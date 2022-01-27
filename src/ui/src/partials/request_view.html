@@ -2,18 +2,23 @@
   <span>Request View</span>
   <span ng-if="responseState(response) === 'success'">
     <small>{{request.id}}</small>
-    <button type="button"
-            ng-if="complete"
-            ng-click="redoRequest(request)"
-            ng-disabled="disabledPourItAgain"
-            class="btn btn-success pull-right"
-            uib-popover="{{msgPourItAgain}}"
-            popover-animation="true"
-            popover-placement="left"
-            popover-trigger="'mouseenter'">
+    <button
+      type="button"
+      ng-if="complete"
+      ng-click="redoRequest(request)"
+      ng-disabled="disabledPourItAgain"
+      class="btn btn-success pull-right"
+      uib-popover="{{msgPourItAgain}}"
+      popover-animation="true"
+      popover-placement="left"
+      popover-trigger="'mouseenter'"
+    >
       Pour it Again
     </button>
-    <small class="pull-right" ng-if="showInstanceStatus(request, instanceStatus)">
+    <small
+      class="pull-right"
+      ng-if="showInstanceStatus(request, instanceStatus)"
+    >
       Error: Instance {{instanceStatus}}
     </small>
   </span>
@@ -23,8 +28,14 @@
 
 <div ng-if="responseState(response) === 'success'">
   <ol class="tagline breadcrumb" ng-show="request_tree.length > 1">
-    <li ng-repeat="request in request_tree = getParentTree(request)" ng-class="{active: $last}"
-      ><span ng-if="!$last"><a ui-sref="base.request({requestId: request.id})">{{request.command}}</a></span
+    <li
+      ng-repeat="request in request_tree = getParentTree(request)"
+      ng-class="{active: $last}"
+    >
+      <span ng-if="!$last"
+        ><a ui-sref="base.request({requestId: request.id})"
+          >{{request.command}}</a
+        ></span
       ><span ng-if="$last">{{request.command}}</span>
     </li>
   </ol>
@@ -37,19 +48,20 @@
           <th scope="col">System</th>
           <th scope="col">System Version</th>
           <th scope="col">Instance Name</th>
-          <th scope="col"
-            >Status<span
+          <th scope="col">
+            Status<span
               uib-popover="{{statusDescriptions[request.status]}}"
               popover-animation="true"
               popover-placement="right"
               popover-trigger="'mouseenter'"
               popover-title="{{request.status}}"
-              style="color: gray; padding-top: 5px; padding-left: 5px;"
-            ><span
-              class="glyphicon glyphicon-info-sign"
-            ></span></span>
+              style="color: gray; padding-top: 5px; padding-left: 5px"
+              ><span class="glyphicon glyphicon-info-sign"></span
+            ></span>
           </th>
-          <th scope="col" ng-show="showErrorColumn(request, children)">Error Type</th>
+          <th scope="col" ng-show="showErrorColumn(request, children)">
+            Error Type
+          </th>
           <th scope="col">Created</th>
           <th scope="col">Status Updated</th>
           <th scope="col">Updated</th>
@@ -59,25 +71,41 @@
       <tbody>
         <tr ng-click="toggleChildren()">
           <td>
-            <span id="chevron"
-                  ng-show="childrenExist(children)"
-                  class="fa fa-chevron-right"
-                  ng-class="{'chevron-rotate': !childrenCollapsed}">
+            <span
+              id="chevron"
+              ng-show="childrenExist(children)"
+              class="fa fa-chevron-right"
+              ng-class="{'chevron-rotate': !childrenCollapsed}"
+            >
             </span>
             {{request.command}}
-            <span ng-show="request.hidden" class="fa fa-user-secret pull-right" style="font-size: 20px;"></span>
+            <span
+              ng-show="request.hidden"
+              class="fa fa-user-secret pull-right"
+              style="font-size: 20px"
+            ></span>
           </td>
           <td>{{request.metadata.system_display_name || request.system}}</td>
           <td>
-            <div style="display: inline-block; padding-top: 3px; padding-right: 16px;">
-              <a ui-sref="base.system({namespace: request.namespace, systemName: request.system, systemVersion: request.system_version})">
+            <div
+              style="
+                display: inline-block;
+                padding-top: 3px;
+                padding-right: 16px;
+              "
+            >
+              <a
+                ui-sref="base.system({namespace: request.namespace, systemName: request.system, systemVersion: request.system_version})"
+              >
                 <span>{{request.system_version}}</span>
               </a>
             </div>
           </td>
           <td>{{request.instance_name}}</td>
           <td>{{request.status}}</td>
-          <td ng-show="showErrorColumn(request, children)">{{request.error_class}}</td>
+          <td ng-show="showErrorColumn(request, children)">
+            {{request.error_class}}
+          </td>
           <td>{{formatDate(request.created_at)}}</td>
           <td>{{formatDate(request.status_updated_at)}}</td>
           <td>{{formatDate(request.updated_at)}}</td>
@@ -87,16 +115,31 @@
         <tr class="child-row slide" ng-repeat="child in childrenDisplay">
           <td>
             <div>
-              <span class="fa fa-chevron-right" style="visibility: hidden"></span>
-              <a class="child-link" ui-sref="base.request({requestId: child.id})">{{child.command}}</a>
-              <span ng-show="child.hidden" class="fa fa-user-secret pull-right" style="font-size: 20px;"></span>
+              <span
+                class="fa fa-chevron-right"
+                style="visibility: hidden"
+              ></span>
+              <a
+                class="child-link"
+                ui-sref="base.request({requestId: child.id})"
+                >{{child.command}}</a
+              >
+              <span
+                ng-show="child.hidden"
+                class="fa fa-user-secret pull-right"
+                style="font-size: 20px"
+              ></span>
             </div>
           </td>
-          <td><div>{{child.metadata.system_display_name || child.system}}</div></td>
+          <td>
+            <div>{{child.metadata.system_display_name || child.system}}</div>
+          </td>
           <td><div>{{child.system_version}}</div></td>
           <td><div>{{child.instance_name}}</div></td>
           <td><div>{{child.status}}</div></td>
-          <td ng-show="showErrorColumn(request, children)"><div>{{child.error_class}}</div></td>
+          <td ng-show="showErrorColumn(request, children)">
+            <div>{{child.error_class}}</div>
+          </td>
           <td><div>{{formatDate(child.created_at)}}</div></td>
           <td><div>{{formatDate(child.status_updated_at)}}</div></td>
           <td><div>{{formatDate(child.updated_at)}}</div></td>
@@ -106,34 +149,80 @@
     </table>
 
     <div class="row">
-      <div ng-style="(displayOutput && isMaximized) ? {'width': '100%'} : {'width': '50%'}" ng-show="displayOutput" class="col-md-6">
-        <div style="margin-bottom: 10px;">
-          <span class="h3">Output
-            <a class="fa fa-expand pull-right"
-                 title="Expand"
-                 ng-click="resize('outputCell')"
-                 ng-hide="isMaximized"
-                 style="font-size: 0.8em; margin-top: 11px; color: black; cursor: pointer;"></a>
-            <a class="fa fa-compress pull-right"
-                 title="Contract"
-                 ng-click="resize('outputCell')"
-                 ng-hide="!isMaximized"
-                 style="font-size: 0.8em; margin-top: 11px; color: black; cursor: pointer;"></a>
-            <a class="fa fa-download pull-right" style="font-size: 0.8em; margin-top: 12px; color: black"
-                 ng-href="api/v1/requests/output/{{request.id}}" download="{{filename}}" ng-show="downloadVisible"></a>
+      <div
+        ng-style="(displayOutput && isMaximized) ? {'width': '100%'} : {'width': '50%'}"
+        ng-show="displayOutput"
+        class="col-md-6"
+      >
+        <div style="margin-bottom: 10px">
+          <span class="h3"
+            >Output
+            <a
+              class="fa fa-expand pull-right"
+              title="Expand"
+              ng-click="resize('outputCell')"
+              ng-hide="isMaximized"
+              style="
+                font-size: 0.8em;
+                margin-top: 11px;
+                color: black;
+                cursor: pointer;
+              "
+            ></a>
+            <a
+              class="fa fa-compress pull-right"
+              title="Contract"
+              ng-click="resize('outputCell')"
+              ng-hide="!isMaximized"
+              style="
+                font-size: 0.8em;
+                margin-top: 11px;
+                color: black;
+                cursor: pointer;
+              "
+            ></a>
+            <a
+              class="fa fa-download pull-right"
+              style="font-size: 0.8em; margin-top: 12px; color: black"
+              ng-href="api/v1/requests/output/{{request.id}}"
+              download="{{filename}}"
+              ng-show="downloadVisible"
+            ></a>
           </span>
-          <span ng-show="formattedAvailable && format_error === undefined" style="margin-top: 9px" class="pull-right">
-            <input bs-switch ng-model="showFormatted" switch-size="mini" type="checkbox" switch-label-width="0"
-                   switch-handle-width="70" switch-on-text="Formatted" switch-off-text="Raw">
+          <span
+            ng-show="formattedAvailable && format_error === undefined"
+            style="margin-top: 9px"
+            class="pull-right"
+          >
+            <input
+              bs-switch
+              ng-model="showFormatted"
+              switch-size="mini"
+              type="checkbox"
+              switch-label-width="0"
+              switch-handle-width="70"
+              switch-on-text="Formatted"
+              switch-off-text="Raw"
+            />
           </span>
-          <span ng-show="formatErrorTitle !== undefined" class="pull-right" uib-popover="{{formatErrorMsg}}"
-                popover-animation="true" popover-placement="left" popover-trigger="'mouseenter'"
-                popover-title="{{formatErrorTitle}}" style="color: gray; padding-top: 5px">
-            <span class="glyphicon glyphicon-info-sign" style="font-size: 26px"></span>
+          <span
+            ng-show="formatErrorTitle !== undefined"
+            class="pull-right"
+            uib-popover="{{formatErrorMsg}}"
+            popover-animation="true"
+            popover-placement="left"
+            popover-trigger="'mouseenter'"
+            popover-title="{{formatErrorTitle}}"
+            style="color: gray; padding-top: 5px"
+          >
+            <span
+              class="glyphicon glyphicon-info-sign"
+              style="font-size: 26px"
+            ></span>
           </span>
         </div>
-        <div style="position: relative;">
-          <div class="w-100" style="text-align: center;" ng-hide="complete">
+        <div style="position: relative">
+          <div class="w-100" style="text-align: center" ng-hide="complete">
             <i class="fa fa-spinner fa-pulse fa-3x"></i>
           </div>
           <div ng-show="complete">
@@ -143,29 +232,57 @@
               <div ng-bind-html="htmlOutput"></div>
             </div>
             <div id="jsonOutput" ng-show="showFormatted && jsonOutput">
-              <div ui-ace="{ onLoad: loadPreview }" ng-model="jsonOutput"
-                ng-if="formattedAvailable && format_error === undefined" style="width: 100%;"></div>
+              <div
+                ui-ace="{ onLoad: loadPreview }"
+                ng-model="jsonOutput"
+                ng-if="formattedAvailable && format_error === undefined"
+                style="width: 100%"
+              ></div>
             </div>
           </div>
         </div>
       </div>
 
-      <div ng-style="(displayParameter && isMaximized) ? {'width': '100%'} : {'width': '50%'}" ng-show="displayParameter" class="col-md-6">
-        <div style="margin-bottom: 10px;">
-          <span class="h3">Parameters
-              <a class="fa fa-expand pull-right"
-                 title="Expand"
-                 ng-click="resize('parameterCell')"
-                 ng-hide="isMaximized"
-                 style="font-size: 0.8em; margin-top: 11px; color: black; cursor: pointer;"></a>
-              <a class="fa fa-compress pull-right"
-                 title="Contract"
-                 ng-click="resize('parameterCell')"
-                 ng-hide="!isMaximized"
-                 style="font-size: 0.8em; margin-top: 11px; color: black; cursor: pointer;"></a>
+      <div
+        ng-style="(displayParameter && isMaximized) ? {'width': '100%'} : {'width': '50%'}"
+        ng-show="displayParameter"
+        class="col-md-6"
+      >
+        <div style="margin-bottom: 10px">
+          <span class="h3"
+            >Parameters
+            <a
+              class="fa fa-expand pull-right"
+              title="Expand"
+              ng-click="resize('parameterCell')"
+              ng-hide="isMaximized"
+              style="
+                font-size: 0.8em;
+                margin-top: 11px;
+                color: black;
+                cursor: pointer;
+              "
+            ></a>
+            <a
+              class="fa fa-compress pull-right"
+              title="Contract"
+              ng-click="resize('parameterCell')"
+              ng-hide="!isMaximized"
+              style="
+                font-size: 0.8em;
+                margin-top: 11px;
+                color: black;
+                cursor: pointer;
+              "
+            ></a>
           </span>
         </div>
-        <div ui-ace="{ onLoad: loadPreview }" ng-model="formattedParameters" style="width: 100%;" title="Input Parameters"></div>
+        <div
+          ui-ace="{ onLoad: loadPreview }"
+          ng-model="formattedParameters"
+          style="width: 100%"
+          title="Input Parameters"
+        ></div>
       </div>
     </div>
   </div>

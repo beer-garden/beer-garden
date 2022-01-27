@@ -1,18 +1,18 @@
-import _ from "lodash";
-import sizeOf from "object-sizeof";
-import { formatDate, formatJsonDisplay } from "../services/utility_service.js";
+import _ from 'lodash';
+import sizeOf from 'object-sizeof';
+import {formatDate, formatJsonDisplay} from '../services/utility_service.js';
 
 requestViewController.$inject = [
-  "$scope",
-  "$state",
-  "$stateParams",
-  "$timeout",
-  "$animate",
-  "$sce",
-  "localStorageService",
-  "RequestService",
-  "SystemService",
-  "EventService",
+  '$scope',
+  '$state',
+  '$stateParams',
+  '$timeout',
+  '$animate',
+  '$sce',
+  'localStorageService',
+  'RequestService',
+  'SystemService',
+  'EventService',
 ];
 
 /**
@@ -29,30 +29,30 @@ requestViewController.$inject = [
  * @param  {Object} EventService       Beer-Garden's Event Service.
  */
 export default function requestViewController(
-  $scope,
-  $state,
-  $stateParams,
-  $timeout,
-  $animate,
-  $sce,
-  localStorageService,
-  RequestService,
-  SystemService,
-  EventService
+    $scope,
+    $state,
+    $stateParams,
+    $timeout,
+    $animate,
+    $sce,
+    localStorageService,
+    RequestService,
+    SystemService,
+    EventService,
 ) {
   $scope.request = undefined;
   $scope.complete = false;
   $scope.instanceStatus = undefined;
   $scope.timeoutRequest = undefined;
   $scope.children = [];
-  $scope.filename = "";
+  $scope.filename = '';
   $scope.downloadVisible = false;
   $scope.childrenDisplay = [];
   $scope.childrenCollapsed = true;
   $scope.rawOutput = undefined;
-  $scope.htmlOutput = "";
-  $scope.jsonOutput = "";
-  $scope.formattedParameters = "";
+  $scope.htmlOutput = '';
+  $scope.jsonOutput = '';
+  $scope.formattedParameters = '';
   $scope.formattedAvailable = false;
   $scope.formatErrorTitle = undefined;
   $scope.formatErrorMsg = undefined;
@@ -60,70 +60,70 @@ export default function requestViewController(
   $scope.disabledPourItAgain = false;
   $scope.msgPourItAgain = null;
 
-  $scope.isMaximized = localStorageService.get("isMaximized");
+  $scope.isMaximized = localStorageService.get('isMaximized');
   if ($scope.isMaximized === null) {
     $scope.isMaximized = false;
   }
-  $scope.displayOutput = localStorageService.get("displayOutput");
+  $scope.displayOutput = localStorageService.get('displayOutput');
   if ($scope.displayOutput === null) {
     $scope.displayOutput = true;
   }
-  $scope.displayParameter = localStorageService.get("displayParameter");
+  $scope.displayParameter = localStorageService.get('displayParameter');
   if ($scope.displayParameter === null) {
     $scope.displayParameter = true;
   }
 
   $scope.statusDescriptions = {
     CREATED:
-      "The request has been validated by beer-garden and is on the " +
-      "queue awaiting processing.",
-    RECEIVED: "Not used.",
+      'The request has been validated by beer-garden and is on the ' +
+      'queue awaiting processing.',
+    RECEIVED: 'Not used.',
     IN_PROGRESS:
-      "The request has been received by the plugin and is " +
-      "actively being processed.",
-    CANCELED: "The request has been canceled and will not be processed.",
-    SUCCESS: "The request has completed successfully",
+      'The request has been received by the plugin and is ' +
+      'actively being processed.',
+    CANCELED: 'The request has been canceled and will not be processed.',
+    SUCCESS: 'The request has completed successfully',
     ERROR:
-      "The request encountered an error during processing and will " +
-      "not be reprocessed.",
-    INVALID: "The request did not pass validation checks",
+      'The request encountered an error during processing and will ' +
+      'not be reprocessed.',
+    INVALID: 'The request did not pass validation checks',
   };
 
   $scope.formatDate = formatDate;
 
-  $scope.loadPreview = function (_editor) {
+  $scope.loadPreview = function(_editor) {
     formatJsonDisplay(_editor, true);
   };
 
-  $scope.canRepeat = function (request) {
+  $scope.canRepeat = function(request) {
     return RequestService.isComplete(request);
   };
 
-  $scope.resize = function (resizeCell) {
+  $scope.resize = function(resizeCell) {
     $scope.isMaximized = !$scope.isMaximized;
 
-    if (resizeCell == "parameterCell") {
+    if (resizeCell == 'parameterCell') {
       $scope.displayOutput = !$scope.displayOutput;
-    } else if (resizeCell == "outputCell") {
+    } else if (resizeCell == 'outputCell') {
       $scope.displayParameter = !$scope.displayParameter;
     }
 
-    localStorageService.set("isMaximized", $scope.isMaximized);
-    localStorageService.set("displayOutput", $scope.displayOutput);
-    localStorageService.set("displayParameter", $scope.displayParameter);
+    localStorageService.set('isMaximized', $scope.isMaximized);
+    localStorageService.set('displayOutput', $scope.displayOutput);
+    localStorageService.set('displayParameter', $scope.displayParameter);
   };
 
-  $scope.showInstanceStatus = function (request, instanceStatus) {
+  $scope.showInstanceStatus = function(request, instanceStatus) {
     return (
       !$scope.canRepeat(request) &&
       instanceStatus &&
-      instanceStatus != "RUNNING"
+      instanceStatus != 'RUNNING'
     );
   };
 
-  $scope.formatOutput = function () {
-    $scope.htmlOutput = "";
-    $scope.jsonOutput = "";
+  $scope.formatOutput = function() {
+    $scope.htmlOutput = '';
+    $scope.jsonOutput = '';
     $scope.formattedAvailable = false;
     $scope.showFormatted = false;
     $scope.formatErrorTitle = undefined;
@@ -133,8 +133,8 @@ export default function requestViewController(
 
     try {
       if (rawOutput === undefined || rawOutput == null) {
-        rawOutput = "null";
-      } else if ($scope.request.output_type == "HTML") {
+        rawOutput = 'null';
+      } else if ($scope.request.output_type == 'HTML') {
         $scope.formattedAvailable = true;
         $scope.showFormatted = true;
 
@@ -144,9 +144,9 @@ export default function requestViewController(
         } else {
           $scope.htmlOutput = rawOutput;
         }
-      } else if ($scope.request.output_type == "JSON") {
+      } else if ($scope.request.output_type == 'JSON') {
         try {
-          let parsedOutput = JSON.parse(rawOutput);
+          const parsedOutput = JSON.parse(rawOutput);
           rawOutput = $scope.stringify(parsedOutput);
           if ($scope.countNodes($scope.formattedOutput) < 1000) {
             $scope.jsonOutput = rawOutput;
@@ -154,20 +154,20 @@ export default function requestViewController(
             $scope.showFormatted = true;
           } else {
             $scope.formatErrorTitle =
-              "Output is too large for collapsible view";
+              'Output is too large for collapsible view';
             $scope.formatErrorMsg =
-              "This output is valid JSON, but it's so big that " +
-              "displaying it in the collapsible viewer would crash the " +
-              "page. Downloading File might take a minute for UI to prepare.";
+              'This output is valid JSON, but it\'s so big that ' +
+              'displaying it in the collapsible viewer would crash the ' +
+              'page. Downloading File might take a minute for UI to prepare.';
           }
         } catch (err) {
-          $scope.formatErrorTitle = "This JSON didn't parse correctly";
+          $scope.formatErrorTitle = 'This JSON didn\'t parse correctly';
           $scope.formatErrorMsg =
-            "beer-garden was expecting this output to be JSON but it " +
-            "doesn't look like JSON. If this is happening often please " +
-            "let the plugin developer know.";
+            'beer-garden was expecting this output to be JSON but it ' +
+            'doesn\'t look like JSON. If this is happening often please ' +
+            'let the plugin developer know.';
         }
-      } else if ($scope.request.output_type == "STRING") {
+      } else if ($scope.request.output_type == 'STRING') {
         try {
           rawOutput = $scope.stringify(JSON.parse(rawOutput));
         } catch (err) {}
@@ -177,17 +177,17 @@ export default function requestViewController(
     }
   };
 
-  $scope.successCallback = function (request) {
+  $scope.successCallback = function(request) {
     $scope.request = request;
     $scope.filename = $scope.request.id;
-    let namespace = $scope.request.namespace || $scope.config.gardenName;
-    let request_system = SystemService.findSystem(
-      namespace,
-      $scope.request.system,
-      $scope.request.system_version
+    const namespace = $scope.request.namespace || $scope.config.gardenName;
+    const requestSystem = SystemService.findSystem(
+        namespace,
+        $scope.request.system,
+        $scope.request.system_version,
     );
-    if (request_system != undefined) {
-      let commands = request_system.commands;
+    if (requestSystem != undefined) {
+      const commands = requestSystem.commands;
       for (let i = 0; i < commands.length; i++) {
         if (commands[i].name == request.command) {
           $scope.disabledPourItAgain = false;
@@ -195,38 +195,38 @@ export default function requestViewController(
           break;
         } else {
           $scope.disabledPourItAgain = true;
-          $scope.msgPourItAgain = "Unable to find command";
+          $scope.msgPourItAgain = 'Unable to find command';
         }
       }
     } else {
       $scope.disabledPourItAgain = true;
-      $scope.msgPourItAgain = "Unable to find system";
+      $scope.msgPourItAgain = 'Unable to find system';
     }
     $scope.setWindowTitle(
-      $scope.request.command,
-      $scope.request.metadata.system_display_name || $scope.request.system,
-      $scope.request.system_version,
-      $scope.request.instance_name,
-      "request"
+        $scope.request.command,
+        $scope.request.metadata.system_display_name || $scope.request.system,
+        $scope.request.system_version,
+        $scope.request.instance_name,
+        'request',
     );
 
     if (RequestService.isComplete($scope.request)) {
       if ($scope.request.output) {
         $scope.downloadVisible = true;
 
-        if ($scope.request.output_type == "STRING") {
-          $scope.filename += ".txt";
-        } else if ($scope.request.output_type == "HTML") {
-          $scope.filename += ".html";
-        } else if ($scope.request.output_type == "JSON") {
-          $scope.filename += ".json";
+        if ($scope.request.output_type == 'STRING') {
+          $scope.filename += '.txt';
+        } else if ($scope.request.output_type == 'HTML') {
+          $scope.filename += '.html';
+        } else if ($scope.request.output_type == 'JSON') {
+          $scope.filename += '.json';
         }
       }
 
       if (sizeOf($scope.request.output) > 5000000) {
-        $scope.formatErrorTitle = "Output is too large";
+        $scope.formatErrorTitle = 'Output is too large';
         $scope.formatErrorMsg =
-          "The output for this request is too large to display, please download instead";
+          'The output for this request is too large to display, please download instead';
       } else {
         $scope.formatOutput();
       }
@@ -237,10 +237,10 @@ export default function requestViewController(
     $scope.formattedParameters = $scope.stringify($scope.request.parameters);
 
     // Grab the status of the instance this request targets to display if necessary
-    let system = SystemService.findSystem(
-      $scope.request.namespace,
-      $scope.request.system,
-      $scope.request.system_version
+    const system = SystemService.findSystem(
+        $scope.request.namespace,
+        $scope.request.system,
+        $scope.request.system_version,
     );
     $scope.instanceStatus = _.find(system.instances, {
       name: $scope.request.instance_name,
@@ -257,7 +257,7 @@ export default function requestViewController(
     }
   };
 
-  $scope.failureCallback = function (response) {
+  $scope.failureCallback = function(response) {
     $scope.response = response;
     $scope.request = response.data;
 
@@ -272,32 +272,33 @@ export default function requestViewController(
     $scope.setWindowTitle();
   };
 
-  $scope.redoRequest = function (request) {
+  $scope.redoRequest = function(request) {
     const newRequest = {
       system: request.system,
       system_version: request.system_version,
       command: request.command,
       instance_name: request.instance_name,
-      comment: request.comment || "",
+      comment: request.comment || '',
       parameters: request.parameters,
     };
-    $state.go("base.command", {
+    $state.go('base.command', {
       systemName: request.system,
       systemVersion: request.system_version,
       commandName: request.command,
-      namespace: request.namespace || $scope.config.gardenName, // Fix for v2 requests w/o a namespace
+      // Fix for v2 requests w/o a namespace
+      namespace: request.namespace || $scope.config.gardenName,
       request: newRequest,
     });
   };
 
-  $scope.childrenExist = function (children) {
+  $scope.childrenExist = function(children) {
     return children !== undefined && children !== null && children.length > 0;
   };
 
-  $scope.toggleChildren = function () {
-    $animate.enabled($("#requestTable"), true);
-    $scope.disableAnimation = $timeout(function () {
-      $animate.enabled($("#requestTable"), false);
+  $scope.toggleChildren = function() {
+    $animate.enabled($('#requestTable'), true);
+    $scope.disableAnimation = $timeout(function() {
+      $animate.enabled($('#requestTable'), false);
     }, 300);
 
     $scope.childrenCollapsed = !$scope.childrenCollapsed;
@@ -310,15 +311,15 @@ export default function requestViewController(
   };
 
   // Return true if any of the children or the parent have an error_class
-  $scope.showErrorColumn = function (request, children) {
-    return _.some(_.concat(children, [request]), "error_class");
+  $scope.showErrorColumn = function(request, children) {
+    return _.some(_.concat(children, [request]), 'error_class');
   };
 
-  $scope.hasParent = function (request) {
+  $scope.hasParent = function(request) {
     return request.parent !== undefined && request.parent !== null;
   };
 
-  $scope.getParentTree = function (request) {
+  $scope.getParentTree = function(request) {
     if (!$scope.hasParent(request)) {
       return [request];
     } else {
@@ -326,13 +327,13 @@ export default function requestViewController(
     }
   };
 
-  $scope.stringify = function (data) {
+  $scope.stringify = function(data) {
     return JSON.stringify(data, undefined, 2);
   };
 
-  $scope.countNodes = function (obj) {
+  $scope.countNodes = function(obj) {
     // Arrays have type object too
-    if (typeof obj != "object") {
+    if (typeof obj != 'object') {
       return 1;
     }
 
@@ -344,14 +345,14 @@ export default function requestViewController(
   };
 
   function eventCallback(event) {
-    if (event.name.startsWith("REQUEST")) {
+    if (event.name.startsWith('REQUEST')) {
       if (event.payload.id == $stateParams.requestId) {
         $scope.successCallback(event.payload);
-      } else if (_.get(event, "payload.parent.id") == $stateParams.requestId) {
-        if (event.name == "REQUEST_CREATED") {
+      } else if (_.get(event, 'payload.parent.id') == $stateParams.requestId) {
+        if (event.name == 'REQUEST_CREATED') {
           $scope.children.push(event.payload);
         } else {
-          let child = _.find($scope.children, { id: event.payload.id });
+          const child = _.find($scope.children, {id: event.payload.id});
 
           if (!child) {
             // If we missed the REQUEST_CREATED just push this one in there
@@ -370,13 +371,13 @@ export default function requestViewController(
     }
   }
 
-  EventService.addCallback("request_view", (event) => {
+  EventService.addCallback('request_view', (event) => {
     $scope.$apply(() => {
       eventCallback(event);
     });
   });
-  $scope.$on("$destroy", function () {
-    EventService.removeCallback("request_view");
+  $scope.$on('$destroy', function() {
+    EventService.removeCallback('request_view');
   });
 
   function loadRequest() {
@@ -389,7 +390,7 @@ export default function requestViewController(
     }, $scope.failureCallback);
   }
 
-  $scope.$on("userChange", function () {
+  $scope.$on('userChange', function() {
     loadRequest();
   });
 
@@ -402,24 +403,24 @@ export default function requestViewController(
  */
 export function slideAnimation() {
   return {
-    enter: function (element, doneFn) {
-      $(element).children("td").hide();
-      $(element).children("td").slideDown(250);
+    enter: function(element, doneFn) {
+      $(element).children('td').hide();
+      $(element).children('td').slideDown(250);
       $(element)
-        .children("td")
-        .children("div")
-        .slideDown(250, function () {
-          doneFn();
-        });
+          .children('td')
+          .children('div')
+          .slideDown(250, function() {
+            doneFn();
+          });
     },
-    leave: function (element, doneFn) {
-      $(element).children("td").slideUp(250);
+    leave: function(element, doneFn) {
+      $(element).children('td').slideUp(250);
       $(element)
-        .children("td")
-        .children("div")
-        .slideUp(250, function () {
-          doneFn();
-        });
+          .children('td')
+          .children('div')
+          .slideUp(250, function() {
+            doneFn();
+          });
     },
   };
 }

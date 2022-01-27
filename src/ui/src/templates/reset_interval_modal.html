@@ -1,30 +1,42 @@
 <div class="modal-content">
-       <div class="modal-header">
-              <h4>Reset the Job Interval?</h4>
-       </div>
+  <div class="modal-header">
+    <h4>Reset the Job Interval?</h4>
+  </div>
 
-       <div class="modal-body">
-              This job has an interval trigger. Choose one of the buttons below to update when the jobshould be run again:
-              <ul>
-                     <li>Selecting "Yes" updates the next run time of the job based on the time right now.</li>
-                     <li>Selecting "No" will keep the job's existing next run time.</li>
-                     <li>Selecting "Cancel" cancels running the job now and no changes will be made to the next run time.</li>
-              </ul>
-       </div>
+  <div class="modal-body">
+    This job has an interval trigger. Choose one of the buttons below to update
+    when the jobshould be run again:
+    <ul>
+      <li>
+        Selecting "Yes" updates the next run time of the job based on the time
+        right now.
+      </li>
+      <li>Selecting "No" will keep the job's existing next run time.</li>
+      <li>
+        Selecting "Cancel" cancels running the job now and no changes will be
+        made to the next run time.
+      </li>
+    </ul>
+  </div>
 
-       <div class="modal-footer">
-       <input type="button"
-              class="btn btn-primary"
-              value="Yes"
-              ng-click="setIntervalReset(true)" />
-       <input type="button"
-              class="btn btn-secondary"
-              value="No"
-              ng-click="setIntervalReset(false)" />
-       <input type="button"
-              class="btn btn-danger"
-              value="Cancel"
-              ng-click="cancelRunNow()" />
-       </div>
+  <div class="modal-footer">
+    <input
+      type="button"
+      class="btn btn-primary"
+      value="Yes"
+      ng-click="setIntervalReset(true)"
+    />
+    <input
+      type="button"
+      class="btn btn-secondary"
+      value="No"
+      ng-click="setIntervalReset(false)"
+    />
+    <input
+      type="button"
+      class="btn btn-danger"
+      value="Cancel"
+      ng-click="cancelRunNow()"
+    />
+  </div>
 </div>
-       

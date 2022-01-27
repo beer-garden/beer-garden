@@ -1,23 +1,37 @@
 <div>
-  <fetch-data response="createResponse" hide="loading,empty" closeable="true"></fetch-data>
+  <fetch-data
+    response="createResponse"
+    hide="loading,empty"
+    closeable="true"
+  ></fetch-data>
 
   <div class="container-fluid">
     <div class="row">
       <div class="col-md-8">
         <form
-            name="jobform"
-            sf-schema="schema"
-            sf-form="form"
-            sf-model="model"
-            ng-submit="submit(jobform, model)"></form>
-        <div uib-alert ng-repeat="alert in alerts" class="alert-danger" close="closeAlert($index)">
+          name="jobform"
+          sf-schema="schema"
+          sf-form="form"
+          sf-model="model"
+          ng-submit="submit(jobform, model)"
+        ></form>
+        <div
+          uib-alert
+          ng-repeat="alert in alerts"
+          class="alert-danger"
+          close="closeAlert($index)"
+        >
           <strong>Uh-oh!</strong>
-          <span ng-bind=alert></span>
+          <span ng-bind="alert"></span>
         </div>
       </div>
       <div class="col-md-4">
         <h3 class="col-md-4" style="margin-top: 0px">Preview</h3>
-        <div ui-ace="{ onLoad: loadPreview }" ng-model="modelJson" style="width: 100%;"></div>
+        <div
+          ui-ace="{ onLoad: loadPreview }"
+          ng-model="modelJson"
+          style="width: 100%"
+        ></div>
       </div>
     </div>
   </div>

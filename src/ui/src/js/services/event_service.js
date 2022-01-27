@@ -4,12 +4,12 @@
  */
 export default function eventService() {
   let socketConnection = undefined;
-  let messageCallbacks = {};
+  const messageCallbacks = {};
 
-  let onMessage = (message) => {
-    let event = JSON.parse(message.data);
+  const onMessage = (message) => {
+    const event = JSON.parse(message.data);
 
-    for (let callback of _.values(messageCallbacks)) {
+    for (const callback of _.values(messageCallbacks)) {
       callback(event);
     }
   };
@@ -27,8 +27,8 @@ export default function eventService() {
         _.isUndefined(socketConnection) ||
         socketConnection.readyState == WebSocket.CLOSED
       ) {
-        let eventUrl =
-          (window.location.protocol === "https:" ? "wss://" : "ws://") +
+        const eventUrl =
+          (window.location.protocol === 'https:' ? 'wss://' : 'ws://') +
           window.location.host +
           window.location.pathname +
           `api/v1/socket/events/`;
@@ -51,7 +51,7 @@ export default function eventService() {
     updateToken: (token) => {
       if (token && (socketConnection.readyState == WebSocket.OPEN)) {
         socketConnection.send(
-            JSON.stringify({name: "UPDATE_TOKEN", payload: token})
+            JSON.stringify({name: 'UPDATE_TOKEN', payload: token}),
         );
       }
     },

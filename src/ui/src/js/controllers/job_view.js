@@ -1,13 +1,13 @@
-import { formatDate, formatJsonDisplay } from "../services/utility_service.js";
-import modalTemplate from "../../templates/reset_interval_modal.html";
+import {formatDate, formatJsonDisplay} from '../services/utility_service.js';
+import modalTemplate from '../../templates/reset_interval_modal.html';
 
 jobViewController.$inject = [
-  "$scope",
-  "$rootScope",
-  "$state",
-  "$stateParams",
-  "$uibModal",
-  "JobService",
+  '$scope',
+  '$rootScope',
+  '$state',
+  '$stateParams',
+  '$uibModal',
+  'JobService',
 ];
 
 /**
@@ -20,62 +20,62 @@ jobViewController.$inject = [
  * @param  {Object} JobService    Beer-Garden's job service.
  */
 export function jobViewController(
-  $scope,
-  $rootScope,
-  $state,
-  $stateParams,
-  $uibModal,
-  JobService
+    $scope,
+    $rootScope,
+    $state,
+    $stateParams,
+    $uibModal,
+    JobService,
 ) {
-  $scope.setWindowTitle("scheduler");
+  $scope.setWindowTitle('scheduler');
 
-  $scope.formattedRequestTemplate = "";
-  $scope.formattedTrigger = "";
+  $scope.formattedRequestTemplate = '';
+  $scope.formattedTrigger = '';
 
-  $scope.loadPreview = function (_editor) {
+  $scope.loadPreview = function(_editor) {
     formatJsonDisplay(_editor, true);
   };
 
   $scope.formatDate = formatDate;
 
-  $scope.successCallback = function (response) {
+  $scope.successCallback = function(response) {
     $scope.response = response;
     $scope.data = response.data;
 
     $scope.formattedRequestTemplate = JSON.stringify(
-      $scope.data.request_template,
-      undefined,
-      2
+        $scope.data.request_template,
+        undefined,
+        2,
     );
     $scope.formattedTrigger = JSON.stringify($scope.data.trigger, undefined, 2);
   };
 
-  $scope.resumeJob = function (jobId) {
+  $scope.resumeJob = function(jobId) {
     JobService.resumeJob(jobId).then(
-      $scope.successCallback,
-      $scope.failureCallback
+        $scope.successCallback,
+        $scope.failureCallback,
     );
   };
 
-  $scope.pauseJob = function (jobId) {
+  $scope.pauseJob = function(jobId) {
     JobService.pauseJob(jobId).then(
-      $scope.successCallback,
-      $scope.failureCallback
+        $scope.successCallback,
+        $scope.failureCallback,
     );
   };
 
-  $scope.updateJob = function (job) {
-    $state.go("base.jobscreaterequest", { job: job });
+  $scope.updateJob = function(job) {
+    $state.go('base.jobscreaterequest', {job: job});
   };
 
-  $scope.deleteJob = function (jobId) {
+  $scope.deleteJob = function(jobId) {
     JobService.deleteJob(jobId).then(
-      $state.go("base.jobs"),
-      $scope.failureCallback
+        $state.go('base.jobs'),
+        $scope.failureCallback,
     );
   };
 
-  $scope.failureCallback = function (response) {
+  $scope.failureCallback = function(response) {
     $scope.response = response;
     $scope.data = [];
   };
@@ -85,12 +85,12 @@ export function jobViewController(
     $scope.data = [];
 
     JobService.getJob($stateParams.id).then(
-      $scope.successCallback,
-      $scope.failureCallback
+        $scope.successCallback,
+        $scope.failureCallback,
     );
   }
 
-  $scope.$on("userChange", () => {
+  $scope.$on('userChange', () => {
     loadJob();
   });
 
@@ -101,15 +101,15 @@ export function jobViewController(
     const resettingInterval = $scope.resetTheInterval;
 
     JobService.runAdHocJob(jobId, $scope.resetTheInterval).then(
-      function (response) {
-        console.log(
-          `Ad hoc run of ID ${jobId}; reset interval: ${resettingInterval}`
-        );
-        $state.go("base.jobs");
-      },
-      function (response) {
-        alert("Failure! Server returned status " + response.status);
-      }
+        function(response) {
+          console.log(
+              `Ad hoc run of ID ${jobId}; reset interval: ${resettingInterval}`,
+          );
+          $state.go('base.jobs');
+        },
+        function(response) {
+          alert('Failure! Server returned status ' + response.status);
+        },
     );
   }
 
@@ -127,26 +127,26 @@ export function jobViewController(
   /*
    * Schedule a job to be run immediately.
    */
-  $scope.runJobNow = function (jobData) {
+  $scope.runJobNow = function(jobData) {
     $scope.resetTheInterval = false;
 
-    let theTriggerIsInterval = isIntervalTrigger(jobData["trigger_type"]);
-    let jobId = jobData["id"];
+    const theTriggerIsInterval = isIntervalTrigger(jobData['trigger_type']);
+    const jobId = jobData['id'];
 
     if (theTriggerIsInterval) {
       // open modal dialog to update resetTheInterval
-      let popupInstance = $uibModal.open({
+      const popupInstance = $uibModal.open({
         animation: true,
         template: modalTemplate,
-        controller: "JobRunNowModalController",
+        controller: 'JobRunNowModalController',
       });
 
       popupInstance.result.then(
-        function (result) {
-          $scope.resetTheInterval = result;
-          runAdHoc(jobId);
-        },
-        () => console.log("Ad hoc run cancelled")
+          function(result) {
+            $scope.resetTheInterval = result;
+            runAdHoc(jobId);
+          },
+          () => console.log('Ad hoc run cancelled'),
       );
     } else {
       runAdHoc(jobId);
@@ -156,7 +156,7 @@ export function jobViewController(
   loadJob();
 }
 
-jobRunNowModalController.$inject = ["$scope", "$uibModalInstance"];
+jobRunNowModalController.$inject = ['$scope', '$uibModalInstance'];
 
 /**
  * jobRunNowModalController - Controller for the reset interval popup.
@@ -164,11 +164,11 @@ jobRunNowModalController.$inject = ["$scope", "$uibModalInstance"];
  * @param  {Object} $uibModalInstance  Object for the modal popup window.
  */
 export function jobRunNowModalController($scope, $uibModalInstance) {
-  $scope.setIntervalReset = function (result) {
+  $scope.setIntervalReset = function(result) {
     $uibModalInstance.close(result);
   };
 
-  $scope.cancelRunNow = function () {
-    $uibModalInstance.dismiss("cancel");
+  $scope.cancelRunNow = function() {
+    $uibModalInstance.dismiss('cancel');
   };
 }

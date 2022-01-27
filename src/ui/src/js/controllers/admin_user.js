@@ -1,15 +1,15 @@
-import _ from "lodash";
-import { arrayToMap, mapToArray } from "../services/utility_service.js";
+import _ from 'lodash';
+import {arrayToMap, mapToArray} from '../services/utility_service.js';
 
-import template from "../../templates/new_user.html";
+import template from '../../templates/new_user.html';
 
 adminUserController.$inject = [
-  "$scope",
-  "$q",
-  "$uibModal",
-  "RoleService",
-  "UserService",
-  "PermissionService",
+  '$scope',
+  '$q',
+  '$uibModal',
+  'RoleService',
+  'UserService',
+  'PermissionService',
 ];
 
 /**
@@ -22,14 +22,14 @@ adminUserController.$inject = [
  * @param  {Object} PermissionService Beer-Garden's permission service object.
  */
 export function adminUserController(
-  $scope,
-  $q,
-  $uibModal,
-  RoleService,
-  UserService,
-  PermissionService
+    $scope,
+    $q,
+    $uibModal,
+    RoleService,
+    UserService,
+    PermissionService,
 ) {
-  $scope.setWindowTitle("users");
+  $scope.setWindowTitle('users');
 
   // This holds the raw responses from the backend
   $scope.raws = {};
@@ -46,48 +46,48 @@ export function adminUserController(
   // Normal loader
   $scope.loader = {};
 
-  $scope.doCreate = function () {
-    let modalInstance = $uibModal.open({
-      controller: "NewUserController",
-      size: "sm",
+  $scope.doCreate = function() {
+    const modalInstance = $uibModal.open({
+      controller: 'NewUserController',
+      size: 'sm',
       template: template,
     });
 
     modalInstance.result.then(
-      (create) => {
-        if (create.password === create.verify) {
-          UserService.createUser(create.username, create.password).then(
-            loadUsers
-          );
-        }
-      },
-      // We don't really need to do anything if canceled
-      () => {}
+        (create) => {
+          if (create.password === create.verify) {
+            UserService.createUser(create.username, create.password).then(
+                loadUsers,
+            );
+          }
+        },
+        // We don't really need to do anything if canceled
+        () => {},
     );
   };
 
-  $scope.doDelete = function (userId) {
+  $scope.doDelete = function(userId) {
     UserService.deleteUser(userId).then(loadUsers);
   };
 
-  $scope.doReset = function (userId) {
-    let original = _.find($scope.serverUsers, { id: userId });
-    let changed = _.find($scope.users, { id: userId });
+  $scope.doReset = function(userId) {
+    const original = _.find($scope.serverUsers, {id: userId});
+    const changed = _.find($scope.users, {id: userId});
 
     changed.roles = _.cloneDeep(original.roles);
     changed.permissions = _.cloneDeep(original.permissions);
   };
 
-  $scope.doUpdate = function () {
-    let userId = $scope.selectedUser.id;
-    let original = _.find($scope.serverUsers, { id: userId });
-    let promises = [];
+  $scope.doUpdate = function() {
+    const userId = $scope.selectedUser.id;
+    const original = _.find($scope.serverUsers, {id: userId});
+    const promises = [];
 
-    let originalList = mapToArray(original.primaryRoles);
-    let changedList = mapToArray($scope.selectedUser.primaryRoles);
+    const originalList = mapToArray(original.primaryRoles);
+    const changedList = mapToArray($scope.selectedUser.primaryRoles);
 
-    let additions = _.difference(changedList, originalList);
-    let removals = _.difference(originalList, changedList);
+    const additions = _.difference(changedList, originalList);
+    const removals = _.difference(originalList, changedList);
 
     if (additions.length) {
       promises.push(UserService.addRoles(userId, additions));
@@ -99,38 +99,38 @@ export function adminUserController(
     $q.all(promises).then(loadUsers, $scope.addErrorAlert);
   };
 
-  $scope.addErrorAlert = function (response) {
+  $scope.addErrorAlert = function(response) {
     $scope.alerts.push({
-      type: "danger",
+      type: 'danger',
       msg:
-        "Something went wrong on the backend: " +
-        _.get(response, "data.message", "Please check the server logs"),
+        'Something went wrong on the backend: ' +
+        _.get(response, 'data.message', 'Please check the server logs'),
     });
   };
 
-  $scope.closeAlert = function (index) {
+  $scope.closeAlert = function(index) {
     $scope.alerts.splice(index, 1);
   };
 
-  $scope.color = function (userId, path) {
+  $scope.color = function(userId, path) {
     // Pull the correct users based on the current selected user's id
-    let originalSelectedUser = _.find($scope.serverUsers, { id: userId });
-    let changedSelectedUser = _.find($scope.users, { id: userId });
+    const originalSelectedUser = _.find($scope.serverUsers, {id: userId});
+    const changedSelectedUser = _.find($scope.users, {id: userId});
 
     // Now pull the original and changed values out
-    let originalValue = _.get(originalSelectedUser, path);
-    let changedValue = _.get(changedSelectedUser, path);
+    const originalValue = _.get(originalSelectedUser, path);
+    const changedValue = _.get(changedSelectedUser, path);
 
     if (changedValue && !originalValue) {
-      return { color: "green" };
+      return {color: 'green'};
     } else if (!changedValue && originalValue) {
-      return { color: "red" };
+      return {color: 'red'};
     }
 
     return {};
   };
 
-  $scope.isRoleDisabled = function (roleName) {
+  $scope.isRoleDisabled = function(roleName) {
     // Roles need to be disabled if it's enabled because it's nested
     return (
       $scope.selectedUser.roles[roleName] &&
@@ -138,39 +138,39 @@ export function adminUserController(
     );
   };
 
-  $scope.roleChange = function (roleName) {
-    let changed = $scope.selectedUser;
+  $scope.roleChange = function(roleName) {
+    const changed = $scope.selectedUser;
 
     // Since this is a result of a click, we need to update primary roles
     changed.primaryRoles[roleName] = changed.roles[roleName];
 
     // Then get the list of roles that are checked
-    let primaryRoleNames = mapToArray(changed.primaryRoles);
+    const primaryRoleNames = mapToArray(changed.primaryRoles);
 
     // Now we need the actual role definitions for those roles...
-    let primaryRoleList = _.filter(
-      $scope.raws.roles,
-      (value, key, collection) => {
-        return _.indexOf(primaryRoleNames, value.name) !== -1;
-      }
+    const primaryRoleList = _.filter(
+        $scope.raws.roles,
+        (value, key, collection) => {
+          return _.indexOf(primaryRoleNames, value.name) !== -1;
+        },
     );
 
     // ...so that we can calculate nested permissions...
-    let coalesced = RoleService.coalescePermissions(primaryRoleList);
-    let permissionNames = coalesced[1];
+    const coalesced = RoleService.coalescePermissions(primaryRoleList);
+    const permissionNames = coalesced[1];
 
     // Finally, convert that list back into the map angular wants
-    let permissionMap = arrayToMap(permissionNames, $scope.raws.permissions);
+    const permissionMap = arrayToMap(permissionNames, $scope.raws.permissions);
     changed.permissions = permissionMap;
 
     // Now deal with roles too
-    let allRoleNames = coalesced[0];
-    let nestedRoleNames = _.difference(allRoleNames, primaryRoleNames);
+    const allRoleNames = coalesced[0];
+    const nestedRoleNames = _.difference(allRoleNames, primaryRoleNames);
 
-    let roleMap = arrayToMap(allRoleNames, $scope.roleNames);
+    const roleMap = arrayToMap(allRoleNames, $scope.roleNames);
     changed.roles = roleMap;
 
-    let nestedRoleMap = arrayToMap(nestedRoleNames, $scope.roleNames);
+    const nestedRoleMap = arrayToMap(nestedRoleNames, $scope.roleNames);
     changed.nestedRoles = nestedRoleMap;
   };
 
@@ -181,26 +181,26 @@ export function adminUserController(
   function handleUsersResponse(response) {
     $scope.raws.users = response.data;
 
-    let thaUsers = [];
+    const thaUsers = [];
 
-    for (let user of $scope.raws.users) {
-      let primaryRoleNames = _.map(user.roles, "name");
+    for (const user of $scope.raws.users) {
+      const primaryRoleNames = _.map(user.roles, 'name');
 
-      let coalesced = RoleService.coalescePermissions(user.roles);
+      const coalesced = RoleService.coalescePermissions(user.roles);
 
-      let allRoleNames = coalesced[0];
+      const allRoleNames = coalesced[0];
 
-      let nestedRoleNames = _.difference(allRoleNames, primaryRoleNames);
-      let allPermissionNames = coalesced[1];
+      const nestedRoleNames = _.difference(allRoleNames, primaryRoleNames);
+      const allPermissionNames = coalesced[1];
 
-      let roleMap = arrayToMap(allRoleNames, $scope.roleNames);
-      let permissionMap = arrayToMap(
-        allPermissionNames,
-        $scope.raws.permissions
+      const roleMap = arrayToMap(allRoleNames, $scope.roleNames);
+      const permissionMap = arrayToMap(
+          allPermissionNames,
+          $scope.raws.permissions,
       );
 
-      let primaryRoleMap = arrayToMap(primaryRoleNames, $scope.roleNames);
-      let nestedRoleMap = arrayToMap(nestedRoleNames, $scope.roleNames);
+      const primaryRoleMap = arrayToMap(primaryRoleNames, $scope.roleNames);
+      const nestedRoleMap = arrayToMap(nestedRoleNames, $scope.roleNames);
 
       thaUsers.push({
         id: user.id,
@@ -216,14 +216,14 @@ export function adminUserController(
 
     // This is super annoying, but I can't find a better way
     // Save off the current selection ID so we can keep it selected
-    let selectedId = $scope.selectedUser["id"];
+    const selectedId = $scope.selectedUser['id'];
     let selectedUser = undefined;
 
     $scope.serverUsers = _.cloneDeep(thaUsers);
     $scope.users = _.cloneDeep(thaUsers);
 
     if (selectedId) {
-      selectedUser = _.find($scope.users, { id: selectedId });
+      selectedUser = _.find($scope.users, {id: selectedId});
     }
     $scope.selectedUser = selectedUser || $scope.users[0];
   }
@@ -246,35 +246,35 @@ export function adminUserController(
       roles: RoleService.getRoles(),
       users: UserService.getUsers(),
     }).then(
-      (responses) => {
+        (responses) => {
         // Success callback is only invoked if all promises are resolved, so just
         // pick one to let the fetch-data directive know about the success
-        $scope.response = responses.users;
+          $scope.response = responses.users;
 
-        $scope.raws = {
-          permissions: responses.permissions.data,
-          roles: responses.roles.data,
-          users: responses.users.data,
-        };
+          $scope.raws = {
+            permissions: responses.permissions.data,
+            roles: responses.roles.data,
+            users: responses.users.data,
+          };
 
-        $scope.roleNames = _.map($scope.raws.roles, "name");
-        $scope.permissions = _.groupBy($scope.raws.permissions, (value) => {
-          return value.split("-").slice(0, 2).join("-");
-        });
+          $scope.roleNames = _.map($scope.raws.roles, 'name');
+          $scope.permissions = _.groupBy($scope.raws.permissions, (value) => {
+            return value.split('-').slice(0, 2).join('-');
+          });
 
-        handleUsersResponse(responses.users);
+          handleUsersResponse(responses.users);
 
-        $scope.loader.loaded = true;
-        $scope.loader.error = false;
-        $scope.loader.errorMessage = undefined;
-      },
-      (response) => {
-        $scope.response = response;
-      }
+          $scope.loader.loaded = true;
+          $scope.loader.error = false;
+          $scope.loader.errorMessage = undefined;
+        },
+        (response) => {
+          $scope.response = response;
+        },
     );
   }
 
-  $scope.$on("userChange", () => {
+  $scope.$on('userChange', () => {
     $scope.response = undefined;
     loadAll();
   });
@@ -282,7 +282,7 @@ export function adminUserController(
   loadAll();
 }
 
-newUserController.$inject = ["$scope", "$uibModalInstance"];
+newUserController.$inject = ['$scope', '$uibModalInstance'];
 
 /**
  * newUserController - New User controller.
@@ -292,11 +292,11 @@ newUserController.$inject = ["$scope", "$uibModalInstance"];
 export function newUserController($scope, $uibModalInstance) {
   $scope.create = {};
 
-  $scope.ok = function () {
+  $scope.ok = function() {
     $uibModalInstance.close($scope.create);
   };
 
-  $scope.cancel = function () {
-    $uibModalInstance.dismiss("cancel");
+  $scope.cancel = function() {
+    $uibModalInstance.dismiss('cancel');
   };
 }

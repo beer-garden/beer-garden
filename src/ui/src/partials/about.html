@@ -8,16 +8,30 @@
         <div class="panel-body">
           <ul>
             <li>
-              <a href="{{config.urlPrefix}}swagger/index.html?config={{config.urlPrefix}}config/swagger">Open API documentation</a> - {{config.applicationName}} uses OpenAPI Documentation for our ReST Interface.
+              <a
+                href="{{config.urlPrefix}}swagger/index.html?config={{config.urlPrefix}}config/swagger"
+                >Open API documentation</a
+              >
+              - {{config.applicationName}} uses OpenAPI Documentation for our
+              ReST Interface.
             </li>
             <li ng-if="config.metricsUrl">
-              <a href="{{config.metricsUrl}}">Metrics</a> - Link to the configured metrics backend.
+              <a href="{{config.metricsUrl}}">Metrics</a> - Link to the
+              configured metrics backend.
             </li>
             <li>
-              <a href="https://grafana.com/dashboards/6621">Grafana Dashboard ({{config.applicationName}})</a> - A grafana dashboard for monitoring {{config.applicationName}} performance.
+              <a href="https://grafana.com/dashboards/6621"
+                >Grafana Dashboard ({{config.applicationName}})</a
+              >
+              - A grafana dashboard for monitoring {{config.applicationName}}
+              performance.
             </li>
             <li>
-              <a href="https://grafana.com/dashboards/6624">Grafana Dashboard (Plugins)</a> - A grafana dashboard for monitoring {{config.applicationName}} plugin performance.
+              <a href="https://grafana.com/dashboards/6624"
+                >Grafana Dashboard (Plugins)</a
+              >
+              - A grafana dashboard for monitoring {{config.applicationName}}
+              plugin performance.
             </li>
           </ul>
         </div>

@@ -1,42 +1,53 @@
-<!doctype html>
-<html lang='en' ng-app="bgApp">
+<!DOCTYPE html>
+<html lang="en" ng-app="bgApp">
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title ng-bind="title"></title>
 
-    <link href="index.css" rel="stylesheet">
-    <link ng-if="themes.slate" ng-href="dark.css" rel="stylesheet">
+    <link href="index.css" rel="stylesheet" />
+    <link ng-if="themes.slate" ng-href="dark.css" rel="stylesheet" />
 
     <!-- Favicon - this prevents the browser requesting favicon.ico before config is loaded -->
-    <link rel="icon" href="data:,">
-    <link rel="icon" ng-if="config.iconDefault" ng-href="image/{{config.iconDefault}}.png">
+    <link rel="icon" href="data:," />
+    <link
+      rel="icon"
+      ng-if="config.iconDefault"
+      ng-href="image/{{config.iconDefault}}.png"
+    />
   </head>
 
   <body ng-cloak>
-
     <!-- Navbar Start -->
     <!-- Static navbar for layout purposes -->
     <nav class="navbar navbar-static-top"></nav>
 
     <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
-
-      <a style="cursor:pointer" class="navbar-brand" ui-sref="base.systems">
-        <i style="padding: 3px;" ng-class="getIcon(config.iconDefault)"></i>
+      <a style="cursor: pointer" class="navbar-brand" ui-sref="base.systems">
+        <i style="padding: 3px" ng-class="getIcon(config.iconDefault)"></i>
         <span ng-cloak>{{config.applicationName}}</span>
       </a>
       <ul class="nav navbar-nav navbar-top-links navbar-right">
-
         <li class="dropdown">
-          <span data-toggle="dropdown" style="padding: 9px 15px; display: block;">
+          <span
+            data-toggle="dropdown"
+            style="padding: 9px 15px; display: block"
+          >
             <i class="fa fa-search"></i>
-            <input ng-model="searchText" title="Search System Names">
+            <input ng-model="searchText" title="Search System Names" />
           </span>
 
-          <ul class="dropdown-menu" ng-show="searchText != null && searchText != ''">
-            <li ng-repeat="system in filteredItems  = (systems | filter:searchText)">
-              <a ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})"
-                ui-sref-active="active">
+          <ul
+            class="dropdown-menu"
+            ng-show="searchText != null && searchText != ''"
+          >
+            <li
+              ng-repeat="system in filteredItems  = (systems | filter:searchText)"
+            >
+              <a
+                ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})"
+                ui-sref-active="active"
+              >
                 <span title="{{system.description}}">
                   <span>{{system.namespace}}</span>
                   <span>{{system.display_name || system.name}}</span>
@@ -44,8 +55,11 @@
                 </span>
               </a>
               <ul>
-                <li ng-repeat="command in system.commands | filter:searchText" >
-                  <a ui-sref="base.command({systemName: system.name, systemVersion: system.version, namespace: system.namespace, commandName: command.name})" ui-sref-active="active">
+                <li ng-repeat="command in system.commands | filter:searchText">
+                  <a
+                    ui-sref="base.command({systemName: system.name, systemVersion: system.version, namespace: system.namespace, commandName: command.name})"
+                    ui-sref-active="active"
+                  >
                     <span title="{{command.description}}">
                       <span>{{command.name}}</span>
                     </span>
@@ -53,13 +67,13 @@
                 </li>
               </ul>
             </li>
-          <li ng-hide="filteredItems.length">No results</li>
+            <li ng-hide="filteredItems.length">No results</li>
           </ul>
         </li>
 
         <li ng-show="authEnabled() && !isUser(user)">
           <a href="" ng-click="doLogin()">
-            <i style="padding: 3px;" class="fa fa-user"></i>
+            <i style="padding: 3px" class="fa fa-user"></i>
             <span>Login</span>
           </a>
         </li>
@@ -69,42 +83,52 @@
         </li>
         <li ng-show="isUser(user)">
           <a ng-click="doLogout()" href="">
-            <i style="padding: 3px;" class="fa fa-user"></i>
+            <i style="padding: 3px" class="fa fa-user"></i>
             <span>Logout</span>
           </a>
         </li>
 
         <li>
-          <a ui-sref="base.systems" ng-class="{active: ($state.current.name.startsWith('base.systems'))}">Systems</a>
+          <a
+            ui-sref="base.systems"
+            ng-class="{active: ($state.current.name.startsWith('base.systems'))}"
+            >Systems</a
+          >
         </li>
         <li>
-          <a ui-sref="base.requests"
-             ng-class="{active: ($state.current.name.startsWith('request'))}">Requests</a>
+          <a
+            ui-sref="base.requests"
+            ng-class="{active: ($state.current.name.startsWith('request'))}"
+            >Requests</a
+          >
         </li>
         <li>
-          <a ui-sref="base.jobs"
-             ng-class="{active: ($state.current.name.startsWith('job'))}">Scheduler</a>
+          <a
+            ui-sref="base.jobs"
+            ng-class="{active: ($state.current.name.startsWith('job'))}"
+            >Scheduler</a
+          >
         </li>
         <!-- Admin Drop Down Menu -->
         <li class="dropdown">
-          <a href="" data-toggle="dropdown" title="Admin Drop Down" >Admin</a>
+          <a href="" data-toggle="dropdown" title="Admin Drop Down">Admin</a>
           <ul class="dropdown-menu">
             <li>
               <a ui-sref="base.system_admin" ui-sref-active="active">
                 <span>Systems</span>
               </a>
             </li>
-<!--            Add after users are refactored-->
-<!--            <li ng-show="hasPermission(user, 'bg-local-admin')">-->
-<!--              <a ui-sref="base.user_admin" ui-sref-active="active">-->
-<!--                <span>Users</span>-->
-<!--              </a>-->
-<!--            </li>-->
-<!--            <li ng-show="hasPermission(user, 'bg-local-admin')">-->
-<!--              <a ui-sref="base.role_admin" ui-sref-active="active">-->
-<!--                <span>Roles</span>-->
-<!--              </a>-->
-<!--            </li>-->
+            <!--            Add after users are refactored-->
+            <!--            <li ng-show="hasPermission(user, 'bg-local-admin')">-->
+            <!--              <a ui-sref="base.user_admin" ui-sref-active="active">-->
+            <!--                <span>Users</span>-->
+            <!--              </a>-->
+            <!--            </li>-->
+            <!--            <li ng-show="hasPermission(user, 'bg-local-admin')">-->
+            <!--              <a ui-sref="base.role_admin" ui-sref-active="active">-->
+            <!--                <span>Roles</span>-->
+            <!--              </a>-->
+            <!--            </li>-->
             <li>
               <a ui-sref="base.garden_admin" ui-sref-active="active">
                 <span>Gardens</span>
@@ -116,37 +140,61 @@
         <!-- Menu Bar broken into two sections: main, themes -->
         <!-- Based on the current menu view selected will determine which elements are seen -->
         <li id="nav-extras" class="dropdown">
-          <a href="" class="fa fa-bars dropdown-toggle" data-toggle="dropdown" title="Menu Drop Down" ng-click="setMenuPage('main')"></a>
+          <a
+            href=""
+            class="fa fa-bars dropdown-toggle"
+            data-toggle="dropdown"
+            title="Menu Drop Down"
+            ng-click="setMenuPage('main')"
+          ></a>
           <ul class="dropdown-menu">
-
             <li ng-show="checkMenuPage('main')">
               <a ui-sref="base.about" ui-sref-active="active">About</a>
             </li>
             <form>
-            <li ng-show="checkMenuPage('main')">
-              <form>
-                <div style="padding: 3px 15px; cursor: pointer;"
-                     ng-click="setMenuPage('theme')">
-                  <span>Themes</span>
-                  <span class="fa fa-chevron-right"></span>
-                </div>
-              </form>
-            </li>
-            </form>
-            <li ng-show="checkMenuPage('theme')" >
+              <li ng-show="checkMenuPage('main')">
                 <form>
-                  <div style="padding: 3px 15px; cursor: pointer;"
-                     ng-click="setMenuPage('main')">
+                  <div
+                    style="padding: 3px 15px; cursor: pointer"
+                    ng-click="setMenuPage('theme')"
+                  >
+                    <span>Themes</span>
+                    <span class="fa fa-chevron-right"></span>
+                  </div>
+                </form>
+              </li>
+            </form>
+            <li ng-show="checkMenuPage('theme')">
+              <form>
+                <div
+                  style="padding: 3px 15px; cursor: pointer"
+                  ng-click="setMenuPage('main')"
+                >
                   <span class="fa fa-chevron-left"></span>
                   <span><b>Themes</b></span>
                 </div>
-                </form>
-            <li>
-            <li ng-show="checkMenuPage('theme')" role="separator" class="divider"><li>
-            <li ng-repeat="(style, enabled) in themes" ng-show="checkMenuPage('theme')">
-              <div style="padding: 3px 15px; cursor: pointer;"
-                    ng-click="changeTheme(style, true)">
-                <span class="fa" ng-class="{'fa-check': enabled, 'fa-fw': !enabled}"></span>
+              </form>
+            </li>
+
+            <li></li>
+            <li
+              ng-show="checkMenuPage('theme')"
+              role="separator"
+              class="divider"
+            ></li>
+            <li></li>
+            <li
+              ng-repeat="(style, enabled) in themes"
+              ng-show="checkMenuPage('theme')"
+            >
+              <div
+                style="padding: 3px 15px; cursor: pointer"
+                ng-click="changeTheme(style, true)"
+              >
+                <span
+                  class="fa"
+                  ng-class="{'fa-check': enabled, 'fa-fw': !enabled}"
+                ></span>
                 <span>{{style}}</span>
               </div>
             </li>
@@ -161,6 +209,5 @@
     </div>
 
     <script src="index.js"></script>
-
   </body>
 </html>
