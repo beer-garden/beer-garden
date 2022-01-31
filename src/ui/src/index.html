@@ -106,6 +106,7 @@
           <a
             ui-sref="base.jobs"
             ng-class="{active: ($state.current.name.startsWith('job'))}"
+            ng-show="hasPermission(user, 'job:read')"
             >Scheduler</a
           >
         </li>
