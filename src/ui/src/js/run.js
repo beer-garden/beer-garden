@@ -89,9 +89,6 @@ export default function appRun(
         // and set the permissions before setting $rootScope.user
           const user = response.data;
 
-          // coalescePermissions [0] is roles, [1] is permissions
-          user.permissions = RoleService.coalescePermissions(user.roles)[1];
-
           // If user is logged in, change to their default theme selection
           let theme;
           if (user.id) {
@@ -151,13 +148,39 @@ export default function appRun(
     // );
   };
 
-  $rootScope.hasPermission = function(user, permissions) {
+  $rootScope.hasPermission = function(user, permission) {
     if (!$rootScope.config.authEnabled) return true;
     if (_.isUndefined(user)) return false;
-    if (_.includes(user.permissions, 'bg-all')) return true;
 
-    // This makes it possible to pass an array or a single string
-    return _.intersection(user.permissions, _.castArray(permissions)).length;
+    return UserService.hasPermission(user, permission);
+  };
+
+  $rootScope.hasGardenPermission = function(user, permission, garden) {
+    if (!$rootScope.config.authEnabled) return true;
+    if (_.isUndefined(user)) return false;
+
+    return UserService.hasGardenPermission(user, permission, garden);
+  };
+
+  $rootScope.hasSystemPermission = function(user, permission, system) {
+    if (!$rootScope.config.authEnabled) return true;
+    if (_.isUndefined(user)) return false;
+
+    return UserService.hasSystemPermission(user, permission, system);
+  };
+
+  $rootScope.hasCommandPermission = function(user, permission, command) {
+    if (!$rootScope.config.authEnabled) return true;
+    if (_.isUndefined(user)) return false;
+
+    return UserService.hasCommandPermission(user, permission, command);
+  };
+
+  $rootScope.hasJobPermission = function(user, permission, job) {
+    if (!$rootScope.config.authEnabled) return true;
+    if (_.isUndefined(user)) return false;
+
+    return UserService.hasJobPermission(user, permission, job);
   };
 
   $rootScope.changeTheme = function(theme, sendUpdate) {
@@ -275,13 +298,23 @@ export default function appRun(
     }
   });
 
-  $interval(function() {
-    EventService.connect(TokenService.getToken());
-  }, 5000);
+  $interval(
+      function() {
+        EventService.connect(TokenService.getToken());
+      },
+      5000,
+      0,
+      false,
+  );
 
-  $interval(function() {
-    TokenService.preemptiveRefresh();
-  }, 30000);
+  $interval(
+      function() {
+        TokenService.preemptiveRefresh();
+      },
+      30000,
+      0,
+      false,
+  );
 
   $rootScope.initialLoad();
 }

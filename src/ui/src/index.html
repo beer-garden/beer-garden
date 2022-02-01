@@ -106,14 +106,15 @@
           <a
             ui-sref="base.jobs"
             ng-class="{active: ($state.current.name.startsWith('job'))}"
+            ng-show="hasPermission(user, 'job:read')"
             >Scheduler</a
           >
         </li>
         <!-- Admin Drop Down Menu -->
-        <li class="dropdown">
+        <li class="dropdown" ng-show="hasPermission(user, 'system:update') || hasPermission(user, 'garden:update')">
           <a href="" data-toggle="dropdown" title="Admin Drop Down">Admin</a>
           <ul class="dropdown-menu">
-            <li>
+            <li ng-show="hasPermission(user, 'system:update')">
               <a ui-sref="base.system_admin" ui-sref-active="active">
                 <span>Systems</span>
               </a>
@@ -129,7 +130,7 @@
             <!--                <span>Roles</span>-->
             <!--              </a>-->
             <!--            </li>-->
-            <li>
+            <li ng-show="hasPermission(user, 'garden:update')">
               <a ui-sref="base.garden_admin" ui-sref-active="active">
                 <span>Gardens</span>
               </a>

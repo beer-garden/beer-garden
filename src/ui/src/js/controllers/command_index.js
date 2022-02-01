@@ -155,6 +155,12 @@ export default function commandIndexController(
 
     $scope.response = response;
     $scope.data = commands;
+
+    $scope.userCanTask = $rootScope.hasCommandPermission(
+        $rootScope.user,
+        'request:create',
+        commands[0],
+    );
     $scope.dtOptions.withLanguage({
       info:
         'Showing _START_ to _END_ of _TOTAL_ entries (filtered from ' +
