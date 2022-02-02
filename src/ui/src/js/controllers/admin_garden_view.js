@@ -56,7 +56,6 @@ export default function adminGardenViewController(
   };
 
   $scope.successCallback = function(response) {
-    console.log('response', response);
     $scope.response = response;
     $scope.data = response.data;
 

@@ -149,7 +149,6 @@ export default function gardenService($rootScope, $http) {
             ('key' in entry && isBlank(entry['key'])) ||
             ('value' in entry && isBlank(entry['value'])))
     );
-    console.log('headersAllBlank', headersAllBlank);
 
     return (
       !headersExist ||
@@ -224,8 +223,6 @@ export default function gardenService($rootScope, $http) {
      * model. Throw an error if the entire form is empty (i.e., don't allow
      * empty connection parameters for both entry points on a remote garden).
      */
-    console.log('formToServerModel DATA', data);
-    console.log('formToServerModel MODEL', model);
     const {connection_type: modelConnectionType, ...modelWithoutConxType} = model;
     let newModel = {...data};
     newModel['connection_type'] = modelConnectionType;
@@ -240,9 +237,6 @@ export default function gardenService($rootScope, $http) {
     for (const modelEntryPointName of Object.keys(modelWithoutConxType)) {
       // modelEntryPointName is either 'http' or 'stomp'
       const modelEntryPointMap = modelWithoutConxType[modelEntryPointName];
-      if (modelEntryPointName === 'stomp') {
-        console.log('STOMP modelEntryPointMap', modelEntryPointMap);
-      }
       const isEmpty = emptyChecker[modelEntryPointName](modelEntryPointMap);
 
       if (isEmpty) {
@@ -254,23 +248,12 @@ export default function gardenService($rootScope, $http) {
 
       const updatedEntryPoint = {};
 
-      if (modelEntryPointName === 'stomp') {
-        console.log('STOMP KEYS', Object.keys(modelEntryPointMap));
-      }
-
       for (const modelEntryPointKey of Object.keys(modelEntryPointMap)) {
         const modelEntryPointValue = modelEntryPointMap[modelEntryPointKey];
-        if (modelEntryPointName === 'stomp') {
-          console.log('modelEntryPointName', modelEntryPointName);
-          console.log('modelEntryPointKey', modelEntryPointKey);
-          console.log('modelEntryPointValue', modelEntryPointValue);
-        }
 
         if (modelEntryPointName === 'stomp' && modelEntryPointKey === 'headers') {
-          console.log('STOMP HEADERS');
           // the ugly corner case is the stomp headers
           const formStompHeaders = modelEntryPointValue;
-          console.log('HEADERS', formStompHeaders);
           const modelUpdatedStompHeaderArray = [];
 
           for (const formStompHeader of formStompHeaders) {
