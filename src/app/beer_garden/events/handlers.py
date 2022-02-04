@@ -50,7 +50,7 @@ def garden_callbacks(event: Event) -> None:
         try:
             handler(deepcopy(event))
         except Exception as ex:
-            logger.exception(
-                f"'{handler_tag}' event handler received an error executing callback"
-                f" for {event!r}: {ex}"
+            logger.error(
+                "'%s' handler received an error executing callback for event %s: %s"
+                % (handler_tag, repr(event), str(ex))
             )

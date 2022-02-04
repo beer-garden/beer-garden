@@ -66,19 +66,6 @@ export default function gardenService($rootScope, $http) {
     });
   };
 
-  GardenService.importGardenConfig = (gardenDefinition, gardenConfigJson) => {
-    const gardenName = encodeURIComponent(gardenDefinition['name']);
-    const url = `api/v1/gardens/${gardenName}`;
-    const gardenConfig = JSON.parse(gardenConfigJson);
-    gardenDefinition['connection_params'] = gardenConfig;
-
-    return $http.patch(url, {
-      operation: 'config',
-      path: '',
-      value: gardenDefinition,
-    });
-  };
-
   GardenService.serverModelToForm = function(model) {
     const values = {};
     const stompHeaders = [];
@@ -279,16 +266,6 @@ export default function gardenService($rootScope, $http) {
         }
       }
       updatedConnectionParams[modelEntryPointName] = updatedEntryPoint;
-    }
-
-    if (emptyConnections['http'] && emptyConnections['stomp']) {
-      throw Error('One of \'http\' or \'stomp\' connection must be defined');
-    } else if (emptyConnections['http'] && modelConnectionType === 'HTTP') {
-      throw Error('Connection type is \'HTTP\' but http connection parameters' +
-        'are blank');
-    } else if (emptyConnections['stomp'] && modelConnectionType === 'STOMP') {
-      throw Error('Connection type is \'STOMP\' but stomp connection ' +
-        'parameters are blank');
     }
 
     newModel = {...newModel, 'connection_params': updatedConnectionParams};
