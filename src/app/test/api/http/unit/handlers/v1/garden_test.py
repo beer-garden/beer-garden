@@ -381,7 +381,7 @@ class TestGardenListAPI:
         assert len(Garden.objects.filter(name="newgarden")) == 1
 
     @pytest.mark.gen_test
-    def test_auth_enabled_rejects_post_for_not_permitted_system(
+    def test_auth_enabled_rejects_post_without_permission(
         self,
         http_client,
         base_url,
