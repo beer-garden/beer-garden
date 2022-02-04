@@ -110,6 +110,11 @@ import {
 } from './js/controllers/admin_role.js';
 import adminGardenController from './js/controllers/admin_garden.js';
 import adminGardenViewController from './js/controllers/admin_garden_view.js';
+import {
+  gardenConfigImportController,
+  gardenConfigImportModalController,
+} from './js/controllers/garden/import_garden_config';
+import gardenConfigExportController from './js/controllers/garden/export_garden_config';
 import commandIndexController from './js/controllers/command_index.js';
 import commandViewController from './js/controllers/command_view.js';
 import requestIndexController from './js/controllers/request_index.js';
@@ -220,6 +225,9 @@ angular
     .controller('NewRoleController', newRoleController)
     .controller('AdminGardenController', adminGardenController)
     .controller('AdminGardenViewController', adminGardenViewController)
+    .controller('GardenConfigExportController', gardenConfigExportController)
+    .controller('GardenConfigImportController', gardenConfigImportController)
+    .controller('GardenConfigImportModalController', gardenConfigImportModalController)
     .controller('CommandIndexController', commandIndexController)
     .controller('CommandViewController', commandViewController)
     .controller('RequestIndexController', requestIndexController)

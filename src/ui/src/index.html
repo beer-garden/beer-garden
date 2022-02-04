@@ -111,7 +111,10 @@
           >
         </li>
         <!-- Admin Drop Down Menu -->
-        <li class="dropdown" ng-show="hasPermission(user, 'system:update') || hasPermission(user, 'garden:update')">
+        <li
+          class="dropdown"
+          ng-show="hasPermission(user, 'system:update') || hasPermission(user, 'garden:update')"
+        >
           <a href="" data-toggle="dropdown" title="Admin Drop Down">Admin</a>
           <ul class="dropdown-menu">
             <li ng-show="hasPermission(user, 'system:update')">

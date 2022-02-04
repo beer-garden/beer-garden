@@ -1,18 +1,19 @@
-<h1 class='page-header'>
+<h1 class="page-header">
   <span>Garden View</span>
   <span class="pull-right" ng-show="responseState(response) !== 'loading'">
-    <button type="button"
-            class="btn btn-primary"
-            ng-click="syncGarden()">Sync</button>
+    <button type="button" class="btn btn-primary" ng-click="syncGarden()">
+      Sync
+    </button>
   </span>
 </h1>
 
 <fetch-data response="response"></fetch-data>
 
-<div id="garden-view-container"
-     class="animate-if container-fluid"
-     ng-if="responseState(response) === 'success'">
-
+<div
+  id="garden-view-container"
+  class="animate-if container-fluid"
+  ng-if="responseState(response) === 'success'"
+>
   <div class="row">
     <h4>Garden Info</h4>
     <div class="row">
@@ -41,10 +42,11 @@
   <div class="row">
     <h4>Connected Systems</h4>
     <table
-        datatable="ng"
-        dt-options="dtOptions"
-        class="table table-striped table-bordered"
-        style="width: 100%">
+      datatable="ng"
+      dt-options="dtOptions"
+      class="table table-striped table-bordered"
+      style="width: 100%"
+    >
       <thead>
         <tr>
           <th id="th_job_name">Namespace</th>
@@ -54,33 +56,63 @@
       </thead>
       <tbody>
         <tr ng-repeat="system in data.systems">
-          <td><a ui-sref="base.systems({namespace: system.namespace})">{{system.namespace}}</a></td>
+          <td>
+            <a ui-sref="base.systems({namespace: system.namespace})"
+              >{{system.namespace}}</a
+            >
+          </td>
           <td>{{system.name}}</td>
-          <td><a ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})">{{system.version}}</a></td>
+          <td>
+            <a
+              ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})"
+              >{{system.version}}</a
+            >
+          </td>
         </tr>
       </tbody>
     </table>
   </div>
 
-  <div uib-alert
+  <div
+    uib-alert
     ng-repeat="alert in alerts"
     ng-class="'alert-' + alert.type"
-    close="closeAlert($index)">
-      {{alert.msg}}
+    close="closeAlert($index)"
+  >
+    {{alert.msg}}
   </div>
 
   <div ng-hide="isLocal">
-    <h4>Update Connection</h4>
+    <h4>
+      Update Connection
+      <button
+        type="button"
+        class="btn btn-primary pull-right"
+        ng-controller="GardenConfigImportController"
+        ng-click="openImportGardenConfigPopup()"
+      >
+        Import Connection
+      </button>
+      <button
+        type="button"
+        ng-if="responseState(response) === 'success'"
+        class="btn btn-primary pull-right"
+        ng-controller="GardenConfigExportController"
+        ng-click="exportGardenConfig(data.name)"
+      >
+        Export Connection
+      </button>
+    </h4>
     <div class="container-fluid">
       <div class="row">
         <form
-            name="gardenform"
-            sf-schema="gardenSchema"
-            sf-form="gardenForm"
-            sf-model="gardenModel"
-            ng-submit="submitGardenForm(gardenform, gardenModel)"/>
+          name="gardenform"
+          sf-schema="gardenSchema"
+          sf-form="gardenForm"
+          sf-model="gardenModel"
+          ng-submit="submitGardenForm(gardenform, gardenModel)"
+        />
       </div>
     </div>
   </div>
-
 </div>
