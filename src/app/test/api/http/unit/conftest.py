@@ -6,6 +6,9 @@ from beer_garden.api.http.authentication import issue_token_pair
 from beer_garden.api.http.client import SerializeHelper
 from beer_garden.api.http.handlers.v1.admin import AdminAPI
 from beer_garden.api.http.handlers.v1.command import CommandAPI, CommandListAPI
+from beer_garden.api.http.handlers.v1.command_publishing_blocklist import (
+    CommandPublishingBlockListAPI,
+)
 from beer_garden.api.http.handlers.v1.forward import ForwardAPI
 from beer_garden.api.http.handlers.v1.garden import GardenAPI, GardenListAPI
 from beer_garden.api.http.handlers.v1.instance import (
@@ -71,6 +74,7 @@ application = tornado.web.Application(
         (r"/api/v1/systems/(\w+)/commands/(\w+)/?", CommandAPI),
         (r"/api/v1/users/?", UserListAPI),
         (r"/api/v1/users/(\w+)/?", UserAPI),
+        (r"/api/v1/commandpublishingblocklist/?", CommandPublishingBlockListAPI),
     ],
     client=SerializeHelper(),
 )

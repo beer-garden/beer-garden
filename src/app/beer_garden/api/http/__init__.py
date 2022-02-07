@@ -49,6 +49,9 @@ import beer_garden.requests
 import beer_garden.router
 from beer_garden.api.http.client import SerializeHelper
 from beer_garden.api.http.processors import EventManager, websocket_publish
+from beer_garden.api.http.schemas.v1.command_publishing_blocklist import (
+    CommandPublishingBlocklistSchema,
+)
 from beer_garden.api.http.schemas.v1.role import RoleListSchema
 from beer_garden.api.http.schemas.v1.token import (
     TokenInputSchema,
@@ -212,6 +215,14 @@ def _setup_tornado_app() -> Application:
         (rf"{prefix}api/v1/token/revoke/?", v1.token.TokenRevokeAPI),
         (rf"{prefix}api/v1/token/refresh/?", v1.token.TokenRefreshAPI),
         (rf"{prefix}api/v1/whoami/?", v1.user.WhoAmIAPI),
+        (
+            rf"{prefix}api/v1/commandpublishingblocklist/(\w+)/?",
+            v1.command_publishing_blocklist.CommandPublishingBlockListPathAPI,
+        ),
+        (
+            rf"{prefix}api/v1/commandpublishingblocklist/?",
+            v1.command_publishing_blocklist.CommandPublishingBlockListAPI,
+        ),
         (rf"{prefix}api/v1/roles/?", v1.role.RoleListAPI),
         # Beta
         (rf"{prefix}api/vbeta/events/?", vbeta.event.EventPublisherAPI),
@@ -317,6 +328,9 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition("Event", schema=EventSchema)
     api_spec.definition("User", schema=UserSchema)
     api_spec.definition("UserCreate", schema=UserCreateSchema)
+    api_spec.definition(
+        "CommandPublishingBlocklist", schema=CommandPublishingBlocklistSchema
+    )
     api_spec.definition("UserList", schema=UserListSchema)
     api_spec.definition("UserPatch", schema=UserPatchSchema)
     api_spec.definition("UserPasswordChange", schema=UserPasswordChangeSchema)
