@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
+import json
+
 from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.handlers import AuthorizationHandler
+from beer_garden.api.http.schemas.v1.garden import GardenReadSchema
+from beer_garden.authorization import user_has_permission_for_object
 from beer_garden.db.mongo.api import MongoParser
 from beer_garden.db.mongo.models import Garden
 from beer_garden.garden import local_garden
@@ -40,7 +44,10 @@ class GardenAPI(AuthorizationHandler):
         """
         garden = self.get_or_raise(Garden, GARDEN_READ, name=garden_name)
 
-        response = MongoParser.serialize(garden)
+        if user_has_permission_for_object(self.current_user, GARDEN_UPDATE, garden):
+            response = MongoParser.serialize(garden)
+        else:
+            response = GardenReadSchema().dumps(garden).data
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -179,8 +186,15 @@ class GardenListAPI(AuthorizationHandler):
           - Garden
         """
         permitted_gardens = self.permissioned_queryset(Garden, GARDEN_READ)
+        response_gardens = []
 
-        response = MongoParser.serialize(permitted_gardens, to_string=True)
+        for garden in permitted_gardens.no_cache():
+            if user_has_permission_for_object(self.current_user, GARDEN_UPDATE, garden):
+                response_gardens.append(MongoParser.serialize(garden))
+            else:
+                response_gardens.append(GardenReadSchema().dump(garden).data)
+
+        response = json.dumps(response_gardens)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

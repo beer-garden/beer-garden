@@ -30,7 +30,29 @@ def garden_not_permitted():
 def garden_admin_role():
     role = Role(
         name="garden_admin",
-        permissions=["garden:create", "garden:read", "garden:update", "garden:delete"],
+        permissions=["garden:read", "garden:update", "garden:delete"],
+    ).save()
+
+    yield role
+    role.delete()
+
+
+@pytest.fixture
+def garden_create_role():
+    role = Role(
+        name="garden_create",
+        permissions=["garden:create"],
+    ).save()
+
+    yield role
+    role.delete()
+
+
+@pytest.fixture
+def garden_read_role():
+    role = Role(
+        name="garden_read",
+        permissions=["garden:read"],
     ).save()
 
     yield role
@@ -44,9 +66,35 @@ def garden_cleanup():
 
 
 @pytest.fixture
-def user(garden_permitted, garden_admin_role):
+def user(garden_permitted, garden_admin_role, garden_create_role):
+    role_assignments = [
+        RoleAssignment(
+            role=garden_admin_role,
+            domain={
+                "scope": "Garden",
+                "identifiers": {
+                    "name": garden_permitted.name,
+                },
+            },
+        ),
+        RoleAssignment(
+            role=garden_create_role,
+            domain={
+                "scope": "Global",
+            },
+        ),
+    ]
+
+    user = User(username="testuser", role_assignments=role_assignments).save()
+
+    yield user
+    user.delete()
+
+
+@pytest.fixture
+def read_only_user(garden_permitted, garden_read_role):
     role_assignment = RoleAssignment(
-        role=garden_admin_role,
+        role=garden_read_role,
         domain={
             "scope": "Garden",
             "identifiers": {
@@ -64,6 +112,11 @@ def user(garden_permitted, garden_admin_role):
 @pytest.fixture
 def access_token(user):
     yield issue_token_pair(user)["access"]
+
+
+@pytest.fixture
+def read_only_access_token(read_only_user):
+    yield issue_token_pair(read_only_user)["access"]
 
 
 @pytest.fixture(autouse=True)
@@ -109,6 +162,26 @@ class TestGardenAPI:
 
         assert response.code == 200
         assert response_body["id"] == str(garden_permitted.id)
+        assert "connection_params" in response_body.keys()
+
+    @pytest.mark.gen_test
+    def test_auth_enabled_returns_permitted_garden_sans_connection_params(
+        self,
+        http_client,
+        base_url,
+        app_config_auth_enabled,
+        read_only_access_token,
+        garden_permitted,
+    ):
+        url = f"{base_url}/api/v1/gardens/{garden_permitted.name}"
+        headers = {"Authorization": f"Bearer {read_only_access_token}"}
+
+        response = yield http_client.fetch(url, headers=headers)
+        response_body = json.loads(response.body.decode("utf-8"))
+
+        assert response.code == 200
+        assert response_body["id"] == str(garden_permitted.id)
+        assert "connection_params" not in response_body.keys()
 
     @pytest.mark.gen_test
     def test_auth_enabled_returns_403_for_not_permitted_garden(
@@ -265,7 +338,70 @@ class TestGardenListAPI:
         assert response.code == 200
         assert len(response_body) == 1
         assert response_body[0]["id"] == str(garden_permitted.id)
+        assert "connection_params" in response_body[0].keys()
 
-    # TODO: Add tests for POST with and without permissions. As of this writing,
-    #      There is no way have POST permission for Gardens.  Once that is implemented,
-    #      tests should be added here.
+    @pytest.mark.gen_test
+    def test_auth_enabled_returns_permitted_gardens_sans_connection_params(
+        self,
+        http_client,
+        base_url,
+        app_config_auth_enabled,
+        read_only_access_token,
+        garden_permitted,
+    ):
+        url = f"{base_url}/api/v1/gardens/"
+        headers = {"Authorization": f"Bearer {read_only_access_token}"}
+
+        response = yield http_client.fetch(url, headers=headers)
+        response_body = json.loads(response.body.decode("utf-8"))
+
+        assert response.code == 200
+        assert "connection_params" not in response_body[0].keys()
+
+    @pytest.mark.gen_test
+    def test_auth_enabled_allows_post_with_permission(
+        self,
+        http_client,
+        base_url,
+        app_config_auth_enabled,
+        access_token,
+    ):
+        url = f"{base_url}/api/v1/gardens"
+        headers = {"Authorization": f"Bearer {access_token}"}
+
+        post_body = {
+            "name": "newgarden",
+        }
+        request = HTTPRequest(
+            url, method="POST", headers=headers, body=json.dumps(post_body)
+        )
+        response = yield http_client.fetch(request)
+
+        assert response.code == 201
+        assert len(Garden.objects.filter(name="newgarden")) == 1
+
+    @pytest.mark.gen_test
+    def test_auth_enabled_rejects_post_without_permission(
+        self,
+        http_client,
+        base_url,
+        app_config_auth_enabled,
+        read_only_access_token,
+    ):
+        url = f"{base_url}/api/v1/gardens"
+        headers = {"Authorization": f"Bearer {read_only_access_token}"}
+        garden_count_before = len(Garden.objects.all())
+
+        post_body = {
+            "name": "newgarden",
+        }
+
+        request = HTTPRequest(
+            url, method="POST", headers=headers, body=json.dumps(post_body)
+        )
+
+        with pytest.raises(HTTPError) as excinfo:
+            yield http_client.fetch(request)
+
+        assert excinfo.value.code == 403
+        assert len(Garden.objects.all()) == garden_count_before
