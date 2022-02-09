@@ -56,7 +56,7 @@ deps-python-develop: ## install bg dependencies from develop
 	pip install -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
 
 deps-compile: ## Generate the requirements.txt and requirements-dev.txt files
-	pip install pip-tools
+	pip install pip-tools && pip install --upgrade pip-tools  ## https://github.com/jazzband/pip-tools/issues/1558
 	pip-compile
 	pip-compile requirements-dev.in
 
