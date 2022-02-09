@@ -20,13 +20,13 @@ attrs==21.4.0
     #   pytest
 babel==2.9.1
     # via sphinx
-black==21.12b0
+black==22.1.0
     # via -r requirements-dev.in
 certifi==2021.10.8
     # via
     #   -c requirements.txt
     #   requests
-charset-normalizer==2.0.9
+charset-normalizer==2.0.11
     # via
     #   -c requirements.txt
     #   requests
@@ -34,7 +34,7 @@ click==8.0.3
     # via black
 codecov==2.1.12
     # via -r requirements-dev.in
-coverage==6.2
+coverage==6.3.1
     # via
     #   -r requirements-dev.in
     #   codecov
@@ -46,7 +46,7 @@ flake8==4.0.1
     # via
     #   -r requirements-dev.in
     #   flake8-bugbear
-flake8-bugbear==21.11.29
+flake8-bugbear==22.1.11
     # via -r requirements-dev.in
 idna==3.3
     # via
@@ -85,7 +85,7 @@ mccabe==0.6.1
     # via flake8
 mock==4.0.3
     # via -r requirements-dev.in
-mongomock==3.23.0
+mongomock==4.0.0
     # via -r requirements-dev.in
 mypy-extensions==0.4.3
     # via black
@@ -93,6 +93,7 @@ packaging==20.9
     # via
     #   -c requirements.txt
     #   brewtils
+    #   mongomock
     #   pytest
     #   sphinx
 pathspec==0.9.0
@@ -105,7 +106,7 @@ pika==1.2.0
     # via
     #   -c requirements.txt
     #   brewtils
-platformdirs==2.4.1
+platformdirs==2.5.0
     # via black
 pluggy==1.0.0
     # via pytest
@@ -115,13 +116,13 @@ pycodestyle==2.8.0
     # via flake8
 pyflakes==2.4.0
     # via flake8
-pygments==2.11.1
+pygments==2.11.2
     # via sphinx
 pyjwt==1.7.1
     # via
     #   -c requirements.txt
     #   brewtils
-pyparsing==3.0.6
+pyparsing==3.0.7
     # via
     #   -c requirements.txt
     #   packaging
@@ -133,7 +134,7 @@ pytest==6.2.5
     #   pytest-tornado
 pytest-lazy-fixture==0.6.3
     # via -r requirements-dev.in
-pytest-mock==3.6.1
+pytest-mock==3.7.0
     # via -r requirements-dev.in
 pytest-tornado==0.8.1
     # via -r requirements-dev.in
@@ -146,7 +147,7 @@ pytz==2020.5
     #   -c requirements.txt
     #   babel
     #   brewtils
-requests==2.27.0
+requests==2.27.1
     # via
     #   -c requirements.txt
     #   brewtils
@@ -179,19 +180,19 @@ sphinxcontrib-websupport==1.2.4
     # via sphinx
 toml==0.10.2
     # via pytest
-tomli==1.2.3
+tomli==2.0.1
     # via black
 tornado==6.1
     # via
     #   -c requirements.txt
     #   pytest-tornado
-typed-ast==1.5.1
+typed-ast==1.5.2
     # via black
 typing-extensions==4.0.1
     # via
     #   black
     #   importlib-metadata
-urllib3==1.26.7
+urllib3==1.26.8
     # via
     #   -c requirements.txt
     #   requests

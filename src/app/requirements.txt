@@ -18,7 +18,7 @@ brewtils==3.11.0
     # via beer-garden (setup.py)
 certifi==2021.10.8
     # via requests
-charset-normalizer==2.0.9
+charset-normalizer==2.0.11
     # via requests
 docopt==0.6.2
     # via stomp-py
@@ -47,7 +47,7 @@ pathtools==0.1.2
     # via watchdog
 pika==1.2.0
     # via brewtils
-prometheus-client==0.12.0
+prometheus-client==0.13.1
     # via beer-garden (setup.py)
 pyjwt==1.7.1
     # via brewtils
@@ -55,7 +55,7 @@ pymongo==3.12.3
     # via
     #   mongoengine
     #   motor
-pyparsing==3.0.6
+pyparsing==3.0.7
     # via packaging
 pyrabbit2==1.0.7
     # via beer-garden (setup.py)
@@ -72,7 +72,7 @@ pyyaml==5.4.1
     # via
     #   apispec
     #   beer-garden (setup.py)
-requests==2.27.0
+requests==2.27.1
     # via
     #   brewtils
     #   pyrabbit2
@@ -95,7 +95,7 @@ tzdata==2021.5
     # via pytz-deprecation-shim
 tzlocal==4.1
     # via apscheduler
-urllib3==1.26.7
+urllib3==1.26.8
     # via requests
 watchdog==0.10.4
     # via yapconf
