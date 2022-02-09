@@ -10,18 +10,18 @@ appdirs==1.4.4
     # via brewtils
 apscheduler==3.8.1
     # via beer-garden (setup.py)
-backports.zoneinfo==0.2.1
+backports-zoneinfo==0.2.1
     # via
     #   pytz-deprecation-shim
     #   tzlocal
-brewtils==3.10.0
+brewtils==3.11.0
     # via beer-garden (setup.py)
 certifi==2021.10.8
     # via requests
 charset-normalizer==2.0.9
     # via requests
 docopt==0.6.2
-    # via stomp.py
+    # via stomp-py
 idna==3.3
     # via requests
 lark-parser==0.6.7
@@ -76,10 +76,10 @@ requests==2.27.0
     # via
     #   brewtils
     #   pyrabbit2
-ruamel.yaml==0.16.13
+ruamel-yaml==0.16.13
     # via beer-garden (setup.py)
-ruamel.yaml.clib==0.2.6
-    # via ruamel.yaml
+ruamel-yaml-clib==0.2.6
+    # via ruamel-yaml
 simplejson==3.17.6
     # via brewtils
 six==1.16.0
@@ -87,7 +87,7 @@ six==1.16.0
     #   apscheduler
     #   brewtils
     #   yapconf
-stomp.py==6.0.0
+stomp-py==6.0.0
     # via beer-garden (setup.py)
 tornado==6.1
     # via beer-garden (setup.py)
