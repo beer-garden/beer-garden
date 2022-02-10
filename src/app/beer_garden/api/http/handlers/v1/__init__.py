@@ -11,6 +11,7 @@ import beer_garden.api.http.handlers.v1.logging
 import beer_garden.api.http.handlers.v1.namespace
 import beer_garden.api.http.handlers.v1.queue
 import beer_garden.api.http.handlers.v1.request
+import beer_garden.api.http.handlers.v1.role
 import beer_garden.api.http.handlers.v1.system
 import beer_garden.api.http.handlers.v1.token
 import beer_garden.api.http.handlers.v1.user

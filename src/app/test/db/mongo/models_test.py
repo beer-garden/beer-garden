@@ -633,6 +633,16 @@ class TestUser:
         return RoleAssignment(role=role, domain={"scope": "Garden"})
 
     @pytest.fixture()
+    def role_assignment_empty_identifiers(self, role):
+        return RoleAssignment(
+            role=role,
+            domain={
+                "scope": "System",
+                "identifiers": {"namespace": "", "name": "testsystem"},
+            },
+        )
+
+    @pytest.fixture()
     def user(self, role_assignment):
         user = User(username="testuser", role_assignments=[role_assignment]).save()
 
@@ -675,6 +685,15 @@ class TestUser:
 
         with pytest.raises(ValidationError):
             user.save()
+
+    def test_role_assignment_empty_identifiers_are_discarded(
+        self, user, role_assignment_empty_identifiers
+    ):
+        user.role_assignments = [role_assignment_empty_identifiers]
+
+        assert len(user.role_assignments[0].domain["identifiers"]) == 2
+        user.save()
+        assert len(user.role_assignments[0].domain["identifiers"]) == 1
 
     def test_revoke_tokens(self, user, user_token):
         assert len(UserToken.objects.filter(user=user)) > 0

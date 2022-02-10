@@ -85,7 +85,6 @@ import requestService from './js/services/request_service.js';
 import systemService from './js/services/system_service.js';
 import userService from './js/services/user_service.js';
 import roleService from './js/services/role_service.js';
-import permissionService from './js/services/permission_service.js';
 import tokenService from './js/services/token_service.js';
 import utilityService from './js/services/utility_service.js';
 import jobService from './js/services/job_service.js';
@@ -101,9 +100,10 @@ import adminSystemController from './js/controllers/admin_system.js';
 import adminSystemLogsController from './js/controllers/admin_system_logs.js';
 import adminSystemForceDeleteController from './js/controllers/admin_system_force_delete.js';
 import {
-  adminUserController,
+  adminUserIndexController,
   newUserController,
-} from './js/controllers/admin_user.js';
+} from './js/controllers/admin_user_index.js';
+import adminUserViewController from './js/controllers/admin_user_view.js';
 import {
   adminRoleController,
   newRoleController,
@@ -141,7 +141,8 @@ import loginController from './js/controllers/login.js';
 // Partials
 import './partials/about.html';
 import './partials/admin_system.html';
-import './partials/admin_user.html';
+import './partials/admin_user_index.html';
+import './partials/admin_user_view.html';
 import './partials/admin_role.html';
 import './partials/admin_garden_index.html';
 import './partials/admin_garden_view.html';
@@ -201,7 +202,6 @@ angular
     .factory('SystemService', systemService)
     .factory('UserService', userService)
     .factory('RoleService', roleService)
-    .factory('PermissionService', permissionService)
     .factory('TokenService', tokenService)
     .factory('UtilityService', utilityService)
     .factory('JobService', jobService)
@@ -219,7 +219,8 @@ angular
     )
     .controller('AdminSystemController', adminSystemController)
     .controller('AdminSystemLogsController', adminSystemLogsController)
-    .controller('AdminUserController', adminUserController)
+    .controller('AdminUserIndexController', adminUserIndexController)
+    .controller('AdminUserViewController', adminUserViewController)
     .controller('NewUserController', newUserController)
     .controller('AdminRoleController', adminRoleController)
     .controller('NewRoleController', newRoleController)
@@ -227,7 +228,10 @@ angular
     .controller('AdminGardenViewController', adminGardenViewController)
     .controller('GardenConfigExportController', gardenConfigExportController)
     .controller('GardenConfigImportController', gardenConfigImportController)
-    .controller('GardenConfigImportModalController', gardenConfigImportModalController)
+    .controller(
+        'GardenConfigImportModalController',
+        gardenConfigImportModalController,
+    )
     .controller('CommandIndexController', commandIndexController)
     .controller('CommandViewController', commandViewController)
     .controller('RequestIndexController', requestIndexController)

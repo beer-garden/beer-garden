@@ -935,11 +935,21 @@ class RoleAssignmentDomain(EmbeddedDocument):
     scope = StringField(required=True, choices=["Garden", "Global", "System"])
     identifiers = DictField(required=False)
 
-    def clean(self):
+    def _ensure_identifiers_are_present(self):
         if self.identifiers == {} and self.scope != "Global":
             raise ValidationError(
                 "identifiers field is required for all scopes other than Global"
             )
+
+    def _remove_empty_identifiers(self):
+        for key in list(self.identifiers.keys()):
+            value = self.identifiers[key]
+            if value is None or value.strip() == "":
+                _ = self.identifiers.pop(key)
+
+    def clean(self):
+        self._remove_empty_identifiers()
+        self._ensure_identifiers_are_present()
 
 
 class RoleAssignment(EmbeddedDocument):

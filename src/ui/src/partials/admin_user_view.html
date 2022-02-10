@@ -1,0 +1,38 @@
+<h1 class="page-header">
+  {{data.username}}
+  <div class="pull-right" ng-show="responseState(response) === 'success'">
+    <input
+      type="submit"
+      class="btn btn-danger w-100"
+      ng-click="doDelete(data.username)"
+      ng-show="hasPermission(user, 'user:delete')"
+      confirm="Are you sure you want to remove user {{data.username}}?"
+      value="Remove User"
+    />
+  </div>
+</h1>
+
+<div
+  uib-alert
+  ng-repeat="alert in alerts"
+  ng-class="'alert-' + alert.type"
+  close="closeAlert($index)"
+>
+  {{alert.msg}}
+</div>
+
+<div
+  id="user-view-container"
+  class="animate-if container-fluid"
+  ng-if="responseState(response) === 'success'"
+>
+  <div class="row">
+    <form
+      name="userform"
+      sf-schema="userSchema"
+      sf-form="userForm"
+      sf-model="userModel"
+      ng-submit="submitUserForm(userform, userModel)"
+    />
+  </div>
+</div>
