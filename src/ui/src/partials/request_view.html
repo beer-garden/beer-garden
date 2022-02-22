@@ -48,6 +48,7 @@
           <th scope="col">System</th>
           <th scope="col">System Version</th>
           <th scope="col">Instance Name</th>
+          <th scope="col" ng-show="authEnabled()">Requester</th>
           <th scope="col">
             Status<span
               uib-popover="{{statusDescriptions[request.status]}}"
@@ -102,6 +103,7 @@
             </div>
           </td>
           <td>{{request.instance_name}}</td>
+          <td ng-show="authEnabled()">{{request.requester}}</td>
           <td>{{request.status}}</td>
           <td ng-show="showErrorColumn(request, children)">
             {{request.error_class}}
@@ -136,6 +138,7 @@
           </td>
           <td><div>{{child.system_version}}</div></td>
           <td><div>{{child.instance_name}}</div></td>
+          <td ng-show="authEnabled()"><div>{{child.requester}}</div></td>
           <td><div>{{child.status}}</div></td>
           <td ng-show="showErrorColumn(request, children)">
             <div>{{child.error_class}}</div>
