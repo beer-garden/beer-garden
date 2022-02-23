@@ -968,6 +968,9 @@ class User(Document):
 
     _permissions_cache: Optional[dict] = None
 
+    def __str__(self) -> str:
+        return self.username
+
     @property
     def permissions(self) -> dict:
         """Return the user's permissions organized by permission name. This is

@@ -30,6 +30,12 @@ export default function userService($http, GardenService, SystemService) {
         password: password,
       });
     },
+    changePassword: (currentPassword, newPassword) => {
+      return $http.post('api/v1/password/change/', {
+        current_password: currentPassword,
+        new_password: newPassword,
+      });
+    },
     hasPermission: (user, permission) => {
       // True if the user has the permission for any objects at all
       return (

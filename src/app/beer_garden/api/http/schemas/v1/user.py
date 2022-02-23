@@ -1,5 +1,5 @@
 from brewtils.schemas import RoleAssignmentDomainSchema
-from marshmallow import Schema, ValidationError, fields, post_load
+from marshmallow import Schema, ValidationError, fields, post_load, validate
 
 from beer_garden.db.mongo.models import Role, RoleAssignment, RoleAssignmentDomain
 
@@ -44,3 +44,12 @@ class UserPatchSchema(Schema):
 
     password = fields.Str()
     role_assignments = fields.List(fields.Nested(RoleAssignmentPatchSchema))
+
+
+class UserPasswordChangeSchema(Schema):
+    """Schema for changing a user's password"""
+
+    current_password = fields.Str(required=True)
+    new_password = fields.Str(
+        required=True, validate=validate.Length(min=1, error="Password required")
+    )
