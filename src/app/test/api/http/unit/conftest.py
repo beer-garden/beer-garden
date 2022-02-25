@@ -24,6 +24,7 @@ from beer_garden.api.http.handlers.v1.logging import LoggingAPI, LoggingConfigAP
 from beer_garden.api.http.handlers.v1.namespace import NamespaceListAPI
 from beer_garden.api.http.handlers.v1.queue import QueueAPI, QueueListAPI
 from beer_garden.api.http.handlers.v1.request import RequestAPI, RequestListAPI
+from beer_garden.api.http.handlers.v1.role import RoleListAPI
 from beer_garden.api.http.handlers.v1.system import SystemAPI, SystemListAPI
 from beer_garden.api.http.handlers.v1.token import (
     TokenAPI,
@@ -59,6 +60,7 @@ application = tornado.web.Application(
         (r"/api/v1/queues/([\w\.-]+)/?", QueueAPI),
         (r"/api/v1/requests/?", RequestListAPI),
         (r"/api/v1/requests/(\w+)/?", RequestAPI),
+        (r"/api/v1/roles/?", RoleListAPI),
         (r"/api/v1/systems/?", SystemListAPI),
         (r"/api/v1/systems/(\w+)/?", SystemAPI),
         (r"/api/v1/systems/(\w+)/commands/(\w+)/?", CommandAPI),

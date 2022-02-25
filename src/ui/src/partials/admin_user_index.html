@@ -1,0 +1,49 @@
+<h1 class="page-header">
+  User Management
+  <div class="pull-right">
+    <input
+      type="submit"
+      class="btn btn-primary w-100"
+      ng-click="doCreate()"
+      ng-show="hasPermission(user, 'user:create')"
+      value="Create User"
+    />
+  </div>
+</h1>
+
+<div
+  class="container-fluid animate-if"
+  ng-show="responseState(response) === 'success'"
+>
+  <div ng-show="!authEnabled()" uib-alert class="alert alert-danger">
+    Warning - Beergarden authorization is currently disabled. Changes made here
+    will be persisted, but permissions will not be enforced. Contact your
+    administator to enable this feature.
+  </div>
+  <div
+    class="container-fluid animate-if"
+    ng-if="responseState(response) === 'success'"
+  >
+    <table
+      datatable="ng"
+      dt-options="dtOptions"
+      class="table table-striped table-bordered"
+      style="width: 100%"
+    >
+      <thead>
+        <tr>
+          <th id="th_username" scope="col">Username</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="user in data.users | filter:query">
+          <td>
+            <a ui-sref="base.user_view({username: user.username})"
+              >{{user.username}}</a
+            >
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

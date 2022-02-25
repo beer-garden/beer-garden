@@ -122,17 +122,11 @@
                 <span>Systems</span>
               </a>
             </li>
-            <!--            Add after users are refactored-->
-            <!--            <li ng-show="hasPermission(user, 'bg-local-admin')">-->
-            <!--              <a ui-sref="base.user_admin" ui-sref-active="active">-->
-            <!--                <span>Users</span>-->
-            <!--              </a>-->
-            <!--            </li>-->
-            <!--            <li ng-show="hasPermission(user, 'bg-local-admin')">-->
-            <!--              <a ui-sref="base.role_admin" ui-sref-active="active">-->
-            <!--                <span>Roles</span>-->
-            <!--              </a>-->
-            <!--            </li>-->
+            <li ng-show="authEnabled() && hasPermission(user, 'user:update')">
+              <a ui-sref="base.user_admin" ui-sref-active="active">
+                <span>Users</span>
+              </a>
+            </li>
             <li ng-show="hasPermission(user, 'garden:update')">
               <a ui-sref="base.garden_admin" ui-sref-active="active">
                 <span>Gardens</span>

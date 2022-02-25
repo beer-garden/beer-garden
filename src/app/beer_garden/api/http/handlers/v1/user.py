@@ -1,9 +1,18 @@
 # -*- coding: utf-8 -*-
 from brewtils.schemas import UserCreateSchema, UserListSchema, UserSchema
+from marshmallow import ValidationError
 
+from beer_garden.api.authorization import Permissions
+from beer_garden.api.http.exceptions import BadRequest
 from beer_garden.api.http.handlers import AuthorizationHandler
+from beer_garden.api.http.schemas.v1.user import UserPatchSchema
 from beer_garden.db.mongo.models import User
 from beer_garden.user import create_user, update_user
+
+USER_CREATE = Permissions.USER_CREATE.value
+USER_READ = Permissions.USER_READ.value
+USER_UPDATE = Permissions.USER_UPDATE.value
+USER_DELETE = Permissions.USER_DELETE.value
 
 
 class UserAPI(AuthorizationHandler):
@@ -54,6 +63,8 @@ class UserAPI(AuthorizationHandler):
         tags:
           - Users
         """
+        self.verify_user_global_permission(USER_DELETE)
+
         user = User.objects.get(username=username)
         user.delete()
 
@@ -75,7 +86,7 @@ class UserAPI(AuthorizationHandler):
             description: |
               A subset of User attributes to update, most commonly the password.
             schema:
-              $ref: '#/definitions/UserCreate'
+              $ref: '#/definitions/UserPatch'
         responses:
           200:
             description: User with the given username
@@ -90,8 +101,16 @@ class UserAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        user_data = UserCreateSchema().load(self.request_body, partial=True).data
-        db_user = User.objects.get(username=username)
+        self.verify_user_global_permission(USER_UPDATE)
+
+        try:
+            user_data = (
+                UserPatchSchema(strict=True).load(self.request_body, partial=True).data
+            )
+            db_user = User.objects.get(username=username)
+        except (ValidationError, User.DoesNotExist) as exc:
+            raise BadRequest(reason=f"{exc}")
+
         user = update_user(db_user, **user_data)
 
         response = UserSchema().dump(user).data
@@ -142,6 +161,8 @@ class UserListAPI(AuthorizationHandler):
         tags:
           - Users
         """
+        self.verify_user_global_permission(USER_CREATE)
+
         user_data = UserCreateSchema().load(self.request_body).data
         create_user(**user_data)
 

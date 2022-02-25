@@ -18,10 +18,8 @@ export default function userService($http, GardenService, SystemService) {
     deleteUser: (userName) => {
       return $http.delete('api/v1/users/' + userName);
     },
-    updateUser: (userName, operations) => {
-      return $http.patch('api/v1/users/' + userName, {
-        operations: operations,
-      });
+    updateUser: (userName, userData) => {
+      return $http.patch('api/v1/users/' + userName, userData);
     },
     getUsers: () => {
       return $http.get('api/v1/users/');

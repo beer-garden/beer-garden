@@ -28,7 +28,17 @@ class Permissions(Enum):
     REQUEST_UPDATE = "request:update"
     REQUEST_DELETE = "request:delete"
 
+    ROLE_CREATE = "role:create"
+    ROLE_READ = "role:read"
+    ROLE_UPDATE = "role:update"
+    ROLE_DELETE = "role:delete"
+
     SYSTEM_CREATE = "system:create"
     SYSTEM_READ = "system:read"
     SYSTEM_UPDATE = "system:update"
     SYSTEM_DELETE = "system:delete"
+
+    USER_CREATE = "user:create"
+    USER_READ = "user:read"
+    USER_UPDATE = "user:update"
+    USER_DELETE = "user:delete"
