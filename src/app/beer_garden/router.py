@@ -40,6 +40,7 @@ import beer_garden.queues
 import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
+import beer_garden.user
 from beer_garden.api.stomp.transport import Connection, consolidate_headers, process
 from beer_garden.errors import (
     ForwardException,
@@ -59,6 +60,7 @@ routable_operations = [
     "REQUEST_CREATE",
     "SYSTEM_DELETE",
     "GARDEN_SYNC",
+    "USER_SYNC",
 ]
 
 # Executor used to run REQUEST_CREATE operations in an async context
@@ -153,6 +155,7 @@ route_functions = {
     "RUNNER_RELOAD": beer_garden.local_plugins.manager.reload,
     "RUNNER_RESCAN": beer_garden.local_plugins.manager.rescan,
     "PUBLISH_EVENT": beer_garden.events.publish,
+    "USER_SYNC": beer_garden.user.user_sync,
 }
 
 
@@ -616,6 +619,9 @@ def _target_from_type(operation: Operation) -> str:
         return _system_name_lookup(
             System(namespace=parts[0], name=parts[1], version=version)
         )
+
+    if "USER" in operation.operation_type:
+        return operation.target_garden_name
 
     raise Exception(f"Bad operation type {operation.operation_type}")
 

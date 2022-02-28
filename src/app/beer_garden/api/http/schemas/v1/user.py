@@ -1,5 +1,5 @@
-from brewtils.schemas import RoleAssignmentDomainSchema
-from marshmallow import Schema, ValidationError, fields, post_load, validate
+from brewtils.schemas import RoleAssignmentDomainSchema, RoleAssignmentSchema
+from marshmallow import Schema, ValidationError, fields, post_dump, post_load, validate
 
 from beer_garden.db.mongo.models import Role, RoleAssignment, RoleAssignmentDomain
 
@@ -43,6 +43,7 @@ class UserPatchSchema(Schema):
     """Schema for updating Users"""
 
     password = fields.Str()
+    hashed_password = fields.Str()
     role_assignments = fields.List(fields.Nested(RoleAssignmentPatchSchema))
 
 
@@ -53,3 +54,22 @@ class UserPasswordChangeSchema(Schema):
     new_password = fields.Str(
         required=True, validate=validate.Length(min=1, error="Password required")
     )
+
+
+class UserSyncSchema(Schema):
+    """Schema for syncing Users between gardens"""
+
+    username = fields.Str()
+    password = fields.Str(dump_to="hashed_password")
+    role_assignments = fields.List(fields.Nested(RoleAssignmentSchema()))
+
+    @post_dump(pass_many=True)
+    def dump_obj(self, data, many=False, **kwargs):
+        """Drop the role definition in favor of just the role_name so that we can use
+        UserPatchSchema on the other end of the sync"""
+        if many is False:
+            data = [data]
+
+        for item in data:
+            for assignment in item.get("role_assignments", []):
+                assignment["role_name"] = assignment.pop("role")["name"]

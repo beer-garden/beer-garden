@@ -79,6 +79,7 @@ __all__ = [
     "Role",
     "RoleAssignment",
     "User",
+    "RemoteUser",
     "CommandPublishingBlockList",
 ]
 
@@ -1069,3 +1070,20 @@ class UserToken(Document):
             {"fields": ["expires_at"], "expireAfterSeconds": 0},
         ]
     }
+
+
+class RemoteUser(Document):
+    username = StringField(required=True)
+    garden = StringField(required=True)
+    role_assignments = ListField(field=DictField(), required=False)
+    updated_at = DateTimeField(required=True, default=datetime.datetime.utcnow)
+
+    meta = {
+        "indexes": [
+            {"fields": ["username"]},
+            {"fields": ["garden", "username"], "unique": True},
+        ],
+    }
+
+    def __str__(self):
+        return f"{self.garden}:{self.username}"
