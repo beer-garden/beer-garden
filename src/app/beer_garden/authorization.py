@@ -10,6 +10,7 @@ from mongoengine import Document, DoesNotExist, Q, QuerySet
 from mongoengine.queryset.visitor import QCombination
 
 import beer_garden.db.mongo.models
+from beer_garden.api.authorization import Permissions
 from beer_garden.db.mongo.models import (
     Garden,
     Job,
@@ -21,8 +22,11 @@ from beer_garden.db.mongo.models import (
 if TYPE_CHECKING:
     from beer_garden.db.mongo.models import User
 
+OBJECT_OWNER_PERMISSIONS = [Permissions.REQUEST_READ.value]
+
 
 _types_that_derive_system_from_request = [Job, BrewtilsJob, Request, BrewtilsRequest]
+_model_username_field_map = {"Request": "requester"}
 
 
 def permissions_for_user(user: "User") -> dict:
@@ -98,7 +102,9 @@ def user_has_permission_for_object(
         bool: True if the user has the specified permission for the object.
               False otherwise.
     """
-    if permission in user.global_permissions:
+    if permission in user.global_permissions or _user_has_object_owner_permission(
+        user, permission, obj
+    ):
         return True
 
     permitted_domains = user.domain_permissions.get(permission, None)
@@ -159,14 +165,18 @@ def user_permitted_objects_filter(
         return Q()
 
     permitted_domains = user.domain_permissions.get(permission)
+    q_filter = _get_user_filter(model, user)
 
-    if permitted_domains is None:
+    if permitted_domains:
+        garden_filter = _get_garden_filter(model, permitted_domains["garden_ids"])
+        system_filter = _get_system_filter(model, permitted_domains["system_ids"])
+
+        q_filter = q_filter | garden_filter | system_filter
+
+    if q_filter:
+        return q_filter
+    else:
         return None
-
-    garden_filter = _get_garden_filter(model, permitted_domains["garden_ids"])
-    system_filter = _get_system_filter(model, permitted_domains["system_ids"])
-
-    return garden_filter | system_filter
 
 
 def _get_garden_filter(model: Type[Document], garden_ids: list) -> Q:
@@ -199,6 +209,17 @@ def _get_system_filter(model: Type[Document], system_ids: list) -> Q:
                     f"{field_prefix}namespace": system.namespace,
                 }
             )
+    else:
+        q_filter = Q()
+
+    return q_filter
+
+
+def _get_user_filter(model: Type[Document], user: "User") -> Q:
+    username_attr = _model_username_field_map.get(model.__name__)
+
+    if username_attr:
+        q_filter = Q(**{username_attr: user.username})
     else:
         q_filter = Q()
 
@@ -288,3 +309,19 @@ def _get_object_system_id(obj) -> Optional[str]:
         system_id = _get_system_id_from_request(obj)
 
     return str(system_id) if system_id else None
+
+
+def _user_has_object_owner_permission(
+    user: "User", permission: str, obj: Union[Document, BrewtilsModel]
+) -> bool:
+    """Determine if the user should have implicit access to the supplied object because
+    they are the object's owner"""
+    obj_type_name = type(obj).__name__
+    username_attr = _model_username_field_map.get(obj_type_name)
+
+    if username_attr:
+        return (permission in OBJECT_OWNER_PERMISSIONS) and (
+            user.username == getattr(obj, username_attr)
+        )
+    else:
+        return False

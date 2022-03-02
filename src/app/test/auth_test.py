@@ -6,6 +6,7 @@ from mongoengine import connect
 from mongomock.gridfs import enable_gridfs_integration
 
 from beer_garden.authorization import (
+    OBJECT_OWNER_PERMISSIONS,
     permissions_for_user,
     user_has_permission_for_object,
     user_permitted_objects,
@@ -352,6 +353,23 @@ class TestAuth:
         assert user_has_permission_for_object(
             user_with_role_assignments, "system:read", test_system_1_0_0
         )
+
+    def test_user_has_permission_for_object_request_through_user(
+        self,
+        test_request,
+    ):
+        """user_has_permission_for_object returns true for a System in which the
+        user has Garden level access for the required permission
+        """
+        # Set the requester of the request to be our "owner" test user
+        owner = User(username="owner")
+        test_request.requester = owner.username
+        test_request.save()
+
+        assert user_has_permission_for_object(
+            owner, OBJECT_OWNER_PERMISSIONS[0], test_request
+        )
+        assert not user_has_permission_for_object(owner, "noaccess", test_request)
 
     def test_user_has_permission_for_object_supports_brewtils_models(
         self,
