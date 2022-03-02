@@ -1,6 +1,7 @@
 import {formatDate} from '../services/utility_service.js';
 
 requestIndexController.$inject = [
+  '$rootScope',
   '$scope',
   '$compile',
   'localStorageService',
@@ -12,6 +13,7 @@ requestIndexController.$inject = [
 
 /**
  * requestIndexController - Angular controller for viewing all requests.
+ * @param  {Object} $rootScope        Angular's $rootScope object.
  * @param  {Object} $scope            Angular's $scope object.
  * @param  {Object} $compile          Angular's $compile object.
  * @param  {Object} localStorageService  Storage service
@@ -21,6 +23,7 @@ requestIndexController.$inject = [
  * @param  {Object} EventService      Beer-Garden Event Service.
  */
 export default function requestIndexController(
+    $rootScope,
     $scope,
     $compile,
     localStorageService,
@@ -106,6 +109,11 @@ export default function requestIndexController(
           attr: {class: 'form-inline form-control', title: 'Instance Filter'},
         },
         5: {
+          html: 'input',
+          type: 'text',
+          attr: {class: 'form-inline form-control', title: 'Requester Filter'},
+        },
+        6: {
           html: 'select',
           type: 'text',
           cssClass: 'form-inline form-control',
@@ -119,7 +127,7 @@ export default function requestIndexController(
             {value: 'ERROR', label: 'ERROR'},
           ],
         },
-        6: {
+        7: {
           html: 'range',
           type: 'text',
           attr: {
@@ -140,7 +148,7 @@ export default function requestIndexController(
             useCurrent: false,
           },
         },
-        7: {
+        8: {
           html: 'input',
           type: 'text',
           attr: {class: 'form-inline form-control', title: 'Comment Filter'},
@@ -211,17 +219,24 @@ export default function requestIndexController(
           >${data}</a>`;
         }),
     DTColumnBuilder.newColumn('instance_name').withTitle('Instance'),
-    DTColumnBuilder.newColumn('status').withTitle('Status'),
-    DTColumnBuilder.newColumn('created_at')
-        .withTitle('Created')
-        .withOption('type', 'date')
-        .withOption('width', '22%')
-        .renderWith(function(data, type, full) {
-          return formatDate(data);
-        }),
-    DTColumnBuilder.newColumn('comment').withTitle('Comment'),
-    DTColumnBuilder.newColumn('metadata').notVisible(),
   ];
+
+  if ($rootScope.authEnabled()) {
+    $scope.dtColumns.push(DTColumnBuilder.newColumn('requester').withTitle('Requester'));
+  }
+
+  $scope.dtColumns.push(
+      DTColumnBuilder.newColumn('status').withTitle('Status'),
+      DTColumnBuilder.newColumn('created_at')
+          .withTitle('Created')
+          .withOption('type', 'date')
+          .withOption('width', '22%')
+          .renderWith(function(data, type, full) {
+            return formatDate(data);
+          }),
+      DTColumnBuilder.newColumn('comment').withTitle('Comment'),
+      DTColumnBuilder.newColumn('metadata').notVisible(),
+  );
 
   $scope.instanceCreated = function(_instance) {
     $scope.dtInstance = _instance;
