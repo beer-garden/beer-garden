@@ -30,7 +30,7 @@ export function adminUserIndexController($scope, $uibModal, UserService) {
 
     modalInstance.result.then(
         (create) => {
-          if (create.password === create.verify) {
+          if (create.password === create.confirm) {
             UserService.createUser(create.username, create.password).then(
                 loadUsers,
             );

@@ -2,6 +2,7 @@ import $ from 'jquery';
 import _ from 'lodash';
 import {responseState} from './services/utility_service.js';
 
+import changePasswordTemplate from '../templates/change_password.html';
 import loginTemplate from '../templates/login.html';
 
 window.$ = $;
@@ -249,6 +250,17 @@ export default function appRun(
 
   $rootScope.checkMenuPage = function(page) {
     return $rootScope.menu_page == page;
+  };
+
+  $rootScope.doChangePassword = function() {
+    return $uibModal.open({
+      controller: 'ChangePasswordController',
+      size: 'sm',
+      template: changePasswordTemplate,
+    }).result.then(
+        _.noop,
+        _.noop,
+    );
   };
 
   function upsertSystem(system) {

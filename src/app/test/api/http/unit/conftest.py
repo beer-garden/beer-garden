@@ -31,7 +31,11 @@ from beer_garden.api.http.handlers.v1.token import (
     TokenRefreshAPI,
     TokenRevokeAPI,
 )
-from beer_garden.api.http.handlers.v1.user import UserAPI, UserListAPI
+from beer_garden.api.http.handlers.v1.user import (
+    UserAPI,
+    UserListAPI,
+    UserPasswordChangeAPI,
+)
 from beer_garden.db.mongo.models import User
 
 # TODO: Load this from conftest using the actual _setup_application call
@@ -52,6 +56,7 @@ application = tornado.web.Application(
         (r"/api/v1/jobs/(\w+)/?", JobAPI),
         (r"/api/v1/jobs/(\w+)/execute/?", JobExecutionAPI),
         (r"/api/v1/logging/?", LoggingAPI),
+        (r"/api/v1/password/change/?", UserPasswordChangeAPI),
         (r"/api/v1/token/?", TokenAPI),
         (r"/api/v1/token/revoke/?", TokenRevokeAPI),
         (r"/api/v1/token/refresh/?", TokenRefreshAPI),

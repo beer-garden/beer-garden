@@ -5,7 +5,10 @@ from marshmallow import ValidationError
 from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.exceptions import BadRequest
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.api.http.schemas.v1.user import UserPatchSchema
+from beer_garden.api.http.schemas.v1.user import (
+    UserPasswordChangeSchema,
+    UserPatchSchema,
+)
 from beer_garden.db.mongo.models import User
 from beer_garden.user import create_user, update_user
 
@@ -167,6 +170,47 @@ class UserListAPI(AuthorizationHandler):
         create_user(**user_data)
 
         self.set_status(201)
+
+
+class UserPasswordChangeAPI(AuthorizationHandler):
+    def post(self):
+        """
+        ---
+        summary: Allows a user to change their own password
+        parameters:
+          - name: password_change
+            in: body
+            description: The current password for verification and the new password
+            schema:
+              $ref: '#/definitions/UserPasswordChange'
+        consumes:
+          - application/json
+        responses:
+          204:
+            description: The password has been changed
+          400:
+            $ref: '#/definitions/400Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Password
+        """
+        user = self.current_user
+
+        try:
+            password_data = (
+                UserPasswordChangeSchema(strict=True).load(self.request_body).data
+            )
+        except ValidationError as exc:
+            raise BadRequest(reason=f"{exc}")
+
+        if user.verify_password(password_data["current_password"]):
+            user.set_password(password_data["new_password"])
+            user.save()
+        else:
+            raise BadRequest(reason="Current password incorrect")
+
+        self.set_status(204)
 
 
 class WhoAmIAPI(AuthorizationHandler):

@@ -146,6 +146,9 @@
             ng-click="setMenuPage('main')"
           ></a>
           <ul class="dropdown-menu">
+            <li ng-show="checkMenuPage('main') && authEnabled()">
+              <a href="" ng-click="doChangePassword()">Change Password</a>
+            </li>
             <li ng-show="checkMenuPage('main')">
               <a ui-sref="base.about" ui-sref-active="active">About</a>
             </li>

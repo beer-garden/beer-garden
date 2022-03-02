@@ -137,6 +137,7 @@ import jobCreateCommandController from './js/controllers/job/create_command.js';
 import jobCreateRequestController from './js/controllers/job/create_request.js';
 import jobCreateTriggerController from './js/controllers/job/create_trigger.js';
 import loginController from './js/controllers/login.js';
+import changePasswordController from './js/controllers/change_password.js';
 
 // Partials
 import './partials/about.html';
@@ -247,4 +248,5 @@ angular
     .controller('JobExportController', jobExportController)
     .controller('JobImportController', jobImportController)
     .controller('JobImportModalController', jobImportModalController)
-    .controller('LoginController', loginController);
+    .controller('LoginController', loginController)
+    .controller('ChangePasswordController', changePasswordController);

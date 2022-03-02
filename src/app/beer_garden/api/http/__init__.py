@@ -55,7 +55,10 @@ from beer_garden.api.http.schemas.v1.token import (
     TokenRefreshInputSchema,
     TokenResponseSchema,
 )
-from beer_garden.api.http.schemas.v1.user import UserPatchSchema
+from beer_garden.api.http.schemas.v1.user import (
+    UserPasswordChangeSchema,
+    UserPatchSchema,
+)
 from beer_garden.events import publish
 
 io_loop: IOLoop = None
@@ -204,6 +207,7 @@ def _setup_tornado_app() -> Application:
         (rf"{prefix}api/v1/gardens/(.*)/?", v1.garden.GardenAPI),
         (rf"{prefix}api/v1/export/jobs/?", v1.job.JobExportAPI),
         (rf"{prefix}api/v1/import/jobs/?", v1.job.JobImportAPI),
+        (rf"{prefix}api/v1/password/change/?", v1.user.UserPasswordChangeAPI),
         (rf"{prefix}api/v1/token/?", v1.token.TokenAPI),
         (rf"{prefix}api/v1/token/revoke/?", v1.token.TokenRevokeAPI),
         (rf"{prefix}api/v1/token/refresh/?", v1.token.TokenRefreshAPI),
@@ -311,6 +315,7 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition("UserCreate", schema=UserCreateSchema)
     api_spec.definition("UserList", schema=UserListSchema)
     api_spec.definition("UserPatch", schema=UserPatchSchema)
+    api_spec.definition("UserPasswordChange", schema=UserPasswordChangeSchema)
     api_spec.definition("Role", schema=LegacyRoleSchema)
     api_spec.definition("RoleList", schema=RoleListSchema)
     api_spec.definition("Queue", schema=QueueSchema)

@@ -313,3 +313,69 @@ class TestUserListAPI:
             yield http_client.fetch(url, method="POST", headers=headers, body="{}")
 
         assert excinfo.value.code == 400
+
+
+class TestUserPasswordChangeAPI:
+    @pytest.mark.gen_test
+    def test_post_responds_204_on_success(
+        self, http_client, base_url, app_config_auth_enabled, access_token_user, user
+    ):
+        url = f"{base_url}/api/v1/password/change/"
+        headers = {
+            "Authorization": f"Bearer {access_token_user}",
+            "Content-Type": "application/json",
+        }
+
+        new_password = "newnewnew"
+        body = json.dumps(
+            {"current_password": "password", "new_password": new_password}
+        )
+
+        response = yield http_client.fetch(
+            url, method="POST", headers=headers, body=body
+        )
+
+        assert response.code == 204
+
+        # Verify password successfully changed
+        assert user.reload().verify_password(new_password)
+
+    @pytest.mark.gen_test
+    def test_post_responds_400_on_incorrect_current_password(
+        self, http_client, base_url, app_config_auth_enabled, access_token_user, user
+    ):
+        url = f"{base_url}/api/v1/password/change/"
+        headers = {
+            "Authorization": f"Bearer {access_token_user}",
+            "Content-Type": "application/json",
+        }
+
+        body = json.dumps(
+            {"current_password": "wrongpassword", "new_password": "newnewnew"}
+        )
+
+        with pytest.raises(HTTPError) as excinfo:
+            yield http_client.fetch(url, method="POST", headers=headers, body=body)
+
+        assert excinfo.value.code == 400
+
+        # Verify password remains unchanged
+        assert user.reload().verify_password("password")
+
+    @pytest.mark.gen_test
+    def test_post_responds_400_when_required_fields_are_missing(
+        self, http_client, base_url, app_config_auth_enabled, access_token_user, user
+    ):
+        url = f"{base_url}/api/v1/password/change/"
+        headers = {
+            "Authorization": f"Bearer {access_token_user}",
+            "Content-Type": "application/json",
+        }
+
+        with pytest.raises(HTTPError) as excinfo:
+            yield http_client.fetch(url, method="POST", headers=headers, body="{}")
+
+        assert excinfo.value.code == 400
+
+        # Verify password remains unchanged
+        assert user.reload().verify_password("password")

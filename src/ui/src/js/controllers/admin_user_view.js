@@ -38,15 +38,29 @@ export default function adminUserViewController(
   };
 
   $scope.submitUserForm = function(form, model) {
-    clearScopeAlerts();
-    model = blankRequiredFields(model);
+    clearUserFormState(model);
+
     $scope.$broadcast('schemaFormValidate');
 
     if (form.$valid) {
-      UserService.updateUser($scope.data.username, model).then(
-          addSuccessAlert,
-          addErrorAlert,
-      );
+      if (
+        (model.new_password || model.confirm_password) &&
+        model.new_password !== model.confirm_password
+      ) {
+        $scope.$broadcast(
+            'schemaForm.error.confirm_password',
+            'passwordMatch',
+            false,
+        );
+      } else {
+        if (model.new_password) {
+          model.password = model.new_password;
+        }
+        UserService.updateUser($scope.data.username, model).then(
+            addSuccessAlert,
+            addErrorAlert,
+        );
+      }
     }
   };
 
@@ -98,7 +112,16 @@ export default function adminUserViewController(
     });
   };
 
-  const clearScopeAlerts = function() {
+  const clearUserFormState = function(model) {
+    model = blankRequiredFields(model);
+    model.password = undefined;
+
+    $scope.$broadcast(
+        'schemaForm.error.confirm_password',
+        'passwordMatch',
+        true,
+    );
+
     while ($scope.alerts.length) {
       $scope.alerts.pop();
     }
@@ -121,21 +144,27 @@ export default function adminUserViewController(
   };
 
   const generateUserSF = function() {
-    $scope.userSchema = roleAssignmentSchema;
-    $scope.userForm = roleAssignmentForm;
+    $scope.userSchema = userSchema;
+    $scope.userForm = userForm;
     $scope.userModel = serverModelToForm($scope.data);
 
     // This gets set here because $scope.roleNames is not yet set at
-    // roleAssignmentSchema declaration time
+    // userSchema declaration time
     $scope.userSchema.properties.role_assignments.items.properties.role_name.enum =
       $scope.roleNames;
 
     $scope.$broadcast('schemaFormRedraw');
   };
 
-  const roleAssignmentSchema = {
+  const userSchema = {
     type: 'object',
     properties: {
+      new_password: {
+        type: 'string',
+      },
+      confirm_password: {
+        type: 'string',
+      },
       role_assignments: {
         title: 'Role Assignments',
         type: 'array',
@@ -182,7 +211,48 @@ export default function adminUserViewController(
     },
   };
 
-  const roleAssignmentForm = [
+  const userForm = [
+    {
+      type: 'section',
+      htmlClass: 'row',
+      items: [
+        {
+          type: 'section',
+          htmlClass: 'col-xs-2',
+          items: [
+            {
+              type: 'password',
+              key: 'new_password',
+              title: 'Change Password',
+              placeholder: 'password',
+              disableSuccessState: true,
+            },
+          ],
+        },
+      ],
+    },
+    {
+      type: 'section',
+      htmlClass: 'row',
+      items: [
+        {
+          type: 'section',
+          htmlClass: 'col-xs-2',
+          items: [
+            {
+              type: 'password',
+              key: 'confirm_password',
+              notitle: true,
+              placeholder: 'confirm password',
+              disableSuccessState: true,
+              validationMessage: {
+                passwordMatch: 'Passwords do not match',
+              },
+            },
+          ],
+        },
+      ],
+    },
     {
       key: 'role_assignments',
       add: 'Add',
