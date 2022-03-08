@@ -55,6 +55,7 @@ def update_user(user: User, hashed_password: Optional[str] = None, **kwargs) -> 
         user.password = hashed_password
 
     user.save()
+    _publish_user_updated(user)
 
     return user
 
@@ -102,9 +103,7 @@ def user_sync(serialized_users: List[dict]) -> None:
     Returns:
         None
     """
-    imported_users = _import_users(serialized_users)
-    _publish_import_results(imported_users)
-
+    _import_users(serialized_users)
     initiate_user_sync()
 
 
@@ -140,17 +139,15 @@ def handle_event(event: Event) -> None:
     if event.garden == config.get("garden.name"):
         return
 
-    if event.name == "USERS_IMPORTED":
-        _handle_users_imported_event(event)
+    if event.name == "USER_UPDATED":
+        _handle_user_updated_event(event)
 
 
-def _import_users(serialized_users: List[dict]) -> List[User]:
+def _import_users(serialized_users: List[dict]) -> None:
     """Imports users from a list of dictionaries."""
     # Avoiding circular import. Schemas should probably be moved outside of the http
     # heirarchy.
     from beer_garden.api.http.schemas.v1.user import UserPatchSchema
-
-    imported_users = []
 
     for serialized_user in serialized_users:
         username = serialized_user["username"]
@@ -167,36 +164,32 @@ def _import_users(serialized_users: List[dict]) -> List[User]:
                 else:
                     continue
 
-            imported_users.append(update_user(user, **updated_user_data))
+            update_user(user, **updated_user_data)
 
         except ValidationError as exc:
             logger.info(f"Failed to import user {username} due to error: {exc}")
 
-    return imported_users
 
-
-def _handle_users_imported_event(event):
-    """Handling for USER_IMPORTED events"""
+def _handle_user_updated_event(event):
+    """Handling for USER_UPDATED events"""
     # NOTE: This event stores its data in the metadata field as a workaround to the
     # brewtils models dependency inherent in the more typical event publishing flow
     try:
         garden = event.metadata["garden"]
-        imported_users = event.metadata["imported_users"]
+        updated_user = event.metadata["user"]
         updated_at = event.timestamp
 
-        for user in imported_users:
-            username = user["username"]
-            role_assignments = user["role_assignments"]
+        username = updated_user["username"]
+        role_assignments = updated_user["role_assignments"]
 
-            try:
-                remote_user = RemoteUser.objects.get(garden=garden, username=username)
-            except RemoteUser.DoesNotExist:
-                remote_user = RemoteUser(garden=garden, username=username)
+        try:
+            remote_user = RemoteUser.objects.get(garden=garden, username=username)
+        except RemoteUser.DoesNotExist:
+            remote_user = RemoteUser(garden=garden, username=username)
 
-            remote_user.role_assignments = role_assignments
-            remote_user.updated_at = updated_at
-
-            remote_user.save()
+        remote_user.role_assignments = role_assignments
+        remote_user.updated_at = updated_at
+        remote_user.save()
     except KeyError:
         logger.error("Error parsing %s event from garden %s", event.name, event.garden)
 
@@ -224,22 +217,22 @@ def _filter_role_assigments_by_garden(user, garden) -> User:
     return filtered_user
 
 
-def _publish_import_results(users):
-    """Publish an event back upstream with the results of the import"""
+def _publish_user_updated(user):
+    """Publish an event with the updated user information"""
     # Avoiding circular imports
     from beer_garden.api.http.schemas.v1.user import UserSyncSchema
 
-    imported_users = UserSyncSchema(many=True).dump(users).data
+    serialized_user = UserSyncSchema().dump(user).data
 
     # We use publish rather than publish_event here so that we can hijack the metadata
     # field to store our actual data. This is done to avoid needing to deal in brewtils
     # models, which the publish_event decorator requires us to do.
     publish(
         Event(
-            name=Events.USERS_IMPORTED.name,
+            name=Events.USER_UPDATED.name,
             metadata={
                 "garden": config.get("garden.name"),
-                "imported_users": imported_users,
+                "user": serialized_user,
             },
         )
     )

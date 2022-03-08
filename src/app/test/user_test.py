@@ -140,17 +140,17 @@ class TestUser:
 
         assert user_synced_with_garden(user_to_sync, garden) is True
 
-    def test_handle_event_for_users_imported(self):
+    def test_handle_event_for_user_updated(self):
         role_assignments = [{"role_name": "role1", "domain": {"scope": "Global"}}]
-        import_results = {
+        user_updated_result = {
             "garden": "garden1",
-            "imported_users": [
-                {"username": "user1", "role_assignments": role_assignments}
-            ],
+            "user": {"username": "user1", "role_assignments": role_assignments},
         }
 
         event = Event(
-            name=Events.USERS_IMPORTED.name, garden="garden1", metadata=import_results
+            name=Events.USER_UPDATED.name,
+            garden="garden1",
+            metadata=user_updated_result,
         )
 
         assert len(RemoteUser.objects.filter(username="user1", garden="garden1")) == 0
