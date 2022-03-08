@@ -893,17 +893,24 @@ def handle_event(event):
             # the subset of fields that change "corrects" the parent
             existing_request = db.query_unique(Request, id=event.payload.id)
 
-            if existing_request:
-                for field in ("status", "output", "error_class", "status_updated_at"):
-                    setattr(existing_request, field, getattr(event.payload, field))
-
-                try:
-                    update_request(existing_request)
-                except RequestStatusTransitionError:
-                    pass
-            else:
+            if existing_request is None:
                 # Attempt to create the request, if it already exists then continue on
                 try:
                     db.create(event.payload)
                 except NotUniqueException:
                     pass
+            elif event.name != Events.REQUEST_CREATED.name:
+                request_changed = False
+
+                for field in ("status", "output", "error_class", "status_updated_at"):
+                    new_value = getattr(event.payload, field)
+
+                    if getattr(existing_request, field) != new_value:
+                        request_changed = True
+                        setattr(existing_request, field, new_value)
+
+                if request_changed:
+                    try:
+                        update_request(existing_request, _publish_error=False)
+                    except RequestStatusTransitionError:
+                        pass
