@@ -21,6 +21,7 @@ from yapconf import YapconfSpec
 
 import beer_garden.config as config
 import beer_garden.db.api as db
+from beer_garden.db.mongo.models import RemoteUser
 from beer_garden.events import publish, publish_event
 from beer_garden.namespace import get_namespaces
 from beer_garden.systems import get_systems, remove_system
@@ -162,6 +163,9 @@ def remove_garden(garden_name: str) -> None:
 
     for system in systems:
         remove_system(system.id)
+
+    # Cleanup any RemoteUser entries
+    RemoteUser.objects.filter(garden=garden_name).delete()
 
     db.delete(garden)
 

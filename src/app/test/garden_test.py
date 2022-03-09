@@ -7,7 +7,7 @@ from mongoengine import DoesNotExist, connect
 from yapconf import YapconfSpec
 
 from beer_garden import config
-from beer_garden.db.mongo.models import Garden, System
+from beer_garden.db.mongo.models import Garden, RemoteUser, System
 from beer_garden.garden import (
     create_garden,
     get_garden,
@@ -163,3 +163,16 @@ class TestGarden:
         garden = create_garden(bg_garden)
         for key in config_map:
             assert garden.connection_params["http"][config_map[key]] == defaults[key]
+
+    def test_remove_garden_cleans_up_remote_user_entries(self, bg_garden):
+        """remove_garden should remove any RemoteUser entries for that garden"""
+        garden = create_garden(bg_garden)
+        remote_user = RemoteUser(username="remoteuser", garden=garden.name).save()
+
+        remove_garden(garden.name)
+
+        remote_user_count = len(
+            RemoteUser.objects.filter(username=remote_user.username, garden=garden.name)
+        )
+
+        assert remote_user_count == 0

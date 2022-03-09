@@ -2,10 +2,12 @@
 import json
 
 import pytest
+from mock import Mock
 from tornado.httpclient import HTTPError, HTTPRequest
 
 import beer_garden.events
 import beer_garden.router
+import beer_garden.user
 from beer_garden.api.http.authentication import issue_token_pair
 from beer_garden.db.mongo.models import Garden, Role, RoleAssignment, User
 
@@ -405,3 +407,72 @@ class TestGardenListAPI:
 
         assert excinfo.value.code == 403
         assert len(Garden.objects.all()) == garden_count_before
+
+    @pytest.mark.gen_test
+    def test_auth_enabled_allows_sync_users_patch_with_permissions_to_all_gardens(
+        self,
+        monkeypatch,
+        http_client,
+        base_url,
+        app_config_auth_enabled,
+        user,
+        garden_admin_role,
+    ):
+        monkeypatch.setattr(beer_garden.user, "initiate_user_sync", Mock())
+
+        user.role_assignments.append(
+            RoleAssignment(
+                role=garden_admin_role,
+                domain={
+                    "scope": "Global",
+                },
+            ),
+        )
+        access_token = issue_token_pair(user)["access"]
+
+        url = f"{base_url}/api/v1/gardens"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+        }
+
+        patch_body = {
+            "operation": "sync_users",
+        }
+        request = HTTPRequest(
+            url, method="PATCH", headers=headers, body=json.dumps(patch_body)
+        )
+        response = yield http_client.fetch(request)
+
+        assert response.code == 204
+        assert beer_garden.user.initiate_user_sync.called is True
+
+    @pytest.mark.gen_test
+    def test_auth_enabled_rejects_sync_users_patch_without_permissions_to_all_gardens(
+        self,
+        monkeypatch,
+        http_client,
+        base_url,
+        app_config_auth_enabled,
+        access_token,
+    ):
+        monkeypatch.setattr(beer_garden.user, "initiate_user_sync", Mock())
+
+        url = f"{base_url}/api/v1/gardens"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+        }
+
+        patch_body = {
+            "operation": "sync_users",
+        }
+        request = HTTPRequest(
+            url, method="PATCH", headers=headers, body=json.dumps(patch_body)
+        )
+
+        with pytest.raises(HTTPError) as excinfo:
+            yield http_client.fetch(request)
+
+        assert excinfo.value.code == 403
+        assert beer_garden.user.initiate_user_sync.called is False

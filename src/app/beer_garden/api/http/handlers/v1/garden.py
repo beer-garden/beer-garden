@@ -12,6 +12,7 @@ from beer_garden.authorization import user_has_permission_for_object
 from beer_garden.db.mongo.api import MongoParser
 from beer_garden.db.mongo.models import Garden
 from beer_garden.garden import local_garden
+from beer_garden.user import initiate_user_sync
 
 GARDEN_CREATE = Permissions.GARDEN_CREATE.value
 GARDEN_READ = Permissions.GARDEN_READ.value
@@ -245,6 +246,7 @@ class GardenListAPI(AuthorizationHandler):
           updates to apply. Currently the only operations are:
 
           * sync
+          * sync_users
 
           ```JSON
           [
@@ -264,10 +266,8 @@ class GardenListAPI(AuthorizationHandler):
             schema:
               $ref: '#/definitions/Patch'
         responses:
-          200:
-            description: Execute Patch action against Gardens
-            schema:
-              $ref: '#/definitions/Garden'
+          204:
+            description: Patch operation has been successfully forwarded
           400:
             $ref: '#/definitions/400Error'
           404:
@@ -285,14 +285,18 @@ class GardenListAPI(AuthorizationHandler):
             operation = op.operation.lower()
 
             if operation == "sync":
-                response = await self.client(
+                await self.client(
                     Operation(
                         operation_type="GARDEN_SYNC",
                     )
                 )
+            elif operation == "sync_users":
+                # requires GARDEN_UPDATE for all gardens
+                for garden in Garden.objects.all():
+                    self.verify_user_permission_for_object(GARDEN_UPDATE, garden)
 
+                initiate_user_sync()
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
-        self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(response)
+        self.set_status(204)

@@ -46,6 +46,7 @@ def garden_callbacks(event: Event) -> None:
         (beer_garden.log.handle_event, "Log"),
         (beer_garden.files.handle_event, "File"),
         (beer_garden.local_plugins.manager.handle_event, "Local plugins manager"),
+        (beer_garden.user.handle_event, "User event handler"),
     ]:
         try:
             handler(deepcopy(event))
