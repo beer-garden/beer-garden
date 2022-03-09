@@ -3,11 +3,13 @@ import logging
 from json import JSONDecodeError
 from typing import TYPE_CHECKING, Optional
 
+from brewtils.models import Events
 from brewtils.schema_parser import SchemaParser
 from marshmallow import Schema, ValidationError, fields, validate
 from tornado.websocket import WebSocketHandler
 
 from beer_garden import config
+from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.authentication import decode_token, get_user_from_token
 from beer_garden.authorization import user_has_permission_for_object
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
@@ -20,6 +22,9 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# Event types that should never be published to the websocket
+WEBSOCKET_EVENT_TYPE_BLOCKLIST = [Events.USER_UPDATED.name]
+
 
 def _auth_enabled():
     """Helper for checking the auth.enabled settings"""
@@ -30,10 +35,16 @@ def _user_can_receive_messages_for_event(user: "User", event: "Event"):
     """Check a that a user has access to view the supplied event"""
     user_permitted = True
 
+    # Event types that won't have a payload, but still require a permission check
+    # TODO: Really every event type ought to be included here
+    event_permission_map = {Events.USERS_IMPORTED.name: Permissions.GARDEN_UPDATE.value}
+
     if event.payload and event.payload_type:
         user_permitted = user_has_permission_for_object(
             user, f"{event.payload_type.lower()}:read", event.payload
         )
+    elif event.name in event_permission_map:
+        user_permitted = event_permission_map[event.name] in user.global_permissions
 
     return user_permitted
 
@@ -126,6 +137,9 @@ class EventSocket(WebSocketHandler):
 
     @classmethod
     def publish(cls, event):
+        if event.name in WEBSOCKET_EVENT_TYPE_BLOCKLIST:
+            return
+
         if len(cls.listeners) > 0:
             message = SchemaParser.serialize(event, to_string=True)
 

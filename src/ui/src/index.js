@@ -99,10 +99,7 @@ import adminQueueController from './js/controllers/admin_queue.js';
 import adminSystemController from './js/controllers/admin_system.js';
 import adminSystemLogsController from './js/controllers/admin_system_logs.js';
 import adminSystemForceDeleteController from './js/controllers/admin_system_force_delete.js';
-import {
-  adminUserIndexController,
-  newUserController,
-} from './js/controllers/admin_user_index.js';
+import adminUserIndexController from './js/controllers/admin_user_index.js';
 import adminUserViewController from './js/controllers/admin_user_view.js';
 import {
   adminRoleController,
@@ -138,6 +135,8 @@ import jobCreateRequestController from './js/controllers/job/create_request.js';
 import jobCreateTriggerController from './js/controllers/job/create_trigger.js';
 import loginController from './js/controllers/login.js';
 import changePasswordController from './js/controllers/change_password.js';
+import newUserController from './js/controllers/user/new_user.js';
+import syncUsersController from './js/controllers/user/sync_users.js';
 
 // Partials
 import './partials/about.html';
@@ -223,6 +222,7 @@ angular
     .controller('AdminUserIndexController', adminUserIndexController)
     .controller('AdminUserViewController', adminUserViewController)
     .controller('NewUserController', newUserController)
+    .controller('SyncUsersController', syncUsersController)
     .controller('AdminRoleController', adminRoleController)
     .controller('NewRoleController', newRoleController)
     .controller('AdminGardenController', adminGardenController)

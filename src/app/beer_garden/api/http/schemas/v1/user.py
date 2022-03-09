@@ -1,5 +1,14 @@
 from brewtils.schemas import RoleAssignmentDomainSchema, RoleAssignmentSchema
-from marshmallow import Schema, ValidationError, fields, post_dump, post_load, validate
+from brewtils.schemas import UserSchema as BrewtilsUserSchema
+from marshmallow import (
+    Schema,
+    ValidationError,
+    fields,
+    post_dump,
+    post_load,
+    pre_dump,
+    validate,
+)
 
 from beer_garden.db.mongo.models import Role, RoleAssignment, RoleAssignmentDomain
 
@@ -73,3 +82,17 @@ class UserSyncSchema(Schema):
         for item in data:
             for assignment in item.get("role_assignments", []):
                 assignment["role_name"] = assignment.pop("role")["name"]
+
+
+class UserSchema(BrewtilsUserSchema):
+    sync_status = fields.Dict(dump_only=True)
+
+    @pre_dump
+    def get_sync_status(self, user):
+        from beer_garden.user import user_sync_status
+
+        user.sync_status = user_sync_status(user)
+
+
+class UserListSchema(Schema):
+    users = fields.List(fields.Nested(UserSchema()))

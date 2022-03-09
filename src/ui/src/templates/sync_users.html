@@ -1,0 +1,40 @@
+<form ng-submit="sync()">
+  <div class="modal-header">
+    <h3 class="modal-title" id="modal-title">Sync Users</h3>
+    This will sync all users from this garden to all remote gardens, making the
+    role assignments and password for each user on the remote garden match those
+    of the the users for this garden. Any role assignments that were granted
+    directly on the remote gardens will be overwritten by this process.
+  </div>
+
+  <div class="modal-body" id="modal-body">
+    <table id="syncStatus" class="table">
+      <thead>
+        <tr>
+          <th scope="col">Garden</th>
+          <th scope="col">Sync Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="garden in gardens">
+          <td>{{garden.name}}</td>
+          <td ng-show="garden.syncStatus!=='IN_PROGRESS'">
+            {{garden.syncStatus}}
+          </td>
+          <td ng-show="garden.syncStatus==='IN_PROGRESS'">
+            <i class="fa fa-spinner fa-pulse"></i>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="modal-footer" ng-if="responseState(response) === 'success'">
+    <button type="button" class="btn btn-danger" ng-click="cancel()">
+      Cancel
+    </button>
+    <button type="submit" class="btn btn-success" ng-disabled="disableSubmit()">
+      Sync
+    </button>
+  </div>
+</form>

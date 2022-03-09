@@ -72,7 +72,9 @@ def initiate_user_sync() -> None:
     from beer_garden.router import route
 
     users = User.objects.all()
-    gardens = Garden.objects.filter(connection_type__nin=["LOCAL", None])
+    gardens = Garden.objects.filter(
+        connection_type__nin=["LOCAL", None], status="RUNNING"
+    )
 
     for garden in gardens:
         filtered_users = [
@@ -104,6 +106,7 @@ def user_sync(serialized_users: List[dict]) -> None:
         None
     """
     _import_users(serialized_users)
+    _publish_users_imported()
     initiate_user_sync()
 
 
@@ -123,15 +126,33 @@ def user_synced_with_garden(user: User, garden: Garden) -> bool:
     # Avoiding circular imports
     from beer_garden.api.http.schemas.v1.user import UserSyncSchema
 
+    user = _filter_role_assigments_by_garden(user, garden)
+
     try:
         remote_user = RemoteUser.objects.get(username=user.username, garden=garden.name)
     except RemoteUser.DoesNotExist:
-        return False
+        return len(user.role_assignments) == 0
 
-    user = _filter_role_assigments_by_garden(user, garden)
     role_assignments = UserSyncSchema().dump(user).data["role_assignments"]
 
     return role_assignments == remote_user.role_assignments
+
+
+def user_sync_status(user: User) -> dict:
+    """Provides the sync status of the provided User with each remote garden. The
+    resulting dict formatting is:
+
+    { "remote_garden_name": bool }
+
+    Args:
+        user: The user for which we are checking the sync status
+    """
+    sync_status = {}
+
+    for garden in Garden.objects.filter(connection_type__nin=["LOCAL"]):
+        sync_status[garden.name] = user_synced_with_garden(user, garden)
+
+    return sync_status
 
 
 def handle_event(event: Event) -> None:
@@ -215,6 +236,18 @@ def _filter_role_assigments_by_garden(user, garden) -> User:
     ]
 
     return filtered_user
+
+
+def _publish_users_imported():
+    """Publish an invent indicating that a user sync was completed"""
+    publish(
+        Event(
+            name=Events.USERS_IMPORTED.name,
+            metadata={
+                "garden": config.get("garden.name"),
+            },
+        )
+    )
 
 
 def _publish_user_updated(user):

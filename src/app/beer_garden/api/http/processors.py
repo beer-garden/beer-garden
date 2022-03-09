@@ -17,9 +17,9 @@ class EventManager:
         beer_garden.api.http.io_loop.add_callback(self._conn.send, event)
 
 
-def websocket_publish(item):
+def websocket_publish(event):
     """Publish an event to all websocket endpoints"""
     try:
-        beer_garden.api.http.io_loop.add_callback(EventSocket.publish, item)
+        beer_garden.api.http.io_loop.add_callback(EventSocket.publish, event)
     except Exception as ex:
         logger.exception(f"Error publishing event to websocket: {ex}")

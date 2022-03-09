@@ -3,12 +3,16 @@ import json
 
 import pytest
 from brewtils.models import Event, System
+from mock import Mock
 from tornado import gen
 from tornado.testing import AsyncHTTPTestCase, gen_test
 from tornado.web import Application
 from tornado.websocket import websocket_connect
 
-from beer_garden.api.http.handlers.v1.event import EventSocket
+from beer_garden.api.http.handlers.v1.event import (
+    WEBSOCKET_EVENT_TYPE_BLOCKLIST,
+    EventSocket,
+)
 
 
 @pytest.fixture
@@ -173,3 +177,14 @@ class TestEventSocket(AsyncHTTPTestCase):
 
         assert response_dict["payload"] is None
         assert response_dict["name"] == event.name
+
+    @gen_test
+    @pytest.mark.usefixtures("app_config_auth_disabled")
+    def test_publish_skips_events_on_blocklist(self):
+        yield self.ws_connect()
+
+        EventSocket.write_message = Mock()
+        event = Event(name=WEBSOCKET_EVENT_TYPE_BLOCKLIST[0])
+        EventSocket.publish(event)
+
+        assert EventSocket.write_message.called is False

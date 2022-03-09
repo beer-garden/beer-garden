@@ -1,31 +1,34 @@
-import template from '../../templates/new_user.html';
+import newUserTemplate from '../../templates/new_user.html';
+import syncUsersTemplate from '../../templates/sync_users.html';
 
 adminUserIndexController.$inject = ['$scope', '$uibModal', 'UserService'];
 
 /**
- * adminUserIndexController - Controller for the job index page.
+ * adminUserIndexController - Controller for the user index page.
  * @param  {Object} $scope        Angular's $scope object.
  * @param  {$scope} $uibModal     Angular UI's $uibModal object.
- * @param  {Object} UserService   Beer-Garden's job service.
+ * @param  {Object} UserService   Beer-Garden's user service.
  */
-export function adminUserIndexController($scope, $uibModal, UserService) {
+export default function adminUserIndexController($scope, $uibModal, UserService) {
   $scope.setWindowTitle('users');
 
   $scope.successCallback = function(response) {
     $scope.response = response;
-    $scope.data = response.data;
+    $scope.users = response.data.users;
+    $scope.displaySyncStatus = false;
+    setUserFullySynced();
   };
 
   $scope.failureCallback = function(response) {
     $scope.response = response;
-    $scope.data = {};
+    $scope.users = [];
   };
 
   $scope.doCreate = function() {
     const modalInstance = $uibModal.open({
       controller: 'NewUserController',
       size: 'sm',
-      template: template,
+      template: newUserTemplate,
     });
 
     modalInstance.result.then(
@@ -41,35 +44,46 @@ export function adminUserIndexController($scope, $uibModal, UserService) {
     );
   };
 
-  function loadUsers() {
+  $scope.doSync = function() {
+    $uibModal.open({
+      controller: 'SyncUsersController',
+      size: 'md',
+      template: syncUsersTemplate,
+    }).result.then(() => {
+      loadUsers();
+    }, () => {
+      loadUsers();
+    });
+  };
+
+  const loadUsers = function() {
     $scope.response = undefined;
-    $scope.data = {};
+    $scope.users = [];
 
     UserService.getUsers().then($scope.successCallback, $scope.failureCallback);
-  }
+  };
+
+  const setUserFullySynced = function() {
+    $scope.users.forEach((user) => {
+      user.fullySynced = true;
+
+      Object.values(user.sync_status).forEach((synced) => {
+        // If we get here at all, then there is sync data and we'll want
+        // to render it, so set that here. If we never get here, that means
+        // there are no remote gardens, so showing the sync status would be
+        // meaningless.
+        $scope.displaySyncStatus = true;
+
+        if (!synced) {
+          user.fullySynced = false;
+        }
+      });
+    });
+  };
 
   $scope.$on('userChange', () => {
     loadUsers();
   });
 
   loadUsers();
-}
-
-newUserController.$inject = ['$scope', '$uibModalInstance'];
-
-/**
- * newUserController - New User controller.
- * @param  {$scope} $scope                        Angular's $scope object.
- * @param  {$uibModalInstance} $uibModalInstance  Angular UI's $uibModalInstance object.
- */
-export function newUserController($scope, $uibModalInstance) {
-  $scope.create = {};
-
-  $scope.ok = function() {
-    $uibModalInstance.close($scope.create);
-  };
-
-  $scope.cancel = function() {
-    $uibModalInstance.dismiss('cancel');
-  };
 }

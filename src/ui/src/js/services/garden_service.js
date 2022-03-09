@@ -30,8 +30,16 @@ export default function gardenService($rootScope, $http) {
   };
 
   GardenService.syncGardens = function() {
-    return $http.patch('api/v1/gardens', {
+    return $http.patch('api/v1/gardens/', {
       operation: 'sync',
+      path: '',
+      value: '',
+    });
+  };
+
+  GardenService.syncUsers = function() {
+    return $http.patch('api/v1/gardens/', {
+      operation: 'sync_users',
       path: '',
       value: '',
     });
