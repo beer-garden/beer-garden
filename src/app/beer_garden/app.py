@@ -220,7 +220,7 @@ class Application(StoppableThread):
 
         self.logger.debug("Setting up database...")
         db.create_connection(db_config=config.get("db"))
-        db.initial_setup(config.get("auth.guest_login_enabled"))
+        db.initial_setup()
 
         self.logger.debug("Setting up message queues...")
         queue.initial_setup()
