@@ -301,6 +301,10 @@ def _load_swagger(url_specs, title=None):
         title=title,
         version="1.0",
         plugins=("apispec.ext.marshmallow", "apispec.ext.tornado"),
+        securityDefinitions={
+            "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"},
+        },
+        security=[{"Bearer": []}],
     )
 
     # Schemas from Marshmallow
