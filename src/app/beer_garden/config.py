@@ -639,6 +639,25 @@ _AUTHENTICATION_HANDLERS_SPEC = {
     },
 }
 
+
+_DEFAULT_ADMIN_SPEC = {
+    "type": "dict",
+    "items": {
+        "username": {
+            "type": "str",
+            "default": "admin",
+            "description": "The username for the default admin account that will "
+            "be created when initializing a new environment",
+        },
+        "password": {
+            "type": "str",
+            "default": "password",
+            "description": "The password for the default admin account that will "
+            "be created when initializing a new environment",
+        },
+    },
+}
+
 _AUTH_SPEC = {
     "type": "dict",
     "items": {
@@ -647,14 +666,7 @@ _AUTH_SPEC = {
             "default": False,
             "description": "Use role-based authentication / authorization",
         },
-        "guest_login_enabled": {
-            "type": "bool",
-            "default": True,
-            "description": (
-                "Only applicable if auth is enabled. If set to "
-                "true, guests can login without username/passwords."
-            ),
-        },
+        "default_admin": _DEFAULT_ADMIN_SPEC,
         "token_secret": {
             "type": "str",
             "required": False,

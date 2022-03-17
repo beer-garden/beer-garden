@@ -1,6 +1,5 @@
 auth:
   enabled: false
-  guest_login_enabled: true
   role_definition_file: null
   group_definition_file: null
   token_secret: IAMSUPERSECRET
@@ -12,6 +11,9 @@ auth:
       username_header: bg-username
       user_groups_header: bg-user-groups
       create_users: True
+  default_admin:
+    password: password
+    username: admin
 db:
   connection:
     host: localhost

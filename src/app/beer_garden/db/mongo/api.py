@@ -169,7 +169,7 @@ def create_connection(connection_alias: str = "default", db_config: Box = None) 
     )
 
 
-def initial_setup(guest_login_enabled):
+def initial_setup():
     """Do everything necessary to ensure the database is in a 'good' state"""
 
     ensure_model_migration()
@@ -186,7 +186,7 @@ def initial_setup(guest_login_enabled):
 
     ensure_local_garden()
     ensure_roles()
-    ensure_users(guest_login_enabled)
+    ensure_users()
 
 
 def get_pruner():

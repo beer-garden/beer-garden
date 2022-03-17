@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import logging
-import os
 from typing import Union
 
 import yaml
@@ -13,9 +12,10 @@ from mongoengine.errors import (
     InvalidDocumentError,
     ValidationError,
 )
-from passlib.apps import custom_app_context
 
 from beer_garden import config
+from beer_garden.api.authorization import Permissions
+from beer_garden.db.mongo.models import Role, RoleAssignment, User
 from beer_garden.errors import ConfigurationError
 from beer_garden.role import sync_roles
 
@@ -43,9 +43,13 @@ def ensure_local_garden():
 
 
 def ensure_roles():
-    """Create roles if necessary
+    """Create roles if necessary"""
+    _sync_roles_from_role_definition_file()
+    _create_superuser_role()
 
-    If auth.role_definition_file is set in the main application config, this will
+
+def _sync_roles_from_role_definition_file():
+    """If auth.role_definition_file is set in the main application config, this will
     load that file and pass it over to sync_roles to make the Role definitions in the
     database match what is defined in the file.
     """
@@ -68,67 +72,40 @@ def ensure_roles():
             )
         except ValidationError as validation_error:
             raise ConfigurationError(
-                f"Invalid role definition in {role_definition_file}: "
-                f"{validation_error}"
+                f"Invalid role definition in {role_definition_file}: {validation_error}"
             )
     else:
         logger.info("auth.role_definition_file not defined. No roles will be synced.")
 
 
-def ensure_users(guest_login_enabled):
-    """Create users if necessary
+def _create_superuser_role():
+    """Creates the superuser role if it does not already exist"""
+    # If users already exist, assume that some setup has already occurred and
+    # leave it be.
+    if User.objects.count() == 0:
+        try:
+            Role.objects.get(name="superuser")
+        except Role.DoesNotExist:
+            logger.info("Creating superuser role with all permissions")
+            all_permissions = [permission.value for permission in Permissions]
+            Role(name="superuser", permissions=all_permissions).save()
 
-    There are certain 'convenience' users that will be created if this is a new
-    install (if no users currently exist).
 
-    Then there are users that MUST be present. These will always be created if
-    they do not exist.
-    """
-    from .models import Principal
+def ensure_users():
+    """Create the default admin user if necessary"""
+    if User.objects.count() == 0:
+        username = config.get("auth.default_admin.username")
+        password = config.get("auth.default_admin.password")
+        superuser_role = Role.objects.get(name="superuser")
 
-    if _should_create_admin():
-        default_password = os.environ.get("BG_DEFAULT_ADMIN_PASSWORD")
-        logger.warning("Creating missing admin user...")
-        if default_password:
-            logger.info(
-                'Creating username "admin" with custom password set'
-                'in environment variable "BG_DEFAULT_ADMIN_PASSWORD"'
-            )
-        else:
-            default_password = "password"
-            logger.info(
-                'Creating username "admin" with password "%s"' % default_password
-            )
-        Principal(
-            username="admin",
-            hash=custom_app_context.hash(default_password),
-            roles=[],
-            metadata={"auto_change": True, "changed": False},
-        ).save()
+        logger.info("Creating default admin user with username: %s", username)
 
-    try:
-        anonymous_user = Principal.objects.get(username="anonymous")
-
-        # Here we specifically check for None because bartender does
-        # not have the guest_login_enabled configuration, so we don't
-        # really know what to do in that case, so we just allow it to
-        # stay around. This actually shouldn't matter anyway, because
-        # brew-view is a dependency for bartender to start so brew-view
-        # should have already done the right thing anyway.
-        if guest_login_enabled is not None and not guest_login_enabled:
-            logger.info(
-                "Previous anonymous user detected, but the config indicates "
-                "guest login is not enabled. Removing old anonymous user."
-            )
-            anonymous_user.delete()
-
-    except DoesNotExist:
-        if guest_login_enabled:
-            logger.info("Creating anonymous user.")
-            Principal(
-                username="anonymous",
-                roles=[],
-            ).save()
+        admin = User(username=username)
+        admin.set_password(password)
+        admin.role_assignments = [
+            RoleAssignment(role=superuser_role, domain={"scope": "Global"})
+        ]
+        admin.save()
 
 
 def ensure_owner_collection_migration():
@@ -364,27 +341,3 @@ def _create_role(role):
     except DoesNotExist:
         logger.warning("Role %s missing, about to create" % role.name)
         role.save()
-
-
-def _should_create_admin():
-    from .models import Principal
-
-    count = Principal.objects.count()
-
-    if count == 0:
-        return True
-
-    try:
-        Principal.objects.get(username="admin")
-        return False
-    except DoesNotExist:
-        pass
-
-    if count == 1:
-        principal = Principal.objects.get()[0]
-        return principal.username == "anonymous"
-
-    # By default, if they have created other users that are not just the
-    # anonymous users, we assume they do not want to re-create the admin
-    # user.
-    return False

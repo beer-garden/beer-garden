@@ -115,6 +115,17 @@ Available settings:
 - **username_header:** The name of the header that will contain the username.
   Default: `bg-username`
 
+### default_admin
+
+Allows you to specify the username and password for the default admin account.
+This account will be created the first time the garden is started and will be
+assigned superuser access to the garden.
+
+Available settings:
+
+- **username:** The username of the admin account. Default: admin
+- **password:** The password of the admin account. Default: password
+
 ### enabled
 
 When `true`, users will be required to authenticate via one of the enabled
