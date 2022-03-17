@@ -87,7 +87,11 @@ export default function adminUserViewController(
   const successCallback = function(response) {
     $scope.response = response;
     $scope.data = response.data;
-    $scope.displaySyncStatus = (Object.keys($scope.data.sync_status).length > 0);
+    $scope.displaySyncStatus = false;
+
+    if ($scope.data.sync_status) {
+      $scope.displaySyncStatus = (Object.keys($scope.data.sync_status).length > 0);
+    }
 
     generateUserSF();
   };
