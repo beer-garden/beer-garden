@@ -706,6 +706,8 @@ def _forward_http(operation: Operation, target_garden: Garden) -> None:
         ca_cert=conn_info.get("ca_cert"),
         ca_verify=conn_info.get("ca_verify"),
         client_cert=conn_info.get("client_cert"),
+        username=conn_info.get("username"),
+        password=conn_info.get("password"),
     )
 
     try:
