@@ -149,7 +149,10 @@ jobs:
 
       - name: Build Local Beer Garden Docker
         if: ${{matrix.beer-garden-local == 'unstable'}}
-        run: make docker-build-unstable
+        run: |
+          python -m pip install --upgrade pip
+          pip install setuptools wheel
+          make docker-build-unstable
         working-directory: ./src/app
 
       - name: Setup python
@@ -239,7 +242,10 @@ jobs:
 
       - name: Build Local Beer Garden Docker
         if: ${{matrix.beer-garden-local == 'unstable'}}
-        run: make docker-build-unstable
+        run: |
+          python -m pip install --upgrade pip
+          pip install setuptools wheel
+          make docker-build-unstable
         working-directory: ./src/app
 
       - name: Setup python
@@ -358,7 +364,10 @@ jobs:
 
       - name: Build Local Beer Garden Docker
         if: ${{matrix.beer-garden-local == 'unstable'}}
-        run: make docker-build-unstable
+        run: |
+          python -m pip install --upgrade pip
+          pip install setuptools wheel
+          make docker-build-unstable
         working-directory: ./src/app
 
       - name: Setup python
@@ -464,7 +473,10 @@ jobs:
 
       - name: Build Local Beer Garden Docker
         if: ${{matrix.beer-garden-local == 'unstable'}}
-        run: make docker-build-unstable
+        run: |
+          python -m pip install --upgrade pip
+          pip install setuptools wheel
+          make docker-build-unstable
         working-directory: ./src/app
 
       - name: Checkout Local Plugins
@@ -555,7 +567,10 @@ jobs:
 
       - name: Build Local Beer Garden Docker
         if: ${{matrix.beer-garden-local == 'unstable'}}
-        run: make docker-build-unstable
+        run: |
+          python -m pip install --upgrade pip
+          pip install setuptools wheel
+          make docker-build-unstable
         working-directory: ./src/app
 
       - name: Setup python
