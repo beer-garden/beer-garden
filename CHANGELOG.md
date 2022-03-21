@@ -1,21 +1,64 @@
 # Beer Garden Changelog
 
+## 3.12.0
+
+3/21/22
+
+### Added Features
+
+- A "Change Password" option has been added to the ☰ in the top right of the UI.
+  (Issue #1262)
+- User management has been added to the UI for creating users and managing their
+  role assignments. This is available via a new "Users" option under the admin
+  menu. (Issue #1262)
+- Requests now list the user that initiated the request. (Issue #1263)
+- Users are now granted implicit access to any requests that they create. (Issue
+  #1264)
+- It is now possible to sync users and their role assignments between gardens.
+  (Issue #1265)
+- A default admin user and superuser role will now be created during the first
+  startup of a new garden. (Issue #1274)
+
+### Bug Fixes
+
+- Overly noisy "ERROR" event messages have been eliminated from the logs. These
+  had been especially prevalent in setups with remote gardens that were more
+  than a single hop away (i.e. "grandchildren"). (Issue #1271)
+
+### Other Changes
+
+- A [security](https://beer-garden.io/docs/app/security/) section has been added
+  to the documentation on beer-garden.io, detailing how to use many of the User
+  management related features in this release.
+
 ## 3.11.0
 
 2/9/22
 
 ### Added Features
-- Updates in status in the user interface (via WebSockets) are now filtered according to a user's authorization, the same as HTTP API requests. (Issue #1243)
-- The user interface now preemptively refreshes user access tokens so that a user will not be automatically logged out after a short period of inactivity. (Issue #1247)
-- User interface elements are now hidden or displayed according to a user's authorization to access their functionality. (Issue #1179 & Issue #1250)
-- Users can now import and export Garden connection configurations via the user interface. (Issue #1192 & Issue #1141)
+
+- Updates in status in the user interface (via WebSockets) are now filtered
+  according to a user's authorization, the same as HTTP API requests. (Issue
+  #1243)
+- The user interface now preemptively refreshes user access tokens so that a
+  user will not be automatically logged out after a short period of inactivity.
+  (Issue #1247)
+- User interface elements are now hidden or displayed according to a user's
+  authorization to access their functionality. (Issue #1179 & Issue #1250)
+- Users can now import and export Garden connection configurations via the user
+  interface. (Issue #1192 & Issue #1141)
 
 ### Bug Fixes
-- The Job error count now correctly also reflects those Jobs that fail due to an exception,  (Issue #1225)
-- Job scheduler request handling now properly keeps track of which requests have finished. (Issue #1214)
+
+- The Job error count now correctly also reflects those Jobs that fail due to an
+  exception, (Issue #1225)
+- Job scheduler request handling now properly keeps track of which requests have
+  finished. (Issue #1214)
 
 ### Other Changes
-- Added basic documentation for authentication and authorization features added to Beer-garden in previous releases. (Issue #1241)
+
+- Added basic documentation for authentication and authorization features added
+  to Beer-garden in previous releases. (Issue #1241)
 
 ## 3.10.0
 
