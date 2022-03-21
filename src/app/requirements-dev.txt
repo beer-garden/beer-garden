@@ -26,15 +26,15 @@ certifi==2021.10.8
     # via
     #   -c requirements.txt
     #   requests
-charset-normalizer==2.0.11
+charset-normalizer==2.0.12
     # via
     #   -c requirements.txt
     #   requests
-click==8.0.3
+click==8.0.4
     # via black
 codecov==2.1.12
     # via -r requirements-dev.in
-coverage==6.3.1
+coverage==6.3.2
     # via
     #   -r requirements-dev.in
     #   codecov
@@ -46,7 +46,7 @@ flake8==4.0.1
     # via
     #   -r requirements-dev.in
     #   flake8-bugbear
-flake8-bugbear==22.1.11
+flake8-bugbear==22.3.20
     # via -r requirements-dev.in
 idna==3.3
     # via
@@ -70,7 +70,7 @@ lark-parser==0.6.7
     # via
     #   -c requirements.txt
     #   brewtils
-markupsafe==2.0.1
+markupsafe==2.1.1
     # via jinja2
 marshmallow==2.21.0
     # via
@@ -106,7 +106,7 @@ pika==1.2.0
     # via
     #   -c requirements.txt
     #   brewtils
-platformdirs==2.5.0
+platformdirs==2.5.1
     # via black
 pluggy==1.0.0
     # via pytest
@@ -188,11 +188,11 @@ tornado==6.1
     #   pytest-tornado
 typed-ast==1.5.2
     # via black
-typing-extensions==4.0.1
+typing-extensions==4.1.1
     # via
     #   black
     #   importlib-metadata
-urllib3==1.26.8
+urllib3==1.26.9
     # via
     #   -c requirements.txt
     #   requests
