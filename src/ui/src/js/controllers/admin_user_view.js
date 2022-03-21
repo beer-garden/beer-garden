@@ -73,7 +73,7 @@ export default function adminUserViewController(
     // identifiers for us anyway.
     model.role_assignments.forEach((assignment) => {
       if (assignment.domain.scope === 'Global') {
-        assignment.domain.identifiers.name = '';
+        assignment.domain.identifiers = {name: ''};
       }
       if (assignment.domain.scope !== 'System') {
         assignment.domain.identifiers.namespace = '';
@@ -87,6 +87,11 @@ export default function adminUserViewController(
   const successCallback = function(response) {
     $scope.response = response;
     $scope.data = response.data;
+    $scope.displaySyncStatus = false;
+
+    if ($scope.data.sync_status) {
+      $scope.displaySyncStatus = (Object.keys($scope.data.sync_status).length > 0);
+    }
 
     generateUserSF();
   };

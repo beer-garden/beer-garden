@@ -31,12 +31,20 @@ class TestUser:
 
     @pytest.fixture
     def gardens(self):
-        garden1 = Garden(name="garden1", connection_type="HTTP").save()
-        garden2 = Garden(name="garden2", connection_type="HTTP").save()
+        garden1 = Garden(
+            name="garden1", connection_type="HTTP", status="RUNNING"
+        ).save()
+        garden2 = Garden(
+            name="garden2", connection_type="HTTP", status="RUNNING"
+        ).save()
+        garden3 = Garden(
+            name="garden2", connection_type="HTTP", status="STOPPED"
+        ).save()
 
-        yield [garden1, garden2]
+        yield [garden1, garden2, garden3]
         garden1.delete()
         garden2.delete()
+        garden3.delete()
 
     @pytest.fixture
     def user_to_sync(self):
@@ -90,12 +98,16 @@ class TestUser:
         assert updated_user.password != prev_password
         assert updated_user.password != "badpassword"
 
-    def test_initiate_user_sync_routes_to_each_garden(self, monkeypatch, gardens):
+    def test_initiate_user_sync_routes_to_each_running_garden(
+        self, monkeypatch, gardens
+    ):
         monkeypatch.setattr(beer_garden.router, "route", Mock())
         User(username="testuser").save()
         initiate_user_sync()
 
-        assert beer_garden.router.route.call_count == len(gardens)
+        assert beer_garden.router.route.call_count == len(
+            Garden.objects.filter(status="RUNNING")
+        )
 
     def test_user_sync_creates_user(self, monkeypatch, user_to_sync):
         monkeypatch.setattr(beer_garden.user, "initiate_user_sync", Mock())
@@ -139,6 +151,12 @@ class TestUser:
         garden = Garden.objects.get(name=remote_user.garden)
 
         assert user_synced_with_garden(user_to_sync, garden) is True
+
+    def test_user_synced_with_garden_returns_true_for_no_relevant_assignments(self):
+        user = User(username="user")
+        garden = Garden(name="garden")
+
+        assert user_synced_with_garden(user, garden) is True
 
     def test_handle_event_for_user_updated(self):
         role_assignments = [{"role_name": "role1", "domain": {"scope": "Global"}}]

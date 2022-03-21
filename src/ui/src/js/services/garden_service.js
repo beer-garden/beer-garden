@@ -30,8 +30,16 @@ export default function gardenService($rootScope, $http) {
   };
 
   GardenService.syncGardens = function() {
-    return $http.patch('api/v1/gardens', {
+    return $http.patch('api/v1/gardens/', {
       operation: 'sync',
+      path: '',
+      value: '',
+    });
+  };
+
+  GardenService.syncUsers = function() {
+    return $http.patch('api/v1/gardens/', {
+      operation: 'sync_users',
       path: '',
       value: '',
     });
@@ -198,7 +206,7 @@ export default function gardenService($rootScope, $http) {
     // Simply decide if every field in the http entry is blank.
     const simpleFieldMissing = getSimpleFieldPredicate(entryPointValues);
     const httpSimpleFields = [
-      'ca_cert', 'client_cert', 'host', 'port', 'url_prefix',
+      'ca_cert', 'client_cert', 'host', 'port', 'url_prefix', 'username', 'password',
     ];
     const allHttpFieldsEmpty = httpSimpleFields.every(simpleFieldMissing);
 
@@ -320,6 +328,16 @@ export default function gardenService($rootScope, $http) {
               'URL path that will be used as a prefix when communicating ' +
               'with Beer-garden. Useful if Beer-garden is running on a URL ' +
               'other than \'/\'.',
+            type: 'string',
+          },
+          username: {
+            title: 'Username',
+            description: 'Required if auth is enabled on the remote garden.',
+            type: 'string',
+          },
+          password: {
+            title: 'Password',
+            description: 'Required if auth is enabled on the remote garden.',
             type: 'string',
           },
           ca_cert: {
@@ -461,6 +479,8 @@ export default function gardenService($rootScope, $http) {
                 'http.host',
                 'http.port',
                 'http.url_prefix',
+                'http.username',
+                'http.password',
                 'http.ssl',
                 'http.ca_cert',
                 'http.ca_verify',

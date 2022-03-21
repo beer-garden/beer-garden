@@ -5,6 +5,7 @@ import pytest
 from mock import Mock
 from tornado.httpclient import HTTPError, HTTPRequest
 
+import beer_garden.api.http.handlers.v1.garden
 import beer_garden.events
 import beer_garden.router
 import beer_garden.user
@@ -418,7 +419,9 @@ class TestGardenListAPI:
         user,
         garden_admin_role,
     ):
-        monkeypatch.setattr(beer_garden.user, "initiate_user_sync", Mock())
+        monkeypatch.setattr(
+            beer_garden.api.http.handlers.v1.garden, "initiate_user_sync", Mock()
+        )
 
         user.role_assignments.append(
             RoleAssignment(
@@ -445,7 +448,7 @@ class TestGardenListAPI:
         response = yield http_client.fetch(request)
 
         assert response.code == 204
-        assert beer_garden.user.initiate_user_sync.called is True
+        assert beer_garden.api.http.handlers.v1.garden.initiate_user_sync.called is True
 
     @pytest.mark.gen_test
     def test_auth_enabled_rejects_sync_users_patch_without_permissions_to_all_gardens(
@@ -456,7 +459,9 @@ class TestGardenListAPI:
         app_config_auth_enabled,
         access_token,
     ):
-        monkeypatch.setattr(beer_garden.user, "initiate_user_sync", Mock())
+        monkeypatch.setattr(
+            beer_garden.api.http.handlers.v1.garden, "initiate_user_sync", Mock()
+        )
 
         url = f"{base_url}/api/v1/gardens"
         headers = {
@@ -475,4 +480,6 @@ class TestGardenListAPI:
             yield http_client.fetch(request)
 
         assert excinfo.value.code == 403
-        assert beer_garden.user.initiate_user_sync.called is False
+        assert (
+            beer_garden.api.http.handlers.v1.garden.initiate_user_sync.called is False
+        )

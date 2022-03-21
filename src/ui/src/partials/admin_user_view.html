@@ -20,6 +20,42 @@
 >
   {{alert.msg}}
 </div>
+<div ng-if="displaySyncStatus">
+  <b>Sync Status</b>
+  <table
+    datatable="ng"
+    dt-options="{paging: false, searching: false, info: false}"
+    class="table table-striped table-bordered"
+    style="width: 25%"
+  >
+    <thead>
+      <th>Garden</th>
+      <th>Synced</th>
+    </thead>
+    <tbody>
+      <tr ng-repeat="(garden, synced) in data.sync_status">
+        <td>{{garden}}</td>
+        <td>
+          <i
+            ng-if="synced"
+            class="glyphicon glyphicon-ok"
+            style="color: green"
+            title="true"
+          ></i>
+          <i
+            ng-if="!synced"
+            class="glyphicon glyphicon-remove"
+            style="color: red"
+            title="false"
+          ></i>
+          <span hidden>{{synced}}</span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <hr />
+</div>
 
 <div
   id="user-view-container"

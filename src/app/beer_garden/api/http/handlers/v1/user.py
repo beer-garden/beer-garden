@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
-from brewtils.schemas import UserCreateSchema, UserListSchema, UserSchema
+from brewtils.schemas import UserCreateSchema
 from marshmallow import ValidationError
 
 from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.exceptions import BadRequest
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.api.http.schemas.v1.user import (
+    UserListSchema,
     UserPasswordChangeSchema,
     UserPatchSchema,
+    UserSchema,
 )
 from beer_garden.db.mongo.models import User
 from beer_garden.user import create_user, update_user

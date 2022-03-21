@@ -112,6 +112,8 @@ export default function adminGardenViewController(
       'http.ca_cert',
       'http.ca_verify',
       'http.client_cert',
+      'http.username',
+      'http.password',
     ];
     const stompFlds = [
       'stomp.host',
