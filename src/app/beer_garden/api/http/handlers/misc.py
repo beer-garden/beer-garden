@@ -12,11 +12,13 @@ class ConfigHandler(BaseHandler):
     async def get(self):
         """Subset of configuration options that the frontend needs"""
         auth_config = config.get("auth")
+        trusted_header_config = auth_config.authentication_handlers.trusted_header
         ui_config = config.get("ui")
 
         configs = {
             "application_name": ui_config.name,
             "auth_enabled": auth_config.enabled,
+            "trusted_header_auth_enabled": trusted_header_config.enabled,
             "icon_default": ui_config.icon_default,
             "debug_mode": ui_config.debug_mode,
             "execute_javascript": ui_config.execute_javascript,
