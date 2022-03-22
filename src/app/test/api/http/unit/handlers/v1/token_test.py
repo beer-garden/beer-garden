@@ -57,24 +57,24 @@ class TestTokenAPI:
         assert decoded_access_token["jti"] == decoded_refresh_token["jti"]
 
     @pytest.mark.gen_test
-    def test_post_returns_401_on_invalid_login(self, http_client, base_url, user):
+    def test_post_returns_400_on_invalid_login(self, http_client, base_url, user):
         url = f"{base_url}/api/v1/token"
         body = json.dumps({"username": user.username, "password": "notmypassword"})
 
         with pytest.raises(HTTPError) as excinfo:
             yield http_client.fetch(url, method="POST", body=body)
 
-        assert excinfo.value.code == 401
+        assert excinfo.value.code == 400
 
     @pytest.mark.gen_test
-    def test_post_returns_401_when_user_not_found(self, http_client, base_url):
+    def test_post_returns_400_when_user_not_found(self, http_client, base_url):
         url = f"{base_url}/api/v1/token"
         body = json.dumps({"username": "cantfindme", "password": "doesntmatter"})
 
         with pytest.raises(HTTPError) as excinfo:
             yield http_client.fetch(url, method="POST", body=body)
 
-        assert excinfo.value.code == 401
+        assert excinfo.value.code == 400
 
 
 class TestTokenRefreshAPI:

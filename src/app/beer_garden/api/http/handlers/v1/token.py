@@ -35,7 +35,7 @@ class TokenAPI(BaseHandler):
                          token.
             schema:
               $ref: '#/definitions/TokenResponse'
-          401:
+          400:
             description: Authentication failed.
         tags:
           - Token

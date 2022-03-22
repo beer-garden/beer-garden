@@ -42,7 +42,7 @@ class AuthorizationRequired(BaseHTTPError):
 
 
 class AuthenticationFailed(BaseHTTPError):
-    status_code: int = 401
+    status_code: int = 400
     reason: str = "Authentication Failed"
 
 
