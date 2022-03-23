@@ -61,8 +61,8 @@ routable_operations = [
     "REQUEST_CREATE",
     "SYSTEM_DELETE",
     "GARDEN_SYNC",
-    "COMMAND_BLOCK_LIST_ADD",
-    "COMMAND_BLOCK_LIST_REMOVE",
+    "COMMAND_BLOCKLIST_ADD",
+    "COMMAND_BLOCKLIST_REMOVE",
     "USER_SYNC",
 ]
 
@@ -159,9 +159,8 @@ route_functions = {
     "RUNNER_RESCAN": beer_garden.local_plugins.manager.rescan,
     "PUBLISH_EVENT": beer_garden.events.publish,
     "USER_SYNC": beer_garden.user.user_sync,
-    "COMMAND_BLOCK_LIST_ADD": beer_garden.command_publishing_blocklist.command_publishing_block_list_adds,
-    "COMMAND_BLOCK_LIST_GET": beer_garden.command_publishing_blocklist.command_publishing_block_list_get,
-    "COMMAND_BLOCK_LIST_REMOVE": beer_garden.command_publishing_blocklist.command_publishing_block_list_remove,
+    "COMMAND_BLOCKLIST_ADD": beer_garden.command_publishing_blocklist.command_publishing_blocklist_save,
+    "COMMAND_BLOCKLIST_REMOVE": beer_garden.command_publishing_blocklist.command_publishing_blocklist_remove,
 }
 
 
@@ -575,7 +574,6 @@ def _target_from_type(operation: Operation) -> str:
             "PLUGIN_LOG_RELOAD",
             "SYSTEM_CREATE",
             "SYSTEM_RESCAN",
-            "COMMAND_BLOCK_LIST_GET",
         )
         or "PUBLISH_EVENT" in operation.operation_type
         or "RUNNER" in operation.operation_type
@@ -584,8 +582,8 @@ def _target_from_type(operation: Operation) -> str:
         return config.get("garden.name")
 
     if operation.operation_type in (
-        "COMMAND_BLOCK_LIST_ADD",
-        "COMMAND_BLOCK_LIST_REMOVE",
+        "COMMAND_BLOCKLIST_ADD",
+        "COMMAND_BLOCKLIST_REMOVE",
     ):
         return operation.target_garden_name
 

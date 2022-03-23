@@ -50,6 +50,8 @@ import beer_garden.router
 from beer_garden.api.http.client import SerializeHelper
 from beer_garden.api.http.processors import EventManager, websocket_publish
 from beer_garden.api.http.schemas.v1.command_publishing_blocklist import (
+    CommandPublishingBlocklistListInputSchema,
+    CommandPublishingBlocklistListSchema,
     CommandPublishingBlocklistSchema,
 )
 from beer_garden.api.http.schemas.v1.role import RoleListSchema
@@ -217,11 +219,11 @@ def _setup_tornado_app() -> Application:
         (rf"{prefix}api/v1/whoami/?", v1.user.WhoAmIAPI),
         (
             rf"{prefix}api/v1/commandpublishingblocklist/(\w+)/?",
-            v1.command_publishing_blocklist.CommandPublishingBlockListPathAPI,
+            v1.command_publishing_blocklist.CommandPublishingBlocklistPathAPI,
         ),
         (
             rf"{prefix}api/v1/commandpublishingblocklist/?",
-            v1.command_publishing_blocklist.CommandPublishingBlockListAPI,
+            v1.command_publishing_blocklist.CommandPublishingBlocklistAPI,
         ),
         (rf"{prefix}api/v1/roles/?", v1.role.RoleListAPI),
         # Beta
@@ -330,6 +332,14 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition("UserCreate", schema=UserCreateSchema)
     api_spec.definition(
         "CommandPublishingBlocklist", schema=CommandPublishingBlocklistSchema
+    )
+    api_spec.definition(
+        "CommandPublishingBlocklistListSchema",
+        schema=CommandPublishingBlocklistListSchema,
+    )
+    api_spec.definition(
+        "CommandPublishingBlocklistListInputSchema",
+        schema=CommandPublishingBlocklistListInputSchema,
     )
     api_spec.definition("UserList", schema=UserListSchema)
     api_spec.definition("UserPatch", schema=UserPatchSchema)

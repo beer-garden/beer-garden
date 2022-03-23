@@ -1,17 +1,20 @@
-from brewtils.models import Operation
-
-import beer_garden.config as config
-import beer_garden.router
-from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.db.mongo.models import CommandPublishingBlockList
 from beer_garden.api.authorization import Permissions
-from beer_garden.db.mongo.models import System
-
+from beer_garden.api.http.handlers import AuthorizationHandler
+from beer_garden.api.http.schemas.v1.command_publishing_blocklist import (
+    CommandPublishingBlocklistListInputSchema,
+    CommandPublishingBlocklistSchema,
+)
+from beer_garden.command_publishing_blocklist import (
+    command_publishing_blocklist_add,
+    command_publishing_blocklist_delete,
+)
+from beer_garden.db.mongo.models import CommandPublishingBlockList, Garden
 
 SYSTEM_UPDATE = Permissions.SYSTEM_UPDATE.value
+SYSTEM_READ = Permissions.SYSTEM_READ.value
 
 
-class CommandPublishingBlockListPathAPI(AuthorizationHandler):
+class CommandPublishingBlocklistPathAPI(AuthorizationHandler):
     def delete(self, command_publishing_id):
         """
         ---
@@ -37,38 +40,22 @@ class CommandPublishingBlockListPathAPI(AuthorizationHandler):
         blocked_command = CommandPublishingBlockList.objects.get(
             id=command_publishing_id
         )
-        systems = System.objects(namespace=blocked_command["namespace"], name=blocked_command["system"])
-        self.get_or_raise(System, SYSTEM_UPDATE, id=systems[0].id)
-
-        if config.get("garden.name") != blocked_command["namespace"]:
-            beer_garden.router.route(
-                Operation(
-                    operation_type="COMMAND_BLOCK_LIST_REMOVE",
-                    args=[command_publishing_id],
-                    target_garden_name=config.get("garden.name"),
-                )
-            )
-        beer_garden.router.route(
-            Operation(
-                operation_type="COMMAND_BLOCK_LIST_REMOVE",
-                args=[command_publishing_id],
-                target_garden_name=blocked_command["namespace"],
-            )
-        )
+        _ = self.get_or_raise(Garden, SYSTEM_UPDATE, name=blocked_command.namespace)
+        command_publishing_blocklist_delete(blocked_command)
 
         self.set_status(204)
 
 
-class CommandPublishingBlockListAPI(AuthorizationHandler):
+class CommandPublishingBlocklistAPI(AuthorizationHandler):
     def get(self):
         """
         ---
         summary: Retrieve list of commands in publishing block list
         responses:
-          201:
+          200:
             description: list of commands in publishing block list
             schema:
-              $ref: '#/definitions/CommandPublishingBlocklist'
+              $ref: '#/definitions/CommandPublishingBlocklistListSchema'
           400:
             $ref: '#/definitions/400Error'
           50x:
@@ -76,11 +63,14 @@ class CommandPublishingBlockListAPI(AuthorizationHandler):
         tags:
           - Command Block List
         """
-        response = beer_garden.router.route(
-            Operation(
-                operation_type="COMMAND_BLOCK_LIST_GET",
-            )
+        permitted_blocklist_entries = self.permissioned_queryset(
+            CommandPublishingBlockList, SYSTEM_READ
         )
+        response = {
+            "command_publishing_blocklist": CommandPublishingBlocklistSchema(many=True)
+            .dump(permitted_blocklist_entries)
+            .data
+        }
 
         self.write(response)
 
@@ -93,16 +83,14 @@ class CommandPublishingBlockListAPI(AuthorizationHandler):
             in: body
             description: The system, namespace and command name
             schema:
-              type: array
-              items:
-                  $ref: '#/definitions/CommandPublishingBlocklist'
+              $ref: '#/definitions/CommandPublishingBlocklistListInputSchema'
         consumes:
           - application/json
         responses:
           201:
-            description: Command has been added to publishing block list
+            description: list of commands that have been added to publishing block list
             schema:
-              $ref: '#/definitions/CommandPublishingBlocklist'
+              $ref: '#/definitions/CommandPublishingBlocklistListSchema'
           400:
             $ref: '#/definitions/400Error'
           50x:
@@ -110,29 +98,22 @@ class CommandPublishingBlockListAPI(AuthorizationHandler):
         tags:
           - Command Block List
         """
-        errors = []
-        for command in self.request_body:
-            systems = System.objects(namespace=command["namespace"], name=command["system"])
-            try:
-                self.get_or_raise(System, SYSTEM_UPDATE, id=systems[0].id)
-                if config.get("garden.name") != command["namespace"]:
-                    blocked_command = beer_garden.router.route(
-                        Operation(
-                            operation_type="COMMAND_BLOCK_LIST_ADD",
-                            kwargs={"command": command},
-                            target_garden_name=config.get("garden.name"),
-                        )
-                    )
-                    command["id"] = blocked_command._data["id"].__str__()
+        commands = self.schema_validated_body(CommandPublishingBlocklistListInputSchema)
+        checked_gardens = []
+        for command in commands["command_publishing_blocklist"]:
+            if command["namespace"] not in checked_gardens:
+                _ = self.get_or_raise(Garden, SYSTEM_UPDATE, name=command["namespace"])
+                checked_gardens.append(command["namespace"])
+        added_commands = []
+        for command in commands["command_publishing_blocklist"]:
+            blocked_command = command_publishing_blocklist_add(command)
+            added_commands.append(blocked_command)
 
-                beer_garden.router.route(
-                    Operation(
-                        operation_type="COMMAND_BLOCK_LIST_ADD",
-                        kwargs={"command": command},
-                        target_garden_name=command["namespace"],
-                    )
-                )
-            except Exception as e:
-                errors.append(f"{e.__str__()} for {command.__str__()}")
+        response = {
+            "command_publishing_blocklist": CommandPublishingBlocklistSchema(many=True)
+            .dump(added_commands)
+            .data
+        }
 
         self.set_status(201)
+        self.write(response)

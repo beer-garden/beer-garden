@@ -338,7 +338,7 @@ class Application(StoppableThread):
             event_manager.register(
                 HttpParentUpdater(
                     easy_client=easy_client,
-                    block_list=config.get("parent.skip_events"),
+                    blocklist=config.get("parent.skip_events"),
                     reconnect_action=reconnect_action,
                 )
             )

@@ -916,6 +916,7 @@ class CommandPublishingBlockList(Document):
     namespace = StringField(required=True)
     system = StringField(required=True)
     command = StringField(required=True)
+    status = StringField(required=False)
 
     meta = {
         "indexes": [{"fields": ["namespace", "system", "command"], "unique": True}],
