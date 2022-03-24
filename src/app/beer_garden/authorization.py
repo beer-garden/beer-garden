@@ -231,11 +231,9 @@ def _get_garden_name_field(model: Type[Document]):
     field_name_map = {
         "Garden": "name",
         "Job": "request_template__namespace",
-        "Request": "namespace",
-        "System": "namespace",
     }
 
-    return field_name_map.get(model.__name__)
+    return field_name_map.get(model.__name__, "namespace")
 
 
 def _get_object_ids_from_domain(domain: RoleAssignmentDomain) -> list:
