@@ -32,6 +32,23 @@ authInterceptorService.$inject = ['$q', '$injector'];
 export function authInterceptorService($q, $injector) {
   let inFlightAuthRequest = null;
 
+  const doLogin = function(rejection) {
+    const $rootScope = $injector.get('$rootScope');
+    const loginModal = $rootScope.doLogin();
+
+    if (rejection.config.method !== 'GET') {
+      return loginModal.result.then(
+          () => {
+            // noop; modal will refresh the page
+          },
+          () => {
+            // User dismissed the modal so return the original rejection
+            return $q.reject(rejection);
+          },
+      );
+    }
+  };
+
   return {
     responseError: (rejection) => {
       // 401 means 'needs authentication'
@@ -72,27 +89,25 @@ export function authInterceptorService($q, $injector) {
 
           return deferred.promise;
         } else {
-          // No refresh token - show the login modal
-          // If this is a GET we're going to assume that retrying is taken care
-          // of by the controllers handling the userChange event.
-          // For other verbs we'll retry if the login is successful
-          const loginModal = $rootScope.doLogin();
-          if (rejection.config.method !== 'GET') {
-            return loginModal.result.then(
-                (result) => {
-                // At this point there'll be updated tokens, so set the
-                // Authorization header to the updated default
-                  rejection.config.headers.Authorization =
-                  $http.defaults.headers.common.Authorization;
+          // If trusted header authentication is available, just try to login
+          // without opening the modal.
+          if ($rootScope.config.trustedHeaderAuthEnabled) {
+            if (!inFlightAuthRequest) {
+              inFlightAuthRequest = TokenService.doLogin();
+            }
 
-                  // And then retry the original request
-                  return $http(rejection.config);
-                },
-                () => {
-                // User dismissed the modal so return the original rejection
-                  return $q.reject(rejection);
+            return inFlightAuthRequest.then(
+                ()=> {
+                  inFlightAuthRequest = null;
+                  // login succeeded, reload the page
+                  location.reload();
+                }, () => {
+                  // login failed, open the login modal
+                  return doLogin(rejection);
                 },
             );
+          } else {
+            return doLogin(rejection);
           }
         }
       }

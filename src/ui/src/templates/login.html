@@ -7,23 +7,28 @@
     <div class="row m-b-1">
       <div class="col-md-12">
         <input
+          id="username"
           type="text"
           class="w-100"
           placeholder="username"
           ng-model="model.username"
-          ng-class="{'red-border': badUsername}"
         />
       </div>
     </div>
     <div class="row m-b-1">
       <div class="col-md-12">
         <input
+          id="password"
           type="password"
           class="w-100"
           placeholder="password"
           ng-model="model.password"
-          ng-class="{'red-border': badPassword}"
         />
+      </div>
+    </div>
+    <div class="row m-b-1" ng-if="loginFailed">
+      <div class="col-md-12" style="color: red">
+        Invalid username or password
       </div>
     </div>
   </div>
