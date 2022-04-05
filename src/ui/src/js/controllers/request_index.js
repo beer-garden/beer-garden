@@ -82,78 +82,7 @@ export default function requestIndexController(
             },
         );
       })
-      .withLightColumnFilter({
-        0: {
-          html: 'input',
-          type: 'text',
-          attr: {class: 'form-inline form-control', title: 'Command Filter'},
-        },
-        1: {
-          html: 'input',
-          type: 'text',
-          attr: {class: 'form-inline form-control', title: 'Namespace Filter'},
-        },
-        2: {
-          html: 'input',
-          type: 'text',
-          attr: {class: 'form-inline form-control', title: 'System Filter'},
-        },
-        3: {
-          html: 'input',
-          type: 'text',
-          attr: {class: 'form-inline form-control', title: 'Version Filter'},
-        },
-        4: {
-          html: 'input',
-          type: 'text',
-          attr: {class: 'form-inline form-control', title: 'Instance Filter'},
-        },
-        5: {
-          html: 'input',
-          type: 'text',
-          attr: {class: 'form-inline form-control', title: 'Requester Filter'},
-        },
-        6: {
-          html: 'select',
-          type: 'text',
-          cssClass: 'form-inline form-control',
-          values: [
-            {value: '', label: ''},
-            {value: 'CREATED', label: 'CREATED'},
-            {value: 'RECEIVED', label: 'RECEIVED'},
-            {value: 'IN_PROGRESS', label: 'IN PROGRESS'},
-            {value: 'CANCELED', label: 'CANCELED'},
-            {value: 'SUCCESS', label: 'SUCCESS'},
-            {value: 'ERROR', label: 'ERROR'},
-          ],
-        },
-        7: {
-          html: 'range',
-          type: 'text',
-          attr: {
-            class: 'form-inline form-control w-50',
-          },
-          startAttr: {
-            placeholder: 'start',
-            title: 'Start Timestamp Filter',
-          },
-          endAttr: {
-            placeholder: 'end',
-            title: 'End Timestamp Filter',
-          },
-          picker: {
-            format: 'YYYY-MM-DD HH:mm:ss',
-            showClear: true,
-            showTodayButton: true,
-            useCurrent: false,
-          },
-        },
-        8: {
-          html: 'input',
-          type: 'text',
-          attr: {class: 'form-inline form-control', title: 'Comment Filter'},
-        },
-      })
+      .withLightColumnFilter({})
       .withDataProp('data')
       .withOption('order', [6, 'desc'])
       .withOption('serverSide', true)
@@ -245,6 +174,85 @@ export default function requestIndexController(
       localStorageService.set('_request_index_length', len);
     });
   };
+
+  const lightColumnFilterOptions = {
+    command: {
+      html: 'input',
+      type: 'text',
+      attr: {class: 'form-inline form-control', title: 'Command Filter'},
+    },
+    namespace: {
+      html: 'input',
+      type: 'text',
+      attr: {class: 'form-inline form-control', title: 'Namespace Filter'},
+    },
+    system: {
+      html: 'input',
+      type: 'text',
+      attr: {class: 'form-inline form-control', title: 'System Filter'},
+    },
+    system_version: {
+      html: 'input',
+      type: 'text',
+      attr: {class: 'form-inline form-control', title: 'Version Filter'},
+    },
+    instance_name: {
+      html: 'input',
+      type: 'text',
+      attr: {class: 'form-inline form-control', title: 'Instance Filter'},
+    },
+    requester: {
+      html: 'input',
+      type: 'text',
+      attr: {class: 'form-inline form-control', title: 'Requester Filter'},
+    },
+    status: {
+      html: 'select',
+      type: 'text',
+      cssClass: 'form-inline form-control',
+      values: [
+        {value: '', label: ''},
+        {value: 'CREATED', label: 'CREATED'},
+        {value: 'RECEIVED', label: 'RECEIVED'},
+        {value: 'IN_PROGRESS', label: 'IN PROGRESS'},
+        {value: 'CANCELED', label: 'CANCELED'},
+        {value: 'SUCCESS', label: 'SUCCESS'},
+        {value: 'ERROR', label: 'ERROR'},
+      ],
+    },
+    created_at: {
+      html: 'range',
+      type: 'text',
+      attr: {
+        class: 'form-inline form-control w-50',
+      },
+      startAttr: {
+        placeholder: 'start',
+        title: 'Start Timestamp Filter',
+      },
+      endAttr: {
+        placeholder: 'end',
+        title: 'End Timestamp Filter',
+      },
+      picker: {
+        format: 'YYYY-MM-DD HH:mm:ss',
+        showClear: true,
+        showTodayButton: true,
+        useCurrent: false,
+      },
+    },
+    comment: {
+      html: 'input',
+      type: 'text',
+      attr: {class: 'form-inline form-control', title: 'Comment Filter'},
+    },
+    metadata: {},
+  };
+
+  $scope.dtColumns.forEach((column, i) => {
+    $scope.dtOptions.lightColumnFilterOptions[i] = lightColumnFilterOptions[column.mData];
+  });
+
 
   EventService.addCallback('request_index', (event) => {
     if (!event.error) {
