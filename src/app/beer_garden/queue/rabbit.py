@@ -95,7 +95,7 @@ def create(instance: Instance, system: System) -> dict:
         "user": mq_config.connections.message.user,
         "password": mq_config.connections.message.password,
         "virtual_host": mq_config.virtual_host,
-        "ssl": {"enabled": mq_config.connections.message.ssl.enabled},
+        "ssl": mq_config.connections.message.ssl,
     }
 
     return {
