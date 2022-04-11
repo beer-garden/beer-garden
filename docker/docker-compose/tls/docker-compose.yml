@@ -100,7 +100,7 @@ services:
         restart: always
 
     rabbitmq:
-        image: rabbitmq:management-alpine
+        image: rabbitmq:3.8-management-alpine
         restart: always
         hostname: rabbitmq
         networks:
@@ -112,14 +112,14 @@ services:
             RABBITMQ_SSL_CACERTFILE: /certs/ca_certificate.pem
             RABBITMQ_SSL_CERTFILE: /certs/combined_server.pem
             RABBITMQ_SSL_DEPTH: 2
-            RABBITMQ_SSL_FAIL_IF_NO_PEER_CERT: "false"
+            RABBITMQ_SSL_FAIL_IF_NO_PEER_CERT: "true"
             RABBITMQ_SSL_KEYFILE: /certs/combined_server.pem
             RABBITMQ_SSL_VERIFY: verify_peer
 
             RABBITMQ_MANAGEMENT_SSL_CACERTFILE: /certs/ca_certificate.pem
             RABBITMQ_MANAGEMENT_SSL_CERTFILE: /certs/combined_server.pem
             RABBITMQ_MANAGEMENT_SSL_DEPTH: 2
-            RABBITMQ_MANAGEMENT_SSL_FAIL_IF_NO_PEER_CERT: "false"
+            RABBITMQ_MANAGEMENT_SSL_FAIL_IF_NO_PEER_CERT: "true"
             RABBITMQ_MANAGEMENT_SSL_KEYFILE: /certs/combined_server.pem
             RABBITMQ_MANAGEMENT_SSL_VERIFY: verify_peer
         ports:
