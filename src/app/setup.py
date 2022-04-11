@@ -36,6 +36,7 @@ setup(
         "more-itertools<9",
         "motor<3",
         "passlib<1.8",
+        "pathtools==0.1.2",
         "prometheus-client<1",
         "pyyaml<6",
         "pyrabbit2<2",
@@ -43,7 +44,8 @@ setup(
         "ruamel.yaml<0.17",
         "stomp.py<6.2.0",
         "tornado<7",
-        "yapconf>=0.3.7",
+        "watchdog<1",
+        "yapconf==0.3.7",
     ],
     classifiers=[
         "Development Status :: 4 - Beta",
