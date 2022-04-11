@@ -44,7 +44,9 @@ packaging==20.9
 passlib==1.7.4
     # via beer-garden (setup.py)
 pathtools==0.1.2
-    # via watchdog
+    # via
+    #   beer-garden (setup.py)
+    #   watchdog
 pika==1.2.0
     # via brewtils
 prometheus-client==0.13.1
@@ -98,7 +100,9 @@ tzlocal==4.1
 urllib3==1.26.9
     # via requests
 watchdog==0.10.4
-    # via yapconf
+    # via
+    #   beer-garden (setup.py)
+    #   yapconf
 wrapt==1.12.1
     # via brewtils
 yapconf==0.3.7
