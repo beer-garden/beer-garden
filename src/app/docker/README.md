@@ -90,9 +90,9 @@ You can also mount in a configuration file and instruct beer-garden to use it:
 
 ```shell
 $ docker run --name beergarden \
-    -v /path/to/config.yaml:/etc/beergarden/config.yaml \
+    -v /path/to/config.yaml:/conf/config.yaml \
     -d bgio/beer-garden:<tag> \
-    --configuration-file /etc/beergarden/config.yaml
+    --configuration-file /conf/config.yaml
 ```
 
 The beer-garden repo has an
@@ -101,9 +101,9 @@ that can be used as a reference for starting out.
 
 ## Local plugins
 
-By default, beer-garden will look in `/var/lib/beer-garden/plugins`. If you wish
-to run local plugins, you should mount the directory containing the plugins on
-the host to that directory on the container.
+By default, beer-garden will look in `/plugins`. If you wish to run local
+plugins, you should mount the directory containing the plugins on the host to
+that directory on the container.
 
 > **NOTE**: Currently local plugins can only be configured via a configuration
 > file, as described above. Plugins will not be able to read required
@@ -113,10 +113,10 @@ the host to that directory on the container.
 ### Adding plugin dependencies
 
 When the beer-garden container starts, it will install any python dependencies
-listed in `/etc/beer-garden/requirements.txt`. If your local plugins have
-dependencies beyond what is required to run beer-garden itself, you can volume
-mount your own `requirements.txt` to that location to have them installed during
-container startup.
+listed in `/conf/requirements.txt`. If your local plugins have dependencies
+beyond what is required to run beer-garden itself, you can volume mount your own
+`requirements.txt` to that location to have them installed during container
+startup.
 
 > **NOTE**: The ability to install additional dependencies is provided as a
 > convenience, but is **not recommended** due to the inherent risks involved.
