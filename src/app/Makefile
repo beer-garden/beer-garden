@@ -154,6 +154,7 @@ docker-build-debian:
 
 docker-build-unstable: package clean-python ## build nightly docker image
 	docker build -t $(DOCKER_NAME):unstable -f docker/Dockerfile.unstable .
+	docker build -t $(DOCKER_NAME):unstable-debian -f docker/Dockerfile.unstable-debian .
 
 
 # Publishing
@@ -172,3 +173,4 @@ publish-docker: docker-build ## push the docker images
 
 publish-docker-unstable: docker-build-unstable ## push the unstable docker image
 	docker push $(DOCKER_NAME):unstable
+	docker push $(DOCKER_NAME):unstable-debian
