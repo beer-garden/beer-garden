@@ -399,6 +399,17 @@ class TestAuth:
             user_with_role_assignments, "system:read", brewtils_system
         )
 
+    def test_user_has_permission_for_object_raises_error_for_unsupported_type(
+        self, user_with_role_assignments
+    ):
+        """user_has_permission_for_object raises TypeError if an unsupported object
+        type is passed in"""
+
+        with pytest.raises(TypeError):
+            user_has_permission_for_object(
+                user_with_role_assignments, "garden:read", []
+            )
+
     def test_user_permitted_objects_returns_permitted_gardens(
         self, user_with_role_assignments, test_garden
     ):
