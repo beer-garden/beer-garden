@@ -1,5 +1,32 @@
 # Beer Garden Changelog
 
+## 3.13.0
+
+4/12/22
+
+**NOTE:** This release fixes an issue where client certificates would not be
+sent to rabbitmq, even if beer garden was configured to do so. Connecting to
+rabbitmq with certificates currently requires that the provided certificate be a
+key and certificate bundle. Please be aware that in certain configurations where
+the certificate is already set and is not a bundle, your connection to rabbitmq
+may fail under this release. To fix this, switch your certificate to be a bundle
+that also includes the key.
+
+### Bug Fixes
+
+- Client certificates are now properly used when connecting to rabbitmq (Issue
+  #1288).
+- Column filtering headers on the Request page are now properly aligned (Issue
+  #1286)
+- Login form now provides feedback when entering invalid credentials (Issue
+  #1280)
+
+### Other Changes
+
+- The bgio/beer-garden:3-debian image and related images have been modified to
+  more closely align with the alpine image. Usage of the debian image should now
+  be the same as that of the alpine image.
+
 ## 3.12.0
 
 3/21/22
