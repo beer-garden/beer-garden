@@ -49,7 +49,7 @@ pathtools==0.1.2
     #   watchdog
 pika==1.2.0
     # via brewtils
-prometheus-client==0.13.1
+prometheus-client==0.14.1
     # via beer-garden (setup.py)
 pyjwt==1.7.1
     # via brewtils
@@ -57,7 +57,7 @@ pymongo==3.12.3
     # via
     #   mongoengine
     #   motor
-pyparsing==3.0.7
+pyparsing==3.0.8
     # via packaging
 pyrabbit2==1.0.7
     # via beer-garden (setup.py)
@@ -95,7 +95,7 @@ tornado==6.1
     # via beer-garden (setup.py)
 tzdata==2022.1
     # via pytz-deprecation-shim
-tzlocal==4.1
+tzlocal==4.2
     # via apscheduler
 urllib3==1.26.9
     # via requests
