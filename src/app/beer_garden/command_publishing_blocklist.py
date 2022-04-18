@@ -5,7 +5,7 @@ from beer_garden.db.mongo.models import CommandPublishingBlockList
 
 
 def command_publishing_blocklist_add(command: dict):
-    """Creates the provided CommandPublishingBlockList by setting its attributes the provided arg.
+    """Creates the provided CommandPublishingBlockList by setting its attributes to the provided arg.
     The created CommandPublishingBlockList object is then saved to the database and returned.
 
     Args:
@@ -35,8 +35,8 @@ def command_publishing_blocklist_add(command: dict):
     return blocked_command
 
 
-def command_publishing_blocklist_save(command):
-    """Creates the provided CommandPublishingBlockList by setting its attributes the provided arg.
+def command_publishing_blocklist_save(command: dict):
+    """Creates the provided CommandPublishingBlockList by setting its attributes to the provided arg.
     The created CommandPublishingBlockList object is then saved to the database.
 
     Args:
