@@ -1,23 +1,23 @@
 from brewtils.models import Operation
 
 import beer_garden.config as config
-from beer_garden.db.mongo.models import CommandPublishingBlockList
+from beer_garden.db.mongo.models import CommandPublishingBlocklist
 
 
 def command_publishing_blocklist_add(command: dict):
-    """Creates the provided CommandPublishingBlockList by setting its attributes to the provided arg.
-    The created CommandPublishingBlockList object is then saved to the database and returned.
+    """Creates the provided CommandPublishingBlocklist by setting its attributes to the provided arg.
+    The created CommandPublishingBlocklist object is then saved to the database and returned.
 
     Args:
         command: a dict with {namespace: string, command: string, system: string}
 
     Returns:
-        CommandPublishingBlockList: the created CommandPublishingBlockList instance
+        CommandPublishingBlocklist: the created CommandPublishingBlocklist instance
     """
     import beer_garden.router
 
     if config.get("garden.name") != command["namespace"]:
-        blocked_command = CommandPublishingBlockList(**command)
+        blocked_command = CommandPublishingBlocklist(**command)
         blocked_command.save()
         command["id"] = str(blocked_command.id)
         beer_garden.router.route(
@@ -30,26 +30,26 @@ def command_publishing_blocklist_add(command: dict):
         blocked_command.status = "ADD_REQUESTED"
         blocked_command.save()
     else:
-        blocked_command = CommandPublishingBlockList(**command)
+        blocked_command = CommandPublishingBlocklist(**command)
         blocked_command.save()
     return blocked_command
 
 
 def command_publishing_blocklist_save(command: dict):
-    """Creates the provided CommandPublishingBlockList by setting its attributes to the provided arg.
-    The created CommandPublishingBlockList object is then saved to the database.
+    """Creates the provided CommandPublishingBlocklist by setting its attributes to the provided arg.
+    The created CommandPublishingBlocklist object is then saved to the database.
 
     Args:
         command: a dict with {namespace: string, command: string, system: string}
     """
-    CommandPublishingBlockList(**command).save()
+    CommandPublishingBlocklist(**command).save()
 
 
-def command_publishing_blocklist_delete(blocked_command: CommandPublishingBlockList):
-    """Deletes the provided CommandPublishingBlockList object from database.
+def command_publishing_blocklist_delete(blocked_command: CommandPublishingBlocklist):
+    """Deletes the provided CommandPublishingBlocklist object from database.
 
     Args:
-        blocked_command: a CommandPublishingBlockList object
+        blocked_command: a CommandPublishingBlocklist object
     """
     if config.get("garden.name") != blocked_command.namespace:
         import beer_garden.router
@@ -68,9 +68,9 @@ def command_publishing_blocklist_delete(blocked_command: CommandPublishingBlockL
 
 
 def command_publishing_blocklist_remove(command_publishing_id: str):
-    """Deletes the CommandPublishingBlockList object with corresponding id from database.
+    """Deletes the CommandPublishingBlocklist object with corresponding id from database.
 
     Args:
-        command_publishing_id: a string of an id used to get CommandPublishingBlockList object from database
+        command_publishing_id: a string of an id used to get CommandPublishingBlocklist object from database
     """
-    CommandPublishingBlockList.objects.filter(id=command_publishing_id).delete()
+    CommandPublishingBlocklist.objects.filter(id=command_publishing_id).delete()

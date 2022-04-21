@@ -6,7 +6,7 @@ from tornado.httpclient import HTTPError, HTTPRequest
 from beer_garden.api.http import CommandPublishingBlocklistListSchema
 from beer_garden.api.http.authentication import issue_token_pair
 from beer_garden.db.mongo.models import (
-    CommandPublishingBlockList,
+    CommandPublishingBlocklist,
     Garden,
     Role,
     RoleAssignment,
@@ -21,7 +21,7 @@ command_name = "somecommand"
 
 @pytest.fixture
 def blocklist():
-    blocklist = CommandPublishingBlockList(
+    blocklist = CommandPublishingBlocklist(
         namespace=garden_name, system=system_name, command=command_name
     )
     blocklist.save()
@@ -107,10 +107,10 @@ def access_token_user(user):
 @pytest.fixture
 def blocklist_cleanup():
     yield
-    CommandPublishingBlockList.drop_collection()
+    CommandPublishingBlocklist.drop_collection()
 
 
-class TestCommandPublishingBlockListAPI:
+class TestCommandPublishingBlocklistAPI:
     @pytest.mark.gen_test
     def test_delete(self, http_client, base_url, garden, blocklist):
         url = f"{base_url}/api/v1/commandpublishingblocklist/{blocklist.id}"
@@ -119,7 +119,7 @@ class TestCommandPublishingBlockListAPI:
         response = yield http_client.fetch(request)
 
         assert response.code == 204
-        assert len(CommandPublishingBlockList.objects.filter(id=blocklist.id)) == 0
+        assert len(CommandPublishingBlocklist.objects.filter(id=blocklist.id)) == 0
 
     @pytest.mark.gen_test
     def test_delete_404(self, http_client, base_url):
@@ -151,7 +151,7 @@ class TestCommandPublishingBlockListAPI:
         response = yield http_client.fetch(request)
 
         assert response.code == 204
-        assert len(CommandPublishingBlockList.objects.filter(id=blocklist.id)) == 0
+        assert len(CommandPublishingBlocklist.objects.filter(id=blocklist.id)) == 0
 
     @pytest.mark.gen_test
     def test_delete_auth_403_user_no_permisions(

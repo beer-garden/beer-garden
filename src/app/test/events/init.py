@@ -3,7 +3,7 @@ import pytest
 from brewtils.models import Event
 
 from beer_garden import config
-from beer_garden.db.mongo.models import CommandPublishingBlockList, Request
+from beer_garden.db.mongo.models import CommandPublishingBlocklist, Request
 from beer_garden.events import event_blocklisted
 
 
@@ -22,7 +22,7 @@ class TestSendEventToParent(object):
 
     @pytest.fixture()
     def command_blocklist(self):
-        blocklist = CommandPublishingBlockList(
+        blocklist = CommandPublishingBlocklist(
             namespace=self.event.payload.namespace,
             system=self.event.payload.system,
             command=self.event.payload.command,

@@ -80,7 +80,7 @@ __all__ = [
     "RoleAssignment",
     "User",
     "RemoteUser",
-    "CommandPublishingBlockList",
+    "CommandPublishingBlocklist",
 ]
 
 REQUEST_MAX_PARAM_SIZE = 5 * 1_000_000
@@ -912,7 +912,7 @@ class RawFile(Document):
     meta = {"queryset_class": FileFieldHandlingQuerySet}
 
 
-class CommandPublishingBlockList(Document):
+class CommandPublishingBlocklist(Document):
     namespace = StringField(required=True)
     system = StringField(required=True)
     command = StringField(required=True)
