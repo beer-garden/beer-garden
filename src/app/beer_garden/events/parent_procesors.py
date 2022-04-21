@@ -18,10 +18,10 @@ class HttpParentUpdater(QueueListener):
     """
 
     def __init__(
-        self, easy_client=None, block_list=None, reconnect_action=None, **kwargs
+        self, easy_client=None, blocklist=None, reconnect_action=None, **kwargs
     ):
         self._ez_client = easy_client
-        self._block_list = block_list or []
+        self._blocklist = blocklist or []
         self._reconnect_action = reconnect_action
         self._connected = True
 

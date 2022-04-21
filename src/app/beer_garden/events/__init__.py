@@ -8,7 +8,7 @@ import wrapt
 from brewtils.models import Event, Events
 
 from beer_garden import config as config
-from beer_garden.db.mongo.models import CommandPublishingBlockList
+from beer_garden.db.mongo.models import CommandPublishingBlocklist
 
 # In this master process this should be an instance of EventManager, and in entry points
 # it should be an instance of EntryPointManager
@@ -147,13 +147,13 @@ def _event_blocklisted_by_name(event):
 def _event_blocklisted_by_command(event):
     if event.payload_type == "Request":
         try:
-            CommandPublishingBlockList.objects.get(
+            CommandPublishingBlocklist.objects.get(
                 namespace=event.payload.namespace,
                 system=event.payload.system,
                 command=event.payload.command,
             )
             return True
-        except CommandPublishingBlockList.DoesNotExist:
+        except CommandPublishingBlocklist.DoesNotExist:
             pass
     return False
 
