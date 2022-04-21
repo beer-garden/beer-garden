@@ -1,4 +1,5 @@
 from beer_garden.api.authorization import Permissions
+from beer_garden.api.http.exceptions import BadRequest, NotFound
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.api.http.schemas.v1.command_publishing_blocklist import (
     CommandPublishingBlocklistListInputSchema,
@@ -8,7 +9,6 @@ from beer_garden.command_publishing_blocklist import (
     command_publishing_blocklist_add,
     command_publishing_blocklist_delete,
 )
-from beer_garden.api.http.exceptions import BadRequest, NotFound
 from beer_garden.db.mongo.models import CommandPublishingBlocklist, Garden
 
 SYSTEM_UPDATE = Permissions.SYSTEM_UPDATE.value
@@ -104,9 +104,13 @@ class CommandPublishingBlocklistAPI(AuthorizationHandler):
         for command in commands["command_publishing_blocklist"]:
             if command["namespace"] not in checked_gardens:
                 try:
-                    _ = self.get_or_raise(Garden, SYSTEM_UPDATE, name=command["namespace"])
+                    _ = self.get_or_raise(
+                        Garden, SYSTEM_UPDATE, name=command["namespace"]
+                    )
                 except NotFound:
-                    raise BadRequest(reason=f"Invalid garden name: {command['namespace']}")
+                    raise BadRequest(
+                        reason=f"Invalid garden name: {command['namespace']}"
+                    )
                 checked_gardens.append(command["namespace"])
         added_commands = []
         for command in commands["command_publishing_blocklist"]:
