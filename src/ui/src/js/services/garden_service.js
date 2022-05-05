@@ -37,11 +37,21 @@ export default function gardenService($rootScope, $http) {
     });
   };
 
-  GardenService.syncUsers = function() {
+  GardenService.syncUsers = function(syncRoles = false) {
+    const patchOps = [
+      {
+        operation: 'sync_users',
+      },
+    ];
+
+    if (syncRoles) {
+      patchOps.push({
+        operation: 'sync_roles',
+      });
+    }
+
     return $http.patch('api/v1/gardens/', {
-      operation: 'sync_users',
-      path: '',
-      value: '',
+      operations: patchOps,
     });
   };
 

@@ -29,7 +29,7 @@ export default function syncUsersController(
       }
     });
 
-    GardenService.syncUsers();
+    GardenService.syncUsers($scope.syncRoles);
   };
 
   $scope.cancel = function() {
@@ -45,10 +45,12 @@ export default function syncUsersController(
   };
 
   EventService.addCallback('sync_users', (event) => {
-    if (event.name === 'USERS_IMPORTED') {
-      $scope.$apply(() => {
-        handleUsersImportedEvent(event);
-      });
+    switch (event.name) {
+      case 'USERS_IMPORTED':
+      case 'ROLES_IMPORTED':
+        $scope.$apply(() => {
+          handleImportedEvent(event);
+        });
     }
   });
 
@@ -56,10 +58,22 @@ export default function syncUsersController(
     EventService.removeCallback('sync_users');
   });
 
-  const handleUsersImportedEvent = function(event) {
+  const handleImportedEvent = function(event) {
     $scope.gardens.forEach((garden) => {
       if (garden.name === event.metadata.garden) {
-        garden.syncStatus = 'COMPLETE';
+        switch (event.name) {
+          case 'USERS_IMPORTED':
+            garden.userSyncStatus = 'COMPLETE';
+          case 'ROLES_IMPORTED':
+            garden.roleSyncStatus = 'COMPLETE';
+        }
+
+        if (
+          garden.userSyncStatus === 'COMPLETE' &&
+          (garden.roleSyncStatus === 'COMPLETE' || $scope.syncRoles === false)
+        ) {
+          garden.syncStatus = 'COMPLETE';
+        }
       }
     });
   };
@@ -67,6 +81,7 @@ export default function syncUsersController(
   const successCallback = function(response) {
     $scope.response = response;
     $scope.gardens = [];
+    $scope.syncRoles = true;
 
     response.data.forEach((garden) => {
       if (garden.connection_type !== 'LOCAL') {
@@ -74,6 +89,8 @@ export default function syncUsersController(
           garden.syncStatus = 'NOT RUNNING';
         } else {
           garden.syncStatus = 'PENDING';
+          garden.userSyncStatus = 'PENDING';
+          garden.roleSyncStatus = 'PENDING';
         }
 
         $scope.gardens.push(garden);

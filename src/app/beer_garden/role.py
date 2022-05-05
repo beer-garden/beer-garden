@@ -1,7 +1,17 @@
+import logging
+from typing import List
+
+from brewtils.models import Event as BrewtilsEvent
+from brewtils.models import Events as BrewtilsEvents
+from brewtils.models import Operation as BrewtilsOperation
 from marshmallow import Schema, fields
 from mongoengine import DoesNotExist
 
-from beer_garden.db.mongo.models import Role, User
+from beer_garden import config
+from beer_garden.db.mongo.models import Garden, RemoteRole, Role, User
+from beer_garden.events import publish
+
+logger = logging.getLogger(__name__)
 
 
 class RoleSyncSchema(Schema):
@@ -95,3 +105,140 @@ def _delete_roles_not_in_list(roles: list) -> int:
         remove_role(role)
 
     return len(roles_to_remove)
+
+
+def initiate_role_sync() -> None:
+    """Syncs all roles from this garden down to all remote gardens.
+
+    Returns:
+        None
+    """
+    # Avoiding circular imports
+    from beer_garden.router import route
+
+    roles = Role.objects.all()
+    serialized_roles = RoleSyncSchema(many=True).dump(roles).data
+
+    gardens = Garden.objects.filter(
+        connection_type__nin=["LOCAL", None], status="RUNNING"
+    )
+
+    for garden in gardens:
+        operation = BrewtilsOperation(
+            operation_type="ROLE_SYNC",
+            target_garden_name=garden.name,
+            kwargs={"serialized_roles": serialized_roles},
+        )
+
+        route(operation)
+
+
+def role_sync(serialized_roles: List[dict]) -> None:
+    """Function called for the ROLE_SYNC operation type. This imports the supplied list
+    of serialized_roles and then initiates a ROLE_SYNC on any remote gardens. The
+    serialized_roles dicts are expected to have been generated via the RoleSyncSchema.
+
+    Args:
+        serialized_roles: Serialized list of roles
+
+    Returns:
+        None
+    """
+    sync_roles(serialized_roles)
+    _publish_roles_imported()
+    initiate_role_sync()
+
+
+def role_synced_with_garden(role: Role, garden: Garden) -> bool:
+    """Checks if the supplied role is currently synced to the supplied garden, based
+    on the corresponding RemoteRole entry. A role is considered synced if there is a
+    RemoteRole entry for the specified garden and the permissions and description of
+    that entry match those of the Role.
+
+    Args:
+        role: The role for which we are checking the sync status
+        garden: The remote garden to check the status against
+
+    Returns:
+        bool: True if the role is currently synced. False otherwise.
+    """
+    try:
+        remote_role = RemoteRole.objects.get(name=role.name, garden=garden.name)
+    except RemoteRole.DoesNotExist:
+        return False
+
+    return (set(role.permissions) == set(remote_role.permissions)) and (
+        role.description == remote_role.description
+    )
+
+
+def role_sync_status(role: Role) -> dict:
+    """Provides the sync status of the provided Role with each remote garden. The
+    resulting dict formatting os:
+
+    { "remote_garden_name": bool }
+
+    Args:
+        role: The role for which we are checking the sync status
+
+    Returns:
+        dict: Sync status by garden name
+    """
+    sync_status = {}
+
+    for garden in Garden.objects.filter(connection_type__nin=["LOCAL"]):
+        sync_status[garden.name] = role_synced_with_garden(role, garden)
+
+    return sync_status
+
+
+def handle_event(event: BrewtilsEvent) -> None:
+    """Processes the provided event by calling the correct handler function(s) for the
+    given event type.
+
+    Args:
+        event: The BrewtilsEvent to process
+
+    Returns:
+        None
+    """
+    # Only handle events from downstream gardens
+    if event.garden == config.get("garden.name"):
+        return
+
+    if event.name == "ROLE_UPDATED":
+        _handle_role_updated_event(event)
+
+
+def _handle_role_updated_event(event: BrewtilsEvent) -> None:
+    """Handling for ROLE_UPDATED events"""
+    # NOTE: This event stores its data in the metadata field as a workaround to the
+    # brewtils models dependency inherent in the more typical event publishing flow
+    try:
+        garden = event.metadata["garden"]
+        updated_role = event.metadata["role"]
+        name = updated_role["name"]
+
+        try:
+            remote_role = RemoteRole.objects.get(garden=garden, name=name)
+        except RemoteRole.DoesNotExist:
+            remote_role = RemoteRole(garden=garden, name=name)
+
+        remote_role.permissions = updated_role.get("permissions")
+        remote_role.description = updated_role.get("description")
+        remote_role.updated_at = event.timestamp
+        remote_role.save()
+    except KeyError:
+        logger.error("Error parsing %s event from garden %s", event.name, event.garden)
+
+
+def _publish_roles_imported() -> None:
+    """Publish an invent indicating that a role sync was completed"""
+    publish(
+        BrewtilsEvent(
+            name=BrewtilsEvents.ROLES_IMPORTED.name,
+            metadata={
+                "garden": config.get("garden.name"),
+            },
+        )
+    )

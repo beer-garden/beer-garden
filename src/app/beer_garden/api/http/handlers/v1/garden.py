@@ -12,6 +12,7 @@ from beer_garden.authorization import user_has_permission_for_object
 from beer_garden.db.mongo.api import MongoParser
 from beer_garden.db.mongo.models import Garden
 from beer_garden.garden import local_garden
+from beer_garden.role import initiate_role_sync
 from beer_garden.user import initiate_user_sync
 
 GARDEN_CREATE = Permissions.GARDEN_CREATE.value
@@ -174,7 +175,7 @@ class GardenListAPI(AuthorizationHandler):
         summary: Retrieve a list of Gardens
         responses:
           200:
-            description: Garden with the given garden_name
+            description: A list of all gardens
             schema:
               type: array
               items:
@@ -247,6 +248,7 @@ class GardenListAPI(AuthorizationHandler):
 
           * sync
           * sync_users
+          * sync_roles
 
           ```JSON
           [
@@ -254,11 +256,6 @@ class GardenListAPI(AuthorizationHandler):
           ]
           ```
         parameters:
-          - name: garden_name
-            in: path
-            required: true
-            description: Garden to use
-            type: string
           - name: patch
             in: body
             required: true
@@ -296,6 +293,12 @@ class GardenListAPI(AuthorizationHandler):
                     self.verify_user_permission_for_object(GARDEN_UPDATE, garden)
 
                 initiate_user_sync()
+            elif operation == "sync_roles":
+                # requires GARDEN_UPDATE for all gardens
+                for garden in Garden.objects.all():
+                    self.verify_user_permission_for_object(GARDEN_UPDATE, garden)
+
+                initiate_role_sync()
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 

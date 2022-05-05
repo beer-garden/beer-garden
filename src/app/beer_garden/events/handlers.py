@@ -11,9 +11,11 @@ import beer_garden.local_plugins.manager
 import beer_garden.log
 import beer_garden.plugin
 import beer_garden.requests
+import beer_garden.role
 import beer_garden.router
 import beer_garden.scheduler
 import beer_garden.systems
+import beer_garden.user
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +49,7 @@ def garden_callbacks(event: Event) -> None:
         (beer_garden.files.handle_event, "File"),
         (beer_garden.local_plugins.manager.handle_event, "Local plugins manager"),
         (beer_garden.user.handle_event, "User event handler"),
+        (beer_garden.role.handle_event, "Role event handler"),
     ]:
         try:
             handler(deepcopy(event))

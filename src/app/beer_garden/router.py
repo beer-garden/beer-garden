@@ -39,6 +39,7 @@ import beer_garden.namespace
 import beer_garden.plugin
 import beer_garden.queues
 import beer_garden.requests
+import beer_garden.role
 import beer_garden.scheduler
 import beer_garden.systems
 import beer_garden.user
@@ -64,6 +65,7 @@ routable_operations = [
     "COMMAND_BLOCKLIST_ADD",
     "COMMAND_BLOCKLIST_REMOVE",
     "USER_SYNC",
+    "ROLE_SYNC",
 ]
 
 # Executor used to run REQUEST_CREATE operations in an async context
@@ -159,6 +161,7 @@ route_functions = {
     "RUNNER_RESCAN": beer_garden.local_plugins.manager.rescan,
     "PUBLISH_EVENT": beer_garden.events.publish,
     "USER_SYNC": beer_garden.user.user_sync,
+    "ROLE_SYNC": beer_garden.role.role_sync,
     "COMMAND_BLOCKLIST_ADD": beer_garden.command_publishing_blocklist.command_publishing_blocklist_save,
     "COMMAND_BLOCKLIST_REMOVE": beer_garden.command_publishing_blocklist.command_publishing_blocklist_remove,
 }
@@ -635,7 +638,7 @@ def _target_from_type(operation: Operation) -> str:
             System(namespace=parts[0], name=parts[1], version=version)
         )
 
-    if "USER" in operation.operation_type:
+    if operation.operation_type in ["USER_SYNC", "ROLE_SYNC"]:
         return operation.target_garden_name
 
     raise Exception(f"Bad operation type {operation.operation_type}")

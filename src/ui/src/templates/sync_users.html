@@ -1,10 +1,19 @@
 <form ng-submit="sync()">
   <div class="modal-header">
     <h3 class="modal-title" id="modal-title">Sync Users</h3>
-    This will sync all users from this garden to all remote gardens, making the
-    role assignments and password for each user on the remote garden match those
-    of the the users for this garden. Any role assignments that were granted
-    directly on the remote gardens will be overwritten by this process.
+    <p>
+      This will sync all users from this garden to all remote gardens, making
+      the role assignments and password for each user on the remote garden match
+      those of the the users for this garden. Any role assignments that were
+      granted directly on the remote gardens will be overwritten by this
+      process.
+    </p>
+
+    <p>
+      By default, roles will be synced along with the users to ensure consistent
+      permissions across all gardens. If you do not wish to include the roles in
+      this sync, uncheck the box labeled "sync roles."
+    </p>
   </div>
 
   <div class="modal-body" id="modal-body">
@@ -27,6 +36,7 @@
         </tr>
       </tbody>
     </table>
+    <input type="checkbox" ng-model="syncRoles" /> sync roles
   </div>
 
   <div class="modal-footer" ng-if="responseState(response) === 'success'">
