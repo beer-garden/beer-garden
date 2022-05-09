@@ -1,7 +1,6 @@
 Beer Garden
 =================================
 
-[![Gitter](https://img.shields.io/badge/gitter-Join%20Us!-ff69b4.svg)](https://gitter.im/beer-garden-io/Lobby)
 [![PyPi Version](https://img.shields.io/pypi/v/beer-garden.svg)](https://pypi.python.org/pypi/beer-garden/)
 [![Integration Tests](https://github.com/beer-garden/beer-garden/actions/workflows/integration_tests.yml/badge.svg)](https://github.com/beer-garden/beer-garden/actions/workflows/integration_tests.yml)
 [![CodeCov](https://codecov.io/gh/beer-garden/beer-garden/branch/develop/graph/badge.svg)](https://codecov.io/gh/beer-garden/beer-garden)
