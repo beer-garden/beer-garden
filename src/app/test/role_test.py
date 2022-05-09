@@ -2,6 +2,7 @@
 import pytest
 from brewtils.models import Event, Events
 from marshmallow import ValidationError
+from mock import Mock
 from mongoengine import DoesNotExist, connect
 
 from beer_garden import config
@@ -65,6 +66,20 @@ def role_sync_data_missing_fields():
             "name": "badrole",
             "description": "hey",
         },
+    ]
+
+    yield role_data
+
+
+@pytest.fixture
+def role_sync_data_protected_role():
+    role_data = [
+        {
+            "name": "protected_role",
+            "description": "can't touch this",
+            "permissions": ["garden:read"],
+            "protected": True,
+        }
     ]
 
     yield role_data
@@ -189,3 +204,23 @@ class TestRole:
         remote_role = RemoteRole.objects.get(name="role1", garden="garden1")
 
         assert remote_role.permissions == permissions
+
+    def test_sync_roles_skips_protected_roles(
+        self, monkeypatch, role_sync_data_protected_role
+    ):
+        Role(**role_sync_data_protected_role[0]).save()
+        monkeypatch.setattr(Role, "save", Mock())
+
+        sync_roles(role_sync_data_protected_role)
+
+        assert Role.save.called is False
+
+    def test_sync_roles_preserves_unlisted_protected_roles(
+        self, role_sync_data_protected_role, role_sync_data
+    ):
+        protected_role = Role(**role_sync_data_protected_role[0]).save()
+
+        # role_sync_data does not include the protected role
+        sync_roles(role_sync_data)
+
+        assert Role.objects.get(name=protected_role.name).id == protected_role.id

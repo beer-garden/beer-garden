@@ -932,6 +932,7 @@ class Role(Document):
     name = StringField(required=True)
     description = StringField()
     permissions = ListField(field=StringField(), validation=validate_permissions)
+    protected = BooleanField(default=False)
 
     meta = {
         "indexes": [{"name": "unique_index", "fields": ["name"], "unique": True}],

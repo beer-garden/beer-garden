@@ -78,6 +78,14 @@ def sync_roles(role_sync_data: list):
     for role in roles:
         try:
             role_obj = Role.objects.get(name=role["name"])
+
+            if role_obj.protected:
+                logger.info(
+                    "Role sync request for protected role %s will be ignored.",
+                    role_obj.name,
+                )
+                continue
+
             role_obj.description = role["description"]
             role_obj.permissions = role["permissions"]
         except DoesNotExist:
@@ -98,7 +106,7 @@ def _delete_roles_not_in_list(roles: list) -> int:
     """
     role_names = [role["name"] for role in roles]
 
-    roles_to_remove = Role.objects.filter(name__nin=role_names)
+    roles_to_remove = Role.objects.filter(name__nin=role_names, protected__ne=True)
 
     for role in roles_to_remove:
         remove_role(role)
