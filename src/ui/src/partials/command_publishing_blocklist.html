@@ -1,0 +1,46 @@
+<fetch-data response="response"></fetch-data>
+
+<div ng-if="responseState(response) === 'success'">
+  <h1 class="page-header">
+    Command Publishing Block List
+    <button type="button"
+            ng-if="responseState(response) === 'success'"
+            ng-show="hasPermission(user, 'job:create')"
+            class="btn btn-primary pull-right"
+            ng-click="openPopup()">
+      Add Commands
+    </button>
+  </h1>
+
+  <div class="container-fluid animate-if">
+    <table
+            id="systemIndexTable"
+            datatable="ng"
+            dt-options="dtOptions"
+            dt-instance="instanceCreated"
+            class="table table-striped table-bordered"
+            style="width: 100%"
+    >
+      <thead>
+      <tr>
+        <th scope="col">Namespace</th>
+        <th scope="col">System</th>
+        <th scope="col">Command</th>
+        <th scope="col">Status</th>
+        <th style="width: fit-content;" scope="col">Delete</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr ng-repeat="command in data | filter:query">
+        <td>{{command.namespace}}</td>
+        <td>{{command.system}}</td>
+        <td>{{command.command}}</td>
+        <td>{{command.status}}</td>
+        <td>
+            <button class="fa fa-trash btn btn-danger" ng-click="deleteBlocklistEntry(command.id, $index)"></button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

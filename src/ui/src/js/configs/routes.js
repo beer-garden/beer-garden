@@ -85,6 +85,11 @@ export default function routeConfig(
         templateUrl: 'about.html',
         controller: 'AboutController',
       })
+      .state('base.commandblocklist', {
+        url: 'commandblocklist',
+        templateUrl: 'command_publishing_blocklist.html',
+        controller: 'CommandPublishingBlocklistController',
+      })
       .state('login', {
         templateUrl: 'login.html',
         controller: 'LoginController',
