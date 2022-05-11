@@ -5,11 +5,7 @@ Beer-Garden App
 
 This is the Beer-garden application backend.
 
-|gitter| |pypi| |travis| |codecov|
-
-.. |gitter| image:: https://img.shields.io/badge/gitter-Join%20Us!-ff69b4.svg
-   :target: https://gitter.im/beer-garden-io/Lobby
-   :alt: Gitter
+|pypi| |travis| |codecov|
 
 .. |pypi| image:: https://img.shields.io/pypi/v/beer-garden.svg
    :target: https://pypi.python.org/pypi/beer-garden
