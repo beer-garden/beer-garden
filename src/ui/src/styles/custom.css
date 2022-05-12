@@ -303,3 +303,19 @@ table.dataTable {
 .animate-fix.ng-animate {
   -webkit-animation: none 0s;
 }
+
+.alert-item.ng-enter,
+.alert-item.ng-leave {
+  -webkit-transition: 3.5s linear all;
+  transition: 3.5s linear all;
+}
+
+.alert-item.ng-enter,
+.alert-item.ng-leave.ng-leave-active {
+  opacity: 0;
+}
+
+.alert-item.ng-leave,
+.alert-item.ng-enter.ng-enter-active {
+  opacity: 1;
+}

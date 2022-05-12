@@ -2,6 +2,8 @@ import _ from 'lodash';
 
 adminGardenViewController.$inject = [
   '$scope',
+  '$window',
+  '$timeout',
   'GardenService',
   'EventService',
   '$stateParams',
@@ -10,12 +12,16 @@ adminGardenViewController.$inject = [
 /**
  * adminGardenController - Garden management controller.
  * @param  {Object} $scope           Angular's $scope object.
+ * @param  {Object} $window          Angular's $window object
+ * @param  {Object} $timeout         Angular's $timeout object
  * @param  {Object} GardenService    Beer-Garden's garden service object.
  * @param  {Object} EventService     Beer-Garden's event service.
  * @param  {Object} $stateParams     State params
  */
 export default function adminGardenViewController(
     $scope,
+    $window,
+    $timeout,
     GardenService,
     EventService,
     $stateParams,
@@ -31,6 +37,33 @@ export default function adminGardenViewController(
 
   $scope.closeAlert = function(index) {
     $scope.alerts.splice(index, 1);
+  };
+
+  /**
+   * Display an alert on the screen that will eventually disappear on its own
+   * if it is not an error alert
+   *
+   * @param {Object} alert - bootstrap UI alert object
+   */
+  const addAlert = (alert) => {
+    $scope.alerts.push(alert);
+    if (alert.type !== 'danger') {
+      // make informational alerts disappear on their own after 30 seconds
+      $timeout(()=> {
+        const index = $scope.alerts.indexOf(alert);
+        if (index > -1) {
+          $scope.closeAlert(index);
+        }
+      }, 30000);
+    }
+  };
+
+  /**
+   * Move the window up so that the alerts are visible
+   */
+  const scrollToAlerts = () => {
+    $window.scrollTo(0,
+        document.getElementById('garden-view-alert-list').offsetTop - 120);
   };
 
   const generateGardenSF = function() {
@@ -61,7 +94,7 @@ export default function adminGardenViewController(
 
     if ($scope.data.id == null || $scope.data.connection_type == 'LOCAL') {
       $scope.isLocal = true;
-      $scope.alerts.push({
+      addAlert({
         type: 'info',
         msg: 'Since this is the local Garden it\'s not possible to modify ' +
         'connection information',
@@ -173,7 +206,7 @@ export default function adminGardenViewController(
           if (connParamErrors.hasOwnProperty(entryPoint)) {
             updateValidationMessages(entryPoint, connParamErrors[entryPoint]);
 
-            $scope.alerts.push({
+            addAlert({
               type: 'warning',
               msg: `Errors found in ${entryPoint} connection`,
             });
@@ -181,19 +214,14 @@ export default function adminGardenViewController(
         }
       }
     } else {
-      $scope.alerts.push({
+      addAlert({
         type: 'danger',
         msg:
           'Something went wrong on the backend: ' +
           _.get(response, 'data.message', 'Please check the server logs'),
       });
     }
-  };
-
-  const clearScopeAlerts = () => {
-    while ($scope.alerts.length) {
-      $scope.alerts.pop();
-    }
+    scrollToAlerts();
   };
 
   $scope.submitImport = (data) => {
@@ -204,7 +232,6 @@ export default function adminGardenViewController(
   };
 
   $scope.submitGardenForm = function(form, model) {
-    clearScopeAlerts();
     resetAllValidationErrors();
     $scope.$broadcast('schemaFormValidate');
 
@@ -217,7 +244,7 @@ export default function adminGardenViewController(
       } catch (e) {
         console.log(e);
 
-        $scope.alerts.push({
+        addAlert({
           type: 'warning',
           msg: e,
         });
@@ -225,26 +252,63 @@ export default function adminGardenViewController(
 
       if (updatedGarden) {
         GardenService.updateGardenConfig(updatedGarden).then(
-            () => console.log('Garden update saved successfully'),
+            () => {
+              addAlert({
+                type: 'success',
+                msg: 'Garden update saved successfully',
+              });
+            },
             $scope.addErrorAlert,
         );
       }
     } else {
-      $scope.alerts.push(
-          'There was an error validating the Garden.',
-      );
+      addAlert({
+        type: 'danger',
+        msg: 'There was an error validating the Garden.',
+      });
     }
+    scrollToAlerts();
   };
 
   $scope.syncGarden = function() {
-    GardenService.syncGarden($scope.data.name);
+    GardenService.syncGarden($scope.data.name).then((r)=>{
+      addAlert({
+        type: 'success',
+        msg: 'Server accepted sync command',
+      });
+      scrollToAlerts();
+    }).catch((e)=>{
+      if (e.data && e.data.message) {
+        addAlert({
+          type: 'danger',
+          msg:
+          'Garden sync failed!',
+        });
+        addAlert({
+          type: 'danger',
+          msg: String(e.data.message),
+        });
+        $scope.data.status = 'ERROR';
+      } else {
+        addAlert({
+          type: 'danger',
+          msg:
+          'Garden sync failed! Please check the server logs.',
+        });
+      }
+      scrollToAlerts();
+    });
   };
 
   EventService.addCallback('admin_garden_view', (event) => {
     switch (event.name) {
+      case 'GARDEN_SYNC':
+        console.log('event', event);
       case 'GARDEN_UPDATED':
-        if ($scope.data.id == event.payload.id) {
-          $scope.data = event.payload;
+        if (event.payload.id && $scope.data.id === event.payload.id) {
+          $scope.$apply(() => {
+            $scope.data = event.payload;
+          });
         }
         break;
     }
