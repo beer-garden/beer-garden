@@ -8,14 +8,22 @@ import beer_garden.events
 import beer_garden.router
 import beer_garden.user
 from beer_garden.api.http.schemas.v1.user import UserSyncSchema
-from beer_garden.db.mongo.models import Garden, RemoteUser, Role, RoleAssignment, User
+from beer_garden.db.mongo.models import (
+    Garden,
+    RemoteRole,
+    RemoteUser,
+    Role,
+    RoleAssignment,
+    User,
+)
+from beer_garden.role import RoleSyncSchema
 from beer_garden.user import (
     create_user,
     handle_event,
     initiate_user_sync,
     update_user,
     user_sync,
-    user_synced_with_garden,
+    user_sync_status,
 )
 
 
@@ -30,36 +38,61 @@ class TestUser:
         User.drop_collection()
 
     @pytest.fixture
-    def gardens(self):
-        garden1 = Garden(
-            name="garden1", connection_type="HTTP", status="RUNNING"
-        ).save()
-        garden2 = Garden(
-            name="garden2", connection_type="HTTP", status="RUNNING"
-        ).save()
-        garden3 = Garden(
-            name="garden2", connection_type="HTTP", status="STOPPED"
-        ).save()
+    def garden(self):
+        _garden = Garden(name="garden", connection_type="HTTP", status="RUNNING").save()
 
-        yield [garden1, garden2, garden3]
-        garden1.delete()
-        garden2.delete()
-        garden3.delete()
+        yield _garden
+        _garden.delete()
 
     @pytest.fixture
-    def user_to_sync(self):
+    def garden_with_role(self, user_role):
+        garden = Garden(
+            name="garden_with_role", connection_type="HTTP", status="RUNNING"
+        ).save()
+        remote_role = RemoteRole(name=user_role.name, garden=garden.name).save()
+
+        yield garden
+        garden.delete()
+        remote_role.delete()
+
+    @pytest.fixture
+    def garden_stopped(self):
+        garden = Garden(
+            name="garden_stopped", connection_type="HTTP", status="STOPPED"
+        ).save()
+
+        yield garden
+        garden.delete()
+
+    @pytest.fixture
+    def gardens(self, garden, garden_with_role, garden_stopped):
+        return [garden, garden_with_role, garden_stopped]
+
+    @pytest.fixture
+    def user_role(self):
         role = Role(name="role1").save()
-        role_assignment = RoleAssignment(role=role, domain={"scope": "Global"})
+
+        yield role
+        role.delete()
+
+    @pytest.fixture
+    def user_to_sync(self, user_role):
+        role_assignment = RoleAssignment(role=user_role, domain={"scope": "Global"})
         user = User(
             username="testuser", password="password", role_assignments=[role_assignment]
         )
 
-        yield user
-        role.delete()
+        return user
 
     @pytest.fixture
-    def remote_user(self, user_to_sync, gardens):
-        remote_user = RemoteUser(username=user_to_sync.username, garden=gardens[0].name)
+    def serialized_role(self, user_role):
+        return RoleSyncSchema().dump(user_role).data
+
+    @pytest.fixture
+    def remote_user(self, user_to_sync, garden_with_role):
+        remote_user = RemoteUser(
+            username=user_to_sync.username, garden=garden_with_role.name
+        )
         remote_user.role_assignments = (
             UserSyncSchema().dump(user_to_sync).data["role_assignments"]
         )
@@ -109,54 +142,69 @@ class TestUser:
             Garden.objects.filter(status="RUNNING")
         )
 
-    def test_user_sync_creates_user(self, monkeypatch, user_to_sync):
+    def test_user_sync_creates_user(self, monkeypatch, user_to_sync, serialized_role):
         monkeypatch.setattr(beer_garden.user, "initiate_user_sync", Mock())
         monkeypatch.setattr(beer_garden.user, "publish", Mock())
         serialized_user = UserSyncSchema().dump(user_to_sync).data
 
         assert len(User.objects.filter(username=user_to_sync.username)) == 0
 
-        user_sync([serialized_user])
+        user_sync([serialized_role], [serialized_user])
 
         assert len(User.objects.filter(username=user_to_sync.username)) == 1
         assert beer_garden.user.publish.called is True
 
-    def test_user_sync_updates_user(self, monkeypatch, user_to_sync):
+    def test_user_sync_updates_user(self, monkeypatch, user_to_sync, serialized_role):
         monkeypatch.setattr(beer_garden.user, "initiate_user_sync", Mock())
         monkeypatch.setattr(beer_garden.user, "publish", Mock())
         serialized_user = UserSyncSchema().dump(user_to_sync).data
         user_to_sync.role_assignments = []
         user_to_sync.save()
 
-        user_sync([serialized_user])
+        user_sync([serialized_role], [serialized_user])
         user_to_sync.reload()
         assert len(user_to_sync.role_assignments) == 1
 
-    def test_user_synced_with_garden_returns_false_for_no_remote_user(
-        self, user_to_sync, gardens
+    def test_user_sync_status_returns_false_for_no_remote_user(
+        self, user_to_sync, garden
     ):
-        assert user_synced_with_garden(user_to_sync, gardens[0]) is False
+        user_status = user_sync_status([user_to_sync])[user_to_sync.username]
 
-    def test_user_synced_with_garden_returns_false_for_non_matching_role_assignments(
+        assert user_status[garden.name] is False
+
+    def test_user_sync_status_returns_false_for_non_matching_role_assignments(
         self, user_to_sync, remote_user
     ):
         garden = Garden.objects.get(name=remote_user.garden)
         user_to_sync.role_assignments = []
+        user_status = user_sync_status([user_to_sync])[user_to_sync.username]
 
-        assert user_synced_with_garden(user_to_sync, garden) is False
+        assert user_status[garden.name] is False
 
-    def test_user_synced_with_garden_returns_true_for_matching_role_assignments(
+    def test_user_sync_status_returns_true_for_matching_role_assignments(
         self, user_to_sync, remote_user
     ):
         garden = Garden.objects.get(name=remote_user.garden)
+        user_status = user_sync_status([user_to_sync])[user_to_sync.username]
 
-        assert user_synced_with_garden(user_to_sync, garden) is True
+        assert user_status[garden.name] is True
 
-    def test_user_synced_with_garden_returns_true_for_no_relevant_assignments(self):
+    def test_user_sync_status_returns_true_for_no_relevant_assignments(self, garden):
         user = User(username="user")
-        garden = Garden(name="garden")
 
-        assert user_synced_with_garden(user, garden) is True
+        user_status = user_sync_status([user])[user.username]
+        assert user_status[garden.name] is True
+
+    def test_user_sync_status_returns_false_for_out_of_sync_roles(
+        self, user_to_sync, remote_user, garden_with_role
+    ):
+        remote_role = RemoteRole.objects.get(garden=garden_with_role.name)
+        remote_role.description = "No longer in sync"
+        remote_role.save()
+
+        user_status = user_sync_status([user_to_sync])[user_to_sync.username]
+
+        assert user_status[garden_with_role.name] is False
 
     def test_handle_event_for_user_updated(self):
         role_assignments = [{"role_name": "role1", "domain": {"scope": "Global"}}]

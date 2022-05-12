@@ -6,8 +6,9 @@ from brewtils.models import Event, Events, Operation
 from marshmallow import ValidationError
 
 from beer_garden import config
-from beer_garden.db.mongo.models import Garden, RemoteUser, User
+from beer_garden.db.mongo.models import Garden, RemoteUser, Role, User
 from beer_garden.events import publish
+from beer_garden.role import RoleSyncSchema, role_sync_status, sync_roles
 
 logger = logging.getLogger(__name__)
 
@@ -83,16 +84,23 @@ def initiate_user_sync() -> None:
         serialized_users = (
             UserSyncSchema(many=True, strict=True).dump(filtered_users).data
         )
+
+        roles = Role.objects.all()
+        serialized_roles = RoleSyncSchema(many=True).dump(roles).data
+
         operation = Operation(
             operation_type="USER_SYNC",
             target_garden_name=garden.name,
-            kwargs={"serialized_users": serialized_users},
+            kwargs={
+                "serialized_roles": serialized_roles,
+                "serialized_users": serialized_users,
+            },
         )
 
         route(operation)
 
 
-def user_sync(serialized_users: List[dict]) -> None:
+def user_sync(serialized_roles: List[dict], serialized_users: List[dict]) -> None:
     """Function called for the USER_SYNC operation type. This imports the supplied list
     of serialized_users and then initiates a USER_SYNC on any remote gardens. The
     serialized_users dicts are expected to have been generated via UserSyncSchema.
@@ -105,23 +113,15 @@ def user_sync(serialized_users: List[dict]) -> None:
     Returns:
         None
     """
+    sync_roles(serialized_roles)
     _import_users(serialized_users)
     _publish_users_imported()
     initiate_user_sync()
 
 
-def user_synced_with_garden(user: User, garden: Garden) -> bool:
+def _user_synced_with_garden(user: User, garden: Garden, role_status: dict) -> bool:
     """Checks if the supplied user is currently synced to the supplied garden, based
-    on the corresponding RemoteUser entry. A user is considered synced if there is a
-    RemoteUser entry for the specified garden and the role assignments of that entry
-    match those of the User (for the relevant gardens).
-
-    Args:
-        user: The user for which we are checking the sync status
-        garden: The remote garden to check the status against
-
-    Returns:
-        bool: True if the user is currently synced. False otherwise.
+    on the corresponding RemoteUser entry.
     """
     # Avoiding circular imports
     from beer_garden.api.http.schemas.v1.user import UserSyncSchema
@@ -133,26 +133,51 @@ def user_synced_with_garden(user: User, garden: Garden) -> bool:
     except RemoteUser.DoesNotExist:
         return len(user.role_assignments) == 0
 
+    for role_assignment in user.role_assignments:
+        # If any roles that the user is assigned are not synced, the user is considered
+        # not synced
+        if not role_status.get(role_assignment.role.name, {}).get(garden.name, False):
+            return False
+
     role_assignments = UserSyncSchema().dump(user).data["role_assignments"]
 
     return role_assignments == remote_user.role_assignments
 
 
-def user_sync_status(user: User) -> dict:
-    """Provides the sync status of the provided User with each remote garden. The
-    resulting dict formatting is:
+def user_sync_status(users: List[User]) -> dict:
+    """Provides the sync status of the provided User with each remote garden. A user is
+    considered synced if there is a RemoteUser entry for the specified garden and the
+    role assignments of that entry match those of the User (for the relevant gardens).
+    The assigned roles must also be synced in order for the user to be considered
+    synced, since out of sync roles means the permissions could differ between the
+    gardens. The resulting dict formatting is:
 
-    { "remote_garden_name": bool }
+    {
+        "username": {
+            "remote_garden_name": bool,
+            "remote_garden_name": bool,
+        }
+    }
 
     Args:
-        user: The user for which we are checking the sync status
+        users: The users for which we are checking the sync status
+
+    Returns:
+        dict: Sync status by username and role name
     """
-    sync_status = {}
+    role_status = role_sync_status(Role.objects.all())
+    user_status = {}
 
     for garden in Garden.objects.filter(connection_type__nin=["LOCAL"]):
-        sync_status[garden.name] = user_synced_with_garden(user, garden)
+        for user in users:
+            if user.username not in user_status:
+                user_status[user.username] = {}
 
-    return sync_status
+            user_status[user.username][garden.name] = _user_synced_with_garden(
+                user, garden, role_status
+            )
+
+    return user_status
 
 
 def handle_event(event: Event) -> None:
@@ -239,7 +264,7 @@ def _filter_role_assigments_by_garden(user, garden) -> User:
 
 
 def _publish_users_imported():
-    """Publish an invent indicating that a user sync was completed"""
+    """Publish an event indicating that a user sync was completed"""
     publish(
         Event(
             name=Events.USERS_IMPORTED.name,
