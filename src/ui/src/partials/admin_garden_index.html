@@ -19,6 +19,15 @@
     </button>
   </span>
 </h1>
+<div id="garden-management-view-alert-list">
+  <div uib-alert
+    ng-repeat="alert in alerts"
+    ng-class="'alert-' + alert.type"
+    close="closeAlert($index)"
+  >
+    <div class="alert-item">{{alert.msg}}</div>
+  </div>
+</div>
 <div class="pull-right">
   <div class="form-popup" ng-hide="createGardenFormHide">
     <form ng-submit="createGarden()" class="form-container">

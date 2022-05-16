@@ -19,6 +19,7 @@ export default function adminGardenController(
     EventService,
 ) {
   $scope.setWindowTitle('gardens');
+  $scope.alerts = [];
   $scope.gardenCreateSchema = GardenService.CreateSCHEMA;
   $scope.gardenCreateForm = GardenService.CreateFORM;
   $scope.successCallback = function(response) {
@@ -45,7 +46,20 @@ export default function adminGardenController(
   };
 
   $scope.syncGardens = function() {
-    GardenService.syncGardens();
+    GardenService.syncGardens().then((resp)=>{
+      $scope.alerts.push({
+        type: 'success',
+        msg: 'Server accepted request to sync all gardens',
+      });
+    }).catch((err) => {
+      if (err.data && err.data.message) {
+        $scope.alerts.push({
+          type: 'danger',
+          msg: err.data.message,
+        });
+        console.log('error', err.data.message);
+      }
+    });
   };
 
   $scope.closeCreateGardenForm = function() {
