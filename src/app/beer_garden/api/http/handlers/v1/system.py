@@ -2,17 +2,30 @@
 from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
-from brewtils.schemas import SystemSchema
+from brewtils.schemas import SystemSchema as BrewtilsSystemSchema
 
 from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.db.mongo.api import MongoParser
+from beer_garden.api.http.schemas.v1.system import SystemSansQueueSchema
 from beer_garden.db.mongo.models import System
 
 SYSTEM_CREATE = Permissions.SYSTEM_CREATE.value
 SYSTEM_READ = Permissions.SYSTEM_READ.value
 SYSTEM_UPDATE = Permissions.SYSTEM_UPDATE.value
 SYSTEM_DELETE = Permissions.SYSTEM_DELETE.value
+
+
+def _remove_queue_info(response: str, many: bool = False) -> str:
+    """Strips out the queue_type and queue_info from the Systems response json.
+
+    This exists because the natural path of getting System data is so tightly integrated
+    with the brewtils schemas and the back and forth between mongoengine and brewtils
+    models that attempting to change the schema used for initial serialization is too
+    risky. Instead, this takes the serialized response and just runs it through another
+    Schema that strips out the queue info.
+    """
+    system_data = SystemSansQueueSchema(many=many).loads(response).data
+    return SystemSansQueueSchema(many=many).dumps(system_data).data
 
 
 class SystemAPI(AuthorizationHandler):
@@ -54,7 +67,7 @@ class SystemAPI(AuthorizationHandler):
         if not include_commands:
             system.commands = []
 
-        response = MongoParser.serialize(system)
+        response = SystemSansQueueSchema().dump(system).data
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -212,11 +225,11 @@ class SystemAPI(AuthorizationHandler):
             )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(response)
+        self.write(_remove_queue_info(response))
 
 
 class SystemListAPI(AuthorizationHandler):
-    REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
+    REQUEST_FIELDS = set(BrewtilsSystemSchema.get_attribute_names())
 
     async def get(self):
         """
@@ -328,7 +341,7 @@ class SystemListAPI(AuthorizationHandler):
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(response)
+        self.write(_remove_queue_info(response, many=True))
 
     async def post(self):
         """
@@ -371,4 +384,4 @@ class SystemListAPI(AuthorizationHandler):
         )
         self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(response)
+        self.write(_remove_queue_info(response))

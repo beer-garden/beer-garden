@@ -18,6 +18,11 @@ class Permissions(Enum):
     GARDEN_UPDATE = "garden:update"
     GARDEN_DELETE = "garden:delete"
 
+    INSTANCE_CREATE = "instance:create"
+    INSTANCE_READ = "instance:read"
+    INSTANCE_UPDATE = "instance:update"
+    INSTANCE_DELETE = "instance:delete"
+
     QUEUE_CREATE = "queue:create"
     QUEUE_READ = "queue:read"
     QUEUE_UPDATE = "queue:update"

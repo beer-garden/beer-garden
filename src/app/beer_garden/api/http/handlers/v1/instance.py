@@ -14,8 +14,8 @@ from beer_garden.api.http.base_handler import event_wait
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.db.mongo.models import System
 
-SYSTEM_READ = Permissions.SYSTEM_READ.value
-SYSTEM_UPDATE = Permissions.SYSTEM_UPDATE.value
+INSTANCE_READ = Permissions.INSTANCE_READ.value
+INSTANCE_UPDATE = Permissions.INSTANCE_UPDATE.value
 QUEUE_READ = Permissions.QUEUE_READ.value
 
 
@@ -42,7 +42,7 @@ class InstanceAPI(AuthorizationHandler):
         tags:
           - Instances
         """
-        _ = self.get_or_raise(System, SYSTEM_READ, instances__id=instance_id)
+        _ = self.get_or_raise(System, INSTANCE_READ, instances__id=instance_id)
 
         response = await self.client(
             Operation(operation_type="INSTANCE_READ", args=[instance_id])
@@ -71,7 +71,7 @@ class InstanceAPI(AuthorizationHandler):
         tags:
           - Instances
         """
-        _ = self.get_or_raise(System, SYSTEM_UPDATE, instances__id=instance_id)
+        _ = self.get_or_raise(System, INSTANCE_UPDATE, instances__id=instance_id)
 
         await self.client(
             Operation(operation_type="INSTANCE_DELETE", args=[instance_id])
@@ -124,7 +124,7 @@ class InstanceAPI(AuthorizationHandler):
         tags:
           - Instances
         """
-        _ = self.get_or_raise(System, SYSTEM_UPDATE, instances__id=instance_id)
+        _ = self.get_or_raise(System, INSTANCE_UPDATE, instances__id=instance_id)
 
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
@@ -230,7 +230,7 @@ class InstanceLogAPI(AuthorizationHandler):
         tags:
           - Instances
         """
-        _ = self.get_or_raise(System, SYSTEM_READ, instances__id=instance_id)
+        _ = self.get_or_raise(System, INSTANCE_READ, instances__id=instance_id)
 
         start_line = self.get_query_argument("start_line", default=None)
         if start_line == "":

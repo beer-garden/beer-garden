@@ -44,7 +44,8 @@ def system(garden):
 @pytest.fixture
 def system_admin_role():
     role = Role(
-        name="system_admin", permissions=["system:read", "system:update", "queue:read"]
+        name="system_admin",
+        permissions=["instance:read", "instance:update", "queue:read"],
     ).save()
 
     yield role

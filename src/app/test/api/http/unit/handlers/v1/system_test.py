@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 import json
 
-import pytest
-from tornado.httpclient import HTTPError, HTTPRequest
-
 import beer_garden.events
 import beer_garden.router
+import pytest
 from beer_garden.api.http.authentication import issue_token_pair
 from beer_garden.db.mongo.models import (
     Command,
@@ -15,6 +13,11 @@ from beer_garden.db.mongo.models import (
     System,
     User,
 )
+from beer_garden.systems import create_system
+from brewtils.models import Command as BrewtilsCommand
+from brewtils.models import Instance as BrewtilsInstance
+from brewtils.models import System as BrewtilsSystem
+from tornado.httpclient import HTTPError, HTTPRequest
 
 
 @pytest.fixture
@@ -103,6 +106,54 @@ def common_mocks(monkeypatch, system_permitted):
     monkeypatch.setattr(beer_garden.events, "publish", generic_mock)
     monkeypatch.setattr(beer_garden.router, "_determine_target", mock_determine_target)
     monkeypatch.setattr(beer_garden.router, "forward", generic_mock)
+
+
+@pytest.fixture
+def brewtils_system_with_instance():
+    return BrewtilsSystem(
+        name="system_with_instance",
+        version="0.0.1",
+        namespace="doesntmatter",
+        commands=[BrewtilsCommand(name="notallowed")],
+        instances=[
+            BrewtilsInstance(
+                name="instance1",
+                queue_type="rabbit",
+                queue_info={"supersecret": "shhh"},
+            )
+        ],
+    )
+
+
+@pytest.fixture
+def system_with_instance(brewtils_system_with_instance):
+    brewtils_system = create_system(brewtils_system_with_instance)
+    system = System.objects.get(id=brewtils_system.id)
+
+    yield system
+    system.delete()
+
+
+@pytest.fixture
+def system_mock(monkeypatch, brewtils_system_with_instance):
+    """Mocks the execute_local call that happens for operations returning a single
+    System"""
+
+    def mock_execute_local(operation):
+        return brewtils_system_with_instance
+
+    monkeypatch.setattr(beer_garden.router, "execute_local", mock_execute_local)
+
+
+@pytest.fixture
+def systems_mock(monkeypatch, brewtils_system_with_instance):
+    """Mocks the execute_local call that happens for operations returning multiple
+    Systems"""
+
+    def mock_execute_local(operation):
+        return [brewtils_system_with_instance]
+
+    monkeypatch.setattr(beer_garden.router, "execute_local", mock_execute_local)
 
 
 class TestSystemAPI:
@@ -248,6 +299,41 @@ class TestSystemAPI:
             == system_not_permitted.description
         )
 
+    @pytest.mark.gen_test
+    def test_get_does_not_include_queue_info(
+        self, http_client, base_url, system_with_instance
+    ):
+        url = f"{base_url}/api/v1/systems/{system_with_instance.id}"
+
+        response = yield http_client.fetch(url)
+        response_body = json.loads(response.body.decode("utf-8"))
+        instance = response_body["instances"][0]
+
+        assert "queue_info" not in instance
+        assert "queue_type" not in instance
+
+    @pytest.mark.gen_test
+    def test_patch_does_not_include_queue_info(
+        self, http_client, base_url, system_with_instance, system_mock
+    ):
+        url = f"{base_url}/api/v1/systems/{system_with_instance.id}"
+        headers = {
+            "Content-Type": "application/json",
+        }
+
+        patch_body = [
+            {"operation": "replace", "path": "/description", "value": "new description"}
+        ]
+        request = HTTPRequest(
+            url, method="PATCH", headers=headers, body=json.dumps(patch_body)
+        )
+        response = yield http_client.fetch(request)
+        response_body = json.loads(response.body.decode("utf-8"))
+        instance = response_body["instances"][0]
+
+        assert "queue_info" not in instance
+        assert "queue_type" not in instance
+
 
 class TestSystemListAPI:
     @pytest.mark.gen_test
@@ -350,3 +436,14 @@ class TestSystemListAPI:
 
         assert excinfo.value.code == 403
         assert len(System.objects.all()) == system_count_before
+
+    @pytest.mark.gen_test
+    def test_get_does_not_include_queue_info(self, http_client, base_url, systems_mock):
+        url = f"{base_url}/api/v1/systems"
+
+        response = yield http_client.fetch(url)
+        response_body = json.loads(response.body.decode("utf-8"))
+        instance = response_body[0]["instances"][0]
+
+        assert "queue_info" not in instance
+        assert "queue_type" not in instance
