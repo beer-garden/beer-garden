@@ -1,16 +1,25 @@
 # -*- coding: utf-8 -*-
 import pytest
+from brewtils.models import Event, Events
 from marshmallow import ValidationError
 from mongoengine import DoesNotExist, connect
 
 from beer_garden import config
-from beer_garden.db.mongo.models import Role, RoleAssignment, User
-from beer_garden.role import sync_roles
+from beer_garden.db.mongo.models import Garden, RemoteRole, Role, RoleAssignment, User
+from beer_garden.role import handle_event, role_sync_status, sync_roles
 
 
 @pytest.fixture(autouse=True)
 def drop():
     Role.drop_collection()
+
+
+@pytest.fixture
+def garden():
+    _garden = Garden(name="garden", connection_type="HTTP", status="RUNNING").save()
+
+    yield _garden
+    _garden.delete()
 
 
 @pytest.fixture
@@ -28,6 +37,25 @@ def role_sync_data():
     ]
 
     yield role_data
+
+
+@pytest.fixture
+def role_to_sync(role_sync_data):
+    return Role(**role_sync_data[0])
+
+
+@pytest.fixture
+def remote_role(role_to_sync, garden):
+    remote_role = RemoteRole(
+        name=role_to_sync.name,
+        garden=garden.name,
+        description=role_to_sync.description,
+        permissions=role_to_sync.permissions,
+    )
+    remote_role.save()
+
+    yield remote_role
+    remote_role.delete()
 
 
 @pytest.fixture
@@ -116,3 +144,48 @@ class TestRole:
         user_with_role_assignments.reload()
 
         assert len(user_with_role_assignments.role_assignments) == 0
+
+    def test_role_synced_with_garden_returns_false_for_no_remote_role(
+        self, role_to_sync, garden
+    ):
+        role_status = role_sync_status([role_to_sync])[role_to_sync.name]
+
+        assert role_status[garden.name] is False
+
+    def test_role_synced_with_garden_returns_false_for_non_matching_permissions(
+        self, role_to_sync, remote_role
+    ):
+        garden = Garden.objects.get(name=remote_role.garden)
+        role_to_sync.permissions = []
+
+        role_status = role_sync_status([role_to_sync])[role_to_sync.name]
+
+        assert role_status[garden.name] is False
+
+    def test_role_synced_with_garden_returns_true_for_matching_permissions(
+        self, role_to_sync, remote_role
+    ):
+        role_status = role_sync_status([role_to_sync])[role_to_sync.name]
+        garden = Garden.objects.get(name=remote_role.garden)
+
+        assert role_status[garden.name] is True
+
+    def test_handle_event_for_role_updated(self):
+        permissions = ["queue:read", "queue:delete"]
+        role_updated_result = {
+            "garden": "garden1",
+            "role": {"name": "role1", "permissions": permissions},
+        }
+
+        event = Event(
+            name=Events.ROLE_UPDATED.name,
+            garden="garden1",
+            metadata=role_updated_result,
+        )
+
+        assert len(RemoteRole.objects.filter(name="role1", garden="garden1")) == 0
+
+        handle_event(event)
+        remote_role = RemoteRole.objects.get(name="role1", garden="garden1")
+
+        assert remote_role.permissions == permissions

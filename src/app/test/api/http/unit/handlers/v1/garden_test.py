@@ -113,6 +113,19 @@ def read_only_user(garden_permitted, garden_read_role):
 
 
 @pytest.fixture
+def global_admin_user(garden_permitted, garden_admin_role):
+    role_assignment = RoleAssignment(
+        role=garden_admin_role,
+        domain={"scope": "Global"},
+    )
+
+    user = User(username="testuser", role_assignments=[role_assignment]).save()
+
+    yield user
+    user.delete()
+
+
+@pytest.fixture
 def access_token(user):
     yield issue_token_pair(user)["access"]
 
@@ -120,6 +133,11 @@ def access_token(user):
 @pytest.fixture
 def read_only_access_token(read_only_user):
     yield issue_token_pair(read_only_user)["access"]
+
+
+@pytest.fixture
+def global_admin_access_token(global_admin_user):
+    yield issue_token_pair(global_admin_user)["access"]
 
 
 @pytest.fixture(autouse=True)
@@ -416,26 +434,15 @@ class TestGardenListAPI:
         http_client,
         base_url,
         app_config_auth_enabled,
-        user,
-        garden_admin_role,
+        global_admin_access_token,
     ):
         monkeypatch.setattr(
             beer_garden.api.http.handlers.v1.garden, "initiate_user_sync", Mock()
         )
 
-        user.role_assignments.append(
-            RoleAssignment(
-                role=garden_admin_role,
-                domain={
-                    "scope": "Global",
-                },
-            ),
-        )
-        access_token = issue_token_pair(user)["access"]
-
         url = f"{base_url}/api/v1/gardens"
         headers = {
-            "Authorization": f"Bearer {access_token}",
+            "Authorization": f"Bearer {global_admin_access_token}",
             "Content-Type": "application/json",
         }
 

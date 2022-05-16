@@ -21,6 +21,8 @@ import brewtils.models
 from brewtils.choices import parse
 from brewtils.errors import ModelValidationError, RequestStatusTransitionError
 from brewtils.models import Command as BrewtilsCommand
+from brewtils.models import Event as BrewtilsEvent
+from brewtils.models import Events as BrewtilsEvents
 from brewtils.models import Instance as BrewtilsInstance
 from brewtils.models import Job as BrewtilsJob
 from brewtils.models import Parameter as BrewtilsParameter
@@ -77,6 +79,7 @@ __all__ = [
     "File",
     "FileChunk",
     "Role",
+    "RemoteRole",
     "RoleAssignment",
     "User",
     "RemoteUser",
@@ -504,6 +507,8 @@ class Request(MongoModel, Document):
         super(Request, self).save(*args, **kwargs)
         self._post_save()
 
+        return self
+
     def clean(self):
         """Validate before saving to the database"""
 
@@ -924,13 +929,72 @@ class CommandPublishingBlocklist(Document):
 
 
 class Role(Document):
-    name = StringField()
+    name = StringField(required=True)
     description = StringField()
     permissions = ListField(field=StringField(), validation=validate_permissions)
 
     meta = {
         "indexes": [{"name": "unique_index", "fields": ["name"], "unique": True}],
     }
+
+    def __str__(self) -> str:
+        return self.name
+
+    def save(self, publish: bool = True, *args, **kwargs):
+        """The regular mongoengine Document save(), with an optional event published
+        about the update.
+
+        Args:
+            publish: Whether or not to publish an event after the save. Default: True
+
+        Returns:
+            Role: The saved Role (self)
+        """
+        super().save(*args, **kwargs)
+
+        if publish:
+            self._publish_role_updated()
+
+        return self
+
+    def _publish_role_updated(self):
+        """Publish an event with the updated role information"""
+        # We use publish rather than publish_event here so that we can hijack the
+        # metadata field to store our actual data. This is done to avoid needing to deal
+        # in brewtils models, which the publish_event decorator requires us to do.
+        from beer_garden.events import publish
+
+        publish(
+            BrewtilsEvent(
+                name=BrewtilsEvents.ROLE_UPDATED.name,
+                metadata={
+                    "garden": config.get("garden.name"),
+                    "role": {
+                        "name": self.name,
+                        "description": self.description,
+                        "permissions": self.permissions,
+                    },
+                },
+            )
+        )
+
+
+class RemoteRole(Document):
+    name = StringField(required=True)
+    garden = StringField(required=True)
+    description = StringField()
+    permissions = ListField(field=StringField(), required=False)
+    updated_at = DateTimeField(required=True, default=datetime.datetime.utcnow)
+
+    meta = {
+        "indexes": [
+            {"fields": ["name"]},
+            {"fields": ["garden", "name"], "unique": True},
+        ],
+    }
+
+    def __str__(self):
+        return f"{self.garden}:{self.name}"
 
 
 class RoleAssignmentDomain(EmbeddedDocument):

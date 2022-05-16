@@ -87,11 +87,16 @@ class UserSyncSchema(Schema):
 class UserSchema(BrewtilsUserSchema):
     sync_status = fields.Dict(dump_only=True)
 
-    @pre_dump
-    def get_sync_status(self, user):
+    @pre_dump(pass_many=True)
+    def get_sync_status(self, data, many):
+        """Add the status of whether each user is synced with each remote garden"""
         from beer_garden.user import user_sync_status
 
-        user.sync_status = user_sync_status(user)
+        users = data if many else [data]
+        sync_status = user_sync_status(users)
+
+        for user in users:
+            user.sync_status = sync_status.get(user.username)
 
 
 class UserListSchema(Schema):

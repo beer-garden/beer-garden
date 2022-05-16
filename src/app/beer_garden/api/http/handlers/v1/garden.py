@@ -174,7 +174,7 @@ class GardenListAPI(AuthorizationHandler):
         summary: Retrieve a list of Gardens
         responses:
           200:
-            description: Garden with the given garden_name
+            description: A list of all gardens
             schema:
               type: array
               items:
@@ -254,11 +254,6 @@ class GardenListAPI(AuthorizationHandler):
           ]
           ```
         parameters:
-          - name: garden_name
-            in: path
-            required: true
-            description: Garden to use
-            type: string
           - name: patch
             in: body
             required: true

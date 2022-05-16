@@ -39,6 +39,7 @@ import beer_garden.namespace
 import beer_garden.plugin
 import beer_garden.queues
 import beer_garden.requests
+import beer_garden.role
 import beer_garden.scheduler
 import beer_garden.systems
 import beer_garden.user
