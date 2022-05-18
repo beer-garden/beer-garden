@@ -365,19 +365,3 @@ class TestEnsureRoles:
         superuser = Role.objects.get(name="superuser")
 
         assert len(superuser.permissions) == len(Permissions)
-
-    def test_ensure_roles_preserves_existing_superuser(self, monkeypatch):
-        """An existing superuser role should be left untouched by ensure_roles"""
-        monkeypatch.setattr(
-            beer_garden.db.mongo.util, "_sync_roles_from_role_definition_file", Mock()
-        )
-
-        superuser = Role(
-            name="superuser", permissions=[list(Permissions)[0].value]
-        ).save()
-
-        monkeypatch.setattr(Role, "save", Mock())
-        ensure_roles()
-
-        assert Role.save.called is False
-        assert len(superuser.reload().permissions) == 1

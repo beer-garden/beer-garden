@@ -44,8 +44,8 @@ def ensure_local_garden():
 
 def ensure_roles():
     """Create roles if necessary"""
+    _configure_superuser_role()
     _sync_roles_from_role_definition_file()
-    _create_superuser_role()
 
 
 def _sync_roles_from_role_definition_file():
@@ -78,17 +78,19 @@ def _sync_roles_from_role_definition_file():
         logger.info("auth.role_definition_file not defined. No roles will be synced.")
 
 
-def _create_superuser_role():
-    """Creates the superuser role if it does not already exist"""
-    # If users already exist, assume that some setup has already occurred and
-    # leave it be.
-    if User.objects.count() == 0:
-        try:
-            Role.objects.get(name="superuser")
-        except Role.DoesNotExist:
-            logger.info("Creating superuser role with all permissions")
-            all_permissions = [permission.value for permission in Permissions]
-            Role(name="superuser", permissions=all_permissions).save()
+def _configure_superuser_role():
+    """Creates or updates the superuser role as needed"""
+    try:
+        superuser = Role.objects.get(name="superuser")
+    except Role.DoesNotExist:
+        logger.info("Creating superuser role with all permissions")
+        superuser = Role(name="superuser")
+
+    superuser.permissions = [permission.value for permission in Permissions]
+    superuser.description = "Role containing all permissions"
+    superuser.protected = True
+
+    superuser.save()
 
 
 def ensure_users():
