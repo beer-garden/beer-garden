@@ -5,8 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title ng-bind="title"></title>
 
-    <link href="index.css" rel="stylesheet" />
-    <link ng-if="themes.slate" ng-href="dark.css" rel="stylesheet" />
+    <!-- TEST 
+    -->
+
+    <link id="theme" href="index.css" rel="stylesheet"/>
+    
+    <link ng-if="themes.slate" ng-href="dark.css" rel="stylesheet" /> 
+    <script>
+      function toggleTheme() {
+          var theme = document.getElementsByTagName('link')[0];
+          console.log(theme);
+          if (theme.getAttribute('href') == 'index.css') {
+              theme.setAttribute('href', 'dark.css');
+          } else {
+              theme.setAttribute('href', 'index.css');
+          }
+      }
+  </script>
+
+
 
     <!-- Favicon - this prevents the browser requesting favicon.ico before config is loaded -->
     <link rel="icon" href="data:," />
@@ -90,16 +107,17 @@
 
         <li>
           <a
+            
             ui-sref="base.systems"
             ng-class="{active: ($state.current.name.startsWith('base.systems'))}"
-            >Systems</a
+            ><b>Systems</b></a
           >
         </li>
         <li>
           <a
             ui-sref="base.requests"
             ng-class="{active: ($state.current.name.startsWith('request'))}"
-            >Requests</a
+            ><b>Requests</b></a
           >
         </li>
         <li>
@@ -107,7 +125,7 @@
             ui-sref="base.jobs"
             ng-class="{active: ($state.current.name.startsWith('job'))}"
             ng-show="hasPermission(user, 'job:read')"
-            >Scheduler</a
+            ><b>Scheduler</b></a
           >
         </li>
         <!-- Admin Drop Down Menu -->
@@ -115,7 +133,7 @@
           class="dropdown"
           ng-show="hasPermission(user, 'system:update') || hasPermission(user, 'garden:update')"
         >
-          <a href="" data-toggle="dropdown" title="Admin Drop Down">Admin</a>
+          <a href="" data-toggle="dropdown" title="Admin Drop Down"><b>Admin</b></a>
           <ul class="dropdown-menu">
             <li ng-show="hasPermission(user, 'system:update')">
               <a ui-sref="base.system_admin" ui-sref-active="active">
@@ -176,7 +194,7 @@
                 </div>
               </form>
             </li>
-
+            <button onclick="toggleTheme()">Switch</button>
             <li></li>
             <li
               ng-show="checkMenuPage('theme')"
@@ -199,6 +217,7 @@
                 <span>{{style}}</span>
               </div>
             </li>
+            <li></li>
           </ul>
         </li>
       </ul>
