@@ -319,3 +319,49 @@ table.dataTable {
 .alert-item.ng-enter.ng-enter-active {
   opacity: 1;
 }
+
+/* Ginnie's CSS changes */
+.navbar-default {
+  background-image: none;
+  background-color: #006e99;
+}
+
+.nav.navbar-nav li a {
+  color: #fff;
+}
+
+.navbar-brand span{
+  color: white;
+}
+
+.dropdown-menu li a span{
+  color: black; 
+}
+
+.dropdown-menu li a{
+  color: black !important;
+}
+
+.dropdown.open{
+  color : black;
+}
+
+.test{
+  background-image: none;
+  background-color: yellow;
+}
+
+.panel-default {
+  background-image: none;
+  border-color: #006e99;
+}
+
+.panel > .panel-heading {
+  background-image: none;
+  background-color: #006e99;
+  color: white;
+}
+
+/*End of Ginnie's changes*/
+
+
