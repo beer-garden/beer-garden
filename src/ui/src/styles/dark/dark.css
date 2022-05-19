@@ -75,6 +75,20 @@
 select {
   background-color: rgb(153, 153, 153);
 }
+
 select option {
   color: rgb(255, 255, 255);
+}
+/* Added by Ginnie */
+
+.dropdown-menu li a span{
+  color: rgba(255, 255, 255, 0.6); 
+}
+
+.nav.navbar-nav li a {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.dropdown-menu li a{
+  color: rgba(255, 255, 255, 0.6) !important;
 }
