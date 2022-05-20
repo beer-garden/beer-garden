@@ -3,41 +3,47 @@
   </div>
 
   <div class="modal-body" id="modal-body">
-    <div class="container-fluid animate-if">
-      <table
-              id="systemIndexTable"
-              datatable="ng"
-              dt-options="dtOptions"
-              dt-instance="instanceCreated"
-              class="table table-striped table-bordered"
-              style="width: 100%"
-      >
-        <thead>
-        <tr>
-          <th style="width: 30px;" scope="col">Add</th>
-          <th scope="col">Namespace</th>
-          <th scope="col">System</th>
-          <th scope="col">Command</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr ng-repeat="command in data | filter:query">
-          <td>
-            <input class="pull-right"
-                   type="checkbox"
-                   value="{{commandBlocklistAdd.includes(command)}}"
-                   ng-click="onChangeCommandBlocklistAdd(command)"
-            >
-          </td>
-          <td>{{command.namespace}}</td>
-          <td>{{command.system}}</td>
-          <td>{{command.command}}</td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
+    <table
+            id="systemIndexTable"
+            datatable="ng"
+            dt-options="dtOptions"
+            dt-instance="instanceCreated"
+            class="table table-striped table-bordered"
+            style="width: 100%"
+    >
+      <thead>
+      <tr>
+        <th style="width: 30px;" class="" scope="col">Add</th>
+        <th scope="col">Namespace</th>
+        <th scope="col">System</th>
+        <th scope="col">Command</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr ng-repeat="command in data | filter:query">
+        <td>
+          <input class=""
+                 type="checkbox"
+                 style="width: 100%"
+                 ng-model="command.isChecked"
+                 ng-click="onCommandCheckChange(command)"
+          >
+        </td>
+        <td>{{command.namespace}}</td>
+        <td>{{command.system}}</td>
+        <td>{{command.command}}</td>
+      </tr>
+      </tbody>
+    </table>
   </div>
   <div class="modal-footer" id="modal-footer">
+    <input
+            type="checkbox"
+            ng-hide="true"
+            id="select-all-hidden-checkbox"
+            ng-model="selectAllValue"
+            ng-click="selectAll()"
+    />
     <input
             type="button"
             class="btn btn-danger"

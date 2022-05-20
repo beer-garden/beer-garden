@@ -1,5 +1,3 @@
-import _ from 'lodash';
-
 commandPublishingBlocklistService.$inject = ['$q', '$http'];
 
 /**
@@ -8,48 +6,20 @@ commandPublishingBlocklistService.$inject = ['$q', '$http'];
  * @return {Object}                Service for interacting with the user API.
  */
 export default function commandPublishingBlocklistService($q, $http) {
-  const service = {
+  return {
     getCommandPublishingBlocklist: () => {
       return $http.get('api/v1/commandpublishingblocklist');
     },
     deleteCommandPublishingBlocklist: (id) => {
-      const promise = $http.delete('api/v1/commandpublishingblocklist/' + id);
-      const deferred = $q.defer();
-      promise.then(
-          (response) => {
-            deferred.resolve(response);
-          },
-          (errorResponse) => {
-            deferred.reject(errorResponse);
-          },
-      );
-
-      return deferred.promise;
+      return $http.delete('api/v1/commandpublishingblocklist/' + id);
     },
-  };
-
-  _.assign(service, {
     addToBlocklist: (blockedCommands) => {
       const requestBody = {'command_publishing_blocklist': blockedCommands};
-      const promise = $http.post('api/v1/commandpublishingblocklist', requestBody, {
+      return $http.post('api/v1/commandpublishingblocklist', requestBody, {
         headers: {
           'Content-Type': 'application/json',
         },
       });
-
-      const deferred = $q.defer();
-      promise.then(
-          (response) => {
-            deferred.resolve(response);
-          },
-          (errorResponse) => {
-            deferred.reject(errorResponse);
-          },
-      );
-
-      return deferred.promise;
     },
-  });
-
-  return service;
+  };
 }

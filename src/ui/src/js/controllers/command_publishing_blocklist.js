@@ -23,9 +23,6 @@ export default function CommandPublishingBlocklistController(
     CommandPublishingBlocklistService,
     $uibModal,
 ) {
-  $scope.setWindowTitle();
-  $scope.blockedList = false;
-
   $scope.data = [];
 
   $scope.dtOptions = DTOptionsBuilder.newOptions()
@@ -35,6 +32,7 @@ export default function CommandPublishingBlocklistController(
           10,
       )
       .withOption('order', [
+        [0, 'asc'],
         [1, 'asc'],
         [2, 'asc'],
         [3, 'asc'],
@@ -55,21 +53,21 @@ export default function CommandPublishingBlocklistController(
           type: 'text',
           attr: {class: 'form-inline form-control', title: 'Commands Filter', style: 'height: 1%'},
         },
+        3: {
+          html: 'input',
+          type: 'text',
+          attr: {class: 'form-inline form-control', title: 'Status Filter', style: 'height: 1%'},
+        },
       })
       .withBootstrap();
 
   $scope.deleteBlocklistEntry = function(blockedCommandId, index) {
-    const promise = CommandPublishingBlocklistService.
-        deleteCommandPublishingBlocklist(blockedCommandId);
-    promise.then(
-        (response) => {
-          $scope.data.splice(index, 1);
-        },
-    );
-  };
-
-  $scope.instanceCreated = function(_instance) {
-    $scope.dtInstance = _instance;
+    CommandPublishingBlocklistService.
+        deleteCommandPublishingBlocklist(blockedCommandId).then(
+            (response) => {
+              $scope.data[index].status = 'REMOVE_REQUESTED';
+            },
+        );
   };
 
   function getData() {
@@ -98,37 +96,6 @@ export default function CommandPublishingBlocklistController(
   $scope.failureCallback = function(response) {
     $scope.response = response;
     $scope.data = [];
-  };
-
-  const dataAddCheck = function(data, value) {
-    for (let i = 0; i < data.length; i++) {
-      if (data[i] === value) {
-        return false;
-      }
-    }
-    return true;
-  };
-
-  $scope.formatSystemsToData = function(systems) {
-    const data = [];
-    for (let i = 0; i < systems.length; i++) {
-      const system = systems[i];
-      for (let n = 0; n < system.commands.length; n++) {
-        const command = system.commands[n];
-        if (dataAddCheck(data, {
-          'namespace': system.namespace,
-          'system': system.name,
-          'command': command.name,
-        })) {
-          data.push({'namespace': system.namespace,
-            'system': system.name,
-            'command': command.name,
-            'status': '',
-          });
-        }
-      }
-    }
-    return data;
   };
 
   $scope.response = $rootScope.sysResponse;
