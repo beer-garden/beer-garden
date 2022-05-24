@@ -82,6 +82,8 @@ import commandService from './js/services/command_service.js';
 import instanceService from './js/services/instance_service.js';
 import queueService from './js/services/queue_service.js';
 import requestService from './js/services/request_service.js';
+import commandPublishingBlocklistService from
+  './js/services/command_publishing_blocklist_service.js';
 import systemService from './js/services/system_service.js';
 import userService from './js/services/user_service.js';
 import roleService from './js/services/role_service.js';
@@ -95,6 +97,7 @@ import gardenService from './js/services/garden_service.js';
 import runnerService from './js/services//runner_service.js';
 
 import aboutController from './js/controllers/about.js';
+import commandPublishingBlocklistController from './js/controllers/command_publishing_blocklist.js';
 import adminQueueController from './js/controllers/admin_queue.js';
 import adminSystemController from './js/controllers/admin_system.js';
 import adminSystemLogsController from './js/controllers/admin_system_logs.js';
@@ -134,12 +137,15 @@ import jobCreateCommandController from './js/controllers/job/create_command.js';
 import jobCreateRequestController from './js/controllers/job/create_request.js';
 import jobCreateTriggerController from './js/controllers/job/create_trigger.js';
 import loginController from './js/controllers/login.js';
+import addCommandPublishingBlocklistController
+  from './js/controllers/add_command_publishing_blocklist.js';
 import changePasswordController from './js/controllers/change_password.js';
 import newUserController from './js/controllers/user/new_user.js';
 import syncUsersController from './js/controllers/user/sync_users.js';
 
 // Partials
 import './partials/about.html';
+import './partials/command_publishing_blocklist.html';
 import './partials/admin_system.html';
 import './partials/admin_user_index.html';
 import './partials/admin_user_view.html';
@@ -199,6 +205,7 @@ angular
     .factory('InstanceService', instanceService)
     .factory('QueueService', queueService)
     .factory('RequestService', requestService)
+    .factory('CommandPublishingBlocklistService', commandPublishingBlocklistService)
     .factory('SystemService', systemService)
     .factory('UserService', userService)
     .factory('RoleService', roleService)
@@ -212,6 +219,8 @@ angular
     .factory('RunnerService', runnerService)
 
     .controller('AboutController', aboutController)
+    .controller('CommandPublishingBlocklistController', commandPublishingBlocklistController)
+    .controller('AddCommandPublishingBlocklistController', addCommandPublishingBlocklistController)
     .controller('AdminQueueController', adminQueueController)
     .controller(
         'AdminSystemForceDeleteController',
