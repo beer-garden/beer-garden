@@ -3,7 +3,8 @@
 import sys
 from os import path
 import warnings
-warnings.filterwarnings("ignore", message= 'calling yaml*')
+
+warnings.filterwarnings("ignore", module="apispec.utils", message="calling yaml.Load()")
 
 if __name__ == "__main__":
 
