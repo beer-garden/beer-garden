@@ -2,6 +2,8 @@
 
 import sys
 from os import path
+import warnings
+warnings.filterwarnings("ignore", message= 'calling yaml*')
 
 if __name__ == "__main__":
 
