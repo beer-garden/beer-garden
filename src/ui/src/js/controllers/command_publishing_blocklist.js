@@ -1,6 +1,6 @@
 import template from '../../templates/add_command_publishing_blocklist.html';
 
-CommandPublishingBlocklistController.$inject = [
+commandPublishingBlocklistController.$inject = [
   '$scope',
   '$rootScope',
   'DTOptionsBuilder',
@@ -9,14 +9,15 @@ CommandPublishingBlocklistController.$inject = [
 ];
 
 /**
- * systemIndexController - Controller for the system index page.
+ * commandPublishingBlocklistController - Controller for viewing and
+ * removing commands in the publishing blocklist.
  * @param  {Object} $scope         Angular's $scope object.
  * @param  {Object} $rootScope     Angular's $rootScope object.
  * @param  {Object} DTOptionsBuilder
  * @param  {Object} CommandPublishingBlocklistService command publishing blocklist service object
  * @param  {$scope} $uibModal     Angular UI's $uibModal object.
  */
-export default function CommandPublishingBlocklistController(
+export default function commandPublishingBlocklistController(
     $scope,
     $rootScope,
     DTOptionsBuilder,
@@ -24,6 +25,7 @@ export default function CommandPublishingBlocklistController(
     $uibModal,
 ) {
   $scope.data = [];
+  $scope.alerts = [];
 
   $scope.dtOptions = DTOptionsBuilder.newOptions()
       .withOption('autoWidth', false)
@@ -66,6 +68,12 @@ export default function CommandPublishingBlocklistController(
         deleteCommandPublishingBlocklist(blockedCommandId).then(
             (response) => {
               $scope.data[index].status = 'REMOVE_REQUESTED';
+            },
+            (errorResponse) => {
+              $scope.alerts.push({
+                type: 'danger',
+                msg: `Failed to remove command! Server returned status ${errorResponse.statusText}`,
+              });
             },
         );
   };

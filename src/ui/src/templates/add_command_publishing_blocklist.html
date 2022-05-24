@@ -52,6 +52,7 @@
     />
     <input
             type="submit"
+            ng-disabled="canSubmit()"
             class="btn btn-primary"
             value="Submit"
             ng-click="submitBlocklistEntries()"

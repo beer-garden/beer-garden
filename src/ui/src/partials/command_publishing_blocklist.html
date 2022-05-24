@@ -1,6 +1,14 @@
 <fetch-data response="response"></fetch-data>
 
 <div ng-if="responseState(response) === 'success'">
+  <div
+          uib-alert
+          ng-repeat="alert in alerts"
+          ng-class="'alert-' + alert.type"
+          close="alerts.splice($index, 1);"
+  >
+    {{alert.msg}}
+  </div>
   <h1 class="page-header">
     Command Publishing Block List
     <button type="button"

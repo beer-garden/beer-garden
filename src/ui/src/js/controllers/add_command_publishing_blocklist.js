@@ -1,5 +1,5 @@
 
-AddCommandPublishingBlocklistController.$inject = [
+addCommandPublishingBlocklistController.$inject = [
   '$scope',
   '$uibModalInstance',
   '$rootScope',
@@ -10,7 +10,7 @@ AddCommandPublishingBlocklistController.$inject = [
 ];
 
 /**
- * systemIndexController - Controller for the system index page.
+ * addCommandPublishingBlocklistController - Controller for adding commands to publishing blocklist.
  * @param  {Object} $scope         Angular's $scope object.
  * @param {Object} $uibModalInstance Object for the modal popup window.
  * @param  {Object} $rootScope     Angular's $rootScope object.
@@ -19,7 +19,7 @@ AddCommandPublishingBlocklistController.$inject = [
  * @param  {Object} $state,     Angular's $state, object.
  * @param {Object} commandBlocklist
  */
-export default function AddCommandPublishingBlocklistController(
+export default function addCommandPublishingBlocklistController(
     $scope,
     $uibModalInstance,
     $rootScope,
@@ -108,6 +108,10 @@ export default function AddCommandPublishingBlocklistController(
           item.command === filteredData[i][3]);
       $scope.data[$scope.data.indexOf(command)].isChecked = $scope.selectAllValue;
     }
+  };
+
+  $scope.canSubmit = function() {
+    return $scope.data.filter((item) => item.isChecked).length === 0;
   };
 
   $scope.formatSystemsToData = function(systems) {
