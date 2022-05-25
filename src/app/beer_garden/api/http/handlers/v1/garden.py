@@ -5,6 +5,7 @@ from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 
+import beer_garden.config as config
 from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.api.http.schemas.v1.garden import GardenReadSchema
@@ -43,7 +44,11 @@ class GardenAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-        garden = self.get_or_raise(Garden, GARDEN_READ, name=garden_name)
+        if garden_name == config.get("garden.name"):
+            garden = local_garden(all_systems=True)
+            self.verify_user_permission_for_object(GARDEN_READ, garden)
+        else:
+            garden = self.get_or_raise(Garden, GARDEN_READ, name=garden_name)
 
         if user_has_permission_for_object(self.current_user, GARDEN_UPDATE, garden):
             response = MongoParser.serialize(garden)
@@ -189,7 +194,17 @@ class GardenListAPI(AuthorizationHandler):
         permitted_gardens = self.permissioned_queryset(Garden, GARDEN_READ)
         response_gardens = []
 
-        for garden in permitted_gardens.no_cache():
+        permitted_gardens_list = list(
+            permitted_gardens.filter(connection_type__ne="LOCAL").no_cache()
+        )
+        _local_garden = local_garden(all_systems=True)
+
+        if user_has_permission_for_object(
+            self.current_user, GARDEN_READ, _local_garden
+        ):
+            permitted_gardens_list.append(_local_garden)
+
+        for garden in permitted_gardens_list:
             if user_has_permission_for_object(self.current_user, GARDEN_UPDATE, garden):
                 response_gardens.append(MongoParser.serialize(garden))
             else:

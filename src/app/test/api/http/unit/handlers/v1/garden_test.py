@@ -10,7 +10,14 @@ import beer_garden.events
 import beer_garden.router
 import beer_garden.user
 from beer_garden.api.http.authentication import issue_token_pair
-from beer_garden.db.mongo.models import Garden, Role, RoleAssignment, User
+from beer_garden.db.mongo.models import (
+    Garden,
+    Instance,
+    Role,
+    RoleAssignment,
+    System,
+    User,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -27,6 +34,20 @@ def garden_not_permitted():
 
     yield garden
     garden.delete()
+
+
+@pytest.fixture()
+def system(garden_permitted):
+    instance = Instance(name="instance")
+    system = System(
+        name="system",
+        version="1.0.0",
+        namespace=garden_permitted.name,
+        instances=[instance],
+    ).save()
+
+    yield system
+    system.delete()
 
 
 @pytest.fixture
@@ -174,6 +195,7 @@ class TestGardenAPI:
         app_config_auth_enabled,
         access_token,
         garden_permitted,
+        system,
     ):
         url = f"{base_url}/api/v1/gardens/{garden_permitted.name}"
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -184,6 +206,10 @@ class TestGardenAPI:
         assert response.code == 200
         assert response_body["id"] == str(garden_permitted.id)
         assert "connection_params" in response_body.keys()
+        assert len(response_body["systems"]) == 1
+        assert response_body["systems"][0]["name"] == system.name
+        assert len(response_body["namespaces"]) == 1
+        assert response_body["namespaces"][0] == garden_permitted.name
 
     @pytest.mark.gen_test
     def test_auth_enabled_returns_permitted_garden_sans_connection_params(
@@ -349,6 +375,7 @@ class TestGardenListAPI:
         app_config_auth_enabled,
         access_token,
         garden_permitted,
+        system,
     ):
         url = f"{base_url}/api/v1/gardens"
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -360,6 +387,10 @@ class TestGardenListAPI:
         assert len(response_body) == 1
         assert response_body[0]["id"] == str(garden_permitted.id)
         assert "connection_params" in response_body[0].keys()
+        assert len(response_body[0]["systems"]) == 1
+        assert response_body[0]["systems"][0]["name"] == system.name
+        assert len(response_body[0]["namespaces"]) == 1
+        assert response_body[0]["namespaces"][0] == garden_permitted.name
 
     @pytest.mark.gen_test
     def test_auth_enabled_returns_permitted_gardens_sans_connection_params(
