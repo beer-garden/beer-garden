@@ -21,6 +21,9 @@ from yapconf import YapconfSpec
 
 import beer_garden.config as config
 import beer_garden.db.api as db
+from beer_garden.command_publishing_blocklist import (
+    publish_command_publishing_blocklist,
+)
 from beer_garden.db.mongo.models import RemoteUser
 from beer_garden.events import publish, publish_event
 from beer_garden.namespace import get_namespaces
@@ -105,6 +108,7 @@ def publish_garden(status: str = "RUNNING") -> Garden:
     garden = local_garden(all_systems=True)
     garden.connection_type = None
     garden.status = status
+    publish_command_publishing_blocklist()
 
     return garden
 

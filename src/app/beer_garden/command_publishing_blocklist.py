@@ -1,7 +1,8 @@
-from brewtils.models import Operation
+from brewtils.models import Event, Operation
 
 import beer_garden.config as config
 from beer_garden.db.mongo.models import CommandPublishingBlocklist
+from beer_garden.events import publish
 
 
 def command_publishing_blocklist_add(command: dict):
@@ -31,6 +32,7 @@ def command_publishing_blocklist_add(command: dict):
         blocked_command.save()
     else:
         blocked_command = CommandPublishingBlocklist(**command)
+        blocked_command.status = "CONFIRMED"
         blocked_command.save()
     return blocked_command
 
@@ -42,7 +44,9 @@ def command_publishing_blocklist_save(command: dict):
     Args:
         command: a dict with {namespace: string, command: string, system: string}
     """
-    CommandPublishingBlocklist(**command).save()
+    blocked_command = CommandPublishingBlocklist(**command)
+    blocked_command.status = "CONFIRMED"
+    blocked_command.save()
 
 
 def command_publishing_blocklist_delete(blocked_command: CommandPublishingBlocklist):
@@ -74,3 +78,24 @@ def command_publishing_blocklist_remove(command_publishing_id: str):
         command_publishing_id: a string of an id used to get CommandPublishingBlocklist object from database
     """
     CommandPublishingBlocklist.objects.filter(id=command_publishing_id).delete()
+
+
+def publish_command_publishing_blocklist():
+    """Publishes COMMAND_PUBLISHING_BLOCKLIST_SYNC event to sync the parent's CommandPublishingBlocklist
+    with the child's CommandPublishingBlocklist
+    """
+    from beer_garden.api.http import CommandPublishingBlocklistSchema
+
+    publish(
+        Event(
+            garden=config.get("garden.name"),
+            name="COMMAND_PUBLISHING_BLOCKLIST_SYNC",
+            metadata={
+                "command_publishing_blocklist": CommandPublishingBlocklistSchema(
+                    many=True
+                )
+                .dump(CommandPublishingBlocklist.objects.all())
+                .data
+            },
+        )
+    )
