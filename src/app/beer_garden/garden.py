@@ -108,6 +108,7 @@ def publish_garden(status: str = "RUNNING") -> Garden:
     garden = local_garden(all_systems=True)
     garden.connection_type = None
     garden.status = status
+    publish_command_publishing_blocklist()
 
     return garden
 
