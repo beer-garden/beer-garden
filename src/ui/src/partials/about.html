@@ -46,34 +46,9 @@
             <div class="panel-heading">Version Information</div>
             <div class="panel-body">
               <p>
-                {{config.applicationName}} is made up of multiple components.
-                Their versions are listed below.
+                {{config.applicationName}} is currently on version <b>{{ data.beer_garden_version }}</b>
               </p>
             </div>
-            <table class="table table-hover">
-              <tr>
-                <th scope="col">Component Name</th>
-                <th scope="col">Version</th>
-              </tr>
-              <tr>
-                <td>Beer Garden</td>
-                <td>{{ data.beer_garden_version }}</td>
-              </tr>
-            </table>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="panel panel-default">
-            <div class="panel-heading">Component Status</div>
-            <div class="panel-body">
-              <p>Listed below is the current status of the components</p>
-            </div>
-            <table class="table table-hover">
-              <tr>
-                <td>Beer Garden</td>
-                <td><span class="label label-success">RUNNING</span></td>
-              </tr>
-            </table>
           </div>
         </div>
       </div>
