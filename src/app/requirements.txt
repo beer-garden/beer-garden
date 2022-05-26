@@ -44,9 +44,7 @@ packaging==20.9
 passlib==1.7.4
     # via beer-garden (setup.py)
 pathtools==0.1.2
-    # via
-    #   beer-garden (setup.py)
-    #   watchdog
+    # via watchdog
 pika==1.2.0
     # via brewtils
 prometheus-client==0.14.1

@@ -36,7 +36,6 @@ setup(
         "more-itertools<9",
         "motor<3",
         "passlib<1.8",
-        "pathtools==0.1.2",
         "prometheus-client<1",
         "pyyaml<6",
         "pyrabbit2<2",
