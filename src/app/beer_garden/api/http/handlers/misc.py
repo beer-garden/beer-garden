@@ -35,8 +35,6 @@ class VersionHandler(BaseHandler):
         self.write(
             {
                 "beer_garden_version": beer_garden.__version__,
-                "brew_view_version": beer_garden.__version__,
-                "bartender_version": beer_garden.__version__,
                 "current_api_version": "v1",
                 "supported_api_versions": ["v1"],
             }
