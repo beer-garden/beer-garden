@@ -43,8 +43,8 @@ setup(
         "ruamel.yaml<0.17",
         "stomp.py<6.2.0",
         "tornado<7",
-        "watchdog<1",
-        "yapconf==0.3.7",
+        "watchdog>2.1.0",
+        "yapconf>=1.0.0",
     ],
     classifiers=[
         "Development Status :: 4 - Beta",
