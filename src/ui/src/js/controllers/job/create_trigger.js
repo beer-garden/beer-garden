@@ -84,29 +84,6 @@ export default function jobCreateTriggerController(
       }
     }
 
-    if (triggerType === 'file') {
-      if (
-        angular.isDefined(model['file_pattern']) &&
-        model['file_pattern'] === ['']
-      ) {
-        $scope.alerts.push('At least one pattern is required.');
-        valid = false;
-      }
-      if (
-        angular.isDefined(model['file_callbacks']) &&
-        model['file_callbacks'] !== null
-      ) {
-        let temp = false;
-        for (const k in model['file_callbacks']) {
-          if (model['file_callbacks'][k] == true) temp = true;
-        }
-        if (!temp) {
-          $scope.alerts.push('At least one callback is required.');
-          valid = temp;
-        }
-      }
-    }
-
     return valid;
   };
 

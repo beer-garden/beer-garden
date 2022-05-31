@@ -110,6 +110,21 @@ def ensure_users():
         admin.save()
 
 
+def ensure_trigger_migration():
+    """File Triggers didn't work all the time, they were removed in 3.14.
+    Remove any file trigger jobs."""
+
+    database = get_db()
+
+    for doc in database["job"].find():
+        try:
+            if doc["trigger_type"] == "file":
+                database["job"].delete_one({"_id": doc["_id"]})
+
+        except Exception:
+            logger.error(f"Error deleting file trigger {doc['_id']}")
+
+
 def ensure_owner_collection_migration():
     """We ran into an issue with 3.0.5 where Requests and Jobs got migrated over to
     the Owner collection. This is in place to resolve that."""
@@ -214,6 +229,7 @@ def ensure_model_migration():
 
     ensure_v2_to_v3_model_migration()
     ensure_owner_collection_migration()
+    ensure_trigger_migration()
 
 
 def check_indexes(document_class):

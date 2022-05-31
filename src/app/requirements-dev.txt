@@ -118,10 +118,6 @@ pyflakes==2.4.0
     # via flake8
 pygments==2.11.2
     # via sphinx
-pyjwt==1.7.1
-    # via
-    #   -c requirements.txt
-    #   brewtils
 pyparsing==3.0.8
     # via
     #   -c requirements.txt

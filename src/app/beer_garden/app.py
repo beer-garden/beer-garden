@@ -254,9 +254,6 @@ class Application(StoppableThread):
         if config.get("plugin.local.logging.config_file"):
             self.plugin_local_log_config_observer.start()
 
-        self.logger.debug("Loading jobs from database")
-        self.scheduler.initialize_from_db()
-
         self.logger.info("All set! Let me know if you need anything else!")
 
     def _shutdown(self):

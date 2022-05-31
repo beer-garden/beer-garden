@@ -7,33 +7,14 @@ The schedule service is responsible for:
 """
 import logging
 import threading
-from datetime import datetime, timedelta
-from os.path import isdir
+from datetime import datetime
 from typing import Dict, List, Optional
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
 from brewtils.errors import ModelValidationError
-from brewtils.models import (
-    DateTrigger,
-    Event,
-    Events,
-    FileTrigger,
-    Job,
-    Operation,
-    Request,
-)
+from brewtils.models import DateTrigger, Event, Events, Job, Operation, Request
 from mongoengine import ValidationError
-from pathtools.patterns import match_any_paths
-from watchdog.events import (
-    EVENT_TYPE_CREATED,
-    EVENT_TYPE_DELETED,
-    EVENT_TYPE_MODIFIED,
-    EVENT_TYPE_MOVED,
-    PatternMatchingEventHandler,
-)
-from watchdog.observers.polling import PollingObserver as Observer
-from watchdog.utils import has_attribute, unicode_paths
 
 import beer_garden
 import beer_garden.config as config
@@ -109,90 +90,6 @@ def inject_values(request, dictionary):
         return request
 
 
-class PatternMatchingEventHandlerWithArgs(PatternMatchingEventHandler):
-    """
-    A BG implementation of the watchdog PatternMatchingEventHandler.
-
-    Allows args/kwargs to be stored and passed through to the callback functions
-    """
-
-    _args = []
-    _kwargs = {}
-    _coalesce = False
-    _src_path_timing = {}
-    # This is used to avoid multiple triggers from the same event
-    _min_delta_time = timedelta(microseconds=500_000)
-
-    def __init__(self, args=None, kwargs=None, coalesce=False, **thru):
-        self._args = args if args is not None else []
-        self._kwargs = kwargs if kwargs is not None else {}
-        self._coalesce = coalesce
-        super().__init__(**thru)
-
-    # Copy the dispatch code, but include arguments if specified
-    def dispatch(self, event):
-        """Dispatches events to the appropriate methods."""
-        current_time = datetime.now()
-        if self.ignore_directories and event.is_directory:
-            return
-
-        paths = []
-        if has_attribute(event, "dest_path"):
-            paths.append(unicode_paths.decode(event.dest_path))
-        if event.src_path:
-            paths.append(unicode_paths.decode(event.src_path))
-
-        if match_any_paths(
-            paths,
-            included_patterns=self.patterns,
-            excluded_patterns=self.ignore_patterns,
-            case_sensitive=self.case_sensitive,
-        ):
-            _method_map = {
-                EVENT_TYPE_MODIFIED: self.on_modified,
-                EVENT_TYPE_MOVED: self.on_moved,
-                EVENT_TYPE_CREATED: self.on_created,
-                EVENT_TYPE_DELETED: self.on_deleted,
-            }
-            event_type = event.event_type
-            event_tuple = (event.src_path, event_type)
-
-            if not self._coalesce:
-                self.on_any_event(*self._args, event=event, **self._kwargs)
-                _method_map[event_type](*self._args, event=event, **self._kwargs)
-
-            elif event_tuple in self._src_path_timing:
-                if (
-                    current_time - self._src_path_timing[event_tuple]
-                    > self._min_delta_time
-                ):
-                    # Update the time
-                    self._src_path_timing[event_tuple] = datetime.now()
-
-                    self.on_any_event(*self._args, event=event, **self._kwargs)
-                    _method_map[event_type](*self._args, event=event, **self._kwargs)
-            else:
-                self._src_path_timing[event_tuple] = datetime.now()
-
-                self.on_any_event(*self._args, event=event, **self._kwargs)
-                _method_map[event_type](*self._args, event=event, **self._kwargs)
-
-    def on_created(self, *args, event=None, **kwargs):
-        super().on_created(event)
-
-    def on_any_event(self, *args, event=None, **kwargs):
-        super().on_any_event(event)
-
-    def on_deleted(self, *args, event=None, **kwargs):
-        super().on_deleted(event)
-
-    def on_modified(self, *args, event=None, **kwargs):
-        super().on_modified(event)
-
-    def on_moved(self, *args, event=None, **kwargs):
-        super().on_moved(event)
-
-
 def pass_through(class_objects=None):
     """
     Adds any non-implemented methods defined by the given object names to the class.
@@ -222,55 +119,31 @@ def pass_through(class_objects=None):
     return wrapper
 
 
-@pass_through(class_objects=["_sync_scheduler", "_async_scheduler"])
+@pass_through(class_objects=["_sync_scheduler"])
 class MixedScheduler(object):
     """
-    A wrapper that tracks a file-based scheduler and an interval-based scheduler.
+    A wrapper that tracks an interval-based scheduler.
     """
 
     _sync_scheduler = BackgroundScheduler()
-    _async_scheduler = Observer()
-    _async_jobs = {}
-    _async_paused_jobs = set()
 
     running = False
 
-    def _process_watches(self, jobs):
-        """Helper function for initialize_from_db.  Adds job list to the scheduler
-
-        Args:
-            jobs: Jobs to be added to the watchdog scheduler
-        """
-        for job in jobs:
-            if isinstance(job.trigger, FileTrigger):
-                self.add_job(
-                    run_job,
-                    trigger=job.trigger,
-                    coalesce=job.coalesce,
-                    kwargs={"job_id": job.id, "request_template": job.request_template},
-                )
-
     def __init__(self, interval_config=None):
-        """Initializes the underlying scheduler(s)
+        """Initializes the underlying scheduler
 
         Args:
             interval_config: Any scheduler-specific arguments for the APScheduler
         """
         self._sync_scheduler.configure(**interval_config)
 
-    def initialize_from_db(self):
-        """Initializes the watchdog scheduler from jobs stored in the database"""
-        all_jobs = db.query(Job, filter_params={"trigger_type": "file"})
-        self._process_watches(all_jobs)
-
     def start(self):
-        """Starts both schedulers"""
+        """Starts the scheduler"""
         self._sync_scheduler.start()
-        self._async_scheduler.start()
         self.running = True
 
     def shutdown(self, **kwargs):
-        """Stops both schedulers
+        """Stops the scheduler
 
         Args:
             kwargs: Any other scheduler-specific arguments
@@ -278,24 +151,22 @@ class MixedScheduler(object):
         self.stop(**kwargs)
 
     def stop(self, **kwargs):
-        """Stops both schedulers
+        """Stops the scheduler
 
         Args:
             kwargs: Any other scheduler-specific arguments
         """
         self._sync_scheduler.shutdown(**kwargs)
-        self._async_scheduler.stop()
         self.running = False
 
     def reschedule_job(self, job_id, **kwargs):
-        """Passes through to the sync scheduler, but ignores async jobs
+        """Passes through to the sync scheduler
 
         Args:
             job_id: The job id
             kwargs: Any other scheduler-specific arguments
         """
-        if job_id not in self._async_jobs:
-            self._sync_scheduler.reschedule_job(job_id, **kwargs)
+        self._sync_scheduler.reschedule_job(job_id, **kwargs)
 
     def get_job(self, job_id):
         """Looks up a job
@@ -303,10 +174,7 @@ class MixedScheduler(object):
         Args:
             job_id: The job id
         """
-        if job_id in self._async_jobs:
-            return db.query_unique(Job, id=job_id)
-        else:
-            return self._sync_scheduler.get_job(job_id)
+        return self._sync_scheduler.get_job(job_id)
 
     def pause_job(self, job_id, **kwargs):
         """Pauses a running job
@@ -315,13 +183,7 @@ class MixedScheduler(object):
             job_id: The job id
             kwargs: Any other scheduler-specific arguments
         """
-        if job_id in self._async_jobs:
-            if job_id not in self._async_paused_jobs:
-                (event_handler, watch) = self._async_jobs.get(job_id)
-                self._async_scheduler.remove_handler_for_watch(event_handler, watch)
-                self._async_paused_jobs.add(job_id)
-        else:
-            self._sync_scheduler.pause_job(job_id, **kwargs)
+        self._sync_scheduler.pause_job(job_id, **kwargs)
 
     def resume_job(self, job_id, **kwargs):
         """Resumes a paused job
@@ -330,13 +192,7 @@ class MixedScheduler(object):
             job_id: The job id
             kwargs: Any other scheduler-specific arguments
         """
-        if job_id in self._async_jobs:
-            if job_id in self._async_paused_jobs:
-                (event_handler, watch) = self._async_jobs.get(job_id)
-                self._async_scheduler.add_handler_for_watch(event_handler, watch)
-                self._async_paused_jobs.remove(job_id)
-        else:
-            self._sync_scheduler.resume_job(job_id, **kwargs)
+        self._sync_scheduler.resume_job(job_id, **kwargs)
 
     def remove_job(self, job_id, **kwargs):
         """Removes the job from the corresponding scheduler
@@ -345,15 +201,7 @@ class MixedScheduler(object):
             job_id: The job id to lookup
             kwargs: Any other scheduler-specific arguments
         """
-        if job_id in self._async_jobs:
-            self._async_jobs.pop(job_id)
-            # Clean up the
-            if job_id in self._async_paused_jobs:
-                self._async_paused_jobs.remove(job_id)
-
-            db.delete(db.query_unique(Job, id=job_id))
-        else:
-            self._sync_scheduler.remove_job(job_id, **kwargs)
+        self._sync_scheduler.remove_job(job_id, **kwargs)
 
     def execute_job(self, job_id, reset_interval=False, **kwargs):
         """Executes the job ad-hoc
@@ -407,39 +255,11 @@ class MixedScheduler(object):
             logger.exception("Scheduler called with None-type trigger.")
             return
 
-        if not isinstance(trigger, FileTrigger):
-            # The old code always set the trigger to None, not sure why
-            self._sync_scheduler.add_job(
-                func,
-                trigger=construct_trigger(kwargs.pop("trigger_type"), trigger),
-                **kwargs,
-            )
-
-        else:
-            if not isdir(trigger.path):
-                logger.exception(f"User passed an invalid trigger path {trigger.path}")
-                return
-
-            # Pull out the arguments needed by the run_job function
-            args = [
-                kwargs.get("kwargs").get("job_id"),
-                kwargs.get("kwargs").get("request_template"),
-            ]
-
-            # Pass in those args to be relayed once the event occurs
-            event_handler = PatternMatchingEventHandlerWithArgs(
-                args=args,
-                coalesce=kwargs.get("coalesce", False),
-                patterns=trigger.pattern,
-            )
-            event_handler = self._add_triggers(event_handler, trigger.callbacks, func)
-
-            if trigger.path is not None and event_handler is not None:
-                # Register the job id with the set and schedule it with watchdog
-                watch = self._async_scheduler.schedule(
-                    event_handler, trigger.path, recursive=trigger.recursive
-                )
-                self._async_jobs[args[0]] = (event_handler, watch)
+        self._sync_scheduler.add_job(
+            func,
+            trigger=construct_trigger(kwargs.pop("trigger_type"), trigger),
+            **kwargs,
+        )
 
 
 class IntervalTrigger(APInterval):
