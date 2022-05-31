@@ -98,10 +98,6 @@ packaging==20.9
     #   sphinx
 pathspec==0.9.0
     # via black
-pathtools==0.1.2
-    # via
-    #   -c requirements.txt
-    #   watchdog
 pika==1.2.0
     # via
     #   -c requirements.txt
@@ -192,7 +188,7 @@ urllib3==1.26.9
     # via
     #   -c requirements.txt
     #   requests
-watchdog==0.10.4
+watchdog==2.1.8
     # via
     #   -c requirements.txt
     #   yapconf
@@ -202,7 +198,7 @@ wrapt==1.12.1
     # via
     #   -c requirements.txt
     #   brewtils
-yapconf==0.3.7
+yapconf==1.0.0
     # via
     #   -c requirements.txt
     #   brewtils
