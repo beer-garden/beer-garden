@@ -111,7 +111,7 @@
           <td>{{formatDate(request.created_at)}}</td>
           <td>{{formatDate(request.status_updated_at)}}</td>
           <td>{{formatDate(request.updated_at)}}</td>
-          <td>{{request.comment}}</td>
+          <td style="white-space: pre-line;">{{request.comment}}</td>
         </tr>
 
         <tr class="child-row slide" ng-repeat="child in childrenDisplay">
