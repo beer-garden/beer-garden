@@ -3,12 +3,7 @@ from brewtils.models import Events
 
 from beer_garden.api.http import CommandPublishingBlocklistSchema
 from beer_garden.command_publishing_blocklist import handle_event
-from beer_garden.db.mongo.models import (
-    CommandPublishingBlocklist,
-    Event,
-    Garden,
-    System,
-)
+from beer_garden.db.mongo.models import CommandPublishingBlocklist, Event, Garden
 
 garden_name = "somechildgarden"
 system_name = "somesystem"
