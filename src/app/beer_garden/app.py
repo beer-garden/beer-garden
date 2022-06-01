@@ -17,11 +17,11 @@ from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecuto
 from brewtils import EasyClient
 from brewtils.models import Event, Events
 from brewtils.stoppable_thread import StoppableThread
-from mongoengine import DoesNotExist
 from pytz import utc
 
 import beer_garden.api
 import beer_garden.api.entry_point
+import beer_garden.command_publishing_blocklist
 import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.events
@@ -30,7 +30,6 @@ import beer_garden.local_plugins.manager
 import beer_garden.namespace
 import beer_garden.queue.api as queue
 import beer_garden.router
-from beer_garden.db.mongo.models import CommandPublishingBlocklist
 from beer_garden.events.handlers import garden_callbacks
 from beer_garden.events.parent_procesors import HttpParentUpdater
 from beer_garden.events.processors import FanoutProcessor, QueueListener
@@ -154,27 +153,6 @@ class Application(StoppableThread):
                 and event.metadata["entry_point_type"] == "HTTP"
             ):
                 beer_garden.local_plugins.manager.rescan()
-        if (event.name == "COMMAND_PUBLISHING_BLOCKLIST_SYNC") and (
-            event.garden != config.get("garden.name")
-        ):
-            local_command_publishing_blocklist = CommandPublishingBlocklist.objects(
-                namespace=event.garden
-            )
-            list_of_ids = []
-            for blocked_command in event.metadata["command_publishing_blocklist"]:
-                list_of_ids.append(blocked_command["id"])
-            for blocked_command in local_command_publishing_blocklist:
-                if f"{blocked_command.id}" not in list_of_ids:
-                    blocked_command.delete()
-            for blocked_command in event.metadata["command_publishing_blocklist"]:
-                try:
-                    local_blocked_command = CommandPublishingBlocklist.objects.get(
-                        id=blocked_command["id"]
-                    )
-                    local_blocked_command.status = blocked_command["status"]
-                    local_blocked_command.save()
-                except DoesNotExist:
-                    CommandPublishingBlocklist(**blocked_command).save()
 
     def _progressive_backoff(self, func: Callable, failure_message: str):
         """Execute a function until it returns truthy, increasing wait time each attempt
@@ -270,6 +248,7 @@ class Application(StoppableThread):
 
         self.logger.debug("Publishing startup sync")
         beer_garden.garden.publish_garden()
+        beer_garden.command_publishing_blocklist.publish_command_publishing_blocklist()
 
         self.logger.debug("Starting plugin log config file monitors")
         if config.get("plugin.logging.config_file"):
@@ -286,6 +265,7 @@ class Application(StoppableThread):
         )
 
         self.logger.debug("Publishing shutdown sync")
+        beer_garden.command_publishing_blocklist.publish_command_publishing_blocklist()
         beer_garden.garden.publish_garden(status="STOPPED")
 
         if self.scheduler.running:

@@ -108,7 +108,6 @@ def publish_garden(status: str = "RUNNING") -> Garden:
     garden = local_garden(all_systems=True)
     garden.connection_type = None
     garden.status = status
-    publish_command_publishing_blocklist()
 
     return garden
 
@@ -276,6 +275,7 @@ def garden_sync(sync_target: str = None):
         logger.debug("Processing garden sync, about to publish")
 
         publish_garden()
+        publish_command_publishing_blocklist()
 
     else:
         from beer_garden.router import route
