@@ -14,11 +14,11 @@ backports-zoneinfo==0.2.1
     # via
     #   pytz-deprecation-shim
     #   tzlocal
-brewtils==3.13.0
+brewtils==3.14.0
     # via beer-garden (setup.py)
 bson==0.5.10
     # via beer-garden (setup.py)
-certifi==2021.10.8
+certifi==2022.5.18.1
     # via requests
 charset-normalizer==2.0.12
     # via requests
@@ -37,7 +37,7 @@ marshmallow-polyfield==3.2
     # via brewtils
 mongoengine==0.20.0
     # via beer-garden (setup.py)
-more-itertools==8.12.0
+more-itertools==8.13.0
     # via beer-garden (setup.py)
 motor==2.5.1
     # via beer-garden (setup.py)
@@ -49,13 +49,13 @@ pika==1.2.0
     # via brewtils
 prometheus-client==0.14.1
     # via beer-garden (setup.py)
-pyjwt==1.7.1
-    # via brewtils
+pyjwt==2.4.0
+    # via beer-garden (setup.py)
 pymongo==3.12.3
     # via
     #   mongoengine
     #   motor
-pyparsing==3.0.8
+pyparsing==3.0.9
     # via packaging
 pyrabbit2==1.0.7
     # via beer-garden (setup.py)
