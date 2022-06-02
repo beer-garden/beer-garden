@@ -40,6 +40,7 @@ setup(
         "pyyaml<6",
         "pyrabbit2<2",
         "pytz<2021",
+        "pyjwt>=2.4.0",
         "ruamel.yaml<0.17",
         "stomp.py<6.2.0",
         "tornado<7",
