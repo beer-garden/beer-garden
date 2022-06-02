@@ -221,7 +221,7 @@ def _generate_refresh_token(user: User, identifier: UUID, expiration: datetime) 
 
     refresh_token = jwt.encode(
         jwt_payload, key=secret_key, headers=jwt_headers
-    ).decode()
+    )
 
     return refresh_token
 
