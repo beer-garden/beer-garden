@@ -129,7 +129,7 @@ plugin:
   local:
     auth:
       password: password
-      username: admin
+      username: plugin_admin
     directory: ./plugins
     host_env_vars: []
     logging:

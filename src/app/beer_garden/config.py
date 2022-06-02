@@ -1221,6 +1221,7 @@ _PLUGIN_SPEC = {
                     "items": {
                         "username": {
                             "type": "str",
+                            "default": "plugin_admin",
                             "description": (
                                 "Username that local plugins will use for "
                                 "authentication (needs bg-plugin role)"
@@ -1229,6 +1230,7 @@ _PLUGIN_SPEC = {
                         },
                         "password": {
                             "type": "str",
+                            "default": "password",
                             "description": (
                                 "Password that local plugins will use for "
                                 "authentication (needs bg-plugin role)"
