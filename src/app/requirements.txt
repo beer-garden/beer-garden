@@ -16,6 +16,8 @@ backports-zoneinfo==0.2.1
     #   tzlocal
 brewtils==3.13.0
     # via beer-garden (setup.py)
+bson==0.5.10
+    # via beer-garden (setup.py)
 certifi==2021.10.8
     # via requests
 charset-normalizer==2.0.12
@@ -58,7 +60,11 @@ pyparsing==3.0.8
 pyrabbit2==1.0.7
     # via beer-garden (setup.py)
 python-box==3.4.6
-    # via yapconf
+    # via
+    #   beer-garden (setup.py)
+    #   yapconf
+python-dateutil==2.8.2
+    # via bson
 pytz==2020.5
     # via
     #   apscheduler
@@ -84,6 +90,8 @@ six==1.16.0
     # via
     #   apscheduler
     #   brewtils
+    #   bson
+    #   python-dateutil
     #   yapconf
 stomp-py==6.0.0
     # via beer-garden (setup.py)
@@ -100,7 +108,9 @@ watchdog==2.1.8
     #   beer-garden (setup.py)
     #   yapconf
 wrapt==1.12.1
-    # via brewtils
+    # via
+    #   beer-garden (setup.py)
+    #   brewtils
 yapconf==1.0.0
     # via
     #   beer-garden (setup.py)
