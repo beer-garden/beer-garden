@@ -1,7 +1,9 @@
-from brewtils.models import Operation
+from brewtils.models import Event, Events, Operation
+from mongoengine import DoesNotExist
 
 import beer_garden.config as config
 from beer_garden.db.mongo.models import CommandPublishingBlocklist
+from beer_garden.events import publish
 
 
 def command_publishing_blocklist_add(command: dict):
@@ -31,6 +33,7 @@ def command_publishing_blocklist_add(command: dict):
         blocked_command.save()
     else:
         blocked_command = CommandPublishingBlocklist(**command)
+        blocked_command.status = "CONFIRMED"
         blocked_command.save()
     return blocked_command
 
@@ -42,7 +45,9 @@ def command_publishing_blocklist_save(command: dict):
     Args:
         command: a dict with {namespace: string, command: string, system: string}
     """
-    CommandPublishingBlocklist(**command).save()
+    blocked_command = CommandPublishingBlocklist(**command)
+    blocked_command.status = "CONFIRMED"
+    blocked_command.save()
 
 
 def command_publishing_blocklist_delete(blocked_command: CommandPublishingBlocklist):
@@ -74,3 +79,54 @@ def command_publishing_blocklist_remove(command_publishing_id: str):
         command_publishing_id: a string of an id used to get CommandPublishingBlocklist object from database
     """
     CommandPublishingBlocklist.objects.filter(id=command_publishing_id).delete()
+
+
+def handle_event(event):
+    """Handles COMMAND_PUBLISHING_BLOCKLIST_SYNC events"""
+    if (event.name == Events.COMMAND_PUBLISHING_BLOCKLIST_SYNC.name) and (
+        event.garden != config.get("garden.name")
+    ):
+        list_of_ids = []
+        for blocked_command in event.metadata["command_publishing_blocklist"]:
+            list_of_ids.append(blocked_command["id"])
+            try:
+                local_blocked_command = CommandPublishingBlocklist.objects.get(
+                    namespace=blocked_command["namespace"],
+                    system=blocked_command["system"],
+                    command=blocked_command["command"],
+                )
+
+                if f"{local_blocked_command.id}" != blocked_command["id"]:
+                    local_blocked_command.delete()
+                    local_blocked_command = CommandPublishingBlocklist(
+                        **blocked_command
+                    )
+                else:
+                    local_blocked_command.status = blocked_command["status"]
+                local_blocked_command.save()
+            except DoesNotExist:
+                CommandPublishingBlocklist(**blocked_command).save()
+        CommandPublishingBlocklist.objects.filter(
+            namespace=event.garden, id__nin=list_of_ids
+        ).delete()
+
+
+def publish_command_publishing_blocklist():
+    """Publishes COMMAND_PUBLISHING_BLOCKLIST_SYNC event to sync the parent's
+    CommandPublishingBlocklist with the child's CommandPublishingBlocklist
+    """
+    from beer_garden.api.http import CommandPublishingBlocklistSchema
+
+    publish(
+        Event(
+            garden=config.get("garden.name"),
+            name=Events.COMMAND_PUBLISHING_BLOCKLIST_SYNC.name,
+            metadata={
+                "command_publishing_blocklist": CommandPublishingBlocklistSchema(
+                    many=True
+                )
+                .dump(CommandPublishingBlocklist.objects.all())
+                .data
+            },
+        )
+    )
