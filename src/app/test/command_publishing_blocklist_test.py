@@ -70,18 +70,10 @@ class TestCommandPublishingBlocklist:
         ).save()
         handle_event(event)
 
-        blocklist_data = {
-            "command_publishing_blocklist": CommandPublishingBlocklistSchema(many=True)
-            .dump(CommandPublishingBlocklist.objects.all())
-            .data
-        }
-
-        assert len(blocklist_data["command_publishing_blocklist"]) == 2
-        for blocked_command in blocklist_data["command_publishing_blocklist"]:
-            if command_name == blocked_command["command"]:
-                assert blocked_command["status"] == "CONFIRMED"
-            else:
-                assert (
-                    "should_get_added" == blocked_command["command"]
-                    and "should_get_removed" != blocked_command["command"]
-                )
+        blocked_commands = CommandPublishingBlocklist.objects.all().values_list(
+            "command", "status"
+        )
+        assert len(blocked_commands) == 2
+        assert ("somecommand", "CONFIRMED") in blocked_commands
+        assert ("should_get_added", "CONFIRMED") in blocked_commands
+        assert ("should_get_removed", "REMOVE_REQUESTED") not in blocked_commands
