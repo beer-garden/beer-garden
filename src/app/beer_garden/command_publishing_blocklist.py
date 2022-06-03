@@ -175,7 +175,7 @@ def handle_event(event):
         if event.name == Events.COMMAND_PUBLISHING_BLOCKLIST_SYNC.name:
             _handle_sync_event(event)
         elif event.name == Events.COMMAND_PUBLISHING_BLOCKLIST_UPDATE.name:
-            _update_blocklist(event.metadata["blocked_command"])
+            _handle_update_event(event)
         elif event.name == Events.COMMAND_PUBLISHING_BLOCKLIST_REMOVE.name:
             _handle_remove_event(event)
 
