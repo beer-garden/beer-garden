@@ -201,7 +201,7 @@ def _generate_access_token(user: User, identifier: UUID) -> str:
         "permissions": permissions_for_user(user),
     }
 
-    access_token = jwt.encode(jwt_payload, key=secret_key, headers=jwt_headers).decode()
+    access_token = jwt.encode(jwt_payload, key=secret_key, headers=jwt_headers)
 
     return access_token
 
@@ -219,9 +219,7 @@ def _generate_refresh_token(user: User, identifier: UUID, expiration: datetime) 
         "type": "refresh",
     }
 
-    refresh_token = jwt.encode(
-        jwt_payload, key=secret_key, headers=jwt_headers
-    ).decode()
+    refresh_token = jwt.encode(jwt_payload, key=secret_key, headers=jwt_headers)
 
     return refresh_token
 

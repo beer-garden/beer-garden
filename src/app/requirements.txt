@@ -58,7 +58,9 @@ pyparsing==3.0.9
 pyrabbit2==1.0.7
     # via beer-garden (setup.py)
 python-box==3.4.6
-    # via yapconf
+    # via
+    #   beer-garden (setup.py)
+    #   yapconf
 pytz==2020.5
     # via
     #   apscheduler
@@ -100,7 +102,9 @@ watchdog==2.1.8
     #   beer-garden (setup.py)
     #   yapconf
 wrapt==1.12.1
-    # via brewtils
+    # via
+    #   beer-garden (setup.py)
+    #   brewtils
 yapconf==1.0.0
     # via
     #   beer-garden (setup.py)
