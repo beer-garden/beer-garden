@@ -27,7 +27,6 @@ from brewtils.models import Instance as BrewtilsInstance
 from brewtils.models import Job as BrewtilsJob
 from brewtils.models import Parameter as BrewtilsParameter
 from brewtils.models import Request as BrewtilsRequest
-from bson.objectid import ObjectId
 from mongoengine import (
     CASCADE,
     NULLIFY,
@@ -270,10 +269,15 @@ class Command(MongoModel, EmbeddedDocument):
             )
 
 
+def generate_objectid():
+    return ObjectIdField().to_python(None)
+
+
 class Instance(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.Instance
-
-    id = ObjectIdField(required=True, default=ObjectId, unique=True, primary_key=True)
+    id = ObjectIdField(
+        required=True, default=generate_objectid, unique=True, primary_key=True
+    )
     name = StringField(required=True, default="default")
     description = StringField()
     status = StringField(default="INITIALIZING")

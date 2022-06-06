@@ -20,7 +20,9 @@ from marshmallow import Schema
 from marshmallow.exceptions import ValidationError as MarshmallowValidationError
 from mongoengine.errors import DoesNotExist, NotUniqueError
 from mongoengine.errors import ValidationError as MongoValidationError
-from pymongo.errors import DocumentTooLarge
+from mongoengine.errors import InvalidDocumentError
+
+# from pymongo.errors import DocumentTooLarge
 from tornado.web import HTTPError, RequestHandler
 
 import beer_garden.api.http
@@ -70,7 +72,7 @@ class BaseHandler(RequestHandler):
         NotUniqueException: {"status_code": 409},
         NotUniqueError: {"status_code": 409, "message": "Resource already exists"},
         EndpointRemovedException: {"status_code": 410, "message": "Endpoint removed"},
-        DocumentTooLarge: {"status_code": 413, "message": "Resource too large"},
+        InvalidDocumentError: {"status_code": 413, "message": "Resource too large"},
         RequestPublishException: {"status_code": 502},
         RoutingException: {"status_code": 500},
         socket.timeout: {"status_code": 504, "message": "Backend request timed out"},

@@ -2,7 +2,6 @@
 import pytest
 from box import Box
 from mock import Mock
-from pymongo.errors import ServerSelectionTimeoutError
 
 import beer_garden.db.mongo.api
 
@@ -39,7 +38,7 @@ class TestCheckConnection(object):
         )
 
     def test_setup_database_connect_error(self, monkeypatch, db_config):
-        connect_mock = Mock(side_effect=ServerSelectionTimeoutError())
+        connect_mock = Mock(side_effect=Exception())
         monkeypatch.setattr(beer_garden.db.mongo.api, "connect", connect_mock)
 
         assert beer_garden.db.mongo.api.check_connection(db_config) is False

@@ -5,8 +5,8 @@ from brewtils.models import Garden as BrewtilsGarden
 from brewtils.models import Job as BrewtilsJob
 from brewtils.models import Request as BrewtilsRequest
 from brewtils.models import System as BrewtilsSystem
-from bson import ObjectId
 from mongoengine import Document, DoesNotExist, Q, QuerySet
+from mongoengine.fields import ObjectIdField
 from mongoengine.queryset.visitor import QCombination
 
 import beer_garden.db.mongo.models
@@ -250,7 +250,7 @@ def _get_object_ids_from_domain(domain: RoleAssignmentDomain) -> list:
     return [str(object_id) for object_id in model_objects.values_list("id")]
 
 
-def _get_garden_id_from_namespace(obj) -> Optional[ObjectId]:
+def _get_garden_id_from_namespace(obj):
     """Returns the Garden id corresponding to the supplied object based on the namespace
     field from the object or its request_template
     """
@@ -268,7 +268,7 @@ def _get_garden_id_from_namespace(obj) -> Optional[ObjectId]:
     return garden_id
 
 
-def _get_system_id_from_request(obj) -> Optional[ObjectId]:
+def _get_system_id_from_request(obj):
     """Returns the System id corresponding to the supplied object based on the fields
     representing a system on the object or its request_template (i.e system, version,
     and namespace)
@@ -287,14 +287,14 @@ def _get_system_id_from_request(obj) -> Optional[ObjectId]:
     return system_id
 
 
-def _get_object_garden_id(obj) -> Optional[str]:
+def _get_object_garden_id(obj):
     """Finds the Garden id (as a string) for the supplied object"""
     garden_id = None
 
     if isinstance(obj, Garden):
         garden_id = obj.id
     elif isinstance(obj, BrewtilsGarden):
-        garden_id = ObjectId(obj.id)
+        garden_id = ObjectIdField().to_mongo(obj.id)
     else:
         garden_id = _get_garden_id_from_namespace(obj)
 
@@ -308,7 +308,7 @@ def _get_object_system_id(obj) -> Optional[str]:
     if isinstance(obj, System):
         system_id = obj.id
     elif isinstance(obj, BrewtilsSystem):
-        system_id = ObjectId(obj.id)
+        system_id = ObjectIdField().to_python(obj.id)
     elif type(obj) in _types_that_derive_system_from_request:
         system_id = _get_system_id_from_request(obj)
 

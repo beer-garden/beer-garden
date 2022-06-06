@@ -12,8 +12,8 @@ from brewtils.models import (
     Request,
     RequestTemplate,
 )
-from bson import ObjectId
 from mock import Mock
+from mongoengine.fields import ObjectIdField
 
 import beer_garden.db.api as db
 import beer_garden.files as files
@@ -35,22 +35,26 @@ class TestFileOperations(object):
             file_name="my_test_data.txt",
             file_size=len(base64_data) * 4,
             chunk_size=len(base64_data),
-            id=str(ObjectId()),
+            id=str(ObjectIdField().to_python(None)),
             owner_type=None,
             owner_id=None,
             request=None,
-            job=ObjectId(),
+            job=ObjectIdField().to_python(None),
             chunks={
-                "0": str(ObjectId()),
-                "1": str(ObjectId()),
-                "2": str(ObjectId()),
-                "3": str(ObjectId()),
+                "0": str(ObjectIdField().to_python(None)),
+                "1": str(ObjectIdField().to_python(None)),
+                "2": str(ObjectIdField().to_python(None)),
+                "3": str(ObjectIdField().to_python(None)),
             },
         )
 
     @pytest.fixture
     def simple_file_chunk(self, simple_file, base64_data):
-        return FileChunk(id=str(ObjectId()), file_id=simple_file.id, data=base64_data)
+        return FileChunk(
+            id=str(ObjectIdField().to_python(None)),
+            file_id=simple_file.id,
+            data=base64_data,
+        )
 
     @pytest.fixture
     def storage_create_kwargs(self):
@@ -123,7 +127,7 @@ class TestFileOperations(object):
                 modified_file.file_name,
                 modified_file.file_size * 1024 * 1024,
                 modified_file.chunk_size * 1024 * 1024,
-                file_id=str(ObjectId()),
+                file_id=str(ObjectIdField().to_python(None)),
             )
             raise AssertionError()
         except ValueError:
@@ -215,7 +219,7 @@ class TestFileOperations(object):
             instance_name="my_bg",
             namespace="file_testing",
             command="something_cool",
-            id=str(ObjectId()),
+            id=str(ObjectIdField().to_python(None)),
         )
 
     @pytest.fixture
@@ -233,7 +237,7 @@ class TestFileOperations(object):
                 command="something_cool",
             ),
             name="my_simple_job",
-            id=str(ObjectId()),
+            id=str(ObjectIdField().to_python(None)),
         )
 
     @pytest.fixture
@@ -256,7 +260,7 @@ class TestFileOperations(object):
             id=simple_file.id,
             owner_type="REQUEST",
             owner_id=simple_request.id,
-            request=ObjectId(),
+            request=ObjectIdField().to_python(None),
         )
 
     @pytest.fixture
@@ -268,7 +272,7 @@ class TestFileOperations(object):
             id=simple_file.id,
             owner_type="JOB",
             owner_id=simple_job.id,
-            job=ObjectId(),
+            job=ObjectIdField().to_python(None),
         )
 
     def test_file_owner(

@@ -118,7 +118,7 @@ class TestCheckIndexes(object):
     @patch("mongoengine.connect", Mock())
     @patch("mongoengine.register_connection", Mock())
     def test_successful_index_rebuild(self, get_db_mock, model_mocks):
-        from pymongo.errors import OperationFailure
+        from mongoengine.errors import OperationError
 
         # 'normal' return values
         for model_mock in model_mocks.values():
@@ -130,7 +130,7 @@ class TestCheckIndexes(object):
             )
 
         # ... except for this one
-        model_mocks["request"].list_indexes.side_effect = OperationFailure("")
+        model_mocks["request"].list_indexes.side_effect = OperationError("")
 
         db_mock = MagicMock()
         get_db_mock.return_value = db_mock

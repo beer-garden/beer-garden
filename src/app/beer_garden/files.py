@@ -16,8 +16,8 @@ from brewtils.models import (
     Operation,
     Request,
 )
-from bson import ObjectId
-from bson.errors import InvalidId
+from mongoengine.errors import ValidationError
+from mongoengine.fields import ObjectIdField
 
 import beer_garden.config as config
 import beer_garden.db.api as db
@@ -118,8 +118,8 @@ def check_file(file_id: str, upsert: bool = False) -> File:
         ModelValidationError: Incorrectly formatted ID is given
     """
     try:
-        ObjectId(file_id)
-    except (InvalidId, TypeError):
+        ObjectIdField().to_mongo(file_id)
+    except (ValidationError, TypeError):
         raise ModelValidationError(
             f"Cannot create a file id with the string {file_id}. "
             "Requires 24-character hex string."
@@ -153,8 +153,8 @@ def check_chunk(chunk_id: str):
         ModelValidationError: Incorrectly formatted ID is given
     """
     try:
-        ObjectId(chunk_id)
-    except (InvalidId, TypeError):
+        ObjectIdField().to_mongo(chunk_id)
+    except (ValidationError, TypeError):
         raise ModelValidationError(
             f"Cannot create a chunk id with the string {chunk_id}. "
             "Requires 24-character hex string."
@@ -368,8 +368,8 @@ def create_file(
     # Override the file id if passed in
     if file_id is not None:
         try:
-            file.id = ObjectId(file_id)
-        except (InvalidId, TypeError):
+            file.id = ObjectIdField().to_mongo(file_id)
+        except (ValidationError, TypeError):
             raise ModelValidationError(
                 f"Cannot create a file id with the string {file_id}. "
                 "Requires 24-character hex string."
