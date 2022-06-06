@@ -2,16 +2,17 @@ from brewtils.models import Event, Events, Operation
 from mongoengine import DoesNotExist
 
 import beer_garden.config as config
-from beer_garden.db.mongo.models import CommandPublishingBlocklist
+from beer_garden.db.mongo.models import CommandPublishingBlocklist, Garden
 from beer_garden.events import publish
 
 
-def command_publishing_blocklist_add(command: dict):
+def command_publishing_blocklist_add(command: dict, return_value: bool = False):
     """Creates the provided CommandPublishingBlocklist by setting its attributes to the provided arg.
     The created CommandPublishingBlocklist object is then saved to the database and returned.
 
     Args:
         command: a dict with {namespace: string, command: string, system: string}
+        return_value: a bool indicating whether to return
 
     Returns:
         CommandPublishingBlocklist: the created CommandPublishingBlocklist instance
@@ -20,14 +21,15 @@ def command_publishing_blocklist_add(command: dict):
     from beer_garden.api.http import CommandPublishingBlocklistSchema
 
     if config.get("garden.name") != command["namespace"]:
+        target_garden = Garden.objects.get(
+            namespaces__contains=command["namespace"]
+        ).name
         blocked_command = CommandPublishingBlocklist(**command)
-        blocked_command.save()
-        command["id"] = str(blocked_command.id)
         beer_garden.router.route(
             Operation(
                 operation_type="COMMAND_BLOCKLIST_ADD",
                 kwargs={"command": command},
-                target_garden_name=command["namespace"],
+                target_garden_name=target_garden,
             )
         )
         blocked_command.status = "ADD_REQUESTED"
@@ -36,32 +38,6 @@ def command_publishing_blocklist_add(command: dict):
         blocked_command = CommandPublishingBlocklist(**command)
         blocked_command.status = "CONFIRMED"
         blocked_command.save()
-        publish(
-            Event(
-                garden=config.get("garden.name"),
-                name=Events.COMMAND_PUBLISHING_BLOCKLIST_UPDATE.name,
-                metadata={
-                    "blocked_command": CommandPublishingBlocklistSchema()
-                    .dump(blocked_command)
-                    .data
-                },
-            )
-        )
-    return blocked_command
-
-
-def command_publishing_blocklist_save(command: dict):
-    """Creates the provided CommandPublishingBlocklist by setting its attributes to the provided arg.
-    The created CommandPublishingBlocklist object is then saved to the database.
-
-    Args:
-        command: a dict with {namespace: string, command: string, system: string}
-    """
-    from beer_garden.api.http import CommandPublishingBlocklistSchema
-
-    blocked_command = CommandPublishingBlocklist(**command)
-    blocked_command.status = "CONFIRMED"
-    blocked_command.save()
     publish(
         Event(
             garden=config.get("garden.name"),
@@ -73,24 +49,35 @@ def command_publishing_blocklist_save(command: dict):
             },
         )
     )
+    if return_value:
+        return blocked_command
 
 
-def command_publishing_blocklist_delete(blocked_command: CommandPublishingBlocklist):
+def command_publishing_blocklist_delete(
+    blocked_command: CommandPublishingBlocklist = None, blocked_command_id: str = None
+):
     """Deletes the provided CommandPublishingBlocklist object from database.
 
     Args:
         blocked_command: a CommandPublishingBlocklist object
+        blocked_command_id: a string of an id for CommandPublishingBlocklist
     """
-    from beer_garden.api.http import CommandPublishingBlocklistSchema
+
+    if blocked_command is None:
+        blocked_command = CommandPublishingBlocklist.objects.get(id=blocked_command_id)
 
     if config.get("garden.name") != blocked_command.namespace:
         import beer_garden.router
+        from beer_garden.api.http import CommandPublishingBlocklistSchema
 
+        target_garden = Garden.objects.get(
+            namespaces__contains=blocked_command["namespace"]
+        ).name
         beer_garden.router.route(
             Operation(
                 operation_type="COMMAND_BLOCKLIST_REMOVE",
-                args=[blocked_command.id],
-                target_garden_name=blocked_command.namespace,
+                kwargs={"blocked_command_id": f"{blocked_command.id}"},
+                target_garden_name=target_garden,
             )
         )
         blocked_command.status = "REMOVE_REQUESTED"
@@ -115,22 +102,6 @@ def command_publishing_blocklist_delete(blocked_command: CommandPublishingBlockl
             )
         )
         blocked_command.delete()
-
-
-def command_publishing_blocklist_remove(command_publishing_id: str):
-    """Deletes the CommandPublishingBlocklist object with corresponding id from database.
-
-    Args:
-        command_publishing_id: a string of an id used to get CommandPublishingBlocklist object from database
-    """
-    publish(
-        Event(
-            garden=config.get("garden.name"),
-            name=Events.COMMAND_PUBLISHING_BLOCKLIST_REMOVE.name,
-            metadata={"id": command_publishing_id},
-        )
-    )
-    CommandPublishingBlocklist.objects.filter(id=command_publishing_id).delete()
 
 
 def _update_blocklist(blocked_command):
