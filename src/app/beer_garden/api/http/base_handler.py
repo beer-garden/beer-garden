@@ -18,9 +18,8 @@ from brewtils.errors import (
 )
 from marshmallow import Schema
 from marshmallow.exceptions import ValidationError as MarshmallowValidationError
-from mongoengine.errors import DoesNotExist, NotUniqueError
+from mongoengine.errors import DoesNotExist, InvalidDocumentError, NotUniqueError
 from mongoengine.errors import ValidationError as MongoValidationError
-from mongoengine.errors import InvalidDocumentError
 from tornado.web import HTTPError, RequestHandler
 
 import beer_garden.api.http
