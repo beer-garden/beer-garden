@@ -17,7 +17,7 @@ from builtins import str
 from copy import deepcopy
 from typing import Dict, List, Sequence, Union
 
-import pika.spec
+from brewtils.pika import PERSISTENT_DELIVERY_MODE
 import six
 import urllib3
 from brewtils.choices import parse
@@ -584,7 +584,7 @@ def _publish_request(request: Request, is_admin: bool, priority: int):
         priority=priority,
         confirm=True,
         mandatory=True,
-        delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE,
+        delivery_mode=PERSISTENT_DELIVERY_MODE,
     )
 
 
