@@ -25,7 +25,7 @@ from typing import Tuple
 from brewtils.models import Event, Events, Instance, Request, RequestTemplate, System
 from brewtils.schema_parser import SchemaParser
 from brewtils.stoppable_thread import StoppableThread
-from bson import ObjectId
+from mongoengine.fields import ObjectIdField
 
 import beer_garden.config as config
 import beer_garden.db.api as db
@@ -357,7 +357,7 @@ async def update_async(
     Returns:
         The updated Instance
     """
-    query = {"instances._id": ObjectId(instance_id)}
+    query = {"instances._id": ObjectIdField().to_mongo(instance_id)}
     projection = {"instances.$": 1, "_id": 0}
     update = {}
 
@@ -378,7 +378,7 @@ async def update_async(
 async def heartbeat_async(
     instance_id: str = None, instance: Instance = None, system: System = None, **_
 ) -> dict:
-    query = {"instances._id": ObjectId(instance_id)}
+    query = {"instances._id": ObjectIdField().to_mongo(instance_id)}
     projection = {"instances.$": 1, "_id": 0}
     update = {"$set": {"instances.$.status_info.heartbeat": datetime.utcnow()}}
 

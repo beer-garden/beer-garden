@@ -7,6 +7,7 @@ from box import Box
 from brewtils.models import BaseModel
 from brewtils.schema_parser import SchemaParser
 from mongoengine import (
+    ConnectionFailure,
     DoesNotExist,
     NotUniqueError,
     QuerySet,
@@ -14,7 +15,6 @@ from mongoengine import (
     register_connection,
 )
 from mongoengine.queryset.visitor import Q, QCombination
-from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
 
 import beer_garden.db.mongo.models
 from beer_garden.db.mongo.models import MongoModel
@@ -124,8 +124,7 @@ def check_connection(db_config: Box):
         bool: True if successful, False otherwise (unable to connect)
 
     Raises:
-        Any mongoengine or pymongo error *except* ConnectionFailure,
-        ServerSelectionTimeoutError
+        Any mongoengine error *except* ConnectionFailure
     """
     try:
         # Set timeouts here to a low value - we don't want to wait 30
@@ -138,14 +137,15 @@ def check_connection(db_config: Box):
             **db_config["connection"],
         )
 
-        # The 'connect' method won't actually fail
-        # An exception won't be raised until we actually try to do something
+    except ConnectionFailure as ex:
+        logger.debug(ex)
+        return False
+
+    try:
+        # Checking for timeout error
         logger.debug("Attempting connection")
         conn.server_info()
-
-        # Close the aliveness connection - the timeouts are too low
-        conn.close()
-    except (ConnectionFailure, ServerSelectionTimeoutError) as ex:
+    except Exception as ex:
         logger.debug(ex)
         return False
 

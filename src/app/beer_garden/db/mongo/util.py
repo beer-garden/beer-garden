@@ -3,7 +3,6 @@ import logging
 from typing import Union
 
 import yaml
-from bson import DBRef
 from marshmallow.exceptions import ValidationError as SchemaValidationError
 from mongoengine.connection import get_db
 from mongoengine.errors import (
@@ -12,11 +11,12 @@ from mongoengine.errors import (
     InvalidDocumentError,
     ValidationError,
 )
+from pymongo.errors import OperationFailure
 
 from beer_garden import config
 from beer_garden.api.authorization import Permissions
 from beer_garden.db.mongo.models import Role, RoleAssignment, User
-from beer_garden.errors import ConfigurationError
+from beer_garden.errors import ConfigurationError, IndexOperationError
 from beer_garden.role import sync_roles
 
 logger = logging.getLogger(__name__)
@@ -180,59 +180,6 @@ def ensure_trigger_migration():
             logger.error(f"Error deleting file trigger {doc['_id']}")
 
 
-def ensure_owner_collection_migration():
-    """We ran into an issue with 3.0.5 where Requests and Jobs got migrated over to
-    the Owner collection. This is in place to resolve that."""
-
-    database = get_db()
-
-    if database["owner"].count():
-        logger.warning(
-            "Found owner collection, migrating documents to appropriate collections. "
-            "This could take a while :)"
-        )
-
-        for doc in database["owner"].find({"_cls": "Owner.Request"}):
-            try:
-                del doc["_cls"]
-
-                if doc.get("has_parent"):
-                    doc["parent"] = DBRef("request", doc["parent"].id)
-
-                database["request"].insert_one(doc)
-            except Exception:
-                logger.error(f"Error migrating request {doc['_id']}")
-
-        for doc in database["owner"].find({"_cls": "Owner.Job"}):
-            try:
-                del doc["_cls"]
-
-                database["job"].insert_one(doc)
-            except Exception:
-                logger.error(f"Error migrating job {doc['_id']}")
-
-        for doc in database["file"].find():
-            try:
-                if doc["owner_type"] == "REQUEST":
-                    doc["request"] = doc["owner"]
-                elif doc["owner_type"] == "JOB":
-                    doc["job"] = doc["owner"]
-                else:
-                    logger.error(f"Unable to migrate file {doc['_id']}: bad owner type")
-                    database["file"].delete_one({"_id": doc["_id"]})
-                    continue
-
-                doc["owner"] = None
-
-                database["file"].replace_one({"_id": doc["_id"]}, doc)
-            except Exception:
-                logger.error(f"Error migrating file {doc['_id']}, removing")
-                database["file"].delete_one({"_id": doc["_id"]})
-
-        logger.info("Dropping owner collection (this is intended!)")
-        database.drop_collection("owner")
-
-
 def ensure_v2_to_v3_model_migration():
     """Ensures that the Role model is flatten and Command model is an
     EmbeddedDocument
@@ -283,7 +230,6 @@ def ensure_model_migration():
     single function for easy management"""
 
     ensure_v2_to_v3_model_migration()
-    ensure_owner_collection_migration()
     ensure_trigger_migration()
 
 
@@ -302,10 +248,9 @@ def check_indexes(document_class):
         None
 
     Raises:
-        mongoengine.OperationFailure: Unhandled mongo error
+        beergarden.IndexOperationError
     """
     from mongoengine.connection import get_db
-    from pymongo.errors import OperationFailure
 
     from .models import Request
 
@@ -321,10 +266,10 @@ def check_indexes(document_class):
         existing = document_class._get_collection().index_information()
 
         if document_class == Request and "parent_instance_index" in existing:
-            raise OperationFailure("Old Request index found, rebuilding")
+            raise IndexOperationError("Old Request index found, rebuilding")
 
         if len(spec) < len(existing):
-            raise OperationFailure("Extra index found, rebuilding")
+            raise IndexOperationError("Extra index found, rebuilding")
 
         if len(spec) > len(existing):
             logger.warning(
@@ -335,7 +280,7 @@ def check_indexes(document_class):
 
         document_class.ensure_indexes()
 
-    except OperationFailure:
+    except IndexOperationError:
         logger.warning(
             "%s collection indexes verification failed, attempting to rebuild",
             document_class.__name__,
