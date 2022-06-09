@@ -124,8 +124,7 @@ def check_connection(db_config: Box):
         bool: True if successful, False otherwise (unable to connect)
 
     Raises:
-        Any mongoengine error *except* ConnectionFailure,
-        ServerSelectionTimeoutError
+        Any mongoengine error *except* ConnectionFailure
     """
     try:
         # Set timeouts here to a low value - we don't want to wait 30
@@ -138,15 +137,15 @@ def check_connection(db_config: Box):
             **db_config["connection"],
         )
 
-        # The 'connect' method won't actually fail
-        # An exception won't be raised until we actually try to do something
-        logger.debug("Attempting connection")
-        # conn.server_info()
+    except ConnectionFailure as ex:
+        logger.debug(ex)
+        return False
 
-        # Close the aliveness connection - the timeouts are too low
-        conn.close()
-    # formerly had ServerSelectionTimeoutError
-    except (ConnectionFailure, Exception) as ex:
+    try:
+        # Checking for timeout error
+        logger.debug("Attempting connection")
+        conn.server_info()
+    except Exception as ex:
         logger.debug(ex)
         return False
 

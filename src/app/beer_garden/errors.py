@@ -38,6 +38,13 @@ class EndpointRemovedException(Exception):
         self.message = message
 
 
+class IndexOperationError(Exception):
+    """Index operation was invalid"""
+
+    def __init__(self, message=None):
+        self.message = message
+
+
 # Routing
 class RoutingException(Exception):
     """Base Routing Exception"""

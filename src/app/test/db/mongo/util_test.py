@@ -10,7 +10,7 @@ from beer_garden import config
 from beer_garden.api.authorization import Permissions
 from beer_garden.db.mongo.models import Garden, Role, User
 from beer_garden.db.mongo.util import ensure_local_garden, ensure_roles, ensure_users
-from beer_garden.errors import ConfigurationError
+from beer_garden.errors import ConfigurationError, IndexOperationError
 
 
 @pytest.fixture
@@ -118,7 +118,7 @@ class TestCheckIndexes(object):
     @patch("mongoengine.connect", Mock())
     @patch("mongoengine.register_connection", Mock())
     def test_successful_index_rebuild(self, get_db_mock, model_mocks):
-        from mongoengine.errors import OperationError
+
 
         # 'normal' return values
         for model_mock in model_mocks.values():
@@ -130,7 +130,7 @@ class TestCheckIndexes(object):
             )
 
         # ... except for this one
-        model_mocks["request"].list_indexes.side_effect = OperationError("")
+        model_mocks["request"].list_indexes.side_effect = IndexOperationError("")
 
         db_mock = MagicMock()
         get_db_mock.return_value = db_mock
@@ -142,7 +142,6 @@ class TestCheckIndexes(object):
     @patch("mongoengine.connect", Mock())
     @patch("mongoengine.connection.get_db")
     def test_unsuccessful_index_drop(self, get_db_mock, model_mocks):
-        from pymongo.errors import OperationFailure
 
         for model_mock in model_mocks.values():
             model_mock.list_indexes = Mock(return_value=["index1"])
@@ -150,18 +149,17 @@ class TestCheckIndexes(object):
                 return_value=Mock(index_information=Mock(return_value={"index1": {}}))
             )
 
-            model_mock.ensure_indexes.side_effect = OperationFailure("")
+            model_mock.ensure_indexes.side_effect = IndexOperationError("")
 
-        get_db_mock.side_effect = OperationFailure("")
+        get_db_mock.side_effect = IndexOperationError("")
 
         for doc in model_mocks.values():
-            with pytest.raises(OperationFailure):
+            with pytest.raises(IndexOperationError):
                 beer_garden.db.mongo.util.check_indexes(doc)
 
     @patch("mongoengine.connect", Mock())
     @patch("mongoengine.connection.get_db", MagicMock())
     def test_unsuccessful_index_rebuild(self, model_mocks):
-        from pymongo.errors import OperationFailure
 
         for model_mock in model_mocks.values():
             model_mock.list_indexes = Mock(return_value=["index1"])
@@ -171,10 +169,10 @@ class TestCheckIndexes(object):
                 )
             )
 
-            model_mock.ensure_indexes.side_effect = OperationFailure("")
+            model_mock.ensure_indexes.side_effect = IndexOperationError("")
 
         for doc in model_mocks.values():
-            with pytest.raises(OperationFailure):
+            with pytest.raises(IndexOperationError):
                 beer_garden.db.mongo.util.check_indexes(doc)
 
     @patch("mongoengine.connection.get_db")

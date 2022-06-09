@@ -11,11 +11,12 @@ from mongoengine.errors import (
     InvalidDocumentError,
     ValidationError,
 )
+from pymongo.errors import OperationFailure
 
 from beer_garden import config
 from beer_garden.api.authorization import Permissions
 from beer_garden.db.mongo.models import Role, RoleAssignment, User
-from beer_garden.errors import ConfigurationError
+from beer_garden.errors import ConfigurationError, IndexOperationError
 from beer_garden.role import sync_roles
 
 logger = logging.getLogger(__name__)
@@ -192,10 +193,9 @@ def check_indexes(document_class):
         None
 
     Raises:
-        mongoengine.OperationFailure: Unhandled mongo error
+        beergarden.IndexOperationError
     """
     from mongoengine.connection import get_db
-    from mongoengine.errors import OperationError
 
     from .models import Request
 
@@ -211,10 +211,10 @@ def check_indexes(document_class):
         existing = document_class._get_collection().index_information()
 
         if document_class == Request and "parent_instance_index" in existing:
-            raise OperationError("Old Request index found, rebuilding")
+            raise IndexOperationError("Old Request index found, rebuilding")
 
         if len(spec) < len(existing):
-            raise OperationError("Extra index found, rebuilding")
+            raise IndexOperationError("Extra index found, rebuilding")
 
         if len(spec) > len(existing):
             logger.warning(
@@ -225,7 +225,7 @@ def check_indexes(document_class):
 
         document_class.ensure_indexes()
 
-    except OperationError:
+    except IndexOperationError:
         logger.warning(
             "%s collection indexes verification failed, attempting to rebuild",
             document_class.__name__,
@@ -242,7 +242,7 @@ def check_indexes(document_class):
             db = get_db()
             db[document_class.__name__.lower()].drop_indexes()
             logger.warning("Dropped indexes for %s collection", document_class.__name__)
-        except OperationError:
+        except OperationFailure:
             logger.error(
                 "Dropping %s indexes failed, please check the database configuration",
                 document_class.__name__,
@@ -266,7 +266,7 @@ def check_indexes(document_class):
         try:
             document_class.ensure_indexes()
             logger.warning("%s indexes rebuilt successfully", document_class.__name__)
-        except OperationError:
+        except IndexOperationError:
             logger.error(
                 "%s index rebuild failed, please check the database configuration",
                 document_class.__name__,
