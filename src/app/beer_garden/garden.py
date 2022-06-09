@@ -21,6 +21,9 @@ from yapconf import YapconfSpec
 
 import beer_garden.config as config
 import beer_garden.db.api as db
+from beer_garden.command_publishing_blocklist import (
+    publish_command_publishing_blocklist,
+)
 from beer_garden.db.mongo.models import RemoteUser
 from beer_garden.events import publish, publish_event
 from beer_garden.namespace import get_namespaces
@@ -272,6 +275,7 @@ def garden_sync(sync_target: str = None):
         logger.debug("Processing garden sync, about to publish")
 
         publish_garden()
+        publish_command_publishing_blocklist()
 
     else:
         from beer_garden.router import route

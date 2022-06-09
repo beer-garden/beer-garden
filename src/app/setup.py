@@ -30,7 +30,8 @@ setup(
     install_requires=[
         "apispec<0.39",
         "apscheduler<4",
-        "brewtils>=3.13.0",
+        "python-box>=3.3.0",
+        "brewtils>=3.14.0",
         "marshmallow<3",
         "mongoengine<0.21",
         "more-itertools<9",
@@ -40,10 +41,12 @@ setup(
         "pyyaml<6",
         "pyrabbit2<2",
         "pytz<2021",
+        "pyjwt>=2.4.0",
         "ruamel.yaml<0.17",
         "stomp.py<6.2.0",
         "tornado<7",
         "watchdog>2.1.0",
+        "wrapt<1.13.0",
         "yapconf>=1.0.0",
     ],
     classifiers=[

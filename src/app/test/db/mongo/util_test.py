@@ -10,6 +10,12 @@ from beer_garden import config
 from beer_garden.api.authorization import Permissions
 from beer_garden.db.mongo.models import Garden, Role, User
 from beer_garden.db.mongo.util import ensure_local_garden, ensure_roles, ensure_users
+from beer_garden.db.mongo.util import (
+    PLUGIN_ROLE_PERMISSIONS,
+    ensure_local_garden,
+    ensure_roles,
+    ensure_users,
+)
 from beer_garden.errors import ConfigurationError, IndexOperationError
 
 
@@ -74,7 +80,7 @@ class TestEnsureUsers(object):
         monkeypatch.setattr(User, "save", Mock())
         ensure_users()
 
-        assert User.save.called is True
+        assert User.save.call_count == 2  # Default Admin, Plugin
 
     def test_admin_not_created_if_users_exist(
         self, monkeypatch, existing_user, roles, config_mock_value
@@ -363,3 +369,15 @@ class TestEnsureRoles:
         superuser = Role.objects.get(name="superuser")
 
         assert len(superuser.permissions) == len(Permissions)
+
+    def test_ensure_roles_creates_bg_plugin_role_if_none_exists(self, monkeypatch):
+        """A plugin role with all permissions should be created if none exists"""
+        monkeypatch.setattr(
+            beer_garden.db.mongo.util, "_sync_roles_from_role_definition_file", Mock()
+        )
+
+        assert len(Role.objects.filter(name="plugin")) == 0
+        ensure_roles()
+        plugin_role = Role.objects.get(name="plugin")
+
+        assert plugin_role.permissions == PLUGIN_ROLE_PERMISSIONS

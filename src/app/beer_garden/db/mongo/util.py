@@ -21,6 +21,18 @@ from beer_garden.role import sync_roles
 
 logger = logging.getLogger(__name__)
 
+PLUGIN_ROLE_PERMISSIONS = [
+    Permissions.GARDEN_READ.value,
+    Permissions.INSTANCE_READ.value,
+    Permissions.INSTANCE_UPDATE.value,
+    Permissions.REQUEST_CREATE.value,
+    Permissions.REQUEST_READ.value,
+    Permissions.REQUEST_UPDATE.value,
+    Permissions.SYSTEM_CREATE.value,
+    Permissions.SYSTEM_READ.value,
+    Permissions.SYSTEM_UPDATE.value,
+]
+
 
 def ensure_local_garden():
     """Creates an entry in the database for the local garden
@@ -45,6 +57,7 @@ def ensure_local_garden():
 def ensure_roles():
     """Create roles if necessary"""
     _configure_superuser_role()
+    _configure_plugin_role()
     _sync_roles_from_role_definition_file()
 
 
@@ -93,21 +106,63 @@ def _configure_superuser_role():
     superuser.save()
 
 
+def _configure_plugin_role():
+    """Creates or updates the plugin role as needed"""
+    try:
+        plugin_role = Role.objects.get(name="plugin")
+    except Role.DoesNotExist:
+        logger.info("Creating plugin role with select permissions")
+        plugin_role = Role(name="plugin")
+
+    plugin_role.permissions = PLUGIN_ROLE_PERMISSIONS
+    plugin_role.description = "Role containing plugin permissions"
+    plugin_role.protected = True
+
+    plugin_role.save()
+
+
 def ensure_users():
-    """Create the default admin user if necessary"""
+    """Create user accounts if necessary"""
     if User.objects.count() == 0:
-        username = config.get("auth.default_admin.username")
-        password = config.get("auth.default_admin.password")
-        superuser_role = Role.objects.get(name="superuser")
+        _create_admin()
+        _create_plugin_user()
 
-        logger.info("Creating default admin user with username: %s", username)
 
-        admin = User(username=username)
-        admin.set_password(password)
-        admin.role_assignments = [
-            RoleAssignment(role=superuser_role, domain={"scope": "Global"})
+def _create_admin():
+    """Create the default admin user if necessary"""
+    username = config.get("auth.default_admin.username")
+    password = config.get("auth.default_admin.password")
+    superuser_role = Role.objects.get(name="superuser")
+
+    logger.info("Creating default admin user with username: %s", username)
+
+    admin = User(username=username)
+    admin.set_password(password)
+    admin.role_assignments = [
+        RoleAssignment(role=superuser_role, domain={"scope": "Global"})
+    ]
+    admin.save()
+
+
+def _create_plugin_user():
+    """Create the default user to run Plugins if necessary"""
+    username = config.get("plugin.local.auth.username")
+    plugin_user = User.objects(username=username).first()
+
+    # Sanity check to make sure we don't accidentally create two
+    # users with the same name
+    if not plugin_user:
+        password = config.get("plugin.local.auth.password")
+        plugin_user_role = Role.objects.get(name="plugin")
+
+        logger.info("Creating default plugin user with username: %s", username)
+
+        plugin_user = User(username=username)
+        plugin_user.set_password(password)
+        plugin_user.role_assignments = [
+            RoleAssignment(role=plugin_user_role, domain={"scope": "Global"})
         ]
-        admin.save()
+        plugin_user.save()
 
 
 def ensure_trigger_migration():
