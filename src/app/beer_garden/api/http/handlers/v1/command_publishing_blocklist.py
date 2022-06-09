@@ -46,9 +46,10 @@ class CommandPublishingBlocklistPathAPI(AuthorizationHandler):
         target_garden = blocked_command["namespace"]
         if blocked_command["namespace"] != config.get("garden.name"):
             target_garden = Garden.objects.get(
-                namespaces__contains=blocked_command["namespace"]
-            ).name
-        _ = self.get_or_raise(Garden, SYSTEM_UPDATE, name=target_garden)
+                namespaces__contains=blocked_command["namespace"],
+                connection_type__nin=[None, "LOCAL"],
+            )
+        self.verify_user_permission_for_object(SYSTEM_UPDATE, target_garden)
         try:
             command_publishing_blocklist_delete(blocked_command)
         except RoutingRequestException:
@@ -113,17 +114,20 @@ class CommandPublishingBlocklistAPI(AuthorizationHandler):
         """
         commands = self.schema_validated_body(CommandPublishingBlocklistListInputSchema)
         checked_gardens = []
+
         if len(commands["command_publishing_blocklist"]) == 0:
             raise BadRequest(reason="Empty list was submitted")
+
         for command in commands["command_publishing_blocklist"]:
             target_garden = command["namespace"]
             if command["namespace"] != config.get("garden.name"):
                 target_garden = Garden.objects.get(
-                    namespaces__contains=command["namespace"]
-                ).name
+                    namespaces__contains=command["namespace"],
+                    connection_type__nin=[None, "LOCAL"],
+                )
             if command["namespace"] not in checked_gardens:
                 try:
-                    _ = self.get_or_raise(Garden, SYSTEM_UPDATE, name=target_garden)
+                    self.verify_user_permission_for_object(SYSTEM_UPDATE, target_garden)
                 except NotFound:
                     raise BadRequest(
                         reason=f"Invalid garden name: {command['namespace']}"

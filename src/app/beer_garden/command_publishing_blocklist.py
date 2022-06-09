@@ -22,7 +22,8 @@ def command_publishing_blocklist_add(command: dict, return_value: bool = False):
 
     if config.get("garden.name") != command["namespace"]:
         target_garden = Garden.objects.get(
-            namespaces__contains=command["namespace"]
+            namespaces__contains=command["namespace"],
+            connection_type__nin=[None, "LOCAL"],
         ).name
         blocked_command = CommandPublishingBlocklist(**command)
         beer_garden.router.route(
@@ -71,7 +72,8 @@ def command_publishing_blocklist_delete(
         from beer_garden.api.http import CommandPublishingBlocklistSchema
 
         target_garden = Garden.objects.get(
-            namespaces__contains=blocked_command["namespace"]
+            namespaces__contains=blocked_command["namespace"],
+            connection_type__nin=[None, "LOCAL"],
         ).name
         beer_garden.router.route(
             Operation(
@@ -98,7 +100,7 @@ def command_publishing_blocklist_delete(
             Event(
                 garden=config.get("garden.name"),
                 name=Events.COMMAND_PUBLISHING_BLOCKLIST_REMOVE.name,
-                metadata={"id": f"{blocked_command.id}"},
+                metadata={"command_blocklist_id": f"{blocked_command.id}"},
             )
         )
         blocked_command.delete()
@@ -127,7 +129,9 @@ def _handle_update_event(event):
 
 
 def _handle_remove_event(event):
-    CommandPublishingBlocklist.objects.filter(id=event.metadata["id"]).delete()
+    CommandPublishingBlocklist.objects.filter(
+        id=event.metadata["command_blocklist_id"]
+    ).delete()
 
 
 def _handle_sync_event(event):
