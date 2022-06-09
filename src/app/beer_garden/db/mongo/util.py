@@ -321,7 +321,7 @@ def check_indexes(document_class):
         try:
             document_class.ensure_indexes()
             logger.warning("%s indexes rebuilt successfully", document_class.__name__)
-        except IndexOperationError:
+        except OperationFailure:
             logger.error(
                 "%s index rebuild failed, please check the database configuration",
                 document_class.__name__,
