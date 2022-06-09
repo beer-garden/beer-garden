@@ -9,7 +9,6 @@ import beer_garden.db.mongo.util
 from beer_garden import config
 from beer_garden.api.authorization import Permissions
 from beer_garden.db.mongo.models import Garden, Role, User
-from beer_garden.db.mongo.util import ensure_local_garden, ensure_roles, ensure_users
 from beer_garden.db.mongo.util import (
     PLUGIN_ROLE_PERMISSIONS,
     ensure_local_garden,
@@ -124,7 +123,6 @@ class TestCheckIndexes(object):
     @patch("mongoengine.connect", Mock())
     @patch("mongoengine.register_connection", Mock())
     def test_successful_index_rebuild(self, get_db_mock, model_mocks):
-
 
         # 'normal' return values
         for model_mock in model_mocks.values():
