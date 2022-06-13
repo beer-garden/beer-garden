@@ -43,13 +43,16 @@ class CommandPublishingBlocklistPathAPI(AuthorizationHandler):
         blocked_command = CommandPublishingBlocklist.objects.get(
             id=command_publishing_id
         )
-        target_garden = blocked_command["namespace"]
+
         if blocked_command["namespace"] != config.get("garden.name"):
             target_garden = Garden.objects.get(
                 namespaces__contains=blocked_command["namespace"],
                 connection_type__nin=[None, "LOCAL"],
             )
+        else:
+            target_garden = Garden.objects.get(name=blocked_command["namespace"])
         self.verify_user_permission_for_object(SYSTEM_UPDATE, target_garden)
+
         try:
             command_publishing_blocklist_delete(blocked_command)
         except RoutingRequestException:
@@ -119,20 +122,22 @@ class CommandPublishingBlocklistAPI(AuthorizationHandler):
             raise BadRequest(reason="Empty list was submitted")
 
         for command in commands["command_publishing_blocklist"]:
-            target_garden = command["namespace"]
-            if command["namespace"] != config.get("garden.name"):
-                target_garden = Garden.objects.get(
-                    namespaces__contains=command["namespace"],
-                    connection_type__nin=[None, "LOCAL"],
-                )
             if command["namespace"] not in checked_gardens:
                 try:
+                    if command["namespace"] != config.get("garden.name"):
+                        target_garden = Garden.objects.get(
+                            namespaces__contains=command["namespace"],
+                            connection_type__nin=[None, "LOCAL"],
+                        )
+                    else:
+                        target_garden = Garden.objects.get(name=command["namespace"])
                     self.verify_user_permission_for_object(SYSTEM_UPDATE, target_garden)
                 except NotFound:
                     raise BadRequest(
                         reason=f"Invalid garden name: {command['namespace']}"
                     )
                 checked_gardens.append(command["namespace"])
+
         added_commands = []
         for command in commands["command_publishing_blocklist"]:
             try:

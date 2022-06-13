@@ -115,7 +115,7 @@ class TestCommandPublishingBlocklist:
         event = Event(
             garden=garden.name,
             name=Events.COMMAND_PUBLISHING_BLOCKLIST_REMOVE.name,
-            metadata={"id": f"{temp_blocked_command.id}"},
+            metadata={"command_blocklist_id": f"{temp_blocked_command.id}"},
         )
         handle_event(event)
 
