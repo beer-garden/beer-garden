@@ -55,19 +55,25 @@ def command_publishing_blocklist_add(command: dict, return_value: bool = False):
 
 
 def command_publishing_blocklist_delete(
-    blocked_command: CommandPublishingBlocklist = None, blocked_command_id: str = None
+    blocked_command: CommandPublishingBlocklist = None,
 ):
     """Deletes the provided CommandPublishingBlocklist object from database.
 
     Args:
         blocked_command: a CommandPublishingBlocklist object
-        blocked_command_id: a string of an id for CommandPublishingBlocklist
     """
 
-    if blocked_command is None:
-        blocked_command = CommandPublishingBlocklist.objects.get(id=blocked_command_id)
+    try:
+        blocked_command = CommandPublishingBlocklist.objects.get(
+            namespace=blocked_command["namespace"],
+            system=blocked_command["system"],
+            command=blocked_command["command"],
+        )
+        blocked_command_exist_in_db = True
+    except DoesNotExist:
+        blocked_command_exist_in_db = False
 
-    if config.get("garden.name") != blocked_command.namespace:
+    if config.get("garden.name") != blocked_command["namespace"]:
         import beer_garden.router
         from beer_garden.api.http import CommandPublishingBlocklistSchema
 
@@ -78,29 +84,35 @@ def command_publishing_blocklist_delete(
         beer_garden.router.route(
             Operation(
                 operation_type="COMMAND_BLOCKLIST_REMOVE",
-                kwargs={"blocked_command_id": f"{blocked_command.id}"},
-                target_garden_name=target_garden,
-            )
-        )
-        blocked_command.status = "REMOVE_REQUESTED"
-        blocked_command.save()
-        publish(
-            Event(
-                garden=config.get("garden.name"),
-                name=Events.COMMAND_PUBLISHING_BLOCKLIST_UPDATE.name,
-                metadata={
+                kwargs={
                     "blocked_command": CommandPublishingBlocklistSchema()
                     .dump(blocked_command)
                     .data
                 },
+                target_garden_name=target_garden,
             )
         )
+        if blocked_command_exist_in_db:
+            blocked_command.status = "REMOVE_REQUESTED"
+            blocked_command.save()
+            publish(
+                Event(
+                    garden=config.get("garden.name"),
+                    name=Events.COMMAND_PUBLISHING_BLOCKLIST_UPDATE.name,
+                    metadata={
+                        "blocked_command": CommandPublishingBlocklistSchema()
+                        .dump(blocked_command)
+                        .data
+                    },
+                )
+            )
+
     else:
         publish(
             Event(
                 garden=config.get("garden.name"),
                 name=Events.COMMAND_PUBLISHING_BLOCKLIST_REMOVE.name,
-                metadata={"command_blocklist_id": f"{blocked_command.id}"},
+                metadata={"command_blocklist_id": f"{blocked_command['id']}"},
             )
         )
         blocked_command.delete()
@@ -139,8 +151,9 @@ def _handle_sync_event(event):
     for blocked_command in event.metadata["command_publishing_blocklist"]:
         list_of_ids.append(blocked_command["id"])
         _update_blocklist(blocked_command)
+    garden = Garden.objects.get(name=event.garden)
     CommandPublishingBlocklist.objects.filter(
-        namespace=event.garden, id__nin=list_of_ids
+        namespace__in=garden.namespaces, id__nin=list_of_ids
     ).delete()
 
 

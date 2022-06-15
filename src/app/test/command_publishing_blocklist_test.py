@@ -26,7 +26,7 @@ def blocklist():
 
 @pytest.fixture
 def garden():
-    garden = Garden(name=garden_name)
+    garden = Garden(name=garden_name, namespaces=[garden_name])
     garden.save()
 
     yield garden
