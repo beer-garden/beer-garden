@@ -31,6 +31,11 @@ class BaseHTTPError(HTTPError):
         )
 
 
+class RoutingException(BaseHTTPError):
+    status_code: int = 503
+    reason: str = "Routing Error"
+
+
 class BadRequest(BaseHTTPError):
     status_code: int = 400
     reason: str = "Bad request"
