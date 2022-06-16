@@ -45,6 +45,10 @@ export default function adminGardenController(
     );
   };
 
+  $scope.closeAlert = function(index) {
+    $scope.alerts.splice(index, 1);
+  };
+
   $scope.syncGardens = function() {
     GardenService.syncGardens().then((resp)=>{
       $scope.alerts.push({
