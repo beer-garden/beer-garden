@@ -208,20 +208,24 @@
               switch-off-text="Raw"
             />
           </span>
-          <span
-            ng-show="formatErrorTitle !== undefined"
-            class="pull-right"
-            uib-popover="{{formatErrorMsg}}"
-            popover-animation="true"
-            popover-placement="left"
-            popover-trigger="'mouseenter'"
-            popover-title="{{formatErrorTitle}}"
-            style="color: gray; padding-top: 5px"
-          >
+          <span ng-mouseover="popoverIsOpen = true" 
+            ng-mouseleave="popoverIsOpen = false"
+            ng-click="formatErrorTitle === 'Output is too large' ? formatOutput() : null">
             <span
-              class="glyphicon glyphicon-info-sign"
-              style="font-size: 26px"
-            ></span>
+              ng-show="formatErrorTitle !== undefined"
+              class="pull-right"
+              uib-popover-html="formatErrorMsg"
+              popover-animation="true"
+              popover-placement="left"
+              popover-is-open="popoverIsOpen"
+              popover-title="{{formatErrorTitle}}"
+              style="color: gray; padding-top: 5px"
+            >
+              <span
+                class="glyphicon glyphicon-info-sign"
+                style="font-size: 26px"
+              ></span>
+            </span>
           </span>
         </div>
         <div style="position: relative">

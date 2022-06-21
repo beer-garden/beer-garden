@@ -226,7 +226,9 @@ export default function requestViewController(
       if (sizeOf($scope.request.output) > 5000000) {
         $scope.formatErrorTitle = 'Output is too large';
         $scope.formatErrorMsg =
-          'The output for this request is too large to display, please download instead';
+          'The output for this request is too large to display, please download instead. To ' +
+          'display the output anyway, <i>click here</i>. <b>NOTE:</b> Displaying large ' +
+          'request output could result in your browser crashing or hanging indefinitely.';
       } else {
         $scope.formatOutput();
       }
