@@ -210,7 +210,7 @@
           </span>
           <span ng-mouseover="popoverIsOpen = true" 
             ng-mouseleave="popoverIsOpen = false"
-            ng-click="formatErrorTitle === 'Output is too large' ? formatOutput() : null">
+            ng-click="formatErrorTitle.contains('Output is too large') ? formatOutput() : null">
             <span
               ng-show="formatErrorTitle !== undefined"
               class="pull-right"

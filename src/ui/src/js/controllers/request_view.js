@@ -148,18 +148,9 @@ export default function requestViewController(
         try {
           const parsedOutput = JSON.parse(rawOutput);
           rawOutput = $scope.stringify(parsedOutput);
-          if ($scope.countNodes($scope.formattedOutput) < 1000) {
-            $scope.jsonOutput = rawOutput;
-            $scope.formattedAvailable = true;
-            $scope.showFormatted = true;
-          } else {
-            $scope.formatErrorTitle =
-              'Output is too large for collapsible view';
-            $scope.formatErrorMsg =
-              'This output is valid JSON, but it\'s so big that ' +
-              'displaying it in the collapsible viewer would crash the ' +
-              'page. Downloading File might take a minute for UI to prepare.';
-          }
+          $scope.jsonOutput = rawOutput;
+          $scope.formattedAvailable = true;
+          $scope.showFormatted = true;
         } catch (err) {
           $scope.formatErrorTitle = 'This JSON didn\'t parse correctly';
           $scope.formatErrorMsg =
@@ -223,7 +214,18 @@ export default function requestViewController(
         }
       }
 
-      if (sizeOf($scope.request.output) > 5000000) {
+      if (
+        $scope.request.output_type == 'JSON' &&
+        $scope.countNodes($scope.formattedOutput) >= 1000
+      ) {
+        $scope.formatErrorTitle =
+          'Output is too large for collapsible view';
+        $scope.formatErrorMsg =
+          'This output is valid JSON, but it\'s so big that displaying it in the viewer would' +
+          ' crash the page. Downloading File might take a minute for UI to prepare. To ' +
+          'display the output anyway, <i>click here</i>. <b>NOTE:</b> Displaying large ' +
+          'request output could result in your browser crashing or hanging indefinitely.';
+      } else if (sizeOf($scope.request.output) > 50) {
         $scope.formatErrorTitle = 'Output is too large';
         $scope.formatErrorMsg =
           'The output for this request is too large to display, please download instead. To ' +
