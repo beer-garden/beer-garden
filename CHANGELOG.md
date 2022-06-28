@@ -1,5 +1,37 @@
 # Beer Garden Changelog
 
+## 3.14.0
+
+6/28/22
+
+### Added Features
+
+- The request output page now provides an option to render output that exceeds
+  the display size threshold. Note that the ability to successfully render such
+  output depends on both the output size and the client's available resources.
+  (Issue #1338)
+- A Command Publishing Blocklist is now available. Commands on remote gardens
+  that are added to this list will not have their results published back up to
+  the parent. (Issue #1310)
+- When launching a garden for the first time, the default user for running
+  plugins is now distinct from the default admin user. (Issue #1309)
+- Improved display of multiline comments on requests. (Issue #242)
+- Improved feedback when performing a garden sync. (Issue #1299)
+- Roles are now synced to downstream gardens when performing a user sync. (Issue
+  #1302)
+
+### Bug Fixes
+
+- The namespaces and systems are now correctly displayed for the local garden in
+  both the API response and the garden admin view. (Issue #1300)
+- Sensitive message queue connection information is no longer returned with the
+  systems API endpoint response. (Issue #1301)
+
+### Other Changes
+
+- The superuser role is now internally managed and no longer needs to be
+  specifically listed in the role definition file. (Issue #1306)
+
 ## 3.13.0
 
 4/12/22
