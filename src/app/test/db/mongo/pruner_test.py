@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
+import datetime
 from datetime import timedelta
 
 import pytest
 from mock import MagicMock, Mock, patch
+from mongomock.gridfs import enable_gridfs_integration
 
 from beer_garden.db.mongo.models import File, RawFile, Request
 from beer_garden.db.mongo.pruner import MongoPruner
+
+enable_gridfs_integration()
 
 
 @pytest.fixture
@@ -25,7 +29,49 @@ def task(collection_mock):
 
 @pytest.fixture
 def pruner(task):
-    return MongoPruner(tasks=[task])
+    return MongoPruner(tasks=[task], cancel_threshold=15)
+
+
+@pytest.fixture
+def negative_pruner(task):
+    return MongoPruner(tasks=[task], cancel_threshold=-1)
+
+
+@pytest.fixture
+def none_pruner(task):
+    return MongoPruner(tasks=[task], cancel_threshold=None)
+
+
+@pytest.fixture
+def in_progress():
+    in_progress = Request(
+        system="T",
+        system_version="T",
+        instance_name="T",
+        namespace="T",
+        command="T",
+        created_at=datetime.datetime(2020, 5, 17),
+        status="IN_PROGRESS",
+    )
+    in_progress.save()
+    yield in_progress
+    in_progress.delete()
+
+
+@pytest.fixture
+def created():
+    created = Request(
+        system="T1",
+        system_version="T",
+        instance_name="T",
+        namespace="T",
+        command="T",
+        created_at=datetime.datetime(2020, 6, 17),
+        status="CREATED",
+    )
+    created.save()
+    yield created
+    created.delete()
 
 
 class TestMongoPruner(object):
@@ -35,6 +81,30 @@ class TestMongoPruner(object):
 
         pruner.run()
         assert collection_mock.objects.return_value.no_cache.return_value.delete.called
+
+    def test_run_cancels_outstanding_requests(self, pruner, in_progress, created):
+        pruner._stop_event = Mock(wait=Mock(side_effect=[False, True]))
+        pruner.run()
+        new_in_progress = Request.objects.get(id=in_progress.id)
+        new_created = Request.objects.get(id=created.id)
+        assert new_in_progress.status == "CANCELED"
+        assert new_created.status == "CANCELED"
+
+    def test_negative_cancel_threshold(self, negative_pruner, in_progress, created):
+        negative_pruner._stop_event = Mock(wait=Mock(side_effect=[False, True]))
+        negative_pruner.run()
+        new_in_progress = Request.objects.get(id=in_progress.id)
+        new_created = Request.objects.get(id=created.id)
+        assert new_in_progress.status == "IN_PROGRESS"
+        assert new_created.status == "CREATED"
+
+    def test_none_cancel_threshold(self, none_pruner, in_progress, created):
+        none_pruner._stop_event = Mock(wait=Mock(side_effect=[False, True]))
+        none_pruner.run()
+        new_in_progress = Request.objects.get(id=in_progress.id)
+        new_created = Request.objects.get(id=created.id)
+        assert new_in_progress.status == "IN_PROGRESS"
+        assert new_created.status == "CREATED"
 
 
 class TestDetermineTasks(object):

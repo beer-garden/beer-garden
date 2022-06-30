@@ -24,6 +24,7 @@ db:
   ttl:
     action: -1
     file: 15
+    in_progress: 15
     info: 15
 entry:
   http:

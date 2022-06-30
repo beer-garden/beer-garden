@@ -82,11 +82,16 @@ class Application(StoppableThread):
         ]
 
         # Only want to run the MongoPruner if it would do anything
-        tasks, run_every = db.prune_tasks(**config.get("db.ttl"))
+        ttl_config = config.get("db.ttl")
+
+        tasks, run_every = db.prune_tasks(**ttl_config)
         if run_every:
             self.helper_threads.append(
                 HelperThread(
-                    db.get_pruner(), tasks=tasks, run_every=timedelta(minutes=run_every)
+                    db.get_pruner(),
+                    tasks=tasks,
+                    run_every=timedelta(minutes=run_every),
+                    cancel_threshold=ttl_config.in_progress,
                 )
             )
 
