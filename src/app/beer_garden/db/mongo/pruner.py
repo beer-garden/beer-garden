@@ -10,17 +10,30 @@ from beer_garden.db.mongo.models import File, RawFile, Request
 
 
 class MongoPruner(StoppableThread):
-    def __init__(self, tasks=None, run_every=None):
+    """
+    Class to prune Mongo DB canceled or timed out Request objects.
+
+    Attributes:
+        logger: Logger to run debug messages
+        display_name: The name of the pruner
+        run_every: How often to run the pruner in minutes
+        tasks: List of tasks to prune
+        cancel_threshold: Time after which outstanding requests are marked as canceled in minutes
+    """
+
+    def __init__(self, tasks=None, run_every=None, cancel_threshold=None):
         self.logger = logging.getLogger(__name__)
         self.display_name = "Mongo Pruner"
         self._run_every = (run_every or timedelta(minutes=15)).total_seconds()
         self._tasks = tasks or []
+        self._cancel_threshold = cancel_threshold or -1
 
         super(MongoPruner, self).__init__(logger=self.logger, name="Remover")
 
     def add_task(
         self, collection=None, field=None, delete_after=None, additional_query=None
     ):
+        """Adds tasks to pruner object"""
         self._tasks.append(
             {
                 "collection": collection,
@@ -30,7 +43,23 @@ class MongoPruner(StoppableThread):
             }
         )
 
+    def _cancel_outstanding(self):
+        """
+        Helper function for run to mark requests still outstanding after a certain
+        amount of time as canceled.
+        """
+
+        timeout = datetime.utcnow() - timedelta(minutes=self._cancel_threshold)
+        outstanding_requests = Request.objects.filter(
+            status__in=["IN_PROGRESS", "CREATED"], created_at__lte=timeout
+        )
+        for request in outstanding_requests:
+            request.status = "CANCELED"
+            request.save()
+
     def run(self):
+        """Runs the pruner to delete tasks"""
+
         self.logger.debug(
             "%s is started with run interval %ss", self.display_name, self._run_every
         )
@@ -50,6 +79,9 @@ class MongoPruner(StoppableThread):
                     % (task["collection"].__name__, str(delete_older_than))
                 )
                 task["collection"].objects(query).no_cache().delete()
+
+            if self._cancel_threshold > 0:
+                self._cancel_outstanding()
 
         self.logger.debug(self.display_name + " is stopped")
 

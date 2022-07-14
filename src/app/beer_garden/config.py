@@ -757,6 +757,15 @@ _DB_SPEC = {
                     "previous_names": ["info_request_ttl"],
                     "alt_env_names": ["INFO_REQUEST_TTL"],
                 },
+                "in_progress": {
+                    "type": "int",
+                    "default": -1,
+                    "description": (
+                        "Number of minutes to wait for a request in CREATED or IN_PROGRESS"
+                        "to complete before considering timed out and marking as CANCELLED"
+                        "(negative number for never)"
+                    ),
+                },
                 "file": {
                     "type": "int",
                     "default": 15,
