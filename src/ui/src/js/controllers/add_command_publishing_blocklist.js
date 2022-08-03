@@ -140,6 +140,6 @@ export default function addCommandPublishingBlocklistController(
     });
     return data;
   };
-  $scope.response = $rootScope.sysResponse;
+  $scope.response = $rootScope.gardensResponse;
   $scope.data = $scope.formatSystemsToData($rootScope.systems);
 }

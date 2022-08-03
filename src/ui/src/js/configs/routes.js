@@ -50,30 +50,20 @@ export default function routeConfig(
           ],
           systems: [
             '$rootScope',
-            'SystemService',
-            ($rootScope, SystemService) => {
-              return SystemService.getSystems().then(
-                  (response) => {
-                    $rootScope.sysResponse = response;
-                    $rootScope.systems = response.data;
-                  },
-                  (response) => {
-                    $rootScope.sysResponse = response;
-                    $rootScope.systems = [];
-                  },
-              );
-            },
-          ],
-          gardens: [
-            '$rootScope',
             'GardenService',
             ($rootScope, GardenService) => {
               return GardenService.getGardens().then(
                   (response) => {
                     $rootScope.gardens = response.data;
+                    $rootScope.systems = $rootScope.gardens.find(
+                        (item) => item.connection_type === 'LOCAL',
+                    ).systems;
+                    $rootScope.gardensResponse = response;
                   },
                   (response) => {
+                    $rootScope.gardensResponse = response;
                     $rootScope.gardens = [];
+                    $rootScope.systems = [];
                   },
               );
             },

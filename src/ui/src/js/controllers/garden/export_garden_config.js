@@ -14,7 +14,7 @@ export default function gardenConfigExportController(
     $filter,
     GardenService,
 ) {
-  $scope.response = $rootScope.sysResponse;
+  $scope.response = $rootScope.gardensResponse;
 
   $scope.exportGardenConfig = (gardenName) => {
     const filename =

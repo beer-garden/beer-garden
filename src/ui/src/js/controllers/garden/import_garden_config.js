@@ -20,7 +20,7 @@ export function gardenConfigImportController(
     $uibModal,
     $state,
 ) {
-  $scope.response = $rootScope.sysResponse;
+  $scope.response = $rootScope.gardensResponse;
 
   $scope.openImportGardenConfigPopup = () => {
     const popupInstance = $uibModal.open({

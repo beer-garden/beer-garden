@@ -103,12 +103,12 @@ export default function commandIndexController(
     });
   }
 
-  $scope.successCallback = function(response) {
+  $scope.successCallback = function(response, systems) {
     // Pull out what we care about
     let commands = [];
     const breadCrumbs = [];
 
-    response.data.forEach((system) => {
+    systems.forEach((system) => {
       system.commands.forEach((command) => {
         commands.push({
           id: command.id,
@@ -136,7 +136,7 @@ export default function commandIndexController(
           });
           breadCrumbs.push($stateParams.systemVersion);
 
-          // If there's a fully specified system and it has a template, show it
+          // If there's a fully specified system, and it has a template, show it
           const foundSystem = SystemService.findSystem(
               $stateParams.namespace,
               $stateParams.systemName,
@@ -176,5 +176,5 @@ export default function commandIndexController(
     $scope.data = {};
   };
 
-  $scope.successCallback($rootScope.sysResponse);
+  $scope.successCallback($rootScope.gardensResponse, $rootScope.systems);
 }
