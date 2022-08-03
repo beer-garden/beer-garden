@@ -170,8 +170,8 @@ class TestCheckIo(object):
 
         plugin.run()
 
-        for logger_name, logger_calls in logger_calls.items():
-            for logger_call in logger_calls:
+        for logger_name, _logger_calls in logger_calls.items():
+            for logger_call in _logger_calls:
                 assert logger_call in getattr(plugin, logger_name).log.mock_calls
 
     def test_check_io_multiple_calls(self, plugin):
