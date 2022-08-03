@@ -106,7 +106,7 @@ export default function commandPublishingBlocklistController(
     $scope.data = [];
   };
 
-  $scope.response = $rootScope.sysResponse;
+  $scope.response = $rootScope.gardensResponse;
 
   function loadCommandPublishingBlocklist() {
     $scope.response = undefined;

@@ -160,7 +160,7 @@ export default function adminSystemController(
 
   function groupSystems() {
     if ($rootScope.systems) {
-      $scope.response = $rootScope.sysResponse;
+      $scope.response = $rootScope.gardensResponse;
 
       const grouped = _.groupBy($rootScope.systems, (value) => {
         return value.display_name || value.name;

@@ -39,7 +39,7 @@ export default function commandViewController(
     system,
     command,
 ) {
-  let tempResponse = $rootScope.sysResponse;
+  let tempResponse = $rootScope.gardensResponse;
 
   $scope.schema = {};
   $scope.form = [];
@@ -241,7 +241,7 @@ export default function commandViewController(
         $scope.template = $scope.command.template;
       }
 
-      $scope.response = $rootScope.sysResponse;
+      $scope.response = $rootScope.gardensResponse;
     } else {
       generateSF();
     }

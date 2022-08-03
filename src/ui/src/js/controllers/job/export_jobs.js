@@ -13,7 +13,7 @@ export default function jobExportController(
     $filter,
     JobService,
 ) {
-  $scope.response = $rootScope.sysResponse;
+  $scope.response = $rootScope.gardensResponse;
   $scope.data = $rootScope.systems;
 
   $scope.exportAllJobs = function() {

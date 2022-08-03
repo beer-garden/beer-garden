@@ -23,7 +23,7 @@ export function jobImportController(
     $state,
     JobService,
 ) {
-  $scope.response = $rootScope.sysResponse;
+  $scope.response = $rootScope.gardensResponse;
   $scope.data = $rootScope.systems;
 
   $scope.openImportJobsPopup = function() {

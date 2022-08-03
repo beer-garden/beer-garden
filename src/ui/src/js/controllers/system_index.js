@@ -92,6 +92,6 @@ export default function systemIndexController(
     $scope.data = {};
   };
 
-  $scope.response = $rootScope.sysResponse;
+  $scope.response = $rootScope.gardensResponse;
   $scope.data = $rootScope.systems;
 }
