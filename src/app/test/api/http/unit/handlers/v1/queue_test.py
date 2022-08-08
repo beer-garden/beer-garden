@@ -128,6 +128,18 @@ class TestQueueAPI:
         assert excinfo.value.code == 403
         assert queue_function_mock.called is False
 
+    @pytest.mark.gen_test
+    def test_delete_works_with_special_characters(
+        self, http_client, base_url, queue_function_mock
+    ):
+        url = f"{base_url}/api/v1/queues/some->queue"
+
+        request = HTTPRequest(url, method="DELETE")
+        response = yield http_client.fetch(request)
+
+        assert response.code == 204
+        assert queue_function_mock.called is True
+
 
 class TestQueueListAPI:
     @pytest.mark.gen_test
