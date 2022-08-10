@@ -213,9 +213,11 @@ class SystemAPI(AuthorizationHandler):
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
         if kwargs:
-            response = await self.client(
-                Operation(
-                    operation_type="SYSTEM_UPDATE", args=[system_id], kwargs=kwargs
+            response = _remove_queue_info(
+                await self.client(
+                    Operation(
+                        operation_type="SYSTEM_UPDATE", args=[system_id], kwargs=kwargs
+                    )
                 )
             )
 
@@ -225,7 +227,7 @@ class SystemAPI(AuthorizationHandler):
             )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(_remove_queue_info(response))
+        self.write(response)
 
 
 class SystemListAPI(AuthorizationHandler):
