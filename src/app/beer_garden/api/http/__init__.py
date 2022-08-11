@@ -4,7 +4,7 @@ import os
 import ssl
 import types
 from copy import deepcopy
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 from apispec import APISpec
 from brewtils.models import Event, Events, Principal
@@ -35,7 +35,7 @@ from brewtils.schemas import (
 )
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
-from tornado.web import Application, RedirectHandler
+from tornado.web import Application, RedirectHandler, RequestHandler
 
 import beer_garden
 import beer_garden.api.http.handlers.misc as misc
@@ -74,6 +74,117 @@ event_publishers = None
 api_spec: APISpec
 anonymous_principal: Principal
 client_ssl: ssl.SSLContext
+
+
+def _get_published_url_specs(
+    prefix: Optional[str] = None,
+) -> List[Tuple[str, RequestHandler]]:
+    """Generates the urls specs for the tornado Application that are intended to be
+    published in the swagger docs
+    """
+    if prefix is None:
+        prefix = config.get("entry.http.url_prefix")
+
+    return [
+        # V1
+        (rf"{prefix}api/v1/requests/?", v1.request.RequestListAPI),
+        (rf"{prefix}api/v1/systems/?", v1.system.SystemListAPI),
+        (rf"{prefix}api/v1/queues/?", v1.queue.QueueListAPI),
+        (rf"{prefix}api/v1/users/?", v1.user.UserListAPI),
+        (rf"{prefix}api/v1/admin/?", v1.admin.AdminAPI),
+        (rf"{prefix}api/v1/jobs/?", v1.job.JobListAPI),
+        (rf"{prefix}api/v1/gardens/?", v1.garden.GardenListAPI),
+        (rf"{prefix}api/v1/namespaces/?", v1.namespace.NamespaceListAPI),
+        (rf"{prefix}api/v1/instances/(\w+)/?", v1.instance.InstanceAPI),
+        (rf"{prefix}api/v1/instances/(\w+)/logs/?", v1.instance.InstanceLogAPI),
+        (rf"{prefix}api/v1/instances/(\w+)/queues/?", v1.instance.InstanceQueuesAPI),
+        (rf"{prefix}api/v1/requests/(\w+)/?", v1.request.RequestAPI),
+        (rf"{prefix}api/v1/requests/output/(\w+)/?", v1.request.RequestOutputAPI),
+        (rf"{prefix}api/v1/systems/(\w+)/commands/(\w+)/?", v1.command.CommandAPI),
+        (rf"{prefix}api/v1/systems/(\w+)/?", v1.system.SystemAPI),
+        (rf"{prefix}api/v1/queues/(.*)/?", v1.queue.QueueAPI),
+        (rf"{prefix}api/v1/users/(.*)/?", v1.user.UserAPI),
+        (rf"{prefix}api/v1/jobs/(\w+)/execute/?", v1.job.JobExecutionAPI),
+        (rf"{prefix}api/v1/jobs/(\w+)/?", v1.job.JobAPI),
+        (rf"{prefix}api/v1/logging/?", v1.logging.LoggingAPI),
+        (rf"{prefix}api/v1/gardens/(.*)/?", v1.garden.GardenAPI),
+        (rf"{prefix}api/v1/export/jobs/?", v1.job.JobExportAPI),
+        (rf"{prefix}api/v1/import/jobs/?", v1.job.JobImportAPI),
+        (rf"{prefix}api/v1/password/change/?", v1.user.UserPasswordChangeAPI),
+        (rf"{prefix}api/v1/token/?", v1.token.TokenAPI),
+        (rf"{prefix}api/v1/token/revoke/?", v1.token.TokenRevokeAPI),
+        (rf"{prefix}api/v1/token/refresh/?", v1.token.TokenRefreshAPI),
+        (rf"{prefix}api/v1/whoami/?", v1.user.WhoAmIAPI),
+        (
+            rf"{prefix}api/v1/commandpublishingblocklist/(\w+)/?",
+            v1.command_publishing_blocklist.CommandPublishingBlocklistPathAPI,
+        ),
+        (
+            rf"{prefix}api/v1/commandpublishingblocklist/?",
+            v1.command_publishing_blocklist.CommandPublishingBlocklistAPI,
+        ),
+        (rf"{prefix}api/v1/roles/?", v1.role.RoleListAPI),
+        # Beta
+        (rf"{prefix}api/vbeta/events/?", vbeta.event.EventPublisherAPI),
+        (rf"{prefix}api/vbeta/runners/?", vbeta.runner.RunnerListAPI),
+        (rf"{prefix}api/vbeta/runners/(\w+)/?", vbeta.runner.RunnerAPI),
+        (
+            rf"{prefix}api/vbeta/chunks/?",
+            beer_garden.api.http.handlers.vbeta.chunk.FileChunkAPI,
+        ),
+        (
+            rf"{prefix}api/vbeta/chunks/id/?",
+            beer_garden.api.http.handlers.vbeta.chunk.ChunkNameAPI,
+        ),
+        (rf"{prefix}api/vbeta/file/?", vbeta.file.RawFileListAPI),
+        (rf"{prefix}api/vbeta/file/(\w+)/?", vbeta.file.RawFileAPI),
+        # V2
+        (rf"{prefix}api/v2/users/?", v1.user.UserListAPI),
+        (rf"{prefix}api/v2/users/(\w+)/?", v1.user.UserAPI),
+        # Deprecated
+        (rf"{prefix}api/v1/commands/?", v1.command.CommandListAPI),
+        (rf"{prefix}api/v1/commands/(\w+)/?", v1.command.CommandAPIOld),
+        (rf"{prefix}api/v1/config/logging/?", v1.logging.LoggingConfigAPI),
+    ]
+
+
+def _get_unpublished_url_specs(
+    prefix: Optional[str] = None,
+) -> List[Tuple[str, RequestHandler]]:
+    """Generates the urls specs for the tornado Application that are not intended to be
+    published in the swagger docs
+    """
+    if prefix is None:
+        prefix = config.get("entry.http.url_prefix")
+
+    return [
+        # These are a little special - unpublished but still versioned
+        # The swagger spec
+        (rf"{prefix}api/v1/spec/?", misc.SpecHandler),
+        (rf"{prefix}api/v1/forward/?", v1.forward.ForwardAPI),
+        # Events websocket
+        (rf"{prefix}api/v1/socket/events/?", v1.event.EventSocket),
+        # Version / configs
+        (rf"{prefix}version/?", misc.VersionHandler),
+        (rf"{prefix}config/?", misc.ConfigHandler),
+        (rf"{prefix}config/swagger/?", misc.SwaggerConfigHandler),
+        # Not sure if this is really necessary
+        (rf"{prefix[:-1]}", RedirectHandler, {"url": prefix}),
+    ]
+
+
+def get_url_specs(
+    prefix: Optional[str] = None,
+) -> List[Tuple[str, RequestHandler]]:
+    """Generates the urls specs for the tornado Application
+
+    Args:
+        prefix: The url prefix for all endpoints
+
+    Returns:
+        A list of tuples containing a url path and RequestHandler
+    """
+    return _get_published_url_specs(prefix) + _get_unpublished_url_specs(prefix)
 
 
 def run(ep_conn):
@@ -184,89 +295,11 @@ def _setup_application():
 
 
 def _setup_tornado_app() -> Application:
-    prefix = config.get("entry.http.url_prefix")
-
-    # These get documented in our OpenAPI (fka Swagger) documentation
-    published_url_specs = [
-        # V1
-        (rf"{prefix}api/v1/requests/?", v1.request.RequestListAPI),
-        (rf"{prefix}api/v1/systems/?", v1.system.SystemListAPI),
-        (rf"{prefix}api/v1/queues/?", v1.queue.QueueListAPI),
-        (rf"{prefix}api/v1/users/?", v1.user.UserListAPI),
-        (rf"{prefix}api/v1/admin/?", v1.admin.AdminAPI),
-        (rf"{prefix}api/v1/jobs/?", v1.job.JobListAPI),
-        (rf"{prefix}api/v1/gardens/?", v1.garden.GardenListAPI),
-        (rf"{prefix}api/v1/namespaces/?", v1.namespace.NamespaceListAPI),
-        (rf"{prefix}api/v1/instances/(\w+)/?", v1.instance.InstanceAPI),
-        (rf"{prefix}api/v1/instances/(\w+)/logs/?", v1.instance.InstanceLogAPI),
-        (rf"{prefix}api/v1/instances/(\w+)/queues/?", v1.instance.InstanceQueuesAPI),
-        (rf"{prefix}api/v1/requests/(\w+)/?", v1.request.RequestAPI),
-        (rf"{prefix}api/v1/requests/output/(\w+)/?", v1.request.RequestOutputAPI),
-        (rf"{prefix}api/v1/systems/(\w+)/commands/(\w+)/?", v1.command.CommandAPI),
-        (rf"{prefix}api/v1/systems/(\w+)/?", v1.system.SystemAPI),
-        (rf"{prefix}api/v1/queues/([\w\.-]+)/?", v1.queue.QueueAPI),
-        (rf"{prefix}api/v1/users/(.*)/?", v1.user.UserAPI),
-        (rf"{prefix}api/v1/jobs/(\w+)/execute/?", v1.job.JobExecutionAPI),
-        (rf"{prefix}api/v1/jobs/(\w+)/?", v1.job.JobAPI),
-        (rf"{prefix}api/v1/logging/?", v1.logging.LoggingAPI),
-        (rf"{prefix}api/v1/gardens/(.*)/?", v1.garden.GardenAPI),
-        (rf"{prefix}api/v1/export/jobs/?", v1.job.JobExportAPI),
-        (rf"{prefix}api/v1/import/jobs/?", v1.job.JobImportAPI),
-        (rf"{prefix}api/v1/password/change/?", v1.user.UserPasswordChangeAPI),
-        (rf"{prefix}api/v1/token/?", v1.token.TokenAPI),
-        (rf"{prefix}api/v1/token/revoke/?", v1.token.TokenRevokeAPI),
-        (rf"{prefix}api/v1/token/refresh/?", v1.token.TokenRefreshAPI),
-        (rf"{prefix}api/v1/whoami/?", v1.user.WhoAmIAPI),
-        (
-            rf"{prefix}api/v1/commandpublishingblocklist/(\w+)/?",
-            v1.command_publishing_blocklist.CommandPublishingBlocklistPathAPI,
-        ),
-        (
-            rf"{prefix}api/v1/commandpublishingblocklist/?",
-            v1.command_publishing_blocklist.CommandPublishingBlocklistAPI,
-        ),
-        (rf"{prefix}api/v1/roles/?", v1.role.RoleListAPI),
-        # Beta
-        (rf"{prefix}api/vbeta/events/?", vbeta.event.EventPublisherAPI),
-        (rf"{prefix}api/vbeta/runners/?", vbeta.runner.RunnerListAPI),
-        (rf"{prefix}api/vbeta/runners/(\w+)/?", vbeta.runner.RunnerAPI),
-        (
-            rf"{prefix}api/vbeta/chunks/?",
-            beer_garden.api.http.handlers.vbeta.chunk.FileChunkAPI,
-        ),
-        (
-            rf"{prefix}api/vbeta/chunks/id/?",
-            beer_garden.api.http.handlers.vbeta.chunk.ChunkNameAPI,
-        ),
-        (rf"{prefix}api/vbeta/file/?", vbeta.file.RawFileListAPI),
-        (rf"{prefix}api/vbeta/file/(\w+)/?", vbeta.file.RawFileAPI),
-        # V2
-        (rf"{prefix}api/v2/users/?", v1.user.UserListAPI),
-        (rf"{prefix}api/v2/users/(\w+)/?", v1.user.UserAPI),
-        # Deprecated
-        (rf"{prefix}api/v1/commands/?", v1.command.CommandListAPI),
-        (rf"{prefix}api/v1/commands/(\w+)/?", v1.command.CommandAPIOld),
-        (rf"{prefix}api/v1/config/logging/?", v1.logging.LoggingConfigAPI),
-    ]
-
-    # And these do not
-    unpublished_url_specs = [
-        # These are a little special - unpublished but still versioned
-        # The swagger spec
-        (rf"{prefix}api/v1/spec/?", misc.SpecHandler),
-        (rf"{prefix}api/v1/forward/?", v1.forward.ForwardAPI),
-        # Events websocket
-        (rf"{prefix}api/v1/socket/events/?", v1.event.EventSocket),
-        # Version / configs
-        (rf"{prefix}version/?", misc.VersionHandler),
-        (rf"{prefix}config/?", misc.ConfigHandler),
-        (rf"{prefix}config/swagger/?", misc.SwaggerConfigHandler),
-        # Not sure if this is really necessary
-        (rf"{prefix[:-1]}", RedirectHandler, {"url": prefix}),
-    ]
-
     auth_config = config.get("auth")
     ui_config = config.get("ui")
+    published_url_specs = _get_published_url_specs()
+    unpublished_url_specs = _get_unpublished_url_specs()
+
     _load_swagger(published_url_specs, title=ui_config.name)
 
     return Application(
