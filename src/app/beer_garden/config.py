@@ -64,8 +64,6 @@ def load(args: Sequence[str], force: bool = False) -> None:
     config = Box(raw_config.to_dict(), default_box=True)
     if config.entry.http.url_prefix:
         config.entry.http.url_prefix = normalize(config.entry.http.url_prefix)
-    if config.event.brew_view.url_prefix:
-        config.event.brew_view.url_prefix = normalize(config.event.brew_view.url_prefix)
 
     _CONFIG = Box(config.to_dict())
 
