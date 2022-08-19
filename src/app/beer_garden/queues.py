@@ -14,6 +14,7 @@ technology we use.
 
 import logging
 
+from brewtils.errors import NotFoundError
 from brewtils.models import Events, Queue, System
 
 import beer_garden.db.api as db
@@ -119,4 +120,13 @@ def clear_all_queues():
             routing_key = get_routing_key(
                 system.namespace, system.name, system.version, instance.name
             )
-            clear_queue(routing_key)
+            try:
+                clear_queue(routing_key)
+            except NotFoundError:
+                # There are various situations that might lead to a system existing,
+                # but its message queue not. In the clear_all context, we want to log
+                # that condition, but allow this to carry on so that the remaining
+                # queues can still be cleared.
+                logger.warning(
+                    "Attempted to clear queue %s, but it does not exist.", routing_key
+                )
