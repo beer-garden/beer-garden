@@ -244,13 +244,6 @@ class InstanceLogAPI(AuthorizationHandler):
         elif end_line:
             end_line = int(end_line)
 
-        response = await self._generate_get_response(instance_id, start_line, end_line)
-
-        self.set_header("request_id", response["id"])
-        self.set_header("Content-Type", "text/plain; charset=UTF-8")
-        self.write(response["output"])
-
-    async def _generate_get_response(self, instance_id, start_line, end_line):
         wait_event = Event()
 
         response = await self.client(
@@ -279,6 +272,10 @@ class InstanceLogAPI(AuthorizationHandler):
 
         if response["status"] == "ERROR":
             raise RequestProcessingError(response["output"])
+
+        self.set_header("request_id", response["id"])
+        self.set_header("Content-Type", "text/plain; charset=UTF-8")
+        self.write(response["output"])
 
 
 class InstanceQueuesAPI(AuthorizationHandler):
