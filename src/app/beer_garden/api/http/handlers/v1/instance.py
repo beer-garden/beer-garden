@@ -280,6 +280,8 @@ class InstanceLogAPI(AuthorizationHandler):
         if response["status"] == "ERROR":
             raise RequestProcessingError(response["output"])
 
+        return response
+
 
 class InstanceQueuesAPI(AuthorizationHandler):
     async def get(self, instance_id):
