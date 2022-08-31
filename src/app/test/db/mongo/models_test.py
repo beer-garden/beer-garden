@@ -736,7 +736,9 @@ class TestCommandBlocklist:
         blocklist.delete()
 
     def test_blocklist_entries_are_required_to_be_unique(self, command_blocklist):
-        """Attempting to create a blocklist entry already in database should raise an exception"""
+        """Attempting to create a blocklist entry already in database should raise an
+        exception
+        """
         with pytest.raises(NotUniqueError):
             CommandPublishingBlocklist(
                 namespace=self.namespace, system=self.system, command=self.command

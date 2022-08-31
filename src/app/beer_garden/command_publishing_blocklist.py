@@ -7,8 +7,9 @@ from beer_garden.events import publish
 
 
 def command_publishing_blocklist_add(command: dict, return_value: bool = False):
-    """Creates the provided CommandPublishingBlocklist by setting its attributes to the provided arg.
-    The created CommandPublishingBlocklist object is then saved to the database and returned.
+    """Creates the provided CommandPublishingBlocklist by setting its attributes to the
+    provided arg. The created CommandPublishingBlocklist object is then saved to the
+    database and returned.
 
     Args:
         command: a dict with {namespace: string, command: string, system: string}

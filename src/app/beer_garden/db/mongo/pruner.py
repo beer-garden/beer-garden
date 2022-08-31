@@ -18,7 +18,8 @@ class MongoPruner(StoppableThread):
         display_name: The name of the pruner
         run_every: How often to run the pruner in minutes
         tasks: List of tasks to prune
-        cancel_threshold: Time after which outstanding requests are marked as canceled in minutes
+        cancel_threshold: Time after which outstanding requests are marked as canceled
+                          in minutes
     """
 
     def __init__(self, tasks=None, run_every=None, cancel_threshold=None):
