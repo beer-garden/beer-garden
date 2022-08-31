@@ -77,7 +77,7 @@ jobs:
       - name: Check PyPi
         uses: nick-invision/retry@v2
         with:
-          timeout_seconds: 30
+          timeout_seconds: 120
           max_attempts: 5
           retry_on: error
           retry_wait_seconds: 10
