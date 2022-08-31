@@ -1,5 +1,29 @@
 # Beer Garden Changelog
 
+## 3.15.0
+
+8/31/22
+
+### Added Features
+
+- A new configuration option, `db.ttl.in_progress`, is now available for timing
+  out requests. Any request still in the `IN_PROGRESS` or `CREATED` status after
+  the configured timeout (set in minutes) will be marked as `CANCELLED`, making
+  it eligible for pruning.
+
+### Bug Fixes
+
+- Viewing instance logs for systems on a local garden now works correctly.
+- The Clear All Queues option on the system admin page now works correctly.
+  **NOTE:** This is supported for the local garden only.
+- Fixed an issue where clearing the queue of an instance with non-word
+  characters in the instance name would raise an error. Queues can now be
+  cleared properly, regardless of the instance name.
+
+### Other Changes
+- Reduced redundancy in the API calls made by the UI.
+- Removed lingering internal references to beer garden v2 naming conventions.
+
 ## 3.14.0
 
 6/28/22
