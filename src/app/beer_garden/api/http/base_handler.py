@@ -80,7 +80,10 @@ class BaseHandler(RequestHandler):
 
         if config.get("ui.cors_enabled"):
             self.set_header("Access-Control-Allow-Origin", "*")
-            self.set_header("Access-Control-Allow-Headers", "Content-Type, Origin, X-Requested-With, Authorization")
+            self.set_header(
+                "Access-Control-Allow-Headers",
+                "Content-Type, Origin, X-Requested-With, Authorization",
+            )
             self.set_header(
                 "Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS"
             )
