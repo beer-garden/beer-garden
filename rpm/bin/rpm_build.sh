@@ -70,6 +70,7 @@ INCLUDE_PATH="$APP_PATH/include"
 LIB_PATH="$APP_PATH/lib"
 SHARE_PATH="$APP_PATH/share"
 UI_PATH="$APP_PATH/ui"
+REACTUI_PATH="$APP_PATH/react-ui"
 
 PYTHON_BIN="$APP_PATH/bin/python"
 PIP_BIN="$APP_PATH/bin/pip"
@@ -109,6 +110,9 @@ install_apps() {
 
     mkdir -p "$UI_PATH"
     cp -r "$SRC_PATH/ui/dist" "$UI_PATH/dist"
+
+    mkdir -p "$REACTUI_PATH"
+    cp -r "$SRC_PATH/react-ui/build" "$REACTUI_PATH/dist"
 
     mkdir -p "$UI_PATH/conf/conf.d"
     cp "$RESOURCE_BASE/nginx/upstream.conf" "$UI_PATH/conf/conf.d/"
