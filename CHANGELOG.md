@@ -1,5 +1,17 @@
 # Beer Garden Changelog
 
+## 3.16.0
+
+11/15/22
+
+### Added Features
+
+- A preview of the new UI is now bundled into the official release RPM. This new
+  UI built on a more modern framework, but is largely intended to look and feel
+  similar to the existing UI. When using the configuration provided in the RPM,
+  the preview UI can be reached by appending /preview to the base beergarden URL
+  in your browser.
+
 ## 3.15.0
 
 8/31/22
@@ -21,6 +33,7 @@
   cleared properly, regardless of the instance name.
 
 ### Other Changes
+
 - Reduced redundancy in the API calls made by the UI.
 - Removed lingering internal references to beer garden v2 naming conventions.
 
