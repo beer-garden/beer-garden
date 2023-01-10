@@ -1,5 +1,13 @@
 # Beer Garden Changelog
 
+## 3.16.1
+
+1/10/23
+
+### Other Changes
+
+- Miscellaneous updates to the preview version of the new the UI
+
 ## 3.16.0
 
 11/15/22
