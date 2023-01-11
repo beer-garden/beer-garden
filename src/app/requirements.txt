@@ -8,7 +8,7 @@ apispec==0.38.0
     # via beer-garden (setup.py)
 appdirs==1.4.4
     # via brewtils
-apscheduler==3.9.1
+apscheduler==3.9.1.post1
     # via beer-garden (setup.py)
 backports-zoneinfo==0.2.1
     # via
@@ -16,13 +16,13 @@ backports-zoneinfo==0.2.1
     #   tzlocal
 brewtils==3.15.0
     # via beer-garden (setup.py)
-certifi==2022.6.15
+certifi==2022.12.7
     # via requests
 charset-normalizer==2.1.1
     # via requests
 docopt==0.6.2
     # via stomp-py
-idna==3.3
+idna==3.4
     # via requests
 lark-parser==0.6.7
     # via brewtils
@@ -45,11 +45,11 @@ passlib==1.7.4
     # via beer-garden (setup.py)
 pika==1.2.0
     # via brewtils
-prometheus-client==0.14.1
+prometheus-client==0.15.0
     # via beer-garden (setup.py)
-pyjwt==2.4.0
+pyjwt==2.6.0
     # via beer-garden (setup.py)
-pymongo==3.12.3
+pymongo==3.13.0
     # via
     #   mongoengine
     #   motor
@@ -78,9 +78,9 @@ requests==2.28.1
     #   pyrabbit2
 ruamel-yaml==0.16.13
     # via beer-garden (setup.py)
-ruamel-yaml-clib==0.2.6
+ruamel-yaml-clib==0.2.7
     # via ruamel-yaml
-simplejson==3.17.6
+simplejson==3.18.1
     # via brewtils
 six==1.16.0
     # via
@@ -91,13 +91,13 @@ stomp-py==6.0.0
     # via beer-garden (setup.py)
 tornado==6.2
     # via beer-garden (setup.py)
-tzdata==2022.2
+tzdata==2022.7
     # via pytz-deprecation-shim
 tzlocal==4.2
     # via apscheduler
-urllib3==1.26.12
+urllib3==1.26.14
     # via requests
-watchdog==2.1.9
+watchdog==2.2.1
     # via
     #   beer-garden (setup.py)
     #   yapconf
