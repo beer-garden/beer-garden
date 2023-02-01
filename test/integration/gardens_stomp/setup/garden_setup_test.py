@@ -143,7 +143,6 @@ class TestGardenSetup(object):
         assert updated_response.ok
 
     def test_garden_manual_register_successful(self):
-
         response = self.easy_client.client.session.get(
             self.easy_client.client.base_url + "api/v1/gardens/"
         )

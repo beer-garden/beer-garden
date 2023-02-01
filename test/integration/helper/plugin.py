@@ -25,7 +25,6 @@ def wait_for_status(client, instance_id, timeout=30, max_delay=60):
     delay_time = 0.01
     total_wait_time = 0
     while instance.status not in ["RUNNING", "STOPPED", "DEAD"]:
-
         time.sleep(delay_time)
         if timeout and total_wait_time > timeout:
             raise Exception("Timed out waiting for instance to start")

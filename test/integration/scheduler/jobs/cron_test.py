@@ -28,7 +28,6 @@ def system_spec():
 @pytest.mark.usefixtures("easy_client")
 class TestCron(object):
     def test_start_date_job(self, system_spec):
-
         job_name = "test_start_date_job"
         delay_start = 60 * 2
         job_wait = 5

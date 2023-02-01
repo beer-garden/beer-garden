@@ -74,7 +74,7 @@ def assert_errored_request(request, **kwargs):
 
 
 def assert_request(request, **kwargs):
-    for (key, expected) in kwargs.items():
+    for key, expected in kwargs.items():
         actual = getattr(request, key)
 
         if key == "error_class" and not isinstance(expected, str):
