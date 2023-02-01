@@ -7,7 +7,6 @@ from beer_garden.api.http.base_handler import BaseHandler
 
 
 class RunnerAPI(BaseHandler):
-
     parser = SchemaParser()
 
     async def get(self, runner_id):
@@ -143,7 +142,6 @@ class RunnerAPI(BaseHandler):
 
 
 class RunnerListAPI(BaseHandler):
-
     parser = SchemaParser()
 
     async def get(self):

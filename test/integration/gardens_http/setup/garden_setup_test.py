@@ -29,7 +29,6 @@ class TestGardenSetup(object):
     child_garden_name = "childdocker"
 
     def test_garden_auto_register_successful(self):
-
         response = self.easy_client.client.session.get(
             self.easy_client.client.base_url + "api/v1/gardens/"
         )
@@ -40,7 +39,6 @@ class TestGardenSetup(object):
         assert len(gardens) == 2
 
     def test_update_garden_connection_info(self):
-
         response = self.easy_client.client.session.get(
             self.easy_client.client.base_url + "api/v1/gardens/"
         )
@@ -77,7 +75,6 @@ class TestGardenSetup(object):
         assert response.ok
 
     def test_child_systems_register_successful(self):
-
         systems = self.easy_client.find_systems()
 
         namespaces = dict()

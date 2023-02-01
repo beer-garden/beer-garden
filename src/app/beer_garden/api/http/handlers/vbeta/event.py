@@ -5,7 +5,6 @@ from beer_garden.events import publish
 
 
 class EventPublisherAPI(BaseHandler):
-
     parser = SchemaParser()
 
     def post(self):

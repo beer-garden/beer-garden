@@ -334,7 +334,6 @@ class PyrabbitClient(object):
         # If there are no channels, then there is nothing to do
         channels = self._client.get_channels() or []
         for channel in channels:
-
             # If the channel is already gone, just return an empty response
             channel_details = self._client.get_channel(channel["name"]) or {
                 "consumer_details": []

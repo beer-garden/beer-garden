@@ -161,7 +161,6 @@ class InstanceAPI(AuthorizationHandler):
 
             elif operation == "replace":
                 if op.path.lower() == "/status":
-
                     response = await self.client(
                         Operation(
                             operation_type="INSTANCE_UPDATE",

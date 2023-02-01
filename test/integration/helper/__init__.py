@@ -73,7 +73,6 @@ def wait_for_in_progress(client, request, timeout=1, max_delay=1):
     delay_time = 0.01
     total_wait_time = 0
     while request.status != "IN_PROGRESS":
-
         if request.status in COMPLETED_STATUSES:
             raise ValueError(
                 "Error waiting for request to go to in progress. Status %s"
@@ -97,7 +96,6 @@ def wait_for_response(client, request, timeout=1, max_delay=1):
     delay_time = 0.01
     total_wait_time = 0
     while request.status not in COMPLETED_STATUSES:
-
         if timeout and total_wait_time > timeout:
             raise TimeoutError("Timed out waiting for request to complete")
 
@@ -133,7 +131,6 @@ def stop_instance(client, instance, timeout=15, max_delay=1):
     delay_time = 0.01
     total_wait_time = 0
     while instance.status not in ["DEAD", "STOPPED", "UNRESPONSIVE"]:
-
         if timeout and total_wait_time > timeout:
             raise TimeoutError("Timed out waiting for instance to stop")
 
@@ -147,7 +144,6 @@ def stop_instance(client, instance, timeout=15, max_delay=1):
 
 
 def get_instance(client, instance_id):
-
     return client.get_instance(instance_id)
 
 

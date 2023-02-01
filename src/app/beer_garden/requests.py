@@ -231,7 +231,6 @@ class RequestValidator(object):
             and command_parameter.choices
             and command_parameter.choices.strict
         ):
-
             choices = command_parameter.choices
 
             def map_param_values(kv_pair_list):
@@ -282,7 +281,6 @@ class RequestValidator(object):
                     self._session.get(parsed_value["address"], params=query_params).text
                 )
             elif choices.type == "command":
-
                 if isinstance(choices.value, six.string_types):
                     parsed_value = parse(choices.value, parse_as="func")
 
@@ -477,7 +475,8 @@ class RequestValidator(object):
         self, request_parameters, command_parameters
     ):
         """Validate that all the parameters passed in were valid keys. If there is a key
-        specified that is not noted in the database, then a validation error is thrown"""
+        specified that is not noted in the database, then a validation error is thrown
+        """
         self.logger.debug("Validating Keys")
         valid_keys = [cp.key for cp in command_parameters]
         self.logger.debug("Valid Keys are : %s" % valid_keys)
@@ -869,7 +868,6 @@ def handle_wait_events(event):
 
     # Only care about local garden
     if event.garden == config.get("garden.name"):
-
         if event.name == Events.GARDEN_STOPPED.name:
             # When shutting down we need to close all handing connections/threads
             # waiting for a response. This will invoke each connection/thread to be
