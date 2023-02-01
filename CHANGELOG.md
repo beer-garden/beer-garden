@@ -1,5 +1,14 @@
 # Beer Garden Changelog
 
+## 3.16.2
+
+2/1/23
+
+### Other Changes
+
+- Preview version of the new UI now has intended feature parity with the
+  existing UI.
+
 ## 3.16.1
 
 1/10/23

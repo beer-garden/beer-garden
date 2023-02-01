@@ -59,7 +59,7 @@ def _unroll_object(
         ignore = []
 
     ret = {}
-    for (key, val) in obj.__dict__.items():
+    for key, val in obj.__dict__.items():
         if key in key_map:
             if callable(key_map[key]):
                 key_map[key](ret, val)

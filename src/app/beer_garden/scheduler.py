@@ -507,7 +507,6 @@ def handle_event(event: Event) -> None:
     """
 
     if event.garden == config.get("garden.name"):
-
         if event.name in [Events.JOB_CREATED.name, Events.JOB_UPDATED.name]:
             try:
                 beer_garden.application.scheduler.add_job(

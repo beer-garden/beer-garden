@@ -185,7 +185,6 @@ class TestAuthorizationHandler:
     def test_auth_enabled_blocks_access_with_refresh_token(
         self, http_client, base_url, app_config_auth_enabled, user
     ):
-
         url = f"{base_url}/api/v1/whoami"
 
         refresh_token = issue_token_pair(user)["refresh"]

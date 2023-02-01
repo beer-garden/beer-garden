@@ -7,7 +7,6 @@ import warnings
 warnings.filterwarnings("ignore", module="apispec.utils", message="calling yaml.load")
 
 if __name__ == "__main__":
-
     # This is gross but we need the directory containing the package on the sys path
     sys.path.append(path.abspath(path.join(path.abspath(__file__), "..", "..")))
 

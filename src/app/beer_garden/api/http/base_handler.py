@@ -141,7 +141,6 @@ class BaseHandler(RequestHandler):
             ).observe(timedelta.total_seconds())
 
     def options(self, *args, **kwargs):
-
         if config.get("ui.cors_enabled"):
             self.set_status(204)
         else:

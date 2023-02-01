@@ -422,7 +422,6 @@ def handle_event(event: Event) -> None:
         event: The event to handle
     """
     if event.garden != config.get("garden.name"):
-
         if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
             event.payload.local = False
 

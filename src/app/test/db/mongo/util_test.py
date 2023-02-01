@@ -94,7 +94,6 @@ class TestCheckIndexes(object):
     @patch("mongoengine.connect", Mock())
     @patch("mongoengine.register_connection", Mock())
     def test_same_indexes(self, model_mocks):
-
         for model_mock in model_mocks.values():
             model_mock.list_indexes = Mock(return_value=["index1"])
             model_mock._get_collection = Mock(
@@ -108,7 +107,6 @@ class TestCheckIndexes(object):
     @patch("mongoengine.connect", Mock())
     @patch("mongoengine.register_connection", Mock())
     def test_missing_index(self, model_mocks):
-
         for model_mock in model_mocks.values():
             model_mock.list_indexes = Mock(return_value=["index1", "index2"])
             model_mock._get_collection = Mock(
@@ -123,7 +121,6 @@ class TestCheckIndexes(object):
     @patch("mongoengine.connect", Mock())
     @patch("mongoengine.register_connection", Mock())
     def test_successful_index_rebuild(self, get_db_mock, model_mocks):
-
         # 'normal' return values
         for model_mock in model_mocks.values():
             model_mock.list_indexes = Mock(return_value=["index1"])
@@ -146,7 +143,6 @@ class TestCheckIndexes(object):
     @patch("mongoengine.connect", Mock())
     @patch("mongoengine.connection.get_db")
     def test_unsuccessful_index_drop(self, get_db_mock, model_mocks):
-
         for model_mock in model_mocks.values():
             model_mock.list_indexes = Mock(return_value=["index1"])
             model_mock._get_collection = Mock(
@@ -164,7 +160,6 @@ class TestCheckIndexes(object):
     @patch("mongoengine.connect", Mock())
     @patch("mongoengine.connection.get_db", MagicMock())
     def test_unsuccessful_index_rebuild(self, model_mocks):
-
         for model_mock in model_mocks.values():
             model_mock.list_indexes = Mock(return_value=["index1"])
             model_mock._get_collection = Mock(

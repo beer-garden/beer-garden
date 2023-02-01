@@ -305,7 +305,6 @@ def handle_event(event):
     This method should NOT update the routing module. Let its handler worry about that!
     """
     if event.garden != config.get("garden.name"):
-
         if event.name in (
             Events.GARDEN_STARTED.name,
             Events.GARDEN_UPDATED.name,

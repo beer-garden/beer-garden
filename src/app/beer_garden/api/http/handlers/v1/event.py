@@ -58,7 +58,6 @@ class IncomingMessageSchema(Schema):
 
 
 class EventSocket(WebSocketHandler):
-
     closing = False
     listeners = set()
 

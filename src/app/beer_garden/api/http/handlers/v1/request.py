@@ -107,7 +107,6 @@ class RequestAPI(AuthorizationHandler):
         for op in patch:
             if op.operation == "replace":
                 if op.path == "/status":
-
                     # If we get a start just assume there's no other op in patch
                     if op.value.upper() == "IN_PROGRESS":
                         operation.operation_type = "REQUEST_START"
@@ -666,7 +665,7 @@ class RequestListAPI(AuthorizationHandler):
 
         try:
             request_form_dict = json.loads(request_form)
-        except (json.JSONDecodeError):
+        except json.JSONDecodeError:
             raise BadRequest(reason="request parameter must be valid JSON")
 
         self._add_files_to_request(request_form_dict)

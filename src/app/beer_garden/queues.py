@@ -37,11 +37,9 @@ def get_queue_message_count(queue_name):
 
 
 def get_instance_queues(instance_id):
-
     instance = get_instance(instance_id=instance_id)
 
     if instance.queue_info:
-
         request_queue = Queue(
             name=instance.queue_info["request"]["name"], instance=instance.name, size=-1
         )
