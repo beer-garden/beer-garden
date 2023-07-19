@@ -16,7 +16,7 @@ brewtils==3.16.0
     # via beer-garden (setup.py)
 certifi==2023.5.7
     # via requests
-charset-normalizer==3.1.0
+charset-normalizer==3.2.0
     # via requests
 docopt==0.6.2
     # via stomp-py
@@ -43,9 +43,9 @@ passlib==1.7.4
     # via beer-garden (setup.py)
 pika==1.2.0
     # via brewtils
-prometheus-client==0.16.0
+prometheus-client==0.17.1
     # via beer-garden (setup.py)
-pyjwt==2.7.0
+pyjwt==2.8.0
     # via beer-garden (setup.py)
 pymongo==3.13.0
     # via
@@ -85,12 +85,14 @@ stomp-py==6.0.0
     # via beer-garden (setup.py)
 tornado==6.2
     # via beer-garden (setup.py)
-typing-extensions==4.6.1
+typing-extensions==4.7.1
     # via pyjwt
 tzlocal==5.0.1
     # via apscheduler
-urllib3==2.0.2
-    # via requests
+urllib3==1.26.16
+    # via
+    #   beer-garden (setup.py)
+    #   requests
 watchdog==3.0.0
     # via
     #   beer-garden (setup.py)
