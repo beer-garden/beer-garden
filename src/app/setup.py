@@ -38,7 +38,7 @@ setup(
         "motor<3",
         "passlib<1.8",
         "prometheus-client<1",
-        "pyyaml<6",
+        "pyyaml<5.4",
         "pyrabbit2<2",
         "pytz<2021",
         "pyjwt>=2.4.0",
