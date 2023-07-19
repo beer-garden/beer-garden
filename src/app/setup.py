@@ -45,6 +45,7 @@ setup(
         "ruamel.yaml<0.17",
         "stomp.py<6.2.0",
         "tornado<7",
+        "urllib3<2",
         "watchdog>2.1.0",
         "wrapt<1.13.0",
         "yapconf>=1.0.0",
