@@ -17,10 +17,10 @@ jobs:
 
     name: Linting OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -61,10 +61,10 @@ jobs:
 
     name: PyTests OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -115,10 +115,10 @@ jobs:
 
     name: Code Coverage OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -175,7 +175,7 @@ jobs:
     name: Code Security Check OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
     steps:
       - name: Setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -184,12 +184,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install "importlib-metadata<5" bandit
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           ref: ${{ github.base_ref }}
           path: ./old
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           path: ./new
 
