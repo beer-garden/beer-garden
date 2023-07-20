@@ -1,5 +1,15 @@
 # Beer Garden Changelog
 
+## 3.17.0
+
+7/19/23
+
+### Other Changes
+
+- Updated preview version of the new UI with better support for commands with
+  dynamic parameters
+- Bumped dependency versions
+
 ## 3.16.2
 
 2/1/23
