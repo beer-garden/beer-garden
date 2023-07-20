@@ -67,7 +67,7 @@ coverage: ## check code coverage
 
 # Packaging
 package: clean ## builds distribution
-	npm run build
+	NODE_OPTIONS=--openssl-legacy-provider npm run build
 
 
 # Docker
