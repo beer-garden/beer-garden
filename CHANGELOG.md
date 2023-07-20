@@ -1,5 +1,13 @@
 # Beer Garden Changelog
 
+## 3.17.1
+
+7/20/23
+
+### Other Changes
+
+- Update RPM build process to use Node 18
+
 ## 3.17.0
 
 7/19/23
