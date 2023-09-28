@@ -23,6 +23,7 @@ db:
   name: beer_garden
   ttl:
     action: -1
+    admin: -1
     file: 15
     in_progress: 15
     info: 15
