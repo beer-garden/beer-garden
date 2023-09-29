@@ -764,7 +764,7 @@ _DB_SPEC = {
                     ),
                     "previous_names": ["info_request_ttl"],
                     "alt_env_names": ["INFO_REQUEST_TTL"],
-                },               
+                },
                 "in_progress": {
                     "type": "int",
                     "default": -1,
