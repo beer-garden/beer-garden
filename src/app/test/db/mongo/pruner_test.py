@@ -118,10 +118,10 @@ class TestDetermineTasks(object):
 
         info_task = prune_tasks[0]
         action_task = prune_tasks[1]
-        file_task = prune_tasks[2]
-        raw_file_task = prune_tasks[3]
-        admin_task = prune_tasks[4]
-
+        admin_task = prune_tasks[2]
+        file_task = prune_tasks[3]
+        raw_file_task = prune_tasks[4]
+        
         assert info_task["collection"] == Request
         assert action_task["collection"] == Request
         assert file_task["collection"] == File
