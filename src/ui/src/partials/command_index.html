@@ -64,6 +64,10 @@
                 class="fa fa-user-secret pull-right"
                 style="font-size: 20px"
               ></span>
+              <span
+                class="{{getCommandIcon(command.command_type)}} pull-right"
+                style="font-size: 20px"
+              ></span>
             </td>
             <td>{{command.description}}</td>
             <td ng-if="userCanTask">

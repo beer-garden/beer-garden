@@ -115,6 +115,7 @@ export default function commandIndexController(
           hidden: command.hidden,
           namespace: system.namespace,
           name: command.name,
+          command_type: command.command_type || 'ACTION',
           system: system.display_name || system.name,
           version: system.version,
           description: command.description || 'No Description Provided',
@@ -177,4 +178,12 @@ export default function commandIndexController(
   };
 
   $scope.successCallback($rootScope.gardensResponse, $rootScope.systems);
+
+  $scope.getCommandIcon = function(command_type) {
+    if (command_type == 'INFO'){
+      return 'fa fa-info';
+    }
+
+    return 'fa fa-flash';
+  }
 }
