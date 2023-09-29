@@ -745,6 +745,16 @@ _DB_SPEC = {
                     "previous_names": ["action_request_ttl"],
                     "alt_env_names": ["ACTION_REQUEST_TTL"],
                 },
+                "admin": {
+                    "type": "int",
+                    "default": -1,
+                    "description": (
+                        "Number of minutes to wait before deleting "
+                        "Admin requests (negative number for never)"
+                    ),
+                    "previous_names": [],
+                    "alt_env_names": [],
+                },
                 "info": {
                     "type": "int",
                     "default": 15,

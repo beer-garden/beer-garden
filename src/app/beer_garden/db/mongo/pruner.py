@@ -104,6 +104,7 @@ class MongoPruner(StoppableThread):
         info_ttl = kwargs.get("info", -1)
         action_ttl = kwargs.get("action", -1)
         file_ttl = kwargs.get("file", -1)
+        admin_ttl = kwargs.get("admin", -1)
 
         prune_tasks = []
         if info_ttl > 0:
@@ -131,6 +132,20 @@ class MongoPruner(StoppableThread):
                     )
                     & Q(has_parent=False)
                     & Q(command_type="ACTION"),
+                }
+            )
+
+        if admin_ttl > 0:
+            prune_tasks.append(
+                {
+                    "collection": Request,
+                    "field": "created_at",
+                    "delete_after": timedelta(minutes=admin_ttl),
+                    "additional_query": (
+                        Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
+                    )
+                    & Q(has_parent=False)
+                    & Q(command_type="ADMIN"),
                 }
             )
 
