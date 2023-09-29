@@ -22,6 +22,7 @@ def task(collection_mock):
     return {
         "collection": collection_mock,
         "field": "test",
+        "batch_size": -1,
         "delete_after": timedelta(microseconds=1),
         "additional_query": Mock(),
     }
