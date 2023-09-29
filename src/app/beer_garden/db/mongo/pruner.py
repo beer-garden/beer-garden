@@ -79,6 +79,14 @@ class MongoPruner(StoppableThread):
                     "Removing %ss older than %s"
                     % (task["collection"].__name__, str(delete_older_than))
                 )
+
+                if task["batch_size"] > 0:
+                    while task["batch_size"] < task["collection"].objects(query).no_cache().count():
+                        self.logger.debug(
+                            "Removing %ss older than %s, batched by %s"
+                            % (task["collection"].__name__, str(delete_older_than), str(task["batch_size"]))
+                        )
+                        task["collection"].objects(query).limit(task["batch_size"]).no_cache().delete()
                 task["collection"].objects(query).no_cache().delete()
 
             if self._cancel_threshold > 0:
@@ -105,12 +113,14 @@ class MongoPruner(StoppableThread):
         action_ttl = kwargs.get("action", -1)
         file_ttl = kwargs.get("file", -1)
         admin_ttl = kwargs.get("admin", -1)
+        batch_size = kwargs.get("batch_size", -1)
 
         prune_tasks = []
         if info_ttl > 0:
             prune_tasks.append(
                 {
                     "collection": Request,
+                    "batch_size": batch_size,
                     "field": "created_at",
                     "delete_after": timedelta(minutes=info_ttl),
                     "additional_query": (
@@ -125,6 +135,7 @@ class MongoPruner(StoppableThread):
             prune_tasks.append(
                 {
                     "collection": Request,
+                    "batch_size": batch_size,
                     "field": "created_at",
                     "delete_after": timedelta(minutes=action_ttl),
                     "additional_query": (
@@ -139,6 +150,7 @@ class MongoPruner(StoppableThread):
             prune_tasks.append(
                 {
                     "collection": Request,
+                    "batch_size": batch_size,
                     "field": "created_at",
                     "delete_after": timedelta(minutes=admin_ttl),
                     "additional_query": (
@@ -153,6 +165,7 @@ class MongoPruner(StoppableThread):
             prune_tasks.append(
                 {
                     "collection": File,
+                    "batch_size": batch_size,
                     "field": "updated_at",
                     "delete_after": timedelta(minutes=file_ttl),
                     "additional_query": Q(owner_type=None)  # No one has claimed me
@@ -167,13 +180,17 @@ class MongoPruner(StoppableThread):
             prune_tasks.append(
                 {
                     "collection": RawFile,
+                    "batch_size": batch_size,
                     "field": "created_at",
                     "delete_after": timedelta(minutes=file_ttl),
                 }
             )
 
-        # Look at the various TTLs to determine how often to run
-        real_ttls = [x for x in kwargs.values() if x > 0]
-        run_every = min(real_ttls) / 2 if real_ttls else None
+        if len(prune_tasks) > 0:
+            # Look at the various TTLs to determine how often to run
+            real_ttls = [x for x in [info_ttl, action_ttl, admin_ttl, file_ttl] if x > 0]
+            run_every = min(real_ttls) / 2 if real_ttls else None
+        else:
+            run_every = None
 
         return prune_tasks, run_every

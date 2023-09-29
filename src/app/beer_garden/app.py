@@ -86,14 +86,34 @@ class Application(StoppableThread):
 
         tasks, run_every = db.prune_tasks(**ttl_config)
         if run_every:
-            self.helper_threads.append(
-                HelperThread(
-                    db.get_pruner(),
-                    tasks=tasks,
-                    run_every=timedelta(minutes=run_every),
-                    cancel_threshold=ttl_config.in_progress,
+            if ttl_config.get("multithread", False):
+                for task in tasks:
+                    self.helper_threads.append(
+                        HelperThread(
+                            db.get_pruner(),
+                            tasks=[task],
+                            run_every=timedelta(minutes=run_every),
+                            cancel_threshold=-1,
+                        )
+                    )
+                    if ttl_config.in_progress > 0:
+                        self.helper_threads.append(
+                            HelperThread(
+                                db.get_pruner(),
+                                tasks=[],
+                                run_every=timedelta(minutes=run_every),
+                                cancel_threshold=ttl_config.in_progress,
+                            )
+                        )
+            else:
+                self.helper_threads.append(
+                    HelperThread(
+                        db.get_pruner(),
+                        tasks=tasks,
+                        run_every=timedelta(minutes=run_every),
+                        cancel_threshold=ttl_config.in_progress,
+                    )
                 )
-            )
 
         metrics_config = config.get("metrics")
         if metrics_config.prometheus.enabled:

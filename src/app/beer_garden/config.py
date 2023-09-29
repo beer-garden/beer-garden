@@ -783,6 +783,23 @@ _DB_SPEC = {
                     ),
                     "alt_env_names": ["FILE_REQUEST_TTL"],
                 },
+                "batch_size": {
+                    "type": "int",
+                    "default": -1,
+                    "description": (
+                        "Batch size for deleting documents "
+                        "(negative number for never)"
+                    ),
+                    "alt_env_names": [],
+                },
+                "multithread": {
+                    "type": "bool",
+                    "default": False,
+                    "description": (
+                        "Runs pruners in seperate threads"
+                    ),
+                    "alt_env_names": [],
+                },
             },
         },
     },
