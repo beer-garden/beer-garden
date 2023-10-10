@@ -1,5 +1,13 @@
 # Beer Garden Changelog
 
+## 3.17.2
+
+10/10/23
+
+- Add Request Pruner for command type Admin
+- Add batching for large pruner
+- Add multithreading for pruner
+
 ## 3.17.1
 
 7/20/23
