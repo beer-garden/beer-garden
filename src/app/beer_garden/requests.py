@@ -913,15 +913,12 @@ def handle_event(event):
                     except RequestStatusTransitionError:
                         pass
 
-    if event.name in (
-            Events.REQUEST_COMPLETED.name,
-            Events.REQUEST_UPDATED.name,
-            Events.REQUEST_CANCELED.name,
-        ):
-        if event.payload.status in ("INVALID","CANCELED","ERROR","SUCCESS"):
+    if event.name in (Events.REQUEST_COMPLETED.name, Events.REQUEST_UPDATED.name, Events.REQUEST_CANCELED.name):
+        if event.payload.status in ("INVALID", "CANCELED", "ERROR", "SUCCESS"):
             existing_request = db.query_unique(Request, id=event.payload.id)
             if existing_request:
                 clean_command_type_temp(existing_request)
+
 
 def clean_command_type_temp(request: Request):
     # Only delete TEMP requests if it is the root request
