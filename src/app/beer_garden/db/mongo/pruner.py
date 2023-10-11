@@ -114,7 +114,7 @@ class MongoPruner(StoppableThread):
         file_ttl = kwargs.get("file", -1)
         admin_ttl = kwargs.get("admin", -1)
         temp_ttl = kwargs.get("temp", -1)
-        batch_size = kwargs.get("batch_size", -1)   
+        batch_size = kwargs.get("batch_size", -1)
 
         prune_tasks = []
         if info_ttl > 0:

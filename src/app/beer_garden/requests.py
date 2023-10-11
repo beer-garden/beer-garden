@@ -925,7 +925,7 @@ def clean_command_type_temp(request: Request):
     if not request.has_parent and request.command_type == "TEMP":
         db.delete(request)
         return
-    
+
     # Delete any children that are TEMP once the current request is completed
     request.children = db.query(Request, filter_params={"parent": request})
 
