@@ -162,6 +162,12 @@ def _event_is_blocklisted_error(event: Event):
     return event.error and event.name.startswith("REQUEST") and event.payload is None
 
 
+def _event_blocklist_by_command_type(event: Event):
+    if event.name.startswith("REQUEST") and event.payload.command_type:
+        return event.payload.command_type == "TEMP"
+    return False
+
+
 def event_blocklisted(event: Event) -> bool:
     """
     This will determine if an event is in block list from being sent to a parent garden.
@@ -176,4 +182,5 @@ def event_blocklisted(event: Event) -> bool:
         _event_blocklisted_by_name(event)
         or _event_blocklisted_by_command(event)
         or _event_is_blocklisted_error(event)
+        or _event_blocklist_by_command_type(event)
     )
