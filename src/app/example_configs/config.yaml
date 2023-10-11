@@ -27,6 +27,7 @@ db:
     file: 15
     in_progress: 15
     info: 15
+    temp: 15
     batch_size: -1
     multithread: false
 entry:

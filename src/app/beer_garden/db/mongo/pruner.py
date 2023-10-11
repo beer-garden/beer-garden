@@ -113,7 +113,8 @@ class MongoPruner(StoppableThread):
         action_ttl = kwargs.get("action", -1)
         file_ttl = kwargs.get("file", -1)
         admin_ttl = kwargs.get("admin", -1)
-        batch_size = kwargs.get("batch_size", -1)
+        temp_ttl = kwargs.get("temp", -1)
+        batch_size = kwargs.get("batch_size", -1)       
 
         prune_tasks = []
         if info_ttl > 0:
@@ -158,6 +159,21 @@ class MongoPruner(StoppableThread):
                     )
                     & Q(has_parent=False)
                     & Q(command_type="ADMIN"),
+                }
+            )
+
+        if temp_ttl > 0:
+            prune_tasks.append(
+                {
+                    "collection": Request,
+                    "batch_size": batch_size,
+                    "field": "created_at",
+                    "delete_after": timedelta(minutes=temp_ttl),
+                    "additional_query": (
+                        Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
+                    )
+                    & Q(has_parent=False)
+                    & Q(command_type="TEMP"),
                 }
             )
 

@@ -912,3 +912,26 @@ def handle_event(event):
                         update_request(existing_request, _publish_error=False)
                     except RequestStatusTransitionError:
                         pass
+
+    if event.name in (
+            Events.REQUEST_COMPLETED.name,
+            Events.REQUEST_UPDATED.name,
+            Events.REQUEST_CANCELED.name,
+        ):
+        if event.payload.status in ("INVALID","CANCELED","ERROR","SUCCESS"):
+            existing_request = db.query_unique(Request, id=event.payload.id)
+            if existing_request:
+                clean_command_type_temp(existing_request)
+
+def clean_command_type_temp(request: Request):
+    # Only delete TEMP requests if it is the root request
+    if not request.has_parent and request.command_type == "TEMP":
+        db.delete(request)
+        return
+    
+    # Delete any children that are TEMP once the current request is completed
+    request.children = db.query(Request, filter_params={"parent": request})
+
+    for child in request.children:
+        if child.command_type == "TEMP":
+            db.delete(child)
