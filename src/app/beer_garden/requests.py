@@ -148,7 +148,7 @@ class RequestValidator(object):
 
                 if request.command_type is None:
                     request.command_type = command.command_type
-                elif command.command_type != request.command_type:
+                elif request.command_type not in Request.COMMAND_TYPES:
                     raise ModelValidationError(
                         "Command Type for Request was %s but the command specified "
                         "the type as %s" % (request.command_type, command.command_type)
