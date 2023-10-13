@@ -2,6 +2,8 @@
 
 ## 3.18.0
 
+10/13/23
+
 - Can set any page as the home page
 - Add command type TEMP that is pruned after parent request is completed or 
   when it completes if it is the top level request
