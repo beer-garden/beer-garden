@@ -1,8 +1,7 @@
 import importlib
 import sys
 
-from brewtils import Plugin
-from brewtils import AutoDecorator
+from brewtils import AutoDecorator, Plugin
 
 
 def main():
