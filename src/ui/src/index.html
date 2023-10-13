@@ -23,7 +23,7 @@
     <nav class="navbar navbar-static-top"></nav>
 
     <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
-      <a style="cursor: pointer" class="navbar-brand" ui-sref="base.systems">
+      <a style="cursor: pointer" class="navbar-brand" ui-sref="{{getHome()}}">
         <i style="padding: 3px" ng-class="getIcon(config.iconDefault)"></i>
         <span ng-cloak>{{config.applicationName}}</span>
       </a>
@@ -156,6 +156,9 @@
             </li>
             <li ng-show="checkMenuPage('main')">
               <a ui-sref="base.about" ui-sref-active="active">About</a>
+            </li>
+            <li ng-show="checkMenuPage('main')">
+              <a href="" ng-click="setHomeToCurrent()">Set As Home</a>
             </li>
             <form>
               <li ng-show="checkMenuPage('main')">
