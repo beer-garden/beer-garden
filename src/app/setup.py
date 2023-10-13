@@ -31,7 +31,7 @@ setup(
         "apispec<0.39",
         "apscheduler<4",
         "python-box>=3.3.0",
-        "brewtils>=3.17.0",
+        "brewtils>=3.18.0",
         "marshmallow<3",
         "mongoengine<0.21",
         "more-itertools<9",
