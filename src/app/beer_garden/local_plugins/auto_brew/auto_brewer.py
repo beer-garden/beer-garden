@@ -4,7 +4,6 @@ import inspect
 
 class AutoBrewerObject:
 
-
     def updateClientClass(self, client, name=None, version=None):
         if name:
             client._bg_name = name
@@ -21,7 +20,6 @@ class AutoBrewerObject:
         self.addFunctions(client)
 
         return client
-
 
     def addFunctions(self, client):
 

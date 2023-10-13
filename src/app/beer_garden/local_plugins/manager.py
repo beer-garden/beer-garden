@@ -606,7 +606,7 @@ class PluginManager(StoppableThread):
                 plugin_auto_module = plugin_config.get("AUTO_BREW_MODULE")
                 plugin_auto_class = plugin_config.get("AUTO_BREW_CLASS")
 
-                if plugin_auto_module is not None and plugin_auto_class is not None:                    
+                if plugin_auto_module is not None and plugin_auto_class is not None:
                     process_args += ["-m", "beer_garden.local_plugins.auto_brew", plugin_auto_module, plugin_auto_class]
                 else:
                     raise PluginValidationError("Can't generate process args")
