@@ -6,7 +6,7 @@ from brewtils import Plugin
 def main():
 
     module_name = sys.argv[1]
-    class_name sys.argv[2]
+    class_name = sys.argv[2]
 
     module = importlib.import_module(module_name)
     my_class = getattr(module, class_name)
@@ -19,7 +19,7 @@ def main():
     plugin = Plugin (
         name = my_class_initialized._bg_name,
         version = my_class_initialized._bg_version,
-        client my_class_initialized
+        client = my_class_initialized
     )
 
     plugin.run()

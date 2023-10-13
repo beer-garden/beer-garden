@@ -1,15 +1,14 @@
 from brewtils.models import Parameter
-from brewtils import Plugin
 
 import inspect
 
 class AutoBrewerObject:
 
-    def updateClientClass(self, client, name = None, version = None):
+    def updateClientClass(self, client, name=None, version=None):
         if name:
             client._bg_name = name
         else:
-            client._bg_name = getattr(client, "__name__", client.__class__.__name__) 
+            client._bg_name = getattr(client, "__name__", client.__class__.__name__)
 
         if version:
             client._bg_version = version
@@ -50,8 +49,8 @@ class AutoBrewerObject:
                             pass
                         elif str(func_parameter_value.annotation) in ["<class 'int'>"]:
                             typeValue = "Integer"
-                        elif str(func_parameter_value.annotation) in [ "<class 'float'>"]:
-                            typeValue = "Floar"
+                        elif str(func_parameter_value.annotation) in ["<class 'float'>"]:
+                            typeValue = "Float"
                         elif str(func_parameter_value.annotation) in ["<class 'bool'>"]:
                             typeValue = "Boolean"
                         elif str(func_parameter_value.annotation) in ["<class 'object'>", "<class 'dict'>"]:
