@@ -1,9 +1,7 @@
 import importlib
 import sys
 
-from brewtils import Plugin
-
-from beer_garden.local_plugins.auto_brew.auto_brewer import AutoBrewerObject
+from brewtils import AutoDecorator, Plugin
 
 
 def main():
@@ -13,7 +11,7 @@ def main():
     module = importlib.import_module(module_name)
     my_class = getattr(module, class_name)
 
-    auto = AutoBrewerObject()
+    auto = AutoDecorator()
     auto.updateClientClass(my_class)
 
     my_class_initialized = my_class()
