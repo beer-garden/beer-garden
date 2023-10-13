@@ -90,6 +90,4 @@ class AutoBrewerObject:
                         _wrapped.parameters = getattr(_wrapped, "parameters", [])
                         _wrapped.parameters.append(new_parameter)
 
-                        # TODO: Add description wrapper from Doc String
-
         return client
