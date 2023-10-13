@@ -1,5 +1,5 @@
-from brewtils.models import Parameter
 import inspect
+from brewtils.models import Parameter
 
 
 class AutoBrewerObject:

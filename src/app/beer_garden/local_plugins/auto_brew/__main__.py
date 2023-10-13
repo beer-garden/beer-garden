@@ -1,7 +1,7 @@
-import sys
-import importlib
 from beer_garden.local_plugins.auto_brew.auto_brewer import AutoBrewerObject
 from brewtils import Plugin
+import importlib
+import sys
 
 
 def main():
