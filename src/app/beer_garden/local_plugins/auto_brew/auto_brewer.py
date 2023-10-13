@@ -3,18 +3,18 @@ from brewtils import Plugin
 
 import inspect
 
-class AutoBrewObject:
+class AutoBrewerObject:
 
     def updateClientClass(self, client, name = None, version = None):
         if name:
             client._bg_name = name
         else:
-            client._bg_name = client.__class__.__name__
+            client._bg_name = getattr(client, "__name__", client.__class__.__name__) 
 
         if version:
             client._bg_version = version
         else:
-            client._bg_version = getattr(client, "__version__", None)
+            client._bg_version = getattr(client, "__version__", "0.0.0")
         client._bg_commands = []
         client._current_request = None
 
@@ -48,18 +48,17 @@ class AutoBrewObject:
 
                         if str(func_parameter_value.annotation) in ["<class 'inspect._empty'>", "<class 'str'>"]:
                             pass
-                        elif str(func_parameter_value.annotation) in ["<class 'int'>", "<class 'float'>"]:
+                        elif str(func_parameter_value.annotation) in ["<class 'int'>"]:
                             typeValue = "Integer"
+                        elif str(func_parameter_value.annotation) in [ "<class 'float'>"]:
+                            typeValue = "Floar"
+                        elif str(func_parameter_value.annotation) in ["<class 'bool'>"]:
+                            typeValue = "Boolean"
                         elif str(func_parameter_value.annotation) in ["<class 'object'>", "<class 'dict'>"]:
                             typeValue = "Dictionary"
 
                         if str(func_parameter_value.default) != "<class 'inspect._empty'>":
                             default = func_parameter_value.default
-
-                        #   TODO: Support kwargs
-                        # if "kwargs" == key:
-                        #     is_kwarg = True
-                        #     optional = True
 
                         new_parameter = Parameter(
                                 key=key,
