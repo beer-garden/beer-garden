@@ -1,8 +1,9 @@
 from brewtils.models import Parameter
-
 import inspect
 
+
 class AutoBrewerObject:
+
 
     def updateClientClass(self, client, name=None, version=None):
         if name:
@@ -20,6 +21,7 @@ class AutoBrewerObject:
         self.addFunctions(client)
 
         return client
+
 
     def addFunctions(self, client):
 
@@ -60,24 +62,24 @@ class AutoBrewerObject:
                             default = func_parameter_value.default
 
                         new_parameter = Parameter(
-                                key=key,
-                                type=typeValue,
-                                multi=False,
-                                display_name=key,
-                                optional=optional,
-                                default=default,
-                                description=None,
-                                choices=None,
-                                parameters=None,
-                                nullable=None,
-                                maximum=None,
-                                minimum=None,
-                                regex=None,
-                                form_input_type=None,
-                                type_info=None,
-                                is_kwarg=is_kwarg,
-                                model=None,
-                            )
+                            key=key,
+                            type=typeValue,
+                            multi=False,
+                            display_name=key,
+                            optional=optional,
+                            default=default,
+                            description=None,
+                            choices=None,
+                            parameters=None,
+                            nullable=None,
+                            maximum=None,
+                            minimum=None,
+                            regex=None,
+                            form_input_type=None,
+                            type_info=None,
+                            is_kwarg=is_kwarg,
+                            model=None,
+                        )
 
                         _wrapped.parameters = getattr(_wrapped, "parameters", [])
                         _wrapped.parameters.append(new_parameter)

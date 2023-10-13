@@ -3,6 +3,7 @@ import importlib
 from beer_garden.local_plugins.auto_brew.auto_brewer import AutoBrewerObject
 from brewtils import Plugin
 
+
 def main():
 
     module_name = sys.argv[1]
@@ -16,13 +17,14 @@ def main():
 
     my_class_initialized = my_class()
 
-    plugin = Plugin (
-        name = my_class_initialized._bg_name,
-        version = my_class_initialized._bg_version,
-        client = my_class_initialized
+    plugin = Plugin(
+        name=my_class_initialized._bg_name,
+        version=my_class_initialized._bg_version,
+        client=my_class_initialized
     )
 
     plugin.run()
+
 
 if __name__ == "__main__":
     main()
