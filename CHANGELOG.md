@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+## 3.18.0
+
+- Can set any page as the home page
+- Add command type TEMP that is pruned after parent request is completed or 
+  when it completes if it is the top level request
+- Add Auto Brew feature for classes without annoations
+
 ## 3.17.2
 
 10/10/23
