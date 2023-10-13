@@ -805,9 +805,7 @@ _DB_SPEC = {
                 "multithread": {
                     "type": "bool",
                     "default": False,
-                    "description": (
-                        "Runs pruners in seperate threads"
-                    ),
+                    "description": ("Runs pruners in seperate threads"),
                     "alt_env_names": [],
                 },
             },

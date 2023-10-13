@@ -3,7 +3,6 @@ import inspect
 
 
 class AutoBrewerObject:
-
     def updateClientClass(self, client, name=None, version=None):
         if name:
             client._bg_name = name
@@ -22,17 +21,14 @@ class AutoBrewerObject:
         return client
 
     def addFunctions(self, client):
-
         for func in dir(client):
             if callable(getattr(client, func)):
                 if not func.startswith("_"):
-
                     # https://docs.python.org/3/library/inspect.html#inspect.signature
                     _wrapped = getattr(client, func)
                     signature = inspect.signature(_wrapped)
 
                     for func_parameter in signature.parameters:
-
                         func_parameter_value = signature.parameters[func_parameter]
 
                         key = func_parameter_value.name
@@ -45,18 +41,29 @@ class AutoBrewerObject:
                         optional = False
                         is_kwarg = False
 
-                        if str(func_parameter_value.annotation) in ["<class 'inspect._empty'>", "<class 'str'>"]:
+                        if str(func_parameter_value.annotation) in [
+                            "<class 'inspect._empty'>",
+                            "<class 'str'>",
+                        ]:
                             pass
                         elif str(func_parameter_value.annotation) in ["<class 'int'>"]:
                             typeValue = "Integer"
-                        elif str(func_parameter_value.annotation) in ["<class 'float'>"]:
+                        elif str(func_parameter_value.annotation) in [
+                            "<class 'float'>"
+                        ]:
                             typeValue = "Float"
                         elif str(func_parameter_value.annotation) in ["<class 'bool'>"]:
                             typeValue = "Boolean"
-                        elif str(func_parameter_value.annotation) in ["<class 'object'>", "<class 'dict'>"]:
+                        elif str(func_parameter_value.annotation) in [
+                            "<class 'object'>",
+                            "<class 'dict'>",
+                        ]:
                             typeValue = "Dictionary"
 
-                        if str(func_parameter_value.default) != "<class 'inspect._empty'>":
+                        if (
+                            str(func_parameter_value.default)
+                            != "<class 'inspect._empty'>"
+                        ):
                             default = func_parameter_value.default
 
                         new_parameter = Parameter(

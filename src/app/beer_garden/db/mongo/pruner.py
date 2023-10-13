@@ -81,12 +81,21 @@ class MongoPruner(StoppableThread):
                 )
 
                 if task["batch_size"] > 0:
-                    while task["batch_size"] < task["collection"].objects(query).no_cache().count():
+                    while (
+                        task["batch_size"]
+                        < task["collection"].objects(query).no_cache().count()
+                    ):
                         self.logger.debug(
                             "Removing %ss older than %s, batched by %s"
-                            % (task["collection"].__name__, str(delete_older_than), str(task["batch_size"]))
+                            % (
+                                task["collection"].__name__,
+                                str(delete_older_than),
+                                str(task["batch_size"]),
+                            )
                         )
-                        task["collection"].objects(query).limit(task["batch_size"]).no_cache().delete()
+                        task["collection"].objects(query).limit(
+                            task["batch_size"]
+                        ).no_cache().delete()
                 task["collection"].objects(query).no_cache().delete()
 
             if self._cancel_threshold > 0:
@@ -204,7 +213,9 @@ class MongoPruner(StoppableThread):
 
         if len(prune_tasks) > 0:
             # Look at the various TTLs to determine how often to run
-            real_ttls = [x for x in [info_ttl, action_ttl, admin_ttl, file_ttl] if x > 0]
+            real_ttls = [
+                x for x in [info_ttl, action_ttl, admin_ttl, file_ttl] if x > 0
+            ]
             run_every = min(real_ttls) / 2 if real_ttls else None
         else:
             run_every = None
