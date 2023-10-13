@@ -1,4 +1,5 @@
 import inspect
+
 from brewtils.models import Parameter
 
 
