@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+## 3.18.1
+
+TBD
+
+- Fixed auto brew conf to support NAME/VERSION parameters
+- Fixed auto brew to support PLUGIN_ARGS
+
 ## 3.18.0
 
 10/13/23
