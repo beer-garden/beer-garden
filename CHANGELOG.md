@@ -6,6 +6,7 @@ TBD
 
 - Fixed auto brew conf to support NAME/VERSION parameters
 - Fixed auto brew to support PLUGIN_ARGS
+- Fixed missing default home
 
 ## 3.18.0
 
