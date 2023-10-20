@@ -7,6 +7,7 @@ TBD
 - Fixed auto brew conf to support NAME/VERSION parameters
 - Fixed auto brew to support PLUGIN_ARGS
 - Fixed missing default home
+- Brewtils version == [3.19.0](https://pypi.org/project/brewtils/3.19.0/)
 
 ## 3.18.0
 
