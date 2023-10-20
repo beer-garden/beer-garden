@@ -2,7 +2,7 @@
 
 ## 3.18.1
 
-TBD
+10/20/2023
 
 - Fixed auto brew conf to support NAME/VERSION parameters
 - Fixed auto brew to support PLUGIN_ARGS
