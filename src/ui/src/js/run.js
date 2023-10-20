@@ -72,8 +72,8 @@ export default function appRun(
 
   $rootScope.config = {};
 
-  $rootScope.config.defaultHome = 'base.system()';
-  $rootScope.config.defaultHomePage = 'base.system';
+  $rootScope.config.defaultHome = 'base.systems()';
+  $rootScope.config.defaultHomePage = 'base.systems';
   $rootScope.config.defaultHomeParameters = {};
 
   $rootScope.themes = {
@@ -143,8 +143,8 @@ export default function appRun(
     const theme = localStorageService.get('currentTheme') || 'default';
     $rootScope.changeTheme(theme, false);
 
-    $rootScope.config.defaultHome = localStorageService.get('defaultHome') || 'base.system()';
-    $rootScope.config.defaultHomePage = localStorageService.get('defaultHomePage') || 'base.system';
+    $rootScope.config.defaultHome = localStorageService.get('defaultHome') || 'base.systems()';
+    $rootScope.config.defaultHomePage = localStorageService.get('defaultHomePage') || 'base.systems';
     $rootScope.config.defaultHomeParameters = localStorageService.get('defaultHomeParameters') || {};
 
     // $rootScope.loadUser(token).catch(
