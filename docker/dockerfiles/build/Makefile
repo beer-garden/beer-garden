@@ -1,6 +1,6 @@
 SHELL:=/bin/bash
 
-build-all: | install-remote-images build-image-base build-image-python3.8 build-image-python3.9
+build-all: | install-remote-images build-image-base build-image-python3.8.18 build-image-python3.9.18 build-image-python3.10.13 build-image-python3.11.6 build-image-python3.12.0
 
 install-remote-images:
 	docker pull --all-tags bgio/build;
