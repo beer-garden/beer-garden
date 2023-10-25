@@ -1,8 +1,6 @@
 name: Release Docker bgio/build Images
 
-on:
-  schedule:
-    - cron: '0 0 1 1 *'
+on: workflow_dispatch
 
 jobs:
   docker-publish:
