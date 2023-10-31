@@ -243,6 +243,7 @@ class Command(MongoModel, EmbeddedDocument):
     hidden = BooleanField()
     icon_name = StringField()
     metadata = DictField()
+    topics = ListField(field=StringField())
 
     def clean(self):
         """Validate before saving to the database"""
@@ -337,6 +338,7 @@ class Request(MongoModel, Document):
     hidden = BooleanField(required=False)
     requester = StringField(required=False)
     parameters_gridfs = FileField()
+    is_event = BooleanField(required=False)
 
     meta = {
         "queryset_class": FileFieldHandlingQuerySet,
