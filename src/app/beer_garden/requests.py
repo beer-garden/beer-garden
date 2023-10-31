@@ -991,6 +991,7 @@ def process_publish_event(garden: Garden, event: Event):
                     event_request.namespace = system.namespace
                     event_request.instance_name = instance.name
                     event_request.command = command.name
+                    event_request.is_event = True
 
                     process_request(event_request)
 
