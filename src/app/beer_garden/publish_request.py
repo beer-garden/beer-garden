@@ -1,8 +1,10 @@
-from beer_garden.requests import process_request
-from beer_garden.garden import get_gardens, local_garden
-import beer_garden.config as config
-from brewtils.models import Event, Events, Garden
 import re
+
+from brewtils.models import Event, Events, Garden
+
+import beer_garden.config as config
+from beer_garden.garden import get_gardens, local_garden
+from beer_garden.requests import process_request
 
 
 def handle_event(event):
