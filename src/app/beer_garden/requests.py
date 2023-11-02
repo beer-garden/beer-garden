@@ -611,9 +611,9 @@ def process_request(
         The processed Request
 
     """
-    if type(new_request) == Request:
+    if isinstance(new_request, Request):
         request = new_request
-    elif type(new_request) == RequestTemplate:
+    elif isinstance(new_request, RequestTemplate):
         request = Request.from_template(new_request)
     else:
         raise TypeError(

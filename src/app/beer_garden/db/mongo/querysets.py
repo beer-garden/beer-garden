@@ -6,7 +6,7 @@ def _delete_file_field_objects(queryset):
     file_field_names = []
 
     for name, field in queryset._document._fields.items():
-        if type(field) == fields.FileField:
+        if isinstance(field, fields.FileField):
             file_field_names.append(name)
 
     if file_field_names:
