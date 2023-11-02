@@ -11,6 +11,7 @@ import beer_garden.garden
 import beer_garden.local_plugins.manager
 import beer_garden.log
 import beer_garden.plugin
+import beer_garden.publish_request
 import beer_garden.requests
 import beer_garden.role
 import beer_garden.router
@@ -42,6 +43,7 @@ def garden_callbacks(event: Event) -> None:
         (beer_garden.garden.handle_event, "Garden"),
         (beer_garden.plugin.handle_event, "Plugin"),
         (beer_garden.requests.handle_event, "Requests"),
+        (beer_garden.publish_request.handle_event, "Publish Requests"),
         (beer_garden.requests.handle_wait_events, "Requests wait events"),
         (beer_garden.router.handle_event, "Router"),
         (beer_garden.systems.handle_event, "System"),

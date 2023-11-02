@@ -168,6 +168,12 @@ def _event_blocklist_by_command_type(event: Event):
     return False
 
 
+def _event_blocklist_publish_no_propagate(event: Event):
+    if event.name == Events.REQUEST_TOPIC_PUBLISH.name:
+        return event.metadata["propagate"]
+    return False
+
+
 def event_blocklisted(event: Event) -> bool:
     """
     This will determine if an event is in block list from being sent to a parent garden.
@@ -183,4 +189,5 @@ def event_blocklisted(event: Event) -> bool:
         or _event_blocklisted_by_command(event)
         or _event_is_blocklisted_error(event)
         or _event_blocklist_by_command_type(event)
+        or _event_blocklist_publish_no_propagate(event)
     )

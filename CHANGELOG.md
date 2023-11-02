@@ -1,5 +1,13 @@
 # Beer Garden Changelog
 
+## 3.19.0
+
+TBD
+
+- Adds support for Published Event Requests
+- Adds support for Requests to spawn Publish Request
+- Upgraded Brewtils version to [3.20.1](https://github.com/beer-garden/brewtils/releases/tag/3.20.1)
+
 ## 3.18.1
 
 10/20/2023
@@ -7,7 +15,7 @@
 - Fixed auto brew conf to support NAME/VERSION parameters
 - Fixed auto brew to support PLUGIN_ARGS
 - Fixed missing default home
-- Upgraded Brewtils version to [3.19.0](https://pypi.org/project/brewtils/3.19.0/)
+- Upgraded Brewtils version to [3.19.0](https://github.com/beer-garden/brewtils/releases/tag/3.19.0)
 
 ## 3.18.0
 
