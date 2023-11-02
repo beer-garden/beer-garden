@@ -12,7 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.7"]
+        python-version: ["3.12"]
         os: ["ubuntu-latest"]
 
     name: Linting OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
@@ -56,7 +56,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9"]
+        python-version: ["3.7", "3.8", "3.9","3.11","3.12"]
         os: ["ubuntu-latest"]
 
     name: PyTests OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
@@ -106,7 +106,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.7"]
+        python-version: ["3.12"]
         os: ["ubuntu-latest"]
 
     env:
@@ -165,7 +165,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.7"]
+        python-version: ["3.12"]
         os: ["ubuntu-latest"]
 
     env:
