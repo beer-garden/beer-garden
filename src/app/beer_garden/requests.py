@@ -33,8 +33,6 @@ from brewtils.models import (
     Request,
     RequestTemplate,
     System,
-    Garden,
-    Event,
 )
 from brewtils.pika import PERSISTENT_DELIVERY_MODE
 from requests import Session
@@ -45,7 +43,6 @@ import beer_garden.queue.api as queue
 from beer_garden.db.mongo.models import RawFile
 from beer_garden.errors import NotUniqueException
 from beer_garden.events import publish_event
-from beer_garden.garden import get_gardens, local_garden
 from beer_garden.metrics import request_completed, request_created, request_started
 
 logger = logging.getLogger(__name__)
