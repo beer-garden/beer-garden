@@ -193,7 +193,7 @@ watchdog==3.0.0
     #   yapconf
 wheel==0.40.0
     # via -r requirements-dev.in
-wrapt==1.12.1
+wrapt==1.15.0
     # via
     #   -c requirements.txt
     #   brewtils
