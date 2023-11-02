@@ -91,7 +91,7 @@ watchdog==3.0.0
     # via
     #   -r requirements.in
     #   yapconf
-wrapt==1.60.1
+wrapt==1.15.0
     # via
     #   -r requirements.in
     #   brewtils
