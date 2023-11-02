@@ -6,7 +6,7 @@ TBD
 
 - Adds support for Published Event Requests
 - Adds support for Requests to spawn Publish Request
-- Upgraded Brewtils version to [3.20.0](https://github.com/beer-garden/brewtils/releases/tag/3.20.0)
+- Upgraded Brewtils version to [3.20.1](https://github.com/beer-garden/brewtils/releases/tag/3.20.1)
 
 ## 3.18.1
 
