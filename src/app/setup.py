@@ -47,7 +47,7 @@ setup(
         "tornado<7",
         "urllib3<2",
         "watchdog>2.1.0",
-        "wrapt<1.13.0",
+        "wrapt<1.16.0",
         "yapconf>=1.0.0",
     ],
     classifiers=[
