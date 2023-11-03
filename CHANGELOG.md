@@ -8,6 +8,8 @@ TBD
 - Adds support for Requests to spawn Publish Request
 - Upgraded Brewtils version to [3.20.1](https://github.com/beer-garden/brewtils/releases/tag/3.20.1)
 - Updated testing baseline to support Python 3.12, and requirements build off 3.10
+- All docker images support Python 3.12
+- RPM build is against Python 3.12
 
 ## 3.18.1
 
