@@ -1,8 +1,8 @@
 {
   "image": "mcr.microsoft.com/devcontainers/universal:2",
   "features": {
-    "ghcr.io/devcontainers/features/node:1": {}
-    "ghcr.io/devcontainers/features/python:1": {}
-  }
-  "postStartCommand": "./.devcontainer/postCreateCommand.sh"
+    "ghcr.io/devcontainers/features/node:1": {},
+    "ghcr.io/devcontainers/features/python:1": {},
+  },
+  "postStartCommand": "./.devcontainer/postCreateCommand.sh",
 }
