@@ -2,7 +2,7 @@
 
 ## 3.19.0
 
-TBD
+11/7/2023
 
 - Adds support for Published Event Requests
 - Adds support for Requests to spawn Publish Request
