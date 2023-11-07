@@ -46,6 +46,20 @@ export default function commandIndexController(
       ])
       .withBootstrap();
 
+  $scope.getTopicsHtml = function(topics) {
+    if (topics === undefined || topics == null || topics.length == 0){
+      return "''";
+    }
+
+    var htmlTopics = topics[0];
+
+    for (var i = 1; i < topics.length; i++){
+      htmlTopics = htmlTopics + "<br>" + topics[i];
+    }
+
+    return "'" + htmlTopics + "'";
+  }
+
   $scope.instanceCreated = function(_instance) {
     $scope.dtInstance = _instance;
 
@@ -119,6 +133,7 @@ export default function commandIndexController(
           system: system.display_name || system.name,
           version: system.version,
           description: command.description || 'No Description Provided',
+          topics: command.topics || [],
         });
       });
     });
@@ -179,11 +194,4 @@ export default function commandIndexController(
 
   $scope.successCallback($rootScope.gardensResponse, $rootScope.systems);
 
-  $scope.getCommandIcon = function(command_type) {
-    if (command_type == 'INFO'){
-      return 'fa fa-info';
-    }
-
-    return 'fa fa-flash';
-  }
 }

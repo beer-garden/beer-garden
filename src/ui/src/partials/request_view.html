@@ -45,6 +45,8 @@
       <thead>
         <tr>
           <th scope="col">Command</th>
+          <th scope="col"></th>
+          <th scope="col">Namespace</th>
           <th scope="col">System</th>
           <th scope="col">System Version</th>
           <th scope="col">Instance Name</th>
@@ -80,12 +82,43 @@
             >
             </span>
             {{request.command}}
+          </td>
+          <td>
             <span
               ng-show="request.hidden"
               class="fa fa-user-secret pull-right"
               style="font-size: 20px"
             ></span>
+            <span
+                class="fa fa-hourglass pull-right"
+                style="font-size: 20px"
+                title="Temp Command"
+                ng-show="request.command_type == 'TEMP'"
+              ></span>
+              <span
+                class="fa fa-info pull-right"
+                style="font-size: 20px"
+                title="Info Command"
+                ng-show="request.command_type == 'INFO'"
+              ></span>
+              <span
+                class="fa fa-font pull-right"
+                style="font-size: 20px"
+                title="Action Command"
+                ng-show="request.command_type == 'ACTION'"
+              ></span>
+              <span
+                class="fa fa-envelope pull-right"
+                style="font-size: 20px"
+                uib-popover="{{getTopic(request)}}"
+                popover-trigger="'mouseenter'"
+                popover-title="Subscription Topic"
+                popover-animation="true"
+                popover-placement="top-left"
+                ng-show="request.is_event"
+              ></span>
           </td>
+          <td>{{request.namespace}}</td>
           <td>{{request.metadata.system_display_name || request.system}}</td>
           <td>
             <div
@@ -125,14 +158,46 @@
                 class="child-link"
                 ui-sref="base.request({requestId: child.id})"
                 >{{child.command}}</a
-              >
-              <span
+              >           
+            </div>
+          </td>
+          <td>
+            <span
                 ng-show="child.hidden"
                 class="fa fa-user-secret pull-right"
                 style="font-size: 20px"
               ></span>
-            </div>
+            <span
+                class="fa fa-hourglass pull-right"
+                style="font-size: 20px"
+                title="Temp Command"
+                ng-show="child.command_type == 'TEMP'"
+              ></span>
+              <span
+                class="fa fa-info pull-right"
+                style="font-size: 20px"
+                title="Info Command"
+                ng-show="child.command_type == 'INFO'"
+              ></span>
+              <span
+                class="fa fa-font pull-right"
+                style="font-size: 20px"
+                title="Action Command"
+                ng-show="child.command_type == 'ACTION'"
+              ></span>
+              <span
+                class="fa fa-envelope pull-right"
+                style="font-size: 20px"
+                uib-popover="{{getTopic(child)}}"
+                popover-trigger="'mouseenter'"
+                popover-title="Subscription Topic"
+                popover-animation="true"
+                popover-placement="top-left"
+                ng-show="child.is_event"
+              ></span>
           </td>
+          <td>
+            <div>{{child.namespace}}</div>
           <td>
             <div>{{child.metadata.system_display_name || child.system}}</div>
           </td>

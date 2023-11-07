@@ -25,6 +25,8 @@ class ConfigHandler(BaseHandler):
             "garden_name": config.get("garden.name"),
             "metrics_url": config.get("metrics.prometheus.url"),
             "url_prefix": config.get("entry.http.url_prefix"),
+            "action_ttl": config.get("db.ttl.action"),
+            "info_ttl": config.get("db.ttl.info"),
         }
 
         self.write(configs)
