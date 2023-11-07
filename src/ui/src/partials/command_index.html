@@ -65,8 +65,44 @@
                 style="font-size: 20px"
               ></span>
               <span
-                class="{{getCommandIcon(command.command_type)}} pull-right"
+                class="fa fa-hourglass pull-right"
                 style="font-size: 20px"
+                uib-popover="Intended for Read actions and are deleted upon completion"
+                popover-trigger="'mouseenter'"
+                popover-title="Temp Command"
+                popover-animation="true"
+                popover-placement="top-left"
+                ng-show="command.command_type == 'TEMP'"
+              ></span>
+              <span
+                class="fa fa-info pull-right"
+                style="font-size: 20px"
+                uib-popover-html="'Intended for Read actions{{config.infoTtl > -1 ? '<br>(TTL is ' + config.infoTtl + ' minutes)' : ''}}'"
+                popover-trigger="'mouseenter'"
+                popover-title="Info Command"
+                popover-animation="true"
+                popover-placement="top-left"
+                ng-show="command.command_type == 'INFO'"
+              ></span>
+              <span
+                class="fa fa-font pull-right"
+                style="font-size: 20px"
+                uib-popover-html="'Default command type, intended for Create, Update, or Delete actions{{config.actionTtl > -1 ? '<br>(TTL is ' + config.actionTtl + ' minutes)' : ''}}'"
+                popover-trigger="'mouseenter'"
+                popover-title="Action Command"
+                popover-animation="true"
+                popover-placement="top-left"
+                ng-show="command.command_type == 'ACTION'"
+              ></span>
+              <span
+                class="fa fa-envelope pull-right"
+                style="font-size: 20px"
+                uib-popover-html="{{getTopicsHtml(command.topics)}}"
+                popover-trigger="'mouseenter'"
+                popover-title="Subscription Topics"
+                popover-animation="true"
+                popover-placement="top-left"
+                ng-show="command.topics.length > 0"
               ></span>
             </td>
             <td>{{command.description}}</td>

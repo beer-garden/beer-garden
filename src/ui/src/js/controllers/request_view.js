@@ -113,6 +113,14 @@ export default function requestViewController(
     localStorageService.set('displayParameter', $scope.displayParameter);
   };
 
+  $scope.getTopic = function(request) {
+    if('_topic' in request.metadata){
+      return request.metadata['_topic'];
+    }
+
+    return 'Unknown Topic';
+  }
+
   $scope.showInstanceStatus = function(request, instanceStatus) {
     return (
       !$scope.canRepeat(request) &&
