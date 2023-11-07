@@ -10,6 +10,10 @@ TBD
 - Updated testing baseline to support Python 3.12, and requirements build off 3.10
 - All docker images support Python 3.12
 - RPM build is against Python 3.12
+- Updated Command Type Icons
+- Updated tooltips on Command Types
+- Added icon for Subscription based Command/Requests
+- Updated Request View page to show Namespace
 
 ## 3.18.1
 
