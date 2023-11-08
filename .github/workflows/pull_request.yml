@@ -249,6 +249,10 @@ jobs:
         run: BG='unstable' docker-compose up -d beer-garden
         working-directory: ./docker/docker-compose
 
+      - name: Wait for Beer Garden to start
+        run: sleep 30s
+        shell: bash
+
       - name: Check If Beer Garden is Operational
         uses: nick-invision/retry@v2
         with:
@@ -279,17 +283,8 @@ jobs:
         working-directory: ./test/integration
 
       - name: Test Plugins
-        uses: nick-invision/retry@v2
-        with:
-          max_attempts: 3
-          timeout_seconds: 360
-          retry_on: error
-          retry_wait_seconds: 30
-          command: python${{ matrix.python-version }} -m pytest test/integration/local_plugins
-
-      # - name: Test Plugins
-      #   run: python${{ matrix.python-version }} -m pytest local_plugins
-      #   working-directory: ./test/integration
+        run: python${{ matrix.python-version }} -m pytest local_plugins
+        working-directory: ./test/integration
 
       - name: Grab logs from Beer-Garden
         run: BG='unstable' docker-compose logs --tail 100 beer-garden
