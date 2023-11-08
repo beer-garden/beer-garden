@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+# 3.20.0
+
+TBD
+
+- Rolls back to Python 3.11 until [cpython ticket](https://github.com/python/cpython/issues/111615) is resolved, expected 3.12.1
+- Expands docker build to include various versions of Python
+
 ## 3.19.0
 
 11/7/2023
