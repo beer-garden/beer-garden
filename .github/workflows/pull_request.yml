@@ -282,6 +282,7 @@ jobs:
         uses: nick-invision/retry@v2
         with:
           max_attempts: 3
+          timeout_seconds: 360
           retry_on: error
           retry_wait_seconds: 30
           command: python${{ matrix.python-version }} -m pytest test/integration/local_plugins
