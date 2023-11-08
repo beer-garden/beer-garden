@@ -226,7 +226,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install setuptools wheel
-          docker build -t bgio/beer-garden:unstable -f docker/Dockerfile.unstable --build-arg PYTHON_VERISON=${{ matrix.python-version }} .
+          docker build -t bgio/beer-garden:unstable -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:${{ matrix.python-version }}-alpine .
         working-directory: ./src/app
 
       - name: Update Docker Compose

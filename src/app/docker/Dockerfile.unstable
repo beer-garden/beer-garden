@@ -1,5 +1,5 @@
-ARG PYTHON_VERISON=3.7
-FROM python:$PYTHON_VERISON-alpine
+ARG PYTHON_IMAGE=python:3.7-alpine
+FROM $PYTHON_IMAGE
 WORKDIR /src
 ENTRYPOINT ["beergarden"]
 
