@@ -222,7 +222,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Build Local Beer Garden Docker
-        if: ${{matrix.beer-garden-local == 'unstable'}}
         run: |
           python -m pip install --upgrade pip
           pip install setuptools wheel
