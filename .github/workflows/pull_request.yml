@@ -211,6 +211,7 @@ jobs:
       matrix:
         python-version: ["3.7","3.10","3.12"]
         os: ["ubuntu-latest"]
+      fail-fast: false
 
     name: Local Plugins - Python ${{ matrix.python-version }}
     steps:
