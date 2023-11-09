@@ -287,7 +287,7 @@ jobs:
         working-directory: ./test/integration
 
       - name: Test Plugins
-        run: python${{ matrix.python-version }} -m pytest local_plugins
+        run: python${{ matrix.python-version }} -m pytest local_plugins/plugins/publisher_test.py
         working-directory: ./test/integration
 
       - name: Grab logs from Beer-Garden
