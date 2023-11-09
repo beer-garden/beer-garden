@@ -1,11 +1,13 @@
 # Beer Garden Changelog
 
-# 3.20.0
+# 3.19.1
 
 TBD
 
 - Rolls back to Python 3.11 until [cpython ticket](https://github.com/python/cpython/issues/111615) is resolved, expected 3.12.1
 - Expands docker build to include various versions of Python
+- Fixed bug in Topics to require full matching for subscriptions, not substrings
+- Expanded pub/sub testing
 
 ## 3.19.0
 
