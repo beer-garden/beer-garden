@@ -1,11 +1,10 @@
+import logging
 import re
-
-from brewtils.models import Event, Events, Garden
 
 import beer_garden.config as config
 from beer_garden.garden import get_gardens, local_garden
 from beer_garden.requests import process_request
-import logging
+from brewtils.models import Event, Events, Garden
 
 logger = logging.getLogger(__name__)
 
