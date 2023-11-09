@@ -1,3 +1,4 @@
+import logging
 import re
 
 from brewtils.models import Event, Events, Garden
@@ -5,6 +6,8 @@ from brewtils.models import Event, Events, Garden
 import beer_garden.config as config
 from beer_garden.garden import get_gardens, local_garden
 from beer_garden.requests import process_request
+
+logger = logging.getLogger(__name__)
 
 
 def handle_event(event):
@@ -55,7 +58,9 @@ def process_publish_event(garden: Garden, event: Event):
                 )
                 if not match:
                     for topic in command.topics:
-                        if re.match(topic, event.metadata["topic"]):
+                        if topic == event.metadata["topic"] or event.metadata[
+                            "topic"
+                        ] in re.findall(topic, event.metadata["topic"]):
                             match = True
                             break
 
