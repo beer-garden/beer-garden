@@ -3,7 +3,7 @@
 import pytest
 from mock import Mock
 from brewtils.models import Event, Events, Garden, System, Command, Request
-
+import beer_garden
 
 @pytest.fixture
 def command_topic_one():
