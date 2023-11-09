@@ -2,12 +2,13 @@
 
 # 3.19.1
 
-TBD
+11/9/2023
 
 - Rolls back to Python 3.11 until [cpython ticket](https://github.com/python/cpython/issues/111615) is resolved, expected 3.12.1
 - Expands docker build to include various versions of Python
 - Fixed bug in Topics to require full matching for subscriptions, not substrings
 - Expanded pub/sub testing
+- Upgraded Brewtils version to [3.20.2](https://github.com/beer-garden/brewtils/releases/tag/3.20.2)
 
 ## 3.19.0
 
