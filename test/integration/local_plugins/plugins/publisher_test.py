@@ -23,7 +23,7 @@ def system_spec():
 class TestPublish(object):
     def test_one_trigger(self):
         request_dict = self.request_generator.generate_request(
-            parameters={"topic": "topic", "payload": {"test":"test"}}
+            parameters={"topic": "topic", "value": "test"}
         )
         request = self.easy_client.create_request(request_dict)
 
@@ -37,7 +37,7 @@ class TestPublish(object):
 
     def test_two_trigger(self):
         request_dict = self.request_generator.generate_request(
-            parameters={"topic": "topic_2", "payload": {"test":"test"}}
+            parameters={"topic": "topic_2", "value": "test"}
         )
         request = self.easy_client.create_request(request_dict)
 
@@ -51,7 +51,7 @@ class TestPublish(object):
 
     def test_three_trigger(self):
         request_dict = self.request_generator.generate_request(
-            parameters={"topic": "topic_1", "payload": {"test":"test"}}
+            parameters={"topic": "topic_1", "value": "test"}
         )
         request = self.easy_client.create_request(request_dict)
 
