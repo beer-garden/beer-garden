@@ -250,7 +250,7 @@ jobs:
         working-directory: ./docker/docker-compose
 
       - name: Wait for Beer Garden to start
-        run: sleep 30s
+        run: sleep 60s
         shell: bash
 
       - name: Grab logs from Beer-Garden
