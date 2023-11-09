@@ -33,7 +33,7 @@ def command_topic_any():
 @pytest.fixture
 def localgarden_system(command_topic_one, command_topic_two, command_topic_one_and_two, command_topic_any):
     return System(
-            name="localsystem", version="1.2.3", namespace="localgarden", local=True,
+            name="localsystem", version="1.2.3", namespace="localgarden", local=True, instances=["default"],
             commands=[command_topic_one, command_topic_two, command_topic_one_and_two, command_topic_any]
         )
     
