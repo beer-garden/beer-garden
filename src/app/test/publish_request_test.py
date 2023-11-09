@@ -45,26 +45,6 @@ def localgarden(localgarden_system):
             name="localgarden", connection_type="LOCAL", systems=[localgarden_system]
         )
 
-# @pytest.fixture
-# def mock_process_request(monkeypatch):
-#     find_mock = Mock()
-#     monkeypatch.setattr(beer_garden.requests, "process_request", find_mock)
-#     return find_mock
-
-# @pytest.fixture
-# def mock_get_gardens(monkeypatch):
-
-#     Garden(systems = [])
-
-#     find_mock = Mock(return_value=[])
-#     monkeypatch.setattr(beer_garden.garden, "get_gardens", find_mock)
-#     return find_mock
-
-# @pytest.fixture
-# def mock_local_garden(monkeypatch, localgarden):
-#     find_mock = Mock(return_value=localgarden)
-#     monkeypatch.setattr(beer_garden.garden, "local_garden", find_mock)
-#     return find_mock
 
 class TestSubscriptionEvent(object):
     def test_topic_one(self, monkeypatch, localgarden):
