@@ -37,7 +37,7 @@ class TestPublish(object):
 
     def test_two_trigger(self):
         request_dict = self.request_generator.generate_request(
-            parameters={"topic": "topic_2", "value": "test"}
+            parameters={"topic": "topic2", "value": "test"}
         )
         request = self.easy_client.create_request(request_dict)
 
@@ -51,7 +51,7 @@ class TestPublish(object):
 
     def test_three_trigger(self):
         request_dict = self.request_generator.generate_request(
-            parameters={"topic": "topic_1", "value": "test"}
+            parameters={"topic": "topic1", "value": "test"}
         )
         request = self.easy_client.create_request(request_dict)
 
