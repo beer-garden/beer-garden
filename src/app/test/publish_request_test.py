@@ -45,30 +45,34 @@ def localgarden(localgarden_system):
             name="localgarden", connection_type="LOCAL", systems=[localgarden_system]
         )
 
-@pytest.fixture
-def mock_process_request(monkeypatch):
-    find_mock = Mock()
-    monkeypatch.setattr(beer_garden.requests, "process_request", find_mock)
-    return find_mock
+# @pytest.fixture
+# def mock_process_request(monkeypatch):
+#     find_mock = Mock()
+#     monkeypatch.setattr(beer_garden.requests, "process_request", find_mock)
+#     return find_mock
 
-@pytest.fixture
-def mock_get_gardens(monkeypatch):
+# @pytest.fixture
+# def mock_get_gardens(monkeypatch):
 
-    Garden(systems = [])
+#     Garden(systems = [])
 
-    find_mock = Mock(return_value=[])
-    monkeypatch.setattr(beer_garden.garden, "get_gardens", find_mock)
-    return find_mock
+#     find_mock = Mock(return_value=[])
+#     monkeypatch.setattr(beer_garden.garden, "get_gardens", find_mock)
+#     return find_mock
 
-@pytest.fixture
-def mock_local_garden(monkeypatch, localgarden):
-    find_mock = Mock(return_value=localgarden)
-    monkeypatch.setattr(beer_garden.garden, "local_garden", find_mock)
-    return find_mock
+# @pytest.fixture
+# def mock_local_garden(monkeypatch, localgarden):
+#     find_mock = Mock(return_value=localgarden)
+#     monkeypatch.setattr(beer_garden.garden, "local_garden", find_mock)
+#     return find_mock
 
 class TestSubscriptionEvent(object):
-    def test_topic_one(self, mock_local_garden, mock_get_gardens, mock_process_request):
+    def test_topic_one(self, monkeypatch, localgarden):
 
+        mock_process_request = Mock(return_value=None)
+        monkeypatch.setattr(beer_garden.requests, "process_request", mock_process_request)
+        monkeypatch.setattr(beer_garden.garden, "get_gardens", Mock(return_value=[]))      
+        monkeypatch.setattr(beer_garden.garden, "local_garden", Mock(return_value=localgarden))
 
         event = Event(name=Events.REQUEST_TOPIC_PUBLISH.name, metadata={"propagate": False, "topic":"topic_1"}, payload=Request())
         beer_garden.publish_request.handle_event(event)
