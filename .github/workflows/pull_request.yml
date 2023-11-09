@@ -291,6 +291,7 @@ jobs:
         working-directory: ./test/integration
 
       - name: Grab logs from Beer-Garden
+        if: always()
         run: BG='unstable' docker-compose logs --tail 100 beer-garden
         working-directory: ./docker/docker-compose
 
