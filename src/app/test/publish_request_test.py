@@ -55,6 +55,6 @@ class TestSubscriptionEvent(object):
         monkeypatch.setattr(beer_garden.publish_request, "local_garden", Mock(return_value=localgarden))
 
         event = Event(name=Events.REQUEST_TOPIC_PUBLISH.name, metadata={"propagate": False, "topic":"topic_1"}, payload=Request())
-        beer_garden.publish_request.handle_event(event)
+        beer_garden.publish_request.process_publish_event(localgarden, event)
 
         assert mock_process_request.call_count == 3
