@@ -31,9 +31,9 @@ class TestPublish(object):
         completed_request = self.easy_client.find_unique_request(id=request.id)
 
         for child_request in completed_request.children:
-            assert(child_request.command == "subscribe_wildcard_topics")
+            assert child_request.command == "subscribe_wildcard_topics"
 
-        assert(len(completed_request.children) == 1)
+        assert len(completed_request.children) == 1
 
     def test_two_trigger(self):
         request_dict = self.request_generator.generate_request(
@@ -45,9 +45,12 @@ class TestPublish(object):
         completed_request = self.easy_client.find_unique_request(id=request.id)
 
         for child_request in completed_request.children:
-            assert(child_request.command in ["subscribe_wildcard_topics", "subscribe_multiple_topics"])
+            assert child_request.command in [
+                "subscribe_wildcard_topics",
+                "subscribe_multiple_topics",
+            ]
 
-        assert(len(completed_request.children) == 2)
+        assert len(completed_request.children) == 2
 
     def test_three_trigger(self):
         request_dict = self.request_generator.generate_request(
@@ -59,6 +62,10 @@ class TestPublish(object):
         completed_request = self.easy_client.find_unique_request(id=request.id)
 
         for child_request in completed_request.children:
-            assert(child_request.command in ["subscribe_wildcard_topics", "subscribe_multiple_topics", "subscrib_one_topics"])
+            assert child_request.command in [
+                "subscribe_wildcard_topics",
+                "subscribe_multiple_topics",
+                "subscrib_one_topics",
+            ]
 
-        assert(len(completed_request.children) == 3)
+        assert len(completed_request.children) == 3

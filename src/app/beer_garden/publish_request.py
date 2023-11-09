@@ -9,6 +9,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def handle_event(event):
     if (event.name == Events.REQUEST_TOPIC_PUBLISH.name) or (
         event.garden == config.get("garden.name")
@@ -58,7 +59,9 @@ def process_publish_event(garden: Garden, event: Event):
                 if not match:
                     for topic in command.topics:
                         logger.error(f'Compare {topic} to {event.metadata["topic"]}')
-                        if topic == event.metadata["topic"] or event.metadata["topic"] in re.findall(topic, event.metadata["topic"]):
+                        if topic == event.metadata["topic"] or event.metadata[
+                            "topic"
+                        ] in re.findall(topic, event.metadata["topic"]):
                             match = True
                             break
 
