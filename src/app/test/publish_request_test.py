@@ -3,7 +3,6 @@
 import pytest
 from mock import Mock
 from brewtils.models import Event, Events, Garden, System, Command, Request
-import beer_garden.publish_request
 
 
 @pytest.fixture
@@ -68,7 +67,7 @@ def mock_local_garden(monkeypatch, localgarden):
     return find_mock
 
 class TestSubscriptionEvent(object):
-    def test_topic_one(self, mock_local_garden, mock_process_request):
+    def test_topic_one(self, mock_local_garden, mock_get_gardens, mock_process_request):
 
 
         event = Event(name=Events.REQUEST_TOPIC_PUBLISH.name, metadata={"propagate": False, "topic":"topic_1"}, payload=Request())
