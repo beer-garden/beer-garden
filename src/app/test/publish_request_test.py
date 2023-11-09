@@ -70,9 +70,9 @@ class TestSubscriptionEvent(object):
     def test_topic_one(self, monkeypatch, localgarden):
 
         mock_process_request = Mock(return_value=None)
-        monkeypatch.setattr(beer_garden.requests, "process_request", mock_process_request)
-        monkeypatch.setattr(beer_garden.garden, "get_gardens", Mock(return_value=[]))      
-        monkeypatch.setattr(beer_garden.garden, "local_garden", Mock(return_value=localgarden))
+        monkeypatch.setattr(beer_garden.publish_request, "process_request", mock_process_request)
+        monkeypatch.setattr(beer_garden.publish_request, "get_gardens", Mock(return_value=[]))      
+        monkeypatch.setattr(beer_garden.publish_request, "local_garden", Mock(return_value=localgarden))
 
         event = Event(name=Events.REQUEST_TOPIC_PUBLISH.name, metadata={"propagate": False, "topic":"topic_1"}, payload=Request())
         beer_garden.publish_request.handle_event(event)
