@@ -55,7 +55,7 @@ def process_publish_event(garden: Garden, event: Event):
                 )
                 if not match:
                     for topic in command.topics:
-                        if event.metadata["topic"] in re.findall(topic, event.metadata["topic"]):
+                        if topic == event.metadata["topic"] or event.metadata["topic"] in re.findall(topic, event.metadata["topic"]):
                             match = True
                             break
 
