@@ -5,6 +5,7 @@
 TBD
 
 - Adds the ability to delete Requests by Plugin on the System Admin page wihtin the plugin sub-menu. These are local deletes only
+- Add error handling if Subscriber Request has exception at creation
 
 # 3.19.1
 

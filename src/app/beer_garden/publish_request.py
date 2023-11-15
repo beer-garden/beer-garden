@@ -73,4 +73,8 @@ def process_publish_event(garden: Garden, event: Event):
                     event_request.command = command.name
                     event_request.is_event = True
 
-                    process_request(event_request)
+                    try:
+                        process_request(event_request)
+                    except Exception as ex:
+                        # If an error occurs while trying to process request, log it and keep running
+                        logger.exception(ex)
