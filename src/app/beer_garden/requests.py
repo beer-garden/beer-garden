@@ -201,9 +201,10 @@ class RequestValidator(object):
         if request_parameters is None:
             request_parameters = request.parameters or {}
 
-        self._validate_no_extra_request_parameter_keys(
-            request_parameters, command_parameters
-        )
+        if not command.allow_any_kwargs:
+            self._validate_no_extra_request_parameter_keys(
+                request_parameters, command_parameters
+            )
 
         parameters_to_save = {}
         for command_parameter in command_parameters:
@@ -218,6 +219,12 @@ class RequestValidator(object):
             self._validate_minimum(extracted_value, command_parameter)
             self._validate_regex(extracted_value, command_parameter)
             parameters_to_save[command_parameter.key] = extracted_value
+
+        if command.allow_any_kwargs:
+            for request_parameter_key in request_parameters:
+                if request_parameter_key not in parameters_to_save:
+                    parameters_to_save[request_parameter_key] = request_parameters[request_parameter_key]
+
 
         self.logger.debug("Successfully Updated and Validated Parameters.")
         self.logger.debug("Parameters: %s", parameters_to_save)
