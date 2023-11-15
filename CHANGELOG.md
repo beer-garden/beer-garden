@@ -5,6 +5,7 @@
 TBD
 
 - Adds Is Alive check for Entry Points, if sub process is killed externally then it is restarted
+- Add error handling if Subscriber Request has exception at creation
 
 # 3.19.1
 
