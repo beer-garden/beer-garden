@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import readLogs from '../../templates/read_logs.html';
 import adminQueue from '../../templates/admin_queue.html';
+import adminRequestDelete from '../../templates/admin_request_delete.html';
 import forceDelete from '../../templates/system_force_delete.html';
 import {responseState} from '../services/utility_service.js';
 
@@ -15,6 +16,7 @@ adminSystemController.$inject = [
   'QueueService',
   'RunnerService',
   'EventService',
+  'RequestService',
 ];
 
 /**
@@ -29,6 +31,7 @@ adminSystemController.$inject = [
  * @param  {Object} QueueService    Beer-Garden's event service object.
  * @param  {Object} RunnerService   Beer-Garden's runner service object.
  * @param  {Object} EventService    Beer-Garden's event service object.
+ * @param  {Object} RequestService    Beer-Garden's request service object.
  */
 export default function adminSystemController(
     $scope,
@@ -41,6 +44,7 @@ export default function adminSystemController(
     QueueService,
     RunnerService,
     EventService,
+    RequestService,
 ) {
   $scope.response = undefined;
   $scope.runnerResponse = undefined;
@@ -229,6 +233,21 @@ export default function adminSystemController(
       controller: 'AdminQueueController',
       windowClass: 'app-modal-window',
     });
+  };
+
+  $scope.deleteRequests = function(system, instance) {
+
+    $uibModal.open({
+      template: adminRequestDelete,
+      resolve: {
+        system: system,
+        instance: instance,
+      },
+      controller: 'AdminRequestDeleteController',
+      windowClass: 'app-modal-window',
+    });
+
+    
   };
 
   function eventCallback(event) {

@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.20.0
+
+TBD
+
+- Adds the ability to delete Requests by Plugin on the System Admin page wihtin the plugin sub-menu. These are local deletes only
+
 # 3.19.1
 
 11/9/2023

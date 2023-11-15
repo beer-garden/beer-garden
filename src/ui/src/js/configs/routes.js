@@ -233,6 +233,11 @@ export default function routeConfig(
       })
       .state('base.queues', {
         url: 'admin/queues/',
+        templateUrl: 'admin_request_delete.html',
+        controller: 'AdminRequestDeleteController',
+      })
+      .state('base.request_admin', {
+        url: 'admin/request/',
         templateUrl: 'admin_queue.html',
         controller: 'AdminQueueController',
       })

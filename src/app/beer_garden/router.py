@@ -105,6 +105,7 @@ route_functions = {
     "REQUEST_COMPLETE": beer_garden.requests.complete_request,
     "REQUEST_READ": beer_garden.requests.get_request,
     "REQUEST_READ_ALL": beer_garden.requests.get_requests,
+    "REQUEST_DELETE": beer_garden.requests.delete_requests,
     "COMMAND_READ": beer_garden.commands.get_command,
     "COMMAND_READ_ALL": beer_garden.commands.get_commands,
     "INSTANCE_READ": beer_garden.systems.get_instance,
@@ -583,7 +584,7 @@ def _target_from_type(operation: Operation) -> str:
         or "PUBLISH_EVENT" in operation.operation_type
         or "RUNNER" in operation.operation_type
         or operation.operation_type
-        in ("PLUGIN_LOG_RELOAD", "QUEUE_DELETE_ALL", "SYSTEM_CREATE")
+        in ("PLUGIN_LOG_RELOAD", "QUEUE_DELETE_ALL", "SYSTEM_CREATE", "REQUEST_DELETE")
     ):
         return config.get("garden.name")
 
