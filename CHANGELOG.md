@@ -1,10 +1,11 @@
 # Beer Garden Changelog
 
-# 3.19.2
+# 3.20.0
 
 TBD
 
 - Add error handling if Subscriber Request has exception at creation
+- Updates request validation to support allow_any_kwargs on commands
 
 # 3.19.1
 
