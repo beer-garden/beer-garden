@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.20.0
+
+TBD
+
+- Adds Is Alive check for Entry Points, if sub process is killed externally then it is restarted
+
 # 3.19.1
 
 11/9/2023

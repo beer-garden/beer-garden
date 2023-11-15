@@ -70,6 +70,7 @@ class EntryPoint:
         self._context = context
         self._log_queue = log_queue
         self._signal_handler = signal_handler
+        self._event_callback = event_callback
 
         self._process = None
         self._ep_conn, self._mp_conn = Pipe()
@@ -78,6 +79,11 @@ class EntryPoint:
             action=event_callback,
             name=f"{name} listener",
         )
+
+    def getName(self) -> str:
+        if self._name:
+            return self._name
+        return None
 
     def start(self) -> None:
         """Start the entry point process"""
@@ -95,10 +101,22 @@ class EntryPoint:
                 lpm.lpm_proxy,
             ),
         )
+
         self._process.start()
 
         # And listen for events coming from it
+        if self._event_listener is None:
+            self._event_listener = PipeListener(
+                conn=self._mp_conn,
+                action=self._event_callback,
+                name=f"{self._name} listener",
+            )
         self._event_listener.start()
+
+    def is_alive(self) -> bool:
+        if self._process:
+            return self._process.is_alive()
+        return False
 
     def stop(self, timeout: int = None) -> None:
         """Stop the process
@@ -119,13 +137,19 @@ class EntryPoint:
         """
         # First stop listening for events
         self._event_listener.stop()
+        self._event_listener = None
 
         pid = self._process.pid
         if not pid:
             logger.warning(f"No pid for {self._name}, was the process started?")
             return
 
-        os.kill(pid, signal.SIGUSR1)
+        try:
+            os.kill(pid, signal.SIGUSR1)
+        except ProcessLookupError:
+            logger.warning(
+                f"pid for {self._name} was not found, was the process killed externally"
+            )
 
         self._process.join(timeout=timeout)
 
@@ -278,3 +302,10 @@ class Manager:
         """Publish an event to all entry points"""
         for entry_point in self.entry_points:
             entry_point.send_event(event)
+
+    def check_entry_points(self) -> None:
+        for entry_point in self.entry_points:
+            if not entry_point.is_alive():
+                self.logger.warning(f"{entry_point.getName()} is dead, restarting")
+                entry_point.stop(timeout=10)
+                entry_point.start()
