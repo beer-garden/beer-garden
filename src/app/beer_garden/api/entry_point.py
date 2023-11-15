@@ -141,14 +141,14 @@ class EntryPoint:
 
         pid = self._process.pid
         if not pid:
-            logger.warning(f"No pid {pid} for {self._name}, was the process started?")
+            logger.warning(f"No pid for {self._name}, was the process started?")
             return
 
         try:
             os.kill(pid, signal.SIGUSR1)
         except ProcessLookupError:
             logger.warning(
-                f"pid for {self._name} was not found, was the process killed externally"
+                f"pid {pid} for {self._name} was not found, was the process killed externally"
             )
 
         self._process.join(timeout=timeout)
