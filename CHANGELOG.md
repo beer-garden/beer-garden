@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.19.2
+
+TBD
+
+- Add error handling if Subscriber Request has exception at creation
+
 # 3.19.1
 
 11/9/2023
