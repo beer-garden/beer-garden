@@ -235,8 +235,7 @@ export default function adminSystemController(
     });
   };
 
-  $scope.deleteRequests = function(system, instance) {
-
+  $scope.deleteRequests = function (system, instance) {
     $uibModal.open({
       template: adminRequestDelete,
       resolve: {
@@ -246,8 +245,6 @@ export default function adminSystemController(
       controller: 'AdminRequestDeleteController',
       windowClass: 'app-modal-window',
     });
-
-    
   };
 
   function eventCallback(event) {
