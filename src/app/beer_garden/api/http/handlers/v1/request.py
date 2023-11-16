@@ -604,6 +604,8 @@ class RequestListAPI(AuthorizationHandler):
           - Requests
         """
 
+        self.verify_user_permission_for_object(REQUEST_DELETE, local_garden())
+
         query_kwargs = {}
         for supportedArg in [
             "system",
