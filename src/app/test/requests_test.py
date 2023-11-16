@@ -383,6 +383,19 @@ class TestGetAndValidateParameters(object):
         with pytest.raises(ModelValidationError):
             validator.get_and_validate_parameters(req, command)
 
+    def test_accept_any_kwargs(self, validator):
+        req = BrewtilsRequest(
+            system="foo", command="command1", parameters={"key1": "value"}
+        )
+
+        command = Command("test", parameters=[], allow_any_kwargs=True)
+        validator.get_and_validate_parameters(req, command)
+
+        command = Command("test", parameters=[], allow_any_kwargs=False)
+
+        with pytest.raises(ModelValidationError):
+            validator.get_and_validate_parameters(req, command)
+
     def test_validate_minimum_non_sequence(self, validator):
         req = BrewtilsRequest(system="foo", command="command1", parameters={"key1": 5})
 

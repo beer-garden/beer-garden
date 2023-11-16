@@ -244,6 +244,7 @@ class Command(MongoModel, EmbeddedDocument):
     icon_name = StringField()
     metadata = DictField()
     topics = ListField(field=StringField())
+    allow_any_kwargs = BooleanField(default=False)
 
     def clean(self):
         """Validate before saving to the database"""
