@@ -165,6 +165,8 @@ class Application(StoppableThread):
                     self.logger.warning(f"{helper.display_name} is dead, restarting")
                     helper.start()
 
+            self.entry_manager.check_entry_points()
+
         self._shutdown()
 
     @staticmethod
