@@ -266,7 +266,7 @@ class Manager:
             name="LogProcessor", queue=self.log_queue, action=process_record
         )
 
-    def create_all(self):
+    def create_all(self) -> None:
         for entry_name, entry_value in beer_garden.config.get("entry").items():
             if entry_value.get("enabled") or entry_name == "stomp":
                 try:
@@ -274,7 +274,7 @@ class Manager:
                 except Exception as ex:
                     logger.exception(f"Error creating entry point {entry_name}: {ex}")
 
-    def create(self, module_name: str):
+    def create(self, module_name: str) -> EntryPoint:
         module = import_module(f"beer_garden.api.{module_name}")
 
         return EntryPoint(
@@ -286,13 +286,13 @@ class Manager:
             event_callback=beer_garden.events.publish,
         )
 
-    def start(self):
+    def start(self) -> None:
         self.log_reader.start()
 
         for entry_point in self.entry_points:
             entry_point.start()
 
-    def stop(self):
+    def stop(self) -> None:
         self.log_reader.stop()
 
         for entry_point in self.entry_points:
