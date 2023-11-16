@@ -4,6 +4,7 @@
 
 TBD
 
+- Adds Is Alive check for Entry Points, if sub process is killed externally then it is restarted
 - Add error handling if Subscriber Request has exception at creation
 - Updates request validation to support allow_any_kwargs on commands
 - Upgraded Brewtils version to [3.21.0](https://github.com/beer-garden/brewtils/releases/tag/3.21.0)
