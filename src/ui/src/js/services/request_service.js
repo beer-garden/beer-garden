@@ -22,6 +22,9 @@ export default function requestService($q, $http, $interval) {
     isComplete: (request) => {
       return _.includes(completeStatuses, request.status);
     },
+    deleteRequests: (data) => {
+      return $http.delete('api/v1/requests', {params: data});
+    },
   };
 
   _.assign(service, {

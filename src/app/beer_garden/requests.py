@@ -583,6 +583,27 @@ def get_requests(**kwargs) -> List[Request]:
     return db.query(Request, **kwargs)
 
 
+# TODO: Add support for Request Delete event type
+# @publish_event(Events.REQUEST_DELETED)
+def delete_requests(**kwargs) -> dict:
+    """Delete Requests
+
+    Args:
+        kwargs: Parameters to be passed to the DB query
+
+    Returns:
+        The kwargs used to match Requests
+
+    """
+    requests = db.query(Request, filter_params=kwargs)
+
+    for request in requests:
+        db.delete(request)
+
+    logger.info(f"Deleted {len(requests)} requests")
+    return kwargs
+
+
 def _publish_request(request: Request, is_admin: bool, priority: int):
     """Publish a Request"""
     queue.put(
@@ -920,6 +941,9 @@ def handle_event(event):
                         update_request(existing_request, _publish_error=False)
                     except RequestStatusTransitionError:
                         pass
+        # TODO: Add support for Request Delete event type
+        # elif event.name == Events.REQUEST_DELETED.name:
+        #     delete_requests(**event.payload)
 
     if event.name in (
         Events.REQUEST_COMPLETED.name,

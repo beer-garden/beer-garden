@@ -99,6 +99,7 @@ import runnerService from './js/services//runner_service.js';
 import aboutController from './js/controllers/about.js';
 import commandPublishingBlocklistController from './js/controllers/command_publishing_blocklist.js';
 import adminQueueController from './js/controllers/admin_queue.js';
+import adminRequestDeleteController from './js/controllers/admin_request_delete.js'
 import adminSystemController from './js/controllers/admin_system.js';
 import adminSystemLogsController from './js/controllers/admin_system_logs.js';
 import adminSystemForceDeleteController from './js/controllers/admin_system_force_delete.js';
@@ -222,6 +223,7 @@ angular
     .controller('CommandPublishingBlocklistController', commandPublishingBlocklistController)
     .controller('AddCommandPublishingBlocklistController', addCommandPublishingBlocklistController)
     .controller('AdminQueueController', adminQueueController)
+    .controller('AdminRequestDeleteController',adminRequestDeleteController)
     .controller(
         'AdminSystemForceDeleteController',
         adminSystemForceDeleteController,

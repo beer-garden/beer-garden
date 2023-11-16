@@ -508,6 +508,130 @@ class RequestListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
+    async def delete(self):
+        """
+        ---
+        summary: Bulk delete of Requests
+        description: |
+
+          test holding
+
+        parameters:
+          - name: system
+            in: query
+            required: false
+            description: |
+                System Name
+            type: string
+          - name: system_version
+            in: query
+            required: false
+            description: |
+                System Version
+            type: string
+          - name: instance_name
+            in: query
+            required: false
+            description: |
+                Instance Name
+            type: string
+          - name: namespace
+            in: query
+            required: false
+            description: |
+                Namespace
+            type: string
+          - name: command
+            in: query
+            required: false
+            description: |
+                Command Name
+            type: string
+          - name: id
+            in: query
+            required: false
+            description: |
+                Request ID
+            type: string
+          - name: is_event
+            in: query
+            required: false
+            description: |
+                Is Event
+            type: bool
+          - name: output_type
+            in: query
+            required: false
+            description: |
+                Output Type
+            type: string
+          - name: status
+            in: query
+            required: false
+            description: |
+                Status
+            type: string
+          - name: command_type
+            in: query
+            required: false
+            description: |
+                Command Type
+            type: string
+          - name: hidden
+            in: query
+            required: false
+            description: |
+                Hidden
+            type: bool
+          - name: has_parent
+            in: query
+            required: false
+            description: |
+                Command Type
+            type: bool
+          - name: requester
+            in: query
+            required: false
+            description: |
+                Requester
+            type: string
+        responses:
+          204:
+            description: Requests has been successfully deleted
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Requests
+        """
+
+        self.verify_user_global_permission(REQUEST_DELETE)
+
+        query_kwargs = {}
+        for supportedArg in [
+            "system",
+            "system_version",
+            "instance_name",
+            "namespace",
+            "command",
+            "id",
+            "is_event",
+            "output_type",
+            "status",
+            "command_type",
+            "hidden",
+            "has_parent",
+            "requester",
+        ]:
+            value = self.get_argument(supportedArg, default=None)
+            if value is not None:
+                query_kwargs[supportedArg] = value
+
+        await self.client(
+            Operation(operation_type="REQUEST_DELETE", kwargs=query_kwargs)
+        )
+
+        self.set_status(204)
+
     def _parse_form_request(self) -> BrewtilsRequest:
         args = {"parameters": {}}
 
