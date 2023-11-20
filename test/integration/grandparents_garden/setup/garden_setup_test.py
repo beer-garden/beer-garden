@@ -30,7 +30,7 @@ class TestGardenSetup(object):
 
     def test_garden_auto_register_successful(self):
         response = self.grand_parent_easy_client.client.session.get(
-            self.easy_client.client.base_url + "api/v1/gardens/"
+            self.grand_parent_easy_client.client.base_url + "api/v1/gardens/"
         )
 
         gardens = self.parser.parse_garden(response.json(), many=True)
