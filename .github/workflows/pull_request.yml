@@ -376,5 +376,5 @@ jobs:
         working-directory: ./test/integration
 
       - name: Test Plugins
-        run: python${{ matrix.python-version }} -m pytest grandparents_garden/setup/garden_setup_test.py
+        run: python${{ matrix.python-version }} -m pytest grandparents_garden/
         working-directory: ./test/integration
