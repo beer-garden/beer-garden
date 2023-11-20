@@ -60,7 +60,9 @@ def get_gardens(include_local: bool = True) -> List[Garden]:
     """
     # This is necessary for as long as local_garden is still needed. See the notes
     # there for more detail.
-    gardens = db.query(Garden, has_parent=False, filter_params={"connection_type__ne": "LOCAL"})
+    gardens = db.query(
+        Garden, has_parent=False, filter_params={"connection_type__ne": "LOCAL"}
+    )
 
     if include_local:
         gardens += [local_garden()]
@@ -155,6 +157,7 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
 
     return update_garden(garden)
 
+
 def remove_remote_users(garden: Garden):
     RemoteUser.objects.filter(garden=garden.name).delete()
 
@@ -162,8 +165,8 @@ def remove_remote_users(garden: Garden):
         for children in garden.children:
             remove_remote_users(children)
 
-def remove_remote_systems(garden: Garden):
 
+def remove_remote_systems(garden: Garden):
     for system in garden.systems:
         remove_system(system.id)
 
@@ -309,6 +312,7 @@ def garden_sync(sync_target: str = None):
                 )
             )
 
+
 def publish_garden_systems(garden: Garden):
     for system in garden.systems:
         publish(
@@ -322,6 +326,7 @@ def publish_garden_systems(garden: Garden):
 
     for child in garden.children:
         publish_garden_systems(child)
+
 
 def handle_event(event):
     """Handle garden-related events
