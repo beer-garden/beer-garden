@@ -49,8 +49,12 @@ class TestGardenSetup(object):
 
         gardens = self.parser.parse_garden(response.json(), many=True)
 
+
         print(gardens)
         assert len(gardens) == 2
+
+        for garden in gardens:
+            assert garden.name in ['grandparent', 'parent']
 
     def test_parent_counter(self):
         response = self.parent_easy_client.client.session.get(
@@ -62,6 +66,9 @@ class TestGardenSetup(object):
         print(gardens)
         assert len(gardens) == 2
 
+        for garden in gardens:
+            assert garden.name in ['child', 'parent']
+
     def test_child_counter(self):
         response = self.child_easy_client.client.session.get(
             self.child_easy_client.client.base_url + "api/v1/gardens/"
@@ -71,6 +78,9 @@ class TestGardenSetup(object):
 
         print(gardens)
         assert len(gardens) == 1
+
+        for garden in gardens:
+            assert garden.name in ['child']
 
 
     # def test_update_garden_connection_info(self):
