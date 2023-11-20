@@ -82,6 +82,22 @@ class TestGardenSetup(object):
         for garden in gardens:
             assert garden.name in ['child']
 
+    def test_grandchildren(self):
+        response = self.grand_parent_easy_client.client.session.get(
+            self.grand_parent_easy_client.client.base_url + "api/v1/gardens/"
+        )
+
+        gardens = self.parser.parse_garden(response.json(), many=True)
+
+
+        print(gardens)
+        assert len(gardens) == 2
+
+        for garden in gardens:
+            if garden.name == 'parent':
+                assert garden.children is not None
+                assert len(garden.children) == 1
+
 
     # def test_update_garden_connection_info(self):
     #     response = self.easy_client.client.session.get(
