@@ -338,8 +338,8 @@ jobs:
           docker tag bgio/beer-garden:${{ matrix.child }} bgio/beer-garden:child
         working-directory: ./src/app
 
-      - name: Update Docker Compose
-        run: cp test/conf/docker-compose-grandparent-test.yml docker/docker-compose/docker-compose.yml
+      - name: Update Docker Compose  
+        run: cp test/conf/docker-compose-grandparents-test.yml docker/docker-compose/docker-compose.yml
         working-directory: ./
 
       - name: Checkout Local Plugins
