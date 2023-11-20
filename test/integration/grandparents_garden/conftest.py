@@ -28,7 +28,9 @@ def parent_easy_client(request):
 
 @pytest.fixture(scope="class")
 def grand_parent_easy_client(request):
-    request.cls.grand_parent_easy_client = get_easy_client()
+    request.cls.parent_easy_client = get_easy_client(
+        bg_host="localhost", bg_port=2337, ssl_enabled=False
+    )
     return request.cls.grand_parent_easy_client
 
 
