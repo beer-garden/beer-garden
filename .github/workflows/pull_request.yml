@@ -358,3 +358,23 @@ jobs:
       - name: Wait for Beer Garden to start
         run: sleep 60s
         shell: bash
+
+      # Custom tag extractor to find Brewtils Branch
+      - name: Find Brewtils Branch
+        uses: TheBurchLog/body-env-tag-action@1.0
+        with:
+          tag: "brewtils:"
+          env-variable: "brewtils"
+          default-value: "develop"
+          tag-position: -1
+
+      - name: Install Develop Version of Brewtils
+        run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@${{env.brewtils}}#egg=brewtils
+
+      - name: Install Testing Dependencies
+        run: pip${{ matrix.python-version }} install -r requirements.txt
+        working-directory: ./test/integration
+
+      - name: Test Plugins
+        run: python${{ matrix.python-version }} -m pytest grandparents_garden/setup/garden_setup_test.py
+        working-directory: ./test/integration
