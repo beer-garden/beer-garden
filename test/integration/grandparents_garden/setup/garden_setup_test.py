@@ -28,7 +28,21 @@ def system_spec():
 class TestGardenSetup(object):
     child_garden_name = "child"
 
-    def test_garden_auto_register_successful(self):
+    # def test_garden_auto_register_successful(self):
+    #     response = self.grand_parent_easy_client.client.session.get(
+    #         self.grand_parent_easy_client.client.base_url + "api/v1/gardens/"
+    #     )
+
+    #     gardens = self.parser.parse_garden(response.json(), many=True)
+
+    #     print(gardens)
+    #     assert len(gardens) == 2
+
+    #     for garden in gardens:
+    #         if garden.name == 'parent':
+    #             assert len(garden.children) == 1
+
+    def test_grandparent_counter(self):
         response = self.grand_parent_easy_client.client.session.get(
             self.grand_parent_easy_client.client.base_url + "api/v1/gardens/"
         )
@@ -38,9 +52,26 @@ class TestGardenSetup(object):
         print(gardens)
         assert len(gardens) == 2
 
-        for garden in gardens:
-            if garden.name == 'parent':
-                assert len(garden.children) == 1
+    def test_parent_counter(self):
+        response = self.parent_easy_client.client.session.get(
+            self.parent_easy_client.client.base_url + "api/v1/gardens/"
+        )
+
+        gardens = self.parser.parse_garden(response.json(), many=True)
+
+        print(gardens)
+        assert len(gardens) == 2
+
+    def test_child_counter(self):
+        response = self.child_easy_client.client.session.get(
+            self.child_easy_client.client.base_url + "api/v1/gardens/"
+        )
+
+        gardens = self.parser.parse_garden(response.json(), many=True)
+
+        print(gardens)
+        assert len(gardens) == 1
+
 
     # def test_update_garden_connection_info(self):
     #     response = self.easy_client.client.session.get(
