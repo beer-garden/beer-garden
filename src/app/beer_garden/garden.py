@@ -158,8 +158,9 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
 def remove_remote_users(garden: Garden):
     RemoteUser.objects.filter(garden=garden.name).delete()
 
-    for children in garden.children:
-        remove_remote_users(children)
+    if garden.children:
+        for children in garden.children:
+            remove_remote_users(children)
 
 
 @publish_event(Events.GARDEN_REMOVED)
