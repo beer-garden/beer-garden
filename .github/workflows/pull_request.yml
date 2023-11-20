@@ -310,7 +310,7 @@ jobs:
         parent: ["unstable"]
       fail-fast: false
 
-    name: Grandchild Test - unstable -> ${{ matrix.parent }} -> ${{ child }}
+    name: Grandchild Test - unstable -> ${{ matrix.parent }} -> ${{ matrix.child }}
     steps:
       - uses: actions/checkout@v2
 
