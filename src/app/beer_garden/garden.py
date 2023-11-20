@@ -313,19 +313,19 @@ def garden_sync(sync_target: str = None):
             )
 
 
-def publish_garden_systems(garden: Garden):
+def publish_garden_systems(garden: Garden, src_garden: str):
     for system in garden.systems:
         publish(
             Event(
                 name=Events.SYSTEM_UPDATED.name,
-                garden=event.garden,
+                garden=src_garden,
                 payload_type="System",
                 payload=system,
             )
         )
 
     for child in garden.children:
-        publish_garden_systems(child)
+        publish_garden_systems(child, src_garden)
 
 
 def handle_event(event):
@@ -368,7 +368,7 @@ def handle_event(event):
                     garden = update_garden(existing_garden)
 
                 # Publish update events for UI to dynamically load changes for Systems
-                publish_garden_systems(garden)
+                publish_garden_systems(garden, event.garden)
 
     elif event.name == Events.GARDEN_UNREACHABLE.name:
         target_garden = get_garden(event.payload.target_garden_name)
