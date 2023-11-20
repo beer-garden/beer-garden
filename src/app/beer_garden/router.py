@@ -424,6 +424,12 @@ def remove_routing_garden(garden_name=None):
             k: v for k, v in instance_id_routes.items() if v != garden_name
         }
 
+def add_routing_garden(garden: Garden, routing_garden: str):
+    for system in garden:
+        add_routing_system(system=system, garden_name=routing_garden)
+
+    for child in garden.children:
+        add_routing_garden(child, routing_garden)
 
 def handle_event(event):
     """Handle events"""
@@ -444,8 +450,7 @@ def handle_event(event):
             remove_routing_garden(garden_name=event.garden)
 
             # Then add routes to the new systems
-            for system in event.payload.systems:
-                add_routing_system(system=system, garden_name=event.payload.name)
+            add_routing_garden(event.payload, event.payload.name)
 
     # This is a little unintuitive. We want to let the garden module deal with handling
     # any downstream garden changes since handling those changes is nontrivial.

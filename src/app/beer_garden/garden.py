@@ -60,7 +60,7 @@ def get_gardens(include_local: bool = True) -> List[Garden]:
     """
     # This is necessary for as long as local_garden is still needed. See the notes
     # there for more detail.
-    gardens = db.query(Garden, filter_params={"connection_type__ne": "LOCAL"})
+    gardens = db.query(Garden, has_parent=False, filter_params={"connection_type__ne": "LOCAL"})
 
     if include_local:
         gardens += [local_garden()]
@@ -105,9 +105,16 @@ def publish_garden(status: str = "RUNNING") -> Garden:
     Returns:
         The local garden, all systems
     """
-    garden = local_garden(all_systems=True)
+    garden = local_garden()
     garden.connection_type = None
     garden.status = status
+
+    children = get_gardens(include_local=False)
+    for child in children:
+        child.parent = garden
+        child.has_parent = True
+
+    garden.children = children
 
     return garden
 
@@ -148,9 +155,15 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
 
     return update_garden(garden)
 
+def remove_remote_users(garden: Garden):
+    RemoteUser.objects.filter(garden=garden.name).delete()
+
+    for children in garden.children:
+        remove_remote_users(children)
+
 
 @publish_event(Events.GARDEN_REMOVED)
-def remove_garden(garden_name: str) -> None:
+def remove_garden(garden_name: str = None, garden: Garden = None) -> None:
     """Remove a garden
 
     Args:
@@ -159,17 +172,10 @@ def remove_garden(garden_name: str) -> None:
     Returns:
         The deleted garden
     """
-    garden = get_garden(garden_name)
 
-    # TODO: Switch to lookup by garden_name rather than namespace
-    systems = get_systems(filter_params={"namespace": garden_name})
+    garden = garden or get_garden(garden_name)
 
-    for system in systems:
-        remove_system(system.id)
-
-    # Cleanup any RemoteUser entries
-    RemoteUser.objects.filter(garden=garden_name).delete()
-
+    remove_remote_users(garden)
     db.delete(garden)
 
     return garden
@@ -292,6 +298,19 @@ def garden_sync(sync_target: str = None):
                 )
             )
 
+def publish_garden_systems(garden: Garden):
+    for system in garden.systems:
+        publish(
+            Event(
+                name=Events.SYSTEM_UPDATED.name,
+                garden=event.garden,
+                payload_type="System",
+                payload=system,
+            )
+        )
+
+    for child in garden.children:
+        publish_garden_systems(child)
 
 def handle_event(event):
     """Handle garden-related events
@@ -333,15 +352,7 @@ def handle_event(event):
                     garden = update_garden(existing_garden)
 
                 # Publish update events for UI to dynamically load changes for Systems
-                for system in garden.systems:
-                    publish(
-                        Event(
-                            name=Events.SYSTEM_UPDATED.name,
-                            garden=event.garden,
-                            payload_type="System",
-                            payload=system,
-                        )
-                    )
+                publish_garden_systems(garden)
 
     elif event.name == Events.GARDEN_UNREACHABLE.name:
         target_garden = get_garden(event.payload.target_garden_name)

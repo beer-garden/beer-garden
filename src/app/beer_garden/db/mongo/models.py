@@ -782,6 +782,12 @@ class Garden(MongoModel, Document):
     connection_params = DictField()
     systems = ListField(ReferenceField(System, reverse_delete_rule=PULL))
 
+    parent = ReferenceField(
+        "Garden", dbref=True, required=False, reverse_delete_rule=CASCADE
+    )
+    children = DummyField(required=False)
+    has_parent = BooleanField(required=False, default=False)
+
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves
         "index_background": True,
