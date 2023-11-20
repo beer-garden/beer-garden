@@ -31,6 +31,12 @@ from beer_garden.systems import get_systems, remove_system
 
 logger = logging.getLogger(__name__)
 
+def get_children_garden(garden: Garden):
+    garden.children = db.query(Garden, filter_params={"parent": garden})
+
+    if garden.children:
+        for child in garden.children:
+            get_children_garden(child)
 
 def get_garden(garden_name: str) -> Garden:
     """Retrieve an individual Garden
@@ -45,7 +51,9 @@ def get_garden(garden_name: str) -> Garden:
     if garden_name == config.get("garden.name"):
         return local_garden()
 
-    return db.query_unique(Garden, name=garden_name, raise_missing=True)
+    garden = db.query_unique(Garden, name=garden_name, raise_missing=True)
+    get_children_garden(garden)
+    return garden
 
 
 def get_gardens(include_local: bool = True) -> List[Garden]:
@@ -66,6 +74,9 @@ def get_gardens(include_local: bool = True) -> List[Garden]:
 
     if include_local:
         gardens += [local_garden()]
+
+    for garden in gardens:
+        get_children_garden(garden)
 
     return gardens
 
