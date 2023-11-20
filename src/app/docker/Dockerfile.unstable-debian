@@ -12,12 +12,13 @@ ADD ./example_configs/local-plugin-logging.yaml /conf/
 ADD ./example_configs/remote-plugin-logging.yaml /conf/
 ADD ./docker/docker-entrypoint.sh /usr/local/bin/
 ADD ./requirements.txt .
+ADD ./requirements-dev.txt .
 ADD ./dist/*.whl ./
 
 RUN set -ex \
     && apt-get -y update \
     && pip install --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt \
     && pip install --no-cache-dir ./*.whl
 
 EXPOSE 2337/tcp

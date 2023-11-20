@@ -12,11 +12,12 @@ ADD ./example_configs/app-logging.yaml conf/
 ADD ./example_configs/local-plugin-logging.yaml conf/
 ADD ./example_configs/remote-plugin-logging.yaml conf/
 ADD ./requirements.txt .
+ADD ./requirements-dev.txt .
 ADD ./dist/*.whl ./
 
 RUN set -ex \
     && apk add --no-cache --virtual .build-deps \
        gcc make musl-dev libffi-dev openssl-dev git \
-    && pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt \
     && pip install --no-cache-dir ./*.whl \
     && apk del .build-deps
