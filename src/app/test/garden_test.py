@@ -53,12 +53,30 @@ def remotegarden_system():
 
 
 @pytest.fixture
-def remotegarden(remotegarden_system):
+def remotegarden(remotegarden_system, remote_grand_child_garden):
     yield create_garden(
         BrewtilsGarden(
-            name="remotegarden", connection_type="HTTP", systems=[remotegarden_system]
+            name="remotegarden", connection_type="HTTP", systems=[remotegarden_system], children=[remote_grand_child_garden]
         )
     )
+
+@pytest.fixture
+def remote_grand_child_garden_system():
+    yield create_system(
+        BrewtilsSystem(
+            name="remote_child_system", version="1.2.3", namespace="remote_garden_child", local=False
+        )
+    )
+
+
+@pytest.fixture
+def remote_grand_child_garden(remote_grand_child_garden_system, remotegarden):
+    yield create_garden(
+        BrewtilsGarden(
+            name="remote_garden_child", connection_type="HTTP", systems=[remote_grand_child_garden_system], has_parent=True, parent=remotegarden
+        )
+    )
+
 
 
 class TestGarden:
@@ -92,6 +110,15 @@ class TestGarden:
 
         assert len(gardens) == 1
         assert localgarden.name != gardens[0].name
+
+    def test_child_garden(self, localgarden, remotegarden):
+        """get_gardens should exclude local gardens when requested"""
+        gardens = get_gardens(include_local=False)
+
+        assert len(gardens) == 1
+        assert localgarden.name != gardens[0].name
+        assert len(gardens[0].children) == 1
+
 
     def test_local_garden_returns_brewtils_model(self, localgarden):
         """local_garden returns a brewtils Garden"""
