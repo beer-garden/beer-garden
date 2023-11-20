@@ -31,12 +31,16 @@ from beer_garden.systems import get_systems, remove_system
 
 logger = logging.getLogger(__name__)
 
-def get_children_garden(garden: Garden):
+def get_children_garden(garden: Garden) -> Garden:
     garden.children = db.query(Garden, filter_params={"parent": garden})
 
     if garden.children:
         for child in garden.children:
             get_children_garden(child)
+    else:
+        garden.children = []
+
+    return garden
 
 def get_garden(garden_name: str) -> Garden:
     """Retrieve an individual Garden
