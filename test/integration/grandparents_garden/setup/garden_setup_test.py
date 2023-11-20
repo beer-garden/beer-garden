@@ -98,7 +98,7 @@ class TestGardenSetup(object):
                 assert garden.children is not None
                 assert len(garden.children) == 1
 
-    def test_child_systems_register_successful(self):
+    def test_parent_systems_register_successful(self):
         systems = self.grand_parent_easy_client.find_systems()
 
         namespaces = dict()
@@ -111,6 +111,20 @@ class TestGardenSetup(object):
 
         assert len(namespaces) == 3
         assert namespaces['grandparent'] == namespaces['parent']
+        assert namespaces['child'] == namespaces['parent']
+
+    def test_child_systems_register_successful(self):
+        systems = self.parent_easy_client.find_systems()
+
+        namespaces = dict()
+
+        for system in systems:
+            if system.namespace not in namespaces.keys():
+                namespaces[system.namespace] = 1
+            else:
+                namespaces[system.namespace] += 1
+
+        assert len(namespaces) == 2
         assert namespaces['child'] == namespaces['parent']
 
 
