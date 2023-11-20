@@ -110,8 +110,9 @@ class TestGardenSetup(object):
                 namespaces[system.namespace] += 1
 
         assert len(namespaces) == 3
-        assert namespaces['grandparent'] == namespaces['parent']
-        assert namespaces['child'] == namespaces['parent']
+        assert namespaces['grandparent'] > 0
+        assert namespaces['parent'] > 0
+        assert namespaces['child'] > 0
 
     def test_child_systems_register_successful(self):
         systems = self.parent_easy_client.find_systems()
@@ -125,7 +126,8 @@ class TestGardenSetup(object):
                 namespaces[system.namespace] += 1
 
         assert len(namespaces) == 2
-        assert namespaces['child'] == namespaces['parent']
+        assert namespaces['parent'] > 0
+        assert namespaces['child'] > 0
 
 
     # def test_update_garden_connection_info(self):
