@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.21.0
+
+TBD
+
+- Adding "?showNav=false" to the end of any UI page will remove the navigation bar
+
 # 3.20.0
 
 11/16/2023
