@@ -53,10 +53,10 @@ def remotegarden_system():
 
 
 @pytest.fixture
-def remotegarden(remotegarden_system, remote_grand_child_garden):
+def remotegarden(remotegarden_system):
     yield create_garden(
         BrewtilsGarden(
-            name="remotegarden", connection_type="HTTP", systems=[remotegarden_system], children=[remote_grand_child_garden]
+            name="remotegarden", connection_type="HTTP", systems=[remotegarden_system]
         )
     )
 
