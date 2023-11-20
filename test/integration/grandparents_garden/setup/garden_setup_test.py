@@ -99,7 +99,7 @@ class TestGardenSetup(object):
                 assert len(garden.children) == 1
 
     def test_child_systems_register_successful(self):
-        systems = self.easy_client.find_systems()
+        systems = self.grand_parent_easy_client.find_systems()
 
         namespaces = dict()
 
