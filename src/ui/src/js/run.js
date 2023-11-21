@@ -13,6 +13,7 @@ appRun.$inject = [
   '$state',
   '$stateParams',
   '$http',
+  '$location',
   '$q',
   '$uibModal',
   '$transitions',
@@ -32,6 +33,7 @@ appRun.$inject = [
  * @param  {Object} $state               Angular's $state object.
  * @param  {Object} $stateParams         Angular's $stateParams object.
  * @param  {Object} $http                Angular's $http object.
+ * @param  {Object} $location            Angular's $location object.
  * @param  {Object} $q                   Angular's $q object.
  * @param  {Object} $uibModal            Angular UI's $uibModal object.
  * @param  {Object} $transitions         Angular's $transitions object.
@@ -49,6 +51,7 @@ export default function appRun(
     $state,
     $stateParams,
     $http,
+    $location,
     $q,
     $uibModal,
     $transitions,
@@ -63,6 +66,12 @@ export default function appRun(
 ) {
   $rootScope.$state = $state;
   $rootScope.$stateParams = $stateParams;
+
+  if ($location.search()['showNav'] == 'false'){
+    $rootScope.showNav = false;
+  } else {
+    $rootScope.showNav = true;
+  }
 
   let loginModal;
   $rootScope.loginInfo = {};

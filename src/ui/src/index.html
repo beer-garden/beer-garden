@@ -20,9 +20,9 @@
   <body ng-cloak>
     <!-- Navbar Start -->
     <!-- Static navbar for layout purposes -->
-    <nav class="navbar navbar-static-top"></nav>
+    <nav class="navbar navbar-static-top" ng-show="showNav"></nav>
 
-    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation" ng-show="showNav">
       <a style="cursor: pointer" class="navbar-brand" ui-sref="{{getHome()}}">
         <i style="padding: 3px" ng-class="getIcon(config.iconDefault)"></i>
         <span ng-cloak>{{config.applicationName}}</span>
