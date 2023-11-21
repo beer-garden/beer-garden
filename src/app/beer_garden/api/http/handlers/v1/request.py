@@ -745,9 +745,9 @@ class RequestListAPI(AuthorizationHandler):
                     filter_params[column["data"] + "__exact"] = ""
                 elif column["data"] == "comment":
                     if column["search"]["value"].upper().startswith("NOT "):
-                        filter_params[column["data"] + "__not__contains"] = column["search"][
-                            "value"
-                        ][4:]
+                        filter_params[column["data"] + "__not__contains"] = column[
+                            "search"
+                        ]["value"][4:]
                     else:
                         filter_params[column["data"] + "__contains"] = column["search"][
                             "value"
@@ -755,13 +755,13 @@ class RequestListAPI(AuthorizationHandler):
 
                 else:
                     if column["search"]["value"].upper().startswith("NOT "):
-                        filter_params[column["data"] + "__not__startswith"] = column["search"][
-                            "value"
-                        ][4:]
+                        filter_params[column["data"] + "__not__startswith"] = column[
+                            "search"
+                        ]["value"][4:]
                     else:
-                        filter_params[column["data"] + "__startswith"] = column["search"][
-                            "value"
-                        ]
+                        filter_params[column["data"] + "__startswith"] = column[
+                            "search"
+                        ]["value"]
 
                 hint_helper.append(column["data"])
 
