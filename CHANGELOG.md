@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.21.0
+
+TBD
+
+- On Request Index page, the prefix NOT is supported to invert string query or search for empty strings. 
+
 # 3.20.0
 
 11/16/2023
