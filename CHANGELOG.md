@@ -5,6 +5,7 @@
 TBD
 
 - On Request Index page, the prefix NOT is supported to invert string query or search for empty strings. 
+- Adding "?showNav=false" to the end of any UI page will remove the navigation bar
 
 # 3.20.0
 
