@@ -239,7 +239,7 @@ class RequestListAPI(AuthorizationHandler):
             "search": {"value": "SUCCESS", "regex":false}
           }
           ```
-          
+
           * To query on empty values, in the value use 'NOT' to return
             values that match ''
           `columns` query parameters:
@@ -252,7 +252,7 @@ class RequestListAPI(AuthorizationHandler):
             "search": {"value":"NOT","regex":false}
           }
           ```
-          
+
           * To invert a field set match, in the value use the prefix 'NOT ' to return
             values that do not match that string value
           `columns` query parameters:
