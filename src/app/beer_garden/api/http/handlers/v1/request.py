@@ -240,6 +240,32 @@ class RequestListAPI(AuthorizationHandler):
           }
           ```
 
+          * To query on empty values, in the value use 'NOT' to return
+            values that match ''
+          `columns` query parameters:
+          ```JSON
+          {
+            "data": "command",
+            "name": "",
+            "searchable": true,
+            "orderable": true,
+            "search": {"value":"NOT","regex":false}
+          }
+          ```
+
+          * To invert a field set match, in the value use the prefix 'NOT ' to return
+            values that do not match that string value
+          `columns` query parameters:
+          ```JSON
+          {
+            "data": "command",
+            "name": "",
+            "searchable": true,
+            "orderable": true,
+            "search": {"value":"NOT command","regex":false}
+          }
+          ```
+
           * To sort by a field use the `order` parameter. The `column` value should be
             the index of the column to sort and the `dir` value can be either "asc" or
             "desc."
@@ -715,15 +741,27 @@ class RequestListAPI(AuthorizationHandler):
                         "value"
                     ]
 
+                elif column["search"]["value"].upper() in ["NOT", "NOT "]:
+                    filter_params[column["data"] + "__exact"] = ""
                 elif column["data"] == "comment":
-                    filter_params[column["data"] + "__contains"] = column["search"][
-                        "value"
-                    ]
+                    if column["search"]["value"].upper().startswith("NOT "):
+                        filter_params[column["data"] + "__not__contains"] = column[
+                            "search"
+                        ]["value"][4:]
+                    else:
+                        filter_params[column["data"] + "__contains"] = column["search"][
+                            "value"
+                        ]
 
                 else:
-                    filter_params[column["data"] + "__startswith"] = column["search"][
-                        "value"
-                    ]
+                    if column["search"]["value"].upper().startswith("NOT "):
+                        filter_params[column["data"] + "__not__startswith"] = column[
+                            "search"
+                        ]["value"][4:]
+                    else:
+                        filter_params[column["data"] + "__startswith"] = column[
+                            "search"
+                        ]["value"]
 
                 hint_helper.append(column["data"])
 
