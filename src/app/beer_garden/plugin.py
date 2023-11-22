@@ -38,12 +38,12 @@ from beer_garden.events import publish_event, publish_event_async
 
 logger = logging.getLogger(__name__)
 
-start_request = RequestTemplate(command="_start", command_type="EPHEMERAL")
-stop_request = RequestTemplate(command="_stop", command_type="EPHEMERAL")
+start_request = RequestTemplate(command="_start", command_type="EPHEMERAL", metadata = {"_queue":"ADMIN", "priority":1})
+stop_request = RequestTemplate(command="_stop", command_type="EPHEMERAL", metadata = {"_queue":"ADMIN", "priority":1})
 initialize_logging_request = RequestTemplate(
-    command="_initialize_logging", command_type="EPHEMERAL"
+    command="_initialize_logging", command_type="EPHEMERAL", metadata = {"_queue":"ADMIN", "priority":1}
 )
-read_logs_request = RequestTemplate(command="_read_log", command_type="ADMIN")
+read_logs_request = RequestTemplate(command="_read_log", command_type="ADMIN", metadata = {"_queue":"ADMIN", "_priority":1})
 
 
 @publish_event(Events.INSTANCE_INITIALIZED)
@@ -148,16 +148,14 @@ def stop(
 
 
 def publish_start(system, instance):
-    requests.process_request(
+    requests.process_wait(
         Request.from_template(
             start_request,
             namespace=system.namespace,
             system=system.name,
             system_version=system.version,
             instance_name=instance.name,
-        ),
-        is_admin=True,
-        priority=1,
+        ), -1
     )
 
 
@@ -171,8 +169,8 @@ def publish_stop(system, instance=None):
     if instance:
         request_args["instance_name"] = instance.name
 
-    requests.process_request(
-        Request.from_template(stop_request, **request_args), is_admin=True, priority=1
+    requests.process_wait(
+        Request.from_template(stop_request, **request_args), -1
     )
 
 
@@ -276,16 +274,14 @@ def initialize_logging(
 
     logger.debug(f"Initializing logging for instance {system}[{instance}]")
 
-    requests.process_request(
+    requests.process_wait(
         Request.from_template(
             initialize_logging_request,
             namespace=system.namespace,
             system=system.name,
             system_version=system.version,
             instance_name=instance.name,
-        ),
-        is_admin=True,
-        priority=1,
+        ), -1
     )
 
     return instance
@@ -318,7 +314,7 @@ def read_logs(
 
     logger.debug(f"Reading Logs from instance {system}[{instance}]")
 
-    request = requests.process_request(
+    request = requests.process_wait(
         Request.from_template(
             read_logs_request,
             namespace=system.namespace,
@@ -326,9 +322,7 @@ def read_logs(
             system_version=system.version,
             instance_name=instance.name,
             parameters={"start_line": start_line, "end_line": end_line},
-        ),
-        is_admin=True,
-        wait_event=wait_event,
+        ), -1
     )
 
     return request

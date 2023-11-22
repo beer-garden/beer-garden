@@ -608,7 +608,7 @@ def _publish_request(request: Request, is_admin: bool, priority: int):
     """Publish a Request"""
     queue.put(
         request,
-        is_admin=is_admin,
+        is_admin=(request.command_type == "ADMIN"),
         priority=priority,
         confirm=True,
         mandatory=True,
@@ -624,8 +624,6 @@ def _validate_request(request: Request):
 def process_request(
     new_request: Union[Request, RequestTemplate],
     wait_event: threading.Event = None,
-    is_admin: bool = False,
-    priority: int = 0,
 ) -> Request:
     """Validates and publishes a Request.
 
@@ -633,8 +631,6 @@ def process_request(
         new_request: The Request
         wait_event: Event that will be added to the local event_map. Event will be set
         when the request completes.
-        is_admin: Flag indicating this request should be published on the admin queue
-        priority: Number between 0 and 1, inclusive. High numbers equal higher priority
 
     Returns:
         The processed Request
@@ -649,6 +645,16 @@ def process_request(
             f"new_request type is {type(new_request)}, expected "
             "brewtils.models.Request or brewtils.models.RequestTemplate,"
         )
+
+    if "_queue" in request.metadata:
+        is_admin = (request.metadata["_queue"] == "ADMIN")
+    else:
+        is_admin = False
+
+    if "_priority" in request.metadata:
+        priority = request.metadata["_priority"]
+    else:
+        priority = 0
 
     # Validation is only required for non Admin commands because Admin commands
     # are hard coded to map Plugin functions
