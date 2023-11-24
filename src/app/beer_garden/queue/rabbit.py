@@ -7,7 +7,7 @@ from typing import List
 import pyrabbit2.api
 import pyrabbit2.http
 from brewtils.errors import NotFoundError
-from brewtils.models import Instance, Request, System
+from brewtils.models import Instance, Request, System, Event
 from brewtils.pika import TransientPikaClient
 from brewtils.schema_parser import SchemaParser
 
@@ -46,7 +46,6 @@ def create_clients(mq_config):
         ),
     }
 
-
 def initial_setup():
     logger.debug("Verifying message virtual host...")
     clients["pyrabbit"].verify_virtual_host()
@@ -56,6 +55,16 @@ def initial_setup():
 
     logger.debug("Declaring message exchange...")
     clients["pika"].declare_exchange()
+
+    logger.debug("Setting up Events Topic...")
+    setup_events_topic()
+
+def setup_events_topic():
+    clients["pika"].setup_queue(
+        "admin",
+        {"durable": True, "arguments": {"x-max-priority": 1}},
+        "events",
+    )
 
 
 def create(instance: Instance, system: System) -> dict:
@@ -107,6 +116,22 @@ def create(instance: Instance, system: System) -> dict:
         },
     }
 
+def put_event(event: Event, headers: dict = None, **kwargs) -> None:
+    """Put a Event on a queue
+
+    Args:
+        event: The Event to publish
+        headers: Headers to use when publishing
+        **kwargs:
+            Other arguments will be passed to the client publish method
+
+    Returns:
+        None
+    """
+    kwargs["headers"] = headers or {}
+    kwargs["routing_key"] = ["admin", "events"]
+
+    clients["pika"].publish(SchemaParser.serialize_event(event), **kwargs)
 
 def put(request: Request, headers: dict = None, **kwargs) -> None:
     """Put a Request on a queue
@@ -407,3 +432,4 @@ def get_routing_keys(*args, **kwargs) -> List[str]:
 def get_routing_key(*args, **kwargs):
     """Convenience method for getting the most specific routing key"""
     return get_routing_keys(*args, **kwargs)[-1]
+

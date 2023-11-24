@@ -32,7 +32,7 @@ import beer_garden.queue.api as queue
 import beer_garden.router
 from beer_garden.events.handlers import garden_callbacks
 from beer_garden.events.parent_procesors import HttpParentUpdater
-from beer_garden.events.processors import FanoutProcessor, QueueListener
+from beer_garden.events.processors import FanoutProcessor, QueueListener, EventProcessor
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
@@ -330,7 +330,23 @@ class Application(StoppableThread):
 
     def _setup_events_manager(self):
         """Set up the event manager for the Main Processor"""
-        event_manager = FanoutProcessor(name="event manager")
+
+        if True:
+            mq_config = config.get("mq") 
+            connection = mq_config.connections;
+
+            event_manager = EventProcessor(
+                name="Event Consumer",
+                
+            )
+            event_manager.setup(
+                queue_name="event",
+                max_workers=1,
+                max_concurrent=1,
+                connection_info = connection,
+            )
+        else:
+            event_manager = FanoutProcessor(name="event manager")
 
         # Forward all events down into the entry points
         event_manager.register(self.entry_manager, manage=False)
