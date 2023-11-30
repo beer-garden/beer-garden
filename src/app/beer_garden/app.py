@@ -332,26 +332,21 @@ class Application(StoppableThread):
         """Set up the event manager for the Main Processor"""
 
         if True:
-            mq_config = config.get("mq") 
+            # mq_config = config.get("mq") 
 
-            connection = {
-                "host": mq_config.host,
-                "port": mq_config.connections.message.port,
-                "user": mq_config.connections.message.user,
-                "password": mq_config.connections.message.password,
-                "virtual_host": mq_config.virtual_host,
-                "ssl": mq_config.connections.message.ssl,
+            # connection = {
+            #     "host": mq_config.host,
+            #     "port": mq_config.connections.message.port,
+            #     "user": mq_config.connections.message.user,
+            #     "password": mq_config.connections.message.password,
+            #     "virtual_host": mq_config.virtual_host,
+            #     "ssl": mq_config.connections.message.ssl,
 
-            }
+            # }
             event_manager = EventProcessor(
                 name="Event Consumer",              
             )
-            event_manager.setup(
-                queue_name="admin.events",
-                max_workers=1,
-                max_concurrent=1,
-                connection_info = connection,
-            )
+
         else:
             event_manager = FanoutProcessor(name="event manager")
 

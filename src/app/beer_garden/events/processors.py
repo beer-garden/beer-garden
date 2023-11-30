@@ -129,45 +129,7 @@ class FanoutProcessor(QueueListener):
 
 class EventProcessor(FanoutProcessor):
     """Class responsible for coordinating Event processing
-
-    The EventProcessor is responsible for the following:
-    - Defining on_message_received callback that will be invoked by the PikaConsumer
-    - Parsing the event
-    - Placing event in queue
-
-    Args:
-        target: Incoming requests will be invoked on this object
-        logger: A logger
-        max_workers: Max number of threads to use in the executor pool
     """
-
-    def __init__(
-        self,
-        logger=None,
-        max_workers=None,
-        **kwargs
-    ):
-        super().__init__(**kwargs)
-
-    def stop(self):
-        self.shutdown_event.set()
-        self.shutdown()
-        super().stop()
-        
-    def run(self):
-        self.startup()
-
-    def setup(self, **kwargs):
-        self.logger = logger or logging.getLogger(__name__)
-
-        from brewtils.pika import PikaConsumer
-        self.shutdown_event = threading.Event()
-
-        self.consumer =  PikaConsumer(panic_event = self.shutdown_event, **kwargs)
-
-        self.consumer.on_message_callback = self.on_message_received
-
-        self._pool = ThreadPoolExecutor(max_workers=kwargs.get("max_workers", 1))
 
     def put(self, event: Event):
         """Put a new item on the queue to be processed
@@ -187,93 +149,13 @@ class EventProcessor(FanoutProcessor):
             Events.GARDEN_UPDATED.name,
             Events.GARDEN_REMOVED.name,
         ) or (Events.GARDEN_SYNC.name and event.garden != config.get("garden.name")):
-            put_event(event, 
-                      confirm=True,
-                      mandatory=True,
-                      delivery_mode=PERSISTENT_DELIVERY_MODE)
+            try:
+                put_event(event)
+            except:
+                self.logger.error(f"Failed to publish Event: {event} to PIKA")
+                self._queue.put(event)
         else:
             self._queue.put(event)
-
-
-    def on_message_received(self, message, headers):
-        """Callback function that will be invoked for received messages
-
-        This will attempt to parse the message and then run the parsed Request through
-        all validation functions that this RequestProcessor knows about.
-
-        If the request parses cleanly and passes validation it will be submitted to this
-        RequestProcessor's ThreadPoolExecutor for processing.
-
-        Args:
-            message: The message string
-            headers: The header dictionary
-
-        Returns:
-            A future that will complete when processing finishes
-
-        Raises:
-            DiscardMessageException: The request failed to parse correctly
-            RequestProcessException: Validation failures should raise a subclass of this
-        """
-        event = self._parse(message)
-
-        return self._pool.submit(
-            self.process_message, event
-        )
-
-    def process_message(self, event: Event):
-        """Process a message. Intended to be run on an Executor.
-
-        Will set the status to IN_PROGRESS, invoke the command, and set the final
-        status / output / error_class.
-
-        Args:
-            target: The object to invoke received commands on
-            request: The parsed Request
-            headers: Dictionary of headers from the `PikaConsumer`
-
-        Returns:
-            None
-        """
-      
+    
+    def put_queue(self, event: Event):
         self._queue.put(event)
-
-
-    def startup(self):
-        """Start the RequestProcessor"""
-        self.consumer.start()
-        self.consumer.run()
-
-    def shutdown(self):
-        """Stop the RequestProcessor"""
-        self.logger.debug("Shutting down consumer")
-        self.consumer.stop_consuming()
-
-        # Finish all current actions
-        self._pool.shutdown(wait=True)
-
-        self.consumer.stop()
-        self.consumer.join()
-
-        # Give the updater a chance to shutdown
-        self._updater.shutdown()
-
-    def _parse(self, message):
-        """Parse a message using the standard SchemaParser
-
-        Args:
-            message: The raw (json) message body
-
-        Returns:
-            A Request model
-
-        Raises:
-            DiscardMessageException: The request failed to parse correctly
-        """
-        try:
-            return SchemaParser.parse_event(message, from_string=True)
-        except Exception as ex:
-            self.logger.exception(
-                "Unable to parse message body: {0}. Exception: {1}".format(message, ex)
-            )
-            raise DiscardMessageException("Error parsing message body")

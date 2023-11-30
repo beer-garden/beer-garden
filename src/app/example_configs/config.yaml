@@ -163,6 +163,9 @@ scheduler:
     coalesce: true
     max_instances: 3
   max_workers: 10
+swarm:
+  enable: false
+  mq_topic: swarm.events
 ui:
   cors_enabled: true
   debug_mode: true
