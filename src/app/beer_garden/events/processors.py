@@ -162,7 +162,7 @@ class EventProcessor(FanoutProcessor):
         from brewtils.pika import PikaConsumer
         self.shutdown_event = threading.Event()
 
-        self.consumer =  PikaConsumer(panic_event = shutdown_event, **kwargs)
+        self.consumer =  PikaConsumer(panic_event = self.shutdown_event, **kwargs)
 
         self.consumer.on_message_callback = self.on_message_received
 
