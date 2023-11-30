@@ -61,9 +61,9 @@ def initial_setup():
 
 def setup_events_topic():
     clients["pika"].setup_queue(
-        "admin",
+        "admin.events",
         {"durable": True, "arguments": {"x-max-priority": 1}},
-        "events",
+        "admin.events",
     )
 
 
@@ -129,7 +129,7 @@ def put_event(event: Event, headers: dict = None, **kwargs) -> None:
         None
     """
     kwargs["headers"] = headers or {}
-    kwargs["routing_key"] = ["admin", "events"]
+    kwargs["routing_key"] = "admin.events"
 
     clients["pika"].publish(SchemaParser.serialize_event(event), **kwargs)
 

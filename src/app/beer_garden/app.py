@@ -333,14 +333,21 @@ class Application(StoppableThread):
 
         if True:
             mq_config = config.get("mq") 
-            connection = mq_config.connections;
 
+            connection = {
+                "host": mq_config.host,
+                "port": mq_config.connections.message.port,
+                "user": mq_config.connections.message.user,
+                "password": mq_config.connections.message.password,
+                "virtual_host": mq_config.virtual_host,
+                "ssl": mq_config.connections.message.ssl,
+
+            }
             event_manager = EventProcessor(
-                name="Event Consumer",
-                
+                name="Event Consumer",              
             )
             event_manager.setup(
-                queue_name="event",
+                queue_name="admin.events",
                 max_workers=1,
                 max_concurrent=1,
                 connection_info = connection,

@@ -4,7 +4,10 @@ from multiprocessing import Queue
 from queue import Empty
 from brewtils.models import Event, Events
 from brewtils.stoppable_thread import StoppableThread
+from brewtils.schema_parser import SchemaParser
 from beer_garden.queue.rabbit import put_event
+from pika.spec import PERSISTENT_DELIVERY_MODE
+import threading
 
 from concurrent.futures.thread import ThreadPoolExecutor
 
@@ -144,14 +147,22 @@ class EventProcessor(FanoutProcessor):
         **kwargs
     ):
         super().__init__(**kwargs)
+
+    def stop(self):
+        self.shutdown_event.set()
+        self.shutdown()
+        super().stop()
         
+    def run(self):
+        self.startup()
 
     def setup(self, **kwargs):
         self.logger = logger or logging.getLogger(__name__)
 
         from brewtils.pika import PikaConsumer
+        self.shutdown_event = threading.Event()
 
-        self.consumer =  PikaConsumer(**kwargs)
+        self.consumer =  PikaConsumer(panic_event = shutdown_event, **kwargs)
 
         self.consumer.on_message_callback = self.on_message_received
 
@@ -169,7 +180,12 @@ class EventProcessor(FanoutProcessor):
             Events.REQUEST_COMPLETED.name,
             Events.REQUEST_UPDATED.name,
             Events.REQUEST_CANCELED.name,
-        ):
+            Events.SYSTEM_CREATED.name,
+            Events.SYSTEM_UPDATED.name,
+            Events.SYSTEM_REMOVED.name,
+            Events.GARDEN_UPDATED.name,
+            Events.GARDEN_REMOVED.name,
+        ) or (Events.GARDEN_SYNC.name and event.garden != config.get("garden.name")):
             put_event(event, 
                       confirm=True,
                       mandatory=True,
@@ -225,6 +241,7 @@ class EventProcessor(FanoutProcessor):
     def startup(self):
         """Start the RequestProcessor"""
         self.consumer.start()
+        self.consumer.run()
 
     def shutdown(self):
         """Stop the RequestProcessor"""
