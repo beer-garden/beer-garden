@@ -2,6 +2,7 @@
 import logging
 from multiprocessing import Queue
 from queue import Empty
+import beer_garden.config as config
 from brewtils.models import Event, Events
 from brewtils.stoppable_thread import StoppableThread
 from brewtils.schema_parser import SchemaParser
