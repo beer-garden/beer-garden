@@ -131,15 +131,15 @@ class EventProcessor(FanoutProcessor):
     """Class responsible for coordinating Event processing
     """
 
-    def put(self, event: Event):
+    def put(self, event: Event, skip_checked: bool = False):
         """Put a new item on the queue to be processed
 
         Args:
             event: New Event
         """
         
-        # Check if it should be published to Rabbit
-        if event.name in (
+        # Check if event should be published to Rabbit
+        if not skip_checked and (event.name in (
             Events.REQUEST_COMPLETED.name,
             Events.REQUEST_UPDATED.name,
             Events.REQUEST_CANCELED.name,
@@ -148,7 +148,7 @@ class EventProcessor(FanoutProcessor):
             Events.SYSTEM_REMOVED.name,
             Events.GARDEN_UPDATED.name,
             Events.GARDEN_REMOVED.name,
-        ) or (Events.GARDEN_SYNC.name and event.garden != config.get("garden.name")):
+        ) or (Events.GARDEN_SYNC.name and event.garden != config.get("garden.name"))):
             try:
                 put_event(event)
             except:

@@ -253,6 +253,10 @@ class Application(StoppableThread):
         self.logger.debug("Setting up message queues...")
         queue.initial_setup()
 
+        if config.get("swarm.enabled"):
+            self.logger.debug("Setting up message queues...")
+            queue.setup_event_consumer(config.get("mq"))
+
         self.logger.debug("Starting helper threads...")
         for helper_thread in self.helper_threads:
             helper_thread.start()
@@ -331,22 +335,8 @@ class Application(StoppableThread):
     def _setup_events_manager(self):
         """Set up the event manager for the Main Processor"""
 
-        if True:
-            # mq_config = config.get("mq") 
-
-            # connection = {
-            #     "host": mq_config.host,
-            #     "port": mq_config.connections.message.port,
-            #     "user": mq_config.connections.message.user,
-            #     "password": mq_config.connections.message.password,
-            #     "virtual_host": mq_config.virtual_host,
-            #     "ssl": mq_config.connections.message.ssl,
-
-            # }
-            event_manager = EventProcessor(
-                name="Event Consumer",              
-            )
-
+        if config.get("swarm.enabled"):
+            event_manager = EventProcessor(name="event manager")
         else:
             event_manager = FanoutProcessor(name="event manager")
 
