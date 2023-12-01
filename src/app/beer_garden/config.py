@@ -1507,8 +1507,8 @@ _SWARM_SPEC = {
     "items": {
         "enabled": {
             "type": "bool",
-            "default": False,
-            "description": "Use role-based authentication / authorization",
+            "default": True,
+            "description": "Publish events to Rabbit to allow all Gardens to stay in sync in swarm",
         },
     },
 }
