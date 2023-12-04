@@ -8,7 +8,7 @@ import pyrabbit2.api
 import pyrabbit2.http
 from brewtils.errors import NotFoundError
 from brewtils.models import Instance, Request, System, Event
-from brewtils.pika import TransientPikaClient
+from brewtils.pika import TransientPikaClient, PikaConsumer
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden.config as config
@@ -70,9 +70,12 @@ def setup_event_consumer(mq_config):
     logger.debug("Setting up Events Consumer...")
     consumers["events"] = EventConsumer(name="Event Pika Consumer")
     consumers["events"].setup(
-        conneciton_info=connection
+        connection_info=connection
     )
     consumers["events"].start()
+
+def shutdown_event_consumer():
+    consumers["events"].stop()
 
 def initial_setup():
     logger.debug("Verifying message virtual host...")
@@ -465,7 +468,7 @@ class EventConsumer(StoppableThread):
         **kwargs
     ):
         self.shutdown_event = threading.Event()
-        self.consumer = PikaConsumer(panic_event = self.shutdown_event, queue = internal_events_queue, **kwargs)
+        self.consumer = PikaConsumer(panic_event = self.shutdown_event, queue_name = internal_events_queue, **kwargs)
         self.consumer.on_message_callback = self.on_message_received
         self._pool = ThreadPoolExecutor(max_workers=1)
     
@@ -476,7 +479,7 @@ class EventConsumer(StoppableThread):
     def run(self):
         self.startup()
 
-    def on_message_recieved(self, message, headers):
+    def on_message_received(self, message, headers):
         """Callback function that will be invoked for received messages
 
         This will attempt to parse the message and then run the parsed Event
@@ -520,11 +523,13 @@ class EventConsumer(StoppableThread):
 
     def shutdown(self):
         """Stop the EventConsumer"""
+        self.logger.error("Shutting down Event Consumer")
         self.shutdown_event.set()
-        self.consumer.stop_consumer()
-        self._pool.shutdown(wait=False)
+        self.consumer.stop_consuming()
+        self._pool.shutdown(wait=True)
         self.consumer.stop()
         self.consumer.join()
+        self.logger.error("Event Consumer Shutdown")
 
     def _parse(self, message):
         """Parse a message using the standard SchemaParser

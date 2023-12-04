@@ -330,6 +330,10 @@ class Application(StoppableThread):
         self.logger.debug("Stopping event manager")
         beer_garden.events.manager.stop()
 
+        if config.get("swarm.enabled"):
+            self.logger.debug("Stopping Event Consumer")
+            queue.shutdown_event_consumer()
+
         self.logger.info("Successfully shut down Beer-garden")
 
     def _setup_events_manager(self):

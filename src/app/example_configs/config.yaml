@@ -1,19 +1,19 @@
 auth:
-  enabled: false
-  role_definition_file: null
-  group_definition_file: null
-  token_secret: IAMSUPERSECRET
   authentication_handlers:
     basic:
-      enabled: True
+      enabled: true
     trusted_header:
-      enabled: False
-      username_header: bg-username
+      create_users: true
+      enabled: false
       user_groups_header: bg-user-groups
-      create_users: True
+      username_header: bg-username
   default_admin:
     password: password
     username: admin
+  enabled: false
+  group_definition_file: null
+  role_definition_file: null
+  token_secret: IAMSUPERSECRET
 db:
   connection:
     host: localhost
@@ -24,12 +24,12 @@ db:
   ttl:
     action: -1
     admin: -1
+    batch_size: -1
     file: 15
     in_progress: 15
     info: 15
-    temp: 15
-    batch_size: -1
     multithread: false
+    temp: 15
 entry:
   http:
     enabled: true
@@ -164,7 +164,7 @@ scheduler:
     max_instances: 3
   max_workers: 10
 swarm:
-  enable: false
+  enabled: true
 ui:
   cors_enabled: true
   debug_mode: true
