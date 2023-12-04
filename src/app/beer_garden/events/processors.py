@@ -128,8 +128,7 @@ class FanoutProcessor(QueueListener):
 
 
 class EventProcessor(FanoutProcessor):
-    """Class responsible for coordinating Event processing
-    """
+    """Class responsible for coordinating Event processing"""
 
     def put(self, event: Event, skip_checked: bool = False):
         """Put a new item on the queue to be processed
@@ -137,18 +136,22 @@ class EventProcessor(FanoutProcessor):
         Args:
             event: New Event
         """
-        
+
         # Check if event should be published to Rabbit
-        if not skip_checked and (event.name in (
-            Events.REQUEST_COMPLETED.name,
-            Events.REQUEST_UPDATED.name,
-            Events.REQUEST_CANCELED.name,
-            Events.SYSTEM_CREATED.name,
-            Events.SYSTEM_UPDATED.name,
-            Events.SYSTEM_REMOVED.name,
-            Events.GARDEN_UPDATED.name,
-            Events.GARDEN_REMOVED.name,
-        ) or (Events.GARDEN_SYNC.name and event.garden != config.get("garden.name"))):
+        if not skip_checked and (
+            event.name
+            in (
+                Events.REQUEST_COMPLETED.name,
+                Events.REQUEST_UPDATED.name,
+                Events.REQUEST_CANCELED.name,
+                Events.SYSTEM_CREATED.name,
+                Events.SYSTEM_UPDATED.name,
+                Events.SYSTEM_REMOVED.name,
+                Events.GARDEN_UPDATED.name,
+                Events.GARDEN_REMOVED.name,
+            )
+            or (Events.GARDEN_SYNC.name and event.garden != config.get("garden.name"))
+        ):
             try:
                 put_event(event)
             except:
@@ -156,6 +159,6 @@ class EventProcessor(FanoutProcessor):
                 self._queue.put(event)
         else:
             self._queue.put(event)
-    
+
     def put_queue(self, event: Event):
         self._queue.put(event)

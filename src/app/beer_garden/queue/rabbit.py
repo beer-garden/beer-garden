@@ -26,6 +26,7 @@ consumers = {}
 internal_events_queue = "internal.events"
 internal_events_keys = ["internal", "internal.events"]
 
+
 def check_connection(connection_name: str):
     return clients[connection_name].is_alive()
 
@@ -53,8 +54,8 @@ def create_clients(mq_config):
         ),
     }
 
-def setup_event_consumer(mq_config):
 
+def setup_event_consumer(mq_config):
     logger.debug("Setting up Events Topic...")
     setup_events_topic()
 
@@ -64,18 +65,18 @@ def setup_event_consumer(mq_config):
         "user": mq_config.connections.message.user,
         "password": mq_config.connections.message.password,
         "virtual_host": mq_config.virtual_host,
-        "ssl": mq_config.connections.message.ssl
+        "ssl": mq_config.connections.message.ssl,
     }
 
     logger.debug("Setting up Events Consumer...")
     consumers["events"] = EventConsumer(name="Event Pika Consumer")
-    consumers["events"].setup(
-        connection_info=connection
-    )
+    consumers["events"].setup(connection_info=connection)
     consumers["events"].start()
+
 
 def shutdown_event_consumer():
     consumers["events"].stop()
+
 
 def initial_setup():
     logger.debug("Verifying message virtual host...")
@@ -87,12 +88,14 @@ def initial_setup():
     logger.debug("Declaring message exchange...")
     clients["pika"].declare_exchange()
 
+
 def setup_events_topic():
     clients["pika"].setup_queue(
         internal_events_queue,
         {"durable": True, "arguments": {"x-max-priority": 1}},
         internal_events_keys,
     )
+
 
 def create(instance: Instance, system: System) -> dict:
     """Create request and admin queues for a given instance
@@ -143,6 +146,7 @@ def create(instance: Instance, system: System) -> dict:
         },
     }
 
+
 def put_event(event: Event, headers: dict = None, **kwargs) -> None:
     """Put a Event on a queue
 
@@ -159,6 +163,7 @@ def put_event(event: Event, headers: dict = None, **kwargs) -> None:
     kwargs["routing_key"] = "admin.events"
 
     clients["pika"].publish(SchemaParser.serialize_event(event), **kwargs)
+
 
 def put(request: Request, headers: dict = None, **kwargs) -> None:
     """Put a Request on a queue
@@ -460,19 +465,19 @@ def get_routing_key(*args, **kwargs):
     """Convenience method for getting the most specific routing key"""
     return get_routing_keys(*args, **kwargs)[-1]
 
+
 class EventConsumer(StoppableThread):
     """Consumers the interfaces with RabbitMQ to listen for internal Events"""
 
-    def setup(
-        self,
-        **kwargs
-    ):
+    def setup(self, **kwargs):
         self.shutdown_event = threading.Event()
-        self.consumer = PikaConsumer(panic_event = self.shutdown_event, queue_name = internal_events_queue, **kwargs)
+        self.consumer = PikaConsumer(
+            panic_event=self.shutdown_event, queue_name=internal_events_queue, **kwargs
+        )
         self.consumer.on_message_callback = self.on_message_received
         self._pool = ThreadPoolExecutor(max_workers=1)
-    
-    def stop(self):        
+
+    def stop(self):
         self.shutdown()
         super().stop()
 
@@ -501,9 +506,7 @@ class EventConsumer(StoppableThread):
 
         event = self._parse(message)
 
-        return self._pool.submit(
-            self.process_message, event
-        )
+        return self._pool.submit(self.process_message, event)
 
     def process_message(self, event):
         """Process a message. Intended to be run on an Executor.
@@ -514,7 +517,7 @@ class EventConsumer(StoppableThread):
         Returns:
             None
         """
-        beer_garden.events.manager.put(event, skip_checked = True)
+        beer_garden.events.manager.put(event, skip_checked=True)
 
     def startup(self):
         """Start the EventConsumer"""
@@ -550,5 +553,3 @@ class EventConsumer(StoppableThread):
                 "Unable to parse message body: {0}. Exception: {1}".format(message, ex)
             )
             raise DiscardMessageException("Error parsing message body")
-
-
