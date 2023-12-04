@@ -253,7 +253,7 @@ class Application(StoppableThread):
         self.logger.debug("Setting up message queues...")
         queue.initial_setup()
 
-        if config.get("swarm.enabled"):
+        if config.get("replication.enabled"):
             self.logger.debug("Setting up message queues...")
             queue.setup_event_consumer(config.get("mq"))
 
