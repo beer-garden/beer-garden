@@ -151,6 +151,8 @@ plugin:
       fallback_level: INFO
   status_heartbeat: 5
   status_timeout: 30
+replication:
+  enabled: false
 request_validation:
   dynamic_choices:
     command:
@@ -163,8 +165,6 @@ scheduler:
     coalesce: true
     max_instances: 3
   max_workers: 10
-swarm:
-  enabled: true
 ui:
   cors_enabled: true
   debug_mode: true

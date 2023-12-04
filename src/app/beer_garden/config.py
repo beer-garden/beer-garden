@@ -1502,13 +1502,13 @@ _REQUEST_VALIDATION_SPEC = {
     },
 }
 
-_SWARM_SPEC = {
+_REPLICATION_SPEC = {
     "type": "dict",
     "items": {
         "enabled": {
             "type": "bool",
             "default": True,
-            "description": "Publish events to Rabbit to allow all Gardens to stay in sync in swarm",
+            "description": "Publish subset of events to Rabbit to allow all Gardens to stay in sync when replicated",
         },
     },
 }
@@ -1526,6 +1526,6 @@ _SPECIFICATION = {
     "plugin": _PLUGIN_SPEC,
     "request_validation": _REQUEST_VALIDATION_SPEC,
     "scheduler": _SCHEDULER_SPEC,
-    "swarm": _SWARM_SPEC,
+    "replication": _REPLICATION_SPEC,
     "ui": _UI_SPEC,
 }
