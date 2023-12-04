@@ -5,12 +5,7 @@ from queue import Empty
 import beer_garden.config as config
 from brewtils.models import Event, Events
 from brewtils.stoppable_thread import StoppableThread
-from brewtils.schema_parser import SchemaParser
 from beer_garden.queue.rabbit import put_event
-from pika.spec import PERSISTENT_DELIVERY_MODE
-import threading
-
-from concurrent.futures.thread import ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -154,7 +149,7 @@ class EventProcessor(FanoutProcessor):
         ):
             try:
                 put_event(event)
-            except:
+            except Exception:
                 self.logger.error(f"Failed to publish Event: {event} to PIKA")
                 self._queue.put(event)
         else:

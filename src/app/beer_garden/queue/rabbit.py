@@ -6,7 +6,7 @@ from typing import List
 
 import pyrabbit2.api
 import pyrabbit2.http
-from brewtils.errors import NotFoundError
+from brewtils.errors import DiscardMessageException, NotFoundError
 from brewtils.models import Instance, Request, System, Event
 from brewtils.pika import TransientPikaClient, PikaConsumer
 from brewtils.schema_parser import SchemaParser
