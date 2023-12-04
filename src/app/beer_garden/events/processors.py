@@ -132,6 +132,7 @@ class EventProcessor(FanoutProcessor):
 
         Args:
             event: New Event
+            skip_check: Flag to skip Event Name checks for routing
         """
 
         # Check if event should be published to Rabbit
