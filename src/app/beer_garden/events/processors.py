@@ -2,9 +2,11 @@
 import logging
 from multiprocessing import Queue
 from queue import Empty
-import beer_garden.config as config
+
 from brewtils.models import Event, Events
 from brewtils.stoppable_thread import StoppableThread
+
+import beer_garden.config as config
 from beer_garden.queue.rabbit import put_event
 
 logger = logging.getLogger(__name__)
