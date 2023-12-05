@@ -4,6 +4,7 @@
 
 TBD
 
+- When Beer-Garden is replicated, publishes required events to RabbitMQ keep the environments in sync.
 - On Request Index page, the prefix NOT is supported to invert string query or search for empty strings. 
 - Adding "?showNav=false" to the end of any UI page will remove the navigation bar
 

@@ -3,7 +3,11 @@ import logging
 from multiprocessing import Queue
 from queue import Empty
 
+from brewtils.models import Event, Events
 from brewtils.stoppable_thread import StoppableThread
+
+import beer_garden.config as config
+from beer_garden.queue.rabbit import put_event
 
 logger = logging.getLogger(__name__)
 
@@ -118,3 +122,41 @@ class FanoutProcessor(QueueListener):
 
         if manage:
             self._managed_processors.append(processor)
+
+
+class EventProcessor(FanoutProcessor):
+    """Class responsible for coordinating Event processing"""
+
+    def put(self, event: Event, skip_checked: bool = False):
+        """Put a new item on the queue to be processed
+
+        Args:
+            event: New Event
+            skip_check: Flag to skip Event Name checks for routing
+        """
+
+        # Check if event should be published to Rabbit
+        if not skip_checked and (
+            event.name
+            in (
+                Events.REQUEST_COMPLETED.name,
+                Events.REQUEST_UPDATED.name,
+                Events.REQUEST_CANCELED.name,
+                Events.SYSTEM_CREATED.name,
+                Events.SYSTEM_UPDATED.name,
+                Events.SYSTEM_REMOVED.name,
+                Events.GARDEN_UPDATED.name,
+                Events.GARDEN_REMOVED.name,
+            )
+            or (Events.GARDEN_SYNC.name and event.garden != config.get("garden.name"))
+        ):
+            try:
+                put_event(event)
+            except Exception:
+                self.logger.error(f"Failed to publish Event: {event} to PIKA")
+                self._queue.put(event)
+        else:
+            self._queue.put(event)
+
+    def put_queue(self, event: Event):
+        self._queue.put(event)

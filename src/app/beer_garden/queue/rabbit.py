@@ -2,14 +2,17 @@
 import logging
 import random
 import string
+import threading
+from concurrent.futures.thread import ThreadPoolExecutor
 from typing import List
 
 import pyrabbit2.api
 import pyrabbit2.http
-from brewtils.errors import NotFoundError
-from brewtils.models import Instance, Request, System
-from brewtils.pika import TransientPikaClient
+from brewtils.errors import DiscardMessageException, NotFoundError
+from brewtils.models import Event, Instance, Request, System
+from brewtils.pika import PikaConsumer, TransientPikaClient
 from brewtils.schema_parser import SchemaParser
+from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden.config as config
 import beer_garden.requests
@@ -17,6 +20,10 @@ import beer_garden.requests
 logger = logging.getLogger(__name__)
 
 clients = {}
+consumers = {}
+
+internal_events_queue = "internal.events"
+internal_events_keys = ["internal", "internal.events"]
 
 
 def check_connection(connection_name: str):
@@ -47,6 +54,29 @@ def create_clients(mq_config):
     }
 
 
+def setup_event_consumer(mq_config):
+    logger.debug("Setting up Events Topic...")
+    setup_events_topic()
+
+    connection = {
+        "host": mq_config.host,
+        "port": mq_config.connections.message.port,
+        "user": mq_config.connections.message.user,
+        "password": mq_config.connections.message.password,
+        "virtual_host": mq_config.virtual_host,
+        "ssl": mq_config.connections.message.ssl,
+    }
+
+    logger.debug("Setting up Events Consumer...")
+    consumers["events"] = EventConsumer(name="Event Pika Consumer")
+    consumers["events"].setup(connection_info=connection)
+    consumers["events"].start()
+
+
+def shutdown_event_consumer():
+    consumers["events"].stop()
+
+
 def initial_setup():
     logger.debug("Verifying message virtual host...")
     clients["pyrabbit"].verify_virtual_host()
@@ -56,6 +86,14 @@ def initial_setup():
 
     logger.debug("Declaring message exchange...")
     clients["pika"].declare_exchange()
+
+
+def setup_events_topic():
+    clients["pika"].setup_queue(
+        internal_events_queue,
+        {"durable": True, "arguments": {"x-max-priority": 1}},
+        internal_events_keys,
+    )
 
 
 def create(instance: Instance, system: System) -> dict:
@@ -106,6 +144,24 @@ def create(instance: Instance, system: System) -> dict:
             "connection": connection,
         },
     }
+
+
+def put_event(event: Event, headers: dict = None, **kwargs) -> None:
+    """Put a Event on a queue
+
+    Args:
+        event: The Event to publish
+        headers: Headers to use when publishing
+        **kwargs:
+            Other arguments will be passed to the client publish method
+
+    Returns:
+        None
+    """
+    kwargs["headers"] = headers or {}
+    kwargs["routing_key"] = "admin.events"
+
+    clients["pika"].publish(SchemaParser.serialize_event(event), **kwargs)
 
 
 def put(request: Request, headers: dict = None, **kwargs) -> None:
@@ -407,3 +463,92 @@ def get_routing_keys(*args, **kwargs) -> List[str]:
 def get_routing_key(*args, **kwargs):
     """Convenience method for getting the most specific routing key"""
     return get_routing_keys(*args, **kwargs)[-1]
+
+
+class EventConsumer(StoppableThread):
+    """Consumers the interfaces with RabbitMQ to listen for internal Events"""
+
+    def setup(self, **kwargs):
+        self.shutdown_event = threading.Event()
+        self.consumer = PikaConsumer(
+            panic_event=self.shutdown_event, queue_name=internal_events_queue, **kwargs
+        )
+        self.consumer.on_message_callback = self.on_message_received
+        self._pool = ThreadPoolExecutor(max_workers=1)
+
+    def stop(self):
+        self.shutdown()
+        super().stop()
+
+    def run(self):
+        self.startup()
+
+    def on_message_received(self, message, headers):
+        """Callback function that will be invoked for received messages
+
+        This will attempt to parse the message and then run the parsed Event
+
+        If the event parses cleanly and passes validation it will be submitted to this
+        Event Managers's ThreadPoolExecutor for processing.
+
+        Args:
+            message: The message string
+            headers: The header dictionary
+
+        Returns:
+            A future that will complete when processing finishes
+
+        Raises:
+            DiscardMessageException: The request failed to parse correctly
+            RequestProcessException: Validation failures should raise a subclass of this
+        """
+
+        event = self._parse(message)
+
+        return self._pool.submit(self.process_message, event)
+
+    def process_message(self, event):
+        """Process a message. Intended to be run on an Executor.
+
+        Args:
+            event: The parsed Event
+
+        Returns:
+            None
+        """
+        beer_garden.events.manager.put(event, skip_checked=True)
+
+    def startup(self):
+        """Start the EventConsumer"""
+        self.consumer.start()
+        self.consumer.run()
+
+    def shutdown(self):
+        """Stop the EventConsumer"""
+        self.logger.error("Shutting down Event Consumer")
+        self.shutdown_event.set()
+        self.consumer.stop_consuming()
+        self._pool.shutdown(wait=True)
+        self.consumer.stop()
+        self.consumer.join()
+        self.logger.error("Event Consumer Shutdown")
+
+    def _parse(self, message):
+        """Parse a message using the standard SchemaParser
+
+        Args:
+            message: The raw (json) message body
+
+        Returns:
+            A Event model
+
+        Raises:
+            DiscardMessageException: The event failed to parse correctly
+        """
+        try:
+            return SchemaParser.parse_event(message, from_string=True)
+        except Exception as ex:
+            self.logger.exception(
+                "Unable to parse message body: {0}. Exception: {1}".format(message, ex)
+            )
+            raise DiscardMessageException("Error parsing message body")
