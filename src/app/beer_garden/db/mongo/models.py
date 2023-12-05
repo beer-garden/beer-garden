@@ -243,6 +243,7 @@ class Command(MongoModel, EmbeddedDocument):
     hidden = BooleanField()
     icon_name = StringField()
     metadata = DictField()
+    tags = ListField(field=StringField())
     topics = ListField(field=StringField())
     allow_any_kwargs = BooleanField(default=False)
 
