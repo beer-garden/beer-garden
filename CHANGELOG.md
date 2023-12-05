@@ -2,7 +2,7 @@
 
 # 3.21.0
 
-TBD
+12/05/2023
 
 - When Beer-Garden is replicated, publishes required events to RabbitMQ keep the environments in sync.
 - On Request Index page, the prefix NOT is supported to invert string query or search for empty strings. 
