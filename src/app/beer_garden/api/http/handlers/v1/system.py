@@ -181,7 +181,7 @@ class SystemAPI(AuthorizationHandler):
                     "/icon_name",
                     "/display_name",
                     "/template",
-                    "/groups", 
+                    "/groups",
                 ]:
                     kwargs[op.path.strip("/")] = op.value
                 else:
