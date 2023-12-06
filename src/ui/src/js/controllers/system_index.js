@@ -71,6 +71,11 @@ export default function systemIndexController(
           type: 'number',
           attr: {class: 'form-inline form-control', title: 'Instances Filter'},
         },
+        6: {
+          html: 'input',
+          type: 'text',
+          attr: {class: 'form-inline form-control', title: 'Group Filter'},
+        },
       })
       .withBootstrap();
 
