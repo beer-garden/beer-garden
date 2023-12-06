@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+# 3.22.0
+
+TBD
+
+- Add support for commands to have tags, used for filtering on the commands index page
+- Upgraded Brewtils version to [3.22.0](https://github.com/beer-garden/brewtils/releases/tag/3.22.0)
+
 # 3.21.0
 
 12/05/2023

@@ -66,7 +66,7 @@ export default function commandIndexController(
     $('#commandIndexTable').on('length.dt', (event, settings, len) => {
       localStorageService.set('_command_index_length', len);
     });
-  };
+  }; 
 
   $scope.hiddenComparator = function(hidden, checkbox) {
     return checkbox || !hidden;
@@ -134,6 +134,7 @@ export default function commandIndexController(
           version: system.version,
           description: command.description || 'No Description Provided',
           topics: command.topics || [],
+          tags: command.tags || [],
         });
       });
     });
