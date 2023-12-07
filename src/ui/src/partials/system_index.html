@@ -20,6 +20,7 @@
           <th scope="col">Description</th>
           <th scope="col">Commands</th>
           <th scope="col">Instances</th>
+          <th scope="col" ng-if="hasGroups">Groups</th>
           <th scope="col"></th>
         </tr>
       </thead>
@@ -31,6 +32,7 @@
           <td>{{system.description || "No Description Provided" }}</td>
           <td>{{system.commands.length}}</td>
           <td>{{system.instances.length}}</td>
+          <td ng-if="hasGroups">{{system.groups.join(", ")}}</td>
           <td>
             <a
               ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})"

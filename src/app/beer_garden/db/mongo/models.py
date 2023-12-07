@@ -593,6 +593,7 @@ class System(MongoModel, Document):
     metadata = DictField()
     local = BooleanField(default=True)
     template = StringField()
+    groups = ListField(field=StringField())
 
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves
