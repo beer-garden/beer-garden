@@ -122,5 +122,4 @@ export default function systemIndexController(
   $scope.data = $rootScope.systems;
   $scope.checkGroups();
 
-  
 }
