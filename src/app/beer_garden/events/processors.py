@@ -137,18 +137,11 @@ class EventProcessor(FanoutProcessor):
 
         # Check if event should be published to Rabbit
         if not skip_checked and (
-            event.name
-            in (
-                Events.REQUEST_COMPLETED.name,
-                Events.REQUEST_UPDATED.name,
-                Events.REQUEST_CANCELED.name,
-                Events.SYSTEM_CREATED.name,
-                Events.SYSTEM_UPDATED.name,
-                Events.SYSTEM_REMOVED.name,
-                Events.GARDEN_UPDATED.name,
-                Events.GARDEN_REMOVED.name,
+            event.name != Events.GARDEN_SYNC.name
+            or (
+                event.name == Events.GARDEN_SYNC.name
+                and event.garden != config.get("garden.name")
             )
-            or (Events.GARDEN_SYNC.name and event.garden != config.get("garden.name"))
         ):
             try:
                 put_event(event)
