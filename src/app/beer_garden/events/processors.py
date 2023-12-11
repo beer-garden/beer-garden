@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 import logging
+import uuid
 from multiprocessing import Queue
 from queue import Empty
 
-from brewtils.models import Event, Events
-from brewtils.stoppable_thread import StoppableThread
-
 import beer_garden.config as config
 from beer_garden.queue.rabbit import put_event
-
-import uuid
+from brewtils.models import Event, Events
+from brewtils.stoppable_thread import StoppableThread
 
 logger = logging.getLogger(__name__)
 
@@ -156,7 +154,10 @@ class EventProcessor(FanoutProcessor):
             except Exception:
                 self.logger.error(f"Failed to publish Event: {event} to PIKA")
                 self._queue.put(event)
-        elif "_source_uuid" not in event.metadata or event.metadata["_source_uuid"] != self.uuid:
+        elif (
+            "_source_uuid" not in event.metadata
+            or event.metadata["_source_uuid"] != self.uuid
+        ):
             self._queue.put(event)
 
     def put_queue(self, event: Event):
