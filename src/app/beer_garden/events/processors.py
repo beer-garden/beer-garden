@@ -156,10 +156,7 @@ class EventProcessor(FanoutProcessor):
             except Exception:
                 self.logger.error(f"Failed to publish Event: {event} to PIKA")
                 self._queue.put(event)
-        elif (
-            "_source_uuid" not in event.metadata
-            or event.metadata["_source_uuid"] != self.uuid
-        ):
+        elif "_source_uuid" not in event.metadata or event.metadata["_source_uuid"] != self.uuid:
             self._queue.put(event)
 
     def put_queue(self, event: Event):
