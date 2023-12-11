@@ -4,7 +4,7 @@
 
 TBD
 
-- Updating Replication to mirror all events, minus child garden sync requests.
+- Replication of all events, when configured, except for Garden Sync events. Garden sync events spawn off additional events that will be replicated properly.
 - Add support for commands to have tags, used for filtering on the commands index page
 - Upgraded Brewtils version to [3.22.0](https://github.com/beer-garden/brewtils/releases/tag/3.22.0)
 
