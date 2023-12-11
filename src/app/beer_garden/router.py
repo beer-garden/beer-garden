@@ -668,10 +668,13 @@ def _system_name_lookup(system: Union[str, System]) -> str:
                         with routing_lock:
                             # Then add routes to systems
                             add_routing_system(system=system, garden_name=garden.name)
-                        logger.error("Router mapping is out of sync, you should consider re-syncing")
+                        logger.error(
+                            "Router mapping is out of sync, you should consider re-syncing"
+                        )
                         return garden.name
 
     return None
+
 
 def _system_id_lookup(system_id: str) -> str:
     with routing_lock:
