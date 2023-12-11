@@ -23,13 +23,15 @@ db:
   name: beer_garden
   ttl:
     action: -1
-    admin: -1
-    batch_size: -1
     file: 15
     in_progress: 15
-    info: 15
-    multithread: false
+    info: 15   
     temp: 15
+    admin: -1
+
+    batch_size: -1
+    multithread: false
+    
 entry:
   http:
     enabled: true

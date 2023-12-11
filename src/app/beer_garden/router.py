@@ -650,7 +650,30 @@ def _target_from_type(operation: Operation) -> str:
 
 def _system_name_lookup(system: Union[str, System]) -> str:
     with routing_lock:
-        return system_name_routes.get(str(system))
+        route = system_name_routes.get(str(system))
+
+    if route:
+        return route
+    else:
+        # If we don't know about the route, attempt to find it and update the routing table
+        systems = beer_garden.systems.get_systems(
+            namespace=system.namespace,
+            name=system.name,
+            version=system.version,
+        )
+        if len(systems) == 1:
+            for garden in get_gardens():
+                for system in garden.systems:
+                    if systems[0].id == system.id:
+                        with routing_lock:
+                            # Then add routes to systems
+                            add_routing_system(system=system, garden_name=garden.name)
+                        logger.error(
+                            "Router mapping is out of sync, you should consider re-syncing"
+                        )
+                        return garden.name
+
+    return None
 
 
 def _system_id_lookup(system_id: str) -> str:

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+import uuid
 from multiprocessing import Queue
 from queue import Empty
 
@@ -127,6 +128,10 @@ class FanoutProcessor(QueueListener):
 class EventProcessor(FanoutProcessor):
     """Class responsible for coordinating Event processing"""
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.uuid = str(uuid.uuid4())
+
     def put(self, event: Event, skip_checked: bool = False):
         """Put a new item on the queue to be processed
 
@@ -137,25 +142,23 @@ class EventProcessor(FanoutProcessor):
 
         # Check if event should be published to Rabbit
         if not skip_checked and (
-            event.name
-            in (
-                Events.REQUEST_COMPLETED.name,
-                Events.REQUEST_UPDATED.name,
-                Events.REQUEST_CANCELED.name,
-                Events.SYSTEM_CREATED.name,
-                Events.SYSTEM_UPDATED.name,
-                Events.SYSTEM_REMOVED.name,
-                Events.GARDEN_UPDATED.name,
-                Events.GARDEN_REMOVED.name,
+            event.name != Events.GARDEN_SYNC.name
+            or (
+                event.name == Events.GARDEN_SYNC.name
+                and event.garden != config.get("garden.name")
             )
-            or (Events.GARDEN_SYNC.name and event.garden != config.get("garden.name"))
         ):
             try:
+                event.metadata["_source_uuid"] = self.uuid
                 put_event(event)
+                self._queue.put(event)
             except Exception:
                 self.logger.error(f"Failed to publish Event: {event} to PIKA")
                 self._queue.put(event)
-        else:
+        elif (
+            "_source_uuid" not in event.metadata
+            or event.metadata["_source_uuid"] != self.uuid
+        ):
             self._queue.put(event)
 
     def put_queue(self, event: Event):
