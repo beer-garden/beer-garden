@@ -9,6 +9,8 @@ from brewtils.stoppable_thread import StoppableThread
 import beer_garden.config as config
 from beer_garden.queue.rabbit import put_event
 
+import uuid
+
 logger = logging.getLogger(__name__)
 
 
@@ -127,6 +129,10 @@ class FanoutProcessor(QueueListener):
 class EventProcessor(FanoutProcessor):
     """Class responsible for coordinating Event processing"""
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.uuid = str(uuid.uuid4())
+
     def put(self, event: Event, skip_checked: bool = False):
         """Put a new item on the queue to be processed
 
@@ -144,11 +150,16 @@ class EventProcessor(FanoutProcessor):
             )
         ):
             try:
+                event.metadata["_source_uuid"] = self.uuid
                 put_event(event)
+                self._queue.put(event)
             except Exception:
                 self.logger.error(f"Failed to publish Event: {event} to PIKA")
                 self._queue.put(event)
-        else:
+        elif (
+            "_source_uuid" not in event.metadata
+            or event.metadata["_source_uuid"] != self.uuid
+        ):
             self._queue.put(event)
 
     def put_queue(self, event: Event):
