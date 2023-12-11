@@ -20,7 +20,7 @@ TBD
 
 11/16/2023
 
-- Adds the ability to delete Requests by Plugin on the System Admin page wihtin the plugin sub-menu. These are local deletes only
+- Adds the ability to delete Requests by Plugin on the System Admin page within the plugin sub-menu. These are local deletes only
 - Adds Is Alive check for Entry Points, if sub process is killed externally then it is restarted
 - Add error handling if Subscriber Request has exception at creation
 - Updates request validation to support allow_any_kwargs on commands
