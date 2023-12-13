@@ -243,7 +243,7 @@ def publish_status_update(instance: Instance):
             name=Events.REQUEST_TOPIC_PUBLISH.name,
             metadata={
                 "topic": "{0}.{1}.{2}.{3}".format(
-                    system.namespace or "",
+                    system.namespace,
                     system.name,
                     system.version,
                     instance.name,
