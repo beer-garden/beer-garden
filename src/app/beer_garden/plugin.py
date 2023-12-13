@@ -227,6 +227,7 @@ def update(
 
     return system.get_instance_by_name(instance.name)
 
+
 def publish_status_update(instance: Instance):
     """Publish event of Instance status.
 
@@ -234,9 +235,7 @@ def publish_status_update(instance: Instance):
         instance: The Instance
 
     """
-    system, instance = _from_kwargs(
-        instance=instance, instance_id=instance.id
-    )
+    system, instance = _from_kwargs(instance=instance, instance_id=instance.id)
 
     # Publish event for plugins to monitor the status of other plugins
     publish(
@@ -248,7 +247,7 @@ def publish_status_update(instance: Instance):
                     system.name,
                     system.version,
                     instance.name,
-                    ),
+                ),
                 "propagate": False,
                 "regex_only": False,
             },
@@ -266,6 +265,7 @@ def publish_status_update(instance: Instance):
             payload_type="Request",
         )
     )
+
 
 def heartbeat(
     instance_id: str = None,
@@ -486,7 +486,7 @@ def handle_event(event: Event) -> None:
     Args:
         event: The event to handle
     """
-    
+
     if event.name == Events.INSTANCE_UPDATED.name:
         if not event.payload_type:
             logger.error(f"{event.name} error: no payload type ({event!r})")
