@@ -235,7 +235,7 @@ def publish_status_update(instance: Instance):
         instance: The Instance
 
     """
-    system, instance = _from_kwargs(instance=instance, instance_id=instance.id)
+    system, instance = _from_kwargs(instance_id=instance.id)
 
     # Publish event for plugins to monitor the status of other plugins
     publish(
