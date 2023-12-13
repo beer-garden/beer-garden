@@ -2,7 +2,7 @@
 
 # 3.22.0
 
-TBD
+12/13/2023
 
 - Replication of all events, when configured, except for Garden Sync events. Garden sync events spawn off additional events that will be replicated properly.
 - Add support for commands to have tags, used for filtering on the commands index page
