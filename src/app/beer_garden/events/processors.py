@@ -141,11 +141,15 @@ class EventProcessor(FanoutProcessor):
         """
 
         # Check if event should be published to Rabbit
-        if not skip_checked and (
-            event.name != Events.GARDEN_SYNC.name
-            or (
-                event.name == Events.GARDEN_SYNC.name
-                and event.garden != config.get("garden.name")
+        if (
+            not skip_checked
+            and event.name != Events.REQUEST_TOPIC_PUBLISH.name
+            and (
+                event.name != Events.GARDEN_SYNC.name
+                or (
+                    event.name == Events.GARDEN_SYNC.name
+                    and event.garden != config.get("garden.name")
+                )
             )
         ):
             try:

@@ -34,7 +34,7 @@ import beer_garden.local_plugins.manager as lpm
 import beer_garden.queue.api as queue
 import beer_garden.requests as requests
 from beer_garden.errors import NotFoundException
-from beer_garden.events import publish_event, publish_event_async
+from beer_garden.events import publish, publish_event, publish_event_async
 
 logger = logging.getLogger(__name__)
 
@@ -226,6 +226,45 @@ def update(
     system = db.modify(system, query={"instances__name": instance.name}, **updates)
 
     return system.get_instance_by_name(instance.name)
+
+
+def publish_status_update(instance: Instance):
+    """Publish event of Instance status.
+
+    Args:
+        instance: The Instance
+
+    """
+    system, instance = _from_kwargs(instance=instance, instance_id=instance.id)
+
+    # Publish event for plugins to monitor the status of other plugins
+    publish(
+        Event(
+            name=Events.REQUEST_TOPIC_PUBLISH.name,
+            metadata={
+                "topic": "{0}.{1}.{2}.{3}".format(
+                    system.namespace,
+                    system.name,
+                    system.version,
+                    instance.name,
+                ),
+                "propagate": False,
+                "regex_only": False,
+            },
+            payload=Request(
+                parameters={
+                    "message": {
+                        "status": instance.status,
+                        "namespace": system.namespace,
+                        "system": system.name,
+                        "version": system.version,
+                        "instance": instance.name,
+                    }
+                },
+            ),
+            payload_type="Request",
+        )
+    )
 
 
 def heartbeat(
@@ -447,12 +486,13 @@ def handle_event(event: Event) -> None:
     Args:
         event: The event to handle
     """
-    if event.garden != config.get("garden.name"):
-        if event.name == Events.INSTANCE_UPDATED.name:
-            if not event.payload_type:
-                logger.error(f"{event.name} error: no payload type ({event!r})")
-                return
 
+    if event.name == Events.INSTANCE_UPDATED.name:
+        if not event.payload_type:
+            logger.error(f"{event.name} error: no payload type ({event!r})")
+            return
+
+        if event.garden != config.get("garden.name"):
             try:
                 update(
                     instance_id=event.payload.id,
@@ -461,6 +501,8 @@ def handle_event(event: Event) -> None:
                 )
             except Exception as ex:
                 logger.error(f"{event.name} error: {ex} ({event!r})")
+        else:
+            publish_status_update(event.payload)
 
 
 class StatusMonitor(StoppableThread):
