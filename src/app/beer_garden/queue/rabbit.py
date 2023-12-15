@@ -53,6 +53,20 @@ def create_clients(mq_config):
         ),
     }
 
+def create_fanout_client(mq_config):
+    clients["pika_fanout"] = TransientPikaClient(
+            host=mq_config.host,
+            port=mq_config.connections.message.port,
+            ssl=mq_config.connections.message.ssl,
+            user=mq_config.connections.admin.user,
+            password=mq_config.connections.admin.password,
+            virtual_host=mq_config.virtual_host,
+            connection_attempts=mq_config.connection_attempts,
+            blocked_connection_timeout=mq_config.blocked_connection_timeout,
+            exchange=f"{mq_config.exchange}_fanout",
+            exchange_type="fanout"
+        )
+
 
 def setup_event_consumer(mq_config):
     logger.debug("Setting up Events Topic...")
@@ -87,9 +101,12 @@ def initial_setup():
     logger.debug("Declaring message exchange...")
     clients["pika"].declare_exchange()
 
+    if "pika_fanout" in clients:
+        clients["pika_fanout"].declare_exchange()
+
 
 def setup_events_topic():
-    clients["pika"].setup_queue(
+    clients["pika_fanout"].setup_queue(
         internal_events_queue,
         {"durable": True, "arguments": {"x-max-priority": 1}},
         internal_events_keys,
@@ -161,7 +178,7 @@ def put_event(event: Event, headers: dict = None, **kwargs) -> None:
     kwargs["headers"] = headers or {}
     kwargs["routing_key"] = "admin.events"
 
-    clients["pika"].publish(SchemaParser.serialize_event(event), **kwargs)
+    clients["pika_fanout"].publish(SchemaParser.serialize_event(event), **kwargs)
 
 
 def put(request: Request, headers: dict = None, **kwargs) -> None:
