@@ -19,7 +19,7 @@ services:
         deploy:
             mode: replicated
             replicas: 3
-            endpoint_mode: vip
+            endpoint_mode: dnsrr
         networks:
             - bg-network
         ports:
