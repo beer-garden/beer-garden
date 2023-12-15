@@ -35,6 +35,8 @@ services:
             BG_PARENT_HTTP_ENABLE: "false"
             BG_PARENT_HTTP_HOST: localhost
 
+            BG_REPLICATION_ENABLED: "true"
+
             # Point at the correct database
             BG_DB_HOST: mongodb
             BG_DB_NAME: beer_garden_v3
