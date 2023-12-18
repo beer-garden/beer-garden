@@ -96,6 +96,10 @@ services:
         command: ["sleeper_solo"]
         <<: *plugin
 
+    subscribe:
+        command: ["subscribe_multiple_topics", "subscrib_one_topics", "subscribe_wildcard_topics"]
+        <<: *plugin
+
 networks:
     bg-network:
         name: bg-network
