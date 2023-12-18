@@ -232,6 +232,10 @@ jobs:
           docker build -t bgio/beer-garden:unstable -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:${{ matrix.python-version }}-alpine .
         working-directory: ./src/app
 
+      - name: Update Docker Compose
+        run: cp test/conf/docker-compose.yml docker/docker-compose/docker-compose.yml
+        working-directory: ./
+
       - name: Checkout Local Plugins
         uses: actions/checkout@v2
         with:
