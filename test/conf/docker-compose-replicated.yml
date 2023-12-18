@@ -1,4 +1,4 @@
-version: '3.6'
+version: '3.8'
 
 x-definitions: &env
     # IMPORTANT!!
@@ -20,7 +20,7 @@ services:
         deploy:
             mode: replicated
             replicas: 3
-            endpoint_mode: dnsrr
+            #endpoint_mode: dnsrr
         networks:
             - bg-network
         ports:
