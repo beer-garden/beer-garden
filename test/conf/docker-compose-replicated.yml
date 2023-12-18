@@ -18,7 +18,9 @@ services:
         image: bgio/beer-garden:$BG
         hostname: beergarden{{.Task.Slot}}
         deploy:
-            mode: replicated
+            restart_policy:
+                condition: any
+            #mode: replicated
             replicas: 3
             #endpoint_mode: dnsrr
         networks:
