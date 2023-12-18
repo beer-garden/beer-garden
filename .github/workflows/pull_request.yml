@@ -348,7 +348,7 @@ jobs:
         shell: bash
 
       - name: Run Docker Beer Garden
-        run: BG='unstable' docker compose up -d beer-garden
+        run: BG='unstable' docker stack deploy -c docker/docker-compose/docker-compose.yml beer-garden
         working-directory: ./docker/docker-compose
 
       - name: Wait for Beer Garden to start
