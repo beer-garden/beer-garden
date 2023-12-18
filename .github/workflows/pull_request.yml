@@ -351,7 +351,7 @@ jobs:
         shell: bash
 
       - name: Run Docker Beer Garden
-        run: BG='unstable' docker stack deploy -c docker-compose-replicated.yml beer-garden
+        run: docker stack deploy -c docker-compose-replicated.yml beer-garden
         working-directory: ./test/conf/
 
       - name: Check names
