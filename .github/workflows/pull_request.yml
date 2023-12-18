@@ -350,12 +350,15 @@ jobs:
         run: docker stack deploy -c docker-compose-framework.yml beer-garden
         working-directory: ./test/conf/swarm/
 
-      - name: Check names
-        run: docker service ls
-
       - name: Wait for Beer Garden to start
         run: sleep 60s
         shell: bash
+
+      - name: Check names
+        run: docker service ls
+
+      - name: List All
+        run: docker ps
 
       - name: Grab logs from Beer-Garden
         run: docker service logs --tail 100 beer-garden_beer-garden
