@@ -383,6 +383,9 @@ jobs:
       - name: Check services
         run: docker service ls
 
+      - name: Check One Plugin
+        run: docker service ps --no-trunc beer-plugins_child
+
       # - name: Grab logs from Beer-Garden
       #   run: BG='unstable' docker compose logs --tail 100 beer-garden
       #   working-directory: ./docker/docker-compose
