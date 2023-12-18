@@ -5,7 +5,7 @@ x-definitions: &common-env
     # Comment this out when using the "secure" compose file
     BG_SSL_ENABLED: "False"
 
-    BG_HOST: localhost
+    BG_HOST: beer-garden
     BG_CA_CERT: /certs/ca_certificate.pem
 
 x-definitions: &complex-env
