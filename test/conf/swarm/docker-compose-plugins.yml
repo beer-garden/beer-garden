@@ -14,8 +14,15 @@ x-definitions: &complex-env
 
 x-definitions: &plugin
     image: bgio/example-plugins
-    network_mode: host
+    networks:
+        - bg-network
+        - rabbit
+        - mongo
     stop_signal: SIGINT
+    deploy:
+        restart_policy:
+            condition: any
+        replicas: 1
     volumes:
         - ../data/certs/ca_certificate.pem:/certs/ca_certificate.pem
     environment:
@@ -84,3 +91,14 @@ services:
     sleeper-solo:
         command: ["sleeper_solo"]
         <<: *plugin
+
+networks:
+    bg-network:
+        name: bg-network
+        external: true
+    rabbit:
+        name: rabbit
+        external: true
+    mongo:
+        name: mongo
+        external: true

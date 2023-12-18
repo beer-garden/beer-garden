@@ -232,8 +232,8 @@ jobs:
           docker build -t bgio/beer-garden:unstable -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:${{ matrix.python-version }}-alpine .
         working-directory: ./src/app
 
-      - name: Update Docker Compose
-        run: cp test/conf/docker-compose.yml docker/docker-compose/docker-compose.yml
+      - name: Copy Data Files
+        run: cp -r docker/docker-compose/data test/conf/swarm/data
         working-directory: ./
 
       - name: Checkout Local Plugins
