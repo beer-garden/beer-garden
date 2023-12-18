@@ -85,7 +85,7 @@ services:
         <<: *plugin
 
     publisher:
-        command: ["publish_topics"]
+        command: ["publisher"]
         <<: *plugin
 
     sleeper:
@@ -97,7 +97,7 @@ services:
         <<: *plugin
 
     subscribe:
-        command: ["subscribe_multiple_topics", "subscrib_one_topics", "subscribe_wildcard_topics"]
+        command: ["subscribe"]
         <<: *plugin
 
 networks:
