@@ -13,8 +13,9 @@ services:
             - rabbit
             - mongo
         ports:
-            - "2337:2337"
-            - "2338:2338"
+            - target: 2337
+              published: 2337
+              mode: host
 
         volumes:
             - ./data/logging-config.yaml:/src/example_configs/logging-config.yaml
