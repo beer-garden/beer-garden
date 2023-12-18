@@ -387,11 +387,11 @@ jobs:
       - name: Check services
         run: docker service ls
 
-      - name: Check One Plugin
-        run: docker service ps --no-trunc beer-plugins_child
+      - name: Check Publisher
+        run: docker service ps --no-trunc beer-plugins_publisher
       
-      - name: Grab logs from Beer-Garden
-        run: docker service logs --tail 100 beer-plugins_child
+      - name: Grab logs from Publisher
+        run: docker service logs --tail 100 beer-plugins_publisher
 
       # - name: Grab logs from Beer-Garden
       #   run: BG='unstable' docker compose logs --tail 100 beer-garden
