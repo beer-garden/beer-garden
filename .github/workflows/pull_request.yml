@@ -347,6 +347,9 @@ jobs:
         run: sleep 20s
         shell: bash
 
+      - name: Start Docker Swarm
+        run: docker swarm init
+
       - name: Run Docker Beer Garden
         run: BG='unstable' docker stack deploy -c docker-compose.yml beer-garden
         working-directory: ./docker/docker-compose
