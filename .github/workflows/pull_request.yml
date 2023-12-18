@@ -355,7 +355,7 @@ jobs:
         working-directory: ./test/conf/swarm/
 
       - name: Wait for Beer Garden to start
-        run: sleep 60s
+        run: sleep 30s
         shell: bash
 
       - name: Check services
