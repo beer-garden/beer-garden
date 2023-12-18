@@ -19,7 +19,7 @@ services:
             - ./data/localplugins:/plugins
 
         healthcheck:
-            test: ["curl", "http://localhost:2337/config"]
+            test: ["CMD", "curl", "http://localhost:2337/config"]
             start_period: 5s
 
         environment:
