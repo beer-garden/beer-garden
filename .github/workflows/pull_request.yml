@@ -347,7 +347,7 @@ jobs:
         working-directory: ./
       
       - name: Check Data Files
-        run: ls test/conf/swarm/data/
+        run: ls test/conf/swarm/data/certs/
         working-directory: ./
 
       - name: Run Docker Beer Garden
