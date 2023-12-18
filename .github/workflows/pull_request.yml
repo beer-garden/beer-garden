@@ -342,7 +342,7 @@ jobs:
         run: sleep 20s
         shell: bash
 
-       - name: Copy Data Files
+      - name: Copy Data Files
         run: cp -r docker/docker-compose/data test/conf/swarm/data
         working-directory: ./
 
