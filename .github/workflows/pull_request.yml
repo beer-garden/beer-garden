@@ -343,7 +343,11 @@ jobs:
         shell: bash
 
       - name: Copy Data Files
-        run: cp -r docker/docker-compose/data test/conf/swarm/data
+        run: cp -r docker/docker-compose/data test/conf/swarm/
+        working-directory: ./
+      
+      - name: Check Data Files
+        run: ls test/conf/swarm/data/
         working-directory: ./
 
       - name: Run Docker Beer Garden
