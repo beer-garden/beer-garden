@@ -417,6 +417,10 @@ jobs:
         run: python${{ matrix.python-version }} -m pytest local_plugins/plugins/publisher_test.py
         working-directory: ./test/integration
 
+      - name: Grab logs from Beer-Garden
+        if: always()
+        run: docker service logs --tail 100 beer-garden_beer-garden
+
       # - name: Grab logs from Beer-Garden
       #   if: always()
       #   run: BG='unstable' docker compose logs --tail 1000 beer-garden

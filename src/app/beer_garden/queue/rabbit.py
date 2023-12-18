@@ -53,19 +53,20 @@ def create_clients(mq_config):
         ),
     }
 
+
 def create_fanout_client(mq_config):
     clients["pika_fanout"] = TransientPikaClient(
-            host=mq_config.host,
-            port=mq_config.connections.message.port,
-            ssl=mq_config.connections.message.ssl,
-            user=mq_config.connections.admin.user,
-            password=mq_config.connections.admin.password,
-            virtual_host=mq_config.virtual_host,
-            connection_attempts=mq_config.connection_attempts,
-            blocked_connection_timeout=mq_config.blocked_connection_timeout,
-            exchange=f"{mq_config.exchange}_fanout",
-            exchange_type="fanout"
-        )
+        host=mq_config.host,
+        port=mq_config.connections.message.port,
+        ssl=mq_config.connections.message.ssl,
+        user=mq_config.connections.admin.user,
+        password=mq_config.connections.admin.password,
+        virtual_host=mq_config.virtual_host,
+        connection_attempts=mq_config.connection_attempts,
+        blocked_connection_timeout=mq_config.blocked_connection_timeout,
+        exchange=f"{mq_config.exchange}_fanout",
+        exchange_type="fanout",
+    )
 
 
 def setup_event_consumer(mq_config):
