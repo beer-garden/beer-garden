@@ -9,7 +9,9 @@ services:
                 condition: any
             replicas: 3
         networks:
-            - bg-replicated-network
+            - bg-network
+            - rabbit
+            - mongo
         ports:
             - "2337:2337"
             - "2338:2338"
@@ -41,40 +43,44 @@ services:
             BG_MQ_CONNECTIONS_MESSAGE_USER: beer_garden
             BG_MQ_CONNECTIONS_MESSAGE_PASSWORD: password
 
-    # mongodb:
-    #     image: mongo:4.2
-    #     restart: always
-    #     networks:
-    #         - bg-network
-    #     ports:
-    #       - "27017:27017"
-    #     volumes:
-    #         - mongo-data:/data/db
-    #         - mongo-config:/data/configdb
+    mongodb:
+        image: mongo:4.2
+        networks:
+            - mongo
+        ports:
+          - "27017:27017"
+        volumes:
+            - mongo-data:/data/db
+            - mongo-config:/data/configdb
 
-    # rabbitmq:
-    #     image: rabbitmq:3.8-management-alpine
-    #     restart: always
-    #     hostname: rabbitmq
-    #     networks:
-    #         - bg-network
-    #     environment:
-    #         - RABBITMQ_DEFAULT_USER=beer_garden
-    #         - RABBITMQ_DEFAULT_PASS=password
-    #     ports:
-    #         - "5672:5672"
-    #         - "15672:15672"
-    #     volumes:
-    #         - rabbitmq-home:/var/lib/rabbitmq
+    rabbitmq:
+        image: rabbitmq:3.8-management-alpine
+        hostname: rabbitmq
+        networks:
+            - rabbit
+        environment:
+            - RABBITMQ_DEFAULT_USER=beer_garden
+            - RABBITMQ_DEFAULT_PASS=password
+        ports:
+            - "5672:5672"
+            - "15672:15672"
+        volumes:
+            - rabbitmq-home:/var/lib/rabbitmq
 
 networks:
-    bg-replicated-network:
+    bg-network:
         driver: overlay
-        name: bg-replicated-network
+        name: bg-network
+    mongo:
+        driver: overlay
+        name: mongo
+    rabbit:
+        driver: overlay
+        name: rabbit
 
-# volumes:
-#     plugins:
-#     plugin-logs:
-#     mongo-data:
-#     mongo-config:
-#     rabbitmq-home:
+volumes:
+    plugins:
+    plugin-logs:
+    mongo-data:
+    mongo-config:
+    rabbitmq-home:

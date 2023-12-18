@@ -335,20 +335,20 @@ jobs:
           docker build -t bgio/beer-garden:unstable -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:${{ matrix.python-version }}-alpine .
         working-directory: ./src/app
 
-      # - name: Update Docker Compose
-      #   run: cp test/conf/docker-compose-replicated.yml docker/docker-compose/docker-compose.yml
-      #   working-directory: ./
+      - name: Start Docker Swarm
+        run: docker swarm init
 
-      - name: Run Docker Mongodb and RabbitMQ
-        run: docker compose up -d mongodb rabbitmq
+      - name: Run Docker RabbitMQ
+        run: docker stack deploy -c docker-compose-replicated.yml mongodb
+        working-directory: ./test/conf/
+
+      - name: Run Docker Mongodb
+        run: docker stack deploy -c docker-compose-replicated.yml rabbitmq
         working-directory: ./test/conf/
 
       - name: Wait for Mongodb and RabbitMQ to start
         run: sleep 20s
         shell: bash
-
-      - name: Start Docker Swarm
-        run: docker swarm init
 
       - name: Run Docker Beer Garden
         run: BG='unstable' docker stack deploy -c docker-compose-replicated.yml beer-garden
