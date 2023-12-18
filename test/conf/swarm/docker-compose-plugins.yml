@@ -37,12 +37,15 @@ services:
     complex-c1:
         command: ["complex", "c1", "c1-host", "c1-port"]
         environment:
+            BG_INSTANCE_NAME: c1
             <<: [*common-env, *complex-env]
+
         <<: *plugin
 
     complex-c2:
         command: ["complex", "c2", "c2-host", "c2-port"]
         environment:
+            BG_INSTANCE_NAME: c2
             <<: [*common-env, *complex-env]
         <<: *plugin
 
