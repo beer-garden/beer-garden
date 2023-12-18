@@ -325,6 +325,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Check Docker Compose
+        run: docker-compose -v
+        working-directory: ./
+
       - name: Build Local Beer Garden Docker
         run: |
           python --version
