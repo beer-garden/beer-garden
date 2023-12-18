@@ -84,6 +84,10 @@ services:
         command: ["parent"]
         <<: *plugin
 
+    publisher:
+        command: ["publish_topics"]
+        <<: *plugin
+
     sleeper:
         command: ["sleeper"]
         <<: *plugin
