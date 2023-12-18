@@ -7,7 +7,7 @@ services:
         deploy:
             restart_policy:
                 condition: any
-            replicas: 3
+            replicas: 1
         networks:
             - bg-network
             - rabbit
@@ -20,15 +20,15 @@ services:
             - ./data/logging-config.yaml:/src/example_configs/logging-config.yaml
             - ./data/localplugins:/plugins
 
-        healthcheck:
-            test: ["CMD", "curl", "http://localhost:2337/config"]
-            start_period: 60s
+        # healthcheck:
+        #     test: ["CMD", "curl", "http://localhost:2337/config"]
+        #     start_period: 60s
 
         environment:
             TZ: UTC
 
-            BG_GARDEN_NAME: docker-replicated
-            BG_REPLICATION_ENABLED: "true"
+            # BG_GARDEN_NAME: docker-replicated
+            # BG_REPLICATION_ENABLED: "true"
 
             # Point at the correct database
             BG_DB_HOST: mongodb

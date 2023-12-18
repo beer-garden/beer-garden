@@ -1,0 +1,25 @@
+version: 1
+disable_existing_loggers: false
+
+formatters:
+  simple:
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+handlers:
+  beer_garden:
+    class: "logging.StreamHandler"
+    formatter: "simple"
+    level: "INFO"
+    stream: "ext://sys.stdout"
+
+loggers:
+  pika:
+    level: "ERROR"
+  tornado:
+    level: "WARN"
+  requests.packages.urllib3.connectionpool:
+    level: "WARN"
+
+root:
+  level: "INFO"
+  handlers: ["beer_garden"]
