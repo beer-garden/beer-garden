@@ -1,0 +1,86 @@
+version: '3.5'
+
+x-definitions: &common-env
+    # IMPORTANT!!
+    # Comment this out when using the "secure" compose file
+    BG_SSL_ENABLED: "False"
+
+    BG_HOST: localhost
+    BG_CA_CERT: /certs/ca_certificate.pem
+
+x-definitions: &complex-env
+    DB_NAME: complex
+    DB_PASS: supersecret
+
+x-definitions: &plugin
+    image: bgio/example-plugins
+    network_mode: host
+    stop_signal: SIGINT
+    volumes:
+        - ../data/certs/ca_certificate.pem:/certs/ca_certificate.pem
+    environment:
+        <<: *common-env
+
+
+services:
+    child:
+        command: ["child"]
+        <<: *plugin
+
+    complex-c1:
+        command: ["complex", "c1", "c1-host", "c1-port"]
+        environment:
+            <<: [*common-env, *complex-env]
+        <<: *plugin
+
+    complex-c2:
+        command: ["complex", "c2", "c2-host", "c2-port"]
+        environment:
+            <<: [*common-env, *complex-env]
+        <<: *plugin
+
+    custom-display:
+        command: ["custom_display"]
+        <<: *plugin
+
+    dynamic-d1:
+        command: ["dynamic"]
+        environment:
+            BG_INSTANCE_NAME: d1
+            <<: *common-env
+        <<: *plugin
+
+    dynamic-d2:
+        command: ["dynamic"]
+        environment:
+            BG_INSTANCE_NAME: d2
+            <<: *common-env
+        <<: *plugin
+
+    echo:
+        command: ["echo"]
+        <<: *plugin
+
+    echo-sleeper:
+        command: ["echo_sleeper"]
+        <<: *plugin
+
+    error:
+        command: ["error"]
+        <<: *plugin
+
+    nested-calls:
+        command: ["nested_calls"]
+        <<: *plugin
+
+    parent:
+        command: ["parent"]
+        <<: *plugin
+
+    sleeper:
+        command: ["sleeper"]
+        <<: *plugin
+
+    sleeper-solo:
+        command: ["sleeper_solo"]
+        <<: *plugin

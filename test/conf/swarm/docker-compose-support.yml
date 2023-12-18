@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+    mongodb:
+        image: mongo:4.2
+        networks:
+            - mongo
+        ports:
+          - "27017:27017"
+        volumes:
+            - mongo-data:/data/db
+            - mongo-config:/data/configdb
+        
+        deploy:
+            restart-policy:
+                condition: any
+
+    rabbitmq:
+        image: rabbitmq:3.8-management-alpine
+        hostname: rabbitmq
+        networks:
+            - rabbit
+        environment:
+            - RABBITMQ_DEFAULT_USER=beer_garden
+            - RABBITMQ_DEFAULT_PASS=password
+        ports:
+            - "5672:5672"
+            - "15672:15672"
+        volumes:
+            - rabbitmq-home:/var/lib/rabbitmq
+
+        deploy:
+            restart-policy:
+                condition: any
+
+networks:
+    bg-network:
+        driver: overlay
+        name: bg-network
+    mongo:
+        driver: overlay
+        name: mongo
+    rabbit:
+        driver: overlay
+        name: rabbit
+
+volumes:
+    mongo-data:
+    mongo-config:
+    rabbitmq-home:
