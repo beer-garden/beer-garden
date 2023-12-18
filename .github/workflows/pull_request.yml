@@ -354,7 +354,7 @@ jobs:
         run: sleep 60s
         shell: bash
 
-      - name: Check names
+      - name: Check services
         run: docker service ls
 
       - name: Check BG
@@ -379,6 +379,9 @@ jobs:
       - name: Wait for Plugins to start
         run: sleep 15s
         shell: bash
+
+      - name: Check services
+        run: docker service ls
 
       # - name: Grab logs from Beer-Garden
       #   run: BG='unstable' docker compose logs --tail 100 beer-garden
