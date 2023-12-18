@@ -232,10 +232,6 @@ jobs:
           docker build -t bgio/beer-garden:unstable -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:${{ matrix.python-version }}-alpine .
         working-directory: ./src/app
 
-      - name: Copy Data Files
-        run: cp -r docker/docker-compose/data test/conf/swarm/data
-        working-directory: ./
-
       - name: Checkout Local Plugins
         uses: actions/checkout@v2
         with:
@@ -346,9 +342,9 @@ jobs:
         run: sleep 20s
         shell: bash
 
-      - name: Ensure Plugin directory
-        run: mkdir -p data/localplugins
-        working-directory: ./test/conf/swarm/
+       - name: Copy Data Files
+        run: cp -r docker/docker-compose/data test/conf/swarm/data
+        working-directory: ./
 
       - name: Run Docker Beer Garden
         run: docker stack deploy -c docker-compose-framework.yml beer-garden
