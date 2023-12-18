@@ -339,20 +339,20 @@ jobs:
         run: docker swarm init
 
       - name: Run Docker RabbitMQ
-        run: docker stack deploy -c docker-compose-replicated.yml mongodb
+        run: docker stack deploy -c docker-compose-replicated.yml mongodb rabbitmq beer-garden
         working-directory: ./test/conf/
 
-      - name: Run Docker Mongodb
-        run: docker stack deploy -c docker-compose-replicated.yml rabbitmq
-        working-directory: ./test/conf/
+      # - name: Run Docker Mongodb
+      #   run: docker stack deploy -c docker-compose-replicated.yml 
+      #   working-directory: ./test/conf/
 
-      - name: Wait for Mongodb and RabbitMQ to start
-        run: sleep 20s
-        shell: bash
+      # - name: Wait for Mongodb and RabbitMQ to start
+      #   run: sleep 20s
+      #   shell: bash
 
-      - name: Run Docker Beer Garden
-        run: docker stack deploy -c docker-compose-replicated.yml beer-garden
-        working-directory: ./test/conf/
+      # - name: Run Docker Beer Garden
+      #   run: docker stack deploy -c docker-compose-replicated.yml beer-garden
+      #   working-directory: ./test/conf/
 
       - name: Check names
         run: docker service ls

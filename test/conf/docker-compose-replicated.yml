@@ -52,6 +52,10 @@ services:
         volumes:
             - mongo-data:/data/db
             - mongo-config:/data/configdb
+        
+        deploy:
+            restart-policy:
+                condition: any
 
     rabbitmq:
         image: rabbitmq:3.8-management-alpine
@@ -66,6 +70,10 @@ services:
             - "15672:15672"
         volumes:
             - rabbitmq-home:/var/lib/rabbitmq
+
+        deploy:
+            restart-policy:
+                condition: any
 
 networks:
     bg-network:
