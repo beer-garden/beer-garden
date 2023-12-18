@@ -9,7 +9,7 @@ services:
                 condition: any
             replicas: 3
         networks:
-            - bg-network
+            - bg-replicated-network
         ports:
             - "2337:2337"
             - "2338:2338"
@@ -68,9 +68,9 @@ services:
     #         - rabbitmq-home:/var/lib/rabbitmq
 
 networks:
-    bg-network:
+    bg-replicated-network:
         driver: overlay
-        name: bg-network
+        name: bg-replicated-network
 
 # volumes:
 #     plugins:
