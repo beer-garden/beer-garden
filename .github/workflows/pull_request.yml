@@ -326,7 +326,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Check Docker Compose
-        run: docker-compose -v
+        run: docker-compose version --short
+        working-directory: ./
+
+      - name: Check Docker Compose
+        run: docker compose version --short
         working-directory: ./
 
       - name: Build Local Beer Garden Docker
