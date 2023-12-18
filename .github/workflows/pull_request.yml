@@ -325,14 +325,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Check Docker Compose
-        run: docker-compose version --short
-        working-directory: ./
-
-      - name: Check Docker Compose
-        run: docker compose version --short
-        working-directory: ./
-
       - name: Build Local Beer Garden Docker
         run: |
           python --version
@@ -348,7 +340,7 @@ jobs:
         working-directory: ./
 
       - name: Run Docker Mongodb and RabbitMQ
-        run: docker-compose up -d mongodb rabbitmq
+        run: docker compose up -d mongodb rabbitmq
         working-directory: ./docker/docker-compose
 
       - name: Wait for Mongodb and RabbitMQ to start
@@ -364,7 +356,7 @@ jobs:
         shell: bash
 
       - name: Grab logs from Beer-Garden
-        run: BG='unstable' docker-compose logs --tail 100 beer-garden
+        run: BG='unstable' docker compose logs --tail 100 beer-garden
         working-directory: ./docker/docker-compose
 
       - name: Check If Beer Garden is Operational
@@ -377,7 +369,7 @@ jobs:
           command: curl http://localhost:2337/config
 
       - name: Run Docker Beer Garden Plugins
-        run: docker-compose up -d
+        run: docker compose up -d
         working-directory: ./docker/docker-compose/plugins
 
       - name: Wait for Plugins to start
@@ -385,11 +377,7 @@ jobs:
         shell: bash
 
       - name: Grab logs from Beer-Garden
-        run: BG='unstable' docker-compose logs --tail 100 beer-garden
-        working-directory: ./docker/docker-compose
-
-      - name: Grab logs from Beer-Garden
-        run: BG='unstable' docker-compose logs --tail 100 beer-garden
+        run: BG='unstable' docker compose logs --tail 100 beer-garden
         working-directory: ./docker/docker-compose
 
       # Custom tag extractor to find Brewtils Branch
@@ -414,9 +402,13 @@ jobs:
 
       - name: Grab logs from Beer-Garden
         if: always()
-        run: BG='unstable' docker-compose logs --tail 1000 beer-garden
+        run: BG='unstable' docker compose logs --tail 1000 beer-garden
         working-directory: ./docker/docker-compose
 
+      - name: Shutdown Docker Plugins
+        run: docker compose stop
+        working-directory: ./docker/docker-compose/plugins
+
       - name: Shutdown Docker Containers
-        run: docker-compose stop
+        run: docker compose stop
         working-directory: ./docker/docker-compose
