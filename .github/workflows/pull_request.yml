@@ -357,8 +357,8 @@ jobs:
       - name: Check names
         run: docker service ls
 
-      - name: List All
-        run: docker ps
+      - name: Check BG
+        run: docker service ps --no-trunc beer-garden_beer-garden
 
       - name: Grab logs from Beer-Garden
         run: docker service logs --tail 100 beer-garden_beer-garden
