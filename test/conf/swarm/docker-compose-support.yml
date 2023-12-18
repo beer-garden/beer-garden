@@ -34,9 +34,6 @@ services:
         #         condition: any
 
 networks:
-    bg-network:
-        driver: overlay
-        name: bg-network
     mongo:
         driver: overlay
         name: mongo
