@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.22.1
+
+TBD
+
+- Added missing Request Status filter for "Invalid"
+
 # 3.22.0
 
 12/13/2023
