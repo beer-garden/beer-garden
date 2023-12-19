@@ -438,6 +438,10 @@ jobs:
         if: always()
         run: docker service logs --tail 100 beer-garden_beer-garden
 
+      - name: Check services
+        if: always()
+        run: docker service ls
+
       # - name: Grab logs from Beer-Garden
       #   if: always()
       #   run: BG='unstable' docker compose logs --tail 1000 beer-garden
