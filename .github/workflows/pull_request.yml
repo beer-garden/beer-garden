@@ -381,7 +381,7 @@ jobs:
           max_attempts: 20
           retry_on: error
           retry_wait_seconds: 5
-          command: curl http://localhost:2337/config
+          command: curl http://127.0.0.1:2337/config
 
       - name: Run Docker Beer Garden Plugins
         run: docker stack deploy -c docker-compose-plugins.yml beer-plugins
@@ -401,7 +401,7 @@ jobs:
         run: docker service logs --tail 100 beer-plugins_publisher
 
       - name: Grab Garden Info
-        run: curl http://localhost:2337/api/v1/gardens/
+        run: curl http://127.0.0.1:2337/api/v1/gardens/
 
 
       # - name: Grab logs from Beer-Garden
