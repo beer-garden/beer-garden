@@ -365,6 +365,9 @@ jobs:
       - name: Check services
         run: docker service ls
 
+      - name: Check docker
+        run: docker ps
+
       - name: Check BG
         run: docker service ps --no-trunc beer-garden_beer-garden
 
@@ -421,6 +424,7 @@ jobs:
         run: pip${{ matrix.python-version }} install -r requirements.txt
         working-directory: ./test/integration
 
+      # Currently Instance Name for plugins through environment variables does not work, so skip those tests
       - name: Test Plugins
         run: python${{ matrix.python-version }} -m pytest local_plugins --ignore=local_plugins/plugins/complex_test.py --ignore=local_plugins/plugins/dynamic_test.py
         working-directory: ./test/integration
