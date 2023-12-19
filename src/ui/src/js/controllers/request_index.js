@@ -218,6 +218,7 @@ export default function requestIndexController(
         {value: 'CANCELED', label: 'CANCELED'},
         {value: 'SUCCESS', label: 'SUCCESS'},
         {value: 'ERROR', label: 'ERROR'},
+        {value: 'INVALID', label: 'INVALID'},
       ],
     },
     created_at: {
