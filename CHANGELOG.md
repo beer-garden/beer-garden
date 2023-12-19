@@ -5,6 +5,7 @@
 TBD
 
 - Added missing Request Status filter for "Invalid"
+- Adding default icon on System Admin page for undefined or null system.icon_name
 
 # 3.22.0
 
