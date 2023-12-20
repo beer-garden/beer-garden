@@ -22,7 +22,7 @@ x-definitions: &plugin
     deploy:
         restart_policy:
             condition: any
-        replicas: 3
+        replicas: 1
     volumes:
         - ./data/certs/ca_certificate.pem:/certs/ca_certificate.pem
     environment:
