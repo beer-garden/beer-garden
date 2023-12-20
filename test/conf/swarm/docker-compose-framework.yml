@@ -3,7 +3,7 @@ version: '3.8'
 services:
     beer-garden:
         image: bgio/beer-garden:unstable
-        hostname: beergarden{{.Task.Slot}}
+        # hostname: beergarden{{.Task.Slot}}
         deploy:
             restart_policy:
                 condition: any
