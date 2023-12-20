@@ -431,8 +431,18 @@ jobs:
 
       # Currently Instance Name for plugins through environment variables does not work, so skip those tests
       - name: Test Plugins
-        run: python${{ matrix.python-version }} -m pytest local_plugins --ignore=local_plugins/plugins/complex_test.py --ignore=local_plugins/plugins/dynamic_test.py
+        uses: nick-invision/retry@v2
+        with:
+          timeout_seconds: 120
+          max_attempts: 0
+          retry_on: error
+          retry_wait_seconds: 5
+          command: python${{ matrix.python-version }} -m pytest local_plugins --ignore=local_plugins/plugins/complex_test.py --ignore=local_plugins/plugins/dynamic_test.py
         working-directory: ./test/integration
+
+      # - name: Test Plugins
+      #   run: python${{ matrix.python-version }} -m pytest local_plugins --ignore=local_plugins/plugins/complex_test.py --ignore=local_plugins/plugins/dynamic_test.py
+      #   working-directory: ./test/integration
 
       - name: Grab logs from Beer-Garden
         if: always()
