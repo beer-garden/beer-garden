@@ -431,7 +431,7 @@ jobs:
 
       - name: Test Plugins
         #run: python${{ matrix.python-version }} -m pytest local_plugins --ignore=local_plugins/plugins/complex_test.py --ignore=local_plugins/plugins/dynamic_test.py
-        run: python${{ matrix.python-version }} -m pytest local_plugins --ignore=local_plugins/plugins/complex_test.py --ignore=local_plugins/plugins/dynamic_test.py
+        run: python${{ matrix.python-version }} -m pytest local_plugins
         working-directory: ./test/integration
         timeout-minutes: 2
 
