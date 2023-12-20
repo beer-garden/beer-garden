@@ -138,7 +138,7 @@ export default function utilityService($rootScope, $http) {
       return $http.get('api/v1/namespaces');
     },
     getIcon: (iconName) => {
-      if (iconName === undefined || iconName == null) {
+      if (iconName === undefined || iconName == null || iconName == '') {
         if (
           $rootScope.config === undefined ||
           $rootScope.config.iconDefault === undefined
