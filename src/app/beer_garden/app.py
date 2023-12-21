@@ -227,6 +227,9 @@ class Application(StoppableThread):
         self.logger.debug("Verifying message queue connection...")
         queue.create_clients(config.get("mq"))
 
+        if config.get("replication.enabled"):
+            queue.create_fanout_client(config.get("mq"))
+
         if not self._progressive_backoff(
             partial(queue.check_connection, "pika"),
             "Unable to connect to rabbitmq, is it started?",
@@ -340,10 +343,10 @@ class Application(StoppableThread):
         """Set up the event manager for the Main Processor"""
 
         if config.get("replication.enabled"):
-            self.logger.error("Setting up Replication Event Manager")
+            self.logger.error("********************Setting up Replication Event Manager")
             event_manager = EventProcessor(name="event manager")
         else:
-            self.logger.error("Setting up Local Event Manager")
+            self.logger.error("********************Setting up Local Event Manager")
             event_manager = FanoutProcessor(name="event manager")
 
         # Forward all events down into the entry points
