@@ -401,7 +401,7 @@ jobs:
           timeout_seconds: 30
           max_attempts: 20
           retry_on: error
-          retry_wait_seconds: 5
+          retry_wait_seconds: 10
           command: curl http://127.0.0.1:2337/api/v1/gardens/
 
       - name: Check services
