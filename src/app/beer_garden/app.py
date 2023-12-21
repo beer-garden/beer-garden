@@ -254,7 +254,7 @@ class Application(StoppableThread):
         queue.initial_setup()
 
         if config.get("replication.enabled"):
-            self.logger.debug("Setting up message queues...")
+            self.logger.error("Setting up fanout message queues...")
             queue.setup_event_consumer(config.get("mq"))
 
         self.logger.debug("Starting helper threads...")
@@ -340,8 +340,10 @@ class Application(StoppableThread):
         """Set up the event manager for the Main Processor"""
 
         if config.get("replication.enabled"):
+            self.logger.error("Setting up Replication Event Manager")
             event_manager = EventProcessor(name="event manager")
         else:
+            self.logger.error("Setting up Local Event Manager")
             event_manager = FanoutProcessor(name="event manager")
 
         # Forward all events down into the entry points

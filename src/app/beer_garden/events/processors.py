@@ -140,6 +140,11 @@ class EventProcessor(FanoutProcessor):
             skip_check: Flag to skip Event Name checks for routing
         """
 
+        if skip_checked:
+            logger.error(f"RabbitMQ Event: {event.name}")
+        else:
+            logger.error(f"Local Event: {event.name}")
+
         # Check if event should be published to Rabbit
         if (
             not skip_checked

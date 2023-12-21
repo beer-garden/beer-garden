@@ -70,7 +70,7 @@ def create_fanout_client(mq_config):
 
 
 def setup_event_consumer(mq_config):
-    logger.debug("Setting up Events Topic...")
+    logger.error("Setting up Events Topic...")
     setup_events_topic()
 
     connection = {
@@ -80,9 +80,10 @@ def setup_event_consumer(mq_config):
         "password": mq_config.connections.message.password,
         "virtual_host": mq_config.virtual_host,
         "ssl": mq_config.connections.message.ssl,
+        "exchange": f"{mq_config.exchange}_fanout",
     }
 
-    logger.debug("Setting up Events Consumer...")
+    logger.error("Setting up Events Consumer...")
     consumers["events"] = EventConsumer(name="Event Pika Consumer")
     consumers["events"].setup(connection_info=connection)
     consumers["events"].start()
@@ -93,16 +94,17 @@ def shutdown_event_consumer():
 
 
 def initial_setup():
-    logger.debug("Verifying message virtual host...")
+    logger.error("Verifying message virtual host...")
     clients["pyrabbit"].verify_virtual_host()
 
-    logger.debug("Ensuring admin queue expiration policy...")
+    logger.error("Ensuring admin queue expiration policy...")
     clients["pyrabbit"].ensure_admin_expiry()
 
-    logger.debug("Declaring message exchange...")
+    logger.error("Declaring message exchange...")
     clients["pika"].declare_exchange()
 
     if "pika_fanout" in clients:
+        logger.error("Declaring message fanout exchange...")
         clients["pika_fanout"].declare_exchange()
 
 
