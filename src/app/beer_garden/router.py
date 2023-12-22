@@ -106,6 +106,7 @@ route_functions = {
     "REQUEST_READ": beer_garden.requests.get_request,
     "REQUEST_READ_ALL": beer_garden.requests.get_requests,
     "REQUEST_DELETE": beer_garden.requests.delete_requests,
+    "REQUEST_UPDATE": beer_garden.requests.update_request,
     "COMMAND_READ": beer_garden.commands.get_command,
     "COMMAND_READ_ALL": beer_garden.commands.get_commands,
     "INSTANCE_READ": beer_garden.systems.get_instance,
@@ -611,7 +612,7 @@ def _target_from_type(operation: Operation) -> str:
         else:
             return _instance_id_lookup(operation.args[0])
 
-    if operation.operation_type == "REQUEST_CREATE":
+    if operation.operation_type in ["REQUEST_CREATE", "REQUEST_UPDATE"]:
         target_system = System(
             namespace=operation.model.namespace,
             name=operation.model.system,
