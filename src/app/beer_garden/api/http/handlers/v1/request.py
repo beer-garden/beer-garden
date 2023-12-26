@@ -543,7 +543,7 @@ class RequestListAPI(AuthorizationHandler):
             in: body
             description: The Request definition
             schema:
-              $ref: '#/definitions/Request'          
+              $ref: '#/definitions/Request'
         consumes:
           - application/json
         responses:
@@ -566,7 +566,12 @@ class RequestListAPI(AuthorizationHandler):
         """
 
         request_model = self.parser.parse_request(
-            (self.request.body.decode() if isinstance(self.request.body, bytes) else self.request.body), from_string=True
+            (
+                self.request.body.decode()
+                if isinstance(self.request.body, bytes)
+                else self.request.body
+            ),
+            from_string=True,
         )
 
         self.verify_user_permission_for_object(REQUEST_CREATE, request_model)
@@ -592,7 +597,6 @@ class RequestListAPI(AuthorizationHandler):
             raise ModelValidationError(
                 f"Could not find a garden containing system {req_system}"
             ) from ex
-
 
         response = SchemaParser.serialize_request(update_request)
 
