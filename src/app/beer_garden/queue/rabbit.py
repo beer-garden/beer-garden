@@ -91,8 +91,8 @@ def setup_event_consumer(mq_config):
     }
 
     logger.error("Setting up Events Consumer...")
-    consumers["events"] = EventConsumer(name="Event Pika Consumer", queue_name = queue_name)
-    consumers["events"].setup(connection_info=connection)
+    consumers["events"] = EventConsumer(name="Event Pika Consumer")
+    consumers["events"].setup(connection_info=connection, queue_name = queue_name)
     consumers["events"].start()
 
 
