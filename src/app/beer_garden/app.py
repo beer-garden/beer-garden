@@ -72,6 +72,15 @@ class Application(StoppableThread):
 
         load_plugin_log_config()
 
+        if config.get("replication.enabled"):    
+            import random
+            sleep_time = random.randrange(1, 60)
+            self.logger.debug(f"Replication Enabled, Staggering Start Time by {sleep_time} Seconds...")
+            
+            import time
+            time.sleep(sleep_time)
+
+
         plugin_config = config.get("plugin")
         self.helper_threads = [
             HelperThread(
@@ -245,14 +254,6 @@ class Application(StoppableThread):
     def _startup(self):
         """Initializes core requirements for Application"""
         self.logger.debug("Starting Application...")
-
-        if config.get("replication.enabled"):    
-            import random
-            sleep_time = random.randrange(1, 60)
-            self.logger.debug(f"Replication Enabled, Staggering Start Time by {sleep_time} Seconds...")
-            
-            import time
-            time.sleep(sleep_time)
 
         self.logger.debug("Starting event manager...")
         beer_garden.events.manager.start()
