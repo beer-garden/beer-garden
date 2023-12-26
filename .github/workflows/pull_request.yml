@@ -450,16 +450,3 @@ jobs:
       - name: Check services
         if: always()
         run: docker service ls
-
-      # - name: Grab logs from Beer-Garden
-      #   if: always()
-      #   run: BG='unstable' docker compose logs --tail 1000 beer-garden
-      #   working-directory: ./docker/docker-compose
-
-      # - name: Shutdown Docker Plugins
-      #   run: docker compose stop
-      #   working-directory: ./docker/docker-compose/plugins
-
-      # - name: Shutdown Docker Containers
-      #   run: docker compose stop
-      #   working-directory: ./docker/docker-compose
