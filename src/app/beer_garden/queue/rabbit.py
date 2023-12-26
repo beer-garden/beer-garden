@@ -13,6 +13,7 @@ from brewtils.models import Event, Instance, Request, System
 from brewtils.pika import PikaConsumer, TransientPikaClient
 from brewtils.schema_parser import SchemaParser
 from brewtils.stoppable_thread import StoppableThread
+from pika import BlockingConnection
 
 import beer_garden.config as config
 import beer_garden.requests
