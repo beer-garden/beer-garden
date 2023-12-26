@@ -73,6 +73,12 @@ def setup_event_consumer(mq_config):
     logger.error("Setting up Events Topic...")
     setup_events_topic()
 
+    
+    with BlockingConnection(clients["pika_fanout"]._conn_params) as conn:
+        result = conn.channel().queue_declare("", exclusive=True)
+        queue_name = result.method.queue
+        conn.channel().queue_bind(exchange=f"{mq_config.exchange}_fanout", queue=queue_name)
+
     connection = {
         "host": mq_config.host,
         "port": mq_config.connections.message.port,
@@ -84,7 +90,7 @@ def setup_event_consumer(mq_config):
     }
 
     logger.error("Setting up Events Consumer...")
-    consumers["events"] = EventConsumer(name="Event Pika Consumer")
+    consumers["events"] = EventConsumer(name="Event Pika Consumer", queue_name = queue_name)
     consumers["events"].setup(connection_info=connection)
     consumers["events"].start()
 
@@ -109,11 +115,14 @@ def initial_setup():
 
 
 def setup_events_topic():
-    clients["pika_fanout"].setup_queue(
-        internal_events_queue,
-        {"durable": True, "arguments": {"x-max-priority": 1}},
-        internal_events_keys,
-    )
+
+    results = clients["pika_fanout"].setup_queue("", {"exclusive": True}, [])
+
+    # clients["pika_fanout"].setup_queue(
+    #     internal_events_queue,
+    #     {"durable": True, "arguments": {"x-max-priority": 1}},
+    #     internal_events_keys,
+    # )
 
 
 def create(instance: Instance, system: System) -> dict:
@@ -489,10 +498,10 @@ def get_routing_key(*args, **kwargs):
 class EventConsumer(StoppableThread):
     """Consumers the interfaces with RabbitMQ to listen for internal Events"""
 
-    def setup(self, **kwargs):
+    def setup(self, queue_name, **kwargs):
         self.shutdown_event = threading.Event()
         self.consumer = PikaConsumer(
-            panic_event=self.shutdown_event, queue_name=internal_events_queue, **kwargs
+            panic_event=self.shutdown_event, queue_name=queue_name, **kwargs
         )
         self.consumer.on_message_callback = self.on_message_received
         self._pool = ThreadPoolExecutor(max_workers=1)
