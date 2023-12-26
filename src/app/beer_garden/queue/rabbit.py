@@ -179,7 +179,7 @@ def put_event(event: Event, headers: dict = None, **kwargs) -> None:
         None
     """
     kwargs["headers"] = headers or {}
-    kwargs["routing_key"] = "admin.events"
+    kwargs["routing_key"] = internal_events_queue
 
     clients["pika_fanout"].publish(SchemaParser.serialize_event(event), **kwargs)
 
