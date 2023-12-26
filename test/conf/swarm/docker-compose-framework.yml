@@ -7,7 +7,7 @@ services:
         deploy:
             restart_policy:
                 condition: any
-            replicas: 2
+            replicas: 3
         networks:
             - bg-network
             - rabbit
