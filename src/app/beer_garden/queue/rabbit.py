@@ -72,7 +72,7 @@ def create_fanout_client(mq_config):
 
 def setup_event_consumer(mq_config):
     logger.error("Setting up Events Topic...")
-    setup_events_topic()
+    #setup_events_topic()
 
     
     with BlockingConnection(clients["pika_fanout"]._conn_params) as conn:
@@ -115,15 +115,15 @@ def initial_setup():
         clients["pika_fanout"].declare_exchange()
 
 
-def setup_events_topic():
+# def setup_events_topic():
 
-    results = clients["pika_fanout"].setup_queue("", {"exclusive": True}, [])
+#     results = clients["pika_fanout"].setup_queue("", {"exclusive": True}, [])
 
-    # clients["pika_fanout"].setup_queue(
-    #     internal_events_queue,
-    #     {"durable": True, "arguments": {"x-max-priority": 1}},
-    #     internal_events_keys,
-    # )
+#     clients["pika_fanout"].setup_queue(
+#         internal_events_queue,
+#         {"durable": True, "arguments": {"x-max-priority": 1}},
+#         internal_events_keys,
+#     )
 
 
 def create(instance: Instance, system: System) -> dict:

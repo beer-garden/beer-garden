@@ -143,7 +143,7 @@ class EventProcessor(FanoutProcessor):
         if not skip_checked:
             #logger.error(f"Local Event: {event.name}")
 
-            if hasattr(event.payload, "id"):
+            if hasattr(event.payload, "id") and event.payload.id:
                 logger.error(f"Local Event: {event.name}+{event.payload.id}")
 
         # Check if event should be published to Rabbit
@@ -170,7 +170,7 @@ class EventProcessor(FanoutProcessor):
             or event.metadata["_source_uuid"] != self.uuid
         ):
             #logger.error(f"RabbitMQ Event: {event.name}")
-            if hasattr(event.payload, "id"):
+            if hasattr(event.payload, "id") and event.payload.id:
                 logger.error(f"RabbitMQ Event: {event.name}+{event.payload.id}")
             self._queue.put(event)
 
