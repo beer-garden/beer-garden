@@ -75,7 +75,7 @@ class Application(StoppableThread):
         if config.get("replication.enabled"):    
             import random
             sleep_time = random.randrange(1, 60)
-            self.logger.debug(f"Replication Enabled, Staggering Start Time by {sleep_time} Seconds...")
+            self.logger.info(f"Replication Enabled, Staggering Start Time by {sleep_time} Seconds...")
             
             import time
             time.sleep(sleep_time)
