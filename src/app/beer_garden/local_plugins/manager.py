@@ -280,7 +280,7 @@ class PluginManager(StoppableThread):
     def restart(
         self, runner_id: Optional[str] = None, instance_id: Optional[str] = None
     ) -> Optional[Runner]:
-        """Restart the runner for a particular Runner ID or Instance ID.
+        """Restart the runner for a particular Runner ID or Instance ID. If stopped.
 
         Args:
             runner_id: An ID string associated with a Runner object, optional
@@ -297,7 +297,9 @@ class PluginManager(StoppableThread):
         elif instance_id is not None:
             the_runner = self._from_instance_id(instance_id)
 
-        return self._restart(the_runner).state() if the_runner is not None else None
+        if the_runner.stopped:
+            return self._restart(the_runner).state() if the_runner is not None else None
+        return the_runner.state()
 
     def update(
         self,
