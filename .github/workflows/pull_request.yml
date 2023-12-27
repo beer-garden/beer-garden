@@ -359,7 +359,7 @@ jobs:
         working-directory: ./test/conf/swarm/
 
       - name: Wait for Beer Garden to start
-        run: sleep 30s
+        run: sleep 60s
         shell: bash
 
       - name: Check services
@@ -371,9 +371,6 @@ jobs:
       - name: Check BG
         run: docker service ps --no-trunc beer-garden_beer-garden
 
-      - name: Grab logs from Beer-Garden
-        run: docker service logs --tail 1000 beer-garden_beer-garden
-
       - name: Check If Beer Garden is Operational
         uses: nick-invision/retry@v2
         with:
@@ -383,9 +380,17 @@ jobs:
           retry_wait_seconds: 5
           command: curl http://127.0.0.1:2337/config
 
-      - name: Grab logs from Beer-Garden
+      - name: Grab logs from Beer-Garden.1
         if: always()
-        run: docker service logs --tail 1000 beer-garden_beer-garden
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.1 --quiet)
+
+      - name: Grab logs from Beer-Garden.2
+        if: always()
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.2 --quiet)
+
+      - name: Grab logs from Beer-Garden.3
+        if: always()
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.3 --quiet)
 
       - name: Run Docker Beer Garden Plugins
         run: docker stack deploy -c docker-compose-plugins.yml beer-plugins
@@ -417,10 +422,6 @@ jobs:
         if: always()
         run: docker service logs --tail 1000 beer-garden_beer-garden
 
-      # - name: Grab logs from Beer-Garden
-      #   run: BG='unstable' docker compose logs --tail 100 beer-garden
-      #   working-directory: ./docker/docker-compose
-
       # Custom tag extractor to find Brewtils Branch
       - name: Find Brewtils Branch
         uses: TheBurchLog/body-env-tag-action@1.0
@@ -438,8 +439,8 @@ jobs:
         working-directory: ./test/integration
 
       - name: Test Plugins
-        run: python${{ matrix.python-version }} -m pytest local_plugins --ignore=local_plugins/plugins/complex_test.py --ignore=local_plugins/plugins/dynamic_test.py
-        #run: python${{ matrix.python-version }} -m pytest -vv local_plugins
+        #run: python${{ matrix.python-version }} -m pytest local_plugins --ignore=local_plugins/plugins/complex_test.py --ignore=local_plugins/plugins/dynamic_test.py
+        run: python${{ matrix.python-version }} -m pytest local_plugins
         working-directory: ./test/integration
         timeout-minutes: 2
 
