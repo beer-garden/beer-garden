@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+    beer-garden:
+        image: bgio/beer-garden:test
+        # hostname: beergarden{{.Task.Slot}}
+        deploy:
+            restart_policy:
+                condition: any
+            replicas: 3
+        networks:
+            - bg-network
+            - rabbit
+            - mongo
+        ports:
+            - "2337:2337"
+
+        volumes:
+            - ./data/logging-config.yaml:/src/example_configs/logging-config.yaml
+            - ./data/localplugins:/plugins
+
+        environment:
+            TZ: UTC
+
+            # BG_GARDEN_NAME: docker-replicated
+            BG_REPLICATION_ENABLED: "true"
+
+            # Point at the correct database
+            BG_DB_HOST: mongodb
+            BG_DB_NAME: beer_garden_v3
+
+            # Point at the correct rabbit broker
+            BG_PLUGIN_MQ_HOST: rabbitmq
+            BG_MQ_HOST: rabbitmq
+            BG_MQ_EXCHANGE: beer_garden
+            BG_MQ_CONNECTIONS_ADMIN_USER: beer_garden
+            BG_MQ_CONNECTIONS_ADMIN_PASSWORD: password
+            BG_MQ_CONNECTIONS_MESSAGE_USER: beer_garden
+            BG_MQ_CONNECTIONS_MESSAGE_PASSWORD: password
+
+networks:
+    bg-network:
+        driver: overlay
+        name: bg-network
+    mongo:
+        name: mongo
+        external: true
+    rabbit:
+        name: rabbit
+        external: true
+
+volumes:
+    plugins:
+    plugin-logs:

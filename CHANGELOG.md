@@ -4,7 +4,7 @@
 
 TBD
 
-- 
+- Fixed issue where replicated messages were not fanned out to all replicated Beer Gardens
 
 # 3.23.0
 
