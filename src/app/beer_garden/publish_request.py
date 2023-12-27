@@ -1,3 +1,4 @@
+import copy
 import logging
 import re
 
@@ -65,7 +66,7 @@ def process_publish_event(garden: Garden, event: Event):
                             break
 
                 if match:
-                    event_request = event.payload
+                    event_request = copy.deepcopy(event.payload)
                     event_request.system = system.name
                     event_request.system_version = system.version
                     event_request.namespace = system.namespace
