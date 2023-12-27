@@ -19,10 +19,6 @@ services:
             - ./data/logging-config.yaml:/src/example_configs/logging-config.yaml
             - ./data/localplugins:/plugins
 
-        healthcheck:
-            test: ["CMD", "curl", "http://localhost:2337/config"]
-            start_period: 60s
-
         environment:
             TZ: UTC
 
