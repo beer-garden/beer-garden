@@ -2,12 +2,13 @@
 
 # 3.23.0
 
-TBD
+12/27/23
 
 - Added missing Request Status filter for "Invalid"
 - Adding default icon on System Admin page for undefined or null system.icon_name
 - Fixed bug where Publish/Subscribe events would carry over request properties across the various topics mapped
 - New API to support PUT Requests, this API will only spawn REQUEST_UPDATE events
+- Upgraded Brewtils version to [3.23.0](https://github.com/beer-garden/brewtils/releases/tag/3.23.0)
 
 # 3.22.0
 
