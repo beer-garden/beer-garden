@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.23.1
+
+TBD
+
+- 
+
 # 3.23.0
 
 12/27/23
