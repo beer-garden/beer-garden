@@ -85,7 +85,8 @@ def initialize(
         },
     )
 
-    start(instance=instance, system=system)
+    if runner_id:
+        lpm.map_runner_to_instance(runner_id, instance.id)
 
     return system.get_instance_by_name(instance.name)
 
