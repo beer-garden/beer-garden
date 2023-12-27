@@ -534,6 +534,76 @@ class RequestListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
+    async def put(self):
+        """
+        ---
+        summary: Update a new Request
+        parameters:
+          - name: request
+            in: body
+            description: The Request definition
+            schema:
+              $ref: '#/definitions/Request'
+        consumes:
+          - application/json
+        responses:
+          201:
+            description: A updated Request
+            schema:
+              $ref: '#/definitions/Request'
+            headers:
+              Instance-Status:
+                type: string
+                description: |
+                    Current status of the Instance that will process the
+                    created Request
+          400:
+            $ref: '#/definitions/400Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Requests
+        """
+
+        request_model = self.parser.parse_request(
+            (
+                self.request.body.decode()
+                if isinstance(self.request.body, bytes)
+                else self.request.body
+            ),
+            from_string=True,
+        )
+
+        self.verify_user_permission_for_object(REQUEST_CREATE, request_model)
+
+        if self.current_user:
+            request_model.requester = self.current_user.username
+
+        try:
+            update_request = await self.client(
+                Operation(
+                    operation_type="REQUEST_UPDATE",
+                    model=request_model,
+                    model_type="Request",
+                ),
+                serialize_kwargs={"to_string": False},
+            )
+        except UnknownGardenException as ex:
+            req_system = BrewtilsSystem(
+                namespace=request_model.namespace,
+                name=request_model.system,
+                version=request_model.system_version,
+            )
+            raise ModelValidationError(
+                f"Could not find a garden containing system {req_system}"
+            ) from ex
+
+        response = SchemaParser.serialize_request(update_request)
+
+        self.set_status(201)
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(response)
+
     async def delete(self):
         """
         ---
