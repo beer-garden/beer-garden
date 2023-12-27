@@ -27,7 +27,7 @@ services:
             TZ: UTC
 
             # BG_GARDEN_NAME: docker-replicated
-            # BG_REPLICATION_ENABLED: "true"
+            BG_REPLICATION_ENABLED: "true"
 
             # Point at the correct database
             BG_DB_HOST: mongodb

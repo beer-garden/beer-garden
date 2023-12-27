@@ -140,12 +140,6 @@ class EventProcessor(FanoutProcessor):
             skip_check: Flag to skip Event Name checks for routing
         """
 
-        if not skip_checked:
-            #logger.error(f"Local Event: {event.name}")
-
-            if hasattr(event.payload, "id") and event.payload.id:
-                logger.error(f"Local Event: {event.name}+{event.payload.id}")
-
         # Check if event should be published to Rabbit
         if (
             not skip_checked
@@ -169,9 +163,6 @@ class EventProcessor(FanoutProcessor):
             "_source_uuid" not in event.metadata
             or event.metadata["_source_uuid"] != self.uuid
         ):
-            #logger.error(f"RabbitMQ Event: {event.name}")
-            if hasattr(event.payload, "id") and event.payload.id:
-                logger.error(f"RabbitMQ Event: {event.name}+{event.payload.id}")
             self._queue.put(event)
 
     def put_queue(self, event: Event):

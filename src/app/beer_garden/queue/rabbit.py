@@ -71,12 +71,12 @@ def create_fanout_client(mq_config):
 
 
 def setup_event_consumer(mq_config):
-    logger.error("Setting up Events Topic...")
-    #setup_events_topic()
+    logger.debug("Setting up Events Topic...")
 
-    
+    # Setup random topic that is not durable. Topic will exisit until Rabbit is bounced
+    # A new topic will be generated each time Beer Garden is started.
     with BlockingConnection(clients["pika_fanout"]._conn_params) as conn:
-        result = conn.channel().queue_declare("", exclusive=True)
+        result = conn.channel().queue_declare("")
         queue_name = result.method.queue
         conn.channel().queue_bind(exchange=f"{mq_config.exchange}_fanout", queue=queue_name)
 
@@ -90,7 +90,7 @@ def setup_event_consumer(mq_config):
         "exchange": f"{mq_config.exchange}_fanout",
     }
 
-    logger.error("Setting up Events Consumer...")
+    logger.debug("Setting up Events Consumer...")
     consumers["events"] = EventConsumer(name="Event Pika Consumer")
     consumers["events"].setup(connection_info=connection, queue_name = queue_name)
     consumers["events"].start()
@@ -113,17 +113,6 @@ def initial_setup():
     if "pika_fanout" in clients:
         logger.error("Declaring message fanout exchange...")
         clients["pika_fanout"].declare_exchange()
-
-
-# def setup_events_topic():
-
-#     results = clients["pika_fanout"].setup_queue("", {"exclusive": True}, [])
-
-#     clients["pika_fanout"].setup_queue(
-#         internal_events_queue,
-#         {"durable": True, "arguments": {"x-max-priority": 1}},
-#         internal_events_keys,
-#     )
 
 
 def create(instance: Instance, system: System) -> dict:
