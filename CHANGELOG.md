@@ -1,12 +1,13 @@
 # Beer Garden Changelog
 
-# 3.22.1
+# 3.23.0
 
 TBD
 
 - Added missing Request Status filter for "Invalid"
 - Adding default icon on System Admin page for undefined or null system.icon_name
 - Fixed bug where Publish/Subscribe events would carry over request properties across the various topics mapped
+- New API to support PUT Requests, this API will only spawn REQUEST_UPDATE events
 
 # 3.22.0
 
