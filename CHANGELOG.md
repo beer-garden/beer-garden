@@ -1,5 +1,21 @@
 # Beer Garden Changelog
 
+# 3.23.1
+
+TBD
+
+- 
+
+# 3.23.0
+
+12/27/23
+
+- Added missing Request Status filter for "Invalid"
+- Adding default icon on System Admin page for undefined or null system.icon_name
+- Fixed bug where Publish/Subscribe events would carry over request properties across the various topics mapped
+- New API to support PUT Requests, this API will only spawn REQUEST_UPDATE events
+- Upgraded Brewtils version to [3.23.0](https://github.com/beer-garden/brewtils/releases/tag/3.23.0)
+
 # 3.22.0
 
 12/13/2023
@@ -22,7 +38,7 @@
 
 11/16/2023
 
-- Adds the ability to delete Requests by Plugin on the System Admin page wihtin the plugin sub-menu. These are local deletes only
+- Adds the ability to delete Requests by Plugin on the System Admin page within the plugin sub-menu. These are local deletes only
 - Adds Is Alive check for Entry Points, if sub process is killed externally then it is restarted
 - Add error handling if Subscriber Request has exception at creation
 - Updates request validation to support allow_any_kwargs on commands
