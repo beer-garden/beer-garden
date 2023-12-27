@@ -34,38 +34,9 @@ services:
         command: ["child"]
         <<: *plugin
 
-    # complex-c1:
-    #     command: ["complex", "instance_name=c1", "c1-host", "c1-port"]
-    #     environment:        
-    #         <<: [*common-env, *complex-env]
-    #         BG_INSTANCE_NAME: c1
-
-    #     <<: *plugin
-
-    # complex-c2:
-    #     command: ["complex", "instance_name=c2", "c2-host", "c2-port"]
-    #     environment:
-    #         <<: [*common-env, *complex-env]
-    #         BG_INSTANCE_NAME: c2
-    #     <<: *plugin
-
     custom-display:
         command: ["custom_display"]
         <<: *plugin
-
-    # dynamic-d1:
-    #     command: ["dynamic"]
-    #     environment:
-    #         BG_INSTANCE_NAME: d1
-    #         <<: *common-env
-    #     <<: *plugin
-
-    # dynamic-d2:
-    #     command: ["dynamic"]
-    #     environment:
-    #         BG_INSTANCE_NAME: d2
-    #         <<: *common-env
-    #     <<: *plugin
 
     echo:
         command: ["echo"]
