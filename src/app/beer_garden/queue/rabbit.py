@@ -78,7 +78,9 @@ def setup_event_consumer(mq_config):
     with BlockingConnection(clients["pika_fanout"]._conn_params) as conn:
         result = conn.channel().queue_declare("")
         queue_name = result.method.queue
-        conn.channel().queue_bind(exchange=f"{mq_config.exchange}_fanout", queue=queue_name)
+        conn.channel().queue_bind(
+            exchange=f"{mq_config.exchange}_fanout", queue=queue_name
+        )
 
     connection = {
         "host": mq_config.host,
@@ -92,7 +94,7 @@ def setup_event_consumer(mq_config):
 
     logger.debug("Setting up Events Consumer...")
     consumers["events"] = EventConsumer(name="Event Pika Consumer")
-    consumers["events"].setup(connection_info=connection, queue_name = queue_name)
+    consumers["events"].setup(connection_info=connection, queue_name=queue_name)
     consumers["events"].start()
 
 
@@ -101,17 +103,17 @@ def shutdown_event_consumer():
 
 
 def initial_setup():
-    logger.error("Verifying message virtual host...")
+    logger.debug("Verifying message virtual host...")
     clients["pyrabbit"].verify_virtual_host()
 
-    logger.error("Ensuring admin queue expiration policy...")
+    logger.debug("Ensuring admin queue expiration policy...")
     clients["pyrabbit"].ensure_admin_expiry()
 
-    logger.error("Declaring message exchange...")
+    logger.debug("Declaring message exchange...")
     clients["pika"].declare_exchange()
 
     if "pika_fanout" in clients:
-        logger.error("Declaring message fanout exchange...")
+        logger.debug("Declaring message fanout exchange...")
         clients["pika_fanout"].declare_exchange()
 
 
@@ -178,7 +180,7 @@ def put_event(event: Event, headers: dict = None, **kwargs) -> None:
         None
     """
     kwargs["headers"] = headers or {}
-    #kwargs["routing_key"] = internal_events_queue
+    # kwargs["routing_key"] = internal_events_queue
     kwargs["routing_key"] = ""
 
     clients["pika_fanout"].publish(SchemaParser.serialize_event(event), **kwargs)

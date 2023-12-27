@@ -1507,7 +1507,7 @@ _REPLICATION_SPEC = {
     "items": {
         "enabled": {
             "type": "bool",
-            "default": True,
+            "default": False,
             "description": "Publish subset of events to Rabbit to allow all Gardens to stay in sync when replicated",
         },
     },

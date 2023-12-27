@@ -72,14 +72,17 @@ class Application(StoppableThread):
 
         load_plugin_log_config()
 
-        if config.get("replication.enabled"):    
+        if config.get("replication.enabled"):
             import random
-            sleep_time = random.randrange(1, 60)
-            self.logger.info(f"Replication Enabled, Staggering Start Time by {sleep_time} Seconds...")
-            
-            import time
-            time.sleep(sleep_time)
 
+            sleep_time = random.randrange(1, 60)
+            self.logger.info(
+                f"Replication Enabled, Staggering Start Time by {sleep_time} Seconds..."
+            )
+
+            import time
+
+            time.sleep(sleep_time)
 
         plugin_config = config.get("plugin")
         self.helper_threads = [
