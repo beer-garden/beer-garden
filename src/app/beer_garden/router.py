@@ -427,7 +427,7 @@ def remove_routing_garden(garden_name=None):
 
 
 def add_routing_garden(garden: Garden, routing_garden: str):
-    for system in garden:
+    for system in garden.systems:
         add_routing_system(system=system, garden_name=routing_garden)
 
     for child in garden.children:
