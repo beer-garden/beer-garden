@@ -51,6 +51,10 @@ def has_instance_id(*args, **kwargs):
 
 @publish_event(Events.RUNNER_STARTED)
 def start(*args, **kwargs):
+    return lpm_proxy.start(*args, **kwargs)
+
+@publish_event(Events.RUNNER_STARTED)
+def restart(*args, **kwargs):
     return lpm_proxy.restart(*args, **kwargs)
 
 
@@ -277,6 +281,32 @@ class PluginManager(StoppableThread):
             the_runner.restart = False
             the_runner.dead = False
 
+    def start(
+        self, runner_id: Optional[str] = None, instance_id: Optional[str] = None
+    ) -> Optional[Runner]:
+        """Restart the runner for a particular Runner ID or Instance ID. If stopped.
+
+        Args:
+            runner_id: An ID string associated with a Runner object, optional
+            instance_id: An ID string associated with an Instance object, optional
+
+        Returns:
+            The Runner associated with the provided ID or ``None`` if neither argument
+            is provided.
+        """
+        the_runner = None
+
+        if runner_id is not None:
+            the_runner = self._from_runner_id(runner_id)
+        elif instance_id is not None:
+            the_runner = self._from_instance_id(instance_id)
+
+        if the_runner is not None:
+            if the_runner.stopped:
+                return self._restart(the_runner).state()
+            return the_runner.state()
+        return None
+    
     def restart(
         self, runner_id: Optional[str] = None, instance_id: Optional[str] = None
     ) -> Optional[Runner]:
@@ -297,9 +327,11 @@ class PluginManager(StoppableThread):
         elif instance_id is not None:
             the_runner = self._from_instance_id(instance_id)
 
-        if the_runner.stopped:
-            return self._restart(the_runner).state() if the_runner is not None else None
-        return the_runner.state()
+        if the_runner is not None:
+            if the_runner.stopped:
+                return self._restart(the_runner).state()
+            return the_runner.state()
+        return None
 
     def update(
         self,

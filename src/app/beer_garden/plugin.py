@@ -119,6 +119,34 @@ def start(
 
     return instance
 
+@publish_event(Events.INSTANCE_STARTED)
+def restart(
+    instance_id: str = None, instance: Instance = None, system: System = None
+) -> Instance:
+    """Starts an instance.
+
+    Args:
+        instance_id: The Instance ID
+        instance: The Instance
+        system: The System
+
+    Returns:
+        The updated Instance
+    """
+    system, instance = _from_kwargs(
+        system=system, instance=instance, instance_id=instance_id
+    )
+
+    logger.debug(f"Starting instance {system}[{instance}]")
+
+    # Only way this works is if this has a local runner, so just assume it does
+    lpm.restart(instance_id=instance.id)
+
+    # Publish the start request
+    publish_start(system, instance)
+
+    return instance
+
 
 @publish_event(Events.INSTANCE_STOPPED)
 def stop(
