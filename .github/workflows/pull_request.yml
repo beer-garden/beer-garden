@@ -387,6 +387,19 @@ jobs:
         run: python${{ matrix.python-version }} -m pytest grandparents_garden/
         working-directory: ./test/integration
 
+      - name: Grab logs from Child
+        if: always()
+        run: docker logs --tail 3000 beer-garden-child
+
+      - name: Grab logs from Parent
+        if: always()
+        run: docker logs --tail 3000 beer-garden-parent
+
+      - name: Grab logs from Grand Parent
+        if: always()
+        run: docker logs --tail 3000 beer-garden-grandparent
+
+
   Replication-Testing:
     runs-on: ${{ matrix.os }}
 
