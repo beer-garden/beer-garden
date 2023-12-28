@@ -119,6 +119,7 @@ def start(
 
     return instance
 
+
 @publish_event(Events.INSTANCE_STARTED)
 def restart(
     instance_id: str = None, instance: Instance = None, system: System = None

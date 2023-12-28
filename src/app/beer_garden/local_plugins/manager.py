@@ -53,6 +53,7 @@ def has_instance_id(*args, **kwargs):
 def start(*args, **kwargs):
     return lpm_proxy.start(*args, **kwargs)
 
+
 @publish_event(Events.RUNNER_STARTED)
 def restart(*args, **kwargs):
     return lpm_proxy.restart(*args, **kwargs)
@@ -62,8 +63,10 @@ def restart(*args, **kwargs):
 def stop(*args, **kwargs):
     return lpm_proxy.stop_one(*args, **kwargs)
 
-def map_runner_to_instance(runner_id:str, instance_id:str) :
+
+def map_runner_to_instance(runner_id: str, instance_id: str):
     return lpm_proxy.map_runner_to_instance(runner_id, instance_id)
+
 
 @publish_event(Events.RUNNER_REMOVED)
 def remove(*args, **kwargs):
@@ -306,7 +309,7 @@ class PluginManager(StoppableThread):
                 return self._restart(the_runner).state()
             return the_runner.state()
         return None
-    
+
     def restart(
         self, runner_id: Optional[str] = None, instance_id: Optional[str] = None
     ) -> Optional[Runner]:
@@ -501,14 +504,14 @@ class PluginManager(StoppableThread):
                 return the_runner
 
         return None
-    
-    def map_runner_to_instance(self, runner_id:str, instance_id:str) -> bool:
+
+    def map_runner_to_instance(self, runner_id: str, instance_id: str) -> bool:
         the_runner = self._from_runner_id(runner_id)
 
         if the_runner:
             the_runner.instance_id = instance_id
             return True
-        
+
         return False
 
     def _restart(self, the_runner: ProcessRunner) -> ProcessRunner:
