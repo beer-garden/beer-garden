@@ -387,7 +387,7 @@ jobs:
         run: python${{ matrix.python-version }} -m pytest grandparents_garden/
         working-directory: ./test/integration
 
-Replication-Testing:
+  Replication-Testing:
     runs-on: ${{ matrix.os }}
 
     strategy:
