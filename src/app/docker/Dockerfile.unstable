@@ -23,4 +23,4 @@ RUN set -ex \
     && pip install --no-cache-dir -r requirements.txt \
     && pip install -e git+https://github.com/beer-garden/brewtils@${BREWTILS_BRANCH}#egg=brewtils \
     && pip install --no-cache-dir ./*.whl \
-    && apk del .build-deps
+    && apk del .build-deps 
