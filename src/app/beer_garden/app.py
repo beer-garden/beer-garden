@@ -72,6 +72,18 @@ class Application(StoppableThread):
 
         load_plugin_log_config()
 
+        if config.get("replication.enabled"):
+            import secrets
+
+            sleep_time = secrets.randbelow(60)
+            self.logger.info(
+                f"Replication Enabled, Staggering Start Time by {sleep_time} Seconds..."
+            )
+
+            import time
+
+            time.sleep(sleep_time)
+
         plugin_config = config.get("plugin")
         self.helper_threads = [
             HelperThread(
@@ -227,6 +239,9 @@ class Application(StoppableThread):
         self.logger.debug("Verifying message queue connection...")
         queue.create_clients(config.get("mq"))
 
+        if config.get("replication.enabled"):
+            queue.create_fanout_client(config.get("mq"))
+
         if not self._progressive_backoff(
             partial(queue.check_connection, "pika"),
             "Unable to connect to rabbitmq, is it started?",
@@ -254,7 +269,7 @@ class Application(StoppableThread):
         queue.initial_setup()
 
         if config.get("replication.enabled"):
-            self.logger.debug("Setting up message queues...")
+            self.logger.debug("Setting up fanout message queues...")
             queue.setup_event_consumer(config.get("mq"))
 
         self.logger.debug("Starting helper threads...")

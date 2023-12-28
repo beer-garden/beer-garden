@@ -13,6 +13,7 @@ from brewtils.models import Event, Instance, Request, System
 from brewtils.pika import PikaConsumer, TransientPikaClient
 from brewtils.schema_parser import SchemaParser
 from brewtils.stoppable_thread import StoppableThread
+from pika import BlockingConnection
 
 import beer_garden.config as config
 import beer_garden.requests
@@ -54,9 +55,32 @@ def create_clients(mq_config):
     }
 
 
+def create_fanout_client(mq_config):
+    clients["pika_fanout"] = TransientPikaClient(
+        host=mq_config.host,
+        port=mq_config.connections.message.port,
+        ssl=mq_config.connections.message.ssl,
+        user=mq_config.connections.admin.user,
+        password=mq_config.connections.admin.password,
+        virtual_host=mq_config.virtual_host,
+        connection_attempts=mq_config.connection_attempts,
+        blocked_connection_timeout=mq_config.blocked_connection_timeout,
+        exchange=f"{mq_config.exchange}_fanout",
+        exchange_type="fanout",
+    )
+
+
 def setup_event_consumer(mq_config):
     logger.debug("Setting up Events Topic...")
-    setup_events_topic()
+
+    # Setup random topic that is not durable. Topic will exisit until Rabbit is bounced
+    # A new topic will be generated each time Beer Garden is started.
+    with BlockingConnection(clients["pika_fanout"]._conn_params) as conn:
+        result = conn.channel().queue_declare("")
+        queue_name = result.method.queue
+        conn.channel().queue_bind(
+            exchange=f"{mq_config.exchange}_fanout", queue=queue_name
+        )
 
     connection = {
         "host": mq_config.host,
@@ -65,11 +89,12 @@ def setup_event_consumer(mq_config):
         "password": mq_config.connections.message.password,
         "virtual_host": mq_config.virtual_host,
         "ssl": mq_config.connections.message.ssl,
+        "exchange": f"{mq_config.exchange}_fanout",
     }
 
     logger.debug("Setting up Events Consumer...")
     consumers["events"] = EventConsumer(name="Event Pika Consumer")
-    consumers["events"].setup(connection_info=connection)
+    consumers["events"].setup(connection_info=connection, queue_name=queue_name)
     consumers["events"].start()
 
 
@@ -87,13 +112,9 @@ def initial_setup():
     logger.debug("Declaring message exchange...")
     clients["pika"].declare_exchange()
 
-
-def setup_events_topic():
-    clients["pika"].setup_queue(
-        internal_events_queue,
-        {"durable": True, "arguments": {"x-max-priority": 1}},
-        internal_events_keys,
-    )
+    if "pika_fanout" in clients:
+        logger.debug("Declaring message fanout exchange...")
+        clients["pika_fanout"].declare_exchange()
 
 
 def create(instance: Instance, system: System) -> dict:
@@ -159,9 +180,9 @@ def put_event(event: Event, headers: dict = None, **kwargs) -> None:
         None
     """
     kwargs["headers"] = headers or {}
-    kwargs["routing_key"] = "admin.events"
+    kwargs["routing_key"] = ""
 
-    clients["pika"].publish(SchemaParser.serialize_event(event), **kwargs)
+    clients["pika_fanout"].publish(SchemaParser.serialize_event(event), **kwargs)
 
 
 def put(request: Request, headers: dict = None, **kwargs) -> None:
@@ -468,10 +489,10 @@ def get_routing_key(*args, **kwargs):
 class EventConsumer(StoppableThread):
     """Consumers the interfaces with RabbitMQ to listen for internal Events"""
 
-    def setup(self, **kwargs):
+    def setup(self, queue_name, **kwargs):
         self.shutdown_event = threading.Event()
         self.consumer = PikaConsumer(
-            panic_event=self.shutdown_event, queue_name=internal_events_queue, **kwargs
+            panic_event=self.shutdown_event, queue_name=queue_name, **kwargs
         )
         self.consumer.on_message_callback = self.on_message_received
         self._pool = ThreadPoolExecutor(max_workers=1)
