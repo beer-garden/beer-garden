@@ -5,6 +5,9 @@
 TBD
 
 - Fixed issue where replicated messages were not fanned out to all replicated Beer Gardens
+- Fixed bug where restart instance was not checking if process is currently running. Now
+  it properly kills the running instance during restart.
+- Split apart functionality of Start and Restart instance into two API operations. 
 
 # 3.23.0
 
