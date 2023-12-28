@@ -1,5 +1,4 @@
 ARG PYTHON_IMAGE=python:3.11-alpine
-ARG BREWTILS=develop
 FROM $PYTHON_IMAGE
 WORKDIR /src
 ENTRYPOINT ["beergarden"]
@@ -21,6 +20,6 @@ RUN set -ex \
     && apk add --no-cache --virtual .build-deps \
        gcc make musl-dev libffi-dev openssl-dev git \
     && pip install --no-cache-dir -r requirements.txt \
-    && pip install -e git+https://github.com/beer-garden/brewtils@${BREWTILS_BRANCH}#egg=brewtils \
+    && pip install -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils \
     && pip install --no-cache-dir ./*.whl \
     && apk del .build-deps 
