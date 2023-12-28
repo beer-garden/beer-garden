@@ -372,6 +372,9 @@ jobs:
         run: docker-compose up -d beer-garden-child
         working-directory: ./docker/docker-compose
 
+      - name: Check Docker
+        run: docker ps
+
       - name: Wait for Beer Garden to start
         run: sleep 60s
         shell: bash
@@ -389,15 +392,18 @@ jobs:
 
       - name: Grab logs from Child
         if: always()
-        run: docker logs --tail 3000 beer-garden-child
+        run: docker-compose logs --tail 3000 beer-garden-child
+        working-directory: ./docker/docker-compose
 
       - name: Grab logs from Parent
         if: always()
-        run: docker logs --tail 3000 beer-garden-parent
+        run: docker-compose logs --tail 3000 beer-garden-parent
+        working-directory: ./docker/docker-compose
 
       - name: Grab logs from Grand Parent
         if: always()
-        run: docker logs --tail 3000 beer-garden-grandparent
+        run: docker-compose logs --tail 3000 beer-garden-grandparent
+        working-directory: ./docker/docker-compose
 
 
   Replication-Testing:
