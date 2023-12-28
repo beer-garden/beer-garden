@@ -243,6 +243,7 @@ class Command(MongoModel, EmbeddedDocument):
     hidden = BooleanField()
     icon_name = StringField()
     metadata = DictField()
+    tags = ListField(field=StringField())
     topics = ListField(field=StringField())
     allow_any_kwargs = BooleanField(default=False)
 
@@ -592,6 +593,7 @@ class System(MongoModel, Document):
     metadata = DictField()
     local = BooleanField(default=True)
     template = StringField()
+    groups = ListField(field=StringField())
 
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves

@@ -849,7 +849,10 @@ def invalid_request(request: Request = None):
 
 @publish_event(Events.REQUEST_UPDATED)
 def update_request(request: Request):
-    db.update(request)
+    if request.id:
+        request = db.update(request)
+    else:
+        request = db.create(request)
     return request
 
 

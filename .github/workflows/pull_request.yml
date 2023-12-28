@@ -245,6 +245,14 @@ jobs:
       - name: Verify Local Plugins
         run: ls ./docker/docker-compose/data/localplugins
 
+      - name: Run Docker Mongodb and RabbitMQ
+        run: docker-compose up -d mongodb rabbitmq
+        working-directory: ./docker/docker-compose
+
+      - name: Wait for Mongodb and RabbitMQ to start
+        run: sleep 20s
+        shell: bash
+
       - name: Run Docker Beer Garden
         run: BG='unstable' docker-compose up -d beer-garden
         working-directory: ./docker/docker-compose
@@ -287,7 +295,7 @@ jobs:
         working-directory: ./test/integration
 
       - name: Test Plugins
-        run: python${{ matrix.python-version }} -m pytest local_plugins/plugins/publisher_test.py
+        run: python${{ matrix.python-version }} -m pytest local_plugins
         working-directory: ./test/integration
 
       - name: Grab logs from Beer-Garden
@@ -378,3 +386,155 @@ jobs:
       - name: Test Plugins
         run: python${{ matrix.python-version }} -m pytest grandparents_garden/
         working-directory: ./test/integration
+
+Replication-Testing:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+        os: ["ubuntu-latest"]
+      fail-fast: false
+
+    name: Replicaiton Testing - Python ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Build Local Beer Garden Docker
+        run: |
+          python --version
+          python -m pip install --upgrade pip
+          pip install setuptools wheel
+          make package
+          make clean-python
+          docker build -t bgio/beer-garden:test -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:${{ matrix.python-version }}-alpine .
+        working-directory: ./src/app
+
+      - name: Start Docker Swarm
+        run: docker swarm init
+
+      - name: Run Docker RabbitMQ and Mongodb
+        run: docker stack deploy -c docker-compose-support.yml bg_core
+        working-directory: ./test/conf/swarm/
+
+      - name: Wait for Mongodb and RabbitMQ to start
+        run: sleep 20s
+        shell: bash
+
+      - name: Copy Data Files
+        run: cp -r docker/docker-compose/data test/conf/swarm/
+        working-directory: ./
+      
+      - name: Check Data Files
+        run: ls test/conf/swarm/data/certs/
+        working-directory: ./
+
+      - name: Run Docker Beer Garden
+        run: docker stack deploy -c docker-compose-framework.yml beer-garden
+        working-directory: ./test/conf/swarm/
+
+      - name: Wait for Beer Garden to start
+        run: sleep 60s
+        shell: bash
+
+      - name: Check services
+        run: docker service ls
+
+      - name: Check docker
+        run: docker ps
+
+      - name: Check BG
+        run: docker service ps --no-trunc beer-garden_beer-garden
+
+      - name: Check If Beer Garden is Operational
+        uses: nick-invision/retry@v2
+        with:
+          timeout_seconds: 30
+          max_attempts: 20
+          retry_on: error
+          retry_wait_seconds: 5
+          command: curl http://127.0.0.1:2337/config
+
+      - name: Grab logs from Beer-Garden.1
+        if: always()
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.1 --quiet)
+
+      - name: Grab logs from Beer-Garden.2
+        if: always()
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.2 --quiet)
+
+      - name: Grab logs from Beer-Garden.3
+        if: always()
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.3 --quiet)
+
+      - name: Run Docker Beer Garden Plugins
+        run: docker stack deploy -c docker-compose-plugins.yml beer-plugins
+        working-directory: ./test/conf/swarm/
+
+      - name: Wait for Plugins to start
+        run: sleep 15s
+        shell: bash
+
+      - name: Grab Garden Info
+        uses: nick-invision/retry@v2
+        with:
+          timeout_seconds: 30
+          max_attempts: 20
+          retry_on: error
+          retry_wait_seconds: 10
+          command: curl http://127.0.0.1:2337/api/v1/gardens/
+
+      - name: Check services
+        run: docker service ls
+
+      - name: Check Publisher
+        run: docker service ps --no-trunc beer-plugins_subscribe 
+      
+      - name: Grab logs from Publisher
+        run: docker service logs --tail 100 beer-plugins_subscribe 
+
+      - name: Grab logs from Beer-Garden
+        if: always()
+        run: docker service logs --tail 1000 beer-garden_beer-garden
+
+      # Custom tag extractor to find Brewtils Branch
+      - name: Find Brewtils Branch
+        uses: TheBurchLog/body-env-tag-action@1.0
+        with:
+          tag: "brewtils:"
+          env-variable: "brewtils"
+          default-value: "develop"
+          tag-position: -1
+
+      - name: Install Develop Version of Brewtils
+        run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@${{env.brewtils}}#egg=brewtils
+
+      - name: Install Testing Dependencies
+        run: pip${{ matrix.python-version }} install -r requirements.txt
+        working-directory: ./test/integration
+
+      - name: Test Plugins
+        run: python${{ matrix.python-version }} -m pytest local_plugins --ignore=local_plugins/plugins/complex_test.py --ignore=local_plugins/plugins/dynamic_test.py
+        working-directory: ./test/integration
+        timeout-minutes: 2
+
+      - name: Grab logs from Beer-Garden.1
+        if: always()
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.1 --quiet)
+
+      - name: Grab logs from Beer-Garden.2
+        if: always()
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.2 --quiet)
+
+      - name: Grab logs from Beer-Garden.3
+        if: always()
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.3 --quiet)
+
+      - name: Check services
+        if: always()
+        run: docker service ls

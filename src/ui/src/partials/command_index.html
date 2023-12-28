@@ -105,7 +105,12 @@
                 ng-show="command.topics.length > 0"
               ></span>
             </td>
-            <td>{{command.description}}</td>
+            <td>
+              {{command.description}}
+              <span ng-show="command.tags.length > 0">
+                <br>{{"TAGS = " + command.tags}}
+              </span>
+            </td>
             <td ng-if="userCanTask">
               <a
                 class="btn btn-primary center-block word-wrap-button"

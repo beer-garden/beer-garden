@@ -132,6 +132,7 @@ class SystemAPI(AuthorizationHandler):
             { "operation": "replace", "path": "/description", "value": "new description"},
             { "operation": "replace", "path": "/display_name", "value": "new display name"},
             { "operation": "replace", "path": "/icon_name", "value": "new icon name"},
+            { "operation": "replace", "path": "/groups", "value": ["group"]},
             { "operation": "update", "path": "/metadata", "value": {"foo": "bar"}}
           ]
           ```
@@ -180,6 +181,7 @@ class SystemAPI(AuthorizationHandler):
                     "/icon_name",
                     "/display_name",
                     "/template",
+                    "/groups",
                 ]:
                     kwargs[op.path.strip("/")] = op.value
                 else:

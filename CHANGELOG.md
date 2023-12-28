@@ -1,10 +1,44 @@
 # Beer Garden Changelog
 
+# 3.23.1
+
+TBD
+
+- Fixed issue where replicated messages were not fanned out to all replicated Beer Gardens
+
+# 3.23.0
+
+12/27/23
+
+- Added missing Request Status filter for "Invalid"
+- Adding default icon on System Admin page for undefined or null system.icon_name
+- Fixed bug where Publish/Subscribe events would carry over request properties across the various topics mapped
+- New API to support PUT Requests, this API will only spawn REQUEST_UPDATE events
+- Upgraded Brewtils version to [3.23.0](https://github.com/beer-garden/brewtils/releases/tag/3.23.0)
+
+# 3.22.0
+
+12/13/2023
+
+- Replication of all events, when configured, except for Garden Sync events. Garden sync events spawn off additional events that will be replicated properly.
+- Add support for commands to have tags, used for filtering on the commands index page
+- Publish Instance Status changed to Instance default topic {Namespace}.{System}.{Version}.{Instance}
+- Upgraded Brewtils version to [3.22.0](https://github.com/beer-garden/brewtils/releases/tag/3.22.0)
+
+# 3.21.0
+
+12/05/2023
+
+- When Beer-Garden is replicated, publishes required events to RabbitMQ keep the environments in sync.
+- On Request Index page, the prefix NOT is supported to invert string query or search for empty strings. 
+- Adding "?showNav=false" to the end of any UI page will remove the navigation bar
+- Upgrading unstable docker images to install Brewtils develop branch
+
 # 3.20.0
 
 11/16/2023
 
-- Adds the ability to delete Requests by Plugin on the System Admin page wihtin the plugin sub-menu. These are local deletes only
+- Adds the ability to delete Requests by Plugin on the System Admin page within the plugin sub-menu. These are local deletes only
 - Adds Is Alive check for Entry Points, if sub process is killed externally then it is restarted
 - Add error handling if Subscriber Request has exception at creation
 - Updates request validation to support allow_any_kwargs on commands

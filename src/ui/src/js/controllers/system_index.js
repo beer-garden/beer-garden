@@ -25,6 +25,44 @@ export default function systemIndexController(
 
   $scope.util = UtilityService;
 
+  $scope.hasGroups = false;
+
+  $scope.filters = {
+    0: {
+      html: 'input',
+      type: 'text',
+      attr: {class: 'form-inline form-control', title: 'Namespace Filter'},
+    },
+    1: {
+      html: 'input',
+      type: 'text',
+      attr: {class: 'form-inline form-control', title: 'System Filter'},
+    },
+    2: {
+      html: 'input',
+      type: 'text',
+      attr: {class: 'form-inline form-control', title: 'Version Filter'},
+    },
+    3: {
+      html: 'input',
+      type: 'text',
+      attr: {
+        class: 'form-inline form-control',
+        title: 'Description Filter',
+      },
+    },
+    4: {
+      html: 'input',
+      type: 'number',
+      attr: {class: 'form-inline form-control', title: 'Commands Filter'},
+    },
+    5: {
+      html: 'input',
+      type: 'number',
+      attr: {class: 'form-inline form-control', title: 'Instances Filter'},
+    },
+  };
+
   $scope.dtOptions = DTOptionsBuilder.newOptions()
       .withOption('autoWidth', false)
       .withOption(
@@ -37,41 +75,7 @@ export default function systemIndexController(
         [2, 'asc'],
         [3, 'asc'],
       ])
-      .withLightColumnFilter({
-        0: {
-          html: 'input',
-          type: 'text',
-          attr: {class: 'form-inline form-control', title: 'Namespace Filter'},
-        },
-        1: {
-          html: 'input',
-          type: 'text',
-          attr: {class: 'form-inline form-control', title: 'System Filter'},
-        },
-        2: {
-          html: 'input',
-          type: 'text',
-          attr: {class: 'form-inline form-control', title: 'Version Filter'},
-        },
-        3: {
-          html: 'input',
-          type: 'text',
-          attr: {
-            class: 'form-inline form-control',
-            title: 'Description Filter',
-          },
-        },
-        4: {
-          html: 'input',
-          type: 'number',
-          attr: {class: 'form-inline form-control', title: 'Commands Filter'},
-        },
-        5: {
-          html: 'input',
-          type: 'number',
-          attr: {class: 'form-inline form-control', title: 'Instances Filter'},
-        },
-      })
+      .withLightColumnFilter($scope.filters)
       .withBootstrap();
 
   $scope.instanceCreated = function(_instance) {
@@ -82,16 +86,40 @@ export default function systemIndexController(
     });
   };
 
+  $scope.checkGroups = function() {
+    $scope.hasGroups = false;
+    for (let i = 0; i < $rootScope.systems.length; i++){
+      if ($rootScope.systems[i].groups.length > 0){
+        $scope.hasGroups = true;
+        break;
+      }
+    }
+
+    if ($scope.hasGroups && !(6 in $scope.filters)){
+      $scope.filters[6] = {
+        html: 'input',
+        type: 'text',
+        attr: {class: 'form-inline form-control', title: 'Group Filter', ng: 'Group Filter'},
+      };
+    } else if (!$scope.hasGroups && 6 in $scope.filters){
+      delete  $scope.filters[6];
+    }
+  }
+
   $scope.successCallback = function(response) {
     $scope.response = response;
     $scope.data = response.data;
+    $scope.checkGroups();
   };
 
   $scope.failureCallback = function(response) {
     $scope.response = response;
     $scope.data = {};
+    $scope.checkGroups();
   };
 
   $scope.response = $rootScope.gardensResponse;
   $scope.data = $rootScope.systems;
+  $scope.checkGroups();
+
 }

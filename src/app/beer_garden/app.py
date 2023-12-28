@@ -32,7 +32,7 @@ import beer_garden.queue.api as queue
 import beer_garden.router
 from beer_garden.events.handlers import garden_callbacks
 from beer_garden.events.parent_procesors import HttpParentUpdater
-from beer_garden.events.processors import FanoutProcessor, QueueListener
+from beer_garden.events.processors import EventProcessor, FanoutProcessor, QueueListener
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
@@ -71,6 +71,18 @@ class Application(StoppableThread):
         self.scheduler = self._setup_scheduler()
 
         load_plugin_log_config()
+
+        if config.get("replication.enabled"):
+            import secrets
+
+            sleep_time = secrets.randbelow(60)
+            self.logger.info(
+                f"Replication Enabled, Staggering Start Time by {sleep_time} Seconds..."
+            )
+
+            import time
+
+            time.sleep(sleep_time)
 
         plugin_config = config.get("plugin")
         self.helper_threads = [
@@ -227,6 +239,9 @@ class Application(StoppableThread):
         self.logger.debug("Verifying message queue connection...")
         queue.create_clients(config.get("mq"))
 
+        if config.get("replication.enabled"):
+            queue.create_fanout_client(config.get("mq"))
+
         if not self._progressive_backoff(
             partial(queue.check_connection, "pika"),
             "Unable to connect to rabbitmq, is it started?",
@@ -252,6 +267,10 @@ class Application(StoppableThread):
 
         self.logger.debug("Setting up message queues...")
         queue.initial_setup()
+
+        if config.get("replication.enabled"):
+            self.logger.debug("Setting up fanout message queues...")
+            queue.setup_event_consumer(config.get("mq"))
 
         self.logger.debug("Starting helper threads...")
         for helper_thread in self.helper_threads:
@@ -326,11 +345,19 @@ class Application(StoppableThread):
         self.logger.debug("Stopping event manager")
         beer_garden.events.manager.stop()
 
+        if config.get("replication.enabled"):
+            self.logger.debug("Stopping Event Consumer")
+            queue.shutdown_event_consumer()
+
         self.logger.info("Successfully shut down Beer-garden")
 
     def _setup_events_manager(self):
         """Set up the event manager for the Main Processor"""
-        event_manager = FanoutProcessor(name="event manager")
+
+        if config.get("replication.enabled"):
+            event_manager = EventProcessor(name="event manager")
+        else:
+            event_manager = FanoutProcessor(name="event manager")
 
         # Forward all events down into the entry points
         event_manager.register(self.entry_manager, manage=False)
