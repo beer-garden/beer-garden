@@ -427,11 +427,13 @@ def remove_routing_garden(garden_name=None):
 
 
 def add_routing_garden(garden: Garden, routing_garden: str):
-    for system in garden.systems:
-        add_routing_system(system=system, garden_name=routing_garden)
+    if garden.systems:
+        for system in garden.systems:
+            add_routing_system(system=system, garden_name=routing_garden)
 
-    for child in garden.children:
-        add_routing_garden(child, routing_garden)
+    if garden.children:
+        for child in garden.children:
+            add_routing_garden(child, routing_garden)
 
 
 def handle_event(event):
