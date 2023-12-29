@@ -804,8 +804,8 @@ class Garden(MongoModel, Document):
     }
 
     def deep_save(self):
-        # if self.connection_type != "LOCAL":
-        #     self._update_associated_systems()
+        if self.connection_type != "LOCAL":
+            self._update_associated_systems()
 
         self.save()
 
