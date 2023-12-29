@@ -295,19 +295,23 @@ def upsert_garden(garden: Garden) -> Garden:
 
     if garden.children:
         for child in garden.children:
+            logger.error(f"Add Child Garden : {child.name}")
             child = upsert_garden(child)
 
     try:
         existing_garden = get_garden(garden.name)
+        
     except DoesNotExist:
         existing_garden = None
 
     if existing_garden is None:
+        logger.error(f"Create Garden {garden.name}")
         garden.connection_type = None
         garden.connection_params = {}
 
         return create_garden(garden)
     else:
+        logger.error(f"Update Garden {garden.name}")
         for attr in ("status", "status_info", "namespaces", "systems"):
             setattr(existing_garden, attr, getattr(garden, attr))
 
