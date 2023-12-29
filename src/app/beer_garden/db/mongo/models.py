@@ -785,7 +785,7 @@ class Garden(MongoModel, Document):
     systems = ListField(ReferenceField(System, reverse_delete_rule=PULL))
 
     parent = StringField()
-    
+
     children = DummyField(required=False)
     has_parent = BooleanField(required=False, default=False)
 
@@ -817,6 +817,8 @@ class Garden(MongoModel, Document):
 
         logger = logging.getLogger(self.__class__.__name__)
 
+        logger.error(f"Updating {len(self.systems)} systems")
+
         def _get_system_triple(system: System) -> Tuple[str, str, str]:
             return (
                 system.namespace,
@@ -844,7 +846,7 @@ class Garden(MongoModel, Document):
 
                 if system_id_to_remove != str(system.id):
                     # remove the system from before this update with the same triple
-                    logger.debug(
+                    logger.error(
                         f"Removing System <{triple[0]}"
                         f", {triple[1]}"
                         f", {triple[2]}> with ID={system_id_to_remove}"
@@ -859,7 +861,7 @@ class Garden(MongoModel, Document):
         # if a child system deleted a particular version of a plugin and installed
         # another version of the same plugin
         for bad_system_id in child_systems_already_known.values():
-            logger.debug(
+            logger.error(
                 f"Removing System with ID={str(bad_system_id)} because it "
                 f"matches no known system in child garden ({self.name})"
             )

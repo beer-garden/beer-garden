@@ -298,7 +298,7 @@ def upsert_garden(garden: Garden) -> Garden:
     if garden.children:
         for child in garden.children:
             logger.error(f"Add Child Garden : {child.name}")
-            child = upsert_garden(child)
+            upsert_garden(child)
 
     try:
         existing_garden = get_garden(garden.name)
