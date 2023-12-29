@@ -61,7 +61,9 @@ def garden_callbacks(event: Event) -> None:
         try:
             handler(deepcopy(event))
         except Exception as ex:
-            logger.error(ex)
+            import traceback
+            tb1 = traceback.TracebackException.from_exception(ex)
+            logger.error(''.join(tb1.format()))
             logger.error(
                 "'%s' handler received an error executing callback for event %s: %s"
                 % (handler_tag, repr(event), str(ex))
