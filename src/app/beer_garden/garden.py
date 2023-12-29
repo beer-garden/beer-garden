@@ -410,7 +410,7 @@ def handle_event(event):
                 for system in event.payload.systems:
                     system.local = False
 
-                upsert_garden(event.payload)
+                garden = upsert_garden(event.payload)
 
                 # if existing_garden is None:
                 #     event.payload.connection_type = None
