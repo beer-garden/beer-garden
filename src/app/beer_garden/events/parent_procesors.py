@@ -49,7 +49,7 @@ class HttpParentUpdater(QueueListener):
                 Events.GARDEN_STOPPED.name,
                 Events.GARDEN_SYNC.name,
             ):
-                if event.payload.parent is None and event.payload.name != config.get("garden.name"):
+                if event.payload.parent is None and event.payload.name != conf.get("garden.name"):
                     event.payload.parent = conf.get("garden.name")
                     event.payload.has_parent = True
 
