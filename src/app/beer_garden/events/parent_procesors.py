@@ -1,4 +1,4 @@
-from brewtils.models import Event, Operation
+from brewtils.models import Event, Operation, Events
 from requests import RequestException
 
 import beer_garden.config as conf
