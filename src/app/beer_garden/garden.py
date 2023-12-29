@@ -133,6 +133,8 @@ def publish_garden(status: str = "RUNNING") -> Garden:
 
     garden.children = children
 
+    logger.error(f"Syncing Garden: Has {len(garden.children)} children")
+
     return garden
 
 

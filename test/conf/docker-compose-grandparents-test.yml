@@ -160,8 +160,8 @@ services:
             BG_METRICS_URL: http://localhost:3000
             BG_METRICS_PROMETHEUS_ENABLED: "false"
 
-        depends_on:
-            - beer-garden-grandparent
+        # depends_on:
+        #     - beer-garden-grandparent
 
     ui-parent:
         image: bgio/ui:3
@@ -218,8 +218,8 @@ services:
             BG_METRICS_URL: http://localhost:3000
             BG_METRICS_PROMETHEUS_ENABLED: "false"
 
-        depends_on:
-            - beer-garden-parent
+        # depends_on:
+        #     - beer-garden-parent
 
     ui-parent:
         image: bgio/ui:3
