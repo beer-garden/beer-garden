@@ -298,15 +298,15 @@ def upsert_garden(garden: Garden) -> Garden:
             child = upsert_garden(child)
 
     try:
-        existing_garden = get_garden(Garden.name)
+        existing_garden = get_garden(garden.name)
     except DoesNotExist:
         existing_garden = None
 
     if existing_garden is None:
-        event.payload.connection_type = None
-        event.payload.connection_params = {}
+        garden.connection_type = None
+        garden.connection_params = {}
 
-        return create_garden(Garden)
+        return create_garden(garden)
     else:
         for attr in ("status", "status_info", "namespaces", "systems"):
             setattr(existing_garden, attr, getattr(garden, attr))
