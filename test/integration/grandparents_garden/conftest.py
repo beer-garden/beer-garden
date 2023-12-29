@@ -37,7 +37,7 @@ def grand_parent_easy_client(request):
 
 def pytest_sessionstart(session):
     client = EasyClient(
-        bg_host="localhost", bg_port=2337, ssl_enabled=False
+        bg_host="localhost", bg_port=2357, ssl_enabled=False
     ).client
 
     patches = json.dumps(
