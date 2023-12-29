@@ -304,6 +304,8 @@ def upsert_garden(garden: Garden) -> Garden:
     except DoesNotExist:
         existing_garden = None
 
+    del garden.children
+    
     if existing_garden is None:
         logger.error(f"Create Garden {garden.name}")
         garden.connection_type = None
