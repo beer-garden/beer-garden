@@ -1,5 +1,5 @@
 import pytest
-from brewtils import get_easy_client, RestClient
+from brewtils import get_easy_client
 from brewtils.schema_parser import SchemaParser
 import json
 import time
