@@ -364,6 +364,10 @@ def handle_event(event):
             # Only do stuff for direct children
             if event.payload.name == event.garden:
                 logger.error(f"Processing {event.garden} for {event.name}")
+                if event.payload.children:
+                    logger.error(f"Has {len(event.payload.children)} children")
+                else:
+                    logger.error(f"Has None children")
                 try:
                     existing_garden = get_garden(event.payload.name)
                 except DoesNotExist:
