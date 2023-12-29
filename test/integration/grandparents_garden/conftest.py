@@ -45,7 +45,7 @@ def pytest_sessionstart(session):
                 {
                     "operation": "sync",
                     "path": "",
-                    "value": "",
+                    "value": "child",
                 }
             ]
         )
