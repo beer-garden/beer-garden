@@ -32,7 +32,7 @@ from beer_garden.systems import get_systems, remove_system
 logger = logging.getLogger(__name__)
 
 def get_children_garden(garden: Garden) -> Garden:
-    garden.children = db.query(Garden, filter_params={"parent": garden})
+    garden.children = db.query(Garden, filter_params={"parent": garden.name})
 
     if garden.children:
         for child in garden.children:
@@ -128,7 +128,7 @@ def publish_garden(status: str = "RUNNING") -> Garden:
 
     children = get_gardens(include_local=False)
     for child in children:
-        child.parent = garden
+        child.parent = garden.name
         child.has_parent = True
 
     garden.children = children
@@ -305,9 +305,6 @@ def upsert_garden(garden: Garden) -> Garden:
         existing_garden = None
 
     del garden.children
-    
-    if garden.parent and garden.parent.children:
-        del garden.parent.children
 
     if existing_garden is None:
         logger.error(f"Create Garden {garden.name}")

@@ -784,9 +784,8 @@ class Garden(MongoModel, Document):
     connection_params = DictField()
     systems = ListField(ReferenceField(System, reverse_delete_rule=PULL))
 
-    parent = ReferenceField(
-        "Garden", dbref=True, required=False, reverse_delete_rule=CASCADE
-    )
+    parent = StringField()
+    
     children = DummyField(required=False)
     has_parent = BooleanField(required=False, default=False)
 
