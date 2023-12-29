@@ -36,7 +36,7 @@ def grand_parent_easy_client(request):
     return request.cls.grand_parent_easy_client
 
 def pytest_sessionstart(session):
-    client = EasyClient(
+    client = get_easy_client(
         bg_host="localhost", bg_port=2357, ssl_enabled=False
     ).client
 
