@@ -373,8 +373,9 @@ def publish_garden_systems(garden: Garden, src_garden: str):
             )
         )
 
-    for child in garden.children:
-        publish_garden_systems(child, src_garden)
+    if garden.children:
+        for child in garden.children:
+            publish_garden_systems(child, src_garden)
 
 
 def handle_event(event):
