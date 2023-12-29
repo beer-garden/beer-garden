@@ -247,8 +247,8 @@ def create_garden(garden: Garden) -> Garden:
 
     garden.status_info["heartbeat"] = datetime.utcnow()
 
-    garden = db.create(garden)
-    return get_children_garden(garden)
+    return db.create(garden)
+    #return get_children_garden(garden)
 
 
 def garden_add_system(system: System, garden_name: str) -> Garden:
@@ -289,8 +289,8 @@ def update_garden(garden: Garden) -> Garden:
         The updated Garden
     """
 
-    garden = db.update(garden)
-    return get_children_garden(garden)
+    return db.update(garden)
+    #return get_children_garden(garden)
 
 def upsert_garden(garden: Garden) -> Garden:
     """ Updates or inserts Garden"""
