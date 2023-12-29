@@ -1,6 +1,8 @@
 import pytest
-from brewtils import get_easy_client
+from brewtils import get_easy_client, RestClient
 from brewtils.schema_parser import SchemaParser
+import json
+import time
 
 try:
     from ..helper import RequestGenerator, setup_easy_client
@@ -32,6 +34,25 @@ def grand_parent_easy_client(request):
         bg_host="localhost", bg_port=2337, ssl_enabled=False
     )
     return request.cls.grand_parent_easy_client
+
+def pytest_sessionstart(session):
+    client = RestClient(
+        bg_host="localhost", bg_port=2337, ssl_enabled=False
+    )
+
+    patches = json.dumps(
+            [
+                {
+                    "operation": "sync",
+                    "path": "",
+                    "value": "",
+                }
+            ]
+        )
+
+    client.patch_garden("", patches)
+
+    time.sleep(20)
 
 
 @pytest.fixture(scope="class")
