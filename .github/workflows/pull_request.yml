@@ -368,7 +368,23 @@ jobs:
       - name: Verify Local Plugins
         run: ls ./docker/docker-compose/data/localplugins
 
-      - name: Run Docker Beer Garden
+      - name: Run Docker Beer Garden Grandparent
+        run: docker-compose up -d beer-garden-grandparent
+        working-directory: ./docker/docker-compose
+
+      - name: Wait for Beer Garden Grandparent to start
+        run: sleep 10s
+        shell: bash
+
+      - name: Run Docker Beer Garden Parent
+        run: docker-compose up -d beer-garden-parent
+        working-directory: ./docker/docker-compose
+
+      - name: Wait for Beer Garden Parent to start
+        run: sleep 10s
+        shell: bash
+
+      - name: Run Docker Beer Garden Child
         run: docker-compose up -d beer-garden-child
         working-directory: ./docker/docker-compose
 
