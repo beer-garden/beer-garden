@@ -126,14 +126,14 @@ def publish_garden(status: str = "RUNNING") -> Garden:
     garden.connection_type = None
     garden.status = status
 
-    children = get_gardens(include_local=False)
-    for child in children:
-        child.parent = garden.name
-        child.has_parent = True
+    # children = get_gardens(include_local=False)
+    # for child in children:
+    #     child.parent = garden.name
+    #     child.has_parent = True
 
-    garden.children = children
+    # garden.children = children
 
-    logger.error(f"Syncing Garden: Has {len(garden.children)} children")
+    # logger.error(f"Syncing Garden: Has {len(garden.children)} children")
 
     return garden
 
@@ -397,32 +397,32 @@ def handle_event(event):
             Events.GARDEN_SYNC.name,
         ):
             # Only do stuff for direct children
-            if event.payload.name == event.garden:
+            #if event.payload.name == event.garden:
                 logger.error(f"Processing {event.garden} for {event.name}")
                 if event.payload.children:
                     logger.error(f"Has {len(event.payload.children)} children")
                 else:
                     logger.error(f"Has None children")
-                # try:
-                #     existing_garden = get_garden(event.payload.name)
-                # except DoesNotExist:
-                #     existing_garden = None
+                try:
+                    existing_garden = get_garden(event.payload.name)
+                except DoesNotExist:
+                    existing_garden = None
 
                 for system in event.payload.systems:
                     system.local = False
+                del event.payload.children
+                # garden = upsert_garden(event.payload)
 
-                garden = upsert_garden(event.payload)
+                if existing_garden is None:
+                    event.payload.connection_type = None
+                    event.payload.connection_params = {}
 
-                # if existing_garden is None:
-                #     event.payload.connection_type = None
-                #     event.payload.connection_params = {}
+                    garden = create_garden(event.payload)
+                else:
+                    for attr in ("status", "status_info", "namespaces", "systems"):
+                        setattr(existing_garden, attr, getattr(event.payload, attr))
 
-                #     garden = create_garden(event.payload)
-                # else:
-                #     for attr in ("status", "status_info", "namespaces", "systems"):
-                #         setattr(existing_garden, attr, getattr(event.payload, attr))
-
-                #     garden = update_garden(existing_garden)
+                    garden = update_garden(existing_garden)
 
                 # Publish update events for UI to dynamically load changes for Systems
                 publish_garden_systems(garden, event.garden)

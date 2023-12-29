@@ -43,6 +43,15 @@ class HttpParentUpdater(QueueListener):
     def process(self, event: Event):
         # TODO - This shouldn't be set here
         event.garden = conf.get("garden.name")
+        if event.name in (
+                Events.GARDEN_STARTED.name,
+                Events.GARDEN_UPDATED.name,
+                Events.GARDEN_STOPPED.name,
+                Events.GARDEN_SYNC.name,
+            ):
+                if event.payload.parent is None and event.payload.name != config.get("garden.name"):
+                    event.payload.parent = config.get("garden.name")
+                    event.payload.has_parent = True
 
         if not event_blocklisted(event):
             try:
