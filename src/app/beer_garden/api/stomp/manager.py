@@ -5,6 +5,7 @@ from threading import Lock
 from box import Box
 from brewtils.models import Event, Events
 
+import beer_garden.config as config
 import beer_garden.log
 import beer_garden.requests
 import beer_garden.router
