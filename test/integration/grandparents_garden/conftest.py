@@ -36,9 +36,9 @@ def grand_parent_easy_client(request):
     return request.cls.grand_parent_easy_client
 
 def pytest_sessionstart(session):
-    client = RestClient(
+    client = EasyClient(
         bg_host="localhost", bg_port=2337, ssl_enabled=False
-    )
+    ).client
 
     patches = json.dumps(
             [
