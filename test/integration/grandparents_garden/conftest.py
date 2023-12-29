@@ -45,12 +45,12 @@ def pytest_sessionstart(session):
                 {
                     "operation": "sync",
                     "path": "",
-                    "value": "child",
+                    "value": "",
                 }
             ]
         )
 
-    client.patch_garden("", patches)
+    client.patch_garden("child", patches)
 
     time.sleep(20)
 
