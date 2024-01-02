@@ -31,6 +31,7 @@ from beer_garden.systems import get_systems, remove_system
 
 logger = logging.getLogger(__name__)
 
+
 def get_children_garden(garden: Garden) -> Garden:
     garden.children = db.query(Garden, filter_params={"parent": garden.name})
 
@@ -41,6 +42,7 @@ def get_children_garden(garden: Garden) -> Garden:
         garden.children = []
 
     return garden
+
 
 def get_garden(garden_name: str) -> Garden:
     """Retrieve an individual Garden
@@ -281,8 +283,9 @@ def update_garden(garden: Garden) -> Garden:
 
     return db.update(garden)
 
+
 def upsert_garden(garden: Garden) -> Garden:
-    """ Updates or inserts Garden"""
+    """Updates or inserts Garden"""
 
     if garden.children:
         for child in garden.children:
@@ -290,7 +293,7 @@ def upsert_garden(garden: Garden) -> Garden:
 
     try:
         existing_garden = get_garden(garden.name)
-        
+
     except DoesNotExist:
         existing_garden = None
 
@@ -383,38 +386,50 @@ def handle_event(event):
             Events.GARDEN_SYNC.name,
         ):
             # Only do stuff for direct children
-            #if event.payload.name == event.garden: 
-                logger.error(f"Processing {event.garden} for {event.name}")
-                logger.error(event.payload)
-                try:
-                    existing_garden = get_garden(event.payload.name)
-                except DoesNotExist:
-                    existing_garden = None
+            # if event.payload.name == event.garden:
+            logger.error(f"Processing {event.garden} for {event.name}")
+            logger.error(event.payload)
+            try:
+                existing_garden = get_garden(event.payload.name)
+            except DoesNotExist:
+                existing_garden = None
 
-                for system in event.payload.systems:
-                    system.local = False
-                del event.payload.children
-                
-                # Remove systems that are tracking locally
-                remote_systems = []
-                for system in event.payload.systems:
-                    if len(get_systems(filter_params={"local":True, "namespace": system.namespace, "name": system.name, "version": system.version})) < 1:
-                        remote_systems.append(system)
-                event.payload.systems = remote_systems
+            for system in event.payload.systems:
+                system.local = False
+            del event.payload.children
 
-                if existing_garden is None:
-                    event.payload.connection_type = None
-                    event.payload.connection_params = {}
+            # Remove systems that are tracking locally
+            remote_systems = []
+            for system in event.payload.systems:
+                if (
+                    len(
+                        get_systems(
+                            filter_params={
+                                "local": True,
+                                "namespace": system.namespace,
+                                "name": system.name,
+                                "version": system.version,
+                            }
+                        )
+                    )
+                    < 1
+                ):
+                    remote_systems.append(system)
+            event.payload.systems = remote_systems
 
-                    garden = create_garden(event.payload)
-                else:
-                    for attr in ("status", "status_info", "namespaces", "systems"):
-                        setattr(existing_garden, attr, getattr(event.payload, attr))
+            if existing_garden is None:
+                event.payload.connection_type = None
+                event.payload.connection_params = {}
 
-                    garden = update_garden(existing_garden)
+                garden = create_garden(event.payload)
+            else:
+                for attr in ("status", "status_info", "namespaces", "systems"):
+                    setattr(existing_garden, attr, getattr(event.payload, attr))
 
-                # Publish update events for UI to dynamically load changes for Systems
-                publish_garden_systems(garden, event.garden)
+                garden = update_garden(existing_garden)
+
+            # Publish update events for UI to dynamically load changes for Systems
+            publish_garden_systems(garden, event.garden)
 
     elif event.name == Events.GARDEN_UNREACHABLE.name:
         target_garden = get_garden(event.payload.target_garden_name)

@@ -20,7 +20,10 @@ GARDEN_READ = Permissions.GARDEN_READ.value
 GARDEN_UPDATE = Permissions.GARDEN_UPDATE.value
 GARDEN_DELETE = Permissions.GARDEN_DELETE.value
 import logging
+
 logger = logging.getLogger(__name__)
+
+
 class GardenAPI(AuthorizationHandler):
     async def get(self, garden_name):
         """
@@ -56,10 +59,7 @@ class GardenAPI(AuthorizationHandler):
         #     response = GardenReadSchema().dumps(garden).data
 
         response = await self.client(
-            Operation(
-                operation_type="GARDEN_READ",
-                args=[garden_name]
-            )
+            Operation(operation_type="GARDEN_READ", args=[garden_name])
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -198,7 +198,7 @@ class GardenListAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-        #permitted_gardens = self.permissioned_queryset(Garden, GARDEN_READ)
+        # permitted_gardens = self.permissioned_queryset(Garden, GARDEN_READ)
         # response_gardens = []
 
         # permitted_gardens_list = list(
@@ -212,18 +212,20 @@ class GardenListAPI(AuthorizationHandler):
         #     permitted_gardens_list.append(_local_garden)
 
         permitted_gardens_list = await self.client(
-            Operation(
-                operation_type="GARDEN_READ_ALL"
-            )
+            Operation(operation_type="GARDEN_READ_ALL")
         )
 
         response_gardens = []
-        for garden in SchemaParser.parse_garden(permitted_gardens_list, from_string=True, many=True):       
+        for garden in SchemaParser.parse_garden(
+            permitted_gardens_list, from_string=True, many=True
+        ):
             if user_has_permission_for_object(self.current_user, GARDEN_READ, garden):
                 response_gardens.append(garden)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(SchemaParser.serialize_garden(response_gardens, to_string = True, many = True))
+        self.write(
+            SchemaParser.serialize_garden(response_gardens, to_string=True, many=True)
+        )
 
     async def post(self):
         """
