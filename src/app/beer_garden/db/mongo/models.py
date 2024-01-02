@@ -825,37 +825,43 @@ class Garden(MongoModel, Document):
                 system.name,
                 system.version,
             )
+        
+        # Check previous save for System records
+        old_garden = Garden.objects.get(name=self.name)
 
-        our_namespaces = set(self.namespaces).union(
-            set(map(attrgetter("namespace"), self.systems))
-        )
+        #our_namespaces = set(self.namespaces).union(
+        #    set(map(attrgetter("namespace"), self.systems))
+        #)
         # we leverage the fact that systems must be unique up to the triple of their
         # namespaces, names and versions
-        child_systems_already_known = {
-            _get_system_triple(system): str(system.id)
-            for system in get_systems(
-                filter_params={"local": False, "namespace__in": our_namespaces}
-            )
-        }
+        child_systems_already_known = {}
+        if old_garden:
+            child_systems_already_known = {
+                _get_system_triple(system): str(system.id)
+                for system in old_garden.systems
+            }
 
         for system in self.systems:
             triple = _get_system_triple(system)
 
-            if triple in child_systems_already_known:
-                system_id_to_remove = child_systems_already_known.pop(triple)
+            # Check is System is a Local System
+            if System.objects(namespace=triple[0], name=triple[1], version=triple[2], local=True).count() < 0:
 
-                if system_id_to_remove != str(system.id):
-                    # remove the system from before this update with the same triple
-                    logger.error(
-                        f"Removing System <{triple[0]}"
-                        f", {triple[1]}"
-                        f", {triple[2]}> with ID={system_id_to_remove}"
-                        f"; doesn't match ID={str(system.id)}"
-                        " for known system with same attributes"
-                    )
-                    remove_system(system_id=system_id_to_remove)
+                if triple in child_systems_already_known:
+                    system_id_to_remove = child_systems_already_known.pop(triple)
 
-            system.save()
+                    if system_id_to_remove != str(system.id):
+                        # remove the system from before this update with the same triple
+                        logger.error(
+                            f"Removing System <{triple[0]}"
+                            f", {triple[1]}"
+                            f", {triple[2]}> with ID={system_id_to_remove}"
+                            f"; doesn't match ID={str(system.id)}"
+                            " for known system with same attributes"
+                        )
+                        remove_system(system_id=system_id_to_remove)
+
+                system.save()
 
         # if there's anything left over, delete those too; this could occur, e.g.,
         # if a child system deleted a particular version of a plugin and installed
