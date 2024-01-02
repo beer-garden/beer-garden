@@ -829,7 +829,7 @@ class Garden(MongoModel, Document):
         # Check previous save for System records
         old_garden = None
         
-        if Garden.objects(name=self.name).count > 0:
+        if Garden.objects(name=self.name).count() > 0:
             old_garden = Garden.objects.get(name=self.name)
 
         #our_namespaces = set(self.namespaces).union(
