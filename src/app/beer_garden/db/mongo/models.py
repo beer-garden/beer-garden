@@ -821,7 +821,7 @@ class Garden(MongoModel, Document):
 
         def _get_system_triple(system: System) -> Tuple[str, str, str]:
             return (
-                system.namespace,
+                system.namespace or self.name,
                 system.name,
                 system.version,
             )
