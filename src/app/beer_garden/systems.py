@@ -429,7 +429,7 @@ def handle_event(event: Event) -> None:
         if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
             event.payload.local = False
 
-            if db.count(System, id=event.payload.id):
+            if db.count(System, id=event.payload.id) > 0:
                 db.update(event.payload)
             else:
                 db.create(event.payload)
