@@ -831,6 +831,8 @@ class Garden(MongoModel, Document):
         
         if Garden.objects(name=self.name).count() > 0:
             old_garden = Garden.objects.get(name=self.name)
+            for system in old_garden.systems:
+                logger.error(system)
 
         #our_namespaces = set(self.namespaces).union(
         #    set(map(attrgetter("namespace"), self.systems))
