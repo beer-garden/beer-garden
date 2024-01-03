@@ -75,6 +75,9 @@ def get_gardens(include_local: bool = True) -> List[Garden]:
     gardens = db.query(
         Garden, filter_params={"connection_type__ne": "LOCAL", "has_parent": "false"}
     )
+    logger.error("In Database")
+    for garden in db.query(Garden):
+        logger.error(garden.__repr__)
 
     if include_local:
         gardens += [local_garden()]
@@ -82,8 +85,9 @@ def get_gardens(include_local: bool = True) -> List[Garden]:
     for garden in gardens:
         get_children_garden(garden)
 
+    logger.error("In Response")
     for garden in gardens:
-        logger.error(f"Returning {garden}")
+        logger.error(garden.__repr__)
 
     return gardens
 
