@@ -44,16 +44,23 @@ class GardenAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-        if garden_name == config.get("garden.name"):
-            garden = local_garden(all_systems=True)
-            self.verify_user_permission_for_object(GARDEN_READ, garden)
-        else:
-            garden = self.get_or_raise(Garden, GARDEN_READ, name=garden_name)
+        # if garden_name == config.get("garden.name"):
+        #     garden = local_garden(all_systems=True)
+        #     self.verify_user_permission_for_object(GARDEN_READ, garden)
+        # else:
+        #     garden = self.get_or_raise(Garden, GARDEN_READ, name=garden_name)
 
-        if user_has_permission_for_object(self.current_user, GARDEN_UPDATE, garden):
-            response = MongoParser.serialize(garden)
-        else:
-            response = GardenReadSchema().dumps(garden).data
+        # if user_has_permission_for_object(self.current_user, GARDEN_UPDATE, garden):
+        #     response = MongoParser.serialize(garden)
+        # else:
+        #     response = GardenReadSchema().dumps(garden).data
+
+        response = await self.client(
+            Operation(
+                operation_type="GARDEN_READ",
+                args=[garden_name]
+            )
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
