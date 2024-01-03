@@ -49,8 +49,9 @@ class HttpParentUpdater(QueueListener):
                 Events.GARDEN_STOPPED.name,
                 Events.GARDEN_SYNC.name,
             ):
-                if event.payload.parent is None and event.payload.name != conf.get("garden.name"):
-                    event.payload.parent = conf.get("garden.name")
+                if event.payload.parent is None and event.payload.name != event.garden:
+                    logger.error(f"Setting parent to {event.garden}")
+                    event.payload.parent = event.garden
                     event.payload.has_parent = True
 
         if not event_blocklisted(event):
