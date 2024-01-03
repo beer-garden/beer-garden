@@ -878,6 +878,7 @@ class Garden(MongoModel, Document):
                 logger.error(f"Saving === {system}")
                 system.save()       
             else:
+                logger.error(f"Deleting === {system}")
                 system.delete()  
             #tracked_systems.append(system)
  
