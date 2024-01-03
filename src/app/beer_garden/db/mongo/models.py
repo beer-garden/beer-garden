@@ -819,7 +819,7 @@ class Garden(MongoModel, Document):
         
         for key in self:
             if not callable(self[key]):
-                logger.error(f"{key} ({type(key)}) = {self[key]}")
+                logger.error(f"{key} ({type(self[key])}) = {self[key]}")
 
         logger.error(f"Updating {len(self.systems)} systems")
 
