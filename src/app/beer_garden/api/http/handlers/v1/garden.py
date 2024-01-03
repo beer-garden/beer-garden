@@ -218,9 +218,7 @@ class GardenListAPI(AuthorizationHandler):
         )
 
         response_gardens = []
-        for garden in permitted_gardens_list:
-            logger.error(garden)
-            logger.error(type(garden))
+        for garden in SchemaParser.parse_garden(permitted_gardens_list, from_string=True, many=True):       
             if user_has_permission_for_object(self.current_user, GARDEN_READ, garden):
                 response_gardens.append(garden)
 
