@@ -405,10 +405,6 @@ def handle_event(event):
             #if event.payload.name == event.garden: 
                 logger.error(f"Processing {event.garden} for {event.name}")
                 logger.error(event.payload)
-                if event.payload.children:
-                    logger.error(f"Has {len(event.payload.children)} children")
-                else:
-                    logger.error(f"Has None children")
                 try:
                     existing_garden = get_garden(event.payload.name)
                 except DoesNotExist:
@@ -421,14 +417,7 @@ def handle_event(event):
                 # Remove systems that are tracking locally
                 remote_systems = []
                 for system in event.payload.systems:
-                    filter_params = {}
-
-                    filter_params["local"] = True
-                    filter_params["namespace"] = system.namespace
-                    filter_params["name"] = system.name
-                    filter_params["version"] = system.version
-
-                    if len(get_systems(filter_params=filter_params)) < 1:
+                    if len(get_systems(filter_params={"local":True, "namespace": system.namespace, "name": system.name, "version": system.version})) < 1:
                         remote_systems.append(system)
                 event.payload.systems = remote_systems
 
