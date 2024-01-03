@@ -198,7 +198,7 @@ class GardenListAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-        # permitted_gardens = self.permissioned_queryset(Garden, GARDEN_READ)
+        #permitted_gardens = self.permissioned_queryset(Garden, GARDEN_READ)
         # response_gardens = []
 
         # permitted_gardens_list = list(
@@ -217,12 +217,13 @@ class GardenListAPI(AuthorizationHandler):
             )
         )
 
-        # for garden in permitted_gardens_list:
-        #     if user_has_permission_for_object(self.current_user, GARDEN_UPDATE, garden):
-        #         response_gardens.append(garden)
+        response_gardens = []
+        for garden in permitted_gardens_list:
+            if user_has_permission_for_object(self.current_user, GARDEN_READ, garden):
+                response_gardens.append(garden)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(permitted_gardens_list)
+        self.write(json.dumps(response_gardens))
 
     async def post(self):
         """

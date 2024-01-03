@@ -75,19 +75,12 @@ def get_gardens(include_local: bool = True) -> List[Garden]:
     gardens = db.query(
         Garden, filter_params={"connection_type__ne": "LOCAL", "has_parent": False}
     )
-    logger.error("In Database")
-    for garden in db.query(Garden):
-        logger.error(garden.__repr__)
 
     if include_local:
         gardens += [local_garden()]
 
     for garden in gardens:
         get_children_garden(garden)
-
-    logger.error("In Response")
-    for garden in gardens:
-        logger.error(garden.__repr__)
 
     return gardens
 
@@ -132,17 +125,6 @@ def publish_garden(status: str = "RUNNING") -> Garden:
     garden = local_garden()
     garden.connection_type = None
     garden.status = status
-
-    #get_children_garden(garden)
-
-    # children = get_gardens(include_local=False)
-    # for child in children:
-    #     child.parent = garden.name
-    #     child.has_parent = True
-
-    # garden.children = children
-
-    # logger.error(f"Syncing Garden: Has {len(garden.children)} children")
 
     return garden
 
@@ -257,7 +239,6 @@ def create_garden(garden: Garden) -> Garden:
     garden.status_info["heartbeat"] = datetime.utcnow()
 
     return db.create(garden)
-    #return get_children_garden(garden)
 
 
 def garden_add_system(system: System, garden_name: str) -> Garden:
@@ -299,14 +280,12 @@ def update_garden(garden: Garden) -> Garden:
     """
 
     return db.update(garden)
-    #return get_children_garden(garden)
 
 def upsert_garden(garden: Garden) -> Garden:
     """ Updates or inserts Garden"""
 
     if garden.children:
         for child in garden.children:
-            logger.error(f"Add Child Garden : {child.name}")
             upsert_garden(child)
 
     try:
@@ -318,13 +297,11 @@ def upsert_garden(garden: Garden) -> Garden:
     del garden.children
 
     if existing_garden is None:
-        logger.error(f"Create Garden {garden.name}")
         garden.connection_type = None
         garden.connection_params = {}
 
         return create_garden(garden)
     else:
-        logger.error(f"Update Garden {garden.name}")
         for attr in ("status", "status_info", "namespaces", "systems"):
             setattr(existing_garden, attr, getattr(garden, attr))
 
