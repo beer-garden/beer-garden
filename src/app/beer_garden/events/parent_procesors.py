@@ -50,7 +50,7 @@ class HttpParentUpdater(QueueListener):
                 Events.GARDEN_SYNC.name,
             ):
                 if event.payload.parent is None and event.payload.name != event.garden:
-                    logger.error(f"Setting parent to {event.garden}")
+                    self.logger.error(f"Setting parent to {event.garden}")
                     event.payload.parent = event.garden
                     event.payload.has_parent = True
 
