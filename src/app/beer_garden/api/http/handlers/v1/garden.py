@@ -215,7 +215,7 @@ class GardenListAPI(AuthorizationHandler):
         #         response_gardens.append(garden)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(json.dumps(permitted_gardens_list))
+        self.write(permitted_gardens_list)
 
     async def post(self):
         """
