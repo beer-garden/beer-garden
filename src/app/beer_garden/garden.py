@@ -418,7 +418,14 @@ def handle_event(event):
                 # Remove systems that are tracking locally
                 remote_systems = []
                 for system in event.payload.systems:
-                    if len(get_systems(local=True, namespace = system.namespace, name = system.name, version=system.version)) < 1:
+                    filter_params = {}
+
+                    filter_params["local"] = True
+                    filter_params["namespace"] = system.namespace
+                    filter_params["name"] = system.name
+                    filter_params["version"] = system.version
+
+                    if len(get_systems(filter_params=filter_params)) < 1:
                         remote_systems.append(system)
                         logger.error(f"Remote ===== {system}")
                     else:
