@@ -73,8 +73,11 @@ def get_gardens(include_local: bool = True) -> List[Garden]:
     # This is necessary for as long as local_garden is still needed. See the notes
     # there for more detail.
     gardens = db.query(
-        Garden, filter_params={"connection_type__ne": "LOCAL", "parent": ""}
+        Garden, filter_params={"connection_type__ne": "LOCAL", "has_parent": "false"}
     )
+
+    for garden in gardens:
+        logger.error(f"Returning {garden}")
 
     if include_local:
         gardens += [local_garden()]
