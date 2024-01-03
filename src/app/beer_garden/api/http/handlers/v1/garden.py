@@ -212,12 +212,10 @@ class GardenListAPI(AuthorizationHandler):
 
         for garden in permitted_gardens_list:
             if user_has_permission_for_object(self.current_user, GARDEN_UPDATE, garden):
-                response_gardens.append(garden)
-
-        response = json.dumps(response_gardens)
+                response_gardens.append(GardenReadSchema().dump(garden).data)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(response)
+        self.write(json.dumps(response_gardens))
 
     async def post(self):
         """
