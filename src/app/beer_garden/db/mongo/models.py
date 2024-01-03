@@ -816,12 +816,6 @@ class Garden(MongoModel, Document):
         from beer_garden.systems import get_systems, remove_system
 
         logger = logging.getLogger(self.__class__.__name__)
-        
-        for key in self:
-            if not callable(self[key]):
-                logger.error(f"{key} ({type(self[key])}) = {self[key]}")
-
-        logger.error(f"Updating {len(self.systems)} systems")
 
         def _get_system_triple(system: System) -> Tuple[str, str, str]:
             return (
@@ -835,16 +829,7 @@ class Garden(MongoModel, Document):
         
         if Garden.objects(name=self.name).count() > 0:
             old_garden = Garden.objects.get(name=self.name)
-            for system in old_garden.systems:
-                logger.error(f"Old System === {system}")
 
-        for system in self.systems:
-                logger.error(f"New System === {system}")
-
-
-        #our_namespaces = set(self.namespaces).union(
-        #    set(map(attrgetter("namespace"), self.systems))
-        #)
         # we leverage the fact that systems must be unique up to the triple of their
         # namespaces, names and versions
         child_systems_already_known = {}
@@ -854,11 +839,6 @@ class Garden(MongoModel, Document):
                 for system in old_garden.systems
             }
 
-        #tracked_systems = []
-
-        logger.error(type(self.systems))
-
-        #self.systems = [system for system in self.systems if (System.objects(namespace=system.namespace, name=system.name, version=system.version, local=True).count() < 0)]
         for system in self.systems:
             triple = _get_system_triple(system)
 
@@ -879,15 +859,9 @@ class Garden(MongoModel, Document):
                         )
                         remove_system(system_id=system_id_to_remove)
 
-                logger.error(f"Saving === {system}")
                 system.save()       
             else:
-                logger.error(f"Deleting === {system}")
                 system.delete()  
-            #tracked_systems.append(system)
- 
-        #self.systems = tracked_systems
-        logger.error(f"Updated {len(self.systems)} systems")
 
         # if there's anything left over, delete those too; this could occur, e.g.,
         # if a child system deleted a particular version of a plugin and installed
