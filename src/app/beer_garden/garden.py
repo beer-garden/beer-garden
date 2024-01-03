@@ -76,14 +76,14 @@ def get_gardens(include_local: bool = True) -> List[Garden]:
         Garden, filter_params={"connection_type__ne": "LOCAL", "has_parent": "false"}
     )
 
-    for garden in gardens:
-        logger.error(f"Returning {garden}")
-
     if include_local:
         gardens += [local_garden()]
 
     for garden in gardens:
         get_children_garden(garden)
+
+    for garden in gardens:
+        logger.error(f"Returning {garden}")
 
     return gardens
 
