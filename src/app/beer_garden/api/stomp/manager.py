@@ -148,7 +148,7 @@ class StompManager(BaseProcessor):
                 Events.GARDEN_SYNC.name,
             ):
                 if event.payload.parent is None and event.payload.name != config.get("garden.name"):
-                    logger.error(f"Setting parent to {config.get("garden.name")}")
+                    logger.error(f"Setting parent to {config.get('garden.name')}")
                     event.payload.parent = config.get("garden.name")
                     event.payload.has_parent = True
 
