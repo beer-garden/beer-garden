@@ -416,7 +416,14 @@ def handle_event(event):
                 del event.payload.children
                 
                 # Remove systems that are tracking locally
-                event.payload.systems = [system for system in event.payload.systems if (len(get_systems(local=True, namespace = system.namespace, name = system.name, version=system.version)) < 1)]
+                remote_systems = []
+                for system in event.payload.systems:
+                    if len(get_systems(local=True, namespace = system.namespace, name = system.name, version=system.version)) < 1:
+                        remote_systems.append(system)
+                        logger.error(f"Remote ===== {system}")
+                    else:
+                        logger.error(f"Filtered ===== {system}")
+                event.payload.systems = remote_systems
 
                 if existing_garden is None:
                     event.payload.connection_type = None
