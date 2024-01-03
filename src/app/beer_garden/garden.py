@@ -414,7 +414,9 @@ def handle_event(event):
                 for system in event.payload.systems:
                     system.local = False
                 del event.payload.children
-                # garden = upsert_garden(event.payload)
+                
+                # Remove systems that are tracking locally
+                event.payload.systems = [system for system in event.payload.systems if (len(get_systems(local=True, namespace = system.namespace, name = system.name, version=system.version)) < 1)]
 
                 if existing_garden is None:
                     event.payload.connection_type = None
