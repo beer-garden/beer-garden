@@ -90,14 +90,18 @@ class TestGardenSetup(object):
         gardens = self.parser.parse_garden(response.json(), many=True)
 
 
-        print(gardens)
-        assert len(gardens) == 2
+        
+        for garden in gardens:
+            print(garden)
+            assert not garden.has_parent
+        
 
         for garden in gardens:
             if garden.name == 'parent':
                 assert garden.children is not None
                 assert len(garden.children) == 1
 
+        assert len(gardens) == 2
     def test_parent_systems_register_successful(self):
         systems = self.grand_parent_easy_client.find_systems()
 
