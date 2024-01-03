@@ -223,7 +223,7 @@ class GardenListAPI(AuthorizationHandler):
                 response_gardens.append(garden)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(json.dumps(response_gardens))
+        self.write(SchemaParser.serialize_garden(response_gardens, to_string = True, many = True))
 
     async def post(self):
         """
