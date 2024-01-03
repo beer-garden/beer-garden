@@ -126,6 +126,8 @@ def publish_garden(status: str = "RUNNING") -> Garden:
     garden.connection_type = None
     garden.status = status
 
+    get_children_garden(garden)
+
     # children = get_gardens(include_local=False)
     # for child in children:
     #     child.parent = garden.name
