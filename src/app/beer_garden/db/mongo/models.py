@@ -850,6 +850,7 @@ class Garden(MongoModel, Document):
                 for system in old_garden.systems
             }
 
+        tracked_systems = []
         for system in self.systems:
             triple = _get_system_triple(system)
 
@@ -871,6 +872,10 @@ class Garden(MongoModel, Document):
                         remove_system(system_id=system_id_to_remove)
 
                 system.save()
+                tracked_systems.append(system)
+ 
+        self.systems = tracked_systems
+        logger.error(f"Updated {len(self.systems)} systems")
 
         # if there's anything left over, delete those too; this could occur, e.g.,
         # if a child system deleted a particular version of a plugin and installed
