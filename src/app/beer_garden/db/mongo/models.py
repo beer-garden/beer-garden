@@ -850,31 +850,36 @@ class Garden(MongoModel, Document):
                 for system in old_garden.systems
             }
 
-        tracked_systems = []
+        #tracked_systems = []
+
+        logger.error(type(self.systems))
+
+        self.systems = [system for system in self.systems if (System.objects(namespace=system.namespace, name=system.name, version=system.version, local=True).count() < 0)]
         for system in self.systems:
             triple = _get_system_triple(system)
 
             # Check is System is a Local System
-            if System.objects(namespace=triple[0], name=triple[1], version=triple[2], local=True).count() < 0:
+            #if System.objects(namespace=triple[0], name=triple[1], version=triple[2], local=True).count() < 0:
 
-                if triple in child_systems_already_known:
-                    system_id_to_remove = child_systems_already_known.pop(triple)
+            if triple in child_systems_already_known:
+                system_id_to_remove = child_systems_already_known.pop(triple)
 
-                    if system_id_to_remove != str(system.id):
-                        # remove the system from before this update with the same triple
-                        logger.error(
-                            f"Removing System <{triple[0]}"
-                            f", {triple[1]}"
-                            f", {triple[2]}> with ID={system_id_to_remove}"
-                            f"; doesn't match ID={str(system.id)}"
-                            " for known system with same attributes"
-                        )
-                        remove_system(system_id=system_id_to_remove)
+                if system_id_to_remove != str(system.id):
+                    # remove the system from before this update with the same triple
+                    logger.error(
+                        f"Removing System <{triple[0]}"
+                        f", {triple[1]}"
+                        f", {triple[2]}> with ID={system_id_to_remove}"
+                        f"; doesn't match ID={str(system.id)}"
+                        " for known system with same attributes"
+                    )
+                    remove_system(system_id=system_id_to_remove)
 
-                system.save()
-                tracked_systems.append(system)
+            logger.error(f"Saving === {system}")
+            system.save()         
+            #tracked_systems.append(system)
  
-        self.systems = tracked_systems
+        #self.systems = tracked_systems
         logger.error(f"Updated {len(self.systems)} systems")
 
         # if there's anything left over, delete those too; this could occur, e.g.,
