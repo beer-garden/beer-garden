@@ -430,9 +430,6 @@ def handle_event(event):
 
                     if len(get_systems(filter_params=filter_params)) < 1:
                         remote_systems.append(system)
-                        logger.error(f"Remote ===== {system}")
-                    else:
-                        logger.error(f"Filtered ===== {system}")
                 event.payload.systems = remote_systems
 
                 if existing_garden is None:
