@@ -53,6 +53,7 @@ class HttpParentUpdater(QueueListener):
                     self.logger.error(f"Setting parent to {event.garden}")
                     event.payload.parent = event.garden
                     event.payload.has_parent = True
+                    self.logger.error(event.payload)
 
         if not event_blocklisted(event):
             try:

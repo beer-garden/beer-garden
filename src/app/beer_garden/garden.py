@@ -401,6 +401,7 @@ def handle_event(event):
             # Only do stuff for direct children
             #if event.payload.name == event.garden:
                 logger.error(f"Processing {event.garden} for {event.name}")
+                logger.error(event.payload)
                 if event.payload.children:
                     logger.error(f"Has {len(event.payload.children)} children")
                 else:
