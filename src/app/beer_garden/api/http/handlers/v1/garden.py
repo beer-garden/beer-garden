@@ -191,24 +191,28 @@ class GardenListAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-        permitted_gardens = self.permissioned_queryset(Garden, GARDEN_READ)
-        response_gardens = []
+        # permitted_gardens = self.permissioned_queryset(Garden, GARDEN_READ)
+        # response_gardens = []
 
-        permitted_gardens_list = list(
-            permitted_gardens.filter(connection_type__ne="LOCAL").no_cache()
+        # permitted_gardens_list = list(
+        #     permitted_gardens.filter(connection_type__ne="LOCAL").no_cache()
+        # )
+        # _local_garden = local_garden(all_systems=True)
+
+        # if user_has_permission_for_object(
+        #     self.current_user, GARDEN_READ, _local_garden
+        # ):
+        #     permitted_gardens_list.append(_local_garden)
+
+        permitted_gardens_list = await self.client(
+            Operation(
+                operation_type="GARDEN_READ_ALL"
+            )
         )
-        _local_garden = local_garden(all_systems=True)
-
-        if user_has_permission_for_object(
-            self.current_user, GARDEN_READ, _local_garden
-        ):
-            permitted_gardens_list.append(_local_garden)
 
         for garden in permitted_gardens_list:
             if user_has_permission_for_object(self.current_user, GARDEN_UPDATE, garden):
-                response_gardens.append(MongoParser.serialize(garden))
-            else:
-                response_gardens.append(GardenReadSchema().dump(garden).data)
+                response_gardens.append(garden)
 
         response = json.dumps(response_gardens)
 
