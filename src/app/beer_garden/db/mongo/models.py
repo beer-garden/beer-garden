@@ -816,6 +816,10 @@ class Garden(MongoModel, Document):
         from beer_garden.systems import get_systems, remove_system
 
         logger = logging.getLogger(self.__class__.__name__)
+        
+        for key in self:
+            if not callable(self[key]):
+                logger.error(f"{key} ({type(key)}) = {self[key]}")
 
         logger.error(f"Updating {len(self.systems)} systems")
 
