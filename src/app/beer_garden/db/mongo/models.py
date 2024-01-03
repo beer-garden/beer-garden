@@ -859,7 +859,7 @@ class Garden(MongoModel, Document):
             triple = _get_system_triple(system)
 
             # Check is System is a Local System
-            if System.objects(namespace=triple[0], name=triple[1], version=triple[2], local=True).count() < 0:
+            if System.objects(namespace=triple[0], name=triple[1], version=triple[2], local=True).count() < 1:
 
                 if triple in child_systems_already_known:
                     system_id_to_remove = child_systems_already_known.pop(triple)
