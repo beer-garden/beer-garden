@@ -20,7 +20,7 @@ GARDEN_READ = Permissions.GARDEN_READ.value
 GARDEN_UPDATE = Permissions.GARDEN_UPDATE.value
 GARDEN_DELETE = Permissions.GARDEN_DELETE.value
 
-
+logger = logging.getLogger(__name__)
 class GardenAPI(AuthorizationHandler):
     async def get(self, garden_name):
         """
@@ -219,6 +219,8 @@ class GardenListAPI(AuthorizationHandler):
 
         response_gardens = []
         for garden in permitted_gardens_list:
+            logger.error(garden)
+            logger.error(type(garden))
             if user_has_permission_for_object(self.current_user, GARDEN_READ, garden):
                 response_gardens.append(garden)
 
