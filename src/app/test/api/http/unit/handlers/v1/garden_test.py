@@ -228,7 +228,7 @@ class TestGardenAPI:
 
         assert response.code == 200
         assert response_body["id"] == str(garden_permitted.id)
-        assert "connection_params" not in response_body.keys()
+        assert response_body["connection_params"] == {}
 
     @pytest.mark.gen_test
     def test_auth_enabled_returns_403_for_not_permitted_garden(
