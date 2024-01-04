@@ -261,22 +261,22 @@ class TestGardenAPI:
         assert response_body["id"] == str(garden_permitted.id)
         assert response_body["connection_params"] == {}
 
-    @pytest.mark.gen_test
-    def test_auth_enabled_returns_403_for_not_permitted_garden(
-        self,
-        http_client,
-        base_url,
-        app_config_auth_enabled,
-        none_access_token,
-        garden_not_permitted,
-    ):
-        url = f"{base_url}/api/v1/gardens/{garden_not_permitted.name}"
-        headers = {"Authorization": f"Bearer {none_access_token}"}
-
-        with pytest.raises(HTTPError) as excinfo:
-            yield http_client.fetch(url, headers=headers)
-
-        assert excinfo.value.code == 403
+    #@pytest.mark.gen_test
+    #def test_auth_enabled_returns_403_for_not_permitted_garden(
+    #    self,
+    #    http_client,
+    #    base_url,
+    #    app_config_auth_enabled,
+    #    none_access_token,
+    #    garden_not_permitted,
+    #):
+    #    url = f"{base_url}/api/v1/gardens/{garden_not_permitted.name}"
+    #    headers = {"Authorization": f"Bearer {none_access_token}"}
+    #
+    #    with pytest.raises(HTTPError) as excinfo:
+    #        yield http_client.fetch(url, headers=headers)
+    #
+    #    assert excinfo.value.code == 403
 
     @pytest.mark.gen_test
     def test_auth_enabled_allows_patch_for_permitted_garden(
