@@ -827,11 +827,14 @@ class TestGarden:
         orig_system_ids = set(
             map(lambda x: str(getattr(x, "id")), child_garden.systems)  # noqa: B009
         )
-        orig_system_versions = set(
-            map(
-                lambda x: str(getattr(x, "version")), child_garden.systems  # noqa: B009
-            )
-        )
+        orig_system_versions = set()
+        for system in child_garden.systems:
+            orig_system_versions.add(system.version)
+        #orig_system_versions = set(
+        #    map(
+        #        lambda x: str(getattr(x, "version")), child_garden.systems  # noqa: B009
+        #    )
+        #)
 
         assert (
             self.v1_str in orig_system_versions
