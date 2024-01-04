@@ -408,7 +408,7 @@ class TestGardenListAPI:
         response_body = json.loads(response.body.decode("utf-8"))
 
         assert response.code == 200
-        assert "connection_params" not in response_body[0].keys()
+        assert response_body[0]["connection_params"] == {}
 
     @pytest.mark.gen_test
     def test_auth_enabled_allows_post_with_permission(
