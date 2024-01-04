@@ -22,9 +22,21 @@ export default function adminGardenController(
   $scope.alerts = [];
   $scope.gardenCreateSchema = GardenService.CreateSCHEMA;
   $scope.gardenCreateForm = GardenService.CreateFORM;
+
+  //const extractChildren = function(garden) {
+  //  for (let i = 0; i < garden.children; i++){
+  //    $scope.data.push(garden.children[i]);
+  //    extractChildren(garden.children[i]);
+  //  }
+  //}
+
   $scope.successCallback = function(response) {
     $scope.response = response;
     $scope.data = response.data;
+    // Add all nested
+    //for (let i = 0; i < response.data.length; i++) {
+    //  extractChildren(response.data[i]);
+    //}
   };
   $scope.garden_name = null;
   $scope.createGardenFormHide = true;
