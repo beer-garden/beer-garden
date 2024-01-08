@@ -428,15 +428,37 @@ def handle_event(event: Event) -> None:
     if event.garden != config.get("garden.name"):
         if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
             # Skip non local events that would override Local plugins
-            if db.count(System, namespace=event.payload.namespace, name=event.payload.name, version=event.payload.version, local=True) < 1:
+            if (
+                db.count(
+                    System,
+                    namespace=event.payload.namespace,
+                    name=event.payload.name,
+                    version=event.payload.version,
+                    local=True,
+                )
+                < 1
+            ):
                 event.payload.local = False
 
                 # Update if the ID matches
                 if db.count(System, id=event.payload.id) > 0:
                     db.update(event.payload)
                 # Find and update if payload was missing ID
-                elif db.count(System, namespace=event.payload.namespace, name=event.payload.name, version=event.payload.version) > 0:
-                    event.payload.id = db.query_unique(System, namespace=event.payload.namespace, name=event.payload.name, version=event.payload.version).id
+                elif (
+                    db.count(
+                        System,
+                        namespace=event.payload.namespace,
+                        name=event.payload.name,
+                        version=event.payload.version,
+                    )
+                    > 0
+                ):
+                    event.payload.id = db.query_unique(
+                        System,
+                        namespace=event.payload.namespace,
+                        name=event.payload.name,
+                        version=event.payload.version,
+                    ).id
                     db.update(event.payload)
                 # Create object
                 else:

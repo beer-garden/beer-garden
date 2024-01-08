@@ -82,6 +82,7 @@ def garden_read_role():
     yield role
     role.delete()
 
+
 @pytest.fixture
 def garden_none_role():
     role = Role(
@@ -123,6 +124,7 @@ def user(garden_permitted, garden_admin_role, garden_create_role):
 
     yield user
     user.delete()
+
 
 @pytest.fixture
 def user_none_role(garden_none_role):
@@ -261,15 +263,15 @@ class TestGardenAPI:
         assert response_body["id"] == str(garden_permitted.id)
         assert response_body["connection_params"] == {}
 
-    #@pytest.mark.gen_test
-    #def test_auth_enabled_returns_403_for_not_permitted_garden(
+    # @pytest.mark.gen_test
+    # def test_auth_enabled_returns_403_for_not_permitted_garden(
     #    self,
     #    http_client,
     #    base_url,
     #    app_config_auth_enabled,
     #    none_access_token,
     #    garden_not_permitted,
-    #):
+    # ):
     #    url = f"{base_url}/api/v1/gardens/{garden_not_permitted.name}"
     #    headers = {"Authorization": f"Bearer {none_access_token}"}
     #
