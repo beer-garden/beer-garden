@@ -847,6 +847,9 @@ class TestGarden:
         # we check that the garden written to the DB has the correct systems
         db_garden = Garden.objects().first()
 
+        print("New Systems")
+        for system in db_garden.systems:
+            print(system)
         new_system_ids = set(
             map(lambda x: str(getattr(x, "id")), db_garden.systems)  # noqa: B009
         )
