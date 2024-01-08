@@ -60,6 +60,7 @@ def remotegarden(remotegarden_system):
         )
     )
 
+
 class TestGarden:
     @classmethod
     def setup_class(cls):
