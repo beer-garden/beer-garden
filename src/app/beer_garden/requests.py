@@ -938,7 +938,13 @@ def handle_event(event):
             elif event.name != Events.REQUEST_CREATED.name:
                 request_changed = False
 
-                for field in ("status", "output", "error_class", "status_updated_at", "target_garden"):
+                for field in (
+                    "status",
+                    "output",
+                    "error_class",
+                    "status_updated_at",
+                    "target_garden",
+                ):
                     new_value = getattr(event.payload, field)
 
                     if getattr(existing_request, field) != new_value:
