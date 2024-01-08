@@ -1,9 +1,9 @@
-from brewtils.models import Event, Operation, Events
 from requests import RequestException
 
 import beer_garden.config as conf
 from beer_garden.events import event_blocklisted
 from beer_garden.events.processors import QueueListener
+from brewtils.models import Event, Events, Operation
 
 
 class HttpParentUpdater(QueueListener):
