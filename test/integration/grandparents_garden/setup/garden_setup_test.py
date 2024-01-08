@@ -1,14 +1,14 @@
-from time import sleep
-
 import pytest
-from brewtils.models import PatchOperation
 
-try:
-    from helper import wait_for_response
-    from helper.assertion import assert_successful_request
-except (ImportError, ValueError):
-    from ...helper import wait_for_response
-    from ...helper.assertion import assert_successful_request
+# from time import sleep
+# from brewtils.models import PatchOperation
+#
+# try:
+#    from helper import wait_for_response
+#    from helper.assertion import assert_successful_request
+# except (ImportError, ValueError):
+#    from ...helper import wait_for_response
+#    from ...helper.assertion import assert_successful_request
 
 
 @pytest.fixture(scope="class")
