@@ -825,10 +825,10 @@ class Garden(MongoModel, Document):
                 system.name,
                 system.version,
             )
-        
+
         # Check previous save for System records
         old_garden = None
-        
+
         if Garden.objects(name=self.name).count() > 0:
             old_garden = Garden.objects.get(name=self.name)
 
@@ -845,8 +845,12 @@ class Garden(MongoModel, Document):
             triple = _get_system_triple(system)
 
             # Check is System is a Local System
-            if System.objects(namespace=triple[0], name=triple[1], version=triple[2], local=True).count() < 1:
-
+            if (
+                System.objects(
+                    namespace=triple[0], name=triple[1], version=triple[2], local=True
+                ).count()
+                < 1
+            ):
                 if triple in child_systems_already_known:
                     system_id_to_remove = child_systems_already_known.pop(triple)
 
@@ -861,9 +865,9 @@ class Garden(MongoModel, Document):
                         )
                         remove_system(system_id=system_id_to_remove)
 
-                system.save()       
+                system.save()
             else:
-                system.delete()  
+                system.delete()
 
         # if there's anything left over, delete those too; this could occur, e.g.,
         # if a child system deleted a particular version of a plugin and installed

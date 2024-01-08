@@ -829,9 +829,9 @@ class TestGarden:
         )
 
         orig_system_versions = set(
-           map(
-               lambda x: str(getattr(x, "version")), child_garden.systems  # noqa: B009
-           )
+            map(
+                lambda x: str(getattr(x, "version")), child_garden.systems  # noqa: B009
+            )
         )
 
         assert (
