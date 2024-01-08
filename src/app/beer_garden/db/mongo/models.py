@@ -305,7 +305,7 @@ class Request(MongoModel, Document):
     # These fields are duplicated for job types, changes to this field
     # necessitate a change to the RequestTemplateSchema in brewtils.
     TEMPLATE_FIELDS = {
-        "system": {"field": StringField, "kwargs": {"required": True}},class Request
+        "system": {"field": StringField, "kwargs": {"required": True}},
         "system_version": {"field": StringField, "kwargs": {"required": True}},
         "instance_name": {"field": StringField, "kwargs": {"required": True}},
         "namespace": {"field": StringField, "kwargs": {"required": False}},
