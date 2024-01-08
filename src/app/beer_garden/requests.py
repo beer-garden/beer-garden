@@ -712,6 +712,12 @@ def create_request(request: Request) -> Request:
     replace_with_raw_file = request.namespace == config.get("garden.name")
     remove_bytes_parameter_base64(request.parameters, replace_with_raw_file)
 
+    if request.source_garden is None:
+        request.source_garden = config.get("garden.name")
+
+    if request.target_garden is None:
+        request.target_garden = config.get("garden.name")
+
     return db.create(request)
 
 
@@ -932,7 +938,13 @@ def handle_event(event):
             elif event.name != Events.REQUEST_CREATED.name:
                 request_changed = False
 
-                for field in ("status", "output", "error_class", "status_updated_at"):
+                for field in (
+                    "status",
+                    "output",
+                    "error_class",
+                    "status_updated_at",
+                    "target_garden",
+                ):
                     new_value = getattr(event.payload, field)
 
                     if getattr(existing_request, field) != new_value:
