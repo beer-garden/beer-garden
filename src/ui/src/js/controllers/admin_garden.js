@@ -23,20 +23,9 @@ export default function adminGardenController(
   $scope.gardenCreateSchema = GardenService.CreateSCHEMA;
   $scope.gardenCreateForm = GardenService.CreateFORM;
 
-  //const extractChildren = function(garden) {
-  //  for (let i = 0; i < garden.children; i++){
-  //    $scope.data.push(garden.children[i]);
-  //    extractChildren(garden.children[i]);
-  //  }
-  //}
-
   $scope.successCallback = function(response) {
     $scope.response = response;
-    $scope.data = response.data;
-    // Add all nested
-    //for (let i = 0; i < response.data.length; i++) {
-    //  extractChildren(response.data[i]);
-    //}
+    $scope.data = $scope.extractGardenChildren(response.data)
   };
   $scope.garden_name = null;
   $scope.createGardenFormHide = true;
@@ -49,6 +38,19 @@ export default function adminGardenController(
   $scope.is_unique_garden_name = true;
   $scope.create_garden_popover_message = null;
   $scope.create_garden_name_focus = false;
+
+  $scope.findGardenLabel = function(garden, gardenLabel) {
+    if (garden.parent != null) {
+      gardenLabel = garden.parent + "/" + gardenLabel;
+      for (let i = 0; i < $scope.data.length; i++){
+        if ($scope.data[i].name == garden.parent){
+          gardenLabel = $scope.findGardenLabel($scope.data[i], gardenLabel)
+        }
+      }
+    }
+    return gardenLabel;
+
+  }
 
   const loadGardens = function() {
     GardenService.getGardens().then(

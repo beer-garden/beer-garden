@@ -54,10 +54,11 @@ export default function routeConfig(
             ($rootScope, GardenService) => {
               return GardenService.getGardens().then(
                   (response) => {
-                    $rootScope.gardens = response.data;
-                    $rootScope.systems = $rootScope.gardens.find(
-                        (item) => item.connection_type === 'LOCAL',
-                    ).systems;
+                    $rootScope.gardens = $rootScope.extractGardenChildren(response.data)
+                    $rootScope.systems = [];
+                    for (let i = 0; i < $rootScope.gardens.length; i++){
+                      $rootScope.systems = $rootScope.systems.concat($rootScope.gardens[i].systems)
+                    }
                     $rootScope.gardensResponse = response;
                   },
                   (response) => {
