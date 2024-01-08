@@ -305,7 +305,7 @@ class Request(MongoModel, Document):
     # These fields are duplicated for job types, changes to this field
     # necessitate a change to the RequestTemplateSchema in brewtils.
     TEMPLATE_FIELDS = {
-        "system": {"field": StringField, "kwargs": {"required": True}},
+        "system": {"field": StringField, "kwargs": {"required": True}},class Request
         "system_version": {"field": StringField, "kwargs": {"required": True}},
         "instance_name": {"field": StringField, "kwargs": {"required": True}},
         "namespace": {"field": StringField, "kwargs": {"required": False}},
@@ -341,6 +341,8 @@ class Request(MongoModel, Document):
     requester = StringField(required=False)
     parameters_gridfs = FileField()
     is_event = BooleanField(required=False)
+    source_garden = StringField(required=False)
+    target_garden = StringField(required=False)
 
     meta = {
         "queryset_class": FileFieldHandlingQuerySet,
