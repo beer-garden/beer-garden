@@ -2,13 +2,16 @@
 
 # 3.23.1
 
-TBD
+12/29/2023
 
 - Fixed issue where replicated messages were not fanned out to all replicated Beer Gardens
+- Fixed bug where restart instance was not checking if process is currently running. Now
+  it properly kills the running instance during restart.
+- Split apart functionality of Start and Restart instance into two API operations. 
 
 # 3.23.0
 
-12/27/23
+12/27/2023
 
 - Added missing Request Status filter for "Invalid"
 - Adding default icon on System Admin page for undefined or null system.icon_name

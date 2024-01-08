@@ -115,6 +115,7 @@ route_functions = {
     "INSTANCE_HEARTBEAT": beer_garden.plugin.heartbeat,
     "INSTANCE_INITIALIZE": beer_garden.plugin.initialize,
     "INSTANCE_START": beer_garden.plugin.start,
+    "INSTANCE_RESTART": beer_garden.plugin.restart,
     "INSTANCE_STOP": beer_garden.plugin.stop,
     "INSTANCE_LOGS": beer_garden.plugin.read_logs,
     "JOB_CREATE": beer_garden.scheduler.create_job,
@@ -535,6 +536,8 @@ def _pre_forward(operation: Operation) -> Operation:
         # unknown request
         operation.model.parent = None
         operation.model.has_parent = False
+        operation.model.source_garden = None
+        operation.model.target_garden = None
 
         # Pull out and store the wait event, if it exists
         wait_event = operation.kwargs.pop("wait_event", None)

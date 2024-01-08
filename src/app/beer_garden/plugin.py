@@ -85,7 +85,8 @@ def initialize(
         },
     )
 
-    start(instance=instance, system=system)
+    if runner_id:
+        lpm.map_runner_to_instance(runner_id, instance.id)
 
     return system.get_instance_by_name(instance.name)
 
@@ -112,6 +113,35 @@ def start(
 
     # Only way this works is if this has a local runner, so just assume it does
     lpm.start(instance_id=instance.id)
+
+    # Publish the start request
+    publish_start(system, instance)
+
+    return instance
+
+
+@publish_event(Events.INSTANCE_STARTED)
+def restart(
+    instance_id: str = None, instance: Instance = None, system: System = None
+) -> Instance:
+    """Starts an instance.
+
+    Args:
+        instance_id: The Instance ID
+        instance: The Instance
+        system: The System
+
+    Returns:
+        The updated Instance
+    """
+    system, instance = _from_kwargs(
+        system=system, instance=instance, instance_id=instance_id
+    )
+
+    logger.debug(f"Starting instance {system}[{instance}]")
+
+    # Only way this works is if this has a local runner, so just assume it does
+    lpm.restart(instance_id=instance.id)
 
     # Publish the start request
     publish_start(system, instance)

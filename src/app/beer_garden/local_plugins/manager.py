@@ -51,12 +51,21 @@ def has_instance_id(*args, **kwargs):
 
 @publish_event(Events.RUNNER_STARTED)
 def start(*args, **kwargs):
+    return lpm_proxy.start(*args, **kwargs)
+
+
+@publish_event(Events.RUNNER_STARTED)
+def restart(*args, **kwargs):
     return lpm_proxy.restart(*args, **kwargs)
 
 
 @publish_event(Events.RUNNER_STOPPED)
 def stop(*args, **kwargs):
     return lpm_proxy.stop_one(*args, **kwargs)
+
+
+def map_runner_to_instance(runner_id: str, instance_id: str):
+    return lpm_proxy.map_runner_to_instance(runner_id, instance_id)
 
 
 @publish_event(Events.RUNNER_REMOVED)
@@ -275,10 +284,10 @@ class PluginManager(StoppableThread):
             the_runner.restart = False
             the_runner.dead = False
 
-    def restart(
+    def start(
         self, runner_id: Optional[str] = None, instance_id: Optional[str] = None
     ) -> Optional[Runner]:
-        """Restart the runner for a particular Runner ID or Instance ID.
+        """Restart the runner for a particular Runner ID or Instance ID. If stopped.
 
         Args:
             runner_id: An ID string associated with a Runner object, optional
@@ -295,7 +304,37 @@ class PluginManager(StoppableThread):
         elif instance_id is not None:
             the_runner = self._from_instance_id(instance_id)
 
-        return self._restart(the_runner).state() if the_runner is not None else None
+        if the_runner is not None:
+            if the_runner.stopped:
+                return self._restart(the_runner).state()
+            return the_runner.state()
+        return None
+
+    def restart(
+        self, runner_id: Optional[str] = None, instance_id: Optional[str] = None
+    ) -> Optional[Runner]:
+        """Restart the runner for a particular Runner ID or Instance ID. If stopped.
+
+        Args:
+            runner_id: An ID string associated with a Runner object, optional
+            instance_id: An ID string associated with an Instance object, optional
+
+        Returns:
+            The Runner associated with the provided ID or ``None`` if neither argument
+            is provided.
+        """
+        the_runner = None
+
+        if runner_id is not None:
+            the_runner = self._from_runner_id(runner_id)
+        elif instance_id is not None:
+            the_runner = self._from_instance_id(instance_id)
+
+        if the_runner is not None:
+            if the_runner.stopped:
+                return self._restart(the_runner).state()
+            return the_runner.state()
+        return None
 
     def update(
         self,
@@ -466,7 +505,18 @@ class PluginManager(StoppableThread):
 
         return None
 
+    def map_runner_to_instance(self, runner_id: str, instance_id: str) -> bool:
+        the_runner = self._from_runner_id(runner_id)
+
+        if the_runner:
+            the_runner.instance_id = instance_id
+            return True
+
+        return False
+
     def _restart(self, the_runner: ProcessRunner) -> ProcessRunner:
+        self.stop_one(runner_id=the_runner.runner_id, remove=True)
+
         new_runner = ProcessRunner(
             runner_id=the_runner.runner_id,
             process_args=the_runner.process_args,
@@ -475,7 +525,6 @@ class PluginManager(StoppableThread):
             capture_streams=the_runner.capture_streams,
         )
 
-        self._runners.remove(the_runner)
         self._runners.append(new_runner)
 
         new_runner.start()

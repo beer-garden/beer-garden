@@ -341,6 +341,8 @@ class Request(MongoModel, Document):
     requester = StringField(required=False)
     parameters_gridfs = FileField()
     is_event = BooleanField(required=False)
+    source_garden = StringField(required=False)
+    target_garden = StringField(required=False)
 
     meta = {
         "queryset_class": FileFieldHandlingQuerySet,

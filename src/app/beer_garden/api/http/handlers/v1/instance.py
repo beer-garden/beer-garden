@@ -149,6 +149,11 @@ class InstanceAPI(AuthorizationHandler):
                     Operation(operation_type="INSTANCE_START", args=[instance_id])
                 )
 
+            elif operation == "restart":
+                response = await self.client(
+                    Operation(operation_type="INSTANCE_RESTART", args=[instance_id])
+                )
+
             elif operation == "stop":
                 response = await self.client(
                     Operation(operation_type="INSTANCE_STOP", args=[instance_id])
