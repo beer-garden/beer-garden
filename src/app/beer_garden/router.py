@@ -528,6 +528,7 @@ def _pre_forward(operation: Operation) -> Operation:
         operation.model.parent = None
         operation.model.has_parent = False
         operation.model.source_garden = None
+        operation.model.target_garden = None
 
         # Pull out and store the wait event, if it exists
         wait_event = operation.kwargs.pop("wait_event", None)
