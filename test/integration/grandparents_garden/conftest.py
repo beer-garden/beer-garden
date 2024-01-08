@@ -5,9 +5,9 @@ import json
 import time
 
 try:
-    from ..helper import RequestGenerator, setup_easy_client
+    from ..helper import RequestGenerator
 except (ImportError, ValueError):
-    from helper import RequestGenerator, setup_easy_client
+    from helper import RequestGenerator
 
 
 @pytest.fixture(scope="class")
