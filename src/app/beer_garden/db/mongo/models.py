@@ -14,7 +14,6 @@ except ImportError:
     from lark.common import ParseError
 
     LarkError = ParseError
-from operator import attrgetter
 from typing import Optional, Tuple
 
 import brewtils.models
@@ -815,7 +814,7 @@ class Garden(MongoModel, Document):
         """If the call to the `deep_save` method is on a child garden object, we ensure
         that when saving the systems, unknowns are deleted."""
         # import moved here to avoid a circular import loop
-        from beer_garden.systems import get_systems, remove_system
+        from beer_garden.systems import remove_system
 
         logger = logging.getLogger(self.__class__.__name__)
 
