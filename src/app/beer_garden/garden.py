@@ -167,6 +167,7 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
 
     return update_garden(garden)
 
+
 def update_garden_metadata_value(garden_name: str, key: str, value) -> Garden:
     """Update metadata on Garden
 
