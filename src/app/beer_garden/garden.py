@@ -33,7 +33,12 @@ logger = logging.getLogger(__name__)
 
 
 def get_children_garden(garden: Garden) -> Garden:
-    garden.children = db.query(Garden, filter_params={"parent": garden.name})
+    if garden.connection_type == "LOCAL":
+        garden.children = db.query(
+            Garden, filter_params={"connection_type__ne": "LOCAL", "has_parent": False}
+        )
+    else:
+        garden.children = db.query(Garden, filter_params={"parent": garden.name})
 
     if garden.children:
         for child in garden.children:

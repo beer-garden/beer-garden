@@ -96,6 +96,9 @@ export default function appRun(
 
   $rootScope.getIcon = UtilityService.getIcon;
 
+  $rootScope.filterGarden = "";
+  $rootScope.gardens = [];
+
   $rootScope.loadUser = function(token) {
     $rootScope.userPromise = UserService.loadUser(token).then(
         (response) => {
@@ -353,8 +356,13 @@ export default function appRun(
   $rootScope.extractGardenChildren = function(gardens) {
     let results = []
     for (let i = 0; i < gardens.length; i++){
-      results.push(gardens[i]);
-      $rootScope.extractGardenChildrenLoop(results, gardens[i]);
+      if (gardens[i].connection_type == "LOCAL"){
+        results.push(gardens[i]);
+        if ($rootScope.filterGarden == ""){
+          $rootScope.filterGarden = gardens[i].name;
+        }
+        $rootScope.extractGardenChildrenLoop(results, gardens[i]);
+      }
     }
     return results;
   }
@@ -365,6 +373,55 @@ export default function appRun(
       $rootScope.extractGardenChildrenLoop(gardens, garden.children[i]);
     }
     return gardens;
+  }
+
+  $rootScope.extractLocalGardenName = function() {
+    for (let i = 0; i < $rootScope.gardens.length; i++){
+      if ($rootScope.gardens[i].connection_type == "LOCAL"){
+        return $rootScope.gardens[i].name;
+      }
+    }
+    return "";
+  }
+
+  $rootScope.loadGardenFilter = function() {
+    $rootScope.filterGarden = localStorageService.get('gardenFilter') || '';
+    if ($rootScope.filterGarden == '') {
+      for (let i = 0; i < $rootScope.gardens.length; i++){
+        if ($rootScope.gardens[i].connection_type == "LOCAL"){
+          $rootScope.filterGarden = $rootScope.gardens[i].name;
+          localStorageService.set('gardenFilter', $rootScope.filterGarden);
+        }
+      }
+    }
+  }
+
+  $rootScope.setGardenFilter = function() {
+    localStorageService.set('gardenFilter', $rootScope.filterGarden);
+    $rootScope.filterSystems(true);
+  }
+
+
+  $rootScope.filterSystems = function(reload) {
+    $rootScope.systems = [];
+    for (let i = 0; i < $rootScope.gardens.length; i++){
+      if ($rootScope.filterGarden == "" && $rootScope.gardens[i].connection_type == "LOCAL"){
+        $rootScope.appendGardenSystems($rootScope.gardens[i]);
+      } else if ($rootScope.filterGarden == $rootScope.gardens[i].name){
+        $rootScope.appendGardenSystems($rootScope.gardens[i]);
+      }
+    }
+    if (reload){
+      location.reload();
+    }
+
+  }
+
+  $rootScope.appendGardenSystems = function(garden) { 
+    $rootScope.systems = $rootScope.systems.concat(garden.systems);
+    for (let i = 0; i < garden.children.length; i++){
+      $rootScope.appendGardenSystems(garden.children[i]);
+    }
   }
 
   function upsertSystem(system) {
