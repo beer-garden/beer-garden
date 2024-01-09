@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 from copy import deepcopy
+import traceback
 
 from brewtils.models import Event
 
@@ -61,11 +62,7 @@ def garden_callbacks(event: Event) -> None:
         try:
             handler(deepcopy(event))
         except Exception as ex:
-            import traceback
-
-            tb1 = traceback.TracebackException.from_exception(ex)
-            logger.error("".join(tb1.format()))
             logger.error(
-                "'%s' handler received an error executing callback for event %s: %s"
-                % (handler_tag, repr(event), str(ex))
+                "'%s' handler received an error executing callback for event %s: %s: %s"
+                % (handler_tag, repr(event), str(ex), traceback.TracebackException.from_exception(ex))
             )
