@@ -3,6 +3,8 @@ import logging
 import traceback
 from copy import deepcopy
 
+from brewtils.models import Event
+
 import beer_garden.command_publishing_blocklist
 import beer_garden.config
 import beer_garden.files
@@ -17,7 +19,6 @@ import beer_garden.router
 import beer_garden.scheduler
 import beer_garden.systems
 import beer_garden.user
-from brewtils.models import Event
 
 logger = logging.getLogger(__name__)
 
