@@ -5,14 +5,15 @@ import json
 import time
 
 try:
-    from ..helper import RequestGenerator, setup_easy_client
+    from ..helper import RequestGenerator
 except (ImportError, ValueError):
-    from helper import RequestGenerator, setup_easy_client
+    from helper import RequestGenerator
 
 
 @pytest.fixture(scope="class")
 def request_generator(request, system_spec):
     request.cls.request_generator = RequestGenerator(**system_spec)
+
 
 @pytest.fixture(scope="class")
 def child_easy_client(request):
@@ -21,12 +22,14 @@ def child_easy_client(request):
     )
     return request.cls.child_easy_client
 
+
 @pytest.fixture(scope="class")
 def parent_easy_client(request):
     request.cls.parent_easy_client = get_easy_client(
         bg_host="localhost", bg_port=2347, ssl_enabled=False
     )
     return request.cls.child_easy_client
+
 
 @pytest.fixture(scope="class")
 def grand_parent_easy_client(request):
@@ -35,20 +38,21 @@ def grand_parent_easy_client(request):
     )
     return request.cls.grand_parent_easy_client
 
+
 def pytest_sessionstart(session):
     client = get_easy_client(
         bg_host="localhost", bg_port=2357, ssl_enabled=False
     ).client
 
     patches = json.dumps(
-            [
-                {
-                    "operation": "sync",
-                    "path": "",
-                    "value": "",
-                }
-            ]
-        )
+        [
+            {
+                "operation": "sync",
+                "path": "",
+                "value": "",
+            }
+        ]
+    )
 
     client.patch_garden("child", patches)
 

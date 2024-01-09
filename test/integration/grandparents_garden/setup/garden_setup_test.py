@@ -1,14 +1,14 @@
-from time import sleep
-
 import pytest
-from brewtils.models import PatchOperation
 
-try:
-    from helper import wait_for_response
-    from helper.assertion import assert_successful_request
-except (ImportError, ValueError):
-    from ...helper import wait_for_response
-    from ...helper.assertion import assert_successful_request
+# from time import sleep
+# from brewtils.models import PatchOperation
+#
+# try:
+#    from helper import wait_for_response
+#    from helper.assertion import assert_successful_request
+# except (ImportError, ValueError):
+#    from ...helper import wait_for_response
+#    from ...helper.assertion import assert_successful_request
 
 
 @pytest.fixture(scope="class")
@@ -23,7 +23,11 @@ def system_spec():
 
 
 @pytest.mark.usefixtures(
-    "parser", "child_easy_client", "parent_easy_client", "grand_parent_easy_client", "request_generator"
+    "parser",
+    "child_easy_client",
+    "parent_easy_client",
+    "grand_parent_easy_client",
+    "request_generator",
 )
 class TestGardenSetup(object):
     child_garden_name = "child"
@@ -49,12 +53,11 @@ class TestGardenSetup(object):
 
         gardens = self.parser.parse_garden(response.json(), many=True)
 
-
         print(gardens)
         assert len(gardens) == 2
 
         for garden in gardens:
-            assert garden.name in ['grandparent', 'parent']
+            assert garden.name in ["grandparent", "parent"]
 
     def test_parent_counter(self):
         response = self.parent_easy_client.client.session.get(
@@ -67,7 +70,7 @@ class TestGardenSetup(object):
         assert len(gardens) == 2
 
         for garden in gardens:
-            assert garden.name in ['child', 'parent']
+            assert garden.name in ["child", "parent"]
 
     def test_child_counter(self):
         response = self.child_easy_client.client.session.get(
@@ -80,7 +83,7 @@ class TestGardenSetup(object):
         assert len(gardens) == 1
 
         for garden in gardens:
-            assert garden.name in ['child']
+            assert garden.name in ["child"]
 
     def test_grandchildren(self):
         response = self.grand_parent_easy_client.client.session.get(
@@ -89,19 +92,17 @@ class TestGardenSetup(object):
 
         gardens = self.parser.parse_garden(response.json(), many=True)
 
-
-        
         for garden in gardens:
             print(garden)
             assert not garden.has_parent
-        
 
         for garden in gardens:
-            if garden.name == 'parent':
+            if garden.name == "parent":
                 assert garden.children is not None
                 assert len(garden.children) == 1
 
         assert len(gardens) == 2
+
     def test_parent_systems_register_successful(self):
         systems = self.grand_parent_easy_client.find_systems()
 
@@ -114,9 +115,9 @@ class TestGardenSetup(object):
                 namespaces[system.namespace] += 1
 
         assert len(namespaces) == 3
-        assert namespaces['grandparent'] > 0
-        assert namespaces['parent'] > 0
-        assert namespaces['child'] > 0
+        assert namespaces["grandparent"] > 0
+        assert namespaces["parent"] > 0
+        assert namespaces["child"] > 0
 
     def test_child_systems_register_successful(self):
         systems = self.parent_easy_client.find_systems()
@@ -130,9 +131,8 @@ class TestGardenSetup(object):
                 namespaces[system.namespace] += 1
 
         assert len(namespaces) == 2
-        assert namespaces['parent'] > 0
-        assert namespaces['child'] > 0
-
+        assert namespaces["parent"] > 0
+        assert namespaces["child"] > 0
 
     # def test_update_garden_connection_info(self):
     #     response = self.easy_client.client.session.get(
