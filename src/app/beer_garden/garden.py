@@ -12,6 +12,7 @@ The garden service is responsible for:
 import logging
 from datetime import datetime
 from typing import List
+from pathlib import Path
 
 from brewtils.errors import PluginError
 from brewtils.models import Event, Events, Garden, Operation, System
@@ -309,6 +310,35 @@ def upsert_garden(garden: Garden) -> Garden:
             setattr(existing_garden, attr, getattr(garden, attr))
 
         return update_garden(existing_garden)
+    
+def rescan():
+    if config.get("children.directory"):
+        
+        for path in Path(config.get("children.directory")).iterdir():
+            try:
+                path_parts = path.parts
+
+                if len(path_parts) == 0:
+                    raise Execption("empty path")
+                if path_parts[-1].startswith("."):
+                    raise Execption("hidden file")
+                
+                if not path_parts[-1].endswith(".yaml"):
+                    raise Execption("is not a .yaml file")
+
+                if not path.exists():
+                    raise Execption("does not exist")
+                if path.is_dir():
+                    raise Execption("Is a directory")
+                
+                garden_config = ConfigLoader.load(path)
+
+            except Execption as plugin_error:
+                logger.warning(
+                    "Not loading child config at %s: %s" % (str(path), str(plugin_error))
+                )
+
+            
 
 
 def garden_sync(sync_target: str = None):

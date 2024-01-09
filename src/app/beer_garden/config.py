@@ -391,6 +391,17 @@ _GARDEN_SPEC = {
     },
 }
 
+_CHILDREN_GARDEN_SPEC = {
+    "type": "dict",
+    "items": {
+        "directory": {
+            "type": "str",
+            "required": False,
+            "description": "Directory where child garden configs are located",
+        }
+    },
+}
+
 _META_SPEC = {
     "type": "dict",
     "bootstrap": True,
@@ -1515,6 +1526,7 @@ _REPLICATION_SPEC = {
 
 _SPECIFICATION = {
     "auth": _AUTH_SPEC,
+    "children": _CHILDREN_GARDEN_SPEC,
     "configuration": _META_SPEC,
     "db": _DB_SPEC,
     "entry": _ENTRY_SPEC,
