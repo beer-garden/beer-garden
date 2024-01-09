@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
-from copy import deepcopy
 import traceback
-
-from brewtils.models import Event
+from copy import deepcopy
 
 import beer_garden.command_publishing_blocklist
 import beer_garden.config
@@ -19,6 +17,7 @@ import beer_garden.router
 import beer_garden.scheduler
 import beer_garden.systems
 import beer_garden.user
+from brewtils.models import Event
 
 logger = logging.getLogger(__name__)
 
@@ -64,5 +63,10 @@ def garden_callbacks(event: Event) -> None:
         except Exception as ex:
             logger.error(
                 "'%s' handler received an error executing callback for event %s: %s: %s"
-                % (handler_tag, repr(event), str(ex), traceback.TracebackException.from_exception(ex))
+                % (
+                    handler_tag,
+                    repr(event),
+                    str(ex),
+                    traceback.TracebackException.from_exception(ex),
+                )
             )
