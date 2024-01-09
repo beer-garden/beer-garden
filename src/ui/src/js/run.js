@@ -350,6 +350,23 @@ export default function appRun(
     );
   };
 
+  $rootScope.extractGardenChildren = function(gardens) {
+    let results = []
+    for (let i = 0; i < gardens.length; i++){
+      results.push(gardens[i]);
+      $rootScope.extractGardenChildrenLoop(results, gardens[i]);
+    }
+    return results;
+  }
+
+  $rootScope.extractGardenChildrenLoop = function(gardens, garden) {
+    for (let i = 0; i < garden.children.length; i++){
+      gardens.push(garden.children[i]);
+      $rootScope.extractGardenChildrenLoop(gardens, garden.children[i]);
+    }
+    return gardens;
+  }
+
   function upsertSystem(system) {
     const index = _.findIndex($rootScope.systems, {id: system.id});
 

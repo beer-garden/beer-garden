@@ -1,4 +1,4 @@
-from brewtils.models import Event, Operation
+from brewtils.models import Event, Events, Operation
 from requests import RequestException
 
 import beer_garden.config as conf
@@ -43,6 +43,17 @@ class HttpParentUpdater(QueueListener):
     def process(self, event: Event):
         # TODO - This shouldn't be set here
         event.garden = conf.get("garden.name")
+        if event.name in (
+            Events.GARDEN_STARTED.name,
+            Events.GARDEN_UPDATED.name,
+            Events.GARDEN_STOPPED.name,
+            Events.GARDEN_SYNC.name,
+        ):
+            if event.payload.parent is None and event.payload.name != event.garden:
+                self.logger.error(f"Setting parent to {event.garden}")
+                event.payload.parent = event.garden
+                event.payload.has_parent = True
+                self.logger.error(event.payload)
 
         if not event_blocklisted(event):
             try:

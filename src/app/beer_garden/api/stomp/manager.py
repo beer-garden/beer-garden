@@ -5,6 +5,7 @@ from threading import Lock
 from box import Box
 from brewtils.models import Event, Events
 
+import beer_garden.config as config
 import beer_garden.log
 import beer_garden.requests
 import beer_garden.router
@@ -140,6 +141,19 @@ class StompManager(BaseProcessor):
     def _event_handler(self, event):
         """Internal event handler"""
         if not event.error:
+            if event.name in (
+                Events.GARDEN_STARTED.name,
+                Events.GARDEN_UPDATED.name,
+                Events.GARDEN_STOPPED.name,
+                Events.GARDEN_SYNC.name,
+            ):
+                if event.payload.parent is None and event.payload.name != config.get(
+                    "garden.name"
+                ):
+                    logger.error(f"Setting parent to {config.get('garden.name')}")
+                    event.payload.parent = config.get("garden.name")
+                    event.payload.has_parent = True
+
             if event.name == Events.GARDEN_REMOVED.name:
                 self.remove_garden_from_list(garden_name=event.payload.name)
 

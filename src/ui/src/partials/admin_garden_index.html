@@ -72,7 +72,7 @@
   <div ng-repeat="garden in data" class="container-item panel panel-default">
     <div class="panel-heading">
       <h3>
-        <span>{{garden.name}}</span>
+        <span>{{findGardenLabel(garden, garden.name)}}</span>
         <span ng-show="garden.id == null || garden.connection_type == 'LOCAL'"
           >(LOCAL)</span
         >
