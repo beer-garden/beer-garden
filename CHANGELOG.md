@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.23.2
+
+TBD
+
+- Updated icons on System Admin page
+
 # 3.23.1
 
 12/29/2023
