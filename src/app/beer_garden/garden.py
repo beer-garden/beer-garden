@@ -167,6 +167,23 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
 
     return update_garden(garden)
 
+def update_garden_metadata_value(garden_name: str, key: str, value) -> Garden:
+    """Update metadata on Garden
+
+    Will not publish update event
+
+    Args:
+        garden_name: The Garden Name
+        key: Key value of metadata field
+        vale: Value of the metadata field
+
+    Returns:
+        The updated Garden
+    """
+    garden = db.query_unique(Garden, name=garden_name)
+    garden.metadata[key] = value
+    db.update(garden)
+
 
 def remove_remote_users(garden: Garden):
     RemoteUser.objects.filter(garden=garden.name).delete()

@@ -49,6 +49,30 @@
         <div class="col-md-2">{{data.connection_type}}</div>
       </div>
     </div>
+    <div class="row">
+      <div class="col-md-2">Create Latency:</div>
+      <div class="col-md-2">
+        <ul>
+          <li ng-repeat="latency in buildLatencyList(data.metadata, 'CREATE_DELTA_')">{{latency}}</li>
+        </ul>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-2">Start Latency:</div>
+      <div class="col-md-2">
+        <ul>
+          <li ng-repeat="latency in buildLatencyList(data.metadata, 'START_DELTA_')">{{latency}}</li>
+        </ul>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-2">Complete Latency:</div>
+      <div class="col-md-2">
+        <ul>
+          <li ng-repeat="latency in buildLatencyList(data.metadata, 'COMPLETE_DELTA_')">{{latency}}</li>
+        </ul>
+      </div>
+    </div>
   </div>
 
   <div class="row">

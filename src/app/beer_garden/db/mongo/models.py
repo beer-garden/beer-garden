@@ -790,6 +790,8 @@ class Garden(MongoModel, Document):
     children = DummyField(required=False)
     has_parent = BooleanField(required=False, default=False)
 
+    metadata = DictField()
+
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves
         "index_background": True,

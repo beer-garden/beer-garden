@@ -109,6 +109,17 @@ export default function adminGardenViewController(
     $scope.data = [];
   };
 
+  $scope.buildLatencyList = function(metadata, filter) {
+    let latencyList = [];
+
+    for (var key in metadata) {
+      if (key.startsWith(filter)){
+        latencyList.push(key.substring(filter.length) + " " + metadata[key] +"s");
+      }
+    }
+    return latencyList;
+  }
+
   const loadGarden = function() {
     GardenService.getGarden($stateParams.name).then(
         $scope.successCallback,

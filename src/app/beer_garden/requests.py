@@ -16,6 +16,7 @@ import threading
 from builtins import str
 from copy import deepcopy
 from typing import Dict, List, Sequence, Union
+import sys
 
 import six
 import urllib3
@@ -916,6 +917,18 @@ def handle_wait_events(event):
 
 def handle_event(event):
     # Only care about downstream garden
+    existing_request = db.query_unique(Request, id=event.payload.id)
+
+    if existing_request:
+        # Skip status that revert
+        if existing_request.status in ("CANCELED", "SUCCESS", "ERROR", "INVALID"):
+            return
+        if existing_request.status == "IN_PROGRESS" and event.payload.status in (
+            "CREATED",
+            "RECEIVED",
+        ):
+            return
+
     if event.garden != config.get("garden.name") and not event.error:
         if event.name in (
             Events.REQUEST_CREATED.name,
@@ -924,10 +937,41 @@ def handle_event(event):
             Events.REQUEST_UPDATED.name,
             Events.REQUEST_CANCELED.name,
         ):
-            # When we send child requests to child gardens where the parent was on
-            # the local garden we remove the parent before sending them. Only setting
-            # the subset of fields that change "corrects" the parent
-            existing_request = db.query_unique(Request, id=event.payload.id)
+            if existing_request and existing_request.source_garden == config.get(
+                "garden.name"
+            ):
+                # Prevent circular imports
+                if "update_garden_metadata_value" not in sys.modules:
+                    from beer_garden.garden import update_garden_metadata_value
+
+                if event.name == Events.REQUEST_CREATED.name:
+                    timeDelta = (
+                        event.payload.created_at - existing_request.created_at
+                    ).total_seconds()
+
+                    update_garden_metadata_value(
+                        existing_request.source_garden,
+                        f"CREATE_DELTA_{event.payload.target_garden}",
+                        timeDelta,
+                    )
+                elif event.payload.status == "IN_PROGRESS":
+                    timeDelta = (
+                        event.payload.updated_at - existing_request.created_at
+                    ).total_seconds()
+                    update_garden_metadata_value(
+                        existing_request.source_garden,
+                        f"START_DELTA_{event.payload.target_garden}",
+                        timeDelta,
+                    )
+                elif event.payload.status in ("CANCELED", "SUCCESS", "ERROR"):
+                    timeDelta = (
+                        event.payload.updated_at - existing_request.created_at
+                    ).total_seconds()
+                    update_garden_metadata_value(
+                        existing_request.source_garden,
+                        f"COMPLETE_DELTA_{event.payload.target_garden}",
+                        timeDelta,
+                    )
 
             if existing_request is None:
                 # Attempt to create the request, if it already exists then continue on
@@ -937,7 +981,9 @@ def handle_event(event):
                     pass
             elif event.name != Events.REQUEST_CREATED.name:
                 request_changed = False
-
+                # When we send child requests to child gardens where the parent was on
+                # the local garden we remove the parent before sending them. Only setting
+                # the subset of fields that change "corrects" the parent
                 for field in (
                     "status",
                     "output",
@@ -956,6 +1002,7 @@ def handle_event(event):
                         update_request(existing_request, _publish_error=False)
                     except RequestStatusTransitionError:
                         pass
+
         # TODO: Add support for Request Delete event type
         # elif event.name == Events.REQUEST_DELETED.name:
         #     delete_requests(**event.payload)
@@ -965,10 +1012,13 @@ def handle_event(event):
         Events.REQUEST_UPDATED.name,
         Events.REQUEST_CANCELED.name,
     ):
-        if event.payload.status in ("INVALID", "CANCELED", "ERROR", "SUCCESS"):
-            existing_request = db.query_unique(Request, id=event.payload.id)
-            if existing_request:
-                clean_command_type_temp(existing_request)
+        if existing_request and event.payload.status in (
+            "INVALID",
+            "CANCELED",
+            "ERROR",
+            "SUCCESS",
+        ):
+            clean_command_type_temp(existing_request)
 
 
 def clean_command_type_temp(request: Request):
