@@ -12,7 +12,6 @@ import gzip
 import json
 import logging
 import re
-import sys
 import threading
 from builtins import str
 from copy import deepcopy
@@ -36,7 +35,16 @@ from brewtils.errors import (
     RequestPublishException,
     RequestStatusTransitionError,
 )
-from brewtils.models import Choices, Events, Operation, Request, RequestTemplate, System
+from brewtils.models import (
+    Choices,
+    Event,
+    Events,
+    Garden,
+    Operation,
+    Request,
+    RequestTemplate,
+    System,
+)
 from brewtils.pika import PERSISTENT_DELIVERY_MODE
 
 logger = logging.getLogger(__name__)
