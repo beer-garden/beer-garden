@@ -349,6 +349,7 @@ def rescan():
                         f"Garden {garden_config.get('garden.name')} has no connections enabled"
                     )
 
+                # TODO: Decide if we will support dual broadcast
                 elif garden_config.get("http.enabled") and garden_config.get(
                     "stomp.enabled"
                 ):
@@ -368,6 +369,7 @@ def rescan():
                     update_garden = True
                     garden.connection_type = "stomp"
 
+                # TODO: Decide if the structure should be flat or nested (SSL block)
                 if garden.connection_params["http"] != garden_config.get("http"):
                     update_garden = True
                     garden.connection_params["http"] = garden_config.get("http")
@@ -385,10 +387,14 @@ def rescan():
                     update_garden = True
                     garden.status = "ERROR"
 
+                    # TODO: Decide if we disable when there is an error with the config?
+                    garden.connection_type = None
+
             if update_garden:
                 update_garden(garden)
 
                 if garden_created and garden.status != "ERROR":
+                    # TODO: Decide if we want to automatically run the sync after it is configured
                     logger.info("Automatically running sync")
 
 
