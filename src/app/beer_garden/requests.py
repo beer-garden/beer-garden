@@ -915,6 +915,39 @@ def handle_wait_events(event):
                 request_map[request_event].set()
 
 
+def update_request_latency_garden(existing_request: Request, event: Event) -> None:
+    """Updater for Garden metadata based on Request timestamps
+
+    Args:
+        existing_request: Request stored in Database
+        event: Incoming request from downstream garden
+
+    """
+
+    # Skip metrics if it is sourced from itself
+    if existing_request.source_garden == event.payload.target_garden:
+        return
+
+    garden = db.query_unique(Garden, name=existing_request.source_garden)
+
+    if event.name == Events.REQUEST_CREATED.name:
+        garden.metadata[f"CREATE_DELTA_{event.payload.target_garden}"] = (
+            event.payload.created_at - existing_request.created_at
+        ).total_seconds()
+    elif event.payload.status == "IN_PROGRESS":
+        garden.metadata[f"START_DELTA_{event.payload.target_garden}"] = (
+            event.payload.updated_at - existing_request.created_at
+        ).total_seconds()
+    elif event.payload.status in ("CANCELED", "SUCCESS", "ERROR"):
+        garden.metadata[f"COMPLETE_DELTA_{event.payload.target_garden}"] = (
+            event.payload.updated_at - existing_request.created_at
+        ).total_seconds()
+    else:
+        return
+
+    db.update(garden)
+
+
 def handle_event(event):
     # Only care about downstream garden
     existing_request = db.query_unique(Request, id=event.payload.id)
@@ -940,38 +973,7 @@ def handle_event(event):
             if existing_request and existing_request.source_garden == config.get(
                 "garden.name"
             ):
-                # Prevent circular imports
-                if "update_garden_metadata_value" not in sys.modules:
-                    from beer_garden.garden import update_garden_metadata_value
-
-                if event.name == Events.REQUEST_CREATED.name:
-                    timeDelta = (
-                        event.payload.created_at - existing_request.created_at
-                    ).total_seconds()
-
-                    update_garden_metadata_value(
-                        existing_request.source_garden,
-                        f"CREATE_DELTA_{event.payload.target_garden}",
-                        timeDelta,
-                    )
-                elif event.payload.status == "IN_PROGRESS":
-                    timeDelta = (
-                        event.payload.updated_at - existing_request.created_at
-                    ).total_seconds()
-                    update_garden_metadata_value(
-                        existing_request.source_garden,
-                        f"START_DELTA_{event.payload.target_garden}",
-                        timeDelta,
-                    )
-                elif event.payload.status in ("CANCELED", "SUCCESS", "ERROR"):
-                    timeDelta = (
-                        event.payload.updated_at - existing_request.created_at
-                    ).total_seconds()
-                    update_garden_metadata_value(
-                        existing_request.source_garden,
-                        f"COMPLETE_DELTA_{event.payload.target_garden}",
-                        timeDelta,
-                    )
+                update_request_latency_garden(existing_request, event)
 
             if existing_request is None:
                 # Attempt to create the request, if it already exists then continue on
