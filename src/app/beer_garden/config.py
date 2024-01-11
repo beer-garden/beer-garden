@@ -914,29 +914,28 @@ _HTTP_SPEC = {
     },
 }
 
-_HTTP_CONNECTION = copy.deepcopy(_HTTP_SPEC)
-_HTTP_CONNECTION["items"] = _HTTP_CONNECTION["items"] | {
-    
-        "username": {
-            "type": "str",
-            "description": "Username for authentication",
-            "required": False,
-        },
-        "password": {
-            "type": "str",
-            "description": "Password for authentication",
-            "required": False,
-        },
-        "access_token": {
-            "type": "str",
-            "description": "Access token for authentication",
-            "required": False,
-        },
-        "refresh_token": {
-            "type": "str",
-            "description": "Refresh token for authentication",
-            "required": False,
-        }
+_HTTP_CONNECTION_SPEC = copy.deepcopy(_HTTP_SPEC)
+_HTTP_CONNECTION_SPEC["items"] = _HTTP_CONNECTION_SPEC["items"] | {
+    "username": {
+        "type": "str",
+        "description": "Username for authentication",
+        "required": False,
+    },
+    "password": {
+        "type": "str",
+        "description": "Password for authentication",
+        "required": False,
+    },
+    "access_token": {
+        "type": "str",
+        "description": "Access token for authentication",
+        "required": False,
+    },
+    "refresh_token": {
+        "type": "str",
+        "description": "Refresh token for authentication",
+        "required": False,
+    },
 }
 
 _STOMP_SPEC = {
@@ -1041,7 +1040,7 @@ _ENTRY_SPEC = {
 _PARENT_SPEC = {
     "type": "dict",
     "items": {
-        "http": _HTTP_CONNECTION,
+        "http": _HTTP_CONNECTION_SPEC,
         "skip_events": {
             "type": "list",
             "items": {"skip_event": {"type": "str"}},
@@ -1391,7 +1390,6 @@ _SPECIFICATION = {
 }
 
 _CHILD_SPECIFICATION = {
-    "garden": _GARDEN_SPEC,
-    "http": _HTTP_CONNECTION,
+    "http": _HTTP_CONNECTION_SPEC,
     "stomp": _STOMP_SPEC,
 }

@@ -11,25 +11,25 @@ The garden service is responsible for:
 """
 import logging
 from datetime import datetime
-from typing import List
 from pathlib import Path
+from typing import List
 
-from brewtils.errors import PluginError
-from brewtils.models import Event, Events, Garden, Operation, System
-from brewtils.specification import _CONNECTION_SPEC
 from mongoengine import DoesNotExist
 from yapconf import YapconfSpec
 
 import beer_garden.config as config
-from beer_garden.config import load_child
 import beer_garden.db.api as db
 from beer_garden.command_publishing_blocklist import (
     publish_command_publishing_blocklist,
 )
+from beer_garden.config import load_child
 from beer_garden.db.mongo.models import RemoteUser
 from beer_garden.events import publish, publish_event
 from beer_garden.namespace import get_namespaces
 from beer_garden.systems import get_systems, remove_system
+from brewtils.errors import PluginError
+from brewtils.models import Event, Events, Garden, Operation, System
+from brewtils.specification import _CONNECTION_SPEC
 
 logger = logging.getLogger(__name__)
 
@@ -311,64 +311,85 @@ def upsert_garden(garden: Garden) -> Garden:
             setattr(existing_garden, attr, getattr(garden, attr))
 
         return update_garden(existing_garden)
-    
+
+
 def rescan():
     if config.get("children.directory"):
-        
         for path in Path(config.get("children.directory")).iterdir():
-            try:
-                path_parts = path.parts
+            path_parts = path.parts
+            garden_name = path_parts[-1][:-5]
+            garden = db.query_unique(Garden, name=garden_name)
 
+            garden_created = garden is None
+            if garden is None:
+                garden = create_garden(Garden(name=garden_name))
+
+            update_garden = False
+
+            try:
                 if len(path_parts) == 0:
-                    raise Execption("empty path")
+                    raise Exception("empty path")
                 if path_parts[-1].startswith("."):
-                    raise Execption("hidden file")
-                
+                    raise Exception("hidden file")
+
                 if not path_parts[-1].endswith(".yaml"):
-                    raise Execption("is not a .yaml file")
+                    raise Exception("is not a .yaml file")
 
                 if not path.exists():
-                    raise Execption("does not exist")
+                    raise Exception("does not exist")
                 if path.is_dir():
-                    raise Execption("Is a directory")
-                
+                    raise Exception("Is a directory")
+
                 garden_config = load_child(path)
-                
-                garden = db.query_unique(Garden, name=garden_config.get("garden.name"))
-                update_garden = False
 
-                if garden is None:
-                    garden = create_garden(Garden(name=garden_config.get("garden.name")))
+                if not garden_config.get("http.enabled") and not garden_config.get(
+                    "stomp.enabled"
+                ):
+                    raise Exception(
+                        f"Garden {garden_config.get('garden.name')} has no connections enabled"
+                    )
 
-                
-
-                if not garden_config.get("http.enabled") and not garden_config.get("stomp.enabled"):
-                    logger.error(f"Garden {garden_config.get('garden.name')} has no connections enabled")
-                    if garden.status != "ERROR":
-                        update_garden = True
-                        garden.status = "ERROR"
-                elif garden_config.get("http.enabled") and garden_config.get("stomp.enabled"):
-                    logger.error(f"Garden {garden_config.get('garden.name')} has TWO connections enabled")
-                    if garden.status != "ERROR":
-                        update_garden = True
-                        garden.status = "ERROR"
-                elif garden_config.get("http.enabled"):
+                elif garden_config.get("http.enabled") and garden_config.get(
+                    "stomp.enabled"
+                ):
+                    raise Exception(
+                        f"Garden {garden_config.get('garden.name')} has TWO connections enabled"
+                    )
+                elif (
+                    garden_config.get("http.enabled")
+                    and garden.connection_type != "http"
+                ):
+                    update_garden = True
                     garden.connection_type = "http"
-                    #garden.connection_params
-                elif garden_config.get("stomp.enabled"):
+                elif (
+                    garden_config.get("stomp.enabled")
+                    and garden.connection_type != "stomp"
+                ):
+                    update_garden = True
                     garden.connection_type = "stomp"
-                    #garden.connection_params
 
-                
-                if update_garden:
-                    update_garden(garden)
+                if garden.connection_params["http"] != garden_config.get("http"):
+                    update_garden = True
+                    garden.connection_params["http"] = garden_config.get("http")
 
-            except Execption as plugin_error:
+                if garden.connection_params["stomp"] != garden_config.get("stomp"):
+                    update_garden = True
+                    garden.connection_params["stomp"] = garden_config.get("stomp")
+
+            except Exception as error:
                 logger.warning(
-                    "Not loading child config at %s: %s" % (str(path), str(plugin_error))
+                    "Not loading child config at %s: %s" % (str(path), str(error))
                 )
+                # This will only update the status of the Garden, but not the connection params
+                if garden.status != "ERROR":
+                    update_garden = True
+                    garden.status = "ERROR"
 
-            
+            if update_garden:
+                update_garden(garden)
+
+                if garden_created and garden.status != "ERROR":
+                    logger.info("Automatically running sync")
 
 
 def garden_sync(sync_target: str = None):
