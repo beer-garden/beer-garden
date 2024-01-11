@@ -21,6 +21,7 @@ from mongoengine import DoesNotExist
 from yapconf import YapconfSpec
 
 import beer_garden.config as config
+from beer_garden.config import load_child
 import beer_garden.db.api as db
 from beer_garden.command_publishing_blocklist import (
     publish_command_publishing_blocklist,
@@ -331,7 +332,36 @@ def rescan():
                 if path.is_dir():
                     raise Execption("Is a directory")
                 
-                garden_config = ConfigLoader.load(path)
+                garden_config = load_child(path)
+                
+                garden = db.query_unique(Garden, name=garden_config.get("garden.name"))
+                update_garden = False
+
+                if garden is None:
+                    garden = create_garden(Garden(name=garden_config.get("garden.name")))
+
+                
+
+                if not garden_config.get("http.enabled") and not garden_config.get("stomp.enabled"):
+                    logger.error(f"Garden {garden_config.get('garden.name')} has no connections enabled")
+                    if garden.status != "ERROR":
+                        update_garden = True
+                        garden.status = "ERROR"
+                elif garden_config.get("http.enabled") and garden_config.get("stomp.enabled"):
+                    logger.error(f"Garden {garden_config.get('garden.name')} has TWO connections enabled")
+                    if garden.status != "ERROR":
+                        update_garden = True
+                        garden.status = "ERROR"
+                elif garden_config.get("http.enabled"):
+                    garden.connection_type = "http"
+                    #garden.connection_params
+                elif garden_config.get("stomp.enabled"):
+                    garden.connection_type = "stomp"
+                    #garden.connection_params
+
+                
+                if update_garden:
+                    update_garden(garden)
 
             except Execption as plugin_error:
                 logger.warning(
