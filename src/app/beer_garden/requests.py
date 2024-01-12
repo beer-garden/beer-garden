@@ -13,6 +13,7 @@ import json
 import logging
 import re
 import threading
+import time
 from builtins import str
 from copy import deepcopy
 from typing import Dict, List, Sequence, Union
@@ -896,6 +897,10 @@ def handle_wait_events(event):
     if event.name == Events.REQUEST_COMPLETED.name:
         completion_event = request_map.pop(event.payload.id, None)
         if completion_event:
+            if event.garden != config.get("garden.name"):
+                # Need to give Beer Garden a moment to process Compelte request
+                time.sleep(0.1)
+
             completion_event.set()
 
     # Only care about local garden

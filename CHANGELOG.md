@@ -5,6 +5,8 @@
 TBD
 
 - Updated icons on System Admin page
+- Fixed bug where `blocking=true` on Request API returned `IN PROGRESS` status for requests sourced from downstream gardens. Delay added to 
+  allow Beer Garden to process the event.
 
 # 3.23.1
 
