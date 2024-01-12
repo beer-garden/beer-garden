@@ -26,7 +26,16 @@ from brewtils.errors import (
     RequestPublishException,
     RequestStatusTransitionError,
 )
-from brewtils.models import Choices, Event, Events, Garden, Operation, Request, RequestTemplate, System
+from brewtils.models import (
+    Choices,
+    Event,
+    Events,
+    Garden,
+    Operation,
+    Request,
+    RequestTemplate,
+    System,
+)
 from brewtils.pika import PERSISTENT_DELIVERY_MODE
 from requests import Session
 
