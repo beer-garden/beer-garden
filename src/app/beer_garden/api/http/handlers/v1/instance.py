@@ -5,9 +5,10 @@ from brewtils.errors import (
     ModelValidationError,
     RequestProcessingError,
     TimeoutExceededError,
-    EndpointRemovedException,
     
 )
+
+from beer_garden.errors import EndpointRemovedException
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 
