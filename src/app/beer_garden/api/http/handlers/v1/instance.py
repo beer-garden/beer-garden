@@ -273,7 +273,9 @@ class InstanceLogAPI(AuthorizationHandler):
         wait_timeout = float(self.get_argument("timeout", default="15"))
         if wait_timeout < 0:
             wait_timeout = None
-        if not await future_wait(wait_future, wait_timeout):
+        await future_wait(wait_future, wait_timeout)
+
+        if not wait_future.done():
             raise TimeoutExceededError("Timeout exceeded")
             
         if wait_future.exception():

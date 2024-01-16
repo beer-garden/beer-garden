@@ -518,9 +518,11 @@ class RequestListAPI(AuthorizationHandler):
             if wait_timeout < 0:
                 wait_timeout = None
 
-            if not await future_wait(wait_future, wait_timeout):
-                raise TimeoutExceededError("Timeout exceeded")
+            await future_wait(wait_future, wait_timeout)
             
+            if not wait_future.done():
+                raise TimeoutExceededError("Timeout exceeded")
+                 
             if wait_future.exception():
                 raise RestClientError(wait_future.exception())                
             

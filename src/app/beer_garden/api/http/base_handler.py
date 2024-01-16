@@ -50,7 +50,7 @@ async def future_wait(future, timeout):
         await asyncio.wait_for(future, timeout)
     except asyncio.TimeoutError:
         pass
-    return future.done()
+    return future
 
 class BaseHandler(RequestHandler):
     """Base handler from which all handlers inherit"""
