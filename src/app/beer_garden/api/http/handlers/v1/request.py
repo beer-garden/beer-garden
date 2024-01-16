@@ -524,7 +524,7 @@ class RequestListAPI(AuthorizationHandler):
                 raise TimeoutExceededError("Timeout exceeded")
                  
             if wait_future.exception():
-                raise RestClientError(wait_future.exception())                
+                raise wait_future.exception()
             
             response = SchemaParser.serialize_request(wait_future.result())
 
