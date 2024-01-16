@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from asyncio import Event
+from asyncio import Future
 
 from brewtils.errors import (
     ModelValidationError,
@@ -10,7 +10,7 @@ from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.authorization import Permissions
-from beer_garden.api.http.base_handler import event_wait
+from beer_garden.api.http.base_handler import future_wait
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.db.mongo.models import System
 
@@ -255,14 +255,14 @@ class InstanceLogAPI(AuthorizationHandler):
         self.write(response["output"])
 
     async def _generate_get_response(self, instance_id, start_line, end_line):
-        wait_event = Event()
+        wait_future = Future()
 
         response = await self.client(
             Operation(
                 operation_type="INSTANCE_LOGS",
                 args=[instance_id],
                 kwargs={
-                    "wait_event": wait_event,
+                    "wait_event": wait_future,
                     "start_line": start_line,
                     "end_line": end_line,
                 },
@@ -273,13 +273,13 @@ class InstanceLogAPI(AuthorizationHandler):
         wait_timeout = float(self.get_argument("timeout", default="15"))
         if wait_timeout < 0:
             wait_timeout = None
-        if not await event_wait(wait_event, wait_timeout):
+        if not await future_wait(wait_future, wait_timeout):
             raise TimeoutExceededError("Timeout exceeded")
-
-        response = await self.client(
-            Operation(operation_type="REQUEST_READ", args=[response["id"]]),
-            serialize_kwargs={"to_string": False},
-        )
+            
+        if wait_future.exception():
+            raise wait_future.exception()             
+        
+        response = wait_future.result()
 
         if response["status"] == "ERROR":
             raise RequestProcessingError(response["output"])

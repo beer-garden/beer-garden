@@ -6,7 +6,7 @@ The request service is responsible for:
 * Validating requests
 * Request completion notification
 """
-
+from asyncio import Future
 import base64
 import gzip
 import json
@@ -624,7 +624,7 @@ def _validate_request(request: Request):
 
 def process_request(
     new_request: Union[Request, RequestTemplate],
-    wait_event: threading.Event = None,
+    wait_event: Union[Future, threading.Event] = None,
     is_admin: bool = False,
     priority: int = 0,
 ) -> Request:
@@ -680,6 +680,10 @@ def process_request(
 
             if wait_event:
                 request_map.pop(request.id, None)
+                if type(wait_event) is Future:
+                    wait_event.cancel(f"Error while publishing {request!r} to message broker")
+                else:
+                    wait_event.set()
 
         raise RequestPublishException(
             f"Error while publishing {request!r} to message broker"
@@ -897,11 +901,14 @@ def handle_wait_events(event):
     if event.name == Events.REQUEST_COMPLETED.name:
         completion_event = request_map.pop(event.payload.id, None)
         if completion_event:
-            if event.garden != config.get("garden.name"):
-                # Need to give Beer Garden a moment to process Compelte request
-                time.sleep(0.1)
-
-            completion_event.set()
+            # Async events return the result object
+            if type(completion_event) is Future:
+                completion_event.set_result(event.payload)
+            # Threading events must retrieve the results in a seperate call
+            else:
+                if event.garden != config.get("garden.name"):
+                    time.sleep(0.1)
+                completion_event.set()
 
     # Only care about local garden
     if event.garden == config.get("garden.name"):
@@ -910,7 +917,10 @@ def handle_wait_events(event):
             # waiting for a response. This will invoke each connection/thread to be
             # returned the current status of the Request.
             for request_event in request_map:
-                request_map[request_event].set()
+                if type(request_map[request_event]) is Future:
+                    request_map[request_event].cancel("Shutting down, cancelling all request waits")
+                else:
+                    request_map[request_event].set()
 
 
 def handle_event(event):
@@ -961,12 +971,15 @@ def handle_event(event):
         if event.payload.status in ("INVALID", "CANCELED", "ERROR", "SUCCESS"):
             existing_request = db.query_unique(Request, id=event.payload.id)
             if existing_request:
-                clean_command_type_temp(existing_request)
+                clean_command_type_temp(existing_request, event.garden != config.get("garden.name"))
 
 
-def clean_command_type_temp(request: Request):
+def clean_command_type_temp(request: Request, is_remote: bool):
     # Only delete TEMP requests if it is the root request
     if not request.has_parent and request.command_type == "TEMP":
+        if is_remote:
+            # Give Threading based requests a chance to pull the Request before deleting it
+            time.sleep(0.5)
         db.delete(request)
         return
 
