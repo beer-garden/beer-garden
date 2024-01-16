@@ -5,7 +5,7 @@ import json
 from asyncio import Future
 from typing import Sequence
 
-from brewtils.errors import ModelValidationError, TimeoutExceededError, RestClientError
+from brewtils.errors import ModelValidationError, TimeoutExceededError, EndpointRemovedException
 from brewtils.models import Operation
 from brewtils.models import Request as BrewtilsRequest
 from brewtils.models import System as BrewtilsSystem
@@ -523,8 +523,8 @@ class RequestListAPI(AuthorizationHandler):
             if not wait_future.done():
                 raise TimeoutExceededError("Timeout exceeded")
                  
-            if wait_future.exception():
-                raise wait_future.exception()
+            if wait_future.cancelled():
+                raise EndpointRemovedException("Garden is shutting down")
             
             response = SchemaParser.serialize_request(wait_future.result())
 

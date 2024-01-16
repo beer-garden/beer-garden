@@ -22,8 +22,6 @@ from mongoengine.errors import DoesNotExist, NotUniqueError
 from mongoengine.errors import ValidationError as MongoValidationError
 from tornado.web import HTTPError, RequestHandler
 
-from concurrent.futures._base import CancelledError
-
 import beer_garden.api.http
 import beer_garden.config as config
 import beer_garden.db.mongo.models
@@ -77,7 +75,6 @@ class BaseHandler(RequestHandler):
         ConflictError: {"status_code": 409},
         NotUniqueException: {"status_code": 409},
         NotUniqueError: {"status_code": 409, "message": "Resource already exists"},
-        CancelledError: {"status_code": 409, "message": "Backend request cancelled"},
         EndpointRemovedException: {"status_code": 410, "message": "Endpoint removed"},
         RequestPublishException: {"status_code": 502},
         RoutingException: {"status_code": 500},

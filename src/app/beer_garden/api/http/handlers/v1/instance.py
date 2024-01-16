@@ -5,6 +5,8 @@ from brewtils.errors import (
     ModelValidationError,
     RequestProcessingError,
     TimeoutExceededError,
+    EndpointRemovedException,
+    
 )
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
@@ -278,8 +280,8 @@ class InstanceLogAPI(AuthorizationHandler):
         if not wait_future.done():
             raise TimeoutExceededError("Timeout exceeded")
             
-        if wait_future.exception():
-            raise wait_future.exception()             
+        if wait_future.cancelled():
+            raise EndpointRemovedException("Garden is shutting down")       
         
         response = wait_future.result()
 
