@@ -681,7 +681,9 @@ def process_request(
             if wait_event:
                 request_map.pop(request.id, None)
                 if type(wait_event) is Future:
-                    wait_event.cancel(f"Error while publishing {request!r} to message broker")
+                    wait_event.cancel(
+                        f"Error while publishing {request!r} to message broker"
+                    )
                 else:
                     wait_event.set()
 
@@ -919,7 +921,9 @@ def handle_wait_events(event):
             # returned the current status of the Request.
             for request_event in request_map:
                 if type(request_map[request_event]) is Future:
-                    request_map[request_event].cancel("Shutting down, cancelling all request waits")
+                    request_map[request_event].cancel(
+                        "Shutting down, cancelling all request waits"
+                    )
                 else:
                     request_map[request_event].set()
 
@@ -972,7 +976,9 @@ def handle_event(event):
         if event.payload.status in ("INVALID", "CANCELED", "ERROR", "SUCCESS"):
             existing_request = db.query_unique(Request, id=event.payload.id)
             if existing_request:
-                clean_command_type_temp(existing_request, event.garden != config.get("garden.name"))
+                clean_command_type_temp(
+                    existing_request, event.garden != config.get("garden.name")
+                )
 
 
 def clean_command_type_temp(request: Request, is_remote: bool):
