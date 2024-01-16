@@ -520,16 +520,16 @@ class RequestListAPI(AuthorizationHandler):
                 wait_timeout = None
 
             await future_wait(wait_future, wait_timeout)
-            
+
             if not wait_future.done():
                 raise TimeoutExceededError("Timeout exceeded")
 
             if wait_future.cancelled():
                 raise EndpointRemovedException("Garden is shutting down")
-            
+
             if wait_future.exception():
                 raise wait_future.exception()
-            
+
             response = SchemaParser.serialize_request(wait_future.result())
 
         else:

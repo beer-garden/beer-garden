@@ -45,13 +45,15 @@ async def event_wait(evt, timeout):
         pass
     return evt.is_set()
 
+
 async def future_wait(future, timeout):
     """Helper method to add a timeout to an asyncio wait"""
     try:
         await asyncio.wait_for(future, timeout)
     except asyncio.TimeoutError:
-        future.set_exception(TimeoutExceededError("Timeout exceeded"))
+        raise TimeoutExceededError("Timeout exceeded")
     return future
+
 
 class BaseHandler(RequestHandler):
     """Base handler from which all handlers inherit"""

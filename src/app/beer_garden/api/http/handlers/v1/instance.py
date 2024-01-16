@@ -5,7 +5,6 @@ from brewtils.errors import (
     ModelValidationError,
     RequestProcessingError,
     TimeoutExceededError,
-    
 )
 
 from beer_garden.errors import EndpointRemovedException
@@ -283,10 +282,10 @@ class InstanceLogAPI(AuthorizationHandler):
 
         if wait_future.cancelled():
             raise EndpointRemovedException("Garden is shutting down")
-        
+
         if wait_future.exception():
-            raise wait_future.exception()   
-        
+            raise wait_future.exception()
+
         response = wait_future.result()
 
         if response["status"] == "ERROR":
