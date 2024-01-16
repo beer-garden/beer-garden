@@ -50,7 +50,7 @@ async def future_wait(future, timeout):
     try:
         await asyncio.wait_for(future, timeout)
     except asyncio.TimeoutError:
-        raise TimeoutExceededError("Timeout exceeded")
+        future.set_exception(TimeoutExceededError("Timeout exceeded"))
     return future
 
 class BaseHandler(RequestHandler):
