@@ -903,7 +903,8 @@ def handle_wait_events(event):
         if completion_event:
             # Async events return the result object
             if type(completion_event) is Future:
-                completion_event.set_result(event.payload)
+                if not completion_event.done():
+                    completion_event.set_result(event.payload)
             # Threading events must retrieve the results in a seperate call
             else:
                 if event.garden != config.get("garden.name"):
