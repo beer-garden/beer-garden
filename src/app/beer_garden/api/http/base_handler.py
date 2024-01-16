@@ -68,7 +68,6 @@ class BaseHandler(RequestHandler):
         RoutingRequestException: {"status_code": 400},
         ModelValidationError: {"status_code": 400},
         ValueError: {"status_code": 400},
-        
         AuthorizationRequired: {"status_code": 401},
         RequestForbidden: {"status_code": 403},
         DoesNotExist: {"status_code": 404, "message": "Resource does not exist"},
@@ -78,10 +77,10 @@ class BaseHandler(RequestHandler):
         ConflictError: {"status_code": 409},
         NotUniqueException: {"status_code": 409},
         NotUniqueError: {"status_code": 409, "message": "Resource already exists"},
+        CancelledError: {"status_code": 409, "message": "Backend request cancelled"},
         EndpointRemovedException: {"status_code": 410, "message": "Endpoint removed"},
         RequestPublishException: {"status_code": 502},
         RoutingException: {"status_code": 500},
-        CancelledError: {"status_code": 500, "message": "Backend cancelled request"},
         socket.timeout: {"status_code": 504, "message": "Backend request timed out"},
     }
 
