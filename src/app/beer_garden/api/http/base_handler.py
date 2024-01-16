@@ -15,6 +15,7 @@ from brewtils.errors import (
     RequestForbidden,
     RequestPublishException,
     WaitExceededError,
+    TimeoutExceededError,
 )
 from marshmallow import Schema
 from marshmallow.exceptions import ValidationError as MarshmallowValidationError
@@ -49,7 +50,7 @@ async def future_wait(future, timeout):
     try:
         await asyncio.wait_for(future, timeout)
     except asyncio.TimeoutError:
-        pass
+        raise TimeoutExceededError("Timeout exceeded")
     return future
 
 class BaseHandler(RequestHandler):
