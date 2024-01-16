@@ -6,7 +6,6 @@ The request service is responsible for:
 * Validating requests
 * Request completion notification
 """
-from asyncio import Future
 import base64
 import gzip
 import json
@@ -14,21 +13,13 @@ import logging
 import re
 import threading
 import time
+from asyncio import Future
 from builtins import str
 from copy import deepcopy
 from typing import Dict, List, Sequence, Union
 
 import six
 import urllib3
-from brewtils.choices import parse
-from brewtils.errors import (
-    ConflictError,
-    ModelValidationError,
-    RequestPublishException,
-    RequestStatusTransitionError,
-)
-from brewtils.models import Choices, Events, Operation, Request, RequestTemplate, System
-from brewtils.pika import PERSISTENT_DELIVERY_MODE
 from requests import Session
 
 import beer_garden.config as config
@@ -38,6 +29,15 @@ from beer_garden.db.mongo.models import RawFile
 from beer_garden.errors import NotUniqueException
 from beer_garden.events import publish_event
 from beer_garden.metrics import request_completed, request_created, request_started
+from brewtils.choices import parse
+from brewtils.errors import (
+    ConflictError,
+    ModelValidationError,
+    RequestPublishException,
+    RequestStatusTransitionError,
+)
+from brewtils.models import Choices, Events, Operation, Request, RequestTemplate, System
+from brewtils.pika import PERSISTENT_DELIVERY_MODE
 
 logger = logging.getLogger(__name__)
 
