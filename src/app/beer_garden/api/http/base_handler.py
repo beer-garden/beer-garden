@@ -22,6 +22,8 @@ from mongoengine.errors import DoesNotExist, NotUniqueError
 from mongoengine.errors import ValidationError as MongoValidationError
 from tornado.web import HTTPError, RequestHandler
 
+from concurrent.futures._base import CancelledError
+
 import beer_garden.api.http
 import beer_garden.config as config
 import beer_garden.db.mongo.models
@@ -66,6 +68,7 @@ class BaseHandler(RequestHandler):
         RoutingRequestException: {"status_code": 400},
         ModelValidationError: {"status_code": 400},
         ValueError: {"status_code": 400},
+        
         AuthorizationRequired: {"status_code": 401},
         RequestForbidden: {"status_code": 403},
         DoesNotExist: {"status_code": 404, "message": "Resource does not exist"},
@@ -78,6 +81,7 @@ class BaseHandler(RequestHandler):
         EndpointRemovedException: {"status_code": 410, "message": "Endpoint removed"},
         RequestPublishException: {"status_code": 502},
         RoutingException: {"status_code": 500},
+        CancelledError: {"status_code": 500, "message": "Backend cancelled request"},
         socket.timeout: {"status_code": 504, "message": "Backend request timed out"},
     }
 
