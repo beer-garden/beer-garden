@@ -17,7 +17,7 @@ from beer_garden.api.http.base_handler import future_wait
 from beer_garden.api.http.exceptions import BadRequest
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.db.mongo.models import Request
-from beer_garden.errors import EndpointRemovedException, UnknownGardenException
+from beer_garden.errors import UnknownGardenException
 from beer_garden.requests import remove_bytes_parameter_base64
 
 REQUEST_CREATE = Permissions.REQUEST_CREATE.value

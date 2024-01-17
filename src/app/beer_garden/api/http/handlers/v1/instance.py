@@ -13,7 +13,6 @@ from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.base_handler import future_wait
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.db.mongo.models import System
-from beer_garden.errors import EndpointRemovedException
 
 INSTANCE_READ = Permissions.INSTANCE_READ.value
 INSTANCE_UPDATE = Permissions.INSTANCE_UPDATE.value
