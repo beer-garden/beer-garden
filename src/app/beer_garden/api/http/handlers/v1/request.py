@@ -5,7 +5,7 @@ import json
 from asyncio import Future
 from typing import Sequence
 
-from brewtils.errors import ModelValidationError, TimeoutExceededError
+from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.models import Request as BrewtilsRequest
 from brewtils.models import System as BrewtilsSystem
