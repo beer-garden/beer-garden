@@ -49,7 +49,7 @@ async def event_wait(evt, timeout):
 async def future_wait(future, timeout):
     """Helper method to add a timeout to an asyncio wait"""
     
-    await asyncio.wait(future, timeout=timeout)
+    await asyncio.wait([future], timeout=timeout)
 
     if not future.done():
         future.set_exception(TimeoutExceededError("Timeout exceeded"))
