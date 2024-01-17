@@ -523,9 +523,6 @@ class RequestListAPI(AuthorizationHandler):
             if not wait_future.done():
                 raise TimeoutExceededError("Timeout exceeded")
 
-            if wait_future.cancelled():
-                raise EndpointRemovedException("Garden is shutting down")
-
             if wait_future.exception():
                 raise wait_future.exception()
 

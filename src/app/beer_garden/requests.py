@@ -35,7 +35,7 @@ import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
 from beer_garden.db.mongo.models import RawFile
-from beer_garden.errors import NotUniqueException
+from beer_garden.errors import NotUniqueException, ShutdownError
 from beer_garden.events import publish_event
 from beer_garden.metrics import request_completed, request_created, request_started
 
@@ -681,8 +681,10 @@ def process_request(
             if wait_event:
                 request_map.pop(request.id, None)
                 if type(wait_event) is Future:
-                    wait_event.cancel(
-                        f"Error while publishing {request!r} to message broker"
+                    wait_event.set_exception(
+                        RequestPublishException(
+                            f"Error while publishing {request!r} to message broker"
+                        )
                     )
                 else:
                     wait_event.set()
@@ -921,8 +923,8 @@ def handle_wait_events(event):
             # returned the current status of the Request.
             for request_event in request_map:
                 if type(request_map[request_event]) is Future:
-                    request_map[request_event].cancel(
-                        "Shutting down, cancelling all request waits"
+                    completion_event.set_exception(
+                        ShutdownError("Shutting down, cancelling all request waits")
                     )
                 else:
                     request_map[request_event].set()
