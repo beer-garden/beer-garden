@@ -520,9 +520,6 @@ class RequestListAPI(AuthorizationHandler):
 
             await future_wait(wait_future, wait_timeout)
 
-            if not wait_future.done():
-                raise TimeoutExceededError("Timeout exceeded")
-
             if wait_future.exception():
                 raise wait_future.exception()
 
