@@ -6,6 +6,18 @@ import re
 import socket
 from typing import Type, Union
 
+from brewtils.errors import (
+    AuthorizationRequired,
+    ConflictError,
+    ModelError,
+    ModelValidationError,
+    NotFoundError,
+    RequestForbidden,
+    RequestPublishException,
+    TimeoutExceededError,
+    WaitExceededError,
+)
+
 from marshmallow import Schema
 from marshmallow.exceptions import ValidationError as MarshmallowValidationError
 from mongoengine.errors import DoesNotExist, NotUniqueError
@@ -23,17 +35,6 @@ from beer_garden.errors import (
     NotUniqueException,
     RoutingException,
     RoutingRequestException,
-)
-from brewtils.errors import (
-    AuthorizationRequired,
-    ConflictError,
-    ModelError,
-    ModelValidationError,
-    NotFoundError,
-    RequestForbidden,
-    RequestPublishException,
-    TimeoutExceededError,
-    WaitExceededError,
 )
 
 
