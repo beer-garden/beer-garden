@@ -17,7 +17,6 @@ from brewtils.errors import (
     TimeoutExceededError,
     WaitExceededError,
 )
-
 from marshmallow import Schema
 from marshmallow.exceptions import ValidationError as MarshmallowValidationError
 from mongoengine.errors import DoesNotExist, NotUniqueError
