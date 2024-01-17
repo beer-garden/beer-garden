@@ -7,6 +7,7 @@ TBD
 - Updated icons on System Admin page
 - Fixed bug where `blocking=true` on Request API returned `IN PROGRESS` status for requests sourced from downstream gardens. Delay added to 
   allow Beer Garden to process the event.
+- Request API utilizes Futures for `blocking=true`, returning back the completed request from the Event, instead of querying the database
 
 # 3.23.1
 

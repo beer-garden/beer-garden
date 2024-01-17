@@ -14,6 +14,7 @@ from brewtils.errors import (
     NotFoundError,
     RequestForbidden,
     RequestPublishException,
+    TimeoutExceededError,
     WaitExceededError,
 )
 from marshmallow import Schema
@@ -43,6 +44,16 @@ async def event_wait(evt, timeout):
     except asyncio.TimeoutError:
         pass
     return evt.is_set()
+
+
+async def future_wait(future, timeout):
+    """Helper method to add a timeout to an asyncio wait"""
+
+    await asyncio.wait([future], timeout=timeout)
+
+    if not future.done():
+        future.set_exception(TimeoutExceededError("Timeout exceeded"))
+    return future
 
 
 class BaseHandler(RequestHandler):
