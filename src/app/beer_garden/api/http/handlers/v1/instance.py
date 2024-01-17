@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 from asyncio import Future
 
-from brewtils.errors import (
-    ModelValidationError,
-    RequestProcessingError,
-)
+from brewtils.errors import ModelValidationError, RequestProcessingError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 
