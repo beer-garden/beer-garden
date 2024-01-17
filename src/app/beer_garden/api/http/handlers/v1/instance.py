@@ -1,11 +1,6 @@
 # -*- coding: utf-8 -*-
 from asyncio import Future
 
-from beer_garden.api.authorization import Permissions
-from beer_garden.api.http.base_handler import future_wait
-from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.db.mongo.models import System
-from beer_garden.errors import EndpointRemovedException
 from brewtils.errors import (
     ModelValidationError,
     RequestProcessingError,
@@ -13,6 +8,12 @@ from brewtils.errors import (
 )
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
+
+from beer_garden.api.authorization import Permissions
+from beer_garden.api.http.base_handler import future_wait
+from beer_garden.api.http.handlers import AuthorizationHandler
+from beer_garden.db.mongo.models import System
+from beer_garden.errors import EndpointRemovedException
 
 INSTANCE_READ = Permissions.INSTANCE_READ.value
 INSTANCE_UPDATE = Permissions.INSTANCE_UPDATE.value
