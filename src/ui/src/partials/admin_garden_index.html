@@ -40,9 +40,54 @@
   <div ng-repeat="garden in data" class="container-item panel panel-default" style="display: block">
     <div class="panel-heading" style="font-size: 22px">
       <span>{{findGardenLabel(garden, garden.name)}}</span>
+
+      <div class="btn-toolbar pull-right">
+        <div class="btn-group btn-group-sm">
+          <button
+            type="button"
+            class="btn btn-default fa fa-play"
+            ng-click="startSystem(system)"
+            title="Start Garden {{garden.name}}"
+          ></button>
+          <button
+            type="button"
+            class="btn btn-default fa fa-stop"
+            ng-click="stopSystem(system)"
+            title="Stop Garden {{garden.name}}"
+          ></button>
+          <button
+            type="button"
+            class="btn btn-default fa fa-refresh"
+            ng-click="reloadSystem(system)"
+            title="Reload Garden {{garden.name}}"
+          ></button>
+          <button
+            type="button"
+            class="btn btn-default fa fa-exchange"
+            ng-click="reloadSystem(system)"
+            title="Sync Garden {{garden.name}}"
+          ></button>
+        </div>
+        <div class="btn-group btn-group-sm pull-right">
+          <button
+            type="button"
+            class="btn btn-default fa fa-trash-o"
+            ng-click="deleteSystem(system)"
+            title="Delete Garden {{garden.name}}"
+          ></button>
+        </div>
+      </div>
     </div>
+
     <div class="panel-body" style="padding-bottom: 0px">
       <div class="list-group">
+        <div class="list-group-item clearfix">
+          <bg-status target="'ERROR'"></bg-status>
+          <span style="padding: 0 10px">Error with {{garden.name}}, please check logs for additional details</span>
+        </div>
+      </div>
+      <div class="list-group">
+        <!--
         <div class="list-group-item clearfix">
           <div
               style="
@@ -73,6 +118,12 @@
                 ng-click="reloadSystem(system)"
                 title="Reload Garden {{garden.name}}"
               ></button>
+              <button
+                type="button"
+                class="btn btn-default fa fa-exchange"
+                ng-click="reloadSystem(system)"
+                title="Sync Garden {{garden.name}}"
+              ></button>
             </div>
             <div class="btn-group btn-group-sm pull-right">
               <button
@@ -83,9 +134,51 @@
               ></button>
             </div>
           </div>
+        </div> -->
+
+          <div class="list-group-item clearfix">
+            <bg-status target="'RUNNING'"></bg-status>
+            <span style="padding: 0 10px">HTTP</span>
+            <span class="btn-toolbar pull-right">
+              <span class="btn-group btn-group-xs">
+                <button
+                    type="button"
+                    class="btn btn-default fa fa-play"
+                    ng-click="startConnection(garden, 'HTTP')"
+                    title="Start Connection HTTP"
+                  ></button>
+                  <button
+                    type="button"
+                    class="btn btn-default fa fa-stop"
+                    ng-click="stopConnection(garden, 'HTTP')"
+                    title="Stop Connection HTTP"
+                  ></button>
+              </span>
+            </span>
+          </div>
+          <div class="list-group-item clearfix">
+            <bg-status target="'STOPPED'"></bg-status>
+            <span style="padding: 0 10px">STOMP</span>
+            <span class="btn-toolbar pull-right">
+              <span class="btn-group btn-group-xs">
+                <button
+                    type="button"
+                    class="btn btn-default fa fa-play"
+                    ng-click="startConnection(garden, 'HTTP')"
+                    title="Start Connection HTTP"
+                  ></button>
+                  <button
+                    type="button"
+                    class="btn btn-default fa fa-stop"
+                    ng-click="stopConnection(garden, 'HTTP')"
+                    title="Stop Connection HTTP"
+                  ></button>
+              </span>
+            </span>
+          </div>
         </div>
+        <!--
         <div ng-repeat="connection in getConnections(garden) | orderBy: 'name'" class="list-group-item">
-          // Connection.name, Connection.enabled
           <bg-status target="RUNNING" ng-show="connection.enabled"></bg-status>
           <bg-status target="STOPPED" ng-show="!connection.enabled"></bg-status>
           <span style="padding: 0 10px">{{connection.name}}</span>
@@ -105,6 +198,47 @@
                 ></button>
             </span>
           </span>
+        </div>-->
+        <div class="list-group">
+          <div class="list-group-item clearfix">
+            <div
+                style="
+                  display: inline-block;
+                  padding-top: 3px;
+                  padding-right: 16px;
+                "
+              >
+                <span>Metrics</span>              
+            </div>
+          </div>
+          <div class="list-group-item clearfix">
+            <div>
+              <span>Latency: 9s</span>
+            </div>
+          </div>
+        </div>
+        <div class="list-group">
+          <div class="list-group-item clearfix">
+            <div
+                style="
+                  display: inline-block;
+                  padding-top: 3px;
+                  padding-right: 16px;
+                "
+              >
+                <span>Children:</span>              
+            </div>
+            <div>
+              <ul>
+                <li>Child A</li>
+                <li>Child B</li>
+                <li>Child C</li>
+              </ul>
+              <ul>
+                <li ng-repeat="child in garden.children">child.name</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
 

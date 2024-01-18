@@ -163,6 +163,7 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
         The updated Garden
     """
     garden = db.query_unique(Garden, name=garden_name)
+
     garden.status = new_status
     garden.status_info["heartbeat"] = datetime.utcnow()
 

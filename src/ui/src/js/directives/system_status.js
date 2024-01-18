@@ -19,6 +19,7 @@ export default function systemStatusDirective() {
             break;
           case 'STOPPING':
           case 'UNRESPONSIVE':
+          case 'UNCONFIGURED':
             scope.labelClass = 'label-warning';
             break;
           case 'STARTING':
@@ -30,6 +31,9 @@ export default function systemStatusDirective() {
             break;
           case 'DEAD':
           case 'STOPPED':
+          case 'DISABLED':
+          case 'ERROR':
+          case 'UNREACHABLE':
             scope.labelClass = 'label-danger';
             break;
         }

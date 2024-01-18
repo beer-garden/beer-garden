@@ -154,13 +154,24 @@ class GardenAPI(AuthorizationHandler):
                         args=[garden.name, "RUNNING"],
                     )
                 )
-            elif operation == "config":
+            elif operation == "connection":
+                connection = op.value.get("connection")
+                enabled = op.value.get("enabled")
+
                 response = await self.client(
                     Operation(
-                        operation_type="GARDEN_UPDATE_CONFIG",
-                        args=[SchemaParser.parse_garden(op.value, from_string=False)],
+                        operation_type="GARDEN_UPDATE_CONNECTION_STATUS",
+                        kwargs={"garden_name": garden.name},
+                        args=[connection, enabled],
                     )
                 )
+            #elif operation == "config":
+            #    response = await self.client(
+            #        Operation(
+            #            operation_type="GARDEN_UPDATE_CONFIG",
+            #            args=[SchemaParser.parse_garden(op.value, from_string=False)],
+            #        )
+            #    )
             elif operation == "sync":
                 response = await self.client(
                     Operation(
