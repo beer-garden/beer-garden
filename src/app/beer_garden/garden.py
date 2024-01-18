@@ -29,7 +29,6 @@ from beer_garden.namespace import get_namespaces
 from beer_garden.systems import get_systems, remove_system
 from brewtils.errors import PluginError
 from brewtils.models import Event, Events, Garden, Operation, System
-from brewtils.specification import _CONNECTION_SPEC
 
 logger = logging.getLogger(__name__)
 
@@ -218,27 +217,27 @@ def create_garden(garden: Garden) -> Garden:
         The created Garden
 
     """
-    # Explicitly load default config options into garden params
-    spec = YapconfSpec(_CONNECTION_SPEC)
-    # bg_host is required to load brewtils garden spec
-    defaults = spec.load_config({"bg_host": ""})
+    # # Explicitly load default config options into garden params
+    # spec = YapconfSpec(_CONNECTION_SPEC)
+    # # bg_host is required to load brewtils garden spec
+    # defaults = spec.load_config({"bg_host": ""})
 
-    config_map = {
-        "bg_host": "host",
-        "bg_port": "port",
-        "ssl_enabled": "ssl",
-        "bg_url_prefix": "url_prefix",
-        "ca_cert": "ca_cert",
-        "ca_verify": "ca_verify",
-        "client_cert": "client_cert",
-    }
+    # config_map = {
+    #     "bg_host": "host",
+    #     "bg_port": "port",
+    #     "ssl_enabled": "ssl",
+    #     "bg_url_prefix": "url_prefix",
+    #     "ca_cert": "ca_cert",
+    #     "ca_verify": "ca_verify",
+    #     "client_cert": "client_cert",
+    # }
 
-    if garden.connection_params is None:
-        garden.connection_params = {}
-    garden.connection_params.setdefault("http", {})
+    # if garden.connection_params is None:
+    #     garden.connection_params = {}
+    # garden.connection_params.setdefault("http", {})
 
-    for key in config_map:
-        garden.connection_params["http"].setdefault(config_map[key], defaults[key])
+    # for key in config_map:
+    #     garden.connection_params["http"].setdefault(config_map[key], defaults[key])
 
     garden.status_info["heartbeat"] = datetime.utcnow()
 
@@ -312,90 +311,132 @@ def upsert_garden(garden: Garden) -> Garden:
 
         return update_garden(existing_garden)
 
+@publish_event(Events.GARDEN_CONFIGURED)
+def update_garden_connections(connection_param: str, connection_status: bool, garden: Garden = None, garden_name: str = None,  ):
+    if not garden:
+        garden = db.query_unique(Garden, name=garden_name)
+
+    garden.connection_params_enabled[connection_param] = connection_status
+
+    return db.update(garden)
+
+def load_garden_connections(garden: Garden):
+    path = Path(f"{config.get('children.directory')}/{garden.name}.yaml")
+
+    if not path.exists():
+        return garden
+
+    garden_config = load_child(path)
+    garden.connection_params = {}
+
+    if garden_config.get("http.enabled") and garden.connection_params_enabled.get("HTTP", False):
+        config_map = {
+            "http.host": "host",
+            "http.port": "port",
+            "http.ssl.enabled": "ssl",
+            "http.url_prefix": "url_prefix",
+            "http.ssl.ca_cert": "ca_cert",
+            "http.ssl.ca_verify": "ca_verify",
+            "http.ssl.client_cert": "client_cert",
+            "http.client_timeout": "client_timeout",
+            "http.username": "username",
+            "http.password": "password",
+            "http.access_token": "access_token",
+            "http.refresh_token": "refresh_token",
+        }
+
+        garden.connection_params.setdefault("http", {})
+        for key in config_map:
+            garden.connection_params["http"].setdefault(
+                config_map[key], garden_config.get(key)
+            )
+
+    if garden_config.get("stomp.enabled") and garden.connection_params_enabled.get("STOMP", False):
+        garden.connection_params["stomp"] = garden_config.get("stomp")
+        config_map = {
+            "stomp.host": "host",
+            "stomp.port": "port",
+            "stomp.send_destination": "send_destination",
+            "stomp.subscribe_destination": "subscribe_destination",
+            "stomp.username": "username",
+            "stomp.password": "password",
+            "stomp.ssl": "ssl",
+            "stomp.headers": "headers",
+        }
+
+        garden.connection_params.setdefault("stomp", {})
+        for key in config_map:
+            garden.connection_params["stomp"].setdefault(
+                config_map[key], garden_config.get(key)
+            )
+
+    return garden
+
+@publish_event(Events.GARDEN_CONFIGURED)
+def load_garden_config(garden: Garden = None, garden_name: str = None, config_path: Path = None):
+
+    if not garden:
+        garden = db.query_unique(Garden, name=garden_name)
+
+    garden.connection_params_enabled = {}
+    garden.connection_type = "Remote"
+    
+    if not config_path:
+        config_path = Path(f"{config.get('children.directory')}/{garden.name}.yaml")
+
+    if config_path.exists():
+
+        garden_config = load_child(config_path)
+
+        if garden_config.get("http.enabled"):
+            garden.connection_params_enabled["HTTP"] = True
+        else:
+            garden.connection_params_enabled.pop("HTTP", None)
+        if garden_config.get("stomp.enabled"):
+            garden.connection_params_enabled["STOMP"] = True
+        else:
+            garden.connection_params_enabled.pop("STOMP", None)
+    else:
+        garden.status = "NOT_CONFIGURED"
+
+    return db.update(garden)
+    
 
 def rescan():
+
     if config.get("children.directory"):
         for path in Path(config.get("children.directory")).iterdir():
             path_parts = path.parts
+
+            if len(path_parts) == 0:
+                continue
+            if path_parts[-1].startswith("."):
+                continue
+
+            if not path_parts[-1].endswith(".yaml"):
+                continue
+
+            if not path.exists():
+                continue
+            if path.is_dir():
+                continue
+
             garden_name = path_parts[-1][:-5]
+
             garden = db.query_unique(Garden, name=garden_name)
 
-            garden_created = garden is None
             if garden is None:
-                garden = create_garden(Garden(name=garden_name))
 
-            update_garden = False
-
-            try:
-                if len(path_parts) == 0:
-                    raise Exception("empty path")
-                if path_parts[-1].startswith("."):
-                    raise Exception("hidden file")
-
-                if not path_parts[-1].endswith(".yaml"):
-                    raise Exception("is not a .yaml file")
-
-                if not path.exists():
-                    raise Exception("does not exist")
-                if path.is_dir():
-                    raise Exception("Is a directory")
-
-                garden_config = load_child(path)
-
-                if not garden_config.get("http.enabled") and not garden_config.get(
-                    "stomp.enabled"
-                ):
-                    raise Exception(
-                        f"Garden {garden_config.get('garden.name')} has no connections enabled"
-                    )
-
-                # TODO: Decide if we will support dual broadcast
-                elif garden_config.get("http.enabled") and garden_config.get(
-                    "stomp.enabled"
-                ):
-                    raise Exception(
-                        f"Garden {garden_config.get('garden.name')} has TWO connections enabled"
-                    )
-                elif (
-                    garden_config.get("http.enabled")
-                    and garden.connection_type != "http"
-                ):
-                    update_garden = True
-                    garden.connection_type = "http"
-                elif (
-                    garden_config.get("stomp.enabled")
-                    and garden.connection_type != "stomp"
-                ):
-                    update_garden = True
-                    garden.connection_type = "stomp"
-
-                # TODO: Decide if the structure should be flat or nested (SSL block)
-                if garden.connection_params["http"] != garden_config.get("http"):
-                    update_garden = True
-                    garden.connection_params["http"] = garden_config.get("http")
-
-                if garden.connection_params["stomp"] != garden_config.get("stomp"):
-                    update_garden = True
-                    garden.connection_params["stomp"] = garden_config.get("stomp")
-
-            except Exception as error:
-                logger.warning(
-                    "Not loading child config at %s: %s" % (str(path), str(error))
+                garden = create_garden(
+                    Garden(name=garden_name)
                 )
-                # This will only update the status of the Garden, but not the connection params
-                if garden.status != "ERROR":
-                    update_garden = True
-                    garden.status = "ERROR"
-
-                    # TODO: Decide if we disable when there is an error with the config?
-                    garden.connection_type = None
-
-            if update_garden:
-                update_garden(garden)
-
-                if garden_created and garden.status != "ERROR":
-                    # TODO: Decide if we want to automatically run the sync after it is configured
-                    logger.info("Automatically running sync")
+                load_garden_config(garden=garden, config_path=path)
+                garden_sync(garden.name)
+            
+            # Garden was created by child, update the connection information if available
+            elif garden.connection_type is None:
+                load_garden_config(garden=garden, config_path=path)
+                garden_sync(garden.name)
 
 
 def garden_sync(sync_target: str = None):

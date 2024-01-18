@@ -50,7 +50,7 @@ from beer_garden.errors import (
     UnknownGardenException,
 )
 from beer_garden.events import publish
-from beer_garden.garden import get_garden, get_gardens
+from beer_garden.garden import get_garden, get_gardens, load_garden_connections
 from beer_garden.requests import complete_request, create_request
 
 logger = logging.getLogger(__name__)
@@ -296,18 +296,18 @@ def forward(operation: Operation):
                 f"Unknown child garden {operation.target_garden_name}"
             )
 
-        if not target_garden.connection_type:
+        if not target_garden.connection_params_enabled.get("HTTP", False) and not target_garden.connection_params_enabled.get("STOMP", False):
             raise RoutingRequestException(
                 "Attempted to forward operation to garden "
-                f"'{operation.target_garden_name}' but the connection type was None. "
+                f"'{operation.target_garden_name}' but the connection was not enabled. "
                 "This probably means that the connection to the child garden has not "
                 "been configured."
             )
 
-        if target_garden.connection_type.casefold() == "http":
-            return _forward_http(operation, target_garden)
-        elif target_garden.connection_type.casefold() == "stomp":
-            return _forward_stomp(operation, target_garden)
+        if target_garden.connection_params_enabled.get("HTTP", False):
+            _forward_http(operation, target_garden)
+        if target_garden.connection_params_enabled.get("STOMP", False):
+            _forward_stomp(operation, target_garden)
         else:
             raise RoutingRequestException(
                 f"Unknown connection type {target_garden.connection_type}"
@@ -361,8 +361,8 @@ def setup_routing():
                 and garden.connection_type.casefold() != "local"
             ):
                 with garden_lock:
-                    gardens[garden.name] = garden
-                    if garden.connection_type.casefold() == "stomp":
+                    gardens[garden.name] = load_garden_connections(garden)
+                    if garden.connectin_params_enabled.get("STOMP", False):
                         if garden.name not in stomp_garden_connections:
                             stomp_garden_connections[
                                 garden.name
@@ -463,11 +463,11 @@ def handle_event(event):
     # It's *those* events we want to act on here, not the "raw" downstream ones.
     # This is also why we only handle GARDEN_UPDATED and not STARTED or STOPPED
     if event.garden == config.get("garden.name") and not event.error:
-        if event.name == Events.GARDEN_UPDATED.name:
+        if event.name == Events.GARDEN_CONFIGURED.name:
             gardens[event.payload.name] = event.payload
 
-            if event.payload.connection_type:
-                if event.payload.connection_type.casefold() == "stomp":
+            if event.payload.connection_param.enabled.get("STOMP", False):
+                if event.payload.connection_type["STOMP"]:
                     if (
                         event.payload.name in stomp_garden_connections
                         and stomp_garden_connections[event.payload.name].is_connected()
@@ -716,6 +716,8 @@ def create_stomp_connection(garden: Garden) -> Connection:
         The created connection wrapper
 
     """
+
+    garden = load_garden_connections(garden)
     connection_params = garden.connection_params.get("stomp", {})
     connection_params = deepcopy(connection_params)
     connection_params["subscribe_destination"] = None

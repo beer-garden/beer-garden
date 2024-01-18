@@ -783,6 +783,7 @@ class Garden(MongoModel, Document):
     namespaces = ListField()
     connection_type = StringField()
     connection_params = DictField()
+    connection_params_enabled = DictField()
     systems = ListField(ReferenceField(System, reverse_delete_rule=PULL))
 
     parent = StringField(required=False)
