@@ -28,7 +28,7 @@ from beer_garden.events import publish, publish_event
 from beer_garden.namespace import get_namespaces
 from beer_garden.systems import get_systems, remove_system
 from brewtils.errors import PluginError
-from brewtils.models import Event, Events, Garden, Operation, System
+from brewtils.models import Event, Events, Garden, Operation, System, Connection
 
 logger = logging.getLogger(__name__)
 
@@ -149,6 +149,36 @@ def update_garden_config(garden: Garden) -> Garden:
 
     return update_garden(db_garden)
 
+def update_garden_receiving(api: str, garden_name: str = None, garden: Garden = None, update_heartbeat = False, status: str = None):
+    if garden is None:
+        garden = db.query_unique(Garden, name=garden_name)
+
+    # if garden doens't exist, create it
+    if garden is None:
+        garden = create_garden(
+                    Garden(name=garden_name, connection_type = "Remote")
+                )
+        
+    connection_set = False
+
+    for connection in garden.receiving_connections:
+        if connection.api == api:
+            connection_set = True
+            # If it is only updating the status, don't update the heartbeat
+            if status:
+                connection.status = status
+            # If it is not updating the status, update the heartbeat
+            if update_heartbeat:
+                connection.status_info["heartbeat"] = datetime.utcnow()
+        
+     # If the receiving type is unknown, enable it by default and set heartbeat
+    if not connection_set:
+        connection = Connection(api=api, status=status if status else "DISABLED")
+        connection.status_info["heartbeat"] = datetime.utcnow()
+        garden.receiving_connections.append(connection)
+
+    return db.update(garden)
+
 
 def update_garden_status(garden_name: str, new_status: str) -> Garden:
     """Update an Garden status.
@@ -218,28 +248,7 @@ def create_garden(garden: Garden) -> Garden:
         The created Garden
 
     """
-    # # Explicitly load default config options into garden params
-    # spec = YapconfSpec(_CONNECTION_SPEC)
-    # # bg_host is required to load brewtils garden spec
-    # defaults = spec.load_config({"bg_host": ""})
-
-    # config_map = {
-    #     "bg_host": "host",
-    #     "bg_port": "port",
-    #     "ssl_enabled": "ssl",
-    #     "bg_url_prefix": "url_prefix",
-    #     "ca_cert": "ca_cert",
-    #     "ca_verify": "ca_verify",
-    #     "client_cert": "client_cert",
-    # }
-
-    # if garden.connection_params is None:
-    #     garden.connection_params = {}
-    # garden.connection_params.setdefault("http", {})
-
-    # for key in config_map:
-    #     garden.connection_params["http"].setdefault(config_map[key], defaults[key])
-
+    garden.publishing_connections = [Connection(api="HTTP", status="MISSING_CONFIGURATION"), Connection(api="STOMP", status="MISSING_CONFIGURATION")]
     garden.status_info["heartbeat"] = datetime.utcnow()
 
     return db.create(garden)
@@ -302,35 +311,48 @@ def upsert_garden(garden: Garden) -> Garden:
     del garden.children
 
     if existing_garden is None:
-        garden.connection_type = None
-        garden.connection_params = {}
-
         return create_garden(garden)
     else:
         for attr in ("status", "status_info", "namespaces", "systems"):
+            setattr(existing_garden, attr, getattr(garden, attr))
+        for attr in ("receiving_connections", "publishing_connections"):
+            # Drop any config information is passed
+            for attribute in getattr(garden, attr):
+                attribute.config = {}
             setattr(existing_garden, attr, getattr(garden, attr))
 
         return update_garden(existing_garden)
 
 @publish_event(Events.GARDEN_CONFIGURED)
-def update_garden_connections(connection_param: str, connection_status: bool, garden: Garden = None, garden_name: str = None,  ):
+def update_garden_publishing(api: str, status: str, garden: Garden = None, garden_name: str = None,  ):
     if not garden:
         garden = db.query_unique(Garden, name=garden_name)
 
-    garden.connection_params_enabled[connection_param] = connection_status
+    connection_set = False
+
+    for connection in garden.receiving_connections:
+        if connection.api == api:
+            connection.status = status
+            connection_set = True
+
+    if not connection_set:
+        garden.receiving_connections.append(Connection(api=api, status = status))
+
 
     return db.update(garden)
 
 def load_garden_connections(garden: Garden):
     path = Path(f"{config.get('children.directory')}/{garden.name}.yaml")
 
+    garden.publishing_connections.clear()
+
     if not path.exists():
+        garden.status = "NOT_CONFIGURED"
         return garden
 
     garden_config = load_child(path)
-    garden.connection_params = {}
 
-    if garden_config.get("http.enabled") and garden.connection_params_enabled.get("HTTP", False):
+    if garden_config.get("http.enabled"):
         config_map = {
             "http.host": "host",
             "http.port": "port",
@@ -346,14 +368,19 @@ def load_garden_connections(garden: Garden):
             "http.refresh_token": "refresh_token",
         }
 
-        garden.connection_params.setdefault("http", {})
+        http_connection = Connection(api="HTTP", status= "ENABLED" if garden_config.get("enabled.outbound") else "DISABLED")
+        http_connection.status_info["heartbeat"] = datetime.utcnow()
+
         for key in config_map:
-            garden.connection_params["http"].setdefault(
+            http_connection.config.setdefault(
                 config_map[key], garden_config.get(key)
             )
+        garden.publishing_connections.append(http_connection)
+    else:
+        garden.publishing_connections.append(Connection(api="HTTP", status="NOT_CONFIGURED"))
 
-    if garden_config.get("stomp.enabled") and garden.connection_params_enabled.get("STOMP", False):
-        garden.connection_params["stomp"] = garden_config.get("stomp")
+    if garden_config.get("stomp.enabled"):
+
         config_map = {
             "stomp.host": "host",
             "stomp.port": "port",
@@ -365,40 +392,29 @@ def load_garden_connections(garden: Garden):
             "stomp.headers": "headers",
         }
 
-        garden.connection_params.setdefault("stomp", {})
+        stomp_connection = Connection(api="STOMP", status= "ENABLED" if garden_config.get("enabled.outbound") else "DISABLED")
+        stomp_connection.status_info["heartbeat"] = datetime.utcnow()
+
         for key in config_map:
-            garden.connection_params["stomp"].setdefault(
+            stomp_connection.config.setdefault(
                 config_map[key], garden_config.get(key)
             )
+        garden.publishing_connections.append(stomp_connection)
+    else:
+        garden.publishing_connections.append(Connection(api="STOMP", status="NOT_CONFIGURED"))
+
+    for receiving_api in garden.receiving_connections:
+        receiving_api.enabled = garden_config.get("enabled.inbound")
 
     return garden
 
 @publish_event(Events.GARDEN_CONFIGURED)
-def load_garden_config(garden: Garden = None, garden_name: str = None, config_path: Path = None):
+def load_garden_config(garden: Garden = None, garden_name: str = None):
 
     if not garden:
         garden = db.query_unique(Garden, name=garden_name)
 
-    garden.connection_params_enabled = {}
-    garden.connection_type = "Remote"
-    
-    if not config_path:
-        config_path = Path(f"{config.get('children.directory')}/{garden.name}.yaml")
-
-    if config_path.exists():
-
-        garden_config = load_child(config_path)
-
-        if garden_config.get("http.enabled"):
-            garden.connection_params_enabled["HTTP"] = True
-        else:
-            garden.connection_params_enabled.pop("HTTP", None)
-        if garden_config.get("stomp.enabled"):
-            garden.connection_params_enabled["STOMP"] = True
-        else:
-            garden.connection_params_enabled.pop("STOMP", None)
-    else:
-        garden.status = "NOT_CONFIGURED"
+    garden = load_garden_connections(garden)
 
     return db.update(garden)
     
@@ -429,15 +445,16 @@ def rescan():
             if garden is None:
 
                 garden = create_garden(
-                    Garden(name=garden_name)
+                    Garden(name=garden_name, connection_type = "Remote")
                 )
-                load_garden_config(garden=garden, config_path=path)
-                garden_sync(garden.name)
             
             # Garden was created by child, update the connection information if available
-            elif garden.connection_type is None:
-                load_garden_config(garden=garden, config_path=path)
-                garden_sync(garden.name)
+            for connection in garden.publishing_connections:
+                if connection.status == "MISSING_CONFIGURATION":            
+                    load_garden_config(garden=garden, config_path=path)
+                    update_garden(garden)
+                    garden_sync(garden.name)
+                    break
 
 
 def garden_sync(sync_target: str = None):
@@ -514,18 +531,11 @@ def handle_event(event):
             Events.GARDEN_STOPPED.name,
             Events.GARDEN_SYNC.name,
         ):
-            # Only do stuff for direct children
-            # if event.payload.name == event.garden:
             logger.error(f"Processing {event.garden} for {event.name}")
             logger.error(event.payload)
-            try:
-                existing_garden = get_garden(event.payload.name)
-            except DoesNotExist:
-                existing_garden = None
 
             for system in event.payload.systems:
                 system.local = False
-            del event.payload.children
 
             # Remove systems that are tracking locally
             remote_systems = []
@@ -546,16 +556,7 @@ def handle_event(event):
                     remote_systems.append(system)
             event.payload.systems = remote_systems
 
-            if existing_garden is None:
-                event.payload.connection_type = None
-                event.payload.connection_params = {}
-
-                garden = create_garden(event.payload)
-            else:
-                for attr in ("status", "status_info", "namespaces", "systems"):
-                    setattr(existing_garden, attr, getattr(event.payload, attr))
-
-                garden = update_garden(existing_garden)
+            garden = upsert_garden(event.payload)
 
             # Publish update events for UI to dynamically load changes for Systems
             publish_garden_systems(garden, event.garden)

@@ -15,6 +15,8 @@ export default function systemStatusDirective() {
       scope.$watch('status', function() {
         switch (scope.status) {
           case 'RUNNING':
+          case 'PUBLISHING':
+          case 'RECEIVING': 
             scope.labelClass = 'label-success';
             break;
           case 'STOPPING':

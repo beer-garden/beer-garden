@@ -4,7 +4,7 @@ from inspect import isawaitable
 from typing import Any, Optional
 
 import six
-from brewtils.models import BaseModel
+from brewtils.models import BaseModel, Operation
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden.api
@@ -12,8 +12,9 @@ import beer_garden.router
 
 
 class SerializeHelper(object):
-    async def __call__(self, *args, serialize_kwargs=None, **kwargs):
-        result = beer_garden.router.route(*args, **kwargs)
+    async def __call__(self, operation: Operation, serialize_kwargs=None, **kwargs):
+        operation.source_api = "HTTP"
+        result = beer_garden.router.route(operation)
 
         # Await any coroutines
         if isawaitable(result):

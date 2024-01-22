@@ -773,6 +773,13 @@ class Job(MongoModel, Document):
                 f"actual type was {type(self.trigger)}"
             )
 
+class Connection(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.Connection
+    
+    status = StringField(default="UNKOWN")
+    status_info = EmbeddedDocumentField("StatusInfo", default=StatusInfo())
+    config = DictField()
+
 
 class Garden(MongoModel, Document):
     brewtils_model = brewtils.models.Garden
@@ -781,15 +788,20 @@ class Garden(MongoModel, Document):
     status = StringField(default="INITIALIZING")
     status_info = EmbeddedDocumentField("StatusInfo", default=StatusInfo())
     namespaces = ListField()
-    connection_type = StringField()
-    connection_params = DictField()
-    connection_params_enabled = DictField()
+
+    connection_type = StringField(required=False)
+    receiving_connections = EmbeddedDocumentListField("Connection")
+    publishing_connections = EmbeddedDocumentListField("Connection")
+
     systems = ListField(ReferenceField(System, reverse_delete_rule=PULL))
 
     parent = StringField(required=False)
 
     children = DummyField(required=False)
     has_parent = BooleanField(required=False, default=False)
+
+    metadata = DictField()
+
 
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves
@@ -809,6 +821,15 @@ class Garden(MongoModel, Document):
         if self.connection_type != "LOCAL":
             self._update_associated_systems()
 
+            # Ensure no receiving configurations are stored locally, if sent
+            for connection in self.receiving_connections:
+                connection.config = {}
+
+            # Only store publishing connections for 1 hop gardens
+            if self.has_parent:
+                for connection in self.publishing_connections:
+                    connection.config = {}
+                
         self.save()
 
     def _update_associated_systems(self):

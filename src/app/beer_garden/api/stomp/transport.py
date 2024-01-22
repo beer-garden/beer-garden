@@ -132,6 +132,7 @@ class OperationListener(stomp.ConnectionListener):
         try:
             if headers.get("model_class") == "Operation":
                 operation = SchemaParser.parse_operation(message, from_string=True)
+                operation.source_api = "STOMP"
 
                 if hasattr(operation, "kwargs"):
                     operation.kwargs.pop("wait_timeout", None)
