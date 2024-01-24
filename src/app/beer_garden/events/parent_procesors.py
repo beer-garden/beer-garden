@@ -52,13 +52,15 @@ class HttpParentUpdater(QueueListener):
             if event.payload.parent is None and event.payload.name != event.garden:
                 self.logger.error(f"Setting parent to {event.garden}")
                 event.payload.parent = event.garden
+                event.payload.publishing_connections = []
+                event.payload.receiving_connections = []
                 event.payload.has_parent = True
                 self.logger.error(event.payload)
 
         if not event_blocklisted(event):
             try:
                 operation = Operation(
-                    operation_type="PUBLISH_EVENT", model=event, model_type="Event"
+                    operation_type="PUBLISH_EVENT", model=event, model_type="Event", source_garden_name=conf.get("garden.name")
                 )
                 self._ez_client.forward(operation)
             except RequestException as ex:

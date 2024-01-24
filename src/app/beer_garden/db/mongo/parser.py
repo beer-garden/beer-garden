@@ -15,6 +15,7 @@ class MongoParser(SchemaParser):
             "SystemSchema": beer_garden.db.mongo.models.System,
             "InstanceSchema": beer_garden.db.mongo.models.Instance,
             "CommandSchema": beer_garden.db.mongo.models.Command,
+            "ConnectionSchema": beer_garden.db.mongo.models.Connection,
             "ParameterSchema": beer_garden.db.mongo.models.Parameter,
             "RequestSchema": beer_garden.db.mongo.models.Request,
             "RequestTemplateSchema": beer_garden.db.mongo.models.RequestTemplate,

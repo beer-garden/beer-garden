@@ -139,9 +139,11 @@ route_functions = {
     "GARDEN_READ": beer_garden.garden.get_garden,
     "GARDEN_READ_ALL": beer_garden.garden.get_gardens,
     "GARDEN_UPDATE_STATUS": beer_garden.garden.update_garden_status,
-    "GARDEN_UPDATE_CONFIG": beer_garden.garden.update_garden_config,
+    "GARDEN_UPDATE_PUBLISHING_STATUS": beer_garden.garden.update_garden_publishing,
+    "GARDEN_UPDATE_RECEIVING_STATUS": beer_garden.garden.update_garden_receiving,
     "GARDEN_DELETE": beer_garden.garden.remove_garden,
     "GARDEN_SYNC": beer_garden.garden.garden_sync,
+    "GARDEN_RESCAN": beer_garden.garden.rescan,
     "PLUGIN_LOG_READ": beer_garden.log.get_plugin_log_config,
     "PLUGIN_LOG_READ_LEGACY": beer_garden.log.get_plugin_log_config_legacy,
     "PLUGIN_LOG_RELOAD": beer_garden.log.load_plugin_log_config,
@@ -246,14 +248,15 @@ def execute_local(operation: Operation):
 
 def invalid_source_check(operation: Operation):
     # Unable to validate source or api
-    if operation.source_garden_name is None or operation.source_api is None:
+    if operation.source_garden_name is None or operation.source_garden_name == config.get("garden.name") or operation.source_api is None:
         return False
     
     # Grabs the garden to check and updates the heartbeat for the entry point
-    source_garden = beer_garden.garden.update_garden_receiving(operation.source_api, garden_name = operation.source_garden_name)
-        
-    if source_garden.receiving_connections[operation.source_api]["enabled"]:
-        return False
+    source_garden = beer_garden.garden.update_garden_receiving_heartbeat(operation.source_api, garden_name = operation.source_garden_name)
+    
+    for connection in source_garden.receiving_connection:
+        if connection.status != "DISABLED":
+            return False
     
     return True
     
@@ -479,17 +482,20 @@ def handle_event(event):
     if event.garden == config.get("garden.name") and not event.error:
         if event.name == Events.GARDEN_CONFIGURED.name:
             gardens[event.payload.name] = event.payload
-            if (
-                event.payload.name in stomp_garden_connections
-                and stomp_garden_connections[event.payload.name].is_connected()
-            ):
-                stomp_garden_connections[event.payload.name].disconnect()
 
+            stomp_found = False
             for connection in event.payload.publishing_connections:
-                if connection.api.upper() == "STOMP" and connection.enabled:
-                    stomp_garden_connections[
-                        event.payload.name
-                    ] = create_stomp_connection(connection)
+                if connection.api.upper() == "STOMP":   
+                    stomp_found = True               
+                    if event.payload.name not in stomp_garden_connections and connection.status == "PUBLISHING":
+                        create_stomp_connection(connection)
+
+                    elif connection.status == "DISABLED":
+                        stomp_garden_connections[event.payload.name].disconnect()
+            
+            if not stomp_found and event.payload.name not in stomp_garden_connections:
+                stomp_garden_connections[event.payload.name].disconnect()
+                del stomp_garden_connections[event.payload.name]
 
         elif event.name == Events.GARDEN_REMOVED.name:
             try:

@@ -17,8 +17,9 @@
 </div>
 
 <fetch-data response="response"></fetch-data>
+
 <div id="gardens-container" class="animate-if" ng-if="responseState(response) === 'success'">
-  <div class="container-item panel panel-danger" style="display: block">
+  <div class="container-item panel panel-danger" style="display: block" ng-if="showUnconfigured(data)">
 
     <div class="panel-heading" style="font-size: 22px">
       <span>Unconfigured Gardens</span>
@@ -26,92 +27,38 @@
 
     <div class="panel-body" style="padding-bottom: 0px">
       <div class="list-group">
-        <div class="list-group-item clearfix">
-
-            <div class="list-group-item clearfix">
-              <span style="font-size: 18px">Child 1</span>
-              <div class="btn-toolbar pull-right">
-                <div class="btn-group btn-group-sm pull-right">
-                  <button type="button" class="btn btn-default fa fa-play" ng-click="startSystem(system)"
-            title="Start Garden {{garden.name}}"></button>
-          <button type="button" class="btn btn-default fa fa-stop" ng-click="stopSystem(system)"
-            title="Stop Garden {{garden.name}}"></button>
-                  <button type="button" class="btn btn-default fa fa-trash-o" ng-click="deleteSystem(system)"
-                    title="Delete Garden {{garden.name}}"></button>
-                </div>
-              </div>
-            </div>
-            <div class="list-group-item clearfix">
-              <bg-status target="'RECEIVING'"></bg-status>
-              <span style="padding: 0 10px">HTTP</span>
-              <span class="btn-toolbar pull-right">
-                <span class="btn-group btn-group-xs">
-                  <button type="button" class="btn btn-default fa fa-play" ng-click="startConnection(garden, 'HTTP')"
-                    title="Start Connection HTTP"></button>
-                  <button type="button" class="btn btn-default fa fa-stop" ng-click="stopConnection(garden, 'HTTP')"
-                    title="Stop Connection HTTP"></button>
-                </span>
-              </span>
-            </div>
-        </div>
-
-        <div class="list-group-item clearfix">
+        <div class="list-group-item clearfix" ng-repeat="garden in data | filter:isRemoteUnconfigured">
 
           <div class="list-group-item clearfix">
-            <span style="font-size: 18px">Child 2</span>
+            <span style="font-size: 18px">{{garden.name}}</span>
             <div class="btn-toolbar pull-right">
               <div class="btn-group btn-group-sm pull-right">
-                <button type="button" class="btn btn-default fa fa-play" ng-click="startSystem(system)"
-            title="Start Garden {{garden.name}}"></button>
-          <button type="button" class="btn btn-default fa fa-stop" ng-click="stopSystem(system)"
-            title="Stop Garden {{garden.name}}"></button>
-                <button type="button" class="btn btn-default fa fa-trash-o" ng-click="deleteSystem(system)"
+                <button type="button" class="btn btn-default fa fa-play" ng-click="startGarden(garden)"
+                  title="Start Garden {{garden.name}}"></button>
+                <button type="button" class="btn btn-default fa fa-stop" ng-click="stopGarden(garden)"
+                  title="Stop Garden {{garden.name}}"></button>
+                <button type="button" class="btn btn-default fa fa-trash-o" ng-click="deleteGarden(garden)"
                   title="Delete Garden {{garden.name}}"></button>
               </div>
             </div>
           </div>
-          <div class="list-group-item clearfix">
-            <bg-status target="'STOPPED'"></bg-status>
-            <span style="padding: 0 10px">HTTP</span>
-            <span class="btn-toolbar pull-right">
+          <div class="list-group-item clearfix" ng-repeat="connection in garden.receiving_connections">
+            <bg-status target="connection.status"></bg-status>
+            <span style="padding: 0 10px">{{connection.api}}</span>
+            <span class="btn-toolbar pull-right" ng-if="!garden.has_parent">
               <span class="btn-group btn-group-xs">
-                <button type="button" class="btn btn-default fa fa-play" ng-click="startConnection(garden, 'HTTP')"
-                  title="Start Connection HTTP"></button>
-                <button type="button" class="btn btn-default fa fa-stop" ng-click="stopConnection(garden, 'HTTP')"
-                  title="Stop Connection HTTP"></button>
+                <button type="button" class="btn btn-default fa fa-play"
+                  ng-click="startReceivingConnection(garden, connection.api)"
+                  title="Start Connection {{connection.api}}"></button>
+                <button type="button" class="btn btn-default fa fa-stop"
+                  ng-click="stopReceivingConnection(garden, connection.api)"
+                  title="Stop Connection {{connection.api}}"></button>
               </span>
             </span>
           </div>
-      </div>
 
-      <div class="list-group-item clearfix">
+        </div>
 
-        <div class="list-group-item clearfix">
-          <span style="font-size: 18px">Child 3</span>
-          <div class="btn-toolbar pull-right">
-            <div class="btn-group btn-group-sm pull-right">
-              <button type="button" class="btn btn-default fa fa-play" ng-click="startSystem(system)"
-            title="Start Garden {{garden.name}}"></button>
-          <button type="button" class="btn btn-default fa fa-stop" ng-click="stopSystem(system)"
-            title="Stop Garden {{garden.name}}"></button>
-              <button type="button" class="btn btn-default fa fa-trash-o" ng-click="deleteSystem(system)"
-                title="Delete Garden {{garden.name}}"></button>
-            </div>
-          </div>
-        </div>
-        <div class="list-group-item clearfix">
-          <bg-status target="'UNRESPONSIVE'"></bg-status>
-          <span style="padding: 0 10px">HTTP</span>
-          <span class="btn-toolbar pull-right">
-            <span class="btn-group btn-group-xs">
-              <button type="button" class="btn btn-default fa fa-play" ng-click="startConnection(garden, 'HTTP')"
-                title="Start Connection HTTP"></button>
-              <button type="button" class="btn btn-default fa fa-stop" ng-click="stopConnection(garden, 'HTTP')"
-                title="Stop Connection HTTP"></button>
-            </span>
-          </span>
-        </div>
-    </div>
 
       </div>
 
@@ -119,43 +66,42 @@
 
   </div>
 
-  <div class="container-item panel panel-info" style="display: block">
+  <div class="container-item panel panel-info" style="display: block" ng-if="showUpstream(data)">
     <div class="panel-heading" style="font-size: 22px">
       <span>Upstream</span>
     </div>
-    <div class="panel-body" style="padding-bottom: 0px">
-        <div class="list-group">
-          <div class="panel-heading" style="font-size: 22px">
-            <span>Publishing</span>
-          </div>
-          <div class="list-group-item clearfix">
-            <bg-status target="'PUBLISHING'"></bg-status>
-            <span style="padding: 0 10px">HTTP: localhost:2338/</span>
-          </div>
-          <div class="list-group-item clearfix">
-            <bg-status target="'PUBLISHING'"></bg-status>
-            <span style="padding: 0 10px">STOMP: localhost:61613/Beer_Garden_Operations_Parent</span>
-          </div>
+    <div class="panel-body" style="padding-bottom: 0px" ng-repeat="garden in data | filter:isLocal">
+      <div class="list-group">
+        <div class="panel-heading" style="font-size: 22px">
+          <span>Publishing</span>
         </div>
+        <div class="list-group-item clearfix" ng-repeat="connection in garden.publishing_connections">
+          <bg-status target="connection.status"></bg-status>
+          <span style="padding: 0 10px" title="localhost:2338">{{connection.api}}</span>
+          <i class="icon-color" ng-class="getIcon('fa-info-circle')" title="{{getConnectionUrl(connection)}}"></i>
+        </div>
+      </div>
 
     </div>
   </div>
 
-  <div ng-repeat="garden in data" class="container-item panel panel-default" style="display: block">
+  <div ng-repeat="garden in data | filter:isRemoteConfigured" class="container-item panel panel-default"
+    style="display: block">
     <div class="panel-heading" style="font-size: 22px">
-      <span>CHILD</span>
+      <span uib-popover-html="getGardenInsights(garden)" popover-trigger="'mouseenter'" popover-title=""
+        popover-animation="true" popover-placement="bottom-right">garden.name</span>
 
       <div class="btn-toolbar pull-right">
         <div class="btn-group btn-group-sm">
-          <button type="button" class="btn btn-default fa fa-play" ng-click="startSystem(system)"
-            title="Start Garden {{garden.name}}"></button>
-          <button type="button" class="btn btn-default fa fa-stop" ng-click="stopSystem(system)"
-            title="Stop Garden {{garden.name}}"></button>
-          <button type="button" class="btn btn-default fa fa-refresh" ng-click="reloadSystem(system)"
+          <button type="button" class="btn btn-default fa fa-play" ng-click="startGarden(garden)"
+            ng-if="!garden.has_parent" title="Start Garden {{garden.name}}"></button>
+          <button type="button" class="btn btn-default fa fa-stop" ng-click="stopGarden(garden)"
+            ng-if="!garden.has_parent" title="Stop Garden {{garden.name}}"></button>
+          <button type="button" class="btn btn-default fa fa-refresh" ng-click="syncGarden(garden)"
             title="Sync Garden {{garden.name}}"></button>
         </div>
         <div class="btn-group btn-group-sm pull-right">
-          <button type="button" class="btn btn-default fa fa-trash-o" ng-click="deleteSystem(system)"
+          <button type="button" class="btn btn-default fa fa-trash-o" ng-click="deleteGarden(garden)"
             title="Delete Garden {{garden.name}}"></button>
         </div>
       </div>
@@ -166,27 +112,17 @@
         <div class="panel-heading" style="font-size: 22px">
           <span>Receiving</span>
         </div>
-        <div class="list-group-item clearfix">
-          <bg-status target="'RECEIVING'"></bg-status>
-          <span style="padding: 0 10px">HTTP</span>
-          <span class="btn-toolbar pull-right">
+        <div class="list-group-item clearfix" ng-repeat="connection in garden.receiving_connections">
+          <bg-status target="connection.status"></bg-status>
+          <span style="padding: 0 10px">{{connection.api}}</span>
+          <span class="btn-toolbar pull-right" ng-if="!garden.has_parent">
             <span class="btn-group btn-group-xs">
-              <button type="button" class="btn btn-default fa fa-play" ng-click="startConnection(garden, 'HTTP')"
-                title="Start Connection HTTP"></button>
-              <button type="button" class="btn btn-default fa fa-stop" ng-click="stopConnection(garden, 'HTTP')"
-                title="Stop Connection HTTP"></button>
-            </span>
-          </span>
-        </div>
-        <div class="list-group-item clearfix">
-          <bg-status target="'UNRESPONSIVE'"></bg-status>
-          <span style="padding: 0 10px">STOMP</span>
-          <span class="btn-toolbar pull-right">
-            <span class="btn-group btn-group-xs">
-              <button type="button" class="btn btn-default fa fa-play" ng-click="startConnection(garden, 'HTTP')"
-                title="Start Connection HTTP"></button>
-              <button type="button" class="btn btn-default fa fa-stop" ng-click="stopConnection(garden, 'HTTP')"
-                title="Stop Connection HTTP"></button>
+              <button type="button" class="btn btn-default fa fa-play"
+                ng-click="startReceivingConnection(garden, connection.api)"
+                title="Start Connection {{connection.api}}"></button>
+              <button type="button" class="btn btn-default fa fa-stop"
+                ng-click="stopReceivingConnection(garden, connection.api)"
+                title="Stop Connection {{connection.api}}"></button>
             </span>
           </span>
         </div>
@@ -195,155 +131,25 @@
         <div class="panel-heading" style="font-size: 22px">
           <span>Publishing</span>
         </div>
-        <div class="list-group-item clearfix">
-          <bg-status target="'PUBLISHING'"></bg-status>
-          <span style="padding: 0 10px">HTTP</span>
-          <span class="btn-toolbar pull-right">
+        <div class="list-group-item clearfix" ng-repeat="connection in garden.publishing_connections">
+          <bg-status target="connection.status"></bg-status>
+          <span style="padding: 0 10px">{{connection.api}}</span>
+          <span class="btn-toolbar pull-right" ng-if="!garden.has_parent">
             <span class="btn-group btn-group-xs">
-              <button type="button" class="btn btn-default fa fa-play" ng-click="startConnection(garden, 'HTTP')"
-                title="Start Connection HTTP"></button>
-              <button type="button" class="btn btn-default fa fa-stop" ng-click="stopConnection(garden, 'HTTP')"
-                title="Stop Connection HTTP"></button>
-            </span>
-          </span>
-        </div>
-        <div class="list-group-item clearfix">
-          <bg-status target="'STOPPED'"></bg-status>
-          <span style="padding: 0 10px">STOMP</span>
-          <span class="btn-toolbar pull-right">
-            <span class="btn-group btn-group-xs">
-              <button type="button" class="btn btn-default fa fa-play" ng-click="startConnection(garden, 'HTTP')"
-                title="Start Connection HTTP"></button>
-              <button type="button" class="btn btn-default fa fa-stop" ng-click="stopConnection(garden, 'HTTP')"
-                title="Stop Connection HTTP"></button>
+              <button type="button" class="btn btn-default fa fa-play"
+                ng-click="startPublishingConnection(garden, connection.api)"
+                title="Start Connection {{connection.api}}"></button>
+              <button type="button" class="btn btn-default fa fa-stop"
+                ng-click="stopPublishingConnection(garden, connection.api)"
+                title="Stop Connection {{connection.api}}"></button>
             </span>
           </span>
         </div>
       </div>
-      <!--
-        <div ng-repeat="connection in getConnections(garden) | orderBy: 'name'" class="list-group-item">
-          <bg-status target="RUNNING" ng-show="connection.enabled"></bg-status>
-          <bg-status target="STOPPED" ng-show="!connection.enabled"></bg-status>
-          <span style="padding: 0 10px">{{connection.name}}</span>
-          <span class="btn-toolbar pull-right">
-            <span class="btn-group btn-group-xs">
-              <button
-                  type="button"
-                  class="btn btn-default fa fa-play"
-                  ng-click="startConnection(garden, connection.name)"
-                  title="Start Connection {{connection.name}}"
-                ></button>
-                <button
-                  type="button"
-                  class="btn btn-default fa fa-stop"
-                  ng-click="stopConnection(garden, connection.name)"
-                  title="Stop Connection {{connection.name}}"
-                ></button>
-            </span>
-          </span>
-        </div>-->
-      <div class="list-group">
-        <div class="panel-heading" style="font-size: 22px">
-          <span>Metrics</span>
-        </div>
-        <div class="list-group-item clearfix">
-          <div>
-            <span>Latency: 9s</span>
-          </div>
-        </div>
-      </div>
-      <div class="list-group">
-        <div class="panel-heading" style="font-size: 22px">
-          <span>Upstream</span>
-        </div>
-        <div class="list-group-item clearfix">
-          <div>
-            <ul>
-              <li>Parent</li>
-            </ul>
-            <ul>
-              <li ng-repeat="child in garden.children">child.name</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-      <div class="list-group">
-        <div class="panel-heading" style="font-size: 22px">
-          <span>Downstream</span>
-        </div>
-        <div class="list-group-item clearfix">
-          <div>
-            <ul>
-              <li>Child A</li>
-              <li>Child B</li>
-              <li>Child C</li>
-            </ul>
-            <ul>
-              <li ng-repeat="child in garden.children">child.name</li>
-            </ul>
-          </div>
-        </div>
-      </div>
+
     </div>
 
-
-    <!--
-    <div class="panel-heading">
-      <h3>
-        <span>{{findGardenLabel(garden, garden.name)}}</span>
-        <span ng-show="garden.id == null || garden.connection_type == 'LOCAL'"
-          >(LOCAL)</span
-        >
-        <span ng-show="garden.id != null && garden.connection_type != 'LOCAL'"
-          >(REMOTE)</span
-        >
-      </h3>
-    </div>
-    <div class="panel-body" style="padding-bottom: 0">
-      <div class="container-fluid">
-        <div class="row">
-          <div class="col-sm-4 garden-table table-header">Status</div>
-          <div class="col-sm-8 garden-table">{{ garden.status }}</div>
-        </div>
-        <div class="row">
-          <div class="col-sm-4 garden-table table-header">Namespaces</div>
-          <div class="col-sm-8 garden-table">
-            {{ garden.namespaces.length }}
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-sm-4 garden-table table-header">Systems</div>
-          <div class="col-sm-8 garden-table">{{ garden.systems.length }}</div>
-        </div>
-      </div>
-    </div>
-    <div class="panel-body" style="padding-bottom: 0">
-      <div>
-        <button
-          type="button"
-          class="btn btn-primary btn-lg btn-block"
-          ng-click="editGarden(garden)"
-          ng-show="hasGardenPermission(user, 'garden:update', garden)"
-          style="..."
-        >
-          Edit {{garden.name}} configuration
-        </button>
-        <button
-          type="button"
-          class="btn btn-danger btn-lg btn-block"
-          ng-click="deleteGarden(garden.name)"
-          style="..."
-          ng-show="garden.id != null && garden.connection_type != 'LOCAL' && hasGardenPermission(user, 'garden:delete', garden)"
-          confirm="Are you sure you want to delete {{garden.name}}?
-                    This will also delete all Systems assocaited with {{garden.name}}."
-        >
-          Delete {{garden.name}}
-        </button>
-      </div>
-    </div>
-  -->
   </div>
-  <!-- This is ugly but empty panels ensure the bottom row is left-aligned -->
-  <div class="container-item empty" />
-  <div class="container-item empty" />
+  <div class="container-item empty"></div>
+  <div class="container-item empty"></div>
 </div>

@@ -155,28 +155,38 @@ class GardenAPI(AuthorizationHandler):
                     )
                 )
             elif operation == "connection":
-                connection = op.value.get("connection")
-                enabled = op.value.get("enabled")
+                connection_type = op.value.get("connection_type")
+                status = op.value.get("status")
+                api = op.value.get("api")
 
-                response = await self.client(
-                    Operation(
-                        operation_type="GARDEN_UPDATE_CONNECTION_STATUS",
-                        kwargs={"garden_name": garden.name},
-                        args=[connection, enabled],
-                    )
-                )
-            #elif operation == "config":
-            #    response = await self.client(
-            #        Operation(
-            #            operation_type="GARDEN_UPDATE_CONFIG",
-            #            args=[SchemaParser.parse_garden(op.value, from_string=False)],
-            #        )
-            #    )
+                if connection_type.upper() == "PUBLISHING":
+                  response = await self.client(
+                      Operation(
+                          operation_type="GARDEN_UPDATE_PUBLISHING_STATUS",
+                          kwargs={"garden_name": garden.name, "api": api},
+                          args=[status],
+                      )
+                  )
+                elif connection_type.upper() == "RECEIVING":
+                    response = await self.client(
+                      Operation(
+                          operation_type="GARDEN_UPDATE_RECEIVING_STATUS",
+                          kwargs={"garden_name": garden.name, "api": api},
+                          args=[status],
+                      )
+                  )
+
             elif operation == "sync":
                 response = await self.client(
                     Operation(
                         operation_type="GARDEN_SYNC",
                         kwargs={"sync_target": garden.name},
+                    )
+                )
+            elif operation == "rescan":
+                response = await self.client(
+                    Operation(
+                        operation_type="GARDEN_RESCAN",
                     )
                 )
 

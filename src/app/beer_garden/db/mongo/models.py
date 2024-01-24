@@ -60,6 +60,7 @@ __all__ = [
     "System",
     "Instance",
     "Command",
+    "Connection",
     "Parameter",
     "Request",
     "Choices",
@@ -776,6 +777,7 @@ class Job(MongoModel, Document):
 class Connection(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.Connection
     
+    api = StringField(required=True)
     status = StringField(default="UNKOWN")
     status_info = EmbeddedDocumentField("StatusInfo", default=StatusInfo())
     config = DictField()
