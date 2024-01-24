@@ -112,15 +112,6 @@ def local_garden(all_systems: bool = False) -> Garden:
     garden.systems = get_systems(filter_params=filter_params)
     garden.namespaces = get_namespaces()
 
-    if config.get("parent.http.enabled"):
-        garden.publishing_connections.append(Connection(api="HTTP", status="PUBLISHING", config={"host":config.get("parent.http.host"), 
-                                                                                                 "port":config.get("parent.http.port"),
-                                                                                                 "url_prefix":config.get("parent.http.url_prefix")}))
-    if config.get("parent.stomp.enabled") and config.get("parent.stomp.send_destination"):
-        garden.publishing_connections.append(Connection(api="STOMP", status="PUBLISHING", config={"host":config.get("parent.stomp.host"), 
-                                                                                                 "port":config.get("parent.stomp.port"),
-                                                                                                 "send_destination":config.get("parent.stomp.send_destination")}))
-
     return garden
 
 
@@ -400,7 +391,7 @@ def load_garden_connections(garden: Garden):
             "http.refresh_token": "refresh_token",
         }
 
-        http_connection = Connection(api="HTTP", status= "ENABLED" if garden_config.get("enabled.outbound") else "DISABLED")
+        http_connection = Connection(api="HTTP", status= "PUBLISHING" if garden_config.get("enabled.outbound") else "DISABLED")
         http_connection.status_info["heartbeat"] = datetime.utcnow()
 
         for key in config_map:
@@ -424,7 +415,7 @@ def load_garden_connections(garden: Garden):
             "stomp.headers": "headers",
         }
 
-        stomp_connection = Connection(api="STOMP", status= "ENABLED" if garden_config.get("enabled.outbound") else "DISABLED")
+        stomp_connection = Connection(api="STOMP", status= "PUBLISHING" if garden_config.get("enabled.outbound") else "DISABLED")
         stomp_connection.status_info["heartbeat"] = datetime.utcnow()
 
         for key in config_map:

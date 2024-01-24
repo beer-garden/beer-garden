@@ -42,7 +42,7 @@ def ensure_local_garden():
     we access them, etc. For that reason, we read the garden info from the configuration
     and create or update the Garden database entry for it.
     """
-    from .models import Garden
+    from .models import Garden, Connection
 
     try:
         garden = Garden.objects.get(connection_type="LOCAL")
@@ -50,6 +50,50 @@ def ensure_local_garden():
         garden = Garden(connection_type="LOCAL", status="RUNNING")
 
     garden.name = config.get("garden.name")
+
+    if config.get("parent.http.enabled"):
+        config_map = {
+            "parent.http.host": "host",
+            "parent.http.port": "port",
+            "parent.http.ssl.enabled": "ssl",
+            "parent.http.url_prefix": "url_prefix",
+            "parent.http.ssl.ca_cert": "ca_cert",
+            "parent.http.ssl.ca_verify": "ca_verify",
+            "parent.http.ssl.client_cert": "client_cert",
+            "parent.http.client_timeout": "client_timeout",
+            "parent.http.username": "username",
+            "parent.http.password": "password",
+            "parent.http.access_token": "access_token",
+            "parent.http.refresh_token": "refresh_token",
+        }
+
+        http_connection = Connection(api="HTTP", status= "PUBLISHING")
+
+        for key in config_map:
+            http_connection.config.setdefault(
+                config_map[key], config.get(key)
+            )
+        garden.publishing_connections.append(http_connection)
+
+    if config.get("parent.stomp.enabled") and config.get("parent.stomp.send_destination"):
+        config_map = {
+            "parent.stomp.host": "host",
+            "parent.stomp.port": "port",
+            "parent.stomp.send_destination": "send_destination",
+            "parent.stomp.subscribe_destination": "subscribe_destination",
+            "parent.stomp.username": "username",
+            "parent.stomp.password": "password",
+            "parent.stomp.ssl": "ssl",
+            "parent.stomp.headers": "headers",
+        }
+
+        stomp_connection = Connection(api="STOMP", status= "PUBLISHING")
+
+        for key in config_map:
+            stomp_connection.config.setdefault(
+                config_map[key], config.get(key)
+            )
+        garden.publishing_connections.append(stomp_connection)
 
     garden.save()
 
