@@ -51,6 +51,8 @@ def ensure_local_garden():
 
     garden.name = config.get("garden.name")
 
+    garden.publishing_connections = []
+
     if config.get("parent.http.enabled"):
         config_map = {
             "parent.http.host": "host",

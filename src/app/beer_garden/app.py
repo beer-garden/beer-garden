@@ -365,36 +365,37 @@ class Application(StoppableThread):
         # Register the callback processor
         event_manager.register(QueueListener(action=garden_callbacks, name="callbacks"))
 
-        for connection in beer_garden.garden.local_garden().publishing_connections:
-            if connection.api == "HTTP":
+        # Set up parent connection
+        cfg = config.get("parent.http")
+        if cfg.enabled:
 
-                def reconnect_action():
-                    beer_garden.garden.publish_garden(status="RUNNING")
+            def reconnect_action():
+                beer_garden.garden.publish_garden(status="RUNNING")
 
-                easy_client = EasyClient(
-                    bg_host=connection.config["host"],
-                    bg_port=connection.config["port"],
-                    bg_url_prefix=connection.config["url_prefix"],
-                    access_token=connection.config["access_token"],
-                    api_version=connection.config["api_version"],
-                    client_timeout=connection.config["client_timeout"],
-                    password=connection.config["password"],
-                    refresh_token=connection.config["password"],
-                    username=connection.config["username"],
-                    ssl_enabled=connection.config["ssl"]["enabled"],
-                    ca_cert=connection.config["ssl"]["ca_cert"],
-                    ca_verify=connection.config["ssl"]["ca_verify"],
-                    client_cert=connection.config["ssl"]["client_cert"],
-                    client_key=connection.config["ssl"]["client_key"],
+            easy_client = EasyClient(
+                bg_host=cfg.host,
+                bg_port=cfg.port,
+                bg_url_prefix=cfg.url_prefix,
+                access_token=cfg.access_token,
+                api_version=cfg.api_version,
+                client_timeout=cfg.client_timeout,
+                password=cfg.password,
+                refresh_token=cfg.password,
+                username=cfg.username,
+                ssl_enabled=cfg.ssl.enabled,
+                ca_cert=cfg.ssl.ca_cert,
+                ca_verify=cfg.ssl.ca_verify,
+                client_cert=cfg.ssl.client_cert,
+                client_key=cfg.ssl.client_key,
+            )
+
+            event_manager.register(
+                HttpParentUpdater(
+                    easy_client=easy_client,
+                    blocklist=config.get("parent.skip_events"),
+                    reconnect_action=reconnect_action,
                 )
-
-                event_manager.register(
-                    HttpParentUpdater(
-                        easy_client=easy_client,
-                        blocklist=config.get("parent.skip_events"),
-                        reconnect_action=reconnect_action,
-                    )
-                )
+            )
 
         return event_manager
 
