@@ -22,7 +22,7 @@ import beer_garden.db.api as db
 from beer_garden.command_publishing_blocklist import (
     publish_command_publishing_blocklist,
 )
-from beer_garden.config import load_child
+
 from beer_garden.db.mongo.models import RemoteUser
 from beer_garden.events import publish, publish_event
 from beer_garden.namespace import get_namespaces
@@ -168,7 +168,16 @@ def update_garden_receiving_heartbeat(api: str, garden_name: str = None, garden:
         
      # If the receiving type is unknown, enable it by default and set heartbeat
     if not connection_set:
+
         connection = Connection(api=api, status="DISABLED")
+
+        # Check if there is a config file
+        path = Path(f"{config.get('children.directory')}/{garden.name}.yaml")
+        if path.exists():
+            garden_config = config.load_child(path)
+            if config.get("receiving", config = garden_config):
+                connection.status = "RECEIVING"
+        
         connection.status_info["heartbeat"] = datetime.utcnow()
         garden.receiving_connections.append(connection)
 
@@ -189,7 +198,7 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
     """
     garden = db.query_unique(Garden, name=garden_name)
 
-    if garden.status == "STOPPED" and new_status == "RUNNING":
+    if new_status == "RUNNING":
         update_garden_publishing("PUBLISHING", garden=garden, override_status=False)
         update_garden_receiving("RECEIVING", garden=garden, override_status=False)
     
@@ -336,7 +345,7 @@ def update_garden_publishing(status: str, api: str = None, garden: Garden = None
 
     for connection in garden.publishing_connections:
         if api == None or connection.api == api:
-            if override_status or connection.status != "NOT_CONFIGURED":
+            if override_status or connection.status not in ["NOT_CONFIGURED", "MISSING_CONFIGURATION"]:
                 connection.status = status
             connection_set = True
 
@@ -355,7 +364,7 @@ def update_garden_receiving(status: str, api: str = None, garden: Garden = None,
     if garden.receiving_connections :
         for connection in garden.receiving_connections:
             if api == None or connection.api == api:
-                if override_status or connection.status != "NOT_CONFIGURED":
+                if override_status or connection.status not in ["NOT_CONFIGURED", "MISSING_CONFIGURATION"]:
                     connection.status = status
                 connection_set = True
 
@@ -373,9 +382,9 @@ def load_garden_connections(garden: Garden):
         garden.status = "NOT_CONFIGURED"
         return garden
 
-    garden_config = load_child(path)
+    garden_config = config.load_child(path)
 
-    if garden_config.get("http.enabled"):
+    if config.get("http.enabled", garden_config):
         config_map = {
             "http.host": "host",
             "http.port": "port",
@@ -391,19 +400,18 @@ def load_garden_connections(garden: Garden):
             "http.refresh_token": "refresh_token",
         }
 
-        http_connection = Connection(api="HTTP", status= "PUBLISHING" if garden_config.get("enabled.outbound") else "DISABLED")
+        http_connection = Connection(api="HTTP", status= "PUBLISHING" if garden_config.get("receiving") else "DISABLED")
         http_connection.status_info["heartbeat"] = datetime.utcnow()
 
         for key in config_map:
             http_connection.config.setdefault(
-                config_map[key], garden_config.get(key)
+                config_map[key], config.get(key, garden_config)
             )
         garden.publishing_connections.append(http_connection)
     else:
         garden.publishing_connections.append(Connection(api="HTTP", status="NOT_CONFIGURED"))
 
-    if garden_config.get("stomp.enabled"):
-
+    if config.get("stomp.enabled", garden_config):
         config_map = {
             "stomp.host": "host",
             "stomp.port": "port",
@@ -415,19 +423,22 @@ def load_garden_connections(garden: Garden):
             "stomp.headers": "headers",
         }
 
-        stomp_connection = Connection(api="STOMP", status= "PUBLISHING" if garden_config.get("enabled.outbound") else "DISABLED")
+        stomp_connection = Connection(api="STOMP", status= "PUBLISHING" if garden_config.get("publishing") else "DISABLED")
         stomp_connection.status_info["heartbeat"] = datetime.utcnow()
 
         for key in config_map:
             stomp_connection.config.setdefault(
-                config_map[key], garden_config.get(key)
+                config_map[key], config.get(key, garden_config)
             )
         garden.publishing_connections.append(stomp_connection)
     else:
         garden.publishing_connections.append(Connection(api="STOMP", status="NOT_CONFIGURED"))
 
-    for receiving_api in garden.receiving_connections:
-        receiving_api.enabled = garden_config.get("enabled.inbound")
+    for connection in garden.receiving_connections:
+        if config.get("receiving", config = garden_config):
+            connection.status = "RECEIVING"
+        else:
+            connection.status = "DISABLED"
 
     return garden
 
@@ -474,8 +485,7 @@ def rescan():
             # Garden was created by child, update the connection information if available
             for connection in garden.publishing_connections:
                 if connection.status == "MISSING_CONFIGURATION":            
-                    load_garden_config(garden=garden, config_path=path)
-                    update_garden(garden)
+                    load_garden_config(garden=garden)
                     garden_sync(garden.name)
                     break
 

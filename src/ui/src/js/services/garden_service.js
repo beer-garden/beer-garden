@@ -71,7 +71,7 @@ export default function gardenService($rootScope, $http) {
 
   GardenService.updatePublisherStatus = function(name, status, api) {
     return $http.patch('api/v1/gardens/' + encodeURIComponent(name), {
-      operation: connection,
+      operation: 'connection',
       path: '',
       value: {
         'status': status,

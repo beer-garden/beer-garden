@@ -183,12 +183,7 @@ class GardenAPI(AuthorizationHandler):
                         kwargs={"sync_target": garden.name},
                     )
                 )
-            elif operation == "rescan":
-                response = await self.client(
-                    Operation(
-                        operation_type="GARDEN_RESCAN",
-                    )
-                )
+            
 
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
@@ -324,7 +319,14 @@ class GardenListAPI(AuthorizationHandler):
         for op in patch:
             operation = op.operation.lower()
 
-            if operation == "sync":
+            if operation == "rescan":
+                await self.client(
+                    Operation(
+                        operation_type="GARDEN_RESCAN",
+                    )
+                )
+
+            elif operation == "sync":
                 await self.client(
                     Operation(
                         operation_type="GARDEN_SYNC",

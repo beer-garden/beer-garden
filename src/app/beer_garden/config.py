@@ -216,7 +216,7 @@ def generate_plugin_logging(args: Sequence[str]) -> dict:
     return logging_config
 
 
-def get(key: Optional[str] = None) -> Union[str, int, float, bool, complex, Box, None]:
+def get(key: Optional[str] = None, config: Box = None) -> Union[str, int, float, bool, complex, Box, None]:
     """Get specified key from the config.
 
     Nested keys can be separated with a "." If the key does not exist, then
@@ -234,9 +234,9 @@ def get(key: Optional[str] = None) -> Union[str, int, float, bool, complex, Box,
         The value of the key in the config.
     """
     if key is None:
-        return _CONFIG
+        return config if config else _CONFIG
 
-    value = _CONFIG
+    value = config if config else _CONFIG
     for key_part in key.split("."):
         if key_part not in value:
             return None
@@ -1426,6 +1426,16 @@ _SPECIFICATION = {
 }
 
 _CHILD_SPECIFICATION = {
+    "publishing": {
+        "type": "bool",
+        "default": False,
+        "description": "If disabled, requires manual start for publishing operations",
+    },
+    "receiving": {
+        "type": "bool",
+        "default": False,
+        "description": "If disabled, requires manual start for receiving operations",
+    },
     "http": _HTTP_CONNECTION_SPEC,
     "stomp": _STOMP_SPEC,
 }

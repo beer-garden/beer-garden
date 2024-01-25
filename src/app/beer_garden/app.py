@@ -289,6 +289,9 @@ class Application(StoppableThread):
         self.logger.debug("Starting local plugin process monitoring...")
         beer_garden.local_plugins.manager.lpm_proxy.start()
 
+        self.logger.debug("Loading child configurations...")
+        beer_garden.garden.rescan()
+
         self.logger.debug("Starting scheduler")
         self.scheduler.start()
 

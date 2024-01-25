@@ -44,7 +44,7 @@
           </div>
           <div class="list-group-item clearfix" ng-repeat="connection in garden.receiving_connections">
             <bg-status target="connection.status"></bg-status>
-            <span style="padding: 0 10px">{{connection.api}}</span>
+            <span style="padding: 0 10px" title="{{getConnectionUrl(connection)}}">{{connection.api}}</span>
             <span class="btn-toolbar pull-right" ng-if="!garden.has_parent">
               <span class="btn-group btn-group-xs">
                 <button type="button" class="btn btn-default fa fa-play"
@@ -77,8 +77,7 @@
         </div>
         <div class="list-group-item clearfix" ng-repeat="connection in garden.publishing_connections">
           <bg-status target="connection.status"></bg-status>
-          <span style="padding: 0 10px" title="localhost:2338">{{connection.api}}</span>
-          <i class="icon-color" ng-class="getIcon('fa-info-circle')" title="{{getConnectionUrl(connection)}}"></i>
+          <span style="padding: 0 10px" title="{{getConnectionUrl(connection)}}">{{connection.api}}</span>
         </div>
       </div>
 
@@ -89,7 +88,7 @@
     style="display: block">
     <div class="panel-heading" style="font-size: 22px">
       <span uib-popover-html="getGardenInsights(garden)" popover-trigger="'mouseenter'" popover-title=""
-        popover-animation="true" popover-placement="bottom-right">garden.name</span>
+        popover-animation="true" popover-placement="bottom-right">{{garden.name}}</span>
 
       <div class="btn-toolbar pull-right">
         <div class="btn-group btn-group-sm">
@@ -108,13 +107,13 @@
     </div>
 
     <div class="panel-body" style="padding-bottom: 0px">
-      <div class="list-group">
+      <div class="list-group" ng-if="garden.receiving_connections.length > 0">
         <div class="panel-heading" style="font-size: 22px">
           <span>Receiving</span>
         </div>
         <div class="list-group-item clearfix" ng-repeat="connection in garden.receiving_connections">
           <bg-status target="connection.status"></bg-status>
-          <span style="padding: 0 10px">{{connection.api}}</span>
+          <span style="padding: 0 10px" title="{{getConnectionUrl(connection)}}">{{connection.api}}</span>
           <span class="btn-toolbar pull-right" ng-if="!garden.has_parent">
             <span class="btn-group btn-group-xs">
               <button type="button" class="btn btn-default fa fa-play"
@@ -127,13 +126,13 @@
           </span>
         </div>
       </div>
-      <div class="list-group">
+      <div class="list-group"  ng-if="garden.publishing_connections.length > 0">
         <div class="panel-heading" style="font-size: 22px">
           <span>Publishing</span>
         </div>
-        <div class="list-group-item clearfix" ng-repeat="connection in garden.publishing_connections">
+        <div class="list-group-item clearfix" ng-repeat="connection in garden.publishing_connections" ng-if="connection.status != 'NOT_CONFIGURED'">
           <bg-status target="connection.status"></bg-status>
-          <span style="padding: 0 10px">{{connection.api}}</span>
+          <span style="padding: 0 10px" title="{{getConnectionUrl(connection)}}">{{connection.api}}</span>
           <span class="btn-toolbar pull-right" ng-if="!garden.has_parent">
             <span class="btn-group btn-group-xs">
               <button type="button" class="btn btn-default fa fa-play"

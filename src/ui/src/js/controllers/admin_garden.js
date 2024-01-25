@@ -157,6 +157,9 @@ export default function adminGardenController(
   //   });
   // };
 
+  $scope.rescan = function() {
+    GardenService.rescanGardens();
+  };
   $scope.syncGarden = function(garden) {
     GardenService.syncGarden(garden.name);
   };
@@ -178,7 +181,7 @@ export default function adminGardenController(
   };
 
   $scope.stopReceivingConnection = function(garden, api) {
-    GardenService.updateReceivingStatus(garden.name, "STOPPED", api);
+    GardenService.updateReceivingStatus(garden.name, "DISABLED", api);
   };
 
   $scope.startPublishingConnection = function(garden, api) {
@@ -186,7 +189,7 @@ export default function adminGardenController(
   };
 
   $scope.stopPublishingConnection = function(garden, api) {
-    GardenService.updatePublisherStatus(garden.name, "STOPPED", api);
+    GardenService.updatePublisherStatus(garden.name, "DISABLED", api);
   };
 
   $scope.isRemoteConfigured = function(garden) {

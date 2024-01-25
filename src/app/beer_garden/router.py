@@ -255,7 +255,7 @@ def invalid_source_check(operation: Operation):
     source_garden = beer_garden.garden.update_garden_receiving_heartbeat(operation.source_api, garden_name = operation.source_garden_name)
     
     for connection in source_garden.receiving_connection:
-        if connection.status != "DISABLED":
+        if connection.api == operation.source_api and connection.status != "DISABLED":
             return False
     
     return True
@@ -318,16 +318,22 @@ def forward(operation: Operation):
                 f"Unknown child garden {operation.target_garden_name}"
             )
 
-        if not target_garden.publishing_connections.get("HTTP", {"enabled":False})["enabled"] and target_garden.connection_params_enabled.get("STOMP", {"enabled":False})["enabled"]:
+        operation_forwarded = False
+        for connection in target_garden.publishing_connections:
+            if connection.status not in ["DISABLED", "NOT_CONFIGURED","MISSING_CONFIGURATION"]:
+                operation_forwarded = True
+                if connection.api == "HTTP":
+                    _forward_http(operation, target_garden)
+                elif connection.api == "STOMP":
+                    _forward_stomp(operation, target_garden)
+        
+        if not operation_forwarded:
             raise RoutingRequestException(
                 "Attempted to forward operation to garden "
                 f"'{operation.target_garden_name}' but the connection was not enabled. "
                 "This probably means that the connection to the child garden has not "
                 "been configured."
             )
-
-        _forward_http(operation, target_garden)
-        _forward_stomp(operation, target_garden)
 
     except ForwardException as ex:
         error_message = str(ex)
@@ -379,7 +385,7 @@ def setup_routing():
                 with garden_lock:
                     gardens[garden.name] = load_garden_connections(garden)
                     for connection in gardens[garden.name].publishing_connections:
-                        if connection.api.upper() == "STOMP" and connection.enabled:
+                        if connection.api.upper() == "STOMP" and connection.status != "DISABLED":
                             if garden.name not in stomp_garden_connections:
                                 stomp_garden_connections[
                                     garden.name
