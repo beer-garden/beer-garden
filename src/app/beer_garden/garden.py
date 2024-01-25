@@ -149,35 +149,35 @@ def update_garden_config(garden: Garden) -> Garden:
 
     return update_garden(db_garden)
 
-def update_garden_receiving_heartbeat(api: str, garden_name: str = None, garden: Garden = None):
+
+def update_garden_receiving_heartbeat(
+    api: str, garden_name: str = None, garden: Garden = None
+):
     if garden is None:
         garden = db.query_unique(Garden, name=garden_name)
 
     # if garden doens't exist, create it
     if garden is None:
-        garden = create_garden(
-                    Garden(name=garden_name, connection_type = "Remote")
-                )
-        
+        garden = create_garden(Garden(name=garden_name, connection_type="Remote"))
+
     connection_set = False
 
     for connection in garden.receiving_connections:
         if connection.api == api:
             connection_set = True
             connection.status_info["heartbeat"] = datetime.utcnow()
-        
-     # If the receiving type is unknown, enable it by default and set heartbeat
-    if not connection_set:
 
+    # If the receiving type is unknown, enable it by default and set heartbeat
+    if not connection_set:
         connection = Connection(api=api, status="DISABLED")
 
         # Check if there is a config file
         path = Path(f"{config.get('children.directory')}/{garden.name}.yaml")
         if path.exists():
             garden_config = config.load_child(path)
-            if config.get("receiving", config = garden_config):
+            if config.get("receiving", config=garden_config):
                 connection.status = "RECEIVING"
-        
+
         connection.status_info["heartbeat"] = datetime.utcnow()
         garden.receiving_connections.append(connection)
 
@@ -201,10 +201,10 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
     if new_status == "RUNNING":
         update_garden_publishing("PUBLISHING", garden=garden, override_status=False)
         update_garden_receiving("RECEIVING", garden=garden, override_status=False)
-    
+
     elif new_status == "STOPPED":
         update_garden_publishing("DISABLED", garden=garden, override_status=False)
-        update_garden_receiving("DISABLED", garden=garden, override_status=False)       
+        update_garden_receiving("DISABLED", garden=garden, override_status=False)
 
     garden.status = new_status
     garden.status_info["heartbeat"] = datetime.utcnow()
@@ -260,7 +260,10 @@ def create_garden(garden: Garden) -> Garden:
         The created Garden
 
     """
-    garden.publishing_connections = [Connection(api="HTTP", status="MISSING_CONFIGURATION"), Connection(api="STOMP", status="MISSING_CONFIGURATION")]
+    garden.publishing_connections = [
+        Connection(api="HTTP", status="MISSING_CONFIGURATION"),
+        Connection(api="STOMP", status="MISSING_CONFIGURATION"),
+    ]
     garden.status_info["heartbeat"] = datetime.utcnow()
 
     return db.create(garden)
@@ -336,8 +339,15 @@ def upsert_garden(garden: Garden, skip_connections: bool = True) -> Garden:
 
         return update_garden(existing_garden)
 
+
 @publish_event(Events.GARDEN_CONFIGURED)
-def update_garden_publishing(status: str, api: str = None, garden: Garden = None, garden_name: str = None,  override_status: bool = True):
+def update_garden_publishing(
+    status: str,
+    api: str = None,
+    garden: Garden = None,
+    garden_name: str = None,
+    override_status: bool = True,
+):
     if not garden:
         garden = db.query_unique(Garden, name=garden_name)
 
@@ -345,33 +355,47 @@ def update_garden_publishing(status: str, api: str = None, garden: Garden = None
 
     for connection in garden.publishing_connections:
         if api == None or connection.api == api:
-            if override_status or connection.status not in ["NOT_CONFIGURED", "MISSING_CONFIGURATION"]:
+            if override_status or connection.status not in [
+                "NOT_CONFIGURED",
+                "MISSING_CONFIGURATION",
+            ]:
                 connection.status = status
             connection_set = True
 
     if not connection_set and api:
-        garden.publishing_connections.append(Connection(api=api, status = status))
+        garden.publishing_connections.append(Connection(api=api, status=status))
 
     return db.update(garden)
 
+
 @publish_event(Events.GARDEN_CONFIGURED)
-def update_garden_receiving(status: str, api: str = None, garden: Garden = None, garden_name: str = None,  override_status: bool = True):
+def update_garden_receiving(
+    status: str,
+    api: str = None,
+    garden: Garden = None,
+    garden_name: str = None,
+    override_status: bool = True,
+):
     if not garden:
         garden = db.query_unique(Garden, name=garden_name)
 
     connection_set = False
 
-    if garden.receiving_connections :
+    if garden.receiving_connections:
         for connection in garden.receiving_connections:
             if api == None or connection.api == api:
-                if override_status or connection.status not in ["NOT_CONFIGURED", "MISSING_CONFIGURATION"]:
+                if override_status or connection.status not in [
+                    "NOT_CONFIGURED",
+                    "MISSING_CONFIGURATION",
+                ]:
                     connection.status = status
                 connection_set = True
 
     if not connection_set and api:
-        garden.receiving_connections.append(Connection(api=api, status = status))
+        garden.receiving_connections.append(Connection(api=api, status=status))
 
     return db.update(garden)
+
 
 def load_garden_connections(garden: Garden):
     path = Path(f"{config.get('children.directory')}/{garden.name}.yaml")
@@ -400,7 +424,10 @@ def load_garden_connections(garden: Garden):
             "http.refresh_token": "refresh_token",
         }
 
-        http_connection = Connection(api="HTTP", status= "PUBLISHING" if garden_config.get("receiving") else "DISABLED")
+        http_connection = Connection(
+            api="HTTP",
+            status="PUBLISHING" if garden_config.get("receiving") else "DISABLED",
+        )
         http_connection.status_info["heartbeat"] = datetime.utcnow()
 
         for key in config_map:
@@ -409,7 +436,9 @@ def load_garden_connections(garden: Garden):
             )
         garden.publishing_connections.append(http_connection)
     else:
-        garden.publishing_connections.append(Connection(api="HTTP", status="NOT_CONFIGURED"))
+        garden.publishing_connections.append(
+            Connection(api="HTTP", status="NOT_CONFIGURED")
+        )
 
     if config.get("stomp.enabled", garden_config):
         config_map = {
@@ -423,7 +452,10 @@ def load_garden_connections(garden: Garden):
             "stomp.headers": "headers",
         }
 
-        stomp_connection = Connection(api="STOMP", status= "PUBLISHING" if garden_config.get("publishing") else "DISABLED")
+        stomp_connection = Connection(
+            api="STOMP",
+            status="PUBLISHING" if garden_config.get("publishing") else "DISABLED",
+        )
         stomp_connection.status_info["heartbeat"] = datetime.utcnow()
 
         for key in config_map:
@@ -432,29 +464,30 @@ def load_garden_connections(garden: Garden):
             )
         garden.publishing_connections.append(stomp_connection)
     else:
-        garden.publishing_connections.append(Connection(api="STOMP", status="NOT_CONFIGURED"))
+        garden.publishing_connections.append(
+            Connection(api="STOMP", status="NOT_CONFIGURED")
+        )
 
     for connection in garden.receiving_connections:
-        if config.get("receiving", config = garden_config):
+        if config.get("receiving", config=garden_config):
             connection.status = "RECEIVING"
         else:
             connection.status = "DISABLED"
 
     return garden
 
+
 @publish_event(Events.GARDEN_CONFIGURED)
 def load_garden_config(garden: Garden = None, garden_name: str = None):
-
     if not garden:
         garden = db.query_unique(Garden, name=garden_name)
 
     garden = load_garden_connections(garden)
 
     return db.update(garden)
-    
+
 
 def rescan():
-
     if config.get("children.directory"):
         for path in Path(config.get("children.directory")).iterdir():
             path_parts = path.parts
@@ -477,14 +510,13 @@ def rescan():
             garden = db.query_unique(Garden, name=garden_name)
 
             if garden is None:
-
                 garden = create_garden(
-                    Garden(name=garden_name, connection_type = "Remote")
+                    Garden(name=garden_name, connection_type="Remote")
                 )
-            
+
             # Garden was created by child, update the connection information if available
             for connection in garden.publishing_connections:
-                if connection.status == "MISSING_CONFIGURATION":            
+                if connection.status == "MISSING_CONFIGURATION":
                     load_garden_config(garden=garden)
                     garden_sync(garden.name)
                     break

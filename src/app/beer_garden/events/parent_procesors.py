@@ -61,7 +61,10 @@ class HttpParentUpdater(QueueListener):
         if not event_blocklisted(event):
             try:
                 operation = Operation(
-                    operation_type="PUBLISH_EVENT", model=event, model_type="Event", source_garden_name=conf.get("garden.name")
+                    operation_type="PUBLISH_EVENT",
+                    model=event,
+                    model_type="Event",
+                    source_garden_name=conf.get("garden.name"),
                 )
                 self._ez_client.forward(operation)
             except RequestException as ex:
@@ -72,9 +75,13 @@ class HttpParentUpdater(QueueListener):
 
     def _update_garden_connection(self, status):
         garden = local_garden()
-        
+
         for connection in garden.publishing_connections:
-            if connection.config["host"] == self._ez_client.client.bg_host and connection.config["port"] == self._ez_client.client.bg_port and connection.config["url_prefix"] == self._ez_client.client.bg_prefix:
+            if (
+                connection.config["host"] == self._ez_client.client.bg_host
+                and connection.config["port"] == self._ez_client.client.bg_port
+                and connection.config["url_prefix"] == self._ez_client.client.bg_prefix
+            ):
                 connection.status = status
 
         update_garden(garden)
@@ -95,14 +102,13 @@ class HttpParentUpdater(QueueListener):
 
                     self.logger.warning("Successfully reconnected to parent garden")
                     self._update_garden_connection("PUBLISHING")
-                    
+
                     if self._reconnect_action:
                         self._reconnect_action()
             except RequestException:
                 pass
 
             if not self._connected:
-
                 self._update_garden_connection("UNREACHABLE")
                 self.logger.debug("Waiting %.1f seconds before next attempt", wait_time)
                 self.wait(wait_time)

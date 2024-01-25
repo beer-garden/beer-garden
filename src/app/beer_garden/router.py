@@ -51,7 +51,13 @@ from beer_garden.errors import (
     UnknownGardenException,
 )
 from beer_garden.events import publish
-from beer_garden.garden import get_garden, get_gardens, load_garden_connections, update_garden_publishing, update_garden
+from beer_garden.garden import (
+    get_garden,
+    get_gardens,
+    load_garden_connections,
+    update_garden_publishing,
+    update_garden,
+)
 from beer_garden.requests import complete_request, create_request
 
 logger = logging.getLogger(__name__)
@@ -195,7 +201,7 @@ def route(operation: Operation):
         raise RoutingRequestException(
             f"Unknown operation type '{operation.operation_type}'"
         )
-    
+
     if invalid_source_check(operation):
         raise RoutingRequestException(
             f"Garden '{operation.source_garden_name}' {operation.source_api} is disabled"
@@ -246,20 +252,27 @@ def execute_local(operation: Operation):
 
     return lookup[operation.operation_type](*operation.args, **operation.kwargs)
 
+
 def invalid_source_check(operation: Operation):
     # Unable to validate source or api
-    if operation.source_garden_name is None or operation.source_garden_name == config.get("garden.name") or operation.source_api is None:
+    if (
+        operation.source_garden_name is None
+        or operation.source_garden_name == config.get("garden.name")
+        or operation.source_api is None
+    ):
         return False
-    
+
     # Grabs the garden to check and updates the heartbeat for the entry point
-    source_garden = beer_garden.garden.update_garden_receiving_heartbeat(operation.source_api, garden_name = operation.source_garden_name)
-    
+    source_garden = beer_garden.garden.update_garden_receiving_heartbeat(
+        operation.source_api, garden_name=operation.source_garden_name
+    )
+
     for connection in source_garden.receiving_connection:
         if connection.api == operation.source_api and connection.status != "DISABLED":
             return False
-    
+
     return True
-    
+
 
 def initiate_forward(operation: Operation):
     """Forward an operation to a child garden
@@ -320,13 +333,17 @@ def forward(operation: Operation):
 
         operation_forwarded = False
         for connection in target_garden.publishing_connections:
-            if connection.status not in ["DISABLED", "NOT_CONFIGURED","MISSING_CONFIGURATION"]:
+            if connection.status not in [
+                "DISABLED",
+                "NOT_CONFIGURED",
+                "MISSING_CONFIGURATION",
+            ]:
                 operation_forwarded = True
                 if connection.api == "HTTP":
                     _forward_http(operation, target_garden)
                 elif connection.api == "STOMP":
                     _forward_stomp(operation, target_garden)
-        
+
         if not operation_forwarded:
             raise RoutingRequestException(
                 "Attempted to forward operation to garden "
@@ -385,7 +402,10 @@ def setup_routing():
                 with garden_lock:
                     gardens[garden.name] = load_garden_connections(garden)
                     for connection in gardens[garden.name].publishing_connections:
-                        if connection.api.upper() == "STOMP" and connection.status != "DISABLED":
+                        if (
+                            connection.api.upper() == "STOMP"
+                            and connection.status != "DISABLED"
+                        ):
                             if garden.name not in stomp_garden_connections:
                                 stomp_garden_connections[
                                     garden.name
@@ -491,14 +511,17 @@ def handle_event(event):
 
             stomp_found = False
             for connection in event.payload.publishing_connections:
-                if connection.api.upper() == "STOMP":   
-                    stomp_found = True               
-                    if event.payload.name not in stomp_garden_connections and connection.status == "PUBLISHING":
+                if connection.api.upper() == "STOMP":
+                    stomp_found = True
+                    if (
+                        event.payload.name not in stomp_garden_connections
+                        and connection.status == "PUBLISHING"
+                    ):
                         create_stomp_connection(connection)
 
                     elif connection.status == "DISABLED":
                         stomp_garden_connections[event.payload.name].disconnect()
-            
+
             if not stomp_found and event.payload.name not in stomp_garden_connections:
                 stomp_garden_connections[event.payload.name].disconnect()
                 del stomp_garden_connections[event.payload.name]
@@ -751,7 +774,6 @@ def create_stomp_connection(connection: BrewtilsConnection) -> Connection:
 
 
 def _forward_stomp(operation: Operation, target_garden: Garden) -> None:
-
     for connection in target_garden.publishing_connections:
         if connection.api == "STOMP" and connection.status != "DISABLED":
             try:
@@ -783,7 +805,7 @@ def _forward_stomp(operation: Operation, target_garden: Garden) -> None:
                     operation=operation,
                     event_name=Events.GARDEN_UNREACHABLE.name,
                 ) from ex
-            
+
             if connection.status != "PUBLISHING":
                 connection.status = "PUBLISHING"
                 update_garden(target_garden)
@@ -794,7 +816,6 @@ def _forward_http(operation: Operation, target_garden: Garden) -> None:
 
     for connection in target_garden.publishing_connections:
         if connection.api == "HTTP" and connection.status != "DISABLED":
-
             easy_client = EasyClient(
                 bg_host=connection.config.get("host"),
                 bg_port=connection.config.get("port"),
@@ -818,7 +839,7 @@ def _forward_http(operation: Operation, target_garden: Garden) -> None:
                     operation=operation,
                     event_name=Events.GARDEN_ERROR.name,
                 ) from e
-            
+
             if connection.status != "PUBLISHING":
                 connection.status = "PUBLISHING"
                 update_garden(target_garden)

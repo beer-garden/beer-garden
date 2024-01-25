@@ -160,21 +160,21 @@ class GardenAPI(AuthorizationHandler):
                 api = op.value.get("api")
 
                 if connection_type.upper() == "PUBLISHING":
-                  response = await self.client(
-                      Operation(
-                          operation_type="GARDEN_UPDATE_PUBLISHING_STATUS",
-                          kwargs={"garden_name": garden.name, "api": api},
-                          args=[status],
-                      )
-                  )
+                    response = await self.client(
+                        Operation(
+                            operation_type="GARDEN_UPDATE_PUBLISHING_STATUS",
+                            kwargs={"garden_name": garden.name, "api": api},
+                            args=[status],
+                        )
+                    )
                 elif connection_type.upper() == "RECEIVING":
                     response = await self.client(
-                      Operation(
-                          operation_type="GARDEN_UPDATE_RECEIVING_STATUS",
-                          kwargs={"garden_name": garden.name, "api": api},
-                          args=[status],
-                      )
-                  )
+                        Operation(
+                            operation_type="GARDEN_UPDATE_RECEIVING_STATUS",
+                            kwargs={"garden_name": garden.name, "api": api},
+                            args=[status],
+                        )
+                    )
 
             elif operation == "sync":
                 response = await self.client(
@@ -183,7 +183,6 @@ class GardenAPI(AuthorizationHandler):
                         kwargs={"sync_target": garden.name},
                     )
                 )
-            
 
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")

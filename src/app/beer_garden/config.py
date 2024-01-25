@@ -216,7 +216,9 @@ def generate_plugin_logging(args: Sequence[str]) -> dict:
     return logging_config
 
 
-def get(key: Optional[str] = None, config: Box = None) -> Union[str, int, float, bool, complex, Box, None]:
+def get(
+    key: Optional[str] = None, config: Box = None
+) -> Union[str, int, float, bool, complex, Box, None]:
     """Get specified key from the config.
 
     Nested keys can be separated with a "." If the key does not exist, then
@@ -956,7 +958,9 @@ _HTTP_CONNECTION_SPEC["items"] = _HTTP_CONNECTION_SPEC["items"] | {
     },
 }
 
-_HTTP_CONNECTION_SPEC["items"]["ssl"]["items"] = _HTTP_CONNECTION_SPEC["items"]["ssl"]["items"] | {
+_HTTP_CONNECTION_SPEC["items"]["ssl"]["items"] = _HTTP_CONNECTION_SPEC["items"]["ssl"][
+    "items"
+] | {
     "ca_verify": {
         "type": "bool",
         "description": "Verify server certificate when using SSL",

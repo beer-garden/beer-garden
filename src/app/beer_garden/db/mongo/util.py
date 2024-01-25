@@ -69,15 +69,15 @@ def ensure_local_garden():
             "parent.http.refresh_token": "refresh_token",
         }
 
-        http_connection = Connection(api="HTTP", status= "PUBLISHING")
+        http_connection = Connection(api="HTTP", status="PUBLISHING")
 
         for key in config_map:
-            http_connection.config.setdefault(
-                config_map[key], config.get(key)
-            )
+            http_connection.config.setdefault(config_map[key], config.get(key))
         garden.publishing_connections.append(http_connection)
 
-    if config.get("parent.stomp.enabled") and config.get("parent.stomp.send_destination"):
+    if config.get("parent.stomp.enabled") and config.get(
+        "parent.stomp.send_destination"
+    ):
         config_map = {
             "parent.stomp.host": "host",
             "parent.stomp.port": "port",
@@ -89,12 +89,10 @@ def ensure_local_garden():
             "parent.stomp.headers": "headers",
         }
 
-        stomp_connection = Connection(api="STOMP", status= "PUBLISHING")
+        stomp_connection = Connection(api="STOMP", status="PUBLISHING")
 
         for key in config_map:
-            stomp_connection.config.setdefault(
-                config_map[key], config.get(key)
-            )
+            stomp_connection.config.setdefault(config_map[key], config.get(key))
         garden.publishing_connections.append(stomp_connection)
 
     garden.save()

@@ -237,44 +237,86 @@ class Connection:
                 for garden in get_gardens():
                     connection_updated = False
                     for connection in garden.receiving_connections:
-                        if connection.api == "STOMP" and connection.status == "UNREACHABLE":
-                            if connection.config.get("host", None) and connection.config.get("port", None) and connection.config.get("subscribe_destination", None):
-                                if connection.config["host"] == self.host and connection.config["port"] == self.port and connection.config["subscribe_destination"] == self.subscribe_destination:
+                        if (
+                            connection.api == "STOMP"
+                            and connection.status == "UNREACHABLE"
+                        ):
+                            if (
+                                connection.config.get("host", None)
+                                and connection.config.get("port", None)
+                                and connection.config.get("subscribe_destination", None)
+                            ):
+                                if (
+                                    connection.config["host"] == self.host
+                                    and connection.config["port"] == self.port
+                                    and connection.config["subscribe_destination"]
+                                    == self.subscribe_destination
+                                ):
                                     connection.status = "RECEIVING"
                                     connection_updated = True
 
                     for connection in garden.publishing_connections:
-                        if connection.api == "STOMP" and connection.status == "UNREACHABLE":
-                            if connection.config.get("host", None) and connection.config.get("port", None) and connection.config.get("send_destination", None):
-                                if connection.config["host"] == self.host and connection.config["port"] == self.port and connection.config["send_destination"] == self.send_destination:
+                        if (
+                            connection.api == "STOMP"
+                            and connection.status == "UNREACHABLE"
+                        ):
+                            if (
+                                connection.config.get("host", None)
+                                and connection.config.get("port", None)
+                                and connection.config.get("send_destination", None)
+                            ):
+                                if (
+                                    connection.config["host"] == self.host
+                                    and connection.config["port"] == self.port
+                                    and connection.config["send_destination"]
+                                    == self.send_destination
+                                ):
                                     connection.status = "PUBLISHING"
                                     connection_updated = True
 
-                    if connection_updated:        
+                    if connection_updated:
                         update_garden(garden)
 
             return self.conn.is_connected()
 
         except Exception as ex:
             logger.warning(f"Connection error: {ex}")
-            
+
             for garden in get_gardens():
                 connection_updated = False
                 for connection in garden.receiving_connections:
                     if connection.api == "STOMP":
-                        if connection.config.get("host", None) and connection.config.get("port", None) and connection.config.get("subscribe_destination", None):
-                            if connection.config["host"] == self.host and connection.config["port"] == self.port and connection.config["subscribe_destination"] == self.subscribe_destination:
+                        if (
+                            connection.config.get("host", None)
+                            and connection.config.get("port", None)
+                            and connection.config.get("subscribe_destination", None)
+                        ):
+                            if (
+                                connection.config["host"] == self.host
+                                and connection.config["port"] == self.port
+                                and connection.config["subscribe_destination"]
+                                == self.subscribe_destination
+                            ):
                                 connection.status = "UNREACHABLE"
                                 connection_updated = True
 
                 for connection in garden.publishing_connections:
                     if connection.api == "STOMP":
-                        if connection.config.get("host", None) and connection.config.get("port", None) and connection.config.get("send_destination", None):
-                            if connection.config["host"] == self.host and connection.config["port"] == self.port and connection.config["send_destination"] == self.send_destination:
+                        if (
+                            connection.config.get("host", None)
+                            and connection.config.get("port", None)
+                            and connection.config.get("send_destination", None)
+                        ):
+                            if (
+                                connection.config["host"] == self.host
+                                and connection.config["port"] == self.port
+                                and connection.config["send_destination"]
+                                == self.send_destination
+                            ):
                                 connection.status = "UNREACHABLE"
                                 connection_updated = True
 
-                if connection_updated:        
+                if connection_updated:
                     update_garden(garden)
             return False
 

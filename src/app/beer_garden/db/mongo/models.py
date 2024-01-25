@@ -774,9 +774,10 @@ class Job(MongoModel, Document):
                 f"actual type was {type(self.trigger)}"
             )
 
+
 class Connection(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.Connection
-    
+
     api = StringField(required=True)
     status = StringField(default="UNKOWN")
     status_info = EmbeddedDocumentField("StatusInfo", default=StatusInfo())
@@ -804,7 +805,6 @@ class Garden(MongoModel, Document):
 
     metadata = DictField()
 
-
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves
         "index_background": True,
@@ -831,7 +831,7 @@ class Garden(MongoModel, Document):
             if self.has_parent:
                 for connection in self.publishing_connections:
                     connection.config = {}
-                
+
         self.save()
 
     def _update_associated_systems(self):
