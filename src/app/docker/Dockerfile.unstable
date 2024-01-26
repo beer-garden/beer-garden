@@ -7,6 +7,7 @@ ENV BG_LOG_CONFIG_FILE=/src/conf/app-logging.yaml \
     BG_PLUGIN_LOCAL_LOGGING_CONFIG_FILE=/src/conf/local-plugin-logging.yaml \
     BG_PLUGIN_REMOTE_LOGGING_CONFIG_FILE=/src/conf/remote-plugin-logging.yaml \
     BG_PLUGIN_LOCAL_DIRECTORY=/plugins \
+    BG_CHILDREN_CONFIG_DIRECTORY=/conf/children \
     BREWTILS_BRANCH=$BREWTILS
 
 ADD ./example_configs/app-logging.yaml conf/
@@ -22,4 +23,5 @@ RUN set -ex \
     && pip install --no-cache-dir -r requirements.txt \
     && pip install -e git+https://github.com/beer-garden/brewtils@Garden-Rework#egg=brewtils \
     && pip install --no-cache-dir ./*.whl \
-    && apk del .build-deps 
+    && apk del .build-deps \
+    && mkdir -p /conf/children
