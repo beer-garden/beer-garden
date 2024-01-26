@@ -4,6 +4,7 @@ USER=$APP_NAME
 APP_HOME="/opt/${APP_NAME}"
 
 CONFIG_HOME="$APP_HOME/conf"
+CHILDREN_CONFIG_HOME="$CONFIG_HOME/children"
 LOG_HOME="$APP_HOME/log"
 BIN_HOME="$APP_HOME/bin"
 PLUGIN_LOG_HOME="$LOG_HOME/plugins"
@@ -25,6 +26,9 @@ PLUGIN_LOG_FILE="${PLUGIN_LOG_HOME}/%%(namespace)s/%%(system_name)s/%%(system_ve
 
 if [ ! -d "$CONFIG_HOME" ]; then
     mkdir -p "$CONFIG_HOME"
+fi
+if [ ! -d "$CHILDREN_CONFIG_HOME" ]; then
+    mkdir -p "$CHILDREN_CONFIG_HOME"
 fi
 if [ ! -d "$LOG_HOME" ]; then
     mkdir -p "$LOG_HOME"
@@ -55,7 +59,8 @@ if [ ! -f "$CONFIG_FILE" ]; then
         -c "$CONFIG_FILE" -l "$APP_LOG_CONFIG" \
         --plugin-local-directory "$PLUGIN_HOME" \
         --plugin-local-logging-config-file "$LOCAL_PLUGIN_LOG_CONFIG" \
-        --plugin-remote-logging-config-file "$REMOTE_PLUGIN_LOG_CONFIG"
+        --plugin-remote-logging-config-file "$REMOTE_PLUGIN_LOG_CONFIG" \
+        --children-direcotry "$CHILDREN_CONFIG_HOME"
 fi
 
 # Generate application logging config if it doesn't exist
