@@ -23,6 +23,7 @@ from functools import partial
 from typing import Dict, Union
 
 from brewtils import EasyClient
+import brewtils.models
 from brewtils.models import Event, Events, Garden, Operation, Request, System
 from brewtils.models import Connection as BrewtilsConnection
 from stomp.exception import ConnectFailedException
@@ -180,6 +181,11 @@ route_functions = {
     ),
 }
 
+# Filter for fields that should not be published outside of Beer Garden
+router_filter = {
+    brewtils.models.Garden: beer_garden.garden.filter_router_result,
+}
+
 
 def route(operation: Operation):
     """Entry point into the routing subsystem
@@ -212,9 +218,28 @@ def route(operation: Operation):
 
     # If it's targeted at THIS garden, execute
     if operation.target_garden_name == config.get("garden.name"):
-        return execute_local(operation)
+        result = execute_local(operation)
     else:
-        return initiate_forward(operation)
+        result = initiate_forward(operation)
+
+    return filter_result(result)
+
+
+def filter_result(result: [brewtils.models.BaseModel, list]):
+    if result is None:
+        return result
+
+    if type(result) is list:
+        for item in result:
+            filter_result(item)
+
+    if type(result) == brewtils.models.Operation:
+        filter_result(result.payload)
+
+    if type(result) in router_filter:
+        return router_filter[type(result)](result)
+    
+    return result
 
 
 def execute_local(operation: Operation):
@@ -267,7 +292,7 @@ def invalid_source_check(operation: Operation):
         operation.source_api, garden_name=operation.source_garden_name
     )
 
-    for connection in source_garden.receiving_connection:
+    for connection in source_garden.receiving_connections:
         if connection.api == operation.source_api and connection.status != "DISABLED":
             return False
 
@@ -332,24 +357,33 @@ def forward(operation: Operation):
             )
 
         operation_forwarded = False
+
+        exceptions = []
         for connection in target_garden.publishing_connections:
             if connection.status not in [
                 "DISABLED",
                 "NOT_CONFIGURED",
                 "MISSING_CONFIGURATION",
             ]:
-                operation_forwarded = True
-                if connection.api == "HTTP":
-                    _forward_http(operation, target_garden)
-                elif connection.api == "STOMP":
-                    _forward_stomp(operation, target_garden)
+                try:
+                    if connection.api == "HTTP":
+                        _forward_http(operation, target_garden)
+                        operation_forwarded = True
+                    elif connection.api == "STOMP":
+                        _forward_stomp(operation, target_garden)
+                        operation_forwarded = True
+                except ForwardException as ex:
+                    exceptions.append(ex)
 
+        # Throw one of the forwarding exceptions
+        for ex in exceptions:
+            raise ex
         if not operation_forwarded:
             raise RoutingRequestException(
                 "Attempted to forward operation to garden "
                 f"'{operation.target_garden_name}' but the connection was not enabled. "
                 "This probably means that the connection to the child garden has not "
-                "been configured."
+                "been configured or the connection is DISABLED"
             )
 
     except ForwardException as ex:
@@ -568,6 +602,8 @@ def _pre_forward(operation: Operation) -> Operation:
         raise RoutingRequestException(
             f"Operation type '{operation.operation_type}' can not be forwarded"
         )
+
+    operation.source_garden_name = None
 
     if operation.operation_type == "REQUEST_CREATE":
         # Save the request so it'll have an ID and we'll have something to update

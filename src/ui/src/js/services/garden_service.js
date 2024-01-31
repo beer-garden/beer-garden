@@ -17,18 +17,6 @@ export default function gardenService($rootScope, $http) {
     return $http.get('api/v1/gardens/' + encodeURIComponent(name));
   };
 
-  // GardenService.createGarden = function(garden) {
-  //   return $http.post('api/v1/gardens', garden);
-  // };
-
-  // GardenService.updateGardenConfig = function(garden) {
-  //   return $http.patch('api/v1/gardens/' + encodeURIComponent(garden.name), {
-  //     operation: 'config',
-  //     path: '',
-  //     value: garden,
-  //   });
-  // };
-
   GardenService.syncGardens = function() {
     return $http.patch('api/v1/gardens/', {
       operation: 'sync',
@@ -83,7 +71,7 @@ export default function gardenService($rootScope, $http) {
 
   GardenService.updateReceivingStatus = function(name, status, api) {
     return $http.patch('api/v1/gardens/' + encodeURIComponent(name), {
-      operation: connection,
+      operation: 'connection',
       path: '',
       value: {
         'status': status,

@@ -353,8 +353,10 @@ export default function appRun(
   $rootScope.extractGardenChildren = function(gardens) {
     let results = []
     for (let i = 0; i < gardens.length; i++){
-      results.push(gardens[i]);
-      $rootScope.extractGardenChildrenLoop(results, gardens[i]);
+      if (gardens[i]["connection_type"] == "LOCAL"){
+        results.push(gardens[i]);
+        $rootScope.extractGardenChildrenLoop(results, gardens[i]);
+      }
     }
     return results;
   }

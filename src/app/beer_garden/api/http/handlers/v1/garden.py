@@ -44,16 +44,6 @@ class GardenAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-        # if garden_name == config.get("garden.name"):
-        #     garden = local_garden(all_systems=True)
-        #     self.verify_user_permission_for_object(GARDEN_READ, garden)
-        # else:
-        #     garden = self.get_or_raise(Garden, GARDEN_READ, name=garden_name)
-
-        # if user_has_permission_for_object(self.current_user, GARDEN_UPDATE, garden):
-        #     response = MongoParser.serialize(garden)
-        # else:
-        #     response = GardenReadSchema().dumps(garden).data
 
         response = await self.client(
             Operation(operation_type="GARDEN_READ", args=[garden_name])
@@ -226,18 +216,20 @@ class GardenListAPI(AuthorizationHandler):
         permitted_gardens_list = await self.client(
             Operation(operation_type="GARDEN_READ_ALL")
         )
+        self.write(permitted_gardens_list)
 
-        response_gardens = []
-        for garden in SchemaParser.parse_garden(
-            permitted_gardens_list, from_string=True, many=True
-        ):
-            if user_has_permission_for_object(self.current_user, GARDEN_READ, garden):
-                response_gardens.append(garden)
+        # response_gardens = []
+        # for garden in SchemaParser.parse_garden(
+        #     permitted_gardens_list, from_string=True, many=True
+        # ):
+        #     if user_has_permission_for_object(self.current_user, GARDEN_READ, garden):
+        #         response_gardens.append(garden)
 
-        self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(
-            SchemaParser.serialize_garden(response_gardens, to_string=True, many=True)
-        )
+        # self.set_header("Content-Type", "application/json; charset=UTF-8")
+        
+        # self.write(
+        #     SchemaParser.serialize_garden(response_gardens, to_string=True, many=True)
+        # )
 
     async def post(self):
         """

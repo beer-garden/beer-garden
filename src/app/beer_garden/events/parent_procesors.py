@@ -53,8 +53,12 @@ class HttpParentUpdater(QueueListener):
             if event.payload.parent is None and event.payload.name != event.garden:
                 self.logger.error(f"Setting parent to {event.garden}")
                 event.payload.parent = event.garden
-                event.payload.publishing_connections = []
-                event.payload.receiving_connections = []
+                for connection in event.payload.publishing_connections:
+                    connection.config = {}
+                for connection in event.payload.receiving_connections:
+                    connection.config = {}
+                #event.payload.publishing_connections = []
+                #event.payload.receiving_connections = []
                 event.payload.has_parent = True
                 self.logger.error(event.payload)
 

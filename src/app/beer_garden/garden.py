@@ -15,7 +15,6 @@ from pathlib import Path
 from typing import List
 
 from mongoengine import DoesNotExist
-from yapconf import YapconfSpec
 
 import beer_garden.config as config
 import beer_garden.db.api as db
@@ -33,8 +32,51 @@ from brewtils.models import Event, Events, Garden, Operation, System, Connection
 logger = logging.getLogger(__name__)
 
 
+def filter_router_result(garden: Garden) -> Garden:
+    """Filter values for API output"""
+    config_whitelist = [
+            "host",
+            "port",
+            "url_prefix",
+            "send_destination",
+            "subscribe_destination",
+        ]
+
+    if garden.publishing_connections:
+        for connection in garden.publishing_connections:   
+            drop_keys = []  
+            for key in connection.config:
+                if key not in config_whitelist:
+                    drop_keys.append(key)
+            for key in drop_keys:
+                connection.config.pop(key)
+
+    if garden.receiving_connections:
+        for connection in garden.receiving_connections:      
+            drop_keys = []  
+            for key in connection.config:
+                if key not in config_whitelist:
+                    drop_keys.append(key)
+            for key in drop_keys:
+                connection.config.pop(key)
+
+    if garden.children:
+        for child in garden.children:
+            filter_router_result(child)
+    return garden
+
+
 def get_children_garden(garden: Garden) -> Garden:
-    garden.children = db.query(Garden, filter_params={"parent": garden.name})
+    if garden.connection_type == "LOCAL":
+        garden.children = db.query(
+                Garden, filter_params={"connection_type__ne": "LOCAL", "has_parent": False}
+            )
+        if garden.children:
+            for child in garden.children:
+                child.has_parent = True
+                child.parent = garden.name
+    else:
+        garden.children = db.query(Garden, filter_params={"parent": garden.name})
 
     if garden.children:
         for child in garden.children:
@@ -128,6 +170,7 @@ def publish_garden(status: str = "RUNNING") -> Garden:
     garden = local_garden()
     garden.connection_type = None
     garden.status = status
+    get_children_garden(garden)
 
     return garden
 
@@ -260,10 +303,18 @@ def create_garden(garden: Garden) -> Garden:
         The created Garden
 
     """
-    garden.publishing_connections = [
-        Connection(api="HTTP", status="MISSING_CONFIGURATION"),
-        Connection(api="STOMP", status="MISSING_CONFIGURATION"),
-    ]
+    if not garden.publishing_connections:
+        garden.publishing_connections = [
+            Connection(api="HTTP", status="MISSING_CONFIGURATION"),
+            Connection(api="STOMP", status="MISSING_CONFIGURATION"),
+        ]
+
+    # if not garden.receiving_connections:
+    #     garden.receiving_connections = [
+    #         Connection(api="HTTP", status="DISABLED"),
+    #         Connection(api="STOMP", status="DISABLED"),
+    #     ]
+
     garden.status_info["heartbeat"] = datetime.utcnow()
 
     return db.create(garden)
@@ -462,7 +513,11 @@ def load_garden_connections(garden: Garden):
             stomp_connection.config.setdefault(
                 config_map[key], config.get(key, garden_config)
             )
-        garden.publishing_connections.append(stomp_connection)
+        if config.get("stomp.send_destination", garden_config):
+            garden.publishing_connections.append(stomp_connection)
+
+        if config.get("stomp.subscribe_destination", garden_config):
+            garden.receiving_connections.append(stomp_connection)
     else:
         garden.publishing_connections.append(
             Connection(api="STOMP", status="NOT_CONFIGURED")
