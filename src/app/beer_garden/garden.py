@@ -98,9 +98,9 @@ def get_garden(garden_name: str) -> Garden:
 
     """
     if garden_name == config.get("garden.name"):
-        return local_garden()
-
-    garden = db.query_unique(Garden, name=garden_name, raise_missing=True)
+        garden = local_garden()
+    else:
+        garden = db.query_unique(Garden, name=garden_name, raise_missing=True)
     get_children_garden(garden)
     return garden
 
@@ -168,9 +168,9 @@ def publish_garden(status: str = "RUNNING") -> Garden:
         The local garden, all systems
     """
     garden = local_garden()
+    get_children_garden(garden)
     garden.connection_type = None
     garden.status = status
-    get_children_garden(garden)
 
     return garden
 
@@ -456,8 +456,20 @@ def load_garden_connections(garden: Garden):
     if not path.exists():
         garden.status = "NOT_CONFIGURED"
         return garden
+    
+    try:
 
-    garden_config = config.load_child(path)
+        garden_config = config.load_child(path)
+    except:
+        #TODO: Determine proper status
+        garden.status = "NOT_CONFIGURED"
+        #garden.publishing_connections.append(
+        #    Connection(api="HTTP", status="ERROR")
+        #)
+        #garden.publishing_connections.append(
+        #    Connection(api="STOMP", status="ERROR")
+        #)
+        return garden
 
     if config.get("http.enabled", garden_config):
         config_map = {

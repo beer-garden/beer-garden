@@ -25,7 +25,7 @@ export default function adminGardenController(
 
   $scope.successCallback = function(response) {
     $scope.response = response;
-    $scope.data = $scope.extractGardenChildren(response.data)
+    $scope.data = $scope.extractGardenChildren([response.data])
   };
   $scope.garden_name = null;
   $scope.createGardenFormHide = true;
@@ -94,7 +94,7 @@ export default function adminGardenController(
   }
 
   const loadGardens = function() {
-    GardenService.getGardens().then(
+    GardenService.getGarden($scope.config.gardenName ).then(
         $scope.successCallback,
         $scope.failureCallback,
     );
@@ -173,6 +173,13 @@ export default function adminGardenController(
     return true;
   };
 
+  $scope.isChild = function(garden) {
+    if (garden.has_parent){
+      return garden.parent == $scope.config.gardenName;
+    }
+    return false;
+  };
+
   $scope.showUnconfigured = function(gardens){
     for (let i = 0; i < gardens.length; i++) {
       if ($scope.isRemoteUnconfigured(gardens[i])){
@@ -223,7 +230,7 @@ export default function adminGardenController(
       return false;
     }
 
-    if (garden.has_parent){
+    if (garden.parent != $scope.config.gardenName){
       return false;
     }
 

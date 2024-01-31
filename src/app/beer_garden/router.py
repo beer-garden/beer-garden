@@ -329,6 +329,35 @@ def initiate_forward(operation: Operation):
 
     return response
 
+def determine_route_garden(target_garden_name):
+    target_garden = gardens.get(target_garden_name)
+
+    if not target_garden:
+        target_garden = get_garden(target_garden_name)
+
+    routable = False
+    for connection in target_garden.publishing_connections:
+        if connection.status not in [
+            "DISABLED",
+            "NOT_CONFIGURED",
+            "MISSING_CONFIGURATION",
+        ]:
+            routable = True
+            break
+    
+    if not routable:
+        raise RoutingRequestException(
+            "Attempted to forward operation to garden "
+            f"'{target_garden_name}' but the connection was not enabled. "
+            "This probably means that the connection to the child garden has not "
+            "been configured or the connection is DISABLED"
+        )
+
+    if target_garden.has_parent and target_garden.parent != config.get("garden.name"):
+        return determine_route_garden(target_garden.parent)
+    
+    return target_garden
+
 
 def forward(operation: Operation):
     """Forward the operation to a child garden
@@ -350,6 +379,7 @@ def forward(operation: Operation):
     if not target_garden:
         target_garden = get_garden(operation.target_garden_name)
 
+    route_garden = determine_route_garden(operation.target_garden_name)
     try:
         if not target_garden:
             raise UnknownGardenException(
@@ -367,10 +397,10 @@ def forward(operation: Operation):
             ]:
                 try:
                     if connection.api == "HTTP":
-                        _forward_http(operation, target_garden)
+                        _forward_http(operation, route_garden)
                         operation_forwarded = True
                     elif connection.api == "STOMP":
-                        _forward_stomp(operation, target_garden)
+                        _forward_stomp(operation, route_garden)
                         operation_forwarded = True
                 except ForwardException as ex:
                     exceptions.append(ex)

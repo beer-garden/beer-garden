@@ -52,9 +52,9 @@ export default function routeConfig(
             '$rootScope',
             'GardenService',
             ($rootScope, GardenService) => {
-              return GardenService.getGardens().then(
+              return GardenService.getGarden($rootScope.config.garden_name).then(
                   (response) => {
-                    $rootScope.gardens = $rootScope.extractGardenChildren(response.data)
+                    $rootScope.gardens = $rootScope.extractGardenChildren([response.data])
                     $rootScope.systems = [];
                     for (let i = 0; i < $rootScope.gardens.length; i++){
                       $rootScope.systems = $rootScope.systems.concat($rootScope.gardens[i].systems)
