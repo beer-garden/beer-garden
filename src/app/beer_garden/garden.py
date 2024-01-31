@@ -718,3 +718,6 @@ def handle_event(event):
 
         if target_garden.status == "NOT_CONFIGURED":
             update_garden_status(event.payload.target_garden_name, "NOT_CONFIGURED")
+
+    elif event.name == Events.GARDEN_CONFIGURED.name:
+        publish_garden()
