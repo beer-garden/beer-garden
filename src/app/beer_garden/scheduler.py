@@ -24,7 +24,6 @@ from beer_garden.db.mongo.jobstore import construct_trigger
 from beer_garden.events import publish_event
 from beer_garden.requests import get_request
 
-
 logger = logging.getLogger(__name__)
 
 
