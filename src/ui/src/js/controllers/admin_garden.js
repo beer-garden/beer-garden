@@ -24,8 +24,12 @@ export default function adminGardenController(
   $scope.gardenCreateForm = GardenService.CreateFORM;
 
   $scope.successCallback = function(response) {
+    for (let i = 0; i < response.data.length; i++){
+      if (!response.data.has_parent){
+        $scope.data = $scope.extractGardenChildren([response.data[i]]);
+      }
+    }
     $scope.response = response;
-    $scope.data = $scope.extractGardenChildren([response.data])
   };
   $scope.garden_name = null;
   $scope.createGardenFormHide = true;
@@ -40,44 +44,52 @@ export default function adminGardenController(
   $scope.create_garden_name_focus = false;
 
   $scope.getGardenInsights = function(garden) {
-    return "<div class='panel-body' style='padding-bottom: 0px'>"+
-    "<div class='list-group'>"+
-    "	<div class='panel-heading' style='font-size: 22px'>"+
-    "	  <span>Metrics</span>"+
-    "	</div>"+
-    "	<div class='list-group-item clearfix'>"+
-    "	  <div>"+
-    "		<span>Latency: 9s</span>"+
-    "	  </div>"+
-    "	</div>"+
-    "	</div>"+
-    "	<div class='list-group'>"+
-    "	<div class='panel-heading' style='font-size: 22px'>"+
-    "	  <span>Upstream</span>"+
-    "	</div>"+
-    "	<div class='list-group-item clearfix'>"+
-    "	  <div>"+
-    "		<ul>"+
-    "		  <li>Parent</li>"+
-    "		</ul>"+
-    "	  </div>"+
-    "	</div>"+
-    "	</div>"+
-    "	<div class='list-group'>"+
-    "	<div class='panel-heading' style='font-size: 22px'>"+
-    "	  <span>Downstream</span>"+
-    "	</div>"+
-    "	<div class='list-group-item clearfix'>"+
-    "	  <div>"+
-    "		<ul>"+
-    "		  <li>Child A</li>"+
-    "		  <li>Child B</li>"+
-    "		  <li>Child C</li>"+
-    "		</ul>"+
-    "	  </div>"+
-    "	</div>"+
-    "	</div>"+
-    "</div>";
+
+    // Base Headers
+    let tooltip = "<div class='panel-body' style='padding-bottom: 0px'>";
+
+    // Add Metrics
+    // TODO: Add metrics tags
+    if (false){ 
+      tooltip += "	<div class='panel-heading' style='font-size: 22px'>"+
+      "	  <span>Metrics</span>"+
+      "	</div>"+
+      "	<div class='list-group-item clearfix'>"+
+      "	  <div>"+
+      "     <span>Latency: 9s</span>"+
+      "	  </div>"+
+      "	</div>";
+    }
+
+    // Upstream
+    if (garden.has_parent){
+      tooltip += "<div class='panel-heading' style='font-size: 22px'>"+
+      "	  <span>Upstream</span>"+
+      "	</div>"+
+      "	<div class='list-group-item clearfix'>"+
+      "	  <div>"+
+      "		  <span>"+garden.parent+"</span>"+
+      "	  </div>"+
+      "	</div>";
+    }
+
+    // Downstream
+    if (garden.children.length > 0){
+      tooltip += "<div class='panel-heading' style='font-size: 22px'>"+
+      " <span>Downstream</span>"+
+      "</div>"+
+      "<div class='list-group-item clearfix'>";
+      
+      for (let i = 0; i < garden.children.length; i++){
+        tooltip += "<div><span>" + garden.children[i].name + "</span></div>";
+      }
+
+      tooltip += "  </div>"+
+      "</div>";
+    }
+
+    tooltip += "</div>"
+    return tooltip;
   }
 
   $scope.findGardenLabel = function(garden, gardenLabel) {
@@ -94,7 +106,7 @@ export default function adminGardenController(
   }
 
   const loadGardens = function() {
-    GardenService.getGarden($scope.config.gardenName ).then(
+    GardenService.getGardens().then(
         $scope.successCallback,
         $scope.failureCallback,
     );
