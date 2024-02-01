@@ -12,12 +12,7 @@ from typing import Dict, List, Optional
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
-from apscheduler.events import (
-    EVENT_JOB_ERROR,
-    EVENT_JOB_MISSED,
-    EVENT_ALL,
-    EVENT_JOB_MAX_INSTANCES,
-)
+from apscheduler.events import EVENT_JOB_MAX_INSTANCES
 from brewtils.errors import ModelValidationError
 from brewtils.models import DateTrigger, Event, Events, Job, Operation, Request
 from mongoengine import ValidationError
