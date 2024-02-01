@@ -355,16 +355,35 @@ export default function appRun(
     for (let i = 0; i < gardens.length; i++){
       if (gardens[i]["connection_type"] == "LOCAL"){
         results.push(gardens[i]);
-        $rootScope.extractGardenChildrenLoop(results, gardens[i]);
+        $rootScope.extractGardenChildrenLoop(results, gardens[i], true);
       }
     }
     return results;
   }
 
-  $rootScope.extractGardenChildrenLoop = function(gardens, garden) {
+  $rootScope.extractGardenChildrenLoop = function(gardens, garden, include_systems) {
     for (let i = 0; i < garden.children.length; i++){
-      gardens.push(garden.children[i]);
-      $rootScope.extractGardenChildrenLoop(gardens, garden.children[i]);
+      //gardens.push(garden.children[i]);
+      //$rootScope.extractGardenChildrenLoop(gardens, garden.children[i], true);
+
+      if (!include_systems){
+        garden.children[i].systems = [];
+        gardens.push(garden.children[i]);
+        $rootScope.extractGardenChildrenLoop(gardens, garden.children[i], false);
+      } else {
+        let routable = false;
+        for (let x = 0; x < garden.children[i].publishing_connections.length; x++){
+          if (garden.children[i].publishing_connections[x].status in ("PUBLISHING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN")){
+            routable = true;
+          }
+        }
+
+        if (!routable){
+          garden.children[i].systems = [];
+        }
+        gardens.push(garden.children[i]);
+        $rootScope.extractGardenChildrenLoop(gardens, garden.children[i], routable);
+      }
     }
     return gardens;
   }
