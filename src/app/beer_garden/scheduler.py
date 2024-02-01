@@ -13,6 +13,8 @@ from typing import Dict, List, Optional
 from apscheduler.events import EVENT_JOB_MAX_INSTANCES
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
+from brewtils.errors import ModelValidationError
+from brewtils.models import DateTrigger, Event, Events, Job, Operation, Request
 from mongoengine import ValidationError
 
 import beer_garden
@@ -21,8 +23,7 @@ import beer_garden.db.api as db
 from beer_garden.db.mongo.jobstore import construct_trigger
 from beer_garden.events import publish_event
 from beer_garden.requests import get_request
-from brewtils.errors import ModelValidationError
-from brewtils.models import DateTrigger, Event, Events, Job, Operation, Request
+
 
 logger = logging.getLogger(__name__)
 

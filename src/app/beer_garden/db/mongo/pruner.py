@@ -3,14 +3,14 @@ import logging
 from datetime import datetime, timedelta
 from typing import List, Tuple
 
+from brewtils.models import Event, Events
+from brewtils.schema_parser import SchemaParser
+from brewtils.stoppable_thread import StoppableThread
 from mongoengine import Q
 
 from beer_garden.db.mongo.models import File, RawFile, Request
 from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.events import publish
-from brewtils.models import Event, Events
-from brewtils.schema_parser import SchemaParser
-from brewtils.stoppable_thread import StoppableThread
 
 
 class MongoPruner(StoppableThread):
