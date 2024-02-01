@@ -26,14 +26,6 @@
   </button>
   <button
     type="button"
-    class="btn btn-warning pull-right"
-    ng-if="data.status === 'RUNNING'"
-    ng-click="pauseJob(data.id)"
-  >
-    Pause Job
-  </button>
-  <button
-    type="button"
     class="btn btn-success pull-right"
     ng-click="updateJob(data)"
   >
@@ -46,6 +38,14 @@
     ng-click="resumeJob(data.id)"
   >
     Resume Job
+  </button>
+  <button
+    type="button"
+    class="btn btn-warning pull-right"
+    ng-if="data.status === 'RUNNING'"
+    ng-click="pauseJob(data.id)"
+  >
+    Pause Job
   </button>
 </span>
 
@@ -66,6 +66,8 @@
         <th>Status</th>
         <th>Success Count</th>
         <th>Error Count</th>
+        <th>Canceled Count</th>
+        <th>Skip Count</th>
         <th>Next Run Time</th>
       </tr>
     </thead>
@@ -79,6 +81,8 @@
         <td>{{data.status}}</td>
         <td>{{data.success_count}}</td>
         <td>{{data.error_count}}</td>
+        <td>{{data.canceled_count}}</td>
+        <td>{{data.skip_count}}</td>
         <td>{{formatDate(data.next_run_time)}}</td>
       </tr>
     </tbody>

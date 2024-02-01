@@ -10,7 +10,7 @@
             "request": "launch",
             "module": "beer_garden",
             "justMyCode": true,
-            "args": ["-c", "/workspaces/beer-garden/src/app/example_configs/config.yaml"],
+            "args": ["-c", "${workspaceFolder}/src/app/example_configs/config.yaml"],
             "cwd":"${workspaceFolder}/src/app"
         }
     ]

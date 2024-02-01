@@ -4,9 +4,13 @@ from datetime import datetime, timedelta
 from typing import List, Tuple
 
 from brewtils.stoppable_thread import StoppableThread
+from brewtils.models import Event, Events
 from mongoengine import Q
 
 from beer_garden.db.mongo.models import File, RawFile, Request
+from brewtils.schema_parser import SchemaParser
+from beer_garden.db.mongo.parser import MongoParser
+from beer_garden.events import publish
 
 
 class MongoPruner(StoppableThread):
@@ -57,6 +61,16 @@ class MongoPruner(StoppableThread):
         for request in outstanding_requests:
             request.status = "CANCELED"
             request.save()
+            serialized = MongoParser.serialize(request, to_string=True)
+            parsed = SchemaParser.parse_request(serialized, from_string=True, many=False)
+            self.logger.error(f"Cancelling request id {parsed.id}")
+            publish(
+                Event(
+                    name=Events.REQUEST_CANCELED.name,
+                    payload_type="Request",
+                    payload=parsed,
+                )
+            )
 
     def run(self):
         """Runs the pruner to delete tasks"""
