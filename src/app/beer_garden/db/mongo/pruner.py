@@ -65,7 +65,7 @@ class MongoPruner(StoppableThread):
             parsed = SchemaParser.parse_request(
                 serialized, from_string=True, many=False
             )
-            self.logger.error(f"Cancelling request id {parsed.id}")
+
             publish(
                 Event(
                     name=Events.REQUEST_CANCELED.name,
