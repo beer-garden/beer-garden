@@ -12,7 +12,12 @@ from typing import Dict, List, Optional
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
-from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_MISSED, EVENT_ALL, EVENT_JOB_MAX_INSTANCES
+from apscheduler.events import (
+    EVENT_JOB_ERROR,
+    EVENT_JOB_MISSED,
+    EVENT_ALL,
+    EVENT_JOB_MAX_INSTANCES,
+)
 from brewtils.errors import ModelValidationError
 from brewtils.models import DateTrigger, Event, Events, Job, Operation, Request
 from mongoengine import ValidationError
@@ -137,11 +142,13 @@ class MixedScheduler(object):
             interval_config: Any scheduler-specific arguments for the APScheduler
         """
         self._sync_scheduler.configure(**interval_config)
-        self._sync_scheduler.add_listener(self.max_concurrence_listener, EVENT_JOB_MAX_INSTANCES)
+        self._sync_scheduler.add_listener(
+            self.max_concurrence_listener, EVENT_JOB_MAX_INSTANCES
+        )
 
     def max_concurrence_listener(scheduler, event):
         db_job = db.query_unique(Job, id=event.job_id)
-        db.modify(db_job, inc__skip_count = 1)
+        db.modify(db_job, inc__skip_count=1)
 
     def start(self):
         """Starts the scheduler"""
