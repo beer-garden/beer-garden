@@ -54,21 +54,22 @@ export default function routeConfig(
             ($rootScope, GardenService) => {
               return GardenService.getGardens().then(
                   (response) => {
-                    $rootScope.gardens = [];
+                    $rootScope.garden = null;
                     for (let i = 0; i < response.data.length; i++){
-                      if (!response.data[i].has_parent){
-                        $rootScope.gardens = $rootScope.extractGardenChildren([response.data[i]]);
+                      if (response.data[i]["connection_type"] == "LOCAL"){
+                        $rootScope.garden = response.data[i];
                       }
                     }
-                    $rootScope.systems = [];
-                    for (let i = 0; i < $rootScope.gardens.length; i++){
-                      $rootScope.systems = $rootScope.systems.concat($rootScope.gardens[i].systems)
+                    if ($rootScope.garden != null){
+                      $rootScope.systems = $rootScope.extractSystems($rootScope.garden);
+                    } else {
+                      $rootScope.systems = []
                     }
                     $rootScope.gardensResponse = response;
                   },
                   (response) => {
                     $rootScope.gardensResponse = response;
-                    $rootScope.gardens = [];
+                    $rootScope.garden = [];
                     $rootScope.systems = [];
                   },
               );
@@ -256,11 +257,6 @@ export default function routeConfig(
         url: 'admin/gardens/',
         templateUrl: 'admin_garden_index.html',
         controller: 'AdminGardenController',
-      })
-      .state('base.garden_view', {
-        url: 'admin/gardens/:name/',
-        templateUrl: 'admin_garden_view.html',
-        controller: 'AdminGardenViewController',
       })
       .state('base.user_admin', {
         url: 'admin/users/',

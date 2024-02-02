@@ -166,7 +166,7 @@ export default function adminSystemController(
     if ($rootScope.systems) {
       $scope.response = $rootScope.gardensResponse;
 
-      const grouped = _.groupBy($rootScope.systems, (value) => {
+      const grouped = _.groupBy($rootScope.systems.filter($rootScope.isSystemRoutable), (value) => {
         return value.display_name || value.name;
       });
       $scope.groupedSystems = _.sortBy(grouped, (sysList) => {
