@@ -110,7 +110,6 @@ import {
   newRoleController,
 } from './js/controllers/admin_role.js';
 import adminGardenController from './js/controllers/admin_garden.js';
-import adminGardenViewController from './js/controllers/admin_garden_view.js';
 import {
   gardenConfigImportController,
   gardenConfigImportModalController,
@@ -152,7 +151,6 @@ import './partials/admin_user_index.html';
 import './partials/admin_user_view.html';
 import './partials/admin_role.html';
 import './partials/admin_garden_index.html';
-import './partials/admin_garden_view.html';
 import './partials/command_index.html';
 import './partials/command_view.html';
 import './partials/request_index.html';
