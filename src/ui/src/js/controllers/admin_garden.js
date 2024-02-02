@@ -265,9 +265,18 @@ export default function adminGardenController(
     loadGardens();
   };
 
+
   EventService.addCallback('admin_garden', (event) => {
     switch (event.name) {
       case 'GARDEN_CREATED':
+        if (event.payload.connection_type != "LOCAL" && !event.payload.has_parent){
+          for (let i = 0; i < $scope.data.length; i++) {
+            if ($scope.data[i].connection_type == "LOCAL"){
+              event.payload.parent = $scope.data[i].name;
+            }
+          }
+          event.payload.has_parent = true;
+        }
         $scope.data.push(event.payload);
         break;
       case 'GARDEN_REMOVED':
@@ -281,7 +290,11 @@ export default function adminGardenController(
       case 'GARDEN_UPDATED':
         for (let i = 0; i < $scope.data.length; i++) {
           if ($scope.data[i].id == event.payload.id) {
-            $scope.data[i] = event.payload;
+            // Min fields to update
+            let updateValues = ["status","receiving_connections","publishing_connections","children","metadata"];
+            for (let x = 0; x < updateValues.length; x++){
+              $scope.data[i][updateValues[x]] = event.payload[updateValues[x]]
+            }
           }
         }
         break;
