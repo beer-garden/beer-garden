@@ -43,6 +43,31 @@ export default function adminGardenController(
   $scope.create_garden_popover_message = null;
   $scope.create_garden_name_focus = false;
 
+  $scope.findMetrics = function(garden){
+    let metrics = {};
+    for (let i = 0; i < $scope.data.length; i++){
+      let gardenMetrics = {};
+      let metricsFound = false;
+      for (var key in $scope.data[i].metadata){
+        if (key == ("CREATE_DELTA_"+garden.name)){
+          gardenMetrics["CREATED"] =  $scope.data[i].metadata[key];
+          metricsFound = true;
+        } else if (key == ("START_DELTA_"+garden.name)){
+          gardenMetrics["STARTED"] =  $scope.data[i].metadata[key];
+          metricsFound = true;
+        } else if (key == ("COMPLETE_DELTA_"+garden.name)){
+          gardenMetrics["COMPLETED"] =  $scope.data[i].metadata[key];
+          metricsFound = true;
+        }
+      }
+      if (metricsFound){
+        metrics[$scope.data[i].name] = gardenMetrics;
+      }
+    }
+
+    return metrics;
+  }
+
   $scope.getGardenInsights = function(garden) {
 
     // Base Headers
@@ -50,42 +75,92 @@ export default function adminGardenController(
 
     // Add Metrics
     // TODO: Add metrics tags
-    if (false){ 
-      tooltip += "	<div class='panel-heading' style='font-size: 22px'>"+
-      "	  <span>Metrics</span>"+
+    let metrics = $scope.findMetrics(garden)
+    if (Object.keys(metrics).length > 0){ 
+      tooltip += "<div>"+
+      "	  <span><h3>Metrics</h3></span>"+
       "	</div>"+
-      "	<div class='list-group-item clearfix'>"+
-      "	  <div>"+
-      "     <span>Latency: 9s</span>"+
-      "	  </div>"+
-      "	</div>";
+      "<div>" +
+      " <table>";
+      // "   <tr>" +
+      // "     <th>Source</th>" +
+      // "     <th>Metrics</th>" +
+      // "   </tr>";
+
+      for (var key in metrics){
+        tooltip += "<tr>" +
+        " <td>"+key+"</td>" +
+        " <td>"+
+        "   <table>";
+        if ("CREATED" in metrics[key]){
+          tooltip += "<tr><td>Created</td><td>" +metrics[key]["CREATED"] + "s</td></tr>";
+        } else {
+          tooltip += "<tr><td>Created</td><td>???s</td></tr>";
+        }
+        if ("STARTED" in metrics[key]){
+          tooltip += "<tr><td>Started</td><td>" +metrics[key]["STARTED"] + "s</td></tr>";
+        } else {
+          tooltip += "<tr><td>Started</td><td>???s</td></tr>";
+        }
+        if ("COMPLETED" in metrics[key]){
+          tooltip += "<tr><td>Completed</td><td>" +metrics[key]["COMPLETED"] + "s</td></tr>";
+        } else {
+          tooltip += "<tr><td>Completed</td><td>???s</td></tr>";
+        }
+        tooltip += "</table>" +
+        " </td>" +
+        "</tr>";
+      }
+      
+      tooltip += "</table>";
+      tooltip += "</div>";
+
     }
 
     // Upstream
     if (garden.has_parent){
-      tooltip += "<div class='panel-heading' style='font-size: 22px'>"+
-      "	  <span>Upstream</span>"+
+      tooltip += "<div>"+
+      "	  <span><h3>Upstream</h3></span>"+
       "	</div>"+
-      "	<div class='list-group-item clearfix'>"+
-      "	  <div>"+
-      "		  <span>"+garden.parent+"</span>"+
-      "	  </div>"+
-      "	</div>";
+      "<div>"+
+      "  <ul><li><span>"+garden.parent+"</span></li></ul>"+
+      "</div>";
+
+      // tooltip += "<div class='panel-heading' style='font-size: 22px'>"+
+      // "	  <span>Upstream</span>"+
+      // "	</div>"+
+      // "	<div class='list-group-item clearfix'>"+
+      // "	  <div>"+
+      // "		  <span>"+garden.parent+"</span>"+
+      // "	  </div>"+
+      // "	</div>";
     }
 
     // Downstream
     if (garden.children.length > 0){
-      tooltip += "<div class='panel-heading' style='font-size: 22px'>"+
-      " <span>Downstream</span>"+
+      tooltip += "<div>"+
+      " <span><h3>Downstream</h3></span>"+
       "</div>"+
-      "<div class='list-group-item clearfix'>";
+      "<div><ul>";
       
       for (let i = 0; i < garden.children.length; i++){
-        tooltip += "<div><span>" + garden.children[i].name + "</span></div>";
+        tooltip += "<li><span>" + garden.children[i].name + "</span></li>";
       }
 
-      tooltip += "  </div>"+
+      tooltip += "  </ul></div>"+
       "</div>";
+
+      // tooltip += "<div class='panel-heading' style='font-size: 22px'>"+
+      // " <span>Downstream</span>"+
+      // "</div>"+
+      // "<div class='list-group-item clearfix'>";
+      
+      // for (let i = 0; i < garden.children.length; i++){
+      //   tooltip += "<div><span>" + garden.children[i].name + "</span></div>";
+      // }
+
+      // tooltip += "  </div>"+
+      // "</div>";
     }
 
     tooltip += "</div>"
@@ -265,6 +340,25 @@ export default function adminGardenController(
     loadGardens();
   };
 
+  $scope.removeGardenEventChildren = function(garden) {
+
+    // Remove children
+    for (let i = 0; i < garden.children.length; i++) {
+      $scope.removeGardenEventChildren(garden.children[i])
+    }
+
+    // Remove source garden
+    for (let i = 0; i < $scope.data.length; i++) {
+      if ($scope.data[i].id == garden.id) {
+        $scope.data.splice(i, 1);
+      } else if ($scope.data[i].parent == garden.name){
+        // Clean up any missing children
+        $scope.data.splice(i, 1);
+      }
+    }
+
+
+  }
 
   EventService.addCallback('admin_garden', (event) => {
     switch (event.name) {
@@ -280,11 +374,7 @@ export default function adminGardenController(
         $scope.data.push(event.payload);
         break;
       case 'GARDEN_REMOVED':
-        for (let i = 0; i < $scope.data.length; i++) {
-          if ($scope.data[i].id == event.payload.id) {
-            $scope.data.splice(i, 1);
-          }
-        }
+        $scope.removeGardenEventChildren(event.payload)
         break;
       case 'GARDEN_CONFIGURATION':
       case 'GARDEN_UPDATED':

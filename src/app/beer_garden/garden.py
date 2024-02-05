@@ -23,6 +23,7 @@ from beer_garden.command_publishing_blocklist import (
 )
 
 from beer_garden.db.mongo.models import RemoteUser
+from beer_garden.errors import ForwardException
 from beer_garden.events import publish, publish_event
 from beer_garden.namespace import get_namespaces
 from beer_garden.systems import get_systems, remove_system
@@ -618,15 +619,18 @@ def garden_sync(sync_target: str = None):
 
         # Iterate over all gardens and forward the sync requests
         for garden in get_gardens(include_local=False):
-            logger.debug(f"About to create sync operation for garden {garden.name}")
+            try:
+                logger.debug(f"About to create sync operation for garden {garden.name}")
 
-            route(
-                Operation(
-                    operation_type="GARDEN_SYNC",
-                    target_garden_name=garden.name,
-                    kwargs={"sync_target": garden.name},
+                route(
+                    Operation(
+                        operation_type="GARDEN_SYNC",
+                        target_garden_name=garden.name,
+                        kwargs={"sync_target": garden.name},
+                    )
                 )
-            )
+            except ForwardException:
+                pass
 
 
 def publish_garden_systems(garden: Garden, src_garden: str):
