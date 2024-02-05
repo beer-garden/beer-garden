@@ -235,7 +235,6 @@ angular
     .controller('AdminRoleController', adminRoleController)
     .controller('NewRoleController', newRoleController)
     .controller('AdminGardenController', adminGardenController)
-    .controller('AdminGardenViewController', adminGardenViewController)
     .controller('GardenConfigExportController', gardenConfigExportController)
     .controller('GardenConfigImportController', gardenConfigImportController)
     .controller(
