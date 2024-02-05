@@ -455,7 +455,7 @@ def setup_routing():
 
     # Don't add the local garden
     for garden in get_gardens(include_local=False):
-        if garden.name != config.get("garden.name"):
+        if garden.name != config.get("garden.name") and ((garden.has_parent and garden.parent == config.get("garden.name")) or not garden.has_parent):
             for system in garden.systems:
                 add_routing_system(system=system, garden_name=garden.name)
 
@@ -571,20 +571,21 @@ def handle_event(event):
     # This is also why we only handle GARDEN_UPDATED and not STARTED or STOPPED
     if event.garden == config.get("garden.name") and not event.error:
         if event.name == Events.GARDEN_CONFIGURED.name:
-            gardens[event.payload.name] = event.payload
+            if event.payload.name != config.get("garden.name") and ((event.payload.has_parent and event.payload.parent == config.get("garden.name")) or not event.payload.has_parent):
+                gardens[event.payload.name] = event.payload
 
-            stomp_found = False
-            for connection in event.payload.publishing_connections:
-                if connection.api.upper() == "STOMP":
-                    stomp_found = True
-                    if (
-                        event.payload.name not in stomp_garden_connections
-                        and connection.status == "PUBLISHING"
-                    ):
-                        create_stomp_connection(connection)
+                stomp_found = False
+                for connection in event.payload.publishing_connections:
+                    if connection.api.upper() == "STOMP":
+                        stomp_found = True
+                        if (
+                            event.payload.name not in stomp_garden_connections
+                            and connection.status == "PUBLISHING"
+                        ):
+                            create_stomp_connection(connection)
 
-                    elif connection.status == "DISABLED":
-                        stomp_garden_connections[event.payload.name].disconnect()
+                        elif connection.status == "DISABLED":
+                            stomp_garden_connections[event.payload.name].disconnect()
 
             if not stomp_found and event.payload.name not in stomp_garden_connections:
                 stomp_garden_connections[event.payload.name].disconnect()
