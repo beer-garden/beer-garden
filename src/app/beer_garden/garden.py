@@ -488,7 +488,7 @@ def load_garden_connections(garden: Garden):
 
         http_connection = Connection(
             api="HTTP",
-            status="PUBLISHING" if garden_config.get("receiving") else "DISABLED",
+            status="PUBLISHING" if garden_config.get("publishing") else "DISABLED",
         )
         http_connection.status_info["heartbeat"] = datetime.utcnow()
 

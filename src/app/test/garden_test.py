@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 import pytest
+from pathlib import Path
+import os
+
 from brewtils.models import Garden as BrewtilsGarden
 from brewtils.models import System as BrewtilsSystem
 from brewtils.specification import _CONNECTION_SPEC
@@ -14,6 +17,7 @@ from beer_garden.garden import (
     get_gardens,
     local_garden,
     remove_garden,
+    load_garden_connections
 )
 from beer_garden.systems import create_system
 
@@ -124,45 +128,124 @@ class TestGarden:
         # confirm that systems of other gardens remain intact
         assert len(System.objects.filter(namespace=localgarden.name)) == 1
 
-    def test_create_garden_loads_default_config(self, bg_garden):
-        """create_garden should explicitly load default HTTP configs from brewtils"""
+    def test_create_garden_default_config(self, bg_garden):
+        """create_garden set publishing connections to Missing Configuration when missing"""
 
-        http_params = {
-            "host": "localhost",
-            "port": 1337,
-            "url_prefix": "/",
-            "ssl": True,
-            "ca_cert": "/abc",
-            "ca_verify": True,
-            "client_cert": "/def",
-        }
-
-        bg_garden.connection_params = {"http": http_params}
-
+        bg_garden.publishing_connections = []
         garden = create_garden(bg_garden)
-        for key in http_params:
-            assert garden.connection_params["http"][key] == http_params[key]
+        for connection in garden.publishing_connections:
+            assert connection.status == "MISSING_CONFIGURATION"
+        #for key in http_params:
+        #    assert garden.connection_params["http"][key] == http_params[key]
 
-    def test_create_garden_with_empty_connection_params(self, bg_garden):
-        """create_garden should explicitly load default HTTP configs from brewtils when empty"""
+    def test_load_configuration_file(self, bg_garden, tmpdir):
+        """Loads a yaml file containing configuration details"""
 
-        config_map = {
-            "bg_host": "host",
-            "bg_port": "port",
-            "ssl_enabled": "ssl",
-            "bg_url_prefix": "url_prefix",
-            "ca_cert": "ca_cert",
-            "ca_verify": "ca_verify",
-            "client_cert": "client_cert",
-        }
+        contents = """publishing: true
+receiving: true
+http:
+  access_token: null
+  api_version: 1
+  client_timeout: -1
+  enabled: true
+  host: localhost
+  password: null
+  port: 2337
+  refresh_token: null
+  ssl:
+    ca_cert: null
+    ca_path: null
+    ca_verify: true
+    client_cert: null
+    client_cert_verify: NONE
+    client_key: null
+    enabled: false
+    private_key: null
+    public_key: null
+  url_prefix: /
+  username: null
+skip_events: []
+stomp:
+  enabled: false
+  headers: []
+  host: localhost
+  password: password
+  port: 61613
+  send_destination: Beer_Garden_Operations_Parent
+  ssl:
+    ca_cert: null
+    client_cert: null
+    client_key: null
+    use_ssl: false
+  subscribe_destination: Beer_Garden_Forward_Parent
+  username: beer_garden"""
+        config_file = Path(tmpdir, "garden.yaml")
+        with open(config_file, "w") as f:
+            f.write(contents)
 
-        spec = YapconfSpec(_CONNECTION_SPEC)
-        # bg_host is required by brewtils garden spec
-        defaults = spec.load_config({"bg_host": ""})
+        config._CONFIG = {"children": {"directory": tmpdir}}
 
-        garden = create_garden(bg_garden)
-        for key in config_map:
-            assert garden.connection_params["http"][config_map[key]] == defaults[key]
+        garden = load_garden_connections(bg_garden)
+        for connection in garden.publishing_connections:
+            if connection.api == "HTTP":
+                assert connection.status == "PUBLISHING"
+            else:
+                assert connection.status == "NOT_CONFIGURED"
+
+    def test_load_configuration_file_disabled_publishing(self, bg_garden, tmpdir):
+        """Loads a yaml file containing configuration details"""
+
+        contents = """publishing: false
+receiving: true
+http:
+  access_token: null
+  api_version: 1
+  client_timeout: -1
+  enabled: true
+  host: localhost
+  password: null
+  port: 2337
+  refresh_token: null
+  ssl:
+    ca_cert: null
+    ca_path: null
+    ca_verify: true
+    client_cert: null
+    client_cert_verify: NONE
+    client_key: null
+    enabled: false
+    private_key: null
+    public_key: null
+  url_prefix: /
+  username: null
+skip_events: []
+stomp:
+  enabled: false
+  headers: []
+  host: localhost
+  password: password
+  port: 61613
+  send_destination: Beer_Garden_Operations_Parent
+  ssl:
+    ca_cert: null
+    client_cert: null
+    client_key: null
+    use_ssl: false
+  subscribe_destination: Beer_Garden_Forward_Parent
+  username: beer_garden"""
+        config_file = Path(tmpdir, "garden.yaml")
+
+        with open(config_file, "w") as f:
+            f.write(contents)
+
+        config._CONFIG = {"children": {"directory": tmpdir}}
+
+        garden = load_garden_connections(bg_garden)
+        for connection in garden.publishing_connections:
+            if connection.api == "HTTP":
+                assert connection.status == "DISABLED"
+            else:
+                assert connection.status == "NOT_CONFIGURED"
 
     def test_remove_garden_cleans_up_remote_user_entries(self, bg_garden):
         """remove_garden should remove any RemoteUser entries for that garden"""
