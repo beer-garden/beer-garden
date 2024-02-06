@@ -96,12 +96,7 @@ export default function adminGardenController(
   };
 
   $scope.syncGardens = function() {
-    GardenService.syncGardens().then((resp)=>{
-      $scope.alerts.push({
-        type: 'success',
-        msg: 'Server accepted request to sync all gardens',
-      });
-    }).catch((err) => {
+    GardenService.syncGardens().then((resp)=>{}).catch((err) => {
       if (err.data && err.data.message) {
         $scope.alerts.push({
           type: 'danger',
