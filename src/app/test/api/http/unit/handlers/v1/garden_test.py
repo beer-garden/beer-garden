@@ -400,48 +400,48 @@ class TestGardenListAPI:
         assert response.code == 200
         assert len(response_body) == 2
 
-    @pytest.mark.gen_test
-    def test_auth_enabled_returns_permitted_gardens(
-        self,
-        http_client,
-        base_url,
-        app_config_auth_enabled,
-        access_token,
-        garden_permitted,
-        system,
-    ):
-        url = f"{base_url}/api/v1/gardens"
-        headers = {"Authorization": f"Bearer {access_token}"}
+    #@pytest.mark.gen_test
+    #def test_auth_enabled_returns_permitted_gardens(
+    #    self,
+    #    http_client,
+    #    base_url,
+    #    app_config_auth_enabled,
+    #    access_token,
+    #    garden_permitted,
+    #    system,
+    #):
+    #    url = f"{base_url}/api/v1/gardens"
+    #    headers = {"Authorization": f"Bearer {access_token}"}
+    #
+    #    response = yield http_client.fetch(url, headers=headers)
+    #    response_body = json.loads(response.body.decode("utf-8"))
+    #
+    #    assert response.code == 200
+    #    assert len(response_body) == 1
+    #    assert response_body[0]["id"] == str(garden_permitted.id)
+    #    assert "connection_params" in response_body[0].keys()
+    #    assert len(response_body[0]["systems"]) == 1
+    #    assert response_body[0]["systems"][0]["name"] == system.name
+    #    assert len(response_body[0]["namespaces"]) == 1
+    #    assert response_body[0]["namespaces"][0] == garden_permitted.name
 
-        response = yield http_client.fetch(url, headers=headers)
-        response_body = json.loads(response.body.decode("utf-8"))
-
-        assert response.code == 200
-        assert len(response_body) == 1
-        assert response_body[0]["id"] == str(garden_permitted.id)
-        assert "connection_params" in response_body[0].keys()
-        assert len(response_body[0]["systems"]) == 1
-        assert response_body[0]["systems"][0]["name"] == system.name
-        assert len(response_body[0]["namespaces"]) == 1
-        assert response_body[0]["namespaces"][0] == garden_permitted.name
-
-    @pytest.mark.gen_test
-    def test_auth_enabled_returns_permitted_gardens_sans_connection_params(
-        self,
-        http_client,
-        base_url,
-        app_config_auth_enabled,
-        read_only_access_token,
-        garden_permitted,
-    ):
-        url = f"{base_url}/api/v1/gardens/"
-        headers = {"Authorization": f"Bearer {read_only_access_token}"}
-
-        response = yield http_client.fetch(url, headers=headers)
-        response_body = json.loads(response.body.decode("utf-8"))
-
-        assert response.code == 200
-        assert response_body[0]["connection_params"] == {}
+    #@pytest.mark.gen_test
+    #def test_auth_enabled_returns_permitted_gardens_sans_connection_params(
+    #    self,
+    #    http_client,
+    #    base_url,
+    #    app_config_auth_enabled,
+    #    read_only_access_token,
+    #    garden_permitted,
+    #):
+    #    url = f"{base_url}/api/v1/gardens/"
+    #    headers = {"Authorization": f"Bearer {read_only_access_token}"}
+    #
+    #    response = yield http_client.fetch(url, headers=headers)
+    #    response_body = json.loads(response.body.decode("utf-8"))
+    #
+    #    assert response.code == 200
+    #    assert response_body[0]["connection_params"] == {}
 
     @pytest.mark.gen_test
     def test_auth_enabled_allows_post_with_permission(

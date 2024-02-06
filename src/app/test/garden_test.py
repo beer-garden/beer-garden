@@ -135,8 +135,6 @@ class TestGarden:
         garden = create_garden(bg_garden)
         for connection in garden.publishing_connections:
             assert connection.status == "MISSING_CONFIGURATION"
-        #for key in http_params:
-        #    assert garden.connection_params["http"][key] == http_params[key]
 
     def test_load_configuration_file(self, bg_garden, tmpdir):
         """Loads a yaml file containing configuration details"""
