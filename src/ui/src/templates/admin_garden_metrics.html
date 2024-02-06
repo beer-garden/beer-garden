@@ -31,7 +31,7 @@
             <tbody>
                 <div>
                     <tr ng-repeat="sourceMetrics in routeMetrics">
-                        <td>{{sourceMetrics["route"]}}</td>
+                        <td>{{sourceMetrics["source"]}} <i class="fa fa-long-arrow-right"></i> {{selectedGarden.name}}</td>
                         <td>{{sourceMetrics["action"]}}</td>
                         <td>{{sourceMetrics["value"]}}s</td>
                     </tr>

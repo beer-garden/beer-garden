@@ -54,11 +54,11 @@ export default function adminGardenController(
     for (let i = 0; i < $scope.data.length; i++) {
       for (var key in $scope.data[i].metadata) {
           if (key == ("CREATE_DELTA_" + garden.name)) {
-            $scope.routeMetrics.push({"route":$scope.data[i].name + " TO " + garden.name, "action":"Request Created", "value":$scope.data[i].metadata[key]})
+            $scope.routeMetrics.push({"source":$scope.data[i].name, "action":"Request Created", "value":$scope.data[i].metadata[key]})
           } else if (key == ("START_DELTA_" + garden.name)) {
-            $scope.routeMetrics.push({"route":$scope.data[i].name + " TO " + garden.name, "action":"Request Started", "value":$scope.data[i].metadata[key]})
+            $scope.routeMetrics.push({"source":$scope.data[i].name, "action":"Request Started", "value":$scope.data[i].metadata[key]})
           } else if (key == ("COMPLETE_DELTA_" + garden.name)) {
-            $scope.routeMetrics.push({"route":$scope.data[i].name + " TO " + garden.name, "action":"Request Completed", "value":$scope.data[i].metadata[key]})
+            $scope.routeMetrics.push({"source":$scope.data[i].name, "action":"Request Completed", "value":$scope.data[i].metadata[key]})
           }
       }
   }
