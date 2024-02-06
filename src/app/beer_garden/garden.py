@@ -288,6 +288,10 @@ def remove_garden(garden_name: str = None, garden: Garden = None) -> None:
 
     remove_remote_users(garden)
     remove_remote_systems(garden)
+    
+    for child in garden.children:
+        remove_garden(child)
+        
     db.delete(garden)
 
     return garden
@@ -309,12 +313,6 @@ def create_garden(garden: Garden) -> Garden:
             Connection(api="HTTP", status="MISSING_CONFIGURATION"),
             Connection(api="STOMP", status="MISSING_CONFIGURATION"),
         ]
-
-    # if not garden.receiving_connections:
-    #     garden.receiving_connections = [
-    #         Connection(api="HTTP", status="DISABLED"),
-    #         Connection(api="STOMP", status="DISABLED"),
-    #     ]
 
     garden.status_info["heartbeat"] = datetime.utcnow()
 

@@ -259,33 +259,54 @@ export default function adminGardenController(
 
   }
 
+  $scope.eventUpsetGarden = function (garden) {
+    if (garden.connection_type != "LOCAL" && !garden.has_parent) {
+      for (let i = 0; i < $scope.data.length; i++) {
+        if ($scope.data[i].connection_type == "LOCAL") {
+          garden.parent = $scope.data[i].name;
+          break;
+        }
+      }
+      garden.has_parent = true;
+    }
+    let gardenNotFound = true;
+    for (let i = 0; i < $scope.data.length; i++) {
+      if ($scope.data[i].id == garden.id) {
+        // Min fields to update
+        let updateValues = ["status", "receiving_connections", "publishing_connections", "metadata"];
+
+        for (let x = 0; x < updateValues.length; x++) {
+          $scope.data[i][updateValues[x]] = garden[updateValues[x]]
+        }
+
+        // Not all events include children, only update when children are provided or added
+        if (garden.children.length > 0 || $scope.data[i].length == 0) {
+          $scope.data[i].children = garden.children;
+        }
+        gardenNotFound = false;
+        break;
+      }
+    }
+
+    if (gardenNotFound) {
+      $scope.data.push(garden);
+    }
+
+    for (let x = 0; x < garden.children.length; x++) {
+      $scope.eventUpsetGarden(garden.children[x]);
+    }
+
+  }
+
   EventService.addCallback('admin_garden', (event) => {
     switch (event.name) {
-      case 'GARDEN_CREATED':
-        if (event.payload.connection_type != "LOCAL" && !event.payload.has_parent){
-          for (let i = 0; i < $scope.data.length; i++) {
-            if ($scope.data[i].connection_type == "LOCAL"){
-              event.payload.parent = $scope.data[i].name;
-            }
-          }
-          event.payload.has_parent = true;
-        }
-        $scope.data.push(event.payload);
-        break;
       case 'GARDEN_REMOVED':
         $scope.removeGardenEventChildren(event.payload)
         break;
-      case 'GARDEN_CONFIGURATION':
+      case 'GARDEN_CREATED':
+      case 'GARDEN_CONFIGURED':
       case 'GARDEN_UPDATED':
-        for (let i = 0; i < $scope.data.length; i++) {
-          if ($scope.data[i].id == event.payload.id) {
-            // Min fields to update
-            let updateValues = ["status","receiving_connections","publishing_connections","children","metadata"];
-            for (let x = 0; x < updateValues.length; x++){
-              $scope.data[i][updateValues[x]] = event.payload[updateValues[x]]
-            }
-          }
-        }
+        $scope.eventUpsetGarden(event.payload)
         break;
     }
   });
