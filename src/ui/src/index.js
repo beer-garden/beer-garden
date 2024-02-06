@@ -110,11 +110,6 @@ import {
   newRoleController,
 } from './js/controllers/admin_role.js';
 import adminGardenController from './js/controllers/admin_garden.js';
-import {
-  gardenConfigImportController,
-  gardenConfigImportModalController,
-} from './js/controllers/garden/import_garden_config';
-import gardenConfigExportController from './js/controllers/garden/export_garden_config';
 import commandIndexController from './js/controllers/command_index.js';
 import commandViewController from './js/controllers/command_view.js';
 import requestIndexController from './js/controllers/request_index.js';
@@ -222,10 +217,7 @@ angular
     .controller('AddCommandPublishingBlocklistController', addCommandPublishingBlocklistController)
     .controller('AdminQueueController', adminQueueController)
     .controller('AdminRequestDeleteController',adminRequestDeleteController)
-    .controller(
-        'AdminSystemForceDeleteController',
-        adminSystemForceDeleteController,
-    )
+    .controller('AdminSystemForceDeleteController', adminSystemForceDeleteController)
     .controller('AdminSystemController', adminSystemController)
     .controller('AdminSystemLogsController', adminSystemLogsController)
     .controller('AdminUserIndexController', adminUserIndexController)
@@ -235,12 +227,6 @@ angular
     .controller('AdminRoleController', adminRoleController)
     .controller('NewRoleController', newRoleController)
     .controller('AdminGardenController', adminGardenController)
-    .controller('GardenConfigExportController', gardenConfigExportController)
-    .controller('GardenConfigImportController', gardenConfigImportController)
-    .controller(
-        'GardenConfigImportModalController',
-        gardenConfigImportModalController,
-    )
     .controller('CommandIndexController', commandIndexController)
     .controller('CommandViewController', commandViewController)
     .controller('RequestIndexController', requestIndexController)

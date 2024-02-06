@@ -1,6 +1,8 @@
+import gardenMetricsTemplate from '../../templates/admin_garden_metrics.html';
+
 adminGardenController.$inject = [
   '$scope',
-  '$state',
+  '$uibModal',
   'GardenService',
   'EventService',
 ];
@@ -8,13 +10,14 @@ adminGardenController.$inject = [
 /**
  * adminGardenController - Garden management controller.
  * @param  {Object} $scope          Angular's $scope object.
+ * @param  {Object} $uibModal
  * @param  {Object} GardenService    Beer-Garden's garden service object.
  * @param  {Object} EventService    Beer-Garden's event service object.
  */
 
 export default function adminGardenController(
     $scope,
-    $state,
+    $uibModal,
     GardenService,
     EventService,
 ) {
@@ -43,128 +46,29 @@ export default function adminGardenController(
   $scope.create_garden_popover_message = null;
   $scope.create_garden_name_focus = false;
 
-  $scope.findMetrics = function(garden){
-    let metrics = {};
-    for (let i = 0; i < $scope.data.length; i++){
-      let gardenMetrics = {};
-      let metricsFound = false;
-      for (var key in $scope.data[i].metadata){
-        if (key == ("CREATE_DELTA_"+garden.name)){
-          gardenMetrics["CREATED"] =  $scope.data[i].metadata[key];
-          metricsFound = true;
-        } else if (key == ("START_DELTA_"+garden.name)){
-          gardenMetrics["STARTED"] =  $scope.data[i].metadata[key];
-          metricsFound = true;
-        } else if (key == ("COMPLETE_DELTA_"+garden.name)){
-          gardenMetrics["COMPLETED"] =  $scope.data[i].metadata[key];
-          metricsFound = true;
-        }
-      }
-      if (metricsFound){
-        metrics[$scope.data[i].name] = gardenMetrics;
-      }
-    }
+  $scope.getGardenInfo = function(garden){
 
-    return metrics;
+    $scope.routeMetrics = [];
+    $scope.selectedGarden = garden; 
+
+    for (let i = 0; i < $scope.data.length; i++) {
+      for (var key in $scope.data[i].metadata) {
+          if (key == ("CREATE_DELTA_" + garden.name)) {
+            $scope.routeMetrics.push({"route":$scope.data[i].name + " TO " + garden.name, "action":"Request Created", "value":$scope.data[i].metadata[key]})
+          } else if (key == ("START_DELTA_" + garden.name)) {
+            $scope.routeMetrics.push({"route":$scope.data[i].name + " TO " + garden.name, "action":"Request Started", "value":$scope.data[i].metadata[key]})
+          } else if (key == ("COMPLETE_DELTA_" + garden.name)) {
+            $scope.routeMetrics.push({"route":$scope.data[i].name + " TO " + garden.name, "action":"Request Completed", "value":$scope.data[i].metadata[key]})
+          }
+      }
   }
 
-  $scope.getGardenInsights = function(garden) {
-
-    // Base Headers
-    let tooltip = "<div class='panel-body' style='padding-bottom: 0px'>";
-
-    // Add Metrics
-    // TODO: Add metrics tags
-    let metrics = $scope.findMetrics(garden)
-    if (Object.keys(metrics).length > 0){ 
-      tooltip += "<div>"+
-      "	  <span><h3>Metrics</h3></span>"+
-      "	</div>"+
-      "<div>" +
-      " <table>";
-      // "   <tr>" +
-      // "     <th>Source</th>" +
-      // "     <th>Metrics</th>" +
-      // "   </tr>";
-
-      for (var key in metrics){
-        tooltip += "<tr>" +
-        " <td>"+key+"</td>" +
-        " <td>"+
-        "   <table>";
-        if ("CREATED" in metrics[key]){
-          tooltip += "<tr><td>Created</td><td>" +metrics[key]["CREATED"] + "s</td></tr>";
-        } else {
-          tooltip += "<tr><td>Created</td><td>???s</td></tr>";
-        }
-        if ("STARTED" in metrics[key]){
-          tooltip += "<tr><td>Started</td><td>" +metrics[key]["STARTED"] + "s</td></tr>";
-        } else {
-          tooltip += "<tr><td>Started</td><td>???s</td></tr>";
-        }
-        if ("COMPLETED" in metrics[key]){
-          tooltip += "<tr><td>Completed</td><td>" +metrics[key]["COMPLETED"] + "s</td></tr>";
-        } else {
-          tooltip += "<tr><td>Completed</td><td>???s</td></tr>";
-        }
-        tooltip += "</table>" +
-        " </td>" +
-        "</tr>";
-      }
-      
-      tooltip += "</table>";
-      tooltip += "</div>";
-
-    }
-
-    // Upstream
-    if (garden.has_parent){
-      tooltip += "<div>"+
-      "	  <span><h3>Upstream</h3></span>"+
-      "	</div>"+
-      "<div>"+
-      "  <ul><li><span>"+garden.parent+"</span></li></ul>"+
-      "</div>";
-
-      // tooltip += "<div class='panel-heading' style='font-size: 22px'>"+
-      // "	  <span>Upstream</span>"+
-      // "	</div>"+
-      // "	<div class='list-group-item clearfix'>"+
-      // "	  <div>"+
-      // "		  <span>"+garden.parent+"</span>"+
-      // "	  </div>"+
-      // "	</div>";
-    }
-
-    // Downstream
-    if (garden.children.length > 0){
-      tooltip += "<div>"+
-      " <span><h3>Downstream</h3></span>"+
-      "</div>"+
-      "<div><ul>";
-      
-      for (let i = 0; i < garden.children.length; i++){
-        tooltip += "<li><span>" + garden.children[i].name + "</span></li>";
-      }
-
-      tooltip += "  </ul></div>"+
-      "</div>";
-
-      // tooltip += "<div class='panel-heading' style='font-size: 22px'>"+
-      // " <span>Downstream</span>"+
-      // "</div>"+
-      // "<div class='list-group-item clearfix'>";
-      
-      // for (let i = 0; i < garden.children.length; i++){
-      //   tooltip += "<div><span>" + garden.children[i].name + "</span></div>";
-      // }
-
-      // tooltip += "  </div>"+
-      // "</div>";
-    }
-
-    tooltip += "</div>"
-    return tooltip;
+    $uibModal.open({
+      template: gardenMetricsTemplate,
+      scope: $scope,
+      windowClass: 'app-modal-window',
+    });
+    
   }
 
   $scope.findGardenLabel = function(garden, gardenLabel) {

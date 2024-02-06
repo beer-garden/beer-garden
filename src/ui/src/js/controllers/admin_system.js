@@ -5,6 +5,8 @@ import adminRequestDelete from '../../templates/admin_request_delete.html';
 import forceDelete from '../../templates/system_force_delete.html';
 import {responseState} from '../services/utility_service.js';
 
+import gardenMetrics from '../../templates/admin_garden_metrics.html';
+
 adminSystemController.$inject = [
   '$scope',
   '$rootScope',
@@ -213,6 +215,16 @@ export default function adminSystemController(
 
   $scope.showLogs = function(system, instance) {
     $uibModal.open({
+      template: gardenMetrics,
+      resolve: {
+        garden: $rootScope.gardensResponse[0],
+        metrics: [],
+      },
+      controller: 'AdminGardenMetricsController',
+      windowClass: 'app-modal-window',
+    });
+    /*
+    $uibModal.open({
       template: readLogs,
       resolve: {
         system: system,
@@ -221,6 +233,7 @@ export default function adminSystemController(
       controller: 'AdminSystemLogsController',
       windowClass: 'app-modal-window',
     });
+    */
   };
 
   $scope.manageQueue = function(system, instance) {

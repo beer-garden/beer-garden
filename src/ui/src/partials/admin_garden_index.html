@@ -92,6 +92,8 @@
 
       <div class="btn-toolbar pull-right">
         <div class="btn-group btn-group-sm">
+          <button type="button" class="btn btn-default fa fa-info-circle" ng-click="getGardenInfo(garden)"
+            title="Metrics for {{garden.name}}"></button>
           <button type="button" class="btn btn-default fa fa-play" ng-click="startGarden(garden)"
             ng-if="isChild(garden)" title="Start Garden {{garden.name}}"></button>
           <button type="button" class="btn btn-default fa fa-stop" ng-click="stopGarden(garden)"

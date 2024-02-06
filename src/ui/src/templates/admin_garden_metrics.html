@@ -1,0 +1,48 @@
+<div class="modal-header">
+    <h3 class="modal-title" id="modal-title">
+        {{selectedGarden.name}}
+    </h3>
+</div>
+
+<div class="modal-body" id="modal-body">
+    <div ng-if="selectedGarden.has_parent">
+        <h4>Upstream</h4>
+        <ul>
+            <li><span>{{selectedGarden.parent}}</span></li>
+        </ul>
+    </div>
+
+    <div ng-if="selectedGarden.children.length > 0">
+        <h4>Downstream</h4>
+        <ul>
+            <li ng-repeat="child in selectedGarden.children">{{child.name}}</li>
+        </ul>
+
+    </div>
+
+    <div ng-if="routeMetrics.length > 0">
+        <h4>Request Latency</h4>
+        <table class="table table-striped table-bordered" style="width: 100%">
+            <thead>
+                <th id="th_garden_route">Route</th>
+                <th id="th_garden_action">Action</th>
+                <th id="th_garden_latency">Latency</th>
+            </thead>
+            <tbody>
+                <div>
+                    <tr ng-repeat="sourceMetrics in routeMetrics">
+                        <td>{{sourceMetrics["route"]}}</td>
+                        <td>{{sourceMetrics["action"]}}</td>
+                        <td>{{sourceMetrics["value"]}}s</td>
+                    </tr>
+                </div>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+<div class="modal-footer">
+    <button class="btn btn-primary" type="button" ng-click="$close()">
+        Close
+    </button>
+</div>
