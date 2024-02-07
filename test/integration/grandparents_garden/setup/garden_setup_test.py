@@ -57,7 +57,22 @@ class TestGardenSetup(object):
         assert len(gardens) == 2
 
         for garden in gardens:
-            assert garden.name in ["grandparent", "parent"]
+            if garden.name == "parent":
+                for connection in garden.publishing_connections:
+                    if connection.api == "HTTP":
+                        assert connection.status == "PUBLISHING"
+                    else:
+                        assert connection.status == "NOT_CONFIGURED"
+                assert len(garden.receiving_connections) == 1
+                assert garden.receiving_connections[0].status == "RECEIVING"
+                assert len(garden.children) == 1
+                assert garden.children[0].name == "child"
+
+            elif garden.name == "grandparent":
+                assert len(garden.children) == 1
+            else:
+                assert False
+
 
     def test_parent_counter(self):
         response = self.parent_easy_client.client.session.get(
@@ -70,7 +85,20 @@ class TestGardenSetup(object):
         assert len(gardens) == 2
 
         for garden in gardens:
-            assert garden.name in ["child", "parent"]
+            if garden.name == "child":
+                for connection in garden.publishing_connections:
+                    if connection.api == "HTTP":
+                        assert connection.status == "PUBLISHING"
+                    else:
+                        assert connection.status == "NOT_CONFIGURED"
+                assert len(garden.receiving_connections) == 1
+                assert garden.receiving_connections[0].status == "RECEIVING"
+                assert len(garden.children) == 0
+
+            elif garden.name == "parent":
+                assert len(garden.children) == 1
+            else:
+                assert False
 
     def test_child_counter(self):
         response = self.child_easy_client.client.session.get(
