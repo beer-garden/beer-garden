@@ -310,7 +310,7 @@ jobs:
         working-directory: ./test/integration
 
       - name: Test Plugins
-        run: python${{ matrix.python-version }} -m pytest local_plugins/plugins/publisher_test.py
+        run: python${{ matrix.python-version }} -m pytest local_plugins/
         working-directory: ./test/integration
 
       - name: Grab logs from Beer-Garden
@@ -351,6 +351,11 @@ jobs:
           default-value: "develop"
           tag-position: -1
 
+      # Used the hashtag here instead of slash allow for branches to have slashes in them
+      - name: Update Brewtils Branch
+        run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements-dev.txt
+        working-directory: ./src/app
+
       - name: Build Beer Garden Docker
         run: |
           python --version
@@ -371,7 +376,10 @@ jobs:
         working-directory: ./src/app
 
       - name: Update Docker Compose  
-        run: cp test/conf/docker-compose-grandparents-test.yml docker/docker-compose/docker-compose.yml
+        run: |
+          cp test/conf/docker-compose-grandparents-test.yml docker/docker-compose/docker-compose.yml
+          cp -r test/conf/beer_garden_grandparent_children docker/docker-compose/
+          cp -r test/conf/beer_garden_parent_children docker/docker-compose/
         working-directory: ./
 
       - name: Checkout Local Plugins

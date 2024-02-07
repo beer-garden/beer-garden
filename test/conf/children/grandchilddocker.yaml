@@ -1,0 +1,37 @@
+receiving: true
+publishing: true
+http:
+  access_token: null
+  api_version: 1
+  client_timeout: -1
+  enabled: true
+  host: 172.18.0.1
+  password: null
+  port: 2357
+  refresh_token: null
+  ssl:
+    ca_cert: null
+    ca_path: null
+    ca_verify: true
+    client_cert: null
+    client_cert_verify: NONE
+    client_key: null
+    enabled: false
+    private_key: null
+    public_key: null
+  url_prefix: /
+  username: null
+stomp:
+  enabled: false
+  headers: []
+  host: localhost
+  password: password
+  port: 61613
+  send_destination: Beer_Garden_Operations_Parent
+  ssl:
+    ca_cert: null
+    client_cert: null
+    client_key: null
+    use_ssl: false
+  subscribe_destination: Beer_Garden_Forward_Parent
+  username: beer_garden
