@@ -84,6 +84,7 @@ class TestGardenSetup(object):
 
         print(gardens)
         assert len(gardens) == 2
+        assert False
 
         for garden in gardens:
             if garden.name == "parent":
