@@ -121,6 +121,9 @@ class TestGardenSetup(object):
                         assert connection.status == "PUBLISHING"
                     else:
                         assert connection.status == "NOT_CONFIGURED"
+                if len(garden.receiving_connections) != 1:
+                    print(garden)
+                    print(len(garden.receiving_connections))
                 assert len(garden.receiving_connections) == 1
                 assert garden.receiving_connections[0].status == "RECEIVING"
                 assert len(garden.children) == 0
