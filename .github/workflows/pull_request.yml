@@ -235,6 +235,7 @@ jobs:
       # Used the hashtag here instead of slash allow for branches to have slashes in them
       - name: Update Brewtils Branch
         run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements-dev.txt
+        working-directory: ./src/app
 
       - name: Build Local Beer Garden Docker
         run: |
