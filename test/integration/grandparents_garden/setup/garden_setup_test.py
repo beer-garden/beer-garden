@@ -1,4 +1,6 @@
 import pytest
+import json
+import time
 
 # from time import sleep
 # from brewtils.models import PatchOperation
@@ -32,6 +34,32 @@ def system_spec():
 class TestGardenSetup(object):
     child_garden_name = "child"
 
+    def sync_parent(self):
+        patches = json.dumps(
+            [
+                {
+                    "operation": "sync",
+                    "path": "",
+                    "value": "",
+                }
+            ]
+        )
+        self.grand_parent_easy_client.client.patch_garden("parent", patches)
+        time.sleep(5)
+
+    def sync_child(self):
+        patches = json.dumps(
+            [
+                {
+                    "operation": "sync",
+                    "path": "",
+                    "value": "",
+                }
+            ]
+        )
+        self.parent_easy_client.client.patch_garden("child", patches)
+        time.sleep(5)
+
     # def test_garden_auto_register_successful(self):
     #     response = self.grand_parent_easy_client.client.session.get(
     #         self.grand_parent_easy_client.client.base_url + "api/v1/gardens/"
@@ -47,6 +75,7 @@ class TestGardenSetup(object):
     #             assert len(garden.children) == 1
 
     def test_grandparent_counter(self):
+        self.sync_parent()
         response = self.grand_parent_easy_client.client.session.get(
             self.grand_parent_easy_client.client.base_url + "api/v1/gardens/"
         )
@@ -75,6 +104,7 @@ class TestGardenSetup(object):
 
 
     def test_parent_counter(self):
+        self.sync_child()
         response = self.parent_easy_client.client.session.get(
             self.parent_easy_client.client.base_url + "api/v1/gardens/"
         )
