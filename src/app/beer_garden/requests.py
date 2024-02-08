@@ -923,6 +923,15 @@ def handle_wait_events(event):
                 request_map[request_event].set()
 
 
+def processes_status_latency(garden, target_garden, status, delta):
+    garden.metadata[f"{status}_DELTA_{target_garden}"] = delta
+    if f"{status}_COUNT_{target_garden}" not in garden.metadata:
+        garden.metadata[f"{status}_AVG_{target_garden}"] = garden.metadata[f"{status}_DELTA_{target_garden}"]
+        garden.metadata[f"{status}_COUNT_{target_garden}"] = 1
+    else:
+        garden.metadata[f"{status}_AVG_{target_garden}"] = ((garden.metadata[f"{status}_AVG_{target_garden}"] * garden.metadata[f"{status}_COUNT_{target_garden}"]) + delta) / (garden.metadata[f"{status}_COUNT_{target_garden}"] + 1)
+        garden.metadata[f"{status}_COUNT_{target_garden}"] = 1
+
 def update_request_latency_garden(existing_request: Request, event: Event) -> None:
     """Updater for Garden metadata based on Request timestamps
 
@@ -939,17 +948,17 @@ def update_request_latency_garden(existing_request: Request, event: Event) -> No
     garden = db.query_unique(Garden, name=existing_request.source_garden)
 
     if event.name == Events.REQUEST_CREATED.name:
-        garden.metadata[f"CREATE_DELTA_{event.payload.target_garden}"] = (
+        processes_status_latency(garden, event.payload.target_garden, "CREATE", (
             event.payload.created_at - existing_request.created_at
-        ).total_seconds()
+        ).total_seconds())
     elif event.payload.status == "IN_PROGRESS":
-        garden.metadata[f"START_DELTA_{event.payload.target_garden}"] = (
+        processes_status_latency(garden, event.payload.target_garden, "START", (
             event.payload.updated_at - existing_request.created_at
-        ).total_seconds()
+        ).total_seconds())
     elif event.payload.status in ("CANCELED", "SUCCESS", "ERROR"):
-        garden.metadata[f"COMPLETE_DELTA_{event.payload.target_garden}"] = (
+        processes_status_latency(garden, event.payload.target_garden, "COMPLETE", (
             event.payload.updated_at - existing_request.created_at
-        ).total_seconds()
+        ).total_seconds())
     else:
         return
 
