@@ -4,6 +4,7 @@ from pathlib import Path
 import os
 
 from brewtils.models import Garden as BrewtilsGarden
+from brewtils.models import Connection as BrewtilsConnection
 from brewtils.models import System as BrewtilsSystem
 from brewtils.specification import _CONNECTION_SPEC
 from mongoengine import DoesNotExist, connect
@@ -17,7 +18,8 @@ from beer_garden.garden import (
     get_gardens,
     local_garden,
     remove_garden,
-    load_garden_connections
+    load_garden_connections,
+    update_garden_receiving_heartbeat
 )
 from beer_garden.systems import create_system
 
@@ -60,7 +62,7 @@ def remotegarden_system():
 def remotegarden(remotegarden_system):
     yield create_garden(
         BrewtilsGarden(
-            name="remotegarden", connection_type="HTTP", systems=[remotegarden_system]
+            name="remotegarden", connection_type="REMOTE", systems=[remotegarden_system]
         )
     )
 
@@ -245,6 +247,60 @@ stomp:
             else:
                 assert connection.status == "NOT_CONFIGURED"
 
+    def test_load_configuration_file_disable_receiving(self, bg_garden, tmpdir):
+        """Loads a yaml file containing configuration details"""
+
+        contents = """publishing: true
+receiving: false
+http:
+  access_token: null
+  api_version: 1
+  client_timeout: -1
+  enabled: true
+  host: localhost
+  password: null
+  port: 2337
+  refresh_token: null
+  ssl:
+    ca_cert: null
+    ca_path: null
+    ca_verify: true
+    client_cert: null
+    client_cert_verify: NONE
+    client_key: null
+    enabled: false
+    private_key: null
+    public_key: null
+  url_prefix: /
+  username: null
+skip_events: []
+stomp:
+  enabled: false
+  headers: []
+  host: localhost
+  password: password
+  port: 61613
+  send_destination: Beer_Garden_Operations_Parent
+  ssl:
+    ca_cert: null
+    client_cert: null
+    client_key: null
+    use_ssl: false
+  subscribe_destination: Beer_Garden_Forward_Parent
+  username: beer_garden"""
+        config_file = Path(tmpdir, "garden.yaml")
+        with open(config_file, "w") as f:
+            f.write(contents)
+
+        config._CONFIG = {"children": {"directory": tmpdir}}
+
+        bg_garden.receiving_connections = [BrewtilsConnection(api="http", status="RECEIVING")]
+
+
+        garden = load_garden_connections(bg_garden)
+        for connection in garden.receiving_connections:
+            assert connection.status == "DISABLED"
+
     def test_remove_garden_cleans_up_remote_user_entries(self, bg_garden):
         """remove_garden should remove any RemoteUser entries for that garden"""
         garden = create_garden(bg_garden)
@@ -257,3 +313,94 @@ stomp:
         )
 
         assert remote_user_count == 0
+
+    def test_update_garden_receiving_heartbeat_update_heartbeat(self):
+        # New garden
+        garden = update_garden_receiving_heartbeat("http", garden_name="new_garden")
+        
+        assert len(garden.receiving_connections) == 1
+        assert garden.receiving_connections[0].status == "DISABLED"
+
+    def test_update_garden_receiving_heartbeat_existing_garden_new_api_with_config(self, tmpdir, bg_garden):
+        # New garden
+
+        bg_garden.systems = []
+        
+        garden = create_garden(bg_garden)
+        assert len(garden.receiving_connections) == 1
+
+        contents = """publishing: true
+receiving: true
+http:
+  access_token: null
+  api_version: 1
+  client_timeout: -1
+  enabled: true
+  host: localhost
+  password: null
+  port: 2337
+  refresh_token: null
+  ssl:
+    ca_cert: null
+    ca_path: null
+    ca_verify: true
+    client_cert: null
+    client_cert_verify: NONE
+    client_key: null
+    enabled: false
+    private_key: null
+    public_key: null
+  url_prefix: /
+  username: null
+skip_events: []
+stomp:
+  enabled: false
+  headers: []
+  host: localhost
+  password: password
+  port: 61613
+  send_destination: Beer_Garden_Operations_Parent
+  ssl:
+    ca_cert: null
+    client_cert: null
+    client_key: null
+    use_ssl: false
+  subscribe_destination: Beer_Garden_Forward_Parent
+  username: beer_garden"""
+        config_file = Path(tmpdir, f"{garden.name}.yaml")
+        with open(config_file, "w") as f:
+            f.write(contents)
+
+        config._CONFIG = {"children": {"directory": tmpdir}}
+
+        garden = update_garden_receiving_heartbeat("STOMP", garden_name=garden.name)
+        
+        assert len(garden.receiving_connections) == 2
+
+        for connection in garden.receiving_connections:
+            assert connection.status == "RECEIVING"
+
+    def test_update_garden_receiving_heartbeat_existing_garden_new_api(self, bg_garden):
+        # New garden
+
+        bg_garden.systems = []
+        
+        garden = create_garden(bg_garden)
+        assert len(garden.receiving_connections) == 1
+
+        garden = update_garden_receiving_heartbeat("STOMP", garden_name=garden.name)
+        
+        assert len(garden.receiving_connections) == 2
+
+        for connection in garden.receiving_connections:
+            if connection.api == "STOMP":
+                assert connection.status == "DISABLED"
+            else:
+                assert connection.status == "RECEIVING"
+
+
+    def test_update_garden_status(self, bg_garden):
+        pass
+
+    def test_upsert_garden(self, bg_garden):
+        pass
