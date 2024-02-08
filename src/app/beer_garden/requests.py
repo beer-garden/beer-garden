@@ -926,7 +926,7 @@ def handle_wait_events(event):
 def processes_status_latency(garden, target_garden, status, delta):
     garden.metadata[f"{status}_DELTA_{target_garden}"] = round(delta, 3)
     if f"{status}_COUNT_{target_garden}" not in garden.metadata:
-        garden.metadata[f"{status}_AVG_{target_garden}"] = garden.metadata[f"{status}_DELTA_{target_garden}"]
+        garden.metadata[f"{status}_AVG_{target_garden}"] = round(garden.metadata[f"{status}_DELTA_{target_garden}"], 3)
         garden.metadata[f"{status}_COUNT_{target_garden}"] = 1
     else:
         garden.metadata[f"{status}_AVG_{target_garden}"] = round(((garden.metadata[f"{status}_AVG_{target_garden}"] * garden.metadata[f"{status}_COUNT_{target_garden}"]) + delta) / (garden.metadata[f"{status}_COUNT_{target_garden}"] + 1),3)
