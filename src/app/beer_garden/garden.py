@@ -460,7 +460,6 @@ def load_garden_connections(garden: Garden):
 
         garden_config = config.load_child(path)
     except:
-        #TODO: Determine proper status
         garden.status = "CONFIGURATION_ERROR"
         garden.publishing_connections.append(
             Connection(api="HTTP", status="CONFIGURATION_ERROR")
@@ -665,7 +664,7 @@ def handle_event(event):
             Events.GARDEN_STOPPED.name,
             Events.GARDEN_SYNC.name,
         ):
-            logger.error(f"Processing {event.garden} for {event.name}")
+            logger.debug(f"Processing {event.garden} for {event.name}")
 
             for system in event.payload.systems:
                 system.local = False
