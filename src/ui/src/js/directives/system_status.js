@@ -38,6 +38,7 @@ export default function systemStatusDirective() {
           case 'UNREACHABLE':
           case 'DISABLED':
           case 'NOT_CONFIGURED':
+          case 'CONFIGURATION_ERROR':
             scope.labelClass = 'label-danger';
             break;
         }

@@ -461,13 +461,13 @@ def load_garden_connections(garden: Garden):
         garden_config = config.load_child(path)
     except:
         #TODO: Determine proper status
-        garden.status = "NOT_CONFIGURED"
-        #garden.publishing_connections.append(
-        #    Connection(api="HTTP", status="ERROR")
-        #)
-        #garden.publishing_connections.append(
-        #    Connection(api="STOMP", status="ERROR")
-        #)
+        garden.status = "CONFIGURATION_ERROR"
+        garden.publishing_connections.append(
+            Connection(api="HTTP", status="CONFIGURATION_ERROR")
+        )
+        garden.publishing_connections.append(
+            Connection(api="STOMP", status="CONFIGURATION_ERROR")
+        )
         return garden
 
     if config.get("http.enabled", garden_config):

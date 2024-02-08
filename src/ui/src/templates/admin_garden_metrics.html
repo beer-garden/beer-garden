@@ -35,27 +35,27 @@
                             <table class="table table-striped table-bordered" style="width: 100%">
                                 <thead>
                                     <th id="th_garden_route">Status</th>
-                                    <th id="th_garden_latency">Latest</th>
-                                    <th id="th_garden_latency">Average</th>
+                                    <th id="th_garden_latency">Latest (seconds)</th>
+                                    <th id="th_garden_latency">Average (seconds)</th>
                                     <th id="th_garden_latency">Count</th>
                                 </thead>
                                 <tbody>
-                                    <tr>
+                                    <tr ng-if="sourceMetrics['CREATE']['COUNT'] > 0">
                                         <td>Created</td>
-                                        <td>{{sourceMetrics["CREATE"]["DELTA"]}} s</td>
-                                        <td>{{sourceMetrics["CREATE"]["AVG"]}} s</td>
+                                        <td>{{sourceMetrics["CREATE"]["DELTA"]}}</td>
+                                        <td>{{sourceMetrics["CREATE"]["AVG"]}}</td>
                                         <td>{{sourceMetrics["CREATE"]["COUNT"]}}</td>
                                     </tr>
-                                    <tr>
+                                    <tr ng-if="sourceMetrics['START']['COUNT'] > 0">
                                         <td>Started</td>
-                                        <td>{{sourceMetrics["START"]["DELTA"]}} s</td>
-                                        <td>{{sourceMetrics["START"]["AVG"]}} s</td>
+                                        <td>{{sourceMetrics["START"]["DELTA"]}}</td>
+                                        <td>{{sourceMetrics["START"]["AVG"]}}</td>
                                         <td>{{sourceMetrics["START"]["COUNT"]}}</td>
                                     </tr>
-                                    <tr>
+                                    <tr ng-if="sourceMetrics['COMPLETE']['COUNT'] > 0">
                                         <td>Completed</td>
-                                        <td>{{sourceMetrics["COMPLETE"]["DELTA"]}} s</td>
-                                        <td>{{sourceMetrics["COMPLETE"]["AVG"]}} s</td>
+                                        <td>{{sourceMetrics["COMPLETE"]["DELTA"]}}</td>
+                                        <td>{{sourceMetrics["COMPLETE"]["AVG"]}}</td>
                                         <td>{{sourceMetrics["COMPLETE"]["COUNT"]}}</td>
                                     </tr>
                                 </tbody>

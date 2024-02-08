@@ -842,7 +842,7 @@ def create_stomp_connection(connection: BrewtilsConnection) -> Connection:
 
 def _forward_stomp(operation: Operation, target_garden: Garden) -> None:
     for connection in target_garden.publishing_connections:
-        if connection.api == "STOMP" and connection.status != "DISABLED":
+        if connection.api == "STOMP" and connection.status not in ["DISABLED","CONFIGURATION_ERROR"]:
             try:
                 conn = stomp_garden_connections[target_garden.name]
 
@@ -882,7 +882,7 @@ def _forward_http(operation: Operation, target_garden: Garden) -> None:
     """Actually forward an operation using HTTP"""
 
     for connection in target_garden.publishing_connections:
-        if connection.api == "HTTP" and connection.status != "DISABLED":
+        if connection.api == "HTTP" and connection.status not in ["DISABLED","CONFIGURATION_ERROR"]:
             easy_client = EasyClient(
                 bg_host=connection.config.get("host"),
                 bg_port=connection.config.get("port"),
