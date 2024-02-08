@@ -751,6 +751,8 @@ class Job(MongoModel, Document):
     next_run_time = DateTimeField()
     success_count = IntField(required=True, default=0, min_value=0)
     error_count = IntField(required=True, default=0, min_value=0)
+    skip_count = IntField(required=True, default=0, min_value=0)
+    canceled_count = IntField(required=True, default=0, min_value=0)
     status = StringField(
         required=True, choices=BrewtilsJob.STATUS_TYPES, default="RUNNING"
     )

@@ -466,9 +466,11 @@ def set_owner(file_id: str, owner_id: str = None, owner_type: str = None) -> Fil
                     owner_id=owner_id,
                     owner_type=owner_type,
                     job=owner.id if owner is not None and owner_type == "JOB" else None,
-                    request=owner.id
-                    if owner is not None and owner_type == "REQUEST"
-                    else None,
+                    request=(
+                        owner.id
+                        if owner is not None and owner_type == "REQUEST"
+                        else None
+                    ),
                 )
             else:
                 file = db.modify(file, owner_id=owner_id, owner_type=owner_type)
