@@ -19,7 +19,8 @@ from beer_garden.garden import (
     local_garden,
     remove_garden,
     load_garden_connections,
-    update_garden_receiving_heartbeat
+    update_garden_receiving_heartbeat,
+    update_garden_status
 )
 from beer_garden.systems import create_system
 
@@ -399,8 +400,35 @@ stomp:
                 assert connection.status == "RECEIVING"
 
 
-    def test_update_garden_status(self, bg_garden):
-        pass
+    def test_update_garden_status_stopped(self, bg_garden):
+        bg_garden.systems = []
+        create_garden(bg_garden)
+        garden = update_garden_status(bg_garden.name, "STOPPED")
+
+        assert len(garden.receiving_connections) > 0
+        assert len(garden.publishing_connections) > 0
+
+        for connection in garden.receiving_connections:
+            assert connection.status == "DISABLED"
+        for connection in garden.publishing_connections:
+            assert connection.status == "DISABLED"
+
+
+    def test_update_garden_status_start(self, bg_garden):
+        for connection in bg_garden.receiving_connections:
+            connection.status = "DISABLED"
+        for connection in bg_garden.publishing_connections:
+            connection.status = "DISABLED"
+        bg_garden.systems = []
+        
+        create_garden(bg_garden)
+        garden = update_garden_status(bg_garden.name, "RUNNING")
+
+        for connection in garden.receiving_connections:
+            assert connection.status == "RECEIVING"
+        for connection in garden.publishing_connections:
+            assert connection.status == "PUBLISHING"
+
 
     def test_upsert_garden(self, bg_garden):
         pass
