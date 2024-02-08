@@ -46,29 +46,37 @@ export default function adminGardenController(
   $scope.create_garden_popover_message = null;
   $scope.create_garden_name_focus = false;
 
-  $scope.getGardenInfo = function(garden){
+  $scope.getGardenInfo = function (garden) {
 
     $scope.routeMetrics = [];
-    $scope.selectedGarden = garden; 
+    $scope.selectedGarden = garden;
+
+    let keys = ["CREATE", "START", "COMPLETE"];
 
     for (let i = 0; i < $scope.data.length; i++) {
-      for (var key in $scope.data[i].metadata) {
-          if (key == ("CREATE_DELTA_" + garden.name)) {
-            $scope.routeMetrics.push({"source":$scope.data[i].name, "action":"Request Created", "value":$scope.data[i].metadata[key]})
-          } else if (key == ("START_DELTA_" + garden.name)) {
-            $scope.routeMetrics.push({"source":$scope.data[i].name, "action":"Request Started", "value":$scope.data[i].metadata[key]})
-          } else if (key == ("COMPLETE_DELTA_" + garden.name)) {
-            $scope.routeMetrics.push({"source":$scope.data[i].name, "action":"Request Completed", "value":$scope.data[i].metadata[key]})
+      let gardenMetrics = { "source": $scope.data[i].name };
+      let foundMetrics = false;
+      for (let x = 0; x < keys.length; x++) {
+        if ($scope.data[i].metadata[keys[x] + "_DELTA_" + garden.name] !== undefined) {
+          gardenMetrics[keys[x]] = {
+            "DELTA": $scope.data[i].metadata[keys[x] + "_DELTA_" + garden.name],
+            "AVG": $scope.data[i].metadata[keys[x] + "_AVG_" + garden.name],
+            "COUNT": $scope.data[i].metadata[keys[x] + "_COUNT_" + garden.name],
           }
+          foundMetrics = true;
+        }
       }
-  }
+      if (foundMetrics) {
+        $scope.routeMetrics.push(gardenMetrics);
+      }
+    }
 
     $uibModal.open({
       template: gardenMetricsTemplate,
       scope: $scope,
       windowClass: 'app-modal-window',
     });
-    
+
   }
 
   $scope.findGardenLabel = function(garden, gardenLabel) {
