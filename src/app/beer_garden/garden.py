@@ -36,16 +36,16 @@ logger = logging.getLogger(__name__)
 def filter_router_result(garden: Garden) -> Garden:
     """Filter values for API output"""
     config_whitelist = [
-            "host",
-            "port",
-            "url_prefix",
-            "send_destination",
-            "subscribe_destination",
-        ]
+        "host",
+        "port",
+        "url_prefix",
+        "send_destination",
+        "subscribe_destination",
+    ]
 
     if garden.publishing_connections:
-        for connection in garden.publishing_connections:   
-            drop_keys = []  
+        for connection in garden.publishing_connections:
+            drop_keys = []
             for key in connection.config:
                 if key not in config_whitelist:
                     drop_keys.append(key)
@@ -53,8 +53,8 @@ def filter_router_result(garden: Garden) -> Garden:
                 connection.config.pop(key)
 
     if garden.receiving_connections:
-        for connection in garden.receiving_connections:      
-            drop_keys = []  
+        for connection in garden.receiving_connections:
+            drop_keys = []
             for key in connection.config:
                 if key not in config_whitelist:
                     drop_keys.append(key)
@@ -70,8 +70,8 @@ def filter_router_result(garden: Garden) -> Garden:
 def get_children_garden(garden: Garden) -> Garden:
     if garden.connection_type == "LOCAL":
         garden.children = db.query(
-                Garden, filter_params={"connection_type__ne": "LOCAL", "has_parent": False}
-            )
+            Garden, filter_params={"connection_type__ne": "LOCAL", "has_parent": False}
+        )
         if garden.children:
             for child in garden.children:
                 child.has_parent = True
@@ -288,10 +288,10 @@ def remove_garden(garden_name: str = None, garden: Garden = None) -> None:
 
     remove_remote_users(garden)
     remove_remote_systems(garden)
-    
+
     for child in garden.children:
         remove_garden(child)
-        
+
     db.delete(garden)
 
     return garden
@@ -378,7 +378,7 @@ def upsert_garden(garden: Garden, skip_connections: bool = True) -> Garden:
     if existing_garden is None:
         return create_garden(garden)
     else:
-        for attr in ("status", "status_info", "namespaces", "systems","metadata"):
+        for attr in ("status", "status_info", "namespaces", "systems", "metadata"):
             setattr(existing_garden, attr, getattr(garden, attr))
         if not skip_connections:
             for attr in ("receiving_connections", "publishing_connections"):
@@ -455,9 +455,8 @@ def load_garden_connections(garden: Garden):
     if not path.exists():
         garden.status = "NOT_CONFIGURED"
         return garden
-    
-    try:
 
+    try:
         garden_config = config.load_child(path)
     except:
         garden.status = "CONFIGURATION_ERROR"

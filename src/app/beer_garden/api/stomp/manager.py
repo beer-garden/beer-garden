@@ -47,7 +47,6 @@ class StompManager(BaseProcessor):
         else:
             logger.info("Failed to connect")
             # Update connection
-            
 
         return conn
 
@@ -185,7 +184,7 @@ class StompManager(BaseProcessor):
                                 conn.send(event, headers=headers)
                         else:
                             conn.send(event)
-                    #else:
+                    # else:
                     #    for garden_name in value["gardens"]:
                     #        try:
                     #            garden = get_garden(garden_name)

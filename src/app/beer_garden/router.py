@@ -238,7 +238,7 @@ def filter_result(result: [brewtils.models.BaseModel, list]):
 
     if type(result) in router_filter:
         return router_filter[type(result)](result)
-    
+
     return result
 
 
@@ -329,6 +329,7 @@ def initiate_forward(operation: Operation):
 
     return response
 
+
 def determine_route_garden(target_garden_name):
     target_garden = gardens.get(target_garden_name)
 
@@ -344,7 +345,7 @@ def determine_route_garden(target_garden_name):
         ]:
             routable = True
             break
-    
+
     if not routable:
         raise RoutingRequestException(
             "Attempted to forward operation to garden "
@@ -355,7 +356,7 @@ def determine_route_garden(target_garden_name):
 
     if target_garden.has_parent and target_garden.parent != config.get("garden.name"):
         return determine_route_garden(target_garden.parent)
-    
+
     return target_garden
 
 
@@ -455,7 +456,10 @@ def setup_routing():
 
     # Don't add the local garden
     for garden in get_gardens(include_local=False):
-        if garden.name != config.get("garden.name") and ((garden.has_parent and garden.parent == config.get("garden.name")) or not garden.has_parent):
+        if garden.name != config.get("garden.name") and (
+            (garden.has_parent and garden.parent == config.get("garden.name"))
+            or not garden.has_parent
+        ):
             for system in garden.systems:
                 add_routing_system(system=system, garden_name=garden.name)
 
@@ -571,7 +575,13 @@ def handle_event(event):
     # This is also why we only handle GARDEN_UPDATED and not STARTED or STOPPED
     if event.garden == config.get("garden.name") and not event.error:
         if event.name == Events.GARDEN_CONFIGURED.name:
-            if event.payload.name != config.get("garden.name") and ((event.payload.has_parent and event.payload.parent == config.get("garden.name")) or not event.payload.has_parent):
+            if event.payload.name != config.get("garden.name") and (
+                (
+                    event.payload.has_parent
+                    and event.payload.parent == config.get("garden.name")
+                )
+                or not event.payload.has_parent
+            ):
                 gardens[event.payload.name] = event.payload
 
                 stomp_found = False
@@ -842,7 +852,10 @@ def create_stomp_connection(connection: BrewtilsConnection) -> Connection:
 
 def _forward_stomp(operation: Operation, target_garden: Garden) -> None:
     for connection in target_garden.publishing_connections:
-        if connection.api == "STOMP" and connection.status not in ["DISABLED","CONFIGURATION_ERROR"]:
+        if connection.api == "STOMP" and connection.status not in [
+            "DISABLED",
+            "CONFIGURATION_ERROR",
+        ]:
             try:
                 conn = stomp_garden_connections[target_garden.name]
 
@@ -882,7 +895,10 @@ def _forward_http(operation: Operation, target_garden: Garden) -> None:
     """Actually forward an operation using HTTP"""
 
     for connection in target_garden.publishing_connections:
-        if connection.api == "HTTP" and connection.status not in ["DISABLED","CONFIGURATION_ERROR"]:
+        if connection.api == "HTTP" and connection.status not in [
+            "DISABLED",
+            "CONFIGURATION_ERROR",
+        ]:
             easy_client = EasyClient(
                 bg_host=connection.config.get("host"),
                 bg_port=connection.config.get("port"),

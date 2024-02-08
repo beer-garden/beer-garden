@@ -57,8 +57,8 @@ class HttpParentUpdater(QueueListener):
                     connection.config = {}
                 for connection in event.payload.receiving_connections:
                     connection.config = {}
-                #event.payload.publishing_connections = []
-                #event.payload.receiving_connections = []
+                # event.payload.publishing_connections = []
+                # event.payload.receiving_connections = []
                 event.payload.has_parent = True
                 self.logger.error(event.payload)
 

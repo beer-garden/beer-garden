@@ -20,7 +20,7 @@ from beer_garden.garden import (
     remove_garden,
     load_garden_connections,
     update_garden_receiving_heartbeat,
-    update_garden_status
+    update_garden_status,
 )
 from beer_garden.systems import create_system
 
@@ -295,8 +295,9 @@ stomp:
 
         config._CONFIG = {"children": {"directory": tmpdir}}
 
-        bg_garden.receiving_connections = [BrewtilsConnection(api="http", status="RECEIVING")]
-
+        bg_garden.receiving_connections = [
+            BrewtilsConnection(api="http", status="RECEIVING")
+        ]
 
         garden = load_garden_connections(bg_garden)
         for connection in garden.receiving_connections:
@@ -318,15 +319,17 @@ stomp:
     def test_update_garden_receiving_heartbeat_update_heartbeat(self):
         # New garden
         garden = update_garden_receiving_heartbeat("http", garden_name="new_garden")
-        
+
         assert len(garden.receiving_connections) == 1
         assert garden.receiving_connections[0].status == "DISABLED"
 
-    def test_update_garden_receiving_heartbeat_existing_garden_new_api_with_config(self, tmpdir, bg_garden):
+    def test_update_garden_receiving_heartbeat_existing_garden_new_api_with_config(
+        self, tmpdir, bg_garden
+    ):
         # New garden
 
         bg_garden.systems = []
-        
+
         garden = create_garden(bg_garden)
         assert len(garden.receiving_connections) == 1
 
@@ -375,7 +378,7 @@ stomp:
         config._CONFIG = {"children": {"directory": tmpdir}}
 
         garden = update_garden_receiving_heartbeat("STOMP", garden_name=garden.name)
-        
+
         assert len(garden.receiving_connections) == 2
 
         for connection in garden.receiving_connections:
@@ -385,12 +388,12 @@ stomp:
         # New garden
 
         bg_garden.systems = []
-        
+
         garden = create_garden(bg_garden)
         assert len(garden.receiving_connections) == 1
 
         garden = update_garden_receiving_heartbeat("STOMP", garden_name=garden.name)
-        
+
         assert len(garden.receiving_connections) == 2
 
         for connection in garden.receiving_connections:
@@ -398,7 +401,6 @@ stomp:
                 assert connection.status == "DISABLED"
             else:
                 assert connection.status == "RECEIVING"
-
 
     def test_update_garden_status_stopped(self, bg_garden):
         bg_garden.systems = []
@@ -413,14 +415,13 @@ stomp:
         for connection in garden.publishing_connections:
             assert connection.status == "DISABLED"
 
-
     def test_update_garden_status_start(self, bg_garden):
         for connection in bg_garden.receiving_connections:
             connection.status = "DISABLED"
         for connection in bg_garden.publishing_connections:
             connection.status = "DISABLED"
         bg_garden.systems = []
-        
+
         create_garden(bg_garden)
         garden = update_garden_status(bg_garden.name, "RUNNING")
 
@@ -428,7 +429,6 @@ stomp:
             assert connection.status == "RECEIVING"
         for connection in garden.publishing_connections:
             assert connection.status == "PUBLISHING"
-
 
     def test_upsert_garden(self, bg_garden):
         pass
