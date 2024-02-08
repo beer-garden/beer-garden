@@ -924,13 +924,13 @@ def handle_wait_events(event):
 
 
 def processes_status_latency(garden, target_garden, status, delta):
-    garden.metadata[f"{status}_DELTA_{target_garden}"] = delta
+    garden.metadata[f"{status}_DELTA_{target_garden}"] = round(delta, 3)
     if f"{status}_COUNT_{target_garden}" not in garden.metadata:
         garden.metadata[f"{status}_AVG_{target_garden}"] = garden.metadata[f"{status}_DELTA_{target_garden}"]
         garden.metadata[f"{status}_COUNT_{target_garden}"] = 1
     else:
-        garden.metadata[f"{status}_AVG_{target_garden}"] = ((garden.metadata[f"{status}_AVG_{target_garden}"] * garden.metadata[f"{status}_COUNT_{target_garden}"]) + delta) / (garden.metadata[f"{status}_COUNT_{target_garden}"] + 1)
-        garden.metadata[f"{status}_COUNT_{target_garden}"] = 1
+        garden.metadata[f"{status}_AVG_{target_garden}"] = round(((garden.metadata[f"{status}_AVG_{target_garden}"] * garden.metadata[f"{status}_COUNT_{target_garden}"]) + delta) / (garden.metadata[f"{status}_COUNT_{target_garden}"] + 1),3)
+        garden.metadata[f"{status}_COUNT_{target_garden}"] += 1
 
 def update_request_latency_garden(existing_request: Request, event: Event) -> None:
     """Updater for Garden metadata based on Request timestamps
