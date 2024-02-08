@@ -666,7 +666,6 @@ def handle_event(event):
             Events.GARDEN_SYNC.name,
         ):
             logger.error(f"Processing {event.garden} for {event.name}")
-            logger.error(event.payload)
 
             for system in event.payload.systems:
                 system.local = False
