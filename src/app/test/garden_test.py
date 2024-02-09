@@ -21,6 +21,7 @@ from beer_garden.garden import (
     load_garden_connections,
     update_garden_receiving_heartbeat,
     update_garden_status,
+    upsert_garden
 )
 from beer_garden.systems import create_system
 
@@ -430,5 +431,42 @@ stomp:
         for connection in garden.publishing_connections:
             assert connection.status == "PUBLISHING"
 
-    def test_upsert_garden(self, bg_garden):
-        pass
+    def test_upsert_garden_add_children(self, bg_garden):
+
+        bg_garden.systems = []
+
+        bg_garden.children = [BrewtilsGarden(name="child",status="RUNNING",connection_type="REMOTE", has_parent=True, parent="garden")]
+
+        upsert_garden(bg_garden)
+
+        child = get_garden("child")
+        parent = get_garden("garden")
+        
+        assert child.name == "child"
+        assert len(parent.children) == 1
+
+    def test_upsert_garden_update_values(self, bg_garden):
+        bg_garden.systems = []
+        bg_garden.has_parent = False
+        bg_garden.status = "RUNNING"
+        bg_garden.metadata = {"test":"test"}
+        bg_garden.connection_type = "REMOTE"
+
+        garden = create_garden(bg_garden)
+
+        garden.has_parent = True
+        garden.status = "STOPPED"
+        garden.metadata = {"alt":"alt"}
+        garden.connection_type = "LOCAL"
+
+        updated_garden = upsert_garden(garden)
+
+        # Not changed
+        assert not updated_garden.has_parent
+        assert updated_garden.connection_type == "REMOTE"
+
+        # Changed
+        assert updated_garden.metadata == {"alt":"alt"}
+        assert updated_garden.status == "STOPPED"
+
+
