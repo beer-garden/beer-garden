@@ -410,7 +410,7 @@ _CHILDREN_GARDEN_SPEC = {
             "description": "Directory where child garden configs are located",
             "alt_env_names": [
                 "CHILDREN_CONFIG_DIRECTORY",
-                "BG_CHILDREN_CONFIG_DIRECTORY"
+                "BG_CHILDREN_CONFIG_DIRECTORY",
             ],
         }
     },
