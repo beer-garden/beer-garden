@@ -42,7 +42,7 @@ def ensure_local_garden():
     we access them, etc. For that reason, we read the garden info from the configuration
     and create or update the Garden database entry for it.
     """
-    from .models import Garden, Connection
+    from .models import Connection, Garden
 
     try:
         garden = Garden.objects.get(connection_type="LOCAL")

@@ -7,8 +7,8 @@ The configuration service is responsible for:
 * Migration configuration files between Beer Garden versions
 * Getting configuration values
 """
-import os
 import copy
+import os
 import sys
 from argparse import ArgumentParser
 from datetime import datetime

@@ -14,6 +14,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import List
 
+from brewtils.errors import PluginError
+from brewtils.models import Connection, Event, Events, Garden, Operation, System
 from mongoengine import DoesNotExist
 from yapconf.exceptions import (
     YapconfItemNotFound,
@@ -32,8 +34,6 @@ from beer_garden.errors import ForwardException
 from beer_garden.events import publish, publish_event
 from beer_garden.namespace import get_namespaces
 from beer_garden.systems import get_systems, remove_system
-from brewtils.errors import PluginError
-from brewtils.models import Connection, Event, Events, Garden, Operation, System
 
 logger = logging.getLogger(__name__)
 

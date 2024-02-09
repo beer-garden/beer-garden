@@ -8,9 +8,9 @@ import stomp
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.garden import get_gardens, update_garden
 import beer_garden.events
 import beer_garden.router
+from beer_garden.garden import get_gardens, update_garden
 
 logger = logging.getLogger(__name__)
 

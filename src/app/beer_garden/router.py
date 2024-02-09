@@ -22,10 +22,10 @@ from copy import deepcopy
 from functools import partial
 from typing import Dict, Union
 
-from brewtils import EasyClient
 import brewtils.models
-from brewtils.models import Event, Events, Garden, Operation, Request, System
+from brewtils import EasyClient
 from brewtils.models import Connection as BrewtilsConnection
+from brewtils.models import Event, Events, Garden, Operation, Request, System
 from stomp.exception import ConnectFailedException
 
 import beer_garden
