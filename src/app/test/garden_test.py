@@ -322,7 +322,6 @@ stomp:
         assert remote_user_count == 0
 
     def test_update_garden_receiving_heartbeat_update_heartbeat(self):
-        # New garden
         garden = update_garden_receiving_heartbeat("http", garden_name="new_garden")
 
         assert len(garden.receiving_connections) == 1
@@ -331,8 +330,6 @@ stomp:
     def test_update_garden_receiving_heartbeat_existing_garden_new_api_with_config(
         self, tmpdir, bg_garden
     ):
-        # New garden
-
         bg_garden.systems = []
 
         garden = create_garden(bg_garden)
@@ -392,8 +389,6 @@ stomp:
         os.remove(config_file)
 
     def test_update_garden_receiving_heartbeat_existing_garden_new_api(self, bg_garden):
-        # New garden
-
         bg_garden.systems = []
 
         garden = create_garden(bg_garden)
