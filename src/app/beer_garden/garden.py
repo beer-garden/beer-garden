@@ -15,20 +15,25 @@ from pathlib import Path
 from typing import List
 
 from mongoengine import DoesNotExist
+from yapconf.exceptions import (
+    YapconfItemNotFound,
+    YapconfLoadError,
+    YapconfSourceError,
+    YapconfSpecError,
+)
 
 import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.command_publishing_blocklist import (
     publish_command_publishing_blocklist,
 )
-
 from beer_garden.db.mongo.models import RemoteUser
 from beer_garden.errors import ForwardException
 from beer_garden.events import publish, publish_event
 from beer_garden.namespace import get_namespaces
 from beer_garden.systems import get_systems, remove_system
 from brewtils.errors import PluginError
-from brewtils.models import Event, Events, Garden, Operation, System, Connection
+from brewtils.models import Connection, Event, Events, Garden, Operation, System
 
 logger = logging.getLogger(__name__)
 
@@ -404,7 +409,7 @@ def update_garden_publishing(
     connection_set = False
 
     for connection in garden.publishing_connections:
-        if api == None or connection.api == api:
+        if api is None or connection.api == api:
             if override_status or connection.status not in [
                 "NOT_CONFIGURED",
                 "MISSING_CONFIGURATION",
@@ -433,7 +438,7 @@ def update_garden_receiving(
 
     if garden.receiving_connections:
         for connection in garden.receiving_connections:
-            if api == None or connection.api == api:
+            if api is None or connection.api == api:
                 if override_status or connection.status not in [
                     "NOT_CONFIGURED",
                     "MISSING_CONFIGURATION",
@@ -458,7 +463,12 @@ def load_garden_connections(garden: Garden):
 
     try:
         garden_config = config.load_child(path)
-    except:
+    except (
+        YapconfItemNotFound,
+        YapconfLoadError,
+        YapconfSourceError,
+        YapconfSpecError,
+    ):
         garden.status = "CONFIGURATION_ERROR"
         garden.publishing_connections.append(
             Connection(api="HTTP", status="CONFIGURATION_ERROR")

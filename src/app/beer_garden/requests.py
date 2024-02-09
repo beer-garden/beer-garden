@@ -926,11 +926,24 @@ def handle_wait_events(event):
 def processes_status_latency(garden, target_garden, status, delta):
     garden.metadata[f"{status}_DELTA_{target_garden}"] = round(delta, 3)
     if f"{status}_COUNT_{target_garden}" not in garden.metadata:
-        garden.metadata[f"{status}_AVG_{target_garden}"] = round(garden.metadata[f"{status}_DELTA_{target_garden}"], 3)
+        garden.metadata[f"{status}_AVG_{target_garden}"] = round(
+            garden.metadata[f"{status}_DELTA_{target_garden}"], 3
+        )
         garden.metadata[f"{status}_COUNT_{target_garden}"] = 1
     else:
-        garden.metadata[f"{status}_AVG_{target_garden}"] = round(((garden.metadata[f"{status}_AVG_{target_garden}"] * garden.metadata[f"{status}_COUNT_{target_garden}"]) + delta) / (garden.metadata[f"{status}_COUNT_{target_garden}"] + 1),3)
+        garden.metadata[f"{status}_AVG_{target_garden}"] = round(
+            (
+                (
+                    garden.metadata[f"{status}_AVG_{target_garden}"]
+                    * garden.metadata[f"{status}_COUNT_{target_garden}"]
+                )
+                + delta
+            )
+            / (garden.metadata[f"{status}_COUNT_{target_garden}"] + 1),
+            3,
+        )
         garden.metadata[f"{status}_COUNT_{target_garden}"] += 1
+
 
 def update_request_latency_garden(existing_request: Request, event: Event) -> None:
     """Updater for Garden metadata based on Request timestamps
@@ -948,17 +961,26 @@ def update_request_latency_garden(existing_request: Request, event: Event) -> No
     garden = db.query_unique(Garden, name=existing_request.source_garden)
 
     if event.name == Events.REQUEST_CREATED.name:
-        processes_status_latency(garden, event.payload.target_garden, "CREATE", (
-            event.payload.created_at - existing_request.created_at
-        ).total_seconds())
+        processes_status_latency(
+            garden,
+            event.payload.target_garden,
+            "CREATE",
+            (event.payload.created_at - existing_request.created_at).total_seconds(),
+        )
     elif event.payload.status == "IN_PROGRESS":
-        processes_status_latency(garden, event.payload.target_garden, "START", (
-            event.payload.updated_at - existing_request.created_at
-        ).total_seconds())
+        processes_status_latency(
+            garden,
+            event.payload.target_garden,
+            "START",
+            (event.payload.updated_at - existing_request.created_at).total_seconds(),
+        )
     elif event.payload.status in ("CANCELED", "SUCCESS", "ERROR"):
-        processes_status_latency(garden, event.payload.target_garden, "COMPLETE", (
-            event.payload.updated_at - existing_request.created_at
-        ).total_seconds())
+        processes_status_latency(
+            garden,
+            event.payload.target_garden,
+            "COMPLETE",
+            (event.payload.updated_at - existing_request.created_at).total_seconds(),
+        )
     else:
         return
 
@@ -969,14 +991,14 @@ def handle_event(event):
     # TODO: Add support for Request Delete event type
     # if event.name == Events.REQUEST_DELETED.name and event.garden != config.get("garden.name"):
     #     delete_requests(**event.payload)
-    
+
     if event.name in (
-            Events.REQUEST_CREATED.name,
-            Events.REQUEST_STARTED.name,
-            Events.REQUEST_COMPLETED.name,
-            Events.REQUEST_UPDATED.name,
-            Events.REQUEST_CANCELED.name,
-        ):
+        Events.REQUEST_CREATED.name,
+        Events.REQUEST_STARTED.name,
+        Events.REQUEST_COMPLETED.name,
+        Events.REQUEST_UPDATED.name,
+        Events.REQUEST_CANCELED.name,
+    ):
         # Only care about downstream garden
         existing_request = db.query_unique(Request, id=event.payload.id)
 
@@ -991,7 +1013,6 @@ def handle_event(event):
                 return
 
         if event.garden != config.get("garden.name") and not event.error:
-
             if existing_request and existing_request.source_garden == config.get(
                 "garden.name"
             ):
