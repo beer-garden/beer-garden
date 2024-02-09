@@ -12,7 +12,6 @@ import beer_garden.router
 from beer_garden.api.stomp.transport import Connection, parse_header_list
 from beer_garden.events import event_blocklisted, publish
 from beer_garden.events.processors import BaseProcessor
-from beer_garden.garden import update_garden, get_garden
 
 logger = logging.getLogger(__name__)
 
@@ -184,17 +183,6 @@ class StompManager(BaseProcessor):
                                 conn.send(event, headers=headers)
                         else:
                             conn.send(event)
-                    # else:
-                    #    for garden_name in value["gardens"]:
-                    #        try:
-                    #            garden = get_garden(garden_name)
-                    #            for connection in garden.publishing_connections:
-                    #                if connection.api == "STOMP" and connection.config["send_destination"] == conn.send_destination:
-                    #                    connection.status = "UNREACHABLE"
-                    #
-                    #            update_garden(garden)
-                    #        except:
-                    #            pass
 
     def handle_event(self, event):
         """Main event entry point

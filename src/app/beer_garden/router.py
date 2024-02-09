@@ -56,7 +56,6 @@ from beer_garden.garden import (
     get_garden,
     get_gardens,
     load_garden_connections,
-    update_garden_publishing,
     update_garden,
 )
 from beer_garden.requests import complete_request, create_request
@@ -233,7 +232,7 @@ def filter_result(result: [brewtils.models.BaseModel, list]):
         for item in result:
             filter_result(item)
 
-    if type(result) == brewtils.models.Operation:
+    if isinstance(result, brewtils.models.Operation):
         filter_result(result.payload)
 
     if type(result) in router_filter:
