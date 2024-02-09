@@ -194,6 +194,8 @@ stomp:
             else:
                 assert connection.status == "NOT_CONFIGURED"
 
+        os.remove(config_file)
+
     def test_load_configuration_file_disabled_publishing(self, bg_garden, tmpdir):
         """Loads a yaml file containing configuration details"""
 
@@ -249,6 +251,8 @@ stomp:
             else:
                 assert connection.status == "NOT_CONFIGURED"
 
+        os.remove(config_file)
+
     def test_load_configuration_file_disable_receiving(self, bg_garden, tmpdir):
         """Loads a yaml file containing configuration details"""
 
@@ -303,6 +307,8 @@ stomp:
         garden = load_garden_connections(bg_garden)
         for connection in garden.receiving_connections:
             assert connection.status == "DISABLED"
+
+        os.remove(config_file)
 
     def test_remove_garden_cleans_up_remote_user_entries(self, bg_garden):
         """remove_garden should remove any RemoteUser entries for that garden"""
@@ -384,6 +390,8 @@ stomp:
 
         for connection in garden.receiving_connections:
             assert connection.status == "RECEIVING"
+
+        os.remove(config_file)
 
     def test_update_garden_receiving_heartbeat_existing_garden_new_api(self, bg_garden):
         # New garden
