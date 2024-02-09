@@ -10,6 +10,7 @@ import threading
 from datetime import datetime
 from typing import Dict, List, Optional
 
+from apscheduler.events import EVENT_JOB_MAX_INSTANCES
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
 from brewtils.errors import ModelValidationError
@@ -136,6 +137,13 @@ class MixedScheduler(object):
             interval_config: Any scheduler-specific arguments for the APScheduler
         """
         self._sync_scheduler.configure(**interval_config)
+        self._sync_scheduler.add_listener(
+            self.max_concurrence_listener, EVENT_JOB_MAX_INSTANCES
+        )
+
+    def max_concurrence_listener(scheduler, event):
+        db_job = db.query_unique(Job, id=event.job_id)
+        db.modify(db_job, inc__skip_count=1)
 
     def start(self):
         """Starts the scheduler"""
@@ -335,7 +343,10 @@ def run_job(job_id, request_template, **kwargs):
         updates = {}
         if request.status == "ERROR":
             updates["inc__error_count"] = 1
-            logger.debug(f"{db_job!r} request completed with ERROR status")
+            logger.debug(f"{db_job!r} request completed with {request.status} status")
+        elif request.status == "CANCELED":
+            updates["inc__canceled_count"] = 1
+            logger.debug(f"{db_job!r} request completed with {request.status} status")
         elif request.status == "SUCCESS":
             logger.debug(f"{db_job!r} request completed with SUCCESS status")
             updates["inc__success_count"] = 1

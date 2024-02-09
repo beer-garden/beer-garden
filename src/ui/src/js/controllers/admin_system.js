@@ -151,6 +151,29 @@ export default function adminSystemController(
     return runner.instance ? runner.instance.name : 'UNKNOWN';
   };
 
+  $scope.instanceIcon = function(instance) {
+    if ('runner_id' in instance.metadata) {
+      if (instance.metadata['runner_id'] != null && instance.metadata['runner_id'] != ""){
+        return $rootScope.getIcon('fa-folder-open');
+      }
+    }
+    return $rootScope.getIcon('fa-rss');
+  }
+
+  $scope.instanceIconTitle = function(instance) {
+    if ('runner_id' in instance.metadata) {
+      if (instance.metadata['runner_id'] != null && instance.metadata['runner_id'] != ""){
+        for (const runner of $scope.runners) {
+          if (runner.id == instance.metadata['runner_id']){
+            return "../" + runner.path;
+          }
+        }
+        return "Unable to find Local Runner";
+      }
+    }
+    return 'Externally Managed'
+  }
+
   $scope.addErrorAlert = function(response) {
     $scope.alerts.push({
       type: 'danger',

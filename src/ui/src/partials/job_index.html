@@ -74,6 +74,8 @@
         <th id="th_next_run_time" scope="col">Next Run Time</th>
         <th id="th_success_count" scope="col">Success Count</th>
         <th id="th_error_count" scope="col">Error Count</th>
+        <th id="th_canceled_count" scope="col">Canceled Count</th>
+        <th id="th_skip_count" scope="col">Skip Count</th>
       </tr>
     </thead>
     <tbody>
@@ -86,6 +88,8 @@
         <td>{{formatDate(job.next_run_time)}}</td>
         <td>{{job.success_count}}</td>
         <td>{{job.error_count}}</td>
+        <td>{{job.canceled_count}}</td>
+        <td>{{job.skip_count}}</td>
       </tr>
     </tbody>
   </table>
