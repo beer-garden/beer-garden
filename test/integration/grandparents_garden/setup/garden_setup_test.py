@@ -101,7 +101,6 @@ class TestGardenSetup(object):
             else:
                 assert False
 
-
     def test_parent_counter(self):
         self.sync_child()
         response = self.parent_easy_client.client.session.get(
