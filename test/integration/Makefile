@@ -24,7 +24,7 @@ deps:
 
 lint: ## check style with flake8
 	flake8
-	black --check ./
+	black --check --diff ./
 
 #test-config: ## run configuration integration tests
 #	pytest config/
