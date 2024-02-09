@@ -2,10 +2,10 @@
 import base64
 import gzip
 import json
-from asyncio import Event
+from asyncio import Future
 from typing import Sequence
 
-from brewtils.errors import ModelValidationError, TimeoutExceededError
+from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.models import Request as BrewtilsRequest
 from brewtils.models import System as BrewtilsSystem
@@ -13,7 +13,7 @@ from brewtils.schema_parser import SchemaParser
 
 import beer_garden.db.api as db
 from beer_garden.api.authorization import Permissions
-from beer_garden.api.http.base_handler import event_wait
+from beer_garden.api.http.base_handler import future_wait
 from beer_garden.api.http.exceptions import BadRequest
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.db.mongo.models import Request
@@ -485,9 +485,9 @@ class RequestListAPI(AuthorizationHandler):
         if self.current_user:
             request_model.requester = self.current_user.username
 
-        wait_event = None
+        wait_future = None
         if self.get_argument("blocking", default="").lower() == "true":
-            wait_event = Event()
+            wait_future = Future()
 
             # Also don't publish latency measurements
             self.request.ignore_latency = True
@@ -498,7 +498,7 @@ class RequestListAPI(AuthorizationHandler):
                     operation_type="REQUEST_CREATE",
                     model=request_model,
                     model_type="Request",
-                    kwargs={"wait_event": wait_event},
+                    kwargs={"wait_event": wait_future},
                 ),
                 serialize_kwargs={"to_string": False},
             )
@@ -513,18 +513,18 @@ class RequestListAPI(AuthorizationHandler):
             ) from ex
 
         # Wait for the request to complete, if requested
-        if wait_event:
+        if wait_future:
             wait_timeout = float(self.get_argument("timeout", default="-1"))
             if wait_timeout < 0:
                 wait_timeout = None
 
-            if not await event_wait(wait_event, wait_timeout):
-                raise TimeoutExceededError("Timeout exceeded")
+            await future_wait(wait_future, wait_timeout)
 
-            # Reload to get the completed request
-            response = await self.client(
-                Operation(operation_type="REQUEST_READ", args=[created_request["id"]])
-            )
+            if wait_future.exception():
+                raise wait_future.exception()
+
+            response = SchemaParser.serialize_request(wait_future.result())
+
         else:
             # We don't want to echo back the base64 encoding of any file parameters
             remove_bytes_parameter_base64(created_request["parameters"], False)

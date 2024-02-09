@@ -1,5 +1,16 @@
 # Beer Garden Changelog
 
+# 3.23.2
+
+TBD
+
+- Updated icons on System Admin page
+- Fixed bug where `blocking=true` on Request API returned `IN PROGRESS` status for requests sourced from downstream gardens. Delay added to 
+  allow Beer Garden to process the event.
+- Request API utilizes Futures for `blocking=true`, returning back the completed request from the Event, instead of querying the database
+- Fixed bug where pruned In-Progress Requests that were scheduled never completed in scheduler, so max concurrency would be reached.
+- Expanded counters for Scheduled Jobs to include Requests skipped and canceled. 
+
 # 3.23.1
 
 12/29/2023

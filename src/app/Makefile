@@ -101,8 +101,8 @@ format: ## Run black formatter in-line
 # Linting
 lint: ## check style with flake8, black and isort
 	flake8 $(MODULE_NAME) $(TEST_DIR)
-	black --check $(MODULE_NAME) $(TEST_DIR)
-	isort --check-only $(MODULE_NAME)
+	black --check --diff $(MODULE_NAME) $(TEST_DIR)
+	isort --check-only --diff $(MODULE_NAME)
 
 
 # Complexity checks

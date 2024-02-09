@@ -364,9 +364,9 @@ def setup_routing():
                     gardens[garden.name] = garden
                     if garden.connection_type.casefold() == "stomp":
                         if garden.name not in stomp_garden_connections:
-                            stomp_garden_connections[
-                                garden.name
-                            ] = create_stomp_connection(garden)
+                            stomp_garden_connections[garden.name] = (
+                                create_stomp_connection(garden)
+                            )
 
             else:
                 logger.warning(f"Garden with invalid connection info: {garden!r}")
@@ -473,9 +473,9 @@ def handle_event(event):
                         and stomp_garden_connections[event.payload.name].is_connected()
                     ):
                         stomp_garden_connections[event.payload.name].disconnect()
-                    stomp_garden_connections[
-                        event.payload.name
-                    ] = create_stomp_connection(event.payload)
+                    stomp_garden_connections[event.payload.name] = (
+                        create_stomp_connection(event.payload)
+                    )
 
         elif event.name == Events.GARDEN_REMOVED.name:
             try:

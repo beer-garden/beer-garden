@@ -94,6 +94,11 @@
         ng-repeat="runner in runners | filter:isRunnerUnassociated | orderBy:'id'"
       >
         <div class="list-group-item container-fluid">
+          <span
+            class="icon-color"
+            ng-class="getIcon('fa-folder-open')"
+            title="../{{runner.path}}"
+          ></span>
           <bg-status target="runner.dead ? 'DEAD' : 'UNRESPONSIVE'"></bg-status>
           <span style="padding: 0 10px">{{runner.id}}</span>
 
@@ -198,6 +203,11 @@
             ng-repeat="instance in system.instances | orderBy: 'name'"
             class="list-group-item"
           >
+            <span
+              class="icon-color"
+              ng-class="instanceIcon(instance)"
+              title="{{instanceIconTitle(instance)}}"
+            ></span>
             <bg-status target="instance.status"></bg-status>
             <span style="padding: 0 10px">{{instance.name}}</span>
             <span class="btn-toolbar pull-right">
