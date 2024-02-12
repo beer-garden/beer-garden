@@ -661,13 +661,17 @@ def publish_garden_systems(garden: Garden, src_garden: str):
 
 def garden_unresponsive_trigger():
     for garden in get_gardens(include_local=False):
-        logger.error(f"Checking Garden {garden.name}")
-        timeout = datetime.utcnow() - timedelta(minutes=garden.metadata.get("_unresponsive_timeout", config.get("children.unresponsive_timeout")))
 
-        for connection in garden.receiving_connections:
-            if connection.status in ["RECEIVING"]:
-                if connection.status_info["heartbeat"] < timeout:
-                    update_garden_receiving("UNRESPONSIVE", api = connection.api, garden=garden)
+        interval_value = garden.metadata.get("_unresponsive_timeout", config.get("children.unresponsive_timeout"))
+
+        if interval_value > 0:
+
+            timeout = datetime.utcnow() - timedelta(minutes=interval_value)
+
+            for connection in garden.receiving_connections:
+                if connection.status in ["RECEIVING"]:
+                    if connection.status_info["heartbeat"] < timeout:
+                        update_garden_receiving("UNRESPONSIVE", api = connection.api, garden=garden)
 
 
 def handle_event(event):

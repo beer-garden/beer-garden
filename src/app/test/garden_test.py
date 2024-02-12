@@ -7,6 +7,7 @@ from brewtils.models import Garden as BrewtilsGarden
 from brewtils.models import Connection as BrewtilsConnection
 from brewtils.models import System as BrewtilsSystem
 from mongoengine import DoesNotExist, connect
+from datetime import datetime, timedelta
 
 from beer_garden import config
 from beer_garden.db.mongo.models import Garden, RemoteUser, System
@@ -20,6 +21,7 @@ from beer_garden.garden import (
     update_garden_receiving_heartbeat,
     update_garden_status,
     upsert_garden,
+    garden_unresponsive_trigger
 )
 from beer_garden.systems import create_system
 
@@ -476,3 +478,80 @@ stomp:
         # Changed
         assert updated_garden.metadata == {"alt": "alt"}
         assert updated_garden.status == "STOPPED"
+
+    def test_garden_unresponsive_trigger(self, bg_garden):
+
+        config._CONFIG = {"children": {"unresponsive_timeout": 15}}
+
+        bg_garden.systems = []
+        for connection in bg_garden.receiving_connections:
+            connection.status_info["heartbeat"] =  datetime.utcnow() - timedelta(minutes=60)
+
+        create_garden(bg_garden)
+
+        garden_unresponsive_trigger()
+
+        garden = get_garden(bg_garden.name)
+
+        assert len(garden.receiving_connections) > 0
+        for connection in garden.receiving_connections:
+            assert connection.status == "UNRESPONSIVE"
+
+    def test_garden_unresponsive_trigger_in_window(self, bg_garden):
+
+        config._CONFIG = {"children": {"unresponsive_timeout": 15}}
+
+        bg_garden.systems = []
+        for connection in bg_garden.receiving_connections:
+            connection.status_info["heartbeat"] =  datetime.utcnow() - timedelta(minutes=10)
+
+        create_garden(bg_garden)
+
+        garden_unresponsive_trigger()
+
+        garden = get_garden(bg_garden.name)
+
+        assert len(garden.receiving_connections) > 0
+        for connection in garden.receiving_connections:
+            assert connection.status == "RECEIVING"
+
+    def test_garden_unresponsive_trigger_child_metadata(self, bg_garden):
+
+        config._CONFIG = {"children": {"unresponsive_timeout": 15}}
+
+        bg_garden.systems = []
+        for connection in bg_garden.receiving_connections:
+            connection.status_info["heartbeat"] =  datetime.utcnow() - timedelta(minutes=10)
+
+        bg_garden.metadata["_unresponsive_timeout"] = 5
+
+        create_garden(bg_garden)
+
+        garden_unresponsive_trigger()
+
+        garden = get_garden(bg_garden.name)
+
+        assert len(garden.receiving_connections) > 0
+        for connection in garden.receiving_connections:
+            assert connection.status == "UNRESPONSIVE"
+
+
+    def test_garden_unresponsive_trigger_missing_window(self, bg_garden):
+
+        config._CONFIG = {"children": {"unresponsive_timeout": -1}}
+
+        bg_garden.systems = []
+        for connection in bg_garden.receiving_connections:
+            connection.status_info["heartbeat"] =  datetime.utcnow() - timedelta(minutes=10)
+
+        create_garden(bg_garden)
+
+        garden_unresponsive_trigger()
+
+        garden = get_garden(bg_garden.name)
+
+        assert len(garden.receiving_connections) > 0
+        for connection in garden.receiving_connections:
+            assert connection.status == "RECEIVING"
+
+
