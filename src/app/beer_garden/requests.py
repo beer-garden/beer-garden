@@ -1090,7 +1090,9 @@ def handle_event(event):
                 "ERROR",
                 "SUCCESS",
             ):
-                clean_command_type_temp(existing_request, event.garden != config.get("garden.name"))
+                clean_command_type_temp(
+                    existing_request, event.garden != config.get("garden.name")
+                )
 
 
 def clean_command_type_temp(request: Request, is_remote: bool):
