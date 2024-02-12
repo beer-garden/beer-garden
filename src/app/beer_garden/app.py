@@ -135,7 +135,7 @@ class Application(StoppableThread):
                 if (config.get("children.unresponsive_timeout") > 0)
                 else 15
             ),
-            max_running_jobs=1
+            max_running_jobs=1,
         )
 
         metrics_config = config.get("metrics")
