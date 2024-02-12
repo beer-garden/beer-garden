@@ -10,7 +10,6 @@ The garden service is responsible for:
 * Handling `Garden` events
 """
 import logging
-from datetime import datetime
 from pathlib import Path
 from typing import List
 
