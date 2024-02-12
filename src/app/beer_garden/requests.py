@@ -22,13 +22,6 @@ import six
 import urllib3
 from requests import Session
 
-import beer_garden.config as config
-import beer_garden.db.api as db
-import beer_garden.queue.api as queue
-from beer_garden.db.mongo.models import RawFile
-from beer_garden.errors import NotUniqueException, ShutdownError
-from beer_garden.events import publish_event
-from beer_garden.metrics import request_completed, request_created, request_started
 from brewtils.choices import parse
 from brewtils.errors import (
     ConflictError,
