@@ -137,18 +137,43 @@ export default function adminGardenController(
 
   $scope.startReceivingConnection = function(garden, api) {
     GardenService.updateReceivingStatus(garden.name, "RECEIVING", api);
+    for (let i = 0; i < garden.receiving_connections.length; i++) {
+      if (garden.receiving_connections[i].api == api){
+        if (garden.receiving_connections[i].status == "DISABLED") {
+          GardenService.updateReceivingStatus(garden.name, "RECEIVING", api);
+        }
+      }
+    }
   };
 
   $scope.stopReceivingConnection = function(garden, api) {
-    GardenService.updateReceivingStatus(garden.name, "DISABLED", api);
+    for (let i = 0; i < garden.receiving_connections.length; i++) {
+      if (garden.receiving_connections[i].api == api){
+        if (garden.receiving_connections[i].status in ["PUBLISHING","RECEIVING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN"]) {
+          GardenService.updateReceivingStatus(garden.name, "DISABLED", api);
+        }
+      }
+    }
   };
 
   $scope.startPublishingConnection = function(garden, api) {
-    GardenService.updatePublisherStatus(garden.name, "PUBLISHING", api);
+    for (let i = 0; i < garden.publishing_connections.length; i++) {
+      if (garden.publishing_connections[i].api == api){
+        if (garden.publishing_connections[i].status == "DISABLED") {
+          GardenService.updatePublisherStatus(garden.name, "PUBLISHING", api);
+        }
+      }
+    }
   };
 
   $scope.stopPublishingConnection = function(garden, api) {
-    GardenService.updatePublisherStatus(garden.name, "DISABLED", api);
+    for (let i = 0; i < garden.publishing_connections.length; i++) {
+      if (garden.publishing_connections[i].api == api){
+        if (garden.publishing_connections[i].status in ["PUBLISHING","RECEIVING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN"]) {
+          GardenService.updatePublisherStatus(garden.name, "DISABLED", api);
+        }
+      }
+    }
   };
 
   $scope.isRemoteConfigured = function(garden) {

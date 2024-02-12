@@ -250,12 +250,22 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
     garden = db.query_unique(Garden, name=garden_name)
 
     if new_status == "RUNNING":
-        update_garden_publishing("PUBLISHING", garden=garden, override_status=False)
-        update_garden_receiving("RECEIVING", garden=garden, override_status=False)
+        for connection in garden.publishing_connections:
+            if connection.status == "DISABLED":
+                update_garden_publishing("PUBLISHING", api=connection.api, garden=garden, override_status=False)
+
+        for connection in garden.receiving_connections:
+            if connection.status == "DISABLED":
+                update_garden_receiving("RECEIVING", api=connection.api, garden=garden, override_status=False)
 
     elif new_status == "STOPPED":
-        update_garden_publishing("DISABLED", garden=garden, override_status=False)
-        update_garden_receiving("DISABLED", garden=garden, override_status=False)
+        for connection in garden.publishing_connections:
+            if connection.status in ["PUBLISHING","RECEIVING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN"]:
+                update_garden_publishing("DISABLED", api=connection.api, garden=garden, override_status=False)
+
+        for connection in garden.receiving_connections:
+            if connection.status in ["PUBLISHING","RECEIVING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN"]:
+                update_garden_receiving("DISABLED", api=connection.api, garden=garden, override_status=False)
 
     garden.status = new_status
     garden.status_info["heartbeat"] = datetime.utcnow()
