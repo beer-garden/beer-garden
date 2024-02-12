@@ -420,7 +420,7 @@ _CHILDREN_GARDEN_SPEC = {
                 "Time before receiving connection is marked as unresponsive"
                 "(negative number for never)"
             ),
-        },  
+        },
     },
 }
 
