@@ -252,20 +252,48 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
     if new_status == "RUNNING":
         for connection in garden.publishing_connections:
             if connection.status == "DISABLED":
-                update_garden_publishing("PUBLISHING", api=connection.api, garden=garden, override_status=False)
+                update_garden_publishing(
+                    "PUBLISHING",
+                    api=connection.api,
+                    garden=garden,
+                    override_status=False,
+                )
 
         for connection in garden.receiving_connections:
             if connection.status == "DISABLED":
-                update_garden_receiving("RECEIVING", api=connection.api, garden=garden, override_status=False)
+                update_garden_receiving(
+                    "RECEIVING",
+                    api=connection.api,
+                    garden=garden,
+                    override_status=False,
+                )
 
     elif new_status == "STOPPED":
         for connection in garden.publishing_connections:
-            if connection.status in ["PUBLISHING","RECEIVING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN"]:
-                update_garden_publishing("DISABLED", api=connection.api, garden=garden, override_status=False)
+            if connection.status in [
+                "PUBLISHING",
+                "RECEIVING",
+                "UNREACHABLE",
+                "UNRESPONSIVE",
+                "ERROR",
+                "UNKNOWN",
+            ]:
+                update_garden_publishing(
+                    "DISABLED", api=connection.api, garden=garden, override_status=False
+                )
 
         for connection in garden.receiving_connections:
-            if connection.status in ["PUBLISHING","RECEIVING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN"]:
-                update_garden_receiving("DISABLED", api=connection.api, garden=garden, override_status=False)
+            if connection.status in [
+                "PUBLISHING",
+                "RECEIVING",
+                "UNREACHABLE",
+                "UNRESPONSIVE",
+                "ERROR",
+                "UNKNOWN",
+            ]:
+                update_garden_receiving(
+                    "DISABLED", api=connection.api, garden=garden, override_status=False
+                )
 
     garden.status = new_status
     garden.status_info["heartbeat"] = datetime.utcnow()
@@ -561,7 +589,9 @@ def load_garden_connections(garden: Garden):
             connection.status = "DISABLED"
 
     if config.get("unresponsive_timeout", garden_config) > 0:
-        garden.metadata["_unresponsive_timeout"] = config.get("unresponsive_timeout", garden_config)
+        garden.metadata["_unresponsive_timeout"] = config.get(
+            "unresponsive_timeout", garden_config
+        )
     return garden
 
 
@@ -671,17 +701,19 @@ def publish_garden_systems(garden: Garden, src_garden: str):
 
 def garden_unresponsive_trigger():
     for garden in get_gardens(include_local=False):
-
-        interval_value = garden.metadata.get("_unresponsive_timeout", config.get("children.unresponsive_timeout"))
+        interval_value = garden.metadata.get(
+            "_unresponsive_timeout", config.get("children.unresponsive_timeout")
+        )
 
         if interval_value > 0:
-
             timeout = datetime.utcnow() - timedelta(minutes=interval_value)
 
             for connection in garden.receiving_connections:
                 if connection.status in ["RECEIVING"]:
                     if connection.status_info["heartbeat"] < timeout:
-                        update_garden_receiving("UNRESPONSIVE", api = connection.api, garden=garden)
+                        update_garden_receiving(
+                            "UNRESPONSIVE", api=connection.api, garden=garden
+                        )
 
 
 def handle_event(event):
