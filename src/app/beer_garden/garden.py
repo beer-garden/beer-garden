@@ -605,37 +605,39 @@ def load_garden_config(garden: Garden = None, garden_name: str = None):
 
 def rescan():
     if config.get("children.directory"):
-        for path in Path(config.get("children.directory")).iterdir():
-            path_parts = path.parts
+        children_directory = Path(config.get("children.directory"))
+        if children_directory.exists():
+            for path in children_directory.iterdir():
+                path_parts = path.parts
 
-            if len(path_parts) == 0:
-                continue
-            if path_parts[-1].startswith("."):
-                continue
+                if len(path_parts) == 0:
+                    continue
+                if path_parts[-1].startswith("."):
+                    continue
 
-            if not path_parts[-1].endswith(".yaml"):
-                continue
+                if not path_parts[-1].endswith(".yaml"):
+                    continue
 
-            if not path.exists():
-                continue
-            if path.is_dir():
-                continue
+                if not path.exists():
+                    continue
+                if path.is_dir():
+                    continue
 
-            garden_name = path_parts[-1][:-5]
+                garden_name = path_parts[-1][:-5]
 
-            garden = db.query_unique(Garden, name=garden_name)
+                garden = db.query_unique(Garden, name=garden_name)
 
-            if garden is None:
-                garden = create_garden(
-                    Garden(name=garden_name, connection_type="Remote")
-                )
+                if garden is None:
+                    garden = create_garden(
+                        Garden(name=garden_name, connection_type="Remote")
+                    )
 
-            # Garden was created by child, update the connection information if available
-            for connection in garden.publishing_connections:
-                if connection.status == "MISSING_CONFIGURATION":
-                    load_garden_config(garden=garden)
-                    garden_sync(garden.name)
-                    break
+                # Garden was created by child, update the connection information if available
+                for connection in garden.publishing_connections:
+                    if connection.status == "MISSING_CONFIGURATION":
+                        load_garden_config(garden=garden)
+                        garden_sync(garden.name)
+                        break
 
 
 def garden_sync(sync_target: str = None):
