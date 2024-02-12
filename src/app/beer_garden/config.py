@@ -412,15 +412,15 @@ _CHILDREN_GARDEN_SPEC = {
                 "CHILDREN_CONFIG_DIRECTORY",
                 "BG_CHILDREN_CONFIG_DIRECTORY",
             ],
+        },
         "unresponsive_timeout": {
             "type": "int",
-            "default": 3600000,  # One hour
+            "default": 60,  # One hour
             "description": (
                 "Time before receiving connection is marked as unresponsive"
                 "(negative number for never)"
             ),
-        },
-        }        
+        },  
     },
 }
 
@@ -1453,12 +1453,12 @@ _CHILD_SPECIFICATION = {
         "description": "If disabled, requires manual start for receiving operations",
     },
     "unresponsive_timeout": {
-            "type": "int",
-            "default": -1,
-            "description": (
-                "Time before receiving connection is marked as unresponsive"
-                "(negative number for never)"
-            ),
+        "type": "int",
+        "default": -1,
+        "description": (
+            "Time before receiving connection is marked as unresponsive"
+            "(negative number for never)"
+        ),
     },
     "http": _HTTP_CONNECTION_SPEC,
     "stomp": _STOMP_SPEC,

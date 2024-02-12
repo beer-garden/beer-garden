@@ -24,6 +24,8 @@ from yapconf.exceptions import (
     YapconfSpecError,
 )
 
+from datetime import datetime, timedelta
+
 import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.command_publishing_blocklist import (
@@ -548,6 +550,8 @@ def load_garden_connections(garden: Garden):
         else:
             connection.status = "DISABLED"
 
+    if config.get("unresponsive_timeout", garden_config) > 0:
+        garden.metadata["_unresponsive_timeout"] = config.get("unresponsive_timeout", garden_config)
     return garden
 
 
@@ -653,6 +657,17 @@ def publish_garden_systems(garden: Garden, src_garden: str):
     if garden.children:
         for child in garden.children:
             publish_garden_systems(child, src_garden)
+
+
+def garden_unresponsive_trigger():
+    for garden in get_gardens(include_local=False):
+        logger.error(f"Checking Garden {garden.name}")
+        timeout = datetime.utcnow() - timedelta(minutes=garden.metadata.get("_unresponsive_timeout", config.get("children.unresponsive_timeout")))
+
+        for connection in garden.receiving_connections:
+            if connection.status in ["RECEIVING"]:
+                if connection.status_info["heartbeat"] < timeout:
+                    update_garden_receiving("UNRESPONSIVE", api = connection.api, garden=garden)
 
 
 def handle_event(event):

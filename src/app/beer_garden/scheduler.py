@@ -269,6 +269,24 @@ class MixedScheduler(object):
             **kwargs,
         )
 
+    def add_schedule(self, func, interval=None, **kwargs):
+        """Adds a schedule to one of the schedulers
+
+        Args:
+            func: The callback function
+            trigger: The trigger used to schedule
+            kwargs: Any other kwargs to be passed to the scheduler
+        """
+        if interval is None:
+            logger.exception("Scheduler called with no interval.")
+            return
+        
+        self._sync_scheduler.add_job(
+            func,
+            trigger=APInterval(minutes=interval),
+            **kwargs
+        )
+
 
 class IntervalTrigger(APInterval):
     """Beergarden implementation of an apscheduler IntervalTrigger"""
@@ -503,7 +521,6 @@ def execute_job(job_id: str, reset_interval=False) -> Job:
         )
 
     return job
-
 
 def handle_event(event: Event) -> None:
     """Handle JOB events
