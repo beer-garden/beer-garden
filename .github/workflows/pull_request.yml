@@ -463,6 +463,20 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      # Custom tag extractor to find Brewtils Branch
+      - name: Find Brewtils Branch
+        uses: TheBurchLog/body-env-tag-action@1.0
+        with:
+          tag: "brewtils:"
+          env-variable: "brewtils"
+          default-value: "develop"
+          tag-position: -1
+
+      # Used the hashtag here instead of slash allow for branches to have slashes in them
+      - name: Update Brewtils Branch
+        run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements-dev.txt
+        working-directory: ./src/app
+
       - name: Build Local Beer Garden Docker
         run: |
           python --version
@@ -559,15 +573,6 @@ jobs:
       - name: Grab logs from Beer-Garden
         if: always()
         run: docker service logs --tail 1000 beer-garden_beer-garden
-
-      # Custom tag extractor to find Brewtils Branch
-      - name: Find Brewtils Branch
-        uses: TheBurchLog/body-env-tag-action@1.0
-        with:
-          tag: "brewtils:"
-          env-variable: "brewtils"
-          default-value: "develop"
-          tag-position: -1
 
       - name: Install Develop Version of Brewtils
         run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@${{env.brewtils}}#egg=brewtils
