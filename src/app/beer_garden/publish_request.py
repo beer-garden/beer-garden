@@ -18,18 +18,14 @@ def handle_event(event: Event):
         and "_publish" in event.payload.metadata
         and event.payload.metadata["_publish"]
     ):
-        logger.error(event)
-        logger.error(f"Event Type: {event.name}")
-        logger.error(f"Payload Type: {event.payload_type}")
-        
         if event.name == Events.REQUEST_CREATED.name:
             event.metadata["regex_only"] = True
             if "_topic" in event.payload.metadata:
                 event.metadata["topic"] = event.payload.metadata["_topic"]
             else:
-                event.metadata["topic"] = (
-                    f"{event.payload.namespace}.{event.payload.system}.{event.payload.system_version}.{event.payload.instance_name}.{event.payload.comment}"
-                )
+                event.metadata[
+                    "topic"
+                ] = f"{event.payload.namespace}.{event.payload.system}.{event.payload.system_version}.{event.payload.instance_name}.{event.payload.comment}"
 
             if "_propagate" in event.payload.metadata:
                 event.metadata["propagate"] = event.payload.metadata["propagate"]
