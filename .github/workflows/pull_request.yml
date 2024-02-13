@@ -55,8 +55,9 @@ jobs:
         working-directory: ./src/app
 
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.7", "3.8", "3.9","3.11"]
+        python-version: ["3.7","3.8","3.9","3.11"]
         os: ["ubuntu-latest"]
 
     name: PyTests OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
@@ -222,6 +223,20 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      # Custom tag extractor to find Brewtils Branch
+      - name: Find Brewtils Branch
+        uses: TheBurchLog/body-env-tag-action@1.0
+        with:
+          tag: "brewtils:"
+          env-variable: "brewtils"
+          default-value: "develop"
+          tag-position: -1
+
+      # Used the hashtag here instead of slash allow for branches to have slashes in them
+      - name: Update Brewtils Branch
+        run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements-dev.txt
+        working-directory: ./src/app
+
       - name: Build Local Beer Garden Docker
         run: |
           python --version
@@ -278,15 +293,6 @@ jobs:
         run: BG='unstable' docker-compose logs --tail 100 beer-garden
         working-directory: ./docker/docker-compose
 
-      # Custom tag extractor to find Brewtils Branch
-      - name: Find Brewtils Branch
-        uses: TheBurchLog/body-env-tag-action@1.0
-        with:
-          tag: "brewtils:"
-          env-variable: "brewtils"
-          default-value: "develop"
-          tag-position: -1
-
       - name: Install Develop Version of Brewtils
         run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@${{env.brewtils}}#egg=brewtils
 
@@ -295,7 +301,7 @@ jobs:
         working-directory: ./test/integration
 
       - name: Test Plugins
-        run: python${{ matrix.python-version }} -m pytest local_plugins
+        run: python${{ matrix.python-version }} -m pytest local_plugins/
         working-directory: ./test/integration
 
       - name: Grab logs from Beer-Garden
@@ -306,6 +312,129 @@ jobs:
       - name: Shutdown Docker Containers
         run: docker-compose stop
         working-directory: ./docker/docker-compose
+
+  Grandchild-Testing:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+        os: ["ubuntu-latest"]
+        child: ["unstable", "3.19.1","3.20.0","3.21.0","3.22.0","3.23.0"]
+        parent: ["unstable"]
+      fail-fast: false
+
+    name: Grandchild Test - unstable -> ${{ matrix.parent }} -> ${{ matrix.child }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Custom tag extractor to find Brewtils Branch
+      - name: Find Brewtils Branch
+        uses: TheBurchLog/body-env-tag-action@1.0
+        with:
+          tag: "brewtils:"
+          env-variable: "brewtils"
+          default-value: "develop"
+          tag-position: -1
+
+      # Used the hashtag here instead of slash allow for branches to have slashes in them
+      - name: Update Brewtils Branch
+        run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements-dev.txt
+        working-directory: ./src/app
+
+      - name: Build Beer Garden Docker
+        run: |
+          python --version
+          python -m pip install --upgrade pip
+          pip install setuptools wheel
+          make package
+          make clean-python
+          docker build -t bgio/beer-garden:unstable -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:${{ matrix.python-version }}-alpine .
+          docker tag bgio/beer-garden:unstable bgio/beer-garden:grandparent
+          if [ "${{ matrix.parent }}" != "unstable" ]; then
+            docker pull bgio/beer-garden:${{ matrix.parent }}
+          fi
+          docker tag bgio/beer-garden:${{ matrix.parent }} bgio/beer-garden:parent
+          if [ "${{ matrix.child }}" != "unstable" ]; then
+            docker pull bgio/beer-garden:${{ matrix.child }}
+          fi
+          docker tag bgio/beer-garden:${{ matrix.child }} bgio/beer-garden:child
+        working-directory: ./src/app
+
+      - name: Update Docker Compose  
+        run: |
+          cp test/conf/docker-compose-grandparents-test.yml docker/docker-compose/docker-compose.yml
+          cp -r test/conf/beer_garden_grandparent_children docker/docker-compose/
+          cp -r test/conf/beer_garden_parent_children docker/docker-compose/
+        working-directory: ./
+
+      - name: Checkout Local Plugins
+        uses: actions/checkout@v2
+        with:
+          repository: beer-garden/example-plugins
+          path: ./docker/docker-compose/data/localplugins
+
+      - name: Verify Local Plugins
+        run: ls ./docker/docker-compose/data/localplugins
+
+      - name: Run Docker Beer Garden Child
+        run: docker-compose up -d beer-garden-child
+        working-directory: ./docker/docker-compose
+
+      - name: Wait for Beer Garden Grandparent to start
+        run: sleep 10s
+        shell: bash
+
+      - name: Run Docker Beer Garden Parent
+        run: docker-compose up -d beer-garden-parent
+        working-directory: ./docker/docker-compose
+
+      - name: Wait for Beer Garden Parent to start
+        run: sleep 10s
+        shell: bash
+
+      - name: Run Docker Beer Garden Grandparent
+        run: docker-compose up -d beer-garden-grandparent
+        working-directory: ./docker/docker-compose
+
+      - name: Check Docker
+        run: docker ps
+
+      - name: Wait for Beer Garden to start
+        run: sleep 60s
+        shell: bash
+
+      - name: Install Develop Version of Brewtils
+        run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@${{env.brewtils}}#egg=brewtils
+
+      - name: Install Testing Dependencies
+        run: pip${{ matrix.python-version }} install -r requirements.txt
+        working-directory: ./test/integration
+
+      - name: Test Plugins
+        run: python${{ matrix.python-version }} -m pytest grandparents_garden/
+        working-directory: ./test/integration
+
+      - name: Grab logs from Child
+        if: always()
+        run: docker-compose logs --tail 3000 beer-garden-child
+        working-directory: ./docker/docker-compose
+
+      - name: Grab logs from Parent
+        if: always()
+        run: docker-compose logs --tail 3000 beer-garden-parent
+        working-directory: ./docker/docker-compose
+
+      - name: Grab logs from Grand Parent
+        if: always()
+        run: docker-compose logs --tail 3000 beer-garden-grandparent
+        working-directory: ./docker/docker-compose
+
 
   Replication-Testing:
     runs-on: ${{ matrix.os }}
@@ -324,6 +453,20 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+
+      # Custom tag extractor to find Brewtils Branch
+      - name: Find Brewtils Branch
+        uses: TheBurchLog/body-env-tag-action@1.0
+        with:
+          tag: "brewtils:"
+          env-variable: "brewtils"
+          default-value: "develop"
+          tag-position: -1
+
+      # Used the hashtag here instead of slash allow for branches to have slashes in them
+      - name: Update Brewtils Branch
+        run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements-dev.txt
+        working-directory: ./src/app
 
       - name: Build Local Beer Garden Docker
         run: |
@@ -421,15 +564,6 @@ jobs:
       - name: Grab logs from Beer-Garden
         if: always()
         run: docker service logs --tail 1000 beer-garden_beer-garden
-
-      # Custom tag extractor to find Brewtils Branch
-      - name: Find Brewtils Branch
-        uses: TheBurchLog/body-env-tag-action@1.0
-        with:
-          tag: "brewtils:"
-          env-variable: "brewtils"
-          default-value: "develop"
-          tag-position: -1
 
       - name: Install Develop Version of Brewtils
         run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@${{env.brewtils}}#egg=brewtils

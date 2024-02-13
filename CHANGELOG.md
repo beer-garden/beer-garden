@@ -1,6 +1,6 @@
 # Beer Garden Changelog
 
-# 3.23.2
+# 3.24.0
 
 TBD
 
@@ -10,6 +10,25 @@ TBD
 - Request API utilizes Futures for `blocking=true`, returning back the completed request from the Event, instead of querying the database
 - Fixed bug where pruned In-Progress Requests that were scheduled never completed in scheduler, so max concurrency would be reached.
 - Expanded counters for Scheduled Jobs to include Requests skipped and canceled. 
+
+## BREAKING CHANGES
+- The Garden table needs to be dropped from the database to support new model changes
+  ```
+  mongo
+  use beer_garden
+  db.garden.drop()
+  ```
+- Garden records store child Gardens
+- Child Gardens are now configured through a config file. Default location is `./children`
+- Garden Admin page overhauled
+- Scheduled checks to ensure that all child gardens are publishing
+- Child Gardens receiving/publishing connections can be started and stopped from the Admin Garden page. This only starts/stops the accepting
+or publishing from the Parent, not disable a remote API.
+- UI now iterates over local Garden children to determine list of Systems
+- If Garden is disabled or not configured, it's and it's child garden Systems will not be visible on the UI
+- If a child garden is not reporting a Recieving connection, but can be tasked, upgrade the child. Older 3.X releases do not report sourcing and 
+ this is utilized to determine the Receiving connections.
+
 
 # 3.23.1
 

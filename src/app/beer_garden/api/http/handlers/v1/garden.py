@@ -1,16 +1,14 @@
 # -*- coding: utf-8 -*-
-import json
+import logging
 
 from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 
-import beer_garden.config as config
 from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.api.http.schemas.v1.garden import GardenReadSchema
-from beer_garden.authorization import user_has_permission_for_object
-from beer_garden.db.mongo.api import MongoParser
+
+# from beer_garden.authorization import user_has_permission_for_object
 from beer_garden.db.mongo.models import Garden
 from beer_garden.garden import local_garden
 from beer_garden.user import initiate_user_sync
@@ -19,6 +17,9 @@ GARDEN_CREATE = Permissions.GARDEN_CREATE.value
 GARDEN_READ = Permissions.GARDEN_READ.value
 GARDEN_UPDATE = Permissions.GARDEN_UPDATE.value
 GARDEN_DELETE = Permissions.GARDEN_DELETE.value
+
+
+logger = logging.getLogger(__name__)
 
 
 class GardenAPI(AuthorizationHandler):
@@ -44,16 +45,10 @@ class GardenAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-        if garden_name == config.get("garden.name"):
-            garden = local_garden(all_systems=True)
-            self.verify_user_permission_for_object(GARDEN_READ, garden)
-        else:
-            garden = self.get_or_raise(Garden, GARDEN_READ, name=garden_name)
 
-        if user_has_permission_for_object(self.current_user, GARDEN_UPDATE, garden):
-            response = MongoParser.serialize(garden)
-        else:
-            response = GardenReadSchema().dumps(garden).data
+        response = await self.client(
+            Operation(operation_type="GARDEN_READ", args=[garden_name])
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -150,13 +145,28 @@ class GardenAPI(AuthorizationHandler):
                         args=[garden.name, "RUNNING"],
                     )
                 )
-            elif operation == "config":
-                response = await self.client(
-                    Operation(
-                        operation_type="GARDEN_UPDATE_CONFIG",
-                        args=[SchemaParser.parse_garden(op.value, from_string=False)],
+            elif operation == "connection":
+                connection_type = op.value.get("connection_type")
+                status = op.value.get("status")
+                api = op.value.get("api")
+
+                if connection_type.upper() == "PUBLISHING":
+                    response = await self.client(
+                        Operation(
+                            operation_type="GARDEN_UPDATE_PUBLISHING_STATUS",
+                            kwargs={"garden_name": garden.name, "api": api},
+                            args=[status],
+                        )
                     )
-                )
+                elif connection_type.upper() == "RECEIVING":
+                    response = await self.client(
+                        Operation(
+                            operation_type="GARDEN_UPDATE_RECEIVING_STATUS",
+                            kwargs={"garden_name": garden.name, "api": api},
+                            args=[status],
+                        )
+                    )
+
             elif operation == "sync":
                 response = await self.client(
                     Operation(
@@ -191,29 +201,36 @@ class GardenListAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-        permitted_gardens = self.permissioned_queryset(Garden, GARDEN_READ)
-        response_gardens = []
+        # permitted_gardens = self.permissioned_queryset(Garden, GARDEN_READ)
+        # response_gardens = []
 
-        permitted_gardens_list = list(
-            permitted_gardens.filter(connection_type__ne="LOCAL").no_cache()
+        # permitted_gardens_list = list(
+        #     permitted_gardens.filter(connection_type__ne="LOCAL").no_cache()
+        # )
+        # _local_garden = local_garden(all_systems=True)
+
+        # if user_has_permission_for_object(
+        #     self.current_user, GARDEN_READ, _local_garden
+        # ):
+        #     permitted_gardens_list.append(_local_garden)
+
+        permitted_gardens_list = await self.client(
+            Operation(operation_type="GARDEN_READ_ALL")
         )
-        _local_garden = local_garden(all_systems=True)
+        self.write(permitted_gardens_list)
 
-        if user_has_permission_for_object(
-            self.current_user, GARDEN_READ, _local_garden
-        ):
-            permitted_gardens_list.append(_local_garden)
+        # response_gardens = []
+        # for garden in SchemaParser.parse_garden(
+        #     permitted_gardens_list, from_string=True, many=True
+        # ):
+        #     if user_has_permission_for_object(self.current_user, GARDEN_READ, garden):
+        #         response_gardens.append(garden)
 
-        for garden in permitted_gardens_list:
-            if user_has_permission_for_object(self.current_user, GARDEN_UPDATE, garden):
-                response_gardens.append(MongoParser.serialize(garden))
-            else:
-                response_gardens.append(GardenReadSchema().dump(garden).data)
+        # self.set_header("Content-Type", "application/json; charset=UTF-8")
 
-        response = json.dumps(response_gardens)
-
-        self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(response)
+        # self.write(
+        #     SchemaParser.serialize_garden(response_gardens, to_string=True, many=True)
+        # )
 
     async def post(self):
         """
@@ -294,7 +311,14 @@ class GardenListAPI(AuthorizationHandler):
         for op in patch:
             operation = op.operation.lower()
 
-            if operation == "sync":
+            if operation == "rescan":
+                await self.client(
+                    Operation(
+                        operation_type="GARDEN_RESCAN",
+                    )
+                )
+
+            elif operation == "sync":
                 await self.client(
                     Operation(
                         operation_type="GARDEN_SYNC",

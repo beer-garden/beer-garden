@@ -5,13 +5,15 @@ WORKDIR /src
 ENV BG_LOG_CONFIG_FILE=/src/conf/app-logging.yaml \
     BG_PLUGIN_LOCAL_LOGGING_CONFIG_FILE=/src/conf/local-plugin-logging.yaml \
     BG_PLUGIN_REMOTE_LOGGING_CONFIG_FILE=/src/conf/remote-plugin-logging.yaml \
-    BG_PLUGIN_LOCAL_DIRECTORY=/plugins
+    BG_PLUGIN_LOCAL_DIRECTORY=/plugins \
+    BG_CHILDREN_CONFIG_DIRECTORY=/conf/children
 
 ADD ./example_configs/app-logging.yaml /conf/
 ADD ./example_configs/local-plugin-logging.yaml /conf/
 ADD ./example_configs/remote-plugin-logging.yaml /conf/
 ADD ./docker/docker-entrypoint.sh /usr/local/bin/
 ADD ./requirements.txt .
+ADD ./requirements-dev.txt .
 ADD ./dist/*.whl ./
 
 RUN set -ex \
@@ -20,7 +22,8 @@ RUN set -ex \
     && pip install --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt \
     && pip install -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils \
-    && pip install --no-cache-dir ./*.whl
+    && pip install --no-cache-dir ./*.whl \
+    && mkdir -p /conf/children
 
 EXPOSE 2337/tcp
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

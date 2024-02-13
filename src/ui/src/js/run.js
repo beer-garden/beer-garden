@@ -350,6 +350,77 @@ export default function appRun(
     );
   };
 
+  $rootScope.extractSystems = function(garden){
+    let systems = garden.systems;
+    if (garden.children !== undefined) {
+      for (let i = 0; i < garden.children.length; i++){
+        systems = systems.concat($rootScope.extractSystems(garden.children[i]));
+      }
+    }
+    return systems;
+  }
+
+  $rootScope.isSystemRoutable = function(system){
+    // Check Local First
+    for (let i = 0; i < $rootScope.garden.systems.length; i++){
+      if (system.id == $rootScope.garden.systems[i].id){
+        return true;
+      }
+    }
+    // Check children
+    for (let i = 0; i < $rootScope.garden.children.length; i++){
+      if ($rootScope.isRemoteSystemRoutable(system, $rootScope.garden.children[i])){
+        return true;
+      }
+    }
+    return false;
+  }
+
+  $rootScope.isRemoteSystemRoutable = function(system, garden){
+    let routable = false;
+    for (let i = 0; i < garden.publishing_connections.length; i++){
+      if (["PUBLISHING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN"].includes(garden.publishing_connections[i].status)){
+        routable = true;
+      }
+    }
+
+    if (!routable){
+      return false;
+    }
+    for (let i = 0; i < garden.systems.length; i++){
+      if (system.id == garden.systems[i].id){
+        return true;
+      }
+    }
+
+    for (let i = 0; i < garden.children.length; i++){
+      if ($rootScope.isRemoteSystemRoutable(system, garden.children[i])){
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  $rootScope.extractGardenChildren = function(gardens) {
+    let results = []
+    for (let i = 0; i < gardens.length; i++){
+      if (gardens[i]["connection_type"] == "LOCAL"){
+        results.push(gardens[i]);
+        $rootScope.extractGardenChildrenLoop(results, gardens[i], true);
+      }
+    }
+    return results;
+  }
+
+  $rootScope.extractGardenChildrenLoop = function(gardens, garden, include_systems) {
+    for (let i = 0; i < garden.children.length; i++){
+      gardens.push(garden.children[i]);
+      $rootScope.extractGardenChildrenLoop(gardens, garden.children[i], true);
+    }
+    return gardens;
+  }
+
   function upsertSystem(system) {
     const index = _.findIndex($rootScope.systems, {id: system.id});
 

@@ -22,7 +22,9 @@ from copy import deepcopy
 from functools import partial
 from typing import Dict, Union
 
+import brewtils.models
 from brewtils import EasyClient
+from brewtils.models import Connection as BrewtilsConnection
 from brewtils.models import Event, Events, Garden, Operation, Request, System
 from stomp.exception import ConnectFailedException
 
@@ -50,7 +52,12 @@ from beer_garden.errors import (
     UnknownGardenException,
 )
 from beer_garden.events import publish
-from beer_garden.garden import get_garden, get_gardens
+from beer_garden.garden import (
+    get_garden,
+    get_gardens,
+    load_garden_connections,
+    update_garden,
+)
 from beer_garden.requests import complete_request, create_request
 
 logger = logging.getLogger(__name__)
@@ -138,9 +145,11 @@ route_functions = {
     "GARDEN_READ": beer_garden.garden.get_garden,
     "GARDEN_READ_ALL": beer_garden.garden.get_gardens,
     "GARDEN_UPDATE_STATUS": beer_garden.garden.update_garden_status,
-    "GARDEN_UPDATE_CONFIG": beer_garden.garden.update_garden_config,
+    "GARDEN_UPDATE_PUBLISHING_STATUS": beer_garden.garden.update_garden_publishing,
+    "GARDEN_UPDATE_RECEIVING_STATUS": beer_garden.garden.update_garden_receiving,
     "GARDEN_DELETE": beer_garden.garden.remove_garden,
     "GARDEN_SYNC": beer_garden.garden.garden_sync,
+    "GARDEN_RESCAN": beer_garden.garden.rescan,
     "PLUGIN_LOG_READ": beer_garden.log.get_plugin_log_config,
     "PLUGIN_LOG_READ_LEGACY": beer_garden.log.get_plugin_log_config_legacy,
     "PLUGIN_LOG_RELOAD": beer_garden.log.load_plugin_log_config,
@@ -171,6 +180,11 @@ route_functions = {
     ),
 }
 
+# Filter for fields that should not be published outside of Beer Garden
+router_filter = {
+    brewtils.models.Garden: beer_garden.garden.filter_router_result,
+}
+
 
 def route(operation: Operation):
     """Entry point into the routing subsystem
@@ -193,14 +207,38 @@ def route(operation: Operation):
             f"Unknown operation type '{operation.operation_type}'"
         )
 
+    if invalid_source_check(operation):
+        raise RoutingRequestException(
+            f"Garden '{operation.source_garden_name}' {operation.source_api} is disabled"
+        )
+
     # Determine which garden the operation is targeting
     operation.target_garden_name = _determine_target(operation)
 
     # If it's targeted at THIS garden, execute
     if operation.target_garden_name == config.get("garden.name"):
-        return execute_local(operation)
+        result = execute_local(operation)
     else:
-        return initiate_forward(operation)
+        result = initiate_forward(operation)
+
+    return filter_result(result)
+
+
+def filter_result(result: [brewtils.models.BaseModel, list]):
+    if result is None:
+        return result
+
+    if type(result) is list:
+        for item in result:
+            filter_result(item)
+
+    if isinstance(result, brewtils.models.Operation):
+        filter_result(result.payload)
+
+    if type(result) in router_filter:
+        return router_filter[type(result)](result)
+
+    return result
 
 
 def execute_local(operation: Operation):
@@ -239,6 +277,27 @@ def execute_local(operation: Operation):
     return lookup[operation.operation_type](*operation.args, **operation.kwargs)
 
 
+def invalid_source_check(operation: Operation):
+    # Unable to validate source or api
+    if (
+        operation.source_garden_name is None
+        or operation.source_garden_name == config.get("garden.name")
+        or operation.source_api is None
+    ):
+        return False
+
+    # Grabs the garden to check and updates the heartbeat for the entry point
+    source_garden = beer_garden.garden.update_garden_receiving_heartbeat(
+        operation.source_api, garden_name=operation.source_garden_name
+    )
+
+    for connection in source_garden.receiving_connections:
+        if connection.api == operation.source_api and connection.status != "DISABLED":
+            return False
+
+    return True
+
+
 def initiate_forward(operation: Operation):
     """Forward an operation to a child garden
 
@@ -270,6 +329,36 @@ def initiate_forward(operation: Operation):
     return response
 
 
+def determine_route_garden(target_garden_name):
+    target_garden = gardens.get(target_garden_name)
+
+    if not target_garden:
+        target_garden = get_garden(target_garden_name)
+
+    routable = False
+    for connection in target_garden.publishing_connections:
+        if connection.status not in [
+            "DISABLED",
+            "NOT_CONFIGURED",
+            "MISSING_CONFIGURATION",
+        ]:
+            routable = True
+            break
+
+    if not routable:
+        raise RoutingRequestException(
+            "Attempted to forward operation to garden "
+            f"'{target_garden_name}' but the connection was not enabled. "
+            "This probably means that the connection to the child garden has not "
+            "been configured or the connection is DISABLED"
+        )
+
+    if target_garden.has_parent and target_garden.parent != config.get("garden.name"):
+        return determine_route_garden(target_garden.parent)
+
+    return target_garden
+
+
 def forward(operation: Operation):
     """Forward the operation to a child garden
 
@@ -290,27 +379,41 @@ def forward(operation: Operation):
     if not target_garden:
         target_garden = get_garden(operation.target_garden_name)
 
+    route_garden = determine_route_garden(operation.target_garden_name)
     try:
         if not target_garden:
             raise UnknownGardenException(
                 f"Unknown child garden {operation.target_garden_name}"
             )
 
-        if not target_garden.connection_type:
+        operation_forwarded = False
+
+        exceptions = []
+        for connection in target_garden.publishing_connections:
+            if connection.status not in [
+                "DISABLED",
+                "NOT_CONFIGURED",
+                "MISSING_CONFIGURATION",
+            ]:
+                try:
+                    if connection.api == "HTTP":
+                        _forward_http(operation, route_garden)
+                        operation_forwarded = True
+                    elif connection.api == "STOMP":
+                        _forward_stomp(operation, route_garden)
+                        operation_forwarded = True
+                except ForwardException as ex:
+                    exceptions.append(ex)
+
+        # Throw one of the forwarding exceptions
+        for ex in exceptions:
+            raise ex
+        if not operation_forwarded:
             raise RoutingRequestException(
                 "Attempted to forward operation to garden "
-                f"'{operation.target_garden_name}' but the connection type was None. "
+                f"'{operation.target_garden_name}' but the connection was not enabled. "
                 "This probably means that the connection to the child garden has not "
-                "been configured."
-            )
-
-        if target_garden.connection_type.casefold() == "http":
-            return _forward_http(operation, target_garden)
-        elif target_garden.connection_type.casefold() == "stomp":
-            return _forward_stomp(operation, target_garden)
-        else:
-            raise RoutingRequestException(
-                f"Unknown connection type {target_garden.connection_type}"
+                "been configured or the connection is DISABLED"
             )
 
     except ForwardException as ex:
@@ -352,7 +455,10 @@ def setup_routing():
 
     # Don't add the local garden
     for garden in get_gardens(include_local=False):
-        if garden.name != config.get("garden.name"):
+        if garden.name != config.get("garden.name") and (
+            (garden.has_parent and garden.parent == config.get("garden.name"))
+            or not garden.has_parent
+        ):
             for system in garden.systems:
                 add_routing_system(system=system, garden_name=garden.name)
 
@@ -361,12 +467,16 @@ def setup_routing():
                 and garden.connection_type.casefold() != "local"
             ):
                 with garden_lock:
-                    gardens[garden.name] = garden
-                    if garden.connection_type.casefold() == "stomp":
-                        if garden.name not in stomp_garden_connections:
-                            stomp_garden_connections[garden.name] = (
-                                create_stomp_connection(garden)
-                            )
+                    gardens[garden.name] = load_garden_connections(garden)
+                    for connection in gardens[garden.name].publishing_connections:
+                        if (
+                            connection.api.upper() == "STOMP"
+                            and connection.status != "DISABLED"
+                        ):
+                            if garden.name not in stomp_garden_connections:
+                                stomp_garden_connections[garden.name] = (
+                                    create_stomp_connection(connection)
+                                )
 
             else:
                 logger.warning(f"Garden with invalid connection info: {garden!r}")
@@ -427,6 +537,16 @@ def remove_routing_garden(garden_name=None):
         }
 
 
+def add_routing_garden(garden: Garden, routing_garden: str):
+    if garden.systems:
+        for system in garden.systems:
+            add_routing_system(system=system, garden_name=routing_garden)
+
+    if garden.children:
+        for child in garden.children:
+            add_routing_garden(child, routing_garden)
+
+
 def handle_event(event):
     """Handle events"""
     if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
@@ -446,27 +566,39 @@ def handle_event(event):
             remove_routing_garden(garden_name=event.garden)
 
             # Then add routes to the new systems
-            for system in event.payload.systems:
-                add_routing_system(system=system, garden_name=event.payload.name)
+            add_routing_garden(event.payload, event.payload.name)
 
     # This is a little unintuitive. We want to let the garden module deal with handling
     # any downstream garden changes since handling those changes is nontrivial.
     # It's *those* events we want to act on here, not the "raw" downstream ones.
     # This is also why we only handle GARDEN_UPDATED and not STARTED or STOPPED
     if event.garden == config.get("garden.name") and not event.error:
-        if event.name == Events.GARDEN_UPDATED.name:
-            gardens[event.payload.name] = event.payload
+        if event.name == Events.GARDEN_CONFIGURED.name:
+            if event.payload.name != config.get("garden.name") and (
+                (
+                    event.payload.has_parent
+                    and event.payload.parent == config.get("garden.name")
+                )
+                or not event.payload.has_parent
+            ):
+                gardens[event.payload.name] = event.payload
 
-            if event.payload.connection_type:
-                if event.payload.connection_type.casefold() == "stomp":
-                    if (
-                        event.payload.name in stomp_garden_connections
-                        and stomp_garden_connections[event.payload.name].is_connected()
-                    ):
-                        stomp_garden_connections[event.payload.name].disconnect()
-                    stomp_garden_connections[event.payload.name] = (
-                        create_stomp_connection(event.payload)
-                    )
+                stomp_found = False
+                for connection in event.payload.publishing_connections:
+                    if connection.api.upper() == "STOMP":
+                        stomp_found = True
+                        if (
+                            event.payload.name not in stomp_garden_connections
+                            and connection.status == "PUBLISHING"
+                        ):
+                            create_stomp_connection(connection)
+
+                        elif connection.status == "DISABLED":
+                            stomp_garden_connections[event.payload.name].disconnect()
+
+            if not stomp_found and event.payload.name not in stomp_garden_connections:
+                stomp_garden_connections[event.payload.name].disconnect()
+                del stomp_garden_connections[event.payload.name]
 
         elif event.name == Events.GARDEN_REMOVED.name:
             try:
@@ -511,6 +643,8 @@ def _pre_forward(operation: Operation) -> Operation:
             f"Operation type '{operation.operation_type}' can not be forwarded"
         )
 
+    operation.source_garden_name = None
+
     if operation.operation_type == "REQUEST_CREATE":
         # Save the request so it'll have an ID and we'll have something to update
         local_request = create_request(operation.model)
@@ -527,6 +661,8 @@ def _pre_forward(operation: Operation) -> Operation:
         # unknown request
         operation.model.parent = None
         operation.model.has_parent = False
+        operation.model.source_garden = None
+        operation.model.target_garden = None
 
         # Pull out and store the wait event, if it exists
         wait_event = operation.kwargs.pop("wait_event", None)
@@ -690,7 +826,7 @@ def _instance_id_lookup(instance_id: str) -> str:
 
 # TRANSPORT TYPE STUFF
 # This should be moved out of this module
-def create_stomp_connection(garden: Garden) -> Connection:
+def create_stomp_connection(connection: BrewtilsConnection) -> Connection:
     """Create a stomp connection wrapper for a garden
 
     Constructs a stomp connection wrapper from the garden's stomp connection parameters.
@@ -705,7 +841,8 @@ def create_stomp_connection(garden: Garden) -> Connection:
         The created connection wrapper
 
     """
-    connection_params = garden.connection_params.get("stomp", {})
+
+    connection_params = connection.config
     connection_params = deepcopy(connection_params)
     connection_params["subscribe_destination"] = None
 
@@ -713,56 +850,78 @@ def create_stomp_connection(garden: Garden) -> Connection:
 
 
 def _forward_stomp(operation: Operation, target_garden: Garden) -> None:
-    try:
-        conn = stomp_garden_connections[target_garden.name]
+    for connection in target_garden.publishing_connections:
+        if connection.api == "STOMP" and connection.status not in [
+            "DISABLED",
+            "CONFIGURATION_ERROR",
+        ]:
+            try:
+                conn = stomp_garden_connections[target_garden.name]
 
-        if not conn.is_connected() and not conn.connect():
-            raise ConnectFailedException()
+                if not conn.is_connected() and not conn.connect():
+                    connection.status = "UNREACHABLE"
+                    update_garden(target_garden)
+                    raise ConnectFailedException()
 
-        header_list = target_garden.connection_params["stomp"].get("headers", {})
-        conn_headers = {}
-        for item in header_list:
-            if "key" in item and "value" in item:
-                conn_headers[item["key"]] = item["value"]
+                header_list = connection.config.get("headers", {})
+                conn_headers = {}
+                for item in header_list:
+                    if "key" in item and "value" in item:
+                        conn_headers[item["key"]] = item["value"]
 
-        body, model_headers = process(operation)
-        headers = consolidate_headers(model_headers, conn_headers)
+                body, model_headers = process(operation)
+                headers = consolidate_headers(model_headers, conn_headers)
 
-        conn.send(body=body, headers=headers)
-    except Exception as ex:
-        raise ForwardException(
-            message=(
-                "Failed to forward operation to garden "
-                f"'{operation.target_garden_name}' via STOMP."
-            ),
-            operation=operation,
-            event_name=Events.GARDEN_UNREACHABLE.name,
-        ) from ex
+                conn.send(body=body, headers=headers)
+            except Exception as ex:
+                connection.status = "ERROR"
+                update_garden(target_garden)
+                raise ForwardException(
+                    message=(
+                        "Failed to forward operation to garden "
+                        f"'{operation.target_garden_name}' via STOMP."
+                    ),
+                    operation=operation,
+                    event_name=Events.GARDEN_UNREACHABLE.name,
+                ) from ex
+
+            if connection.status != "PUBLISHING":
+                connection.status = "PUBLISHING"
+                update_garden(target_garden)
 
 
 def _forward_http(operation: Operation, target_garden: Garden) -> None:
     """Actually forward an operation using HTTP"""
 
-    conn_info = target_garden.connection_params.get("http", {})
+    for connection in target_garden.publishing_connections:
+        if connection.api == "HTTP" and connection.status not in [
+            "DISABLED",
+            "CONFIGURATION_ERROR",
+        ]:
+            easy_client = EasyClient(
+                bg_host=connection.config.get("host"),
+                bg_port=connection.config.get("port"),
+                ssl_enabled=connection.config.get("ssl"),
+                bg_url_prefix=connection.config.get("url_prefix", "/"),
+                ca_cert=connection.config.get("ca_cert"),
+                ca_verify=connection.config.get("ca_verify"),
+                client_cert=connection.config.get("client_cert"),
+                username=connection.config.get("username"),
+                password=connection.config.get("password"),
+            )
 
-    easy_client = EasyClient(
-        bg_host=conn_info.get("host"),
-        bg_port=conn_info.get("port"),
-        ssl_enabled=conn_info.get("ssl"),
-        bg_url_prefix=conn_info.get("url_prefix", "/"),
-        ca_cert=conn_info.get("ca_cert"),
-        ca_verify=conn_info.get("ca_verify"),
-        client_cert=conn_info.get("client_cert"),
-        username=conn_info.get("username"),
-        password=conn_info.get("password"),
-    )
+            try:
+                response = easy_client.forward(operation)
+                response.raise_for_status()
+            except Exception as e:
+                connection.status = "UNREACHABLE"
+                update_garden(target_garden)
+                raise ForwardException(
+                    message=f"Error forwarding to garden '{operation.target_garden_name}': {e}",
+                    operation=operation,
+                    event_name=Events.GARDEN_ERROR.name,
+                ) from e
 
-    try:
-        response = easy_client.forward(operation)
-        response.raise_for_status()
-    except Exception as e:
-        raise ForwardException(
-            message=f"Error forwarding to garden '{operation.target_garden_name}': {e}",
-            operation=operation,
-            event_name=Events.GARDEN_ERROR.name,
-        ) from e
+            if connection.status != "PUBLISHING":
+                connection.status = "PUBLISHING"
+                update_garden(target_garden)

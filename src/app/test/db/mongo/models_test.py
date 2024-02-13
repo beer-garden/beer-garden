@@ -766,7 +766,7 @@ class TestGarden:
 
     @pytest.fixture
     def child_system(self):
-        return System(name="echoer", namespace="child_garden")
+        return System(name="echoer", namespace="child_garden", local=False)
 
     @pytest.fixture
     def child_system_v1(self, child_system):
@@ -827,6 +827,7 @@ class TestGarden:
         orig_system_ids = set(
             map(lambda x: str(getattr(x, "id")), child_garden.systems)  # noqa: B009
         )
+
         orig_system_versions = set(
             map(
                 lambda x: str(getattr(x, "version")), child_garden.systems  # noqa: B009
@@ -844,6 +845,9 @@ class TestGarden:
         # we check that the garden written to the DB has the correct systems
         db_garden = Garden.objects().first()
 
+        print("New Systems")
+        for system in db_garden.systems:
+            print(system)
         new_system_ids = set(
             map(lambda x: str(getattr(x, "id")), db_garden.systems)  # noqa: B009
         )

@@ -11,7 +11,7 @@ from beer_garden.requests import process_request
 logger = logging.getLogger(__name__)
 
 
-def handle_event(event):
+def handle_event(event: Event):
     if (event.name == Events.REQUEST_TOPIC_PUBLISH.name) or (
         event.garden == config.get("garden.name")
         and event.name == Events.REQUEST_CREATED.name

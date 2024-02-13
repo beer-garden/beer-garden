@@ -14,7 +14,6 @@ except ImportError:
     from lark.common import ParseError
 
     LarkError = ParseError
-from operator import attrgetter
 from typing import Optional, Tuple
 
 import brewtils.models
@@ -61,6 +60,7 @@ __all__ = [
     "System",
     "Instance",
     "Command",
+    "Connection",
     "Parameter",
     "Request",
     "Choices",
@@ -341,6 +341,8 @@ class Request(MongoModel, Document):
     requester = StringField(required=False)
     parameters_gridfs = FileField()
     is_event = BooleanField(required=False)
+    source_garden = StringField(required=False)
+    target_garden = StringField(required=False)
 
     meta = {
         "queryset_class": FileFieldHandlingQuerySet,
@@ -775,6 +777,15 @@ class Job(MongoModel, Document):
             )
 
 
+class Connection(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.Connection
+
+    api = StringField(required=True)
+    status = StringField(default="UNKOWN")
+    status_info = EmbeddedDocumentField("StatusInfo", default=StatusInfo())
+    config = DictField()
+
+
 class Garden(MongoModel, Document):
     brewtils_model = brewtils.models.Garden
 
@@ -782,9 +793,19 @@ class Garden(MongoModel, Document):
     status = StringField(default="INITIALIZING")
     status_info = EmbeddedDocumentField("StatusInfo", default=StatusInfo())
     namespaces = ListField()
-    connection_type = StringField()
-    connection_params = DictField()
+
+    connection_type = StringField(required=False)
+    receiving_connections = EmbeddedDocumentListField("Connection")
+    publishing_connections = EmbeddedDocumentListField("Connection")
+
     systems = ListField(ReferenceField(System, reverse_delete_rule=PULL))
+
+    parent = StringField(required=False)
+
+    children = DummyField(required=False)
+    has_parent = BooleanField(required=False, default=False)
+
+    metadata = DictField()
 
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves
@@ -804,59 +825,80 @@ class Garden(MongoModel, Document):
         if self.connection_type != "LOCAL":
             self._update_associated_systems()
 
+            # Ensure no receiving configurations are stored locally, if sent
+            for connection in self.receiving_connections:
+                connection.config = {}
+
+            # Only store publishing connections for 1 hop gardens
+            if self.has_parent:
+                for connection in self.publishing_connections:
+                    connection.config = {}
+
         self.save()
 
     def _update_associated_systems(self):
         """If the call to the `deep_save` method is on a child garden object, we ensure
         that when saving the systems, unknowns are deleted."""
         # import moved here to avoid a circular import loop
-        from beer_garden.systems import get_systems, remove_system
+        from beer_garden.systems import remove_system
 
         logger = logging.getLogger(self.__class__.__name__)
 
         def _get_system_triple(system: System) -> Tuple[str, str, str]:
             return (
-                system.namespace,
+                system.namespace or self.name,
                 system.name,
                 system.version,
             )
 
-        our_namespaces = set(self.namespaces).union(
-            set(map(attrgetter("namespace"), self.systems))
-        )
+        # Check previous save for System records
+        old_garden = None
+
+        if Garden.objects(name=self.name).count() > 0:
+            old_garden = Garden.objects.get(name=self.name)
+
         # we leverage the fact that systems must be unique up to the triple of their
         # namespaces, names and versions
-        child_systems_already_known = {
-            _get_system_triple(system): str(system.id)
-            for system in get_systems(
-                filter_params={"local": False, "namespace__in": our_namespaces}
-            )
-        }
+        child_systems_already_known = {}
+        if old_garden:
+            child_systems_already_known = {
+                _get_system_triple(system): str(system.id)
+                for system in old_garden.systems
+            }
 
         for system in self.systems:
             triple = _get_system_triple(system)
 
-            if triple in child_systems_already_known:
-                system_id_to_remove = child_systems_already_known.pop(triple)
+            # Check is System is a Local System
+            if (
+                System.objects(
+                    namespace=triple[0], name=triple[1], version=triple[2], local=True
+                ).count()
+                < 1
+            ):
+                if triple in child_systems_already_known:
+                    system_id_to_remove = child_systems_already_known.pop(triple)
 
-                if system_id_to_remove != str(system.id):
-                    # remove the system from before this update with the same triple
-                    logger.debug(
-                        f"Removing System <{triple[0]}"
-                        f", {triple[1]}"
-                        f", {triple[2]}> with ID={system_id_to_remove}"
-                        f"; doesn't match ID={str(system.id)}"
-                        " for known system with same attributes"
-                    )
-                    remove_system(system_id=system_id_to_remove)
+                    if system_id_to_remove != str(system.id):
+                        # remove the system from before this update with the same triple
+                        logger.error(
+                            f"Removing System <{triple[0]}"
+                            f", {triple[1]}"
+                            f", {triple[2]}> with ID={system_id_to_remove}"
+                            f"; doesn't match ID={str(system.id)}"
+                            " for known system with same attributes"
+                        )
+                        remove_system(system_id=system_id_to_remove)
 
-            system.save()
+                system.save()
+            else:
+                system.delete()
 
         # if there's anything left over, delete those too; this could occur, e.g.,
         # if a child system deleted a particular version of a plugin and installed
         # another version of the same plugin
         for bad_system_id in child_systems_already_known.values():
-            logger.debug(
+            logger.error(
                 f"Removing System with ID={str(bad_system_id)} because it "
                 f"matches no known system in child garden ({self.name})"
             )

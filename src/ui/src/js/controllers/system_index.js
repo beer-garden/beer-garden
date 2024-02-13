@@ -108,7 +108,7 @@ export default function systemIndexController(
 
   $scope.successCallback = function(response) {
     $scope.response = response;
-    $scope.data = response.data;
+    $scope.data = response.data.filter($rootScope.isSystemRoutable);
     $scope.checkGroups();
   };
 
@@ -119,7 +119,7 @@ export default function systemIndexController(
   };
 
   $scope.response = $rootScope.gardensResponse;
-  $scope.data = $rootScope.systems;
+  $scope.data = $rootScope.systems.filter($rootScope.isSystemRoutable);
   $scope.checkGroups();
 
 }
