@@ -352,8 +352,10 @@ export default function appRun(
 
   $rootScope.extractSystems = function(garden){
     let systems = garden.systems;
-    for (let i = 0; i < garden.children.length; i++){
-      systems = systems.concat($rootScope.extractSystems(garden.children[i]));
+    if (garden.children !== undefined) {
+      for (let i = 0; i < garden.children.length; i++){
+        systems = systems.concat($rootScope.extractSystems(garden.children[i]));
+      }
     }
     return systems;
   }
