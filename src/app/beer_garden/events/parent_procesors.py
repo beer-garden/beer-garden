@@ -4,6 +4,7 @@ from requests import RequestException
 import beer_garden.config as conf
 from beer_garden.events import event_blocklisted
 from beer_garden.events.processors import QueueListener
+from beer_garden.garden import local_garden, update_garden
 
 
 class HttpParentUpdater(QueueListener):
@@ -52,13 +53,22 @@ class HttpParentUpdater(QueueListener):
             if event.payload.parent is None and event.payload.name != event.garden:
                 self.logger.error(f"Setting parent to {event.garden}")
                 event.payload.parent = event.garden
+                for connection in event.payload.publishing_connections:
+                    connection.config = {}
+                for connection in event.payload.receiving_connections:
+                    connection.config = {}
+                # event.payload.publishing_connections = []
+                # event.payload.receiving_connections = []
                 event.payload.has_parent = True
                 self.logger.error(event.payload)
 
         if not event_blocklisted(event):
             try:
                 operation = Operation(
-                    operation_type="PUBLISH_EVENT", model=event, model_type="Event"
+                    operation_type="PUBLISH_EVENT",
+                    model=event,
+                    model_type="Event",
+                    source_garden_name=conf.get("garden.name"),
                 )
                 self._ez_client.forward(operation)
             except RequestException as ex:
@@ -66,6 +76,19 @@ class HttpParentUpdater(QueueListener):
 
                 self._connected = False
                 self._reconnect()
+
+    def _update_garden_connection(self, status):
+        garden = local_garden()
+
+        for connection in garden.publishing_connections:
+            if (
+                connection.config["host"] == self._ez_client.client.bg_host
+                and connection.config["port"] == self._ez_client.client.bg_port
+                and connection.config["url_prefix"] == self._ez_client.client.bg_prefix
+            ):
+                connection.status = status
+
+        update_garden(garden)
 
     def _reconnect(self):
         """Attempt to reestablish connection"""
@@ -82,6 +105,7 @@ class HttpParentUpdater(QueueListener):
                     self._connected = True
 
                     self.logger.warning("Successfully reconnected to parent garden")
+                    self._update_garden_connection("PUBLISHING")
 
                     if self._reconnect_action:
                         self._reconnect_action()
@@ -89,6 +113,7 @@ class HttpParentUpdater(QueueListener):
                 pass
 
             if not self._connected:
+                self._update_garden_connection("UNREACHABLE")
                 self.logger.debug("Waiting %.1f seconds before next attempt", wait_time)
                 self.wait(wait_time)
                 wait_time = min(wait_time * 2, 30)

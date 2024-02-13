@@ -45,6 +45,7 @@ class StompManager(BaseProcessor):
             logger.info("Successfully connected")
         else:
             logger.info("Failed to connect")
+            # Update connection
 
         return conn
 

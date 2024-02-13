@@ -14,6 +14,9 @@ auth:
   group_definition_file: null
   role_definition_file: null
   token_secret: IAMSUPERSECRET
+children:
+  directory: ./children
+  unresponsive_timeout: 60
 db:
   connection:
     host: localhost

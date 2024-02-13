@@ -1,4 +1,6 @@
 import pytest
+import json
+import time
 
 # from time import sleep
 # from brewtils.models import PatchOperation
@@ -32,6 +34,32 @@ def system_spec():
 class TestGardenSetup(object):
     child_garden_name = "child"
 
+    def sync_parent(self):
+        patches = json.dumps(
+            [
+                {
+                    "operation": "sync",
+                    "path": "",
+                    "value": "",
+                }
+            ]
+        )
+        self.grand_parent_easy_client.client.patch_garden("parent", patches)
+        time.sleep(5)
+
+    def sync_child(self):
+        patches = json.dumps(
+            [
+                {
+                    "operation": "sync",
+                    "path": "",
+                    "value": "",
+                }
+            ]
+        )
+        self.parent_easy_client.client.patch_garden("child", patches)
+        time.sleep(5)
+
     # def test_garden_auto_register_successful(self):
     #     response = self.grand_parent_easy_client.client.session.get(
     #         self.grand_parent_easy_client.client.base_url + "api/v1/gardens/"
@@ -47,30 +75,60 @@ class TestGardenSetup(object):
     #             assert len(garden.children) == 1
 
     def test_grandparent_counter(self):
+        self.sync_parent()
         response = self.grand_parent_easy_client.client.session.get(
             self.grand_parent_easy_client.client.base_url + "api/v1/gardens/"
         )
 
         gardens = self.parser.parse_garden(response.json(), many=True)
 
-        print(gardens)
         assert len(gardens) == 2
 
         for garden in gardens:
-            assert garden.name in ["grandparent", "parent"]
+            if garden.name == "parent":
+                for connection in garden.publishing_connections:
+                    if connection.api == "HTTP":
+                        assert connection.status == "PUBLISHING"
+                    else:
+                        assert connection.status == "NOT_CONFIGURED"
+                assert len(garden.receiving_connections) == 1
+                assert garden.receiving_connections[0].status == "RECEIVING"
+                assert len(garden.children) == 1
+                assert garden.children[0].name == "child"
+
+            elif garden.name == "grandparent":
+                assert len(garden.children) == 1
+            else:
+                assert False
 
     def test_parent_counter(self):
+        self.sync_child()
         response = self.parent_easy_client.client.session.get(
             self.parent_easy_client.client.base_url + "api/v1/gardens/"
         )
 
         gardens = self.parser.parse_garden(response.json(), many=True)
 
-        print(gardens)
         assert len(gardens) == 2
 
         for garden in gardens:
-            assert garden.name in ["child", "parent"]
+            if garden.name == "child":
+                for connection in garden.publishing_connections:
+                    if connection.api == "HTTP":
+                        assert connection.status == "PUBLISHING"
+                    else:
+                        assert connection.status == "NOT_CONFIGURED"
+
+                # Older gardens will not have receiving connections present
+                if len(garden.receiving_connections) > 0:
+                    assert len(garden.receiving_connections) == 1
+                    assert garden.receiving_connections[0].status == "RECEIVING"
+                    assert len(garden.children) == 0
+
+            elif garden.name == "parent":
+                assert len(garden.children) == 1
+            else:
+                assert False
 
     def test_child_counter(self):
         response = self.child_easy_client.client.session.get(

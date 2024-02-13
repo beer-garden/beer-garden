@@ -20,15 +20,6 @@ from typing import Dict, List, Sequence, Union
 
 import six
 import urllib3
-from requests import Session
-
-import beer_garden.config as config
-import beer_garden.db.api as db
-import beer_garden.queue.api as queue
-from beer_garden.db.mongo.models import RawFile
-from beer_garden.errors import NotUniqueException, ShutdownError
-from beer_garden.events import publish_event
-from beer_garden.metrics import request_completed, request_created, request_started
 from brewtils.choices import parse
 from brewtils.errors import (
     ConflictError,
@@ -47,6 +38,15 @@ from brewtils.models import (
     System,
 )
 from brewtils.pika import PERSISTENT_DELIVERY_MODE
+from requests import Session
+
+import beer_garden.config as config
+import beer_garden.db.api as db
+import beer_garden.queue.api as queue
+from beer_garden.db.mongo.models import RawFile
+from beer_garden.errors import NotUniqueException, ShutdownError
+from beer_garden.events import publish_event
+from beer_garden.metrics import request_completed, request_created, request_started
 
 logger = logging.getLogger(__name__)
 
@@ -945,6 +945,28 @@ def handle_wait_events(event):
                     request_map[request_event].set()
 
 
+def processes_status_latency(garden, target_garden, status, delta):
+    garden.metadata[f"{status}_DELTA_{target_garden}"] = round(delta, 3)
+    if f"{status}_COUNT_{target_garden}" not in garden.metadata:
+        garden.metadata[f"{status}_AVG_{target_garden}"] = round(
+            garden.metadata[f"{status}_DELTA_{target_garden}"], 3
+        )
+        garden.metadata[f"{status}_COUNT_{target_garden}"] = 1
+    else:
+        garden.metadata[f"{status}_AVG_{target_garden}"] = round(
+            (
+                (
+                    garden.metadata[f"{status}_AVG_{target_garden}"]
+                    * garden.metadata[f"{status}_COUNT_{target_garden}"]
+                )
+                + delta
+            )
+            / (garden.metadata[f"{status}_COUNT_{target_garden}"] + 1),
+            3,
+        )
+        garden.metadata[f"{status}_COUNT_{target_garden}"] += 1
+
+
 def update_request_latency_garden(existing_request: Request, event: Event) -> None:
     """Updater for Garden metadata based on Request timestamps
 
@@ -961,17 +983,26 @@ def update_request_latency_garden(existing_request: Request, event: Event) -> No
     garden = db.query_unique(Garden, name=existing_request.source_garden)
 
     if event.name == Events.REQUEST_CREATED.name:
-        garden.metadata[f"CREATE_DELTA_{event.payload.target_garden}"] = (
-            event.payload.created_at - existing_request.created_at
-        ).total_seconds()
+        processes_status_latency(
+            garden,
+            event.payload.target_garden,
+            "CREATE",
+            (event.payload.created_at - existing_request.created_at).total_seconds(),
+        )
     elif event.payload.status == "IN_PROGRESS":
-        garden.metadata[f"START_DELTA_{event.payload.target_garden}"] = (
-            event.payload.updated_at - existing_request.created_at
-        ).total_seconds()
+        processes_status_latency(
+            garden,
+            event.payload.target_garden,
+            "START",
+            (event.payload.updated_at - existing_request.created_at).total_seconds(),
+        )
     elif event.payload.status in ("CANCELED", "SUCCESS", "ERROR"):
-        garden.metadata[f"COMPLETE_DELTA_{event.payload.target_garden}"] = (
-            event.payload.updated_at - existing_request.created_at
-        ).total_seconds()
+        processes_status_latency(
+            garden,
+            event.payload.target_garden,
+            "COMPLETE",
+            (event.payload.updated_at - existing_request.created_at).total_seconds(),
+        )
     else:
         return
 
@@ -979,27 +1010,31 @@ def update_request_latency_garden(existing_request: Request, event: Event) -> No
 
 
 def handle_event(event):
-    # Only care about downstream garden
-    existing_request = db.query_unique(Request, id=event.payload.id)
+    # TODO: Add support for Request Delete event type
+    # if event.name == Events.REQUEST_DELETED.name and event.garden != config.get("garden.name"):
+    #     delete_requests(**event.payload)
 
-    if existing_request:
-        # Skip status that revert
-        if existing_request.status in ("CANCELED", "SUCCESS", "ERROR", "INVALID"):
-            return
-        if existing_request.status == "IN_PROGRESS" and event.payload.status in (
-            "CREATED",
-            "RECEIVED",
-        ):
-            return
+    if event.name in (
+        Events.REQUEST_CREATED.name,
+        Events.REQUEST_STARTED.name,
+        Events.REQUEST_COMPLETED.name,
+        Events.REQUEST_UPDATED.name,
+        Events.REQUEST_CANCELED.name,
+    ):
+        # Only care about downstream garden
+        existing_request = db.query_unique(Request, id=event.payload.id)
 
-    if event.garden != config.get("garden.name") and not event.error:
-        if event.name in (
-            Events.REQUEST_CREATED.name,
-            Events.REQUEST_STARTED.name,
-            Events.REQUEST_COMPLETED.name,
-            Events.REQUEST_UPDATED.name,
-            Events.REQUEST_CANCELED.name,
-        ):
+        if existing_request:
+            # Skip status that revert
+            if existing_request.status in ("CANCELED", "SUCCESS", "ERROR", "INVALID"):
+                return
+            if existing_request.status == "IN_PROGRESS" and event.payload.status in (
+                "CREATED",
+                "RECEIVED",
+            ):
+                return
+
+        if event.garden != config.get("garden.name") and not event.error:
             if existing_request and existing_request.source_garden == config.get(
                 "garden.name"
             ):
@@ -1035,18 +1070,17 @@ def handle_event(event):
                     except RequestStatusTransitionError:
                         pass
 
-        # TODO: Add support for Request Delete event type
-        # elif event.name == Events.REQUEST_DELETED.name:
-        #     delete_requests(**event.payload)
-
-    if event.name in (
-        Events.REQUEST_COMPLETED.name,
-        Events.REQUEST_UPDATED.name,
-        Events.REQUEST_CANCELED.name,
-    ):
-        if event.payload.status in ("INVALID", "CANCELED", "ERROR", "SUCCESS"):
-            existing_request = db.query_unique(Request, id=event.payload.id)
-            if existing_request:
+        if event.name in (
+            Events.REQUEST_COMPLETED.name,
+            Events.REQUEST_UPDATED.name,
+            Events.REQUEST_CANCELED.name,
+        ):
+            if existing_request and event.payload.status in (
+                "INVALID",
+                "CANCELED",
+                "ERROR",
+                "SUCCESS",
+            ):
                 clean_command_type_temp(
                     existing_request, event.garden != config.get("garden.name")
                 )

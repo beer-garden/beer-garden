@@ -5,12 +5,14 @@ ARG VERSION
 ENV BG_LOG_CONFIG_FILE=/conf/app-logging.yaml \
     BG_PLUGIN_LOCAL_LOGGING_CONFIG_FILE=/conf/local-plugin-logging.yaml \
     BG_PLUGIN_REMOTE_LOGGING_CONFIG_FILE=/conf/remote-plugin-logging.yaml \
-    BG_PLUGIN_LOCAL_DIRECTORY=/plugins
+    BG_PLUGIN_LOCAL_DIRECTORY=/plugins \
+    BG_CHILDREN_CONFIG_DIRECTORY=/conf/children
 
 RUN set -ex \
     && apt-get -y update \
     && pip install --upgrade pip \
-    && pip install --no-cache-dir beer-garden==$VERSION
+    && pip install --no-cache-dir beer-garden==$VERSION \
+    && mkdir -p /conf/children
 
 ADD example_configs/app-logging.yaml /conf/
 ADD example_configs/local-plugin-logging.yaml /conf/

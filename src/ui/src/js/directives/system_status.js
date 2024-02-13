@@ -15,10 +15,13 @@ export default function systemStatusDirective() {
       scope.$watch('status', function() {
         switch (scope.status) {
           case 'RUNNING':
+          case 'PUBLISHING':
+          case 'RECEIVING': 
             scope.labelClass = 'label-success';
             break;
           case 'STOPPING':
           case 'UNRESPONSIVE':
+          case 'MISSING_CONFIGURATION':
             scope.labelClass = 'label-warning';
             break;
           case 'STARTING':
@@ -30,6 +33,12 @@ export default function systemStatusDirective() {
             break;
           case 'DEAD':
           case 'STOPPED':
+          case 'DISABLED':
+          case 'ERROR':
+          case 'UNREACHABLE':
+          case 'DISABLED':
+          case 'NOT_CONFIGURED':
+          case 'CONFIGURATION_ERROR':
             scope.labelClass = 'label-danger';
             break;
         }
