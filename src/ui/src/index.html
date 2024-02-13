@@ -26,51 +26,13 @@
       <a style="cursor: pointer" class="navbar-brand" ui-sref="{{getHome()}}">
         <i style="padding: 3px" ng-class="getIcon(config.iconDefault)"></i>
         <span ng-cloak>{{config.applicationName}}</span>
+        
       </a>
+      <select ng-model="filterGarden" class="navbar-brand" ng-change="setGardenFilter()" >
+        <option ng-repeat="garden in gardensResponse.data">{{garden.name}}</option>
+      </select>
       <ul class="nav navbar-nav navbar-top-links navbar-right">
-        <li class="dropdown">
-          <span
-            data-toggle="dropdown"
-            style="padding: 9px 15px; display: block"
-          >
-            <i class="fa fa-search"></i>
-            <input ng-model="searchText" title="Search System Names" />
-          </span>
-
-          <ul
-            class="dropdown-menu"
-            ng-show="searchText != null && searchText != ''"
-          >
-            <li
-              ng-repeat="system in filteredItems  = (systems | filter:searchText)"
-            >
-              <a
-                ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})"
-                ui-sref-active="active"
-              >
-                <span title="{{system.description}}">
-                  <span>{{system.namespace}}</span>
-                  <span>{{system.display_name || system.name}}</span>
-                  <span>{{system.version}}</span>
-                </span>
-              </a>
-              <ul>
-                <li ng-repeat="command in system.commands | filter:searchText">
-                  <a
-                    ui-sref="base.command({systemName: system.name, systemVersion: system.version, namespace: system.namespace, commandName: command.name})"
-                    ui-sref-active="active"
-                  >
-                    <span title="{{command.description}}">
-                      <span>{{command.name}}</span>
-                    </span>
-                  </a>
-                </li>
-              </ul>
-            </li>
-            <li ng-hide="filteredItems.length">No results</li>
-          </ul>
-        </li>
-
+        
         <li ng-show="authEnabled() && !isUser(user)">
           <a href="" ng-click="doLogin()">
             <i style="padding: 3px" class="fa fa-user"></i>

@@ -55,10 +55,8 @@ export default function routeConfig(
               return GardenService.getGardens().then(
                   (response) => {
                     $rootScope.gardens = $rootScope.extractGardenChildren(response.data)
-                    $rootScope.systems = [];
-                    for (let i = 0; i < $rootScope.gardens.length; i++){
-                      $rootScope.systems = $rootScope.systems.concat($rootScope.gardens[i].systems)
-                    }
+                    $rootScope.loadGardenFilter();
+                    $rootScope.filterSystems(false);
                     $rootScope.gardensResponse = response;
                   },
                   (response) => {
