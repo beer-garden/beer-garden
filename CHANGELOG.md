@@ -2,7 +2,7 @@
 
 # 3.24.0
 
-TBD
+2/13/24
 
 - Updated icons on System Admin page
 - Fixed bug where `blocking=true` on Request API returned `IN PROGRESS` status for requests sourced from downstream gardens. Delay added to 
