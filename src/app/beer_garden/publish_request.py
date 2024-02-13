@@ -11,13 +11,17 @@ from beer_garden.requests import process_request
 logger = logging.getLogger(__name__)
 
 
-def handle_event(event):
+def handle_event(event: Event):
     if (event.name == Events.REQUEST_TOPIC_PUBLISH.name) or (
         event.garden == config.get("garden.name")
         and event.name == Events.REQUEST_CREATED.name
         and "_publish" in event.payload.metadata
         and event.payload.metadata["_publish"]
     ):
+        logger.error(event)
+        logger.error(f"Event Type: {event.name}")
+        logger.error(f"Payload Type: {event.payload_type}")
+        
         if event.name == Events.REQUEST_CREATED.name:
             event.metadata["regex_only"] = True
             if "_topic" in event.payload.metadata:

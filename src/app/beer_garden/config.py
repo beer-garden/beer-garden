@@ -928,68 +928,6 @@ _HTTP_SPEC = {
     },
 }
 
-_HTTP_CONNECTION_SPEC = copy.deepcopy(_HTTP_SPEC)
-_HTTP_CONNECTION_SPEC["items"] = _HTTP_CONNECTION_SPEC["items"] | {
-    "username": {
-        "type": "str",
-        "description": "Username for authentication",
-        "required": False,
-    },
-    "password": {
-        "type": "str",
-        "description": "Password for authentication",
-        "required": False,
-    },
-    "access_token": {
-        "type": "str",
-        "description": "Access token for authentication",
-        "required": False,
-    },
-    "refresh_token": {
-        "type": "str",
-        "description": "Refresh token for authentication",
-        "required": False,
-    },
-    "api_version": {
-        "type": "int",
-        "description": "Beergarden API version",
-        "default": 1,
-        "choices": [1],
-    },
-    "client_timeout": {
-        "type": "float",
-        "description": "Max time RestClient will wait for server response",
-        "long_description": (
-            "This setting controls how long the HTTP(s) client will wait"
-            " when opening a connection to Beergarden before aborting. This"
-            " prevents some strange Beergarden server state from causing"
-            " plugins to hang indefinitely. Set to -1 to disable (this is a"
-            " bad idea in production code, see the Requests documentation)."
-        ),
-        "default": -1,
-    },
-}
-
-_HTTP_CONNECTION_SPEC["items"]["ssl"]["items"] = _HTTP_CONNECTION_SPEC["items"]["ssl"][
-    "items"
-] | {
-    "ca_verify": {
-        "type": "bool",
-        "description": "Verify server certificate when using SSL",
-        "default": True,
-    },
-    "client_cert": {
-        "type": "str",
-        "description": "Client certificate to use",
-        "required": False,
-    },
-    "client_key": {
-        "type": "str",
-        "description": "Client key to use",
-        "required": False,
-    },
-}
-
 _STOMP_SPEC = {
     "type": "dict",
     "items": {
@@ -1092,7 +1030,102 @@ _ENTRY_SPEC = {
 _PARENT_SPEC = {
     "type": "dict",
     "items": {
-        "http": _HTTP_CONNECTION_SPEC,
+        "http": {
+            "type": "dict",
+            "items": {
+                "enabled": {
+                    "type": "bool",
+                    "default": False,
+                    "description": "Publish events to parent garden over HTTP",
+                },
+                "host": {
+                    "type": "str",
+                    "description": "Host for the HTTP Server to bind to",
+                    "required": False,
+                },
+                "port": {
+                    "type": "int",
+                    "default": 2337,
+                    "description": "Serve content on this port",
+                },
+                "api_version": {
+                    "type": "int",
+                    "description": "Beergarden API version",
+                    "default": 1,
+                    "choices": [1],
+                },
+                "client_timeout": {
+                    "type": "float",
+                    "description": "Max time RestClient will wait for server response",
+                    "long_description": (
+                        "This setting controls how long the HTTP(s) client will wait"
+                        " when opening a connection to Beergarden before aborting. This"
+                        " prevents some strange Beergarden server state from causing"
+                        " plugins to hang indefinitely. Set to -1 to disable (this is a"
+                        " bad idea in production code, see the Requests documentation)."
+                    ),
+                    "default": -1,
+                },
+                "username": {
+                    "type": "str",
+                    "description": "Username for authentication",
+                    "required": False,
+                },
+                "password": {
+                    "type": "str",
+                    "description": "Password for authentication",
+                    "required": False,
+                },
+                "access_token": {
+                    "type": "str",
+                    "description": "Access token for authentication",
+                    "required": False,
+                },
+                "refresh_token": {
+                    "type": "str",
+                    "description": "Refresh token for authentication",
+                    "required": False,
+                },
+                "ssl": {
+                    "type": "dict",
+                    "items": {
+                        "enabled": {
+                            "type": "bool",
+                            "default": False,
+                            "description": "Use SSL when connecting",
+                        },
+                        "ca_cert": {
+                            "type": "str",
+                            "description": (
+                                "Path to CA certificate file to use for SSLContext"
+                            ),
+                            "required": False,
+                        },
+                        "ca_verify": {
+                            "type": "bool",
+                            "description": "Verify server certificate when using SSL",
+                            "default": True,
+                        },
+                        "client_cert": {
+                            "type": "str",
+                            "description": "Client certificate to use",
+                            "required": False,
+                        },
+                        "client_key": {
+                            "type": "str",
+                            "description": "Client key to use",
+                            "required": False,
+                        },
+                    },
+                },
+                "url_prefix": {
+                    "type": "str",
+                    "default": "/",
+                    "description": "URL path prefix",
+                    "required": False,
+                },
+            },
+        },
         "skip_events": {
             "type": "list",
             "items": {"skip_event": {"type": "str"}},
@@ -1100,7 +1133,97 @@ _PARENT_SPEC = {
             "required": False,
             "description": "Events to be skipped",
         },
-        "stomp": _STOMP_SPEC,
+        "stomp": {
+            "type": "dict",
+            "items": {
+                "enabled": {
+                    "type": "bool",
+                    "default": False,
+                    "description": "Publish events to parent garden over STOMP",
+                },
+                "host": {
+                    "type": "str",
+                    "default": "localhost",
+                    "description": "Broker hostname",
+                },
+                "port": {
+                    "type": "int",
+                    "default": 61613,
+                    "description": "Broker port",
+                },
+                "username": {
+                    "type": "str",
+                    "description": "Username to use for authentication",
+                    "required": False,
+                },
+                "password": {
+                    "type": "str",
+                    "description": "Password to use for authentication",
+                    "required": False,
+                },
+                "send_destination": {
+                    "type": "str",
+                    "description": "Topic where events are published",
+                    "required": False,
+                },
+                "subscribe_destination": {
+                    "type": "str",
+                    "description": "Topic to listen for operations",
+                    "required": False,
+                },
+                "headers": {
+                    "type": "list",
+                    "description": (
+                        "Headers to be sent with messages. "
+                        "Follows standard YAML formatting for lists with "
+                        "two variables 'key' and 'value'"
+                    ),
+                    "required": False,
+                    "items": {
+                        "key": {"type": "str"},
+                        "value": {"type": "str"},
+                    },
+                    "default": [],
+                },
+                "ssl": {
+                    "type": "dict",
+                    "items": {
+                        "use_ssl": {
+                            "type": "bool",
+                            "description": "Use SSL when connecting to message broker",
+                            "default": False,
+                        },
+                        "client_key": {
+                            "type": "str",
+                            "description": (
+                                "Path to client private key to use when "
+                                "communicating with the message broker"
+                            ),
+                            "required": False,
+                            "previous_names": ["private_key"],
+                        },
+                        "client_cert": {
+                            "type": "str",
+                            "description": (
+                                "Path to client public certificate to use "
+                                "when communicating with the message broker"
+                            ),
+                            "required": False,
+                            "previous_names": ["cert_file"],
+                        },
+                        "ca_cert": {
+                            "type": "str",
+                            "description": (
+                                "Path to certificate file containing the "
+                                "certificate of the authority that issued the message "
+                                "broker certificate"
+                            ),
+                            "required": False,
+                        },
+                    },
+                },
+            },
+        },
     },
 }
 
@@ -1460,6 +1583,191 @@ _CHILD_SPECIFICATION = {
             "(negative number for never)"
         ),
     },
-    "http": _HTTP_CONNECTION_SPEC,
-    "stomp": _STOMP_SPEC,
+    "http": {
+            "type": "dict",
+            "items": {
+                "enabled": {
+                    "type": "bool",
+                    "default": False,
+                    "description": "Publish events to Child garden over HTTP",
+                },
+                "host": {
+                    "type": "str",
+                    "description": "Host for the HTTP Server to bind to",
+                    "required": False,
+                },
+                "port": {
+                    "type": "int",
+                    "default": 2337,
+                    "description": "Serve content on this port",
+                },
+                "api_version": {
+                    "type": "int",
+                    "description": "Beergarden API version",
+                    "default": 1,
+                    "choices": [1],
+                },
+                "client_timeout": {
+                    "type": "float",
+                    "description": "Max time RestClient will wait for server response",
+                    "long_description": (
+                        "This setting controls how long the HTTP(s) client will wait"
+                        " when opening a connection to Beergarden before aborting. This"
+                        " prevents some strange Beergarden server state from causing"
+                        " plugins to hang indefinitely. Set to -1 to disable (this is a"
+                        " bad idea in production code, see the Requests documentation)."
+                    ),
+                    "default": -1,
+                },
+                "username": {
+                    "type": "str",
+                    "description": "Username for authentication",
+                    "required": False,
+                },
+                "password": {
+                    "type": "str",
+                    "description": "Password for authentication",
+                    "required": False,
+                },
+                "access_token": {
+                    "type": "str",
+                    "description": "Access token for authentication",
+                    "required": False,
+                },
+                "refresh_token": {
+                    "type": "str",
+                    "description": "Refresh token for authentication",
+                    "required": False,
+                },
+                "ssl": {
+                    "type": "dict",
+                    "items": {
+                        "enabled": {
+                            "type": "bool",
+                            "default": False,
+                            "description": "Use SSL when connecting",
+                        },
+                        "ca_cert": {
+                            "type": "str",
+                            "description": (
+                                "Path to CA certificate file to use for SSLContext"
+                            ),
+                            "required": False,
+                        },
+                        "ca_verify": {
+                            "type": "bool",
+                            "description": "Verify server certificate when using SSL",
+                            "default": True,
+                        },
+                        "client_cert": {
+                            "type": "str",
+                            "description": "Client certificate to use",
+                            "required": False,
+                        },
+                        "client_key": {
+                            "type": "str",
+                            "description": "Client key to use",
+                            "required": False,
+                        },
+                    },
+                },
+                "url_prefix": {
+                    "type": "str",
+                    "default": "/",
+                    "description": "URL path prefix",
+                    "required": False,
+                },
+            },
+        },
+    "stomp": {
+            "type": "dict",
+            "items": {
+                "enabled": {
+                    "type": "bool",
+                    "default": False,
+                    "description": "Publish events to child garden over STOMP",
+                },
+                "host": {
+                    "type": "str",
+                    "default": "localhost",
+                    "description": "Broker hostname",
+                },
+                "port": {
+                    "type": "int",
+                    "default": 61613,
+                    "description": "Broker port",
+                },
+                "username": {
+                    "type": "str",
+                    "description": "Username to use for authentication",
+                    "required": False,
+                },
+                "password": {
+                    "type": "str",
+                    "description": "Password to use for authentication",
+                    "required": False,
+                },
+                "send_destination": {
+                    "type": "str",
+                    "description": "Topic where events are published",
+                    "required": False,
+                },
+                "subscribe_destination": {
+                    "type": "str",
+                    "description": "Topic to listen for operations",
+                    "required": False,
+                },
+                "headers": {
+                    "type": "list",
+                    "description": (
+                        "Headers to be sent with messages. "
+                        "Follows standard YAML formatting for lists with "
+                        "two variables 'key' and 'value'"
+                    ),
+                    "required": False,
+                    "items": {
+                        "key": {"type": "str"},
+                        "value": {"type": "str"},
+                    },
+                    "default": [],
+                },
+                "ssl": {
+                    "type": "dict",
+                    "items": {
+                        "use_ssl": {
+                            "type": "bool",
+                            "description": "Use SSL when connecting to message broker",
+                            "default": False,
+                        },
+                        "client_key": {
+                            "type": "str",
+                            "description": (
+                                "Path to client private key to use when "
+                                "communicating with the message broker"
+                            ),
+                            "required": False,
+                            "previous_names": ["private_key"],
+                        },
+                        "client_cert": {
+                            "type": "str",
+                            "description": (
+                                "Path to client public certificate to use "
+                                "when communicating with the message broker"
+                            ),
+                            "required": False,
+                            "previous_names": ["cert_file"],
+                        },
+                        "ca_cert": {
+                            "type": "str",
+                            "description": (
+                                "Path to certificate file containing the "
+                                "certificate of the authority that issued the message "
+                                "broker certificate"
+                            ),
+                            "required": False,
+                        },
+                    },
+                },
+            },
+        },
 }
