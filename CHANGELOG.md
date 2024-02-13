@@ -11,7 +11,7 @@ TBD
 - Fixed bug where pruned In-Progress Requests that were scheduled never completed in scheduler, so max concurrency would be reached.
 - Expanded counters for Scheduled Jobs to include Requests skipped and canceled. 
 
-** BREAKING CHANGES **
+## BREAKING CHANGES
 - The Garden table needs to be dropped from the database to support new model changes
   ```
   mongo
