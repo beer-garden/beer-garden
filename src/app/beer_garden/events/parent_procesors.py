@@ -51,14 +51,12 @@ class HttpParentUpdater(QueueListener):
             Events.GARDEN_SYNC.name,
         ):
             if event.payload.parent is None and event.payload.name != event.garden:
-                self.logger.error(f"Setting parent to {event.garden}")
                 event.payload.parent = event.garden
                 for connection in event.payload.publishing_connections:
                     connection.config = {}
                 for connection in event.payload.receiving_connections:
                     connection.config = {}
                 event.payload.has_parent = True
-                self.logger.error(event.payload)
 
         if not event_blocklisted(event):
             try:

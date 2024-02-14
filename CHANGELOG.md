@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.24.1
+
+TBD
+
+- Cleaned up logging statements left from debugging
+
 # 3.24.0
 
 2/13/24
