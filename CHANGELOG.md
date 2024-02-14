@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.24.1
+
+TBD
+
+- Fixed bug where the Garden Connection Stop button did not request the connection to be disabled if the current status is a valid running status.
+
 # 3.24.0
 
 2/13/24
