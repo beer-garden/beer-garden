@@ -24,12 +24,14 @@ export default function adminSystemLogsController(
   $scope.logs = undefined;
   $scope.start_line = 0;
   $scope.end_line = 20;
+  $scope.tail_start = 0;
   $scope.tail_line = 20;
   $scope.wait_timeout = 30;
   $scope.displayLogs = undefined;
   $scope.system = system;
   $scope.instance = instance;
   $scope.loadingLogs = false;
+  $scope.stopTailing = false;
   $scope.alerts = [
     {
       type: 'info',
@@ -62,9 +64,11 @@ export default function adminSystemLogsController(
     $scope.downloadHref = 'api/v1/requests/output/' + $scope.requestId;
   };
 
+
   $scope.getLogsLines = function() {
     $scope.loadingLogs = true;
     $scope.displayLogs = undefined;
+
 
     InstanceService.getInstanceLogs(
         instance.id,
@@ -74,16 +78,59 @@ export default function adminSystemLogsController(
     ).then($scope.successLogs, $scope.addErrorAlert);
   };
 
+  $scope.successTailLogs = function(response) {
+    $scope.loadingLogs = false;
+    let appendLogs = true;
+
+    if ($scope.displayLogs === undefined){
+      $scope.displayLogs = '';
+      $scope.logs = [];
+      appendLogs = false;
+    } 
+    if (appendLogs && response.data.length > 0){
+      $scope.displayLogs = $scope.displayLogs.concat("\n");
+    }
+
+    for (let i = 0; i < response.data.length; i++) {
+      $scope.displayLogs = $scope.displayLogs.concat(response.data[i]);
+    }
+
+    $scope.requestId = response.headers('request_id');
+    $scope.downloadHref = 'api/v1/requests/output/' + $scope.requestId;
+
+    if (response.data.length > 0){
+      $scope.tail_start = $scope.tail_start + response.data.match(/\n/g).length + 1;
+    }
+
+    // TODO: Sleep here a second so you don't spam the server
+    if (response.data.length > 0){
+      // Sleep longer since nothing changed
+    } else {
+      // Sleep 
+    }
+    $scope.getLogsTailLoop();
+  };
+
+  $scope.getLogsTailLoop = function() {
+    InstanceService.getInstanceLogs(
+        instance.id,
+        $scope.wait_timeout,
+        $scope.tail_start,
+        $scope.tail_line + $scope.tail_start,
+    ).then($scope.successTailLogs, $scope.addErrorAlert);
+  };
+
   $scope.getLogsTail = function() {
     $scope.loadingLogs = true;
     $scope.displayLogs = undefined;
+    $scope.tail_start = 0;
 
     InstanceService.getInstanceLogs(
         instance.id,
         $scope.wait_timeout,
-        $scope.tail_line * -1,
-        null,
-    ).then($scope.successLogs, $scope.addErrorAlert);
+        $scope.tail_start,
+        $scope.tail_line + $scope.tail_start,
+    ).then($scope.successTailLogs, $scope.addErrorAlert);
   };
 
   $scope.getLogs = function() {
@@ -99,6 +146,7 @@ export default function adminSystemLogsController(
   };
 
   $scope.closeDialog = function() {
+    $scope.stopTailing = true;
     $uibModalInstance.close();
   };
 
