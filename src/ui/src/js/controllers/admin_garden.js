@@ -149,7 +149,7 @@ export default function adminGardenController(
   $scope.stopReceivingConnection = function(garden, api) {
     for (let i = 0; i < garden.receiving_connections.length; i++) {
       if (garden.receiving_connections[i].api == api){
-        if (garden.receiving_connections[i].status in ["PUBLISHING","RECEIVING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN"]) {
+        if (["PUBLISHING","RECEIVING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN"].includes(garden.receiving_connections[i].status)) {
           GardenService.updateReceivingStatus(garden.name, "DISABLED", api);
         }
       }
@@ -169,7 +169,7 @@ export default function adminGardenController(
   $scope.stopPublishingConnection = function(garden, api) {
     for (let i = 0; i < garden.publishing_connections.length; i++) {
       if (garden.publishing_connections[i].api == api){
-        if (garden.publishing_connections[i].status in ["PUBLISHING","RECEIVING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN"]) {
+        if (["PUBLISHING","RECEIVING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN"].includes(garden.publishing_connections[i].status)) {
           GardenService.updatePublisherStatus(garden.name, "DISABLED", api);
         }
       }
