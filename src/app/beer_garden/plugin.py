@@ -25,10 +25,10 @@ from brewtils.models import (
     Event,
     Events,
     Instance,
+    Operation,
     Request,
     RequestTemplate,
-    System,
-    Operation,
+    System,  
 )
 from brewtils.schema_parser import SchemaParser
 from brewtils.stoppable_thread import StoppableThread
