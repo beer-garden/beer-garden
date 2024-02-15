@@ -18,7 +18,6 @@ delegate requesting information from the plugin to the request service.
 """
 
 import logging
-import threading
 from datetime import datetime, timedelta
 from typing import Tuple
 

@@ -608,6 +608,7 @@ def handle_event(event):
             except KeyError:
                 pass
 
+
 def _operation_converstion(operation: Operation) -> Operation:
     # Use if the targeted function creates a Request object that
     # needs to be routed to any Garden
@@ -616,6 +617,7 @@ def _operation_converstion(operation: Operation) -> Operation:
     if operation.operation_type == "INSTANCE_LOGS":
         return beer_garden.plugin.read_logs_operation(operation)
     return operation
+
 
 def _pre_route(operation: Operation) -> Operation:
     """Called before any routing logic is applied"""
