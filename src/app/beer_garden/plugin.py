@@ -22,7 +22,15 @@ import threading
 from datetime import datetime, timedelta
 from typing import Tuple
 
-from brewtils.models import Event, Events, Instance, Request, RequestTemplate, System
+from brewtils.models import (
+    Event,
+    Events,
+    Instance,
+    Request,
+    RequestTemplate,
+    System,
+    Operation,
+)
 from brewtils.schema_parser import SchemaParser
 from brewtils.stoppable_thread import StoppableThread
 from mongoengine.fields import ObjectIdField
@@ -360,47 +368,53 @@ def initialize_logging(
     return instance
 
 
-def read_logs(
-    instance_id: str = None,
-    instance: Instance = None,
-    system: System = None,
-    start_line: int = None,
-    end_line: int = None,
-    wait_event: threading.Event = None,
-) -> Request:
-    """Read lines from an Instance's log file.
+def read_logs_operation(operation: Operation) -> Operation:
+    """Converts Operation to Read lines from an Instance's log file.
 
-    Args:
+    Expected Operation.kwargs fields:
         instance_id: The Instance ID
-        instance: The Instance
-        system: The System
         start_line: Start reading log file at
         end_line: Stop reading log file at
         wait_event: Wait event for response
 
+    Args:
+        operation: The Operation to convert to Create Request
+
+
     Returns:
-        Request object with logs as output
+        Operation for Request Create
     """
     system, instance = _from_kwargs(
-        system=system, instance=instance, instance_id=instance_id
+        instance_id=operation.kwargs.get("instance_id", None),
     )
 
-    logger.debug(f"Reading Logs from instance {system}[{instance}]")
+    logger.debug(
+        f"Generating operation for Reading Logs from instance {system}[{instance}]"
+    )
 
-    request = requests.process_request(
-        Request.from_template(
+    return Operation(
+        operation_type="REQUEST_CREATE",
+        model=Request.from_template(
             read_logs_request,
             namespace=system.namespace,
             system=system.name,
             system_version=system.version,
             instance_name=instance.name,
-            parameters={"start_line": start_line, "end_line": end_line},
+            parameters={
+                "start_line": operation.kwargs.get("start_line", None),
+                "end_line": operation.kwargs.get("end_line", None),
+            },
         ),
-        is_admin=True,
-        wait_event=wait_event,
+        model_type="Request",
+        kwargs={
+            "wait_event": operation.kwargs.get("wait_event", None),
+            "is_admin": True,
+            "priority": 1,
+        },
+        target_garden_name=operation.target_garden_name,
+        source_garden_name=operation.source_garden_name,
+        source_api=operation.source_api,
     )
-
-    return request
 
 
 @publish_event_async(Events.INSTANCE_UPDATED)

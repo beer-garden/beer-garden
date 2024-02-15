@@ -124,7 +124,6 @@ route_functions = {
     "INSTANCE_START": beer_garden.plugin.start,
     "INSTANCE_RESTART": beer_garden.plugin.restart,
     "INSTANCE_STOP": beer_garden.plugin.stop,
-    "INSTANCE_LOGS": beer_garden.plugin.read_logs,
     "JOB_CREATE": beer_garden.scheduler.create_job,
     "JOB_CREATE_MULTI": beer_garden.scheduler.create_jobs,
     "JOB_UPDATE": beer_garden.scheduler.update_job,
@@ -609,9 +608,19 @@ def handle_event(event):
             except KeyError:
                 pass
 
+def _operation_converstion(operation: Operation) -> Operation:
+    # Use if the targeted function creates a Request object that
+    # needs to be routed to any Garden
+
+    # Instance Logs is expected back a Request object, this converts the class so it can be routed
+    if operation.operation_type == "INSTANCE_LOGS":
+        return beer_garden.plugin.read_logs_operation(operation)
+    return operation
 
 def _pre_route(operation: Operation) -> Operation:
     """Called before any routing logic is applied"""
+    # Determine if the operation needs to be converted first
+    operation = _operation_converstion(operation)
     # If no source garden is defined set it to the local garden
     if operation.source_garden_name is None:
         operation.source_garden_name = config.get("garden.name")

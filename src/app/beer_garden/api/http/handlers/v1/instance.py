@@ -256,8 +256,8 @@ class InstanceLogAPI(AuthorizationHandler):
         response = await self.client(
             Operation(
                 operation_type="INSTANCE_LOGS",
-                args=[instance_id],
                 kwargs={
+                    "instance_id": instance_id,
                     "wait_event": wait_future,
                     "start_line": start_line,
                     "end_line": end_line,
@@ -276,8 +276,8 @@ class InstanceLogAPI(AuthorizationHandler):
 
         response = wait_future.result()
 
-        if response["status"] == "ERROR":
-            raise RequestProcessingError(response["output"])
+        if response.status == "ERROR":
+            raise RequestProcessingError(response.output)
 
         return response
 
