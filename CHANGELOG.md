@@ -5,6 +5,7 @@
 TBD
 
 - Cleaned up logging statements left from debugging
+- Fixed bug where the modal for reading Instance Logs was not appearing
 
 # 3.24.0
 
