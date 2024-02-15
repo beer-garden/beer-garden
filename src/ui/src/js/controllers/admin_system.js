@@ -237,16 +237,7 @@ export default function adminSystemController(
   $rootScope.$watchCollection('systems', groupSystems);
 
   $scope.showLogs = function(system, instance) {
-    $uibModal.open({
-      template: gardenMetrics,
-      resolve: {
-        garden: $rootScope.gardensResponse[0],
-        metrics: [],
-      },
-      controller: 'AdminGardenMetricsController',
-      windowClass: 'app-modal-window',
-    });
-    /*
+    
     $uibModal.open({
       template: readLogs,
       resolve: {
@@ -256,7 +247,7 @@ export default function adminSystemController(
       controller: 'AdminSystemLogsController',
       windowClass: 'app-modal-window',
     });
-    */
+    
   };
 
   $scope.manageQueue = function(system, instance) {
