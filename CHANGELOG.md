@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.24.1
+
+TBD
+
+- Fixed bug where the modal for reading Instance Logs was not appearing
+
 # 3.24.0
 
 2/13/24
