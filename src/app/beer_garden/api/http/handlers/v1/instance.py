@@ -246,9 +246,9 @@ class InstanceLogAPI(AuthorizationHandler):
 
         response = await self._generate_get_response(instance_id, start_line, end_line)
 
-        self.set_header("request_id", response.id)
+        self.set_header("request_id", response["id"])
         self.set_header("Content-Type", "text/plain; charset=UTF-8")
-        self.write(response.output)
+        self.write(response["output"])
 
     async def _generate_get_response(self, instance_id, start_line, end_line):
         wait_future = Future()
@@ -276,8 +276,8 @@ class InstanceLogAPI(AuthorizationHandler):
 
         response = wait_future.result()
 
-        if response.status == "ERROR":
-            raise RequestProcessingError(response.output)
+        if response["status"] == "ERROR":
+            raise RequestProcessingError(response["output"])
 
         return response
 
