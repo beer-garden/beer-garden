@@ -18,6 +18,8 @@ from beer_garden.db.mongo.models import (
     User,
 )
 
+from brewtils.models import Request as BrewtilsRequest
+
 
 @pytest.fixture
 def garden():
@@ -79,7 +81,7 @@ def access_token_permitted(user_with_permission):
 @pytest.fixture
 def instance_function_mock():
     future = asyncio.Future()
-    future.set_result({"id": "doesn't", "output": "matter"})
+    future.set_result(BrewtilsRequest(id="doesn't", output="matter"))
     instance_function = Mock()
     instance_function.return_value = future
 

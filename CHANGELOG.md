@@ -8,6 +8,7 @@ TBD
 - Cleaned up logging statements left from debugging
 - Fixed bug where the modal for reading Instance Logs was not appearing
 - Updated System Instance "Get Logs" to support live polling
+- Expanded Instance Logs requests to allow for routing to child gardens
 
 # 3.24.0
 
