@@ -1,6 +1,7 @@
 adminSystemLogsController.$inject = [
   '$scope',
   '$uibModalInstance',
+  '$timeout',
   'InstanceService',
   'system',
   'instance',
@@ -10,6 +11,7 @@ adminSystemLogsController.$inject = [
  * adminSystemController - System management controller.
  * @param  {Object} $scope          Angular's $scope object.
  * @param  {Object} $uibModalInstance
+ * @param  {Object} $timeout
  * @param  {Object} InstanceService Beer-Garden's instance service object.
  * @param  {Object} system
  * @param  {Object} instance
@@ -17,6 +19,7 @@ adminSystemLogsController.$inject = [
 export default function adminSystemLogsController(
     $scope,
     $uibModalInstance,
+    $timeout,
     InstanceService,
     system,
     instance,
@@ -102,16 +105,19 @@ export default function adminSystemLogsController(
       $scope.tail_start = $scope.tail_start + response.data.match(/\n/g).length + 1;
     }
 
-    // TODO: Sleep here a second so you don't spam the server
-    if (response.data.length > 0){
-      // Sleep longer since nothing changed
+    // Sleep so you don't spam the server
+    if (response.data.length == 0 || response.data.match(/\n/g).length < $scope.tail_line){
+      $timeout(() => {$scope.getLogsTailLoop();}, 10000); // Sleep Ten seconds
     } else {
-      // Sleep 
+      $timeout(() => {$scope.getLogsTailLoop();}, 1000); // Sleep One Second
     }
-    $scope.getLogsTailLoop();
+    ;
   };
 
   $scope.getLogsTailLoop = function() {
+    if ($scope.stopTailing) {
+      return;
+    }
     InstanceService.getInstanceLogs(
         instance.id,
         $scope.wait_timeout,
@@ -120,10 +126,15 @@ export default function adminSystemLogsController(
     ).then($scope.successTailLogs, $scope.addErrorAlert);
   };
 
+  $scope.stopLogsTail = function() {
+    $scope.stopTailing = true;
+  }
+
   $scope.getLogsTail = function() {
     $scope.loadingLogs = true;
     $scope.displayLogs = undefined;
     $scope.tail_start = 0;
+    $scope.stopTailing = false;
 
     InstanceService.getInstanceLogs(
         instance.id,
