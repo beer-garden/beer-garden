@@ -622,7 +622,7 @@ def _operation_conversion(operation: Operation) -> Operation:
 def _pre_route(operation: Operation) -> Operation:
     """Called before any routing logic is applied"""
     # Determine if the operation needs to be converted first
-    operation = _operation_converstion(operation)
+    operation = _operation_conversion(operation)
     # If no source garden is defined set it to the local garden
     if operation.source_garden_name is None:
         operation.source_garden_name = config.get("garden.name")
