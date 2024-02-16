@@ -89,7 +89,7 @@ then
   echo "PIP Trusted Host already set"
 else
   echo "Setting PIP Trusted Host to ${TRUSTED_HOST}"
-  $PIP_BIN config set global.trust-host "${TRUSTED_HOST}"
+  $PIP_BIN config set global.trusted-host "${TRUSTED_HOST}"
 fi
 
 get_version() {
