@@ -609,7 +609,7 @@ def handle_event(event):
                 pass
 
 
-def _operation_converstion(operation: Operation) -> Operation:
+def _operation_conversion(operation: Operation) -> Operation:
     # Use if the targeted function creates a Request object that
     # needs to be routed to any Garden
 
