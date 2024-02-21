@@ -8,6 +8,7 @@ TBD
 - Fixed bug where the Garden Connection Stop button did not request the connection to be disabled if the current status is a valid running status.
 - Cleaned up logging statements left from debugging
 - Fixed bug where the modal for reading Instance Logs was not appearing
+- Updated System Instance "Get Logs" to support live polling
 - Expanded Instance Logs requests to allow for routing to child gardens
 
 # 3.24.0

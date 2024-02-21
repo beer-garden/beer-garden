@@ -15,16 +15,9 @@
   </div>
 
   <div>
-    <form ng-submit="getLogsTail()">
-      <input type="submit" value="Get Tail Logs" />
-      <label for="start_line">Tail Lines</label>
-      <input
-        type="number"
-        id="tail_line"
-        min="0"
-        name="start_line"
-        ng-model="tail_line"
-      />
+    <form>
+      <input type="submit" name="start" value="Get Tail Logs" ng-click="getLogsTail()"/>
+      <input type="submit" name="stop" value="Stop Tail Logs" ng-click="stopLogsTail()"/>
     </form>
   </div>
 
