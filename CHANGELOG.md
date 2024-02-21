@@ -2,7 +2,7 @@
 
 # 3.24.1
 
-TBD
+2/21/24
 
 - Fixed pip config trusted-host on rpm build
 - Fixed bug where the Garden Connection Stop button did not request the connection to be disabled if the current status is a valid running status.
