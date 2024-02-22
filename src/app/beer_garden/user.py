@@ -2,14 +2,16 @@ import logging
 from copy import copy
 from typing import List, Optional
 
-from brewtils.models import Event, Events, Operation, User
+from brewtils.models import Event, Events, Operation, User, Garden, Role
 from marshmallow import ValidationError
+from copy import deepcopy
 
 from beer_garden import config
 from beer_garden.db.mongo.models import UserToken
 import beer_garden.db.api as db
 from beer_garden.events import publish
 from beer_garden.role import RoleSyncSchema, role_sync_status, sync_roles
+from beer_garden.errors import InvalidPasswordException
 
 from passlib.apps import custom_app_context
 
@@ -49,10 +51,13 @@ def revoke_tokens(user: User) -> None:
     """
     UserToken.objects.filter(user=user).delete()
 
+def get_user(username: str) -> User:
+    """
+    """
+    return db.query_unique(User, username=username, raise_missing=True)
 
 
-
-def create_user(**kwargs) -> User:
+def create_user(user: User) -> User:
     """Creates a User using the provided kwargs. The created user is saved to the
     database and returned.
 
@@ -62,7 +67,6 @@ def create_user(**kwargs) -> User:
     Returns:
         User: The created User instance
     """
-    user = User(**kwargs)
 
     if user.password:
         set_password(user)
@@ -71,14 +75,15 @@ def create_user(**kwargs) -> User:
 
 
 
-def update_user(user: User = None, username: str = None, hashed_password: Optional[str] = None, **kwargs) -> User:
+def update_user(user: User = None, username: str = None, new_password: str = None, current_password: str = None, **kwargs) -> User:
     """Updates the provided User by setting its attributes to those provided by kwargs.
     The updated user object is then saved to the database and returned.
 
     Args:
         user: The User instance to be updated
-        hashed_password: A pre-hashed password that should be stored as is. This will
-            override a password kwarg if one is supplied.
+        username: The username of the User instance to be updated
+        new_password: The new password to be hashed
+        current_password: The current password for verification and the new password
         **kwargs: Keyword arguments corresponding to User model attributes
 
     Returns:
@@ -86,20 +91,74 @@ def update_user(user: User = None, username: str = None, hashed_password: Option
     """
     if not user:
         user = db.query_unique(User, username=username, raise_missing=True)
+    
+    if not user.is_remote:
+        # Only local accounts have passwords associated
+        if new_password and current_password:
+            if verify_password(user, current_password):
+                set_password(user, password=new_password)
+            else:
+                raise InvalidPasswordException("Current password incorrect")
+ 
+    else:
+        existing_user = db.query_unique(User, username=user.username, raise_missing=True)
+
+        if existing_user and not existing_user.is_remote:
+            # Update remote roles, and remote user mappings
+            existing_user.remote_roles = user.remote_roles
+            existing_user.remote_user_mapping = user.remote_user_mapping
+
+            user = existing_user
 
     for key, value in kwargs.items():
-        if key == "password" and hashed_password is None:
-            set_password(user, password=value)
-        else:
-            setattr(user, key, value)
-
-    if hashed_password:
-        user.password = hashed_password
+        setattr(user, key, value)
 
     user = db.update(user)
     _publish_user_updated(user)
 
     return user
+
+
+def flatten_user_role(role: Role, flatten_roles: list):
+    new_roles = []
+    #loop through each scope to determine if we need to flatten further
+    for scope_attribute in ["scope_gardens","scope_namespaces", "scope_systems", "scope_instances", "scope_versions","scope_commands"]:
+        if len(getattr(role, scope_attribute, [])) > 1:
+            # Split scope and rerun
+            
+            for attribute_value in getattr(role, scope_attribute, []):
+                new_role = deepcopy(role)
+                setattr(new_role, scope_attribute, [attribute_value])
+                new_roles.append(new_role)
+            
+            break
+
+    # Role is as flat as it can be
+    if len(new_roles) == 0:
+        flatten_roles.append(role)
+    
+    # Keep Looping to flatten role
+    for flatten_role in new_roles:
+        flatten_user_role(flatten_role, flatten_roles)
+
+
+def generate_remote_user(target_garden: Garden, user: User) -> User:
+
+    has_remote_mapping = False
+
+    for remote_user_map in user.remote_user_mapping:
+        if remote_user_map.target_garden == target_garden.name:
+            user_copy = deepcopy(user)
+
+            # Prep user model
+            user_copy.remote_user_mapping = []
+            user_copy.password = None
+            user_copy.is_remote = True
+
+            for role in user.roles:
+                
+    return None
+
 
 #Old Stuff
 ################################

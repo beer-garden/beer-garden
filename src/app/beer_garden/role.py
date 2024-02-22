@@ -2,63 +2,79 @@ import logging
 from typing import List
 
 from brewtils.models import Event as BrewtilsEvent
+from brewtils.models import Role, User
 from marshmallow import Schema, fields
 from mongoengine import DoesNotExist
 
 from beer_garden import config
-from beer_garden.db.mongo.models import Garden, RemoteRole, Role, User
-
+import beer_garden.db.api as db
+#from beer_garden.db.mongo.models import Garden, RemoteRole, Role, User
+from beer_garden.user import update_user
 logger = logging.getLogger(__name__)
 
 
-class RoleSyncSchema(Schema):
-    """Role syncing input schema"""
 
-    name = fields.Str(required=True)
-    description = fields.Str(allow_none=True, missing=None)
-    permissions = fields.List(fields.Str(), required=True)
+def create_role(role: Role) -> Role:
+    return db.create(role)
+
+def get_role(role_name: str):
+    return db.query_unique(Role, name=role_name, raise_missing=True)
+
+def get_roles():
+    return db.query(Role)
+
+def update_role(role: Role = None, role_name: str = None, **kwargs) -> Role:
+    
+    if not role:
+        role = db.query_unique(Role, name=role_name, raise_missing=True)
+
+    for key, value in kwargs.items():
+        setattr(role, key, value)
+
+    return db.update(role)
+
+def delete_role(role: Role = None, role_name: str = None) -> Role:
+    if not role:
+        role = db.query_unique(Role, name=role_name, raise_missing=True)
+
+    remove_local_role_assignments_for_role(role)
+
+    db.delete(role)
+
+    return role
 
 
-def remove_role(role: Role):
-    """Remove a Role. This will also remove any references to the Role, such as those
-    in User role assignments.
-
-    Args:
-        role: The Role document object.
-
-    Returns:
-        None
-    """
-    remove_role_assignments_for_role(role)
-    role.delete()
-
-
-def remove_role_assignments_for_role(role: Role) -> int:
+def remove_local_role_assignments_for_role(role: Role) -> int:
     """Remove all User role assignments for the provided Role.
 
     Args:
         role: The Role document object
 
     Returns:
-        int: The number of role assignments removed
+        int: The number of users role was removed from
     """
     # Avoid circular import
-    from beer_garden.user import update_user
-
-    impacted_users = User.objects.filter(role_assignments__match={"role": role})
-    total_removed_count = 0
+    
+    impacted_users = db.query(
+            User, filter_params={"roles__match": role.name}
+        )
 
     for user in impacted_users:
-        prev_role_assignment_count = len(user.role_assignments)
+        user.roles.remove(role.name)
+        update_user(user)
 
-        role_assignments = list(
-            filter(lambda ra: ra.role != role, user.role_assignments)
-        )
-        update_user(user, role_assignments=role_assignments)
+    return len(impacted_users)
+    
 
-        total_removed_count += prev_role_assignment_count - len(user.role_assignments)
+def rescan():
+    """ Rescan the roles configuration file"""
+    pass
 
-    return total_removed_count
+#Old Stuff
+################################
+
+
+
 
 
 def sync_roles(role_sync_data: list):

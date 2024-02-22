@@ -1,18 +1,14 @@
 # -*- coding: utf-8 -*-
-from brewtils.schemas import UserCreateSchema
+from brewtils.schema_parser import SchemaParser
+from brewtils.models import Operation
 from marshmallow import ValidationError
 
 from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.exceptions import BadRequest
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.api.http.schemas.v1.user import (
-    UserListSchema,
     UserPasswordChangeSchema,
-    UserPatchSchema,
-    UserSchema,
 )
-from beer_garden.db.mongo.models import User
-from beer_garden.user import create_user, update_user
 
 USER_CREATE = Permissions.USER_CREATE.value
 USER_READ = Permissions.USER_READ.value
@@ -21,7 +17,7 @@ USER_DELETE = Permissions.USER_DELETE.value
 
 
 class UserAPI(AuthorizationHandler):
-    def get(self, username):
+    async def get(self, username):
         """
         ---
         summary: Retrieve a specific User
@@ -43,12 +39,17 @@ class UserAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        user = User.objects.get(username=username)
-        response = UserSchema().dump(user).data
+
+        response = await self.client(
+            Operation(
+                operation_type="USER_READ",
+                args=[username],
+            )
+        )
 
         self.write(response)
 
-    def delete(self, username):
+    async def delete(self, username):
         """
         ---
         summary: Delete a specific User
@@ -69,13 +70,16 @@ class UserAPI(AuthorizationHandler):
           - Users
         """
         self.verify_user_global_permission(USER_DELETE)
-
-        user = User.objects.get(username=username)
-        user.delete()
+        await self.client(
+            Operation(
+                operation_type="USER_DELETE",
+                args=[username],
+            )
+        )
 
         self.set_status(204)
 
-    def patch(self, username):
+    async def patch(self, username):
         """
         ---
         summary: Partially update a User
@@ -108,22 +112,25 @@ class UserAPI(AuthorizationHandler):
         """
         self.verify_user_global_permission(USER_UPDATE)
 
-        try:
-            user_data = (
-                UserPatchSchema(strict=True).load(self.request_body, partial=True).data
-            )
-            db_user = User.objects.get(username=username)
-        except (ValidationError, User.DoesNotExist) as exc:
-            raise BadRequest(reason=f"{exc}")
+        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
-        user = update_user(db_user, **user_data)
+        for op in patch:
+            operation = op.operation.lower()
 
-        response = UserSchema().dump(user).data
+            if operation == "update":
+                response = await self.client(
+                        Operation(
+                            operation_type="USER_UPDATE",
+                            kwargs=op.value,
+                            args=[username],
+                        )
+                    )
+
         self.write(response)
 
 
 class UserListAPI(AuthorizationHandler):
-    def get(self):
+    async def get(self):
         """
         ---
         summary: Retrieve all Users
@@ -137,12 +144,16 @@ class UserListAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        users = User.objects.all()
-        response = UserListSchema().dump({"users": users}).data
+
+        response = await self.client(
+            Operation(
+                operation_type="USER_READ_ALL",
+            )
+        ) 
 
         self.write(response)
 
-    def post(self):
+    async def post(self):
         """
         ---
         summary: Create a new User
@@ -168,14 +179,23 @@ class UserListAPI(AuthorizationHandler):
         """
         self.verify_user_global_permission(USER_CREATE)
 
-        user_data = UserCreateSchema().load(self.request_body).data
-        create_user(**user_data)
+        user_model = self.parser.parse_user(
+            self.request.decoded_body, from_string=True
+        )
 
-        self.set_status(201)
+        response = await self.client(
+            Operation(
+                operation_type="USER_CREATE",
+                args=[user_model]
+            )
+        ) 
+
+
+        self.write(response)
 
 
 class UserPasswordChangeAPI(AuthorizationHandler):
-    def post(self):
+    async def post(self):
         """
         ---
         summary: Allows a user to change their own password
@@ -206,11 +226,13 @@ class UserPasswordChangeAPI(AuthorizationHandler):
         except ValidationError as exc:
             raise BadRequest(reason=f"{exc}")
 
-        if user.verify_password(password_data["current_password"]):
-            user.set_password(password_data["new_password"])
-            user.save()
-        else:
-            raise BadRequest(reason="Current password incorrect")
+        await self.client(
+            Operation(
+                operation_type="USER_UPDATE",
+                args=[user],
+                kwargs = {"current_password":password_data["current_password"], "new_password":password_data["new_password"]}
+            )
+        ) 
 
         self.set_status(204)
 
@@ -232,7 +254,7 @@ class WhoAmIAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        user = self.current_user
-        response = UserSchema().dump(user).data
+
+        response = SchemaParser.serialize_user(self.current_user, to_string=False)
 
         self.write(response)
