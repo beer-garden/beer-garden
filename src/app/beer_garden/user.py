@@ -2,15 +2,54 @@ import logging
 from copy import copy
 from typing import List, Optional
 
-from brewtils.models import Event, Events, Operation
+from brewtils.models import Event, Events, Operation, User
 from marshmallow import ValidationError
 
 from beer_garden import config
-from beer_garden.db.mongo.models import Garden, RemoteUser, Role, User
+from beer_garden.db.mongo.models import UserToken
+import beer_garden.db.api as db
 from beer_garden.events import publish
 from beer_garden.role import RoleSyncSchema, role_sync_status, sync_roles
 
+from passlib.apps import custom_app_context
+
+
 logger = logging.getLogger(__name__)
+
+
+def set_password(user: User, password: str = None):
+    """This helper should be used to set the user's password, rather than directly
+    assigning a value. This ensures that the password is stored as a hash rather
+    than in plain text
+
+    Args:
+        password: String to set as the user's password.
+
+    Returns:
+        None
+    """
+    user.password = custom_app_context.hash(password or user.password)
+
+def verify_password(user: User, password: str):
+    """Checks the provided plaintext password against thea user's stored password
+    hash
+
+    Args:
+        password: Plaintext string to check against user's password"
+
+    Returns:
+        bool: True if the password matches, False otherwise
+    """
+    return custom_app_context.verify(password, user.password)
+
+def revoke_tokens(user: User) -> None:
+    """Remove all tokens from the user's list of valid tokens. This is useful for
+    requiring the user to explicitly login, which one may want to do for a variety
+    of reasons.
+    """
+    UserToken.objects.filter(user=user).delete()
+
+
 
 
 def create_user(**kwargs) -> User:
@@ -26,14 +65,13 @@ def create_user(**kwargs) -> User:
     user = User(**kwargs)
 
     if user.password:
-        user.set_password(user.password)
+        set_password(user)
 
-    user.save()
-
-    return user
+    return db.create(user)
 
 
-def update_user(user: User, hashed_password: Optional[str] = None, **kwargs) -> User:
+
+def update_user(user: User = None, username: str = None, hashed_password: Optional[str] = None, **kwargs) -> User:
     """Updates the provided User by setting its attributes to those provided by kwargs.
     The updated user object is then saved to the database and returned.
 
@@ -46,20 +84,25 @@ def update_user(user: User, hashed_password: Optional[str] = None, **kwargs) -> 
     Returns:
         User: the updated User instance
     """
+    if not user:
+        user = db.query_unique(User, username=username, raise_missing=True)
+
     for key, value in kwargs.items():
         if key == "password" and hashed_password is None:
-            user.set_password(value)
+            set_password(user, password=value)
         else:
             setattr(user, key, value)
 
     if hashed_password:
         user.password = hashed_password
 
-    user.save()
+    user = db.update(user)
     _publish_user_updated(user)
 
     return user
 
+#Old Stuff
+################################
 
 def initiate_user_sync() -> None:
     """Syncs all users from this garden down to all remote gardens. Only the role
