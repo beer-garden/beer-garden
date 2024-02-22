@@ -119,7 +119,7 @@ def update_user(user: User = None, username: str = None, new_password: str = Non
     return user
 
 
-def flatten_user_role(role: Role, flatten_roles: list):
+def flatten_user_role(role: Role, flatten_roles: list = []):
     new_roles = []
     #loop through each scope to determine if we need to flatten further
     for scope_attribute in ["scope_gardens","scope_namespaces", "scope_systems", "scope_instances", "scope_versions","scope_commands"]:
@@ -141,6 +141,8 @@ def flatten_user_role(role: Role, flatten_roles: list):
     for flatten_role in new_roles:
         flatten_user_role(flatten_role, flatten_roles)
 
+    return flatten_roles
+
 
 def generate_remote_user(target_garden: Garden, user: User) -> User:
 
@@ -156,7 +158,10 @@ def generate_remote_user(target_garden: Garden, user: User) -> User:
             user_copy.is_remote = True
 
             for role in user.roles:
-                
+                for flatten_role in flatten_user_role(role):
+                    user_copy.remote_roles.append(flatten_role)
+
+            # Need to filter the flatten roles to only things that apply to the garden
     return None
 
 
