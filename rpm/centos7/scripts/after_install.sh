@@ -60,7 +60,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
         --plugin-local-directory "$PLUGIN_HOME" \
         --plugin-local-logging-config-file "$LOCAL_PLUGIN_LOG_CONFIG" \
         --plugin-remote-logging-config-file "$REMOTE_PLUGIN_LOG_CONFIG" \
-        --children-direcotry "$CHILDREN_CONFIG_HOME"
+        --children-directory "$CHILDREN_CONFIG_HOME"
 fi
 
 # Generate application logging config if it doesn't exist
