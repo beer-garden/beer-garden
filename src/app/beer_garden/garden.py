@@ -701,29 +701,21 @@ def publish_local_garden():
             )
         )
 
-def publish_garden_systems(garden: Garden):
-    publish(
+def publish_garden_systems(garden: Garden, src_garden: str):
+    for system in garden.systems:
+        publish(
             Event(
-                name=Events.GARDEN_UPDATED.name,
-                garden=config.get("garden.name"),
-                payload_type="Garden",
-                payload=garden,
+                name=Events.SYSTEM_UPDATED.name,
+                garden=src_garden,
+                payload_type="System",
+                payload=system,
             )
         )
-    
-    # for system in garden.systems:
-    #     publish(
-    #         Event(
-    #             name=Events.SYSTEM_UPDATED.name,
-    #             garden=src_garden,
-    #             payload_type="System",
-    #             payload=system,
-    #         )
-    #     )
 
-    # if garden.children:
-    #     for child in garden.children:
-    #         publish_garden_systems(child, src_garden)
+    if garden.children:
+        for child in garden.children:
+            publish_garden_systems(child, src_garden)
+
 
 
 def garden_unresponsive_trigger():
@@ -786,8 +778,10 @@ def handle_event(event):
             event.payload.systems = remote_systems
 
             upsert_garden(event.payload)
+            # publish_garden_systems(garden, event.garden)
 
             # Publish update events for UI to dynamically load changes for Systems
+            logger.error("Publish Remote to Local Garden Update")
             publish_local_garden()
             # publish_garden_systems(garden)
             # logger.error("Publish Remote Garden Update")
@@ -828,6 +822,7 @@ def handle_event(event):
     if "SYSTEM" in event.name or "INSTANCE" in event.name:
         # If a System or Instance is updated, publish updated Local Garden Model for UI
         publish_local_garden()
+        logger.error("Publish Local Garden Update")
         # updated_garden = get_garden(config.get("garden.name"))
         # publish_garden_systems(updated_garden)
         # logger.error("Publish Local Garden Update")
