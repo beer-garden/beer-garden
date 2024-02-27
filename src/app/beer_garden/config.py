@@ -129,7 +129,7 @@ def migrate(args: Sequence[str]):
         new_file = current_root + "." + new_type
         type_conversion = True
     else:
-        new_file = config.configuration.file
+        new_file = f"{config.configuration.file}.tmp"
 
     spec.migrate_config_file(
         config.configuration.file,
@@ -142,6 +142,10 @@ def migrate(args: Sequence[str]):
 
     if type_conversion:
         os.remove(config.configuration.file)
+    elif _is_new_config(config.configuration.file, new_file):
+        _backup_previous_config(config.configuration.file, new_file)
+    else:
+        os.remove(new_file)
 
 
 def generate_app_logging(args: Sequence[str]):
