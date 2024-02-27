@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.24.2
+
+TBD
+
+- Backup current config on rpm update when config changes are present
+
 # 3.24.1
 
 2/21/24
