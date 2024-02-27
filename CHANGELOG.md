@@ -7,6 +7,7 @@ TBD
 - Fixed bug where setting the heartbeat for recieving garden connections would override changes from Instance Updates in seperate threads
 - Fixed bug where heartbeat did not update the status to `RECEVING` for the receiving connection type
 - Backup current config on rpm update when config changes are present
+- Fixed bug where Admin Garden page did not update page based on events until page was interacted with
 
 # 3.24.1
 
