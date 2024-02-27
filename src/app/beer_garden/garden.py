@@ -209,12 +209,16 @@ def update_garden_receiving_heartbeat(
     if garden is None:
         garden = create_garden(Garden(name=garden_name, connection_type="Remote"))
 
+    updates = {}
+
     connection_set = False
 
     for connection in garden.receiving_connections:
         if connection.api == api:
             connection_set = True
             connection.status_info["heartbeat"] = datetime.utcnow()
+            if connection.status != "DISABLED":
+                connection.status = "RECEIVING"
 
     # If the receiving type is unknown, enable it by default and set heartbeat
     if not connection_set:
@@ -230,7 +234,11 @@ def update_garden_receiving_heartbeat(
         connection.status_info["heartbeat"] = datetime.utcnow()
         garden.receiving_connections.append(connection)
 
-    return db.update(garden)
+    updates["receiving_connections"] = [
+        db.from_brewtils(connection) for connection in garden.receiving_connections
+    ]
+
+    return db.modify(garden, **updates)
 
 
 def update_garden_status(garden_name: str, new_status: str) -> Garden:
