@@ -690,32 +690,17 @@ def garden_sync(sync_target: str = None):
             except ForwardException:
                 pass
 
+
 def publish_local_garden():
     local_garden = get_garden(config.get("garden.name"))
     publish(
-            Event(
-                name=Events.GARDEN_UPDATED.name,
-                garden=config.get("garden.name"),
-                payload_type="Garden",
-                payload=local_garden,
-            )
+        Event(
+            name=Events.GARDEN_UPDATED.name,
+            garden=config.get("garden.name"),
+            payload_type="Garden",
+            payload=local_garden,
         )
-
-def publish_garden_systems(garden: Garden, src_garden: str):
-    for system in garden.systems:
-        publish(
-            Event(
-                name=Events.SYSTEM_UPDATED.name,
-                garden=src_garden,
-                payload_type="System",
-                payload=system,
-            )
-        )
-
-    if garden.children:
-        for child in garden.children:
-            publish_garden_systems(child, src_garden)
-
+    )
 
 
 def garden_unresponsive_trigger():
@@ -778,17 +763,9 @@ def handle_event(event):
             event.payload.systems = remote_systems
 
             upsert_garden(event.payload)
-            # publish_garden_systems(garden, event.garden)
 
             # Publish update events for UI to dynamically load changes for Systems
-            logger.error("Publish Remote to Local Garden Update")
             publish_local_garden()
-            # publish_garden_systems(garden)
-            # logger.error("Publish Remote Garden Update")
-            # for system in updated_garden.systems:
-            #     logger.error(f"  {system.name}")
-            #     for instance in system.instances:
-            #         logger.error(f"    {instance.name} = {instance.status}")
 
     elif event.name == Events.GARDEN_UNREACHABLE.name:
         target_garden = get_garden(event.payload.target_garden_name)
@@ -818,25 +795,7 @@ def handle_event(event):
 
     elif event.name == Events.GARDEN_CONFIGURED.name:
         publish_garden()
-    
+
     if "SYSTEM" in event.name or "INSTANCE" in event.name:
         # If a System or Instance is updated, publish updated Local Garden Model for UI
         publish_local_garden()
-        logger.error("Publish Local Garden Update")
-        # updated_garden = get_garden(config.get("garden.name"))
-        # publish_garden_systems(updated_garden)
-        # logger.error("Publish Local Garden Update")
-        # for system in updated_garden.systems:
-        #     logger.error(f"  {system.name}")
-        #     for instance in system.instances:
-        #         logger.error(f"    {instance.name} = {instance.status}")
-        # publish(
-        #     Event(
-        #         name=Events.GARDEN_UPDATED.name,
-        #         garden=config.get("garden.name"),
-        #         payload_type="Garden",
-        #         payload=updated_garden,
-        #     )
-        # )
-        
-
