@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+# 3.24.2
+
+TBD
+
+- Fixed bug where setting the heartbeat for recieving garden connections would override changes from Instance Updates in seperate threads
+- Fixed bug where heartbeat did not update the status to `RECEVING` for the receiving connection type
+
 # 3.24.1
 
 2/21/24
