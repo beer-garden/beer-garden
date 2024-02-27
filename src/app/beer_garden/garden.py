@@ -234,7 +234,9 @@ def update_garden_receiving_heartbeat(
         connection.status_info["heartbeat"] = datetime.utcnow()
         garden.receiving_connections.append(connection)
 
-    updates["receiving_connections"] = [db.from_brewtils(connection) for connection in garden.receiving_connections]
+    updates["receiving_connections"] = [
+        db.from_brewtils(connection) for connection in garden.receiving_connections
+    ]
 
     return db.modify(garden, **updates)
 
