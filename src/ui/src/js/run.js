@@ -462,7 +462,7 @@ export default function appRun(
 
     if (index == -1) {
       $rootScope.systems.push(system);
-      return $rootScope.systems.length -1
+      return $rootScope.systems.length - 1;
     } else {
       $rootScope.systems.splice(index, 1, system);
       return index;
@@ -474,14 +474,14 @@ export default function appRun(
     let matched = false;
     for (let i = 0; i < srcGarden.children.length; i++){
       if (srcGarden.children[i].name== newGarden.name){
-        srcGarden.children[i] = newGarden
+        srcGarden.children[i] = newGarden;
         matched = true;
         break
       }
     }
     if (!matched){
       for (let i = 0; i < srcGarden.children.length; i++){
-        srcGarden.children[i] = updateGardenChildren(srcGarden.children[i], newGarden)
+        srcGarden.children[i] = updateGardenChildren(srcGarden.children[i], newGarden);
       }
     }
     
