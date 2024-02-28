@@ -275,17 +275,19 @@ export default function adminSystemController(
   };
 
   function eventCallback(event) {
-    if (event.name.startsWith('RUNNER')) {
-      _.remove($scope.runners, (value) => {
-        return value.id == event.payload.id;
-      });
+    if ($rootScope.garden !== undefined && event.garden == $rootScope.garden.name) {
+      if (event.name.startsWith('RUNNER')) {
+        _.remove($scope.runners, (value) => {
+          return value.id == event.payload.id;
+        });
 
-      if (event.name != 'RUNNER_REMOVED') {
-        $scope.runners.push(event.payload);
+        if (event.name != 'RUNNER_REMOVED') {
+          $scope.runners.push(event.payload);
+        }
+        groupRunners();
+      } else if (event.name.startsWith('INSTANCE')) {
+        groupRunners();
       }
-      groupRunners();
-    } else if (event.name.startsWith('INSTANCE')) {
-      groupRunners();
     }
   }
 

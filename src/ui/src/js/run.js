@@ -351,7 +351,10 @@ export default function appRun(
   };
 
   $rootScope.extractSystems = function(garden){
-    let systems = garden.systems;
+    let systems = [];
+    if (garden.systems !== undefined){
+      systems = garden.systems;
+    }
     if (garden.children !== undefined) {
       for (let i = 0; i < garden.children.length; i++){
         systems = systems.concat($rootScope.extractSystems(garden.children[i]));
@@ -421,44 +424,78 @@ export default function appRun(
     return gardens;
   }
 
+  function upsertGardenSystems(garden, seenIndexes){
+    let routable = (garden.connection_type == "LOCAL");
+    for (let i = 0; i < garden.publishing_connections.length; i++){
+      if (["PUBLISHING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN"].includes(garden.publishing_connections[i].status)){
+        routable = true;
+      }
+    }
+    if (routable) {
+      if (garden.systems !== undefined) {
+        for (let i = 0; i < garden.systems.length; i++){
+          seenIndexes.push(upsertSystem(garden.systems[i]));
+        }
+      }
+      for (let i = 0; i < garden.children.length; i++){
+        upsertGardenSystems(garden.children[i], seenIndexes);
+      }
+    }
+  }
+
+  function updateGardenSystems(){
+    if ($rootScope.garden !== undefined) {
+      let seenIndexes = [];
+      upsertGardenSystems($rootScope.garden, seenIndexes);
+      // Loop through seen indexes and remove everything not seen starting at the end
+      for (let i = ($rootScope.systems.length - 1); i > -1; i--){
+        if (!seenIndexes.includes(i)){
+          $rootScope.systems.splice(i, 1);
+        }
+      }
+    }
+    $rootScope.systems;
+  }
+
   function upsertSystem(system) {
     const index = _.findIndex($rootScope.systems, {id: system.id});
 
     if (index == -1) {
       $rootScope.systems.push(system);
+      return $rootScope.systems.length - 1;
     } else {
       $rootScope.systems.splice(index, 1, system);
+      return index;
     }
   }
 
-  function removeSystem(system) {
-    const index = _.findIndex($rootScope.systems, {id: system.id});
+  function updateGardenChildren(srcGarden, newGarden) {
 
-    if (index != -1) {
-      $rootScope.systems.splice(index, 1);
-    }
-  }
-
-  function updateInstance(instance) {
-    _.forEach($rootScope.systems, (sys) => {
-      const index = _.findIndex(sys.instances, {id: instance.id});
-
-      if (index != -1) {
-        sys.instances.splice(index, 1, instance);
-
-        // Returning false ends the iteration early
-        return false;
+    let matched = false;
+    for (let i = 0; i < srcGarden.children.length; i++){
+      if (srcGarden.children[i].name== newGarden.name){
+        srcGarden.children[i] = newGarden;
+        matched = true;
+        break
       }
-    });
+    }
+    if (!matched){
+      for (let i = 0; i < srcGarden.children.length; i++){
+        srcGarden.children[i] = updateGardenChildren(srcGarden.children[i], newGarden);
+      }
+    }
+    
+    return srcGarden;
   }
 
   EventService.addCallback('global_systems', (event) => {
-    if (['SYSTEM_CREATED', 'SYSTEM_UPDATED'].includes(event.name)) {
-      upsertSystem(event.payload);
-    } else if (event.name == 'SYSTEM_REMOVED') {
-      removeSystem(event.payload);
-    } else if (event.name.startsWith('INSTANCE')) {
-      updateInstance(event.payload);
+    if ($rootScope.garden !== undefined && event.garden == $rootScope.garden.name && event.name == "GARDEN_UPDATED"){
+      if ($rootScope.garden.name== event.payload.name){
+        $rootScope.garden = event.payload;
+      } else {
+        $rootScope.garden = updateGardenChildren($rootScope.garden, event.payload);
+      }
+      updateGardenSystems();
     }
   });
 
