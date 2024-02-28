@@ -7,7 +7,7 @@ from copy import deepcopy
 from typing import List, Optional, Tuple
 
 from apispec import APISpec
-from brewtils.models import Event, Events, Principal
+from brewtils.models import Event, Events, User
 from brewtils.schemas import (
     CommandSchema,
     CronTriggerSchema,
@@ -20,7 +20,7 @@ from brewtils.schemas import (
     JobExportInputSchema,
     JobExportSchema,
     JobSchema,
-    LegacyRoleSchema,
+    RoleSchema,
     LoggingConfigSchema,
     OperationSchema,
     ParameterSchema,
@@ -72,7 +72,7 @@ tornado_app: Application
 logger: logging.Logger = None
 event_publishers = None
 api_spec: APISpec
-anonymous_principal: Principal
+anonymous_principal: User
 client_ssl: ssl.SSLContext
 
 
@@ -377,7 +377,7 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition("UserList", schema=UserListSchema)
     api_spec.definition("UserPatch", schema=UserPatchSchema)
     api_spec.definition("UserPasswordChange", schema=UserPasswordChangeSchema)
-    api_spec.definition("Role", schema=LegacyRoleSchema)
+    api_spec.definition("Role", schema=RoleSchema)
     api_spec.definition("RoleList", schema=RoleListSchema)
     api_spec.definition("Queue", schema=QueueSchema)
     api_spec.definition("Operation", schema=OperationSchema)

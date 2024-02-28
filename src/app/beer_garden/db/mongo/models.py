@@ -65,8 +65,8 @@ __all__ = [
     "Request",
     "Choices",
     "Event",
-    "Principal",
-    "LegacyRole",
+    # "Principal",
+    # "LegacyRole",
     "UserToken",
     "Job",
     "RequestTemplate",
@@ -639,34 +639,34 @@ class Event(MongoModel, Document):
     timestamp = DateTimeField()
 
 
-class LegacyRole(MongoModel, Document):
-    brewtils_model = brewtils.models.LegacyRole
+# class LegacyRole(MongoModel, Document):
+#     brewtils_model = brewtils.models.LegacyRole
 
-    name = StringField(required=True)
-    description = StringField()
-    permissions = ListField(field=StringField())
+#     name = StringField(required=True)
+#     description = StringField()
+#     permissions = ListField(field=StringField())
 
-    meta = {
-        "auto_create_index": False,  # We need to manage this ourselves
-        "index_background": True,
-        "indexes": [{"name": "unique_index", "fields": ["name"], "unique": True}],
-    }
+#     meta = {
+#         "auto_create_index": False,  # We need to manage this ourselves
+#         "index_background": True,
+#         "indexes": [{"name": "unique_index", "fields": ["name"], "unique": True}],
+#     }
 
 
-class Principal(MongoModel, Document):
-    brewtils_model = brewtils.models.Principal
+# class Principal(MongoModel, Document):
+#     brewtils_model = brewtils.models.Principal
 
-    username = StringField(required=True)
-    hash = StringField()
-    roles = ListField(field=ReferenceField("LegacyRole", reverse_delete_rule=PULL))
-    preferences = DictField()
-    metadata = DictField()
+#     username = StringField(required=True)
+#     hash = StringField()
+#     roles = ListField(field=ReferenceField("LegacyRole", reverse_delete_rule=PULL))
+#     preferences = DictField()
+#     metadata = DictField()
 
-    meta = {
-        "auto_create_index": False,  # We need to manage this ourselves
-        "index_background": True,
-        "indexes": [{"name": "unique_index", "fields": ["username"], "unique": True}],
-    }
+#     meta = {
+#         "auto_create_index": False,  # We need to manage this ourselves
+#         "index_background": True,
+#         "indexes": [{"name": "unique_index", "fields": ["username"], "unique": True}],
+#     }
 
 
 class RequestTemplate(MongoModel, EmbeddedDocument):
