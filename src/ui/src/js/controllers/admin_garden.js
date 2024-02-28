@@ -313,7 +313,16 @@ export default function adminGardenController(
         }
 
         // Not all events include children, only update when children are provided or added
-        if (garden.children.length > 0 || $scope.data[i].length == 0) {
+        if (
+          garden.children !== undefined &&
+          garden.children != null &&
+          (
+            garden.children.length > 0 ||
+            $scope.data[i].children === undefined ||
+            $scope.data[i].children == null ||
+            $scope.data[i].children.length == 0
+          )
+        ) {
           $scope.data[i].children = garden.children;
         }
         gardenNotFound = false;
@@ -324,9 +333,10 @@ export default function adminGardenController(
     if (gardenNotFound) {
       $scope.data.push(garden);
     }
-
-    for (let x = 0; x < garden.children.length; x++) {
-      $scope.eventUpsetGarden(garden.children[x]);
+    if (garden.children !== undefined && garden.children != null){
+      for (let x = 0; x < garden.children.length; x++) {
+        $scope.eventUpsetGarden(garden.children[x]);
+      }
     }
 
   }
@@ -335,11 +345,13 @@ export default function adminGardenController(
     switch (event.name) {
       case 'GARDEN_REMOVED':
         $scope.removeGardenEventChildren(event.payload)
+        $scope.$digest();
         break;
       case 'GARDEN_CREATED':
       case 'GARDEN_CONFIGURED':
       case 'GARDEN_UPDATED':
         $scope.eventUpsetGarden(event.payload)
+        $scope.$digest();
         break;
     }
   });
