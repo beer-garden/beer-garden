@@ -691,20 +691,16 @@ def garden_sync(sync_target: str = None):
                 pass
 
 
-def publish_garden_systems(garden: Garden, src_garden: str):
-    for system in garden.systems:
-        publish(
-            Event(
-                name=Events.SYSTEM_UPDATED.name,
-                garden=src_garden,
-                payload_type="System",
-                payload=system,
-            )
+def publish_local_garden():
+    local_garden = get_garden(config.get("garden.name"))
+    publish(
+        Event(
+            name=Events.GARDEN_UPDATED.name,
+            garden=config.get("garden.name"),
+            payload_type="Garden",
+            payload=local_garden,
         )
-
-    if garden.children:
-        for child in garden.children:
-            publish_garden_systems(child, src_garden)
+    )
 
 
 def garden_unresponsive_trigger():
@@ -766,10 +762,10 @@ def handle_event(event):
                     remote_systems.append(system)
             event.payload.systems = remote_systems
 
-            garden = upsert_garden(event.payload)
+            upsert_garden(event.payload)
 
             # Publish update events for UI to dynamically load changes for Systems
-            publish_garden_systems(garden, event.garden)
+            publish_local_garden()
 
     elif event.name == Events.GARDEN_UNREACHABLE.name:
         target_garden = get_garden(event.payload.target_garden_name)
@@ -799,3 +795,7 @@ def handle_event(event):
 
     elif event.name == Events.GARDEN_CONFIGURED.name:
         publish_garden()
+
+    if "SYSTEM" in event.name or "INSTANCE" in event.name:
+        # If a System or Instance is updated, publish updated Local Garden Model for UI
+        publish_local_garden()

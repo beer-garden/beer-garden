@@ -8,6 +8,8 @@ TBD
 - Fixed bug where heartbeat did not update the status to `RECEVING` for the receiving connection type
 - Backup current config on rpm update when config changes are present
 - Fixed bug where Admin Garden page did not update page based on events until page was interacted with
+- Fixed bug where Plugins assocaited with a runner would appear after a refresh
+- Fixed bug where child unresponsive runners appeared in the list of unresponsive runners
 
 # 3.24.1
 
