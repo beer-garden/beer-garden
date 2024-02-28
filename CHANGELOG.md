@@ -2,7 +2,7 @@
 
 # 3.24.2
 
-TBD
+2/28/24
 
 - Fixed bug where setting the heartbeat for recieving garden connections would override changes from Instance Updates in seperate threads
 - Fixed bug where heartbeat did not update the status to `RECEVING` for the receiving connection type
@@ -10,6 +10,7 @@ TBD
 - Fixed bug where Admin Garden page did not update page based on events until page was interacted with
 - Fixed bug where Plugins assocaited with a runner would appear after a refresh
 - Fixed bug where child unresponsive runners appeared in the list of unresponsive runners
+- Upgraded Brewtils version to [3.24.1](https://github.com/beer-garden/brewtils/releases/tag/3.24.1)
 
 # 3.24.1
 
