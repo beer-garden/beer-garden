@@ -49,7 +49,8 @@ def revoke_tokens(user: User) -> None:
     requiring the user to explicitly login, which one may want to do for a variety
     of reasons.
     """
-    UserToken.objects.filter(user=user).delete()
+    for user_token in db.query(UserToken, user__username=user.username):
+        db.delete(user_token)
 
 def get_user(username: str) -> User:
     """
@@ -143,26 +144,102 @@ def flatten_user_role(role: Role, flatten_roles: list = []):
 
     return flatten_roles
 
+def generate_remote_user_mappings(user: User, target_garden: Garden, remote_user_mapping: list):
+    for child in target_garden.children:
+        for remote_user_map in remote_user_mapping:
+            if remote_user_map.target_garden == target_garden.name:
+                user.remote_user_mapping.append(remote_user_map)
+        generate_remote_user_mappings(user, child, remote_user_mapping)
+
+def remote_role_match(role: Role, target_garden: Garden):
+    if remote_role_match_garden(role, target_garden):
+        return True
+    
+    for child in target_garden.children:
+        if remote_role_match(role, child):
+            return True
+    
+    return False
+
+def remote_role_match_garden(role: Role, target_garden: Garden):
+    if role.gardens and len(role.gardens) > 0:
+        if target_garden.name not in role.gardens:
+            return False
+        
+    for system in target_garden.systems:
+
+        # Check for Command Role Filter
+        if role.scope_commands and len(role.scope_commands) > 0:
+            match = False
+            for command in system.commands:
+                if command.name in role.scope_commands:
+                    match = True
+                    break
+        
+            if not match:
+                continue
+
+        # Check for Instance Role Filter
+        if role.scope_instances and len(role.scope_instances) > 0:
+            match = False
+            for instance in system.instances:
+                if instance.name in role.scope_instances:
+                    match = True
+                    break
+        
+            if not match:
+                continue
+
+        # Check for Version Role Filter
+        if role.scope_versions and len(role.scope_versions) > 0:
+            match = False
+            if system.version in role.scope_versions:
+                match = True
+            if not match:
+                continue
+
+        # Check for System Role Filter    
+        if role.scope_namespaces and len(role.scope_namespaces) > 0:
+            match = False
+            if system.name in role.scope_namespaces:
+                match = True
+
+            if not match:
+                continue
+
+        # Check for System Role Filter
+        if role.scope_systems and len(role.scope_systems) > 0:
+            match = False
+            if system.name in role.scope_systems:
+                match = True
+            if not match:
+                continue
+
+        return True
+
+    return False
 
 def generate_remote_user(target_garden: Garden, user: User) -> User:
 
-    has_remote_mapping = False
+    remote_user = None
 
     for remote_user_map in user.remote_user_mapping:
         if remote_user_map.target_garden == target_garden.name:
-            user_copy = deepcopy(user)
+            remote_user = User(username=remote_user_map.username, is_remote=True)
 
-            # Prep user model
-            user_copy.remote_user_mapping = []
-            user_copy.password = None
-            user_copy.is_remote = True
+            generate_remote_user_mappings(remote_user, target_garden, user.remote_user_mapping)
 
             for role in user.roles:
                 for flatten_role in flatten_user_role(role):
-                    user_copy.remote_roles.append(flatten_role)
+                    if remote_role_match(flatten_role, target_garden):
+                        remote_user.remote_roles.append(flatten_role)
 
-            # Need to filter the flatten roles to only things that apply to the garden
-    return None
+            for role in user.remote_roles:
+                for flatten_role in flatten_user_role(role):
+                    if remote_role_match(flatten_role, target_garden):
+                        remote_user.remote_roles.append(flatten_role)
+    
+    return remote_user
 
 
 #Old Stuff
