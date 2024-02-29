@@ -36,7 +36,7 @@ def _has_empty_scopes(role: BrewtilsRole, scopes: list = ["scope_gardens","scope
             return False
     return True
 
-def _get_garden_q_filter(user: BrewtilsUser, permission_level: str) -> Q:
+def _get_garden_q_filter(user: BrewtilsUser, permission_levels: list) -> Q:
     """Returns a Q filter object for filtering a queryset for gardens"""
     
 
@@ -53,24 +53,26 @@ def _get_garden_q_filter(user: BrewtilsUser, permission_level: str) -> Q:
 
     return Q(**{"name__in": garden_names})
 
-def _get_system_filter_output(system: BrewtilsSystem, user: BrewtilsUser, permission_level: str) -> BrewtilsSystem:
+def _get_system_filter_output(system: BrewtilsSystem, user: BrewtilsUser, permission_levels: list, source_garden: str = None) -> BrewtilsSystem:
+    if any(role.permission in permission_levels and _has_empty_scopes(role) for role in user.local_roles):
+        return system
+    
+    if any(role.permission in permission_levels and _has_empty_scopes(role) for role in user.remote_roles):
+        return system
+    
     return system
 
-def _get_garden_filter_output(garden: BrewtilsGarden, user: BrewtilsUser, permission_level: str) -> BrewtilsGarden:
-    """Returns a Q filter object for filtering a queryset for gardens"""
-    if permission_level == "READ_ONLY":
-        permission_levels = ["READ_ONLY", "OPERATOR", "ADMIN"]
-    elif permission_level == "OPERATOR":
-        permission_levels = ["OPERATOR", "ADMIN"]
-    else:
-        permission_levels = [ "ADMIN"]
-    
+def _get_garden_filter_output(garden: BrewtilsGarden, user: BrewtilsUser, permission_levels: list) -> BrewtilsGarden:
+    """Returns a Q filter object for filtering a queryset for gardens"""   
 
     if any(role.permission in permission_levels and _has_empty_scopes(role) for role in user.local_roles):
         return garden
     
     if any(role.permission in permission_levels and _has_empty_scopes(role) for role in user.remote_roles):
         return garden
+    
+    if not any(role.permission in permission_levels and (len(role.scope_garden) == 0 or garden.name in role.scope_gardens) for role in user.remote_roles):
+        return None
 
     filter_systems = True
     for role in user.local_roles:
@@ -80,11 +82,18 @@ def _get_garden_filter_output(garden: BrewtilsGarden, user: BrewtilsUser, permis
     if filter_systems:
         new_systems = []
         for system in garden.systems:
-            filtered_system = _get_system_filter_output(system, user, permission_level)
+            filtered_system = _get_system_filter_output(system, user, permission_levels, garden.name)
             if filtered_system:
                 new_systems.append(filtered_system)
 
         garden.systems = filtered_system
+
+    new_child_gardens = []
+    for child in garden.children:
+        filtered_garden = _get_garden_filter_output(child, user, permission_levels)
+        if filtered_garden:
+            new_child_gardens.append(filtered_garden)
+    garden.children = new_child_gardens
 
     return garden
 
