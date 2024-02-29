@@ -1,18 +1,15 @@
 import logging
-# from copy import copy
-# from typing import List, Optional
 
 from brewtils.models import Event, Events, Operation, User, Garden, Role, UserToken
-# from marshmallow import ValidationError
 from copy import deepcopy
 
 from beer_garden import config
-# from beer_garden.db.mongo.models import UserToken
 import beer_garden.db.api as db
 from beer_garden.events import publish
 # from beer_garden.role import RoleSyncSchema, role_sync_status, sync_roles
 from beer_garden.errors import InvalidPasswordException
 from beer_garden.garden import get_gardens, get_garden
+from beer_garden.role import get_role
 
 from passlib.apps import custom_app_context
 
@@ -56,10 +53,18 @@ def revoke_tokens(user: User) -> None:
 def get_user(username: str) -> User:
     """
     """
-    return db.query_unique(User, username=username, raise_missing=True)
+    user = db.query_unique(User, username=username, raise_missing=True)
+    for role in user.roles:
+        user.local_roles.append(get_role(role))
+    
+    return user
 
 def get_users() -> list:
-    return db.query(User)
+    users = db.query(User)
+    for user in users:
+        for role in user.roles:
+            user.local_roles.append(get_role(role))
+    return users
 
 
 def create_user(user: User) -> User:
@@ -106,16 +111,22 @@ def update_user(user: User = None, username: str = None, new_password: str = Non
                 raise InvalidPasswordException("Current password incorrect")
  
     else:
-        existing_user = db.query_unique(User, username=user.username, raise_missing=True)
+        existing_user = db.query_unique(User, username=user.username)
 
         if existing_user and not existing_user.is_remote:
             # Update remote roles, and remote user mappings
+            if existing_user.remote_roles != user.remote_roles:
+                # Roles changed, so cached tokens are no longer valid
+                revoke_tokens(existing_user)
             existing_user.remote_roles = user.remote_roles
             existing_user.remote_user_mapping = user.remote_user_mapping
 
             user = existing_user
 
     for key, value in kwargs.items():
+        if key == "roles":
+            # Roles changed, so cached tokens are no longer valid
+            revoke_tokens(user)
         setattr(user, key, value)
 
     user = db.update(user)
@@ -384,6 +395,29 @@ def _create_plugin_user():
         set_password(plugin_user, password)
         db.create(plugin_user)
 
+def remove_local_role_assignments_for_role(role: Role) -> int:
+    """Remove all User role assignments for the provided Role.
+
+    Args:
+        role: The Role document object
+
+    Returns:
+        int: The number of users role was removed from
+    """
+    # Avoid circular import
+    
+    impacted_users = db.query(
+            User, filter_params={"roles__match": role.name}
+        )
+
+    for user in impacted_users:
+        user.roles.remove(role.name)
+        update_user(user)
+        # Roles changed, so cached tokens are no longer valid
+        revoke_tokens(user)
+
+    return len(impacted_users)
+
 #Old Stuff
 ################################
 
@@ -447,10 +481,11 @@ def _create_plugin_user():
 
 
 def handle_event(event: Event) -> None:
-    return
     # Only handle events from downstream gardens
-    # if event.garden == config.get("garden.name"):
-    #     return
+    if event.garden == config.get("garden.name"):
+        if event.name == "ROLE_DELETE":
+            remove_local_role_assignments_for_role(event.payload)
+
 
     # if event.name == "USER_UPDATED":
     #     _handle_user_updated_event(event)

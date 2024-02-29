@@ -20,8 +20,6 @@ import brewtils.models
 from brewtils.choices import parse
 from brewtils.errors import ModelValidationError, RequestStatusTransitionError
 from brewtils.models import Command as BrewtilsCommand
-from brewtils.models import Event as BrewtilsEvent
-from brewtils.models import Events as BrewtilsEvents
 from brewtils.models import Instance as BrewtilsInstance
 from brewtils.models import Job as BrewtilsJob
 from brewtils.models import Parameter as BrewtilsParameter
@@ -65,8 +63,6 @@ __all__ = [
     "Request",
     "Choices",
     "Event",
-    # "Principal",
-    # "LegacyRole",
     "UserToken",
     "Job",
     "RequestTemplate",
@@ -76,11 +72,10 @@ __all__ = [
     "Garden",
     "File",
     "FileChunk",
+    "LocalRole",
     "Role",
     "RemoteRole",
-    "RoleAssignment",
     "User",
-    "RemoteUser",
     "CommandPublishingBlocklist",
 ]
 
@@ -638,37 +633,6 @@ class Event(MongoModel, Document):
     metadata = DictField()
     timestamp = DateTimeField()
 
-
-# class LegacyRole(MongoModel, Document):
-#     brewtils_model = brewtils.models.LegacyRole
-
-#     name = StringField(required=True)
-#     description = StringField()
-#     permissions = ListField(field=StringField())
-
-#     meta = {
-#         "auto_create_index": False,  # We need to manage this ourselves
-#         "index_background": True,
-#         "indexes": [{"name": "unique_index", "fields": ["name"], "unique": True}],
-#     }
-
-
-# class Principal(MongoModel, Document):
-#     brewtils_model = brewtils.models.Principal
-
-#     username = StringField(required=True)
-#     hash = StringField()
-#     roles = ListField(field=ReferenceField("LegacyRole", reverse_delete_rule=PULL))
-#     preferences = DictField()
-#     metadata = DictField()
-
-#     meta = {
-#         "auto_create_index": False,  # We need to manage this ourselves
-#         "index_background": True,
-#         "indexes": [{"name": "unique_index", "fields": ["username"], "unique": True}],
-#     }
-
-
 class RequestTemplate(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.RequestTemplate
 
@@ -958,202 +922,88 @@ class CommandPublishingBlocklist(Document):
     }
 
 
-class Role(Document):
-    name = StringField(required=True)
-    description = StringField()
-    permissions = ListField(field=StringField(), validation=validate_permissions)
-    protected = BooleanField(default=False)
+class Role(MongoModel):
 
+    name = StringField()
+    description = StringField()
+    scope_gardens = ListField(field=StringField())
+    scope_namespaces = ListField(field=StringField())
+    scope_systems = ListField(field=StringField())
+    scope_instances = ListField(field=StringField())
+    scope_versions = ListField(field=StringField())
+    scope_commands = ListField(field=StringField())
+
+    def __str__(self) -> str:
+        return self.name
+    
+class LocalRole(Role, Document):
     meta = {
         "indexes": [{"name": "unique_index", "fields": ["name"], "unique": True}],
     }
 
-    def __str__(self) -> str:
-        return self.name
-
-    def save(self, publish: bool = True, *args, **kwargs):
-        """The regular mongoengine Document save(), with an optional event published
-        about the update.
-
-        Args:
-            publish: Whether or not to publish an event after the save. Default: True
-
-        Returns:
-            Role: The saved Role (self)
-        """
-        super().save(*args, **kwargs)
-
-        if publish:
-            self._publish_role_updated()
-
-        return self
-
-    def _publish_role_updated(self):
-        """Publish an event with the updated role information"""
-        # We use publish rather than publish_event here so that we can hijack the
-        # metadata field to store our actual data. This is done to avoid needing to deal
-        # in brewtils models, which the publish_event decorator requires us to do.
-        from beer_garden.events import publish
-
-        publish(
-            BrewtilsEvent(
-                name=BrewtilsEvents.ROLE_UPDATED.name,
-                metadata={
-                    "garden": config.get("garden.name"),
-                    "role": {
-                        "name": self.name,
-                        "description": self.description,
-                        "permissions": self.permissions,
-                    },
-                },
-            )
-        )
+class RemoteRole(Role, EmbeddedDocument):
+    pass
 
 
-class RemoteRole(Document):
-    name = StringField(required=True)
-    garden = StringField(required=True)
-    description = StringField()
-    permissions = ListField(field=StringField(), required=False)
-    updated_at = DateTimeField(required=True, default=datetime.datetime.utcnow)
+class RemoteUserMap(MongoModel, EmbeddedDocument):
+    target_garden = StringField()
+    username = StringField()
 
-    meta = {
-        "indexes": [
-            {"fields": ["name"]},
-            {"fields": ["garden", "name"], "unique": True},
-        ],
-    }
-
-    def __str__(self):
-        return f"{self.garden}:{self.name}"
-
-
-class RoleAssignmentDomain(EmbeddedDocument):
-    scope = StringField(required=True, choices=["Garden", "Global", "System"])
-    identifiers = DictField(required=False)
-
-    def _ensure_identifiers_are_present(self):
-        if self.identifiers == {} and self.scope != "Global":
-            raise ValidationError(
-                "identifiers field is required for all scopes other than Global"
-            )
-
-    def _remove_empty_identifiers(self):
-        for key in list(self.identifiers.keys()):
-            value = self.identifiers[key]
-            if value is None or value.strip() == "":
-                _ = self.identifiers.pop(key)
-
-    def clean(self):
-        self._remove_empty_identifiers()
-        self._ensure_identifiers_are_present()
-
-
-class RoleAssignment(EmbeddedDocument):
-    domain = EmbeddedDocumentField(RoleAssignmentDomain, required=True)
-    role = ReferenceField("Role", required=True)
-
-
-class User(Document):
+class User(MongoModel, Document):
     username = StringField(required=True)
     password = StringField()
-    role_assignments = EmbeddedDocumentListField("RoleAssignment")
+    roles = ListField(field=StringField())
+    local_roles = DummyField(required=False)
+    remote_roles = EmbeddedDocumentListField("RemoteRole")
+    is_remote = BooleanField(required=True, default=False)
+    remote_user_mapping = EmbeddedDocumentListField("RemoteUserMap")
+    metadata = DictField()
 
     meta = {
         "indexes": [{"name": "unique_index", "fields": ["username"], "unique": True}],
     }
 
-    _permissions_cache: Optional[dict] = None
+    # _permissions_cache: Optional[dict] = None
+
+    def save(self, *args, **kwargs):
+        for local_role in self.local_roles:
+            if local_role.name not in self.roles:
+                self.roles.append(local_role.name)
+        return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return self.username
 
-    @property
-    def permissions(self) -> dict:
-        """Return the user's permissions organized by permission name. This is
-        calculated via beer_garden.authorization.permissions_for_user and is cached on
-        the User object to avoid unnecessary recalculation.
+    # def clear_permissions_cache(self) -> None:
+    #     """Clear the cached permission set for the user. This is useful if the user's
+    #     role assignments have been changed and you want to perform a permission check
+    #     using those new role assignments without reloading the entire user object.
+    #     """
+    #     self._permissions_cache = None
 
-        Returns:
-            dict: The user's permissions organized by permission name
-        """
-        from beer_garden.authorization import permissions_for_user
+    # def set_permissions_cache(self, permissions: dict) -> None:
+    #     """Manually set the cached permission set for the user. This cache is typically
+    #     set and checked by the permissions property method. In cases where those
+    #     permissions are externally sourced (such as an access token in a web request
+    #     that was provided via initial authentication), this method can be used to
+    #     manually set the _permissions_cache value so that subsequent calls to
+    #     permissions related helper functions do not unnecessarily recalculate the user
+    #     permissions.
 
-        if self._permissions_cache is None:
-            self._permissions_cache = permissions_for_user(self)
+    #     Args:
+    #         permissions: A dictionary containing the user's permissions. The format
+    #             should match the one produced by permissions_for_user in
+    #             beer_garden.authorization
 
-        return self._permissions_cache
-
-    @property
-    def domain_permissions(self) -> dict:
-        """Returns the domain_permissions portion of self.permissions"""
-        return self.permissions["domain_permissions"]
-
-    @property
-    def global_permissions(self) -> dict:
-        """Returns the global_permissions portion of self.permissions"""
-        return self.permissions["global_permissions"]
-
-    def clear_permissions_cache(self) -> None:
-        """Clear the cached permission set for the user. This is useful if the user's
-        role assignments have been changed and you want to perform a permission check
-        using those new role assignments without reloading the entire user object.
-        """
-        self._permissions_cache = None
-
-    def set_permissions_cache(self, permissions: dict) -> None:
-        """Manually set the cached permission set for the user. This cache is typically
-        set and checked by the permissions property method. In cases where those
-        permissions are externally sourced (such as an access token in a web request
-        that was provided via initial authentication), this method can be used to
-        manually set the _permissions_cache value so that subsequent calls to
-        permissions related helper functions do not unnecessarily recalculate the user
-        permissions.
-
-        Args:
-            permissions: A dictionary containing the user's permissions. The format
-                should match the one produced by permissions_for_user in
-                beer_garden.authorization
-
-        Returns:
-            None
-        """
-        self._permissions_cache = permissions
-
-    def set_password(self, password: str):
-        """This helper should be used to set the user's password, rather than directly
-        assigning a value. This ensures that the password is stored as a hash rather
-        than in plain text
-
-        Args:
-            password: String to set as the user's password.
-
-        Returns:
-            None
-        """
-        self.password = custom_app_context.hash(password)
-
-    def verify_password(self, password: str):
-        """Checks the provided plaintext password against thea user's stored password
-        hash
-
-        Args:
-            password: Plaintext string to check against user's password"
-
-        Returns:
-            bool: True if the password matches, False otherwise
-        """
-        return custom_app_context.verify(password, self.password)
-
-    def revoke_tokens(self) -> None:
-        """Remove all tokens from the user's list of valid tokens. This is useful for
-        requiring the user to explicitly login, which one may want to do for a variety
-        of reasons.
-        """
-        UserToken.objects.filter(user=self).delete()
+    #     Returns:
+    #         None
+    #     """
+    #     self._permissions_cache = permissions
 
 
-class UserToken(Document):
+
+
+class UserToken(MongoModel, Document):
     issued_at = DateTimeField(required=True, default=datetime.datetime.utcnow)
     expires_at = DateTimeField(required=True)
     user = LazyReferenceField("User", required=True, reverse_delete_rule=CASCADE)
@@ -1168,18 +1018,4 @@ class UserToken(Document):
     }
 
 
-class RemoteUser(Document):
-    username = StringField(required=True)
-    garden = StringField(required=True)
-    role_assignments = ListField(field=DictField(), required=False)
-    updated_at = DateTimeField(required=True, default=datetime.datetime.utcnow)
 
-    meta = {
-        "indexes": [
-            {"fields": ["username"]},
-            {"fields": ["garden", "username"], "unique": True},
-        ],
-    }
-
-    def __str__(self):
-        return f"{self.garden}:{self.username}"

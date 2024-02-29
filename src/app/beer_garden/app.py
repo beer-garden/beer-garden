@@ -290,6 +290,13 @@ class Application(StoppableThread):
         self.logger.debug("Setting up garden routing...")
         beer_garden.router.setup_routing()
 
+        self.logger.debug("Load Roles...")
+
+        self.logger.debug("Verifying default users...")
+        beer_garden.user.ensure_users()
+
+        self.logger.debug("Load Users...")
+
         self.logger.debug("Starting forwarding processor...")
         beer_garden.router.forward_processor.start()
 

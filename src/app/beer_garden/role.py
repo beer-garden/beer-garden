@@ -9,7 +9,7 @@ from brewtils.models import Role, User
 from beer_garden import config
 import beer_garden.db.api as db
 #from beer_garden.db.mongo.models import Garden, RemoteRole, Role, User
-from beer_garden.user import update_user
+# from beer_garden.user import update_user
 logger = logging.getLogger(__name__)
 
 
@@ -33,37 +33,19 @@ def update_role(role: Role = None, role_name: str = None, **kwargs) -> Role:
 
     return db.update(role)
 
+@publish_event(Events.ROLE_DELETE)
 def delete_role(role: Role = None, role_name: str = None) -> Role:
     if not role:
         role = db.query_unique(Role, name=role_name, raise_missing=True)
 
-    remove_local_role_assignments_for_role(role)
+    #remove_local_role_assignments_for_role(role)
 
     db.delete(role)
 
     return role
 
 
-def remove_local_role_assignments_for_role(role: Role) -> int:
-    """Remove all User role assignments for the provided Role.
 
-    Args:
-        role: The Role document object
-
-    Returns:
-        int: The number of users role was removed from
-    """
-    # Avoid circular import
-    
-    impacted_users = db.query(
-            User, filter_params={"roles__match": role.name}
-        )
-
-    for user in impacted_users:
-        user.roles.remove(role.name)
-        update_user(user)
-
-    return len(impacted_users)
     
 
 def rescan():

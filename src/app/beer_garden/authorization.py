@@ -5,6 +5,8 @@ from brewtils.models import Garden as BrewtilsGarden
 from brewtils.models import Job as BrewtilsJob
 from brewtils.models import Request as BrewtilsRequest
 from brewtils.models import System as BrewtilsSystem
+from brewtils.models import User as BrewtilsUser
+from brewtils.models import Role as BrewtilsRole
 from mongoengine import Document, DoesNotExist, Q, QuerySet
 from mongoengine.fields import ObjectIdField
 from mongoengine.queryset.visitor import QCombination
@@ -15,9 +17,81 @@ from beer_garden.db.mongo.models import (
     Garden,
     Job,
     Request,
-    RoleAssignmentDomain,
     System,
 )
+
+def _permission_levels(permission_level: str) -> list:
+    if permission_level == "READ_ONLY":
+        return ["READ_ONLY", "OPERATOR", "ADMIN"]
+    
+    if permission_level == "OPERATOR":
+        return ["OPERATOR", "ADMIN"]
+
+    return [ "ADMIN"]
+
+
+def _has_empty_scopes(role: BrewtilsRole, scopes: list = ["scope_gardens","scope_namespaces", "scope_systems", "scope_instances", "scope_versions","scope_commands"]):
+    for scope_attribute in scopes:
+        if len(getattr(role, scope_attribute, [])) > 0:
+            return False
+    return True
+
+def _get_garden_q_filter(user: BrewtilsUser, permission_level: str) -> Q:
+    """Returns a Q filter object for filtering a queryset for gardens"""
+    
+
+    if any(role.permission in permission_levels and _has_empty_scopes(role, ["scope_gardens"]) for role in user.local_roles):
+        return Q()
+    
+    if any(role.permission in permission_levels and _has_empty_scopes(role, ["scope_gardens"]) for role in user.remote_roles):
+        return Q()
+
+    garden_names = []
+    for role in user.local_roles:
+        for garden_scope in role.scope_gardens:
+            garden_names.append(garden_scope)
+
+    return Q(**{"name__in": garden_names})
+
+def _get_system_filter_output(system: BrewtilsSystem, user: BrewtilsUser, permission_level: str) -> BrewtilsSystem:
+    return system
+
+def _get_garden_filter_output(garden: BrewtilsGarden, user: BrewtilsUser, permission_level: str) -> BrewtilsGarden:
+    """Returns a Q filter object for filtering a queryset for gardens"""
+    if permission_level == "READ_ONLY":
+        permission_levels = ["READ_ONLY", "OPERATOR", "ADMIN"]
+    elif permission_level == "OPERATOR":
+        permission_levels = ["OPERATOR", "ADMIN"]
+    else:
+        permission_levels = [ "ADMIN"]
+    
+
+    if any(role.permission in permission_levels and _has_empty_scopes(role) for role in user.local_roles):
+        return garden
+    
+    if any(role.permission in permission_levels and _has_empty_scopes(role) for role in user.remote_roles):
+        return garden
+
+    filter_systems = True
+    for role in user.local_roles:
+        if garden.name in role.scope_gardens and _has_empty_scopes(role, ["scope_namespaces", "scope_systems", "scope_instances", "scope_versions","scope_commands"]):
+            filter_systems = False
+
+    if filter_systems:
+        new_systems = []
+        for system in garden.systems:
+            filtered_system = _get_system_filter_output(system, user, permission_level)
+            if filtered_system:
+                new_systems.append(filtered_system)
+
+        garden.systems = filtered_system
+
+    return garden
+
+
+########################################
+#            OLD STUFF                 #
+########################################
 
 if TYPE_CHECKING:
     from beer_garden.db.mongo.models import User
