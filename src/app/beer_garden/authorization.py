@@ -7,6 +7,7 @@ from brewtils.models import Request as BrewtilsRequest
 from brewtils.models import System as BrewtilsSystem
 from brewtils.models import User as BrewtilsUser
 from brewtils.models import Role as BrewtilsRole
+from brewtils.models import Command as BrewtilsCommand
 from mongoengine import Document, DoesNotExist, Q, QuerySet
 from mongoengine.fields import ObjectIdField
 from mongoengine.queryset.visitor import QCombination
@@ -19,6 +20,15 @@ from beer_garden.db.mongo.models import (
     Request,
     System,
 )
+
+def _check_global_roles(user: BrewtilsUser, permission_levels: list) -> bool:
+    if any(role.permission in permission_levels and _has_empty_scopes(role) for role in user.local_roles):
+        return True
+    
+    if any(role.permission in permission_levels and _has_empty_scopes(role) for role in user.remote_roles):
+        return True
+    
+    return False
 
 def _permission_levels(permission_level: str) -> list:
     if permission_level == "READ_ONLY":
@@ -40,10 +50,7 @@ def _get_garden_q_filter(user: BrewtilsUser, permission_levels: list) -> Q:
     """Returns a Q filter object for filtering a queryset for gardens"""
     
 
-    if any(role.permission in permission_levels and _has_empty_scopes(role, ["scope_gardens"]) for role in user.local_roles):
-        return Q()
-    
-    if any(role.permission in permission_levels and _has_empty_scopes(role, ["scope_gardens"]) for role in user.remote_roles):
+    if _check_global_roles(user, permission_levels):
         return Q()
 
     garden_names = []
@@ -53,25 +60,73 @@ def _get_garden_q_filter(user: BrewtilsUser, permission_levels: list) -> Q:
 
     return Q(**{"name__in": garden_names})
 
+def _get_command_filter_output(command: BrewtilsCommand, user: BrewtilsUser, permission_levels: list, source_garden: str = None, source_system: str = None) -> BrewtilsSystem:
+    if _check_global_roles(user, permission_levels):
+        return command
+    
+    if any((
+            role.permission in permission_levels and 
+            (source_garden is None or len(role.scope_gardens) == 0 or source_garden in role.scope_gardens) and 
+            (source_system is None or len(role.scope_systems) == 0 or source_system in role.scope_systems)) and 
+            (len(role.scope_commands) == 0 or command.name in role.scope_commands) 
+            for role in user.remote_roles):
+            return command
+
+    return None
+
 def _get_system_filter_output(system: BrewtilsSystem, user: BrewtilsUser, permission_levels: list, source_garden: str = None) -> BrewtilsSystem:
-    if any(role.permission in permission_levels and _has_empty_scopes(role) for role in user.local_roles):
+    if _check_global_roles(user, permission_levels):
         return system
     
-    if any(role.permission in permission_levels and _has_empty_scopes(role) for role in user.remote_roles):
-        return system
+    # Filter System Roles
+    allow_system = False
+    if any(role.permission in permission_levels and (source_garden is None or len(role.scope_gardens) == 0 or source_garden in role.scope_gardens) and (len(role.scope_systems) == 0 or system.name in role.scope_systems) for role in user.local_roles):
+        allow_system = True
+
+    if any(role.permission in permission_levels and (source_garden is None or len(role.scope_gardens) == 0 or source_garden in role.scope_gardens) and (len(role.scope_systems) == 0 or system.name in role.scope_systems) for role in user.remote_roles):
+        allow_system = True
+
+    if not allow_system:
+        return None 
+
+    # Filter Instances
+    filtered_instances = []
+    for instance in system.instances:
+        if any((
+            role.permission in permission_levels and 
+            (source_garden is None or len(role.scope_gardens) == 0 or source_garden in role.scope_gardens) and 
+            (len(role.scope_systems) == 0 or system.name in role.scope_systems)) and 
+            (len(role.scope_instances) == 0 or instance in role.scope_instances) 
+            for role in user.remote_roles):
+            filtered_instances.append(instance)
+
+    if len(filtered_instances) == 0:
+        return None
+    
+    system.instances = filtered_instances
+
+    # Filter Commands
+    filtered_commands = []
+    for command in system.commands:
+        filtered_command = _get_command_filter_output(command, user, permission_levels, source_garden, system.name)
+        if filtered_command:
+            filtered_commands.append(filtered_command)
+
+    if len(filtered_commands) == 0:
+        return None
     
     return system
 
 def _get_garden_filter_output(garden: BrewtilsGarden, user: BrewtilsUser, permission_levels: list) -> BrewtilsGarden:
     """Returns a Q filter object for filtering a queryset for gardens"""   
 
-    if any(role.permission in permission_levels and _has_empty_scopes(role) for role in user.local_roles):
+    if _check_global_roles(user, permission_levels):
         return garden
     
-    if any(role.permission in permission_levels and _has_empty_scopes(role) for role in user.remote_roles):
-        return garden
-    
-    if not any(role.permission in permission_levels and (len(role.scope_garden) == 0 or garden.name in role.scope_gardens) for role in user.remote_roles):
+    if (
+        not any(role.permission in permission_levels and (len(role.scope_garden) == 0 or garden.name in role.scope_gardens) for role in user.local_roles) and 
+        not any(role.permission in permission_levels and (len(role.scope_garden) == 0 or garden.name in role.scope_gardens) for role in user.remote_roles)
+        ):
         return None
 
     filter_systems = True
