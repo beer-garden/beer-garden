@@ -82,6 +82,8 @@ __all__ = [
     "User",
     "RemoteUser",
     "CommandPublishingBlocklist",
+    "Topic",
+    "Subscriber",
 ]
 
 REQUEST_MAX_PARAM_SIZE = 5 * 1_000_000
@@ -578,6 +580,49 @@ class Request(MongoModel, Document):
                     f"completed status. Requested: {self.status}, completed statuses "
                     f"are {BrewtilsRequest.COMPLETED_STATUSES}."
                 )
+
+
+class Subscriber(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.Subscriber
+
+    garden = StringField()
+    namespace = StringField()
+    system = StringField()
+    version = StringField()
+    instance = StringField()
+    command = StringField()
+
+    meta = {
+        "auto_create_index": False,  # We need to manage this ourselves
+        "index_background": True,
+        "indexes": [
+            {
+                "name": "unique_index",
+                "fields": [
+                    "garden",
+                    "namespace",
+                    "system",
+                    "version",
+                    "instance",
+                    "command",
+                ],
+                "unique": True,
+            }
+        ],
+    }
+
+
+class Topic(MongoModel, Document):
+    brewtils_model = brewtils.models.Topic
+
+    name = StringField(required=True, primary_key=True)
+    subscribers = EmbeddedDocumentListField("Subscriber")
+
+    meta = {
+        "auto_create_index": True,  # We need to manage this ourselves
+        "index_background": True,
+        "indexes": [{"name": "unique_index", "fields": ["name"], "unique": True}],
+    }
 
 
 class System(MongoModel, Document):

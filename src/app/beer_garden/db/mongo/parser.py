@@ -30,6 +30,8 @@ class MongoParser(SchemaParser):
             "GardenSchema": beer_garden.db.mongo.models.Garden,
             "FileSchema": beer_garden.db.mongo.models.File,
             "FileChunkSchema": beer_garden.db.mongo.models.FileChunk,
+            "TopicSchema": beer_garden.db.mongo.models.Topic,
+            "SubscriberSchema": beer_garden.db.mongo.models.Subscriber,
         }
     )
 

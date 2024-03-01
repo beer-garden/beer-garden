@@ -44,6 +44,7 @@ import beer_garden.requests
 import beer_garden.role
 import beer_garden.scheduler
 import beer_garden.systems
+import beer_garden.topic
 import beer_garden.user
 from beer_garden.api.stomp.transport import Connection, consolidate_headers, process
 from beer_garden.errors import (
@@ -162,6 +163,12 @@ route_functions = {
     "FILE_FETCH": beer_garden.files.fetch_file,
     "FILE_DELETE": beer_garden.files.delete_file,
     "FILE_OWNER": beer_garden.files.set_owner,
+    "TOPIC_CREATE": beer_garden.topic.create_topic,
+    "TOPIC_READ": beer_garden.topic.get_topic,
+    "TOPIC_READ_ALL": beer_garden.topic.get_all_topics,
+    "TOPIC_DELETE": beer_garden.topic.delete_topic,
+    "TOPIC_ADD_SUBCRIBER": beer_garden.topic.topic_add_subscriber,
+    "TOPIC_REMOVE_SUBSCRIBER": beer_garden.topic.topic_remove_subscriber,
     "RUNNER_READ": beer_garden.local_plugins.manager.runner,
     "RUNNER_READ_ALL": beer_garden.local_plugins.manager.runners,
     "RUNNER_START": beer_garden.local_plugins.manager.start,
@@ -473,9 +480,9 @@ def setup_routing():
                             and connection.status != "DISABLED"
                         ):
                             if garden.name not in stomp_garden_connections:
-                                stomp_garden_connections[garden.name] = (
-                                    create_stomp_connection(connection)
-                                )
+                                stomp_garden_connections[
+                                    garden.name
+                                ] = create_stomp_connection(connection)
 
             else:
                 logger.warning(f"Garden with invalid connection info: {garden!r}")
