@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, Optional, Type, Union
+from typing import Union
+# from typing import TYPE_CHECKING, Optional, Type, Union
 
 from brewtils.models import BaseModel as BrewtilsModel
 from brewtils.models import Garden as BrewtilsGarden
@@ -11,18 +12,19 @@ from brewtils.models import Role as BrewtilsRole
 from brewtils.models import Command as BrewtilsCommand
 from brewtils.models import Instance as BrewtilsInstance
 from brewtils.models import Event as BrewtilsEvent
-from mongoengine import Document, DoesNotExist, Q, QuerySet
-from mongoengine.fields import ObjectIdField
-from mongoengine.queryset.visitor import QCombination
+from mongoengine import Q
+# from mongoengine import Document, DoesNotExist, Q, QuerySet
+# from mongoengine.fields import ObjectIdField
+# from mongoengine.queryset.visitor import QCombination
 
-import beer_garden.db.mongo.models
-from beer_garden.api.authorization import Permissions
-from beer_garden.db.mongo.models import (
-    Garden,
-    Job,
-    Request,
-    System,
-)
+# import beer_garden.db.mongo.models
+# from beer_garden.api.authorization import Permissions
+# from beer_garden.db.mongo.models import (
+#     Garden,
+#     Job,
+#     Request,
+#     System,
+# )
 
 import beer_garden.db.api as db
 
@@ -35,11 +37,98 @@ class QueryFilterBuilder:
             return Q()
 
         garden_names = []
-        for role in user.local_roles:
-            for garden_scope in role.scope_gardens:
-                garden_names.append(garden_scope)
+        for roles in [user.local_roles, user.remote_roles]:
+            for role in roles:
+                if role in permission_levels:
+                    for garden_scope in role.scope_gardens:
+                        garden_names.append(garden_scope)
 
         return Q(**{"name__in": garden_names})
+    
+    def _get_system_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
+        
+        if self._check_global_roles(user, permission_levels):
+            return Q() 
+        
+        filters = []
+
+        for roles in [user.local_roles, user.remote_roles]:
+            for role in roles:
+                if role in permission_levels:
+                    filter = {}
+                    if len(role.systems) > 0:
+                        filter["name_in"] = role.systems
+                    if len(role.instances) > 0:
+                        filter["instances__name__in"] = role.instances
+                    if len(role.versions) > 0:
+                        filter["version__in"] = role.versions
+                    if len(role.commands) > 0:
+                        filter["commands__name__in"] = role.commands
+                    
+                    if len(filter) > 0:
+                        filters.append(Q**filter)
+
+        if len(filters) == 0:
+            return Q()
+        
+        output = None
+
+        for filter in filters:
+            if output is None:
+                output = filter
+            else:
+                output = output | filter
+
+        return output
+
+    
+    def _get_instance_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
+        
+        if self._check_global_roles(user, permission_levels):
+            return Q() 
+        
+        filters = []
+
+        for roles in [user.local_roles, user.remote_roles]:
+            for role in roles:
+                if role in permission_levels:
+                    filter = {}
+                    if len(role.instances) > 0:
+                        filter["name__in"] = role.instances
+                    
+                    if len(filter) > 0:
+                        filters.append(Q**filter)
+
+        if len(filters) == 0:
+            return Q()
+        
+        output = None
+
+        for filter in filters:
+            if output is None:
+                output = filter
+            else:
+                output = output | filter
+
+        return output
+    
+    def build_filter(
+        self, user: BrewtilsUser, permission: str, model: BrewtilsModel, **kwargs
+    ) -> Q:
+        
+        permission_levels = self._permission_levels(permission)
+
+        if model is None:
+            return Q()
+
+        if model is BrewtilsGarden:
+            return self._get_garden_q_filter(user, permission_levels)
+        if model is BrewtilsSystem:
+            return self._get_system_filter(user, permission_levels)
+        if model is BrewtilsInstance:
+            return self._get_instance_filter(user, permission_levels)
+
+        return Q()
 
 
 class FilterModels:
