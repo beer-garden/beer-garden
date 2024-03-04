@@ -5,10 +5,10 @@ from uuid import UUID, uuid4
 import jwt
 from tornado.httputil import HTTPServerRequest
 
+from brewtils.models import User, UserToken
+
 from beer_garden import config
 from beer_garden.api.http.authentication.login_handlers import enabled_login_handlers
-from beer_garden.authorization import permissions_for_user
-from beer_garden.db.mongo.models import User, UserToken
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
 
 
@@ -198,7 +198,7 @@ def _generate_access_token(user: User, identifier: UUID) -> str:
         "exp": _get_access_token_expiration(),
         "type": "access",
         "username": user.username,
-        "permissions": permissions_for_user(user),
+        "roles": user.local_roles + user.remote_roles,
     }
 
     access_token = jwt.encode(jwt_payload, key=secret_key, headers=jwt_headers)
