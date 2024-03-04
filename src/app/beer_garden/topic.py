@@ -82,7 +82,6 @@ def topic_add_subscriber(subscriber: Subscriber, topic_name: str) -> Topic:
     if subscriber not in topic.subscribers:
         topic.subscribers.append(subscriber)
 
-    # return update_topic(topic)
     return update_topic(topic)
 
 
@@ -95,7 +94,6 @@ def topic_remove_subscriber(subscriber: Subscriber, topic_name: str) -> Topic:
 
     Returns:
         The updated Topic
-
     """
     try:
         topic = get_topic(topic_name)

@@ -69,10 +69,12 @@ class TestTopic:
             get_topic(topic1.name)
 
     def test_add_subscriber(self, topic1, subscriber):
+        """add subscriber to existing topic"""
         topic_add_subscriber(subscriber, topic1.name)
         assert len(get_topic(topic1.name).subscribers) == 1
 
     def test_remove_subscriber(self, topic2, subscriber):
+        """remove subscriber from existing topic"""
         topic_add_subscriber(subscriber, topic2.name)
         topic_remove_subscriber(subscriber, topic2.name)
         assert len(get_topic(topic2.name).subscribers) == 0
