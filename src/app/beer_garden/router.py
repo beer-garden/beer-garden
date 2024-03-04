@@ -739,6 +739,7 @@ def _target_from_type(operation: Operation) -> str:
         )
         or "PUBLISH_EVENT" in operation.operation_type
         or "RUNNER" in operation.operation_type
+        or "TOPIC" in operation.operation_type
         or operation.operation_type
         in ("PLUGIN_LOG_RELOAD", "QUEUE_DELETE_ALL", "SYSTEM_CREATE", "REQUEST_DELETE")
     ):
