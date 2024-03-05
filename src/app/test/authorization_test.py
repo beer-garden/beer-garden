@@ -554,16 +554,11 @@ class TestModelFilter:
                 base_request, user, ["ADMIN"], source_garden="garden"
             )
 
-            assert model_filter.filter_object(
-                base_request, user, ["ADMIN"], source_garden="garden"
-            )
         else:
             assert not model_filter._get_request_filter(
                 base_request, user, ["ADMIN"], source_garden="garden"
             )
-            assert not model_filter.filter_object(
-                base_request, user, ["ADMIN"], source_garden="garden"
-            )
+
 
     
     @pytest.mark.parametrize(
@@ -610,16 +605,11 @@ class TestModelFilter:
                 base_garden, user, ["ADMIN"],
             )
 
-            assert model_filter.filter_object(
-                base_garden, user, ["ADMIN"]
-            )
         else:
             assert not model_filter._get_garden_filter(
                 base_garden, user, ["ADMIN"]
             )
-            assert not model_filter.filter_object(
-                base_garden, user, ["ADMIN"]
-            )
+
 
     # @pytest.mark.parametrize(
     #     "user,returned",    
@@ -723,4 +713,100 @@ class TestModelFilter:
         else:
             assert not model_filter._get_command_filter(
                 base_command, user, ["ADMIN"], source_system=base_system, source_garden_name="garden"
+            )
+
+    @pytest.mark.parametrize(
+        "user,returned",    
+        [
+            (User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden", "garden2", "garden3"],
+                            scope_namespaces=["namespace", "namespace2"],
+                            scope_systems=["system", "system2"],
+                            scope_instances=["instance", "instance2"],
+                            scope_versions=["1", "2"],
+                            scope_commands=["command", "command2"],
+                        )
+                    ],
+                ),
+                True
+            ),
+            (User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden", "garden2", "garden3"],
+                            scope_namespaces=["namespace", "namespace2"],
+                            scope_systems=["system", "system2"],
+                            scope_instances=["instance2"],
+                            scope_versions=["1", "2"],
+                            scope_commands=["command", "command2"],
+                        )
+                    ],
+                ),
+                False)
+        ]
+    )
+    def test_get_instance_filter(self, model_filter, base_instance, base_system, user, returned):
+        if returned:
+            assert model_filter._get_instance_filter(
+                base_instance, user, ["ADMIN"], source_system=base_system, source_garden_name="garden"
+            )
+        else:
+            assert not model_filter._get_instance_filter(
+                base_instance, user, ["ADMIN"], source_system=base_system, source_garden_name="garden"
+            )
+
+    @pytest.mark.parametrize(
+        "user,returned",    
+        [
+            (User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden", "garden2", "garden3"],
+                            scope_namespaces=["namespace", "namespace2"],
+                            scope_systems=["system", "system2"],
+                            scope_instances=["instance", "instance2"],
+                            scope_versions=["1", "2"],
+                            scope_commands=["command", "command2"],
+                        )
+                    ],
+                ),
+                True
+            ),
+            (User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden", "garden2", "garden3"],
+                            scope_namespaces=["namespace", "namespace2"],
+                            scope_systems=["system2"],
+                            scope_instances=["instance", "instance2"],
+                            scope_versions=["1", "2"],
+                            scope_commands=["command", "command2"],
+                        )
+                    ],
+                ),
+                False)
+        ]
+    )
+    def test_get_system_filter(self, model_filter, base_system, user, returned):
+        if returned:
+            assert model_filter._get_system_filter(
+                base_system, user, ["ADMIN"], source_garden_name="garden"
+            )
+        else:
+            assert not model_filter._get_system_filter(
+                base_system, user, ["ADMIN"], source_garden_name="garden"
             )

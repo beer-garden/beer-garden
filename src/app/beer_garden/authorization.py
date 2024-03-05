@@ -224,7 +224,7 @@ class ModelFilter:
             if check_system and system_name is None:
                 system_name = system.name
             if check_instances and system_instances is None:
-                system_instances = system.instance_names()
+                system_instances = [i.name for i in system.instances]
             if check_version and system_version is None:
                 system_version = system.version
             if check_namespace and system_namespace is None:
