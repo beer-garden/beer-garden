@@ -30,22 +30,24 @@ from mongoengine import Q
 
 import beer_garden.db.api as db
 
+
 def check_global_roles(
-        user: BrewtilsUser,
-        permission_level: str = None,
-        permission_levels: list = None,
-    ) -> bool:
-        if permission_levels is None:
-            permission_levels = generate_permission_levels(permission_level)
+    user: BrewtilsUser,
+    permission_level: str = None,
+    permission_levels: list = None,
+) -> bool:
+    if permission_levels is None:
+        permission_levels = generate_permission_levels(permission_level)
 
-        for roles in [user.local_roles, user.remote_roles]:
-            if any(
-                role.permission in permission_levels and _has_empty_scopes(role)
-                for role in roles
-            ):
-                return True
+    for roles in [user.local_roles, user.remote_roles]:
+        if any(
+            role.permission in permission_levels and _has_empty_scopes(role)
+            for role in roles
+        ):
+            return True
 
-        return False
+    return False
+
 
 def generate_permission_levels(permission_level: str) -> list:
     if permission_level == "READ_ONLY":
@@ -56,24 +58,25 @@ def generate_permission_levels(permission_level: str) -> list:
 
     return ["ADMIN"]
 
+
 def _has_empty_scopes(
-        role: BrewtilsRole,
-        scopes: list = [
-            "scope_gardens",
-            "scope_namespaces",
-            "scope_systems",
-            "scope_instances",
-            "scope_versions",
-            "scope_commands",
-        ],
-    ):
-        for scope_attribute in scopes:
-            if len(getattr(role, scope_attribute, [])) > 0:
-                return False
-        return True
+    role: BrewtilsRole,
+    scopes: list = [
+        "scope_gardens",
+        "scope_namespaces",
+        "scope_systems",
+        "scope_instances",
+        "scope_versions",
+        "scope_commands",
+    ],
+):
+    for scope_attribute in scopes:
+        if len(getattr(role, scope_attribute, [])) > 0:
+            return False
+    return True
+
 
 class QueryFilterBuilder:
-
     def _get_garden_q_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
         """Returns a Q filter object for filtering a queryset for gardens"""
 
@@ -175,35 +178,113 @@ class QueryFilterBuilder:
 
 
 class ModelFilter:
-    def _find_filter_criteria(
+    def _checks(
         self,
+        user: BrewtilsUser,
+        permission_levels: list,
+        check_garden: bool = False,
+        check_system: bool = False,
+        check_namespace: bool = False,
+        check_instances: bool = False,
+        check_version: bool = False,
+        check_command: bool = False,
         garden_name: str = None,
-        system_name: str = None,
+        system: BrewtilsSystem = None,
         system_id: str = None,
+        system_name: str = None,
+        system_namespace: str = None,
+        system_version: str = None,
+        system_instances: list = None,
         instance_id: str = None,
+        command_name: str = None,
     ):
-        if system_id and system_name is None:
-            system_name = db.query_unique(
-                BrewtilsSystem, id=system_id, raise_missing=True
-            ).name
+        """Core check for filtering. If provided a nested record with some parent attributes, 
+        attempt to find it's source for the checks. If None is provided, then skip the check 
+        because we can't determine the value"""
 
-        elif instance_id and system_name is None:
-            system_name = db.query_unique(
-                BrewtilsSystem, instances_id=instance_id, raise_missing=True
-            ).name
+        if system is None:
+            if (
+                (check_system and system_name is None)
+                or (check_namespace and system_namespace is None)
+                or (check_instances and system_instances is None)
+                or (check_version and system_version is None)
+                or (check_garden and garden_name is None and system_name is None)
+            ):
+                if system_id:
+                    system = db.query_unique(
+                        BrewtilsSystem, id=system_id, raise_missing=True
+                    )
 
-        if garden_name is None and system_name:
+                elif instance_id:
+                    system = db.query_unique(
+                        BrewtilsSystem, instances_id=instance_id, raise_missing=True
+                    )
+
+        if system:
+            if check_system and system_name is None:
+                system_name = system.name
+            if check_instances and system_instances is None:
+                system_instances = system.instance_names()
+            if check_version and system_version is None:
+                system_version = system.version
+            if check_namespace and system_namespace is None:
+                system_namespace = system.namespace
+
+        if system and check_garden and garden_name is None:
             garden_name = db.query_unique(
                 BrewtilsGarden, systems__name=system_name, raise_missing=True
             ).name
 
-        return garden_name, system_name
+        for roles in [user.local_roles, user.remote_roles]:
+            if any(
+                (
+                    role.permission in permission_levels
+                    and (
+                        not check_garden
+                        or garden_name is None
+                        or len(role.scope_gardens) == 0
+                        or garden_name in role.scope_gardens
+                    )
+                    and (
+                        not check_namespace
+                        or system_namespace is None
+                        or len(role.scope_namespaces) == 0
+                        or system_namespace in role.scope_namespaces
+                    )
+                    and (
+                        not check_system
+                        or system_name is None
+                        or system_name is None
+                        or len(role.scope_systems) == 0
+                        or system_name in role.scope_systems
+                    )
+                    and (
+                        not check_version
+                        or system_version is None
+                        or len(role.scope_versions) == 0
+                        or system_version in role.scope_versions
+                    )
+                    and (
+                        not check_instances
+                        or system_instances is None
+                        or len(role.scope_instances) == 0
+                        or any(
+                            instance_name in role.scope_instances
+                            for instance_name in system_instances
+                        )
+                    )
+                    and (
+                        not check_command
+                        or command_name is None
+                        or len(role.scope_commands) == 0
+                        or command_name in role.scope_commands
+                    )
+                )
+                for role in roles
+            ):
+                return True
 
-    
-
-    
-
-    
+            return False
 
     def _get_user_filter(
         self,
@@ -221,9 +302,8 @@ class ModelFilter:
         if not skip_global and check_global_roles(user, permission_levels):
             return user_output
 
-        for roles in [user.local_roles, user.remote_roles]:
-            if any(role.permission in permission_levels for role in roles):
-                return user_output
+        if self._checks(user, permission_levels=permission_levels, **kwargs):
+            return user_output
 
         return None
 
@@ -266,6 +346,7 @@ class ModelFilter:
             permission_levels,
             source_garden=source_garden,
             skip_global=True,
+            **kwargs,
         )
 
         if filtered_request_template:
@@ -291,40 +372,24 @@ class ModelFilter:
         if getattr(request, "requester", None) == user.username:
             return request
 
-        if source_garden is None:
-            source_garden, _ = self._find_filter_criteria(
-                garden_name=source_garden, system_name=request.system
-            )
-
-        for roles in [user.local_roles, user.remote_roles]:
-            if any(
-                (
-                    role.permission in permission_levels
-                    and (
-                        source_garden is None
-                        or len(role.scope_gardens) == 0
-                        or source_garden in role.scope_gardens
-                    )
-                    and (
-                        len(role.scope_systems) == 0
-                        or request.system in role.scope_systems
-                    )
-                    and (
-                        len(role.scope_versions) == 0
-                        or request.system_version in role.scope_versions
-                    )
-                    and (
-                        len(role.scope_namespaces) == 0
-                        or request.namespace in role.scope_namespaces
-                    )
-                    and (
-                        len(role.scope_commands) == 0
-                        or request.command in role.scope_commands
-                    )
-                )
-                for role in roles
-            ):
-                return request
+        if self._checks(
+            user,
+            permission_levels=permission_levels,
+            garden_name=source_garden,
+            system_namespace=request.namespace,
+            system_name=request.system,
+            system_version=request.system_version,
+            system_instances=[request.instance_name],
+            command_name=request.command,
+            check_garden=True,
+            check_system=True,
+            check_namespace=True,
+            check_version=True,
+            check_instances=True,
+            check_command=True,
+            **kwargs,
+        ):
+            return request
 
         return None
 
@@ -333,8 +398,12 @@ class ModelFilter:
         command: BrewtilsCommand,
         user: BrewtilsUser,
         permission_levels: list,
+        source_system: BrewtilsSystem = None,
         source_garden_name: str = None,
+        source_system_namespace: str = None,
         source_system_name: str = None,
+        source_system_instances: list = None,
+        source_system_version: str = None,
         skip_global: bool = False,
         **kwargs
     ) -> BrewtilsSystem:
@@ -343,34 +412,25 @@ class ModelFilter:
         if not skip_global and check_global_roles(user, permission_levels):
             return command
 
-        if source_garden_name is None or source_system_name is None:
-            source_garden_name, source_system_name = self._find_filter_criteria(
-                garden_name=source_garden_name,
-                system_name=source_system_name,
-                system_id=getattr(kwargs, "system_id", None),
-            )
-
-        for roles in [user.local_roles, user.remote_roles]:
-            if any(
-                (
-                    role.permission in permission_levels
-                    and (
-                        source_garden_name is None
-                        or len(role.scope_gardens) == 0
-                        or source_garden_name in role.scope_gardens
-                    )
-                    and (
-                        source_system_name is None
-                        or len(role.scope_systems) == 0
-                        or source_system_name in role.scope_systems
-                    )
-                )
-                and (
-                    len(role.scope_commands) == 0 or command.name in role.scope_commands
-                )
-                for role in roles
-            ):
-                return command
+        if self._checks(
+            user,
+            permission_levels=permission_levels,
+            garden_name=source_garden_name,
+            system=source_system,
+            system_namespace=source_system_namespace,
+            system_name=source_system_name,
+            system_version=source_system_version,
+            system_instances=source_system_instances,
+            command_name=command.name,
+            check_garden=True,
+            check_system=True,
+            check_namespace=True,
+            check_version=True,
+            check_instances=True,
+            check_command=True,
+            **kwargs,
+        ):
+            return command
 
         return None
 
@@ -379,8 +439,11 @@ class ModelFilter:
         instance: BrewtilsInstance,
         user: BrewtilsUser,
         permission_levels: list,
+        source_system: BrewtilsSystem = None,
         source_garden_name: str = None,
+        source_system_namespace: str = None,
         source_system_name: str = None,
+        source_system_version: str = None,
         skip_global: bool = False,
         **kwargs
     ) -> BrewtilsSystem:
@@ -389,35 +452,24 @@ class ModelFilter:
         if not skip_global and check_global_roles(user, permission_levels):
             return instance
 
-        if source_garden_name is None or source_system_name is None:
-            source_garden_name, source_system_name = self._find_filter_criteria(
-                garden_name=source_garden_name,
-                system_name=source_system_name,
-                instance_id=getattr(kwargs, "instance_id", None),
-            )
-
-        for roles in [user.local_roles, user.remote_roles]:
-            if any(
-                (
-                    role.permission in permission_levels
-                    and (
-                        source_garden_name is None
-                        or len(role.scope_gardens) == 0
-                        or source_garden_name in role.scope_gardens
-                    )
-                    and (
-                        source_system_name is None
-                        or len(role.scope_systems) == 0
-                        or source_system_name in role.scope_systems
-                    )
-                )
-                and (
-                    len(role.scope_instances) == 0
-                    or instance.name in role.scope_instances
-                )
-                for role in roles
-            ):
-                return instance
+        if self._checks(
+            user,
+            permission_levels=permission_levels,
+            system=source_system,
+            garden_name=source_garden_name,
+            system_namespace=source_system_namespace,
+            system_name=source_system_name,
+            system_version=source_system_version,
+            system_instances=[instance.name],
+            check_garden=True,
+            check_system=True,
+            check_namespace=True,
+            check_version=True,
+            check_instances=True,
+            instance_id=instance.id,
+            **kwargs,
+        ):
+            return instance
 
         return None
 
@@ -435,27 +487,17 @@ class ModelFilter:
         if not skip_global and check_global_roles(user, permission_levels):
             return system
 
-        if source_garden_name is None:
-            source_garden_name, _ = self._find_filter_criteria(
-                garden_name=source_garden_name, system_name=system.name
-            )
-
-        # Filter System Roles
-        allow_system = False
-        for roles in [user.local_roles, user.remote_roles]:
-            if any(
-                role.permission in permission_levels
-                and (
-                    source_garden_name is None
-                    or len(role.scope_gardens) == 0
-                    or source_garden_name in role.scope_gardens
-                )
-                and (len(role.scope_systems) == 0 or system.name in role.scope_systems)
-                for role in roles
-            ):
-                allow_system = True
-
-        if not allow_system:
+        if not self._checks(
+            user,
+            permission_levels=permission_levels,
+            system=system,
+            garden_name=source_garden_name,
+            check_garden=True,
+            check_system=True,
+            check_namespace=True,
+            check_version=True,
+            **kwargs,
+        ):
             return None
 
         filter_commands = True
@@ -490,7 +532,7 @@ class ModelFilter:
                         break
 
         # Filter Instances
-        if filter_instances:
+        if filter_instances and system.instances:
             filtered_instances = []
             for instance in system.instances:
                 filtered_instance = self._get_instance_filter(
@@ -498,7 +540,7 @@ class ModelFilter:
                     user,
                     permission_levels,
                     source_garden_name=source_garden_name,
-                    source_system_name=system.name,
+                    source_system=system,
                     skip_global=True,
                 )
                 if filtered_instances:
@@ -536,7 +578,7 @@ class ModelFilter:
                     break
 
         # Filter Commands
-        if filter_commands:
+        if filter_commands and system.commands:
             filtered_commands = []
             for command in system.commands:
                 filtered_command = self._get_command_filter(
@@ -544,7 +586,7 @@ class ModelFilter:
                     user,
                     permission_levels,
                     source_garden_name=source_garden_name,
-                    source_system_name=system.name,
+                    source_system=system,
                     skip_global=True,
                 )
                 if filtered_command:
@@ -568,63 +610,63 @@ class ModelFilter:
         if not skip_global and check_global_roles(user, permission_levels):
             return garden
 
-        if not any(
-            role.permission in permission_levels
-            and (len(role.scope_garden) == 0 or garden.name in role.scope_gardens)
-            for role in user.local_roles
-        ) and not any(
-            role.permission in permission_levels
-            and (len(role.scope_garden) == 0 or garden.name in role.scope_gardens)
-            for role in user.remote_roles
+        if not self._checks(
+            user,
+            permission_levels=permission_levels,
+            garden_name=garden.name,
+            check_garden=True,
+            **kwargs,
         ):
             return None
 
-        filter_systems = True
-        for roles in [user.local_roles, user.remote_roles]:
-            for role in roles:
-                if garden.name in role.scope_gardens and self._has_empty_scopes(
-                    role,
-                    [
-                        "scope_namespaces",
-                        "scope_systems",
-                        "scope_instances",
-                        "scope_versions",
-                        "scope_commands",
-                    ],
-                ):
-                    filter_systems = False
-                    break
+        if garden.systems:
+            filter_systems = True
+            for roles in [user.local_roles, user.remote_roles]:
+                for role in roles:
+                    if garden.name in role.scope_gardens and _has_empty_scopes(
+                        role,
+                        [
+                            "scope_namespaces",
+                            "scope_systems",
+                            "scope_instances",
+                            "scope_versions",
+                            "scope_commands",
+                        ],
+                    ):
+                        filter_systems = False
+                        break
 
-        if filter_systems:
-            new_systems = []
-            for system in garden.systems:
-                filtered_system = self._get_system_filter(
-                    system,
-                    user,
-                    permission_levels,
-                    source_garden_name=garden.name,
-                    skip_global=True,
-                )
-                if filtered_system:
-                    new_systems.append(filtered_system)
+            if filter_systems:
+                new_systems = []
+                for system in garden.systems:
+                    filtered_system = self._get_system_filter(
+                        system,
+                        user,
+                        permission_levels,
+                        source_garden_name=garden.name,
+                        skip_global=True,
+                    )
+                    if filtered_system:
+                        new_systems.append(filtered_system)
 
-            garden.systems = filtered_system
+                garden.systems = filtered_system
 
         new_child_gardens = []
-        for child in garden.children:
-            filtered_garden = self._get_garden_filter(
-                child, user, permission_levels, skip_global=True
-            )
-            if filtered_garden:
-                new_child_gardens.append(filtered_garden)
-        garden.children = new_child_gardens
+        if garden.children:
+            for child in garden.children:
+                filtered_garden = self._get_garden_filter(
+                    child, user, permission_levels, skip_global=True
+                )
+                if filtered_garden:
+                    new_child_gardens.append(filtered_garden)
+            garden.children = new_child_gardens
 
         return garden
 
     def filter_object(
         self,
-        user: BrewtilsUser,
         obj: BrewtilsModel,
+        user: BrewtilsUser,
         permission: str = None,
         permission_levels: list[str] = None,
         **kwargs
