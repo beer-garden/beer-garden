@@ -1,7 +1,9 @@
 import pytest
 from mongoengine import connect
 
-from brewtils.models import User, Role, Request, Garden, System, Instance, Command
+from brewtils.models import User, Role, Request, Garden, System, Instance, Command, Job, RequestTemplate
+from beer_garden.db.mongo import models
+import beer_garden.db.api as db
 
 from beer_garden.authorization import (
     QueryFilterBuilder,
@@ -13,38 +15,32 @@ from beer_garden.authorization import (
 
 # @pytest.fixture(autouse=True)
 # def drop():
-#     Garden.drop_collection()
-#     Role.drop_collection()
-#     System.drop_collection()
-#     User.drop_collection()
+#     models.Garden.drop_collection()
+#     models.LocalRole.drop_collection()
+#     models.System.drop_collection()
+#     models.User.drop_collection()
+
 
 
 @pytest.fixture()
 def role_for_global_scope():
-    role = Role(name="global", permission="ADMIN")
-
-    return role
+    return Role(name="global", permission="ADMIN")
 
 
 @pytest.fixture()
 def role_for_read_scope():
-    role = Role(name="read", permission="READ_ONLY")
-
-    return role
-
+    return Role(name="read", permission="READ_ONLY")
 
 @pytest.fixture()
 def user_for_global_scope(role_for_global_scope):
-    user = User(
+    return User(
         username="global", roles=["global"], local_roles=[role_for_global_scope]
     )
-    return user
 
 
 @pytest.fixture()
 def user_for_read_scope(role_for_read_scope):
-    user = User(username="read", roles=["read"], local_roles=[role_for_read_scope])
-    return user
+    return User(username="read", roles=["read"], local_roles=[role_for_read_scope])
 
 
 @pytest.fixture()
@@ -56,17 +52,25 @@ def query_filter():
 def model_filter():
     return ModelFilter()
 
-
 @pytest.fixture()
-def base_request():
-    return Request(
-        requester="user1",
+def base_request_template():
+    return RequestTemplate(
         namespace="namespace",
         system="system",
         system_version="1",
         instance_name="instance",
         command="command",
     )
+
+@pytest.fixture()
+def base_request(base_request_template):
+    request = Request.from_template(base_request_template)
+    request.requester="user1"
+    return request
+
+@pytest.fixture()
+def base_job(base_request_template):
+    return Job(request_template=base_request_template)
 
 @pytest.fixture()
 def base_command():
@@ -79,6 +83,15 @@ def base_instance():
 @pytest.fixture()
 def base_system(base_command, base_instance):
     return System(name="system", namespace="namespace", version="1", instances=[base_instance], commands=[base_command])
+
+@pytest.fixture
+def base_system_2():
+    system = models.System(name="system2", namespace="namespace", version="1", instances=[], commands=[])
+    system.save()
+
+    yield system
+    system.delete()
+
 
 @pytest.fixture()
 def base_garden(base_system):
@@ -560,6 +573,251 @@ class TestModelFilter:
             )
 
 
+    @pytest.mark.parametrize(
+        "user,returned",
+        [
+            (
+                User(
+                    username="user2",
+                    local_roles=[
+                        Role(permission="ADMIN", name="role", scope_gardens=["garden"])
+                    ],
+                ),
+                True,
+            ),
+            (
+                User(
+                    username="user2",
+                    local_roles=[
+                        Role(permission="ADMIN", name="role", scope_gardens=["garden2"])
+                    ],
+                ),
+                False,
+            ),
+            (
+                User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden"],
+                            scope_namespaces=["namespace"],
+                        )
+                    ],
+                ),
+                True,
+            ),
+            (
+                User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden"],
+                            scope_namespaces=["namespace2"],
+                        )
+                    ],
+                ),
+                False,
+            ),
+            (
+                User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden"],
+                            scope_systems=["system"],
+                        )
+                    ],
+                ),
+                True,
+            ),
+            (
+                User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden"],
+                            scope_systems=["system2"],
+                        )
+                    ],
+                ),
+                False,
+            ),
+            (
+                User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden"],
+                            scope_versions=["1"],
+                        )
+                    ],
+                ),
+                True,
+            ),
+            (
+                User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden"],
+                            scope_versions=["2"],
+                        )
+                    ],
+                ),
+                False,
+            ),
+            (
+                User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden"],
+                            scope_instances=["instance"],
+                        )
+                    ],
+                ),
+                True,
+            ),
+            (
+                User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden"],
+                            scope_instances=["instance2"],
+                        )
+                    ],
+                ),
+                False,
+            ),
+            (
+                User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden"],
+                            scope_commands=["command"],
+                        )
+                    ],
+                ),
+                True,
+            ),
+            (
+                User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden"],
+                            scope_commands=["command2"],
+                        )
+                    ],
+                ),
+                False,
+            ),
+            (
+                User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden"],
+                            scope_commands=["command2"],
+                        )
+                    ],
+                    remote_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role2",
+                            scope_gardens=["garden"],
+                            scope_versions=["2"],
+                        )
+                    ],
+                ),
+                False,
+            ),
+            (
+                User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden", "garden2", "garden3"],
+                        )
+                    ],
+                ),
+                True,
+            ),
+            (
+                User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden", "garden2", "garden3"],
+                            scope_namespaces=["namespace", "namespace2"],
+                            scope_systems=["system", "system2"],
+                            scope_instances=["instance", "instance2"],
+                            scope_versions=["1", "2"],
+                            scope_commands=["command2"],
+                        )
+                    ],
+                ),
+                False,
+            ),
+            (
+                User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden", "garden2", "garden3"],
+                            scope_namespaces=["namespace", "namespace2"],
+                            scope_systems=["system", "system2"],
+                            scope_instances=["instance", "instance2"],
+                            scope_versions=["1", "2"],
+                            scope_commands=["command", "command2"],
+                        )
+                    ],
+                ),
+                True,
+            ),
+        ],
+    )
+    def test_get_job_filter(self, model_filter, base_job, user, returned):
+        if returned:
+            assert model_filter._get_job_filter(
+                base_job, user, ["ADMIN"], source_garden="garden"
+            )
+
+        else:
+            assert not model_filter._get_job_filter(
+                base_job, user, ["ADMIN"], source_garden="garden"
+            )
+
     
     @pytest.mark.parametrize(
         "user,returned",    
@@ -611,60 +869,53 @@ class TestModelFilter:
             )
 
 
-    # @pytest.mark.parametrize(
-    #     "user,returned",    
-    #     [
-    #         (User(
-    #                 username="user2",
-    #                 local_roles=[
-    #                     Role(
-    #                         permission="ADMIN",
-    #                         name="role",
-    #                         scope_gardens=["garden"],
-    #                         scope_namespaces=["namespace"],
-    #                         scope_systems=["system"],
-    #                         scope_instances=["instance"],
-    #                         scope_versions=["1"],
-    #                         scope_commands=["command"],
-    #                     )
-    #                 ],
-    #             ),
-    #             True
-    #         ),
-    #         (User(
-    #                 username="user2",
-    #                 local_roles=[
-    #                     Role(
-    #                         permission="ADMIN",
-    #                         name="role",
-    #                         scope_gardens=["garden", "garden2", "garden3"],
-    #                         scope_namespaces=["namespace", "namespace2"],
-    #                         scope_systems=["system2"],
-    #                         scope_instances=["instance", "instance2"],
-    #                         scope_versions=["1", "2"],
-    #                         scope_commands=["command", "command2"],
-    #                     )
-    #                 ],
-    #             ),
-    #             False)
-    #     ]
-    # )
-    # def test_get_garden_filter_check_systems(self, model_filter, base_garden, user, returned):
-    #     if returned:
-    #         assert model_filter._get_garden_filter(
-    #             base_garden, user, ["ADMIN"],
-    #         ).systems
-
-    #         assert model_filter.filter_object(
-    #             base_garden, user, ["ADMIN"]
-    #         )
-    #     else:
-    #         assert not model_filter._get_garden_filter(
-    #             base_garden, user, ["ADMIN"]
-    #         ).systems
-    #         assert not model_filter.filter_object(
-    #             base_garden, user, ["ADMIN"]
-    #         ).systems
+    @pytest.mark.parametrize(
+        "user,returned",    
+        [
+            (User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden"],
+                            scope_namespaces=["namespace"],
+                            scope_systems=["system"],
+                            scope_instances=["instance"],
+                            scope_versions=["1"],
+                            scope_commands=["command"],
+                        )
+                    ],
+                ),
+                True
+            ),
+            (User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden", "garden2", "garden3"],
+                            scope_namespaces=["namespace", "namespace2"],
+                            scope_systems=["system2"],
+                            scope_instances=["instance", "instance2"],
+                            scope_versions=["1", "2"],
+                            scope_commands=["command", "command2"],
+                        )
+                    ],
+                ),
+                False)
+        ]
+    )
+    def test_get_garden_filter_check_systems(self, model_filter, base_garden, user, returned):
+        if returned:
+            assert model_filter._get_garden_filter(
+                base_garden, user, ["ADMIN"],
+            ).systems
+        else:
+            assert not model_filter._get_garden_filter(
+                base_garden, user, ["ADMIN"]
+            ).systems
             
     
     @pytest.mark.parametrize(
@@ -793,6 +1044,54 @@ class TestModelFilter:
                             scope_namespaces=["namespace", "namespace2"],
                             scope_systems=["system2"],
                             scope_instances=["instance", "instance2"],
+                            scope_versions=["2"],
+                            scope_commands=["command", "command2"],
+                        )
+                    ],
+                ),
+                False)
+        ]
+    )
+    def test_get_instance_filter_db_system_check(self, model_filter, base_instance, base_system_2, user, returned):
+        if returned:
+            assert model_filter._get_instance_filter(
+                base_instance, user, ["ADMIN"], system_id=base_system_2.id, source_garden_name="garden"
+            )
+        else:
+            assert not model_filter._get_instance_filter(
+                base_instance, user, ["ADMIN"], system_id=base_system_2.id, source_garden_name="garden", 
+            )
+
+    @pytest.mark.parametrize(
+        "user,returned",    
+        [
+            (User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden", "garden2", "garden3"],
+                            scope_namespaces=["namespace", "namespace2"],
+                            scope_systems=["system", "system2"],
+                            scope_instances=["instance", "instance2"],
+                            scope_versions=["1", "2"],
+                            scope_commands=["command", "command2"],
+                        )
+                    ],
+                ),
+                True
+            ),
+            (User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden", "garden2", "garden3"],
+                            scope_namespaces=["namespace", "namespace2"],
+                            scope_systems=["system2"],
+                            scope_instances=["instance", "instance2"],
                             scope_versions=["1", "2"],
                             scope_commands=["command", "command2"],
                         )
@@ -802,6 +1101,102 @@ class TestModelFilter:
         ]
     )
     def test_get_system_filter(self, model_filter, base_system, user, returned):
+        if returned:
+            assert model_filter._get_system_filter(
+                base_system, user, ["ADMIN"], source_garden_name="garden"
+            )
+        else:
+            assert not model_filter._get_system_filter(
+                base_system, user, ["ADMIN"], source_garden_name="garden"
+            )
+
+    @pytest.mark.parametrize(
+        "user,returned",    
+        [
+            (User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden", "garden2", "garden3"],
+                            scope_namespaces=["namespace", "namespace2"],
+                            scope_systems=["system", "system2"],
+                            scope_instances=["instance", "instance2"],
+                            scope_versions=["1", "2"],
+                            scope_commands=["command", "command2"],
+                        )
+                    ],
+                ),
+                True
+            ),
+            (User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden", "garden2", "garden3"],
+                            scope_namespaces=["namespace", "namespace2"],
+                            scope_systems=["system", "system2"],
+                            scope_instances=["instance2"],
+                            scope_versions=["1", "2"],
+                            scope_commands=["command", "command2"],
+                        )
+                    ],
+                ),
+                False)
+        ]
+    )
+    def test_get_system_filter_dropped_by_instance(self, model_filter, base_system, user, returned):
+        if returned:
+            assert model_filter._get_system_filter(
+                base_system, user, ["ADMIN"], source_garden_name="garden"
+            )
+        else:
+            assert not model_filter._get_system_filter(
+                base_system, user, ["ADMIN"], source_garden_name="garden"
+            )
+
+    @pytest.mark.parametrize(
+        "user,returned",    
+        [
+            (User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden", "garden2", "garden3"],
+                            scope_namespaces=["namespace", "namespace2"],
+                            scope_systems=["system", "system2"],
+                            scope_instances=["instance", "instance2"],
+                            scope_versions=["1", "2"],
+                            scope_commands=["command", "command2"],
+                        )
+                    ],
+                ),
+                True
+            ),
+            (User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden", "garden2", "garden3"],
+                            scope_namespaces=["namespace", "namespace2"],
+                            scope_systems=["system", "system2"],
+                            scope_instances=["instance","instance2"],
+                            scope_versions=["1", "2"],
+                            scope_commands=["command2"],
+                        )
+                    ],
+                ),
+                False)
+        ]
+    )
+    def test_get_system_filter_dropped_by_command(self, model_filter, base_system, user, returned):
         if returned:
             assert model_filter._get_system_filter(
                 base_system, user, ["ADMIN"], source_garden_name="garden"

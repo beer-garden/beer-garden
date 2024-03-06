@@ -1,5 +1,5 @@
 from typing import Union
-
+import logging
 # from typing import TYPE_CHECKING, Optional, Type, Union
 
 from brewtils.models import BaseModel as BrewtilsModel
@@ -29,7 +29,7 @@ from mongoengine import Q
 # )
 
 import beer_garden.db.api as db
-
+logger = logging.getLogger(__name__)
 
 def check_global_roles(
     user: BrewtilsUser,
@@ -214,13 +214,17 @@ class ModelFilter:
                     system = db.query_unique(
                         BrewtilsSystem, id=system_id, raise_missing=True
                     )
-
+                elif system_name:
+                    system = db.query_unique(
+                        BrewtilsSystem, name=system_name, raise_missing=True
+                    )                 
                 elif instance_id:
                     system = db.query_unique(
                         BrewtilsSystem, instances_id=instance_id, raise_missing=True
                     )
-
+                
         if system:
+            
             if check_system and system_name is None:
                 system_name = system.name
             if check_instances and system_instances is None:
@@ -405,6 +409,7 @@ class ModelFilter:
         source_system_instances: list = None,
         source_system_version: str = None,
         skip_global: bool = False,
+        skip_system: bool = False,
         **kwargs
     ) -> BrewtilsSystem:
         """Returns a filtered Command object based on the roles of the user"""
@@ -423,10 +428,10 @@ class ModelFilter:
             system_instances=source_system_instances,
             command_name=command.name,
             check_garden=True,
-            check_system=True,
-            check_namespace=True,
-            check_version=True,
-            check_instances=True,
+            check_system=not skip_system,
+            check_namespace=not skip_system,
+            check_version=not skip_system,
+            check_instances=not skip_system,
             check_command=True,
             **kwargs,
         ):
@@ -445,6 +450,7 @@ class ModelFilter:
         source_system_name: str = None,
         source_system_version: str = None,
         skip_global: bool = False,
+        skip_system: bool = False,
         **kwargs
     ) -> BrewtilsSystem:
         """Returns a filtered Command object based on the roles of the user"""
@@ -462,14 +468,15 @@ class ModelFilter:
             system_version=source_system_version,
             system_instances=[instance.name],
             check_garden=True,
-            check_system=True,
-            check_namespace=True,
-            check_version=True,
+            check_system=not skip_system,
+            check_namespace=not skip_system,
+            check_version=not skip_system,
             check_instances=True,
             instance_id=instance.id,
             **kwargs,
         ):
             return instance
+
 
         return None
 
@@ -535,6 +542,7 @@ class ModelFilter:
         if filter_instances and system.instances:
             filtered_instances = []
             for instance in system.instances:
+                logger.error("Check Instance")
                 filtered_instance = self._get_instance_filter(
                     instance,
                     user,
@@ -542,8 +550,10 @@ class ModelFilter:
                     source_garden_name=source_garden_name,
                     source_system=system,
                     skip_global=True,
+                    skip_system=True,
                 )
-                if filtered_instances:
+                
+                if filtered_instance:
                     filtered_instances.append(filtered_instance)
 
             if len(filtered_instances) == 0:
@@ -588,6 +598,7 @@ class ModelFilter:
                     source_garden_name=source_garden_name,
                     source_system=system,
                     skip_global=True,
+                    skip_system=True,
                 )
                 if filtered_command:
                     filtered_commands.append(filtered_command)
