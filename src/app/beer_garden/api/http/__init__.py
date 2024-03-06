@@ -115,8 +115,8 @@ def _get_published_url_specs(
         (rf"{prefix}api/v1/token/?", v1.token.TokenAPI),
         (rf"{prefix}api/v1/token/revoke/?", v1.token.TokenRevokeAPI),
         (rf"{prefix}api/v1/token/refresh/?", v1.token.TokenRefreshAPI),
-        (rf"{prefix}api/v1/topic/?", v1.topic.TopicListAPI),
-        (rf"{prefix}api/v1/topic/(\w+)/?", v1.topic.TopicAPI),
+        (rf"{prefix}api/v1/topics/?", v1.topic.TopicListAPI),
+        (rf"{prefix}api/v1/topics/(\w+)/?", v1.topic.TopicAPI),
         (rf"{prefix}api/v1/whoami/?", v1.user.WhoAmIAPI),
         (
             rf"{prefix}api/v1/commandpublishingblocklist/(\w+)/?",

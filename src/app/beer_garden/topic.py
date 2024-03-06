@@ -18,30 +18,30 @@ def create_topic(topic: Topic) -> Topic:
     return topic
 
 
-def get_topic(topic_name: str) -> Topic:
+def get_topic(topic_id: str) -> Topic:
     """Retrieve an individual Topic
 
     Args:
-        topic_name: The name of the Topic
+        topic_id: The id of the Topic
 
     Returns:
         Topic
     """
-    topic = db.query_unique(Topic, name=topic_name, raise_missing=True)
-    return topic
+    return db.query_unique(Topic, id=topic_id)
 
 
-def delete_topic(topic_name: str = None, topic: Topic = None) -> Topic:
+def remove_topic(topic_id: str = None, topic: Topic = None) -> Topic:
     """Remove a topic
 
     Args:
-        topic_name: The Topic name
+        topic_id: The Topic ID
+        topic: The Topic
 
     Returns:
-        The deleted topic
-    """
+        The removed Topic
 
-    topic = topic or get_topic(topic_name)
+    """
+    topic = topic or db.query_unique(Topic, id=topic_id)
 
     db.delete(topic)
 
@@ -61,22 +61,22 @@ def get_all_topics(**kwargs) -> List[Topic]:
     return db.query(Topic, **kwargs)
 
 
-def topic_add_subscriber(subscriber: Subscriber, topic_name: str) -> Topic:
+def topic_add_subscriber(subscriber: Subscriber, topic_id: str) -> Topic:
     """Add a Subscriber to a Topic
 
     Args:
         subscriber: The subscriber to add
-        topic_name: The Topic Name to add it to
+        topic_id: The Topic ID to add it to
 
     Returns:
         The updated Topic
 
     """
     try:
-        topic = get_topic(topic_name)
+        topic = get_topic(topic_id)
     except DoesNotExist:
         raise PluginError(
-            f"Topic '{topic_name}' does not exist, unable to map '{str(subscriber)}"
+            f"Topic '{topic_id}' does not exist, unable to map '{str(subscriber)}"
         )
 
     if subscriber not in topic.subscribers:
@@ -85,21 +85,21 @@ def topic_add_subscriber(subscriber: Subscriber, topic_name: str) -> Topic:
     return update_topic(topic)
 
 
-def topic_remove_subscriber(subscriber: Subscriber, topic_name: str) -> Topic:
+def topic_remove_subscriber(subscriber: Subscriber, topic_id: str) -> Topic:
     """Remove a Subscriber from a Topic
 
     Args:
         subscriber: The subscriber to remove
-        topic_name: The Topic Name to from it from
+        topic_id: The Topic id to from it from
 
     Returns:
         The updated Topic
     """
     try:
-        topic = get_topic(topic_name)
+        topic = get_topic(topic_id)
     except DoesNotExist:
         raise PluginError(
-            f"Topic '{topic_name}' does not exist, unable to map '{str(subscriber)}"
+            f"Topic '{topic_id}' does not exist, unable to map '{str(subscriber)}"
         )
 
     if subscriber in topic.subscribers:

@@ -615,7 +615,7 @@ class Subscriber(MongoModel, EmbeddedDocument):
 class Topic(MongoModel, Document):
     brewtils_model = brewtils.models.Topic
 
-    name = StringField(required=True, primary_key=True)
+    name = StringField(required=True)
     subscribers = EmbeddedDocumentListField("Subscriber")
 
     meta = {

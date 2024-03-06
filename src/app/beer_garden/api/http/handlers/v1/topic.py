@@ -9,15 +9,15 @@ from beer_garden.api.http.base_handler import BaseHandler
 class TopicAPI(BaseHandler):
     parser = SchemaParser()
 
-    async def get(self, topic_name):
+    async def get(self, topic_id):
         """
         ---
-        summary: Get a topic by name
+        summary: Get a topic by id
         parameters:
-          - name: topic_name
+          - name: topic_id
             in: path
             required: true
-            description: The name of the Topic
+            description: The id of the Topic
             type: string
         responses:
           200:
@@ -33,21 +33,21 @@ class TopicAPI(BaseHandler):
         """
 
         response = await self.client(
-            Operation(operation_type="TOPIC_READ", kwargs={"topic_name": topic_name})
+            Operation(operation_type="TOPIC_READ", kwargs={"topic_id": topic_id})
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    async def delete(self, topic_name):
+    async def delete(self, topic_id):
         """
         ---
         summary: Delete a topic
         parameters:
-          - name: topic_name
+          - name: topic_id
             in: path
             required: true
-            description: The name of the topic
+            description: The id of the topic
             type: string
         responses:
           200:
@@ -62,17 +62,11 @@ class TopicAPI(BaseHandler):
           - Topics
         """
 
-        response = await self.client(
-            Operation(
-                operation_type="TOPIC_DELETE",
-                kwargs={"topic_name": topic_name},
-            )
-        )
+        await self.client(Operation(operation_type="TOPIC_DELETE", args=[topic_id]))
 
-        self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(response)
+        self.set_status(204)
 
-    async def patch(self, topic_name):
+    async def patch(self, topic_id):
         """
         ---
         summary: Partially update a Topic
@@ -90,10 +84,10 @@ class TopicAPI(BaseHandler):
           ]
           ```
         parameters:
-          - name: topic_name
+          - name: topic_id
             in: path
             required: true
-            description: The name of the Topic
+            description: The id of the Topic
             type: string
           - name: patch
             in: body
@@ -124,7 +118,7 @@ class TopicAPI(BaseHandler):
                 response = await self.client(
                     Operation(
                         operation_type="TOPIC_ADD_SUBSCRIBER",
-                        kwargs={"topic_name": topic_name, "subscriber": op.value},
+                        kwargs={"topic_id": topic_id, "subscriber": op.value},
                     )
                 )
 
@@ -132,7 +126,7 @@ class TopicAPI(BaseHandler):
                 response = await self.client(
                     Operation(
                         operation_type="TOPIC_REMOVE_SUBSCRIBER",
-                        kwargs={"topic_name": topic_name, "subscriber": op.value},
+                        kwargs={"topic_id": topic_id, "subscriber": op.value},
                     )
                 )
 
@@ -191,8 +185,6 @@ class TopicListAPI(BaseHandler):
           - Topics
         """
         topic = SchemaParser.parse_topic(self.request.decoded_body, from_string=True)
-
-        self.verify_user_permission_for_object("TOPIC_CREATE", topic)
 
         response = await self.client(
             Operation(
