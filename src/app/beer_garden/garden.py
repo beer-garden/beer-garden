@@ -565,7 +565,6 @@ def load_garden_connections(garden: Garden):
             "stomp.username": "username",
             "stomp.password": "password",
             "stomp.ssl": "ssl",
-            "stomp.headers": "headers",
         }
 
         stomp_connection = Connection(
@@ -578,6 +577,14 @@ def load_garden_connections(garden: Garden):
             stomp_connection.config.setdefault(
                 config_map[key], config.get(key, garden_config)
             )
+
+        headers = []
+        for header in config.get("stomp.headers", garden_config):
+            # Load Json of Header
+            pass
+        stomp_connection.config.setdefault("headers", headers)
+
+        
         if config.get("stomp.send_destination", garden_config):
             garden.publishing_connections.append(stomp_connection)
 
