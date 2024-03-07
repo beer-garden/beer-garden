@@ -1,11 +1,13 @@
-from brewtils.models import Topic, Subscriber
+from brewtils.models import Topic, Subscriber, Events
 from typing import List
 
 import beer_garden.db.api as db
 from mongoengine import DoesNotExist
 from brewtils.errors import PluginError
+from beer_garden.events import publish_event
 
 
+@publish_event(Events.TOPIC_CREATED)
 def create_topic(topic: Topic) -> Topic:
     """Creates a topic with the provided fields
 
@@ -30,6 +32,7 @@ def get_topic(topic_id: str) -> Topic:
     return db.query_unique(Topic, id=topic_id)
 
 
+@publish_event(Events.TOPIC_REMOVED)
 def remove_topic(topic_id: str = None, topic: Topic = None) -> Topic:
     """Remove a topic
 
@@ -108,6 +111,7 @@ def topic_remove_subscriber(subscriber: Subscriber, topic_id: str) -> Topic:
     return update_topic(topic)
 
 
+@publish_event(Events.TOPIC_UPDATED)
 def update_topic(topic: Topic) -> Topic:
     """Update a Topic
 
