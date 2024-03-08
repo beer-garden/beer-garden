@@ -9,6 +9,8 @@ The garden service is responsible for:
 * Responding to `Garden` sync requests and forwarding request to children
 * Handling `Garden` events
 """
+import copy
+import json
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -565,7 +567,6 @@ def load_garden_connections(garden: Garden):
             "stomp.username": "username",
             "stomp.password": "password",
             "stomp.ssl": "ssl",
-            "stomp.headers": "headers",
         }
 
         stomp_connection = Connection(
@@ -578,11 +579,27 @@ def load_garden_connections(garden: Garden):
             stomp_connection.config.setdefault(
                 config_map[key], config.get(key, garden_config)
             )
+
+        headers = []
+        for header in config.get("stomp.headers", garden_config):
+            stomp_header = {}
+
+            header_dict = json.loads(header.replace("'", '"'))
+
+            stomp_header["key"] = header_dict["stomp.headers.key"]
+            stomp_header["value"] = header_dict["stomp.headers.value"]
+
+            headers.append(stomp_header)
+
+        stomp_connection.config.setdefault("headers", headers)
+
         if config.get("stomp.send_destination", garden_config):
             garden.publishing_connections.append(stomp_connection)
 
         if config.get("stomp.subscribe_destination", garden_config):
-            garden.receiving_connections.append(stomp_connection)
+            subscribe_connection = copy.deepcopy(stomp_connection)
+            subscribe_connection.status = "RECEIVING"
+            garden.receiving_connections.append(subscribe_connection)
     else:
         garden.publishing_connections.append(
             Connection(api="STOMP", status="NOT_CONFIGURED")
