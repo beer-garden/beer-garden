@@ -2,7 +2,7 @@
 
 # 3.24.3
 
-TBD
+3/8/24
 
 - Fixed bug where Stomp Headers were not being parsed into Dictionaries
 
