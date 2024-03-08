@@ -4,7 +4,7 @@
 
 TBD
 
-- Fixed bug where Stomp Headers were not being parsed into Dictonaries
+- Fixed bug where Stomp Headers were not being parsed into Dictionaries
 
 # 3.24.2
 
