@@ -9,10 +9,10 @@ The garden service is responsible for:
 * Responding to `Garden` sync requests and forwarding request to children
 * Handling `Garden` events
 """
-import logging
 import copy
-from datetime import datetime, timedelta
 import json
+import logging
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List
 
