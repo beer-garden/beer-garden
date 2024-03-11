@@ -2,7 +2,7 @@
 
 # 3.24.4
 
-TBD
+3/11/24
 
 - Fixed bug where child STOMP Recieving connections where not being saved or configured to listen
 
