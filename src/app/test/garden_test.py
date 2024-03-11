@@ -169,7 +169,7 @@ http:
 skip_events: []
 stomp:
   enabled: false
-  headers: []
+  headers: [{"key":"foo", "value":"bar"},{"key":"alpha", "value":"beta"}]
   host: localhost
   password: password
   port: 61613
@@ -193,6 +193,72 @@ stomp:
                 assert connection.status == "PUBLISHING"
             else:
                 assert connection.status == "NOT_CONFIGURED"
+
+        os.remove(config_file)
+
+    def test_load_configuration_file_stomp(self, bg_garden, tmpdir):
+        """Loads a yaml file containing configuration details"""
+
+        contents = """publishing: true
+receiving: true
+http:
+  access_token: null
+  api_version: 1
+  client_timeout: -1
+  enabled: false
+  host: localhost
+  password: null
+  port: 2337
+  refresh_token: null
+  ssl:
+    ca_cert: null
+    ca_path: null
+    ca_verify: true
+    client_cert: null
+    client_cert_verify: NONE
+    client_key: null
+    enabled: false
+    private_key: null
+    public_key: null
+  url_prefix: /
+  username: null
+skip_events: []
+stomp:
+  enabled: true
+  headers: [{"key":"foo", "value":"bar"},{"key":"alpha", "value":"beta"}]
+  host: localhost
+  password: password
+  port: 61613
+  send_destination: Beer_Garden_Operations_Parent
+  ssl:
+    ca_cert: null
+    client_cert: null
+    client_key: null
+    use_ssl: false
+  subscribe_destination: Beer_Garden_Forward_Parent
+  username: beer_garden"""
+        config_file = Path(tmpdir, "garden.yaml")
+        with open(config_file, "w") as f:
+            f.write(contents)
+
+        config._CONFIG = {"children": {"directory": tmpdir}}
+
+        garden = load_garden_connections(bg_garden)
+        for connection in garden.publishing_connections:
+            if connection.api == "STOMP":
+                assert connection.status == "PUBLISHING"
+                assert {"key": "foo", "value": "bar"} in connection.config.get(
+                    "headers"
+                )
+                assert {"key": "alpha", "value": "beta"} in connection.config.get(
+                    "headers"
+                )
+            else:
+                assert connection.status == "NOT_CONFIGURED"
+
+        for connection in garden.receiving_connections:
+            if connection.api == "STOMP":
+                assert connection.status == "RECEIVING"
 
         os.remove(config_file)
 

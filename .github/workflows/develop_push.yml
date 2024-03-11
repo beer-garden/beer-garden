@@ -21,3 +21,53 @@ jobs:
 
       - name: Build and Publish Unstable Images
         run: make publish-docker-unstable
+        
+  CodeCoverage:
+    runs-on: ${{ matrix.os }}
+
+    defaults:
+      run:
+        working-directory: ./src/app
+
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+        os: ["ubuntu-latest"]
+
+    env:
+      OS: ${{ matrix.os }}
+      PYTHON: ${{ matrix.python-version }}
+
+    name: Code Coverage OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Need to update if we support other OS's
+      - name: Cache PIP Install
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-${{ matrix.python-version }}-pip-coverage-${{ hashFiles('**/setup.py') }}-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.python-version }}-pip-coverage
+
+      - name: Make Deps
+        run: |
+          make deps
+          pip install pytest
+          pip install pytest-cov
+
+      - name: Generate coverage report
+        continue-on-error: true
+        run: |
+          coverage run --source beer_garden -m pytest test --tb=no
+          coverage report -m
+          coverage xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1

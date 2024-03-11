@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.24.3
+
+3/8/24
+
+- Fixed bug where Stomp Headers were not being parsed into Dictionaries
+
 # 3.24.2
 
 2/28/24
