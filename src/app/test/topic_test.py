@@ -10,6 +10,7 @@ from beer_garden.topic import (
     get_all_topics,
     topic_add_subscriber,
     topic_remove_subscriber,
+    subscriber_match,
 )
 from beer_garden.db.mongo.models import Topic
 
@@ -25,6 +26,37 @@ def subscriber():
     return BrewtilsSubscriber(
         garden="bg",
         namespace="beer-garden",
+        system="system",
+        version="0.0.1",
+        instance="inst",
+        command="command",
+    )
+
+
+@pytest.fixture
+def subscriber1():
+    return BrewtilsSubscriber(
+        garden="bg",
+        namespace="beer-garden",
+        system="system",
+    )
+
+
+@pytest.fixture
+def subscriber2():
+    return BrewtilsSubscriber(
+        garden="bg",
+        namespace="bg",
+        system="system",
+        version="0.0.1",
+        instance="inst",
+        command="command",
+    )
+
+
+@pytest.fixture
+def subscriber3():
+    return BrewtilsSubscriber(
         system="system",
         version="0.0.1",
         instance="inst",
@@ -74,3 +106,10 @@ class TestTopic:
         topic_add_subscriber(subscriber, topic2.id)
         topic_remove_subscriber(subscriber, topic2.id)
         assert len(get_topic(topic2.id).subscribers) == 0
+
+    def test_subscriber_match(self, subscriber, subscriber1, subscriber2, subscriber3):
+        """subscriber comparison"""
+        assert (subscriber_match(subscriber, subscriber)) is True
+        assert (subscriber_match(subscriber, subscriber1)) is True
+        assert (subscriber_match(subscriber1, subscriber2)) is False
+        assert (subscriber_match(subscriber1, subscriber3)) is True

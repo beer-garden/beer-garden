@@ -2,11 +2,14 @@ import copy
 import logging
 import re
 
-from brewtils.models import Event, Events, Garden
+from typing import Optional, List
+
+from brewtils.models import Event, Events, Garden, Subscriber
 
 import beer_garden.config as config
 from beer_garden.garden import get_gardens, local_garden
 from beer_garden.requests import process_request
+from beer_garden.topic import get_all_topics, subscriber_match
 
 logger = logging.getLogger(__name__)
 
@@ -35,18 +38,26 @@ def handle_event(event: Event):
             event.payload.namespace = None
             event.payload.system = None
             event.payload.system_version = None
-            event.paylaod.instance_name = None
+            event.payload.instance_name = None
             event.payload.command = None
             del event.payload.metadata["_publish"]
 
+        subscribers = []
+        for topic in get_all_topics():
+            if re.findall(topic.name, event.metadata["topic"]):
+                # get a list of subscribers for matching topic
+                subscribers = topic.subscribers
+
         if "propagate" in event.metadata and event.metadata["propagate"]:
             for garden in get_gardens(include_local=False):
-                process_publish_event(garden, event)
+                process_publish_event(garden, event, subscribers)
 
-        process_publish_event(local_garden(), event)
+        process_publish_event(local_garden(), event, subscribers)
 
 
-def process_publish_event(garden: Garden, event: Event):
+def process_publish_event(
+    garden: Garden, event: Event, subscribers: Optional[List[Subscriber]]
+):
     # Iterate over commands on Garden to find matching topic
     regex_only = "regex_only" in event.metadata and event.metadata["regex_only"]
     for system in garden.systems:
@@ -62,6 +73,21 @@ def process_publish_event(garden: Garden, event: Event):
                         if topic == event.metadata["topic"] or event.metadata[
                             "topic"
                         ] in re.findall(topic, event.metadata["topic"]):
+                            match = True
+                            break
+
+                if not match:
+                    event_subscriber = Subscriber(
+                        garden=garden.name,
+                        system=system.name,
+                        namespace=system.namespace,
+                        version=system.version,
+                        instance=instance.name,
+                        command=command.name,
+                    )
+                    subscribers = subscribers if subscribers else []
+                    for subscriber in subscribers:
+                        if subscriber_match(subscriber, event_subscriber):
                             match = True
                             break
 

@@ -122,3 +122,19 @@ def update_topic(topic: Topic) -> Topic:
         The updated Topic
     """
     return db.update(topic)
+
+
+def subscriber_match(
+    first_subscriber: Subscriber, second_subscriber: Subscriber
+) -> bool:
+    match = False
+    for item in ["garden", "namespace", "system", "version", "instance", "command"]:
+        first_value = getattr(first_subscriber, item)
+        second_value = getattr(second_subscriber, item)
+        if first_value and second_value:
+            if first_value == second_value:
+                match = True
+            else:
+                return False
+
+    return match
