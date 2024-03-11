@@ -126,8 +126,6 @@ services:
             <<: *env
 
             BG_GARDEN_NAME: parent
-            # BG_PARENT_HTTP_ENABLED: "true"
-            # BG_PARENT_HTTP_HOST: beer-garden-grandparent
             BG_PARENT_STOMP_ENABLED: "true"
             BG_PARENT_STOMP_HOST: activemq
             BG_PARENT_STOMP_USERNAME: beer_garden
