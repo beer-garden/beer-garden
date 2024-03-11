@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.24.4
+
+TBD
+
+- Fixed bug where child STOMP Recieving connections where not being saved or configured to listen
+
 # 3.24.3
 
 3/8/24

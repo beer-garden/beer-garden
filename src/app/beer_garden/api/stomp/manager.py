@@ -156,17 +156,23 @@ class StompManager(BaseProcessor):
             if event.name == Events.GARDEN_REMOVED.name:
                 self.remove_garden_from_list(garden_name=event.payload.name)
 
-            elif event.name == Events.GARDEN_UPDATED.name:
+            elif event.name == Events.GARDEN_CONFIGURED.name:
                 skip_key = None
 
-                if event.payload.connection_type:
-                    if event.payload.connection_type.casefold() == "stomp":
-                        stomp_config = event.payload.connection_params.get("stomp", {})
-                        stomp_config = deepcopy(stomp_config)
-                        stomp_config["send_destination"] = None
-                        skip_key = self.add_connection(
-                            stomp_config=stomp_config, name=event.payload.name
-                        )
+                for connection in event.payload.receiving_connections:
+                    if connection.api.casefold() == "stomp":
+                        if connection.status in [
+                            "RECEIVING",
+                            "UNREACHABLE",
+                            "UNRESPONSIVE",
+                            "ERROR",
+                            "UNKNOWN",
+                        ]:
+                            stomp_config = deepcopy(connection.config)
+                            stomp_config["send_destination"] = None
+                            skip_key = self.add_connection(
+                                stomp_config=stomp_config, name=event.payload.name
+                            )
 
                 self.remove_garden_from_list(
                     garden_name=event.payload.name, skip_key=skip_key

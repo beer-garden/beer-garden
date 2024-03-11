@@ -4,7 +4,7 @@ http:
   access_token: null
   api_version: 1
   client_timeout: -1
-  enabled: true
+  enabled: false
   host: beer-garden-parent
   password: null
   port: 2337
@@ -22,16 +22,16 @@ http:
   url_prefix: /
   username: null
 stomp:
-  enabled: false
+  enabled: true
   headers: []
-  host: localhost
+  host: activemq
   password: password
   port: 61613
-  send_destination: Beer_Garden_Operations_Parent
+  send_destination: Beer_Garden_Forward_Parent
   ssl:
     ca_cert: null
     client_cert: null
     client_key: null
     use_ssl: false
-  subscribe_destination: Beer_Garden_Forward_Parent
+  subscribe_destination: Beer_Garden_Operations_Parent
   username: beer_garden
