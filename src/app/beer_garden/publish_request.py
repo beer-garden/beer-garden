@@ -56,7 +56,7 @@ def handle_event(event: Event):
 
 
 def process_publish_event(
-    garden: Garden, event: Event, subscribers: Optional[List[Subscriber]]
+    garden: Garden, event: Event, subscribers: Optional[List[Subscriber]] = None
 ):
     # Iterate over commands on Garden to find matching topic
     regex_only = "regex_only" in event.metadata and event.metadata["regex_only"]
