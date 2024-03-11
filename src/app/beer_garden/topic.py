@@ -1,11 +1,12 @@
 from brewtils.models import Topic, Subscriber, Events
 from typing import List
+import logging
 
 import beer_garden.db.api as db
 from mongoengine import DoesNotExist
 from brewtils.errors import PluginError
 from beer_garden.events import publish_event
-
+logger = logging.getLogger(__name__)
 
 @publish_event(Events.TOPIC_CREATED)
 def create_topic(topic: Topic) -> Topic:
@@ -17,6 +18,7 @@ def create_topic(topic: Topic) -> Topic:
         Topic
     """
     topic = db.create(topic)
+    logger.error(f"Created Topic: {topic}")
     return topic
 
 
@@ -133,8 +135,14 @@ def subscriber_match(
         second_value = getattr(second_subscriber, item)
         if first_value and second_value:
             if first_value == second_value:
+                logger.error(f"{first_value} == {second_value}")
                 match = True
             else:
+                logger.error(f"{first_value} != {second_value}")
+                logger.error(f"{first_subscriber} != {second_subscriber}")
                 return False
-
+    if match:
+        logger.error(f"{first_subscriber} == {second_subscriber}")
+    else:
+        logger.error(f"{first_subscriber} != {second_subscriber}")
     return match
