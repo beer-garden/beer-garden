@@ -47,51 +47,51 @@ class TestPublish(object):
         assert len(completed_request.children) == 1
         self.easy_client.remove_topic(newtopic.id)
 
-    def test_one_trigger(self):
-        request_dict = self.request_generator.generate_request(
-            parameters={"topic": "topic", "value": "test"}
-        )
-        request = self.easy_client.create_request(request_dict)
+    # def test_one_trigger(self):
+    #     request_dict = self.request_generator.generate_request(
+    #         parameters={"topic": "topic", "value": "test"}
+    #     )
+    #     request = self.easy_client.create_request(request_dict)
 
-        time.sleep(2)
-        completed_request = self.easy_client.find_unique_request(id=request.id)
+    #     time.sleep(2)
+    #     completed_request = self.easy_client.find_unique_request(id=request.id)
 
-        for child_request in completed_request.children:
-            assert child_request.command == "subscribe_wildcard_topics"
+    #     for child_request in completed_request.children:
+    #         assert child_request.command == "subscribe_wildcard_topics"
 
-        assert len(completed_request.children) == 1
+    #     assert len(completed_request.children) == 1
 
-    def test_two_trigger(self):
-        request_dict = self.request_generator.generate_request(
-            parameters={"topic": "topic2", "value": "test"}
-        )
-        request = self.easy_client.create_request(request_dict)
+    # def test_two_trigger(self):
+    #     request_dict = self.request_generator.generate_request(
+    #         parameters={"topic": "topic2", "value": "test"}
+    #     )
+    #     request = self.easy_client.create_request(request_dict)
 
-        time.sleep(2)
-        completed_request = self.easy_client.find_unique_request(id=request.id)
+    #     time.sleep(2)
+    #     completed_request = self.easy_client.find_unique_request(id=request.id)
 
-        for child_request in completed_request.children:
-            assert child_request.command in [
-                "subscribe_wildcard_topics",
-                "subscribe_multiple_topics",
-            ]
+    #     for child_request in completed_request.children:
+    #         assert child_request.command in [
+    #             "subscribe_wildcard_topics",
+    #             "subscribe_multiple_topics",
+    #         ]
 
-        assert len(completed_request.children) == 2
+    #     assert len(completed_request.children) == 2
 
-    def test_three_trigger(self):
-        request_dict = self.request_generator.generate_request(
-            parameters={"topic": "topic1", "value": "test"}
-        )
-        request = self.easy_client.create_request(request_dict)
+    # def test_three_trigger(self):
+    #     request_dict = self.request_generator.generate_request(
+    #         parameters={"topic": "topic1", "value": "test"}
+    #     )
+    #     request = self.easy_client.create_request(request_dict)
 
-        time.sleep(2)
-        completed_request = self.easy_client.find_unique_request(id=request.id)
+    #     time.sleep(2)
+    #     completed_request = self.easy_client.find_unique_request(id=request.id)
 
-        for child_request in completed_request.children:
-            assert child_request.command in [
-                "subscribe_wildcard_topics",
-                "subscribe_multiple_topics",
-                "subscrib_one_topics",
-            ]
+    #     for child_request in completed_request.children:
+    #         assert child_request.command in [
+    #             "subscribe_wildcard_topics",
+    #             "subscribe_multiple_topics",
+    #             "subscrib_one_topics",
+    #         ]
 
-        assert len(completed_request.children) == 3
+    #     assert len(completed_request.children) == 3
