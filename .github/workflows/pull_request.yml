@@ -293,12 +293,12 @@ jobs:
         run: BG='unstable' docker-compose logs --tail 100 beer-garden
         working-directory: ./docker/docker-compose
 
-      - name: Install Develop Version of Brewtils
-        run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@${{env.brewtils}}#egg=brewtils
-
       - name: Install Testing Dependencies
         run: pip${{ matrix.python-version }} install -r requirements.txt
         working-directory: ./test/integration
+
+      - name: Install Develop Version of Brewtils
+        run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@${{env.brewtils}}#egg=brewtils
 
       - name: Test Plugins
         run: python${{ matrix.python-version }} -m pytest local_plugins/plugins/publisher_test.py
