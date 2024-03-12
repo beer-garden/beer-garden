@@ -19,8 +19,8 @@ def topic():
     return Topic(
         name="newtopic",
         subscribers=[
-            Subscriber(garden="docker",
-                       namespace="docker",
+            Subscriber(garden=None,
+                       namespace=None,
                        system="subscribe",
                        instance=None,
                        version=None,
