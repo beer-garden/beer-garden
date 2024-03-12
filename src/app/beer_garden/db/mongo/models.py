@@ -592,25 +592,6 @@ class Subscriber(MongoModel, EmbeddedDocument):
     instance = StringField()
     command = StringField()
 
-    meta = {
-        "auto_create_index": False,  # We need to manage this ourselves
-        "index_background": True,
-        "indexes": [
-            {
-                "name": "unique_index",
-                "fields": [
-                    "garden",
-                    "namespace",
-                    "system",
-                    "version",
-                    "instance",
-                    "command",
-                ],
-                "unique": True,
-            }
-        ],
-    }
-
 
 class Topic(MongoModel, Document):
     brewtils_model = brewtils.models.Topic
