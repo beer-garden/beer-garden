@@ -11,7 +11,7 @@ from tornado.websocket import WebSocketHandler
 from beer_garden import config
 from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.authentication import decode_token, get_user_from_token
-from beer_garden.authorization import user_has_permission_for_object
+# from beer_garden.authorization import user_has_permission_for_object
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
 
 if TYPE_CHECKING:
@@ -37,14 +37,14 @@ def _user_can_receive_messages_for_event(user: "User", event: "Event"):
 
     # Event types that won't have a payload, but still require a permission check
     # TODO: Really every event type ought to be included here
-    event_permission_map = {Events.USERS_IMPORTED.name: Permissions.GARDEN_UPDATE.value}
+    # event_permission_map = {Events.USERS_IMPORTED.name: Permissions.GARDEN_UPDATE.value}
 
-    if event.payload and event.payload_type:
-        user_permitted = user_has_permission_for_object(
-            user, f"{event.payload_type.lower()}:read", event.payload
-        )
-    elif event.name in event_permission_map:
-        user_permitted = event_permission_map[event.name] in user.global_permissions
+    # if event.payload and event.payload_type:
+    #     user_permitted = user_has_permission_for_object(
+    #         user, f"{event.payload_type.lower()}:read", event.payload
+    #     )
+    # elif event.name in event_permission_map:
+    #     user_permitted = event_permission_map[event.name] in user.global_permissions
 
     return user_permitted
 

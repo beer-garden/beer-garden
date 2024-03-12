@@ -1,25 +1,24 @@
 import pytest
-from mongoengine import connect
-
-from brewtils.models import User, Role, Request, Garden, System, Instance, Command, Job, RequestTemplate
-from beer_garden.db.mongo import models
-import beer_garden.db.api as db
 
 from beer_garden.authorization import (
-    QueryFilterBuilder,
     ModelFilter,
+    QueryFilterBuilder,
+    _has_empty_scopes,
     check_global_roles,
     generate_permission_levels,
-    _has_empty_scopes,
 )
-
-# @pytest.fixture(autouse=True)
-# def drop():
-#     models.Garden.drop_collection()
-#     models.LocalRole.drop_collection()
-#     models.System.drop_collection()
-#     models.User.drop_collection()
-
+from beer_garden.db.mongo import models
+from brewtils.models import (
+    Command,
+    Garden,
+    Instance,
+    Job,
+    Request,
+    RequestTemplate,
+    Role,
+    System,
+    User,
+)
 
 
 @pytest.fixture()
@@ -30,6 +29,7 @@ def role_for_global_scope():
 @pytest.fixture()
 def role_for_read_scope():
     return Role(name="read", permission="READ_ONLY")
+
 
 @pytest.fixture()
 def user_for_global_scope(role_for_global_scope):
@@ -52,6 +52,7 @@ def query_filter():
 def model_filter():
     return ModelFilter()
 
+
 @pytest.fixture()
 def base_request_template():
     return RequestTemplate(
@@ -62,31 +63,45 @@ def base_request_template():
         command="command",
     )
 
+
 @pytest.fixture()
 def base_request(base_request_template):
     request = Request.from_template(base_request_template)
-    request.requester="user1"
+    request.requester = "user1"
     return request
+
 
 @pytest.fixture()
 def base_job(base_request_template):
     return Job(request_template=base_request_template)
 
+
 @pytest.fixture()
 def base_command():
     return Command(name="command")
+
 
 @pytest.fixture()
 def base_instance():
     return Instance(name="instance")
 
+
 @pytest.fixture()
 def base_system(base_command, base_instance):
-    return System(name="system", namespace="namespace", version="1", instances=[base_instance], commands=[base_command])
+    return System(
+        name="system",
+        namespace="namespace",
+        version="1",
+        instances=[base_instance],
+        commands=[base_command],
+    )
+
 
 @pytest.fixture
 def base_system_2():
-    system = models.System(name="system2", namespace="namespace", version="1", instances=[], commands=[])
+    system = models.System(
+        name="system2", namespace="namespace", version="1", instances=[], commands=[]
+    )
     system.save()
 
     yield system
@@ -572,7 +587,6 @@ class TestModelFilter:
                 base_request, user, ["ADMIN"], source_garden="garden"
             )
 
-
     @pytest.mark.parametrize(
         "user,returned",
         [
@@ -818,11 +832,11 @@ class TestModelFilter:
                 base_job, user, ["ADMIN"], source_garden="garden"
             )
 
-    
     @pytest.mark.parametrize(
-        "user,returned",    
+        "user,returned",
         [
-            (User(
+            (
+                User(
                     username="user2",
                     local_roles=[
                         Role(
@@ -837,9 +851,10 @@ class TestModelFilter:
                         )
                     ],
                 ),
-                True
+                True,
             ),
-            (User(
+            (
+                User(
                     username="user2",
                     local_roles=[
                         Role(
@@ -854,25 +869,26 @@ class TestModelFilter:
                         )
                     ],
                 ),
-                False)
-        ]
+                False,
+            ),
+        ],
     )
     def test_get_garden_filter(self, model_filter, base_garden, user, returned):
         if returned:
             assert model_filter._get_garden_filter(
-                base_garden, user, ["ADMIN"],
+                base_garden,
+                user,
+                ["ADMIN"],
             )
 
         else:
-            assert not model_filter._get_garden_filter(
-                base_garden, user, ["ADMIN"]
-            )
-
+            assert not model_filter._get_garden_filter(base_garden, user, ["ADMIN"])
 
     @pytest.mark.parametrize(
-        "user,returned",    
+        "user,returned",
         [
-            (User(
+            (
+                User(
                     username="user2",
                     local_roles=[
                         Role(
@@ -887,9 +903,10 @@ class TestModelFilter:
                         )
                     ],
                 ),
-                True
+                True,
             ),
-            (User(
+            (
+                User(
                     username="user2",
                     local_roles=[
                         Role(
@@ -904,24 +921,29 @@ class TestModelFilter:
                         )
                     ],
                 ),
-                False)
-        ]
+                False,
+            ),
+        ],
     )
-    def test_get_garden_filter_check_systems(self, model_filter, base_garden, user, returned):
+    def test_get_garden_filter_check_systems(
+        self, model_filter, base_garden, user, returned
+    ):
         if returned:
             assert model_filter._get_garden_filter(
-                base_garden, user, ["ADMIN"],
+                base_garden,
+                user,
+                ["ADMIN"],
             ).systems
         else:
             assert not model_filter._get_garden_filter(
                 base_garden, user, ["ADMIN"]
             ).systems
-            
-    
+
     @pytest.mark.parametrize(
-        "user,returned",    
+        "user,returned",
         [
-            (User(
+            (
+                User(
                     username="user2",
                     local_roles=[
                         Role(
@@ -936,9 +958,10 @@ class TestModelFilter:
                         )
                     ],
                 ),
-                True
+                True,
             ),
-            (User(
+            (
+                User(
                     username="user2",
                     local_roles=[
                         Role(
@@ -953,23 +976,35 @@ class TestModelFilter:
                         )
                     ],
                 ),
-                False)
-        ]
+                False,
+            ),
+        ],
     )
-    def test_get_command_filter(self, model_filter, base_command, base_system, user, returned):
+    def test_get_command_filter(
+        self, model_filter, base_command, base_system, user, returned
+    ):
         if returned:
             assert model_filter._get_command_filter(
-                base_command, user, ["ADMIN"], source_system=base_system, source_garden_name="garden"
+                base_command,
+                user,
+                ["ADMIN"],
+                source_system=base_system,
+                source_garden_name="garden",
             )
         else:
             assert not model_filter._get_command_filter(
-                base_command, user, ["ADMIN"], source_system=base_system, source_garden_name="garden"
+                base_command,
+                user,
+                ["ADMIN"],
+                source_system=base_system,
+                source_garden_name="garden",
             )
 
     @pytest.mark.parametrize(
-        "user,returned",    
+        "user,returned",
         [
-            (User(
+            (
+                User(
                     username="user2",
                     local_roles=[
                         Role(
@@ -984,9 +1019,10 @@ class TestModelFilter:
                         )
                     ],
                 ),
-                True
+                True,
             ),
-            (User(
+            (
+                User(
                     username="user2",
                     local_roles=[
                         Role(
@@ -1001,23 +1037,35 @@ class TestModelFilter:
                         )
                     ],
                 ),
-                False)
-        ]
+                False,
+            ),
+        ],
     )
-    def test_get_instance_filter(self, model_filter, base_instance, base_system, user, returned):
+    def test_get_instance_filter(
+        self, model_filter, base_instance, base_system, user, returned
+    ):
         if returned:
             assert model_filter._get_instance_filter(
-                base_instance, user, ["ADMIN"], source_system=base_system, source_garden_name="garden"
+                base_instance,
+                user,
+                ["ADMIN"],
+                source_system=base_system,
+                source_garden_name="garden",
             )
         else:
             assert not model_filter._get_instance_filter(
-                base_instance, user, ["ADMIN"], source_system=base_system, source_garden_name="garden"
+                base_instance,
+                user,
+                ["ADMIN"],
+                source_system=base_system,
+                source_garden_name="garden",
             )
 
     @pytest.mark.parametrize(
-        "user,returned",    
+        "user,returned",
         [
-            (User(
+            (
+                User(
                     username="user2",
                     local_roles=[
                         Role(
@@ -1032,9 +1080,10 @@ class TestModelFilter:
                         )
                     ],
                 ),
-                True
+                True,
             ),
-            (User(
+            (
+                User(
                     username="user2",
                     local_roles=[
                         Role(
@@ -1049,23 +1098,35 @@ class TestModelFilter:
                         )
                     ],
                 ),
-                False)
-        ]
+                False,
+            ),
+        ],
     )
-    def test_get_instance_filter_db_system_check(self, model_filter, base_instance, base_system_2, user, returned):
+    def test_get_instance_filter_db_system_check(
+        self, model_filter, base_instance, base_system_2, user, returned
+    ):
         if returned:
             assert model_filter._get_instance_filter(
-                base_instance, user, ["ADMIN"], system_id=base_system_2.id, source_garden_name="garden"
+                base_instance,
+                user,
+                ["ADMIN"],
+                system_id=base_system_2.id,
+                source_garden_name="garden",
             )
         else:
             assert not model_filter._get_instance_filter(
-                base_instance, user, ["ADMIN"], system_id=base_system_2.id, source_garden_name="garden", 
+                base_instance,
+                user,
+                ["ADMIN"],
+                system_id=base_system_2.id,
+                source_garden_name="garden",
             )
 
     @pytest.mark.parametrize(
-        "user,returned",    
+        "user,returned",
         [
-            (User(
+            (
+                User(
                     username="user2",
                     local_roles=[
                         Role(
@@ -1080,9 +1141,10 @@ class TestModelFilter:
                         )
                     ],
                 ),
-                True
+                True,
             ),
-            (User(
+            (
+                User(
                     username="user2",
                     local_roles=[
                         Role(
@@ -1097,8 +1159,9 @@ class TestModelFilter:
                         )
                     ],
                 ),
-                False)
-        ]
+                False,
+            ),
+        ],
     )
     def test_get_system_filter(self, model_filter, base_system, user, returned):
         if returned:
@@ -1111,9 +1174,10 @@ class TestModelFilter:
             )
 
     @pytest.mark.parametrize(
-        "user,returned",    
+        "user,returned",
         [
-            (User(
+            (
+                User(
                     username="user2",
                     local_roles=[
                         Role(
@@ -1128,9 +1192,10 @@ class TestModelFilter:
                         )
                     ],
                 ),
-                True
+                True,
             ),
-            (User(
+            (
+                User(
                     username="user2",
                     local_roles=[
                         Role(
@@ -1145,10 +1210,13 @@ class TestModelFilter:
                         )
                     ],
                 ),
-                False)
-        ]
+                False,
+            ),
+        ],
     )
-    def test_get_system_filter_dropped_by_instance(self, model_filter, base_system, user, returned):
+    def test_get_system_filter_dropped_by_instance(
+        self, model_filter, base_system, user, returned
+    ):
         if returned:
             assert model_filter._get_system_filter(
                 base_system, user, ["ADMIN"], source_garden_name="garden"
@@ -1159,9 +1227,10 @@ class TestModelFilter:
             )
 
     @pytest.mark.parametrize(
-        "user,returned",    
+        "user,returned",
         [
-            (User(
+            (
+                User(
                     username="user2",
                     local_roles=[
                         Role(
@@ -1176,9 +1245,10 @@ class TestModelFilter:
                         )
                     ],
                 ),
-                True
+                True,
             ),
-            (User(
+            (
+                User(
                     username="user2",
                     local_roles=[
                         Role(
@@ -1187,16 +1257,19 @@ class TestModelFilter:
                             scope_gardens=["garden", "garden2", "garden3"],
                             scope_namespaces=["namespace", "namespace2"],
                             scope_systems=["system", "system2"],
-                            scope_instances=["instance","instance2"],
+                            scope_instances=["instance", "instance2"],
                             scope_versions=["1", "2"],
                             scope_commands=["command2"],
                         )
                     ],
                 ),
-                False)
-        ]
+                False,
+            ),
+        ],
     )
-    def test_get_system_filter_dropped_by_command(self, model_filter, base_system, user, returned):
+    def test_get_system_filter_dropped_by_command(
+        self, model_filter, base_system, user, returned
+    ):
         if returned:
             assert model_filter._get_system_filter(
                 base_system, user, ["ADMIN"], source_garden_name="garden"

@@ -769,6 +769,9 @@ class Garden(MongoModel, Document):
     children = DummyField(required=False)
     has_parent = BooleanField(required=False, default=False)
 
+    default_user = StringField(required=False)
+    shared_users = BooleanField(required=False, default=False)
+
     metadata = DictField()
 
     meta = {

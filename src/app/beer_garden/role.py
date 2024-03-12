@@ -2,7 +2,7 @@ import logging
 from typing import List
 
 # from brewtils.models import Event as BrewtilsEvent
-from brewtils.models import Role, User
+from brewtils.models import Role, User, Event
 # from marshmallow import Schema, fields
 # from mongoengine import DoesNotExist
 
@@ -33,7 +33,7 @@ def update_role(role: Role = None, role_name: str = None, **kwargs) -> Role:
 
     return db.update(role)
 
-@publish_event(Events.ROLE_DELETE)
+# @publish_event(Events.ROLE_DELETE)
 def delete_role(role: Role = None, role_name: str = None) -> Role:
     if not role:
         role = db.query_unique(Role, name=role_name, raise_missing=True)
@@ -164,16 +164,17 @@ def rescan():
 #     return sync_status
 
 
-# def handle_event(event: BrewtilsEvent) -> None:
-#     """Processes the provided event by calling the correct handler function(s) for the
-#     given event type.
+def handle_event(event: Event) -> None:
+    """Processes the provided event by calling the correct handler function(s) for the
+    given event type.
 
-#     Args:
-#         event: The BrewtilsEvent to process
+    Args:
+        event: The Event to process
 
-#     Returns:
-#         None
-#     """
+    Returns:
+        None
+    """
+    return
 #     # Only handle events from downstream gardens
 #     if event.garden == config.get("garden.name"):
 #         return
