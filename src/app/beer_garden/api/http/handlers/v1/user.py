@@ -3,15 +3,11 @@ from brewtils.schema_parser import SchemaParser
 from brewtils.models import Operation
 from marshmallow import ValidationError
 
-from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.exceptions import BadRequest
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.api.http.schemas.v1.user import (
     UserPasswordChangeSchema,
 )
-
-
-GARDEN_ADMIN = Permissions.GARDEN_ADMIN.value
 
 
 class UserAPI(AuthorizationHandler):
@@ -67,7 +63,7 @@ class UserAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        self.verify_user_global_permission(GARDEN_ADMIN)
+        self.verify_user_global_permission(self.GARDEN_ADMIN)
         await self.client(
             Operation(
                 operation_type="USER_DELETE",
@@ -108,7 +104,7 @@ class UserAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        self.verify_user_global_permission(GARDEN_ADMIN)
+        self.verify_user_global_permission(self.GARDEN_ADMIN)
 
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
@@ -175,7 +171,7 @@ class UserListAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        self.verify_user_global_permission(GARDEN_ADMIN)
+        self.verify_user_global_permission(self.GARDEN_ADMIN)
 
         user_model = self.parser.parse_user(
             self.request.decoded_body, from_string=True

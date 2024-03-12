@@ -2,11 +2,8 @@
 
 from brewtils.models import Operation
 
-from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.db.mongo.models import Garden, Request, System
-
-READ_ONLY = Permissions.READ_ONLY.value
 
 
 class NamespaceListAPI(AuthorizationHandler):
@@ -22,9 +19,9 @@ class NamespaceListAPI(AuthorizationHandler):
         tags:
           - Namespace
         """
-        permitted_gardens = self.permissioned_queryset(Garden, READ_ONLY)
-        permitted_requests = self.permissioned_queryset(Request, READ_ONLY)
-        permitted_systems = self.permissioned_queryset(System, READ_ONLY)
+        permitted_gardens = self.permissioned_queryset(Garden, self.READ_ONLY)
+        permitted_requests = self.permissioned_queryset(Request, self.READ_ONLY)
+        permitted_systems = self.permissioned_queryset(System, self.READ_ONLY)
 
         response = await self.client(
             Operation(

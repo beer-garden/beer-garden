@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 from brewtils.models import Operation
 
-from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.garden import local_garden
-
-OPERATOR = Permissions.OPERATOR.value
 
 
 class QueueAPI(AuthorizationHandler):
@@ -29,7 +26,7 @@ class QueueAPI(AuthorizationHandler):
         tags:
           - Queues
         """
-        self.verify_user_permission_for_object(OPERATOR, local_garden())
+        self.verify_user_permission_for_object(self.OPERATOR, local_garden())
 
         await self.client(Operation(operation_type="QUEUE_DELETE", args=[queue_name]))
 
@@ -53,7 +50,7 @@ class QueueListAPI(AuthorizationHandler):
         tags:
           - Queues
         """
-        self.verify_user_permission_for_object(OPERATOR, local_garden())
+        self.verify_user_permission_for_object(self.OPERATOR, local_garden())
 
         response = await self.client(Operation(operation_type="QUEUE_READ"))
 
@@ -72,7 +69,7 @@ class QueueListAPI(AuthorizationHandler):
         tags:
           - Queues
         """
-        self.verify_user_permission_for_object(OPERATOR, local_garden())
+        self.verify_user_permission_for_object(self.OPERATOR, local_garden())
 
         await self.client(Operation(operation_type="QUEUE_DELETE_ALL"))
 

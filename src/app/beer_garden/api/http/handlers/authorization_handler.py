@@ -22,10 +22,14 @@ class AuthorizationHandler(BaseHandler):
     """Handler that builds on BaseHandler and adds support for authorizing requests
     via a jwt access token supplied in the Authorization header"""
 
+    GARDEN_ADMIN = "GARDEN_ADMIN"
+    PLUGIN_ADMIN = "PLUGIN_ADMIN"
+    OPERATOR = "OPERATOR"
+    READ_ONLY = "READ_ONLY"
+
     def __init__(self, *args, **kwargs):
         self.queryFilter = QueryFilterBuilder()
         self.modelFilter = ModelFilter()
-
         super.__init__(*args, **kwargs)
 
     def get_current_user(self) -> User:

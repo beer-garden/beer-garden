@@ -1,5 +1,4 @@
 import beer_garden.config as config
-from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.exceptions import BadRequest, NotFound, RoutingException
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.api.http.schemas.v1.command_publishing_blocklist import (
@@ -12,9 +11,6 @@ from beer_garden.command_publishing_blocklist import (
 )
 from beer_garden.db.mongo.models import CommandPublishingBlocklist, Garden
 from beer_garden.errors import RoutingRequestException
-
-PLUGIN_ADMIN = Permissions.PLUGIN_ADMIN.value
-READ_ONLY = Permissions.READ_ONLY.value
 
 
 class CommandPublishingBlocklistPathAPI(AuthorizationHandler):
@@ -51,7 +47,7 @@ class CommandPublishingBlocklistPathAPI(AuthorizationHandler):
             )
         else:
             target_garden = Garden.objects.get(name=blocked_command["namespace"])
-        self.verify_user_permission_for_object(PLUGIN_ADMIN, target_garden)
+        self.verify_user_permission_for_object(self.PLUGIN_ADMIN, target_garden)
 
         try:
             command_publishing_blocklist_delete(blocked_command)
@@ -81,7 +77,7 @@ class CommandPublishingBlocklistAPI(AuthorizationHandler):
           - Command Block List
         """
         permitted_blocklist_entries = self.permissioned_queryset(
-            CommandPublishingBlocklist, READ_ONLY
+            CommandPublishingBlocklist, self.READ_ONLY
         )
         response = {
             "command_publishing_blocklist": CommandPublishingBlocklistSchema(many=True)
@@ -131,7 +127,7 @@ class CommandPublishingBlocklistAPI(AuthorizationHandler):
                         )
                     else:
                         target_garden = Garden.objects.get(name=command["namespace"])
-                    self.verify_user_permission_for_object(PLUGIN_ADMIN, target_garden)
+                    self.verify_user_permission_for_object(self.PLUGIN_ADMIN, target_garden)
                 except NotFound:
                     raise BadRequest(
                         reason=f"Invalid garden name: {command['namespace']}"

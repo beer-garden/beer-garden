@@ -9,9 +9,6 @@ from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.api.http.schemas.v1.system import SystemSansQueueSchema
 from beer_garden.db.mongo.models import System
 
-READ_ONLY = Permissions.READ_ONLY.value
-PLUGIN_ADMIN = Permissions.PLUGIN_ADMIN.value
-
 
 def _remove_queue_info(response: str, many: bool = False) -> str:
     """Strips out the queue_type and queue_info from the Systems response json.
@@ -55,7 +52,7 @@ class SystemAPI(AuthorizationHandler):
         tags:
           - Systems
         """
-        system = self.get_or_raise(System, READ_ONLY, id=system_id)
+        system = self.get_or_raise(System, self.READ_ONLY, id=system_id)
 
         # This is only here because of backwards compatibility
         include_commands = (
@@ -101,7 +98,7 @@ class SystemAPI(AuthorizationHandler):
         tags:
           - Systems
         """
-        _ = self.get_or_raise(System, PLUGIN_ADMIN, id=system_id)
+        _ = self.get_or_raise(System, self.PLUGIN_ADMIN, id=system_id)
 
         await self.client(
             Operation(
@@ -161,7 +158,7 @@ class SystemAPI(AuthorizationHandler):
         tags:
           - Systems
         """
-        _ = self.get_or_raise(System, PLUGIN_ADMIN, id=system_id)
+        _ = self.get_or_raise(System, self.PLUGIN_ADMIN, id=system_id)
 
         kwargs = {}
         do_reload = False
@@ -295,7 +292,7 @@ class SystemListAPI(AuthorizationHandler):
         tags:
           - Systems
         """
-        permitted_objects_filter = self.permitted_objects_filter(System, READ_ONLY)
+        permitted_objects_filter = self.permitted_objects_filter(System, self.READ_ONLY)
 
         order_by = self.get_query_argument("order_by", None)
 
@@ -376,7 +373,7 @@ class SystemListAPI(AuthorizationHandler):
         """
         system = SchemaParser.parse_system(self.request.decoded_body, from_string=True)
 
-        self.verify_user_permission_for_object(PLUGIN_ADMIN, system)
+        self.verify_user_permission_for_object(self.PLUGIN_ADMIN, system)
 
         response = await self.client(
             Operation(

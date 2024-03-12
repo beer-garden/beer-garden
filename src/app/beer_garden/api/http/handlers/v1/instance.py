@@ -10,9 +10,6 @@ from beer_garden.api.http.base_handler import future_wait
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.db.mongo.models import System
 
-READ_ONLY = Permissions.READ_ONLY.value
-PLUGIN_ADMIN = Permissions.PLUGIN_ADMIN.value
-
 
 class InstanceAPI(AuthorizationHandler):
     async def get(self, instance_id):
@@ -37,7 +34,7 @@ class InstanceAPI(AuthorizationHandler):
         tags:
           - Instances
         """
-        _ = self.get_or_raise(System, READ_ONLY, instances__id=instance_id)
+        _ = self.get_or_raise(System, self.READ_ONLY, instances__id=instance_id)
 
         response = await self.client(
             Operation(operation_type="INSTANCE_READ", args=[instance_id])
@@ -66,7 +63,7 @@ class InstanceAPI(AuthorizationHandler):
         tags:
           - Instances
         """
-        _ = self.get_or_raise(System, PLUGIN_ADMIN, instances__id=instance_id)
+        _ = self.get_or_raise(System, self.PLUGIN_ADMIN, instances__id=instance_id)
 
         await self.client(
             Operation(operation_type="INSTANCE_DELETE", args=[instance_id])
@@ -119,7 +116,7 @@ class InstanceAPI(AuthorizationHandler):
         tags:
           - Instances
         """
-        _ = self.get_or_raise(System, PLUGIN_ADMIN, instances__id=instance_id)
+        _ = self.get_or_raise(System, self.PLUGIN_ADMIN, instances__id=instance_id)
 
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
@@ -229,7 +226,7 @@ class InstanceLogAPI(AuthorizationHandler):
         tags:
           - Instances
         """
-        _ = self.get_or_raise(System, PLUGIN_ADMIN, instances__id=instance_id)
+        _ = self.get_or_raise(System, self.PLUGIN_ADMIN, instances__id=instance_id)
 
         start_line = self.get_query_argument("start_line", default=None)
         if start_line == "":
@@ -304,7 +301,7 @@ class InstanceQueuesAPI(AuthorizationHandler):
         tags:
           - Queues
         """
-        _ = self.get_or_raise(System, PLUGIN_ADMIN, instances__id=instance_id)
+        _ = self.get_or_raise(System, self.PLUGIN_ADMIN, instances__id=instance_id)
 
         response = await self.client(
             Operation(operation_type="QUEUE_READ_INSTANCE", args=[instance_id])

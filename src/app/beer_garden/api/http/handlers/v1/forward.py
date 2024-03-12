@@ -7,8 +7,6 @@ from brewtils.schema_parser import SchemaParser
 from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.handlers import AuthorizationHandler
 
-EVENT_FORWARD = Permissions.EVENT_FORWARD.value
-
 
 class ForwardAPI(AuthorizationHandler):
     async def post(self):
@@ -47,7 +45,7 @@ class ForwardAPI(AuthorizationHandler):
         tags:
           - Forward
         """
-        self.verify_user_global_permission(EVENT_FORWARD)
+        self.verify_user_global_permission(self.GARDEN_ADMIN)
 
         operation = SchemaParser.parse_operation(
             self.request.decoded_body, from_string=True
