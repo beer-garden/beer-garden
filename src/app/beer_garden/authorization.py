@@ -14,6 +14,7 @@ from brewtils.models import Command as BrewtilsCommand
 from brewtils.models import Instance as BrewtilsInstance
 from brewtils.models import Event as BrewtilsEvent
 from mongoengine import Q
+import beer_garden.config as config
 
 # from mongoengine import Document, DoesNotExist, Q, QuerySet
 # from mongoengine.fields import ObjectIdField
@@ -45,18 +46,33 @@ def check_global_roles(
             for role in roles
         ):
             return True
+        
+        # Check is the user has Garden Admin for the current Garden
+        if any(
+            role.permission == "GARDEN_ADMIN" and (
+                    len(role.scope_gardens) == 0 or config.get("garden.name") in role.scope_gardens
+                ) 
+            for role in roles
+        ):
+            return True
 
     return False
 
 
 def generate_permission_levels(permission_level: str) -> list:
     if permission_level == "READ_ONLY":
-        return ["READ_ONLY", "OPERATOR", "ADMIN"]
+        return ["READ_ONLY", "OPERATOR", "PLUGIN_ADMIN", "GARDEN_ADMIN"]
 
     if permission_level == "OPERATOR":
-        return ["OPERATOR", "ADMIN"]
-
-    return ["ADMIN"]
+        return ["OPERATOR", "PLUGIN_ADMIN", "GARDEN_ADMIN"]
+    
+    if permission_level == "PLUGIN_ADMIN":
+        return ["PLUGIN_ADMIN", "GARDEN_ADMIN"]
+    
+    if permission_level == "GARDEN_ADMIN":
+        return ["GARDEN_ADMIN"]
+    
+    return []
 
 
 def _has_empty_scopes(

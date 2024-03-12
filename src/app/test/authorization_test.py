@@ -24,7 +24,7 @@ from beer_garden.authorization import (
 
 @pytest.fixture()
 def role_for_global_scope():
-    return Role(name="global", permission="ADMIN")
+    return Role(name="global", permission="GARDEN_ADMIN")
 
 
 @pytest.fixture()
