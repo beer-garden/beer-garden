@@ -9,10 +9,8 @@ from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.api.http.schemas.v1.system import SystemSansQueueSchema
 from beer_garden.db.mongo.models import System
 
-SYSTEM_CREATE = Permissions.SYSTEM_CREATE.value
-SYSTEM_READ = Permissions.SYSTEM_READ.value
-SYSTEM_UPDATE = Permissions.SYSTEM_UPDATE.value
-SYSTEM_DELETE = Permissions.SYSTEM_DELETE.value
+READ_ONLY = Permissions.READ_ONLY.value
+PLUGIN_ADMIN = Permissions.PLUGIN_ADMIN.value
 
 
 def _remove_queue_info(response: str, many: bool = False) -> str:
@@ -57,7 +55,7 @@ class SystemAPI(AuthorizationHandler):
         tags:
           - Systems
         """
-        system = self.get_or_raise(System, SYSTEM_READ, id=system_id)
+        system = self.get_or_raise(System, READ_ONLY, id=system_id)
 
         # This is only here because of backwards compatibility
         include_commands = (
@@ -103,7 +101,7 @@ class SystemAPI(AuthorizationHandler):
         tags:
           - Systems
         """
-        _ = self.get_or_raise(System, SYSTEM_DELETE, id=system_id)
+        _ = self.get_or_raise(System, PLUGIN_ADMIN, id=system_id)
 
         await self.client(
             Operation(
@@ -163,7 +161,7 @@ class SystemAPI(AuthorizationHandler):
         tags:
           - Systems
         """
-        _ = self.get_or_raise(System, SYSTEM_UPDATE, id=system_id)
+        _ = self.get_or_raise(System, PLUGIN_ADMIN, id=system_id)
 
         kwargs = {}
         do_reload = False
@@ -297,7 +295,7 @@ class SystemListAPI(AuthorizationHandler):
         tags:
           - Systems
         """
-        permitted_objects_filter = self.permitted_objects_filter(System, SYSTEM_READ)
+        permitted_objects_filter = self.permitted_objects_filter(System, READ_ONLY)
 
         order_by = self.get_query_argument("order_by", None)
 
@@ -378,7 +376,7 @@ class SystemListAPI(AuthorizationHandler):
         """
         system = SchemaParser.parse_system(self.request.decoded_body, from_string=True)
 
-        self.verify_user_permission_for_object(SYSTEM_CREATE, system)
+        self.verify_user_permission_for_object(PLUGIN_ADMIN, system)
 
         response = await self.client(
             Operation(

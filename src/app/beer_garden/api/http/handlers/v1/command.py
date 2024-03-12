@@ -7,11 +7,7 @@ from beer_garden.db.mongo.api import MongoParser
 from beer_garden.db.mongo.models import System
 from beer_garden.errors import EndpointRemovedException
 
-SYSTEM_CREATE = Permissions.SYSTEM_CREATE.value
-SYSTEM_READ = Permissions.SYSTEM_READ.value
-SYSTEM_UPDATE = Permissions.SYSTEM_UPDATE.value
-SYSTEM_DELETE = Permissions.SYSTEM_DELETE.value
-
+READ_ONLY = Permissions.READ_ONLY.value
 
 class CommandAPI(AuthorizationHandler):
     async def get(self, system_id, command_name):
@@ -41,7 +37,7 @@ class CommandAPI(AuthorizationHandler):
         tags:
           - Commands
         """
-        _ = self.get_or_raise(System, SYSTEM_READ, id=system_id)
+        _ = self.get_or_raise(System, READ_ONLY, id=system_id)
 
         response = await self.client(
             Operation(operation_type="COMMAND_READ", args=[system_id, command_name])
@@ -100,7 +96,7 @@ class CommandListAPI(AuthorizationHandler):
         tags:
           - Deprecated
         """
-        systems = self.permissioned_queryset(System, SYSTEM_READ)
+        systems = self.permissioned_queryset(System, READ_ONLY)
         commands = []
 
         for system in systems:

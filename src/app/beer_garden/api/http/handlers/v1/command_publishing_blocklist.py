@@ -13,8 +13,8 @@ from beer_garden.command_publishing_blocklist import (
 from beer_garden.db.mongo.models import CommandPublishingBlocklist, Garden
 from beer_garden.errors import RoutingRequestException
 
-SYSTEM_UPDATE = Permissions.SYSTEM_UPDATE.value
-SYSTEM_READ = Permissions.SYSTEM_READ.value
+PLUGIN_ADMIN = Permissions.PLUGIN_ADMIN.value
+READ_ONLY = Permissions.READ_ONLY.value
 
 
 class CommandPublishingBlocklistPathAPI(AuthorizationHandler):
@@ -51,7 +51,7 @@ class CommandPublishingBlocklistPathAPI(AuthorizationHandler):
             )
         else:
             target_garden = Garden.objects.get(name=blocked_command["namespace"])
-        self.verify_user_permission_for_object(SYSTEM_UPDATE, target_garden)
+        self.verify_user_permission_for_object(PLUGIN_ADMIN, target_garden)
 
         try:
             command_publishing_blocklist_delete(blocked_command)
@@ -81,7 +81,7 @@ class CommandPublishingBlocklistAPI(AuthorizationHandler):
           - Command Block List
         """
         permitted_blocklist_entries = self.permissioned_queryset(
-            CommandPublishingBlocklist, SYSTEM_READ
+            CommandPublishingBlocklist, READ_ONLY
         )
         response = {
             "command_publishing_blocklist": CommandPublishingBlocklistSchema(many=True)
@@ -131,7 +131,7 @@ class CommandPublishingBlocklistAPI(AuthorizationHandler):
                         )
                     else:
                         target_garden = Garden.objects.get(name=command["namespace"])
-                    self.verify_user_permission_for_object(SYSTEM_UPDATE, target_garden)
+                    self.verify_user_permission_for_object(PLUGIN_ADMIN, target_garden)
                 except NotFound:
                     raise BadRequest(
                         reason=f"Invalid garden name: {command['namespace']}"

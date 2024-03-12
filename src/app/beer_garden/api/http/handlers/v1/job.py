@@ -11,10 +11,8 @@ from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.db.mongo.models import Job
 from beer_garden.scheduler import create_jobs
 
-JOB_CREATE = Permissions.JOB_CREATE.value
-JOB_READ = Permissions.JOB_READ.value
-JOB_UPDATE = Permissions.JOB_UPDATE.value
-JOB_DELETE = Permissions.JOB_DELETE.value
+READ_ONLY = Permissions.READ_ONLY.value
+OPERATOR = Permissions.OPERATOR.value
 
 
 class JobAPI(AuthorizationHandler):
@@ -40,7 +38,7 @@ class JobAPI(AuthorizationHandler):
         tags:
           - Jobs
         """
-        _ = self.get_or_raise(Job, JOB_READ, id=job_id)
+        _ = self.get_or_raise(Job, OPERATOR, id=job_id)
 
         response = await self.client(
             Operation(operation_type="JOB_READ", args=[job_id])
@@ -94,7 +92,7 @@ class JobAPI(AuthorizationHandler):
         tags:
           - Jobs
         """
-        _ = self.get_or_raise(Job, JOB_UPDATE, id=job_id)
+        _ = self.get_or_raise(Job, OPERATOR, id=job_id)
 
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
@@ -149,7 +147,7 @@ class JobAPI(AuthorizationHandler):
         tags:
           - Jobs
         """
-        _ = self.get_or_raise(Job, JOB_DELETE, id=job_id)
+        _ = self.get_or_raise(Job, OPERATOR, id=job_id)
 
         await self.client(Operation(operation_type="JOB_DELETE", args=[job_id]))
 
@@ -173,7 +171,7 @@ class JobListAPI(AuthorizationHandler):
         tags:
           - Jobs
         """
-        permitted_objects_filter = self.permitted_objects_filter(Job, JOB_READ)
+        permitted_objects_filter = self.permitted_objects_filter(Job, READ_ONLY)
 
         filter_params = {}
         for key in self.request.arguments.keys():
@@ -222,7 +220,7 @@ class JobListAPI(AuthorizationHandler):
             self.request.body.decode("utf-8"), from_string=True
         )
 
-        self.verify_user_permission_for_object(JOB_CREATE, job)
+        self.verify_user_permission_for_object(OPERATOR, job)
 
         response = await self.client(
             Operation(
@@ -267,7 +265,7 @@ class JobImportAPI(AuthorizationHandler):
         parsed_job_list = SchemaParser.parse_job(self.request_body, many=True)
 
         for job in parsed_job_list:
-            self.verify_user_permission_for_object(JOB_CREATE, job)
+            self.verify_user_permission_for_object(OPERATOR, job)
 
         create_jobs_output = create_jobs(parsed_job_list)
         created_jobs = create_jobs_output["created"]
@@ -310,7 +308,7 @@ class JobExportAPI(AuthorizationHandler):
           - Jobs
         """
         filter_params_dict = {}
-        permitted_objects_filter = self.permitted_objects_filter(Job, JOB_READ)
+        permitted_objects_filter = self.permitted_objects_filter(Job, READ_ONLY)
 
         # self.request_body is designed to return a 400 on a completely absent body
         # but we want to return all jobs if that's the case
@@ -364,7 +362,7 @@ class JobExecutionAPI(AuthorizationHandler):
         tags:
           - Jobs
         """
-        _ = self.get_or_raise(Job, JOB_CREATE, id=job_id)
+        _ = self.get_or_raise(Job, OPERATOR, id=job_id)
 
         reset_interval = (
             True

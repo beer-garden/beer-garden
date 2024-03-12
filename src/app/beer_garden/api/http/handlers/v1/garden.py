@@ -13,10 +13,7 @@ from beer_garden.db.mongo.models import Garden
 from beer_garden.garden import local_garden
 from beer_garden.user import initiate_user_sync
 
-GARDEN_CREATE = Permissions.GARDEN_CREATE.value
-GARDEN_READ = Permissions.GARDEN_READ.value
-GARDEN_UPDATE = Permissions.GARDEN_UPDATE.value
-GARDEN_DELETE = Permissions.GARDEN_DELETE.value
+GARDEN_ADMIN = Permissions.GARDEN_ADMIN.value
 
 
 logger = logging.getLogger(__name__)
@@ -73,7 +70,7 @@ class GardenAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-        garden = self.get_or_raise(Garden, GARDEN_DELETE, name=garden_name)
+        garden = self.get_or_raise(Garden, GARDEN_ADMIN, name=garden_name)
 
         await self.client(Operation(operation_type="GARDEN_DELETE", args=[garden.name]))
 
@@ -124,7 +121,7 @@ class GardenAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-        garden = self.get_or_raise(Garden, GARDEN_UPDATE, name=garden_name)
+        garden = self.get_or_raise(Garden, GARDEN_ADMIN, name=garden_name)
 
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
@@ -256,7 +253,7 @@ class GardenListAPI(AuthorizationHandler):
         """
         garden = SchemaParser.parse_garden(self.request.decoded_body, from_string=True)
 
-        self.verify_user_permission_for_object(GARDEN_CREATE, garden)
+        self.verify_user_permission_for_object(GARDEN_ADMIN, garden)
 
         response = await self.client(
             Operation(
@@ -304,7 +301,7 @@ class GardenListAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-        self.verify_user_permission_for_object(GARDEN_UPDATE, local_garden())
+        self.verify_user_permission_for_object(GARDEN_ADMIN, local_garden())
 
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
@@ -327,7 +324,7 @@ class GardenListAPI(AuthorizationHandler):
             elif operation == "sync_users":
                 # requires GARDEN_UPDATE for all gardens
                 for garden in Garden.objects.all():
-                    self.verify_user_permission_for_object(GARDEN_UPDATE, garden)
+                    self.verify_user_permission_for_object(GARDEN_ADMIN, garden)
 
                 initiate_user_sync()
             else:

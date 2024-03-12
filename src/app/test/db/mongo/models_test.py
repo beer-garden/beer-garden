@@ -25,7 +25,6 @@ from beer_garden.db.mongo.models import (
     RawFile,
     Request,
     Role,
-    RoleAssignment,
     System,
     User,
     UserToken,
@@ -213,6 +212,7 @@ class TestRequest(object):
                 ("SUCCESS", "IN_PROGRESS"),
                 ("SUCCESS", "ERROR"),
                 ("IN_PROGRESS", "CREATED"),
+                ("CANCELED", "IN_PROGRESS"),
             ],
         )
         def test_invalid_transitions(self, bg_request, start, end):
@@ -621,26 +621,6 @@ class TestUser:
         yield role
         role.delete()
 
-    @pytest.fixture()
-    def role_assignment(self, role):
-        return RoleAssignment(
-            role=role,
-            domain={"scope": "Garden", "identifiers": {"name": "test_garden"}},
-        )
-
-    @pytest.fixture()
-    def role_assignment_missing_identifiers(self, role):
-        return RoleAssignment(role=role, domain={"scope": "Garden"})
-
-    @pytest.fixture()
-    def role_assignment_empty_identifiers(self, role):
-        return RoleAssignment(
-            role=role,
-            domain={
-                "scope": "System",
-                "identifiers": {"namespace": "", "name": "testsystem"},
-            },
-        )
 
     @pytest.fixture()
     def user(self, role_assignment):

@@ -7,7 +7,7 @@ from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.garden import local_garden
 
-GARDEN_UPDATE = Permissions.GARDEN_UPDATE.value
+GARDEN_ADMIN = Permissions.GARDEN_ADMIN.value
 
 
 class AdminAPI(AuthorizationHandler):
@@ -53,7 +53,7 @@ class AdminAPI(AuthorizationHandler):
         tags:
           - Admin
         """
-        self.verify_user_permission_for_object(GARDEN_UPDATE, local_garden())
+        self.verify_user_permission_for_object(GARDEN_ADMIN, local_garden())
 
         operations = SchemaParser.parse_patch(
             self.request.decoded_body, many=True, from_string=True

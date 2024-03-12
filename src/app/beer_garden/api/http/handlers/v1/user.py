@@ -10,10 +10,8 @@ from beer_garden.api.http.schemas.v1.user import (
     UserPasswordChangeSchema,
 )
 
-USER_CREATE = Permissions.USER_CREATE.value
-USER_READ = Permissions.USER_READ.value
-USER_UPDATE = Permissions.USER_UPDATE.value
-USER_DELETE = Permissions.USER_DELETE.value
+
+GARDEN_ADMIN = Permissions.GARDEN_ADMIN.value
 
 
 class UserAPI(AuthorizationHandler):
@@ -69,7 +67,7 @@ class UserAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        self.verify_user_global_permission(USER_DELETE)
+        self.verify_user_global_permission(GARDEN_ADMIN)
         await self.client(
             Operation(
                 operation_type="USER_DELETE",
@@ -110,7 +108,7 @@ class UserAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        self.verify_user_global_permission(USER_UPDATE)
+        self.verify_user_global_permission(GARDEN_ADMIN)
 
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
@@ -177,7 +175,7 @@ class UserListAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        self.verify_user_global_permission(USER_CREATE)
+        self.verify_user_global_permission(GARDEN_ADMIN)
 
         user_model = self.parser.parse_user(
             self.request.decoded_body, from_string=True

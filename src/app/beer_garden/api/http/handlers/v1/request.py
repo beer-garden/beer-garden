@@ -20,10 +20,9 @@ from beer_garden.db.mongo.models import Request
 from beer_garden.errors import UnknownGardenException
 from beer_garden.requests import remove_bytes_parameter_base64
 
-REQUEST_CREATE = Permissions.REQUEST_CREATE.value
-REQUEST_READ = Permissions.REQUEST_READ.value
-REQUEST_UPDATE = Permissions.REQUEST_UPDATE.value
-REQUEST_DELETE = Permissions.REQUEST_DELETE.value
+READ_ONLY = Permissions.READ_ONLY.value
+OPERATOR = Permissions.OPERATOR.value
+PLUGIN_ADMIN = Permissions.PLUGIN_ADMIN.value
 
 
 class RequestAPI(AuthorizationHandler):
@@ -49,7 +48,7 @@ class RequestAPI(AuthorizationHandler):
         tags:
           - Requests
         """
-        _ = self.get_or_raise(Request, REQUEST_READ, id=request_id)
+        _ = self.get_or_raise(Request, READ_ONLY, id=request_id)
 
         response = await self.client(
             Operation(operation_type="REQUEST_READ", args=[request_id])
@@ -99,7 +98,7 @@ class RequestAPI(AuthorizationHandler):
         tags:
           - Requests
         """
-        _ = self.get_or_raise(Request, REQUEST_UPDATE, id=request_id)
+        _ = self.get_or_raise(Request, OPERATOR, id=request_id)
 
         operation = Operation(args=[request_id])
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
@@ -161,7 +160,7 @@ class RequestOutputAPI(AuthorizationHandler):
         tags:
           - Requests
         """
-        _ = self.get_or_raise(Request, REQUEST_READ, id=request_id)
+        _ = self.get_or_raise(Request, READ_ONLY, id=request_id)
 
         response = await self.client(
             Operation(operation_type="REQUEST_READ", args=[request_id]),
@@ -368,7 +367,7 @@ class RequestListAPI(AuthorizationHandler):
         query_args = self._parse_datatables_parameters()
 
         # Add the filter for only requests the user is permitted to see
-        q_filter = self.permitted_objects_filter(Request, REQUEST_READ)
+        q_filter = self.permitted_objects_filter(Request, READ_ONLY)
         query_args["q_filter"] = q_filter
 
         # There are also some sane parameters
@@ -480,7 +479,7 @@ class RequestListAPI(AuthorizationHandler):
         else:
             raise ModelValidationError("Unsupported or missing content-type header")
 
-        self.verify_user_permission_for_object(REQUEST_CREATE, request_model)
+        self.verify_user_permission_for_object(OPERATOR, request_model)
 
         if self.current_user:
             request_model.requester = self.current_user.username
@@ -574,7 +573,7 @@ class RequestListAPI(AuthorizationHandler):
             from_string=True,
         )
 
-        self.verify_user_permission_for_object(REQUEST_CREATE, request_model)
+        self.verify_user_permission_for_object(OPERATOR, request_model)
 
         if self.current_user:
             request_model.requester = self.current_user.username
@@ -700,7 +699,7 @@ class RequestListAPI(AuthorizationHandler):
           - Requests
         """
 
-        self.verify_user_global_permission(REQUEST_DELETE)
+        self.verify_user_global_permission(PLUGIN_ADMIN)
 
         query_kwargs = {}
         for supportedArg in [

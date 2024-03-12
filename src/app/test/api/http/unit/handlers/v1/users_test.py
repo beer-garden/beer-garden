@@ -5,7 +5,7 @@ import pytest
 from tornado.httpclient import HTTPError
 
 from beer_garden.api.http.authentication import issue_token_pair
-from beer_garden.db.mongo.models import Role, RoleAssignment, User
+from beer_garden.db.mongo.models import Role,  User
 
 
 @pytest.fixture
