@@ -14,24 +14,12 @@ from mongoengine.errors import (
 from pymongo.errors import OperationFailure
 
 from beer_garden import config
-from beer_garden.api.authorization import Permissions
+
 # from beer_garden.db.mongo.models import Role, RoleAssignment, User
 from beer_garden.errors import ConfigurationError, IndexOperationError
 # from beer_garden.role import sync_roles
 
 logger = logging.getLogger(__name__)
-
-PLUGIN_ROLE_PERMISSIONS = [
-    Permissions.GARDEN_READ.value,
-    Permissions.INSTANCE_READ.value,
-    Permissions.INSTANCE_UPDATE.value,
-    Permissions.REQUEST_CREATE.value,
-    Permissions.REQUEST_READ.value,
-    Permissions.REQUEST_UPDATE.value,
-    Permissions.SYSTEM_CREATE.value,
-    Permissions.SYSTEM_READ.value,
-    Permissions.SYSTEM_UPDATE.value,
-]
 
 
 def ensure_local_garden():

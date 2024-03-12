@@ -12,7 +12,6 @@ from brewtils.models import System as BrewtilsSystem
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden.db.api as db
-from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.base_handler import future_wait
 from beer_garden.api.http.exceptions import BadRequest
 from beer_garden.api.http.handlers import AuthorizationHandler

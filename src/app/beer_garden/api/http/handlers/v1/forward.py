@@ -4,7 +4,6 @@ import asyncio
 from brewtils.errors import TimeoutExceededError
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.handlers import AuthorizationHandler
 
 

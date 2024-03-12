@@ -4,7 +4,6 @@ from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import SystemSchema as BrewtilsSystemSchema
 
-from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.api.http.schemas.v1.system import SystemSansQueueSchema
 from beer_garden.db.mongo.models import System

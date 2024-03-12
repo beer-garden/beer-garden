@@ -9,7 +9,6 @@ from marshmallow import Schema, ValidationError, fields, validate
 from tornado.websocket import WebSocketHandler
 
 from beer_garden import config
-from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.authentication import decode_token, get_user_from_token
 # from beer_garden.authorization import user_has_permission_for_object
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException

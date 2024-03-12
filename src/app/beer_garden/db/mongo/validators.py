@@ -1,13 +1,12 @@
 from mongoengine import ValidationError
 
-from beer_garden.api.authorization import Permissions
+from brewtils.models import Role as BrewtilsRole
 
 
 def validate_permissions(permissions):
-    valid_permissions = [p.value for p in Permissions]
-
+    
     for permission in permissions:
-        if permission not in valid_permissions:
+        if permission not in BrewtilsRole.PERMISSION_TYPES:
             raise ValidationError(
                 f"{permission} is not a valid permission. All permissions must be "
                 "present in Permission."
