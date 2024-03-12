@@ -29,9 +29,8 @@ from brewtils.schemas import (
     RequestSchema,
     RunnerSchema,
     SystemSchema,
-    # UserCreateSchema,
-    # UserListSchema,
     UserSchema,
+    UserTokenSchema,
 )
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
@@ -54,16 +53,16 @@ from beer_garden.api.http.schemas.v1.command_publishing_blocklist import (
     CommandPublishingBlocklistListSchema,
     CommandPublishingBlocklistSchema,
 )
-from beer_garden.api.http.schemas.v1.role import RoleListSchema
-from beer_garden.api.http.schemas.v1.token import (
-    TokenInputSchema,
-    TokenRefreshInputSchema,
-    TokenResponseSchema,
-)
-from beer_garden.api.http.schemas.v1.user import (
-    UserPasswordChangeSchema,
-    UserPatchSchema,
-)
+# from beer_garden.api.http.schemas.v1.role import RoleListSchema
+# from beer_garden.api.http.schemas.v1.token import (
+#     TokenInputSchema,
+#     TokenRefreshInputSchema,
+#     TokenResponseSchema,
+# )
+# from beer_garden.api.http.schemas.v1.user import (
+#     UserPasswordChangeSchema,
+#     UserPatchSchema,
+# )
 from beer_garden.events import publish
 
 io_loop: IOLoop = None
@@ -362,7 +361,7 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition("LoggingConfig", schema=LoggingConfigSchema)
     api_spec.definition("Event", schema=EventSchema)
     api_spec.definition("User", schema=UserSchema)
-    api_spec.definition("UserCreate", schema=UserCreateSchema)
+    # api_spec.definition("UserCreate", schema=UserCreateSchema)
     api_spec.definition(
         "CommandPublishingBlocklist", schema=CommandPublishingBlocklistSchema
     )
@@ -374,17 +373,15 @@ def _load_swagger(url_specs, title=None):
         "CommandPublishingBlocklistListInputSchema",
         schema=CommandPublishingBlocklistListInputSchema,
     )
-    api_spec.definition("UserList", schema=UserListSchema)
-    api_spec.definition("UserPatch", schema=UserPatchSchema)
+    # api_spec.definition("UserList", schema=UserListSchema)
+    # api_spec.definition("UserPatch", schema=UserPatchSchema)
     api_spec.definition("UserPasswordChange", schema=UserPasswordChangeSchema)
     api_spec.definition("Role", schema=RoleSchema)
-    api_spec.definition("RoleList", schema=RoleListSchema)
+
     api_spec.definition("Queue", schema=QueueSchema)
     api_spec.definition("Operation", schema=OperationSchema)
     api_spec.definition("FileStatus", schema=FileStatusSchema)
-    api_spec.definition("TokenInput", schema=TokenInputSchema)
-    api_spec.definition("TokenRefreshInput", schema=TokenRefreshInputSchema)
-    api_spec.definition("TokenResponse", schema=TokenResponseSchema)
+    api_spec.definition("UserToken", schema=UserTokenSchema)
 
     api_spec.definition("Garden", schema=GardenSchema)
     api_spec.definition("Runner", schema=RunnerSchema)

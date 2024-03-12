@@ -274,7 +274,7 @@ def generate_remote_user(target_garden: Garden, user: User) -> User:
     
     return remote_user
 
-def initiate_garden_user_sync(garden_name: str = None, garden: Garden = None) -> None
+def initiate_garden_user_sync(garden_name: str = None, garden: Garden = None) -> None:
     """Syncs all users from this garden down to requested garden. Only the role
     assignments relevant to the garden will be included in the sync.
 

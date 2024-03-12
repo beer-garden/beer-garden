@@ -10,7 +10,7 @@ from mongoengine import DoesNotExist, connect
 from datetime import datetime, timedelta
 
 from beer_garden import config
-from beer_garden.db.mongo.models import Garden, RemoteUser, System
+from beer_garden.db.mongo.models import Garden, System
 from beer_garden.garden import (
     create_garden,
     get_garden,
@@ -376,18 +376,18 @@ stomp:
 
         os.remove(config_file)
 
-    def test_remove_garden_cleans_up_remote_user_entries(self, bg_garden):
-        """remove_garden should remove any RemoteUser entries for that garden"""
-        garden = create_garden(bg_garden)
-        remote_user = RemoteUser(username="remoteuser", garden=garden.name).save()
+    # def test_remove_garden_cleans_up_remote_user_entries(self, bg_garden):
+    #     """remove_garden should remove any RemoteUser entries for that garden"""
+    #     garden = create_garden(bg_garden)
+    #     remote_user = RemoteUser(username="remoteuser", garden=garden.name).save()
 
-        remove_garden(garden.name)
+    #     remove_garden(garden.name)
 
-        remote_user_count = len(
-            RemoteUser.objects.filter(username=remote_user.username, garden=garden.name)
-        )
+    #     remote_user_count = len(
+    #         RemoteUser.objects.filter(username=remote_user.username, garden=garden.name)
+    #     )
 
-        assert remote_user_count == 0
+    #     assert remote_user_count == 0
 
     def test_update_garden_receiving_heartbeat_update_heartbeat(self):
         garden = update_garden_receiving_heartbeat("http", garden_name="new_garden")

@@ -170,7 +170,7 @@ route_functions = {
     "RUNNER_RELOAD": beer_garden.local_plugins.manager.reload,
     "RUNNER_RESCAN": beer_garden.local_plugins.manager.rescan,
     "PUBLISH_EVENT": beer_garden.events.publish,
-    "USER_SYNC": beer_garden.user.user_sync,
+    # "USER_SYNC": beer_garden.user.user_sync,
     "COMMAND_BLOCKLIST_ADD": (
         beer_garden.command_publishing_blocklist.command_publishing_blocklist_add
     ),
@@ -676,6 +676,20 @@ def _pre_forward(operation: Operation) -> Operation:
         operation.model.has_parent = False
         operation.model.source_garden = None
         operation.model.target_garden = None
+
+        # Map requester to username on target garden
+        if operation.model.requester:
+            user_default_user = True
+            requester = beer_garden.user.get_user(operation.model.requester)
+            for remote_user_map in requester.remote_user_mapping():
+                if remote_user_map.target_garden == operation.target_garden_name:
+                    operation.model.requester = remote_user_map.username
+                    user_default_user = False
+                    break
+
+            if user_default_user:
+                operation.model.requester = get_garden(operation.target_garden_name).default_user
+
 
         # Pull out and store the wait event, if it exists
         wait_event = operation.kwargs.pop("wait_event", None)

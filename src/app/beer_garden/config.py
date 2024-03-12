@@ -1577,6 +1577,11 @@ _CHILD_SPECIFICATION = {
         "default": False,
         "description": "If disabled, requires manual start for receiving operations",
     },
+    "default_user": {
+        "type": "str",
+        "description": "Default username when passing operations, if none is found with current user",
+        "required": False,
+    },
     "unresponsive_timeout": {
         "type": "int",
         "default": -1,
