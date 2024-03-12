@@ -1,12 +1,38 @@
 # Beer Garden Changelog
 
+# 3.24.4
+
+3/11/24
+
+- Fixed bug where child STOMP Recieving connections where not being saved or configured to listen
+
+# 3.24.3
+
+3/8/24
+
+- Fixed bug where Stomp Headers were not being parsed into Dictionaries
+
+# 3.24.2
+
+2/28/24
+
+- Fixed bug where setting the heartbeat for recieving garden connections would override changes from Instance Updates in seperate threads
+- Fixed bug where heartbeat did not update the status to `RECEVING` for the receiving connection type
+- Backup current config on rpm update when config changes are present
+- Fixed bug where Admin Garden page did not update page based on events until page was interacted with
+- Fixed bug where Plugins assocaited with a runner would appear after a refresh
+- Fixed bug where child unresponsive runners appeared in the list of unresponsive runners
+- Upgraded Brewtils version to [3.24.1](https://github.com/beer-garden/brewtils/releases/tag/3.24.1)
+
 # 3.24.1
 
-TBD
+2/21/24
 
+- Fixed pip config trusted-host on rpm build
 - Fixed bug where the Garden Connection Stop button did not request the connection to be disabled if the current status is a valid running status.
 - Cleaned up logging statements left from debugging
 - Fixed bug where the modal for reading Instance Logs was not appearing
+- Updated System Instance "Get Logs" to support live polling
 - Expanded Instance Logs requests to allow for routing to child gardens
 
 # 3.24.0

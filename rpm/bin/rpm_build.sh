@@ -84,12 +84,12 @@ AFTER_REMOVE="after_remove.sh"
 
 RESOURCE_BASE="/rpm/centos${RELEASE}/resources"
 
-if [ -z "${TRUSTED_HOST}"]
+if [ -z "${TRUSTED_HOST}" ]
 then
   echo "PIP Trusted Host already set"
 else
   echo "Setting PIP Trusted Host to ${TRUSTED_HOST}"
-  $PIP_BIN config set global.trust-host "${TRUSTED_HOST}"
+  $PIP_BIN config set global.trusted-host "${TRUSTED_HOST}"
 fi
 
 get_version() {

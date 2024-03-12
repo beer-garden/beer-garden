@@ -9,6 +9,8 @@ The garden service is responsible for:
 * Responding to `Garden` sync requests and forwarding request to children
 * Handling `Garden` events
 """
+import copy
+import json
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -209,12 +211,16 @@ def update_garden_receiving_heartbeat(
     if garden is None:
         garden = create_garden(Garden(name=garden_name, connection_type="Remote"))
 
+    updates = {}
+
     connection_set = False
 
     for connection in garden.receiving_connections:
         if connection.api == api:
             connection_set = True
             connection.status_info["heartbeat"] = datetime.utcnow()
+            if connection.status != "DISABLED":
+                connection.status = "RECEIVING"
 
     # If the receiving type is unknown, enable it by default and set heartbeat
     if not connection_set:
@@ -230,7 +236,11 @@ def update_garden_receiving_heartbeat(
         connection.status_info["heartbeat"] = datetime.utcnow()
         garden.receiving_connections.append(connection)
 
-    return db.update(garden)
+    updates["receiving_connections"] = [
+        db.from_brewtils(connection) for connection in garden.receiving_connections
+    ]
+
+    return db.modify(garden, **updates)
 
 
 def update_garden_status(garden_name: str, new_status: str) -> Garden:
@@ -557,7 +567,6 @@ def load_garden_connections(garden: Garden):
             "stomp.username": "username",
             "stomp.password": "password",
             "stomp.ssl": "ssl",
-            "stomp.headers": "headers",
         }
 
         stomp_connection = Connection(
@@ -570,11 +579,27 @@ def load_garden_connections(garden: Garden):
             stomp_connection.config.setdefault(
                 config_map[key], config.get(key, garden_config)
             )
+
+        headers = []
+        for header in config.get("stomp.headers", garden_config):
+            stomp_header = {}
+
+            header_dict = json.loads(header.replace("'", '"'))
+
+            stomp_header["key"] = header_dict["stomp.headers.key"]
+            stomp_header["value"] = header_dict["stomp.headers.value"]
+
+            headers.append(stomp_header)
+
+        stomp_connection.config.setdefault("headers", headers)
+
         if config.get("stomp.send_destination", garden_config):
             garden.publishing_connections.append(stomp_connection)
 
         if config.get("stomp.subscribe_destination", garden_config):
-            garden.receiving_connections.append(stomp_connection)
+            subscribe_connection = copy.deepcopy(stomp_connection)
+            subscribe_connection.status = "RECEIVING"
+            garden.receiving_connections.append(subscribe_connection)
     else:
         garden.publishing_connections.append(
             Connection(api="STOMP", status="NOT_CONFIGURED")
@@ -683,20 +708,16 @@ def garden_sync(sync_target: str = None):
                 pass
 
 
-def publish_garden_systems(garden: Garden, src_garden: str):
-    for system in garden.systems:
-        publish(
-            Event(
-                name=Events.SYSTEM_UPDATED.name,
-                garden=src_garden,
-                payload_type="System",
-                payload=system,
-            )
+def publish_local_garden():
+    local_garden = get_garden(config.get("garden.name"))
+    publish(
+        Event(
+            name=Events.GARDEN_UPDATED.name,
+            garden=config.get("garden.name"),
+            payload_type="Garden",
+            payload=local_garden,
         )
-
-    if garden.children:
-        for child in garden.children:
-            publish_garden_systems(child, src_garden)
+    )
 
 
 def garden_unresponsive_trigger():
@@ -758,10 +779,10 @@ def handle_event(event):
                     remote_systems.append(system)
             event.payload.systems = remote_systems
 
-            garden = upsert_garden(event.payload)
+            upsert_garden(event.payload)
 
             # Publish update events for UI to dynamically load changes for Systems
-            publish_garden_systems(garden, event.garden)
+            publish_local_garden()
 
     elif event.name == Events.GARDEN_UNREACHABLE.name:
         target_garden = get_garden(event.payload.target_garden_name)
@@ -791,3 +812,7 @@ def handle_event(event):
 
     elif event.name == Events.GARDEN_CONFIGURED.name:
         publish_garden()
+
+    if "SYSTEM" in event.name or "INSTANCE" in event.name:
+        # If a System or Instance is updated, publish updated Local Garden Model for UI
+        publish_local_garden()
