@@ -75,6 +75,7 @@ class TestTopicAPI:
         http_client,
         base_url,
         topic_permitted,
+        subscriber
     ):
         url = f"{base_url}/api/v1/topics/{topic_permitted.id}"
         headers = {
@@ -89,6 +90,7 @@ class TestTopicAPI:
 
         assert response.code == 200
         assert len(Topic.objects.get(id=topic_permitted.id).subscribers) == 1
+        assert Topic.objects.get(id=topic_permitted.id).subscribers[0] == subscriber
 
 
 class TestTopicListAPI:
