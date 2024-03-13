@@ -46,7 +46,7 @@ def handle_event(event: Event):
         for topic in get_all_topics():
             if re.findall(topic.name, event.metadata["topic"]):
                 # get a list of subscribers for matching topic
-                subscribers = topic.subscribers
+                subscribers.extend(topic.subscribers)
 
         if "propagate" in event.metadata and event.metadata["propagate"]:
             for garden in get_gardens(include_local=False):
@@ -85,11 +85,11 @@ def process_publish_event(
                         instance=instance.name,
                         command=command.name,
                     )
-                    subscribers = subscribers if subscribers else []
-                    for subscriber in subscribers:
-                        if subscriber_match(subscriber, event_subscriber):
-                            match = True
-                            break
+                    if subscribers:
+                        for subscriber in subscribers:
+                            if subscriber_match(subscriber, event_subscriber):
+                                match = True
+                                break
 
                 if match:
                     event_request = copy.deepcopy(event.payload)
