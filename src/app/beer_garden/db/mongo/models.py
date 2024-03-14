@@ -925,9 +925,11 @@ class CommandPublishingBlocklist(Document):
 
 
 class Role(MongoModel):
+    brewtils_model = brewtils.models.Role
 
     name = StringField()
     description = StringField()
+    permission = StringField()
     scope_gardens = ListField(field=StringField())
     scope_namespaces = ListField(field=StringField())
     scope_systems = ListField(field=StringField())
@@ -937,6 +939,14 @@ class Role(MongoModel):
 
     def __str__(self) -> str:
         return self.name
+
+    def clean(self):
+        """Validate before saving to the database"""
+
+        if self.permission not in brewtils.models.Role.PERMISSION_TYPES:
+            raise ModelValidationError(
+                f"Cannot save Role. No permission type {self.permission}"
+            )
     
 class LocalRole(Role, Document):
     meta = {
@@ -952,6 +962,8 @@ class RemoteUserMap(MongoModel, EmbeddedDocument):
     username = StringField()
 
 class User(MongoModel, Document):
+    brewtils_model = brewtils.models.User
+
     username = StringField(required=True)
     password = StringField()
     roles = ListField(field=StringField())
@@ -968,9 +980,10 @@ class User(MongoModel, Document):
     # _permissions_cache: Optional[dict] = None
 
     def save(self, *args, **kwargs):
-        for local_role in self.local_roles:
-            if local_role.name not in self.roles:
-                self.roles.append(local_role.name)
+        if self.local_roles:
+            for local_role in self.local_roles:
+                if local_role.name not in self.roles:
+                    self.roles.append(local_role.name)
         return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
@@ -1006,10 +1019,12 @@ class User(MongoModel, Document):
 
 
 class UserToken(MongoModel, Document):
+    brewtils_model = brewtils.models.UserToken
+
     issued_at = DateTimeField(required=True, default=datetime.datetime.utcnow)
     expires_at = DateTimeField(required=True)
     user = LazyReferenceField("User", required=True, reverse_delete_rule=CASCADE)
-    uuid = UUIDField(binary=False, required=True, unique="True")
+    uuid = StringField()
 
     meta = {
         "indexes": [

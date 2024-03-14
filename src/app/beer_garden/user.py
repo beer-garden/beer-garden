@@ -42,6 +42,11 @@ def verify_password(user: User, password: str):
     """
     return custom_app_context.verify(password, user.password)
 
+def create_token(token: UserToken):
+    """
+    """
+    return db.create(token)
+
 def revoke_tokens(user: User) -> None:
     """Remove all tokens from the user's list of valid tokens. This is useful for
     requiring the user to explicitly login, which one may want to do for a variety
@@ -82,6 +87,24 @@ def create_user(user: User) -> User:
         set_password(user)
 
     return db.create(user)
+
+def delete_user(user: User = None, username: str = None) -> User:
+    """Creates a User using the provided kwargs. The created user is saved to the
+    database and returned.
+
+    Args:
+        **kwargs: Keyword arguments accepted by the User __init__
+
+    Returns:
+        User: The created User instance
+    """
+
+    if not user:
+        user = db.query_unique(User, username=username, raise_missing=True)
+
+    db.delete(user)
+
+    return user
 
 
 

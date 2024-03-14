@@ -2,6 +2,7 @@
 from typing import Type, Union
 
 from brewtils.models import BaseModel as BrewtilsModel
+from brewtils.models import Role, User
 from mongoengine import Document, QuerySet, ValidationError
 from mongoengine.queryset.visitor import Q, QCombination
 
@@ -14,7 +15,7 @@ from beer_garden.api.http.exceptions import (
     RequestForbidden,
 )
 from beer_garden.authorization import QueryFilterBuilder, ModelFilter
-from beer_garden.db.mongo.models import User
+# from beer_garden.db.mongo.models import User
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
 
 
@@ -26,11 +27,11 @@ class AuthorizationHandler(BaseHandler):
     PLUGIN_ADMIN = "PLUGIN_ADMIN"
     OPERATOR = "OPERATOR"
     READ_ONLY = "READ_ONLY"
+    queryFilter = QueryFilterBuilder()
+    modelFilter = ModelFilter()
 
-    def __init__(self, *args, **kwargs):
-        self.queryFilter = QueryFilterBuilder()
-        self.modelFilter = ModelFilter()
-        super.__init__(*args, **kwargs)
+    # def __init__(self, *args, **kwargs):        
+    #     super.__init__(*args, **kwargs)
 
     def get_current_user(self) -> User:
         """Retrieve the appropriate User object for the request. If the auth setting
@@ -171,13 +172,13 @@ class AuthorizationHandler(BaseHandler):
             None
         """
 
-        if not self.modelFilter.filter_object(self.current_user, permission, obj):
+        if not self.modelFilter.filter_object(user=self.current_user, permission=permission, obj=obj):
             raise RequestForbidden
 
     def _anonymous_superuser(self) -> User:  # Updated
         """Return a User object with all permissions for all gardens"""
         anonymous_superuser = User(
-            username="anonymous", remote_roles=[], local_roles=[]
+            username="anonymous", remote_roles=[], local_roles=[Role(name="superuser", permission="GARDEN_ADMIN")]
         )
 
         # Manually set the permissions cache (to all permissions for all gardens) since

@@ -2,7 +2,8 @@ import logging
 from typing import List
 
 # from brewtils.models import Event as BrewtilsEvent
-from brewtils.models import Role, User, Event
+from brewtils.models import Role, Event
+from mongoengine import DoesNotExist
 # from marshmallow import Schema, fields
 # from mongoengine import DoesNotExist
 
@@ -44,13 +45,33 @@ def delete_role(role: Role = None, role_name: str = None) -> Role:
 
     return role
 
-
-
-    
-
 def rescan():
     """ Rescan the roles configuration file"""
     pass
+
+def ensure_roles():
+    """Create roles if necessary"""
+    configure_superuser_role()
+    configure_plugin_role()
+
+def configure_superuser_role():
+    """Creates or updates the superuser role as needed"""
+    try:
+        superuser = get_role("superuser")
+    except DoesNotExist:
+        logger.info("Creating superuser role with all permissions")
+        superuser = Role(name="superuser", description = "Role containing max permissions", permission="GARDEN_ADMIN")
+        create_role(superuser)
+
+def configure_plugin_role():
+    """Creates or updates the plugin role as needed"""
+    try:
+        plugin_role = Role.objects.get(name="plugin")
+    except DoesNotExist:
+        logger.info("Creating plugin role with select permissions")
+        plugin_role = Role(name="plugin", description = "Role containing plugin permissions", permission="PLUGIN_ADMIN")
+        create_role(plugin_role)
+
 
 #Old Stuff
 ################################

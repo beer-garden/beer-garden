@@ -40,7 +40,7 @@ def check_global_roles(
     if permission_levels is None:
         permission_levels = generate_permission_levels(permission_level)
 
-    for roles in [user.local_roles, user.remote_roles]:
+    for roles in [user.local_roles if user.local_roles else [], user.remote_roles if user.remote_roles else []]:
         if any(
             role.permission in permission_levels and _has_empty_scopes(role)
             for role in roles
@@ -197,7 +197,8 @@ class ModelFilter:
     def _checks(
         self,
         user: BrewtilsUser,
-        permission_levels: list,
+        permission: str = None,
+        permission_levels: list = None,
         check_garden: bool = False,
         check_system: bool = False,
         check_namespace: bool = False,
@@ -217,6 +218,9 @@ class ModelFilter:
         """Core check for filtering. If provided a nested record with some parent attributes, 
         attempt to find it's source for the checks. If None is provided, then skip the check 
         because we can't determine the value"""
+
+        if not permission_levels and permission:
+            permission_levels = generate_permission_levels(permission)
 
         if system is None:
             if (
@@ -692,8 +696,8 @@ class ModelFilter:
 
     def filter_object(
         self,
-        obj: BrewtilsModel,
-        user: BrewtilsUser,
+        obj: BrewtilsModel = None,
+        user: BrewtilsUser = None,
         permission: str = None,
         permission_levels: list[str] = None,
         **kwargs

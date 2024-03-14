@@ -86,11 +86,11 @@ def ensure_local_garden():
     garden.save()
 
 
-# def ensure_roles():
-#     """Create roles if necessary"""
-#     _configure_superuser_role()
-#     _configure_plugin_role()
-#     _sync_roles_from_role_definition_file()
+def ensure_roles():
+    """Create roles if necessary"""
+    _configure_superuser_role()
+    _configure_plugin_role()
+    # _sync_roles_from_role_definition_file()
 
 
 # def _sync_roles_from_role_definition_file():

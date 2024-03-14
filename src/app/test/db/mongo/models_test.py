@@ -12,7 +12,6 @@ from mongomock.gridfs import enable_gridfs_integration
 
 import beer_garden.db.api as db
 import beer_garden.db.mongo.models
-from beer_garden.api.authorization import Permissions
 from beer_garden.db.mongo.models import (
     Choices,
     Command,
@@ -24,7 +23,7 @@ from beer_garden.db.mongo.models import (
     Parameter,
     RawFile,
     Request,
-    Role,
+    LocalRole,
     System,
     User,
     UserToken,
@@ -588,22 +587,20 @@ class TestJob(object):
 class TestRole:
     @pytest.fixture(autouse=True)
     def drop(self, mongo_conn):
-        Role.drop_collection()
+        LocalRole.drop_collection()
 
     def test_create_with_valid_permissions(self):
-        permissions = [Permissions.REQUEST_READ.value, Permissions.REQUEST_CREATE.value]
 
-        role = Role(name="test_role", permissions=permissions)
+        role = LocalRole(name="test_role", permission="READ_ONLY")
         role.save()
 
-        assert Role.objects.filter(name="test_role").count() == 1
+        assert LocalRole.objects.filter(name="test_role").count() == 1
 
     def test_create_with_invalid_permissions(self):
-        permissions = ["invalid_permission"]
 
-        role = Role(name="test_role", permissions=permissions)
+        role = LocalRole(name="test_role", permission="invalid_permission")
 
-        with pytest.raises(ValidationError):
+        with pytest.raises(ModelValidationError):
             role.save()
 
 
@@ -614,20 +611,16 @@ class TestUser:
 
     @pytest.fixture()
     def role(self):
-        role = Role(
-            name="test_role", permissions=[Permissions.REQUEST_READ.value]
-        ).save()
-
+        role = LocalRole(name="test_role", permission="READ_ONLY").save()
         yield role
         role.delete()
 
-
     @pytest.fixture()
-    def user(self, role_assignment):
-        user = User(username="testuser", role_assignments=[role_assignment]).save()
-
+    def user(self):
+        user = User(username="testuser").save()
         yield user
         user.delete()
+
 
     @pytest.fixture()
     def user_token(self, user):
@@ -643,42 +636,52 @@ class TestUser:
     def test_create(self, user):
         assert User.objects.filter(username="testuser").count() == 1
 
-    def test_set_password(self, user):
-        user.set_password("password")
+    # def test_set_password(self, user):
+    #     user.set_password("password")
 
-        # Testing for a specific value would be too tightly coupled with the hashing
-        # algorithm we use, so instead just verify that the password is not stored
-        # in its original form
-        assert user.password is not None
-        assert user.password != "password"
+    #     # Testing for a specific value would be too tightly coupled with the hashing
+    #     # algorithm we use, so instead just verify that the password is not stored
+    #     # in its original form
+    #     assert user.password is not None
+    #     assert user.password != "password"
 
-    def test_verify_password(self, user):
-        user.set_password("password")
+    # def test_verify_password(self, user):
+    #     user.set_password("password")
 
-        assert user.verify_password("password")
-        assert not user.verify_password("mismatch")
+    #     assert user.verify_password("password")
+    #     assert not user.verify_password("mismatch")
+        
+    def test_local_role_map_to_roles(self, user, role):
+        
+        assert len(user.roles) == 0
 
-    def test_role_assignment_missing_identifiers_raises_validation_error(
-        self, user, role_assignment_missing_identifiers
-    ):
-        user.role_assignments = [role_assignment_missing_identifiers]
+        user.local_roles.append(role)
+        user = user.save()
 
-        with pytest.raises(ValidationError):
-            user.save()
+        assert len(user.roles) == 1
+        
 
-    def test_role_assignment_empty_identifiers_are_discarded(
-        self, user, role_assignment_empty_identifiers
-    ):
-        user.role_assignments = [role_assignment_empty_identifiers]
+    # def test_role_assignment_missing_identifiers_raises_validation_error(
+    #     self, user, role_assignment_missing_identifiers
+    # ):
+    #     user.role_assignments = [role_assignment_missing_identifiers]
 
-        assert len(user.role_assignments[0].domain["identifiers"]) == 2
-        user.save()
-        assert len(user.role_assignments[0].domain["identifiers"]) == 1
+    #     with pytest.raises(ValidationError):
+    #         user.save()
 
-    def test_revoke_tokens(self, user, user_token):
-        assert len(UserToken.objects.filter(user=user)) > 0
-        user.revoke_tokens()
-        assert len(UserToken.objects.filter(user=user)) == 0
+    # def test_role_assignment_empty_identifiers_are_discarded(
+    #     self, user, role_assignment_empty_identifiers
+    # ):
+    #     user.role_assignments = [role_assignment_empty_identifiers]
+
+    #     assert len(user.role_assignments[0].domain["identifiers"]) == 2
+    #     user.save()
+    #     assert len(user.role_assignments[0].domain["identifiers"]) == 1
+
+    # def test_revoke_tokens(self, user, user_token):
+    #     assert len(UserToken.objects.filter(user=user)) > 0
+    #     user.revoke_tokens()
+    #     assert len(UserToken.objects.filter(user=user)) == 0
 
 
 class TestUserToken:

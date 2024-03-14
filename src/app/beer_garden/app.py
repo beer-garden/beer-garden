@@ -291,6 +291,10 @@ class Application(StoppableThread):
         beer_garden.router.setup_routing()
 
         self.logger.debug("Load Roles...")
+        beer_garden.role.rescan()
+
+        self.logger.debug("Verifying default Roles...")
+        beer_garden.role.ensure_roles()
 
         self.logger.debug("Verifying default users...")
         beer_garden.user.ensure_users()
