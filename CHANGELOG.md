@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.24.5
+
+TBD
+
+- Utilized the TTL for In_Progress requests to set Expiration windows for Requests on PIKA, to handle backups of requests that Beer Garden has already cancelled.
+
 # 3.24.4
 
 3/11/24
