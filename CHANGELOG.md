@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.24.5
+
+TBD
+
+- Fixed bug where child garden plugins are treated like local plugins on the System Admin page
+
 # 3.24.4
 
 3/11/24
