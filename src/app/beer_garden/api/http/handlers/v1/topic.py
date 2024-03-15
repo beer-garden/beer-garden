@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import json
-
 from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
