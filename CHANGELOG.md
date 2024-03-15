@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.24.5
+
+TBD
+
+- Fixed order of Gardens and Connections on Garden Admin page
+
 # 3.24.4
 
 3/11/24
