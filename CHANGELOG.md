@@ -5,6 +5,8 @@
 TBD
 
 - Fixed order of Gardens and Connections on Garden Admin page
+- Fixed bug where child garden plugins are treated like local plugins on the System Admin page
+- Utilized the TTL for In_Progress requests to set Expiration windows for Requests on PIKA, to handle backups of requests that Beer Garden has already cancelled.
 
 # 3.24.4
 
