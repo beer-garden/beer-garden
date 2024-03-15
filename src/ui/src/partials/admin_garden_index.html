@@ -44,7 +44,7 @@
           </div>
           <div class="list-group-item clearfix" ng-repeat="connection in garden.receiving_connections">
             <bg-status target="connection.status"></bg-status>
-            <span style="padding: 0 10px" title="{{getConnectionUrl(connection)}}">{{connection.api}}</span>
+            <span style="padding: 0 10px" title="{{getConnectionUrl(connection, true)}}">{{connection.api}}</span>
             <span class="btn-toolbar pull-right" ng-if="!garden.has_parent">
               <span class="btn-group btn-group-xs">
                 <button type="button" class="btn btn-default fa fa-play"
@@ -77,7 +77,7 @@
         </div>
         <div class="list-group-item clearfix" ng-repeat="connection in garden.publishing_connections">
           <bg-status target="connection.status"></bg-status>
-          <span style="padding: 0 10px" title="{{getConnectionUrl(connection)}}">{{connection.api}}</span>
+          <span style="padding: 0 10px" title="{{getConnectionUrl(connection, false)}}">{{connection.api}}</span>
         </div>
       </div>
 
@@ -115,7 +115,7 @@
         </div>
         <div class="list-group-item clearfix" ng-repeat="connection in garden.receiving_connections">
           <bg-status target="connection.status"></bg-status>
-          <span style="padding: 0 10px" title="{{getConnectionUrl(connection)}}">{{connection.api}}</span>
+          <span style="padding: 0 10px" title="{{getConnectionUrl(connection, true)}}">{{connection.api}}</span>
           <span class="btn-toolbar pull-right" ng-if="isChild(garden)">
             <span class="btn-group btn-group-xs">
               <button type="button" class="btn btn-default fa fa-play"
@@ -134,7 +134,7 @@
         </div>
         <div class="list-group-item clearfix" ng-repeat="connection in garden.publishing_connections" ng-if="connection.status != 'NOT_CONFIGURED'">
           <bg-status target="connection.status"></bg-status>
-          <span style="padding: 0 10px" title="{{getConnectionUrl(connection)}}">{{connection.api}}</span>
+          <span style="padding: 0 10px" title="{{getConnectionUrl(connection, false)}}">{{connection.api}}</span>
           <span class="btn-toolbar pull-right" ng-if="isChild(garden)">
             <span class="btn-group btn-group-xs">
               <button type="button" class="btn btn-default fa fa-play"

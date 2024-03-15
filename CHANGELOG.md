@@ -2,6 +2,12 @@
 
 # 3.24.4
 
+TBD
+
+- Updated how STOMP URL preview is formatted on Garden Admin page
+
+# 3.24.4
+
 3/11/24
 
 - Fixed bug where child STOMP Recieving connections where not being saved or configured to listen
