@@ -207,6 +207,10 @@ def put(request: Request, headers: dict = None, **kwargs) -> None:
     if request.id:
         kwargs["headers"]["request_id"] = request.id
 
+    # Set Expiration Time for non admin requests
+    if config.get("db.ttl.in_progress") > 0 and not kwargs.get("is_admin", False):
+        kwargs["expiration"] = str(config.get("db.ttl.in_progress") * 60 * 1000)
+
     if "routing_key" not in kwargs:
         kwargs["routing_key"] = get_routing_key(
             request.namespace,
