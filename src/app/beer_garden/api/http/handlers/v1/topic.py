@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
+import json
+
 from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
+from brewtils.models import Subscriber as BrewtilsSubscriber
 
 from beer_garden.api.http.base_handler import BaseHandler
 
@@ -113,12 +116,13 @@ class TopicAPI(BaseHandler):
 
         for op in patch:
             operation = op.operation.lower()
+            subscriber = BrewtilsSubscriber(**op.value)
 
             if operation == "add":
                 response = await self.client(
                     Operation(
                         operation_type="TOPIC_ADD_SUBSCRIBER",
-                        kwargs={"topic_id": topic_id, "subscriber": op.value},
+                        kwargs={"topic_id": topic_id, "subscriber": subscriber},
                     )
                 )
 
@@ -126,7 +130,7 @@ class TopicAPI(BaseHandler):
                 response = await self.client(
                     Operation(
                         operation_type="TOPIC_REMOVE_SUBSCRIBER",
-                        kwargs={"topic_id": topic_id, "subscriber": op.value},
+                        kwargs={"topic_id": topic_id, "subscriber": subscriber},
                     )
                 )
 

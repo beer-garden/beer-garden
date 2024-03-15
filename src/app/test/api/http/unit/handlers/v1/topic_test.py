@@ -4,11 +4,11 @@ import json
 import beer_garden.events
 import beer_garden.router
 import pytest
-from beer_garden.db.mongo.models import Role, RoleAssignment, User, Topic, Subscriber
+from beer_garden.db.mongo.models import Role, RoleAssignment, User, Topic
 import beer_garden.api.http.handlers.v1.garden
 from beer_garden.api.http.authentication import issue_token_pair
 from beer_garden.topic import create_topic
-from brewtils.models import Topic as BrewtilsTopic
+
 from brewtils.models import Subscriber as BrewtilsSubscriber
 from tornado.httpclient import HTTPError, HTTPRequest
 
@@ -31,7 +31,7 @@ def topic_not_permitted():
 
 @pytest.fixture
 def subscriber():
-    return Subscriber(
+    return BrewtilsSubscriber(
         garden="bg",
         namespace="beer-garden",
         system="system",
@@ -48,7 +48,6 @@ class TestTopicAPI:
 
         response = yield http_client.fetch(url)
         response_body = json.loads(response.body.decode("utf-8"))
-        print(response_body)
 
         assert response.code == 200
         assert response_body["id"] == str(topic_permitted.id)
@@ -70,19 +69,21 @@ class TestTopicAPI:
         assert len(Topic.objects.filter(id=topic_permitted.id)) == 0
 
     @pytest.mark.gen_test
-    def test_patch_topic(
-        self,
-        http_client,
-        base_url,
-        topic_permitted,
-        subscriber
-    ):
+    def test_patch_topic(self, http_client, base_url, topic_permitted, subscriber):
         url = f"{base_url}/api/v1/topics/{topic_permitted.id}"
         headers = {
             "Content-Type": "application/json",
         }
+        subscriber_dict = {
+            "garden": subscriber.garden,
+            "namespace": subscriber.namespace,
+            "system": subscriber.system,
+            "version": subscriber.version,
+            "instance": subscriber.instance,
+            "command": subscriber.command,
+        }
 
-        patch_body = [{"operation": "add", "value": str(subscriber)}]
+        patch_body = [{"operation": "add", "value": subscriber_dict}]
         request = HTTPRequest(
             url, method="PATCH", headers=headers, body=json.dumps(patch_body)
         )
