@@ -11,12 +11,6 @@ TBD
 
 # 3.24.4
 
-TBD
-
-- Now show alert on Garden Admin page when a Sync event is seen
-
-# 3.24.4
-
 3/11/24
 
 - Fixed bug where child STOMP Recieving connections where not being saved or configured to listen
