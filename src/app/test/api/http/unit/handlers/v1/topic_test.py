@@ -91,7 +91,14 @@ class TestTopicAPI:
 
         assert response.code == 200
         assert len(Topic.objects.get(id=topic_permitted.id).subscribers) == 1
-        assert Topic.objects.get(id=topic_permitted.id).subscribers[0] == subscriber
+        # Can't compare beer_garden.db.mongo.models.Subscriber and brewtils.models.Subscriber
+        mongo_subscriber = Topic.objects.get(id=topic_permitted.id).subscribers[0]
+        assert mongo_subscriber.garden == subscriber.garden
+        assert mongo_subscriber.namespace == subscriber.namespace
+        assert mongo_subscriber.system == subscriber.system
+        assert mongo_subscriber.version == subscriber.version
+        assert mongo_subscriber.instance == subscriber.instance
+        assert mongo_subscriber.command == subscriber.command
 
 
 class TestTopicListAPI:
