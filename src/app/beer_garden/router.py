@@ -485,9 +485,9 @@ def setup_routing():
                             and connection.status != "DISABLED"
                         ):
                             if garden.name not in stomp_garden_connections:
-                                stomp_garden_connections[
-                                    garden.name
-                                ] = create_stomp_connection(connection)
+                                stomp_garden_connections[garden.name] = (
+                                    create_stomp_connection(connection)
+                                )
 
             else:
                 logger.warning(f"Garden with invalid connection info: {garden!r}")
@@ -602,9 +602,9 @@ def handle_event(event):
                             event.payload.name not in stomp_garden_connections
                             and connection.status == "PUBLISHING"
                         ):
-                            stomp_garden_connections[
-                                event.payload.name
-                            ] = create_stomp_connection(connection)
+                            stomp_garden_connections[event.payload.name] = (
+                                create_stomp_connection(connection)
+                            )
 
                         elif connection.status == "DISABLED":
                             stomp_garden_connections[event.payload.name].disconnect()
