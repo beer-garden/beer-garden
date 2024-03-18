@@ -7,6 +7,7 @@ TBD
 - Now show alert on Garden Admin page when a Sync event is seen
 - Fixed order of Gardens and Connections on Garden Admin page
 - Fixed bug where child garden plugins are treated like local plugins on the System Admin page
+- Garden Receiving connections heartbeats are only updated on the half windows for timeout windows. If no timeout window is set, the value is not populated.
 - Utilized the TTL for In_Progress requests to set Expiration windows for Requests on PIKA, to handle backups of requests that Beer Garden has already cancelled.
 
 # 3.24.4
