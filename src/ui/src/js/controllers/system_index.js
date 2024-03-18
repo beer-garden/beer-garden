@@ -118,8 +118,14 @@ export default function systemIndexController(
     $scope.checkGroups();
   };
 
-  $scope.response = $rootScope.gardensResponse;
-  $scope.data = $rootScope.systems.filter($rootScope.isSystemRoutable);
-  $scope.checkGroups();
+  var filterSystems = function() {
+    $scope.response = $rootScope.gardensResponse;
+      $scope.data = $rootScope.systems.filter($rootScope.isSystemRoutable);
+      $scope.checkGroups();
+      $scope.$digest();
+  }
+
+  // Systems to load async, have to monitor the systems for changes
+  $rootScope.$watchCollection('systems', filterSystems);
 
 }

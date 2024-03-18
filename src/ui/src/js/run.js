@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import _ from 'lodash';
-import {responseState} from './services/utility_service.js';
+import {responseState, camelCaseKeys}  from './services/utility_service.js';
 
 import changePasswordTemplate from '../templates/change_password.html';
 import loginTemplate from '../templates/login.html';
@@ -25,6 +25,7 @@ appRun.$inject = [
   'TokenService',
   'RoleService',
   'EventService',
+  'GardenService',
 ];
 
 /**
@@ -45,6 +46,7 @@ appRun.$inject = [
  * @param  {Object} TokenService         Service for Token information.
  * @param  {Object} RoleService          Service for Role information.
  * @param  {Object} EventService         Service for Event information.
+ * @param  {Object} GardenService        Service for Garden information.
  */
 export default function appRun(
     $rootScope,
@@ -63,6 +65,7 @@ export default function appRun(
     TokenService,
     RoleService,
     EventService,
+    GardenService,
 ) {
   $rootScope.$state = $state;
   $rootScope.$stateParams = $stateParams;
@@ -349,6 +352,39 @@ export default function appRun(
         _.noop,
     );
   };
+
+  $rootScope.getLocalGarden = function (callback) {
+    if ($rootScope.garden !== undefined) {
+      return callback();
+    }
+
+    if ($rootScope.config.gardenName === undefined) {
+      UtilityService.getConfig().then((response) => {
+        angular.extend($rootScope.config, camelCaseKeys(response.data));
+        return $rootScope.getLocalGarden(callback);
+      });
+    } else {
+
+      GardenService.getGarden($rootScope.config.gardenName).then((response) => {
+        $rootScope.garden = response.data;
+        $rootScope.gardensResponse = response;
+        return callback();
+      },
+        (response) => {
+          $rootScope.gardenResponse = response;
+          $rootScope.garden = {};
+        });
+    }
+  }
+
+  $rootScope.getSystems = function () {
+    if ($rootScope.garden === undefined) {
+      return $rootScope.getLocalGarden($rootScope.getSystems);
+    } else {
+      $rootScope.systems = $rootScope.extractSystems($rootScope.garden);
+      return $rootScope.systems;
+    }
+  }
 
   $rootScope.extractSystems = function(garden, hideRunners = false){
     let systems = [];
