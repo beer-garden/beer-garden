@@ -201,22 +201,24 @@ def update_garden_config(garden: Garden) -> Garden:
     return update_garden(db_garden)
 
 
-def check_garden_receiving_heartbeat(api: str, garden_name: str = None, garden: Garden = None):
+def check_garden_receiving_heartbeat(
+    api: str, garden_name: str = None, garden: Garden = None
+):
     if garden is None:
         garden = db.query_unique(Garden, name=garden_name)
 
     # if garden doens't exist, create it
     if garden is None:
         garden = create_garden(Garden(name=garden_name, connection_type="Remote"))
-    
+
     connection_set = False
     update_heartbeat = False
 
     for connection in garden.receiving_connections:
         if connection.api == api:
             connection_set = True
-            
-            if connection.status not in ["DISABLED","RECEIVING"]:
+
+            if connection.status not in ["DISABLED", "RECEIVING"]:
                 connection.status = "RECEIVING"
                 update_heartbeat = True
 
@@ -243,7 +245,6 @@ def check_garden_receiving_heartbeat(api: str, garden_name: str = None, garden: 
             if config.get("receiving", config=garden_config):
                 connection.status = "RECEIVING"
 
-
         connection.status_info["heartbeat"] = datetime.utcnow()
         garden.receiving_connections.append(connection)
 
@@ -252,9 +253,9 @@ def check_garden_receiving_heartbeat(api: str, garden_name: str = None, garden: 
 
     return garden
 
+
 @publish_event(Events.GARDEN_UPDATED)
 def update_receiving_connections(garden: Garden):
-
     updates = {}
 
     if update_garden:
@@ -263,7 +264,7 @@ def update_receiving_connections(garden: Garden):
         ]
 
         return db.modify(garden, **updates)
-    
+
     return garden
 
 
