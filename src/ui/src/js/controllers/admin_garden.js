@@ -244,11 +244,17 @@ export default function adminGardenController(
 
     if (isReceiving){
       if (connection.config["subscribe_destination"] !== undefined){
-        url = url + " " + connection.config["subscribe_destination"];
+        if (connection.config["subscribe_destination"].charAt(0) != "/" && url.charAt(url.length - 1) != "/"){
+          url = url + "/";
+        }
+        url = url + connection.config["subscribe_destination"];
       }
     } else {
       if (connection.config["send_destination"] !== undefined){
-        url = url + " " + connection.config["send_destination"];
+        if (connection.config["send_destination"].charAt(0) != "/" && url.charAt(url.length - 1) != "/"){
+          url = url + "/";
+        }
+        url = url + connection.config["send_destination"];
       }
     }
 
