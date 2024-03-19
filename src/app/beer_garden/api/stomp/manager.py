@@ -79,9 +79,9 @@ class StompManager(BaseProcessor):
                 conn_dict_key = f"{host_and_ports}{subscribe_destination}{use_ssl}"
 
                 if conn_dict_key in self.conn_dict:
-                    if {"name": name, "main": is_main} not in self.conn_dict[conn_dict_key][
-                        "gardens"
-                    ]:
+                    if {"name": name, "main": is_main} not in self.conn_dict[
+                        conn_dict_key
+                    ]["gardens"]:
                         self.conn_dict[conn_dict_key]["gardens"].append(
                             {"name": name, "main": is_main}
                         )
