@@ -1,10 +1,11 @@
-from brewtils.models import Topic, Subscriber, Events
 from typing import List
 
-import beer_garden.db.api as db
 from mongoengine import DoesNotExist
-from brewtils.errors import PluginError
+
+import beer_garden.db.api as db
 from beer_garden.events import publish_event
+from brewtils.errors import PluginError
+from brewtils.models import Events, Subscriber, Topic
 
 
 @publish_event(Events.TOPIC_CREATED)
