@@ -6,6 +6,7 @@ TBD
 
 - Now show alert on Garden Admin page when a Sync event is seen
 - Fixed order of Gardens and Connections on Garden Admin page
+- Fixed bug where Disabled STOMP Receiving connection could be re-enabled if it is shared and unresponsive
 - Fixed bug where child garden plugins are treated like local plugins on the System Admin page
 - Utilized the TTL for In_Progress requests to set Expiration windows for Requests on PIKA, to handle backups of requests that Beer Garden has already cancelled.
 - Optimized UI Rest calls to load only Local Garden with Children

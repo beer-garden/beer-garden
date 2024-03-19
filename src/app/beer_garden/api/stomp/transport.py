@@ -285,7 +285,7 @@ class Connection:
             for garden in get_gardens():
                 connection_updated = False
                 for connection in garden.receiving_connections:
-                    if connection.api == "STOMP":
+                    if connection.api == "STOMP" and connection.status != "DISABLED":
                         if (
                             connection.config.get("host", None)
                             and connection.config.get("port", None)
@@ -301,7 +301,7 @@ class Connection:
                                 connection_updated = True
 
                 for connection in garden.publishing_connections:
-                    if connection.api == "STOMP":
+                    if connection.api == "STOMP" and connection.status != "DISABLED":
                         if (
                             connection.config.get("host", None)
                             and connection.config.get("port", None)
