@@ -246,6 +246,8 @@ export default function adminGardenController(
       if (connection.config["subscribe_destination"] !== undefined){
         if (connection.config["subscribe_destination"].charAt(0) != "/" && url.charAt(url.length - 1) != "/"){
           url = url + "/";
+        } else if (connection.config["send_destination"].charAt(0) == "/" && url.charAt(url.length - 1) == "/"){
+          url = url.substring(0, url.length - 2);
         }
         url = url + connection.config["subscribe_destination"];
       }
@@ -253,6 +255,8 @@ export default function adminGardenController(
       if (connection.config["send_destination"] !== undefined){
         if (connection.config["send_destination"].charAt(0) != "/" && url.charAt(url.length - 1) != "/"){
           url = url + "/";
+        } else if (connection.config["send_destination"].charAt(0) == "/" && url.charAt(url.length - 1) == "/"){
+          url = url.substring(0, url.length - 2);
         }
         url = url + connection.config["send_destination"];
       }
