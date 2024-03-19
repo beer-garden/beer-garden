@@ -1,5 +1,4 @@
 {
     "name": "Beer Garden",
-    "image": "mcr.microsoft.com/devcontainers/universal:2",
     "postCreateCommand": "make setup"
   }
