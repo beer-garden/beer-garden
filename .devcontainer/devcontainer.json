@@ -1,4 +1,0 @@
-{
-    "name": "Beer Garden",
-    "postCreateCommand": "make setup"
-  }
