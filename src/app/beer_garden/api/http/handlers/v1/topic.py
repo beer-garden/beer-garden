@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-from beer_garden.api.http.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.models import Subscriber as BrewtilsSubscriber
 from brewtils.schema_parser import SchemaParser
+
+from beer_garden.api.http.base_handler import BaseHandler
 
 
 class TopicAPI(BaseHandler):
