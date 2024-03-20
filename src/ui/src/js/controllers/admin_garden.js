@@ -353,6 +353,11 @@ export default function adminGardenController(
         $scope.eventUpsetGarden(event.payload)
         $scope.$digest();
         break;
+      case 'GARDEN_SYNC':
+        $scope.alerts.push({
+          type: 'info',
+          msg: 'Garden sync event seen from ' + event.payload.name,
+        });
     }
   });
 

@@ -42,6 +42,8 @@ logger = logging.getLogger(__name__)
 
 def filter_router_result(garden: Garden) -> Garden:
     """Filter values for API output"""
+
+    filtered_garden = copy.deepcopy(garden)
     config_whitelist = [
         "host",
         "port",
@@ -50,8 +52,8 @@ def filter_router_result(garden: Garden) -> Garden:
         "subscribe_destination",
     ]
 
-    if garden.publishing_connections:
-        for connection in garden.publishing_connections:
+    if filtered_garden.publishing_connections:
+        for connection in filtered_garden.publishing_connections:
             drop_keys = []
             for key in connection.config:
                 if key not in config_whitelist:
@@ -59,8 +61,8 @@ def filter_router_result(garden: Garden) -> Garden:
             for key in drop_keys:
                 connection.config.pop(key)
 
-    if garden.receiving_connections:
-        for connection in garden.receiving_connections:
+    if filtered_garden.receiving_connections:
+        for connection in filtered_garden.receiving_connections:
             drop_keys = []
             for key in connection.config:
                 if key not in config_whitelist:
@@ -68,10 +70,10 @@ def filter_router_result(garden: Garden) -> Garden:
             for key in drop_keys:
                 connection.config.pop(key)
 
-    if garden.children:
-        for child in garden.children:
+    if filtered_garden.children:
+        for child in filtered_garden.children:
             filter_router_result(child)
-    return garden
+    return filtered_garden
 
 
 def get_children_garden(garden: Garden) -> Garden:

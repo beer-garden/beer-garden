@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import _ from 'lodash';
-import {responseState} from './services/utility_service.js';
+import {responseState, camelCaseKeys}  from './services/utility_service.js';
 
 import changePasswordTemplate from '../templates/change_password.html';
 import loginTemplate from '../templates/login.html';
@@ -25,6 +25,7 @@ appRun.$inject = [
   'TokenService',
   'RoleService',
   'EventService',
+  'GardenService',
 ];
 
 /**
@@ -45,6 +46,7 @@ appRun.$inject = [
  * @param  {Object} TokenService         Service for Token information.
  * @param  {Object} RoleService          Service for Role information.
  * @param  {Object} EventService         Service for Event information.
+ * @param  {Object} GardenService        Service for Garden information.
  */
 export default function appRun(
     $rootScope,
@@ -63,6 +65,7 @@ export default function appRun(
     TokenService,
     RoleService,
     EventService,
+    GardenService,
 ) {
   $rootScope.$state = $state;
   $rootScope.$stateParams = $stateParams;
@@ -350,14 +353,55 @@ export default function appRun(
     );
   };
 
-  $rootScope.extractSystems = function(garden){
+  $rootScope.getLocalGarden = function (callback) {
+    if ($rootScope.garden !== undefined) {
+      return callback();
+    }
+
+    if ($rootScope.config.gardenName === undefined) {
+      UtilityService.getConfig().then((response) => {
+        angular.extend($rootScope.config, camelCaseKeys(response.data));
+        return $rootScope.getLocalGarden(callback);
+      });
+    } else {
+
+      GardenService.getGarden($rootScope.config.gardenName).then((response) => {
+        $rootScope.garden = response.data;
+        $rootScope.gardensResponse = response;
+        return callback();
+      },
+        (response) => {
+          $rootScope.gardenResponse = response;
+          $rootScope.garden = {};
+        });
+    }
+  }
+
+  $rootScope.getSystems = function () {
+    if ($rootScope.garden === undefined) {
+      return $rootScope.getLocalGarden($rootScope.getSystems);
+    } else {
+      $rootScope.systems = $rootScope.extractSystems($rootScope.garden);
+      return $rootScope.systems;
+    }
+  }
+
+  $rootScope.extractSystems = function(garden, hideRunners = false){
     let systems = [];
     if (garden.systems !== undefined){
+      for (let i = 0; i < garden.systems.length; i++){
+        if (hideRunners){
+          systems.push(hideSystemRunners(garden.systems[i]))
+        } else {
+          systems.push(garden.systems[i])
+        }
+      }
+      
       systems = garden.systems;
     }
     if (garden.children !== undefined) {
       for (let i = 0; i < garden.children.length; i++){
-        systems = systems.concat($rootScope.extractSystems(garden.children[i]));
+        systems = systems.concat($rootScope.extractSystems(garden.children[i], true));
       }
     }
     return systems;
@@ -424,7 +468,7 @@ export default function appRun(
     return gardens;
   }
 
-  function upsertGardenSystems(garden, seenIndexes){
+  function upsertGardenSystems(garden, seenIndexes, hideRunners = false){
     let routable = (garden.connection_type == "LOCAL");
     for (let i = 0; i < garden.publishing_connections.length; i++){
       if (["PUBLISHING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN"].includes(garden.publishing_connections[i].status)){
@@ -434,11 +478,11 @@ export default function appRun(
     if (routable) {
       if (garden.systems !== undefined) {
         for (let i = 0; i < garden.systems.length; i++){
-          seenIndexes.push(upsertSystem(garden.systems[i]));
+          seenIndexes.push(upsertSystem(garden.systems[i], hideRunners));
         }
       }
       for (let i = 0; i < garden.children.length; i++){
-        upsertGardenSystems(garden.children[i], seenIndexes);
+        upsertGardenSystems(garden.children[i], seenIndexes, true);
       }
     }
   }
@@ -457,9 +501,21 @@ export default function appRun(
     $rootScope.systems;
   }
 
-  function upsertSystem(system) {
+  function hideSystemRunners(system) {
+    for (let i = 0; i < system.instances.length; i++){
+      if (system.instances[i].metadata.runner_id !== undefined){
+        delete system.instances[i].metadata.runner_id
+      }
+    }
+    return system
+  }
+
+  function upsertSystem(system, hideRunner = false) {
     const index = _.findIndex($rootScope.systems, {id: system.id});
 
+    if (hideRunner){
+      system = hideSystemRunners(system)
+    }
     if (index == -1) {
       $rootScope.systems.push(system);
       return $rootScope.systems.length - 1;
