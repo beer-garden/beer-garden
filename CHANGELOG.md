@@ -1,9 +1,10 @@
 # Beer Garden Changelog
 
-# 3.24.5
+# 3.25.0
 
 TBD
 
+- Fixed bug where removing a parent garden failed to remove both parent and child
 - Now show alert on Garden Admin page when a Sync event is seen
 - Fixed order of Gardens and Connections on Garden Admin page
 - Fixed bug where Disabled STOMP Receiving connection could be re-enabled if it is shared and unresponsive

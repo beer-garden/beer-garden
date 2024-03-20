@@ -343,7 +343,7 @@ def remove_garden(garden_name: str = None, garden: Garden = None) -> None:
     remove_remote_systems(garden)
 
     for child in garden.children:
-        remove_garden(child)
+        remove_garden(child.name)
 
     db.delete(garden)
 
