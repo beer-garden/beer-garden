@@ -597,7 +597,9 @@ def handle_event(event):
                             event.payload.name not in stomp_garden_connections
                             and connection.status == "PUBLISHING"
                         ):
-                            create_stomp_connection(connection)
+                            stomp_garden_connections[event.payload.name] = (
+                                create_stomp_connection(connection)
+                            )
 
                         elif connection.status == "DISABLED":
                             stomp_garden_connections[event.payload.name].disconnect()

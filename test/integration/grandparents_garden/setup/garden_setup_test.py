@@ -87,7 +87,7 @@ class TestGardenSetup(object):
         for garden in gardens:
             if garden.name == "parent":
                 for connection in garden.publishing_connections:
-                    if connection.api == "HTTP":
+                    if connection.api == "STOMP":
                         assert connection.status == "PUBLISHING"
                     else:
                         assert connection.status == "NOT_CONFIGURED"

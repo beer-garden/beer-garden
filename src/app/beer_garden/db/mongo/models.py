@@ -851,12 +851,11 @@ class Garden(MongoModel, Document):
         if self.connection_type != "LOCAL":
             self._update_associated_systems()
 
-            # Ensure no receiving configurations are stored locally, if sent
-            for connection in self.receiving_connections:
-                connection.config = {}
-
-            # Only store publishing connections for 1 hop gardens
+            # Ensure no configurations are stored locally, if sent
             if self.has_parent:
+                for connection in self.receiving_connections:
+                    connection.config = {}
+
                 for connection in self.publishing_connections:
                     connection.config = {}
 

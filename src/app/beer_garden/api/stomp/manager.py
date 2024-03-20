@@ -68,38 +68,39 @@ class StompManager(BaseProcessor):
             logger.error(f"Error sending event {event} to main process: {e}")
 
     def add_connection(self, stomp_config=None, name=None, is_main=False):
-        if stomp_config.get("subscribe_destination"):
-            host_and_ports = [(stomp_config.get("host"), stomp_config.get("port"))]
-            subscribe_destination = stomp_config.get("subscribe_destination")
+        with self.ep_lock:
+            if stomp_config.get("subscribe_destination"):
+                host_and_ports = [(stomp_config.get("host"), stomp_config.get("port"))]
+                subscribe_destination = stomp_config.get("subscribe_destination")
 
-            ssl = stomp_config.get("ssl") or {}
-            use_ssl = ssl.get("use_ssl") or False
+                ssl = stomp_config.get("ssl") or {}
+                use_ssl = ssl.get("use_ssl") or False
 
-            conn_dict_key = f"{host_and_ports}{subscribe_destination}{use_ssl}"
+                conn_dict_key = f"{host_and_ports}{subscribe_destination}{use_ssl}"
 
-            if conn_dict_key in self.conn_dict:
-                if {"name": name, "main": is_main} not in self.conn_dict[conn_dict_key][
-                    "gardens"
-                ]:
-                    self.conn_dict[conn_dict_key]["gardens"].append(
-                        {"name": name, "main": is_main}
-                    )
-            else:
-                self.conn_dict[conn_dict_key] = {
-                    "conn": self.connect(stomp_config),
-                    "gardens": [{"name": name, "main": is_main}],
-                }
+                if conn_dict_key in self.conn_dict:
+                    if {"name": name, "main": is_main} not in self.conn_dict[
+                        conn_dict_key
+                    ]["gardens"]:
+                        self.conn_dict[conn_dict_key]["gardens"].append(
+                            {"name": name, "main": is_main}
+                        )
+                else:
+                    self.conn_dict[conn_dict_key] = {
+                        "conn": self.connect(stomp_config),
+                        "gardens": [{"name": name, "main": is_main}],
+                    }
 
-            if "headers_list" not in self.conn_dict:
-                self.conn_dict[conn_dict_key]["headers_list"] = []
+                if "headers_list" not in self.conn_dict:
+                    self.conn_dict[conn_dict_key]["headers_list"] = []
 
-            if stomp_config.get("headers") and is_main:
-                headers = parse_header_list(stomp_config.get("headers"))
+                if stomp_config.get("headers") and is_main:
+                    headers = parse_header_list(stomp_config.get("headers"))
 
-                if headers not in self.conn_dict[conn_dict_key]["headers_list"]:
-                    self.conn_dict[conn_dict_key]["headers_list"].append(headers)
+                    if headers not in self.conn_dict[conn_dict_key]["headers_list"]:
+                        self.conn_dict[conn_dict_key]["headers_list"].append(headers)
 
-            return conn_dict_key
+                return conn_dict_key
 
     def run(self):
         while not self.stopped():
@@ -126,17 +127,18 @@ class StompManager(BaseProcessor):
 
     def remove_garden_from_list(self, garden_name=None, skip_key=None):
         """removes garden name from dict list of gardens for stomp subscriptions"""
-        for key in list(self.conn_dict):
-            if not key == skip_key:
-                gardens = self.conn_dict[key]["gardens"]
+        with self.ep_lock:
+            for key in list(self.conn_dict):
+                if not key == skip_key:
+                    gardens = self.conn_dict[key]["gardens"]
 
-                for garden in gardens:
-                    if garden_name == garden["name"] and not garden["main"]:
-                        gardens.remove(garden)
+                    for garden in gardens:
+                        if garden_name == garden["name"] and not garden["main"]:
+                            gardens.remove(garden)
 
-                if not gardens:
-                    self.conn_dict[key]["conn"].disconnect()
-                    self.conn_dict.pop(key)
+                    if not gardens:
+                        self.conn_dict[key]["conn"].disconnect()
+                        self.conn_dict.pop(key)
 
     def _event_handler(self, event):
         """Internal event handler"""
@@ -156,17 +158,23 @@ class StompManager(BaseProcessor):
             if event.name == Events.GARDEN_REMOVED.name:
                 self.remove_garden_from_list(garden_name=event.payload.name)
 
-            elif event.name == Events.GARDEN_UPDATED.name:
+            elif event.name == Events.GARDEN_CONFIGURED.name:
                 skip_key = None
 
-                if event.payload.connection_type:
-                    if event.payload.connection_type.casefold() == "stomp":
-                        stomp_config = event.payload.connection_params.get("stomp", {})
-                        stomp_config = deepcopy(stomp_config)
-                        stomp_config["send_destination"] = None
-                        skip_key = self.add_connection(
-                            stomp_config=stomp_config, name=event.payload.name
-                        )
+                for connection in event.payload.receiving_connections:
+                    if connection.api.casefold() == "stomp":
+                        if connection.status in [
+                            "RECEIVING",
+                            "UNREACHABLE",
+                            "UNRESPONSIVE",
+                            "ERROR",
+                            "UNKNOWN",
+                        ]:
+                            stomp_config = deepcopy(connection.config)
+                            stomp_config["send_destination"] = None
+                            skip_key = self.add_connection(
+                                stomp_config=stomp_config, name=event.payload.name
+                            )
 
                 self.remove_garden_from_list(
                     garden_name=event.payload.name, skip_key=skip_key
