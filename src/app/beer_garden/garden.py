@@ -203,7 +203,7 @@ def update_garden_config(garden: Garden) -> Garden:
     return update_garden(db_garden)
 
 
-def update_garden_receiving_heartbeat(
+def check_garden_receiving_heartbeat(
     api: str, garden_name: str = None, garden: Garden = None
 ):
     if garden is None:
@@ -213,19 +213,31 @@ def update_garden_receiving_heartbeat(
     if garden is None:
         garden = create_garden(Garden(name=garden_name, connection_type="Remote"))
 
-    updates = {}
-
     connection_set = False
+    update_heartbeat = False
 
     for connection in garden.receiving_connections:
         if connection.api == api:
             connection_set = True
-            connection.status_info["heartbeat"] = datetime.utcnow()
-            if connection.status != "DISABLED":
+
+            if connection.status not in ["DISABLED", "RECEIVING"]:
                 connection.status = "RECEIVING"
+                update_heartbeat = True
+
+            interval_value = garden.metadata.get(
+                "_unresponsive_timeout", config.get("children.unresponsive_timeout")
+            )
+
+            if interval_value > 0:
+                timeout = datetime.utcnow() - timedelta(minutes=interval_value / 2)
+
+                if connection.status_info["heartbeat"] < timeout:
+                    connection.status_info["heartbeat"] = datetime.utcnow()
+                    update_heartbeat = True
 
     # If the receiving type is unknown, enable it by default and set heartbeat
     if not connection_set:
+        update_heartbeat = True
         connection = Connection(api=api, status="DISABLED")
 
         # Check if there is a config file
@@ -238,11 +250,24 @@ def update_garden_receiving_heartbeat(
         connection.status_info["heartbeat"] = datetime.utcnow()
         garden.receiving_connections.append(connection)
 
-    updates["receiving_connections"] = [
-        db.from_brewtils(connection) for connection in garden.receiving_connections
-    ]
+    if update_heartbeat:
+        return update_receiving_connections(garden)
 
-    return db.modify(garden, **updates)
+    return garden
+
+
+@publish_event(Events.GARDEN_UPDATED)
+def update_receiving_connections(garden: Garden):
+    updates = {}
+
+    if update_garden:
+        updates["receiving_connections"] = [
+            db.from_brewtils(connection) for connection in garden.receiving_connections
+        ]
+
+        return db.modify(garden, **updates)
+
+    return garden
 
 
 def update_garden_status(garden_name: str, new_status: str) -> Garden:

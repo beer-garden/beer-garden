@@ -206,6 +206,8 @@ def route(operation: Operation):
             f"Unknown operation type '{operation.operation_type}'"
         )
 
+    update_api_heartbeat(operation)
+
     if invalid_source_check(operation):
         raise RoutingRequestException(
             f"Garden '{operation.source_garden_name}' {operation.source_api} is disabled"
@@ -276,6 +278,21 @@ def execute_local(operation: Operation):
     return lookup[operation.operation_type](*operation.args, **operation.kwargs)
 
 
+def update_api_heartbeat(operation: Operation):
+    if (
+        operation.source_garden_name is not None
+        and operation.source_garden_name != config.get("garden.name")
+        and operation.source_api is not None
+    ):
+        source_garden = getattr(gardens, operation.source_garden_name, None)
+
+        beer_garden.garden.check_garden_receiving_heartbeat(
+            operation.source_api,
+            garden_name=operation.source_garden_name,
+            garden=source_garden,
+        )
+
+
 def invalid_source_check(operation: Operation):
     # Unable to validate source or api
     if (
@@ -285,12 +302,7 @@ def invalid_source_check(operation: Operation):
     ):
         return False
 
-    # Grabs the garden to check and updates the heartbeat for the entry point
-    source_garden = beer_garden.garden.update_garden_receiving_heartbeat(
-        operation.source_api, garden_name=operation.source_garden_name
-    )
-
-    for connection in source_garden.receiving_connections:
+    for connection in gardens[operation.source_garden_name].receiving_connections:
         if connection.api == operation.source_api and connection.status != "DISABLED":
             return False
 
@@ -609,6 +621,8 @@ def handle_event(event):
                     del stomp_garden_connections[event.payload.name]
             except KeyError:
                 pass
+        elif event.name == Events.GARDEN_UPDATED.name:
+            gardens[event.payload.name] = event.payload
 
 
 def _operation_conversion(operation: Operation) -> Operation:
