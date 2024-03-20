@@ -656,11 +656,10 @@ _AUTHENTICATION_HANDLERS_SPEC = {
                     "default": "bg-username",
                     "description": "The http header containing the username",
                 },
-                "user_groups_header": {
+                "user_roles_header": {
                     "type": "str",
-                    "default": "bg-user-groups",
-                    "description": "The http header containing the comma separated "
-                    "list of the user's groups.",
+                    "default": "bg-user-roles",
+                    "description": "The http header containing the JSON list of the user's roles",
                 },
                 "create_users": {
                     "type": "bool",
@@ -707,19 +706,19 @@ _AUTH_SPEC = {
             "description": "Secret to use when signing authentication tokens",
             "default": "",
         },
-        "role_definition_file": {
-            "type": "str",
-            "description": (
-                "Path to the yaml file that defines roles used for authorization"
-            ),
-            "required": False,
-        },
-        "group_definition_file": {
-            "type": "str",
-            "description": "Path to the file containg a mapping of "
-            "groups to beer garden role assignments",
-            "required": False,
-        },
+        # "role_definition_file": {
+        #     "type": "str",
+        #     "description": (
+        #         "Path to the yaml file that defines roles used for authorization"
+        #     ),
+        #     "required": False,
+        # },
+        # "group_definition_file": {
+        #     "type": "str",
+        #     "description": "Path to the file containg a mapping of "
+        #     "groups to beer garden role assignments",
+        #     "required": False,
+        # },
         "authentication_handlers": _AUTHENTICATION_HANDLERS_SPEC,
     },
 }
@@ -1577,6 +1576,11 @@ _CHILD_SPECIFICATION = {
         "type": "bool",
         "default": False,
         "description": "If disabled, requires manual start for receiving operations",
+    },
+    "default_user": {
+        "type": "str",
+        "description": "Default username when passing operations, if none is found with current user",
+        "required": False,
     },
     "unresponsive_timeout": {
         "type": "int",

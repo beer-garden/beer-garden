@@ -2,11 +2,11 @@
 from typing import Type, Union
 
 from brewtils.models import BaseModel as BrewtilsModel
+from brewtils.models import Role, User
 from mongoengine import Document, QuerySet, ValidationError
 from mongoengine.queryset.visitor import Q, QCombination
 
 import beer_garden.config as config
-from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.authentication import decode_token, get_user_from_token
 from beer_garden.api.http.base_handler import BaseHandler
 from beer_garden.api.http.exceptions import (
@@ -14,12 +14,8 @@ from beer_garden.api.http.exceptions import (
     NotFound,
     RequestForbidden,
 )
-from beer_garden.authorization import (
-    user_has_permission_for_object,
-    user_permitted_objects,
-    user_permitted_objects_filter,
-)
-from beer_garden.db.mongo.models import User
+from beer_garden.authorization import QueryFilterBuilder, ModelFilter
+# from beer_garden.db.mongo.models import User
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
 
 
@@ -27,7 +23,17 @@ class AuthorizationHandler(BaseHandler):
     """Handler that builds on BaseHandler and adds support for authorizing requests
     via a jwt access token supplied in the Authorization header"""
 
-    def get_current_user(self) -> "User":
+    GARDEN_ADMIN = "GARDEN_ADMIN"
+    PLUGIN_ADMIN = "PLUGIN_ADMIN"
+    OPERATOR = "OPERATOR"
+    READ_ONLY = "READ_ONLY"
+    queryFilter = QueryFilterBuilder()
+    modelFilter = ModelFilter()
+
+    # def __init__(self, *args, **kwargs):        
+    #     super.__init__(*args, **kwargs)
+
+    def get_current_user(self) -> User:
         """Retrieve the appropriate User object for the request. If the auth setting
         is enabled, the User is determined by the token provided in the Bearer
         Authorization header. If auth is disabled, an anonymous user with full access
@@ -45,7 +51,7 @@ class AuthorizationHandler(BaseHandler):
         else:
             return self._anonymous_superuser()
 
-    def get_or_raise(self, model: Type[Document], permission: str, **kwargs):
+    def get_or_raise(self, model: Type[Document], permission: str, **kwargs):  # Updated
         """Get Document model objects specified by **kwargs if the requesting user
         has the given permission for that object.
 
@@ -63,7 +69,9 @@ class AuthorizationHandler(BaseHandler):
             RequestForbidden: This is raised through the permission verification call
               if the requesting user does not have permissions to the object
         """
-        provided_filter = Q(**kwargs)
+        provided_filter = Q(**kwargs) & self.queryFilter.build_filter(
+            self.current_user, permission, model
+        )
 
         try:
             requested_object = model.objects.get(provided_filter)
@@ -74,7 +82,9 @@ class AuthorizationHandler(BaseHandler):
 
         return requested_object
 
-    def permissioned_queryset(self, model: Type[Document], permission: str) -> QuerySet:
+    def permissioned_queryset(
+        self, model: Type[Document], permission: str
+    ) -> QuerySet:  # Updated
         """Returns a QuerySet for the provided Document model filtered down to only
         the objects for which the requesting user has the given permission
 
@@ -86,11 +96,12 @@ class AuthorizationHandler(BaseHandler):
             QuerySet: A QuerySet for model filtered down to objects the requesting user
               has access to.
         """
-        return user_permitted_objects(self.current_user, model, permission)
+
+        return self.queryFilter.build_filter(self.current_user, permission, model)
 
     def permitted_objects_filter(
         self, model: Type[Document], permission: str
-    ) -> QCombination:
+    ) -> QCombination:  # Updated
         """Returns a QCombination that can be used to filter a QuerySet down to the
         objects for which the requesting user has the given permission.
 
@@ -106,7 +117,8 @@ class AuthorizationHandler(BaseHandler):
             RequestForbidden: The requesting user has access to no objects of the given
                 model type
         """
-        q_filter = user_permitted_objects_filter(self.current_user, model, permission)
+
+        q_filter = self.queryFilter.build_filter(self.current_user, permission, model)
 
         if q_filter is None:
             raise RequestForbidden
@@ -126,7 +138,7 @@ class AuthorizationHandler(BaseHandler):
         # duplication of the work required to identify and retrieve the User object.
         _ = self.current_user
 
-    def verify_user_global_permission(self, permission: str) -> None:
+    def verify_user_global_permission(self, permission: str) -> None:  # Updated
         """Verifies that the requesting use has the specified permission for the Global
         scope.
 
@@ -139,12 +151,12 @@ class AuthorizationHandler(BaseHandler):
         Returns:
             None
         """
-        if permission not in self.current_user.global_permissions:
+        if not self.queryFilter.check_global_roles(permission):
             raise RequestForbidden
 
     def verify_user_permission_for_object(
-        self, permission: str, obj: Union[Document, BrewtilsModel]
-    ) -> None:
+        self, permission: str, obj: BrewtilsModel
+    ) -> None:  # Updated
         """Verifies that the requesting user has the specified permission for the
         given object.
 
@@ -159,22 +171,19 @@ class AuthorizationHandler(BaseHandler):
         Returns:
             None
         """
-        if not user_has_permission_for_object(self.current_user, permission, obj):
+
+        if not self.modelFilter.filter_object(user=self.current_user, permission=permission, obj=obj):
             raise RequestForbidden
 
-    def _anonymous_superuser(self) -> "User":
+    def _anonymous_superuser(self) -> User:  # Updated
         """Return a User object with all permissions for all gardens"""
-        anonymous_superuser = User(username="anonymous")
+        anonymous_superuser = User(
+            username="anonymous", remote_roles=[], local_roles=[Role(name="superuser", permission="GARDEN_ADMIN")]
+        )
 
         # Manually set the permissions cache (to all permissions for all gardens) since
         # the anonymous user has no actual role assignments from which the permissions
         # could be calculated
-        permissions = {"global_permissions": [], "domain_permissions": {}}
-
-        for permission in Permissions:
-            permissions["global_permissions"].append(permission.value)
-
-        anonymous_superuser.set_permissions_cache(permissions)
 
         return anonymous_superuser
 

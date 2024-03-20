@@ -24,8 +24,8 @@ from beer_garden.db.mongo.util import (
     check_indexes,
     ensure_local_garden,
     ensure_model_migration,
-    ensure_roles,
-    ensure_users,
+    # ensure_roles,
+    # ensure_users,
 )
 from beer_garden.errors import NotUniqueException
 
@@ -185,8 +185,8 @@ def initial_setup():
         check_indexes(doc)
 
     ensure_local_garden()
-    ensure_roles()
-    ensure_users()
+    # ensure_roles()
+    # ensure_users()
 
 
 def get_pruner():

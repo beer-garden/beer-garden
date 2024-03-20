@@ -5,10 +5,11 @@ from uuid import UUID, uuid4
 import jwt
 from tornado.httputil import HTTPServerRequest
 
+from brewtils.models import User, UserToken
+
 from beer_garden import config
+from beer_garden.user import create_token
 from beer_garden.api.http.authentication.login_handlers import enabled_login_handlers
-from beer_garden.authorization import permissions_for_user
-from beer_garden.db.mongo.models import User, UserToken
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
 
 
@@ -53,7 +54,7 @@ def issue_token_pair(user: User, refresh_expiration: Optional[datetime] = None) 
     access_token = _generate_access_token(user, token_uuid)
     refresh_token = _generate_refresh_token(user, token_uuid, expiration)
 
-    UserToken(expires_at=expiration, user=user, uuid=token_uuid).save()
+    token = create_token(UserToken(expires_at=expiration, user=user, uuid=token_uuid))
 
     return {"access": access_token, "refresh": refresh_token}
 
@@ -190,6 +191,16 @@ def _generate_access_token(user: User, identifier: UUID) -> str:
     """Generates a JWT access token for a user containing the user's permissions"""
     secret_key = config.get("auth").token_secret
 
+    roles = []
+
+    if user.local_roles:
+        for role in user.local_roles:
+            roles.append(role)
+    
+    if user.remote_roles:
+        for role in user.remote_roles:
+            roles.append(role)
+
     jwt_headers = {"alg": "HS256", "typ": "JWT"}
     jwt_payload = {
         "jti": str(identifier),
@@ -198,7 +209,7 @@ def _generate_access_token(user: User, identifier: UUID) -> str:
         "exp": _get_access_token_expiration(),
         "type": "access",
         "username": user.username,
-        "permissions": permissions_for_user(user),
+        "roles": roles,
     }
 
     access_token = jwt.encode(jwt_payload, key=secret_key, headers=jwt_headers)

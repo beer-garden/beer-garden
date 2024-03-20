@@ -1041,8 +1041,23 @@ def handle_event(event):
                 update_request_latency_garden(existing_request, event)
 
             if existing_request is None:
+                if not get_users:
+                    from beer_garden.user import get_users
+
                 # Attempt to create the request, if it already exists then continue on
                 try:
+                    # User mappings back to local usernames
+                    if event.payload.requester:
+                        foundUser = False
+                        for user in get_users():
+                            for remote_user_map in user.remote_user_mappings:
+                                if remote_user_map.target_garden == event.garden and remote_user_map.username == event.payload.requester:
+                                    event.payload.requester = user.username
+                                    foundUser = True
+                                    break
+                            if foundUser:
+                                break
+
                     db.create(event.payload)
                 except NotUniqueException:
                     pass

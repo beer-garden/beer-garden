@@ -13,10 +13,10 @@ from beer_garden.db.mongo.models import (
     Garden,
     Job,
     RawFile,
-    RemoteRole,
-    RemoteUser,
+    # RemoteRole,
+    # RemoteUser,
     Request,
-    Role,
+    LocalRole,
     System,
     User,
     UserToken,
@@ -40,9 +40,9 @@ def data_cleanup():
     Job.drop_collection()
     RawFile.drop_collection()
     Request.drop_collection()
-    RemoteRole.drop_collection()
-    RemoteUser.drop_collection()
-    Role.drop_collection()
+    # RemoteRole.drop_collection()
+    # RemoteUser.drop_collection()
+    LocalRole.drop_collection()
     System.drop_collection()
     User.drop_collection()
     UserToken.drop_collection()
