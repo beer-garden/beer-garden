@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.25.0
+
+TBD
+
+- Added Topics API and classes to support dynamic topic subscribers
+
 # 3.24.5
 
 TBD
