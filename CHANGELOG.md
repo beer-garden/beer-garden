@@ -12,11 +12,6 @@ TBD
 - Garden Receiving connections heartbeats are only updated on the half windows for timeout windows. If no timeout window is set, the value is not populated.
 - Utilized the TTL for In_Progress requests to set Expiration windows for Requests on PIKA, to handle backups of requests that Beer Garden has already cancelled.
 - Optimized UI Rest calls to load only Local Garden with Children
-
-# 3.24.4
-
-TBD
-
 - Updated how STOMP URL preview is formatted on Garden Admin page
 
 # 3.24.4
