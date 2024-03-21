@@ -242,23 +242,20 @@ export default function adminGardenController(
       url = url + "/" + connection.config["url_prefix"];
     }
 
+    //const regex = /^/+/;
+    //const regex2 = //+$/;
+
     if (isReceiving){
       if (connection.config["subscribe_destination"] !== undefined){
-        if (connection.config["subscribe_destination"].charAt(0) != "/" && url.charAt(url.length - 1) != "/"){
-          url = url + "/";
-        } else if (connection.config["send_destination"].charAt(0) == "/" && url.charAt(url.length - 1) == "/"){
-          url = url.substring(0, url.length - 2);
-        }
-        url = url + connection.config["subscribe_destination"];
+        let sub_dest = connection.config["subscribe_destination"].replace(/^\/+/, "");
+        url = url.replace(/\/+$/, "");
+        url = url.concat("/", sub_dest);
       }
     } else {
       if (connection.config["send_destination"] !== undefined){
-        if (connection.config["send_destination"].charAt(0) != "/" && url.charAt(url.length - 1) != "/"){
-          url = url + "/";
-        } else if (connection.config["send_destination"].charAt(0) == "/" && url.charAt(url.length - 1) == "/"){
-          url = url.substring(0, url.length - 2);
-        }
-        url = url + connection.config["send_destination"];
+        let send_dest = connection.config["send_destination"].replace(/^\/+/, "");
+        url = url.replace(/\/+$/, "");
+        url = url.concat("/", send_dest);
       }
     }
 
