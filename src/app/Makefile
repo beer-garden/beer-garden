@@ -102,7 +102,7 @@ format: ## Run black formatter in-line
 lint: ## check style with flake8, black and isort
 	flake8 $(MODULE_NAME) $(TEST_DIR)
 	black --check --diff $(MODULE_NAME) $(TEST_DIR)
-	isort --check-only --diff $(MODULE_NAME)
+	isort --check-only --diff --thirdparty brewtils $(MODULE_NAME)
 
 
 # Complexity checks

@@ -223,7 +223,7 @@ export default function adminGardenController(
     return garden.connection_type == "LOCAL";
   }
 
-  $scope.getConnectionUrl = function(connection) {
+  $scope.getConnectionUrl = function(connection, isReceiving) {
     let url = "";
 
     if (connection.config["host"] !== undefined){
@@ -233,12 +233,27 @@ export default function adminGardenController(
       url = url + ":" + connection.config["port"];
     }
 
-    if (connection.config["url_prefix"] !== undefined){
+    if (
+      connection.config["url_prefix"] !== undefined &&
+      connection.config["url_prefix"] != null &&
+      connection.config["url_prefix"] != "" &&
+      connection.config["url_prefix"] != "/"
+    ) {
       url = url + "/" + connection.config["url_prefix"];
     }
 
-    if (connection.config["send_destination"] !== undefined){
-      url = url + "/" + connection.config["send_destination"];
+    if (isReceiving){
+      if (connection.config["subscribe_destination"] !== undefined){
+        let sub_dest = connection.config["subscribe_destination"].replace(/^\/+/, "");
+        url = url.replace(/\/+$/, "");
+        url = url.concat("/", sub_dest);
+      }
+    } else {
+      if (connection.config["send_destination"] !== undefined){
+        let send_dest = connection.config["send_destination"].replace(/^\/+/, "");
+        url = url.replace(/\/+$/, "");
+        url = url.concat("/", send_dest);
+      }
     }
 
     return url;
