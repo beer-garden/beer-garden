@@ -47,6 +47,12 @@ def create_token(token: UserToken):
     """
     return db.create(token)
 
+def get_token(uuid: str):
+    """
+    """
+    return db.query_unique(UserToken, uuid=uuid, raise_missing=True)
+
+
 def revoke_tokens(user: User) -> None:
     """Remove all tokens from the user's list of valid tokens. This is useful for
     requiring the user to explicitly login, which one may want to do for a variety
@@ -55,12 +61,16 @@ def revoke_tokens(user: User) -> None:
     for user_token in db.query(UserToken, user__username=user.username):
         db.delete(user_token)
 
-def get_user(username: str) -> User:
+def get_user(username: str = None, id: str = None, include_roles: bool = True) -> User:
     """
     """
-    user = db.query_unique(User, username=username, raise_missing=True)
-    for role in user.roles:
-        user.local_roles.append(get_role(role))
+    if username:
+        user = db.query_unique(User, username=username, raise_missing=True)
+    else:
+        user = db.query_unique(User, id=id, raise_missing=True)
+    if include_roles:
+        for role in user.roles:
+            user.local_roles.append(get_role(role))
     
     return user
 
@@ -86,7 +96,11 @@ def create_user(user: User) -> User:
     if user.password:
         set_password(user)
 
-    return db.create(user)
+    user = db.create(user)
+    user.local_roles = []
+    for role in user.roles:
+        user.local_roles.append(get_role(role))
+    return user
 
 def delete_user(user: User = None, username: str = None) -> User:
     """Creates a User using the provided kwargs. The created user is saved to the

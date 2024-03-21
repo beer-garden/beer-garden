@@ -1023,12 +1023,12 @@ class UserToken(MongoModel, Document):
 
     issued_at = DateTimeField(required=True, default=datetime.datetime.utcnow)
     expires_at = DateTimeField(required=True)
-    user = LazyReferenceField("User", required=True, reverse_delete_rule=CASCADE)
+    username = StringField()
     uuid = StringField()
 
     meta = {
         "indexes": [
-            "user",
+            "username",
             "uuid",
             {"fields": ["expires_at"], "expireAfterSeconds": 0},
         ]

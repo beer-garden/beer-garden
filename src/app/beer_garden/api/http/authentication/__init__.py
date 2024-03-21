@@ -8,9 +8,10 @@ from tornado.httputil import HTTPServerRequest
 from brewtils.models import User, UserToken
 
 from beer_garden import config
-from beer_garden.user import create_token
+from beer_garden.user import create_token, get_user, get_token
 from beer_garden.api.http.authentication.login_handlers import enabled_login_handlers
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
+from mongoengine import DoesNotExist
 
 
 def user_login(request: HTTPServerRequest) -> Optional[User]:
@@ -54,7 +55,7 @@ def issue_token_pair(user: User, refresh_expiration: Optional[datetime] = None) 
     access_token = _generate_access_token(user, token_uuid)
     refresh_token = _generate_refresh_token(user, token_uuid, expiration)
 
-    token = create_token(UserToken(expires_at=expiration, user=user, uuid=token_uuid))
+    token = create_token(UserToken(expires_at=expiration, username=user.username, uuid=token_uuid))
 
     return {"access": access_token, "refresh": refresh_token}
 
@@ -132,19 +133,21 @@ def get_user_from_token(access_token: dict, revoke_expired=True) -> User:
             longer exists.
     """
     try:
-        user = User.objects.get(id=access_token["sub"])
-    except User.DoesNotExist:
+        user = get_user(id=access_token["sub"], include_roles=False)
+    except DoesNotExist:
         raise InvalidTokenException
 
     try:
-        _ = UserToken.objects.get(uuid=access_token["jti"])
-    except UserToken.DoesNotExist:
+        _ = get_token(uuid=access_token["jti"])
+    except DoesNotExist:
         if revoke_expired:
             user.revoke_tokens()
 
         raise ExpiredTokenException
 
-    user.set_permissions_cache(access_token["permissions"])
+    user.roles = []
+    user.local_roles = access_token["roles"]
+    user.remote_roles = []
 
     return user
 
