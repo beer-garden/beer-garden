@@ -242,9 +242,6 @@ export default function adminGardenController(
       url = url + "/" + connection.config["url_prefix"];
     }
 
-    //const regex = /^/+/;
-    //const regex2 = //+$/;
-
     if (isReceiving){
       if (connection.config["subscribe_destination"] !== undefined){
         let sub_dest = connection.config["subscribe_destination"].replace(/^\/+/, "");
