@@ -1,9 +1,10 @@
 # Beer Garden Changelog
 
-# 3.24.5
+# 3.25.0
 
 TBD
 
+- Added Topics API and classes to support dynamic topic subscribers
 - Now show alert on Garden Admin page when a Sync event is seen
 - Fixed bug where outbound filtering removing Username/Password from STOMP connections for internal events
 - Fixed order of Gardens and Connections on Garden Admin page

@@ -41,6 +41,8 @@ ModelType = Union[
     Type[brewtils.models.Garden],
     Type[brewtils.models.File],
     Type[brewtils.models.FileChunk],
+    Type[brewtils.models.Topic],
+    Type[brewtils.models.Subscriber],
 ]
 
 ModelItem = Union[
@@ -53,6 +55,8 @@ ModelItem = Union[
     brewtils.models.Garden,
     brewtils.models.File,
     brewtils.models.FileChunk,
+    brewtils.models.Topic,
+    brewtils.models.Subscriber,
 ]
 
 _model_map = {}
