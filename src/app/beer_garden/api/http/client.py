@@ -16,7 +16,7 @@ class SerializeHelper(object):
     def __init__(self):
         self.model_filter = ModelFilter()
 
-    async def __call__(self, operation: Operation, serialize_kwargs=None, current_user: User=None, current_permission:str=None, **kwargs):
+    async def __call__(self, operation: Operation, serialize_kwargs=None, current_user: User=None, minimum_permission:str=None, **kwargs):
         operation.source_api = "HTTP"
         result = beer_garden.router.route(operation)
 
@@ -24,8 +24,8 @@ class SerializeHelper(object):
         if isawaitable(result):
             result = await result
 
-        if current_permission and current_user:
-            result = self.model_filter.filter_object(user=current_user, permission=current_permission, obj=result)
+        if minimum_permission and current_user:
+            result = self.model_filter.filter_object(user=current_user, permission=minimum_permission, obj=result)
 
         # Handlers overwhelmingly just write the response so default to serializing
         serialize_kwargs = serialize_kwargs or {}

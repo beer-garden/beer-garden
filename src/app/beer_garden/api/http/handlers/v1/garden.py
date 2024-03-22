@@ -39,8 +39,8 @@ class GardenAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-
-        response = await self.client(
+        self.minimum_permission = self.READ_ONLY
+        response = await self.process_operation(
             Operation(operation_type="GARDEN_READ", args=[garden_name])
         )
 
@@ -67,9 +67,10 @@ class GardenAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-        garden = self.get_or_raise(Garden, self.GARDEN_ADMIN, name=garden_name)
+        self.minimum_permission = self.GARDEN_ADMIN
+        garden = self.get_or_raise(Garden, name=garden_name)
 
-        await self.client(Operation(operation_type="GARDEN_DELETE", args=[garden.name]))
+        await self.process_operation(Operation(operation_type="GARDEN_DELETE", args=[garden.name]))
 
         self.set_status(204)
 
@@ -118,7 +119,8 @@ class GardenAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-        garden = self.get_or_raise(Garden, self.GARDEN_ADMIN, name=garden_name)
+        self.minimum_permission = self.GARDEN_ADMIN
+        garden = self.get_or_raise(Garden, name=garden_name)
 
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
@@ -126,14 +128,14 @@ class GardenAPI(AuthorizationHandler):
             operation = op.operation.lower()
 
             if operation in ["initializing", "running", "stopped", "block"]:
-                response = await self.client(
+                response = await self.process_operation(
                     Operation(
                         operation_type="GARDEN_UPDATE_STATUS",
                         args=[garden.name, operation.upper()],
                     )
                 )
             elif operation == "heartbeat":
-                response = await self.client(
+                response = await self.process_operation(
                     Operation(
                         operation_type="GARDEN_UPDATE_STATUS",
                         args=[garden.name, "RUNNING"],
@@ -145,7 +147,7 @@ class GardenAPI(AuthorizationHandler):
                 api = op.value.get("api")
 
                 if connection_type.upper() == "PUBLISHING":
-                    response = await self.client(
+                    response = await self.process_operation(
                         Operation(
                             operation_type="GARDEN_UPDATE_PUBLISHING_STATUS",
                             kwargs={"garden_name": garden.name, "api": api},
@@ -153,7 +155,7 @@ class GardenAPI(AuthorizationHandler):
                         )
                     )
                 elif connection_type.upper() == "RECEIVING":
-                    response = await self.client(
+                    response = await self.process_operation(
                         Operation(
                             operation_type="GARDEN_UPDATE_RECEIVING_STATUS",
                             kwargs={"garden_name": garden.name, "api": api},
@@ -162,7 +164,7 @@ class GardenAPI(AuthorizationHandler):
                     )
 
             elif operation == "sync":
-                response = await self.client(
+                response = await self.process_operation(
                     Operation(
                         operation_type="GARDEN_SYNC",
                         kwargs={"sync_target": garden.name},
@@ -207,8 +209,8 @@ class GardenListAPI(AuthorizationHandler):
         #     self.current_user, GARDEN_READ, _local_garden
         # ):
         #     permitted_gardens_list.append(_local_garden)
-
-        permitted_gardens_list = await self.client(
+        self.minimum_permission = self.READ_ONLY
+        permitted_gardens_list = await self.process_operation(
             Operation(operation_type="GARDEN_READ_ALL")
         )
         self.write(permitted_gardens_list)
@@ -248,11 +250,12 @@ class GardenListAPI(AuthorizationHandler):
         tags:
           - Garden
         """
+        self.minimum_permission = self.GARDEN_ADMIN
         garden = SchemaParser.parse_garden(self.request.decoded_body, from_string=True)
 
-        self.verify_user_permission_for_object(self.GARDEN_ADMIN, garden)
+        self.verify_user_permission_for_object(garden)
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(
                 operation_type="GARDEN_CREATE",
                 args=[garden],
@@ -298,7 +301,8 @@ class GardenListAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-        self.verify_user_permission_for_object(self.GARDEN_ADMIN, local_garden())
+        self.minimum_permission = self.GARDEN_ADMIN
+        self.verify_user_permission_for_object(local_garden())
 
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
@@ -306,14 +310,14 @@ class GardenListAPI(AuthorizationHandler):
             operation = op.operation.lower()
 
             if operation == "rescan":
-                await self.client(
+                await self.process_operation(
                     Operation(
                         operation_type="GARDEN_RESCAN",
                     )
                 )
 
             elif operation == "sync":
-                await self.client(
+                await self.process_operation(
                     Operation(
                         operation_type="GARDEN_SYNC",
                     )
@@ -321,7 +325,7 @@ class GardenListAPI(AuthorizationHandler):
             elif operation == "sync_users":
                 # requires GARDEN_UPDATE for all gardens
                 for garden in Garden.objects.all():
-                    self.verify_user_permission_for_object(self.GARDEN_ADMIN, garden)
+                    self.verify_user_permission_for_object(garden)
 
                 initiate_user_sync()
             else:

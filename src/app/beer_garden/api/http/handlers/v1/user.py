@@ -34,7 +34,7 @@ class UserAPI(AuthorizationHandler):
           - Users
         """
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(
                 operation_type="USER_READ",
                 args=[username],
@@ -64,7 +64,7 @@ class UserAPI(AuthorizationHandler):
           - Users
         """
         self.verify_user_global_permission(self.GARDEN_ADMIN)
-        await self.client(
+        await self.process_operation(
             Operation(
                 operation_type="USER_DELETE",
                 args=[username],
@@ -112,7 +112,7 @@ class UserAPI(AuthorizationHandler):
             operation = op.operation.lower()
 
             if operation == "update":
-                response = await self.client(
+                response = await self.process_operation(
                         Operation(
                             operation_type="USER_UPDATE",
                             kwargs=op.value,
@@ -139,7 +139,7 @@ class UserListAPI(AuthorizationHandler):
           - Users
         """
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(
                 operation_type="USER_READ_ALL",
             )
@@ -177,7 +177,7 @@ class UserListAPI(AuthorizationHandler):
             self.request.decoded_body, from_string=True
         )
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(
                 operation_type="USER_CREATE",
                 args=[user_model]
@@ -220,7 +220,7 @@ class UserPasswordChangeAPI(AuthorizationHandler):
         except ValidationError as exc:
             raise BadRequest(reason=f"{exc}")
 
-        await self.client(
+        await self.process_operation(
             Operation(
                 operation_type="USER_UPDATE",
                 args=[user],

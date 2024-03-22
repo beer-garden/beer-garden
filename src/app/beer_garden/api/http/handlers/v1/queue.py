@@ -28,7 +28,7 @@ class QueueAPI(AuthorizationHandler):
         """
         self.verify_user_permission_for_object(self.OPERATOR, local_garden())
 
-        await self.client(Operation(operation_type="QUEUE_DELETE", args=[queue_name]))
+        await self.process_operation(Operation(operation_type="QUEUE_DELETE", args=[queue_name]))
 
         self.set_status(204)
 
@@ -52,7 +52,7 @@ class QueueListAPI(AuthorizationHandler):
         """
         self.verify_user_permission_for_object(self.OPERATOR, local_garden())
 
-        response = await self.client(Operation(operation_type="QUEUE_READ"))
+        response = await self.process_operation(Operation(operation_type="QUEUE_READ"))
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -71,6 +71,6 @@ class QueueListAPI(AuthorizationHandler):
         """
         self.verify_user_permission_for_object(self.OPERATOR, local_garden())
 
-        await self.client(Operation(operation_type="QUEUE_DELETE_ALL"))
+        await self.process_operation(Operation(operation_type="QUEUE_DELETE_ALL"))
 
         self.set_status(204)

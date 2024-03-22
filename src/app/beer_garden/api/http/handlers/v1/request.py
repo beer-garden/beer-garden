@@ -43,9 +43,10 @@ class RequestAPI(AuthorizationHandler):
         tags:
           - Requests
         """
-        _ = self.get_or_raise(Request, self.READ_ONLY, id=request_id)
+        self.minimum_permission = self.READ_ONLY
+        _ = self.get_or_raise(Request, id=request_id)
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(operation_type="REQUEST_READ", args=[request_id])
         )
 
@@ -93,7 +94,8 @@ class RequestAPI(AuthorizationHandler):
         tags:
           - Requests
         """
-        _ = self.get_or_raise(Request, self.OPERATOR, id=request_id)
+        self.minimum_permission = self.OPERATOR
+        _ = self.get_or_raise(Request, id=request_id)
 
         operation = Operation(args=[request_id])
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
@@ -127,7 +129,7 @@ class RequestAPI(AuthorizationHandler):
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
-        response = await self.client(operation)
+        response = await self.process_operation(operation)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -155,9 +157,10 @@ class RequestOutputAPI(AuthorizationHandler):
         tags:
           - Requests
         """
-        _ = self.get_or_raise(Request, self.READ_ONLY, id=request_id)
+        self.minimum_permission = self.READ_ONLY
+        _ = self.get_or_raise(Request, id=request_id)
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(operation_type="REQUEST_READ", args=[request_id]),
             serialize_kwargs={"to_string": False},
         )
@@ -358,11 +361,12 @@ class RequestListAPI(AuthorizationHandler):
         tags:
           - Requests
         """
+        self.minimum_permission = self.READ_ONLY
         # V1 API is a mess, it's basically written for datatables
         query_args = self._parse_datatables_parameters()
 
         # Add the filter for only requests the user is permitted to see
-        q_filter = self.permitted_objects_filter(Request, self.READ_ONLY)
+        q_filter = self.permitted_objects_filter(Request)
         query_args["q_filter"] = q_filter
 
         # There are also some sane parameters
@@ -377,7 +381,7 @@ class RequestListAPI(AuthorizationHandler):
         if query_args.get("include_fields"):
             serialize_kwargs["only"] = query_args.get("include_fields")
 
-        requests = await self.client(
+        requests = await self.process_operation(
             Operation(operation_type="REQUEST_READ_ALL", kwargs=query_args),
             serialize_kwargs=serialize_kwargs,
         )
@@ -463,6 +467,8 @@ class RequestListAPI(AuthorizationHandler):
         tags:
           - Requests
         """
+        self.minimum_permission = self.OPERATOR
+
         if self.request.mime_type == "application/json":
             request_model = self.parser.parse_request(
                 self.request.decoded_body, from_string=True
@@ -474,7 +480,7 @@ class RequestListAPI(AuthorizationHandler):
         else:
             raise ModelValidationError("Unsupported or missing content-type header")
 
-        self.verify_user_permission_for_object(self.OPERATOR, request_model)
+        self.verify_user_permission_for_object(request_model)
 
         if self.current_user:
             request_model.requester = self.current_user.username
@@ -487,7 +493,7 @@ class RequestListAPI(AuthorizationHandler):
             self.request.ignore_latency = True
 
         try:
-            created_request = await self.client(
+            created_request = await self.process_operation(
                 Operation(
                     operation_type="REQUEST_CREATE",
                     model=request_model,
@@ -558,7 +564,7 @@ class RequestListAPI(AuthorizationHandler):
         tags:
           - Requests
         """
-
+        self.minimum_permission = self.OPERATOR
         request_model = self.parser.parse_request(
             (
                 self.request.body.decode()
@@ -568,13 +574,13 @@ class RequestListAPI(AuthorizationHandler):
             from_string=True,
         )
 
-        self.verify_user_permission_for_object(self.OPERATOR, request_model)
+        self.verify_user_permission_for_object(request_model)
 
         if self.current_user:
             request_model.requester = self.current_user.username
 
         try:
-            update_request = await self.client(
+            update_request = await self.process_operation(
                 Operation(
                     operation_type="REQUEST_UPDATE",
                     model=request_model,
@@ -693,8 +699,8 @@ class RequestListAPI(AuthorizationHandler):
         tags:
           - Requests
         """
-
-        self.verify_user_global_permission(self.PLUGIN_ADMIN)
+        self.minimum_permission = self.PLUGIN_ADMIN
+        self.verify_user_global_permission()
 
         query_kwargs = {}
         for supportedArg in [
@@ -716,7 +722,7 @@ class RequestListAPI(AuthorizationHandler):
             if value is not None:
                 query_kwargs[supportedArg] = value
 
-        await self.client(
+        await self.process_operation(
             Operation(operation_type="REQUEST_DELETE", kwargs=query_kwargs)
         )
 

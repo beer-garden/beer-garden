@@ -44,13 +44,14 @@ class ForwardAPI(AuthorizationHandler):
         tags:
           - Forward
         """
-        self.verify_user_global_permission(self.GARDEN_ADMIN)
+        self.minimum_permission = self.GARDEN_ADMIN
+        self.verify_user_global_permission()
 
         operation = SchemaParser.parse_operation(
             self.request.decoded_body, from_string=True
         )
 
-        task = asyncio.create_task(self.client(operation))
+        task = asyncio.create_task(self.process_operation(operation))
 
         # Deal with blocking
         blocking = self.get_argument("blocking", default="").lower() == "true"

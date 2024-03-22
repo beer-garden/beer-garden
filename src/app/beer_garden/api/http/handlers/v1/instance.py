@@ -33,9 +33,10 @@ class InstanceAPI(AuthorizationHandler):
         tags:
           - Instances
         """
-        _ = self.get_or_raise(System, self.READ_ONLY, instances__id=instance_id)
+        self.minimum_permission = self.READ_ONLY
+        _ = self.get_or_raise(System, instances__id=instance_id)
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(operation_type="INSTANCE_READ", args=[instance_id])
         )
 
@@ -62,9 +63,10 @@ class InstanceAPI(AuthorizationHandler):
         tags:
           - Instances
         """
-        _ = self.get_or_raise(System, self.PLUGIN_ADMIN, instances__id=instance_id)
+        self.minimum_permission = self.PLUGIN_ADMIN
+        _ = self.get_or_raise(System, instances__id=instance_id)
 
-        await self.client(
+        await self.process_operation(
             Operation(operation_type="INSTANCE_DELETE", args=[instance_id])
         )
 
@@ -115,7 +117,8 @@ class InstanceAPI(AuthorizationHandler):
         tags:
           - Instances
         """
-        _ = self.get_or_raise(System, self.PLUGIN_ADMIN, instances__id=instance_id)
+        self.minimum_permission = self.PLUGIN_ADMIN
+        _ = self.get_or_raise(System, instances__id=instance_id)
 
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
@@ -127,7 +130,7 @@ class InstanceAPI(AuthorizationHandler):
                 if op.value:
                     runner_id = op.value.get("runner_id")
 
-                response = await self.client(
+                response = await self.process_operation(
                     Operation(
                         operation_type="INSTANCE_INITIALIZE",
                         args=[instance_id],
@@ -136,28 +139,28 @@ class InstanceAPI(AuthorizationHandler):
                 )
 
             elif operation == "start":
-                response = await self.client(
+                response = await self.process_operation(
                     Operation(operation_type="INSTANCE_START", args=[instance_id])
                 )
 
             elif operation == "restart":
-                response = await self.client(
+                response = await self.process_operation(
                     Operation(operation_type="INSTANCE_RESTART", args=[instance_id])
                 )
 
             elif operation == "stop":
-                response = await self.client(
+                response = await self.process_operation(
                     Operation(operation_type="INSTANCE_STOP", args=[instance_id])
                 )
 
             elif operation == "heartbeat":
-                response = await self.client(
+                response = await self.process_operation(
                     Operation(operation_type="INSTANCE_HEARTBEAT", args=[instance_id])
                 )
 
             elif operation == "replace":
                 if op.path.lower() == "/status":
-                    response = await self.client(
+                    response = await self.process_operation(
                         Operation(
                             operation_type="INSTANCE_UPDATE",
                             args=[instance_id],
@@ -169,7 +172,7 @@ class InstanceAPI(AuthorizationHandler):
 
             elif operation == "update":
                 if op.path.lower() == "/metadata":
-                    response = await self.client(
+                    response = await self.process_operation(
                         Operation(
                             operation_type="INSTANCE_UPDATE",
                             args=[instance_id],
@@ -225,7 +228,8 @@ class InstanceLogAPI(AuthorizationHandler):
         tags:
           - Instances
         """
-        _ = self.get_or_raise(System, self.PLUGIN_ADMIN, instances__id=instance_id)
+        self.minimum_permission = self.PLUGIN_ADMIN
+        _ = self.get_or_raise(System, instances__id=instance_id)
 
         start_line = self.get_query_argument("start_line", default=None)
         if start_line == "":
@@ -248,7 +252,7 @@ class InstanceLogAPI(AuthorizationHandler):
     async def _generate_get_response(self, instance_id, start_line, end_line):
         wait_future = Future()
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(
                 operation_type="INSTANCE_LOGS",
                 kwargs={
@@ -300,9 +304,10 @@ class InstanceQueuesAPI(AuthorizationHandler):
         tags:
           - Queues
         """
-        _ = self.get_or_raise(System, self.PLUGIN_ADMIN, instances__id=instance_id)
+        self.minimum_permission = self.PLUGIN_ADMIN
+        _ = self.get_or_raise(System, instances__id=instance_id)
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(operation_type="QUEUE_READ_INSTANCE", args=[instance_id])
         )
 

@@ -19,11 +19,12 @@ class NamespaceListAPI(AuthorizationHandler):
         tags:
           - Namespace
         """
-        permitted_gardens = self.permissioned_queryset(Garden, self.READ_ONLY)
-        permitted_requests = self.permissioned_queryset(Request, self.READ_ONLY)
-        permitted_systems = self.permissioned_queryset(System, self.READ_ONLY)
+        self.minimum_permission = self.READ_ONLY
+        permitted_gardens = self.permissioned_queryset(Garden)
+        permitted_requests = self.permissioned_queryset(Request)
+        permitted_systems = self.permissioned_queryset(System)
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(
                 operation_type="NAMESPACE_READ_ALL",
                 kwargs={

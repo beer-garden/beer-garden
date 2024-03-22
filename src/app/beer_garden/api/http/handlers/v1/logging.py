@@ -30,7 +30,8 @@ class LoggingAPI(AuthorizationHandler):
         tags:
           - Logging
         """
-        self.verify_user_permission_for_object(self.OPERATOR, local_garden())
+        self.minimum_permission = self.PLUGIN_ADMIN
+        self.verify_user_permission_for_object(local_garden())
 
         local = self.get_query_argument("local", None)
         if local is None:
@@ -38,7 +39,7 @@ class LoggingAPI(AuthorizationHandler):
         else:
             local = bool(local.lower() == "true")
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(operation_type="PLUGIN_LOG_READ", kwargs={"local": local})
         )
 
@@ -68,9 +69,10 @@ class LoggingConfigAPI(AuthorizationHandler):
         tags:
           - Deprecated
         """
-        self.verify_user_permission_for_object(self.OPERATOR, local_garden())
+        self.minimum_permission = self.PLUGIN_ADMIN
+        self.verify_user_permission_for_object(local_garden())
 
-        response = await self.client(Operation(operation_type="PLUGIN_LOG_READ_LEGACY"))
+        response = await self.process_operation(Operation(operation_type="PLUGIN_LOG_READ_LEGACY"))
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -103,7 +105,8 @@ class LoggingConfigAPI(AuthorizationHandler):
         tags:
           - Deprecated
         """
-        self.verify_user_permission_for_object(self.OPERATOR, local_garden())
+        self.minimum_permission = self.PLUGIN_ADMIN
+        self.verify_user_permission_for_object( local_garden())
 
         patch = SchemaParser.parse_patch(
             self.request.decoded_body, many=True, from_string=True
@@ -112,7 +115,7 @@ class LoggingConfigAPI(AuthorizationHandler):
         response = None
         for op in patch:
             if op.operation == "reload":
-                response = await self.client(
+                response = await self.process_operation(
                     Operation(operation_type="PLUGIN_LOG_RELOAD")
                 )
             else:

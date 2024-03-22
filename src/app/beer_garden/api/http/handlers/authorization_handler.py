@@ -30,6 +30,8 @@ class AuthorizationHandler(BaseHandler):
     queryFilter = QueryFilterBuilder()
     modelFilter = ModelFilter()
 
+    minimum_permission = READ_ONLY
+
 
     def get_current_user(self) -> User:
         """Retrieve the appropriate User object for the request. If the auth setting
@@ -50,7 +52,7 @@ class AuthorizationHandler(BaseHandler):
             return self._anonymous_superuser()
         
     async def process_operation(self, operation: Operation):
-        return await self.client(operation, current_user=self.current_user, current_permission=self.current_permission)
+        return await self.client(operation, current_user=self.current_user, minimum_permission=self.minimum_permission)
 
 
     def get_or_raise(self, model: Type[Document], **kwargs):  # Updated
@@ -72,7 +74,7 @@ class AuthorizationHandler(BaseHandler):
               if the requesting user does not have permissions to the object
         """
         provided_filter = Q(**kwargs) & self.queryFilter.build_filter(
-            self.current_user, self.current_permission, model
+            self.current_user, self.minimum_permission, model
         )
 
         try:
@@ -120,7 +122,7 @@ class AuthorizationHandler(BaseHandler):
                 model type
         """
 
-        q_filter = self.queryFilter.build_filter(self.current_user, self.current_permission, model)
+        q_filter = self.queryFilter.build_filter(self.current_user, self.minimum_permission, model)
 
         if q_filter is None:
             raise RequestForbidden
@@ -140,7 +142,7 @@ class AuthorizationHandler(BaseHandler):
         # duplication of the work required to identify and retrieve the User object.
         _ = self.current_user
 
-    def verify_user_global_permission(self, permission: str) -> None:  # Updated
+    def verify_user_global_permission(self) -> None:  # Updated
         """Verifies that the requesting use has the specified permission for the Global
         scope.
 
@@ -153,7 +155,7 @@ class AuthorizationHandler(BaseHandler):
         Returns:
             None
         """
-        if not self.queryFilter.check_global_roles(permission):
+        if not self.queryFilter.check_global_roles(self.minimum_permission):
             raise RequestForbidden
 
     def verify_user_permission_for_object(
@@ -173,7 +175,7 @@ class AuthorizationHandler(BaseHandler):
             None
         """
 
-        if not self.modelFilter.filter_object(user=self.current_user, permission=self.current_permission, obj=obj):
+        if not self.modelFilter.filter_object(user=self.current_user, permission=self.minimum_permission, obj=obj):
             raise RequestForbidden
 
     def _anonymous_superuser(self) -> User:  # Updated
