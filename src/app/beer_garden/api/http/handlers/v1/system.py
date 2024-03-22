@@ -51,7 +51,8 @@ class SystemAPI(AuthorizationHandler):
         tags:
           - Systems
         """
-        system = self.get_or_raise(System, self.READ_ONLY, id=system_id)
+        self.current_permission = self.READ_ONLY
+        system = self.get_or_raise(System, id=system_id)
 
         # This is only here because of backwards compatibility
         include_commands = (
@@ -97,9 +98,10 @@ class SystemAPI(AuthorizationHandler):
         tags:
           - Systems
         """
-        _ = self.get_or_raise(System, self.PLUGIN_ADMIN, id=system_id)
+        self.current_permission = self.PLUGIN_ADMIN
+        _ = self.get_or_raise(System, id=system_id)
 
-        await self.client(
+        await self.process_operation(
             Operation(
                 operation_type="SYSTEM_DELETE",
                 args=[system_id],
@@ -157,7 +159,8 @@ class SystemAPI(AuthorizationHandler):
         tags:
           - Systems
         """
-        _ = self.get_or_raise(System, self.PLUGIN_ADMIN, id=system_id)
+        self.current_permission = self.PLUGIN_ADMIN
+        _ = self.get_or_raise(System, id=system_id)
 
         kwargs = {}
         do_reload = False
@@ -210,7 +213,7 @@ class SystemAPI(AuthorizationHandler):
 
         if kwargs:
             response = _remove_queue_info(
-                await self.client(
+                await self.process_operation(
                     Operation(
                         operation_type="SYSTEM_UPDATE", args=[system_id], kwargs=kwargs
                     )
@@ -218,7 +221,7 @@ class SystemAPI(AuthorizationHandler):
             )
 
         if do_reload:
-            await self.client(
+            await self.process_operation(
                 Operation(operation_type="SYSTEM_RELOAD", args=[system_id])
             )
 
@@ -291,7 +294,8 @@ class SystemListAPI(AuthorizationHandler):
         tags:
           - Systems
         """
-        permitted_objects_filter = self.permitted_objects_filter(System, self.READ_ONLY)
+        self.current_permission = self.READ_ONLY
+        permitted_objects_filter = self.permitted_objects_filter(System)
 
         order_by = self.get_query_argument("order_by", None)
 
@@ -323,7 +327,7 @@ class SystemListAPI(AuthorizationHandler):
         if exclude_fields:
             serialize_kwargs["exclude"] = exclude_fields
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(
                 operation_type="SYSTEM_READ_ALL",
                 kwargs={
@@ -370,11 +374,12 @@ class SystemListAPI(AuthorizationHandler):
         tags:
           - Systems
         """
+        self.current_permission = self.PLUGIN_ADMIN
         system = SchemaParser.parse_system(self.request.decoded_body, from_string=True)
 
-        self.verify_user_permission_for_object(self.PLUGIN_ADMIN, system)
+        self.verify_user_permission_for_object(system)
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(
                 operation_type="SYSTEM_CREATE",
                 args=[system],

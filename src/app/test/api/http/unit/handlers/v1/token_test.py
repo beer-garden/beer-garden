@@ -8,6 +8,12 @@ from tornado.httpclient import HTTPError
 
 from beer_garden.api.http.authentication import issue_token_pair
 from beer_garden.db.mongo.models import User, UserToken
+from brewtils.models import User, UserToken
+from beer_garden.user import create_user, delete_user, get_token
+from beer_garden.errors import ExpiredTokenException, InvalidTokenException
+from mongoengine import DoesNotExist
+
+from beer_garden.db.mongo.models import UserToken as MongoUserToken
 
 
 @pytest.fixture
@@ -17,12 +23,10 @@ def user_password():
 
 @pytest.fixture
 def user(user_password):
-    user = User(username="testuser")
-    user.set_password(user_password)
-    user.save()
+    user = create_user(User(username="testuser", password=user_password))
 
     yield user
-    user.delete()
+    delete_user(user)
 
 
 class TestTokenAPI:
@@ -141,7 +145,7 @@ class TestTokenRefreshAPI:
         ]
         body = json.dumps({"refresh": refresh_token})
 
-        UserToken.drop_collection()
+        MongoUserToken.drop_collection()
 
         with pytest.raises(HTTPError) as excinfo:
             yield http_client.fetch(url, method="POST", body=body)
@@ -178,12 +182,13 @@ class TestTokenRevokeAPI:
             algorithms=[token_headers["alg"]],
         )
 
-        assert len(UserToken.objects.filter(uuid=decoded_refresh_token["jti"])) == 1
+        assert get_token(uuid=decoded_refresh_token["jti"])
 
         response = yield http_client.fetch(url, method="POST", body=body)
 
         assert response.code == 204
-        assert len(UserToken.objects.filter(uuid=decoded_refresh_token["jti"])) == 0
+        with pytest.raises(DoesNotExist):
+            get_token(uuid=decoded_refresh_token["jti"])
 
     @pytest.mark.gen_test
     def test_post_with_expired_refresh_token_returns_204(
@@ -207,7 +212,7 @@ class TestTokenRevokeAPI:
         refresh_token = issue_token_pair(user)["refresh"]
         body = json.dumps({"refresh": refresh_token})
 
-        UserToken.drop_collection()
+        MongoUserToken.drop_collection()
 
         response = yield http_client.fetch(url, method="POST", body=body)
 

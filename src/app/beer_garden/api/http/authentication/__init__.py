@@ -6,9 +6,10 @@ import jwt
 from tornado.httputil import HTTPServerRequest
 
 from brewtils.models import User, UserToken
+from brewtils.schema_parser import SchemaParser
 
 from beer_garden import config
-from beer_garden.user import create_token, get_user, get_token
+from beer_garden.user import create_token, get_user, get_token, delete_token
 from beer_garden.api.http.authentication.login_handlers import enabled_login_handlers
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
 from mongoengine import DoesNotExist
@@ -83,15 +84,16 @@ def refresh_token_pair(refresh_token: str) -> dict:
     decoded_refresh_token = decode_token(refresh_token)
 
     try:
-        refresh_token_obj = UserToken.objects.get(uuid=decoded_refresh_token["jti"])
-    except UserToken.DoesNotExist:
+        refresh_token_obj = get_token(uuid=decoded_refresh_token["jti"])
+    except DoesNotExist:
         raise ExpiredTokenException
 
     expiration = datetime.fromtimestamp(decoded_refresh_token["exp"], tz=timezone.utc)
     user = User.objects.get(id=decoded_refresh_token["sub"])
 
     new_token_pair = issue_token_pair(user, expiration)
-    refresh_token_obj.delete()
+
+    delete_token(refresh_token_obj)
 
     return new_token_pair
 
@@ -107,8 +109,8 @@ def revoke_token_pair(refresh_token: str) -> None:
     """
     try:
         decoded_refresh_token = decode_token(refresh_token)
-        UserToken.objects.get(uuid=decoded_refresh_token["jti"]).delete()
-    except (ExpiredTokenException, UserToken.DoesNotExist):
+        delete_token(get_token(uuid=decoded_refresh_token["jti"]))
+    except (ExpiredTokenException, DoesNotExist):
         # Since we're trying to revoke the token anyway, do nothing if it was already
         # expired or revoked
         pass
@@ -146,7 +148,7 @@ def get_user_from_token(access_token: dict, revoke_expired=True) -> User:
         raise ExpiredTokenException
 
     user.roles = []
-    user.local_roles = access_token["roles"]
+    user.local_roles = SchemaParser.parse_role(access_token["roles"], many=True, from_string=False)
     user.remote_roles = []
 
     return user
@@ -212,8 +214,9 @@ def _generate_access_token(user: User, identifier: UUID) -> str:
         "exp": _get_access_token_expiration(),
         "type": "access",
         "username": user.username,
-        "roles": roles,
+        "roles": SchemaParser.serialize_role(roles, to_string=False, many=True),
     }
+    
 
     access_token = jwt.encode(jwt_payload, key=secret_key, headers=jwt_headers)
 

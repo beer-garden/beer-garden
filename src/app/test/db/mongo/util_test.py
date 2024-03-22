@@ -9,7 +9,6 @@ import beer_garden.db.mongo.util
 from beer_garden import config
 from beer_garden.db.mongo.models import Garden, Role, User
 from beer_garden.db.mongo.util import (
-    PLUGIN_ROLE_PERMISSIONS,
     ensure_local_garden,
     ensure_roles,
     ensure_users,

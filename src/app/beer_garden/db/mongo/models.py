@@ -72,8 +72,8 @@ __all__ = [
     "Garden",
     "File",
     "FileChunk",
-    "LocalRole",
     "Role",
+    "RemoteRole",
     "RemoteRole",
     "User",
     "CommandPublishingBlocklist",
@@ -924,8 +924,37 @@ class CommandPublishingBlocklist(Document):
     }
 
 
-class Role(MongoModel):
+class Role(MongoModel, Document):
     brewtils_model = brewtils.models.Role
+
+    name = StringField()
+    description = StringField()
+    permission = StringField()
+    scope_gardens = ListField(field=StringField())
+    scope_namespaces = ListField(field=StringField())
+    scope_systems = ListField(field=StringField())
+    scope_instances = ListField(field=StringField())
+    scope_versions = ListField(field=StringField())
+    scope_commands = ListField(field=StringField())
+
+    meta = {
+        "indexes": [{"name": "unique_index", "fields": ["name"], "unique": True}],
+    }
+
+    def __str__(self) -> str:
+        return self.name
+
+    def clean(self):
+        """Validate before saving to the database"""
+
+        if self.permission not in brewtils.models.Role.PERMISSION_TYPES:
+            raise ModelValidationError(
+                f"Cannot save Role. No permission type {self.permission}"
+            )
+    
+
+class RemoteRole(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.RemoteRole
 
     name = StringField()
     description = StringField()
@@ -947,14 +976,6 @@ class Role(MongoModel):
             raise ModelValidationError(
                 f"Cannot save Role. No permission type {self.permission}"
             )
-    
-class LocalRole(Role, Document):
-    meta = {
-        "indexes": [{"name": "unique_index", "fields": ["name"], "unique": True}],
-    }
-
-class RemoteRole(Role, EmbeddedDocument):
-    pass
 
 
 class RemoteUserMap(MongoModel, EmbeddedDocument):

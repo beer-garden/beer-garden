@@ -52,6 +52,12 @@ def get_token(uuid: str):
     """
     return db.query_unique(UserToken, uuid=uuid, raise_missing=True)
 
+def delete_token(token: UserToken):
+    """
+    """
+    return db.delete(token)
+
+
 
 def revoke_tokens(user: User) -> None:
     """Remove all tokens from the user's list of valid tokens. This is useful for

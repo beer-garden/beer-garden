@@ -2,7 +2,7 @@
 from typing import Type, Union
 
 from brewtils.models import BaseModel as BrewtilsModel
-from brewtils.models import Role, User
+from brewtils.models import Role, User, Operation
 from mongoengine import Document, QuerySet, ValidationError
 from mongoengine.queryset.visitor import Q, QCombination
 
@@ -30,8 +30,6 @@ class AuthorizationHandler(BaseHandler):
     queryFilter = QueryFilterBuilder()
     modelFilter = ModelFilter()
 
-    # def __init__(self, *args, **kwargs):        
-    #     super.__init__(*args, **kwargs)
 
     def get_current_user(self) -> User:
         """Retrieve the appropriate User object for the request. If the auth setting
@@ -50,8 +48,12 @@ class AuthorizationHandler(BaseHandler):
                 raise AuthorizationRequired(reason="Authorization token expired")
         else:
             return self._anonymous_superuser()
+        
+    async def process_operation(self, operation: Operation):
+        return await self.client(operation, current_user=self.current_user, current_permission=self.current_permission)
 
-    def get_or_raise(self, model: Type[Document], permission: str, **kwargs):  # Updated
+
+    def get_or_raise(self, model: Type[Document], **kwargs):  # Updated
         """Get Document model objects specified by **kwargs if the requesting user
         has the given permission for that object.
 
@@ -70,7 +72,7 @@ class AuthorizationHandler(BaseHandler):
               if the requesting user does not have permissions to the object
         """
         provided_filter = Q(**kwargs) & self.queryFilter.build_filter(
-            self.current_user, permission, model
+            self.current_user, self.current_permission, model
         )
 
         try:
@@ -78,7 +80,7 @@ class AuthorizationHandler(BaseHandler):
         except (model.DoesNotExist, ValidationError):
             raise NotFound
 
-        self.verify_user_permission_for_object(permission, requested_object)
+        self.verify_user_permission_for_object(requested_object)
 
         return requested_object
 
@@ -100,7 +102,7 @@ class AuthorizationHandler(BaseHandler):
         return self.queryFilter.build_filter(self.current_user, permission, model)
 
     def permitted_objects_filter(
-        self, model: Type[Document], permission: str
+        self, model: Type[Document]
     ) -> QCombination:  # Updated
         """Returns a QCombination that can be used to filter a QuerySet down to the
         objects for which the requesting user has the given permission.
@@ -118,7 +120,7 @@ class AuthorizationHandler(BaseHandler):
                 model type
         """
 
-        q_filter = self.queryFilter.build_filter(self.current_user, permission, model)
+        q_filter = self.queryFilter.build_filter(self.current_user, self.current_permission, model)
 
         if q_filter is None:
             raise RequestForbidden
@@ -155,7 +157,7 @@ class AuthorizationHandler(BaseHandler):
             raise RequestForbidden
 
     def verify_user_permission_for_object(
-        self, permission: str, obj: BrewtilsModel
+        self, obj: BrewtilsModel
     ) -> None:  # Updated
         """Verifies that the requesting user has the specified permission for the
         given object.
@@ -163,7 +165,6 @@ class AuthorizationHandler(BaseHandler):
         Args:
             permission: The permission to check against
             obj: The object to check against. This can be either a brewtils model
-              or a mongoengine Document model.
 
         Raises:
             RequestForbidden: The user does not have the required object permissions
@@ -172,7 +173,7 @@ class AuthorizationHandler(BaseHandler):
             None
         """
 
-        if not self.modelFilter.filter_object(user=self.current_user, permission=permission, obj=obj):
+        if not self.modelFilter.filter_object(user=self.current_user, permission=self.current_permission, obj=obj):
             raise RequestForbidden
 
     def _anonymous_superuser(self) -> User:  # Updated

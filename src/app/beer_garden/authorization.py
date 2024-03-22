@@ -16,7 +16,7 @@ from brewtils.models import Event as BrewtilsEvent
 from mongoengine import Q
 import beer_garden.config as config
 
-# from mongoengine import Document, DoesNotExist, Q, QuerySet
+# from mongoengine import Document, DoesNaotExist, Q, QuerySet
 # from mongoengine.fields import ObjectIdField
 # from mongoengine.queryset.visitor import QCombination
 
@@ -254,10 +254,14 @@ class ModelFilter:
             if check_namespace and system_namespace is None:
                 system_namespace = system.namespace
 
-        if system and check_garden and garden_name is None:
-            garden_name = db.query_unique(
-                BrewtilsGarden, systems__name=system_name, raise_missing=True
-            ).name
+        if system_name and check_garden and garden_name is None:
+            gardens = db.query(BrewtilsGarden, systems__name=system_name)
+
+            if gardens and len(gardens) == 1:
+                garden_name = gardens[0].name
+            else:
+                # TODO: Add better Exception
+                raise Exception()
 
         for roles in [user.local_roles, user.remote_roles]:
             if any(
@@ -555,7 +559,7 @@ class ModelFilter:
                     if len(role.scope_instances) == 0:
                         filter_instances = False
 
-                    if not filter_commands and not filtered_instances:
+                    if not filter_commands and not filter_instances:
                         break
 
         # Filter Instances
@@ -702,19 +706,20 @@ class ModelFilter:
         permission_levels: list[str] = None,
         **kwargs
     ) -> BrewtilsModel:
+        
+        if not permission_levels:
+            permission_levels = generate_permission_levels(permission)
+
         if isinstance(obj, list):
             outputList = []
             for value in obj:
                 output = self.filter_object(
-                    user, value, permission_levels=permission_levels, **kwargs
+                    obj=value, user=user, permission_levels=permission_levels, **kwargs
                 )
                 if output:
                     outputList.append(output)
 
             return outputList
-
-        if not permission_levels:
-            permission_levels = generate_permission_levels(permission)
 
         if check_global_roles(user, permission_levels):
             return obj

@@ -23,7 +23,7 @@ from beer_garden.db.mongo.models import (
     Parameter,
     RawFile,
     Request,
-    LocalRole,
+    Role,
     System,
     User,
     UserToken,
@@ -587,18 +587,18 @@ class TestJob(object):
 class TestRole:
     @pytest.fixture(autouse=True)
     def drop(self, mongo_conn):
-        LocalRole.drop_collection()
+        Role.drop_collection()
 
     def test_create_with_valid_permissions(self):
 
-        role = LocalRole(name="test_role", permission="READ_ONLY")
+        role = Role(name="test_role", permission="READ_ONLY")
         role.save()
 
-        assert LocalRole.objects.filter(name="test_role").count() == 1
+        assert Role.objects.filter(name="test_role").count() == 1
 
     def test_create_with_invalid_permissions(self):
 
-        role = LocalRole(name="test_role", permission="invalid_permission")
+        role = Role(name="test_role", permission="invalid_permission")
 
         with pytest.raises(ModelValidationError):
             role.save()
@@ -611,7 +611,7 @@ class TestUser:
 
     @pytest.fixture()
     def role(self):
-        role = LocalRole(name="test_role", permission="READ_ONLY").save()
+        role = Role(name="test_role", permission="READ_ONLY").save()
         yield role
         role.delete()
 
