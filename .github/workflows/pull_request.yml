@@ -679,17 +679,20 @@ jobs:
         run: sleep 60s
         shell: bash
 
+      - name: Create reports directory
+        run: mkdir reports
+
       - name: Echo Jmeter Test
         uses: QAInsights/PerfAction@v5.6.2
         with:
           test-plan-path: ./test/jmeter/child_echo_request.jmx
-          args: ""
+          args: "-e -o ./reports/html/"
 
       - name: Upload JMeter Results
         uses: actions/upload-artifact@v3
         with:
-          name: jmeter-results
-          path: result.jtl
+          name: jmeter-html-reports
+          path: reports
           if-no-files-found: error
 
       - name: Grab logs from Child
