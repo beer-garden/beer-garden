@@ -644,7 +644,7 @@ jobs:
       - name: Update Docker Compose  
         run: |
           cp test/conf/docker-compose-parents-test.yml docker/docker-compose/docker-compose.yml
-          cp -r test/conf/beer_parent_children docker/docker-compose/
+          cp -r test/conf/beer_garden_parent_children docker/docker-compose/
         working-directory: ./
 
       - name: Checkout Local Plugins
