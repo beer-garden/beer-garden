@@ -22,7 +22,7 @@
       </ThreadGroup>
       <hashTree>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Child Echo Request">
-          <stringProp name="HTTPSampler.domain">beer-garden-parent</stringProp>
+          <stringProp name="HTTPSampler.domain">172.17.0.1</stringProp>
           <stringProp name="HTTPSampler.port">2337</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
           <stringProp name="HTTPSampler.path">/api/v1/requests?blocking=true&amp;timeout=-1</stringProp>
