@@ -620,7 +620,9 @@ jobs:
         uses: QAInsights/PerfAction@v5.6.2
         with:
           test-plan-path: ./test/jmeter/child_echo_request.jmx
-          args: "-e -o ./reports/html/ -JHostDomain=${ifconfig eth0 | grep 'inet' | awk '{print $2}'}"
+          args: "-e -o ./reports/html/ -JHostDomain=$HOSTNAME"
+        env:
+          HOSTNAME: ${{ifconfig eth0 | grep 'inet' | awk '{print $2}'}}
 
       # Custom tag extractor to find Brewtils Branch
       - name: Find Brewtils Branch
@@ -696,7 +698,9 @@ jobs:
         uses: QAInsights/PerfAction@v5.6.2
         with:
           test-plan-path: ./test/jmeter/child_echo_request.jmx
-          args: "-e -o ./reports/html/ -JHostDomain=${ifconfig eth0 | grep 'inet' | awk '{print $2}'}"
+          args: "-e -o ./reports/html/ -JHostDomain=$HOSTNAME"
+        env:
+          HOSTNAME: ${{ifconfig eth0 | grep 'inet' | awk '{print $2}'}}
 
       - name: Upload JMeter Results
         uses: actions/upload-artifact@v3
