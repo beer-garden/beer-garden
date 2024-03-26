@@ -612,6 +612,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Wait for Beer Garden to start
+        run: ifconfig
+        shell: bash
+
       # Custom tag extractor to find Brewtils Branch
       - name: Find Brewtils Branch
         uses: TheBurchLog/body-env-tag-action@1.0
