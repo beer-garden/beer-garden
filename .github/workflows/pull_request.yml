@@ -634,7 +634,7 @@ jobs:
           make package
           make clean-python
           docker build -t bgio/beer-garden:unstable -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:${{ matrix.python-version }}-alpine .
-          docker tag bgio/beer-garden:unstable bgio/beer-garden:grandparent
+          docker tag bgio/beer-garden:unstable bgio/beer-garden:parent
           if [ "${{ matrix.child }}" != "unstable" ]; then
             docker pull bgio/beer-garden:${{ matrix.child }}
           fi
