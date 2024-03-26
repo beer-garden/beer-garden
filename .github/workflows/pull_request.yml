@@ -613,7 +613,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: IP Address
-        run: ifconfig eth0 | grep 'inet' | awk '{print $2}'}
+        run: ifconfig eth0 | grep 'inet' | awk '{print $2}'
         shell: bash
 
       - name: Echo Jmeter Test
