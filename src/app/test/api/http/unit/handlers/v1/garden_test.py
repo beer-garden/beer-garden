@@ -207,6 +207,36 @@ def common_mocks(monkeypatch, garden_permitted):
     monkeypatch.setattr(beer_garden.router, "forward", generic_mock)
 
 
+class TestGardenAPI:
+    @pytest.mark.gen_test
+    def test_garden_reset_metrics(self, http_client, base_url, garden_permitted):
+        url = f"{base_url}/api/v1/gardens/{garden_permitted.name}"
+        headers = {
+            "Content-Type": "application/json",
+        }
+        patch_body = [{"operation": "reset_metrics"}]
+        request = HTTPRequest(
+            url, method="PATCH", headers=headers, body=json.dumps(patch_body)
+        )
+        response = yield http_client.fetch(request)
+        assert response.code == 200
+
+
+class TestGardenListAPI:
+    @pytest.mark.gen_test
+    def test_reset_metrics(self, http_client, base_url):
+        url = f"{base_url}/api/v1/gardens/"
+        headers = {
+            "Content-Type": "application/json",
+        }
+        patch_body = [{"operation": "reset_metrics"}]
+        request = HTTPRequest(
+            url, method="PATCH", headers=headers, body=json.dumps(patch_body)
+        )
+        response = yield http_client.fetch(request)
+        assert response.code == 204
+
+
 # class TestGardenAPI:
 #    @pytest.mark.gen_test
 #    def test_auth_disabled_returns_any_garden(

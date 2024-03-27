@@ -91,7 +91,10 @@ class GardenAPI(AuthorizationHandler):
           * running
           * stopped
           * block
-          * update
+          * heartbeat
+          * connection
+          * sync
+          * reset_metrics
 
           ```JSON
           [
@@ -172,6 +175,13 @@ class GardenAPI(AuthorizationHandler):
                     Operation(
                         operation_type="GARDEN_SYNC",
                         kwargs={"sync_target": garden.name},
+                    )
+                )
+            elif operation == "reset_metrics":
+                response = await self.client(
+                    Operation(
+                        operation_type="GARDEN_RESET_METRICS",
+                        kwargs={"garden_name": garden.name},
                     )
                 )
 
@@ -279,6 +289,7 @@ class GardenListAPI(AuthorizationHandler):
 
           * sync
           * sync_users
+          * reset_metrics
 
           ```JSON
           [
@@ -330,6 +341,8 @@ class GardenListAPI(AuthorizationHandler):
                     self.verify_user_permission_for_object(GARDEN_UPDATE, garden)
 
                 initiate_user_sync()
+            elif operation == "reset_metrics":
+                await self.client(Operation(operation_type="GARDEN_RESET_ALL_METRICS"))
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 

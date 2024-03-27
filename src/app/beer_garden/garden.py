@@ -12,6 +12,7 @@ The garden service is responsible for:
 import copy
 import json
 import logging
+import re
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List
@@ -332,6 +333,23 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
 
     garden.status = new_status
     garden.status_info["heartbeat"] = datetime.utcnow()
+
+    return update_garden(garden)
+
+
+def reset_metrics():
+    for garden in get_gardens(include_local=True):
+        reset_garden_metrics(garden.name)
+
+
+def reset_garden_metrics(garden_name: str):
+    garden = db.query_unique(Garden, name=garden_name)
+    if garden.metadata:
+        bg_meta = copy.deepcopy(garden.metadata)
+        for key in garden.metadata.keys():
+            if re.search("^(?:CREATE|START|COMPLETE)_(?:DELTA|AVG|COUNT)_", key):
+                del bg_meta[key]
+        garden.metadata = bg_meta
 
     return update_garden(garden)
 

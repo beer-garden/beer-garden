@@ -150,6 +150,8 @@ route_functions = {
     "GARDEN_DELETE": beer_garden.garden.remove_garden,
     "GARDEN_SYNC": beer_garden.garden.garden_sync,
     "GARDEN_RESCAN": beer_garden.garden.rescan,
+    "GARDEN_RESET_METRICS": beer_garden.garden.reset_garden_metrics,
+    "GARDEN_RESET_ALL_METRICS": beer_garden.garden.reset_metrics,
     "PLUGIN_LOG_READ": beer_garden.log.get_plugin_log_config,
     "PLUGIN_LOG_READ_LEGACY": beer_garden.log.get_plugin_log_config_legacy,
     "PLUGIN_LOG_RELOAD": beer_garden.log.load_plugin_log_config,
