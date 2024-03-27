@@ -1264,7 +1264,7 @@ _METRICS_SPEC = {
             "type": "bool",
             "description": "Enable collection of Garden latency metrics based off Requests",
             "default": False,
-        }
+        },
         "prometheus": {
             "type": "dict",
             "items": {
