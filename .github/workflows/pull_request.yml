@@ -698,10 +698,17 @@ jobs:
       #     test-plan-path: ./test/jmeter/child_echo_request.jmx
       #     args: "-e -o ./reports/html/ -JHostDomain=${{steps.set_hostname.outputs.hostname}}"
 
-      - name: Echo Jmeter Test
-        uses: QAInsights/PerfAction@v5.6.2
+      # - name: Echo Jmeter Test
+      #   uses: QAInsights/PerfAction@v5.6.2
+      #   with:
+      #     test-plan-path: ./test/jmeter/child_echo_request.jmx
+      #     args: "-e -o ./reports/html_2/ -JHostDomain=${{steps.set_hostname.outputs.hostname_2}}"
+
+      - name: Run JMeter Action on a test
+        uses: rbhadti94/apache-jmeter-action@v0.5.0
         with:
-          test-plan-path: ./test/jmeter/child_echo_request.jmx
+          testFilePath: ./test/jmeter/child_echo_request.jmx
+          outputReportsFolder: reports/
           args: "-e -o ./reports/html_2/ -JHostDomain=${{steps.set_hostname.outputs.hostname_2}}"
 
       - name: Upload JMeter Results
