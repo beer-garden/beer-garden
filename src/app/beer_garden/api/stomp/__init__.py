@@ -52,7 +52,7 @@ def run(ep_conn):
                     ]:
                         stomp_config = deepcopy(connection.config)
                         stomp_config["send_destination"] = None
-                        skip_key = conn_manager.add_connection(
+                        conn_manager.add_connection(
                             stomp_config=stomp_config, name=garden.name
                         )
 
