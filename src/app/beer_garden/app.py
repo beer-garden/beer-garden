@@ -128,15 +128,16 @@ class Application(StoppableThread):
                 )
 
         # Add scheduled job for checking unresponsive gardens
-        self.scheduler.add_schedule(
-            beer_garden.garden.garden_unresponsive_trigger,
-            interval=(
-                (config.get("children.unresponsive_timeout") / 2)
-                if (config.get("children.unresponsive_timeout") > 0)
-                else 15
-            ),
-            max_running_jobs=1,
-        )
+        if config.get("children.unresponsive_timeout_enabled"):
+            self.scheduler.add_schedule(
+                beer_garden.garden.garden_unresponsive_trigger,
+                interval=(
+                    (config.get("children.unresponsive_timeout") / 2)
+                    if (config.get("children.unresponsive_timeout") > 0)
+                    else 15
+                ),
+                max_running_jobs=1,
+            )
 
         metrics_config = config.get("metrics")
         if metrics_config.prometheus.enabled:
