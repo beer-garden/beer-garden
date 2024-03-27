@@ -709,7 +709,7 @@ jobs:
         with:
           testFilePath: ./test/jmeter/child_echo_request.jmx
           outputReportsFolder: reports/
-          args: "-JHostDomain=${{steps.set_hostname.outputs.hostname_2}}"
+          args: "-JHostDomain=127.0.0.1"
 
       - name: Upload JMeter Results
         uses: actions/upload-artifact@v3
