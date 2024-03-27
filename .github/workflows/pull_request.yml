@@ -615,7 +615,7 @@ jobs:
       - name: Print Ifconfig
         id: set_hostname
         run: |
-          echo "hostname=$(ifconfig eth0)
+          ifconfig
 
       # - name: Set BG Hostname
       #   id: set_hostname
