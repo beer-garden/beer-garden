@@ -17,6 +17,7 @@ auth:
 children:
   directory: ./children
   unresponsive_timeout: 60
+  unresponsive_timeout_enabled: false
 db:
   connection:
     host: localhost

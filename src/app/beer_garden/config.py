@@ -424,6 +424,11 @@ _CHILDREN_GARDEN_SPEC = {
                 "(negative number for never)"
             ),
         },
+        "unresponsive_timeout_enabled": {
+            "type": "bool",
+            "default": False,
+            "description": "Should unresponsive timeouts be calculated, regardless if timeouts are set",
+        },
     },
 }
 

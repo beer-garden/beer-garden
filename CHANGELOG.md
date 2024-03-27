@@ -5,6 +5,7 @@
 TBD
 
 - Fixed bug where removing a parent garden failed to remove both parent and child
+- Added flag to enable API heartbeat checks
 - Added Topics API and classes to support dynamic topic subscribers
 - Now show alert on Garden Admin page when a Sync event is seen
 - Fixed bug where outbound filtering removing Username/Password from STOMP connections for internal events

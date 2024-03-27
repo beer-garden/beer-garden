@@ -213,7 +213,8 @@ def route(operation: Operation):
             f"Unknown operation type '{operation.operation_type}'"
         )
 
-    update_api_heartbeat(operation)
+    if config.get("children.unresponsive_timeout_enabled"):
+        update_api_heartbeat(operation)
 
     if invalid_source_check(operation):
         raise RoutingRequestException(
