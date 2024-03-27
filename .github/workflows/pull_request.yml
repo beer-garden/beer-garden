@@ -615,7 +615,8 @@ jobs:
       - name: "set_bg_hostname"
         id: set_hostname
         run: |
-          echo "::set-output hostname=today::$(HOSTNAME_BG=ifconfig eth0 | grep 'inet' | awk '{print $2}')"
+          echo "hostname=$(HOSTNAME_BG=ifconfig eth0 | grep 'inet' | awk '{print $2}')" >> $GITHUB_OUTPUT
+          # echo "::set-output hostname=today::$(HOSTNAME_BG=ifconfig eth0 | grep 'inet' | awk '{print $2}')"
 
       # - name: IP Address
       #   run: echo "HOSTNAME_BG=ifconfig eth0 | grep 'inet' | awk '{print $2}'" >> $GITHUB_ENV
@@ -697,18 +698,18 @@ jobs:
       - name: Create reports directory
         run: mkdir reports
 
-      - name: Echo Jmeter Test
-        uses: QAInsights/PerfAction@v5.6.2
-        with:
-          test-plan-path: ./test/jmeter/child_echo_request.jmx
-          args: "-e -o ./reports/html/ -JHostDomain=${{steps.set_hostname.outputs.hostname}}"
+      # - name: Echo Jmeter Test
+      #   uses: QAInsights/PerfAction@v5.6.2
+      #   with:
+      #     test-plan-path: ./test/jmeter/child_echo_request.jmx
+      #     args: "-e -o ./reports/html/ -JHostDomain=${{steps.set_hostname.outputs.hostname}}"
 
-      - name: Upload JMeter Results
-        uses: actions/upload-artifact@v3
-        with:
-          name: jmeter-html-reports
-          path: reports
-          if-no-files-found: error
+      # - name: Upload JMeter Results
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: jmeter-html-reports
+      #     path: reports
+      #     if-no-files-found: error
 
       - name: Grab logs from Child
         if: always()
