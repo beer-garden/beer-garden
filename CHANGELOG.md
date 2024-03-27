@@ -16,6 +16,7 @@ TBD
 - Utilized the TTL for In_Progress requests to set Expiration windows for Requests on PIKA, to handle backups of requests that Beer Garden has already cancelled.
 - Optimized UI Rest calls to load only Local Garden with Children
 - Updated how STOMP URL preview is formatted on Garden Admin page
+- Added flag to enable the collection of Garden Latency metrics based off Request event times
 
 # 3.24.4
 

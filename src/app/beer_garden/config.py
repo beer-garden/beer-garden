@@ -1265,6 +1265,11 @@ _LOG_SPEC = {
 _METRICS_SPEC = {
     "type": "dict",
     "items": {
+        "garden_latency_metrics_enabled": {
+            "type": "bool",
+            "description": "Enable collection of Garden latency metrics based off Requests",
+            "default": False,
+        },
         "prometheus": {
             "type": "dict",
             "items": {
@@ -1289,7 +1294,7 @@ _METRICS_SPEC = {
                     "required": False,
                 },
             },
-        }
+        },
     },
 }
 

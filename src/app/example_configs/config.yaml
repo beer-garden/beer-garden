@@ -70,6 +70,7 @@ log:
   fallback_file: null
   fallback_level: INFO
 metrics:
+  garden_latency_metrics_enabled: false
   prometheus:
     enabled: false
     host: 0.0.0.0
