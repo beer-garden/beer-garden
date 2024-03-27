@@ -692,11 +692,11 @@ jobs:
       - name: Create reports directory
         run: mkdir reports
 
-      - name: Echo Jmeter Test
-        uses: QAInsights/PerfAction@v5.6.2
-        with:
-          test-plan-path: ./test/jmeter/child_echo_request.jmx
-          args: "-e -o ./reports/html/ -JHostDomain=${{steps.set_hostname.outputs.hostname}}"
+      # - name: Echo Jmeter Test
+      #   uses: QAInsights/PerfAction@v5.6.2
+      #   with:
+      #     test-plan-path: ./test/jmeter/child_echo_request.jmx
+      #     args: "-e -o ./reports/html/ -JHostDomain=${{steps.set_hostname.outputs.hostname}}"
 
       - name: Echo Jmeter Test
         uses: QAInsights/PerfAction@v5.6.2
