@@ -612,6 +612,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: "set_bg_hostname"
+        id: set_hostname
+        run: |
+          echo "::set-output hostname=today::$(HOSTNAME_BG=ifconfig eth0 | grep 'inet' | awk '{print $2}')"
+
       # - name: IP Address
       #   run: echo "HOSTNAME_BG=ifconfig eth0 | grep 'inet' | awk '{print $2}'" >> $GITHUB_ENV
       #   shell: bash
@@ -696,7 +701,7 @@ jobs:
         uses: QAInsights/PerfAction@v5.6.2
         with:
           test-plan-path: ./test/jmeter/child_echo_request.jmx
-          args: "-e -o ./reports/html/"
+          args: "-e -o ./reports/html/ -JHostDomain=${{steps.set_hostname.outputs.hostname}}"
 
       - name: Upload JMeter Results
         uses: actions/upload-artifact@v3
