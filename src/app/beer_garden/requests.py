@@ -20,6 +20,15 @@ from typing import Dict, List, Sequence, Union
 
 import six
 import urllib3
+from requests import Session
+
+import beer_garden.config as config
+import beer_garden.db.api as db
+import beer_garden.queue.api as queue
+from beer_garden.db.mongo.models import RawFile
+from beer_garden.errors import NotUniqueException, ShutdownError
+from beer_garden.events import publish_event
+from beer_garden.metrics import request_completed, request_created, request_started
 from brewtils.choices import parse
 from brewtils.errors import (
     ConflictError,
@@ -38,15 +47,6 @@ from brewtils.models import (
     System,
 )
 from brewtils.pika import PERSISTENT_DELIVERY_MODE
-from requests import Session
-
-import beer_garden.config as config
-import beer_garden.db.api as db
-import beer_garden.queue.api as queue
-from beer_garden.db.mongo.models import RawFile
-from beer_garden.errors import NotUniqueException, ShutdownError
-from beer_garden.events import publish_event
-from beer_garden.metrics import request_completed, request_created, request_started
 
 logger = logging.getLogger(__name__)
 
@@ -1035,7 +1035,11 @@ def handle_event(event):
                 return
 
         if event.garden != config.get("garden.name") and not event.error:
-            if existing_request and config.get("metrics.garden_latency_metrics_enabled") and existing_request.source_garden == config.get("garden.name"):
+            if (
+                existing_request
+                and config.get("metrics.garden_latency_metrics_enabled")
+                and existing_request.source_garden == config.get("garden.name")
+            ):
                 update_request_latency_garden(existing_request, event)
 
             if existing_request is None:
