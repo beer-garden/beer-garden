@@ -617,100 +617,107 @@ jobs:
         run: |
           ifconfig
 
-      # - name: Set BG Hostname
-      #   id: set_hostname
-      #   run: |
-      #     echo "hostname=$(ifconfig eth0 | grep 'inet ' | awk '{print $2}')" >> $GITHUB_OUTPUT
+      - name: Set BG Hostname
+        id: set_hostname
+        run: |
+          echo "hostname=$(ifconfig eth0 | grep 'inet ' | awk '{print $2}')" >> $GITHUB_OUTPUT
+          echo "hostname_2=$(ifconfig docker0 | grep 'inet ' | awk '{print $2}')" >> $GITHUB_OUTPUT
 
-      # # Custom tag extractor to find Brewtils Branch
-      # - name: Find Brewtils Branch
-      #   uses: TheBurchLog/body-env-tag-action@1.0
-      #   with:
-      #     tag: "brewtils:"
-      #     env-variable: "brewtils"
-      #     default-value: "develop"
-      #     tag-position: -1
+      # Custom tag extractor to find Brewtils Branch
+      - name: Find Brewtils Branch
+        uses: TheBurchLog/body-env-tag-action@1.0
+        with:
+          tag: "brewtils:"
+          env-variable: "brewtils"
+          default-value: "develop"
+          tag-position: -1
 
-      # # Used the hashtag here instead of slash allow for branches to have slashes in them
-      # - name: Update Brewtils Branch
-      #   run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements-dev.txt
-      #   working-directory: ./src/app
+      # Used the hashtag here instead of slash allow for branches to have slashes in them
+      - name: Update Brewtils Branch
+        run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements-dev.txt
+        working-directory: ./src/app
 
-      # - name: Build Beer Garden Docker
-      #   run: |
-      #     python --version
-      #     python -m pip install --upgrade pip
-      #     pip install setuptools wheel
-      #     make package
-      #     make clean-python
-      #     docker build -t bgio/beer-garden:unstable -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:${{ matrix.python-version }}-alpine .
-      #     docker tag bgio/beer-garden:unstable bgio/beer-garden:parent
-      #     if [ "${{ matrix.child }}" != "unstable" ]; then
-      #       docker pull bgio/beer-garden:${{ matrix.child }}
-      #     fi
-      #     docker tag bgio/beer-garden:${{ matrix.child }} bgio/beer-garden:child
-      #   working-directory: ./src/app
+      - name: Build Beer Garden Docker
+        run: |
+          python --version
+          python -m pip install --upgrade pip
+          pip install setuptools wheel
+          make package
+          make clean-python
+          docker build -t bgio/beer-garden:unstable -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:${{ matrix.python-version }}-alpine .
+          docker tag bgio/beer-garden:unstable bgio/beer-garden:parent
+          if [ "${{ matrix.child }}" != "unstable" ]; then
+            docker pull bgio/beer-garden:${{ matrix.child }}
+          fi
+          docker tag bgio/beer-garden:${{ matrix.child }} bgio/beer-garden:child
+        working-directory: ./src/app
 
-      # - name: Update Docker Compose  
-      #   run: |
-      #     cp test/conf/docker-compose-parents-test.yml docker/docker-compose/docker-compose.yml
-      #     cp -r test/conf/beer_garden_parent_children docker/docker-compose/
-      #   working-directory: ./
+      - name: Update Docker Compose  
+        run: |
+          cp test/conf/docker-compose-parents-test.yml docker/docker-compose/docker-compose.yml
+          cp -r test/conf/beer_garden_parent_children docker/docker-compose/
+        working-directory: ./
 
-      # - name: Checkout Local Plugins
-      #   uses: actions/checkout@v2
-      #   with:
-      #     repository: beer-garden/example-plugins
-      #     path: ./docker/docker-compose/data/localplugins
+      - name: Checkout Local Plugins
+        uses: actions/checkout@v2
+        with:
+          repository: beer-garden/example-plugins
+          path: ./docker/docker-compose/data/localplugins
 
-      # - name: Verify Local Plugins
-      #   run: ls ./docker/docker-compose/data/localplugins
+      - name: Verify Local Plugins
+        run: ls ./docker/docker-compose/data/localplugins
 
-      # - name: Run Docker Beer Garden Child
-      #   run: docker-compose up -d beer-garden-child
-      #   working-directory: ./docker/docker-compose
+      - name: Run Docker Beer Garden Child
+        run: docker-compose up -d beer-garden-child
+        working-directory: ./docker/docker-compose
 
-      # - name: Wait for Beer Garden to start
-      #   run: sleep 10s
-      #   shell: bash
+      - name: Wait for Beer Garden to start
+        run: sleep 10s
+        shell: bash
 
-      # - name: Run Docker Beer Garden Parent
-      #   run: docker-compose up -d beer-garden-parent
-      #   working-directory: ./docker/docker-compose
+      - name: Run Docker Beer Garden Parent
+        run: docker-compose up -d beer-garden-parent
+        working-directory: ./docker/docker-compose
 
-      # - name: Wait for Beer Garden Parent to start
-      #   run: sleep 10s
-      #   shell: bash
+      - name: Wait for Beer Garden Parent to start
+        run: sleep 10s
+        shell: bash
 
-      # - name: Check Docker
-      #   run: docker ps
+      - name: Check Docker
+        run: docker ps
 
-      # - name: Wait for Beer Garden to start
-      #   run: sleep 60s
-      #   shell: bash
+      - name: Wait for Beer Garden to start
+        run: sleep 60s
+        shell: bash
 
-      # - name: Create reports directory
-      #   run: mkdir reports
+      - name: Create reports directory
+        run: mkdir reports
 
-      # - name: Echo Jmeter Test
-      #   uses: QAInsights/PerfAction@v5.6.2
-      #   with:
-      #     test-plan-path: ./test/jmeter/child_echo_request.jmx
-      #     args: "-e -o ./reports/html/ -JHostDomain=${{steps.set_hostname.outputs.hostname}}"
+      - name: Echo Jmeter Test
+        uses: QAInsights/PerfAction@v5.6.2
+        with:
+          test-plan-path: ./test/jmeter/child_echo_request.jmx
+          args: "-e -o ./reports/html/ -JHostDomain=${{steps.set_hostname.outputs.hostname}}"
 
-      # - name: Upload JMeter Results
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: jmeter-html-reports
-      #     path: reports
-      #     if-no-files-found: error
+      - name: Echo Jmeter Test
+        uses: QAInsights/PerfAction@v5.6.2
+        with:
+          test-plan-path: ./test/jmeter/child_echo_request.jmx
+          args: "-e -o ./reports/html_2/ -JHostDomain=${{steps.set_hostname.outputs.hostname_2}}"
 
-      # - name: Grab logs from Child
-      #   if: always()
-      #   run: docker-compose logs --tail 3000 beer-garden-child
-      #   working-directory: ./docker/docker-compose
+      - name: Upload JMeter Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: jmeter-html-reports
+          path: reports
+          if-no-files-found: error
 
-      # - name: Grab logs from Parent
-      #   if: always()
-      #   run: docker-compose logs --tail 3000 beer-garden-parent
-      #   working-directory: ./docker/docker-compose
+      - name: Grab logs from Child
+        if: always()
+        run: docker-compose logs --tail 3000 beer-garden-child
+        working-directory: ./docker/docker-compose
+
+      - name: Grab logs from Parent
+        if: always()
+        run: docker-compose logs --tail 3000 beer-garden-parent
+        working-directory: ./docker/docker-compose
