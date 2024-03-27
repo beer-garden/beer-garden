@@ -5,12 +5,13 @@ import threading
 import types
 from copy import deepcopy
 
+from brewtils.models import Event, Events
+
 import beer_garden.config as config
 import beer_garden.events
 from beer_garden.api.stomp.manager import StompManager
 from beer_garden.events import publish
 from beer_garden.garden import get_gardens
-from brewtils.models import Event, Events
 
 logger: logging.Logger = logging.getLogger(__name__)
 shutdown_event = threading.Event()
