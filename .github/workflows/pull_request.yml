@@ -615,6 +615,9 @@ jobs:
       - name: "set_bg_hostname"
         id: set_hostname
         run: |
+          echo $(ifconfig eth0)
+          echo $(ifconfig eth0 | grep 'inet')
+          echo $(ifconfig eth0 | grep 'inet'| awk '{print $2}')
           echo "hostname=$(ifconfig eth0 | grep 'inet' | awk '{print $2}')" >> $GITHUB_OUTPUT
           # echo "::set-output hostname=today::$(HOSTNAME_BG=ifconfig eth0 | grep 'inet' | awk '{print $2}')"
 
