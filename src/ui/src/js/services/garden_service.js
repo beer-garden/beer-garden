@@ -57,6 +57,14 @@ export default function gardenService($rootScope, $http) {
     });
   };
 
+  GardenService.resetMetrics = function(name) {
+    return $http.patch('api/v1/gardens/' + encodeURIComponent(name), {
+      operation: 'reset_metrics',
+      path: '',
+      value: '',
+    });
+  };
+
   GardenService.updatePublisherStatus = function(name, status, api) {
     return $http.patch('api/v1/gardens/' + encodeURIComponent(name), {
       operation: 'connection',

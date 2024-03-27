@@ -34,6 +34,12 @@ export default function adminGardenController(
     }
     $scope.response = response;
   };
+  $scope.addSuccessAlert = function(response) {
+    $scope.alerts.push({
+      type: 'success',
+      msg: 'Success!',
+    });
+  };
   $scope.garden_name = null;
   $scope.createGardenFormHide = true;
   $scope.create_garden_name = null;
@@ -91,6 +97,13 @@ export default function adminGardenController(
     return gardenLabel;
 
   }
+
+  $scope.resetMetrics = function(gardenName) {
+    GardenService.resetMetrics(gardenName).then(
+        $scope.addSuccessAlert,
+        $scope.failureCallback,
+    );
+  };
 
   const loadGardens = function() {
     GardenService.getGardens().then(
