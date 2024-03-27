@@ -424,6 +424,11 @@ _CHILDREN_GARDEN_SPEC = {
                 "(negative number for never)"
             ),
         },
+        "unresponsive_timeout_enabled": {
+            "type": "bool",
+            "default": False,
+            "description": "Should unresponsive timeouts be calculated, regardless if timeouts are set",
+        },
     },
 }
 
@@ -1260,6 +1265,11 @@ _LOG_SPEC = {
 _METRICS_SPEC = {
     "type": "dict",
     "items": {
+        "garden_latency_metrics_enabled": {
+            "type": "bool",
+            "description": "Enable collection of Garden latency metrics based off Requests",
+            "default": False,
+        },
         "prometheus": {
             "type": "dict",
             "items": {
@@ -1284,7 +1294,7 @@ _METRICS_SPEC = {
                     "required": False,
                 },
             },
-        }
+        },
     },
 }
 
