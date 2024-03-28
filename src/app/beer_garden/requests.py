@@ -54,7 +54,7 @@ logger = logging.getLogger(__name__)
 request_map: Dict[str, threading.Event] = {}
 
 cached_latency_metrics = {}
-cached_latency_metrics_timestamp = datetime.utcnow()
+cached_latency_metrics_timestamp = {"last_seen": datetime.utcnow()}
 cached_latency_metrics_lock = threading.RLock()
 
 
@@ -1118,12 +1118,11 @@ def handle_event(event):
                     except RequestStatusTransitionError:
                         pass
 
-        if (datetime.utcnow() - cached_latency_metrics_timestamp).total_seconds() > (
+        if (datetime.utcnow() - cached_latency_metrics_timestamp["last_seen"]).total_seconds() > (
             config.get("metrics.garden_latency_metrics_cache_window") * 60
         ):
             store_cache_latency_metrics()
-            # TODO: Switch to a box that is interfaced with
-            cached_latency_metrics_timestamp = datetime.utcnow()
+            cached_latency_metrics_timestamp["last_seen"] = datetime.utcnow()
 
         if event.name in (
             Events.REQUEST_COMPLETED.name,
