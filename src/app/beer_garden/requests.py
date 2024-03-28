@@ -1044,8 +1044,7 @@ def store_cache_latency_metrics():
             for source_garden in processed_gardens:
                 del cached_latency_metrics[source_garden]
             
-            if cached_latency_metrics_timestamp:
-                cached_latency_metrics_timestamp = datetime.utcnow()
+            
 
 
 def handle_event(event):
@@ -1123,6 +1122,8 @@ def handle_event(event):
             config.get("metrics.garden_latency_metrics_cache_window") * 60
         ):
             store_cache_latency_metrics()
+            # TODO: Switch to a box that is interfaced with
+            cached_latency_metrics_timestamp = datetime.utcnow()
 
         if event.name in (
             Events.REQUEST_COMPLETED.name,
