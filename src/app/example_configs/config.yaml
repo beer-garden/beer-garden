@@ -71,6 +71,7 @@ log:
   fallback_level: INFO
 metrics:
   garden_latency_metrics_enabled: false
+  garden_latency_metrics_cache_window: 5
   prometheus:
     enabled: false
     host: 0.0.0.0
