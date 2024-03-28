@@ -306,6 +306,6 @@ class Manager:
     def check_entry_points(self) -> None:
         for entry_point in self.entry_points:
             if not entry_point.is_alive():
-                self.logger.warning(f"{entry_point.getName()} is dead, restarting")
+                logger.warning(f"{entry_point.getName()} is dead, restarting")
                 entry_point.stop(timeout=10)
                 entry_point.start()

@@ -1089,8 +1089,10 @@ def handle_event(event):
                 return
 
         if event.garden != config.get("garden.name") and not event.error:
-            if existing_request and existing_request.source_garden == config.get(
-                "garden.name"
+            if (
+                existing_request
+                and config.get("metrics.garden_latency_metrics_enabled")
+                and existing_request.source_garden == config.get("garden.name")
             ):
                 update_request_latency_garden(existing_request, event)
 

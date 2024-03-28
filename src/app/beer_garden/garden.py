@@ -224,16 +224,18 @@ def check_garden_receiving_heartbeat(
                 connection.status = "RECEIVING"
                 update_heartbeat = True
 
-            interval_value = garden.metadata.get(
-                "_unresponsive_timeout", config.get("children.unresponsive_timeout")
-            )
+            if config.get("children.unresponsive_timeout_enabled"):
 
-            if interval_value > 0:
-                timeout = datetime.utcnow() - timedelta(minutes=interval_value / 2)
+                interval_value = garden.metadata.get(
+                    "_unresponsive_timeout", config.get("children.unresponsive_timeout")
+                )
 
-                if connection.status_info["heartbeat"] < timeout:
-                    connection.status_info["heartbeat"] = datetime.utcnow()
-                    update_heartbeat = True
+                if interval_value > 0:
+                    timeout = datetime.utcnow() - timedelta(minutes=interval_value / 2)
+
+                    if connection.status_info["heartbeat"] < timeout:
+                        connection.status_info["heartbeat"] = datetime.utcnow()
+                        update_heartbeat = True
 
     # If the receiving type is unknown, enable it by default and set heartbeat
     if not connection_set:
