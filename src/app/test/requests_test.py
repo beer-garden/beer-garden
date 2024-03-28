@@ -2,26 +2,38 @@
 from datetime import datetime, timedelta
 
 import pytest
+import time
+from copy import deepcopy
 from box import Box
 from brewtils.errors import ModelValidationError
 from brewtils.models import Choices, Command, Event, Events, Parameter
+from brewtils.models import Garden as BrewtilsGarden
 from brewtils.models import Request as BrewtilsRequest
 from mock import Mock, call, patch
 from mongomock.gridfs import enable_gridfs_integration
 
 import beer_garden.config
 import beer_garden.requests
-from beer_garden.db.mongo.models import Request
+from beer_garden.db.mongo.models import Request, Garden
 from beer_garden.requests import RequestValidator
+from beer_garden.garden import create_garden, get_garden
 
 enable_gridfs_integration()
 
+@pytest.fixture(autouse=True)
+def drop():
+    yield
+    Garden.drop_collection()
+
+
 
 @pytest.fixture
-def system_find(monkeypatch):
-    find_mock = Mock()
-    monkeypatch.setattr(beer_garden.requests.db, "query_unique", find_mock)
-    return find_mock
+def localgarden():
+    yield create_garden(
+        BrewtilsGarden(
+            name="parent", connection_type="LOCAL", systems=[]
+        )
+    )
 
 
 @pytest.fixture
@@ -1100,3 +1112,101 @@ class TestHandleEvent:
         updated_request = Request.objects.get(id=child_garden_request.id)
 
         assert updated_request.status_updated_at == status_updated_at
+
+class TestLatencyRequest:
+
+    def test_create_request(self, child_garden_request):
+        
+        child_garden_request.status = "CREATE"     
+        child_garden_request.source_garden = "parent"
+        child_garden_request.target_garden = "target"
+
+        updated_request = deepcopy(child_garden_request)
+        status_updated_at = datetime.utcnow() + timedelta(minutes=1)
+        status_updated_at = status_updated_at.replace(microsecond=0)
+        updated_request.created_at = status_updated_at
+
+        request_event = Event(
+            payload=updated_request, name=Events.REQUEST_CREATED.name
+        )
+
+        beer_garden.requests.update_request_latency_garden(child_garden_request, request_event)
+
+        assert beer_garden.requests.cached_latency_metrics
+
+        assert "parent" in beer_garden.requests.cached_latency_metrics
+        assert "target" in beer_garden.requests.cached_latency_metrics["parent"]
+        assert len(beer_garden.requests.cached_latency_metrics["parent"]["target"]["CREATE"]) > 0
+
+    def test_in_progress_request(self, child_garden_request):
+        
+        child_garden_request.status = "IN_PROGRESS"     
+        child_garden_request.source_garden = "parent"
+        child_garden_request.target_garden = "target"
+
+        updated_request = deepcopy(child_garden_request)
+        status_updated_at = datetime.utcnow() + timedelta(minutes=1)
+        status_updated_at = status_updated_at.replace(microsecond=0)
+        updated_request.created_at = status_updated_at
+
+        request_event = Event(
+            payload=updated_request, name=Events.REQUEST_UPDATED.name
+        )
+
+        beer_garden.requests.update_request_latency_garden(child_garden_request, request_event)
+
+        assert beer_garden.requests.cached_latency_metrics
+
+        assert "parent" in beer_garden.requests.cached_latency_metrics
+        assert "target" in beer_garden.requests.cached_latency_metrics["parent"]
+        assert len(beer_garden.requests.cached_latency_metrics["parent"]["target"]["START"]) > 0
+
+    def test_complete_request(self, child_garden_request):
+        
+        child_garden_request.status = "SUCCESS"     
+        child_garden_request.source_garden = "parent"
+        child_garden_request.target_garden = "target"
+
+        updated_request = deepcopy(child_garden_request)
+        status_updated_at = datetime.utcnow() + timedelta(minutes=1)
+        status_updated_at = status_updated_at.replace(microsecond=0)
+        updated_request.created_at = status_updated_at
+
+        request_event = Event(
+            payload=updated_request, name=Events.REQUEST_UPDATED.name
+        )
+
+        beer_garden.requests.update_request_latency_garden(child_garden_request, request_event)
+
+        assert beer_garden.requests.cached_latency_metrics
+
+        assert "parent" in beer_garden.requests.cached_latency_metrics
+        assert "target" in beer_garden.requests.cached_latency_metrics["parent"]
+        assert len(beer_garden.requests.cached_latency_metrics["parent"]["target"]["COMPLETE"]) > 0
+
+    def test_update_cache(self, localgarden):
+        child_garden_request.status = "CREATE"     
+        child_garden_request.source_garden = "parent"
+        child_garden_request.target_garden = "target"
+
+        updated_request = deepcopy(child_garden_request)
+        status_updated_at = datetime.utcnow() + timedelta(minutes=1)
+        status_updated_at = status_updated_at.replace(microsecond=0)
+        updated_request.created_at = status_updated_at
+
+        request_event = Event(
+            payload=updated_request, name=Events.REQUEST_CREATED.name
+        )
+
+        beer_garden.requests.update_request_latency_garden(child_garden_request, request_event)
+
+        beer_garden.requests.store_cache_latency_metrics()
+
+        updated_garden = get_garden(localgarden.name)
+
+        assert updated_garden.metadata["CREATE_COUNT_target"] == 1
+
+
+
+
+

@@ -21,6 +21,15 @@ from typing import Dict, List, Sequence, Union
 
 import six
 import urllib3
+from requests import Session
+
+import beer_garden.config as config
+import beer_garden.db.api as db
+import beer_garden.queue.api as queue
+from beer_garden.db.mongo.models import RawFile
+from beer_garden.errors import NotUniqueException, ShutdownError
+from beer_garden.events import publish_event
+from beer_garden.metrics import request_completed, request_created, request_started
 from brewtils.choices import parse
 from brewtils.errors import (
     ConflictError,
@@ -39,15 +48,6 @@ from brewtils.models import (
     System,
 )
 from brewtils.pika import PERSISTENT_DELIVERY_MODE
-from requests import Session
-
-import beer_garden.config as config
-import beer_garden.db.api as db
-import beer_garden.queue.api as queue
-from beer_garden.db.mongo.models import RawFile
-from beer_garden.errors import NotUniqueException, ShutdownError
-from beer_garden.events import publish_event
-from beer_garden.metrics import request_completed, request_created, request_started
 
 logger = logging.getLogger(__name__)
 
@@ -990,7 +990,6 @@ def update_request_latency_garden(existing_request: Request, event: Event) -> No
     """
 
     with cached_latency_metrics_lock:
-
         if existing_request.source_garden not in cached_latency_metrics:
             cached_latency_metrics[existing_request.source_garden] = {}
 
@@ -1012,18 +1011,17 @@ def update_request_latency_garden(existing_request: Request, event: Event) -> No
             cached_latency_metrics[existing_request.source_garden][
                 event.payload.target_garden
             ]["START"].append(
-                (event.payload.updated_at - existing_request.created_at).total_seconds()
+                (event.payload.updated_at - existing_request.updated_at).total_seconds()
             )
         elif event.payload.status in ("CANCELED", "SUCCESS", "ERROR"):
             cached_latency_metrics[existing_request.source_garden][
                 event.payload.target_garden
             ]["COMPLETE"].append(
-                (event.payload.updated_at - existing_request.created_at).total_seconds()
+                (event.payload.updated_at - existing_request.updated_at).total_seconds()
             )
 
 
 def store_cache_latency_metrics():
-
     with cached_latency_metrics_lock:
         if len(cached_latency_metrics) > 0:
             processed_gardens = []
@@ -1031,7 +1029,9 @@ def store_cache_latency_metrics():
                 garden = db.query_unique(Garden, name=source_garden)
                 for target_garden in cached_latency_metrics[source_garden]:
                     for status in cached_latency_metrics[source_garden][target_garden]:
-                        for delay in cached_latency_metrics[source_garden][target_garden][status]:
+                        for delay in cached_latency_metrics[source_garden][
+                            target_garden
+                        ][status]:
                             processes_status_latency(
                                 garden,
                                 target_garden,
@@ -1066,15 +1066,6 @@ def handle_event(event):
         Events.REQUEST_UPDATED.name,
         Events.REQUEST_CANCELED.name,
     ):
-
-        if (
-            (
-                datetime.utcnow() - cached_latency_metrics_timestamp
-            ).total_seconds()
-            > 60
-        ):
-            store_cache_latency_metrics()
-
         # Only care about downstream garden
         existing_request = db.query_unique(Request, id=event.payload.id)
 
@@ -1125,6 +1116,11 @@ def handle_event(event):
                         update_request(existing_request, _publish_error=False)
                     except RequestStatusTransitionError:
                         pass
+
+        if (datetime.utcnow() - cached_latency_metrics_timestamp).total_seconds() > (
+            config.get("metrics.garden_latency_metrics_cache_window") * 60
+        ):
+            store_cache_latency_metrics()
 
         if event.name in (
             Events.REQUEST_COMPLETED.name,
