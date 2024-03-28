@@ -1043,7 +1043,9 @@ def store_cache_latency_metrics():
 
             for source_garden in processed_gardens:
                 del cached_latency_metrics[source_garden]
-            cached_latency_metrics_timestamp = datetime.utcnow()
+            
+            if cached_latency_metrics_timestamp:
+                cached_latency_metrics_timestamp = datetime.utcnow()
 
 
 def handle_event(event):
