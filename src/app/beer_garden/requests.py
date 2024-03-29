@@ -1043,8 +1043,6 @@ def store_cache_latency_metrics():
 
             for source_garden in processed_gardens:
                 del cached_latency_metrics[source_garden]
-            
-            
 
 
 def handle_event(event):
@@ -1118,7 +1116,9 @@ def handle_event(event):
                     except RequestStatusTransitionError:
                         pass
 
-        if (datetime.utcnow() - cached_latency_metrics_timestamp["last_seen"]).total_seconds() > (
+        if (
+            datetime.utcnow() - cached_latency_metrics_timestamp["last_seen"]
+        ).total_seconds() > (
             config.get("metrics.garden_latency_metrics_cache_window") * 60
         ):
             store_cache_latency_metrics()

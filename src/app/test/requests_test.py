@@ -32,11 +32,13 @@ def localgarden():
         BrewtilsGarden(name="parent", connection_type="LOCAL", systems=[])
     )
 
+
 @pytest.fixture
 def system_find(monkeypatch):
     find_mock = Mock()
     monkeypatch.setattr(beer_garden.requests.db, "query_unique", find_mock)
     return find_mock
+
 
 @pytest.fixture
 def validator(monkeypatch, mongo_conn):
@@ -70,6 +72,7 @@ def child_garden_request():
 
     yield request
     request.delete()
+
 
 @pytest.fixture
 def latency_request():
@@ -1121,10 +1124,14 @@ class TestHandleEvent:
         child_garden_request.status = "SUCCESS"
         child_garden_request.status_updated_at = status_updated_at
         request_event = Event(
-            payload=child_garden_request, name=Events.REQUEST_UPDATED.name, garden="child"
+            payload=child_garden_request,
+            name=Events.REQUEST_UPDATED.name,
+            garden="child",
         )
 
-        beer_garden.config._CONFIG = {"metrics": {"garden_latency_metrics_cache_window": 60}}
+        beer_garden.config._CONFIG = {
+            "metrics": {"garden_latency_metrics_cache_window": 60}
+        }
 
         beer_garden.requests.handle_event(request_event)
 
