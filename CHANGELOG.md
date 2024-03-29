@@ -18,6 +18,7 @@ TBD
 - Updated how STOMP URL preview is formatted on Garden Admin page
 - Fixed bug where STOMP connections for children did not start with Beer Garden startup
 - Added flag to enable the collection of Garden Latency metrics based off Request event times
+- Garden Sync events will update heartbeat status of Receiving Garden APIs
 
 # 3.24.4
 

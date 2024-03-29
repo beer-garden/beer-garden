@@ -204,7 +204,7 @@ def update_garden_config(garden: Garden) -> Garden:
 
 
 def check_garden_receiving_heartbeat(
-    api: str, garden_name: str = None, garden: Garden = None
+    api: str, garden_name: str = None, garden: Garden = None, force_update: bool = False
 ):
     if garden is None:
         garden = db.query_unique(Garden, name=garden_name)
@@ -233,7 +233,7 @@ def check_garden_receiving_heartbeat(
                 if interval_value > 0:
                     timeout = datetime.utcnow() - timedelta(minutes=interval_value / 2)
 
-                    if connection.status_info["heartbeat"] < timeout:
+                    if force_update or connection.status_info["heartbeat"] < timeout:
                         connection.status_info["heartbeat"] = datetime.utcnow()
                         update_heartbeat = True
 

@@ -293,10 +293,16 @@ def update_api_heartbeat(operation: Operation):
     ):
         source_garden = getattr(gardens, operation.source_garden_name, None)
 
+        is_garden_sync = (
+            operation.operation_type == "PUBLISH_EVENT" and 
+            operation.model.name == Events.GARDEN_SYNC.name and
+            operation.model.payload.name == operation.source_garden_name)
+
         beer_garden.garden.check_garden_receiving_heartbeat(
             operation.source_api,
             garden_name=operation.source_garden_name,
             garden=source_garden,
+            force_update=is_garden_sync
         )
 
 
