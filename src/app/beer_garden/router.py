@@ -294,15 +294,16 @@ def update_api_heartbeat(operation: Operation):
         source_garden = getattr(gardens, operation.source_garden_name, None)
 
         is_garden_sync = (
-            operation.operation_type == "PUBLISH_EVENT" and 
-            operation.model.name == Events.GARDEN_SYNC.name and
-            operation.model.payload.name == operation.source_garden_name)
+            operation.operation_type == "PUBLISH_EVENT"
+            and operation.model.name == Events.GARDEN_SYNC.name
+            and operation.model.payload.name == operation.source_garden_name
+        )
 
         beer_garden.garden.check_garden_receiving_heartbeat(
             operation.source_api,
             garden_name=operation.source_garden_name,
             garden=source_garden,
-            force_update=is_garden_sync
+            force_update=is_garden_sync,
         )
 
 
@@ -498,9 +499,9 @@ def setup_routing():
                             and connection.status != "DISABLED"
                         ):
                             if garden.name not in stomp_garden_connections:
-                                stomp_garden_connections[garden.name] = (
-                                    create_stomp_connection(connection)
-                                )
+                                stomp_garden_connections[
+                                    garden.name
+                                ] = create_stomp_connection(connection)
 
             else:
                 logger.warning(f"Garden with invalid connection info: {garden!r}")
@@ -615,9 +616,9 @@ def handle_event(event):
                             event.payload.name not in stomp_garden_connections
                             and connection.status == "PUBLISHING"
                         ):
-                            stomp_garden_connections[event.payload.name] = (
-                                create_stomp_connection(connection)
-                            )
+                            stomp_garden_connections[
+                                event.payload.name
+                            ] = create_stomp_connection(connection)
 
                         elif connection.status == "DISABLED":
                             stomp_garden_connections[event.payload.name].disconnect()
