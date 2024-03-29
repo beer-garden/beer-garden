@@ -14,12 +14,12 @@ from datetime import datetime
 from typing import Iterable, List, Optional, Sequence, Tuple, Union
 
 from box import Box
+from brewtils.rest import normalize_url_prefix as normalize
 from ruamel.yaml import YAML
 from yapconf import YapconfSpec, dump_data
 
 from beer_garden.errors import ConfigurationError
 from beer_garden.log import default_app_config, default_plugin_config
-from brewtils.rest import normalize_url_prefix as normalize
 
 __all__ = [
     "load",
