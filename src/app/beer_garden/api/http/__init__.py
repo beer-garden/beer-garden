@@ -29,6 +29,7 @@ from brewtils.schemas import (
     RequestSchema,
     RunnerSchema,
     SystemSchema,
+    TopicSchema,
     UserSchema,
     UserTokenSchema,
 )
@@ -113,6 +114,8 @@ def _get_published_url_specs(
         (rf"{prefix}api/v1/token/?", v1.token.TokenAPI),
         (rf"{prefix}api/v1/token/revoke/?", v1.token.TokenRevokeAPI),
         (rf"{prefix}api/v1/token/refresh/?", v1.token.TokenRefreshAPI),
+        (rf"{prefix}api/v1/topics/?", v1.topic.TopicListAPI),
+        (rf"{prefix}api/v1/topics/(\w+)/?", v1.topic.TopicAPI),
         (rf"{prefix}api/v1/whoami/?", v1.user.WhoAmIAPI),
         (
             rf"{prefix}api/v1/commandpublishingblocklist/(\w+)/?",
@@ -382,6 +385,8 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition("Operation", schema=OperationSchema)
     api_spec.definition("FileStatus", schema=FileStatusSchema)
     api_spec.definition("UserToken", schema=UserTokenSchema)
+    api_spec.definition("Topic", schema=TopicSchema)
+
 
     api_spec.definition("Garden", schema=GardenSchema)
     api_spec.definition("Runner", schema=RunnerSchema)

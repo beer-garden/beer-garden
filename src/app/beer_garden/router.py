@@ -44,6 +44,7 @@ import beer_garden.requests
 import beer_garden.role
 import beer_garden.scheduler
 import beer_garden.systems
+import beer_garden.topic
 import beer_garden.user
 from beer_garden.api.stomp.transport import Connection, consolidate_headers, process
 from beer_garden.errors import (
@@ -162,6 +163,12 @@ route_functions = {
     "FILE_FETCH": beer_garden.files.fetch_file,
     "FILE_DELETE": beer_garden.files.delete_file,
     "FILE_OWNER": beer_garden.files.set_owner,
+    "TOPIC_CREATE": beer_garden.topic.create_topic,
+    "TOPIC_READ": beer_garden.topic.get_topic,
+    "TOPIC_READ_ALL": beer_garden.topic.get_all_topics,
+    "TOPIC_DELETE": beer_garden.topic.remove_topic,
+    "TOPIC_ADD_SUBSCRIBER": beer_garden.topic.topic_add_subscriber,
+    "TOPIC_REMOVE_SUBSCRIBER": beer_garden.topic.topic_remove_subscriber,
     "RUNNER_READ": beer_garden.local_plugins.manager.runner,
     "RUNNER_READ_ALL": beer_garden.local_plugins.manager.runners,
     "RUNNER_START": beer_garden.local_plugins.manager.start,
@@ -205,6 +212,8 @@ def route(operation: Operation):
         raise RoutingRequestException(
             f"Unknown operation type '{operation.operation_type}'"
         )
+
+    update_api_heartbeat(operation)
 
     if invalid_source_check(operation):
         raise RoutingRequestException(
@@ -276,6 +285,21 @@ def execute_local(operation: Operation):
     return lookup[operation.operation_type](*operation.args, **operation.kwargs)
 
 
+def update_api_heartbeat(operation: Operation):
+    if (
+        operation.source_garden_name is not None
+        and operation.source_garden_name != config.get("garden.name")
+        and operation.source_api is not None
+    ):
+        source_garden = getattr(gardens, operation.source_garden_name, None)
+
+        beer_garden.garden.check_garden_receiving_heartbeat(
+            operation.source_api,
+            garden_name=operation.source_garden_name,
+            garden=source_garden,
+        )
+
+
 def invalid_source_check(operation: Operation):
     # Unable to validate source or api
     if (
@@ -285,12 +309,7 @@ def invalid_source_check(operation: Operation):
     ):
         return False
 
-    # Grabs the garden to check and updates the heartbeat for the entry point
-    source_garden = beer_garden.garden.update_garden_receiving_heartbeat(
-        operation.source_api, garden_name=operation.source_garden_name
-    )
-
-    for connection in source_garden.receiving_connections:
+    for connection in gardens[operation.source_garden_name].receiving_connections:
         if connection.api == operation.source_api and connection.status != "DISABLED":
             return False
 
@@ -609,6 +628,8 @@ def handle_event(event):
                     del stomp_garden_connections[event.payload.name]
             except KeyError:
                 pass
+        elif event.name == Events.GARDEN_UPDATED.name:
+            gardens[event.payload.name] = event.payload
 
 
 def _operation_conversion(operation: Operation) -> Operation:
@@ -748,6 +769,7 @@ def _target_from_type(operation: Operation) -> str:
         )
         or "PUBLISH_EVENT" in operation.operation_type
         or "RUNNER" in operation.operation_type
+        or "TOPIC" in operation.operation_type
         or operation.operation_type
         in ("PLUGIN_LOG_RELOAD", "QUEUE_DELETE_ALL", "SYSTEM_CREATE", "REQUEST_DELETE")
     ):

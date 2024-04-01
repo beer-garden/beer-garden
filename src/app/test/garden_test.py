@@ -18,7 +18,7 @@ from beer_garden.garden import (
     local_garden,
     remove_garden,
     load_garden_connections,
-    update_garden_receiving_heartbeat,
+    check_garden_receiving_heartbeat,
     update_garden_status,
     upsert_garden,
     garden_unresponsive_trigger,
@@ -389,13 +389,13 @@ stomp:
 
     #     assert remote_user_count == 0
 
-    def test_update_garden_receiving_heartbeat_update_heartbeat(self):
-        garden = update_garden_receiving_heartbeat("http", garden_name="new_garden")
+    def test_check_garden_receiving_heartbeat_update_heartbeat(self):
+        garden = check_garden_receiving_heartbeat("http", garden_name="new_garden")
 
         assert len(garden.receiving_connections) == 1
         assert garden.receiving_connections[0].status == "DISABLED"
 
-    def test_update_garden_receiving_heartbeat_existing_garden_new_api_with_config(
+    def test_check_garden_receiving_heartbeat_existing_garden_new_api_with_config(
         self, tmpdir, bg_garden
     ):
         bg_garden.systems = []
@@ -447,7 +447,7 @@ stomp:
 
         config._CONFIG = {"children": {"directory": tmpdir}}
 
-        garden = update_garden_receiving_heartbeat("STOMP", garden_name=garden.name)
+        garden = check_garden_receiving_heartbeat("STOMP", garden_name=garden.name)
 
         assert len(garden.receiving_connections) == 2
 
@@ -456,13 +456,13 @@ stomp:
 
         os.remove(config_file)
 
-    def test_update_garden_receiving_heartbeat_existing_garden_new_api(self, bg_garden):
+    def test_check_garden_receiving_heartbeat_existing_garden_new_api(self, bg_garden):
         bg_garden.systems = []
 
         garden = create_garden(bg_garden)
         assert len(garden.receiving_connections) == 1
 
-        garden = update_garden_receiving_heartbeat("STOMP", garden_name=garden.name)
+        garden = check_garden_receiving_heartbeat("STOMP", garden_name=garden.name)
 
         assert len(garden.receiving_connections) == 2
 

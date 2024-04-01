@@ -3,6 +3,7 @@
 import logging
 import threading
 import types
+from copy import deepcopy
 
 from brewtils.models import Event, Events
 
@@ -40,13 +41,21 @@ def run(ep_conn):
         )
 
     for garden in get_gardens(include_local=False):
-        if garden.name != garden_name and garden.connection_type:
-            if garden.connection_type.casefold() == "stomp":
-                connection_params = garden.connection_params.get("stomp", {})
-                connection_params["send_destination"] = None
-                conn_manager.add_connection(
-                    stomp_config=connection_params, name=garden.name
-                )
+        if garden.name != garden_name:
+            for connection in garden.receiving_connections:
+                if connection.api.casefold() == "stomp":
+                    if connection.status in [
+                        "RECEIVING",
+                        "UNREACHABLE",
+                        "UNRESPONSIVE",
+                        "ERROR",
+                        "UNKNOWN",
+                    ]:
+                        stomp_config = deepcopy(connection.config)
+                        stomp_config["send_destination"] = None
+                        conn_manager.add_connection(
+                            stomp_config=stomp_config, name=garden.name
+                        )
 
     conn_manager.start()
 

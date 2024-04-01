@@ -1,16 +1,23 @@
 # Beer Garden Changelog
 
-# 3.24.5
+# 3.25.0
 
 TBD
 
+- Fixed bug where removing a parent garden failed to remove both parent and child
+- Added flag to enable API heartbeat checks
+- Added Topics API and classes to support dynamic topic subscribers
 - Now show alert on Garden Admin page when a Sync event is seen
 - Fixed bug where outbound filtering removing Username/Password from STOMP connections for internal events
 - Fixed order of Gardens and Connections on Garden Admin page
 - Fixed bug where Disabled STOMP Receiving connection could be re-enabled if it is shared and unresponsive
 - Fixed bug where child garden plugins are treated like local plugins on the System Admin page
+- Garden Receiving connections heartbeats are only updated on the half windows for timeout windows. If no timeout window is set, the value is not populated.
 - Utilized the TTL for In_Progress requests to set Expiration windows for Requests on PIKA, to handle backups of requests that Beer Garden has already cancelled.
 - Optimized UI Rest calls to load only Local Garden with Children
+- Updated how STOMP URL preview is formatted on Garden Admin page
+- Fixed bug where STOMP connections for children did not start with Beer Garden startup
+- Added flag to enable the collection of Garden Latency metrics based off Request event times
 
 # 3.24.4
 
