@@ -200,11 +200,11 @@ def _generate_access_token(user: User, identifier: UUID) -> str:
 
     if user.local_roles:
         for role in user.local_roles:
-            roles.append(role)
+            roles.append(SchemaParser.serialize_role(role, to_string=False, many=False))
     
     if user.remote_roles:
         for role in user.remote_roles:
-            roles.append(role)
+            roles.append(SchemaParser.serialize_remote_role(role, to_string=False, many=False))
 
     jwt_headers = {"alg": "HS256", "typ": "JWT"}
     jwt_payload = {
@@ -214,7 +214,7 @@ def _generate_access_token(user: User, identifier: UUID) -> str:
         "exp": _get_access_token_expiration(),
         "type": "access",
         "username": user.username,
-        "roles": SchemaParser.serialize_role(roles, to_string=False, many=True),
+        "roles": roles,
     }
     
 

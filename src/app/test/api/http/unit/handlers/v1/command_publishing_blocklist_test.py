@@ -8,11 +8,12 @@ from beer_garden.api.http.authentication import issue_token_pair
 from beer_garden.db.mongo.models import (
     CommandPublishingBlocklist,
     Garden,
-    Role,
-    RoleAssignment,
     System,
-    User,
 )
+from beer_garden.user import create_user, delete_user
+from beer_garden.role import create_role, delete_role
+
+from brewtils.models import Role, User
 
 garden_name = "somegarden"
 system_name = "somesystem"
@@ -50,25 +51,21 @@ def system():
 
 @pytest.fixture
 def user_admin_role():
-    role = Role(
-        name="user_admin",
-        permissions=["system:update", "system:read"],
-    ).save()
+    role = create_role(Role(
+        name="plugin_admin",
+        permission="PLUGIN_ADMIN",
+    ))
 
     yield role
-    role.delete()
+    delete_role(role)
 
 
 @pytest.fixture
 def user_admin(user_admin_role):
-    role_assignment = RoleAssignment(role=user_admin_role, domain={"scope": "Global"})
-    user = User(username="useradmin")
-    user.set_password("password")
-    user.role_assignments = [role_assignment]
-    user.save()
+    user = create_user(User(username="testuser", local_roles=[user_admin_role]))
 
     yield user
-    user.delete()
+    delete_user(user)
 
 
 @pytest.fixture
@@ -78,25 +75,21 @@ def access_token_user_admin(user_admin):
 
 @pytest.fixture
 def user_role():
-    role = Role(
+    role = create_role(Role(
         name="user",
-        permissions=[],
-    ).save()
+        permission="READ_ONLY",
+    ))
 
     yield role
-    role.delete()
+    delete_role(role)
 
 
 @pytest.fixture
 def user(user_role):
-    role_assignment = RoleAssignment(role=user_role, domain={"scope": "Global"})
-    user = User(username="user")
-    user.set_password("password")
-    user.role_assignments = [role_assignment]
-    user.save()
+    user = create_user(User(username="user", local_roles=[user_role]))
 
     yield user
-    user.delete()
+    delete_user(user)
 
 
 @pytest.fixture

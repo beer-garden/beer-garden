@@ -96,7 +96,7 @@ class QueryFilterBuilder:
     def _get_garden_q_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
         """Returns a Q filter object for filtering a queryset for gardens"""
 
-        if check_global_roles(user, permission_levels):
+        if check_global_roles(user, permission_levels=permission_levels):
             return Q()
 
         garden_names = []
@@ -109,7 +109,7 @@ class QueryFilterBuilder:
         return Q(**{"name__in": garden_names})
 
     def _get_system_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
-        if check_global_roles(user, permission_levels):
+        if check_global_roles(user, permission_levels=permission_levels):
             return Q()
 
         filters = []
@@ -144,7 +144,7 @@ class QueryFilterBuilder:
         return output
 
     def _get_instance_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
-        if check_global_roles(user, permission_levels):
+        if check_global_roles(user, permission_levels=permission_levels):
             return Q()
 
         filters = []
@@ -327,7 +327,7 @@ class ModelFilter:
         if user_output.username == user.username:
             return user_output
 
-        if not skip_global and check_global_roles(user, permission_levels):
+        if not skip_global and check_global_roles(user, permission_levels=permission_levels):
             return user_output
 
         if self._checks(user, permission_levels=permission_levels, **kwargs):
@@ -345,7 +345,7 @@ class ModelFilter:
     ) -> BrewtilsSystem:
         """Returns a filtered User object based on the roles of the user"""
 
-        if not skip_global and check_global_roles(user, permission_levels):
+        if not skip_global and check_global_roles(user, permission_levels=permission_levels):
             return role
 
         # Can return the role information, if the user has the role
@@ -365,7 +365,7 @@ class ModelFilter:
     ) -> BrewtilsSystem:
         """Returns a filtered Job object based on the roles of the user"""
 
-        if not skip_global and check_global_roles(user, permission_levels):
+        if not skip_global and check_global_roles(user, permission_levels=permission_levels):
             return job
 
         filtered_request_template = self._get_request_filter(
@@ -393,7 +393,7 @@ class ModelFilter:
     ) -> BrewtilsSystem:
         """Returns a filtered Job object based on the roles of the user"""
 
-        if not skip_global and check_global_roles(user, permission_levels):
+        if not skip_global and check_global_roles(user, permission_levels=permission_levels):
             return request
 
         # Owner of the request can always see what they submitted
@@ -438,7 +438,7 @@ class ModelFilter:
     ) -> BrewtilsSystem:
         """Returns a filtered Command object based on the roles of the user"""
 
-        if not skip_global and check_global_roles(user, permission_levels):
+        if not skip_global and check_global_roles(user, permission_levels=permission_levels):
             return command
 
         if self._checks(
@@ -479,7 +479,7 @@ class ModelFilter:
     ) -> BrewtilsSystem:
         """Returns a filtered Command object based on the roles of the user"""
 
-        if not skip_global and check_global_roles(user, permission_levels):
+        if not skip_global and check_global_roles(user, permission_levels=permission_levels):
             return instance
 
         if self._checks(
@@ -515,7 +515,7 @@ class ModelFilter:
     ) -> BrewtilsSystem:
         """Returns a filtered System object based on the roles of the user"""
 
-        if not skip_global and check_global_roles(user, permission_levels):
+        if not skip_global and check_global_roles(user, permission_levels=permission_levels):
             return system
 
         if not self._checks(
@@ -642,7 +642,7 @@ class ModelFilter:
     ) -> BrewtilsGarden:
         """Returns a filtered Garden object based on the roles of the user"""
 
-        if not skip_global and check_global_roles(user, permission_levels):
+        if not skip_global and check_global_roles(user, permission_levels=permission_levels):
             return garden
 
         if not self._checks(
@@ -721,7 +721,7 @@ class ModelFilter:
 
             return outputList
 
-        if check_global_roles(user, permission_levels):
+        if check_global_roles(user, permission_levels=permission_levels):
             return obj
 
         if obj is None:
@@ -770,7 +770,7 @@ class ModelFilter:
                     return None
 
         # If object is outside of the filters, check for permissions at a minimum
-        if check_global_roles(user, permission_levels):
+        if check_global_roles(user, permission_levels=permission_levels):
             return obj
 
 

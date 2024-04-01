@@ -87,7 +87,7 @@ class AuthorizationHandler(BaseHandler):
         return requested_object
 
     def permissioned_queryset(
-        self, model: Type[Document], permission: str
+        self, model: Type[Document]
     ) -> QuerySet:  # Updated
         """Returns a QuerySet for the provided Document model filtered down to only
         the objects for which the requesting user has the given permission
@@ -101,7 +101,7 @@ class AuthorizationHandler(BaseHandler):
               has access to.
         """
 
-        return self.queryFilter.build_filter(self.current_user, permission, model)
+        return self.queryFilter.build_filter(self.current_user, self.minimum_permission, model)
 
     def permitted_objects_filter(
         self, model: Type[Document]

@@ -15,7 +15,6 @@ from beer_garden.db.mongo.models import (
     RawFile,
     Request,
     Role,
-    RoleAssignment,
     System,
     User,
 )
@@ -204,35 +203,17 @@ def request_with_gridfs_output(monkeypatch, local_system):
 
 
 @pytest.fixture
-def operator_role():
-    role = Role(
-        name="operator",
-        permissions=[
-            "request:create",
-            "request:read",
-            "request:update",
-            "request:delete",
-        ],
-    ).save()
+def operator_role(request_permitted):
+    role = Role(name="operator", permission="OPERATOR", scope_systems=[request_permitted.system], scope_namespaces=[request_permitted.namespace]).save()
 
     yield role
     role.delete()
 
 
 @pytest.fixture
-def user(request_permitted, operator_role):
-    role_assignment = RoleAssignment(
-        role=operator_role,
-        domain={
-            "scope": "System",
-            "identifiers": {
-                "name": request_permitted.system,
-                "namespace": request_permitted.namespace,
-            },
-        },
-    )
+def user(operator_role):
 
-    user = User(username="testuser", role_assignments=[role_assignment]).save()
+    user = User(username="testuser", local_role=[operator_role]).save()
 
     yield user
     user.delete()
