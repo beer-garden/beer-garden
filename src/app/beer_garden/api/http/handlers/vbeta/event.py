@@ -32,6 +32,9 @@ class EventPublisherAPI(BaseHandler):
         tags:
           - Event
         """
-        publish(SchemaParser.parse_event(self.request.decoded_body, from_string=True))
+        self.minimum_permission = self.OPERATOR
+        event = SchemaParser.parse_event(self.request.decoded_body, from_string=True)
+        self.verify_user_permission_for_object(event)
+        publish(event)
 
         self.set_status(204)

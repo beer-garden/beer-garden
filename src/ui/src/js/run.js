@@ -20,6 +20,7 @@ appRun.$inject = [
   '$interval',
   'localStorageService',
   'UtilityService',
+  'PermissionService',
   'SystemService',
   'UserService',
   'TokenService',
@@ -41,6 +42,7 @@ appRun.$inject = [
  * @param  {Object} $interval            Angular's $interval object.
  * @param  {Object} localStorageService  Storage service
  * @param  {Object} UtilityService       Service for configuration/icons.
+ * @param  {Object} PermissionService    Service for filtering user accesses.
  * @param  {Object} SystemService        Service for System information.
  * @param  {Object} UserService          Service for User information.
  * @param  {Object} TokenService         Service for Token information.
@@ -60,6 +62,7 @@ export default function appRun(
     $interval,
     localStorageService,
     UtilityService,
+    PermissionService,
     SystemService,
     UserService,
     TokenService,
@@ -98,6 +101,7 @@ export default function appRun(
   $rootScope.responseState = responseState;
 
   $rootScope.getIcon = UtilityService.getIcon;
+  $rootScope.hasPermission = PermissionService.hasPermission;
 
   $rootScope.loadUser = function(token) {
     $rootScope.userPromise = UserService.loadUser(token).then(
@@ -169,25 +173,20 @@ export default function appRun(
     // );
   };
 
-  $rootScope.hasPermission = function(user, permission) {
-    if (!$rootScope.config.authEnabled) return true;
-    if (_.isUndefined(user)) return false;
+  // $rootScope.hasPermission = function(user, permission) {
+  //   if (!$rootScope.config.authEnabled) return true;
+  //   if (_.isUndefined(user)) return false;
 
-    return UserService.hasPermission(user, permission);
+  //   return UserService.hasPermission(user, permission);
+  // };
+
+  $rootScope.hasGardenPermission = function(permission, garden) {
+    return $rootScope.hasPermission(permission, garden_name = garden.name)
   };
 
-  $rootScope.hasGardenPermission = function(user, permission, garden) {
-    if (!$rootScope.config.authEnabled) return true;
-    if (_.isUndefined(user)) return false;
-
-    return UserService.hasGardenPermission(user, permission, garden);
-  };
-
-  $rootScope.hasSystemPermission = function(user, permission, system) {
-    if (!$rootScope.config.authEnabled) return true;
-    if (_.isUndefined(user)) return false;
-
-    return UserService.hasSystemPermission(user, permission, system);
+  $rootScope.hasSystemPermission = function(permission, system) {
+    garden_name = PermissionService.findGardenScope(namespace = system.namespace, system_name = system.name, system_version = system.version)
+    return $rootScope.hasPermission(permission, garden_name=garden_name, namespace = system.namespace, system_name = system.name, system_version = system.version)
   };
 
   $rootScope.hasCommandPermission = function(user, permission, command) {

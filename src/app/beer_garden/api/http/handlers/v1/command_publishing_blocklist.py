@@ -36,6 +36,8 @@ class CommandPublishingBlocklistPathAPI(AuthorizationHandler):
         tags:
           - Command Block List
         """
+
+        self.minimum_permission = self.PLUGIN_ADMIN
         blocked_command = CommandPublishingBlocklist.objects.get(
             id=command_publishing_id
         )
@@ -47,7 +49,7 @@ class CommandPublishingBlocklistPathAPI(AuthorizationHandler):
             )
         else:
             target_garden = Garden.objects.get(name=blocked_command["namespace"])
-        self.verify_user_permission_for_object(self.PLUGIN_ADMIN, target_garden)
+        self.verify_user_permission_for_object(target_garden)
 
         try:
             command_publishing_blocklist_delete(blocked_command)
@@ -76,8 +78,9 @@ class CommandPublishingBlocklistAPI(AuthorizationHandler):
         tags:
           - Command Block List
         """
+        self.minimum_permission = self.READ_ONLY
         permitted_blocklist_entries = self.permissioned_queryset(
-            CommandPublishingBlocklist, self.READ_ONLY
+            CommandPublishingBlocklist
         )
         response = {
             "command_publishing_blocklist": CommandPublishingBlocklistSchema(many=True)
@@ -111,6 +114,8 @@ class CommandPublishingBlocklistAPI(AuthorizationHandler):
         tags:
           - Command Block List
         """
+        self.minimum_permission = self.PLUGIN_ADMIN
+
         commands = self.schema_validated_body(CommandPublishingBlocklistListInputSchema)
         checked_gardens = []
 
@@ -127,7 +132,7 @@ class CommandPublishingBlocklistAPI(AuthorizationHandler):
                         )
                     else:
                         target_garden = Garden.objects.get(name=command["namespace"])
-                    self.verify_user_permission_for_object(self.PLUGIN_ADMIN, target_garden)
+                    self.verify_user_permission_for_object(target_garden)
                 except NotFound:
                     raise BadRequest(
                         reason=f"Invalid garden name: {command['namespace']}"

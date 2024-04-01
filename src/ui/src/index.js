@@ -89,6 +89,7 @@ import userService from './js/services/user_service.js';
 import roleService from './js/services/role_service.js';
 import tokenService from './js/services/token_service.js';
 import utilityService from './js/services/utility_service.js';
+import permissionService from './js/services/permission_service.js';
 import jobService from './js/services/job_service.js';
 import errorService from './js/services/error_service.js';
 import eventService from './js/services/event_service.js';
@@ -205,6 +206,7 @@ angular
     .factory('RoleService', roleService)
     .factory('TokenService', tokenService)
     .factory('UtilityService', utilityService)
+    .factory('PermissionService', permissionService)
     .factory('JobService', jobService)
     .factory('ErrorService', errorService)
     .factory('EventService', eventService)

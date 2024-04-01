@@ -35,9 +35,10 @@ class CommandAPI(AuthorizationHandler):
         tags:
           - Commands
         """
-        _ = self.get_or_raise(System, self.READ_ONLY, id=system_id)
+        self.minimum_permission = self.READ_ONLY
+        _ = self.get_or_raise(System, id=system_id)
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(operation_type="COMMAND_READ", args=[system_id, command_name])
         )
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -94,7 +95,9 @@ class CommandListAPI(AuthorizationHandler):
         tags:
           - Deprecated
         """
-        systems = self.permissioned_queryset(System, self.READ_ONLY)
+        self.minimum_permission = self.READ_ONLY
+
+        systems = self.permissioned_queryset(System)
         commands = []
 
         for system in systems:

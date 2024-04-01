@@ -42,6 +42,7 @@ class FileChunkAPI(BaseHandler):
         tags:
           - Files
         """
+        self.minimum_permission = self.READ_ONLY
         file_id = self.get_argument("file_id", default=None)
         chunk = self.get_argument("chunk", default=None)
         verify = self.get_argument("verify", default="").lower() == "true"
@@ -49,7 +50,7 @@ class FileChunkAPI(BaseHandler):
         if file_id is None:
             raise ValueError("Cannot fetch a file or chunk without a file ID.")
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(
                 operation_type="FILE_FETCH",
                 args=[file_id],
@@ -99,6 +100,7 @@ class FileChunkAPI(BaseHandler):
         tags:
           - Files
         """
+        self.minimum_permission = self.OPERATOR
         file_id = self.get_argument("file_id", default=None)
         upsert = self.get_argument("upsert", default="").lower() == "true"
 
@@ -115,7 +117,7 @@ class FileChunkAPI(BaseHandler):
                 f"No offset sent with data to write to file {file_id}"
             )
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(
                 operation_type="FILE_CHUNK",
                 args=[file_id, offset, data],
@@ -148,11 +150,12 @@ class FileChunkAPI(BaseHandler):
         tags:
           - Files
         """
+        self.minimum_permission = self.OPERATOR
         file_id = self.get_argument("file_id", default=None)
         if file_id is None:
             raise ValueError("Cannot delete a file without an id.")
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(operation_type="FILE_DELETE", args=[file_id])
         )
 
@@ -213,6 +216,7 @@ class ChunkNameAPI(BaseHandler):
         tags:
           - Files
         """
+        self.minimum_permission = self.READ_ONLY
         file_name = self.get_argument("file_name", default="")
         file_size = self.get_argument("file_size", default=None)
         chunk_size = self.get_argument("chunk_size", default=None)
@@ -226,7 +230,7 @@ class ChunkNameAPI(BaseHandler):
         if file_size is None:
             raise ModelValidationError(f"No file_size sent with file {file_name}.")
 
-        file_status = await self.client(
+        file_status = await self.process_operation(
             Operation(
                 operation_type="FILE_CREATE",
                 args=[file_name, int(file_size), int(chunk_size)],

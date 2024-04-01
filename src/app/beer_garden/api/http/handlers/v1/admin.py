@@ -50,7 +50,9 @@ class AdminAPI(AuthorizationHandler):
         tags:
           - Admin
         """
-        self.verify_user_permission_for_object(self.GARDEN_ADMIN, local_garden())
+        self.minimum_permission = self.GARDEN_ADMIN
+
+        self.verify_user_permission_for_object(local_garden())
 
         operations = SchemaParser.parse_patch(
             self.request.decoded_body, many=True, from_string=True
@@ -58,10 +60,10 @@ class AdminAPI(AuthorizationHandler):
 
         for op in operations:
             if op.operation == "rescan":
-                await self.client(Operation(operation_type="RUNNER_RESCAN"))
+                await self.process_operation(Operation(operation_type="RUNNER_RESCAN"))
             elif op.operation == "reload":
                 if op.path == "/config/logging/plugin":
-                    await self.client(Operation(operation_type="PLUGIN_LOG_RELOAD"))
+                    await self.process_operation(Operation(operation_type="PLUGIN_LOG_RELOAD"))
                 else:
                     raise ModelValidationError(f"Unsupported path '{op.path}'")
             else:
