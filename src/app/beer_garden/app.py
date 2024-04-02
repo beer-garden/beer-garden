@@ -181,8 +181,6 @@ class Application(StoppableThread):
             modify_event=file_event,
         )
 
-        # Sync with parent at start
-        beer_garden.garden.publish_garden()
 
     def run(self):
         """Before setting up Beer-Garden, ensures that required services are running"""
@@ -327,6 +325,9 @@ class Application(StoppableThread):
             self.plugin_log_config_observer.start()
         if config.get("plugin.local.logging.config_file"):
             self.plugin_local_log_config_observer.start()
+
+        self.logger.debug("Publishing to Parent that we are online")
+        beer_garden.garden.publish_garden()
 
         self.logger.info("All set! Let me know if you need anything else!")
 
