@@ -182,7 +182,9 @@ def publish_garden(status: str = "RUNNING") -> Garden:
     garden.connection_type = None
     garden.status = status
     if config.get("parent.sync_interval") > 0:
-        garden.metadata["_unresponsive_timeout"] = (config.get("parent.sync_interval") * 3)
+        garden.metadata["_unresponsive_timeout"] = (
+            config.get("parent.sync_interval") * 3
+        )
 
     return garden
 
@@ -217,7 +219,6 @@ def check_garden_receiving_heartbeat(
 
     connection_set = False
 
-
     for connection in garden.receiving_connections:
         if connection.api == api:
             connection_set = True
@@ -226,7 +227,6 @@ def check_garden_receiving_heartbeat(
                 connection.status = "RECEIVING"
 
             connection.status_info["heartbeat"] = datetime.utcnow()
-
 
     # If the receiving type is unknown, enable it by default and set heartbeat
     if not connection_set:
