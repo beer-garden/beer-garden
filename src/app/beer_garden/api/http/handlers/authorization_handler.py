@@ -51,8 +51,8 @@ class AuthorizationHandler(BaseHandler):
         else:
             return self._anonymous_superuser()
         
-    async def process_operation(self, operation: Operation):
-        return await self.client(operation, current_user=self.current_user, minimum_permission=self.minimum_permission)
+    async def process_operation(self, operation: Operation, **kwargs):
+        return await self.client(operation, current_user=self.current_user, minimum_permission=self.minimum_permission, **kwargs)
 
 
     def get_or_raise(self, model: Type[Document], **kwargs):  # Updated

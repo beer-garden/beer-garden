@@ -228,11 +228,15 @@ class ModelFilter:
                 or (check_namespace and system_namespace is None)
                 or (check_instances and system_instances is None)
                 or (check_version and system_version is None)
-                or (check_garden and garden_name is None and system_name is None)
+                or (check_garden and (garden_name is None or system_name is None))
             ):
                 if system_id:
                     system = db.query_unique(
                         BrewtilsSystem, id=system_id, raise_missing=True
+                    )
+                elif system_name and system_namespace and system_version:
+                    system = db.query_unique(
+                        BrewtilsSystem, name=system_name, version=system_version, namespace=system_namespace, raise_missing=True
                     )
                 elif system_name:
                     system = db.query_unique(
@@ -255,13 +259,14 @@ class ModelFilter:
                 system_namespace = system.namespace
 
         if system_name and check_garden and garden_name is None:
-            gardens = db.query(BrewtilsGarden, systems__name=system_name)
+            if system:
+                gardens = db.query(BrewtilsGarden, systems__id=system.id)
 
             if gardens and len(gardens) == 1:
                 garden_name = gardens[0].name
             else:
                 # TODO: Add better Exception
-                raise Exception()
+                raise Exception("Unable to find source garden for Authorization checks")
 
         for roles in [user.local_roles, user.remote_roles]:
             if any(
