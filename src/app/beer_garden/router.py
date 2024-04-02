@@ -290,21 +290,17 @@ def update_api_heartbeat(operation: Operation):
         operation.source_garden_name is not None
         and operation.source_garden_name != config.get("garden.name")
         and operation.source_api is not None
-    ):
+        and operation.operation_type == "PUBLISH_EVENT"
+        and operation.model.name == Events.GARDEN_SYNC.name
+        ):
+
         source_garden = getattr(gardens, operation.source_garden_name, None)
-
-        is_garden_sync = (
-            operation.operation_type == "PUBLISH_EVENT"
-            and operation.model.name == Events.GARDEN_SYNC.name
-            and operation.model.payload.name == operation.source_garden_name
-        )
-
-        beer_garden.garden.check_garden_receiving_heartbeat(
-            operation.source_api,
-            garden_name=operation.source_garden_name,
-            garden=source_garden,
-            force_update=is_garden_sync,
-        )
+        if operation.model.payload.name == operation.source_garden_name:
+            beer_garden.garden.check_garden_receiving_heartbeat(
+                operation.source_api,
+                garden_name=operation.source_garden_name,
+                garden=source_garden,
+            )
 
 
 def invalid_source_check(operation: Operation):

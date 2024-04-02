@@ -122,6 +122,7 @@ parent:
     url_prefix: /
     username: null
   skip_events: []
+  sync_interval: 15
   stomp:
     enabled: false
     headers: []

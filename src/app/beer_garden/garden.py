@@ -181,6 +181,8 @@ def publish_garden(status: str = "RUNNING") -> Garden:
     get_children_garden(garden)
     garden.connection_type = None
     garden.status = status
+    if config.get("parent.sync_interval") > 0:
+        garden.metadata["_unresponsive_timeout"] = (config.get("parent.sync_interval") * 3)
 
     return garden
 
@@ -204,7 +206,7 @@ def update_garden_config(garden: Garden) -> Garden:
 
 
 def check_garden_receiving_heartbeat(
-    api: str, garden_name: str = None, garden: Garden = None, force_update: bool = False
+    api: str, garden_name: str = None, garden: Garden = None
 ):
     if garden is None:
         garden = db.query_unique(Garden, name=garden_name)
@@ -214,7 +216,7 @@ def check_garden_receiving_heartbeat(
         garden = create_garden(Garden(name=garden_name, connection_type="Remote"))
 
     connection_set = False
-    update_heartbeat = False
+
 
     for connection in garden.receiving_connections:
         if connection.api == api:
@@ -222,24 +224,12 @@ def check_garden_receiving_heartbeat(
 
             if connection.status not in ["DISABLED", "RECEIVING"]:
                 connection.status = "RECEIVING"
-                update_heartbeat = True
 
-            if config.get("children.unresponsive_timeout_enabled"):
+            connection.status_info["heartbeat"] = datetime.utcnow()
 
-                interval_value = garden.metadata.get(
-                    "_unresponsive_timeout", config.get("children.unresponsive_timeout")
-                )
-
-                if interval_value > 0:
-                    timeout = datetime.utcnow() - timedelta(minutes=interval_value / 2)
-
-                    if force_update or connection.status_info["heartbeat"] < timeout:
-                        connection.status_info["heartbeat"] = datetime.utcnow()
-                        update_heartbeat = True
 
     # If the receiving type is unknown, enable it by default and set heartbeat
     if not connection_set:
-        update_heartbeat = True
         connection = Connection(api=api, status="DISABLED")
 
         # Check if there is a config file
@@ -252,10 +242,7 @@ def check_garden_receiving_heartbeat(
         connection.status_info["heartbeat"] = datetime.utcnow()
         garden.receiving_connections.append(connection)
 
-    if update_heartbeat:
-        return update_receiving_connections(garden)
-
-    return garden
+    return update_receiving_connections(garden)
 
 
 @publish_event(Events.GARDEN_UPDATED)
@@ -640,10 +627,6 @@ def load_garden_connections(garden: Garden):
         else:
             connection.status = "DISABLED"
 
-    if config.get("unresponsive_timeout", garden_config) > 0:
-        garden.metadata["_unresponsive_timeout"] = config.get(
-            "unresponsive_timeout", garden_config
-        )
     return garden
 
 

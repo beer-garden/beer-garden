@@ -139,6 +139,14 @@ class Application(StoppableThread):
                 max_running_jobs=1,
             )
 
+        # Add Garden Sync Scheduler
+        if config.get("parent.sync_interval") > 0 and (config.get("parent.stomp.enabled") or config.get("parent.http.enabled")):
+            self.scheduler.add_schedule(
+                beer_garden.garden.publish_garden,
+                interval=config.get("parent.sync_interval"),
+                max_running_jobs=1,
+            )
+
         metrics_config = config.get("metrics")
         if metrics_config.prometheus.enabled:
             self.helper_threads.append(
@@ -172,6 +180,9 @@ class Application(StoppableThread):
             create_event=file_event,
             modify_event=file_event,
         )
+
+        # Sync with parent at start
+        beer_garden.garden.publish_garden()
 
     def run(self):
         """Before setting up Beer-Garden, ensures that required services are running"""
