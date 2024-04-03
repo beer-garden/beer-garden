@@ -35,6 +35,8 @@ services:
           - "8161:8161"
         volumes:
             - ./data/activemq-config/etc-override-non-ssl:/var/lib/artemis/etc-override
+        networks:
+            - bg-network
 
     mongodb:
         image: mongo:4.2
@@ -44,6 +46,8 @@ services:
         volumes:
             - mongo-data:/data/db
             - mongo-config:/data/configdb
+        networks:
+            - bg-network
 
     rabbitmq:
         image: rabbitmq:3.8-management-alpine
@@ -57,6 +61,8 @@ services:
             - "15672:15672"
         volumes:
             - rabbitmq-home:/var/lib/rabbitmq
+        networks:
+            - bg-network
 
     jmeter-testing:
         image: justb4/jmeter
@@ -71,6 +77,8 @@ services:
 
     beer-garden-parent:
         image: bgio/beer-garden:parent
+        networks:
+            - bg-network
         ports:
             - "2337:2337"
         volumes:
@@ -120,6 +128,8 @@ services:
 
     beer-garden-child:
         image: bgio/beer-garden:child
+        networks:
+            - bg-network
         ports:
             - "2357:2337"
             - "2358:2338"
@@ -161,6 +171,11 @@ services:
 
         depends_on:
             - beer-garden-parent
+
+networks:
+    bg-network:
+        driver: bridge
+        name: bg-network
 
 volumes:
     plugins:
