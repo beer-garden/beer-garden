@@ -1278,6 +1278,14 @@ _METRICS_SPEC = {
             "description": "Enable collection of Garden latency metrics based off Requests",
             "default": False,
         },
+        "garden_latency_metrics_cache_window": {
+            "type": "int",
+            "default": 5,
+            "description": (
+                "Number of minutes to writing cache to "
+                "database (negative number for never cache)"
+            ),
+        },
         "prometheus": {
             "type": "dict",
             "items": {
