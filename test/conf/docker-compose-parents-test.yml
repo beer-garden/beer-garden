@@ -67,7 +67,7 @@ services:
             - bg-network 
         command: -n -t /tests/child_echo_request.jmx -o /reports/html/
         depends_on:
-            - beer-garden   
+            - beer-garden-child   
 
     beer-garden-parent:
         image: bgio/beer-garden:parent
