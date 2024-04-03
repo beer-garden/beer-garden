@@ -37,7 +37,7 @@
                 <stringProp name="Argument.value">{&#xd;
                   &quot;system&quot;: &quot;echo&quot;,&#xd;
                   &quot;system_version&quot;: &quot;3.0.0.dev0&quot;,&#xd;
-                  &quot;namespace&quot;: &quot;child&quot;,&#xd;
+                  &quot;namespace&quot;: &quot;parent&quot;,&#xd;
                   &quot;command&quot;: &quot;say&quot;,&#xd;
                   &quot;comment&quot;: &quot;&quot;,&#xd;
                   &quot;output_type&quot;: &quot;STRING&quot;,&#xd;
