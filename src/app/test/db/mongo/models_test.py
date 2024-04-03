@@ -206,6 +206,17 @@ class TestRequest(object):
             with pytest.raises(ModelValidationError):
                 req.clean()
 
+        @pytest.mark.parametrize(
+            "parent",
+            [(Request(command="say"))],
+        )
+        def test_parent_orphan(self, parent):
+            parent.save()
+            req = Request(command="bar", parent=parent, has_parent=True).save()
+            parent.delete()
+            with pytest.raises(ModelValidationError):
+                req.clean()
+
     class TestCleanUpdate:
         @pytest.mark.parametrize(
             "start, end",
