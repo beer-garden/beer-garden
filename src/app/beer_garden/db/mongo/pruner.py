@@ -3,6 +3,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import List, Tuple
 
+from brewtils.errors import ModelValidationError
 from brewtils.models import Event, Events
 from brewtils.schema_parser import SchemaParser
 from brewtils.stoppable_thread import StoppableThread
@@ -58,7 +59,7 @@ class MongoPruner(StoppableThread):
         timeout = datetime.utcnow() - timedelta(minutes=self._cancel_threshold)
         outstanding_requests = Request.objects.filter(
             status__in=["IN_PROGRESS", "CREATED"], created_at__lte=timeout
-        ).no_cache()
+        )
         for request in outstanding_requests:
             try:
                 request.status = "CANCELED"
@@ -75,8 +76,15 @@ class MongoPruner(StoppableThread):
                         payload=parsed,
                     )
                 )
-            except DoesNotExist:
-                self.logger.error(f"Attempted to CANCEL request id {request.id}, unable to find in Mongo")
+            except ModelValidationError:
+                self.logger.error(f"Attempted to CANCEL request id {request.id}, unable to find reference. Will attempt to check for parents")
+
+                if self.has_parent:
+                    try:
+                        request.parent.id
+                    except DoesNotExist:
+                        self.logger.error(f"Parent is missing, killing orphan request")
+                        request.delete()
 
     def run(self):
         """Runs the pruner to delete tasks"""
