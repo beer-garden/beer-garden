@@ -612,16 +612,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       
-      - name: Print Ifconfig
-        run: |
-          ifconfig
-
-      - name: Set BG Hostname
-        id: set_hostname
-        run: |
-          echo "hostname=$(ifconfig eth0 | grep 'inet ' | awk '{print $2}')" >> $GITHUB_OUTPUT
-          echo "hostname_2=$(ifconfig docker0 | grep 'inet ' | awk '{print $2}')" >> $GITHUB_OUTPUT
-
       # Custom tag extractor to find Brewtils Branch
       - name: Find Brewtils Branch
         uses: TheBurchLog/body-env-tag-action@1.0
@@ -655,6 +645,7 @@ jobs:
         run: |
           cp test/conf/docker-compose-parents-test.yml docker/docker-compose/docker-compose.yml
           cp -r test/conf/beer_garden_parent_children docker/docker-compose/
+          cp -r test/jmeter docker/docker-compose/data/
         working-directory: ./
 
       - name: Checkout Local Plugins
@@ -691,6 +682,11 @@ jobs:
 
       - name: Create reports directory
         run: mkdir reports
+        working-directory: ./docker/docker-compose/data
+
+      - name: Run Jmeter Test
+        run: docker-compose up jmeter-testing
+        working-directory: ./docker/docker-compose
 
       # - name: Echo Jmeter Test
       #   uses: QAInsights/PerfAction@v5.6.2
@@ -704,12 +700,12 @@ jobs:
       #     test-plan-path: ./test/jmeter/child_echo_request.jmx
       #     args: "-e -o ./reports/html_2/ -JHostDomain=${{steps.set_hostname.outputs.hostname_2}}"
 
-      - name: Run JMeter Action on a test
-        uses: rbhadti94/apache-jmeter-action@v0.5.0
-        with:
-          testFilePath: ./test/jmeter/child_echo_request.jmx
-          outputReportsFolder: reports/
-          args: "-JHostDomain=127.0.0.1"
+      # - name: Run JMeter Action on a test
+      #   uses: rbhadti94/apache-jmeter-action@v0.5.0
+      #   with:
+      #     testFilePath: ./test/jmeter/child_echo_request.jmx
+      #     outputReportsFolder: reports/
+      #     args: "-JHostDomain=127.0.0.1"
 
       - name: Upload JMeter Results
         uses: actions/upload-artifact@v3
@@ -717,6 +713,7 @@ jobs:
           name: jmeter-html-reports
           path: reports
           if-no-files-found: error
+        working-directory: ./docker/docker-compose/data
 
       - name: Grab logs from Child
         if: always()
