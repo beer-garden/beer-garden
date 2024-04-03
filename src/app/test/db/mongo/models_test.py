@@ -208,11 +208,11 @@ class TestRequest(object):
 
         @pytest.mark.parametrize(
             "parent",
-            [(Request(command="say"))],
+            [(Request(system="system",instance="instance",version="1",namespace="namespace",command="say"))],
         )
         def test_parent_orphan(self, parent):
             parent.save()
-            req = Request(command="bar", parent=parent, has_parent=True).save()
+            req = Request(system="system",instance="instance",version="1",namespace="namespace",command="bar", parent=parent, has_parent=True).save()
             parent.delete()
             with pytest.raises(ModelValidationError):
                 req.clean()
