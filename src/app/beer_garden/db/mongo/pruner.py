@@ -77,7 +77,9 @@ class MongoPruner(StoppableThread):
                     )
                 )
             except ModelValidationError:
-                self.logger.error(f"Attempted to CANCEL request id {request.id}, unable to find reference. Will attempt to check for parents")
+                self.logger.error(
+                    f"Attempted to CANCEL request id {request.id}, unable to find reference. Will attempt to check for parents"
+                )
 
                 if self.has_parent:
                     try:
