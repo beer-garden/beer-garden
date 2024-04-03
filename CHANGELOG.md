@@ -20,7 +20,7 @@ TBD
 - Added flag to enable the collection of Garden Latency metrics based off Request event times
 - Garden Sync events will update heartbeat status of Receiving Garden APIs
 - Fixed bug where Child Garden Publishers appeared as Upstream on Garden Admin Page
-- Removed Unresponsive Timeout from Child configuraitons, and added it to be controlled by child Garden based on Sync intervals.
+- Removed Unresponsive Timeout from Child configurations, and added it to be controlled by child Garden based on Sync intervals.
 
 # 3.24.4
 
