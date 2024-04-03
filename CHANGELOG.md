@@ -19,6 +19,7 @@ TBD
 - Fixed bug where STOMP connections for children did not start with Beer Garden startup
 - Added flag to enable the collection of Garden Latency metrics based off Request event times
 
+
 # 3.24.4
 
 3/11/24
