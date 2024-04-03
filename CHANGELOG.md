@@ -4,6 +4,7 @@
 
 TBD
 
+- Added button to reset garden admin metrics
 - Fixed bug where removing a parent garden failed to remove both parent and child
 - Added flag to enable API heartbeat checks
 - Added Topics API and classes to support dynamic topic subscribers
