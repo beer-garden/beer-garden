@@ -22,7 +22,7 @@
       </ThreadGroup>
       <hashTree>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Child Echo Request">
-          <stringProp name="HTTPSampler.domain">beer-garden</stringProp>   
+          <stringProp name="HTTPSampler.domain">beer-garden-parent</stringProp>   
           <stringProp name="HTTPSampler.port">2337</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
           <stringProp name="HTTPSampler.path">/api/v1/requests?blocking=true&amp;timeout=-1</stringProp>
@@ -37,7 +37,7 @@
                 <stringProp name="Argument.value">{&#xd;
                   &quot;system&quot;: &quot;echo&quot;,&#xd;
                   &quot;system_version&quot;: &quot;3.0.0.dev0&quot;,&#xd;
-                  &quot;namespace&quot;: &quot;parent&quot;,&#xd;
+                  &quot;namespace&quot;: &quot;child&quot;,&#xd;
                   &quot;command&quot;: &quot;say&quot;,&#xd;
                   &quot;comment&quot;: &quot;&quot;,&#xd;
                   &quot;output_type&quot;: &quot;STRING&quot;,&#xd;
