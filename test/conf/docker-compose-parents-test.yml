@@ -71,7 +71,7 @@ services:
             - ./data/reports:/reports
         networks:
             - bg-network 
-        command: -n -t /tests/child_echo_request.jmx -e -o /reports/html/
+        command: -n -l log.jtl -t /tests/child_echo_request.jmx -e -o /reports/html/
         depends_on:
             - beer-garden-child   
 
