@@ -82,9 +82,11 @@ class MongoPruner(StoppableThread):
 
                 if self.has_parent:
                     try:
-                        Request.objects.get(id=request.parent.id)                     
+                        Request.objects.get(id=request.parent.id)
                     except DoesNotExist:
-                        self.logger.error(f"Parent is missing, killing orphan request {request.id}")
+                        self.logger.error(
+                            f"Parent is missing, killing orphan request {request.id}"
+                        )
                         request.delete()
 
     def run(self):
