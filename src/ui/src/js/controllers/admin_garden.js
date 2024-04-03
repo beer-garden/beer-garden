@@ -39,6 +39,7 @@ export default function adminGardenController(
       type: 'success',
       msg: 'Success!',
     });
+    loadAll();
   };
   $scope.garden_name = null;
   $scope.createGardenFormHide = true;
