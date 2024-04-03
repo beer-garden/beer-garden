@@ -213,10 +213,10 @@ class TestRequest(object):
         def test_parent_orphan(self, parent):
             parent.save()
             req = Request(system="system",instance_name="instance",system_version="1",namespace="namespace",command="bar", parent=parent, has_parent=True).save()
-            parent.delete()
-            req = Request.objects.get(id=req.id)
+            req2 = Request.objects.get(id=req.id)
+            parent.delete()       
             with pytest.raises(ModelValidationError):
-                req.clean()
+                req2.clean()
 
     class TestCleanUpdate:
         @pytest.mark.parametrize(
