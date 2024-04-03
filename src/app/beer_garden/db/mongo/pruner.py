@@ -7,6 +7,7 @@ from brewtils.models import Event, Events
 from brewtils.schema_parser import SchemaParser
 from brewtils.stoppable_thread import StoppableThread
 from mongoengine import Q
+from mongoengine.errors import DoesNotExist
 
 from beer_garden.db.mongo.models import File, RawFile, Request
 from beer_garden.db.mongo.parser import MongoParser
@@ -57,22 +58,25 @@ class MongoPruner(StoppableThread):
         timeout = datetime.utcnow() - timedelta(minutes=self._cancel_threshold)
         outstanding_requests = Request.objects.filter(
             status__in=["IN_PROGRESS", "CREATED"], created_at__lte=timeout
-        )
+        ).no_cache()
         for request in outstanding_requests:
-            request.status = "CANCELED"
-            request.save()
-            serialized = MongoParser.serialize(request, to_string=True)
-            parsed = SchemaParser.parse_request(
-                serialized, from_string=True, many=False
-            )
-
-            publish(
-                Event(
-                    name=Events.REQUEST_CANCELED.name,
-                    payload_type="Request",
-                    payload=parsed,
+            try:
+                request.status = "CANCELED"
+                request.save()
+                serialized = MongoParser.serialize(request, to_string=True)
+                parsed = SchemaParser.parse_request(
+                    serialized, from_string=True, many=False
                 )
-            )
+
+                publish(
+                    Event(
+                        name=Events.REQUEST_CANCELED.name,
+                        payload_type="Request",
+                        payload=parsed,
+                    )
+                )
+            except DoesNotExist:
+                self.logger.error(f"Attempted to CANCEL request id {request.id}, unable to find in Mongo")
 
     def run(self):
         """Runs the pruner to delete tasks"""
