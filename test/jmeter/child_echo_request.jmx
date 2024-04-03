@@ -35,19 +35,19 @@
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
                 <stringProp name="Argument.value">{&#xd;
-  &quot;system&quot;: &quot;echo&quot;,&#xd;
-  &quot;system_version&quot;: &quot;3.0.0.dev0&quot;,&#xd;
-  &quot;namespace&quot;: &quot;parent&quot;,&#xd;
-  &quot;command&quot;: &quot;say&quot;,&#xd;
-  &quot;comment&quot;: &quot;&quot;,&#xd;
-  &quot;output_type&quot;: &quot;STRING&quot;,&#xd;
-  &quot;instance_name&quot;: &quot;default&quot;,&#xd;
-  &quot;command_type&quot;: &quot;ACTION&quot;,&#xd;
-  &quot;parameters&quot;: {&#xd;
-    &quot;message&quot;: &quot;Hello, World!&quot;,&#xd;
-    &quot;loud&quot;: false&#xd;
-  }&#xd;
-}</stringProp>
+                  &quot;system&quot;: &quot;echo&quot;,&#xd;
+                  &quot;system_version&quot;: &quot;3.0.0.dev0&quot;,&#xd;
+                  &quot;namespace&quot;: &quot;child&quot;,&#xd;
+                  &quot;command&quot;: &quot;say&quot;,&#xd;
+                  &quot;comment&quot;: &quot;&quot;,&#xd;
+                  &quot;output_type&quot;: &quot;STRING&quot;,&#xd;
+                  &quot;instance_name&quot;: &quot;default&quot;,&#xd;
+                  &quot;command_type&quot;: &quot;ACTION&quot;,&#xd;
+                  &quot;parameters&quot;: {&#xd;
+                    &quot;message&quot;: &quot;Hello, World!&quot;,&#xd;
+                    &quot;loud&quot;: false&#xd;
+                  }&#xd;
+                }</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
             </collectionProp>
