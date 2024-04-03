@@ -214,6 +214,7 @@ class TestRequest(object):
             parent.save()
             req = Request(system="system",instance_name="instance",system_version="1",namespace="namespace",command="bar", parent=parent, has_parent=True).save()
             parent.delete()
+            req = Request.objects.get(id=req.id)
             with pytest.raises(ModelValidationError):
                 req.clean()
 
