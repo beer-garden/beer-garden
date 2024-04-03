@@ -129,6 +129,7 @@ services:
         depends_on:
             - rabbitmq
             - mongodb
+            - activemq
 
     beer-garden-child:
         image: bgio/beer-garden:child
@@ -177,6 +178,7 @@ services:
             - beer-garden-parent
             - rabbitmq
             - mongodb
+            - activemq
 
 networks:
     bg-network:
