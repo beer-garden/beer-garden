@@ -49,6 +49,7 @@ from mongoengine import (
     UUIDField,
     ValidationError,
 )
+from mongoengine.errors import DoesNotExist
 
 from beer_garden import config
 from beer_garden.db.mongo.querysets import FileFieldHandlingQuerySet
@@ -548,7 +549,17 @@ class Request(MongoModel, Document):
         # Deal with has_parent
         if self.has_parent is None:
             self.has_parent = bool(self.parent)
-        elif self.has_parent != bool(self.parent):
+
+        if self.has_parent:
+            try:
+                self.parent
+            except DoesNotExist:
+                raise ModelValidationError(
+                    f"Cannot save Request {self}: parent value is not "
+                    f"present in database"
+                )
+
+        if self.has_parent != bool(self.parent):
             raise ModelValidationError(
                 f"Cannot save Request {self}: parent value of {self.parent!r} is not "
                 f"consistent with has_parent value of {self.has_parent}"
