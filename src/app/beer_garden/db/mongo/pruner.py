@@ -76,16 +76,15 @@ class MongoPruner(StoppableThread):
                         payload=parsed,
                     )
                 )
-            except ModelValidationError:
-                self.logger.error(
-                    f"Attempted to CANCEL request id {request.id}, unable to find reference. Will attempt to check for parents"
-                )
+            except ModelValidationError as ex:
+                self.logger.error(ex)
+                self.logger.error("Will attempt to check for parents")
 
                 if self.has_parent:
                     try:
-                        request.parent.id
+                        Request.objects.get(id=request.parent.id)                     
                     except DoesNotExist:
-                        self.logger.error(f"Parent is missing, killing orphan request")
+                        self.logger.error(f"Parent is missing, killing orphan request {request.id}")
                         request.delete()
 
     def run(self):
