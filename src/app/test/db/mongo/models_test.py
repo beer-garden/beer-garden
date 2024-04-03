@@ -215,7 +215,7 @@ class TestRequest(object):
             req = Request(system="system",instance_name="instance",system_version="1",namespace="namespace",command="bar", parent=parent, has_parent=True).save()
             req2 = Request.objects.get(id=req.id)
             parent.delete()       
-            with pytest.raises(ModelValidationError):
+            with pytest.raises(ModelValidationError, match=".*parent value is not present in database"):
                 req2.clean()
 
     class TestCleanUpdate:
