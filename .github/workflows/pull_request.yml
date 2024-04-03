@@ -711,9 +711,8 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: jmeter-html-reports
-          path: reports
+          path: ./docker/docker-compose/data/reports
           if-no-files-found: error
-        working-directory: ./docker/docker-compose/data
 
       - name: Grab logs from Child
         if: always()
