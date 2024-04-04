@@ -708,3 +708,4 @@ jobs:
         if: always()
         run: docker-compose logs --tail 3000 beer-garden-parent
         working-directory: ./docker/docker-compose
+        
