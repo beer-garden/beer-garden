@@ -5,7 +5,7 @@ http:
   api_version: 1
   client_timeout: -1
   enabled: true
-  host: beer-garden-child
+  host: 192.168.86.44
   password: null
   port: 2337
   refresh_token: null

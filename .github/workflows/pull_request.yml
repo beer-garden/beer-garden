@@ -643,8 +643,8 @@ jobs:
 
       - name: Update Docker Compose  
         run: |
-          cp test/conf/docker-compose-parents-test.yml docker/docker-compose/docker-compose.yml
-          cp -r test/conf/beer_garden_parent_children docker/docker-compose/
+          cp test/conf/docker-compose-jmeter-test.yml docker/docker-compose/docker-compose.yml
+          cp -r test/conf/beer_garden_jmeter_parent_children docker/docker-compose/
           cp -r test/jmeter docker/docker-compose/data/
         working-directory: ./
 
