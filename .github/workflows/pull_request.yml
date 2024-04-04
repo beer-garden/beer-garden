@@ -688,25 +688,6 @@ jobs:
         run: docker-compose up jmeter-testing
         working-directory: ./docker/docker-compose
 
-      # - name: Echo Jmeter Test
-      #   uses: QAInsights/PerfAction@v5.6.2
-      #   with:
-      #     test-plan-path: ./test/jmeter/child_echo_request.jmx
-      #     args: "-e -o ./reports/html/ -JHostDomain=${{steps.set_hostname.outputs.hostname}}"
-
-      # - name: Echo Jmeter Test
-      #   uses: QAInsights/PerfAction@v5.6.2
-      #   with:
-      #     test-plan-path: ./test/jmeter/child_echo_request.jmx
-      #     args: "-e -o ./reports/html_2/ -JHostDomain=${{steps.set_hostname.outputs.hostname_2}}"
-
-      # - name: Run JMeter Action on a test
-      #   uses: rbhadti94/apache-jmeter-action@v0.5.0
-      #   with:
-      #     testFilePath: ./test/jmeter/child_echo_request.jmx
-      #     outputReportsFolder: reports/
-      #     args: "-JHostDomain=127.0.0.1"
-
       - name: Upload JMeter Results
         uses: actions/upload-artifact@v3
         with:
