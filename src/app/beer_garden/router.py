@@ -697,6 +697,7 @@ def _pre_forward(operation: Operation) -> Operation:
         operation.model.has_parent = False
         operation.model.source_garden = None
         operation.model.target_garden = None
+        operation.model.metadata = {}
 
         # Pull out and store the wait event, if it exists
         wait_event = operation.kwargs.pop("wait_event", None)

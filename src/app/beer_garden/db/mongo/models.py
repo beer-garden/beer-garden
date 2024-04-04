@@ -490,6 +490,13 @@ class Request(MongoModel, Document):
         if self.output_gridfs.grid_id:
             self.output = None
 
+        if not self.metadata:
+            self.metadata = {}
+
+        status_key = f"{self.status}_{config.get('garden.name')}"
+        if status_key not in self.metadata:
+            self.metadata[status_key] = int(datetime.datetime.utcnow().timestamp() * 1000)
+
     def _post_save(self):
         if self.status == "CREATED" and self.namespace == config.get("garden.name"):
             self._update_raw_file_references()
