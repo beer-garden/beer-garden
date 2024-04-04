@@ -58,11 +58,10 @@ class MongoPruner(StoppableThread):
 
         timeout = datetime.utcnow() - timedelta(minutes=self._cancel_threshold)
         outstanding_requests = Request.objects.filter(
-            status__in=["IN_PROGRESS", "CREATED"], 
-            created_at__lte=timeout
+            status__in=["IN_PROGRESS", "CREATED"], created_at__lte=timeout
         )
         # TODO: Sorting in reverse order, so newest first
-        
+
         for request in outstanding_requests:
             try:
                 request.status = "CANCELED"
