@@ -97,7 +97,6 @@ services:
             BG_CHILDREN_CONFIG_DIRECTORY: /children
             BG_CHILDREN_UNRESPONSIVE_TIMEOUT_ENABLED: "true"
             BG_METRICS_GARDEN_LATENCY_METRICS_ENABLED: "true"
-            unresponsive_timeou
 
             # Point at the correct database
             BG_DB_HOST: mongodb
