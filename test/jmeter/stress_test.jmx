@@ -19,19 +19,6 @@
         </elementProp>
       </ThreadGroup>
       <hashTree>
-        <UserParameters guiclass="UserParametersGui" testclass="UserParameters" testname="User Parameters UUID">
-          <collectionProp name="UserParameters.names">
-            <stringProp name="1150090954">requestUUID</stringProp>
-          </collectionProp>
-          <collectionProp name="UserParameters.thread_values">
-            <collectionProp name="681405977">
-              <stringProp name="118040362">${__UUID()}</stringProp>
-            </collectionProp>
-          </collectionProp>
-          <boolProp name="UserParameters.per_iteration">true</boolProp>
-          <stringProp name="TestPlan.comments">Pre Processor</stringProp>
-        </UserParameters>
-        <hashTree/>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Create Compelted Request">
           <stringProp name="HTTPSampler.domain">beer-garden-parent</stringProp>
           <stringProp name="HTTPSampler.port">2337</stringProp>
@@ -57,7 +44,6 @@
     &quot;children&quot;: [],&#xd;
     &quot;created_at&quot;: 1712240594955,&#xd;
     &quot;instance_name&quot;: &quot;default&quot;,&#xd;
-    &quot;id&quot;: &quot;${requestUUID}&quot;,&#xd;
     &quot;source_garden&quot;: &quot;default&quot;,&#xd;
     &quot;system_version&quot;: &quot;3.0.0.dev0&quot;,&#xd;
     &quot;output&quot;: &quot;Hello, World!&quot;,&#xd;
@@ -92,7 +78,7 @@
           <hashTree/>
         </hashTree>
       </hashTree>
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Beer Garden Child Requesters">
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Beer Garden Child Requesters" enabled="false">
         <intProp name="ThreadGroup.num_threads">200</intProp>
         <intProp name="ThreadGroup.ramp_time">120</intProp>
         <longProp name="ThreadGroup.duration">3600</longProp>
