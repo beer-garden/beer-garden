@@ -2,7 +2,6 @@
 from datetime import datetime, timedelta
 
 import pytest
-from copy import deepcopy
 from box import Box
 from brewtils.errors import ModelValidationError
 from brewtils.models import Choices, Command, Event, Events, Parameter
@@ -15,7 +14,7 @@ import beer_garden.config
 import beer_garden.requests
 from beer_garden.db.mongo.models import Request, Garden
 from beer_garden.requests import RequestValidator
-from beer_garden.garden import create_garden, get_garden
+from beer_garden.garden import create_garden
 
 enable_gridfs_integration()
 
@@ -67,22 +66,8 @@ def child_garden_request():
         instance_name="instance1",
         command="somecommand",
         parameters={},
-    )
-    request.save()
-
-    yield request
-    request.delete()
-
-
-@pytest.fixture
-def latency_request():
-    request = Request(
-        namespace="child_garden",
-        system="testsystem",
-        system_version="1.0.0",
-        instance_name="instance1",
-        command="somecommand",
-        parameters={},
+        source_garden="parent",
+        target_garden="child",
     )
     request.save()
 
@@ -1129,121 +1114,10 @@ class TestHandleEvent:
             garden="child",
         )
 
-        beer_garden.config._CONFIG = {
-            "metrics": {"garden_latency_metrics_cache_window": 60}
-        }
+        beer_garden.config._CONFIG = {"garden": {"name": "parent"}}
 
         beer_garden.requests.handle_event(request_event)
 
         updated_request = Request.objects.get(id=child_garden_request.id)
 
         assert updated_request.status_updated_at == status_updated_at
-
-
-class TestLatencyRequest:
-    def test_create_request(self, latency_request):
-        latency_request.status = "CREATE"
-        latency_request.source_garden = "parent"
-        latency_request.target_garden = "target"
-
-        updated_request = deepcopy(latency_request)
-        status_updated_at = datetime.utcnow() + timedelta(minutes=1)
-        status_updated_at = status_updated_at.replace(microsecond=0)
-        updated_request.created_at = status_updated_at
-
-        request_event = Event(payload=updated_request, name=Events.REQUEST_CREATED.name)
-
-        beer_garden.requests.update_request_latency_garden(
-            latency_request, request_event
-        )
-
-        assert beer_garden.requests.cached_latency_metrics
-
-        assert "parent" in beer_garden.requests.cached_latency_metrics
-        assert "target" in beer_garden.requests.cached_latency_metrics["parent"]
-        assert (
-            len(
-                beer_garden.requests.cached_latency_metrics["parent"]["target"][
-                    "CREATE"
-                ]
-            )
-            > 0
-        )
-
-    def test_in_progress_request(self, latency_request):
-        latency_request.status = "IN_PROGRESS"
-        latency_request.source_garden = "parent"
-        latency_request.target_garden = "target"
-
-        updated_request = deepcopy(latency_request)
-        status_updated_at = datetime.utcnow() + timedelta(minutes=1)
-        status_updated_at = status_updated_at.replace(microsecond=0)
-        updated_request.created_at = status_updated_at
-
-        request_event = Event(payload=updated_request, name=Events.REQUEST_UPDATED.name)
-
-        beer_garden.requests.update_request_latency_garden(
-            latency_request, request_event
-        )
-
-        assert beer_garden.requests.cached_latency_metrics
-
-        assert "parent" in beer_garden.requests.cached_latency_metrics
-        assert "target" in beer_garden.requests.cached_latency_metrics["parent"]
-        assert (
-            len(
-                beer_garden.requests.cached_latency_metrics["parent"]["target"]["START"]
-            )
-            > 0
-        )
-
-    def test_complete_request(self, latency_request):
-        latency_request.status = "SUCCESS"
-        latency_request.source_garden = "parent"
-        latency_request.target_garden = "target"
-
-        updated_request = deepcopy(latency_request)
-        status_updated_at = datetime.utcnow() + timedelta(minutes=1)
-        status_updated_at = status_updated_at.replace(microsecond=0)
-        updated_request.created_at = status_updated_at
-
-        request_event = Event(payload=updated_request, name=Events.REQUEST_UPDATED.name)
-
-        beer_garden.requests.update_request_latency_garden(
-            latency_request, request_event
-        )
-
-        assert beer_garden.requests.cached_latency_metrics
-
-        assert "parent" in beer_garden.requests.cached_latency_metrics
-        assert "target" in beer_garden.requests.cached_latency_metrics["parent"]
-        assert (
-            len(
-                beer_garden.requests.cached_latency_metrics["parent"]["target"][
-                    "COMPLETE"
-                ]
-            )
-            > 0
-        )
-
-    def test_update_cache(self, localgarden, latency_request):
-        latency_request.status = "CREATE"
-        latency_request.source_garden = "parent"
-        latency_request.target_garden = "target"
-
-        updated_request = deepcopy(latency_request)
-        status_updated_at = datetime.utcnow() + timedelta(minutes=1)
-        status_updated_at = status_updated_at.replace(microsecond=0)
-        updated_request.created_at = status_updated_at
-
-        request_event = Event(payload=updated_request, name=Events.REQUEST_CREATED.name)
-
-        beer_garden.requests.update_request_latency_garden(
-            latency_request, request_event
-        )
-
-        beer_garden.requests.store_cache_latency_metrics()
-
-        updated_garden = get_garden(localgarden.name)
-
-        assert updated_garden.metadata["CREATE_COUNT_target"] > 0

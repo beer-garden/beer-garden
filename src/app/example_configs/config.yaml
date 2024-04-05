@@ -16,8 +16,6 @@ auth:
   token_secret: IAMSUPERSECRET
 children:
   directory: ./children
-  unresponsive_timeout: 60
-  unresponsive_timeout_enabled: false
 db:
   connection:
     host: localhost
@@ -70,8 +68,6 @@ log:
   fallback_file: null
   fallback_level: INFO
 metrics:
-  garden_latency_metrics_enabled: false
-  garden_latency_metrics_cache_window: 5
   prometheus:
     enabled: false
     host: 0.0.0.0

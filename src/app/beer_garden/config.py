@@ -416,19 +416,6 @@ _CHILDREN_GARDEN_SPEC = {
                 "BG_CHILDREN_CONFIG_DIRECTORY",
             ],
         },
-        "unresponsive_timeout": {
-            "type": "int",
-            "default": 60,  # One hour
-            "description": (
-                "Time before receiving connection is marked as unresponsive"
-                "(negative number for never)"
-            ),
-        },
-        "unresponsive_timeout_enabled": {
-            "type": "bool",
-            "default": False,
-            "description": "Should unresponsive timeouts be calculated, regardless if timeouts are set",
-        },
     },
 }
 
@@ -1273,19 +1260,6 @@ _LOG_SPEC = {
 _METRICS_SPEC = {
     "type": "dict",
     "items": {
-        "garden_latency_metrics_enabled": {
-            "type": "bool",
-            "description": "Enable collection of Garden latency metrics based off Requests",
-            "default": False,
-        },
-        "garden_latency_metrics_cache_window": {
-            "type": "int",
-            "default": 5,
-            "description": (
-                "Number of minutes to writing cache to "
-                "database (negative number for never cache)"
-            ),
-        },
         "prometheus": {
             "type": "dict",
             "items": {
