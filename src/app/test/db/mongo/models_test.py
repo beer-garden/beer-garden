@@ -373,7 +373,10 @@ class TestRequest(object):
     def test_save_preserves_status_updated_at_for_child_garden_requests(
         self, request_model
     ):
+        beer_garden.config._CONFIG = {"garden": {"name": "parent"}}
+
         request_model.namespace = "child_garden"
+        request_model.target_garden = "child_garden"
         request_model.save()
 
         status_updated_at = datetime.utcnow() - timedelta(days=1)
@@ -382,6 +385,7 @@ class TestRequest(object):
         request_model.save()
 
         assert request_model.status_updated_at == status_updated_at
+        beer_garden.config._CONFIG = {}
 
     def test_save_updates_raw_file_reference(self, request_model):
         request_model.status = "CREATED"
