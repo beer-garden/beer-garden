@@ -2,7 +2,6 @@
 from datetime import datetime, timedelta
 
 import pytest
-from copy import deepcopy
 from box import Box
 from brewtils.errors import ModelValidationError
 from brewtils.models import Choices, Command, Event, Events, Parameter
@@ -15,7 +14,7 @@ import beer_garden.config
 import beer_garden.requests
 from beer_garden.db.mongo.models import Request, Garden
 from beer_garden.requests import RequestValidator
-from beer_garden.garden import create_garden, get_garden
+from beer_garden.garden import create_garden
 
 enable_gridfs_integration()
 
@@ -68,7 +67,7 @@ def child_garden_request():
         command="somecommand",
         parameters={},
         source_garden="parent",
-        target_garden="child"
+        target_garden="child",
     )
     request.save()
 
@@ -1115,15 +1114,10 @@ class TestHandleEvent:
             garden="child",
         )
 
-        beer_garden.config._CONFIG = {
-            "garden" : {
-                "name":"parent"
-            }
-        }
+        beer_garden.config._CONFIG = {"garden": {"name": "parent"}}
 
         beer_garden.requests.handle_event(request_event)
 
         updated_request = Request.objects.get(id=child_garden_request.id)
 
         assert updated_request.status_updated_at == status_updated_at
-

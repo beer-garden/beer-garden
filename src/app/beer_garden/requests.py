@@ -16,12 +16,10 @@ import time
 from asyncio import Future
 from builtins import str
 from copy import deepcopy
-from datetime import datetime, timedelta
 from typing import Dict, List, Sequence, Union
 
 import six
 import urllib3
-from mongoengine import Q
 from requests import Session
 
 import beer_garden.config as config
@@ -40,9 +38,7 @@ from brewtils.errors import (
 )
 from brewtils.models import (
     Choices,
-    Event,
     Events,
-    Garden,
     Operation,
     Request,
     RequestTemplate,
