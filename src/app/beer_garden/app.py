@@ -139,6 +139,16 @@ class Application(StoppableThread):
                 max_running_jobs=1,
             )
 
+        # Add Garden Sync Scheduler
+        if config.get("parent.sync_interval") > 0 and (
+            config.get("parent.stomp.enabled") or config.get("parent.http.enabled")
+        ):
+            self.scheduler.add_schedule(
+                beer_garden.garden.publish_garden,
+                interval=config.get("parent.sync_interval"),
+                max_running_jobs=1,
+            )
+
         metrics_config = config.get("metrics")
         if metrics_config.prometheus.enabled:
             self.helper_threads.append(
@@ -316,6 +326,9 @@ class Application(StoppableThread):
             self.plugin_log_config_observer.start()
         if config.get("plugin.local.logging.config_file"):
             self.plugin_local_log_config_observer.start()
+
+        self.logger.debug("Publishing to Parent that we are online")
+        beer_garden.garden.publish_garden()
 
         self.logger.info("All set! Let me know if you need anything else!")
 

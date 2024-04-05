@@ -1141,6 +1141,14 @@ _PARENT_SPEC = {
             "required": False,
             "description": "Events to be skipped",
         },
+        "sync_interval": {
+            "type": "int",
+            "default": 15,
+            "description": (
+                "Number of minutes to wait before sending "
+                "Garden Sync event to parent"
+            ),
+        },
         "stomp": {
             "type": "dict",
             "items": {
@@ -1269,6 +1277,14 @@ _METRICS_SPEC = {
             "type": "bool",
             "description": "Enable collection of Garden latency metrics based off Requests",
             "default": False,
+        },
+        "garden_latency_metrics_cache_window": {
+            "type": "int",
+            "default": 5,
+            "description": (
+                "Number of minutes to writing cache to "
+                "database (negative number for never cache)"
+            ),
         },
         "prometheus": {
             "type": "dict",
@@ -1587,14 +1603,6 @@ _CHILD_SPECIFICATION = {
         "type": "bool",
         "default": False,
         "description": "If disabled, requires manual start for receiving operations",
-    },
-    "unresponsive_timeout": {
-        "type": "int",
-        "default": -1,
-        "description": (
-            "Time before receiving connection is marked as unresponsive"
-            "(negative number for never)"
-        ),
     },
     "http": {
         "type": "dict",
