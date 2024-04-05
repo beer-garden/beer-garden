@@ -416,19 +416,6 @@ _CHILDREN_GARDEN_SPEC = {
                 "BG_CHILDREN_CONFIG_DIRECTORY",
             ],
         },
-        "unresponsive_timeout": {
-            "type": "int",
-            "default": 60,  # One hour
-            "description": (
-                "Time before receiving connection is marked as unresponsive"
-                "(negative number for never)"
-            ),
-        },
-        "unresponsive_timeout_enabled": {
-            "type": "bool",
-            "default": False,
-            "description": "Should unresponsive timeouts be calculated, regardless if timeouts are set",
-        },
     },
 }
 
@@ -1141,6 +1128,14 @@ _PARENT_SPEC = {
             "required": False,
             "description": "Events to be skipped",
         },
+        "sync_interval": {
+            "type": "int",
+            "default": 15,
+            "description": (
+                "Number of minutes to wait before sending "
+                "Garden Sync event to parent"
+            ),
+        },
         "stomp": {
             "type": "dict",
             "items": {
@@ -1265,11 +1260,6 @@ _LOG_SPEC = {
 _METRICS_SPEC = {
     "type": "dict",
     "items": {
-        "garden_latency_metrics_enabled": {
-            "type": "bool",
-            "description": "Enable collection of Garden latency metrics based off Requests",
-            "default": False,
-        },
         "prometheus": {
             "type": "dict",
             "items": {
@@ -1587,14 +1577,6 @@ _CHILD_SPECIFICATION = {
         "type": "bool",
         "default": False,
         "description": "If disabled, requires manual start for receiving operations",
-    },
-    "unresponsive_timeout": {
-        "type": "int",
-        "default": -1,
-        "description": (
-            "Time before receiving connection is marked as unresponsive"
-            "(negative number for never)"
-        ),
     },
     "http": {
         "type": "dict",

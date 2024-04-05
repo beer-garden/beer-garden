@@ -27,16 +27,7 @@ from brewtils.errors import (
     RequestPublishException,
     RequestStatusTransitionError,
 )
-from brewtils.models import (
-    Choices,
-    Event,
-    Events,
-    Garden,
-    Operation,
-    Request,
-    RequestTemplate,
-    System,
-)
+from brewtils.models import Choices, Events, Operation, Request, RequestTemplate, System
 from brewtils.pika import PERSISTENT_DELIVERY_MODE
 from requests import Session
 
@@ -945,70 +936,6 @@ def handle_wait_events(event):
                     request_map[request_event].set()
 
 
-def processes_status_latency(garden, target_garden, status, delta):
-    garden.metadata[f"{status}_DELTA_{target_garden}"] = round(delta, 3)
-    if f"{status}_COUNT_{target_garden}" not in garden.metadata:
-        garden.metadata[f"{status}_AVG_{target_garden}"] = round(
-            garden.metadata[f"{status}_DELTA_{target_garden}"], 3
-        )
-        garden.metadata[f"{status}_COUNT_{target_garden}"] = 1
-    else:
-        garden.metadata[f"{status}_AVG_{target_garden}"] = round(
-            (
-                (
-                    garden.metadata[f"{status}_AVG_{target_garden}"]
-                    * garden.metadata[f"{status}_COUNT_{target_garden}"]
-                )
-                + delta
-            )
-            / (garden.metadata[f"{status}_COUNT_{target_garden}"] + 1),
-            3,
-        )
-        garden.metadata[f"{status}_COUNT_{target_garden}"] += 1
-
-
-def update_request_latency_garden(existing_request: Request, event: Event) -> None:
-    """Updater for Garden metadata based on Request timestamps
-
-    Args:
-        existing_request: Request stored in Database
-        event: Incoming request from downstream garden
-
-    """
-
-    # Skip metrics if it is sourced from itself
-    if existing_request.source_garden == event.payload.target_garden:
-        return
-
-    garden = db.query_unique(Garden, name=existing_request.source_garden)
-
-    if event.name == Events.REQUEST_CREATED.name:
-        processes_status_latency(
-            garden,
-            event.payload.target_garden,
-            "CREATE",
-            (event.payload.created_at - existing_request.created_at).total_seconds(),
-        )
-    elif event.payload.status == "IN_PROGRESS":
-        processes_status_latency(
-            garden,
-            event.payload.target_garden,
-            "START",
-            (event.payload.updated_at - existing_request.created_at).total_seconds(),
-        )
-    elif event.payload.status in ("CANCELED", "SUCCESS", "ERROR"):
-        processes_status_latency(
-            garden,
-            event.payload.target_garden,
-            "COMPLETE",
-            (event.payload.updated_at - existing_request.created_at).total_seconds(),
-        )
-    else:
-        return
-
-    db.update(garden)
-
-
 def handle_event(event):
     # TODO: Add support for Request Delete event type
     # if event.name == Events.REQUEST_DELETED.name and event.garden != config.get("garden.name"):
@@ -1035,13 +962,6 @@ def handle_event(event):
                 return
 
         if event.garden != config.get("garden.name") and not event.error:
-            if (
-                existing_request
-                and config.get("metrics.garden_latency_metrics_enabled")
-                and existing_request.source_garden == config.get("garden.name")
-            ):
-                update_request_latency_garden(existing_request, event)
-
             if existing_request is None:
                 # Attempt to create the request, if it already exists then continue on
                 try:

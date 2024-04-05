@@ -5,6 +5,7 @@
 TBD
 
 - Fixed bug where removing a parent garden failed to remove both parent and child
+- Added caching to Request Latency Metrics for Gardens to reduce database calls
 - Added flag to enable API heartbeat checks
 - Added Topics API and classes to support dynamic topic subscribers
 - Now show alert on Garden Admin page when a Sync event is seen
@@ -12,12 +13,16 @@ TBD
 - Fixed order of Gardens and Connections on Garden Admin page
 - Fixed bug where Disabled STOMP Receiving connection could be re-enabled if it is shared and unresponsive
 - Fixed bug where child garden plugins are treated like local plugins on the System Admin page
+- Fixed bug where pruner dies if it is unable to update cancelled request
+- Fixed bug where child requests were stored in database without parent request
 - Garden Receiving connections heartbeats are only updated on the half windows for timeout windows. If no timeout window is set, the value is not populated.
 - Utilized the TTL for In_Progress requests to set Expiration windows for Requests on PIKA, to handle backups of requests that Beer Garden has already cancelled.
 - Optimized UI Rest calls to load only Local Garden with Children
 - Updated how STOMP URL preview is formatted on Garden Admin page
 - Fixed bug where STOMP connections for children did not start with Beer Garden startup
-- Added flag to enable the collection of Garden Latency metrics based off Request event times
+- Garden Sync events will update heartbeat status of Receiving Garden APIs
+- Fixed bug where Child Garden Publishers appeared as Upstream on Garden Admin Page
+
 
 # 3.24.4
 

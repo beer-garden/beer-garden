@@ -128,14 +128,19 @@ class Application(StoppableThread):
                 )
 
         # Add scheduled job for checking unresponsive gardens
-        if config.get("children.unresponsive_timeout_enabled"):
+        self.scheduler.add_schedule(
+            beer_garden.garden.garden_unresponsive_trigger,
+            interval=15,
+            max_running_jobs=1,
+        )
+
+        # Add Garden Sync Scheduler
+        if config.get("parent.sync_interval") > 0 and (
+            config.get("parent.stomp.enabled") or config.get("parent.http.enabled")
+        ):
             self.scheduler.add_schedule(
-                beer_garden.garden.garden_unresponsive_trigger,
-                interval=(
-                    (config.get("children.unresponsive_timeout") / 2)
-                    if (config.get("children.unresponsive_timeout") > 0)
-                    else 15
-                ),
+                beer_garden.garden.publish_garden,
+                interval=config.get("parent.sync_interval"),
                 max_running_jobs=1,
             )
 
@@ -316,6 +321,9 @@ class Application(StoppableThread):
             self.plugin_log_config_observer.start()
         if config.get("plugin.local.logging.config_file"):
             self.plugin_local_log_config_observer.start()
+
+        self.logger.debug("Publishing to Parent that we are online")
+        beer_garden.garden.publish_garden()
 
         self.logger.info("All set! Let me know if you need anything else!")
 
