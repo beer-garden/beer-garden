@@ -561,7 +561,7 @@ class Request(MongoModel, Document):
                 f"consistent with has_parent value of {self.has_parent}"
             )
 
-        if (self.namespace == config.get("garden.name")) and (
+        if (self.target_garden == config.get("garden.name")) and (
             "status" in self.changed_fields or self.created
         ):
             self.status_updated_at = datetime.datetime.utcnow()
