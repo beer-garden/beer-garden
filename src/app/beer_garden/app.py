@@ -139,12 +139,12 @@ class Application(StoppableThread):
                 max_running_jobs=1,
             )
 
-        if config.get("metrics.garden_latency_metrics_enabled"):
-            self.scheduler.add_schedule(
-                beer_garden.request.calculate_latency_metrics,
-                interval=config.get("metrics.garden_latency_metrics_cache_window"),
-                max_running_jobs=1,
-            )
+        # if config.get("metrics.garden_latency_metrics_enabled"):
+        #     self.scheduler.add_schedule(
+        #         beer_garden.requests.calculate_latency_metrics,
+        #         interval=config.get("metrics.garden_latency_metrics_cache_window"),
+        #         max_running_jobs=1,
+        #     )
 
         # Add Garden Sync Scheduler
         if config.get("parent.sync_interval") > 0 and (

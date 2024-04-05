@@ -16,7 +16,7 @@ import time
 from asyncio import Future
 from builtins import str
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, List, Sequence, Union
 
 import six
@@ -947,75 +947,96 @@ def handle_wait_events(event):
                     request_map[request_event].set()
 
 
-def processes_status_latency(garden, target_garden, status, delta):
-    garden.metadata[f"{status}_DELTA_{target_garden}"] = round(delta, 3)
-    if f"{status}_COUNT_{target_garden}" not in garden.metadata:
-        garden.metadata[f"{status}_AVG_{target_garden}"] = round(
-            garden.metadata[f"{status}_DELTA_{target_garden}"], 3
-        )
-        garden.metadata[f"{status}_COUNT_{target_garden}"] = 1
-    else:
-        garden.metadata[f"{status}_AVG_{target_garden}"] = round(
-            (
-                (
-                    garden.metadata[f"{status}_AVG_{target_garden}"]
-                    * garden.metadata[f"{status}_COUNT_{target_garden}"]
-                )
-                + delta
-            )
-            / (garden.metadata[f"{status}_COUNT_{target_garden}"] + 1),
-            3,
-        )
-        garden.metadata[f"{status}_COUNT_{target_garden}"] += 1
+# def processes_status_latency(garden, target_garden, status, delta):
+#     garden.metadata[f"{status}_DELTA_{target_garden}"] = round(delta, 3)
+#     if f"{status}_COUNT_{target_garden}" not in garden.metadata:
+#         garden.metadata[f"{status}_AVG_{target_garden}"] = round(
+#             garden.metadata[f"{status}_DELTA_{target_garden}"], 3
+#         )
+#         garden.metadata[f"{status}_COUNT_{target_garden}"] = 1
+#     else:
+#         garden.metadata[f"{status}_AVG_{target_garden}"] = round(
+#             (
+#                 (
+#                     garden.metadata[f"{status}_AVG_{target_garden}"]
+#                     * garden.metadata[f"{status}_COUNT_{target_garden}"]
+#                 )
+#                 + delta
+#             )
+#             / (garden.metadata[f"{status}_COUNT_{target_garden}"] + 1),
+#             3,
+#         )
+#         garden.metadata[f"{status}_COUNT_{target_garden}"] += 1
 
 
-def calculate_latency_metrics():
-    current_time = datetime.utcnow()
-    process_newer_than = current_time - config.get(
-        "metrics.garden_latency_metrics_cache_window"
-    )
-    query = (
-        Q(**{"updated_at__lt": process_newer_than})
-        & Q(source_garden=config.get("garden.name"))
-        & Q(target_garden_ne=config.get("garden.name"))
-        & (Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR"))
-    )
+# def calculate_latency_metrics():
+#     current_time = datetime.utcnow()
+#     process_newer_than = current_time - timedelta(minutes=config.get(
+#         "metrics.garden_latency_metrics_cache_window"
+#     )) 
+#     query = (
+#         Q(**{"updated_at__lt": process_newer_than})
+#         & Q(source_garden=config.get("garden.name"))
+#         & Q(target_garden_ne=config.get("garden.name"))
+#         & (Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR"))
+#     )
 
-    garden = db.query_unique(Garden, name=config.get("garden.name"))
-    for request in db.query(Request, include_fields=["metadata"], q_filter=query):
-        original_create_timestamp = request.metadata.pop(
-            f"CREATED_{config.get('garden.name')}"
-        )
-        for key in request.metadata:
-            status = None
-            target_garden = None
+#     garden = db.query_unique(Garden, name=config.get("garden.name"))
+#     for request in db.query(Request, include_fields=["metadata", "target_garden"], q_filter=query):
+#         source_create_timestamp = request.metadata.pop(
+#             f"CREATED_{config.get('garden.name')}"
+#         )
 
-            if key.startswith("CREATED_"):
-                status = "CREATE"
-                target_garden = key.split("CREATED_")[0]
-            elif key.startswith("IN_PROGRESS_"):
-                status = "START"
-                target_garden = key.split("IN_PROGRESS_")[0]
-            elif key.startswith("CANCELED_"):
-                status = "COMPLETE"
-                target_garden = key.split("CANCELED_")[0]
-            elif key.startswith("SUCCESS_"):
-                status = "COMPLETE"
-                target_garden = key.split("SUCCESS_")[0]
-            elif key.startswith("ERROR_"):
-                status = "COMPLETE"
-                target_garden = key.split("ERROR_")[0]
+#         source_start_timestamp = request.metadata.pop(
+#             f"IN_PROGRESS_{config.get('garden.name')}"
+#         )
 
-            if status and target_garden:
-                delay = int((original_create_timestamp - request.metadata[key]) / 1000)
-                processes_status_latency(
-                    garden,
-                    target_garden,
-                    status,
-                    delay,
-                )
+#         source_complete_timestamp = request.metadata.pop(
+#             f"CANCELED_{config.get('garden.name')}", None
+#         )
 
-    db.update(garden)
+#         if not source_complete_timestamp:
+#             source_complete_timestamp = request.metadata.pop(
+#             f"SUCCESS_{config.get('garden.name')}", None
+#         )
+
+#         if not source_complete_timestamp:
+#             source_complete_timestamp = request.metadata.pop(
+#             f"ERROR_{config.get('garden.name')}", None
+#         )
+            
+#         for key in request.metadata:
+#             status = None
+#             target_garden = None
+
+#             if key.startswith("CREATED_"):
+#                 status = "CREATE"
+#                 target_garden = key.split("CREATED_")[0]
+#             elif key.startswith("IN_PROGRESS_"):
+#                 status = "START"
+#                 target_garden = key.split("IN_PROGRESS_")[0]
+#             elif key.startswith("CANCELED_"):
+#                 status = "COMPLETE"
+#                 target_garden = key.split("CANCELED_")[0]
+#             elif key.startswith("SUCCESS_"):
+#                 status = "COMPLETE"
+#                 target_garden = key.split("SUCCESS_")[0]
+#             elif key.startswith("ERROR_"):
+#                 status = "COMPLETE"
+#                 target_garden = key.split("ERROR_")[0]
+
+#             if status and target_garden:
+#                 if status == "CREATE":
+#                     delay = int((source_create_timestamp - request.metadata[key]) / 1000)
+                    
+#                 processes_status_latency(
+#                     garden,
+#                     target_garden,
+#                     status,
+#                     delay,
+#                 )
+
+#     db.update(garden)
 
 
 def handle_event(event):
