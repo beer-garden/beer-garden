@@ -128,16 +128,11 @@ class Application(StoppableThread):
                 )
 
         # Add scheduled job for checking unresponsive gardens
-        if config.get("children.unresponsive_timeout_enabled"):
-            self.scheduler.add_schedule(
-                beer_garden.garden.garden_unresponsive_trigger,
-                interval=(
-                    (config.get("children.unresponsive_timeout") / 2)
-                    if (config.get("children.unresponsive_timeout") > 0)
-                    else 15
-                ),
-                max_running_jobs=1,
-            )
+        self.scheduler.add_schedule(
+            beer_garden.garden.garden_unresponsive_trigger,
+            interval=15,
+            max_running_jobs=1,
+        )
 
         # Add Garden Sync Scheduler
         if config.get("parent.sync_interval") > 0 and (

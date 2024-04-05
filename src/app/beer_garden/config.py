@@ -416,19 +416,6 @@ _CHILDREN_GARDEN_SPEC = {
                 "BG_CHILDREN_CONFIG_DIRECTORY",
             ],
         },
-        "unresponsive_timeout": {
-            "type": "int",
-            "default": 60,  # One hour
-            "description": (
-                "Time before receiving connection is marked as unresponsive"
-                "(negative number for never)"
-            ),
-        },
-        "unresponsive_timeout_enabled": {
-            "type": "bool",
-            "default": False,
-            "description": "Should unresponsive timeouts be calculated, regardless if timeouts are set",
-        },
     },
 }
 

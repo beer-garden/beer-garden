@@ -22,8 +22,6 @@ TBD
 - Fixed bug where STOMP connections for children did not start with Beer Garden startup
 - Garden Sync events will update heartbeat status of Receiving Garden APIs
 - Fixed bug where Child Garden Publishers appeared as Upstream on Garden Admin Page
-- Removed Unresponsive Timeout from Child configurations, and added it to be controlled by child Garden based on Sync intervals.
-- Removed Garden Latency from Beer Garden to be evaluated at a later point
 
 
 # 3.24.4
