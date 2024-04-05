@@ -21,6 +21,16 @@ from typing import Dict, List, Sequence, Union
 
 import six
 import urllib3
+from mongoengine import Q
+from requests import Session
+
+import beer_garden.config as config
+import beer_garden.db.api as db
+import beer_garden.queue.api as queue
+from beer_garden.db.mongo.models import RawFile
+from beer_garden.errors import NotUniqueException, ShutdownError
+from beer_garden.events import publish_event
+from beer_garden.metrics import request_completed, request_created, request_started
 from brewtils.choices import parse
 from brewtils.errors import (
     ConflictError,
@@ -39,23 +49,10 @@ from brewtils.models import (
     System,
 )
 from brewtils.pika import PERSISTENT_DELIVERY_MODE
-from requests import Session
-
-import beer_garden.config as config
-import beer_garden.db.api as db
-import beer_garden.queue.api as queue
-from beer_garden.db.mongo.models import RawFile
-from beer_garden.errors import NotUniqueException, ShutdownError
-from beer_garden.events import publish_event
-from beer_garden.metrics import request_completed, request_created, request_started
 
 logger = logging.getLogger(__name__)
 
 request_map: Dict[str, threading.Event] = {}
-
-cached_latency_metrics = {}
-cached_latency_metrics_timestamp = {"last_seen": datetime.utcnow()}
-cached_latency_metrics_lock = threading.RLock()
 
 
 class RequestValidator(object):
@@ -972,91 +969,59 @@ def processes_status_latency(garden, target_garden, status, delta):
         garden.metadata[f"{status}_COUNT_{target_garden}"] += 1
 
 
-def update_request_latency_garden(existing_request: Request, event: Event) -> None:
-    """Updater for Garden metadata based on Request timestamps
+def calculate_latency_metrics():
+    current_time = datetime.utcnow()
+    process_newer_than = current_time - config.get(
+        "metrics.garden_latency_metrics_cache_window"
+    )
+    query = (
+        Q(**{"updated_at__lt": process_newer_than})
+        & Q(source_garden=config.get("garden.name"))
+        & Q(target_garden_ne=config.get("garden.name"))
+        & (Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR"))
+    )
 
-    Args:
-        existing_request: Request stored in Database
-        event: Incoming request from downstream garden
+    garden = db.query_unique(Garden, name=config.get("garden.name"))
+    for request in db.query(Request, include_fields=["metadata"], q_filter=query):
+        original_create_timestamp = request.metadata.pop(
+            f"CREATED_{config.get('garden.name')}"
+        )
+        for key in request.metadata:
+            status = None
+            target_garden = None
 
-    """
+            if key.startswith("CREATED_"):
+                status = "CREATE"
+                target_garden = key.split("CREATED_")[0]
+            elif key.startswith("IN_PROGRESS_"):
+                status = "START"
+                target_garden = key.split("IN_PROGRESS_")[0]
+            elif key.startswith("CANCELED_"):
+                status = "COMPLETE"
+                target_garden = key.split("CANCELED_")[0]
+            elif key.startswith("SUCCESS_"):
+                status = "COMPLETE"
+                target_garden = key.split("SUCCESS_")[0]
+            elif key.startswith("ERROR_"):
+                status = "COMPLETE"
+                target_garden = key.split("ERROR_")[0]
 
-    # Skip metrics if it is sourced from itself
-    if existing_request.source_garden == event.payload.target_garden:
-        return
+            if status and target_garden:
+                delay = int((original_create_timestamp - request.metadata[key]) / 1000)
+                processes_status_latency(
+                    garden,
+                    target_garden,
+                    status,
+                    delay,
+                )
 
-    """
-    [source_garden][target_garden]{status:[seconds],...}
-    """
-
-    with cached_latency_metrics_lock:
-        if existing_request.source_garden not in cached_latency_metrics:
-            cached_latency_metrics[existing_request.source_garden] = {}
-
-        if (
-            event.payload.target_garden
-            not in cached_latency_metrics[existing_request.source_garden]
-        ):
-            cached_latency_metrics[existing_request.source_garden][
-                event.payload.target_garden
-            ] = {"CREATE": [], "START": [], "COMPLETE": []}
-
-        if event.name == Events.REQUEST_CREATED.name:
-            cached_latency_metrics[existing_request.source_garden][
-                event.payload.target_garden
-            ]["CREATE"].append(
-                (event.payload.created_at - existing_request.created_at).total_seconds()
-            )
-        elif event.payload.status == "IN_PROGRESS":
-            cached_latency_metrics[existing_request.source_garden][
-                event.payload.target_garden
-            ]["START"].append(
-                (event.payload.updated_at - existing_request.updated_at).total_seconds()
-            )
-        elif event.payload.status in ("CANCELED", "SUCCESS", "ERROR"):
-            cached_latency_metrics[existing_request.source_garden][
-                event.payload.target_garden
-            ]["COMPLETE"].append(
-                (event.payload.updated_at - existing_request.updated_at).total_seconds()
-            )
-
-
-def store_cache_latency_metrics():
-    with cached_latency_metrics_lock:
-        if len(cached_latency_metrics) > 0:
-            processed_gardens = []
-            for source_garden in cached_latency_metrics:
-                garden = db.query_unique(Garden, name=source_garden)
-                for target_garden in cached_latency_metrics[source_garden]:
-                    for status in cached_latency_metrics[source_garden][target_garden]:
-                        for delay in cached_latency_metrics[source_garden][
-                            target_garden
-                        ][status]:
-                            processes_status_latency(
-                                garden,
-                                target_garden,
-                                status,
-                                delay,
-                            )
-
-                db.update(garden)
-
-            for source_garden in processed_gardens:
-                del cached_latency_metrics[source_garden]
+    db.update(garden)
 
 
 def handle_event(event):
     # TODO: Add support for Request Delete event type
     # if event.name == Events.REQUEST_DELETED.name and event.garden != config.get("garden.name"):
     #     delete_requests(**event.payload)
-
-    # On shutdown, store all cached metrics
-    if (
-        event.name == Events.GARDEN_SYNC
-        and event.payload.name == config.get("garden.name")
-        and event.payload.status == "STOPPED"
-    ):
-        store_cache_latency_metrics()
 
     if event.name in (
         Events.REQUEST_CREATED.name,
@@ -1079,13 +1044,6 @@ def handle_event(event):
                 return
 
         if event.garden != config.get("garden.name") and not event.error:
-            if (
-                existing_request
-                and config.get("metrics.garden_latency_metrics_enabled")
-                and existing_request.source_garden == config.get("garden.name")
-            ):
-                update_request_latency_garden(existing_request, event)
-
             if existing_request is None:
                 # Attempt to create the request, if it already exists then continue on
                 try:
@@ -1115,14 +1073,6 @@ def handle_event(event):
                         update_request(existing_request, _publish_error=False)
                     except RequestStatusTransitionError:
                         pass
-
-        if (
-            datetime.utcnow() - cached_latency_metrics_timestamp["last_seen"]
-        ).total_seconds() > (
-            config.get("metrics.garden_latency_metrics_cache_window") * 60
-        ):
-            store_cache_latency_metrics()
-            cached_latency_metrics_timestamp["last_seen"] = datetime.utcnow()
 
         if event.name in (
             Events.REQUEST_COMPLETED.name,
