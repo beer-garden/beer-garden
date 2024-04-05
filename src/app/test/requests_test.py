@@ -68,7 +68,7 @@ def child_garden_request():
         command="somecommand",
         parameters={},
         source_garden="parent",
-        target_garden="child"
+        target_garden="child",
     )
     request.save()
 
@@ -1115,15 +1115,10 @@ class TestHandleEvent:
             garden="child",
         )
 
-        beer_garden.config._CONFIG = {
-            "garden" : {
-                "name":"parent"
-            }
-        }
+        beer_garden.config._CONFIG = {"garden": {"name": "parent"}}
 
         beer_garden.requests.handle_event(request_event)
 
         updated_request = Request.objects.get(id=child_garden_request.id)
 
         assert updated_request.status_updated_at == status_updated_at
-

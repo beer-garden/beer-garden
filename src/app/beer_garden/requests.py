@@ -946,6 +946,7 @@ def handle_wait_events(event):
                 else:
                     request_map[request_event].set()
 
+
 def handle_event(event):
     # TODO: Add support for Request Delete event type
     # if event.name == Events.REQUEST_DELETED.name and event.garden != config.get("garden.name"):
