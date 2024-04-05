@@ -574,9 +574,9 @@ class Request(MongoModel, Document):
                 f"consistent with has_parent value of {self.has_parent}"
             )
 
-        if (not self.target_garden or self.target_garden == config.get("garden.name")) and (
-            "status" in self.changed_fields or self.created
-        ):
+        if (
+            not self.target_garden or self.target_garden == config.get("garden.name")
+        ) and ("status" in self.changed_fields or self.created):
             self.status_updated_at = datetime.datetime.utcnow()
 
     def clean_update(self):

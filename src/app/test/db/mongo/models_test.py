@@ -315,7 +315,9 @@ class TestRequest(object):
         @pytest.fixture()
         def max_size(self, monkeypatch):
             """mock max request size to be arbitrarily small"""
-            monkeypatch.setattr(beer_garden.db.mongo.models, "REQUEST_MAX_PARAM_SIZE", 100)
+            monkeypatch.setattr(
+                beer_garden.db.mongo.models, "REQUEST_MAX_PARAM_SIZE", 100
+            )
             return beer_garden.db.mongo.models.REQUEST_MAX_PARAM_SIZE + 10
 
         def test_save_stores_in_gridfs_after_maxsize(self, request_model, max_size):
