@@ -7,7 +7,6 @@ TBD
 - Added Topics API and classes to support dynamic topic subscribers
 - Now show alert on Garden Admin page when a Sync event is seen
 - Garden Sync events will update heartbeat status of Receiving Garden APIs
-- Garden Receiving connections heartbeats are only updated on the half windows for timeout windows. If no timeout window is set, the value is not populated.
 - Utilized the TTL for In_Progress requests to set Expiration windows for Requests on PIKA, to handle backups of requests that Beer Garden has already cancelled.
 - Optimized UI Rest calls to load only Local Garden with Children
 - Updated how STOMP URL preview is formatted on Garden Admin page
