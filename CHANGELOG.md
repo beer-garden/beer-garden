@@ -11,8 +11,8 @@ TBD
 - Utilized the TTL for In_Progress requests to set Expiration windows for Requests on PIKA, to handle backups of requests that Beer Garden has already cancelled.
 - Optimized UI Rest calls to load only Local Garden with Children
 - Updated how STOMP URL preview is formatted on Garden Admin page
-- Configuration update: Prometheus metrics is now disabled by default
-- Configuration update: Default directory for children configs is `./children`
+- Configuration update: Prometheus metrics (`metrics.prometheus.enabled`) is now disabled by default
+- Configuration update: Default directory for child configs (`children.directory`) is now `./children`
 - Configuration update: Default for `ui.cors_enabled` is now True to match example configuration and default behavior of UI docker images
 - Fixed order of Gardens and Connections on Garden Admin page
 - Fixed bug where STOMP connections for children did not start with Beer Garden startup
