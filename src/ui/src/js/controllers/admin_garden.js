@@ -369,10 +369,12 @@ export default function adminGardenController(
         $scope.$digest();
         break;
       case 'GARDEN_SYNC':
-        $scope.alerts.push({
-          type: 'info',
-          msg: 'Garden sync event seen from ' + event.payload.name,
-        });
+        if (event.payload.name != $scope.config.gardenName) {
+          $scope.alerts.push({
+            type: 'info',
+            msg: 'Garden sync event seen from ' + event.payload.name,
+          });
+        }
     }
   });
 
