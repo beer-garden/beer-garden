@@ -410,6 +410,7 @@ _CHILDREN_GARDEN_SPEC = {
         "directory": {
             "type": "str",
             "required": False,
+            "default": "./children",
             "description": "Directory where child garden configs are located",
             "alt_env_names": [
                 "CHILDREN_CONFIG_DIRECTORY",
@@ -575,7 +576,7 @@ _UI_SPEC = {
     "items": {
         "cors_enabled": {
             "type": "bool",
-            "default": False,
+            "default": True,
             "description": "Determine if CORS should be enabled",
             "previous_names": ["cors_enabled"],
         },
@@ -1266,7 +1267,7 @@ _METRICS_SPEC = {
                 "enabled": {
                     "type": "bool",
                     "description": "Enable prometheus server",
-                    "default": True,
+                    "default": False,
                 },
                 "host": {
                     "type": "str",
