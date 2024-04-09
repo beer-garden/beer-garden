@@ -664,6 +664,7 @@ jobs:
       - name: Cache Mongo Database
         id: cache-mongo
         uses: actions/cache@v3
+        user: '1000:1000'
         env:
           cache-name: cache-mongo-database
         with:
