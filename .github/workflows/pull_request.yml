@@ -670,7 +670,7 @@ jobs:
         with:
           # Use cache requests, if models have not been updated
           path: ./docker-compose_mongo-data
-          key: ${{ runner.os }}-pr-${{ env.cache-name }}-${{ hashFiles('./src/app/beer_garden/db/mongo/models.py') }}
+          key: ${{ runner.os }}-pr-stress-test-cache-${{ hashFiles('./src/app/beer_garden/db/mongo/models.py') }}
 
       - if: steps.cache-mongo.outputs.cache-hit == 'true'
         name: Move database file
