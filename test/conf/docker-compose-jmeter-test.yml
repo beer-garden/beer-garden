@@ -64,6 +64,16 @@ services:
         networks:
             - bg-network
 
+    jmeter-loader:
+        image: justb4/jmeter
+        volumes:
+            - ./data/jmeter:/tests
+        networks:
+            - bg-network 
+        command: -n -t /tests/prep_database.jmx
+        depends_on:
+            - beer-garden-parent   
+
     jmeter-testing:
         image: justb4/jmeter
         volumes:

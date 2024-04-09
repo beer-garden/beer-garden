@@ -661,6 +661,20 @@ jobs:
       - name: Verify Local Plugins
         run: ls ./docker/docker-compose/data/localplugins
 
+      - name: Cache Mongo Database
+        id: cache-mongo
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-mongo-database
+        with:
+          # Use cache requests, if models have not been updated
+          path: ./docker/docker-compose/data/mongo-data
+          key: ${{ runner.os }}-pr-${{ env.cache-name }}-${{ hashFiles('./src/app/beer_garden/db/mongo/models.py') }}
+          restore-keys: |
+            ${{ runner.os }}-pr-${{ env.cache-name }}-
+            ${{ runner.os }}-pr-
+            ${{ runner.os }}-
+
       - name: Run Docker Beer Garden Child
         run: docker-compose up -d beer-garden-child
         working-directory: ./docker/docker-compose
@@ -688,16 +702,22 @@ jobs:
         run: mkdir reports
         working-directory: ./docker/docker-compose/data
 
-      - name: Run Jmeter Test
-        run: docker-compose up jmeter-testing
+      - if: ${{ steps.cache-mongo.outputs.cache-mongo-database != 'true' }}
+        name: Pre-load database
+        continue-on-error: false
+        run: docker-compose up jmeter-loader
         working-directory: ./docker/docker-compose
 
-      - name: Upload JMeter Results
-        uses: actions/upload-artifact@v3
-        with:
-          name: jmeter-html-reports
-          path: docker/docker-compose/data/reports
-          if-no-files-found: error
+      # - name: Run Jmeter Test
+      #   run: docker-compose up jmeter-testing
+      #   working-directory: ./docker/docker-compose
+
+      # - name: Upload JMeter Results
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: jmeter-html-reports
+      #     path: docker/docker-compose/data/reports
+      #     if-no-files-found: error
 
       - name: Grab logs from Child
         if: always()

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Beer Garden Stress Test">
+      <boolProp name="TestPlan.serialize_threadgroups">true</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+        <collectionProp name="Arguments.arguments"/>
+      </elementProp>
+    </TestPlan>
+    <hashTree>
+      <UserParameters guiclass="UserParametersGui" testclass="UserParameters" testname="Global Garden Values">
+        <collectionProp name="UserParameters.names">
+          <stringProp name="-1116878166">parentGardenName</stringProp>
+          <stringProp name="1258770588">childGardenName</stringProp>
+          <stringProp name="1955626749">parentHostname</stringProp>
+        </collectionProp>
+        <collectionProp name="UserParameters.thread_values">
+          <collectionProp name="-1979467545">
+            <stringProp name="-995424086">parent</stringProp>
+            <stringProp name="94631196">child</stringProp>
+            <stringProp name="-1752233883">beer-garden-parent</stringProp>
+          </collectionProp>
+        </collectionProp>
+        <boolProp name="UserParameters.per_iteration">false</boolProp>
+        <stringProp name="TestPlan.comments">Update here for testing outside of pipeline</stringProp>
+      </UserParameters>
+      <hashTree/>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Generate Requests">
+        <intProp name="ThreadGroup.num_threads">250</intProp>
+        <intProp name="ThreadGroup.ramp_time">1</intProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">false</boolProp>
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
+          <stringProp name="LoopController.loops">1</stringProp>
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+        </elementProp>
+      </ThreadGroup>
+      <hashTree>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Create Compelted Request">
+          <stringProp name="HTTPSampler.domain">${parentHostname}</stringProp>
+          <stringProp name="HTTPSampler.port">2337</stringProp>
+          <stringProp name="HTTPSampler.protocol">http</stringProp>
+          <stringProp name="HTTPSampler.path">/api/v1/requests</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <stringProp name="HTTPSampler.method">PUT</stringProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">{&#xd;
+    &quot;system&quot;: &quot;echo&quot;,&#xd;
+    &quot;is_event&quot;: false,&#xd;
+    &quot;updated_at&quot;: 1712240595057,&#xd;
+    &quot;metadata&quot;: {},&#xd;
+    &quot;output_type&quot;: &quot;STRING&quot;,&#xd;
+    &quot;parent&quot;: null,&#xd;
+    &quot;has_parent&quot;: false,&#xd;
+    &quot;command_type&quot;: &quot;ACTION&quot;,&#xd;
+    &quot;children&quot;: [],&#xd;
+    &quot;created_at&quot;: 1712240594955,&#xd;
+    &quot;instance_name&quot;: &quot;default&quot;,&#xd;
+    &quot;source_garden&quot;: &quot;default&quot;,&#xd;
+    &quot;system_version&quot;: &quot;3.0.0.dev0&quot;,&#xd;
+    &quot;output&quot;: &quot;Hello, World!&quot;,&#xd;
+    &quot;parameters&quot;: {&#xd;
+        &quot;message&quot;: &quot;Hello, World!&quot;,&#xd;
+        &quot;loud&quot;: false&#xd;
+    },&#xd;
+    &quot;error_class&quot;: null,&#xd;
+    &quot;target_garden&quot;: &quot;${parentGardenName}&quot;,&#xd;
+    &quot;requester&quot;: &quot;anonymous&quot;,&#xd;
+    &quot;hidden&quot;: false,&#xd;
+    &quot;command&quot;: &quot;say&quot;,&#xd;
+    &quot;status&quot;: &quot;SUCCESS&quot;,&#xd;
+    &quot;status_updated_at&quot;: 1712240595059,&#xd;
+    &quot;comment&quot;: &quot;&quot;,&#xd;
+    &quot;namespace&quot;: &quot;${parentGardenName}&quot;&#xd;
+}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager">
+            <collectionProp name="HeaderManager.headers">
+              <elementProp name="" elementType="Header">
+                <stringProp name="Header.name">Content-Type</stringProp>
+                <stringProp name="Header.value">application/json</stringProp>
+              </elementProp>
+            </collectionProp>
+          </HeaderManager>
+          <hashTree/>
+        </hashTree>
+      </hashTree>      
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>
