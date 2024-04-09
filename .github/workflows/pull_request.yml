@@ -668,7 +668,7 @@ jobs:
           cache-name: cache-mongo-database
         with:
           # Use cache requests, if models have not been updated
-          path: ./docker/docker-compose/data/db
+          path: /var/lib/docker/volumes/docker-compose_mongo-data
           key: ${{ runner.os }}-pr-${{ env.cache-name }}-${{ hashFiles('./src/app/beer_garden/db/mongo/models.py') }}
           restore-keys: |
             ${{ runner.os }}-pr-${{ env.cache-name }}-
