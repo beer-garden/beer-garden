@@ -667,14 +667,12 @@ jobs:
       - name: Cache Mongo Database
         id: cache-mongo
         uses: actions/cache@v3
-        env:
-          cache-name: cache-mongo-database
         with:
           # Use cache requests, if models have not been updated
           path: ./docker-compose_mongo-data
           key: ${{ runner.os }}-pr-${{ env.cache-name }}-${{ hashFiles('./src/app/beer_garden/db/mongo/models.py') }}
 
-      - if: ${{ steps.cache-mongo.outputs.cache-mongo-database != 'false' }}
+      - if: steps.cache-mongo.outputs.cache-hit == 'true'
         name: Move database file
         run: |
           sudo chown -R root:root ./docker-compose_mongo-data
@@ -710,7 +708,7 @@ jobs:
         run: mkdir reports
         working-directory: ./docker/docker-compose/data
 
-      - if: ${{ steps.cache-mongo.outputs.cache-mongo-database != 'true' }}
+      - if: steps.cache-mongo.outputs.cache-hit != 'true'
         name: Pre-load database
         continue-on-error: false
         run: docker-compose up jmeter-loader
@@ -740,7 +738,7 @@ jobs:
         run: docker-compose logs --tail 3000 beer-garden-parent
         working-directory: ./docker/docker-compose
 
-      - if: ${{ steps.cache-mongo.outputs.cache-mongo-database != 'true' }}
+      - if: steps.cache-mongo.outputs.cache-hit != 'true'
         name: Move database file
         continue-on-error: false
         run: |
