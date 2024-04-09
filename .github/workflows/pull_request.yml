@@ -743,7 +743,7 @@ jobs:
         run: docker-compose logs --tail 3000 beer-garden-parent
         working-directory: ./docker/docker-compose
 
-      - if: ${{ steps.cache-mongo.outputs.cache-mongo-database == 'true' }}
+      - if: ${{ steps.cache-mongo.outputs.cache-mongo-database != 'true' }}
         name: Move database file
         continue-on-error: false
         run: |
