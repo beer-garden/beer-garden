@@ -29,6 +29,12 @@ jobs:
   pypi-publish:
     name: PyPI Publish
     runs-on: ubuntu-latest
+    environment:
+      name: release
+      url: https://pypi.org/p/beer-garden
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
 
     defaults:
       run:
@@ -55,13 +61,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install setuptools wheel twine
 
-      - name: Build and publish
-        continue-on-error: true
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-        run: make publish-package
+      - name: Make Package
+        run: make package
 
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
 
   pypi-verify:
     name: Verify PyPI Publish
