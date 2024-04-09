@@ -678,7 +678,7 @@ jobs:
         name: Move database file
         continue-on-error: false
         run: |
-          sudo chown root:root ./docker-compose_mongo-data
+          sudo chown -R root:root ./docker-compose_mongo-data
           sudo mv ./docker-compose_mongo-data /var/lib/docker/volumes/docker-compose_mongo-data
 
         working-directory: ./docker/docker-compose
@@ -748,5 +748,5 @@ jobs:
         continue-on-error: false
         run: |
           sudo mv -f /var/lib/docker/volumes/docker-compose_mongo-data ./docker-compose_mongo-data
-          sudo chown $USER:$USER ./docker-compose_mongo-data
+          sudo chown -R $USER:$USER ./docker-compose_mongo-data
         
