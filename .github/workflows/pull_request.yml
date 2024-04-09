@@ -661,20 +661,21 @@ jobs:
       - name: Verify Local Plugins
         run: ls ./docker/docker-compose/data/localplugins
 
+      - name: Check Volumes
+        run: sudo ls -al /var/lib/docker/volumes/
+
       - name: Cache Mongo Database
         id: cache-mongo
         uses: actions/cache@v3
-        user: '1000:1000'
         env:
           cache-name: cache-mongo-database
         with:
           # Use cache requests, if models have not been updated
           path: /var/lib/docker/volumes/docker-compose_mongo-data
           key: ${{ runner.os }}-pr-${{ env.cache-name }}-${{ hashFiles('./src/app/beer_garden/db/mongo/models.py') }}
-          restore-keys: |
-            ${{ runner.os }}-pr-${{ env.cache-name }}-
-            ${{ runner.os }}-pr-
-            ${{ runner.os }}-
+
+      - name: Check Volumes
+        run: sudo ls -al /var/lib/docker/volumes/
 
       - name: Run Docker Beer Garden Child
         run: docker-compose up -d beer-garden-child
@@ -708,6 +709,9 @@ jobs:
         continue-on-error: false
         run: docker-compose up jmeter-loader
         working-directory: ./docker/docker-compose
+
+      - name: Check Volumes
+        run: sudo ls -al /var/lib/docker/volumes/
 
       # - name: Run Jmeter Test
       #   run: docker-compose up jmeter-testing
