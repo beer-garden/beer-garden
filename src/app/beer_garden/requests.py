@@ -874,6 +874,10 @@ def update_request(request: Request):
         request = db.create(request)
     return request
 
+@publish_event(Events.REQUEST_UPDATED)
+def modify_request(request: Request = None, **kwargs):
+    return db.modify(request, **kwargs)
+
 
 def process_wait(request: Request, timeout: float) -> Request:
     """Helper to process a request and wait for completion using a threading.Event
@@ -954,6 +958,7 @@ def handle_event(event):
     ):
         # Only care about downstream garden
         existing_request = request_cache.get(event.payload.id, None)
+        
         if not existing_request:         
             existing_request = db.query_unique(Request, id=event.payload.id)
 
@@ -975,7 +980,7 @@ def handle_event(event):
                 except NotUniqueException:
                     pass
             elif event.name != Events.REQUEST_CREATED.name:
-                request_changed = False
+                request_changed = {}
                 # When we send child requests to child gardens where the parent was on
                 # the local garden we remove the parent before sending them. Only setting
                 # the subset of fields that change "corrects" the parent
@@ -989,18 +994,26 @@ def handle_event(event):
                     new_value = getattr(event.payload, field)
 
                     if getattr(existing_request, field) != new_value:
-                        request_changed = True
-                        setattr(existing_request, field, new_value)
+                        request_changed[field] = new_value
 
                 if request_changed:
                     try:
-                        update_request(existing_request, _publish_error=False)
+                        # TODO: Convert this to a modify request for the fields
+                        existing_request = modify_request(existing_request, _publish_error=False, **request_changed)
                     except RequestStatusTransitionError:
                         pass
                 
             with request_cache_lock:
-                if existing_request not in ("CANCELED", "SUCCESS", "ERROR", "INVALID"):                    
-                    request_cache[existing_request.id] = existing_request
+                if existing_request not in ("CANCELED", "SUCCESS", "ERROR", "INVALID"):  
+                    cache_request = Request(id=existing_request.id,
+                                            status=existing_request.status,
+                                            output=existing_request.output,
+                                            error_class=existing_request.error_class,
+                                            status_updated_at=existing_request.status_updated_at,
+                                            target_garden=existing_request.target_garden,
+                                            updated_at=existing_request.updated_at,
+                                            command_type=existing_request.command_type)                  
+                    request_cache[cache_request.id] = cache_request
                 else:
                     request_cache.pop(event.payload.id, None)
 
