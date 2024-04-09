@@ -668,9 +668,9 @@ jobs:
         id: cache-mongo
         uses: actions/cache@v3
         with:
-          # Use cache requests, if models have not been updated
+          # Use cache requests, if models have not been updated or database loader
           path: ./docker-compose_mongo-data
-          key: ${{ runner.os }}-pr-stress-test-cache-${{ hashFiles('./src/app/beer_garden/db/mongo/models.py') }}
+          key: ${{ runner.os }}-pr-stress-test-cache-${{ hashFiles('./src/app/beer_garden/db/mongo/models.py') }}-${{ hashFiles('./docker/docker-compose/data/jmeter/prep_database.jmx') }}
 
       - if: steps.cache-mongo.outputs.cache-hit == 'true'
         name: Move database file
@@ -717,16 +717,16 @@ jobs:
       - name: Check Volumes
         run: sudo ls -al /var/lib/docker/volumes/
 
-      # - name: Run Jmeter Test
-      #   run: docker-compose up jmeter-testing
-      #   working-directory: ./docker/docker-compose
+      - name: Run Jmeter Test
+        run: docker-compose up jmeter-testing
+        working-directory: ./docker/docker-compose
 
-      # - name: Upload JMeter Results
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: jmeter-html-reports
-      #     path: docker/docker-compose/data/reports
-      #     if-no-files-found: error
+      - name: Upload JMeter Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: jmeter-html-reports
+          path: docker/docker-compose/data/reports
+          if-no-files-found: error
 
       - name: Grab logs from Child
         if: always()
