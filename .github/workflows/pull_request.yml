@@ -674,9 +674,8 @@ jobs:
           path: ./docker-compose_mongo-data
           key: ${{ runner.os }}-pr-${{ env.cache-name }}-${{ hashFiles('./src/app/beer_garden/db/mongo/models.py') }}
 
-      - if: ${{ steps.cache-mongo.outputs.cache-mongo-database == 'true' }}
+      - if: ${{ steps.cache-mongo.outputs.cache-mongo-database != 'false' }}
         name: Move database file
-        continue-on-error: false
         run: |
           sudo chown -R root:root ./docker-compose_mongo-data
           sudo mv ./docker-compose_mongo-data /var/lib/docker/volumes/docker-compose_mongo-data
