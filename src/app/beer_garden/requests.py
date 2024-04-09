@@ -17,6 +17,7 @@ from asyncio import Future
 from builtins import str
 from copy import deepcopy
 from typing import Dict, List, Sequence, Union
+from datetime import datetime
 
 import six
 import urllib3
@@ -42,6 +43,9 @@ from beer_garden.metrics import request_completed, request_created, request_star
 logger = logging.getLogger(__name__)
 
 request_map: Dict[str, threading.Event] = {}
+
+request_cache_lock = threading.RLock()
+request_cache: Dict[str, Request] = {}
 
 
 class RequestValidator(object):
@@ -949,7 +953,9 @@ def handle_event(event):
         Events.REQUEST_CANCELED.name,
     ):
         # Only care about downstream garden
-        existing_request = db.query_unique(Request, id=event.payload.id)
+        existing_request = request_cache.get(event.payload.id, None)
+        if not existing_request:         
+            existing_request = db.query_unique(Request, id=event.payload.id)
 
         if existing_request:
             # Skip status that revert
@@ -965,7 +971,7 @@ def handle_event(event):
             if existing_request is None:
                 # Attempt to create the request, if it already exists then continue on
                 try:
-                    db.create(event.payload)
+                    existing_request = db.create(event.payload)
                 except NotUniqueException:
                     pass
             elif event.name != Events.REQUEST_CREATED.name:
@@ -991,6 +997,20 @@ def handle_event(event):
                         update_request(existing_request, _publish_error=False)
                     except RequestStatusTransitionError:
                         pass
+                
+            with request_cache_lock:
+                if existing_request not in ("CANCELED", "SUCCESS", "ERROR", "INVALID"):                    
+                    request_cache[existing_request.id] = existing_request
+                else:
+                    request_cache.pop(event.payload.id, None)
+
+                # TODO: Make cache limit configurable
+                if len(request_cache) > 100:
+                    now = datetime.utcnow()
+                    for key, request in dict(request_cache).items():
+                        # TODO: Determine if this is the right thing to do
+                        if now - request.updated_at >= config.get("db.ttl.in_progress") / 2:
+                            del request_cache[key]
 
         if event.name in (
             Events.REQUEST_COMPLETED.name,
@@ -1015,7 +1035,7 @@ def clean_command_type_temp(request: Request, is_remote: bool):
             # Give Threading based requests a chance to pull the Request before deleting it
             time.sleep(0.5)
         db.delete(request)
-        return
+        return None
 
     # Delete any children that are TEMP once the current request is completed
     request.children = db.query(Request, filter_params={"parent": request})
@@ -1023,3 +1043,5 @@ def clean_command_type_temp(request: Request, is_remote: bool):
     for child in request.children:
         if child.command_type == "TEMP":
             db.delete(child)
+
+    return request
