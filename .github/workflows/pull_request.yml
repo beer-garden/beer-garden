@@ -705,9 +705,6 @@ jobs:
         run: docker-compose up jmeter-loader
         working-directory: ./docker/docker-compose
 
-      - name: Check Volumes
-        run: sudo ls -al /var/lib/docker/volumes/
-
       - name: Run Jmeter Test
         run: docker-compose up jmeter-testing
         working-directory: ./docker/docker-compose
