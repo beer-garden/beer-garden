@@ -671,8 +671,17 @@ jobs:
           cache-name: cache-mongo-database
         with:
           # Use cache requests, if models have not been updated
-          path: /var/lib/docker/volumes/docker-compose_mongo-data
+          path: ./docker-compose_mongo-data
           key: ${{ runner.os }}-pr-${{ env.cache-name }}-${{ hashFiles('./src/app/beer_garden/db/mongo/models.py') }}
+
+      - if: ${{ steps.cache-mongo.outputs.cache-mongo-database == 'true' }}
+        name: Move database file
+        continue-on-error: false
+        run: |
+          sudo chown root:root ./docker-compose_mongo-data
+          sudo mv ./docker-compose_mongo-data /var/lib/docker/volumes/docker-compose_mongo-data
+
+        working-directory: ./docker/docker-compose
 
       - name: Check Volumes
         run: sudo ls -al /var/lib/docker/volumes/
@@ -733,4 +742,11 @@ jobs:
         if: always()
         run: docker-compose logs --tail 3000 beer-garden-parent
         working-directory: ./docker/docker-compose
+
+      - if: ${{ steps.cache-mongo.outputs.cache-mongo-database == 'true' }}
+        name: Move database file
+        continue-on-error: false
+        run: |
+          sudo mv -f /var/lib/docker/volumes/docker-compose_mongo-data ./docker-compose_mongo-data
+          sudo chown $USER:$USER ./docker-compose_mongo-data
         
