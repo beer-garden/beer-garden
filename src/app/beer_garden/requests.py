@@ -874,6 +874,7 @@ def update_request(request: Request):
         request = db.create(request)
     return request
 
+
 @publish_event(Events.REQUEST_UPDATED)
 def modify_request(request: Request = None, **kwargs):
     return db.modify(request, **kwargs)
@@ -958,8 +959,8 @@ def handle_event(event):
     ):
         # Only care about downstream garden
         existing_request = request_cache.get(event.payload.id, None)
-        
-        if not existing_request:         
+
+        if not existing_request:
             existing_request = db.query_unique(Request, id=event.payload.id)
 
         if existing_request:
@@ -999,20 +1000,24 @@ def handle_event(event):
                 if request_changed:
                     try:
                         # TODO: Convert this to a modify request for the fields
-                        existing_request = modify_request(existing_request, _publish_error=False, **request_changed)
+                        existing_request = modify_request(
+                            existing_request, _publish_error=False, **request_changed
+                        )
                     except RequestStatusTransitionError:
                         pass
-                
+
             with request_cache_lock:
-                if existing_request not in ("CANCELED", "SUCCESS", "ERROR", "INVALID"):  
-                    cache_request = Request(id=existing_request.id,
-                                            status=existing_request.status,
-                                            output=existing_request.output,
-                                            error_class=existing_request.error_class,
-                                            status_updated_at=existing_request.status_updated_at,
-                                            target_garden=existing_request.target_garden,
-                                            updated_at=existing_request.updated_at,
-                                            command_type=existing_request.command_type)                  
+                if existing_request not in ("CANCELED", "SUCCESS", "ERROR", "INVALID"):
+                    cache_request = Request(
+                        id=existing_request.id,
+                        status=existing_request.status,
+                        output=existing_request.output,
+                        error_class=existing_request.error_class,
+                        status_updated_at=existing_request.status_updated_at,
+                        target_garden=existing_request.target_garden,
+                        updated_at=existing_request.updated_at,
+                        command_type=existing_request.command_type,
+                    )
                     request_cache[cache_request.id] = cache_request
                 else:
                     request_cache.pop(event.payload.id, None)
@@ -1022,7 +1027,10 @@ def handle_event(event):
                     now = datetime.utcnow()
                     for key, request in dict(request_cache).items():
                         # TODO: Determine if this is the right thing to do
-                        if now - request.updated_at >= config.get("db.ttl.in_progress") / 2:
+                        if (
+                            now - request.updated_at
+                            >= config.get("db.ttl.in_progress") / 2
+                        ):
                             del request_cache[key]
 
         if event.name in (
