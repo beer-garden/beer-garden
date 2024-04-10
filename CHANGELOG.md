@@ -1,4 +1,4 @@
-# Beer Garden Changelog 
+# Beer Garden Changelog
 
 # 3.25.0
 
