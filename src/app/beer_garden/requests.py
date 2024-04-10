@@ -18,7 +18,7 @@ from builtins import str
 from copy import deepcopy
 from typing import Dict, List, Sequence, Union
 from datetime import datetime
-from cachetools import TTLCache
+# from cachetools import TTLCache
 
 import six
 import urllib3
@@ -45,9 +45,9 @@ logger = logging.getLogger(__name__)
 
 request_map: Dict[str, threading.Event] = {}
 
-request_cache_lock = threading.RLock()
-# request_cache: Dict[str, Request] = {}
-request_cache = TTLCache(maxsize=500, ttl=(60*10))
+# request_cache_lock = threading.RLock()
+# # request_cache: Dict[str, Request] = {}
+# request_cache = TTLCache(maxsize=500, ttl=(60*10))
 
 
 class RequestValidator(object):
@@ -960,12 +960,14 @@ def handle_event(event):
         Events.REQUEST_CANCELED.name,
     ):
         # Only care about downstream garden
-        existing_request = request_cache.get(event.payload.id, None)
+        # existing_request = request_cache.get(event.payload.id, None)
 
-        if not existing_request:
-            existing_request = db.query_unique(Request, id=event.payload.id)
+        # if not existing_request:
+        #     existing_request = db.query_unique(Request, id=event.payload.id)
 
-        # existing_request = db.query_unique(Request, id=event.payload.id)
+        requests = db.query(Request, filter_params={"id": event.payload.id}, include_fields=["id","status","output","error_class","status_updated_at","target_garden","updated_at","command_type"])
+        if requests:
+            existing_request = requests[0]
 
         if existing_request:
             # Skip status that revert
@@ -1010,21 +1012,21 @@ def handle_event(event):
                     except RequestStatusTransitionError:
                         pass
 
-            with request_cache_lock:
-                if existing_request not in ("CANCELED", "SUCCESS", "ERROR", "INVALID"):
-                    cache_request = Request(
-                        id=existing_request.id,
-                        status=existing_request.status,
-                        output=existing_request.output,
-                        error_class=existing_request.error_class,
-                        status_updated_at=existing_request.status_updated_at,
-                        target_garden=existing_request.target_garden,
-                        updated_at=existing_request.updated_at,
-                        command_type=existing_request.command_type,
-                    )
-                    request_cache[cache_request.id] = cache_request
-                else:
-                    request_cache.pop(event.payload.id, None)
+            # with request_cache_lock:
+            #     if existing_request not in ("CANCELED", "SUCCESS", "ERROR", "INVALID"):
+            #         cache_request = Request(
+            #             id=existing_request.id,
+            #             status=existing_request.status,
+            #             output=existing_request.output,
+            #             error_class=existing_request.error_class,
+            #             status_updated_at=existing_request.status_updated_at,
+            #             target_garden=existing_request.target_garden,
+            #             updated_at=existing_request.updated_at,
+            #             command_type=existing_request.command_type,
+            #         )
+            #         request_cache[cache_request.id] = cache_request
+            #     else:
+            #         request_cache.pop(event.payload.id, None)
 
                 # # TODO: Make cache limit configurable
                 # if len(request_cache) > 100:

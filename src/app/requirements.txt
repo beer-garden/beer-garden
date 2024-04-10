@@ -8,19 +8,17 @@ apispec==0.38.0
     # via beer-garden (setup.py)
 appdirs==1.4.4
     # via brewtils
-apscheduler==3.10.1
+apscheduler==3.10.4
     # via beer-garden (setup.py)
 brewtils==3.25.0
     # via beer-garden (setup.py)
-cachetools==5.3.3
-    # via beer-garden (setup.py)
-certifi==2023.5.7
+certifi==2024.2.2
     # via requests
-charset-normalizer==3.2.0
+charset-normalizer==3.3.2
     # via requests
 docopt==0.6.2
     # via stomp-py
-idna==3.4
+idna==3.6
     # via requests
 lark-parser==0.6.7
     # via brewtils
@@ -37,13 +35,13 @@ more-itertools==8.14.0
     # via beer-garden (setup.py)
 motor==2.5.1
     # via beer-garden (setup.py)
-packaging==23.1
+packaging==24.0
     # via brewtils
 passlib==1.7.4
     # via beer-garden (setup.py)
 pika==1.2.0
     # via brewtils
-prometheus-client==0.17.1
+prometheus-client==0.20.0
     # via beer-garden (setup.py)
 pyjwt==2.8.0
     # via beer-garden (setup.py)
@@ -72,7 +70,7 @@ requests==2.31.0
     #   pyrabbit2
 ruamel-yaml==0.16.13
     # via beer-garden (setup.py)
-simplejson==3.19.1
+simplejson==3.19.2
     # via brewtils
 six==1.16.0
     # via
@@ -81,15 +79,15 @@ six==1.16.0
     #   yapconf
 stomp-py==6.0.0
     # via beer-garden (setup.py)
-tornado==6.2
+tornado==6.4
     # via beer-garden (setup.py)
-tzlocal==5.0.1
+tzlocal==5.2
     # via apscheduler
-urllib3==1.26.16
+urllib3==1.26.18
     # via
     #   beer-garden (setup.py)
     #   requests
-watchdog==3.0.0
+watchdog==4.0.0
     # via
     #   beer-garden (setup.py)
     #   yapconf
@@ -101,6 +99,3 @@ yapconf==1.0.0
     # via
     #   beer-garden (setup.py)
     #   brewtils
-
-# The following packages are considered to be unsafe in a requirements file:
-# setuptools
