@@ -959,12 +959,15 @@ def handle_event(event):
             filter_params={"id": event.payload.id},
             include_fields=[
                 "id",
+                # Required to check if change in fields from child
                 "status",
                 "output",
                 "error_class",
                 "status_updated_at",
                 "target_garden",
                 "updated_at",
+                "metadata",
+                # Required for TEMP check
                 "command_type",
             ],
         )
