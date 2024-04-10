@@ -969,7 +969,7 @@ def handle_event(event):
                 "command_type",
             ],
         )
-        
+
         if requests:
             existing_request = requests[0]
         else:
