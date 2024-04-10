@@ -874,7 +874,7 @@ def update_request(request: Request):
 
 @publish_event(Events.REQUEST_UPDATED)
 def modify_request(request: Request = None, **kwargs):
-    
+
     # Clean commands are not run for modify, so have to add this in here instead
     status_key = f"{request.status}_{config.get('garden.name')}"
     if status_key not in request.metadata:
