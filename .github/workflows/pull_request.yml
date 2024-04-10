@@ -709,7 +709,7 @@ jobs:
         id: jmeter
         run: |
           docker-compose up jmeter-testing | tee jmeter.log
-          echo "jmeter-rates=$(cat jmeter.log | grep 'Active: 0')\n" >> $GITHUB_OUTPUT         
+          echo "jmeter-rates=$(cat jmeter.log | grep 'summary' | tail -1 | cut -d '|' -f 2-)\n" >> $GITHUB_OUTPUT         
         working-directory: ./docker/docker-compose
 
       - uses: actions/github-script@v7
