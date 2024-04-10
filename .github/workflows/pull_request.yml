@@ -695,10 +695,6 @@ jobs:
         run: sleep 60s
         shell: bash
 
-      - name: Check Gardens API
-        run: curl http://localhost:2337/api/v1/gardens/child
-        shell: bash
-
       - name: Create reports directory
         run: mkdir reports
         working-directory: ./docker/docker-compose/data
