@@ -13,11 +13,11 @@ from beer_garden.api.http.authentication import issue_token_pair
 from beer_garden.db.mongo.models import (
     Garden,
     Instance,
-    Role,
-    RoleAssignment,
     System,
-    User,
 )
+from beer_garden.user import create_user, delete_user
+from beer_garden.role import create_role, delete_role
+from brewtils.models import User, Role
 
 
 @pytest.fixture(autouse=True)
@@ -51,47 +51,32 @@ def system(garden_permitted):
 
 
 @pytest.fixture
-def garden_admin_role():
-    role = Role(
-        name="garden_admin",
-        permissions=["garden:read", "garden:update", "garden:delete"],
-    ).save()
-
+def garden_admin_role(garden_permitted):
+    role = create_role(Role(name="garden_admin", permission="GARDEN_ADMIN", scope_gardens=[garden_permitted.name]))
     yield role
-    role.delete()
+    delete_role(role)
 
 
 @pytest.fixture
 def garden_create_role():
-    role = Role(
-        name="garden_create",
-        permissions=["garden:create"],
-    ).save()
-
+    role = create_role(Role(name="garden_create", permission="GARDEN_ADMIN"))
     yield role
-    role.delete()
+    delete_role(role)
 
 
 @pytest.fixture
-def garden_read_role():
-    role = Role(
-        name="garden_read",
-        permissions=["garden:read"],
-    ).save()
-
+def garden_read_role(garden_permitted):
+    role = create_role(Role(name="garden_read", permission="READ_ONLY", scope_gardens=[garden_permitted.name]))
     yield role
-    role.delete()
+    delete_role(role)
 
 
 @pytest.fixture
 def garden_none_role():
-    role = Role(
-        name="garden_none",
-        permissions=[],
-    ).save()
-
+    role = create_role(Role(name="garden_none"))
     yield role
-    role.delete()
+    delete_role(role)
+
 
 
 @pytest.fixture
@@ -101,77 +86,32 @@ def garden_cleanup():
 
 
 @pytest.fixture
-def user(garden_permitted, garden_admin_role, garden_create_role):
-    role_assignments = [
-        RoleAssignment(
-            role=garden_admin_role,
-            domain={
-                "scope": "Garden",
-                "identifiers": {
-                    "name": garden_permitted.name,
-                },
-            },
-        ),
-        RoleAssignment(
-            role=garden_create_role,
-            domain={
-                "scope": "Global",
-            },
-        ),
-    ]
-
-    user = User(username="testuser", role_assignments=role_assignments).save()
-
+def user(garden_admin_role, garden_create_role):
+    user = create_user(User(username="testuser", local_roles=[garden_admin_role, garden_create_role]))
     yield user
-    user.delete()
+    delete_user(user)
 
 
 @pytest.fixture
 def user_none_role(garden_none_role):
-    role_assignments = [
-        RoleAssignment(
-            role=garden_none_role,
-            domain={
-                "scope": "Global",
-            },
-        ),
-    ]
-
-    user = User(username="testuser", role_assignments=role_assignments).save()
-
+    user = create_user(User(username="testuser", local_roles=[garden_none_role]))
     yield user
-    user.delete()
+    delete_user(user)
 
 
 @pytest.fixture
-def read_only_user(garden_permitted, garden_read_role):
-    role_assignment = RoleAssignment(
-        role=garden_read_role,
-        domain={
-            "scope": "Garden",
-            "identifiers": {
-                "name": garden_permitted.name,
-            },
-        },
-    )
-
-    user = User(username="testuser", role_assignments=[role_assignment]).save()
-
+def read_only_user(garden_read_role):
+    user = create_user(User(username="testuser", local_roles=[garden_read_role]))
     yield user
-    user.delete()
+    delete_user(user)
+
 
 
 @pytest.fixture
-def global_admin_user(garden_permitted, garden_admin_role):
-    role_assignment = RoleAssignment(
-        role=garden_admin_role,
-        domain={"scope": "Global"},
-    )
-
-    user = User(username="testuser", role_assignments=[role_assignment]).save()
-
+def global_admin_user(garden_admin_role):
+    user = create_user(User(username="testuser", local_roles=[garden_admin_role]))
     yield user
-    user.delete()
+    delete_user(user)
 
 
 @pytest.fixture

@@ -4,7 +4,10 @@ import json
 import pytest
 
 from beer_garden.api.http.authentication import issue_token_pair
-from beer_garden.db.mongo.models import Garden, Role, RoleAssignment, User
+from beer_garden.db.mongo.models import Garden
+from beer_garden.user import create_user, delete_user
+from beer_garden.role import create_role, delete_role
+from brewtils.models import User, Role
 
 
 @pytest.fixture(autouse=True)
@@ -28,32 +31,17 @@ def garden_not_permitted():
 
 
 @pytest.fixture
-def garden_read_role():
-    role = Role(
-        name="garden_read",
-        permissions=["garden:read"],
-    ).save()
-
+def garden_read_role(garden_permitted):
+    role = create_role(Role(name="garden_read", permission="READ_ONLY", scope_gardenss=[garden_permitted.name]))
     yield role
-    role.delete()
+    delete_role(role)
 
 
 @pytest.fixture
-def user_with_permission(garden_permitted, garden_read_role):
-    role_assignment = RoleAssignment(
-        role=garden_read_role,
-        domain={
-            "scope": "Garden",
-            "identifiers": {
-                "name": garden_permitted.name,
-            },
-        },
-    )
-
-    user = User(username="testuser", role_assignments=[role_assignment]).save()
-
+def user_with_permission(garden_read_role):
+    user = create_user(User(username="testuser", local_roles=[garden_read_role]))
     yield user
-    user.delete()
+    delete_user(user)
 
 
 @pytest.fixture

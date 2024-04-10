@@ -12,30 +12,30 @@ from beer_garden.api.http.handlers.v1.instance import InstanceLogAPI
 from beer_garden.db.mongo.models import (
     Garden,
     Instance,
-    Role,
-    RoleAssignment,
-    System,
-    User,
+    System
 )
+from beer_garden.user import create_user, delete_user
+from beer_garden.role import create_role, delete_role
+from brewtils.models import User, Role
 
 from brewtils.models import Request as BrewtilsRequest
 
 
-@pytest.fixture
-def garden():
-    garden = Garden(name="somegarden", connection_type="LOCAL").save()
+@pytest.fixture(autouse=True)
+def garden(system):
+    garden = Garden(name="somegarden", connection_type="LOCAL", systems=[system]).save()
 
     yield garden
     garden.delete()
 
 
-@pytest.fixture(autouse=True)
-def system(garden):
+
+def system():
     instance = Instance(name="instance")
     system = System(
         name="system",
         version="1.0.0",
-        namespace=garden.name,
+        namespace="somegarden",
         instances=[instance],
     ).save()
 
@@ -44,33 +44,18 @@ def system(garden):
 
 
 @pytest.fixture
-def system_admin_role():
-    role = Role(
-        name="system_admin",
-        permissions=["instance:read", "instance:update", "queue:read"],
-    ).save()
-
+def system_admin_role(system):
+    role = create_role(Role(name="system_admin", permission="PLUGIN_ADMIN", scope_systems=[system.name], scope_namespaces=[system.namespace]))
     yield role
-    role.delete()
+    delete_role(role)
+
 
 
 @pytest.fixture
-def user_with_permission(system, system_admin_role):
-    role_assignment = RoleAssignment(
-        role=system_admin_role,
-        domain={
-            "scope": "System",
-            "identifiers": {
-                "name": system.name,
-                "namespace": system.namespace,
-            },
-        },
-    )
-
-    user = User(username="testuser", role_assignments=[role_assignment]).save()
-
+def user_with_permission(system_admin_role):
+    user = create_user(User(username="testuser", local_roles=[system_admin_role]))
     yield user
-    user.delete()
+    delete_user(user)
 
 
 @pytest.fixture

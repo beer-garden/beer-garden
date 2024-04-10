@@ -8,11 +8,11 @@ from beer_garden.api.http.authentication import issue_token_pair
 from beer_garden.db.mongo.models import (
     Command,
     Garden,
-    Role,
-    RoleAssignment,
     System,
-    User,
 )
+from beer_garden.user import create_user, delete_user
+from beer_garden.role import create_role, delete_role
+from brewtils.models import User, Role
 
 
 @pytest.fixture
@@ -50,33 +50,17 @@ def system_not_permitted(garden):
 
 
 @pytest.fixture
-def system_read_role():
-    role = Role(
-        name="system_admin",
-        permissions=["system:read"],
-    ).save()
-
+def system_read_role(system_permitted):
+    role = create_role(Role(name="system_admin", permission="READ_ONLY", scope_systems=[system_permitted.name], scope_namespaces=[system_permitted.namespace]))
     yield role
-    role.delete()
+    delete_role(role)
 
 
 @pytest.fixture
 def user(system_permitted, system_read_role):
-    role_assignment = RoleAssignment(
-        role=system_read_role,
-        domain={
-            "scope": "System",
-            "identifiers": {
-                "name": system_permitted.name,
-                "namespace": system_permitted.namespace,
-            },
-        },
-    )
-
-    user = User(username="testuser", role_assignments=[role_assignment]).save()
-
+    user = create_user(User(username="testuser", local_roles=[system_read_role]))
     yield user
-    user.delete()
+    delete_user(user)
 
 
 @pytest.fixture

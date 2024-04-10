@@ -4,7 +4,7 @@ import json
 import beer_garden.events
 import beer_garden.router
 import pytest
-from beer_garden.db.mongo.models import Role, RoleAssignment, User, Topic
+from beer_garden.db.mongo.models import Topic
 import beer_garden.api.http.handlers.v1.garden
 from beer_garden.api.http.authentication import issue_token_pair
 from beer_garden.topic import create_topic
