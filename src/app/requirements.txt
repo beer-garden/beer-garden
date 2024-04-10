@@ -13,6 +13,7 @@ apscheduler==3.10.1
 brewtils==3.25.0
     # via beer-garden (setup.py)
 cachetools==5.3.3
+    # via beer-garden (setup.py)
 certifi==2023.5.7
     # via requests
 charset-normalizer==3.2.0
