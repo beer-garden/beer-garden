@@ -149,6 +149,7 @@ services:
             <<: *env
 
             BG_GARDEN_NAME: child
+            BG_PARENT_SYNC_INTERVAL: 1
             BG_PARENT_STOMP_ENABLED: "true"
             BG_PARENT_STOMP_HOST: activemq
             BG_PARENT_STOMP_USERNAME: beer_garden
