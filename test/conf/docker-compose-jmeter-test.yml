@@ -94,7 +94,7 @@ services:
         volumes:
             - ./data/logging-config.yaml:/src/example_configs/logging-config.yaml
             - ./data/localplugins:/plugins
-            - ./beer_garden_parent_children:/children
+            - ./beer_garden_jmeter_parent_children:/children
         environment:
             <<: *env
 
