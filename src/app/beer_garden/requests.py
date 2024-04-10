@@ -16,8 +16,8 @@ import time
 from asyncio import Future
 from builtins import str
 from copy import deepcopy
-from typing import Dict, List, Sequence, Union
 from datetime import datetime
+from typing import Dict, List, Sequence, Union
 
 import six
 import urllib3
