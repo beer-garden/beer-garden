@@ -17,6 +17,7 @@ from beer_garden.api.http.exceptions import (
 from beer_garden.authorization import QueryFilterBuilder, ModelFilter
 # from beer_garden.db.mongo.models import User
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
+import beer_garden.db.api as db
 
 
 class AuthorizationHandler(BaseHandler):
@@ -55,7 +56,7 @@ class AuthorizationHandler(BaseHandler):
         return await self.client(operation, current_user=self.current_user, minimum_permission=self.minimum_permission, **kwargs)
 
 
-    def get_or_raise(self, model: Type[Document], **kwargs):  # Updated
+    def get_or_raise(self, model: Type[BrewtilsModel], **kwargs):  # Updated
         """Get Document model objects specified by **kwargs if the requesting user
         has the given permission for that object.
 
@@ -73,18 +74,21 @@ class AuthorizationHandler(BaseHandler):
             RequestForbidden: This is raised through the permission verification call
               if the requesting user does not have permissions to the object
         """
+        # Change to brewtils query
         provided_filter = Q(**kwargs) & self.queryFilter.build_filter(
             self.current_user, self.minimum_permission, model
         )
 
         try:
-            requested_object = model.objects.get(provided_filter)
+            requested_objects = db.query(model, query=provided_filter )
+            if len(requested_objects) != 1:
+                raise ValidationError(f"Multiple records returned for schema query: {model.schema}, {provided_filter}")
         except (model.DoesNotExist, ValidationError):
             raise NotFound
 
-        self.verify_user_permission_for_object(requested_object)
+        self.verify_user_permission_for_object(requested_objects[0])
 
-        return requested_object
+        return requested_objects[0]
 
     def permissioned_queryset(
         self, model: Type[Document]

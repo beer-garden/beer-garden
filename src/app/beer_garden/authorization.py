@@ -244,7 +244,7 @@ class ModelFilter:
                     )                 
                 elif instance_id:
                     system = db.query_unique(
-                        BrewtilsSystem, instances_id=instance_id, raise_missing=True
+                        BrewtilsSystem, instances__id=instance_id, raise_missing=True
                     )
                 
         if system:

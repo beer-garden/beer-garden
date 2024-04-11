@@ -2,12 +2,12 @@
 from asyncio import Future
 
 from brewtils.errors import ModelValidationError, RequestProcessingError
-from brewtils.models import Operation
+from brewtils.models import Operation, System
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.base_handler import future_wait
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.db.mongo.models import System
+
 
 
 class InstanceAPI(AuthorizationHandler):

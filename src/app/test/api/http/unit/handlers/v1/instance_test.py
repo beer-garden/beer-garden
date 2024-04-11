@@ -29,7 +29,7 @@ def garden(system):
     garden.delete()
 
 
-
+@pytest.fixture
 def system():
     instance = Instance(name="instance")
     system = System(
@@ -85,9 +85,9 @@ def router_mocks(monkeypatch, instance_function_mock):
 
 
 @pytest.fixture(autouse=True)
-def common_mocks(monkeypatch, system, instance_function_mock):
+def common_mocks(monkeypatch, garden, instance_function_mock):
     def mock_determine_target(operation):
-        return system.namespace
+        return garden.name
 
     def generic_mock(*args, **kwargs):
         pass
