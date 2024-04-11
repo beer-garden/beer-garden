@@ -969,11 +969,10 @@ def handle_event(event):
                 "id",
                 # Required to check if change in fields from child
                 "status",
-                "output",
-                "error_class",
                 "status_updated_at",
                 "target_garden",
                 "updated_at",
+                # Required for latency tracking
                 "metadata",
                 # Required for TEMP check
                 "command_type",
@@ -1009,15 +1008,22 @@ def handle_event(event):
                 # the subset of fields that change "corrects" the parent
                 for field in (
                     "status",
-                    "output",
-                    "error_class",
                     "status_updated_at",
                     "target_garden",
+                    "updated_at",
                 ):
                     new_value = getattr(event.payload, field)
 
                     if getattr(existing_request, field) != new_value:
                         request_changed[field] = new_value
+
+                # Add output fields only if the status changes to a compelted state
+                if "status" in request_changed:
+                    if event.payload.status in ("CANCELED", "SUCCESS", "ERROR", "INVALID"):
+                        if event.payload.output:
+                            request_changed["output"] = event.payload.output
+                        if event.payload.error_class:
+                            request_changed["error_class"] = event.payload.error_class
 
                 if request_changed:
                     try:
