@@ -948,6 +948,7 @@ def handle_wait_events(event):
                 else:
                     request_map[request_event].set()
 
+
 def handle_event(event):
     # TODO: Add support for Request Delete event type
     # if event.name == Events.REQUEST_DELETED.name and event.garden != config.get("garden.name"):
@@ -1041,6 +1042,7 @@ def handle_event(event):
                 clean_command_type_temp(
                     existing_request, event.garden != config.get("garden.name")
                 )
+
 
 def clean_command_type_temp(request: Request, is_remote: bool):
     # Only delete TEMP requests if it is the root request
