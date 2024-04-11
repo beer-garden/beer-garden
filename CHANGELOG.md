@@ -9,6 +9,7 @@ TBD
 - Garden Sync events will update heartbeat status of Receiving Garden APIs
 - Utilized the TTL for In_Progress requests to set Expiration windows for Requests on PIKA, to handle backups of requests that Beer Garden has already cancelled.
 - Optimized UI Rest calls to load only Local Garden with Children
+- Optimized Child Request Event handeling
 - Updated how STOMP URL preview is formatted on Garden Admin page
 - Configuration update: Prometheus metrics (`metrics.prometheus.enabled`) is now disabled by default
 - Configuration update: Default directory for child configs (`children.directory`) is now `./children`
