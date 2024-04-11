@@ -260,7 +260,7 @@ class ModelFilter:
 
         if system_name and check_garden and garden_name is None:
             if system:
-                gardens = db.query(BrewtilsGarden, systems__id=system.id)
+                gardens = db.query(BrewtilsGarden, filter_params={"systems":system})
 
             if gardens and len(gardens) == 1:
                 garden_name = gardens[0].name

@@ -7,15 +7,13 @@ from typing import Sequence
 
 from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
-from brewtils.models import Request as BrewtilsRequest
-from brewtils.models import System as BrewtilsSystem
+from brewtils.models import Request, System
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden.db.api as db
 from beer_garden.api.http.base_handler import future_wait
 from beer_garden.api.http.exceptions import BadRequest
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.db.mongo.models import Request
 from beer_garden.errors import UnknownGardenException
 from beer_garden.requests import remove_bytes_parameter_base64
 
@@ -109,7 +107,7 @@ class RequestAPI(AuthorizationHandler):
                         operation.kwargs = {}
                         break
 
-                    elif op.value.upper() in BrewtilsRequest.COMPLETED_STATUSES:
+                    elif op.value.upper() in Request.COMPLETED_STATUSES:
                         operation.operation_type = "REQUEST_COMPLETE"
                         operation.kwargs["status"] = op.value
 
@@ -392,9 +390,9 @@ class RequestListAPI(AuthorizationHandler):
             "length": len(requests),
             # And these are required by datatables
             "recordsFiltered": db.count(
-                BrewtilsRequest, q_filter=q_filter, **query_args["filter_params"]
+                Request, q_filter=q_filter, **query_args["filter_params"]
             ),
-            "recordsTotal": db.count(BrewtilsRequest, q_filter=q_filter),
+            "recordsTotal": db.count(Request, q_filter=q_filter),
             "draw": self.get_argument("draw", ""),
         }
 
@@ -503,7 +501,7 @@ class RequestListAPI(AuthorizationHandler):
                 serialize_kwargs={"to_string": False},
             )
         except UnknownGardenException as ex:
-            req_system = BrewtilsSystem(
+            req_system = System(
                 namespace=request_model.namespace,
                 name=request_model.system,
                 version=request_model.system_version,
@@ -589,7 +587,7 @@ class RequestListAPI(AuthorizationHandler):
                 serialize_kwargs={"to_string": False},
             )
         except UnknownGardenException as ex:
-            req_system = BrewtilsSystem(
+            req_system = System(
                 namespace=request_model.namespace,
                 name=request_model.system,
                 version=request_model.system_version,
@@ -728,7 +726,7 @@ class RequestListAPI(AuthorizationHandler):
 
         self.set_status(204)
 
-    def _parse_form_request(self) -> BrewtilsRequest:
+    def _parse_form_request(self) -> Request:
         args = {"parameters": {}}
 
         for key, value in self.request.body_arguments.items():
@@ -739,7 +737,7 @@ class RequestListAPI(AuthorizationHandler):
             else:
                 args[key] = decoded_param
 
-        return BrewtilsRequest(**args)
+        return Request(**args)
 
     def _parse_datatables_parameters(self) -> dict:
         """Parse the HTTP request's datatables query parameters
@@ -886,7 +884,7 @@ class RequestListAPI(AuthorizationHandler):
 
         return "_".join(real_hint)
 
-    def _parse_multipart_form_data(self) -> BrewtilsRequest:
+    def _parse_multipart_form_data(self) -> Request:
         """Generate a Request object from multipart/form-data input"""
         request_form = self.get_body_argument("request")
 
@@ -902,7 +900,7 @@ class RequestListAPI(AuthorizationHandler):
 
         self._add_files_to_request(request_form_dict)
 
-        return BrewtilsRequest(**request_form_dict)
+        return Request(**request_form_dict)
 
     def _add_files_to_request(self, request_form_dict: dict) -> None:
         """Processes any files attached to the request and adds them as parameters to
