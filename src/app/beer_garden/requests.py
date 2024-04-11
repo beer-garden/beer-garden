@@ -949,6 +949,100 @@ def handle_wait_events(event):
                     request_map[request_event].set()
 
 
+# def handle_event(event):
+#     # TODO: Add support for Request Delete event type
+#     # if event.name == Events.REQUEST_DELETED.name and event.garden != config.get("garden.name"):
+#     #     delete_requests(**event.payload)
+
+#     if event.name in (
+#         Events.REQUEST_CREATED.name,
+#         Events.REQUEST_STARTED.name,
+#         Events.REQUEST_COMPLETED.name,
+#         Events.REQUEST_UPDATED.name,
+#         Events.REQUEST_CANCELED.name,
+#     ):
+#         # Only care about downstream garden
+#         requests = db.query(
+#             Request,
+#             filter_params={"id": event.payload.id},
+#             include_fields=[
+#                 "id",
+#                 # Required to check if change in fields from child
+#                 "status",
+#                 "output",
+#                 "error_class",
+#                 "status_updated_at",
+#                 "target_garden",
+#                 "updated_at",
+#                 "metadata",
+#                 # Required for TEMP check
+#                 "command_type",
+#             ],
+#         )
+
+#         if requests:
+#             existing_request = requests[0]
+#         else:
+#             existing_request = None
+
+#         if existing_request:
+#             # Skip status that revert
+#             if existing_request.status in ("CANCELED", "SUCCESS", "ERROR", "INVALID"):
+#                 return
+#             if existing_request.status == "IN_PROGRESS" and event.payload.status in (
+#                 "CREATED",
+#                 "RECEIVED",
+#             ):
+#                 return
+
+#         if event.garden != config.get("garden.name") and not event.error:
+#             if existing_request is None:
+#                 # Attempt to create the request, if it already exists then continue on
+#                 try:
+#                     existing_request = db.create(event.payload)
+#                 except NotUniqueException:
+#                     pass
+#             elif event.name != Events.REQUEST_CREATED.name:
+#                 request_changed = {}
+#                 # When we send child requests to child gardens where the parent was on
+#                 # the local garden we remove the parent before sending them. Only setting
+#                 # the subset of fields that change "corrects" the parent
+#                 for field in (
+#                     "status",
+#                     "output",
+#                     "error_class",
+#                     "status_updated_at",
+#                     "target_garden",
+#                 ):
+#                     new_value = getattr(event.payload, field)
+
+#                     if getattr(existing_request, field) != new_value:
+#                         request_changed[field] = new_value
+
+#                 if request_changed:
+#                     try:
+#                         # TODO: Convert this to a modify request for the fields
+#                         existing_request = modify_request(
+#                             existing_request, _publish_error=False, **request_changed
+#                         )
+#                     except RequestStatusTransitionError:
+#                         pass
+
+#         if event.name in (
+#             Events.REQUEST_COMPLETED.name,
+#             Events.REQUEST_UPDATED.name,
+#             Events.REQUEST_CANCELED.name,
+#         ):
+#             if existing_request and event.payload.status in (
+#                 "INVALID",
+#                 "CANCELED",
+#                 "ERROR",
+#                 "SUCCESS",
+#             ):
+#                 clean_command_type_temp(
+#                     existing_request, event.garden != config.get("garden.name")
+#                 )
+
 def handle_event(event):
     # TODO: Add support for Request Delete event type
     # if event.name == Events.REQUEST_DELETED.name and event.garden != config.get("garden.name"):
@@ -962,28 +1056,7 @@ def handle_event(event):
         Events.REQUEST_CANCELED.name,
     ):
         # Only care about downstream garden
-        requests = db.query(
-            Request,
-            filter_params={"id": event.payload.id},
-            include_fields=[
-                "id",
-                # Required to check if change in fields from child
-                "status",
-                "output",
-                "error_class",
-                "status_updated_at",
-                "target_garden",
-                "updated_at",
-                "metadata",
-                # Required for TEMP check
-                "command_type",
-            ],
-        )
-
-        if requests:
-            existing_request = requests[0]
-        else:
-            existing_request = None
+        existing_request = db.query_unique(Request, id=event.payload.id)
 
         if existing_request:
             # Skip status that revert
@@ -999,11 +1072,11 @@ def handle_event(event):
             if existing_request is None:
                 # Attempt to create the request, if it already exists then continue on
                 try:
-                    existing_request = db.create(event.payload)
+                    db.create(event.payload)
                 except NotUniqueException:
                     pass
             elif event.name != Events.REQUEST_CREATED.name:
-                request_changed = {}
+                request_changed = False
                 # When we send child requests to child gardens where the parent was on
                 # the local garden we remove the parent before sending them. Only setting
                 # the subset of fields that change "corrects" the parent
@@ -1017,14 +1090,12 @@ def handle_event(event):
                     new_value = getattr(event.payload, field)
 
                     if getattr(existing_request, field) != new_value:
-                        request_changed[field] = new_value
+                        request_changed = True
+                        setattr(existing_request, field, new_value)
 
                 if request_changed:
                     try:
-                        # TODO: Convert this to a modify request for the fields
-                        existing_request = modify_request(
-                            existing_request, _publish_error=False, **request_changed
-                        )
+                        update_request(existing_request, _publish_error=False)
                     except RequestStatusTransitionError:
                         pass
 
@@ -1042,7 +1113,6 @@ def handle_event(event):
                 clean_command_type_temp(
                     existing_request, event.garden != config.get("garden.name")
                 )
-
 
 def clean_command_type_temp(request: Request, is_remote: bool):
     # Only delete TEMP requests if it is the root request
