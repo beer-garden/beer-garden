@@ -79,12 +79,15 @@ class AuthorizationHandler(BaseHandler):
             self.current_user, self.minimum_permission, model
         )
 
-        try:
-            requested_objects = db.query(model, query=provided_filter )
-            if len(requested_objects) != 1:
-                raise ValidationError(f"Multiple records returned for schema query: {model.schema}, {provided_filter}")
-        except (model.DoesNotExist, ValidationError):
-            raise NotFound
+        requested_objects = db.query(model, q_filter=provided_filter)
+        if len(requested_objects) != 1:
+            raise NotFound(f"Multiple records returned for schema query: {model.schema}, {provided_filter}")
+        elif len(requested_objects) == 0:
+            if len(db.query(model, q_filter=Q(**kwargs) )) > 0:
+                raise RequestForbidden
+            else:
+                raise NotFound
+
 
         self.verify_user_permission_for_object(requested_objects[0])
 

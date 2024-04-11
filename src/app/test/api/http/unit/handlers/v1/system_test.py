@@ -69,7 +69,7 @@ def system_read_role(system_permitted):
 def system_admin_role(system_permitted):
     role = create_role(Role(
         name="system_admin",
-        permission="OPERATOR",
+        permission="PLUGIN_ADMIN",
         scope_namespaces=[system_permitted.namespace],
         scope_systems=[system_permitted.name],
     ))
