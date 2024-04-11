@@ -1032,7 +1032,6 @@ def handle_event(event):
 
                 if request_changed:
                     try:
-                        # TODO: Convert this to a modify request for the fields
                         existing_request = modify_request(
                             existing_request, _publish_error=False, **request_changed
                         )
