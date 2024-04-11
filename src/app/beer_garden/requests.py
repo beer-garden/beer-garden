@@ -1019,7 +1019,12 @@ def handle_event(event):
 
                 # Add output fields only if the status changes to a compelted state
                 if "status" in request_changed:
-                    if event.payload.status in ("CANCELED", "SUCCESS", "ERROR", "INVALID"):
+                    if event.payload.status in (
+                        "CANCELED",
+                        "SUCCESS",
+                        "ERROR",
+                        "INVALID",
+                    ):
                         if event.payload.output:
                             request_changed["output"] = event.payload.output
                         if event.payload.error_class:
