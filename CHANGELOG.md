@@ -2,7 +2,7 @@
 
 # 3.25.0
 
-TBD
+4/11/2024
 
 - Added Topics API and classes to support dynamic topic subscribers
 - Now show alert on Garden Admin page when a Sync event is seen
@@ -26,13 +26,13 @@ TBD
 
 # 3.24.4
 
-3/11/24
+3/11/2024
 
 - Fixed bug where child STOMP Recieving connections where not being saved or configured to listen
 
 # 3.24.3
 
-3/8/24
+3/8/2024
 
 - Fixed bug where Stomp Headers were not being parsed into Dictionaries
 
@@ -50,7 +50,7 @@ TBD
 
 # 3.24.1
 
-2/21/24
+2/21/2024
 
 - Fixed pip config trusted-host on rpm build
 - Fixed bug where the Garden Connection Stop button did not request the connection to be disabled if the current status is a valid running status.
@@ -61,7 +61,7 @@ TBD
 
 # 3.24.0
 
-2/13/24
+2/13/2024
 
 - Updated icons on System Admin page
 - Fixed bug where `blocking=true` on Request API returned `IN PROGRESS` status for requests sourced from downstream gardens. Delay added to 
