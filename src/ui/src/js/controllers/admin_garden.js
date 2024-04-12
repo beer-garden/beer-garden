@@ -210,7 +210,7 @@ export default function adminGardenController(
 
   $scope.showUpstream = function(gardens){
     for (let i = 0; i < gardens.length; i++) {
-      if (gardens[i].connection_type == "LOCAL"){
+      if (gardens[i].connection_type == "LOCAL" && gardens[i].name == $scope.config.gardenName){
         if (gardens[i].publishing_connections.length > 0){
           return true;
         }
@@ -220,7 +220,7 @@ export default function adminGardenController(
   }
 
   $scope.isLocal = function(garden) {
-    return garden.connection_type == "LOCAL";
+    return garden.name == $scope.config.gardenName && garden.connection_type == "LOCAL";
   }
 
   $scope.getConnectionUrl = function(connection, isReceiving) {
@@ -369,10 +369,12 @@ export default function adminGardenController(
         $scope.$digest();
         break;
       case 'GARDEN_SYNC':
-        $scope.alerts.push({
-          type: 'info',
-          msg: 'Garden sync event seen from ' + event.payload.name,
-        });
+        if (event.payload.name != $scope.config.gardenName) {
+          $scope.alerts.push({
+            type: 'info',
+            msg: 'Garden sync event seen from ' + event.payload.name,
+          });
+        }
     }
   });
 

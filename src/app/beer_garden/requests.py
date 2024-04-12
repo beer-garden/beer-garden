@@ -16,6 +16,7 @@ import time
 from asyncio import Future
 from builtins import str
 from copy import deepcopy
+from datetime import datetime
 from typing import Dict, List, Sequence, Union
 
 import six
@@ -27,16 +28,7 @@ from brewtils.errors import (
     RequestPublishException,
     RequestStatusTransitionError,
 )
-from brewtils.models import (
-    Choices,
-    Event,
-    Events,
-    Garden,
-    Operation,
-    Request,
-    RequestTemplate,
-    System,
-)
+from brewtils.models import Choices, Events, Operation, Request, RequestTemplate, System
 from brewtils.pika import PERSISTENT_DELIVERY_MODE
 from requests import Session
 
@@ -880,6 +872,18 @@ def update_request(request: Request):
     return request
 
 
+@publish_event(Events.REQUEST_UPDATED)
+def modify_request(request: Request = None, **kwargs):
+
+    # Clean commands are not run for modify, so have to add this in here instead
+    status_key = f"{request.status}_{config.get('garden.name')}"
+    if status_key not in request.metadata:
+        request.metadata[status_key] = int(datetime.utcnow().timestamp() * 1000)
+        kwargs["metadata"] = request.metadata
+
+    return db.modify(request, **kwargs)
+
+
 def process_wait(request: Request, timeout: float) -> Request:
     """Helper to process a request and wait for completion using a threading.Event
 
@@ -945,70 +949,6 @@ def handle_wait_events(event):
                     request_map[request_event].set()
 
 
-def processes_status_latency(garden, target_garden, status, delta):
-    garden.metadata[f"{status}_DELTA_{target_garden}"] = round(delta, 3)
-    if f"{status}_COUNT_{target_garden}" not in garden.metadata:
-        garden.metadata[f"{status}_AVG_{target_garden}"] = round(
-            garden.metadata[f"{status}_DELTA_{target_garden}"], 3
-        )
-        garden.metadata[f"{status}_COUNT_{target_garden}"] = 1
-    else:
-        garden.metadata[f"{status}_AVG_{target_garden}"] = round(
-            (
-                (
-                    garden.metadata[f"{status}_AVG_{target_garden}"]
-                    * garden.metadata[f"{status}_COUNT_{target_garden}"]
-                )
-                + delta
-            )
-            / (garden.metadata[f"{status}_COUNT_{target_garden}"] + 1),
-            3,
-        )
-        garden.metadata[f"{status}_COUNT_{target_garden}"] += 1
-
-
-def update_request_latency_garden(existing_request: Request, event: Event) -> None:
-    """Updater for Garden metadata based on Request timestamps
-
-    Args:
-        existing_request: Request stored in Database
-        event: Incoming request from downstream garden
-
-    """
-
-    # Skip metrics if it is sourced from itself
-    if existing_request.source_garden == event.payload.target_garden:
-        return
-
-    garden = db.query_unique(Garden, name=existing_request.source_garden)
-
-    if event.name == Events.REQUEST_CREATED.name:
-        processes_status_latency(
-            garden,
-            event.payload.target_garden,
-            "CREATE",
-            (event.payload.created_at - existing_request.created_at).total_seconds(),
-        )
-    elif event.payload.status == "IN_PROGRESS":
-        processes_status_latency(
-            garden,
-            event.payload.target_garden,
-            "START",
-            (event.payload.updated_at - existing_request.created_at).total_seconds(),
-        )
-    elif event.payload.status in ("CANCELED", "SUCCESS", "ERROR"):
-        processes_status_latency(
-            garden,
-            event.payload.target_garden,
-            "COMPLETE",
-            (event.payload.updated_at - existing_request.created_at).total_seconds(),
-        )
-    else:
-        return
-
-    db.update(garden)
-
-
 def handle_event(event):
     # TODO: Add support for Request Delete event type
     # if event.name == Events.REQUEST_DELETED.name and event.garden != config.get("garden.name"):
@@ -1022,7 +962,27 @@ def handle_event(event):
         Events.REQUEST_CANCELED.name,
     ):
         # Only care about downstream garden
-        existing_request = db.query_unique(Request, id=event.payload.id)
+        requests = db.query(
+            Request,
+            filter_params={"id": event.payload.id},
+            include_fields=[
+                "id",
+                # Required to check if change in fields from child
+                "status",
+                "status_updated_at",
+                "target_garden",
+                "updated_at",
+                # Required for latency tracking
+                "metadata",
+                # Required for TEMP check
+                "command_type",
+            ],
+        )
+
+        if requests:
+            existing_request = requests[0]
+        else:
+            existing_request = None
 
         if existing_request:
             # Skip status that revert
@@ -1035,13 +995,6 @@ def handle_event(event):
                 return
 
         if event.garden != config.get("garden.name") and not event.error:
-            if (
-                existing_request
-                and config.get("metrics.garden_latency_metrics_enabled")
-                and existing_request.source_garden == config.get("garden.name")
-            ):
-                update_request_latency_garden(existing_request, event)
-
             if existing_request is None:
                 if not get_users:
                     from beer_garden.user import get_users
@@ -1060,30 +1013,43 @@ def handle_event(event):
                             if foundUser:
                                 break
 
-                    db.create(event.payload)
+                    existing_request = db.create(event.payload)
                 except NotUniqueException:
                     pass
             elif event.name != Events.REQUEST_CREATED.name:
-                request_changed = False
+                request_changed = {}
                 # When we send child requests to child gardens where the parent was on
                 # the local garden we remove the parent before sending them. Only setting
                 # the subset of fields that change "corrects" the parent
                 for field in (
                     "status",
-                    "output",
-                    "error_class",
                     "status_updated_at",
                     "target_garden",
+                    "updated_at",
                 ):
                     new_value = getattr(event.payload, field)
 
                     if getattr(existing_request, field) != new_value:
-                        request_changed = True
-                        setattr(existing_request, field, new_value)
+                        request_changed[field] = new_value
+
+                # Add output fields only if the status changes to a compelted state
+                if "status" in request_changed:
+                    if event.payload.status in (
+                        "CANCELED",
+                        "SUCCESS",
+                        "ERROR",
+                        "INVALID",
+                    ):
+                        if event.payload.output:
+                            request_changed["output"] = event.payload.output
+                        if event.payload.error_class:
+                            request_changed["error_class"] = event.payload.error_class
 
                 if request_changed:
                     try:
-                        update_request(existing_request, _publish_error=False)
+                        existing_request = modify_request(
+                            existing_request, _publish_error=False, **request_changed
+                        )
                     except RequestStatusTransitionError:
                         pass
 
@@ -1110,7 +1076,7 @@ def clean_command_type_temp(request: Request, is_remote: bool):
             # Give Threading based requests a chance to pull the Request before deleting it
             time.sleep(0.5)
         db.delete(request)
-        return
+        return None
 
     # Delete any children that are TEMP once the current request is completed
     request.children = db.query(Request, filter_params={"parent": request})
@@ -1118,3 +1084,5 @@ def clean_command_type_temp(request: Request, is_remote: bool):
     for child in request.children:
         if child.command_type == "TEMP":
             db.delete(child)
+
+    return request

@@ -5,16 +5,31 @@ import pytest
 from box import Box
 from brewtils.errors import ModelValidationError
 from brewtils.models import Choices, Command, Event, Events, Parameter
+from brewtils.models import Garden as BrewtilsGarden
 from brewtils.models import Request as BrewtilsRequest
 from mock import Mock, call, patch
 from mongomock.gridfs import enable_gridfs_integration
 
 import beer_garden.config
 import beer_garden.requests
-from beer_garden.db.mongo.models import Request
+from beer_garden.db.mongo.models import Request, Garden
 from beer_garden.requests import RequestValidator
+from beer_garden.garden import create_garden
 
 enable_gridfs_integration()
+
+
+@pytest.fixture(autouse=True)
+def drop():
+    yield
+    Garden.drop_collection()
+
+
+@pytest.fixture
+def localgarden():
+    yield create_garden(
+        BrewtilsGarden(name="parent", connection_type="LOCAL", systems=[])
+    )
 
 
 @pytest.fixture
@@ -51,6 +66,8 @@ def child_garden_request():
         instance_name="instance1",
         command="somecommand",
         parameters={},
+        source_garden="parent",
+        target_garden="child",
     )
     request.save()
 
@@ -1092,8 +1109,12 @@ class TestHandleEvent:
         child_garden_request.status = "SUCCESS"
         child_garden_request.status_updated_at = status_updated_at
         request_event = Event(
-            payload=child_garden_request, name=Events.REQUEST_UPDATED.name
+            payload=child_garden_request,
+            name=Events.REQUEST_UPDATED.name,
+            garden="child",
         )
+
+        beer_garden.config._CONFIG = {"garden": {"name": "parent"}}
 
         beer_garden.requests.handle_event(request_event)
 

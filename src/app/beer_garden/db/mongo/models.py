@@ -47,6 +47,7 @@ from mongoengine import (
     UUIDField,
     ValidationError,
 )
+from mongoengine.errors import DoesNotExist
 
 from beer_garden import config
 from beer_garden.db.mongo.querysets import FileFieldHandlingQuerySet
@@ -485,6 +486,15 @@ class Request(MongoModel, Document):
         if self.output_gridfs.grid_id:
             self.output = None
 
+        if not self.metadata:
+            self.metadata = {}
+
+        status_key = f"{self.status}_{config.get('garden.name')}"
+        if status_key not in self.metadata:
+            self.metadata[status_key] = int(
+                datetime.datetime.utcnow().timestamp() * 1000
+            )
+
     def _post_save(self):
         if self.status == "CREATED" and self.namespace == config.get("garden.name"):
             self._update_raw_file_references()
@@ -543,15 +553,25 @@ class Request(MongoModel, Document):
         # Deal with has_parent
         if self.has_parent is None:
             self.has_parent = bool(self.parent)
-        elif self.has_parent != bool(self.parent):
+
+        if self.has_parent:
+            try:
+                self.parent
+            except DoesNotExist:
+                raise ModelValidationError(
+                    f"Cannot save Request {self}: parent value is not "
+                    f"present in database"
+                )
+
+        if self.has_parent != bool(self.parent):
             raise ModelValidationError(
                 f"Cannot save Request {self}: parent value of {self.parent!r} is not "
                 f"consistent with has_parent value of {self.has_parent}"
             )
 
-        if (self.namespace == config.get("garden.name")) and (
-            "status" in self.changed_fields or self.created
-        ):
+        if (
+            not self.target_garden or self.target_garden == config.get("garden.name")
+        ) and ("status" in self.changed_fields or self.created):
             self.status_updated_at = datetime.datetime.utcnow()
 
     def clean_update(self):

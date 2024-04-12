@@ -3,10 +3,12 @@ import logging
 from datetime import datetime, timedelta
 from typing import List, Tuple
 
+from brewtils.errors import ModelValidationError
 from brewtils.models import Event, Events
 from brewtils.schema_parser import SchemaParser
 from brewtils.stoppable_thread import StoppableThread
 from mongoengine import Q
+from mongoengine.errors import DoesNotExist
 
 from beer_garden.db.mongo.models import File, RawFile, Request
 from beer_garden.db.mongo.parser import MongoParser
@@ -58,21 +60,36 @@ class MongoPruner(StoppableThread):
         outstanding_requests = Request.objects.filter(
             status__in=["IN_PROGRESS", "CREATED"], created_at__lte=timeout
         )
-        for request in outstanding_requests:
-            request.status = "CANCELED"
-            request.save()
-            serialized = MongoParser.serialize(request, to_string=True)
-            parsed = SchemaParser.parse_request(
-                serialized, from_string=True, many=False
-            )
+        # TODO: Sorting in reverse order, so newest first
 
-            publish(
-                Event(
-                    name=Events.REQUEST_CANCELED.name,
-                    payload_type="Request",
-                    payload=parsed,
+        for request in outstanding_requests:
+            try:
+                request.status = "CANCELED"
+                request.save()
+                serialized = MongoParser.serialize(request, to_string=True)
+                parsed = SchemaParser.parse_request(
+                    serialized, from_string=True, many=False
                 )
-            )
+
+                publish(
+                    Event(
+                        name=Events.REQUEST_CANCELED.name,
+                        payload_type="Request",
+                        payload=parsed,
+                    )
+                )
+            except ModelValidationError as ex:
+                self.logger.error(ex)
+                self.logger.error("Will attempt to check for parents")
+
+                if self.has_parent:
+                    try:
+                        Request.objects.get(id=request.parent.id)
+                    except DoesNotExist:
+                        self.logger.error(
+                            f"Parent is missing, killing orphan request {request.id}"
+                        )
+                        request.delete()
 
     def run(self):
         """Runs the pruner to delete tasks"""

@@ -2,32 +2,37 @@
 
 # 3.25.0
 
-TBD
+4/11/2024
 
-- Fixed bug where removing a parent garden failed to remove both parent and child
-- Added flag to enable API heartbeat checks
 - Added Topics API and classes to support dynamic topic subscribers
 - Now show alert on Garden Admin page when a Sync event is seen
-- Fixed bug where outbound filtering removing Username/Password from STOMP connections for internal events
-- Fixed order of Gardens and Connections on Garden Admin page
-- Fixed bug where Disabled STOMP Receiving connection could be re-enabled if it is shared and unresponsive
-- Fixed bug where child garden plugins are treated like local plugins on the System Admin page
-- Garden Receiving connections heartbeats are only updated on the half windows for timeout windows. If no timeout window is set, the value is not populated.
+- Garden Sync events will update heartbeat status of Receiving Garden APIs
 - Utilized the TTL for In_Progress requests to set Expiration windows for Requests on PIKA, to handle backups of requests that Beer Garden has already cancelled.
 - Optimized UI Rest calls to load only Local Garden with Children
+- Optimized Child Request Event handeling
 - Updated how STOMP URL preview is formatted on Garden Admin page
+- Configuration update: Prometheus metrics (`metrics.prometheus.enabled`) is now disabled by default
+- Configuration update: Default directory for child configs (`children.directory`) is now `./children`
+- Configuration update: Default for `ui.cors_enabled` is now True to match example configuration and default behavior of UI docker images
+- Fixed order of Gardens and Connections on Garden Admin page
 - Fixed bug where STOMP connections for children did not start with Beer Garden startup
-- Added flag to enable the collection of Garden Latency metrics based off Request event times
+- Fixed bug where Child Garden Publishers appeared as Upstream on Garden Admin Page
+- Fixed bug where outbound filtering removing Username/Password from STOMP connections for internal events
+- Fixed bug where Disabled STOMP Receiving connection could be re-enabled if it is shared and unresponsive
+- Fixed bug where child garden plugins are treated like local plugins on the System Admin page
+- Fixed bug where pruner dies if it is unable to update cancelled request
+- Fixed bug where child requests were stored in database without parent request
+- Fixed bug where removing a parent garden failed to remove both parent and child
 
 # 3.24.4
 
-3/11/24
+3/11/2024
 
 - Fixed bug where child STOMP Recieving connections where not being saved or configured to listen
 
 # 3.24.3
 
-3/8/24
+3/8/2024
 
 - Fixed bug where Stomp Headers were not being parsed into Dictionaries
 
@@ -45,7 +50,7 @@ TBD
 
 # 3.24.1
 
-2/21/24
+2/21/2024
 
 - Fixed pip config trusted-host on rpm build
 - Fixed bug where the Garden Connection Stop button did not request the connection to be disabled if the current status is a valid running status.
@@ -56,7 +61,7 @@ TBD
 
 # 3.24.0
 
-2/13/24
+2/13/2024
 
 - Updated icons on System Admin page
 - Fixed bug where `blocking=true` on Request API returned `IN PROGRESS` status for requests sourced from downstream gardens. Delay added to 

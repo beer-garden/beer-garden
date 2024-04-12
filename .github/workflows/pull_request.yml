@@ -2,6 +2,10 @@ name: Pull Request
 
 on: pull_request
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   Linting:
     runs-on: ${{ matrix.os }}
@@ -592,3 +596,153 @@ jobs:
       - name: Check services
         if: always()
         run: docker service ls
+
+  JMeter-Testing:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+        os: ["ubuntu-latest"]
+        child: ["unstable"]
+      fail-fast: false
+
+    name: JMeter Test - unstable -> ${{ matrix.child }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      
+      # Custom tag extractor to find Brewtils Branch
+      - name: Find Brewtils Branch
+        uses: TheBurchLog/body-env-tag-action@1.0
+        with:
+          tag: "brewtils:"
+          env-variable: "brewtils"
+          default-value: "develop"
+          tag-position: -1
+
+      # Used the hashtag here instead of slash allow for branches to have slashes in them
+      - name: Update Brewtils Branch
+        run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements-dev.txt
+        working-directory: ./src/app
+
+      - name: Build Beer Garden Docker
+        run: |
+          python --version
+          python -m pip install --upgrade pip
+          pip install setuptools wheel
+          make package
+          make clean-python
+          docker build -t bgio/beer-garden:unstable -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:${{ matrix.python-version }}-alpine .
+          docker tag bgio/beer-garden:unstable bgio/beer-garden:parent
+          if [ "${{ matrix.child }}" != "unstable" ]; then
+            docker pull bgio/beer-garden:${{ matrix.child }}
+          fi
+          docker tag bgio/beer-garden:${{ matrix.child }} bgio/beer-garden:child
+        working-directory: ./src/app
+
+      - name: Update Docker Compose  
+        run: |
+          cp test/conf/docker-compose-jmeter-test.yml docker/docker-compose/docker-compose.yml
+          cp -r test/conf/beer_garden_jmeter_parent_children docker/docker-compose/
+          cp -r test/jmeter docker/docker-compose/data/
+        working-directory: ./
+
+      - name: Checkout Local Plugins
+        uses: actions/checkout@v2
+        with:
+          repository: beer-garden/example-plugins
+          path: ./docker/docker-compose/data/localplugins
+
+      - name: Cache Mongo Database
+        id: cache-mongo
+        uses: actions/cache@v3
+        with:
+          # Use cache requests, if models have not been updated or database loader
+          path: ./docker-compose_mongo-data
+          key: ${{ runner.os }}-pr-stress-test-cache-${{ hashFiles('./src/app/beer_garden/db/mongo/models.py') }}-${{ hashFiles('./docker/docker-compose/data/jmeter/prep_database.jmx') }}
+
+      - if: steps.cache-mongo.outputs.cache-hit == 'true'
+        name: Move database file
+        run: |
+          sudo chown -R root:root ./docker-compose_mongo-data
+          sudo mv ./docker-compose_mongo-data /var/lib/docker/volumes/docker-compose_mongo-data
+
+      - name: Run Docker Beer Garden Child
+        run: docker-compose up -d beer-garden-child
+        working-directory: ./docker/docker-compose
+
+      - name: Wait for Beer Garden to start
+        run: sleep 10s
+        shell: bash
+
+      - name: Run Docker Beer Garden Parent
+        run: docker-compose up -d beer-garden-parent
+        working-directory: ./docker/docker-compose
+
+      - name: Wait for Beer Garden Parent to start
+        run: sleep 10s
+        shell: bash
+
+      - name: Check Docker
+        run: docker ps
+
+      - name: Wait for Beer Garden to start
+        run: sleep 60s
+        shell: bash
+
+      - name: Create reports directory
+        run: mkdir reports
+        working-directory: ./docker/docker-compose/data
+
+      - if: steps.cache-mongo.outputs.cache-hit != 'true'
+        name: Pre-load database
+        continue-on-error: false
+        run: docker-compose up jmeter-loader
+        working-directory: ./docker/docker-compose
+
+      - name: Run Jmeter Test
+        id: jmeter
+        run: |
+          docker-compose up jmeter-testing | tee jmeter.log
+          echo "jmeter-rates=$(cat jmeter.log | grep 'summary' | tail -1 | cut -d '|' -f 2- | sed 's/^.*summary/summary/')\n" >> $GITHUB_OUTPUT         
+        working-directory: ./docker/docker-compose
+
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'Jmeter Results:\n${{steps.jmeter.outputs.jmeter-rates}}'
+            })
+
+      - name: Upload JMeter Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: jmeter-html-reports
+          path: docker/docker-compose/data/reports
+          if-no-files-found: error
+
+      - name: Grab logs from Child
+        if: always()
+        run: docker-compose logs --tail 3000 beer-garden-child
+        working-directory: ./docker/docker-compose
+
+      - name: Grab logs from Parent
+        if: always()
+        run: docker-compose logs --tail 3000 beer-garden-parent
+        working-directory: ./docker/docker-compose
+
+      - if: steps.cache-mongo.outputs.cache-hit != 'true'
+        name: Move database file
+        continue-on-error: false
+        run: |
+          sudo mv -f /var/lib/docker/volumes/docker-compose_mongo-data ./docker-compose_mongo-data
+          sudo chown -R $USER:$USER ./docker-compose_mongo-data
+        
