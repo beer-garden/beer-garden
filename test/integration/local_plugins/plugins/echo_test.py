@@ -30,9 +30,9 @@ class TestEcho(object):
 
                 stopped_instance = self.easy_client.client.patch_instance(instance.id, stop_patch_body)
 
-                assert stopped_instance.status == "STOPPED"
+                assert stopped_instance.json()["status"] == "STOPPED"
                 start_instance = self.easy_client.client.patch_instance(instance.id, start_patch_body)
-                assert start_instance.status == "RUNNING"
+                assert start_instance.json()["status"] == "RUNNING"
                 test_ran = True
         
         assert test_ran
