@@ -6,8 +6,6 @@ try:
 except (ImportError, ValueError):
     from ...helper import wait_for_response
     from ...helper.assertion import assert_successful_request, assert_validation_error
-from tornado.httpclient import HTTPRequest
-import json
 
 @pytest.fixture(scope="class")
 def system_spec():
@@ -27,8 +25,6 @@ class TestEcho(object):
         test_ran = False
         for instance in system.instances:
             if instance.name == self.system_spec.instance_name:
-                url = f"localhost:2337/api/v1/instances/{instance.id}"
-                headers = {"Content-Type": "application/json"}
                 stop_patch_body = {"operations": [{"operation": "stop"}]}
                 start_patch_body = {"operations": [{"operation": "start"}]}
 
