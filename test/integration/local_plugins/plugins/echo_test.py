@@ -24,7 +24,7 @@ class TestEcho(object):
         system = self.easy_client.find_unique_system(name=system_spec["system"], version=system_spec["system_version"])
         test_ran = False
         for instance in system.instances:
-            if instance.name == self.system_spec.instance_name:
+            if instance.name == system_spec["instance_name"]:
                 stop_patch_body = {"operations": [{"operation": "stop"}]}
                 start_patch_body = {"operations": [{"operation": "start"}]}
 
