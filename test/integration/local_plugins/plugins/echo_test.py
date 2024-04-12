@@ -21,7 +21,7 @@ def system_spec():
 class TestEcho(object):
 
     def test_stop_start(self):
-        system = self.easy_client.find_unique_system(name=self.system_spec.system, version=self.system_spec.system_version)
+        system = self.easy_client.find_unique_system(name=system_spec()["system"], version=system_spec()["system_version"])
         test_ran = False
         for instance in system.instances:
             if instance.name == self.system_spec.instance_name:
