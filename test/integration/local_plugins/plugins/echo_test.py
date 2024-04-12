@@ -22,7 +22,7 @@ def system_spec():
 @pytest.mark.usefixtures("easy_client", "request_generator")
 class TestEcho(object):
 
-    def test_stop_start(self, http_client):
+    def test_stop_start(self):
         system = self.easy_client.find_unique_system(name=self.system_spec.system, version=self.system_spec.system_version)
         test_ran = False
         for instance in system.instances:
@@ -32,19 +32,11 @@ class TestEcho(object):
                 stop_patch_body = {"operations": [{"operation": "stop"}]}
                 start_patch_body = {"operations": [{"operation": "start"}]}
 
-                stop_request = HTTPRequest(
-                    url, method="PATCH", headers=headers, body=json.dumps(stop_patch_body)
-                )
-                stop_response = yield http_client.fetch(stop_request)
+                stopped_instance = self.easy_client.client.patch_instance(instance.id, stop_patch_body)
 
-                assert stop_response.code == 200
-
-                start_request = HTTPRequest(
-                    url, method="PATCH", headers=headers, body=json.dumps(start_patch_body)
-                )
-                start_response = yield http_client.fetch(start_request)
-
-                assert start_response.code == 200
+                assert stopped_instance.status == "STOPPED"
+                start_instance = self.easy_client.client.patch_instance(instance.id, start_patch_body)
+                assert start_instance.status == "RUNNING"
                 test_ran = True
         
         assert test_ran
