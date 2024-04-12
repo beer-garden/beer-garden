@@ -6,6 +6,7 @@ try:
 except (ImportError, ValueError):
     from ...helper import wait_for_response
     from ...helper.assertion import assert_successful_request, assert_validation_error
+from brewtils.schema_parser import SchemaParser
 
 @pytest.fixture(scope="class")
 def system_spec():
@@ -29,12 +30,12 @@ class TestEcho(object):
 
                 stop_patch_body = {"operations": [{"operation": "stop"}]}      
                 stopped_instance = self.easy_client.client.patch_instance(instance.id, stop_patch_body)
-                assert stopped_instance.json() == {}
-                assert stopped_instance.json()["status"] == "STOPPED"
+                assert stopped_instance.ok
+                assert SchemaParser.serialize_instance(stopped_instance).status == "STOPPED"
 
                 start_patch_body = {"operations": [{"operation": "start"}]}
                 start_instance = self.easy_client.client.patch_instance(instance.id, start_patch_body)
-                assert start_instance.json()["status"] == "RUNNING"
+                assert SchemaParser.serialize_instance(start_instance).status == "RUNNING"
                 
                 test_ran = True
         
