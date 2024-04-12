@@ -17,14 +17,14 @@ def system_spec():
     }
 
 
-@pytest.mark.usefixtures("easy_client", "request_generator", "system_spec")
+@pytest.mark.usefixtures("easy_client", "request_generator")
 class TestEcho(object):
 
-    def test_stop_start(self):
-        system = self.easy_client.find_unique_system(name=self.system_spec["system"], version=self.system_spec["system_version"])
+    def test_stop_start(self, system_spec):
+        system = self.easy_client.find_unique_system(name=system_spec["system"], version=system_spec["system_version"])
         test_ran = False
         for instance in system.instances:
-            if instance.name == self.system_spec["instance_name"]:
+            if instance.name == system_spec["instance_name"]:
                 stop_patch_body = {"operations": [{"operation": "stop"}]}
                 start_patch_body = {"operations": [{"operation": "start"}]}
 
