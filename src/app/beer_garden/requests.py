@@ -667,7 +667,7 @@ def process_request(
         # Save after validation since validate can modify the request
         request = create_request(request)
 
-        logger.info(f"Publishing {request!r}")
+        logger.debug(f"Publishing {request!r}")
 
         if wait_event:
             request_map[request.id] = wait_event
