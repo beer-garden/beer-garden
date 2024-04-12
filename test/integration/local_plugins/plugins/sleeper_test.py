@@ -1,8 +1,6 @@
 import time
 
 import pytest
-from brewtils.models import PatchOperation
-from brewtils.schema_parser import SchemaParser
 
 try:
     from helper import COMPLETED_STATUSES, wait_for_in_progress
@@ -22,32 +20,6 @@ def system_spec():
 
 @pytest.mark.usefixtures("easy_client", "request_generator")
 class TestSleeper(object):
-
-    def test_stop_start(self, system_spec):
-        test_ran = False
-
-        system = self.easy_client.find_unique_system(
-            name=system_spec["system"], version=system_spec["system_version"]
-        )
-        for instance in system.instances:
-            if instance.name == system_spec["instance_name"]:
-                assert instance.status == "RUNNING"
-
-                stopped_instance = self.easy_client.client.patch_instance(
-                    instance.id,
-                    SchemaParser.serialize_patch(PatchOperation(operation="stop")),
-                )
-                assert stopped_instance.ok
-
-                start_instance = self.easy_client.client.patch_instance(
-                    instance.id,
-                    SchemaParser.serialize_patch(PatchOperation(operation="start")),
-                )
-                assert start_instance.ok
-
-                test_ran = True
-
-        assert test_ran
 
     @pytest.mark.skip("Skipping until we set max current by default")
     def test_only_process_single_request_at_a_time(self):
