@@ -25,14 +25,17 @@ class TestEcho(object):
         test_ran = False
         for instance in system.instances:
             if instance.name == system_spec["instance_name"]:
-                stop_patch_body = {"operations": [{"operation": "stop"}]}
-                start_patch_body = {"operations": [{"operation": "start"}]}
+                assert instance.status == "RUNNING"
 
+                stop_patch_body = {"operations": [{"operation": "stop"}]}      
                 stopped_instance = self.easy_client.client.patch_instance(instance.id, stop_patch_body)
-
+                assert stopped_instance.json() == {}
                 assert stopped_instance.json()["status"] == "STOPPED"
+
+                start_patch_body = {"operations": [{"operation": "start"}]}
                 start_instance = self.easy_client.client.patch_instance(instance.id, start_patch_body)
                 assert start_instance.json()["status"] == "RUNNING"
+                
                 test_ran = True
         
         assert test_ran
