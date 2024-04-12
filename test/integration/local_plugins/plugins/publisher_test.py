@@ -1,7 +1,8 @@
-import pytest
 import time
 
-from brewtils.models import Topic, Subscriber
+import pytest
+from brewtils.models import PatchOperation, Subscriber, Topic
+from brewtils.schema_parser import SchemaParser
 
 
 @pytest.fixture(scope="class")
@@ -50,6 +51,33 @@ def topic():
 
 @pytest.mark.usefixtures("easy_client", "request_generator")
 class TestPublish(object):
+
+    def test_stop_start(self, system_spec):
+        test_ran = False
+
+        system = self.easy_client.find_unique_system(
+            name=system_spec["system"], version=system_spec["system_version"]
+        )
+        for instance in system.instances:
+            if instance.name == system_spec["instance_name"]:
+                assert instance.status == "RUNNING"
+
+                stopped_instance = self.easy_client.client.patch_instance(
+                    instance.id,
+                    SchemaParser.serialize_patch(PatchOperation(operation="stop")),
+                )
+                assert stopped_instance.ok
+
+                start_instance = self.easy_client.client.patch_instance(
+                    instance.id,
+                    SchemaParser.serialize_patch(PatchOperation(operation="start")),
+                )
+                assert start_instance.ok
+
+                test_ran = True
+
+        assert test_ran
+
     def test_one_trigger_topic_subscriber(self, topic1):
         newtopic = self.easy_client.create_topic(topic1)
         request_dict = self.request_generator.generate_request(
