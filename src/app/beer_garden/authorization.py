@@ -144,6 +144,42 @@ class QueryFilterBuilder:
         output = output | Q(requester=user.u)
         return output
 
+    def _get_job_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
+        if check_global_roles(user, permission_levels=permission_levels):
+            return Q()
+
+        filters = []
+
+        for roles in [user.local_roles, user.remote_roles]:
+            for role in roles:
+                if role in permission_levels:
+                    filter = {}
+                    if len(role.systems) > 0:
+                        filter["request_template__system__in"] = role.systems
+                    if len(role.instances) > 0:
+                        filter["request_template__instance_name__in"] = role.instances
+                    if len(role.versions) > 0:
+                        filter["request_template__system_version__in"] = role.versions
+                    if len(role.commands) > 0:
+                        filter["request_template__command__in"] = role.commands
+
+                    if len(filter) > 0:
+                        filters.append(Q**filter)
+
+        if len(filters) == 0:
+            return Q()
+
+        output = None
+
+        for filter in filters:
+            if output is None:
+                output = filter
+            else:
+                output = output | filter
+
+        output = output | Q(requester=user.u)
+        return output
+
     def _get_system_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
         if check_global_roles(user, permission_levels=permission_levels):
             return Q()
