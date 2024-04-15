@@ -29,6 +29,7 @@ from brewtils.errors import (
 )
 from brewtils.models import Choices, Events, Operation, Request, RequestTemplate, System
 from brewtils.pika import PERSISTENT_DELIVERY_MODE
+from mongoengine import DoesNotExist
 from requests import Session
 
 import beer_garden.config as config
@@ -865,10 +866,14 @@ def invalid_request(request: Request = None):
 @publish_event(Events.REQUEST_UPDATED)
 def update_request(request: Request):
     if request.id:
-        request = db.update(request)
-    else:
-        request = db.create(request)
-    return request
+        try:
+            return db.update(request)
+        except DoesNotExist:
+            logger.warning(
+                f"Failed to update request {request.id}. Creating new request instead."
+            )
+
+    return db.create(request)
 
 
 def process_wait(request: Request, timeout: float) -> Request:
