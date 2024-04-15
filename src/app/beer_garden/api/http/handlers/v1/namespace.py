@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from brewtils.models import Operation
+from brewtils.models import Operation, Garden, Request, System
 
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.db.mongo.models import Garden, Request, System
 
 
 class NamespaceListAPI(AuthorizationHandler):

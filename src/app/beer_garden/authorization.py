@@ -856,6 +856,16 @@ class ModelFilter:
                     obj.payload = payload_filtered
                 else:
                     return None
+        if isinstance(obj, str):
+            # Source of String is unknown, so ensure that a role has the basic permissions
+            for roles in [user.local_roles if user.local_roles else [], user.remote_roles if user.remote_roles else []]:
+                if any(
+                    role.permission in permission_levels
+                    for role in roles
+                ):
+                    return obj
+
+            return None
 
         # If object is outside of the filters, check for permissions at a minimum
         if check_global_roles(user, permission_levels=permission_levels):

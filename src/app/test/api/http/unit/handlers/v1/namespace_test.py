@@ -32,7 +32,7 @@ def garden_not_permitted():
 
 @pytest.fixture
 def garden_read_role(garden_permitted):
-    role = create_role(Role(name="garden_read", permission="READ_ONLY", scope_gardenss=[garden_permitted.name]))
+    role = create_role(Role(name="garden_read", permission="READ_ONLY", scope_gardens=[garden_permitted.name]))
     yield role
     delete_role(role)
 
