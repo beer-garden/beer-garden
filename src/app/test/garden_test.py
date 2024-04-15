@@ -546,13 +546,13 @@ stomp:
         assert updated_garden.status == "STOPPED"
 
     def test_garden_unresponsive_trigger(self, bg_garden):
-        config._CONFIG = {"children": {"unresponsive_timeout": 15}}
 
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
             connection.status_info["heartbeat"] = datetime.utcnow() - timedelta(
                 minutes=60
             )
+        bg_garden.metadata = {"_unresponsive_timeout": 15}
 
         create_garden(bg_garden)
 
@@ -565,13 +565,14 @@ stomp:
             assert connection.status == "UNRESPONSIVE"
 
     def test_garden_unresponsive_trigger_in_window(self, bg_garden):
-        config._CONFIG = {"children": {"unresponsive_timeout": 15}}
 
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
             connection.status_info["heartbeat"] = datetime.utcnow() - timedelta(
                 minutes=10
             )
+
+        bg_garden.metadata = {"_unresponsive_timeout": 15}
 
         create_garden(bg_garden)
 
@@ -584,13 +585,14 @@ stomp:
             assert connection.status == "RECEIVING"
 
     def test_garden_unresponsive_trigger_child_metadata(self, bg_garden):
-        config._CONFIG = {"children": {"unresponsive_timeout": 15}}
 
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
             connection.status_info["heartbeat"] = datetime.utcnow() - timedelta(
                 minutes=10
             )
+
+        bg_garden.metadata = {"_unresponsive_timeout": 15}
 
         bg_garden.metadata["_unresponsive_timeout"] = 5
 
@@ -605,13 +607,14 @@ stomp:
             assert connection.status == "UNRESPONSIVE"
 
     def test_garden_unresponsive_trigger_missing_window(self, bg_garden):
-        config._CONFIG = {"children": {"unresponsive_timeout": -1}}
 
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
             connection.status_info["heartbeat"] = datetime.utcnow() - timedelta(
                 minutes=10
             )
+
+        bg_garden.metadata = {"_unresponsive_timeout": 15}
 
         create_garden(bg_garden)
 
