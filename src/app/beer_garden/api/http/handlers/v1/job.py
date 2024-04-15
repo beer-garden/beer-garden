@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 from brewtils.errors import ModelValidationError, NotFoundError
-from brewtils.models import Operation
+from brewtils.models import Job, Operation
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import JobExportInputSchema, JobSchema
 from mongoengine.errors import ValidationError
 
 from beer_garden.api.http.exceptions import BadRequest
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.db.mongo.models import Job
 from beer_garden.scheduler import create_jobs
 
 

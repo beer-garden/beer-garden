@@ -108,6 +108,42 @@ class QueryFilterBuilder:
 
         return Q(**{"name__in": garden_names})
 
+    def _get_request_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
+        if check_global_roles(user, permission_levels=permission_levels):
+            return Q()
+
+        filters = []
+
+        for roles in [user.local_roles, user.remote_roles]:
+            for role in roles:
+                if role in permission_levels:
+                    filter = {}
+                    if len(role.systems) > 0:
+                        filter["system__in"] = role.systems
+                    if len(role.instances) > 0:
+                        filter["instance_name__in"] = role.instances
+                    if len(role.versions) > 0:
+                        filter["system_version__in"] = role.versions
+                    if len(role.commands) > 0:
+                        filter["command__in"] = role.commands
+
+                    if len(filter) > 0:
+                        filters.append(Q**filter)
+
+        if len(filters) == 0:
+            return Q()
+
+        output = None
+
+        for filter in filters:
+            if output is None:
+                output = filter
+            else:
+                output = output | filter
+
+        output = output | Q(requester=user.u)
+        return output
+
     def _get_system_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
         if check_global_roles(user, permission_levels=permission_levels):
             return Q()
@@ -189,6 +225,10 @@ class QueryFilterBuilder:
             return self._get_system_filter(user, permission_levels)
         if model is BrewtilsInstance:
             return self._get_instance_filter(user, permission_levels)
+        if model is BrewtilsRequest:
+            return self._get_request_filter(user, permission_levels)
+        if model is BrewtilsJob:
+            return self._get_job_filter(user, permission_levels)
 
         return Q()
 
@@ -259,14 +299,18 @@ class ModelFilter:
                 system_namespace = system.namespace
 
         if system_name and check_garden and garden_name is None:
-            if system:
+            if system and system.id:
                 gardens = db.query(BrewtilsGarden, filter_params={"systems":system})
 
-            if gardens and len(gardens) == 1:
-                garden_name = gardens[0].name
+                if gardens and len(gardens) == 1:
+                    garden_name = gardens[0].name
+                else:
+                    # TODO: Add better Exception
+                    raise Exception("Unable to find source garden for Authorization checks")
             else:
-                # TODO: Add better Exception
-                raise Exception("Unable to find source garden for Authorization checks")
+                config.get("garden.name")
+                
+                
 
         for roles in [user.local_roles, user.remote_roles]:
             if any(

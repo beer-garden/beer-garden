@@ -107,7 +107,8 @@ class SystemAPI(AuthorizationHandler):
                 kwargs={
                     "force": self.get_argument("force", default="").lower() == "true"
                 },
-            )
+            ),
+            filter_results=False
         )
 
         self.set_status(204)
