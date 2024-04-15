@@ -177,7 +177,6 @@ class QueryFilterBuilder:
             else:
                 output = output | filter
 
-        output = output | Q(requester=user.u)
         return output
 
     def _get_system_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
