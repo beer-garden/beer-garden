@@ -14,7 +14,7 @@ from beer_garden.api.http.exceptions import (
     NotFound,
     RequestForbidden,
 )
-from beer_garden.authorization import QueryFilterBuilder, ModelFilter
+from beer_garden.authorization import QueryFilterBuilder, ModelFilter, check_global_roles
 # from beer_garden.db.mongo.models import User
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
 import beer_garden.db.api as db
@@ -162,7 +162,7 @@ class AuthorizationHandler(BaseHandler):
         Returns:
             None
         """
-        if not self.queryFilter.check_global_roles(self.minimum_permission):
+        if not check_global_roles(self.current_user, permission_level=self.minimum_permission):
             raise RequestForbidden
 
     def verify_user_permission_for_object(

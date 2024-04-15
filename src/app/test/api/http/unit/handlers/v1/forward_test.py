@@ -39,11 +39,10 @@ def user_with_permission(event_forward_role):
 
 
 @pytest.fixture
-def user_without_permission(event_forward_role):
-    user = User(username="testuser").save()
-
+def user_without_permission():
+    user = create_user(User(username="testuser"))
     yield user
-    user.delete()
+    delete_user(user)
 
 
 @pytest.fixture
