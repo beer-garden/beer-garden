@@ -84,7 +84,7 @@ class CommandPublishingBlocklistAPI(AuthorizationHandler):
         )
         response = {
             "command_publishing_blocklist": CommandPublishingBlocklistSchema(many=True)
-            .dump(permitted_blocklist_entries)
+            .dump(CommandPublishingBlocklist.objects.filter(permitted_blocklist_entries))
             .data
         }
 
