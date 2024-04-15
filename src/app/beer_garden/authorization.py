@@ -102,7 +102,7 @@ class QueryFilterBuilder:
         garden_names = []
         for roles in [user.local_roles, user.remote_roles]:
             for role in roles:
-                if role in permission_levels:
+                if role.permission in permission_levels:
                     for garden_scope in role.scope_gardens:
                         garden_names.append(garden_scope)
 
@@ -116,19 +116,19 @@ class QueryFilterBuilder:
 
         for roles in [user.local_roles, user.remote_roles]:
             for role in roles:
-                if role in permission_levels:
+                if role.permission in permission_levels:
                     filter = {}
-                    if len(role.systems) > 0:
-                        filter["system__in"] = role.systems
-                    if len(role.instances) > 0:
-                        filter["instance_name__in"] = role.instances
-                    if len(role.versions) > 0:
-                        filter["system_version__in"] = role.versions
-                    if len(role.commands) > 0:
-                        filter["command__in"] = role.commands
+                    if len(role.scope_systems) > 0:
+                        filter["system__in"] = role.scope_systems
+                    if len(role.scope_instances) > 0:
+                        filter["instance_name__in"] = role.scope_instances
+                    if len(role.scope_versions) > 0:
+                        filter["system_version__in"] = role.scope_versions
+                    if len(role.scope_commands) > 0:
+                        filter["command__in"] = role.scope_commands
 
                     if len(filter) > 0:
-                        filters.append(Q**filter)
+                       filters.append(Q(**filter))
 
         if len(filters) == 0:
             return Q()
@@ -152,19 +152,19 @@ class QueryFilterBuilder:
 
         for roles in [user.local_roles, user.remote_roles]:
             for role in roles:
-                if role in permission_levels:
+                if role.permission in permission_levels:
                     filter = {}
-                    if len(role.systems) > 0:
-                        filter["request_template__system__in"] = role.systems
-                    if len(role.instances) > 0:
-                        filter["request_template__instance_name__in"] = role.instances
-                    if len(role.versions) > 0:
-                        filter["request_template__system_version__in"] = role.versions
-                    if len(role.commands) > 0:
-                        filter["request_template__command__in"] = role.commands
+                    if len(role.scope_systems) > 0:
+                        filter["request_template__system__in"] = role.scope_systems
+                    if len(role.scope_instances) > 0:
+                        filter["request_template__instance_name__in"] = role.scope_instances
+                    if len(role.scope_versions) > 0:
+                        filter["request_template__system_version__in"] = role.scope_versions
+                    if len(role.scope_commands) > 0:
+                        filter["request_template__command__in"] = role.scope_commands
 
                     if len(filter) > 0:
-                        filters.append(Q**filter)
+                        filters.append(Q(**filter))
 
         if len(filters) == 0:
             return Q()
@@ -188,19 +188,19 @@ class QueryFilterBuilder:
 
         for roles in [user.local_roles, user.remote_roles]:
             for role in roles:
-                if role in permission_levels:
+                if role.permission in permission_levels:
                     filter = {}
-                    if len(role.systems) > 0:
-                        filter["name_in"] = role.systems
-                    if len(role.instances) > 0:
-                        filter["instances__name__in"] = role.instances
-                    if len(role.versions) > 0:
-                        filter["version__in"] = role.versions
-                    if len(role.commands) > 0:
-                        filter["commands__name__in"] = role.commands
+                    if len(role.scope_systems) > 0:
+                        filter["name__in"] = role.scope_systems
+                    if len(role.scope_instances) > 0:
+                        filter["instances__name__in"] = role.scope_instances
+                    if len(role.scope_versions) > 0:
+                        filter["version__in"] = role.scope_versions
+                    if len(role.scope_commands) > 0:
+                        filter["commands__name__in"] = role.scope_commands
 
                     if len(filter) > 0:
-                        filters.append(Q**filter)
+                        filters.append(Q(**filter))
 
         if len(filters) == 0:
             return Q()
@@ -223,13 +223,13 @@ class QueryFilterBuilder:
 
         for roles in [user.local_roles, user.remote_roles]:
             for role in roles:
-                if role in permission_levels:
+                if role.permission in permission_levels:
                     filter = {}
-                    if len(role.instances) > 0:
-                        filter["name__in"] = role.instances
+                    if len(role.scope_instances) > 0:
+                        filter["name__in"] = role.scope_instances
 
                     if len(filter) > 0:
-                        filters.append(Q**filter)
+                        filters.append(Q(**filter))
 
         if len(filters) == 0:
             return Q()
@@ -842,6 +842,10 @@ class ModelFilter:
             )
         if isinstance(obj, BrewtilsRole):
             return self._get_role_filter(
+                obj, user, permission_levels, skip_global=True, **kwargs
+            )
+        if isinstance(obj, BrewtilsCommand):
+            return self._get_command_filter(
                 obj, user, permission_levels, skip_global=True, **kwargs
             )
         if isinstance(obj, BrewtilsEvent):

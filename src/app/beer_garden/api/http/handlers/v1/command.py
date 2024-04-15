@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-from brewtils.models import Operation
+from brewtils.models import Operation, System
 
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.db.mongo.api import MongoParser
-from beer_garden.db.mongo.models import System
 from beer_garden.errors import EndpointRemovedException
 
 
@@ -97,13 +95,11 @@ class CommandListAPI(AuthorizationHandler):
         """
         self.minimum_permission = self.READ_ONLY
 
-        systems = self.permissioned_queryset(System)
-        commands = []
+        permitted_objects_filter = self.permissioned_queryset(System)
 
-        for system in systems:
-            commands.extend(system.commands)
-
-        response = MongoParser.serialize(commands, to_string=True)
+        response = await self.process_operation(
+            Operation(operation_type="COMMAND_READ_ALL", kwargs={"q_filter": permitted_objects_filter,})
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
