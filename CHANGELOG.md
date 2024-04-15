@@ -1,16 +1,25 @@
 # Beer Garden Changelog
 
+# 3.25.1
+
+TBD
+
+- Added support for cross-server parent/child requests
+
 # 3.25.0
 
-4/5/24
+4/11/2024
 
 - Added Topics API and classes to support dynamic topic subscribers
 - Now show alert on Garden Admin page when a Sync event is seen
 - Garden Sync events will update heartbeat status of Receiving Garden APIs
-- Garden Receiving connections heartbeats are only updated on the half windows for timeout windows. If no timeout window is set, the value is not populated.
 - Utilized the TTL for In_Progress requests to set Expiration windows for Requests on PIKA, to handle backups of requests that Beer Garden has already cancelled.
 - Optimized UI Rest calls to load only Local Garden with Children
+- Optimized Child Request Event handeling
 - Updated how STOMP URL preview is formatted on Garden Admin page
+- Configuration update: Prometheus metrics (`metrics.prometheus.enabled`) is now disabled by default
+- Configuration update: Default directory for child configs (`children.directory`) is now `./children`
+- Configuration update: Default for `ui.cors_enabled` is now True to match example configuration and default behavior of UI docker images
 - Fixed order of Gardens and Connections on Garden Admin page
 - Fixed bug where STOMP connections for children did not start with Beer Garden startup
 - Fixed bug where Child Garden Publishers appeared as Upstream on Garden Admin Page
@@ -23,13 +32,13 @@
 
 # 3.24.4
 
-3/11/24
+3/11/2024
 
 - Fixed bug where child STOMP Recieving connections where not being saved or configured to listen
 
 # 3.24.3
 
-3/8/24
+3/8/2024
 
 - Fixed bug where Stomp Headers were not being parsed into Dictionaries
 
@@ -47,7 +56,7 @@
 
 # 3.24.1
 
-2/21/24
+2/21/2024
 
 - Fixed pip config trusted-host on rpm build
 - Fixed bug where the Garden Connection Stop button did not request the connection to be disabled if the current status is a valid running status.
@@ -58,7 +67,7 @@
 
 # 3.24.0
 
-2/13/24
+2/13/2024
 
 - Updated icons on System Admin page
 - Fixed bug where `blocking=true` on Request API returned `IN PROGRESS` status for requests sourced from downstream gardens. Delay added to 
