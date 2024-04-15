@@ -141,7 +141,7 @@ class QueryFilterBuilder:
             else:
                 output = output | filter
 
-        output = output | Q(requester=user.u)
+        output = output | Q(requester=user.username)
         return output
 
     def _get_job_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
