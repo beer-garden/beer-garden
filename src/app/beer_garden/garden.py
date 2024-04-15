@@ -734,9 +734,7 @@ def publish_local_garden():
 
 def garden_unresponsive_trigger():
     for garden in get_gardens(include_local=False):
-        interval_value = garden.metadata.get(
-            "_unresponsive_timeout", -1
-        )
+        interval_value = garden.metadata.get("_unresponsive_timeout", -1)
 
         if interval_value > 0:
             timeout = datetime.utcnow() - timedelta(minutes=interval_value)
