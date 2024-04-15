@@ -856,7 +856,7 @@ class ModelFilter:
                     obj.payload = payload_filtered
                 else:
                     return None
-        if isinstance(obj, str):
+        if isinstance(obj, str) or isinstance(obj, dict):
             # Source of String is unknown, so ensure that a role has the basic permissions
             for roles in [user.local_roles if user.local_roles else [], user.remote_roles if user.remote_roles else []]:
                 if any(

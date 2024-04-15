@@ -20,7 +20,7 @@ def garden_permitted():
 
 
 @pytest.fixture
-def garden_admin_role():
+def garden_admin_role(garden_permitted):
     role = create_role(Role(name="garden_admin", permission="GARDEN_ADMIN", scope_gardens=[garden_permitted.name]))
     yield role
     delete_role(role)
