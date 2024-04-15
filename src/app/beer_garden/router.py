@@ -169,6 +169,11 @@ route_functions = {
     "TOPIC_DELETE": beer_garden.topic.remove_topic,
     "TOPIC_ADD_SUBSCRIBER": beer_garden.topic.topic_add_subscriber,
     "TOPIC_REMOVE_SUBSCRIBER": beer_garden.topic.topic_remove_subscriber,
+    "ROLE_CREATE": beer_garden.role.create_role,
+    "ROLE_UPDATE": beer_garden.role.update_role,
+    "ROLE_DELETE": beer_garden.role.delete_role,
+    "ROLE_READ_ALL": beer_garden.role.get_roles,
+    "ROLE_READ": beer_garden.role.get_role,
     "RUNNER_READ": beer_garden.local_plugins.manager.runner,
     "RUNNER_READ_ALL": beer_garden.local_plugins.manager.runners,
     "RUNNER_START": beer_garden.local_plugins.manager.start,
@@ -773,6 +778,7 @@ def _target_from_type(operation: Operation) -> str:
         or "PUBLISH_EVENT" in operation.operation_type
         or "RUNNER" in operation.operation_type
         or "TOPIC" in operation.operation_type
+        or "ROLE" in operation.operation_type
         or operation.operation_type
         in ("PLUGIN_LOG_RELOAD", "QUEUE_DELETE_ALL", "SYSTEM_CREATE", "REQUEST_DELETE")
     ):

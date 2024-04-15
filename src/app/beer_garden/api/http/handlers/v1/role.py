@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.api.http.schemas.v1.role import RoleListSchema
-from beer_garden.db.mongo.models import Role
 from beer_garden.garden import local_garden
+
+from brewtils.models import Operation
 
 
 class RoleListAPI(AuthorizationHandler):
-    def get(self):
+    async def get(self):
         """
         ---
         summary: Retrieve all Roles
@@ -24,7 +24,9 @@ class RoleListAPI(AuthorizationHandler):
         self.minimum_permission = self.GARDEN_ADMIN
         self.verify_user_permission_for_object(local_garden())
 
-        roles = Role.objects.all()
-        response = RoleListSchema().dump({"roles": roles}).data
+        response = await self.process_operation(
+            Operation(operation_type="ROLE_READ_ALL")
+        )
 
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

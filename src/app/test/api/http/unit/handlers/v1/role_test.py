@@ -2,18 +2,23 @@ import json
 
 import pytest
 
-from beer_garden.db.mongo.models import Role
-
-
+from beer_garden.role import create_role, delete_role
+from brewtils.models import Role
+from beer_garden.db.mongo.models import Garden
 @pytest.fixture()
 def roles():
-    role1 = Role(name="role1").save()
-    role2 = Role(name="role2").save()
-
+    role1 = create_role(Role(name="role1", permission="OPERATOR"))
+    role2 = create_role(Role(name="role2", permission="OPERATOR"))
     yield [role1, role2]
-    role1.delete()
-    role2.delete()
+    delete_role(role1)
+    delete_role(role2)
 
+@pytest.fixture(autouse=True)
+def local_garden():
+    garden = Garden(name="somegarden", connection_type="LOCAL").save()
+
+    yield garden
+    garden.delete()
 
 class TestRoleAPI:
     @pytest.mark.gen_test
@@ -24,4 +29,4 @@ class TestRoleAPI:
         response_body = json.loads(response.body.decode("utf-8"))
 
         assert response.code == 200
-        assert len(response_body["roles"]) == len(roles)
+        assert len(response_body) == len(roles)
