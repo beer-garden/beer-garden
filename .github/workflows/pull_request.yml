@@ -662,7 +662,7 @@ jobs:
 
       - name: Run Docker Beer Garden
         run: docker stack deploy -c docker-compose-framework.yml beer-garden
-        working-directory: ./test/conf/swarm/
+        working-directory: ./test/conf/jmeter-swarm/
 
       - name: Wait for Beer Garden to start
         run: sleep 60s
@@ -702,7 +702,7 @@ jobs:
 
       - name: Run Docker Beer Garden Plugins
         run: docker stack deploy -c docker-compose-plugins.yml beer-plugins
-        working-directory: ./test/conf/swarm/
+        working-directory: ./test/conf/jmeter-swarm/
 
       - name: Wait for Plugins to start
         run: sleep 15s
