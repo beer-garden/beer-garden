@@ -791,6 +791,9 @@ class ModelFilter:
         **kwargs
     ) -> BrewtilsModel:
         
+        if isinstance(obj, BrewtilsUser):
+            del obj.password
+        
         if not permission_levels:
             permission_levels = generate_permission_levels(permission)
 
@@ -816,10 +819,6 @@ class ModelFilter:
                 obj, user, permission_levels, skip_global=True, **kwargs
             )
         if isinstance(obj, BrewtilsSystem):
-            return self._get_system_filter(
-                obj, user, permission_levels, skip_global=True, **kwargs
-            )
-        if isinstance(obj, BrewtilsUser):
             return self._get_system_filter(
                 obj, user, permission_levels, skip_global=True, **kwargs
             )

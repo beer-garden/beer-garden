@@ -26,7 +26,7 @@ def user(user_password):
     user = create_user(User(username="testuser", password=user_password))
 
     yield user
-    delete_user(user)
+    delete_user(user=user)
 
 
 class TestTokenAPI:

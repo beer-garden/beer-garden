@@ -108,7 +108,7 @@ def create_user(user: User) -> User:
         user.local_roles.append(get_role(role))
     return user
 
-def delete_user(user: User = None, username: str = None) -> User:
+def delete_user(username: str = None, user: User = None) -> User:
     """Creates a User using the provided kwargs. The created user is saved to the
     database and returned.
 
@@ -128,7 +128,7 @@ def delete_user(user: User = None, username: str = None) -> User:
 
 
 
-def update_user(user: User = None, username: str = None, new_password: str = None, current_password: str = None, **kwargs) -> User:
+def update_user(username: str = None, user: User = None, new_password: str = None, current_password: str = None, **kwargs) -> User:
     """Updates the provided User by setting its attributes to those provided by kwargs.
     The updated user object is then saved to the database and returned.
 
@@ -165,7 +165,7 @@ def update_user(user: User = None, username: str = None, new_password: str = Non
             existing_user.remote_user_mapping = user.remote_user_mapping
 
             user = existing_user
-
+    
     for key, value in kwargs.items():
         if key == "roles":
             # Roles changed, so cached tokens are no longer valid
@@ -455,7 +455,7 @@ def remove_local_role_assignments_for_role(role: Role) -> int:
 
     for user in impacted_users:
         user.roles.remove(role.name)
-        update_user(user)
+        update_user(user=user)
         # Roles changed, so cached tokens are no longer valid
         revoke_tokens(user)
 

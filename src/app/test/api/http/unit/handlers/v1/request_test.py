@@ -215,7 +215,7 @@ def operator_role(request_permitted):
 def user(operator_role):
     user = create_user(User(username="testuser", local_roles=[operator_role]))
     yield user
-    delete_user(user)
+    delete_user(user=user)
 
 
 

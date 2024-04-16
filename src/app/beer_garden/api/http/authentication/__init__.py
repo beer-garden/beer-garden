@@ -89,7 +89,7 @@ def refresh_token_pair(refresh_token: str) -> dict:
         raise ExpiredTokenException
 
     expiration = datetime.fromtimestamp(decoded_refresh_token["exp"], tz=timezone.utc)
-    user = User.objects.get(id=decoded_refresh_token["sub"])
+    user = get_user(id=decoded_refresh_token["sub"])
 
     new_token_pair = issue_token_pair(user, expiration)
 

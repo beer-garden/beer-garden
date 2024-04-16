@@ -33,7 +33,7 @@ def queue_manager_role(garden_permitted):
 def user_with_permission(queue_manager_role):
     user = create_user(User(username="testuser", local_roles=[queue_manager_role]))
     yield user
-    delete_user(user)
+    delete_user(user=user)
 
 
 @pytest.fixture

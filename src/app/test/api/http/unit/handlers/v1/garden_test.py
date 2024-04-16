@@ -89,21 +89,21 @@ def garden_cleanup():
 def user(garden_admin_role, garden_create_role):
     user = create_user(User(username="testuser", local_roles=[garden_admin_role, garden_create_role]))
     yield user
-    delete_user(user)
+    delete_user(user=user)
 
 
 @pytest.fixture
 def user_none_role(garden_none_role):
     user = create_user(User(username="testuser", local_roles=[garden_none_role]))
     yield user
-    delete_user(user)
+    delete_user(user=user)
 
 
 @pytest.fixture
 def read_only_user(garden_read_role):
     user = create_user(User(username="testuser", local_roles=[garden_read_role]))
     yield user
-    delete_user(user)
+    delete_user(user=user)
 
 
 
@@ -111,7 +111,7 @@ def read_only_user(garden_read_role):
 def global_admin_user(garden_admin_role):
     user = create_user(User(username="testuser", local_roles=[garden_admin_role]))
     yield user
-    delete_user(user)
+    delete_user(user=user)
 
 
 @pytest.fixture

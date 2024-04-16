@@ -35,14 +35,14 @@ def event_forward_role():
 def user_with_permission(event_forward_role):
     user = create_user(User(username="testuser", local_roles=[event_forward_role]))
     yield user
-    delete_user(user)
+    delete_user(user=user)
 
 
 @pytest.fixture
 def user_without_permission():
     user = create_user(User(username="testuser"))
     yield user
-    delete_user(user)
+    delete_user(user=user)
 
 
 @pytest.fixture

@@ -65,7 +65,7 @@ def user_admin(user_admin_role):
     user = create_user(User(username="testuser", local_roles=[user_admin_role]))
 
     yield user
-    delete_user(user)
+    delete_user(user=user)
 
 
 @pytest.fixture

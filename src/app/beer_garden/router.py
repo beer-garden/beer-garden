@@ -181,6 +181,11 @@ route_functions = {
     "RUNNER_DELETE": beer_garden.local_plugins.manager.remove,
     "RUNNER_RELOAD": beer_garden.local_plugins.manager.reload,
     "RUNNER_RESCAN": beer_garden.local_plugins.manager.rescan,
+    "USER_READ_ALL":beer_garden.user.get_users,
+    "USER_READ": beer_garden.user.get_user,
+    "USER_CREATE": beer_garden.user.create_user,
+    "USER_UPDATE": beer_garden.user.update_user,
+    "USER_DELETE": beer_garden.user.delete_user,
     "PUBLISH_EVENT": beer_garden.events.publish,
     # "USER_SYNC": beer_garden.user.user_sync,
     "COMMAND_BLOCKLIST_ADD": (
@@ -769,6 +774,7 @@ def _target_from_type(operation: Operation) -> str:
         "READ" in operation.operation_type
         or "JOB" in operation.operation_type
         or "FILE" in operation.operation_type
+        or "USER" in operation.operation_type
         or operation.operation_type
         in (
             "PLUGIN_LOG_RELOAD",

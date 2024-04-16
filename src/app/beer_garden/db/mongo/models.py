@@ -1051,6 +1051,14 @@ class User(MongoModel, Document):
             for local_role in self.local_roles:
                 if local_role.name not in self.roles:
                     self.roles.append(local_role.name)
+
+        if self.roles:
+            for role in self.roles:
+                try:
+                    Role.objects.get(name=role)
+                except DoesNotExist:
+                    raise ModelValidationError(f"Local Role '{role}' does not exist")
+
         return super().save(*args, **kwargs)
 
     def __str__(self) -> str:

@@ -98,13 +98,13 @@ def system_cleanup():
 def user(system_admin_role):
     user = create_user(User(username="testuser", local_roles=[system_admin_role]))
     yield user
-    delete_user(user)
+    delete_user(user=user)
 
 @pytest.fixture
 def read_user(system_read_role):
     user = create_user(User(username="testreaduser", local_roles=[system_read_role]))
     yield user
-    delete_user(user)
+    delete_user(user=user)
 
 
 @pytest.fixture
