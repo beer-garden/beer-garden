@@ -100,7 +100,7 @@ networks:
         external: true
     activemq:
         name: activemq
-        external: activemq
+        external: true
 
 volumes:
     plugins:
