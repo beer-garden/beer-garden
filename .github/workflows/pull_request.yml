@@ -667,7 +667,7 @@ jobs:
 
       - name: Run Docker Beer Garden
         run: docker stack deploy -c docker-compose-framework.yml beer-garden
-        working-directory: ./test/conf/jmeter-swarm/
+        working-directory: ./test/conf/jmeter_swarm/
 
       - name: Wait for Beer Garden to start
         run: sleep 60s
@@ -682,12 +682,14 @@ jobs:
       - name: Check BG
         run: docker service ps --no-trunc beer-garden_beer-garden
 
-      - name: Grab logs from Beer-Garden.1
+      - name: Grab logs from Beer-Garden
         if: always()
+        continue-on-error: true
         run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.1 --quiet)
 
-      - name: Grab logs from Beer-Garden-Child.1
+      - name: Grab logs from Beer-Garden-Child
         if: always()
+        continue-on-error: true
         run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden-child.1 --quiet)
       
 
@@ -750,12 +752,14 @@ jobs:
           path: docker/docker-compose/data/reports
           if-no-files-found: error
 
-      - name: Grab logs from Beer-Garden.1
+      - name: Grab logs from Beer-Garden
         if: always()
+        continue-on-error: true
         run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.1 --quiet)
 
-      - name: Grab logs from Beer-Garden-Child.1
+      - name: Grab logs from Beer-Garden-Child
         if: always()
+        continue-on-error: true
         run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden-child.1 --quiet)
 
       - if: steps.cache-mongo.outputs.cache-hit != 'true'
