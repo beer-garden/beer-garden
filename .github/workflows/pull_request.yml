@@ -645,18 +645,46 @@ jobs:
           docker tag bgio/beer-garden:${{ matrix.child }} bgio/beer-garden:child
         working-directory: ./src/app
 
-      - name: Update Docker Compose  
-        run: |
-          cp test/conf/docker-compose-jmeter-test.yml docker/docker-compose/docker-compose.yml
-          cp -r test/conf/beer_garden_jmeter_parent_children docker/docker-compose/
-          cp -r test/jmeter docker/docker-compose/data/
+      - name: Start Docker Swarm
+        run: docker swarm init
+
+      - name: Run Docker RabbitMQ and Mongodb
+        run: docker stack deploy -c docker-compose-support.yml bg_core
+        working-directory: ./test/conf/jmeter_swarm/
+
+      - name: Wait for Mongodb and RabbitMQ to start
+        run: sleep 20s
+        shell: bash
+
+      - name: Copy Data Files
+        run: cp -r docker/docker-compose/data test/conf/jmeter_swarm/
         working-directory: ./
 
-      - name: Checkout Local Plugins
-        uses: actions/checkout@v2
-        with:
-          repository: beer-garden/example-plugins
-          path: ./docker/docker-compose/data/localplugins
+      - name: Run Docker Beer Garden
+        run: docker stack deploy -c docker-compose-framework.yml beer-garden
+        working-directory: ./test/conf/swarm/
+
+      - name: Wait for Beer Garden to start
+        run: sleep 60s
+        shell: bash
+
+      - name: Check services
+        run: docker service ls
+
+      - name: Check docker
+        run: docker ps
+
+      - name: Check BG
+        run: docker service ps --no-trunc beer-garden_beer-garden
+
+      - name: Grab logs from Beer-Garden.1
+        if: always()
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.1 --quiet)
+
+      - name: Grab logs from Beer-Garden-Child.1
+        if: always()
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden-child.1 --quiet)
+      
 
       - name: Cache Mongo Database
         id: cache-mongo
@@ -672,28 +700,16 @@ jobs:
           sudo chown -R root:root ./docker-compose_mongo-data
           sudo mv ./docker-compose_mongo-data /var/lib/docker/volumes/docker-compose_mongo-data
 
-      - name: Run Docker Beer Garden Child
-        run: docker-compose up -d beer-garden-child
-        working-directory: ./docker/docker-compose
+      - name: Run Docker Beer Garden Plugins
+        run: docker stack deploy -c docker-compose-plugins.yml beer-plugins
+        working-directory: ./test/conf/swarm/
 
-      - name: Wait for Beer Garden to start
-        run: sleep 10s
+      - name: Wait for Plugins to start
+        run: sleep 15s
         shell: bash
 
-      - name: Run Docker Beer Garden Parent
-        run: docker-compose up -d beer-garden-parent
-        working-directory: ./docker/docker-compose
-
-      - name: Wait for Beer Garden Parent to start
-        run: sleep 10s
-        shell: bash
-
-      - name: Check Docker
-        run: docker ps
-
-      - name: Wait for Beer Garden to start
-        run: sleep 60s
-        shell: bash
+      - name: Check services
+        run: docker service ls
 
       - name: Create reports directory
         run: mkdir reports
@@ -729,15 +745,13 @@ jobs:
           path: docker/docker-compose/data/reports
           if-no-files-found: error
 
-      - name: Grab logs from Child
+      - name: Grab logs from Beer-Garden.1
         if: always()
-        run: docker-compose logs --tail 3000 beer-garden-child
-        working-directory: ./docker/docker-compose
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.1 --quiet)
 
-      - name: Grab logs from Parent
+      - name: Grab logs from Beer-Garden-Child.1
         if: always()
-        run: docker-compose logs --tail 3000 beer-garden-parent
-        working-directory: ./docker/docker-compose
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden-child.1 --quiet)
 
       - if: steps.cache-mongo.outputs.cache-hit != 'true'
         name: Move database file

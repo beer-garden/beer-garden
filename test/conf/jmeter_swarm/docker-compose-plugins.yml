@@ -1,0 +1,47 @@
+version: '3.5'
+
+x-definitions: &common-env
+    # IMPORTANT!!
+    # Comment this out when using the "secure" compose file
+    BG_SSL_ENABLED: "False"
+
+    BG_HOST: beer-garden-child
+    BG_CA_CERT: /certs/ca_certificate.pem
+
+x-definitions: &complex-env
+    DB_NAME: complex
+    DB_PASS: supersecret
+
+x-definitions: &plugin
+    image: bgio/example-plugins
+    networks:
+        - bg-network
+        - rabbit
+        - mongo
+    stop_signal: SIGINT
+    deploy:
+        restart_policy:
+            condition: any
+        replicas: 50
+    volumes:
+        - ./data/certs/ca_certificate.pem:/certs/ca_certificate.pem
+    environment:
+        <<: *common-env
+
+
+services:
+
+    echo:
+        command: ["echo"]
+        <<: *plugin
+
+networks:
+    bg-network:
+        name: bg-network
+        external: true
+    rabbit:
+        name: rabbit
+        external: true
+    mongo:
+        name: mongo
+        external: true
