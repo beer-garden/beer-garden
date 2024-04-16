@@ -11,6 +11,7 @@ services:
             - bg-network
             - rabbit
             - mongo
+            - activemq
         ports:
             - "2337:2337"
 
@@ -51,6 +52,7 @@ services:
             - bg-network
             - rabbit
             - mongo
+            - activemq
         ports:
             - "3337:2337"
 
@@ -96,6 +98,9 @@ networks:
     rabbit:
         name: rabbit
         external: true
+    activemq:
+        name: activemq
+        external: activemq
 
 volumes:
     plugins:
