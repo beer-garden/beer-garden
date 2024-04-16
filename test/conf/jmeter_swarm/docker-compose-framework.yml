@@ -52,7 +52,7 @@ services:
             - rabbit
             - mongo
         ports:
-            - "2337:2337"
+            - "3337:2337"
 
         volumes:
             - ./data/logging-config.yaml:/src/example_configs/logging-config.yaml
