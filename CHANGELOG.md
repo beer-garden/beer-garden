@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.25.1
+
+TBD
+
+- Fixed bug where unresponsive Garden API was referencing a non existing configuration for default. New default is -1.
+
 # 3.25.0
 
 4/11/2024
