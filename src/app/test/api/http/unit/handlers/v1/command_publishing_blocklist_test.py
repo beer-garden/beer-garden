@@ -52,8 +52,8 @@ def system():
 @pytest.fixture
 def user_admin_role():
     role = create_role(Role(
-        name="plugin_admin",
-        permission="PLUGIN_ADMIN",
+        name="garden_admin",
+        permission="GARDEN_ADMIN",
     ))
 
     yield role
@@ -62,7 +62,7 @@ def user_admin_role():
 
 @pytest.fixture
 def user_admin(user_admin_role):
-    user = create_user(User(username="testuser", local_roles=[user_admin_role]))
+    user = create_user(User(username="admin_user", local_roles=[user_admin_role]))
 
     yield user
     delete_user(user=user)
@@ -76,7 +76,7 @@ def access_token_user_admin(user_admin):
 @pytest.fixture
 def user_role():
     role = create_role(Role(
-        name="user",
+        name="read_only",
         permission="READ_ONLY",
     ))
 
@@ -86,7 +86,7 @@ def user_role():
 
 @pytest.fixture
 def user(user_role):
-    user = create_user(User(username="user", local_roles=[user_role]))
+    user = create_user(User(username="read_user", local_roles=[user_role]))
 
     yield user
     delete_user(user)
@@ -223,10 +223,10 @@ class TestCommandPublishingBlocklistAPI:
         }
         request = HTTPRequest(url, headers=headers)
 
-        response = yield http_client.fetch(request)
-        blocklist = json.loads(response.body.decode("utf-8"))
-        assert response.code == 200
-        assert len(blocklist["command_publishing_blocklist"]) == 0
+        with pytest.raises(HTTPError) as excinfo:
+            yield http_client.fetch(request)
+
+        assert excinfo.value.code == 403
 
     @pytest.mark.gen_test
     def test_post(self, http_client, base_url, garden, system, blocklist_cleanup):

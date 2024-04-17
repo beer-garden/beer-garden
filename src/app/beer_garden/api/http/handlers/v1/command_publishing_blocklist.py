@@ -37,7 +37,9 @@ class CommandPublishingBlocklistPathAPI(AuthorizationHandler):
           - Command Block List
         """
 
-        self.minimum_permission = self.PLUGIN_ADMIN
+        self.minimum_permission = self.GARDEN_ADMIN
+        self.verify_user_global_permission()
+        
         blocked_command = CommandPublishingBlocklist.objects.get(
             id=command_publishing_id
         )
@@ -78,7 +80,9 @@ class CommandPublishingBlocklistAPI(AuthorizationHandler):
         tags:
           - Command Block List
         """
-        self.minimum_permission = self.READ_ONLY
+        self.minimum_permission = self.GARDEN_ADMIN
+        self.verify_user_global_permission()
+
         permitted_blocklist_entries = self.permissioned_queryset(
             CommandPublishingBlocklist
         )
@@ -114,7 +118,8 @@ class CommandPublishingBlocklistAPI(AuthorizationHandler):
         tags:
           - Command Block List
         """
-        self.minimum_permission = self.PLUGIN_ADMIN
+        self.minimum_permission = self.GARDEN_ADMIN
+        self.verify_user_global_permission()
 
         commands = self.schema_validated_body(CommandPublishingBlocklistListInputSchema)
         checked_gardens = []
