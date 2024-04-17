@@ -20,23 +20,19 @@ from beer_garden.errors import ConfigurationError, IndexOperationError
 def model_mocks(monkeypatch):
     request_mock = Mock()
     system_mock = Mock()
-    role_mock = Mock()
     job_mock = Mock()
 
     request_mock.__name__ = "Request"
     system_mock.__name__ = "System"
-    role_mock.__name__ = "LegacyRole"
     job_mock.__name__ = "Job"
 
     monkeypatch.setattr(beer_garden.db.mongo.models, "Request", request_mock)
     monkeypatch.setattr(beer_garden.db.mongo.models, "System", system_mock)
-    monkeypatch.setattr(beer_garden.db.mongo.models, "LegacyRole", role_mock)
     monkeypatch.setattr(beer_garden.db.mongo.models, "Job", job_mock)
 
     return {
         "request": request_mock,
         "system": system_mock,
-        "role": role_mock,
         "job": job_mock,
     }
 
@@ -215,22 +211,6 @@ class TestCheckIndexes(object):
         assert model_mocks["request"].ensure_indexes.called is True
         assert update_parent_field_type_mock.called is True
         assert update_has_parent_mock.called is True
-
-
-class TestCreateLegacyRole(object):
-    def test_exists(self, model_mocks):
-        role = Mock()
-        model_mocks["role"].objects.get.return_value = role
-
-        beer_garden.db.mongo.util._create_role(role)
-        assert role.save.called is False
-
-    def test_missing(self, model_mocks):
-        role = Mock()
-        model_mocks["role"].objects.get.side_effect = DoesNotExist
-
-        beer_garden.db.mongo.util._create_role(role)
-        assert role.save.called is True
 
 
 class TestEnsureLocalGarden:
