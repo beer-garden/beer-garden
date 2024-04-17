@@ -555,25 +555,10 @@ class TestUser:
     def test_create(self, user):
         assert User.objects.filter(username="testuser").count() == 1
 
-    # def test_set_password(self, user):
-    #     user.set_password("password")
-
-    #     # Testing for a specific value would be too tightly coupled with the hashing
-    #     # algorithm we use, so instead just verify that the password is not stored
-    #     # in its original form
-    #     assert user.password is not None
-    #     assert user.password != "password"
-
-    # def test_verify_password(self, user):
-    #     user.set_password("password")
-
-    #     assert user.verify_password("password")
-    #     assert not user.verify_password("mismatch")
         
     def test_local_role_map_to_roles(self, user, role):
         
         assert len(user.roles) == 0
-
         user.local_roles = []
         user.local_roles.append(role)
         user = user.save()
@@ -619,6 +604,8 @@ class TestUserToken:
             expires_at=datetime.utcnow() + timedelta(minutes=10),
             username=user.username,
             uuid=str(uuid4()),
+            username=user.username,
+            uuid=str(uuid4()),
         ).save()
 
         yield user_token
@@ -627,7 +614,7 @@ class TestUserToken:
 
     def test_user_delete_cascades_to_user_token(self, user, user_token):
         assert len(UserToken.objects.filter(id=user_token.id)) == 1
-        user.delete()
+        User.objects.get(username="testuser").delete()
         assert len(UserToken.objects.filter(id=user_token.id)) == 0
 
 

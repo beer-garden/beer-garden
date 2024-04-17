@@ -1067,7 +1067,10 @@ class User(MongoModel, Document):
         return self.username
     
     def delete(self, *args, **kwargs):
-        UserToken.objects.filter(username=self.username).delete()
+        try:
+            UserToken.objects.get(username=self.username).delete()
+        except DoesNotExist:
+            pass
         return super().delete(*args, **kwargs)
 
     # def clear_permissions_cache(self) -> None:
