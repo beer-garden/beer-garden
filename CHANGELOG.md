@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.25.1
+
+TBD
+
+- Reuse existing rabbit admin queue by purging messages instead of creating new queue
+
 # 3.25.0
 
 4/11/2024
