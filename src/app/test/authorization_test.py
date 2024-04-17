@@ -22,8 +22,12 @@ from brewtils.models import (
 
 
 @pytest.fixture()
-def role_for_global_scope():
-    return Role(name="global", permission="GARDEN_ADMIN")
+def role_for_garden_scope():
+    return Role(name="garden", permission="GARDEN_ADMIN")
+
+@pytest.fixture()
+def role_for_plugin_scope():
+    return Role(name="plugin", permission="PLUGIN_ADMIN")
 
 
 @pytest.fixture()
@@ -32,9 +36,15 @@ def role_for_read_scope():
 
 
 @pytest.fixture()
-def user_for_global_scope(role_for_global_scope):
+def user_for_garden_scope(role_for_garden_scope):
     return User(
-        username="global", roles=["global"], local_roles=[role_for_global_scope]
+        username="global", roles=["garden"], local_roles=[role_for_garden_scope]
+    )
+
+@pytest.fixture()
+def user_for_plugin_scope(role_for_plugin_scope):
+    return User(
+        username="global", roles=["plugin"], local_roles=[role_for_plugin_scope]
     )
 
 
@@ -114,15 +124,17 @@ def base_garden(base_system):
 
 
 class TestAuthorization:
-    def test_query_filter_global_check(self, user_for_global_scope):
+    def test_query_filter_garden_check(self, user_for_garden_scope):
         """get_garden should allow for retrieval by name"""
-        assert check_global_roles(user_for_global_scope, permission_level="ADMIN")
-        assert check_global_roles(user_for_global_scope, permission_level="OPERATOR")
-        assert check_global_roles(user_for_global_scope, permission_level="READ_ONLY")
+        assert check_global_roles(user_for_garden_scope, permission_level="GARDEN_ADMIN")
+        assert check_global_roles(user_for_garden_scope, permission_level="PLUGIN_ADMIN")
+        assert check_global_roles(user_for_garden_scope, permission_level="OPERATOR")
+        assert check_global_roles(user_for_garden_scope, permission_level="READ_ONLY")
 
     def test_query_filter_read_check(self, user_for_read_scope):
         """get_garden should allow for retrieval by name"""
-        assert not check_global_roles(user_for_read_scope, permission_level="ADMIN")
+        assert not check_global_roles(user_for_read_scope, permission_level="GARDEN_ADMIN")
+        assert not check_global_roles(user_for_read_scope, permission_level="PLUGIN_ADMIN")
         assert not check_global_roles(user_for_read_scope, permission_level="OPERATOR")
         assert check_global_roles(user_for_read_scope, permission_level="READ_ONLY")
 
@@ -130,10 +142,12 @@ class TestAuthorization:
         assert generate_permission_levels("READ_ONLY") == [
             "READ_ONLY",
             "OPERATOR",
-            "ADMIN",
+            "PLUGIN_ADMIN",
+            "GARDEN_ADMIN",
         ]
-        assert generate_permission_levels("OPERATOR") == ["OPERATOR", "ADMIN"]
-        assert generate_permission_levels("ADMIN") == ["ADMIN"]
+        assert generate_permission_levels("OPERATOR") == ["OPERATOR", "PLUGIN_ADMIN", "GARDEN_ADMIN"]
+        assert generate_permission_levels("PLUGIN_ADMIN") == ["PLUGIN_ADMIN","GARDEN_ADMIN"]
+        assert generate_permission_levels("GARDEN_ADMIN") == ["GARDEN_ADMIN"]
 
     def test__has_empty_scopes(self):
         assert _has_empty_scopes(
@@ -302,42 +316,42 @@ class TestAuthorization:
 
 class TestModelFilter:
     def test_get_user_filter(
-        self, model_filter, user_for_read_scope, user_for_global_scope
+        self, model_filter, user_for_read_scope, user_for_garden_scope
     ):
         assert model_filter._get_user_filter(
             user_for_read_scope, user_for_read_scope, ["ADMIN"]
         )
 
         assert not model_filter._get_user_filter(
-            user_for_global_scope, user_for_read_scope, ["ADMIN"]
+            user_for_garden_scope, user_for_read_scope, ["ADMIN"]
         )
         assert model_filter._get_user_filter(
-            user_for_global_scope, user_for_read_scope, ["READ_ONLY"]
+            user_for_garden_scope, user_for_read_scope, ["READ_ONLY"]
         )
 
         assert model_filter._get_user_filter(
-            user_for_global_scope, user_for_global_scope, ["ADMIN"]
+            user_for_garden_scope, user_for_garden_scope, ["ADMIN"]
         )
         assert model_filter._get_user_filter(
-            user_for_read_scope, user_for_global_scope, ["ADMIN"]
+            user_for_read_scope, user_for_garden_scope, ["ADMIN"]
         )
 
     def test_get_role_filter(
         self,
         model_filter,
         user_for_read_scope,
-        user_for_global_scope,
-        role_for_global_scope,
+        user_for_garden_scope,
+        role_for_garden_scope,
     ):
         assert model_filter._get_role_filter(
-            user_for_read_scope.local_roles[0], user_for_read_scope, ["READ_ONLY"]
+            user_for_read_scope.local_roles[0], user_for_read_scope, ["GARDEN_ADMIN"]
         )
         assert not model_filter._get_role_filter(
-            role_for_global_scope, user_for_read_scope, ["READ_ONLY"]
+            role_for_garden_scope, user_for_read_scope, ["GARDEN_ADMIN"]
         )
 
         assert model_filter._get_role_filter(
-            role_for_global_scope, user_for_global_scope, ["READ_ONLY"]
+            role_for_garden_scope, user_for_garden_scope, ["GARDEN_ADMIN"]
         )
 
     @pytest.mark.parametrize(
