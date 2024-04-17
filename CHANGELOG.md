@@ -5,6 +5,7 @@
 TBD
 
 - Added support for cross-server parent/child requests
+- Fixed bug where unresponsive Garden API was referencing a non existing configuration for default. New default is -1.
 
 # 3.25.0
 

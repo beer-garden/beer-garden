@@ -658,8 +658,19 @@ jobs:
           repository: beer-garden/example-plugins
           path: ./docker/docker-compose/data/localplugins
 
-      - name: Verify Local Plugins
-        run: ls ./docker/docker-compose/data/localplugins
+      - name: Cache Mongo Database
+        id: cache-mongo
+        uses: actions/cache@v3
+        with:
+          # Use cache requests, if models have not been updated or database loader
+          path: ./docker-compose_mongo-data
+          key: ${{ runner.os }}-pr-stress-test-cache-${{ hashFiles('./src/app/beer_garden/db/mongo/models.py') }}-${{ hashFiles('./docker/docker-compose/data/jmeter/prep_database.jmx') }}
+
+      - if: steps.cache-mongo.outputs.cache-hit == 'true'
+        name: Move database file
+        run: |
+          sudo chown -R root:root ./docker-compose_mongo-data
+          sudo mv ./docker-compose_mongo-data /var/lib/docker/volumes/docker-compose_mongo-data
 
       - name: Run Docker Beer Garden Child
         run: docker-compose up -d beer-garden-child
@@ -688,9 +699,28 @@ jobs:
         run: mkdir reports
         working-directory: ./docker/docker-compose/data
 
-      - name: Run Jmeter Test
-        run: docker-compose up jmeter-testing
+      - if: steps.cache-mongo.outputs.cache-hit != 'true'
+        name: Pre-load database
+        continue-on-error: false
+        run: docker-compose up jmeter-loader
         working-directory: ./docker/docker-compose
+
+      - name: Run Jmeter Test
+        id: jmeter
+        run: |
+          docker-compose up jmeter-testing | tee jmeter.log
+          echo "jmeter-rates=$(cat jmeter.log | grep 'summary' | tail -1 | cut -d '|' -f 2- | sed 's/^.*summary/summary/')\n" >> $GITHUB_OUTPUT         
+        working-directory: ./docker/docker-compose
+
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'Jmeter Results:\n${{steps.jmeter.outputs.jmeter-rates}}'
+            })
 
       - name: Upload JMeter Results
         uses: actions/upload-artifact@v3
@@ -708,4 +738,11 @@ jobs:
         if: always()
         run: docker-compose logs --tail 3000 beer-garden-parent
         working-directory: ./docker/docker-compose
+
+      - if: steps.cache-mongo.outputs.cache-hit != 'true'
+        name: Move database file
+        continue-on-error: false
+        run: |
+          sudo mv -f /var/lib/docker/volumes/docker-compose_mongo-data ./docker-compose_mongo-data
+          sudo chown -R $USER:$USER ./docker-compose_mongo-data
         
