@@ -86,7 +86,7 @@ def user_role():
 
 @pytest.fixture
 def user(user_role):
-    user = create_user(User(username="read_user", local_roles=[user_role]))
+    user = create_user(User(username="testuser", local_roles=[user_role]))
 
     yield user
     delete_user(user)
