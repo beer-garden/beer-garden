@@ -574,6 +574,7 @@ class TestUser:
         
         assert len(user.roles) == 0
 
+        user.local_roles = []
         user.local_roles.append(role)
         user = user.save()
 
@@ -604,22 +605,29 @@ class TestUser:
 
 
 class TestUserToken:
+
     @pytest.fixture()
-    def user_token(self):
+    def user(self):
         user = User(username="testuser").save()
+        yield user
+        user.delete()
+
+    @pytest.fixture()
+    def user_token(self, user):
+
         user_token = UserToken(
             expires_at=datetime.utcnow() + timedelta(minutes=10),
-            user=user,
-            uuid=uuid4(),
+            username=user.username,
+            uuid=str(uuid4()),
         ).save()
 
         yield user_token
         user_token.delete()
-        user.delete()
 
-    def test_user_delete_cascades_to_user_token(self, user_token):
+
+    def test_user_delete_cascades_to_user_token(self, user, user_token):
         assert len(UserToken.objects.filter(id=user_token.id)) == 1
-        user_token.user.fetch().delete()
+        user.delete()
         assert len(UserToken.objects.filter(id=user_token.id)) == 0
 
 

@@ -1063,6 +1063,10 @@ class User(MongoModel, Document):
 
     def __str__(self) -> str:
         return self.username
+    
+    def delete(self, *args, **kwargs):
+        UserToken.objects.filter(username=self.username).delete()
+        return super().delete(*args, **kwargs)
 
     # def clear_permissions_cache(self) -> None:
     #     """Clear the cached permission set for the user. This is useful if the user's
