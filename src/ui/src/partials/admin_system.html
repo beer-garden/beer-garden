@@ -1,6 +1,6 @@
 <h1 class="page-header">
   <span>Systems Management</span>
-  <span class="pull-right" ng-show="responseState(response) !== 'loading'">
+  <span class="pull-right" ng-show="responseState(response) !== 'loading'" ng-if="hasPermission('PLUGIN_ADMIN')">
     <button
       type="button"
       class="btn btn-danger"
@@ -59,7 +59,7 @@
             <span style="font-size: 18px">{{runners[0].path}}</span>
           </div>
         </div>
-        <div class="btn-toolbar pull-right">
+        <div class="btn-toolbar pull-right" ng-if="hasPermission('PLUGIN_ADMIN')">
           <div class="btn-group btn-group-sm">
             <button
               type="button"
@@ -104,7 +104,7 @@
 
           <i class="fa fa-spinner fa-pulse" ng-show="runner.waiting"></i>
 
-          <div class="btn-group btn-group-xs pull-right">
+          <div class="btn-group btn-group-xs pull-right" ng-if="hasPermission('PLUGIN_ADMIN')">
             <button
               type="button"
               class="btn btn-default fa fa-play"
@@ -165,7 +165,7 @@
                 >
               </a>
             </div>
-            <div class="btn-toolbar pull-right">
+            <div class="btn-toolbar pull-right" ng-if="hasSystemPermission('PLUGIN_ADMIN', system, global=true)">
               <div class="btn-group btn-group-sm">
                 <button
                   type="button"
@@ -211,7 +211,7 @@
             <bg-status target="instance.status"></bg-status>
             <span style="padding: 0 10px">{{instance.name}}</span>
             <span class="btn-toolbar pull-right">
-              <span class="btn-group btn-group-xs">
+              <span class="btn-group btn-group-xs" ng-if="hasInstancePermission('PLUGIN_ADMIN', system, instance)">
                 <button
                   type="button"
                   class="btn btn-default fa fa-play"

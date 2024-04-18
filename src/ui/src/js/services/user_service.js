@@ -35,63 +35,7 @@ export default function userService($http, GardenService, SystemService) {
         current_password: currentPassword,
         new_password: newPassword,
       });
-    },
-    hasPermission: (user, permission) => {
-      // True if the user has the permission for any objects at all
-      return (
-        user.permissions.global_permissions.includes(permission) ||
-        user.permissions.domain_permissions.hasOwnProperty(permission)
-      );
-    },
-    hasGardenPermission: (user, permission, garden) => {
-      if (user.permissions.global_permissions.includes(permission)) {
-        return true;
-      }
-
-      if (user.permissions.domain_permissions.hasOwnProperty(permission)) {
-        return user.permissions.domain_permissions[
-            permission
-        ].garden_ids.includes(garden.id);
-      }
-
-      return false;
-    },
-    hasSystemPermission: (user, permission, system) => {
-      if (user.permissions.global_permissions.includes(permission)) {
-        return true;
-      }
-
-      const garden = GardenService.findGarden(system.namespace);
-      if (garden && service.hasGardenPermission(user, permission, garden)) {
-        return true;
-      }
-
-      if (user.permissions.domain_permissions.hasOwnProperty(permission)) {
-        return user.permissions.domain_permissions[
-            permission
-        ].system_ids.includes(system.id);
-      }
-
-      return false;
-    },
-    hasCommandPermission: (user, permission, command) => {
-      const system = SystemService.findSystem(
-          command.namespace,
-          command.system,
-          command.version,
-      );
-
-      return service.hasSystemPermission(user, permission, system);
-    },
-    hasJobPermission: (user, permission, job) => {
-      const system = SystemService.findSystem(
-          job.request_template.namespace,
-          job.request_template.system,
-          job.request_template.system_version,
-      );
-
-      return service.hasSystemPermission(user, permission, system);
-    },
+    }
   };
 
   _.assign(service, {

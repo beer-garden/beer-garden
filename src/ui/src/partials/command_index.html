@@ -111,7 +111,7 @@
                 <br>{{"TAGS = " + command.tags}}
               </span>
             </td>
-            <td ng-if="userCanTask">
+            <td ng-if="hasCommandPermission('OPERATOR', command)">
               <a
                 class="btn btn-primary center-block word-wrap-button"
                 ui-sref="base.command({systemName: command.system, systemVersion: command.version, namespace: command.namespace, commandName: command.name})"

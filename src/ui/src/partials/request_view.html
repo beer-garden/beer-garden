@@ -4,7 +4,7 @@
     <small>{{request.id}}</small>
     <button
       type="button"
-      ng-if="complete"
+      ng-if="complete && hasRequestPermission('OPERATOR', request)"
       ng-click="redoRequest(request)"
       ng-disabled="disabledPourItAgain"
       class="btn btn-success pull-right"
