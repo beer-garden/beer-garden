@@ -5,7 +5,7 @@
       type="button"
       class="btn btn-primary"
       ng-click="doCreate()"
-      ng-show="hasPermission(user, 'user:create')"
+      ng-show="hasPermission('GARDEN_ADMIN', global=true)"
     >
       Create User
     </button>
@@ -14,7 +14,7 @@
       class="btn btn-primary"
       ng-if="displaySyncStatus"
       ng-click="doSync()"
-      ng-show="hasPermission(user, 'garden:update')"
+      ng-show="hasPermission('GARDEN_ADMIN', global=true)"
     >
       Sync Users
     </button>
@@ -43,9 +43,6 @@
       <thead>
         <tr>
           <th id="th_username" scope="col">Username</th>
-          <th ng-if="displaySyncStatus" id="th_fullysynced" scope="col">
-            Fully Synced
-          </th>
         </tr>
       </thead>
       <tbody>
@@ -54,21 +51,6 @@
             <a ui-sref="base.user_view({username: user.username})"
               >{{user.username}}</a
             >
-          </td>
-          <td ng-if="displaySyncStatus">
-            <i
-              ng-if="user.fullySynced"
-              class="glyphicon glyphicon-ok"
-              style="color: green"
-              title="true"
-            ></i>
-            <i
-              ng-if="!user.fullySynced"
-              class="glyphicon glyphicon-remove"
-              style="color: red"
-              title="false"
-            ></i>
-            <span hidden>{{user.fullySynced}}</span>
           </td>
         </tr>
       </tbody>

@@ -58,7 +58,7 @@
             type="submit"
             class="btn btn-success w-100"
             ng-click="doCreate()"
-            ng-show="hasPermission(user, 'bg-local-admin')"
+            ng-show="hasPermission('GARDEN_ADMIN', global=true)"
             value="Create Role"
           />
         </div>
@@ -68,7 +68,7 @@
             class="btn btn-danger w-100"
             value="Remove Role"
             ng-click="doDelete(selectedRole.id)"
-            ng-show="hasPermission(user, 'bg-local-admin')"
+            ng-show="hasPermission('GARDEN_ADMIN', global=true)"
             ng-disabled="selectedRole.name == 'bg-admin' ||
                          selectedRole.name == 'bg-anonymous' ||
                          selectedRole.name == 'bg-plugin'"
@@ -90,7 +90,7 @@
           type="submit"
           class="btn btn-primary w-100"
           ng-click="doUpdate()"
-          ng-show="hasPermission(user, 'bg-local-admin')"
+          ng-show="hasPermission('GARDEN_ADMIN', global=true)"
           value="Update Role"
         />
       </div>
