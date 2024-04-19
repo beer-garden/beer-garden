@@ -4,6 +4,7 @@
 
 TBD
 
+- Reuse existing rabbit admin queue by purging messages instead of creating new queue
 - Fixed bug where unresponsive Garden API was referencing a non existing configuration for default. New default is -1.
 
 # 3.25.0

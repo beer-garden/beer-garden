@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 import logging
-import random
-import string
 import threading
 from concurrent.futures.thread import ThreadPoolExecutor
 from typing import List
@@ -135,16 +133,16 @@ def create(instance: Instance, system: System) -> dict:
         [request_queue_name],
     )
 
-    suffix = [random.choice(string.ascii_lowercase + string.digits) for _ in range(10)]
-    routing_words.append("".join(suffix))
-
     admin_keys = get_routing_keys(*routing_words, is_admin=True)
     admin_queue_name = admin_keys[-1]
-    clients["pika"].setup_queue(
-        admin_queue_name,
-        {"durable": True, "arguments": {"x-max-priority": 1}},
-        admin_keys,
-    )
+    try:
+        clear(admin_queue_name)
+    except NotFoundError:
+        clients["pika"].setup_queue(
+            admin_queue_name,
+            {"durable": True, "arguments": {"x-max-priority": 1}},
+            admin_keys,
+        )
 
     mq_config = config.get("mq")
     plugin_config = config.get("plugin")
@@ -334,10 +332,10 @@ class PyrabbitClient(object):
         Args:
             queue_name: The queue name
         """
-        self.logger.info("Clearing Queue: %s", queue_name)
-
         queue_dictionary = self._client.get_queue(self._virtual_host, queue_name)
         number_of_messages = queue_dictionary.get("messages_ready", 0)
+
+        self.logger.info("Clearing Queue: %s", queue_name)
 
         while number_of_messages > 0:
             self.logger.debug("Getting the Next Message")
@@ -350,7 +348,8 @@ class PyrabbitClient(object):
                     request = SchemaParser.parse_request(
                         message["payload"], from_string=True
                     )
-                    beer_garden.requests.cancel_request(request.id)
+                    if request.id:
+                        beer_garden.requests.cancel_request(request.id)
                 except Exception as ex:
                     self.logger.exception(f"Error canceling message: {ex}")
             else:
