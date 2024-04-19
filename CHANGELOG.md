@@ -6,6 +6,7 @@ TBD
 
 - Reuse existing rabbit admin queue by purging messages instead of creating new queue
 - Fixed bug where unresponsive Garden API was referencing a non existing configuration for default. New default is -1.
+- Fixed bug where tailing plugin logs fails if the logs are not updating
 
 # 3.25.0
 
