@@ -11,7 +11,7 @@ def main():
     passedArgs = []
     passedKwargs = {}
     if len(sys.argv) > 3:
-        for arg in sys.argv[:3]:
+        for arg in sys.argv[3:]:
             if "=" in arg:
                 passedKwargs[arg.split("=")[0]] = arg.split("=")[1]
             else:
