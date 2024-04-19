@@ -984,7 +984,7 @@ def handle_event(event):
         else:
             existing_request = None
 
-        if existing_request:
+        if existing_request and existing_request.status != event.payload.status:
             # Skip status that revert
             if existing_request.status in ("CANCELED", "SUCCESS", "ERROR", "INVALID"):
                 return
