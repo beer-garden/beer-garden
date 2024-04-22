@@ -248,7 +248,7 @@ class InstanceLogAPI(AuthorizationHandler):
 
         self.set_header("request_id", response.id)
         self.set_header("Content-Type", "text/plain; charset=UTF-8")
-        self.write(response.output if response.output else '')
+        self.write(response.output if response.output else "")
 
     async def _generate_get_response(self, instance_id, start_line, end_line):
         wait_future = Future()
