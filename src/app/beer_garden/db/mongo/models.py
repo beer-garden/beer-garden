@@ -983,6 +983,8 @@ class Role(MongoModel, Document):
     scope_versions = ListField(field=StringField())
     scope_commands = ListField(field=StringField())
 
+    protected = BooleanField(default=False)
+
     meta = {
         "indexes": [{"name": "unique_index", "fields": ["name"], "unique": True}],
     }
