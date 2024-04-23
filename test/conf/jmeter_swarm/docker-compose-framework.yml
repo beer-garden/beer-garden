@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
     beer-garden:
-        image: bgio/beer-garden:test
+        image: bgio/beer-garden:unstable
         deploy:
             restart_policy:
                 condition: any
@@ -43,7 +43,7 @@ services:
             BG_MQ_CONNECTIONS_MESSAGE_PASSWORD: password
 
     beer-garden-child:
-        image: bgio/beer-garden:test
+        image: bgio/beer-garden:unstable
         deploy:
             restart_policy:
                 condition: any
