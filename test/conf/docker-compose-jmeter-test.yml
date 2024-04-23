@@ -43,5 +43,6 @@ services:
 
 networks:
     bg-network:
+        driver: overlay
+        attachable: true
         name: bg-network
-        external: true
