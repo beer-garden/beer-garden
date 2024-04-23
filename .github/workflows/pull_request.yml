@@ -653,6 +653,9 @@ jobs:
       - name: Start Docker Swarm
         run: docker swarm init
 
+      - name: Make BG Network
+        run: docker network create -d overlay --attachable bg-network
+
       - name: Run Docker RabbitMQ and Mongodb
         run: docker stack deploy -c docker-compose-support.yml bg_core
         working-directory: ./test/conf/jmeter_swarm/
