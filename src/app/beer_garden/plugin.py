@@ -50,7 +50,7 @@ stop_request = RequestTemplate(command="_stop", command_type="EPHEMERAL")
 initialize_logging_request = RequestTemplate(
     command="_initialize_logging", command_type="EPHEMERAL"
 )
-read_logs_request = RequestTemplate(command="_read_log", command_type="ADMIN")
+read_logs_request = RequestTemplate(command="_read_log", command_type="TEMP")
 
 
 @publish_event(Events.INSTANCE_INITIALIZED)
