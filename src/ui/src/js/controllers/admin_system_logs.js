@@ -90,9 +90,6 @@ export default function adminSystemLogsController(
       $scope.logs = [];
       appendLogs = false;
     } 
-    if (appendLogs && response.data.length > 0){
-      $scope.displayLogs = $scope.displayLogs.concat("\n");
-    }
 
     for (let i = 0; i < response.data.length; i++) {
       $scope.displayLogs = $scope.displayLogs.concat(response.data[i]);
