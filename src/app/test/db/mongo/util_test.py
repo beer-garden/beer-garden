@@ -4,7 +4,6 @@ import yaml
 from mock import MagicMock, Mock, mock_open, patch
 from mongoengine import DoesNotExist, connect
 
-from beer_garden import config
 import beer_garden.db.mongo.models
 import beer_garden.db.mongo.util
 from beer_garden import config
