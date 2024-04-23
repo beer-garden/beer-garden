@@ -90,8 +90,8 @@ services:
 
 networks:
     bg-network:
-        driver: overlay
         name: bg-network
+        external: true
     mongo:
         name: mongo
         external: true
