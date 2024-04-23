@@ -181,10 +181,6 @@ def publish_garden(status: str = "RUNNING") -> Garden:
     get_children_garden(garden)
     garden.connection_type = None
     garden.status = status
-    if config.get("parent.sync_interval") > 0:
-        garden.metadata["_unresponsive_timeout"] = (
-            config.get("parent.sync_interval") * 3
-        )
 
     return garden
 
@@ -735,6 +731,7 @@ def publish_local_garden():
 def garden_unresponsive_trigger():
     for garden in get_gardens(include_local=False):
         interval_value = garden.metadata.get("_unresponsive_timeout", -1)
+        logger.error(f"{garden.name} Timeout of {interval_value}")
 
         if interval_value > 0:
             timeout = datetime.utcnow() - timedelta(minutes=interval_value)
@@ -745,6 +742,7 @@ def garden_unresponsive_trigger():
                         update_garden_receiving(
                             "UNRESPONSIVE", api=connection.api, garden=garden
                         )
+                        logger.error(f"{garden.name} Timed out")
 
 
 def handle_event(event):

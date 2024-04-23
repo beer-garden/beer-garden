@@ -51,6 +51,13 @@ def ensure_local_garden():
 
     garden.name = config.get("garden.name")
 
+    if config.get("parent.sync_interval") > 0:
+        garden.metadata["_unresponsive_timeout"] = (
+            config.get("parent.sync_interval") * 3
+        )
+    elif garden.metadata:
+        garden.metadata.pop("_unresponsive_timeout", None)
+
     garden.publishing_connections = []
 
     if config.get("parent.http.enabled"):
