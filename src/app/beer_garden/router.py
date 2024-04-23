@@ -787,13 +787,16 @@ def _target_from_type(operation: Operation) -> str:
         else:
             return _instance_id_lookup(operation.args[0])
 
-    if operation.operation_type in ["REQUEST_CREATE", "REQUEST_UPDATE"]:
+    if operation.operation_type in ["REQUEST_CREATE"]:
         target_system = System(
             namespace=operation.model.namespace,
             name=operation.model.system,
             version=operation.model.system_version,
         )
         return _system_name_lookup(target_system)
+
+    if operation.operation_type in ["REQUEST_UPDATE"]:
+        return config.get("garden.name")
 
     if operation.operation_type.startswith("REQUEST"):
         request = db.query_unique(Request, id=operation.args[0])

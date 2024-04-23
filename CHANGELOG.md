@@ -4,9 +4,12 @@
 
 TBD
 
+- Added support for cross-server parent/child requests
 - Reuse existing rabbit admin queue by purging messages instead of creating new queue
+- Fixed bug where Auto brew plugins did not parse NAME/VERSION properly from the beer.conf
 - Fixed bug where unresponsive Garden API was referencing a non existing configuration for default. New default is -1.
 - Fixed bug where tailing plugin logs fails if the logs are not updating
+- Fixed bug where locally connected plugin commands ran as TEMP did not auto delete after completion
 
 # 3.25.0
 

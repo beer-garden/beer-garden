@@ -665,7 +665,7 @@ class PluginManager(StoppableThread):
                 plugin_version = plugin_config.get("VERSION")
 
                 if plugin_version is not None:
-                    process_args += ["VERSION=" + plugin_name]
+                    process_args += ["VERSION=" + plugin_version]
 
             elif plugin_name is not None:
                 process_args += ["-m", plugin_name]
