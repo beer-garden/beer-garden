@@ -9,7 +9,7 @@
     >
       Create User
     </button>
-    <button
+    <!-- <button
       type="button"
       class="btn btn-primary"
       ng-if="displaySyncStatus"
@@ -17,7 +17,7 @@
       ng-show="hasPermission('GARDEN_ADMIN', global=true)"
     >
       Sync Users
-    </button>
+    </button> -->
   </div>
 </h1>
 
@@ -43,6 +43,8 @@
       <thead>
         <tr>
           <th id="th_username" scope="col">Username</th>
+          <th id="th_local_roles" scope="col">Local Roles</th>
+          <th id="th_local_roles" scope="col">Remote Roles</th>
         </tr>
       </thead>
       <tbody>
@@ -52,6 +54,10 @@
               >{{user.username}}</a
             >
           </td>
+          <td>Echo_Plugin_Admin</td>
+          <td></td>
+          <!-- <td>{{user.local_roles}}</td>
+          <td>{{user.remote_roles}}</td> -->
         </tr>
       </tbody>
     </table>

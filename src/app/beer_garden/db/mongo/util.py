@@ -234,11 +234,11 @@ def ensure_v2_to_v3_model_migration():
     it would be better if we could seamlessly move the existing commands into existing
     Systems.
     """
-    from beer_garden.db.mongo.models import LegacyRole, System
+    from beer_garden.db.mongo.models import Role, System
 
     try:
-        if LegacyRole.objects.count() > 0:
-            _ = LegacyRole.objects()[0]
+        if Role.objects.count() > 0:
+            _ = Role.objects()[0]
         if System.objects.count() > 0:
             _ = System.objects()[0]
     except (FieldDoesNotExist, InvalidDocumentError):

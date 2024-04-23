@@ -60,10 +60,9 @@ from beer_garden.api.http.schemas.v1.command_publishing_blocklist import (
 #     TokenRefreshInputSchema,
 #     TokenResponseSchema,
 # )
-# from beer_garden.api.http.schemas.v1.user import (
-#     UserPasswordChangeSchema,
-#     UserPatchSchema,
-# )
+from beer_garden.api.http.schemas.v1.user import (
+    UserPasswordChangeSchema,
+)
 from beer_garden.events import publish
 
 io_loop: IOLoop = None

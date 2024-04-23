@@ -259,49 +259,9 @@ export default function adminUserViewController(
       ],
     },
     {
-      key: 'role_assignments',
-      add: 'Add',
-      style: {add: 'btn-default'},
-      items: [
-        'role_assignments[].role_name',
-        {
-          type: 'section',
-          htmlClass: 'row',
-          items: [
-            {
-              type: 'section',
-              htmlClass: 'col-xs-2',
-              items: ['role_assignments[].domain.scope'],
-            },
-            {
-              type: 'section',
-              htmlClass: 'col-xs-2',
-              condition:
-                'model.role_assignments[arrayIndex].domain.scope === "System"',
-              items: ['role_assignments[].domain.identifiers.namespace'],
-            },
-            {
-              type: 'section',
-              htmlClass: 'col-xs-2',
-              condition:
-                'model.role_assignments[arrayIndex].domain.scope !== "Global"',
-              items: ['role_assignments[].domain.identifiers.name'],
-            },
-            {
-              type: 'section',
-              htmlClass: 'col-xs-2',
-              condition:
-                'model.role_assignments[arrayIndex].domain.scope === "System"',
-              items: ['role_assignments[].domain.identifiers.version'],
-            },
-          ],
-        },
-      ],
-    },
-    {
       type: 'submit',
       style: 'btn-primary w-10',
-      title: 'Save',
+      title: 'Update Password',
     },
   ];
 

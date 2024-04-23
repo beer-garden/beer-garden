@@ -1,7 +1,7 @@
-filterService.$inject = ['$rootScope'];
+permissionService.$inject = ['$rootScope'];
 
 /**
- * filterService - Used for filtering logic based on User roles
+ * permissionService - Used for filtering logic based on User roles
  * @param  {$rootScope} $rootScope Angular's $rootScope object
  * @return {Object}                For use by a controller.
  */

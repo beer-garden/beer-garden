@@ -182,9 +182,7 @@ def initial_setup():
         beer_garden.db.mongo.models.Garden,
         beer_garden.db.mongo.models.Job,
         beer_garden.db.mongo.models.Request,
-        beer_garden.db.mongo.models.LegacyRole,
         beer_garden.db.mongo.models.System,
-        beer_garden.db.mongo.models.Principal,
     ):
         check_indexes(doc)
 

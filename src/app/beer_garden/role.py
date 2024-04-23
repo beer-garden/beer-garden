@@ -66,7 +66,7 @@ def configure_superuser_role():
 def configure_plugin_role():
     """Creates or updates the plugin role as needed"""
     try:
-        plugin_role = Role.objects.get(name="plugin")
+        plugin_role = get_role("plugin")
     except DoesNotExist:
         logger.info("Creating plugin role with select permissions")
         plugin_role = Role(name="plugin", description = "Role containing plugin permissions", permission="PLUGIN_ADMIN")
