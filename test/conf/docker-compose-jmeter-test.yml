@@ -24,46 +24,6 @@ x-definitions: &env
 
 services:
 
-    activemq:
-        image: vromero/activemq-artemis:2.16-alpine-latest
-        restart: always
-        environment:
-            - ARTEMIS_USERNAME=beer_garden
-            - ARTEMIS_PASSWORD=password
-        ports:
-          - "61613:61613"
-          - "8161:8161"
-        volumes:
-            - ./data/activemq-config/etc-override-non-ssl:/var/lib/artemis/etc-override
-        networks:
-            - bg-network
-
-    mongodb:
-        image: mongo:4.2
-        restart: always
-        ports:
-          - "27017:27017"
-        volumes:
-            - mongo-data:/data/db
-            - mongo-config:/data/configdb
-        networks:
-            - bg-network
-
-    rabbitmq:
-        image: rabbitmq:3.8-management-alpine
-        restart: always
-        hostname: rabbitmq
-        environment:
-            - RABBITMQ_DEFAULT_USER=beer_garden
-            - RABBITMQ_DEFAULT_PASS=password
-        ports:
-            - "5672:5672"
-            - "15672:15672"
-        volumes:
-            - rabbitmq-home:/var/lib/rabbitmq
-        networks:
-            - bg-network
-
     jmeter-loader:
         image: justb4/jmeter
         volumes:
@@ -71,8 +31,6 @@ services:
         networks:
             - bg-network 
         command: -n -t /tests/prep_database.jmx
-        depends_on:
-            - beer-garden-parent   
 
     jmeter-testing:
         image: justb4/jmeter
@@ -82,121 +40,8 @@ services:
         networks:
             - bg-network 
         command: -n -l log.jtl -t /tests/stress_test.jmx -e -o /reports/html/
-        depends_on:
-            - beer-garden-child   
-
-    beer-garden-parent:
-        image: bgio/beer-garden:parent
-        networks:
-            - bg-network
-        ports:
-            - "2337:2337"
-        volumes:
-            - ./data/logging-config.yaml:/src/example_configs/logging-config.yaml
-            - ./data/localplugins:/plugins
-            - ./beer_garden_jmeter_parent_children:/children
-        environment:
-            <<: *env
-
-            BG_GARDEN_NAME: parent         
-
-            # If you are running in Ubuntu, then you need to set the Timezone
-            # We are actively investigating why this is
-            TZ: UTC
-
-            BG_CHILDREN_CONFIG_DIRECTORY: /children
-            BG_CHILDREN_UNRESPONSIVE_TIMEOUT_ENABLED: "true"
-            BG_METRICS_GARDEN_LATENCY_METRICS_ENABLED: "true"
-
-            # Point at the correct database
-            BG_DB_HOST: mongodb
-            BG_DB_NAME: parent
-
-            # Point at the correct rabbit broker
-            BG_MQ_HOST: rabbitmq
-            BG_MQ_EXCHANGE: parent
-            BG_MQ_CONNECTIONS_ADMIN_USER: beer_garden
-            BG_MQ_CONNECTIONS_ADMIN_PASSWORD: password
-            BG_MQ_CONNECTIONS_MESSAGE_USER: beer_garden
-            BG_MQ_CONNECTIONS_MESSAGE_PASSWORD: password
-
-            # Enable stomp and point at the correct broker
-            BG_ENTRY_STOMP_ENABLED: "false"
-            BG_ENTRY_STOMP_HOST: activemq
-
-            # We expose grafana for you, but you can change this to an
-            # external grafana URL if you would like. It just adds a
-            # link in our About section if it is defined.
-            BG_METRICS_URL: http://localhost:3000
-            BG_METRICS_PROMETHEUS_ENABLED: "false"
-
-        depends_on:
-            - rabbitmq
-            - mongodb
-            - activemq
-
-    beer-garden-child:
-        image: bgio/beer-garden:child
-        networks:
-            - bg-network
-        ports:
-            - "2357:2337"
-            - "2358:2338"
-        volumes:
-            - ./data/logging-config.yaml:/src/example_configs/logging-config.yaml
-            - ./data/localplugins:/plugins
-        environment:
-            <<: *env
-
-            BG_GARDEN_NAME: child
-            BG_PARENT_SYNC_INTERVAL: 1
-            BG_PARENT_STOMP_ENABLED: "true"
-            BG_PARENT_STOMP_HOST: activemq
-            BG_PARENT_STOMP_USERNAME: beer_garden
-            BG_PARENT_STOMP_PASSWORD: password
-            BG_PARENT_STOMP_SEND_DESTINATION: Beer_Garden_Operations_Parent
-            BG_PARENT_STOMP_SUBSCRIBE_DESTINATION: Beer_Garden_Forward_Parent
-
-            # If you are running in Ubuntu, then you need to set the Timezone
-            # We are actively investigating why this is
-            TZ: UTC
-
-            # Point at the correct database
-            BG_DB_HOST: mongodb
-            BG_DB_NAME: child
-
-            # Point at the correct rabbit broker
-            BG_MQ_HOST: rabbitmq
-            BG_MQ_EXCHANGE: child
-            BG_MQ_CONNECTIONS_ADMIN_USER: beer_garden
-            BG_MQ_CONNECTIONS_ADMIN_PASSWORD: password
-            BG_MQ_CONNECTIONS_MESSAGE_USER: beer_garden
-            BG_MQ_CONNECTIONS_MESSAGE_PASSWORD: password
-
-            # Enable stomp and point at the correct broker
-            BG_ENTRY_STOMP_ENABLED: "false"
-            BG_ENTRY_STOMP_HOST: activemq
-
-            # We expose grafana for you, but you can change this to an
-            # external grafana URL if you would like. It just adds a
-            # link in our About section if it is defined.
-            BG_METRICS_URL: http://localhost:3000
-            BG_METRICS_PROMETHEUS_ENABLED: "false"
-
-        depends_on:
-            - beer-garden-parent
-            - rabbitmq
-            - mongodb
-            - activemq
 
 networks:
     bg-network:
-        driver: bridge
         name: bg-network
-
-volumes:
-    plugins:
-    plugin-logs:
-    mongo-data:
-    mongo-config:
-    rabbitmq-home:
+        external: true
