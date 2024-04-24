@@ -42,22 +42,49 @@
     >
       <thead>
         <tr>
-          <th id="th_username" scope="col">Username</th>
-          <th id="th_local_roles" scope="col">Local Roles</th>
-          <th id="th_local_roles" scope="col">Remote Roles</th>
+          <th scope="col"></th>
+          <th scope="col">Username</th>
+          <th scope="col">Permissions</th>
+          <th scope="col">Last Login</th>
+          <th scope="col">Roles</th>
+          <th scope="col">Remote Roles</th>
+          <th scope="col">Status</th>
+          <th scope="col"></th>
         </tr>
       </thead>
       <tbody>
         <tr ng-repeat="user in users | filter:query">
+          <td>{{user.username}}</td>
+          <td>GARDEN_ADMIN</td>
+          <td>1 hour ago</td>
+          <td>{{user.local_roles}}</td>
+          <td>{{user.remote_roles}}</td>
           <td>
-            <a ui-sref="base.user_view({username: user.username})"
-              >{{user.username}}</a
-            >
+            <i
+              ng-if="user.fullySynced"
+              class="glyphicon glyphicon-ok"
+              style="color: green"
+              title="true"
+            ></i>
+            <!-- <i
+              ng-if="!user.fullySynced"
+              class="glyphicon glyphicon-remove"
+              style="color: red"
+              title="false"
+            ></i> -->
           </td>
-          <td>Echo_Plugin_Admin</td>
-          <td></td>
-          <!-- <td>{{user.local_roles}}</td>
-          <td>{{user.remote_roles}}</td> -->
+          <td>
+            <span
+              class="fa fa-user pull-right"
+              style="font-size: 20px"
+              title="Info Command"
+            ></span>
+            <span
+              class="fa fa-trash pull-right"
+              style="font-size: 20px"
+              title="Info Command"
+            ></span>
+        </td>
         </tr>
       </tbody>
     </table>
