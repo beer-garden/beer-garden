@@ -17,7 +17,6 @@ x-definitions: &plugin
     networks:
         - bg-network
         - rabbit
-        - mongo
     stop_signal: SIGINT
     deploy:
         restart_policy:

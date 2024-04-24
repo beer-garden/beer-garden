@@ -715,13 +715,8 @@ jobs:
         working-directory: ./test/conf/jmeter_swarm/
 
       - name: Wait for Plugins to start
-        run: sleep 15s
+        run: sleep 60s
         shell: bash
-
-      - name: Grab logs from Plugin
-        if: always()
-        continue-on-error: true
-        run: docker logs --tail 3000 $(docker ps --filter name=beer-plugins_echo.1 --quiet)
 
       - name: Check services
         run: docker service ls

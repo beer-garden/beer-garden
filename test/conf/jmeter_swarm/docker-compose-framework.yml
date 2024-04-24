@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-    beer-garden:
+    beer-garden-parent:
         image: bgio/beer-garden:unstable
         deploy:
             restart_policy:
