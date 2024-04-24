@@ -42,6 +42,3 @@ networks:
     rabbit:
         name: rabbit
         external: true
-    mongo:
-        name: mongo
-        external: true
