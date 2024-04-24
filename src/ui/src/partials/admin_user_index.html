@@ -9,15 +9,6 @@
     >
       Create User
     </button>
-    <!-- <button
-      type="button"
-      class="btn btn-primary"
-      ng-if="displaySyncStatus"
-      ng-click="doSync()"
-      ng-show="hasPermission('GARDEN_ADMIN', global=true)"
-    >
-      Sync Users
-    </button> -->
   </div>
 </h1>
 
@@ -42,48 +33,69 @@
     >
       <thead>
         <tr>
-          <th scope="col"></th>
           <th scope="col">Username</th>
-          <th scope="col">Permissions</th>
+          <th scope="col">Max Permission</th>
           <th scope="col">Last Login</th>
           <th scope="col">Roles</th>
           <th scope="col">Remote Roles</th>
-          <th scope="col">Status</th>
+          <th scope="col">Remote Garden Accounts</th>
+          <th scope="col">Active User Token</th>
           <th scope="col"></th>
         </tr>
       </thead>
       <tbody>
         <tr ng-repeat="user in users | filter:query">
           <td>{{user.username}}</td>
-          <td>GARDEN_ADMIN</td>
-          <td>1 hour ago</td>
-          <td>{{user.local_roles}}</td>
-          <td>{{user.remote_roles}}</td>
+          <td>{{maxPermission(user)}}</td>
+          <td>TIMESTAMP</td>
+          <td>
+            <div ng-repeat="role in user.local_roles">
+              <div title="{{roleTitle(role)}}">{{role.name}}</div>
+            </div>
+          </td>
+          <td>{{rolesList(user.local_roles)}}</td>
+          <!-- <td>cr1, cr2</td> -->
+          <td>
+            child -> ALBERT
+          </td>
           <td>
             <i
-              ng-if="user.fullySynced"
               class="glyphicon glyphicon-ok"
               style="color: green"
-              title="true"
+              title="Active"
             ></i>
             <!-- <i
-              ng-if="!user.fullySynced"
               class="glyphicon glyphicon-remove"
               style="color: red"
-              title="false"
+              title="Inactive"
             ></i> -->
           </td>
           <td>
             <span
-              class="fa fa-user pull-right"
-              style="font-size: 20px"
-              title="Info Command"
-            ></span>
-            <span
               class="fa fa-trash pull-right"
               style="font-size: 20px"
-              title="Info Command"
+              title="Delete User"
             ></span>
+            <span
+              class="fa fa-sign-out pull-right"
+              style="font-size: 20px"
+              title="Delete User Token"
+            ></span>
+            <span
+              class="fa fa-user-plus pull-right"
+              style="font-size: 20px"
+              title="Add/Remove Roles"
+            ></span>
+            <span
+              class="fa fa-globe pull-right"
+              style="font-size: 20px"
+              title="Garden Account Mapping"
+            ></span>
+            <span
+              class="fa fa-pencil pull-right"
+              style="font-size: 20px"
+              title="Change Password"
+            ></span>    
         </td>
         </tr>
       </tbody>

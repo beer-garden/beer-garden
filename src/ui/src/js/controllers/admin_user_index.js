@@ -24,6 +24,63 @@ export default function adminUserIndexController($scope, $uibModal, UserService)
     $scope.users = [];
   };
 
+  $scope.maxPermission = function(user) {
+
+    let permission = "NONE";
+
+    for (const role of user.local_roles){
+      if (role.permission == "GARDEN_ADMIN"){
+        return "GARDEN_ADMIN";
+      }
+      else if (role.permission == "PLUGIN_ADMIN" && ["NONE", "READ_ONLY", "OPERATOR"].contains(permission)){
+        permission = role.permission
+      }
+      else if (role.permission == "OPERATOR" && ["NONE", "READ_ONLY"].contains(permission)){
+        permission = role.permission
+      }
+      else if (role.permission == "READ_ONLY" && ["NONE"].contains(permission)){
+        permission = role.permission
+      }
+    }
+
+    for (const role of user.remote_roles){
+      if (role.permission == "GARDEN_ADMIN"){
+        return "GARDEN_ADMIN";
+      }
+      else if (role.permission == "PLUGIN_ADMIN" && ["NONE", "READ_ONLY", "OPERATOR"].contains(permission)){
+        permission = role.permission
+      }
+      else if (role.permission == "OPERATOR" && ["NONE", "READ_ONLY"].contains(permission)){
+        permission = role.permission
+      }
+      else if (role.permission == "READ_ONLY" && ["NONE"].contains(permission)){
+        permission = role.permission
+      }
+    }
+
+    return permission;
+  }
+
+  $scope.roleTitle = function(role) {
+    let title = role.permission;
+
+    return title;
+  }
+
+  $scope.rolesList = function(roles) {
+    let rolesDisplay = null;
+
+    for (const role of roles) {
+      if (rolesDisplay == null) {
+        rolesDisplay = "<div title='test'>" + role.name + "</div>";
+      } else {
+        rolesDisplay = rolesDisplay + ", " + role.name;
+      }
+    }
+
+    return rolesDisplay;
+  }
+
   $scope.doCreate = function() {
     const modalInstance = $uibModal.open({
       controller: 'NewUserController',

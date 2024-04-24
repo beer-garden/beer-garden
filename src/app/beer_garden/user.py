@@ -10,6 +10,7 @@ from beer_garden.events import publish
 from beer_garden.errors import InvalidPasswordException
 from beer_garden.garden import get_gardens, get_garden
 from beer_garden.role import get_role
+from mongoengine import DoesNotExist
 
 from passlib.apps import custom_app_context
 
@@ -415,24 +416,29 @@ def _create_admin():
     """Create the default admin user if necessary"""
     username = config.get("auth.default_admin.username")
     password = config.get("auth.default_admin.password")
-
-    logger.info("Creating default admin user with username: %s", username)
-
-    admin = User(username=username, roles=["superuser"])
-    set_password(admin, password)
-    db.create(admin)
+    try:
+        admin = get_user(username=username)
+        set_password(admin, password)
+        db.update(admin)
+    except DoesNotExist:
+        logger.info("Creating default admin user with username: %s", username)
+        admin = User(username=username, roles=["superuser"])
+        set_password(admin, password)
+        db.create(admin)
 
 
 
 def _create_plugin_user():
     """Create the default user to run Plugins if necessary"""
     username = config.get("plugin.local.auth.username")
-    plugin_user = get_user(username=username)
-
-    # Sanity check to make sure we don't accidentally create two
-    # users with the same name
-    if not plugin_user:
-        password = config.get("plugin.local.auth.password")
+    password = config.get("plugin.local.auth.password")
+    try:
+        plugin_user = get_user(username=username)
+        set_password(plugin_user, password)
+        db.update(plugin_user)
+    except DoesNotExist:
+        # Sanity check to make sure we don't accidentally create two
+        # users with the same name      
         logger.info("Creating default plugin user with username: %s", username)
         plugin_user = User(username=username, roles=["plugin"])
         set_password(plugin_user, password)
