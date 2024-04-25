@@ -1,9 +1,6 @@
 version: '3.5'
 
 x-definitions: &env
-    # IMPORTANT!!
-    # Change this to whatever you want your garden name / namespace default to be
-
     # If you are running in Ubuntu, then you need to set the Timezone
     # We are actively investigating why this is
     TZ: UTC
@@ -12,14 +9,6 @@ x-definitions: &env
     # Change this to support both local and remote plugins
     # Should be resolvable from inside and outside the docker network
     BG_PLUGIN_MQ_HOST: rabbitmq
-
-    # IMPORTANT!!
-    # If you are connection to a Parent BG instance, toggle true
-
-
-    # IMPORTANT !!
-    # If you are connecting to a Parent BG instance, change this the resolvable DNS entry
-
 
 
 services:
@@ -93,7 +82,6 @@ services:
             - "2337:2337"
         volumes:
             - ./data/logging-config.yaml:/src/example_configs/logging-config.yaml
-            - ./data/localplugins:/plugins
             - ./beer_garden_jmeter_parent_children:/children
         environment:
             <<: *env
@@ -144,7 +132,6 @@ services:
             - "2358:2338"
         volumes:
             - ./data/logging-config.yaml:/src/example_configs/logging-config.yaml
-            - ./data/localplugins:/plugins
         environment:
             <<: *env
 
@@ -191,7 +178,8 @@ services:
 
 networks:
     bg-network:
-        driver: bridge
+        driver: overlay
+        external: true
         name: bg-network
 
 volumes:
