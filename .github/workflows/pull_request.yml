@@ -648,6 +648,7 @@ jobs:
       - name: Update Docker Compose  
         run: |
           cp test/conf/docker-compose-jmeter-test.yml docker/docker-compose/docker-compose.yml
+          cp -r test/conf/beer_garden_jmeter_parent_children docker/docker-compose/
           cp -r test/jmeter docker/docker-compose/data/
 
       - name: Start Docker Swarm
@@ -656,21 +657,17 @@ jobs:
       - name: Make BG Network
         run: docker network create -d overlay --attachable bg-network
 
-      - name: Run Docker RabbitMQ and Mongodb
-        run: docker stack deploy -c docker-compose-support.yml bg_core
-        working-directory: ./test/conf/jmeter_swarm/
+      - name: Run Docker Beer Garden Child
+        run: docker-compose up -d beer-garden-child
+        working-directory: ./docker/docker-compose
 
-      - name: Wait for Mongodb and RabbitMQ to start
-        run: sleep 20s
+      - name: Wait for Beer Garden Child to start
+        run: sleep 10s
         shell: bash
 
-      - name: Copy Data Files
-        run: cp -r docker/docker-compose/data test/conf/jmeter_swarm/
-        working-directory: ./
-
-      - name: Run Docker Beer Garden
-        run: docker stack deploy -c docker-compose-framework.yml beer-garden
-        working-directory: ./test/conf/jmeter_swarm/
+      - name: Run Docker Beer Garden Parent
+        run: docker-compose up -d beer-garden-parent
+        working-directory: ./docker/docker-compose
 
       - name: Wait for Beer Garden to start
         run: sleep 60s
@@ -685,15 +682,17 @@ jobs:
       - name: Check BG
         run: docker service ps --no-trunc beer-garden_beer-garden-parent
 
-      - name: Grab logs from Beer-Garden
+      - name: Grab logs from Beer-Garden-Parent
         if: always()
         continue-on-error: true
-        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden-parent.1 --quiet)
+        run: docker-compose logs --tail 3000 beer-garden-parent
+        working-directory: ./docker/docker-compose
 
       - name: Grab logs from Beer-Garden-Child
         if: always()
         continue-on-error: true
-        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden-child.1 --quiet)
+        run: docker-compose logs --tail 3000 beer-garden-child
+        working-directory: ./docker/docker-compose
       
 
       - name: Cache Mongo Database
