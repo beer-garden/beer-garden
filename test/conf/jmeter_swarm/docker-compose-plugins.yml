@@ -16,7 +16,6 @@ x-definitions: &plugin
     image: bgio/example-plugins
     networks:
         - bg-network
-        - rabbit
     stop_signal: SIGINT
     deploy:
         restart_policy:
@@ -37,7 +36,4 @@ services:
 networks:
     bg-network:
         name: bg-network
-        external: true
-    rabbit:
-        name: rabbit
         external: true

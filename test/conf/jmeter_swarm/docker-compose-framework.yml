@@ -9,9 +9,6 @@ services:
             replicas: 1
         networks:
             - bg-network
-            - rabbit
-            - mongo
-            - activemq
         ports:
             - "2337:2337"
 
@@ -50,9 +47,6 @@ services:
             replicas: 1
         networks:
             - bg-network
-            - rabbit
-            - mongo
-            - activemq
         ports:
             - "3337:2337"
 
@@ -91,15 +85,6 @@ services:
 networks:
     bg-network:
         name: bg-network
-        external: true
-    mongo:
-        name: mongo
-        external: true
-    rabbit:
-        name: rabbit
-        external: true
-    activemq:
-        name: activemq
         external: true
 
 volumes:

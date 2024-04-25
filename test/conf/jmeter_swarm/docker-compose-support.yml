@@ -4,7 +4,7 @@ services:
     mongodb:
         image: mongo:4.2
         networks:
-            - mongo
+            - bg-network
         ports:
           - "27017:27017"
         volumes:
@@ -15,7 +15,7 @@ services:
         image: rabbitmq:3.8-management-alpine
         hostname: rabbitmq
         networks:
-            - rabbit
+            - bg-network
         environment:
             - RABBITMQ_DEFAULT_USER=beer_garden
             - RABBITMQ_DEFAULT_PASS=password
@@ -37,18 +37,12 @@ services:
         volumes:
             - ./data/activemq-config/etc-override-non-ssl:/var/lib/artemis/etc-override
         networks:
-            - activemq
+            - bg-network
 
 networks:
-    mongo:
-        driver: overlay
-        name: mongo
-    rabbit:
-        driver: overlay
-        name: rabbit
-    activemq:
-        driver: overlay
-        name: activemq
+    bg-network:
+        name: bg-network
+        external: true
 
 volumes:
     mongo-data:
