@@ -136,7 +136,10 @@ def create(instance: Instance, system: System) -> dict:
     admin_keys = get_routing_keys(*routing_words, is_admin=True)
     admin_queue_name = admin_keys[-1]
     try:
-        clear(admin_queue_name)
+        if system.local and instance.metadata and instance.metadata.get("runner_id"):
+            clear(admin_queue_name)
+        else:
+            count(admin_queue_name)
     except NotFoundError:
         clients["pika"].setup_queue(
             admin_queue_name,
@@ -222,7 +225,13 @@ def put(request: Request, headers: dict = None, **kwargs) -> None:
 
 
 def count(queue_name: str) -> int:
-    return clients["pyrabbit"].get_queue_size(queue_name)
+    try:
+        return clients["pyrabbit"].get_queue_size(queue_name)
+    except pyrabbit2.http.HTTPError as ex:
+        if ex.status == 404:
+            raise NotFoundError("No queue named %s" % queue_name)
+        else:
+            raise
 
 
 def clear(queue_name: str) -> None:
