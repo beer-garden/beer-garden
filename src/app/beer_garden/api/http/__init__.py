@@ -111,6 +111,7 @@ def _get_published_url_specs(
         (rf"{prefix}api/v1/import/jobs/?", v1.job.JobImportAPI),
         (rf"{prefix}api/v1/password/change/?", v1.user.UserPasswordChangeAPI),
         (rf"{prefix}api/v1/token/?", v1.token.TokenAPI),
+        (rf"{prefix}api/v1/tokens/(\w+)/?", v1.token.TokenListAPI),
         (rf"{prefix}api/v1/token/revoke/?", v1.token.TokenRevokeAPI),
         (rf"{prefix}api/v1/token/refresh/?", v1.token.TokenRefreshAPI),
         (rf"{prefix}api/v1/topics/?", v1.topic.TopicListAPI),

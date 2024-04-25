@@ -1,15 +1,16 @@
 import newUserTemplate from '../../templates/new_user.html';
 import syncUsersTemplate from '../../templates/sync_users.html';
 
-adminUserIndexController.$inject = ['$scope', '$uibModal', 'UserService'];
+adminUserIndexController.$inject = ['$scope', '$uibModal', 'UserService', 'TokenService'];
 
 /**
  * adminUserIndexController - Controller for the user index page.
  * @param  {Object} $scope        Angular's $scope object.
  * @param  {$scope} $uibModal     Angular UI's $uibModal object.
  * @param  {Object} UserService   Beer-Garden's user service.
+ * @param  {Object} TokenService   Beer-Garden's token service.
  */
-export default function adminUserIndexController($scope, $uibModal, UserService) {
+export default function adminUserIndexController($scope, $uibModal, UserService, TokenService) {
   $scope.setWindowTitle('users');
 
   $scope.successCallback = function(response) {
@@ -32,13 +33,13 @@ export default function adminUserIndexController($scope, $uibModal, UserService)
       if (role.permission == "GARDEN_ADMIN"){
         return "GARDEN_ADMIN";
       }
-      else if (role.permission == "PLUGIN_ADMIN" && ["NONE", "READ_ONLY", "OPERATOR"].contains(permission)){
+      else if (role.permission == "PLUGIN_ADMIN" && ["NONE", "READ_ONLY", "OPERATOR"].includes(permission)){
         permission = role.permission
       }
-      else if (role.permission == "OPERATOR" && ["NONE", "READ_ONLY"].contains(permission)){
+      else if (role.permission == "OPERATOR" && ["NONE", "READ_ONLY"].includes(permission)){
         permission = role.permission
       }
-      else if (role.permission == "READ_ONLY" && ["NONE"].contains(permission)){
+      else if (role.permission == "READ_ONLY" && ["NONE"].includes(permission)){
         permission = role.permission
       }
     }
@@ -47,13 +48,13 @@ export default function adminUserIndexController($scope, $uibModal, UserService)
       if (role.permission == "GARDEN_ADMIN"){
         return "GARDEN_ADMIN";
       }
-      else if (role.permission == "PLUGIN_ADMIN" && ["NONE", "READ_ONLY", "OPERATOR"].contains(permission)){
+      else if (role.permission == "PLUGIN_ADMIN" && ["NONE", "READ_ONLY", "OPERATOR"].includes(permission)){
         permission = role.permission
       }
-      else if (role.permission == "OPERATOR" && ["NONE", "READ_ONLY"].contains(permission)){
+      else if (role.permission == "OPERATOR" && ["NONE", "READ_ONLY"].includes(permission)){
         permission = role.permission
       }
-      else if (role.permission == "READ_ONLY" && ["NONE"].contains(permission)){
+      else if (role.permission == "READ_ONLY" && ["NONE"].includes(permission)){
         permission = role.permission
       }
     }
@@ -61,8 +62,40 @@ export default function adminUserIndexController($scope, $uibModal, UserService)
     return permission;
   }
 
+  $scope.getLastAuth = function (user) {
+
+    if (user.metadata === undefined || user.metadata.last_authentication === undefined || user.metadata.last_authentication === null ){
+      return "NEVER"
+    }
+    return formatDate(user.metadata.last_authentication);
+  }
+
   $scope.roleTitle = function(role) {
     let title = role.permission;
+
+    if (role.scope_gardens.length > 0){
+      title += ", Gardens = " + role.scope_gardens;
+    }
+
+    if (role.scope_namespaces.length > 0){
+      title += ", Namespaces = " + role.scope_namespaces;
+    }
+
+    if (role.scope_systems.length > 0){
+      title += ", Systems = " + role.scope_systems;
+    }
+
+    if (role.scope_instances.length > 0){
+      title += ", Instances = " + role.scope_instances;
+    }
+
+    if (role.scope_versions.length > 0){
+      title += ", Versions = " + role.scope_versions;
+    }
+
+    if (role.scope_commands.length > 0){
+      title += ", Commands = " + role.scope_commands;
+    }
 
     return title;
   }
@@ -80,6 +113,18 @@ export default function adminUserIndexController($scope, $uibModal, UserService)
 
     return rolesDisplay;
   }
+
+  $scope.doDelete = function(user) {
+    UserService.deleteUser(user.username).then(
+      loadUsers,
+    );
+  };
+
+  $scope.doRevokeToken = function(user) {
+    TokenService.revokeUserToken(user.username).then(
+      loadUsers,
+    );
+  };
 
   $scope.doCreate = function() {
     const modalInstance = $uibModal.open({

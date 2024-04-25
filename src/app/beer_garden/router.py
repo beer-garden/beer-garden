@@ -169,6 +169,7 @@ route_functions = {
     "TOPIC_DELETE": beer_garden.topic.remove_topic,
     "TOPIC_ADD_SUBSCRIBER": beer_garden.topic.topic_add_subscriber,
     "TOPIC_REMOVE_SUBSCRIBER": beer_garden.topic.topic_remove_subscriber,
+    "TOKEN_USER_DELETE": beer_garden.user.revoke_tokens,
     "ROLE_CREATE": beer_garden.role.create_role,
     "ROLE_UPDATE": beer_garden.role.update_role,
     "ROLE_DELETE": beer_garden.role.delete_role,
@@ -775,6 +776,7 @@ def _target_from_type(operation: Operation) -> str:
         or "JOB" in operation.operation_type
         or "FILE" in operation.operation_type
         or "USER" in operation.operation_type
+        or "TOKEN" in operation.operation_type
         or operation.operation_type
         in (
             "PLUGIN_LOG_RELOAD",

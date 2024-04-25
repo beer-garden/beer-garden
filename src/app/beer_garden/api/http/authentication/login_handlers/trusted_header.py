@@ -5,6 +5,7 @@ from uuid import uuid4
 from box import Box
 from brewtils.schema_parser import SchemaParser
 from brewtils.models import Role, User
+from datetime import datetime
 from marshmallow import Schema, ValidationError, fields, post_load, validates
 from tornado.httputil import HTTPHeaders, HTTPServerRequest
 
@@ -57,11 +58,11 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                         create_user(authenticated_user)
 
                 if authenticated_user:
-
                     if roles:
                         authenticated_user.remote_roles = roles
-                        authenticated_user = update_user(authenticated_user)
 
+                    authenticated_user.metadata["last_authentication"] = datetime.utcnow().timestamp()
+                    authenticated_user = update_user(authenticated_user)
 
         return authenticated_user
     

@@ -17,6 +17,12 @@ from passlib.apps import custom_app_context
 
 logger = logging.getLogger(__name__)
 
+"""
+User Actions should never throw Events. These events get broadcasted to the UI. This
+could cause issues in scenarios where a child garden has authentication and the parent
+does not. Where anyone monitoring the parent events could see unfiltered user updates
+on child.
+"""
 
 def set_password(user: User, password: str = None):
     """This helper should be used to set the user's password, rather than directly
@@ -58,14 +64,15 @@ def delete_token(token: UserToken):
     """
     return db.delete(token)
 
+def has_token(username: str):
+    return db.count(UserToken, username=username) > 0
 
-
-def revoke_tokens(user: User) -> None:
+def revoke_tokens(user: User = None, username: str = None) -> None:
     """Remove all tokens from the user's list of valid tokens. This is useful for
     requiring the user to explicitly login, which one may want to do for a variety
     of reasons.
     """
-    for user_token in db.query(UserToken, user__username=user.username):
+    for user_token in db.query(UserToken, username=user.username if user else username):
         db.delete(user_token)
 
 def get_user(username: str = None, id: str = None, include_roles: bool = True) -> User:
@@ -86,6 +93,8 @@ def get_users() -> list:
     for user in users:
         for role in user.roles:
             user.local_roles.append(get_role(role))
+
+        user.metadata["has_token"] = has_token(user.username)
     return users
 
 
@@ -161,7 +170,7 @@ def update_user(username: str = None, user: User = None, new_password: str = Non
             # Update remote roles, and remote user mappings
             if existing_user.remote_roles != user.remote_roles:
                 # Roles changed, so cached tokens are no longer valid
-                revoke_tokens(existing_user)
+                revoke_tokens(user = existing_user)
             existing_user.remote_roles = user.remote_roles
             existing_user.remote_user_mapping = user.remote_user_mapping
 
@@ -170,7 +179,7 @@ def update_user(username: str = None, user: User = None, new_password: str = Non
     for key, value in kwargs.items():
         if key == "roles":
             # Roles changed, so cached tokens are no longer valid
-            revoke_tokens(user)
+            revoke_tokens(user = user)
         setattr(user, key, value)
 
     user = db.update(user)
@@ -463,7 +472,7 @@ def remove_local_role_assignments_for_role(role: Role) -> int:
         user.roles.remove(role.name)
         update_user(user=user)
         # Roles changed, so cached tokens are no longer valid
-        revoke_tokens(user)
+        revoke_tokens(user = user)
 
     return len(impacted_users)
 

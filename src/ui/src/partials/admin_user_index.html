@@ -47,55 +47,64 @@
         <tr ng-repeat="user in users | filter:query">
           <td>{{user.username}}</td>
           <td>{{maxPermission(user)}}</td>
-          <td>TIMESTAMP</td>
+          <td>{{getLastAuth(user)}}</td>
           <td>
             <div ng-repeat="role in user.local_roles">
               <div title="{{roleTitle(role)}}">{{role.name}}</div>
             </div>
           </td>
-          <td>{{rolesList(user.local_roles)}}</td>
-          <!-- <td>cr1, cr2</td> -->
           <td>
-            child -> ALBERT
+            <div ng-repeat="role in user.remote_roles">
+              <div title="{{roleTitle(role)}}">{{role.name}}</div>
+            </div>
+          </td>
+          <td>
+            <div ng-repeat="remote_user in user.remote_user_mapping">
+              <div>{{remote_user.target_garden}}[{{remote_user.username}}]</div>
+            </div>
           </td>
           <td>
             <i
+              ng-if="user.metadata !== undefined && user.metadata.has_token !== undefined && user.metadata.has_token"
               class="glyphicon glyphicon-ok"
               style="color: green"
               title="Active"
             ></i>
-            <!-- <i
+            <i
+            ng-if="user.metadata === undefined || user.metadata.has_token === undefined ||  !user.metadata.has_token"
               class="glyphicon glyphicon-remove"
               style="color: red"
               title="Inactive"
-            ></i> -->
+            ></i>
           </td>
           <td>
-            <span
+            <button
               class="fa fa-trash pull-right"
               style="font-size: 20px"
+              ng-click="doDelete(user)"
               title="Delete User"
-            ></span>
-            <span
+            ></button>
+            <button
               class="fa fa-sign-out pull-right"
               style="font-size: 20px"
+              ng-click="doRevokeToken(user)"
               title="Delete User Token"
-            ></span>
-            <span
+            ></button>
+            <button
               class="fa fa-user-plus pull-right"
               style="font-size: 20px"
               title="Add/Remove Roles"
-            ></span>
-            <span
+            ></button>
+            <button
               class="fa fa-globe pull-right"
               style="font-size: 20px"
               title="Garden Account Mapping"
-            ></span>
-            <span
+            ></button>
+            <!-- <button
               class="fa fa-pencil pull-right"
               style="font-size: 20px"
               title="Change Password"
-            ></span>    
+            ></button>     -->
         </td>
         </tr>
       </tbody>
