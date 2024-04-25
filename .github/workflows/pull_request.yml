@@ -679,9 +679,6 @@ jobs:
       - name: Check docker
         run: docker ps
 
-      - name: Check BG
-        run: docker service ps --no-trunc beer-garden_beer-garden-parent
-
       - name: Grab logs from Beer-Garden-Parent
         if: always()
         continue-on-error: true
