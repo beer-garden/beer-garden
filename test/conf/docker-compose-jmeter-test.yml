@@ -181,3 +181,10 @@ networks:
         driver: overlay
         external: true
         name: bg-network
+
+volumes:
+    plugins:
+    plugin-logs:
+    mongo-data:
+    mongo-config:
+    rabbitmq-home:
