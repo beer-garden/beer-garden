@@ -13,7 +13,6 @@ services:
 
     rabbitmq:
         image: rabbitmq:3.8-management-alpine
-        hostname: rabbitmq
         networks:
             - bg-network
         environment:
@@ -27,7 +26,6 @@ services:
 
     activemq:
         image: vromero/activemq-artemis:2.16-alpine-latest
-        hostname: activemq
         environment:
             - ARTEMIS_USERNAME=beer_garden
             - ARTEMIS_PASSWORD=password
