@@ -263,9 +263,10 @@ export default function requestIndexController(
         case 'REQUEST_STARTED':
         case 'REQUEST_COMPLETED':
           if ($scope.dtInstance) {
-            $('#newData').css('visibility', 'visible');
             if ($('#autoRefreshCheck').is(':checked')) {
               $scope.dtInstance.reloadData();
+            } else {
+              $('#newData').css('visibility', 'visible');
             }
           }
           break;
