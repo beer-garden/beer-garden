@@ -93,12 +93,33 @@ export default function runDTRenderer(DTRendererService) {
         $('.dataTables_length').append(refreshButton);
       }
 
+
+      if (options && options.autoRefresh) {
+        const autoRefresh = $('<span>')
+            .attr('id', 'autoRefreshContainer')
+            .css('margin-left', '20px')
+            //.css('margin-bottom', '5px')
+            .append(
+              $('<input>')
+                  .attr('id', 'autoRefreshCheck')
+                  .attr('type', 'checkbox')
+                  .css('margin-top', '-4px')
+            )
+            .append(
+                  $('<label>')
+                    .attr('for', 'autoRefreshCheck')
+                    .css('padding-left', '4px')
+                    .text('Auto Refresh')
+            );
+          $('.dataTables_length').append(autoRefresh);
+      }
+
       if (options && options.newData) {
         const newData = $('<span>')
             .attr('id', 'newData')
             .css('margin-left', '20px')
             .css('margin-bottom', '5px')
-            .css('visiblity', 'hidden')
+            .css('visibility', 'hidden')
             .append(
                 $('<span>')
                     .addClass('glyphicon')
