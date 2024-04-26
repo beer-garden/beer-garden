@@ -87,6 +87,7 @@ export default function requestIndexController(
       .withOption('order', [6, 'desc'])
       .withOption('serverSide', true)
       .withOption('refreshButton', true)
+      .withOption('autoRefresh', true)
       .withOption('childContainer', true)
       .withOption('hiddenRequestContainer', true)
       .withOption('newData', true)
@@ -262,7 +263,11 @@ export default function requestIndexController(
         case 'REQUEST_STARTED':
         case 'REQUEST_COMPLETED':
           if ($scope.dtInstance) {
-            $('#newData').css('visibility', 'visible');
+            if ($('#autoRefreshCheck').is(':checked')) {
+              $scope.dtInstance.reloadData();
+            } else {
+              $('#newData').css('visibility', 'visible');
+            }
           }
           break;
       }
