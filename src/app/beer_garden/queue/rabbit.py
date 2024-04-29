@@ -136,7 +136,11 @@ def create(instance: Instance, system: System) -> dict:
     admin_keys = get_routing_keys(*routing_words, is_admin=True)
     admin_queue_name = admin_keys[-1]
     try:
-        if exists(admin_queue_name) and instance.metadata and instance.metadata.get("runner_id"):
+        if (
+            exists(admin_queue_name)
+            and instance.metadata
+            and instance.metadata.get("runner_id")
+        ):
             clear(admin_queue_name)
     except NotFoundError:
         clients["pika"].setup_queue(
@@ -232,6 +236,7 @@ def exists(queue_name: str) -> bool:
         else:
             raise
 
+
 def count(queue_name: str) -> int:
     return clients["pyrabbit"].get_queue_size(queue_name)
 
@@ -314,7 +319,7 @@ class PyrabbitClient(object):
 
     def get_queue(self, queue_name: str) -> dict:
         """Get queue dictionary
-        
+
         Args:
             queue_name: The queue name
         """
