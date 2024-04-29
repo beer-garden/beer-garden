@@ -3,10 +3,10 @@ from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.api.http.base_handler import BaseHandler
+from beer_garden.api.http.handlers import AuthorizationHandler
 
 
-class RunnerAPI(BaseHandler):
+class RunnerAPI(AuthorizationHandler):
     parser = SchemaParser()
 
     async def get(self, runner_id):
@@ -142,7 +142,7 @@ class RunnerAPI(BaseHandler):
         self.write(response)
 
 
-class RunnerListAPI(BaseHandler):
+class RunnerListAPI(AuthorizationHandler):
     parser = SchemaParser()
 
     async def get(self):

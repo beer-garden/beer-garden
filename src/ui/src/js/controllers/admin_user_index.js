@@ -1,5 +1,6 @@
 import newUserTemplate from '../../templates/new_user.html';
 import syncUsersTemplate from '../../templates/sync_users.html';
+import addRemoveRoles from '../../templates/add_remove_roles.html';
 
 adminUserIndexController.$inject = ['$scope', '$uibModal', 'UserService', 'TokenService'];
 
@@ -144,6 +145,19 @@ export default function adminUserIndexController($scope, $uibModal, UserService,
         // We don't really need to do anything if canceled
         () => {},
     );
+  };
+
+  $scope.showLogs = function(user) {
+    
+    $uibModal.open({
+      template: addRemoveRoles,
+      resolve: {
+        user: user,
+      },
+      controller: 'addRemoveRolesController',
+      windowClass: 'app-modal-window',
+    });
+    
   };
 
   $scope.doSync = function() {
