@@ -172,7 +172,7 @@ export default function adminUserIndexController($scope, $uibModal, UserService,
       resolve: {
         user: $scope.updateUser,
       },
-      controller: 'addRemoveRolesController',
+      controller: 'userGardenAccountsController',
       windowClass: 'app-modal-window',
     });
     

@@ -39,13 +39,14 @@
                 </td>
             </tr>
             <tr ng-repeat="account in user.remote_user_mapping">
-                <td>{{findParent(account.garden)}}</td>
+                <td>{{findParentGarden(account.garden)}}</td>
                 <td>{{account.garden}}</td>
                 <td>
                     <input class=""
                            type="text"
                            style="width: 100%"
                            ng-model="account.username"
+                           placeholder="{{findDefaultUsername(account.garden)}}"
                     >
                 </td>
             </tr>

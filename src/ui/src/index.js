@@ -111,6 +111,7 @@ import {
   newRoleController,
 } from './js/controllers/admin_role.js';
 import addRemoveRolesController from './js/controllers/add_remove_roles.js';
+import userGardenAccountsController from './js/controllers/user_garden_accounts.js';
 import adminGardenController from './js/controllers/admin_garden.js';
 import commandIndexController from './js/controllers/command_index.js';
 import commandViewController from './js/controllers/command_view.js';
@@ -226,6 +227,7 @@ angular
     .controller('AdminUserIndexController', adminUserIndexController)
     .controller('AdminUserViewController', adminUserViewController)
     .controller('addRemoveRolesController', addRemoveRolesController)
+    .controller('userGardenAccountsController', userGardenAccountsController)
     .controller('NewUserController', newUserController)
     .controller('SyncUsersController', syncUsersController)
     .controller('AdminRoleController', adminRoleController)
