@@ -19,7 +19,18 @@ export default function userService($http, GardenService, SystemService) {
       return $http.delete('api/v1/users/' + userName);
     },
     updateUser: (userName, userData) => {
-      return $http.patch('api/v1/users/' + userName, userData);
+      return $http.patch('api/v1/users/' + userName, {
+        operation: 'update',
+        path: '',
+        value: userData,
+      });
+    },
+    updateUserRoles: (userName, userData) => {
+      return $http.patch('api/v1/users/' + userName, {
+        operation: 'update_roles',
+        path: '',
+        value: {'roles':userData.roles},
+      });
     },
     getUsers: () => {
       return $http.get('api/v1/users/');

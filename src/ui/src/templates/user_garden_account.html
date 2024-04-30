@@ -1,0 +1,76 @@
+<div class="modal-header">
+    <h3 class="modal-title" id="modal-title">Manage Garden Account Mappings for {{user.username}}</h3>
+</div>
+<div class="modal-body" id="modal-body">
+    <table
+            id="roleIndexTable"
+            datatable="ng"
+            dt-options="dtOptions"
+            dt-instance="instanceCreated"
+            class="table table-striped table-bordered"
+            style="width: 100%"
+    >
+        <thead>
+            <th scope="col">Parent</th>
+            <th scope="col">Garden</th>
+            <th scope="col">Username</th>
+        </thead>
+        <tbody>
+            <tr>
+                <td>GARDEN</td>
+                <td>ONE</td>
+                <td>
+                <input class=""
+                           type="text"
+                           style="width: 100%"
+                           value="foo"
+                    >
+                </td>
+            </tr>
+            <tr>
+                <td>ONE</td>
+                <td>TWO</td>
+                <td>
+                <input class=""
+                           type="text"
+                           style="width: 100%"
+                           placeholder="foo"
+                    >
+                </td>
+            </tr>
+            <tr ng-repeat="account in user.remote_user_mapping">
+                <td>{{findParent(account.garden)}}</td>
+                <td>{{account.garden}}</td>
+                <td>
+                    <input class=""
+                           type="text"
+                           style="width: 100%"
+                           ng-model="account.username"
+                    >
+                </td>
+            </tr>
+        </tbody>
+
+    </table>
+</div>
+<div class="modal-footer" id="modal-footer">
+    <input
+            type="submit"
+            ng-disabled="canSubmit()"
+            class="btn btn-primary"
+            value="Submit"
+            ng-click="submitRoles()"
+    />
+    <input
+            type="button"
+            class="btn btn-danger"
+            value="Reset"
+            ng-click="resetSubmission()"
+    />
+    <input
+            type="button"
+            class="btn btn-primary"
+            value="Close"
+            ng-click="close()"
+    />
+</div>

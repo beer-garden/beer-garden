@@ -1,4 +1,4 @@
-addRemoveRolesController.$inject = ['$scope', '$uibModalInstance', 'UserService', 'RoleService'];
+addRemoveRolesController.$inject = ['$scope', '$uibModalInstance', 'UserService', 'RoleService', 'user'];
 
 /**
  * addRemoveRolesController - Controller for change user roles modal.
@@ -9,47 +9,84 @@ addRemoveRolesController.$inject = ['$scope', '$uibModalInstance', 'UserService'
  * @param  {Object} User               User model to modify
  */
 export default function addRemoveRolesController($scope, $uibModalInstance, UserService, RoleService, user) {
-    $scope.cancel = function() {
+    $scope.close = function() {
         $uibModalInstance.close();
       };
     
     $scope.user = user;
-    $scope.user_roles = [...user.local_roles];
+    // $scope.user.local_roles = [];
+    $scope.user_roles = [...user.roles];
+    $scope.data = [];
 
-    $scope.selectAllValue = false;
-
-    $scope.selectAll = function() {
-    const filteredData = $scope.dtInstance.DataTable.rows( {search: 'applied'} ).data();
-    
-    $scope.selectAllValue = !$scope.selectAllValue;
-        for (let i = 0; i < filteredData.length; i++) {
-            const role = $scope.data.find((item) => item.name === filteredData[i][1]);
-            if ($scope.selectAllValue && !$scope.user_roles.includes(role.name)){
-                $scope.user_roles.push(role.name)
-            } else if (!$scope.selectAllValue && $scope.user_roles.includes(role.name)) {
-                $scope.user_roles = $scope.user_roles.splice($scope.user_roles.indexOf(role.name), 1);
-            }
+    $scope.resetSubmission = function() {
+        $scope.user_roles = [];
+        for (let i = 0; i < $scope.user.local_roles.length; i++) {
+            $scope.user_roles.push($scope.user.local_roles[i].name)
         }
-    };
 
-    $scope.cancelSubmission = function() {
-        $scope.user_roles = [...user.local_roles];
+        for (let i = 0; i < $scope.data.length; i++) {
+            $scope.data[i].is_checked = $scope.user.roles.includes($scope.data[i].name)
+        }
+    }
+
+    $scope.localRolesContains = function (role) {
+        return $scope.user_roles.includes(role);
+    }
+
+    $scope.onRoleCheckChange = function (role) {
+        if (!$scope.user_roles.includes(role.name) && !role.is_checked){
+            $scope.user_roles.push(role.name);
+        } else  if ($scope.user_roles.includes(role.name) && role.is_checked){
+            $scope.user_roles.splice($scope.user_roles.indexOf(role.name), 1);
+        }
     }
 
     $scope.submitRoles = function() {
-        $scope.user.local_roles = $scope.user_roles;
+        $scope.user.roles = $scope.user_roles;
 
-        UserService.updateUser($scope.user.username, $scope.user);
+        UserService.updateUserRoles($scope.user.username, $scope.user);
     }
 
     $scope.data = RoleService.getRoles().then(
         (responses) => {
-            $scope.data = responses.roles;
+            $scope.data = responses.data;
+            for (let i = 0; i < $scope.data.length; i++) {
+                $scope.data[i].is_checked = $scope.user.roles.includes($scope.data[i].name)
+            }
         },
         (response) => {
             $scope.response = response;
         },
     )
 
+    $scope.roleTitle = function(role) {
+        let title = role.permission;
+    
+        if (role.scope_gardens.length > 0){
+          title += ", Gardens = " + role.scope_gardens;
+        }
+    
+        if (role.scope_namespaces.length > 0){
+          title += ", Namespaces = " + role.scope_namespaces;
+        }
+    
+        if (role.scope_systems.length > 0){
+          title += ", Systems = " + role.scope_systems;
+        }
+    
+        if (role.scope_instances.length > 0){
+          title += ", Instances = " + role.scope_instances;
+        }
+    
+        if (role.scope_versions.length > 0){
+          title += ", Versions = " + role.scope_versions;
+        }
+    
+        if (role.scope_commands.length > 0){
+          title += ", Commands = " + role.scope_commands;
+        }
+    
+        return title;
+      }
 
 }

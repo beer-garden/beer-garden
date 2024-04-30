@@ -10,7 +10,10 @@ from beer_garden.api.http.schemas.v1.user import (
 )
 from beer_garden.errors import InvalidPasswordException
 
+
 class UserAPI(AuthorizationHandler):
+    parser = SchemaParser()
+
     async def get(self, username):
         """
         ---
@@ -113,14 +116,17 @@ class UserAPI(AuthorizationHandler):
         for op in patch:
             operation = op.operation.lower()
 
-            if operation == "update":
+            if operation == "update_roles":
                 response = await self.process_operation(
-                        Operation(
-                            operation_type="USER_UPDATE",
-                            kwargs=op.value,
-                            args=[username],
-                        )
+                    Operation(
+                        operation_type="USER_UPDATE",
+                        kwargs={
+                            "username": username,
+                            "roles": op.value["roles"],
+                            "local_roles": [],
+                        },
                     )
+                )
 
         self.write(response)
 
@@ -147,7 +153,7 @@ class UserListAPI(AuthorizationHandler):
             Operation(
                 operation_type="USER_READ_ALL",
             )
-        ) 
+        )
 
         self.write(response)
 
@@ -178,18 +184,11 @@ class UserListAPI(AuthorizationHandler):
         self.minimum_permission = self.GARDEN_ADMIN
         self.verify_user_global_permission()
 
-        user_model = self.parser.parse_user(
-            self.request.decoded_body, from_string=True
-        )
-        
+        user_model = self.parser.parse_user(self.request.decoded_body, from_string=True)
 
         response = await self.process_operation(
-            Operation(
-                operation_type="USER_CREATE",
-                args=[user_model]
-            )
-        ) 
-
+            Operation(operation_type="USER_CREATE", args=[user_model])
+        )
 
         self.write(response)
         self.set_status(201)
@@ -227,16 +226,20 @@ class UserPasswordChangeAPI(AuthorizationHandler):
         except ValidationError as exc:
             raise BadRequest(reason=f"{exc}")
 
-        try: 
-          await self.process_operation(
-              Operation(
-                  operation_type="USER_UPDATE",
-                  kwargs = {"user": user, "current_password":password_data["current_password"], "new_password":password_data["new_password"]}
-              )
-          ) 
+        try:
+            await self.process_operation(
+                Operation(
+                    operation_type="USER_UPDATE",
+                    kwargs={
+                        "user": user,
+                        "current_password": password_data["current_password"],
+                        "new_password": password_data["new_password"],
+                    },
+                )
+            )
         except InvalidPasswordException as exc:
             raise BadRequest(reason=f"{exc}")
-        
+
         self.set_status(204)
 
 

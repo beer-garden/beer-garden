@@ -1,6 +1,7 @@
 import newUserTemplate from '../../templates/new_user.html';
 import syncUsersTemplate from '../../templates/sync_users.html';
 import addRemoveRoles from '../../templates/add_remove_roles.html';
+import userGardenAccounts from '../../templates/user_garden_account.html';
 
 adminUserIndexController.$inject = ['$scope', '$uibModal', 'UserService', 'TokenService'];
 
@@ -147,12 +148,29 @@ export default function adminUserIndexController($scope, $uibModal, UserService,
     );
   };
 
-  $scope.showLogs = function(user) {
+  $scope.showAddRemoveRoles = function(user) {
+
+    $scope.updateUser = user;
     
     $uibModal.open({
       template: addRemoveRoles,
       resolve: {
-        user: user,
+        user: $scope.updateUser,
+      },
+      controller: 'addRemoveRolesController',
+      windowClass: 'app-modal-window',
+    });
+    
+  };
+
+  $scope.showUserGardenAccounts = function(user) {
+
+    $scope.updateUser = user;
+    
+    $uibModal.open({
+      template: userGardenAccounts,
+      resolve: {
+        user: $scope.updateUser,
       },
       controller: 'addRemoveRolesController',
       windowClass: 'app-modal-window',
