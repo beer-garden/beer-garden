@@ -144,26 +144,6 @@ export default function routeConfig(
           request: null,
           id: null,
         },
-        resolve: {
-          system: [
-            '$stateParams',
-            'SystemService',
-            ($stateParams, SystemService) => {
-              return SystemService.findSystem(
-                  $stateParams.namespace,
-                  $stateParams.systemName,
-                  $stateParams.systemVersion,
-              );
-            },
-          ],
-          command: [
-            '$stateParams',
-            'system',
-            ($stateParams, system) => {
-              return _.find(system.commands, {name: $stateParams.commandName});
-            },
-          ],
-        },
       })
       .state('base.jobs', {
         url: 'jobs/',

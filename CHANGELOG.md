@@ -12,6 +12,7 @@ TBD
 - Fixed bug where Garden unresponsive metadata was cleared during child garden shutdown
 - Fixed bug where tailing plugin logs fails if the logs are not updating
 - Fixed bug where locally connected plugin commands ran as TEMP did not auto delete after completion
+- Fixed bug where commands page did not load properly if opened up directly
 
 # 3.25.0
 
