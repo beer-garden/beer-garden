@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
-from typing import List, Optional, Tuple, Type, Union
+from typing import List, Optional, Type, Union
 
 import brewtils.models
 from box import Box

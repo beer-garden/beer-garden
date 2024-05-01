@@ -6,7 +6,6 @@ in Beer-Garden will be initialized within this class.
 """
 import logging
 import signal
-from datetime import timedelta
 from functools import partial
 from multiprocessing.managers import BaseManager
 from typing import Callable

@@ -6,7 +6,6 @@ from typing import List, Tuple
 from brewtils.errors import ModelValidationError
 from brewtils.models import Event, Events
 from brewtils.schema_parser import SchemaParser
-from brewtils.stoppable_thread import StoppableThread
 from mongoengine import Q
 from mongoengine.errors import DoesNotExist
 

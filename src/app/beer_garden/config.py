@@ -729,9 +729,7 @@ _DB_SPEC = {
         "prune_interval": {
             "type": "int",
             "default": 15,
-            "description": (
-                "Number of minutes to wait before running db pruner"
-            ),
+            "description": ("Number of minutes to wait before running db pruner"),
         },
         "connection": {
             "type": "dict",
