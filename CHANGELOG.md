@@ -13,6 +13,7 @@ TBD
 - Fixed bug where tailing plugin logs fails if the logs are not updating
 - Fixed bug where locally connected plugin commands ran as TEMP did not auto delete after completion
 - Fixed bug where `Pour It Again` on Request View page was generated before Systems were loaded from API
+- Fixed bug where Autobrew plugins passed PLUGIN_ARGS to Client class
 
 # 3.25.0
 
