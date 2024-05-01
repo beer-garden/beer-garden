@@ -136,10 +136,12 @@ def create(instance: Instance, system: System) -> dict:
     admin_keys = get_routing_keys(*routing_words, is_admin=True)
     admin_queue_name = admin_keys[-1]
     try:
-        if system.local and instance.metadata and instance.metadata.get("runner_id"):
+        if (
+            exists(admin_queue_name)
+            and instance.metadata
+            and instance.metadata.get("runner_id")
+        ):
             clear(admin_queue_name)
-        else:
-            count(admin_queue_name)
     except NotFoundError:
         clients["pika"].setup_queue(
             admin_queue_name,
@@ -224,9 +226,10 @@ def put(request: Request, headers: dict = None, **kwargs) -> None:
     clients["pika"].publish(SchemaParser.serialize_request(request), **kwargs)
 
 
-def count(queue_name: str) -> int:
+def exists(queue_name: str) -> bool:
+    """Verify if queue exists"""
     try:
-        return clients["pyrabbit"].get_queue_size(queue_name)
+        return bool(clients["pyrabbit"].get_queue(queue_name))
     except pyrabbit2.http.HTTPError as ex:
         if ex.status == 404:
             raise NotFoundError("No queue named %s" % queue_name)
@@ -234,8 +237,11 @@ def count(queue_name: str) -> int:
             raise
 
 
+def count(queue_name: str) -> int:
+    return clients["pyrabbit"].get_queue_size(queue_name)
+
+
 def clear(queue_name: str) -> None:
-    logger.debug("Clearing queue %s", queue_name)
     try:
         clients["pyrabbit"].clear_queue(queue_name)
     except pyrabbit2.http.HTTPError as ex:
@@ -310,6 +316,14 @@ class PyrabbitClient(object):
         except Exception:
             self.logger.error("Error creating admin queue expiration policy")
             raise
+
+    def get_queue(self, queue_name: str) -> dict:
+        """Get queue dictionary
+
+        Args:
+            queue_name: The queue name
+        """
+        return self._client.get_queue(self._virtual_host, queue_name)
 
     def get_queue_size(self, queue_name: str) -> int:
         """Get the number of messages in a queue.
