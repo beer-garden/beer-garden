@@ -18,6 +18,8 @@ from builtins import str
 from copy import deepcopy
 from datetime import datetime
 from typing import Dict, List, Sequence, Union
+from packaging.version import InvalidVersion
+from packaging.version import parse as versionParse
 
 import six
 import urllib3
@@ -584,6 +586,35 @@ def get_requests(**kwargs) -> List[Request]:
 
     """
     return db.query(Request, **kwargs)
+
+
+def determine_latest_system_version(request: Request):
+    if request.system_version and request.system_version.lower() != "latest":
+        return request
+    
+    systems = db.query(
+        System,
+        filter_params={
+            "namespace": request.namespace,
+            "name": request.system,
+        },
+    )
+
+    versions = []
+    legacy_versions = []
+
+    for system in systems:
+        try:
+            versions.append(versionParse(system.version))
+        except InvalidVersion:
+            legacy_versions.append(system.version)
+
+    eligible_versions = versions if versions else legacy_versions
+
+    if eligible_versions:
+        request.system_version = str(sorted(eligible_versions, reverse=True)[0])
+
+    return request
 
 
 # TODO: Add support for Request Delete event type

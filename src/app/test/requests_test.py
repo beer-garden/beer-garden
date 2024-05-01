@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import pytest
 from box import Box
 from brewtils.errors import ModelValidationError
-from brewtils.models import Choices, Command, Event, Events, Parameter
+from brewtils.models import Choices, Command, Event, Events, Parameter, System
 from brewtils.models import Garden as BrewtilsGarden
 from brewtils.models import Request as BrewtilsRequest
 from mock import Mock, call, patch
@@ -13,8 +13,9 @@ from mongomock.gridfs import enable_gridfs_integration
 import beer_garden.config
 import beer_garden.requests
 from beer_garden.db.mongo.models import Request, Garden
-from beer_garden.requests import RequestValidator
+from beer_garden.requests import RequestValidator, determine_latest_system_version
 from beer_garden.garden import create_garden
+from beer_garden.systems import create_system
 
 enable_gridfs_integration()
 
@@ -1121,3 +1122,76 @@ class TestHandleEvent:
         updated_request = Request.objects.get(id=child_garden_request.id)
 
         assert updated_request.status_updated_at == status_updated_at
+
+
+class TestLatestRequest(object):
+
+    @pytest.fixture
+    def system_v1(self):
+        yield create_system(
+            System(
+                name="original",
+                version="1.0.0",
+                namespace="beer_garden",
+                commands=[Command(name="original")],
+            )
+        )
+
+        beer_garden.db.mongo.models.System.drop_collection()
+
+    @pytest.fixture
+    def system_v2(self):
+        yield create_system(
+            System(
+                name="original",
+                version="2.0.0",
+                namespace="beer_garden",
+                commands=[Command(name="original")],
+            )
+        )
+
+        beer_garden.db.mongo.models.System.drop_collection()
+
+    def test_v1_request(self, system_v1):
+        latest_request = determine_latest_system_version(
+            Request(system="original", namespace="beer_garden", system_version = "latest")
+        )
+
+        assert latest_request.system_version == system_v1.version
+
+    def test_v2_request(self, system_v2):
+        latest_request = determine_latest_system_version(
+            Request(system="original", namespace="beer_garden", system_version = "latest")
+        )
+
+        assert latest_request.system_version == system_v2.version
+
+    def test_latest_request(self, system_v1, system_v2):
+        latest_request = determine_latest_system_version(
+            Request(system="original", namespace="beer_garden", system_version = "latest")
+        )
+
+        assert latest_request.system_version != system_v1.version
+        assert latest_request.system_version == system_v2.version
+
+    def test_v1_request_no_version(self, system_v1):
+        latest_request = determine_latest_system_version(
+            Request(system="original", namespace="beer_garden")
+        )
+
+        assert latest_request.system_version == system_v1.version
+
+    def test_v2_request_no_version(self, system_v2):
+        latest_request = determine_latest_system_version(
+            Request(system="original", namespace="beer_garden")
+        )
+
+        assert latest_request.system_version == system_v2.version
+
+    def test_latest_request_no_version(self, system_v1, system_v2):
+        latest_request = determine_latest_system_version(
+            Request(system="original", namespace="beer_garden")
+        )
+
+        assert latest_request.system_version != system_v1.version
+        assert latest_request.system_version == system_v2.version

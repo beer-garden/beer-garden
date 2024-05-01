@@ -7,6 +7,8 @@ TBD
 - Added auto refresh checkbox to requests page
 - Added support for cross-server parent/child requests
 - Reuse existing rabbit admin queue by purging messages instead of creating new queue
+- Migrates `Latest` system version from SystemClient to Request API supported
+- Adds support for filtering `SystemsList` API on `filter_latest` to return only latest version of each system
 - Fixed bug where Auto brew plugins did not parse NAME/VERSION properly from the beer.conf
 - Fixed bug where unresponsive Garden API was referencing a non existing configuration for default. New default is -1.
 - Fixed bug where Garden unresponsive metadata was cleared during child garden shutdown
