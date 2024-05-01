@@ -10,8 +10,6 @@ commandViewController.$inject = [
   '$q',
   'RequestService',
   'SFBuilderService',
-  'system',
-  'command',
 ];
 
 /**
@@ -36,10 +34,7 @@ export default function commandViewController(
     $q,
     RequestService,
     SFBuilderService,
-    system,
-    command,
 ) {
-  let tempResponse = $rootScope.gardensResponse;
 
   $scope.schema = {};
   $scope.form = [];
@@ -49,8 +44,6 @@ export default function commandViewController(
   $scope.template = '';
   $scope.manualOverride = false;
   $scope.manualModel = '';
-
-  $scope.system = system;
 
   $scope.jsonValues = {
     model: '',
@@ -228,8 +221,20 @@ export default function commandViewController(
     $scope.jsonValues.form = JSON.stringify($scope.form, undefined, 2);
   };
 
-  $scope.successCallback = function(command) {
-    $scope.command = command;
+  $scope.successCallback = function(systems) {
+
+    for (let i = 0; i < systems.length; i++) {
+      let system = systems[i];
+      if (system.namespace == $stateParams.namespace &&
+        (system.display_name || system.name) == $stateParams.systemName &&
+        system.version == $stateParams.systemVersion) {
+        $scope.system = system;
+        break;
+      }
+    }
+
+    $scope.command = _.find($scope.system.commands, {name: $stateParams.commandName});
+
     $scope.jsonValues.command = JSON.stringify($scope.command, undefined, 2);
 
     // If this command has a custom template then we're done!
@@ -240,12 +245,11 @@ export default function commandViewController(
       } else {
         $scope.template = $scope.command.template;
       }
-
-      $scope.response = $rootScope.gardensResponse;
+   
     } else {
       generateSF();
     }
-
+    
     $scope.breadCrumbs = [
       $scope.system.namespace,
       $scope.system.display_name || $scope.system.name,
@@ -259,10 +263,11 @@ export default function commandViewController(
         $scope.system.version,
         'command',
     );
+
+    $scope.response = $rootScope.gardensResponse;
   };
 
   $scope.failureCallback = function(response) {
-    tempResponse = response;
     $scope.response = response;
     $scope.command = [];
     $scope.setWindowTitle();
@@ -316,10 +321,17 @@ export default function commandViewController(
   // Model instantiate button will emit this so need to listen for it
   $scope.$on('generateSF', generateSF);
 
-  // Stop the loading animation after the schema form is done
-  $scope.$on('sf-render-finished', () => {
-    $scope.response = tempResponse;
-  });
-
-  $scope.successCallback(command);
+  if ($rootScope.gardensResponse !== undefined){
+    $scope.successCallback($rootScope.systems);
+  } 
+  else {
+    setTimeout(function delaySystemLoad() {
+      if ($rootScope.gardensResponse !== undefined){
+        $scope.successCallback($rootScope.systems);
+        $scope.$digest();
+      } else {
+        setTimeout(delaySystemLoad, 10);
+      }
+    }, 10);
+  }
 }
