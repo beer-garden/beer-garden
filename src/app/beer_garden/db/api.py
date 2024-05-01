@@ -8,8 +8,8 @@ check_connection = beer_garden.db.mongo.api.check_connection
 create_connection = beer_garden.db.mongo.api.create_connection
 initial_setup = beer_garden.db.mongo.api.initial_setup
 
-get_pruner = beer_garden.db.mongo.api.get_pruner
-prune_tasks = beer_garden.db.mongo.api.prune_tasks
+# get_pruner = beer_garden.db.mongo.api.get_pruner
+# prune_tasks = beer_garden.db.mongo.api.prune_tasks
 
 get_job_store = beer_garden.db.mongo.api.get_job_store
 

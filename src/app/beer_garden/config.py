@@ -726,6 +726,13 @@ _DB_SPEC = {
             "description": "Name of the database to use",
             "previous_names": ["db_name"],
         },
+        "prune_interval": {
+            "type": "int",
+            "default": 15,
+            "description": (
+                "Number of minutes to wait before running db pruner"
+            ),
+        },
         "connection": {
             "type": "dict",
             "items": {
