@@ -11,7 +11,6 @@ The system service is responible for:
 import copy
 import logging
 from typing import List, Sequence
-from packaging.version import InvalidVersion, parse
 
 from brewtils.errors import (
     BrewtilsException,
@@ -21,6 +20,7 @@ from brewtils.errors import (
 )
 from brewtils.models import Command, Event, Events, Instance, System
 from brewtils.schemas import SystemSchema
+from packaging.version import InvalidVersion, parse
 
 import beer_garden.config as config
 import beer_garden.db.api as db

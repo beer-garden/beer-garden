@@ -18,8 +18,6 @@ from builtins import str
 from copy import deepcopy
 from datetime import datetime
 from typing import Dict, List, Sequence, Union
-from packaging.version import InvalidVersion
-from packaging.version import parse as versionParse
 
 import six
 import urllib3
@@ -33,6 +31,8 @@ from brewtils.errors import (
 from brewtils.models import Choices, Events, Operation, Request, RequestTemplate, System
 from brewtils.pika import PERSISTENT_DELIVERY_MODE
 from mongoengine import DoesNotExist
+from packaging.version import InvalidVersion
+from packaging.version import parse as versionParse
 from requests import Session
 
 import beer_garden.config as config
