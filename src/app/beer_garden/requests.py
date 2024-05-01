@@ -591,7 +591,7 @@ def get_requests(**kwargs) -> List[Request]:
 def determine_latest_system_version(request: Request):
     if request.system_version and request.system_version.lower() != "latest":
         return request
-    
+
     systems = db.query(
         System,
         filter_params={

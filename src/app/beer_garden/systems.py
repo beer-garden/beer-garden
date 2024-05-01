@@ -63,7 +63,7 @@ def get_systems(**kwargs) -> List[System]:
 
     if not filter_latest or not systems:
         return systems
-    
+
     group_systems = {}
 
     for system in systems:
@@ -82,32 +82,33 @@ def get_systems(**kwargs) -> List[System]:
             latest_systems.append(_determine_latest(group_systems[group_key]))
 
     return latest_systems
-    
+
+
 def _determine_latest(systems):
-        # type: (Iterable[System]) -> Optional[System]
-        """Returns the system with the latest version from the provided list of Systems.
-        Any version adhering to PEP440 is treated as "later" than a version that does
-        not adhere to that standard.
-        """
-        versions = []
-        legacy_versions = []
-        system_versions_map = {}
+    # type: (Iterable[System]) -> Optional[System]
+    """Returns the system with the latest version from the provided list of Systems.
+    Any version adhering to PEP440 is treated as "later" than a version that does
+    not adhere to that standard.
+    """
+    versions = []
+    legacy_versions = []
+    system_versions_map = {}
 
-        for system in systems:
-            try:
-                versions.append(parse(system.version))
-                system_versions_map[str(parse(system.version))] = system
-            except InvalidVersion:
-                legacy_versions.append(system.version)
-                system_versions_map[system.version] = system
+    for system in systems:
+        try:
+            versions.append(parse(system.version))
+            system_versions_map[str(parse(system.version))] = system
+        except InvalidVersion:
+            legacy_versions.append(system.version)
+            system_versions_map[system.version] = system
 
-        eligible_versions = versions if versions else legacy_versions
+    eligible_versions = versions if versions else legacy_versions
 
-        if eligible_versions:
-            latest_version = sorted(eligible_versions, reverse=True)[0]
-            return system_versions_map.get(str(latest_version))
-        else:
-            return None 
+    if eligible_versions:
+        latest_version = sorted(eligible_versions, reverse=True)[0]
+        return system_versions_map.get(str(latest_version))
+    else:
+        return None
 
 
 @publish_event(Events.SYSTEM_CREATED)

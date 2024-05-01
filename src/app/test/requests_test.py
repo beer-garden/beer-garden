@@ -1154,21 +1154,21 @@ class TestLatestRequest(object):
 
     def test_v1_request(self, system_v1):
         latest_request = determine_latest_system_version(
-            Request(system="original", namespace="beer_garden", system_version = "latest")
+            Request(system="original", namespace="beer_garden", system_version="latest")
         )
 
         assert latest_request.system_version == system_v1.version
 
     def test_v2_request(self, system_v2):
         latest_request = determine_latest_system_version(
-            Request(system="original", namespace="beer_garden", system_version = "latest")
+            Request(system="original", namespace="beer_garden", system_version="latest")
         )
 
         assert latest_request.system_version == system_v2.version
 
     def test_latest_request(self, system_v1, system_v2):
         latest_request = determine_latest_system_version(
-            Request(system="original", namespace="beer_garden", system_version = "latest")
+            Request(system="original", namespace="beer_garden", system_version="latest")
         )
 
         assert latest_request.system_version != system_v1.version

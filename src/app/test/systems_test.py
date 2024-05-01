@@ -23,6 +23,7 @@ def system():
 
     System.drop_collection()
 
+
 @pytest.fixture
 def system2():
     yield create_system(
@@ -84,7 +85,7 @@ class TestSystem:
 
     def test_get_systems_filtered(self, system, system2):
 
-        systems = get_systems(filter_latest = True)
+        systems = get_systems(filter_latest=True)
 
         assert len(systems) == 1
 
