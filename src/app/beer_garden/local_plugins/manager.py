@@ -281,10 +281,8 @@ class PluginManager(StoppableThread):
 
         if the_runner is not None:
             self.stop_one(
-                runner_id=the_runner.runner_id,
-                send_sigterm = False,
-                remove = False
-            ) 
+                runner_id=the_runner.runner_id, send_sigterm=False, remove=False
+            )
 
     def start(
         self, runner_id: Optional[str] = None, instance_id: Optional[str] = None
@@ -349,11 +347,10 @@ class PluginManager(StoppableThread):
 
         the_runner = None
 
-        if not the_runner:
-            if runner_id is not None:
-                the_runner = self._from_runner_id(runner_id)
-            elif instance_id is not None:
-                the_runner = self._from_instance_id(instance_id)
+        if runner_id is not None:
+            the_runner = self._from_runner_id(runner_id)
+        elif instance_id is not None:
+            the_runner = self._from_instance_id(instance_id)
 
         if the_runner is None:
             return None
