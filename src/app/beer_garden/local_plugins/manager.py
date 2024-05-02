@@ -280,9 +280,16 @@ class PluginManager(StoppableThread):
         the_runner = self._from_instance_id(event.payload.id)
 
         if the_runner is not None:
-            self.stop_one(
-                runner_id=the_runner.runner_id, send_sigterm=False, remove=False
-            )
+            if not the_runner.stopped:
+                # Allow for plugin to finish processing the current requests
+                the_runner.stopped = True
+                the_runner.restart = False
+                the_runner.dead = False
+            else:
+                # The double tap, shutdown the thread and don't wait for requests to finish
+                self.stop_one(
+                    runner_id=the_runner.runner_id, send_sigterm=False, remove=False
+                )
 
     def start(
         self, runner_id: Optional[str] = None, instance_id: Optional[str] = None
