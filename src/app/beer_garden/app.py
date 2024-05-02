@@ -23,13 +23,13 @@ import beer_garden.api.entry_point
 import beer_garden.command_publishing_blocklist
 import beer_garden.config as config
 import beer_garden.db.api as db
+import beer_garden.db.mongo.pruner
 import beer_garden.events
 import beer_garden.garden
 import beer_garden.local_plugins.manager
 import beer_garden.namespace
 import beer_garden.queue.api as queue
 import beer_garden.router
-import beer_garden.db.mongo.pruner
 from beer_garden.events.handlers import garden_callbacks
 from beer_garden.events.parent_procesors import HttpParentUpdater
 from beer_garden.events.processors import EventProcessor, FanoutProcessor, QueueListener
