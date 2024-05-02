@@ -344,7 +344,6 @@ class PluginManager(StoppableThread):
         stopped: Optional[bool] = None,
     ) -> Optional[Runner]:
         """Update a runner's state."""
-
         the_runner = None
 
         if runner_id is not None:
@@ -390,7 +389,6 @@ class PluginManager(StoppableThread):
         Returns:
             The stopped runner.
         """
-
         the_runner = None
 
         if runner_id is not None:
