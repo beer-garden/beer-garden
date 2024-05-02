@@ -280,9 +280,11 @@ class PluginManager(StoppableThread):
         the_runner = self._from_instance_id(event.payload.id)
 
         if the_runner is not None:
-            the_runner.stopped = True
-            the_runner.restart = False
-            the_runner.dead = False
+            self.stop_one(
+                runner_id=the_runner.runner_id,
+                send_sigterm = False,
+                remove = False
+            ) 
 
     def start(
         self, runner_id: Optional[str] = None, instance_id: Optional[str] = None
@@ -344,12 +346,14 @@ class PluginManager(StoppableThread):
         stopped: Optional[bool] = None,
     ) -> Optional[Runner]:
         """Update a runner's state."""
+
         the_runner = None
 
-        if runner_id is not None:
-            the_runner = self._from_runner_id(runner_id)
-        elif instance_id is not None:
-            the_runner = self._from_instance_id(instance_id)
+        if not the_runner:
+            if runner_id is not None:
+                the_runner = self._from_runner_id(runner_id)
+            elif instance_id is not None:
+                the_runner = self._from_instance_id(instance_id)
 
         if the_runner is None:
             return None
@@ -389,6 +393,7 @@ class PluginManager(StoppableThread):
         Returns:
             The stopped runner.
         """
+
         the_runner = None
 
         if runner_id is not None:

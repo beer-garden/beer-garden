@@ -15,6 +15,7 @@ TBD
 - Fixed bug where commands page did not load properly if opened up directly
 - Fixed bug where `Pour It Again` on Request View page was generated before Systems were loaded from API
 - Fixed bug where Autobrew plugins passed PLUGIN_ARGS to Client class
+- Fixed bug where outstanding Requests will prevent Plugin from shutting down. 
 
 # 3.25.0
 
