@@ -16,7 +16,7 @@ from beer_garden.db.mongo.pruner import (
     prune_temp_requests,
     prune_files,
     determine_tasks,
-    run_pruner,
+    prune_outstanding,
 )
 
 enable_gridfs_integration()
@@ -186,21 +186,24 @@ class TestMongoPruner(object):
         assert len(File.objects.all()) == 0
 
     def test_run_cancels_outstanding_requests(self, task, in_progress, created):
-        run_pruner([task], 15)
+        config._CONFIG = {"db": {"ttl": {"in_progress": 15}}}
+        prune_outstanding()
         new_in_progress = Request.objects.get(id=in_progress.id)
         new_created = Request.objects.get(id=created.id)
         assert new_in_progress.status == "CANCELED"
         assert new_created.status == "CANCELED"
 
     def test_negative_cancel_threshold(self, task, in_progress, created):
-        run_pruner([task], -1)
+        config._CONFIG = {"db": {"ttl": {"in_progress": -1}}}
+        prune_outstanding()
         new_in_progress = Request.objects.get(id=in_progress.id)
         new_created = Request.objects.get(id=created.id)
         assert new_in_progress.status == "IN_PROGRESS"
         assert new_created.status == "CREATED"
 
     def test_none_cancel_threshold(self, task, in_progress, created):
-        run_pruner([task], None)
+        config._CONFIG = {"db": {"ttl": {}}}
+        prune_outstanding()
         new_in_progress = Request.objects.get(id=in_progress.id)
         new_created = Request.objects.get(id=created.id)
         assert new_in_progress.status == "IN_PROGRESS"

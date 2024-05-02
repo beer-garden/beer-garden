@@ -19,8 +19,7 @@ logger = logging.getLogger(__name__)
 display_name = "Mongo Pruner"
 
 
-def run_pruner(tasks, cancel_threshold):
-    cancel_threshold = cancel_threshold or -1
+def run_pruner(tasks, ttl_name):
     current_time = datetime.utcnow()
 
     if tasks:
@@ -31,9 +30,9 @@ def run_pruner(tasks, cancel_threshold):
             if task.get("additional_query", None):
                 query = query & task["additional_query"]
 
-            logger.info(
-                "Removing %ss older than %s"
-                % (task["collection"].__name__, str(delete_older_than))
+            logger.debug(
+                "Removing %s %ss older than %s"
+                % (ttl_name, task["collection"].__name__, str(delete_older_than))
             )
 
             if task["batch_size"] > 0:
@@ -42,8 +41,9 @@ def run_pruner(tasks, cancel_threshold):
                     < task["collection"].objects(query).no_cache().count()
                 ):
                     logger.debug(
-                        "Removing %ss older than %s, batched by %s"
+                        "Removing %s from %ss older than %s, batched by %s"
                         % (
+                            ttl_name,
                             task["collection"].__name__,
                             str(delete_older_than),
                             str(task["batch_size"]),
@@ -53,21 +53,20 @@ def run_pruner(tasks, cancel_threshold):
                         task["batch_size"]
                     ).no_cache().delete()
 
-            task["collection"].objects(query).no_cache().delete()
-
-    if cancel_threshold > 0:
-        cancel_outstanding(cancel_threshold)
-    logger.debug(display_name + " is stopped")
+            num = task["collection"].objects(query).no_cache().delete()
+            if num:
+                logger.debug(
+                    "Deleted %s %s from %ss"
+                    % (num, ttl_name, task["collection"].__name__)
+                )
 
 
 def prune_by_name(ttl_name):
     ttl_config = config.get("db.ttl")
-    cancel_threshold = ttl_config.get("in_progress", -1)
     match_keys = [ttl_name, "batch_size"]
     new_ttl_config = {k: ttl_config[k] for k in match_keys if k in ttl_config}
     tasks = determine_tasks(**new_ttl_config)
-    logger.debug("%s is started for %s", display_name, ttl_name)
-    run_pruner(tasks, cancel_threshold)
+    run_pruner(tasks, ttl_name)
 
 
 def prune_info_requests():
@@ -200,43 +199,45 @@ def determine_tasks(**kwargs) -> Tuple[List[dict], int]:
     return prune_tasks
 
 
-def cancel_outstanding(cancel_threshold):
+def prune_outstanding():
     """
     Helper function for run to mark requests still outstanding after a certain
     amount of time as canceled.
     """
+    ttl_config = config.get("db.ttl")
+    cancel_threshold = ttl_config.get("in_progress", -1)
+    if cancel_threshold > 0:
+        timeout = datetime.utcnow() - timedelta(minutes=cancel_threshold)
+        outstanding_requests = Request.objects.filter(
+            status__in=["IN_PROGRESS", "CREATED"], created_at__lte=timeout
+        )
+        # TODO: Sorting in reverse order, so newest first
 
-    timeout = datetime.utcnow() - timedelta(minutes=cancel_threshold)
-    outstanding_requests = Request.objects.filter(
-        status__in=["IN_PROGRESS", "CREATED"], created_at__lte=timeout
-    )
-    # TODO: Sorting in reverse order, so newest first
-
-    for request in outstanding_requests:
-        try:
-            request.status = "CANCELED"
-            request.save()
-            serialized = MongoParser.serialize(request, to_string=True)
-            parsed = SchemaParser.parse_request(
-                serialized, from_string=True, many=False
-            )
-
-            publish(
-                Event(
-                    name=Events.REQUEST_CANCELED.name,
-                    payload_type="Request",
-                    payload=parsed,
+        for request in outstanding_requests:
+            try:
+                request.status = "CANCELED"
+                request.save()
+                serialized = MongoParser.serialize(request, to_string=True)
+                parsed = SchemaParser.parse_request(
+                    serialized, from_string=True, many=False
                 )
-            )
-        except ModelValidationError as ex:
-            logger.error(ex)
-            logger.error("Will attempt to check for parents")
 
-            if request.parent:
-                try:
-                    Request.objects.get(id=request.parent.id)
-                except DoesNotExist:
-                    logger.error(
-                        f"Parent is missing, killing orphan request {request.id}"
+                publish(
+                    Event(
+                        name=Events.REQUEST_CANCELED.name,
+                        payload_type="Request",
+                        payload=parsed,
                     )
-                    request.delete()
+                )
+            except ModelValidationError as ex:
+                logger.error(ex)
+                logger.error("Will attempt to check for parents")
+
+                if request.parent:
+                    try:
+                        Request.objects.get(id=request.parent.id)
+                    except DoesNotExist:
+                        logger.error(
+                            f"Parent is missing, killing orphan request {request.id}"
+                        )
+                        request.delete()

@@ -192,14 +192,6 @@ def initial_setup():
     ensure_users()
 
 
-# def get_pruner():
-#     return MongoPruner
-
-
-# def prune_tasks(**kwargs) -> Tuple[List[dict], int]:
-#     return MongoPruner.determine_tasks(**kwargs)
-
-
 def get_job_store():
     from beer_garden.db.mongo.jobstore import MongoJobStore
 
