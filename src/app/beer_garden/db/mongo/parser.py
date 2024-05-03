@@ -34,6 +34,7 @@ class MongoParser(SchemaParser):
             "UserTokenSchema": beer_garden.db.mongo.models.UserToken,
             "TopicSchema": beer_garden.db.mongo.models.Topic,
             "SubscriberSchema": beer_garden.db.mongo.models.Subscriber,
+            "RemoteUserMapSchema": beer_garden.db.mongo.models.RemoteUserMap,
         }
     )
 

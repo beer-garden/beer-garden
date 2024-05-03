@@ -32,6 +32,13 @@ export default function userService($http, GardenService, SystemService) {
         value: {'roles':userData.roles},
       });
     },
+    updateUserAccounts: (userName, userData) => {
+      return $http.patch('api/v1/users/' + userName, {
+        operation: 'update_user_mappings',
+        path: '',
+        value: {'remote_user_mapping':userData.remote_user_mapping},
+      });
+    },
     getUsers: () => {
       return $http.get('api/v1/users/');
     },

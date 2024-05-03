@@ -1,15 +1,16 @@
-addRemoveRolesController.$inject = ['$scope', '$rootScope', '$uibModalInstance', 'UserService', 'GardenService', 'user'];
+userGardenAccountsController.$inject = ['$scope', '$rootScope', '$uibModalInstance', '$sce', 'UserService', 'GardenService', 'user'];
 
 /**
- * addRemoveRolesController - Controller for change user roles modal.
+ * userGardenAccountsController - Controller for change user accounts modal.
  * @param  {Object} $scope             Angular's $scope object.
  * @param  {Object} $rootScope     Angular's $rootScope object.
  * @param  {$scope} $uibModalInstance  Angular UI's $uibModalInstance object.
+ * @param  {Object} $sce             Angular's $sce object.
  * @param  {Object} UserService        Beer-Garden's user service.
  * @param  {Object} GardenService      Beer-Garden's garden service.
  * @param  {Object} User               User model to modify
  */
-export default function userGardenAccountsController($scope, $rootScope, $uibModalInstance, UserService, GardenService, user) {
+export default function userGardenAccountsController($scope, $rootScope, $uibModalInstance, $sce, UserService, GardenService, user) {
     $scope.close = function() {
         $uibModalInstance.close();
       };
@@ -19,15 +20,30 @@ export default function userGardenAccountsController($scope, $rootScope, $uibMod
     $scope.addGardenNames = function(garden = null) {
       if (garden == null){
         garden = $rootScope.garden;
+      } else {
+        if ($scope.editUser.remote_user_mapping.length == 0){
+          $scope.editUser.remote_user_mapping.push({"target_garden":garden.name, "username":null})
+        } else {
+          let foundMapping = false;
+
+          for (const user_mapping of $scope.editUser.remote_user_mapping){
+            if (garden.name == user_mapping.target_garden){
+              foundMapping = true;
+              break;
+            }
+          }
+
+          if (!foundMapping){
+            $scope.editUser.remote_user_mapping.push({"target_garden":garden.name, "username":null})
+          }
+        }
+       
       }
 
-      if ($scope.editUser.remote_user_mapping[garden.name] === undefined){
-        $scope.editUser.remote_user_mapping[garden.name] = null;
-      }
       if (garden.children !== undefined && garden.children != null && garden.children.length > 0){
-        garden.children.array.forEach(childGarden => {
+        for (const childGarden of garden.children){
           $scope.addGardenNames(childGarden);
-        });
+        }
       }
     }
 
@@ -58,21 +74,52 @@ export default function userGardenAccountsController($scope, $rootScope, $uibMod
       return null;
     }
 
+    $scope.findParentGardenRoute = function(gardenName) {
+      return $sce.trustAsHtml($scope.findParentGardenRouteHtml(gardenName))
+    }
+
+    $scope.findParentGardenRouteHtml = function (gardenName, route = null) {
+      if (route == null){
+        route = gardenName;
+      }
+
+      let parent = $scope.findParentGarden(gardenName);
+
+      if (parent == null){
+        return route;
+      } else {
+        route = "<span> " + parent + ' </span><span class="fa fa-arrow-right" ></span><span> ' + route + " </span>";      
+        return $scope.findParentGardenRouteHtml(parent, route);
+      }
+    }
+
     $scope.findDefaultUsername = function(gardenName) {
       let parentGarden = $scope.findParentGarden(gardenName);
       if (parentGarden == null) {
-        return null;
+        return $scope.editUser.username;
       }
 
-      if ($scope.editUser.remote_user_mapping[parentGarden] !== undefined && $scope.editUser.remote_user_mapping[parentGarden] != null){
-        return $scope.editUser.remote_user_mapping[parentGarden];
+      for (const user_mapping of $scope.editUser.remote_user_mapping){
+        if (parentGarden == user_mapping.target_garden){
+          if (user_mapping.username !== undefined && user_mapping.username != null){
+            return user_mapping.username;
+          }
+          break;
+        }
       }
 
       return $scope.findDefaultUsername(parentGarden);
     }
 
     $scope.submitAccounts = function() {
-        UserService.updateUserAccounts($scope.editUser.username, $scope.editUser);
+      let populatedAccounts = [];
+      for (const user_mapping of $scope.editUser.remote_user_mapping){
+        if (user_mapping.username !== undefined && user_mapping.username != null && user_mapping.username.length > 0){
+          populatedAccounts.push(user_mapping);
+        }
+      }
+      $scope.user.remote_user_mapping = populatedAccounts;
+      UserService.updateUserAccounts($scope.user.username, $scope.user);
     }
    
 

@@ -127,7 +127,17 @@ class UserAPI(AuthorizationHandler):
                         },
                     )
                 )
-
+            elif operation == "update_user_mappings":
+                response = await self.process_operation(
+                    Operation(
+                        operation_type="USER_UPDATE",
+                        kwargs={
+                            "username": username,
+                            "remote_user_mapping": SchemaParser.parse_remote_user_map(op.value["remote_user_mapping"], from_string=False, many=True),
+                        },
+                    )
+                )
+        
         self.write(response)
 
 

@@ -75,7 +75,7 @@ __all__ = [
     "FileChunk",
     "Role",
     "RemoteRole",
-    "RemoteRole",
+    "RemoteUserMap",
     "User",
     "CommandPublishingBlocklist",
     "Topic",
@@ -1027,6 +1027,8 @@ class RemoteRole(MongoModel, EmbeddedDocument):
 
 
 class RemoteUserMap(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.RemoteUserMap
+    
     target_garden = StringField()
     username = StringField()
 

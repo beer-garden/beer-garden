@@ -59,8 +59,24 @@
             </div>
           </td>
           <td>
-            <div ng-repeat="remote_user in user.remote_user_mapping">
-              <div>{{remote_user.target_garden}}[{{remote_user.username}}]</div>
+            <div ng-if="user.remote_user_mapping.length > 0">
+              <table 
+                class="table table-bordered"
+                style="width: 100%"
+                >
+                <thead>
+                  <tr>
+                    <th scope="col">Garden</th>
+                    <th scope="col">Account</th>
+                  </tr>
+                  </thead>
+                <tbody>
+                  <tr ng-repeat="remote_user in user.remote_user_mapping">
+                    <td>{{remote_user.target_garden}}</td>
+                    <td>{{remote_user.username}}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </td>
           <td>
@@ -102,11 +118,11 @@
               ng-click="showUserGardenAccounts(user)"
               title="Garden Account Mapping"
             ></button>
-            <!-- <button
+            <button
               class="fa fa-pencil pull-right"
               style="font-size: 20px"
               title="Change Password"
-            ></button>     -->
+            ></button>
         </td>
         </tr>
       </tbody>

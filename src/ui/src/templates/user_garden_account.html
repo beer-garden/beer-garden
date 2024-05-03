@@ -11,43 +11,23 @@
             style="width: 100%"
     >
         <thead>
-            <th scope="col">Parent</th>
             <th scope="col">Garden</th>
             <th scope="col">Username</th>
+            <th scope="col">Route</th>
         </thead>
         <tbody>
-            <tr>
-                <td>GARDEN</td>
-                <td>ONE</td>
-                <td>
-                <input class=""
-                           type="text"
-                           style="width: 100%"
-                           value="foo"
-                    >
-                </td>
-            </tr>
-            <tr>
-                <td>ONE</td>
-                <td>TWO</td>
-                <td>
-                <input class=""
-                           type="text"
-                           style="width: 100%"
-                           placeholder="foo"
-                    >
-                </td>
-            </tr>
-            <tr ng-repeat="account in user.remote_user_mapping">
-                <td>{{findParentGarden(account.garden)}}</td>
-                <td>{{account.garden}}</td>
+            <tr ng-repeat="account in editUser.remote_user_mapping">            
+                <td>{{account.target_garden}}</td>
                 <td>
                     <input class=""
                            type="text"
                            style="width: 100%"
                            ng-model="account.username"
-                           placeholder="{{findDefaultUsername(account.garden)}}"
+                           placeholder="{{findDefaultUsername(account.target_garden)}}"
                     >
+                </td>
+                <td> 
+                    <div ng-bind-html="findParentGardenRoute(account.target_garden)"></div>
                 </td>
             </tr>
         </tbody>
@@ -60,7 +40,7 @@
             ng-disabled="canSubmit()"
             class="btn btn-primary"
             value="Submit"
-            ng-click="submitRoles()"
+            ng-click="submitAccounts()"
     />
     <input
             type="button"
