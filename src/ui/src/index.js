@@ -138,6 +138,7 @@ import loginController from './js/controllers/login.js';
 import addCommandPublishingBlocklistController
   from './js/controllers/add_command_publishing_blocklist.js';
 import changePasswordController from './js/controllers/change_password.js';
+import changePasswordAdminController from './js/controllers/change_password_admin.js';
 import newUserController from './js/controllers/user/new_user.js';
 import syncUsersController from './js/controllers/user/sync_users.js';
 
@@ -249,4 +250,5 @@ angular
     .controller('JobImportController', jobImportController)
     .controller('JobImportModalController', jobImportModalController)
     .controller('LoginController', loginController)
-    .controller('ChangePasswordController', changePasswordController);
+    .controller('ChangePasswordController', changePasswordController)
+    .controller('ChangePasswordAdminController', changePasswordAdminController);

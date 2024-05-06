@@ -137,6 +137,17 @@ class UserAPI(AuthorizationHandler):
                         },
                     )
                 )
+            elif operation == "update_user_password":
+                response = await self.process_operation(
+                    Operation(
+                        operation_type="USER_UPDATE",
+                        kwargs={
+                            "username": username,
+                            "new_password": op.value["password"],
+                        },
+                    )
+                )
+
         
         self.write(response)
 

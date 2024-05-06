@@ -48,6 +48,13 @@ export default function userService($http, GardenService, SystemService) {
         password: password,
       });
     },
+    adminChangePassword: (userName, password) => {
+      return $http.patch('api/v1/users/' + userName, {
+        operation: 'update_user_password',
+        path: '',
+        value: {'password':password},
+      });
+    },
     changePassword: (currentPassword, newPassword) => {
       return $http.post('api/v1/password/change/', {
         current_password: currentPassword,

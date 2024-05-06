@@ -157,8 +157,8 @@ def update_user(username: str = None, user: User = None, new_password: str = Non
     
     if not user.is_remote:
         # Only local accounts have passwords associated
-        if new_password and current_password:
-            if verify_password(user, current_password):
+        if new_password:
+            if not current_password or verify_password(user, current_password):
                 set_password(user, password=new_password)
             else:
                 raise InvalidPasswordException("Current password incorrect")

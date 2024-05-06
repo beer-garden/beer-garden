@@ -2,8 +2,9 @@ import newUserTemplate from '../../templates/new_user.html';
 import syncUsersTemplate from '../../templates/sync_users.html';
 import addRemoveRoles from '../../templates/add_remove_roles.html';
 import userGardenAccounts from '../../templates/user_garden_account.html';
+import changePasswordTemplate from '../../templates/change_password.html';
 
-adminUserIndexController.$inject = ['$scope', '$uibModal', 'UserService', 'TokenService'];
+adminUserIndexController.$inject = ['$rootScope', '$scope', '$uibModal', 'UserService', 'TokenService'];
 
 /**
  * adminUserIndexController - Controller for the user index page.
@@ -12,7 +13,7 @@ adminUserIndexController.$inject = ['$scope', '$uibModal', 'UserService', 'Token
  * @param  {Object} UserService   Beer-Garden's user service.
  * @param  {Object} TokenService   Beer-Garden's token service.
  */
-export default function adminUserIndexController($scope, $uibModal, UserService, TokenService) {
+export default function adminUserIndexController($rootScope, $scope, $uibModal, UserService, TokenService) {
   $scope.setWindowTitle('users');
 
   $scope.successCallback = function(response) {
@@ -176,6 +177,24 @@ export default function adminUserIndexController($scope, $uibModal, UserService,
       windowClass: 'app-modal-window',
     });
     
+  };
+
+  
+  $scope.doAdminChangePassword = function(user) {
+    return $uibModal.open({
+      template: changePasswordTemplate,
+      resolve: {
+        user: user,
+      },
+      controller: 'ChangePasswordAdminController',
+      size: 'sm',
+      // windowClass: 'app-modal-window',
+      
+      
+    }).result.then(
+        _.noop,
+        _.noop,
+    );
   };
 
   $scope.doSync = function() {
