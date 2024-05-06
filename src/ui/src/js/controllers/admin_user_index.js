@@ -216,26 +216,6 @@ export default function adminUserIndexController($rootScope, $scope, $uibModal, 
     UserService.getUsers().then($scope.successCallback, $scope.failureCallback);
   };
 
-  // const setUserFullySynced = function() {
-  //   $scope.users.forEach((user) => {
-  //     user.fullySynced = true;
-
-  //     if (user.sync_status) {
-  //       Object.values(user.sync_status).forEach((synced) => {
-  //         // If we get here at all, then there is sync data and we'll want
-  //         // to render it, so set that here. If we never get here, that means
-  //         // there are no remote gardens, so showing the sync status would be
-  //         // meaningless.
-  //         $scope.displaySyncStatus = true;
-
-  //         if (!synced) {
-  //           user.fullySynced = false;
-  //         }
-  //       });
-  //     }
-  //   });
-  // };
-
   $scope.$on('userChange', () => {
     loadUsers();
   });
