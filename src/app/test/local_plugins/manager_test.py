@@ -500,6 +500,241 @@ class TestLoadConfig(object):
         with pytest.raises(PluginValidationError):
             ConfigLoader.load(tmp_path / CONFIG_NAME)
 
+    def test_auto_brew_global_args(self, tmp_path):
+        write_file(
+            tmp_path,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                AUTO_BREW_MODULE="autobrew.autobrew"
+                AUTO_BREW_CLASS="AutoBrewClient"
+                AUTO_BREW_ARGS=["foo", "bar"]
+            """
+            ),
+        )
+
+        loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
+        assert loaded_config["INSTANCES"] == ["default"]
+        assert loaded_config["PLUGIN_ARGS"] == {"default": ["foo", "bar"]}
+
+    def test_auto_brew_global_args_with_instances(self, tmp_path):
+        write_file(
+            tmp_path,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                AUTO_BREW_MODULE="autobrew.autobrew"
+                AUTO_BREW_CLASS="AutoBrewClient"
+                AUTO_BREW_ARGS=["foo", "bar"]
+                INSTANCES=["a", "b"]
+            """
+            ),
+        )
+
+        loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
+        assert loaded_config["INSTANCES"] == ["a", "b"]
+        assert loaded_config["PLUGIN_ARGS"] == {
+            "a": ["foo", "bar"],
+            "b": ["foo", "bar"],
+        }
+
+    def test_auto_brew_instance_based_args(self, tmp_path):
+        write_file(
+            tmp_path,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                AUTO_BREW_MODULE="autobrew.autobrew"
+                AUTO_BREW_CLASS="AutoBrewClient"
+                AUTO_BREW_ARGS={"a":["foo"],"b":["bar"]}
+            """
+            ),
+        )
+
+        loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
+        assert loaded_config["INSTANCES"] == ["a", "b"]
+        assert loaded_config["PLUGIN_ARGS"] == {"a": ["foo"], "b": ["bar"]}
+
+    def test_auto_brew_instance_based_args_with_instances(self, tmp_path):
+        write_file(
+            tmp_path,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                AUTO_BREW_MODULE="autobrew.autobrew"
+                AUTO_BREW_CLASS="AutoBrewClient"
+                AUTO_BREW_ARGS={"a":["foo"],"b":["bar"]}
+                INSTANCES=["a", "b"]
+            """
+            ),
+        )
+
+        loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
+        assert loaded_config["INSTANCES"] == ["a", "b"]
+        assert loaded_config["PLUGIN_ARGS"] == {"a": ["foo"], "b": ["bar"]}
+
+    def test_auto_brew_instance_based_args_with_instances_mismatch(self, tmp_path):
+        write_file(
+            tmp_path,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                AUTO_BREW_MODULE="autobrew.autobrew"
+                AUTO_BREW_CLASS="AutoBrewClient"
+                AUTO_BREW_ARGS={"a":["foo"],"b":["bar"]}
+                INSTANCES=["a"]
+            """
+            ),
+        )
+
+        loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
+        assert loaded_config["INSTANCES"] == ["a", "b"]
+        assert loaded_config["PLUGIN_ARGS"] == {"a": ["foo"], "b": ["bar"]}
+
+    def test_auto_brew_global_kwargs(self, tmp_path):
+        write_file(
+            tmp_path,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                AUTO_BREW_MODULE="autobrew.autobrew"
+                AUTO_BREW_CLASS="AutoBrewClient"
+                AUTO_BREW_KWARGS={"foo":"bar", "bar": "baz"}
+            """
+            ),
+        )
+
+        loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
+        assert loaded_config["INSTANCES"] == ["default"]
+        assert loaded_config["PLUGIN_ARGS"] == {"default": ["foo=bar", "bar=baz"]}
+
+    def test_auto_brew_global_kwargs_with_instances(self, tmp_path):
+        write_file(
+            tmp_path,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                AUTO_BREW_MODULE="autobrew.autobrew"
+                AUTO_BREW_CLASS="AutoBrewClient"
+                AUTO_BREW_KWARGS={"foo":"bar"}
+                INSTANCES=["a", "b"]
+            """
+            ),
+        )
+
+        loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
+        assert loaded_config["INSTANCES"] == ["a", "b"]
+        assert loaded_config["PLUGIN_ARGS"] == {"a": ["foo=bar"], "b": ["foo=bar"]}
+
+    def test_auto_brew_instance_kwargs(self, tmp_path):
+        write_file(
+            tmp_path,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                AUTO_BREW_MODULE="autobrew.autobrew"
+                AUTO_BREW_CLASS="AutoBrewClient"
+                AUTO_BREW_KWARGS={"a":{"foo":"bar"}, "b":{"foo":"zed"}}
+            """
+            ),
+        )
+
+        loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
+        assert loaded_config["INSTANCES"] == ["a", "b"]
+        assert loaded_config["PLUGIN_ARGS"] == {"a": ["foo=bar"], "b": ["foo=zed"]}
+
+    def test_auto_brew_instance_kwargs_with_instances(self, tmp_path):
+        write_file(
+            tmp_path,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                AUTO_BREW_MODULE="autobrew.autobrew"
+                AUTO_BREW_CLASS="AutoBrewClient"
+                AUTO_BREW_KWARGS={"a":{"foo":"bar"}, "b":{"foo":"zed"}}
+                INSTANCES=["a","b"]
+            """
+            ),
+        )
+
+        loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
+        assert loaded_config["INSTANCES"] == ["a", "b"]
+        assert loaded_config["PLUGIN_ARGS"] == {"a": ["foo=bar"], "b": ["foo=zed"]}
+
+    def test_auto_brew_instance_kwargs_with_instances_mismatch(self, tmp_path):
+        write_file(
+            tmp_path,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                AUTO_BREW_MODULE="autobrew.autobrew"
+                AUTO_BREW_CLASS="AutoBrewClient"
+                AUTO_BREW_KWARGS={"a":{"foo":"bar"}, "b":{"foo":"zed"}}
+                INSTANCES=["b"]
+            """
+            ),
+        )
+
+        loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
+        assert loaded_config["INSTANCES"] == ["a", "b"]
+        assert loaded_config["PLUGIN_ARGS"] == {"a": ["foo=bar"], "b": ["foo=zed"]}
+
+    def test_auto_brew_instance_args_and_kwargs_with_instances(self, tmp_path):
+        write_file(
+            tmp_path,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                AUTO_BREW_MODULE="autobrew.autobrew"
+                AUTO_BREW_CLASS="AutoBrewClient"
+                AUTO_BREW_KWARGS={"a":{"foo":"bar"}, "b":{"foo":"zed"}}
+                AUTO_BREW_ARGS={"a":["foo"],"c":["bar"]}
+                INSTANCES=["a"]
+            """
+            ),
+        )
+
+        loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
+        assert loaded_config["INSTANCES"] == ["a", "b", "c"]
+        assert dict(sorted(loaded_config["PLUGIN_ARGS"].items())) == {
+            "a": ["foo", "foo=bar"],
+            "b": ["foo=zed"],
+            "c": ["bar"],
+        }
+
+    def test_auto_brew_instance_args_and_kwargs_with_no_instances(self, tmp_path):
+        write_file(
+            tmp_path,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                AUTO_BREW_MODULE="autobrew.autobrew"
+                AUTO_BREW_CLASS="AutoBrewClient"
+                AUTO_BREW_KWARGS={"a":{"foo":"bar"}, "b":{"foo":"zed"}}
+                AUTO_BREW_ARGS=["alpha"]
+            """
+            ),
+        )
+
+        loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
+        assert loaded_config["INSTANCES"] == ["a", "b"]
+        assert dict(sorted(loaded_config["PLUGIN_ARGS"].items())) == {
+            "a": ["alpha", "foo=bar"],
+            "b": ["alpha", "foo=zed"],
+        }
+
 
 class TestConfigValidation(object):
     @pytest.fixture

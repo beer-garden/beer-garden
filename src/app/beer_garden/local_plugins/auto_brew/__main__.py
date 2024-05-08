@@ -8,11 +8,14 @@ def main():
     module_name = sys.argv[1]
     class_name = sys.argv[2]
 
+    passedArgs = []
     passedKwargs = {}
     if len(sys.argv) > 3:
         for arg in sys.argv[3:]:
             if "=" in arg:
                 passedKwargs[arg.split("=")[0]] = arg.split("=")[1]
+            else:
+                passedArgs.append(arg)
 
     module = importlib.import_module(module_name)
     my_class = getattr(module, class_name)
@@ -20,11 +23,11 @@ def main():
     auto = AutoDecorator()
     auto.updateClientClass(
         my_class,
-        name=passedKwargs.get("NAME", None),
-        version=passedKwargs.get("VERSION", None),
+        name=passedKwargs.pop("NAME", None),
+        version=passedKwargs.pop("VERSION", None),
     )
 
-    my_class_initialized = my_class()
+    my_class_initialized = my_class(*passedArgs, **passedKwargs)
 
     plugin = Plugin(
         name=my_class_initialized._bg_name,

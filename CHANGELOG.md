@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.25.2
+
+TBD
+
+- Autobrew supports any kwargs
+
 # 3.25.1
 
 5/3/2024

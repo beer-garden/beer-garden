@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import copy
 import json
 import logging
 import os
@@ -143,6 +144,10 @@ def handle_event(event: Event) -> None:
             lpm_proxy.handle_initialize(event)
         elif event.name == Events.INSTANCE_STOPPED.name:
             lpm_proxy.handle_stopped(event)
+
+
+def flatten_kwargs(kwargs: dict) -> list:
+    return [f"{k}={v}" for k, v in kwargs.items()]
 
 
 class PluginManager(StoppableThread):
@@ -617,6 +622,9 @@ class PluginManager(StoppableThread):
             runner_id = self._get_runner_id()
             capture_streams = plugin_config.get("CAPTURE_STREAMS")
             process_args = self._process_args(plugin_config, instance_name)
+            logger.info("CREATE RUNNERS")
+            logger.info(plugin_config)
+            logger.info(process_args)
             process_env = self._environment(
                 plugin_config, instance_name, plugin_path, runner_id
             )
@@ -764,6 +772,8 @@ class ConfigKeys(Enum):
 
     AUTO_BREW_MODULE = 16
     AUTO_BREW_CLASS = 17
+    AUTO_BREW_ARGS = 18
+    AUTO_BREW_KWARGS = 19
 
 
 class ConfigLoader(object):
@@ -786,6 +796,8 @@ class ConfigLoader(object):
                 config_dict.get("INSTANCES"),
                 config_dict.get("PLUGIN_ARGS"),
                 config_dict.get("MAX_INSTANCES"),
+                config_dict.get("AUTO_BREW_ARGS"),
+                config_dict.get("AUTO_BREW_KWARGS"),
             )
         )
 
@@ -813,7 +825,7 @@ class ConfigLoader(object):
         return config_module
 
     @staticmethod
-    def _normalize(instances, args, max_instances):
+    def _normalize(instances, args, max_instances, auto_args, auto_kwargs):
         """Normalize the config
 
         Will reconcile the different ways instances and arguments can be specified as
@@ -823,6 +835,93 @@ class ConfigLoader(object):
         if isinstance(instances, list) and isinstance(args, dict):
             # Fully specified, nothing to translate
             pass
+
+        elif auto_args or auto_kwargs:
+            if auto_args:
+                # Global Args
+                if isinstance(auto_args, list):
+                    if instances is None:
+                        instances = ["default"]
+                        args = {"default": auto_args}
+                    else:
+                        temp_args = {}
+                        for instance in instances:
+                            temp_args[instance] = copy.deepcopy(auto_args)
+                        args = temp_args
+
+                # Instance-based args
+                if isinstance(auto_args, dict):
+                    if instances is None:
+                        instances = [key for key in auto_args.keys()]
+                        temp_args = {}
+                        for instance in instances:
+                            temp_args[instance] = auto_args[instance]
+                        args = temp_args
+                    else:
+                        temp_instances = [key for key in auto_args.keys()]
+                        temp_args = {}
+                        for instance in temp_instances:
+                            temp_args[instance] = auto_args[instance]
+                        if instances:
+                            # Instances that are in the args but not in the instances list
+                            missing_instances = list(
+                                set(temp_instances) - set(instances)
+                            )
+                            for missing_instance in missing_instances:
+                                instances.append(missing_instance)
+                            # Instances that are in the instances list but not in the args list
+                            diff_instances = list(set(instances) - set(temp_instances))
+                            for diff_instance in diff_instances:
+                                instances.append(diff_instance)
+                                temp_args[diff_instance] = None
+                        args = temp_args
+
+            if auto_kwargs:
+                if not isinstance(auto_kwargs, dict):
+                    raise ValueError("AUTO_BREW_KWARGS must be dict")
+
+                key = next(iter(auto_kwargs))
+                # Global kwargs
+                if isinstance(auto_kwargs[key], str):
+                    if instances is None:
+                        args = {"default": flatten_kwargs(auto_kwargs)}
+                    else:
+                        temp_args = {} if not args else copy.deepcopy(args)
+                        for instance in instances:
+                            try:
+                                temp_args[instance].append(
+                                    flatten_kwargs(auto_kwargs)[0]
+                                )
+                            except KeyError:
+                                temp_args[instance] = flatten_kwargs(auto_kwargs)
+                        args = temp_args
+                # Instance-based kwargs
+                elif isinstance(auto_kwargs[key], dict):
+                    temp_args = {} if not args else copy.deepcopy(args)
+                    temp_instances = (
+                        [] if not instances or "default" in instances else instances
+                    )
+                    def_args = (
+                        temp_args.pop("default") if "default" in temp_args else None
+                    )
+                    for key, val in auto_kwargs.items():
+                        temp_instances.append(key)
+                        try:
+                            temp_args[key].append(flatten_kwargs(val)[0])
+                        except KeyError:
+                            if def_args:
+                                temp_args[key] = def_args + flatten_kwargs(val)
+                            else:
+                                temp_args[key] = flatten_kwargs(val)
+                    instances = list(set(temp_instances))
+                    args = temp_args
+
+            if instances is None:
+                instances = ["default"]
+            else:
+                instances = sorted(instances)
+            if args is None:
+                args = {"default": None}
 
         elif instances is None and args is None:
             instances = ["default"]
