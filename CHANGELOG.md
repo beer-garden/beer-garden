@@ -2,7 +2,7 @@
 
 # 3.25.1
 
-TBD
+5/3/2024
 
 - Added auto refresh checkbox to requests page
 - Added support for cross-server parent/child requests
@@ -16,6 +16,7 @@ TBD
 - Fixed bug where commands page did not load properly if opened up directly
 - Fixed bug where `Pour It Again` on Request View page was generated before Systems were loaded from API
 - Fixed bug where Autobrew plugins passed PLUGIN_ARGS to Client class
+- Fixed bug where outstanding Requests will prevent Plugin from shutting down. 
 
 # 3.25.0
 
