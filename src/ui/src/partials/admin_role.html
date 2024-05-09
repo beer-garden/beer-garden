@@ -50,12 +50,60 @@
         <td>{{role.name}}</td>
         <td>{{role.permission}}</td>
         <td>{{role.description}}</td>
-        <td>{{role.scope_gardens}}</td>
-        <td>{{role.scope_namespaces}}</td>
-        <td>{{role.scope_systems}}</td>
-        <td>{{role.scope_versions}}</td>
-        <td>{{role.scope_instances}}</td>
-        <td>{{role.scope_commands}}</td>
+        <td>
+          <div ng-if="role.scope_gardens.lenght > 0">
+            <ul>
+              <li ng-repeat="scope in role.scope_gardens">
+                {{scope}}
+              </li>
+            </ul>
+          </div>
+        </td>
+        <td>
+          <div ng-if="role.scope_namespaces.lenght > 0">
+            <ul>
+              <li ng-repeat="scope in role.scope_namespaces">
+                {{scope}}
+              </li>
+            </ul>
+          </div>
+        </td>
+        <td>
+          <div ng-if="role.scope_systems.lenght > 0">
+            <ul>
+              <li ng-repeat="scope in role.scope_systems">
+                {{scope}}
+              </li>
+            </ul>
+          </div>
+        </td>
+        <td>
+          <div ng-if="role.scope_versions.lenght > 0">
+            <ul>
+              <li ng-repeat="scope in role.scope_versions">
+                {{scope}}
+              </li>
+            </ul>
+          </div>
+        </td>
+        <td>
+          <div ng-if="role.scope_instances.lenght > 0">
+            <ul>
+              <li ng-repeat="scope in role.scope_instances">
+                {{scope}}
+              </li>
+            </ul>
+          </div>
+        </td>
+        <td>
+          <div ng-if="role.scope_commands.lenght > 0">
+            <ul>
+              <li ng-repeat="scope in role.scope_commands">
+                {{scope}}
+              </li>
+            </ul>
+          </div>
+        </td>
         <td>
           <button
               class="fa fa-trash pull-right"
