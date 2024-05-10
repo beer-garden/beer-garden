@@ -46,6 +46,7 @@ export function adminRoleController(
       controller: 'NewRoleController',
       size: 'lg',
       template: template,
+      backdrop: 'static',
       resolve: {
         create: role,
       },
@@ -111,42 +112,42 @@ newRoleController.$inject = ['$rootScope', '$scope', '$uibModalInstance', 'creat
  * @param  {$uibModalInstance} $uibModalInstance  Angular UI's $uibModalInstance object.
  */
 export function newRoleController($rootScope, $scope, $uibModalInstance, create = {}) {
-  $scope.create = angular.copy(create);
+  $scope.editRole = angular.copy(create);
   $scope.garden = $rootScope.garden;
 
-  $scope.gardenValidation = function(value, garden = null) {
-    if (value === undefined || value == null || value.length == 0){
+  $scope.gardenValidation = function (value, garden = null) {
+    if (value === undefined || value == null || value.length == 0) {
       return true;
     }
-    if (garden == null){
-        garden = $scope.garden;
+    if (garden == null) {
+      garden = $scope.garden;
     }
-    if (garden.name == value){
-        return true;
+    if (garden.name == value) {
+      return true;
     }
 
-    if (garden.children !== undefined && garden.children != null && garden.children.length > 0){
+    if (garden.children !== undefined && garden.children != null && garden.children.length > 0) {
       for (const child of garden.children) {
-          if ($scope.gardenValidation(value, child)){
-              return true;
-          }
+        if ($scope.gardenValidation(value, child)) {
+          return true;
+        }
       }
     }
 
     return false;
   }
 
-  $scope.roleContainsGarden = function(garden){
+  $scope.roleContainsGarden = function (gardenName) {
 
-    if ($scope.create.scope_gardens === undefined || $scope.create.scope_gardens == null || $scope.create.scope_gardens.length == 0){
+    if ($scope.editRole.scope_gardens === undefined || $scope.editRole.scope_gardens == null || $scope.editRole.scope_gardens.length == 0) {
       return true;
     }
 
     let matched = true;
-    for (const scope_garden of $scope.create.scope_gardens){
-      if (scope_garden.scope.length > 0){
+    for (const scope_garden of $scope.editRole.scope_gardens) {
+      if (scope_garden.scope !== undefined && scope_garden.scope != null && scope_garden.scope.length > 0) {
         matched = false;
-        if (scope_garden.scope == garden.name){
+        if (scope_garden.scope == gardenName) {
           return true;
         }
       }
@@ -154,27 +155,224 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, create 
     return matched;
   }
 
-  $scope.namespaceValidation = function(value, garden = null) {
-    if (value === undefined || value == null || value.length == 0){
+  $scope.namespaceValidation = function (value, garden = null) {
+    if (value === undefined || value == null || value.length == 0) {
       return true;
     }
-    if (garden == null){
-        garden = $scope.garden;
+    if (garden == null) {
+      garden = $scope.garden;
     }
 
-    if ($scope.roleContainsGarden(garden)) {
-      for (const system of garden.systems){
-        if (system.namespace == value){
+    if ($scope.roleContainsGarden(garden.name)) {
+      for (const system of garden.systems) {
+        if (system.namespace == value) {
           return true;
         }
       }
     }
 
-    if (garden.children !== undefined && garden.children != null && garden.children.length > 0){
+    if (garden.children !== undefined && garden.children != null && garden.children.length > 0) {
       for (const child of garden.children) {
-          if ($scope.namespaceValidation(value, child)){
-              return true;
+        if ($scope.namespaceValidation(value, child)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  $scope.roleContainsNamespace = function (namespace) {
+
+    if ($scope.editRole.scope_namespaces === undefined || $scope.editRole.scope_namespaces == null || $scope.editRole.scope_namespaces.length == 0) {
+      return true;
+    }
+
+    let matched = true;
+    for (const scope_namespace of $scope.editRole.scope_namespaces) {
+      if (scope_namespace.scope !== undefined && scope_namespace.scope != null && scope_namespace.scope.length > 0) {
+        matched = false;
+        if (scope_namespace.scope == namespace) {
+          return true;
+        }
+      }
+    }
+    return matched;
+  }
+
+  $scope.systemValidation = function (value, garden = null) {
+    if (value === undefined || value == null || value.length == 0) {
+      return true;
+    }
+    if (garden == null) {
+      garden = $scope.garden;
+    }
+
+    if ($scope.roleContainsGarden(garden.name)) {
+      for (const system of garden.systems) {
+        if ($scope.roleContainsNamespace(system.namespace)) {
+          if (system.name == value) {
+            return true;
           }
+        }
+      }
+    }
+
+    if (garden.children !== undefined && garden.children != null && garden.children.length > 0) {
+      for (const child of garden.children) {
+        if ($scope.systemValidation(value, child)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  $scope.roleContainsSystem = function (systemName) {
+
+    if ($scope.editRole.scope_systems === undefined || $scope.editRole.scope_systems == null || $scope.editRole.scope_systems.length == 0) {
+      return true;
+    }
+
+    let matched = true;
+    for (const scope_system of $scope.editRole.scope_systems) {
+      if (scope_system.scope !== undefined && scope_system.scope != null && scope_system.scope.length > 0) {
+        matched = false;
+        if (scope_system.scope == systemName) {
+          return true;
+        }
+      }
+    }
+    return matched;
+  }
+
+  $scope.versionValidation = function (value, garden = null) {
+    if (value === undefined || value == null || value.length == 0) {
+      return true;
+    }
+    if (garden == null) {
+      garden = $scope.garden;
+    }
+
+    if ($scope.roleContainsGarden(garden.name)) {
+      for (const system of garden.systems) {
+        if ($scope.roleContainsNamespace(system.namespace) && $scope.roleContainsSystem(system.name)) {
+          if (system.version == value) {
+            return true;
+          }
+        }
+      }
+    }
+
+    if (garden.children !== undefined && garden.children != null && garden.children.length > 0) {
+      for (const child of garden.children) {
+        if ($scope.versionValidation(value, child)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  $scope.roleContainsVersion = function (version) {
+
+    if ($scope.editRole.scope_versions === undefined || $scope.editRole.scope_versions == null || $scope.editRole.scope_versions.length == 0) {
+      return true;
+    }
+
+    let matched = true;
+    for (const scope_version of $scope.editRole.scope_versions) {
+      if (scope_version.scope !== undefined && scope_version.scope != null && scope_version.scope.length > 0) {
+        matched = false;
+        if (scope_version.scope == version) {
+          return true;
+        }
+      }
+    }
+    return matched;
+  }
+
+  $scope.instanceValidation = function (value, garden = null) {
+    if (value === undefined || value == null || value.length == 0) {
+      return true;
+    }
+    if (garden == null) {
+      garden = $scope.garden;
+    }
+
+    if ($scope.roleContainsGarden(garden.name)) {
+      for (const system of garden.systems) {
+        if ($scope.roleContainsNamespace(system.namespace) && $scope.roleContainsSystem(system.name) && $scope.roleContainsVersion(system.version)) {
+          for (const instance of system.instances) {
+            if (instance.name == value) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+
+    if (garden.children !== undefined && garden.children != null && garden.children.length > 0) {
+      for (const child of garden.children) {
+        if ($scope.instanceValidation(value, child)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  $scope.roleContainsInstance = function (instances) {
+
+    if ($scope.editRole.scope_instances === undefined || $scope.editRole.scope_instances == null || $scope.editRole.scope_instances.length == 0) {
+      return true;
+    }
+
+    let matched = true;
+    for (const scope_instance of $scope.editRole.scope_instances) {
+      if (scope_instance.scope !== undefined && scope_instance.scope != null && scope_instance.scope.length > 0) {
+        matched = false;
+        for (const instance of instances) {
+          if (scope_instance.scope == instance) {
+            return true;
+          }
+        }
+      }
+    }
+    return matched;
+  }
+
+  $scope.commandsValidation = function (value) {
+    return true;
+  }
+  $scope.commandValidation = function (value, garden = null) {
+    if (value === undefined || value == null || value.length == 0) {
+      return true;
+    }
+    if (garden == null) {
+      garden = $scope.garden;
+    }
+
+    if ($scope.roleContainsGarden(garden.name)) {
+      for (const system of garden.systems) {
+        if ($scope.roleContainsNamespace(system.namespace) && $scope.roleContainsSystem(system.name) && $scope.roleContainsVersion(system.version) && $scope.roleContainsInstance(system.instances)) {
+          for (const command of system.commands) {
+            if (command.name == value) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+
+    if (garden.children !== undefined && garden.children != null && garden.children.length > 0) {
+      for (const child of garden.children) {
+        if ($scope.commandValidation(value, child)) {
+          return true;
+        }
       }
     }
 
@@ -214,7 +412,6 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, create 
         title: 'Namespaces',
         type: 'array',
         items: {
-
             type: "object",
             properties: {
               scope: { type: "string" },
@@ -225,33 +422,41 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, create 
         title: 'Systems',
         type: 'array',
         items: {
-          type: 'string',
-          notitle: true
-        }
+          type: "object",
+          properties: {
+            scope: { type: "string" },
+          }
+      }
       },
       scope_versions: {
         title: 'Versions',
         type: 'array',
         items: {
-          type: 'string',
-          notitle: true
-        }
+          type: "object",
+          properties: {
+            scope: { type: "string" },
+          }
+      }
       },
       scope_instances: {
         title: 'Instances',
         type: 'array',
         items: {
-          type: 'string',
-          notitle: true
-        }
+          type: "object",
+          properties: {
+            scope: { type: "string" },
+          }
+      }
       },
       scope_commands: {
         title: 'Commands',
         type: 'array',
         items: {
-          type: 'string',
-          notitle: true
-        }
+          type: "object",
+          properties: {
+            scope: { type: "string" },
+          }
+      }
       },
     },
   };
@@ -302,14 +507,94 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, create 
         }
       ],
     },
-    "scope_systems",
-    "scope_versions",
-    "scope_instances",
-    "scope_commands",
+    {
+      key: 'scope_systems',
+      type: 'array',
+      add: "Add System Scope",
+      style: {
+        add: "btn-success"
+      },
+      items: [
+        {
+          key: "scope_systems[].scope",
+          validationMessage: {
+            'systemValidator': 'Unable to find Namespace in Garden/Namespace Scope'
+          },
+          $validators: {
+            systemValidator: function(value) {
+              return $scope.systemValidation(value);
+            }
+          }
+        }
+      ],
+    },
+    {
+      key: 'scope_versions',
+      type: 'array',
+      add: "Add Version Scope",
+      style: {
+        add: "btn-success"
+      },
+      items: [
+        {
+          key: "scope_versions[].scope",
+          validationMessage: {
+            'versionValidator': 'Unable to find Namespace in Garden/Namespace/System Scope'
+          },
+          $validators: {
+            versionValidator: function(value) {
+              return $scope.versionValidation(value);
+            }
+          }
+        }
+      ],
+    },
+    {
+      key: 'scope_instances',
+      type: 'array',
+      add: "Add Instance Scope",
+      style: {
+        add: "btn-success"
+      },
+      items: [
+        {
+          key: "scope_instances[].scope",
+          validationMessage: {
+            'instanceValidator': 'Unable to find Namespace in Garden/Namespace/System/Version Scope'
+          },
+          $validators: {
+            instanceValidator: function(value) {
+              return $scope.instanceValidation(value);
+            }
+          }
+        }
+      ],
+    },
+    {
+      key: 'scope_commands',
+      type: 'array',
+      add: "Add Command Scope",
+      style: {
+        add: "btn-success"
+      },
+      items: [
+        {
+          key: "scope_commands[].scope",
+          validationMessage: {
+            'commandValidator': 'Unable to find Namespace in Garden/Namespace/System/Version/Instance Scope'
+          },
+          $validators: {
+            commandValidator: function(value) {
+              return $scope.commandValidation(value);
+            }
+          }
+        }
+      ],
+    },
     {
       type: 'section',
       htmlClass: 'row',
-      items: [
+      items: [       
         {
           type: 'section',
           htmlClass: 'col-xs-3 col-md-offset-5',
@@ -337,17 +622,21 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, create 
     },
   ];
 
-  const generateChangePasswordForm = function() {
+  const generateRoleForm = function() {
     $scope.roleSchema = roleSchema;
     $scope.roleForm = roleForm;
     $scope.$broadcast('schemaFormRedraw');
   };
 
-  // $scope.$broadcast('schemaFormValidate');
-  generateChangePasswordForm();
+  // $scope.forceValidation = function() {
+  //   $scope.$broadcast('schemaFormValidate');
+  //   $scope.$broadcast('schemaForm.error.scope_commands.scope','commandValidator',false);
+  // }
+
+  generateRoleForm();
 
   $scope.ok = function() {
-    $uibModalInstance.close($scope.create);
+    $uibModalInstance.close($scope.editRole);
   };
 
   $scope.cancel = function() {
