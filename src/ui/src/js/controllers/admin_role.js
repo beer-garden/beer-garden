@@ -114,6 +114,73 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, create 
   $scope.create = angular.copy(create);
   $scope.garden = $rootScope.garden;
 
+  $scope.gardenValidation = function(value, garden = null) {
+    if (value === undefined || value == null || value.length == 0){
+      return true;
+    }
+    if (garden == null){
+        garden = $scope.garden;
+    }
+    if (garden.name == value){
+        return true;
+    }
+
+    if (garden.children !== undefined && garden.children != null && garden.children.length > 0){
+      for (const child of garden.children) {
+          if ($scope.gardenValidation(value, child)){
+              return true;
+          }
+      }
+    }
+
+    return false;
+  }
+
+  $scope.roleContainsGarden = function(garden){
+
+    if ($scope.create.scope_gardens === undefined || $scope.create.scope_gardens == null || $scope.create.scope_gardens.length == 0){
+      return true;
+    }
+
+    let matched = true;
+    for (const scope_garden of $scope.create.scope_gardens){
+      if (scope_garden.scope.length > 0){
+        matched = false;
+        if (scope_garden.scope == garden.name){
+          return true;
+        }
+      }
+    }
+    return matched;
+  }
+
+  $scope.namespaceValidation = function(value, garden = null) {
+    if (value === undefined || value == null || value.length == 0){
+      return true;
+    }
+    if (garden == null){
+        garden = $scope.garden;
+    }
+
+    if ($scope.roleContainsGarden(garden)) {
+      for (const system of garden.systems){
+        if (system.namespace == value){
+          return true;
+        }
+      }
+    }
+
+    if (garden.children !== undefined && garden.children != null && garden.children.length > 0){
+      for (const child of garden.children) {
+          if ($scope.namespaceValidation(value, child)){
+              return true;
+          }
+      }
+    }
+
+    return false;
+  }
+
   const roleSchema = {
     type: 'object',
     required: ['name', 'permission'],
@@ -147,8 +214,11 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, create 
         title: 'Namespaces',
         type: 'array',
         items: {
-          type: 'string',
-          notitle: true
+
+            type: "object",
+            properties: {
+              scope: { type: "string" },
+            }
         }
       },
       scope_systems: {
@@ -188,20 +258,7 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, create 
 
   const roleForm = [
     "name",
-    {
-      key: 'description',
-      validationMessage: {
-        'noBob': 'Bob is not OK! You here me?'
-      },
-      $validators: {
-        noBob: function(value) {
-          if (angular.isString(value) && value.indexOf('Bob') !== -1) {
-            return false;
-          }
-          return true
-        }
-      }
-    },
+    "description",
     "permission",
     {
       key: 'scope_gardens',
@@ -214,23 +271,37 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, create 
         {
           key: "scope_gardens[].scope",
           validationMessage: {
-            'noBob': 'Bob is not OK! You here me?'
+            'gardenValidator': 'Unable to find Garden'
           },
           $validators: {
-            noBob: function (value) {
-              if (angular.isString(value) && value.indexOf('Bob') !== -1) {
-                return false;
-              }
-              return true
+            gardenValidator: function(value) {
+              return $scope.gardenValidation(value);
             }
           }
         }
-        ,
       ],
-
-
     },
-    "scope_namespaces",
+    {
+      key: 'scope_namespaces',
+      type: 'array',
+      add: "Add Namespace Scope",
+      style: {
+        add: "btn-success"
+      },
+      items: [
+        {
+          key: "scope_namespaces[].scope",
+          validationMessage: {
+            'namespaceValidator': 'Unable to find Namespace in Garden Scope'
+          },
+          $validators: {
+            namespaceValidator: function(value) {
+              return $scope.namespaceValidation(value);
+            }
+          }
+        }
+      ],
+    },
     "scope_systems",
     "scope_versions",
     "scope_instances",
