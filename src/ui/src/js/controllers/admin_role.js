@@ -112,6 +112,7 @@ newRoleController.$inject = ['$rootScope', '$scope', '$uibModalInstance', 'creat
  */
 export function newRoleController($rootScope, $scope, $uibModalInstance, create = {}) {
   $scope.create = angular.copy(create);
+  $scope.garden = $rootScope.garden;
 
   const roleSchema = {
     type: 'object',
@@ -125,21 +126,9 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, create 
       description: {
         title: 'Description',
         type: 'string',
-        validationMessage: {
-          'gardenCheck': 'Unable to find Garden refernce',
-        },
-        $validators: {
-          gardenCheck: function(value) {
-            if (angular.isString(value) && value.indexOf('Bob') !== -1) {
-              return false;
-            }
-            return true
-          }
-        }
       },
       permission: {
         title: 'Permission',
-        //type: 'typeahead',
         type: 'string',
         enum: ["GARDEN_ADMIN","PLUGIN_ADMIN","OPERATOR","READ_ONLY"],
       },
@@ -147,20 +136,11 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, create 
         title: 'Gardens',
         type: 'array',
         items: {
-          type: 'string',
-          notitle: true,
-          validationMessage: {
-            'gardenCheck': 'Unable to find Garden refernce',
-            '402':'Duplicate Values Found'
-          },
-          $validators: {
-            gardenCheck: function(value) {
-              if (angular.isString(value) && value.indexOf('Bob') !== -1) {
-                return false;
-              }
-              return true
+
+            type: "object",
+            properties: {
+              scope: { type: "string" },
             }
-          }
         }
       },
       scope_namespaces: {
@@ -208,9 +188,48 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, create 
 
   const roleForm = [
     "name",
-    "description",
+    {
+      key: 'description',
+      validationMessage: {
+        'noBob': 'Bob is not OK! You here me?'
+      },
+      $validators: {
+        noBob: function(value) {
+          if (angular.isString(value) && value.indexOf('Bob') !== -1) {
+            return false;
+          }
+          return true
+        }
+      }
+    },
     "permission",
-    "scope_gardens",
+    {
+      key: 'scope_gardens',
+      type: 'array',
+      add: "Add Garden Scope",
+      style: {
+        add: "btn-success"
+      },
+      items: [
+        {
+          key: "scope_gardens[].scope",
+          validationMessage: {
+            'noBob': 'Bob is not OK! You here me?'
+          },
+          $validators: {
+            noBob: function (value) {
+              if (angular.isString(value) && value.indexOf('Bob') !== -1) {
+                return false;
+              }
+              return true
+            }
+          }
+        }
+        ,
+      ],
+
+
+    },
     "scope_namespaces",
     "scope_systems",
     "scope_versions",
