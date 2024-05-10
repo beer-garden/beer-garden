@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.26.0
+
+TBD
+
+- Updated order of Hidden and Command Type icons on Command Index and Request View pages
+
 # 3.25.1
 
 5/3/2024
