@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.26.0
+
+TBD
+
+- Upgraded Font-Awesome to Free version of 6.5.x
+
 # 3.25.1
 
 5/3/2024

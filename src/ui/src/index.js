@@ -58,7 +58,7 @@ import 'metismenu/dist/metisMenu.css';
 import 'startbootstrap-sb-admin-2/dist/css/sb-admin-2.css';
 import 'datatables.net-bs/css/dataTables.bootstrap.css';
 import 'ui-select/dist/select.css';
-import 'font-awesome/css/font-awesome.css';
+import '@fortawesome/fontawesome-free/css/all.css';
 import './styles/custom.css';
 
 // Now load our actual application components
