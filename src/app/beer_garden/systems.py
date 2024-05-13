@@ -20,6 +20,7 @@ from brewtils.errors import (
 )
 from brewtils.models import Command, Event, Events, Instance, System
 from brewtils.schemas import SystemSchema
+from packaging.version import InvalidVersion, parse
 
 import beer_garden.config as config
 import beer_garden.db.api as db
@@ -57,7 +58,57 @@ def get_systems(**kwargs) -> List[System]:
         The list of Systems that matched the query
 
     """
-    return db.query(System, **kwargs)
+    filter_latest = kwargs.pop("filter_latest", False)
+    systems = db.query(System, **kwargs)
+
+    if not filter_latest or not systems:
+        return systems
+
+    group_systems = {}
+
+    for system in systems:
+        system_key = f"{system.namespace}.{system.name}"
+        if system_key not in group_systems:
+            group_systems[system_key] = [system]
+        else:
+            group_systems[system_key].append(system)
+
+    latest_systems = []
+
+    for group_key in group_systems:
+        if len(group_systems[group_key]) == 1:
+            latest_systems.append(group_systems[group_key][0])
+        else:
+            latest_systems.append(_determine_latest(group_systems[group_key]))
+
+    return latest_systems
+
+
+def _determine_latest(systems):
+    # type: (Iterable[System]) -> Optional[System]
+    """Returns the system with the latest version from the provided list of Systems.
+    Any version adhering to PEP440 is treated as "later" than a version that does
+    not adhere to that standard.
+    """
+    versions = []
+    legacy_versions = []
+    system_versions_map = {}
+
+    for system in systems:
+        try:
+            versions.append(parse(system.version))
+            system_versions_map[str(parse(system.version))] = system
+        except InvalidVersion:
+            legacy_versions.append(system.version)
+            system_versions_map[system.version] = system
+
+    eligible_versions = versions if versions else legacy_versions
+
+    if eligible_versions:
+        latest_version = sorted(eligible_versions, reverse=True)[0]
+        return system_versions_map.get(str(latest_version))
+    else:
+        return None
 
 
 @publish_event(Events.SYSTEM_CREATED)

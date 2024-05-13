@@ -5,6 +5,8 @@
 TBD
 
 - Updated order of Hidden and Command Type icons on Command Index and Request View pages
+- Migrates `Latest` system version from SystemClient to Request API supported
+- Adds support for filtering `SystemsList` API on `filter_latest` to return only latest version of each system
 
 # 3.25.1
 
