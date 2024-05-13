@@ -5,6 +5,8 @@
 TBD
 
 - Upgraded Font-Awesome to Free version of 6.5.x
+- Migrates `Latest` system version from SystemClient to Request API supported
+- Adds support for filtering `SystemsList` API on `filter_latest` to return only latest version of each system
 
 # 3.25.1
 

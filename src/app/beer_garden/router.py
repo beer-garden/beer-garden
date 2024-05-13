@@ -788,6 +788,9 @@ def _target_from_type(operation: Operation) -> str:
             return _instance_id_lookup(operation.args[0])
 
     if operation.operation_type in ["REQUEST_CREATE"]:
+        operation.model = beer_garden.requests.determine_latest_system_version(
+            operation.model
+        )
         target_system = System(
             namespace=operation.model.namespace,
             name=operation.model.system,
