@@ -836,12 +836,6 @@ _DB_SPEC = {
                     ),
                     "alt_env_names": [],
                 },
-                "multithread": {
-                    "type": "bool",
-                    "default": False,
-                    "description": ("Runs pruners in seperate threads"),
-                    "alt_env_names": [],
-                },
             },
         },
     },

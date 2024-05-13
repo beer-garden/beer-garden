@@ -30,10 +30,9 @@ db:
     in_progress: 15
     info: 15   
     temp: 15
-    admin: -1
+    admin: 15
 
     batch_size: -1
-    multithread: false
     
 entry:
   http:
