@@ -25,21 +25,41 @@ export function adminRoleController(
 ) {
   $scope.setWindowTitle('roles');
 
-  $scope.doCreate = function() {
+  // $scope.doCreate = function() {
+  //   const modalInstance = $uibModal.open({
+  //     controller: 'NewRoleController',
+  //     size: 'sm',
+  //     template: template,
+  //   });
+
+  //   modalInstance.result.then(
+  //       (create) => {
+  //         RoleService.createRole(create).then(loadAll);
+  //       },
+  //       // We don't really need to do anything if canceled
+  //       () => {},
+  //   );
+  // };
+
+  $scope.doCreate = function(role) {
     const modalInstance = $uibModal.open({
       controller: 'NewRoleController',
-      size: 'sm',
+      size: 'lg',
       template: template,
+      backdrop: 'static',
+      resolve: {
+        isNew: false,
+        editRole: role,
+      },
     });
-
     modalInstance.result.then(
-        (create) => {
-          RoleService.createRole(create).then(loadAll);
-        },
-        // We don't really need to do anything if canceled
-        () => {},
-    );
-  };
+      (create) => {
+        RoleService.createRole(create).then(loadAll);
+      },
+      // We don't really need to do anything if canceled
+      () => {},
+  );
+};
 
   $scope.doClone = function(role) {
     const modalInstance = $uibModal.open({
@@ -48,7 +68,8 @@ export function adminRoleController(
       template: template,
       backdrop: 'static',
       resolve: {
-        create: role,
+        isNew: true,
+        editRole: role,
       },
     });
 
@@ -104,15 +125,21 @@ export function adminRoleController(
   loadRoles();
 }
 
-newRoleController.$inject = ['$rootScope', '$scope', '$uibModalInstance', 'create'];
+newRoleController.$inject = ['$rootScope', '$scope', '$uibModalInstance', 'isNew', 'editRole'];
 
 /**
  * newRoleController - New Role controller.
  * @param  {$scope} $scope                        Angular's $scope object.
  * @param  {$uibModalInstance} $uibModalInstance  Angular UI's $uibModalInstance object.
  */
-export function newRoleController($rootScope, $scope, $uibModalInstance, create = {}) {
-  $scope.editRole = angular.copy(create);
+export function newRoleController($rootScope, $scope, $uibModalInstance, isNew, editRole = {}) {
+  $scope.editRole = angular.copy(editRole);
+
+  if (isNew) {
+    $scope.editRole.name = null;
+    $scope.editRole.id = null;
+  }
+
   $scope.garden = $rootScope.garden;
 
   $scope.gardenValidation = function (value, garden = null) {
