@@ -930,7 +930,6 @@ class ConfigLoader(object):
             if auto_kwargs is None:
                 auto_kwargs = {"default": None}
 
-
         if isinstance(instances, list) and isinstance(args, dict):
             # Fully specified, nothing to translate
             pass

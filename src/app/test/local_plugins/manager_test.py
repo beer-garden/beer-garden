@@ -32,7 +32,7 @@ def config_all():
         "LOG_LEVEL": "INFO",
         "MAX_INSTANCES": 1,
         "AUTO_BREW_ARGS": None,
-        "AUTO_BREW_KWARGS": None
+        "AUTO_BREW_KWARGS": None,
     }
 
 
