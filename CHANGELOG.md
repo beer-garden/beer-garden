@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+# 3.26.0
+
+TBD
+
+- Migrates `Latest` system version from SystemClient to Request API supported
+- Adds support for filtering `SystemsList` API on `filter_latest` to return only latest version of each system
+
 # 3.25.1
 
 5/3/2024
