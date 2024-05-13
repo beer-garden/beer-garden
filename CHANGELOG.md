@@ -1,10 +1,10 @@
 # Beer Garden Changelog
 
-# 3.25.2
+# 3.26.0
 
 TBD
 
-- Autobrew supports any kwargs
+- Autobrew supports args and kwargs provided to client class
 
 # 3.25.1
 

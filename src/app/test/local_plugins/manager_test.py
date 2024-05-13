@@ -31,6 +31,8 @@ def config_all():
         "DISPLAY_NAME": None,
         "LOG_LEVEL": "INFO",
         "MAX_INSTANCES": 1,
+        "AUTO_BREW_ARGS": None,
+        "AUTO_BREW_KWARGS": None
     }
 
 
@@ -51,6 +53,8 @@ def config_all_serialized():
             DISPLAY_NAME=None
             LOG_LEVEL='INFO'
             MAX_INSTANCES=1
+            AUTO_BREW_ARGS=None
+            AUTO_BREW_KWARGS=None
         """
     )
 
@@ -510,13 +514,16 @@ class TestLoadConfig(object):
                 AUTO_BREW_MODULE="autobrew.autobrew"
                 AUTO_BREW_CLASS="AutoBrewClient"
                 AUTO_BREW_ARGS=["foo", "bar"]
+                PLUGIN_ARGS=["baz","zoo"]
             """
             ),
         )
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
         assert loaded_config["INSTANCES"] == ["default"]
-        assert loaded_config["PLUGIN_ARGS"] == {"default": ["foo", "bar"]}
+        assert loaded_config["AUTO_BREW_ARGS"] == {"default": ["foo", "bar"]}
+        assert loaded_config["PLUGIN_ARGS"] == {"default": ["baz", "zoo"]}
+        assert loaded_config["AUTO_BREW_KWARGS"] == {"default": None}
 
     def test_auto_brew_global_args_with_instances(self, tmp_path):
         write_file(
@@ -535,9 +542,13 @@ class TestLoadConfig(object):
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
         assert loaded_config["INSTANCES"] == ["a", "b"]
-        assert loaded_config["PLUGIN_ARGS"] == {
+        assert loaded_config["AUTO_BREW_ARGS"] == {
             "a": ["foo", "bar"],
             "b": ["foo", "bar"],
+        }
+        assert loaded_config["AUTO_BREW_KWARGS"] == {
+            "a": None,
+            "b": None,
         }
 
     def test_auto_brew_instance_based_args(self, tmp_path):
@@ -556,7 +567,9 @@ class TestLoadConfig(object):
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
         assert loaded_config["INSTANCES"] == ["a", "b"]
-        assert loaded_config["PLUGIN_ARGS"] == {"a": ["foo"], "b": ["bar"]}
+        assert loaded_config["PLUGIN_ARGS"] == {"a": None, "b": None}
+        assert loaded_config["AUTO_BREW_ARGS"] == {"a": ["foo"], "b": ["bar"]}
+        assert loaded_config["AUTO_BREW_KWARGS"] == {"a": None, "b": None}
 
     def test_auto_brew_instance_based_args_with_instances(self, tmp_path):
         write_file(
@@ -575,7 +588,9 @@ class TestLoadConfig(object):
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
         assert loaded_config["INSTANCES"] == ["a", "b"]
-        assert loaded_config["PLUGIN_ARGS"] == {"a": ["foo"], "b": ["bar"]}
+        assert loaded_config["PLUGIN_ARGS"] == {"a": None, "b": None}
+        assert loaded_config["AUTO_BREW_ARGS"] == {"a": ["foo"], "b": ["bar"]}
+        assert loaded_config["AUTO_BREW_KWARGS"] == {"a": None, "b": None}
 
     def test_auto_brew_instance_based_args_with_instances_mismatch(self, tmp_path):
         write_file(
@@ -594,7 +609,9 @@ class TestLoadConfig(object):
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
         assert loaded_config["INSTANCES"] == ["a", "b"]
-        assert loaded_config["PLUGIN_ARGS"] == {"a": ["foo"], "b": ["bar"]}
+        assert loaded_config["PLUGIN_ARGS"] == {"a": None, "b": None}
+        assert loaded_config["AUTO_BREW_ARGS"] == {"a": ["foo"], "b": ["bar"]}
+        assert loaded_config["AUTO_BREW_KWARGS"] == {"a": None, "b": None}
 
     def test_auto_brew_global_kwargs(self, tmp_path):
         write_file(
@@ -612,7 +629,9 @@ class TestLoadConfig(object):
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
         assert loaded_config["INSTANCES"] == ["default"]
-        assert loaded_config["PLUGIN_ARGS"] == {"default": ["foo=bar", "bar=baz"]}
+        assert loaded_config["PLUGIN_ARGS"] == {"default": None}
+        assert loaded_config["AUTO_BREW_ARGS"] == {"default": None}
+        assert loaded_config["AUTO_BREW_KWARGS"] == {"default": ["foo=bar", "bar=baz"]}
 
     def test_auto_brew_global_kwargs_with_instances(self, tmp_path):
         write_file(
@@ -631,7 +650,9 @@ class TestLoadConfig(object):
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
         assert loaded_config["INSTANCES"] == ["a", "b"]
-        assert loaded_config["PLUGIN_ARGS"] == {"a": ["foo=bar"], "b": ["foo=bar"]}
+        assert loaded_config["PLUGIN_ARGS"] == {"a": None, "b": None}
+        assert loaded_config["AUTO_BREW_ARGS"] == {"a": None, "b": None}
+        assert loaded_config["AUTO_BREW_KWARGS"] == {"a": ["foo=bar"], "b": ["foo=bar"]}
 
     def test_auto_brew_instance_kwargs(self, tmp_path):
         write_file(
@@ -649,7 +670,9 @@ class TestLoadConfig(object):
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
         assert loaded_config["INSTANCES"] == ["a", "b"]
-        assert loaded_config["PLUGIN_ARGS"] == {"a": ["foo=bar"], "b": ["foo=zed"]}
+        assert loaded_config["PLUGIN_ARGS"] == {"a": None, "b": None}
+        assert loaded_config["AUTO_BREW_ARGS"] == {"a": None, "b": None}
+        assert loaded_config["AUTO_BREW_KWARGS"] == {"a": ["foo=bar"], "b": ["foo=zed"]}
 
     def test_auto_brew_instance_kwargs_with_instances(self, tmp_path):
         write_file(
@@ -668,7 +691,9 @@ class TestLoadConfig(object):
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
         assert loaded_config["INSTANCES"] == ["a", "b"]
-        assert loaded_config["PLUGIN_ARGS"] == {"a": ["foo=bar"], "b": ["foo=zed"]}
+        assert loaded_config["PLUGIN_ARGS"] == {"a": None, "b": None}
+        assert loaded_config["AUTO_BREW_ARGS"] == {"a": None, "b": None}
+        assert loaded_config["AUTO_BREW_KWARGS"] == {"a": ["foo=bar"], "b": ["foo=zed"]}
 
     def test_auto_brew_instance_kwargs_with_instances_mismatch(self, tmp_path):
         write_file(
@@ -687,7 +712,9 @@ class TestLoadConfig(object):
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
         assert loaded_config["INSTANCES"] == ["a", "b"]
-        assert loaded_config["PLUGIN_ARGS"] == {"a": ["foo=bar"], "b": ["foo=zed"]}
+        assert loaded_config["PLUGIN_ARGS"] == {"a": None, "b": None}
+        assert loaded_config["AUTO_BREW_ARGS"] == {"a": None, "b": None}
+        assert loaded_config["AUTO_BREW_KWARGS"] == {"a": ["foo=bar"], "b": ["foo=zed"]}
 
     def test_auto_brew_instance_args_and_kwargs_with_instances(self, tmp_path):
         write_file(
@@ -708,9 +735,17 @@ class TestLoadConfig(object):
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
         assert loaded_config["INSTANCES"] == ["a", "b", "c"]
         assert dict(sorted(loaded_config["PLUGIN_ARGS"].items())) == {
-            "a": ["foo", "foo=bar"],
-            "b": ["foo=zed"],
+            "a": None,
+            "b": None,
+            "c": None,
+        }
+        assert dict(sorted(loaded_config["AUTO_BREW_ARGS"].items())) == {
+            "a": ["foo"],
             "c": ["bar"],
+        }
+        assert dict(sorted(loaded_config["AUTO_BREW_KWARGS"].items())) == {
+            "a": ["foo=bar"],
+            "b": ["foo=zed"],
         }
 
     def test_auto_brew_instance_args_and_kwargs_with_no_instances(self, tmp_path):
@@ -731,8 +766,16 @@ class TestLoadConfig(object):
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
         assert loaded_config["INSTANCES"] == ["a", "b"]
         assert dict(sorted(loaded_config["PLUGIN_ARGS"].items())) == {
-            "a": ["alpha", "foo=bar"],
-            "b": ["alpha", "foo=zed"],
+            "a": None,
+            "b": None,
+        }
+        assert dict(sorted(loaded_config["AUTO_BREW_ARGS"].items())) == {
+            "a": ["alpha"],
+            "b": ["alpha"],
+        }
+        assert dict(sorted(loaded_config["AUTO_BREW_KWARGS"].items())) == {
+            "a": ["foo=bar"],
+            "b": ["foo=zed"],
         }
 
 

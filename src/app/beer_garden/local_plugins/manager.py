@@ -622,9 +622,6 @@ class PluginManager(StoppableThread):
             runner_id = self._get_runner_id()
             capture_streams = plugin_config.get("CAPTURE_STREAMS")
             process_args = self._process_args(plugin_config, instance_name)
-            logger.info("CREATE RUNNERS")
-            logger.info(plugin_config)
-            logger.info(process_args)
             process_env = self._environment(
                 plugin_config, instance_name, plugin_path, runner_id
             )
@@ -691,6 +688,16 @@ class PluginManager(StoppableThread):
 
         if plugin_args is not None:
             process_args += plugin_args
+
+        if plugin_config["AUTO_BREW_ARGS"]:
+            plugin_auto_args = plugin_config["AUTO_BREW_ARGS"].get(instance_name)
+            if plugin_auto_args is not None:
+                process_args += ["ARG=" + arg for arg in plugin_auto_args]
+
+        if plugin_config["AUTO_BREW_KWARGS"]:
+            plugin_auto_kwargs = plugin_config["AUTO_BREW_KWARGS"].get(instance_name)
+            if plugin_auto_kwargs is not None:
+                process_args += ["KWARG=" + kwarg for kwarg in plugin_auto_kwargs]
 
         return process_args
 
@@ -832,22 +839,18 @@ class ConfigLoader(object):
         well as determine the correct MAX_INSTANCE value
         """
 
-        if isinstance(instances, list) and isinstance(args, dict):
-            # Fully specified, nothing to translate
-            pass
-
-        elif auto_args or auto_kwargs:
+        if auto_args or auto_kwargs:
             if auto_args:
                 # Global Args
                 if isinstance(auto_args, list):
                     if instances is None:
                         instances = ["default"]
-                        args = {"default": auto_args}
+                        auto_args = {"default": auto_args}
                     else:
                         temp_args = {}
                         for instance in instances:
                             temp_args[instance] = copy.deepcopy(auto_args)
-                        args = temp_args
+                        auto_args = temp_args
 
                 # Instance-based args
                 if isinstance(auto_args, dict):
@@ -856,7 +859,7 @@ class ConfigLoader(object):
                         temp_args = {}
                         for instance in instances:
                             temp_args[instance] = auto_args[instance]
-                        args = temp_args
+                        auto_args = temp_args
                     else:
                         temp_instances = [key for key in auto_args.keys()]
                         temp_args = {}
@@ -874,7 +877,7 @@ class ConfigLoader(object):
                             for diff_instance in diff_instances:
                                 instances.append(diff_instance)
                                 temp_args[diff_instance] = None
-                        args = temp_args
+                        auto_args = temp_args
 
             if auto_kwargs:
                 if not isinstance(auto_kwargs, dict):
@@ -884,44 +887,53 @@ class ConfigLoader(object):
                 # Global kwargs
                 if isinstance(auto_kwargs[key], str):
                     if instances is None:
-                        args = {"default": flatten_kwargs(auto_kwargs)}
+                        auto_kwargs = {"default": flatten_kwargs(auto_kwargs)}
                     else:
-                        temp_args = {} if not args else copy.deepcopy(args)
+                        temp_kwargs = {}
                         for instance in instances:
                             try:
-                                temp_args[instance].append(
+                                temp_kwargs[instance].append(
                                     flatten_kwargs(auto_kwargs)[0]
                                 )
                             except KeyError:
-                                temp_args[instance] = flatten_kwargs(auto_kwargs)
-                        args = temp_args
+                                temp_kwargs[instance] = flatten_kwargs(auto_kwargs)
+                        auto_kwargs = temp_kwargs
                 # Instance-based kwargs
                 elif isinstance(auto_kwargs[key], dict):
-                    temp_args = {} if not args else copy.deepcopy(args)
+                    temp_kwargs = {}
                     temp_instances = (
                         [] if not instances or "default" in instances else instances
-                    )
-                    def_args = (
-                        temp_args.pop("default") if "default" in temp_args else None
                     )
                     for key, val in auto_kwargs.items():
                         temp_instances.append(key)
                         try:
-                            temp_args[key].append(flatten_kwargs(val)[0])
+                            temp_kwargs[key].append(flatten_kwargs(val)[0])
                         except KeyError:
-                            if def_args:
-                                temp_args[key] = def_args + flatten_kwargs(val)
-                            else:
-                                temp_args[key] = flatten_kwargs(val)
+                            temp_kwargs[key] = flatten_kwargs(val)
                     instances = list(set(temp_instances))
-                    args = temp_args
+                    auto_kwargs = temp_kwargs
 
             if instances is None:
                 instances = ["default"]
             else:
                 instances = sorted(instances)
-            if args is None:
-                args = {"default": None}
+                if auto_args and auto_args.get("default"):
+                    def_args = auto_args.pop("default")
+                    for instance in instances:
+                        auto_args[instance] = def_args
+                if auto_args is None:
+                    auto_args = {instance: None for instance in instances}
+                if not auto_kwargs:
+                    auto_kwargs = {instance: None for instance in instances}
+            if auto_args is None:
+                auto_args = {"default": None}
+            if auto_kwargs is None:
+                auto_kwargs = {"default": None}
+
+
+        if isinstance(instances, list) and isinstance(args, dict):
+            # Fully specified, nothing to translate
+            pass
 
         elif instances is None and args is None:
             instances = ["default"]
@@ -960,6 +972,8 @@ class ConfigLoader(object):
             "INSTANCES": instances,
             "PLUGIN_ARGS": args,
             "MAX_INSTANCES": max_instances,
+            "AUTO_BREW_ARGS": auto_args,
+            "AUTO_BREW_KWARGS": auto_kwargs,
         }
 
     @staticmethod
