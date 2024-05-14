@@ -697,23 +697,23 @@ def garden_sync(sync_target: str = None):
         publish_garden()
         publish_command_publishing_blocklist()
 
-    else:
-        from beer_garden.router import route
+    
+    from beer_garden.router import route
 
-        # Iterate over all gardens and forward the sync requests
-        for garden in get_gardens(include_local=False):
-            try:
-                logger.debug(f"About to create sync operation for garden {garden.name}")
+    # Iterate over all gardens and forward the sync requests
+    for garden in get_gardens(include_local=False):
+        try:
+            logger.debug(f"About to create sync operation for garden {garden.name}")
 
-                route(
-                    Operation(
-                        operation_type="GARDEN_SYNC",
-                        target_garden_name=garden.name,
-                        kwargs={"sync_target": garden.name},
-                    )
+            route(
+                Operation(
+                    operation_type="GARDEN_SYNC",
+                    target_garden_name=garden.name,
+                    kwargs={"sync_target": garden.name},
                 )
-            except ForwardException:
-                pass
+            )
+        except ForwardException:
+            pass
 
 
 def publish_local_garden():
