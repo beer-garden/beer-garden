@@ -731,7 +731,6 @@ def publish_local_garden():
 def garden_unresponsive_trigger():
     for garden in get_gardens(include_local=False):
         interval_value = garden.metadata.get("_unresponsive_timeout", -1)
-        logger.error(f"{garden.name} Timeout of {interval_value}")
 
         if interval_value > 0:
             timeout = datetime.utcnow() - timedelta(minutes=interval_value)
@@ -742,7 +741,9 @@ def garden_unresponsive_trigger():
                         update_garden_receiving(
                             "UNRESPONSIVE", api=connection.api, garden=garden
                         )
-                        logger.error(f"{garden.name} Timed out")
+                        logger.error(
+                            f"{garden.name} Timed out {interval_value} minutes"
+                        )
 
 
 def handle_event(event):
@@ -818,7 +819,12 @@ def handle_event(event):
         if target_garden.status == "NOT_CONFIGURED":
             update_garden_status(event.payload.target_garden_name, "NOT_CONFIGURED")
 
-    elif event.name == Events.GARDEN_CONFIGURED.name:
+    elif event.name in [
+        Events.GARDEN_CONFIGURED.name,
+        Events.GARDEN_REMOVED.name,
+        Events.GARDEN_CREATED.name,
+        Events.GARDEN_UPDATED.name,
+    ]:
         publish_garden()
 
     if "SYSTEM" in event.name or "INSTANCE" in event.name:
