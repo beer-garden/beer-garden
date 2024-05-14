@@ -697,7 +697,9 @@ class PluginManager(StoppableThread):
         if plugin_config["AUTO_BREW_KWARGS"]:
             plugin_auto_kwargs = plugin_config["AUTO_BREW_KWARGS"].get(instance_name)
             if plugin_auto_kwargs is not None:
-                process_args += ["KWARG=" + kwarg for kwarg in plugin_auto_kwargs]
+                process_args += [
+                    f"KWARG={k}={v}" for k, v in plugin_auto_kwargs.items()
+                ]
 
         return process_args
 
