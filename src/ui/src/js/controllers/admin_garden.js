@@ -370,13 +370,25 @@ export default function adminGardenController(
         break;
       case 'GARDEN_SYNC':
         if (event.payload.name != $scope.config.gardenName) {
-          $scope.alerts.push({
-            type: 'info',
-            msg: 'Garden sync event seen from ' + event.payload.name,
-          });
+          $scope.pushAlert('info', 'Garden sync event seen from ' + event.payload.name);
         }
     }
   });
+
+  $scope.pushAlert = function (type, msg) {
+    let newMessage = true;
+    for (const alert of $scope.alerts) {
+      if (alert.msg == msg) {
+        newMessage = false;
+      }
+    }
+    if (newMessage) {
+      $scope.alerts.push({
+        type: type,
+        msg: msg,
+      });
+    }
+  }
 
   $scope.$on('$destroy', function() {
     EventService.removeCallback('admin_garden');
