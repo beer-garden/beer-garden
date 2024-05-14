@@ -7,6 +7,9 @@ TBD
 - Updated order of Hidden and Command Type icons on Command Index and Request View pages
 - Migrates `Latest` system version from SystemClient to Request API supported
 - Adds support for filtering `SystemsList` API on `filter_latest` to return only latest version of each system
+- Updated Garden Syncs to include sync of targeted garden children
+- Updated Garden Admin page to not show duplicative info alerts
+- Updated Garden Update/Delete/Create events to trigger Publish Garden Sync
 
 # 3.25.1
 
