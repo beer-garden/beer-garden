@@ -788,6 +788,7 @@ def handle_event(event):
             event.payload.systems = remote_systems
 
             if event.name == Events.GARDEN_SYNC.name:
+                logger.info("Garden sync event for {event.payload.name}")
                 try:
                     # Check if child garden as deleted
                     db_garden = get_garden(event.payload.name)
@@ -799,7 +800,7 @@ def handle_event(event):
                                 break
                         if child_deleted:
                             logger.error(
-                                "Unable to find {db_child.name} in Garden sync"
+                                f"Unable to find {db_child.name} in Garden sync"
                             )
                             remove_garden(garden=db_child)
                 except DoesNotExist:
