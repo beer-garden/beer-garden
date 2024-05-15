@@ -10,6 +10,8 @@ TBD
 - Updated Garden Syncs to include sync of targeted garden children
 - Updated Garden Admin page to not show duplicative info alerts
 - Updated Garden Update/Delete/Create events to trigger Publish Garden Sync
+- Fixed bug in routing logic when syncing Garden 2+ hops away
+- Fixed bug where downstream garden deletes on 1-hop did not reflect locally
 
 # 3.25.1
 
