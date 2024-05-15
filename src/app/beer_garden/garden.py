@@ -697,7 +697,6 @@ def garden_sync(sync_target: str = None):
         publish_garden()
         publish_command_publishing_blocklist()
 
-    
     from beer_garden.router import route
 
     # Iterate over all gardens and forward the sync requests
@@ -787,6 +786,24 @@ def handle_event(event):
                 ):
                     remote_systems.append(system)
             event.payload.systems = remote_systems
+
+            if event.name == Events.GARDEN_SYNC.name:
+                try:
+                    # Check if child garden as deleted
+                    db_garden = get_garden(event.payload.name)
+                    for db_child in db_garden.children:
+                        child_deleted = True
+                        for event_child in event.payload.children:
+                            if db_child.name == event_child.name:
+                                child_deleted = False
+                                break
+                        if child_deleted:
+                            logger.error(
+                                "Unable to find {db_child.name} in Garden sync"
+                            )
+                            remove_garden(garden=db_child)
+                except DoesNotExist:
+                    pass
 
             upsert_garden(event.payload)
 
