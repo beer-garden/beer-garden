@@ -5,11 +5,18 @@
 TBD
 
 - Fixed large output handling when updating parent requests
+- Upgraded Font-Awesome to Free version of 6.5.x
 - Refactored Mongo pruner to use APScheduler
 - Autobrew supports args and kwargs provided to client class
 - Updated order of Hidden and Command Type icons on Command Index and Request View pages
 - Migrates `Latest` system version from SystemClient to Request API supported
 - Adds support for filtering `SystemsList` API on `filter_latest` to return only latest version of each system
+- Updated Garden Syncs to include sync of targeted garden children
+- Updated Garden Admin page to not show duplicative info alerts
+- Updated Garden Update/Delete/Create events to trigger Publish Garden Sync
+- Fixed bug in routing logic when syncing Garden 2+ hops away
+- Fixed bug where downstream garden deletes on 1-hop did not reflect locally
+- Fixed bug where Garden Events caused duplicate Gardens to appear if event came from 2+ hops away
 
 # 3.25.1
 

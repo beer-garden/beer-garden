@@ -409,7 +409,7 @@ def forward(operation: Operation):
         operation_forwarded = False
 
         exceptions = []
-        for connection in target_garden.publishing_connections:
+        for connection in route_garden.publishing_connections:
             if connection.status not in [
                 "DISABLED",
                 "NOT_CONFIGURED",
@@ -942,6 +942,7 @@ def _forward_http(operation: Operation, target_garden: Garden) -> None:
             "DISABLED",
             "CONFIGURATION_ERROR",
         ]:
+
             easy_client = EasyClient(
                 bg_host=connection.config.get("host"),
                 bg_port=connection.config.get("port"),

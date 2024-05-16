@@ -1,29 +1,31 @@
 # -*- coding: utf-8 -*-
-import pytest
-from pathlib import Path
 import os
-
-from brewtils.models import Garden as BrewtilsGarden
-from brewtils.models import Connection as BrewtilsConnection
-from brewtils.models import System as BrewtilsSystem
-from mongoengine import DoesNotExist, connect
 from datetime import datetime, timedelta
+from pathlib import Path
+
+import pytest
+from mongoengine import DoesNotExist, connect
 
 from beer_garden import config
 from beer_garden.db.mongo.models import Garden, RemoteUser, System
 from beer_garden.garden import (
+    check_garden_receiving_heartbeat,
     create_garden,
+    garden_unresponsive_trigger,
     get_garden,
     get_gardens,
+    handle_event,
+    load_garden_connections,
     local_garden,
     remove_garden,
-    load_garden_connections,
-    check_garden_receiving_heartbeat,
     update_garden_status,
     upsert_garden,
-    garden_unresponsive_trigger,
 )
 from beer_garden.systems import create_system
+from brewtils.models import Connection as BrewtilsConnection
+from brewtils.models import Event, Events
+from brewtils.models import Garden as BrewtilsGarden
+from brewtils.models import System as BrewtilsSystem
 
 
 @pytest.fixture(autouse=True)
@@ -625,3 +627,36 @@ stomp:
         assert len(garden.receiving_connections) > 0
         for connection in garden.receiving_connections:
             assert connection.status == "RECEIVING"
+
+    def test_handle_event_child_delete_garden(self):
+        grand_parent = create_garden(
+            BrewtilsGarden(
+                name="grand",
+                connection_type="LOCAL",
+            )
+        )
+
+        parent = create_garden(
+            BrewtilsGarden(
+                name="parent",
+                connection_type="REMOTE",
+                has_parent=True,
+                parent=grand_parent.name,
+            )
+        )
+
+        child = create_garden(
+            BrewtilsGarden(
+                name="child",
+                connection_type="REMOTE",
+                has_parent=True,
+                parent=parent.name,
+            )
+        )
+
+        event = Event(name=Events.GARDEN_SYNC.name, payload=parent, garden=parent.name)
+
+        handle_event(event)
+
+        with pytest.raises(DoesNotExist):
+            get_garden(child.name)
