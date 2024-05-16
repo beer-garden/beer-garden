@@ -28,7 +28,7 @@
     "datatables.net": "^1.11.3",
     "datatables.net-bs": "^1.11.3",
     "eonasdan-bootstrap-datetimepicker": "^4.17.47",
-    "font-awesome": "^4.7.0",
+    "@fortawesome/fontawesome-free": "^6.5.0",
     "jquery": "^3.2.1",
     "jwt-decode": "^2.2.0",
     "lodash": "^4.17.10",

@@ -4,6 +4,7 @@
 
 TBD
 
+- Upgraded Font-Awesome to Free version of 6.5.x
 - Refactored Mongo pruner to use APScheduler
 - Autobrew supports args and kwargs provided to client class
 - Updated order of Hidden and Command Type icons on Command Index and Request View pages
