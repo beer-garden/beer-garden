@@ -50,6 +50,18 @@ def topic():
 
 @pytest.mark.usefixtures("easy_client", "request_generator")
 class TestPublish(object):
+
+    def wait_for_request(self, request, expected_length):
+        check = 0
+        while check < 5:
+            completed_request = self.easy_client.find_unique_request(id=request.id)
+            if len(completed_request.children) == expected_length:
+                return completed_request
+            time.sleep(5)
+            check += 1
+
+        return request
+
     def test_one_trigger_topic_subscriber(self, topic1):
         newtopic = self.easy_client.create_topic(topic1)
         request_dict = self.request_generator.generate_request(
@@ -57,8 +69,7 @@ class TestPublish(object):
         )
         request = self.easy_client.create_request(request_dict)
 
-        time.sleep(2)
-        completed_request = self.easy_client.find_unique_request(id=request.id)
+        completed_request = self.wait_for_request(request, 1)
 
         for child_request in completed_request.children:
             assert child_request.command == "subscribe_wildcard_topics"
@@ -73,8 +84,7 @@ class TestPublish(object):
         )
         request = self.easy_client.create_request(request_dict)
 
-        time.sleep(2)
-        completed_request = self.easy_client.find_unique_request(id=request.id)
+        completed_request = self.wait_for_request(request, 1)
 
         for child_request in completed_request.children:
             assert child_request.command == "subscribe_wildcard_topics"
@@ -88,8 +98,7 @@ class TestPublish(object):
         )
         request = self.easy_client.create_request(request_dict)
 
-        time.sleep(2)
-        completed_request = self.easy_client.find_unique_request(id=request.id)
+        completed_request = self.wait_for_request(request, 1)
 
         for child_request in completed_request.children:
             assert child_request.command == "subscribe_wildcard_topics"
@@ -102,8 +111,7 @@ class TestPublish(object):
         )
         request = self.easy_client.create_request(request_dict)
 
-        time.sleep(2)
-        completed_request = self.easy_client.find_unique_request(id=request.id)
+        completed_request = self.wait_for_request(request, 2)
 
         for child_request in completed_request.children:
             assert child_request.command in [
@@ -119,8 +127,7 @@ class TestPublish(object):
         )
         request = self.easy_client.create_request(request_dict)
 
-        time.sleep(2)
-        completed_request = self.easy_client.find_unique_request(id=request.id)
+        completed_request = self.wait_for_request(request, 3)
 
         for child_request in completed_request.children:
             assert child_request.command in [
