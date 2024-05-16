@@ -82,6 +82,27 @@ export function adminRoleController(
     );
   };
 
+  $scope.doEdit = function(role) {
+    const modalInstance = $uibModal.open({
+      controller: 'NewRoleController',
+      size: 'lg',
+      template: template,
+      backdrop: 'static',
+      resolve: {
+        isNew: false,
+        editRole: role,
+      },
+    });
+
+    modalInstance.result.then(
+        (create) => {
+          RoleService.createRole(create).then(loadAll);
+        },
+        // We don't really need to do anything if canceled
+        () => {},
+    );
+  };
+
   $scope.doDelete = function(role) {
     RoleService.deleteRole(role.id).then(loadAll);
   };
@@ -465,6 +486,7 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, isNew, 
         title: 'Name',
         minLength: 1,
         type: 'string',
+        readonly: !isNew,
       },
       description: {
         title: 'Description',
