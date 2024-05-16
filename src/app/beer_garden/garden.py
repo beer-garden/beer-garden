@@ -664,14 +664,14 @@ def rescan():
                     garden = create_garden(
                         Garden(name=garden_name, connection_type="Remote")
                     )
-                    # TODO: Add sync
 
                 # Garden was created by child, update the connection information if available
                 for connection in garden.publishing_connections:
                     if connection.status == "MISSING_CONFIGURATION":
                         load_garden_config(garden=garden)
-                        garden_sync(garden.name)
                         break
+
+                garden_sync(garden.name)
 
 
 def garden_sync(sync_target: str = None):
@@ -795,10 +795,11 @@ def handle_event(event):
                     db_garden = get_garden(event.payload.name)
                     for db_child in db_garden.children:
                         child_deleted = True
-                        for event_child in event.payload.children:
-                            if db_child.name == event_child.name:
-                                child_deleted = False
-                                break
+                        if event.payload.children:
+                            for event_child in event.payload.children:
+                                if db_child.name == event_child.name:
+                                    child_deleted = False
+                                    break
                         if child_deleted:
                             logger.error(
                                 f"Unable to find {db_child.name} in Garden sync"
