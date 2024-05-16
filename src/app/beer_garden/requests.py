@@ -1003,6 +1003,11 @@ def handle_event(event):
             filter_params={"id": event.payload.id},
             include_fields=[
                 "id",
+                "system",
+                "system_version",
+                "instance_name",
+                "command",
+                "namespace",
                 # Required to check if change in fields from child
                 "status",
                 "status_updated_at",
@@ -1052,6 +1057,7 @@ def handle_event(event):
 
                     if getattr(existing_request, field) != new_value:
                         request_changed[field] = new_value
+                        setattr(existing_request, field, new_value)
 
                 # Add output fields only if the status changes to a compelted state
                 if "status" in request_changed:
@@ -1063,14 +1069,14 @@ def handle_event(event):
                     ):
                         if event.payload.output:
                             request_changed["output"] = event.payload.output
+                            existing_request.output = event.payload.output
                         if event.payload.error_class:
                             request_changed["error_class"] = event.payload.error_class
+                            existing_request.error_class = event.payload.error_class
 
                 if request_changed:
                     try:
-                        existing_request = modify_request(
-                            existing_request, _publish_error=False, **request_changed
-                        )
+                        existing_request = update_request(existing_request)
                     except RequestStatusTransitionError:
                         pass
 

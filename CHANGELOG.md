@@ -4,6 +4,7 @@
 
 TBD
 
+- Fixed large output handling when updating parent requests
 - Refactored Mongo pruner to use APScheduler
 - Autobrew supports args and kwargs provided to client class
 - Updated order of Hidden and Command Type icons on Command Index and Request View pages
