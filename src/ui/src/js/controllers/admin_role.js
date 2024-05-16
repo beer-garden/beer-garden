@@ -133,11 +133,62 @@ newRoleController.$inject = ['$rootScope', '$scope', '$uibModalInstance', 'isNew
  * @param  {$uibModalInstance} $uibModalInstance  Angular UI's $uibModalInstance object.
  */
 export function newRoleController($rootScope, $scope, $uibModalInstance, isNew, editRole = {}) {
-  $scope.editRole = angular.copy(editRole);
+  
+
+  $scope.convertScopeToModal = function(scope_values){
+    let scopes = [];
+
+    if (scope_values !== undefined && scope_values != null && scope_values.length > 0){
+      for (const value of scope_values){
+        scopes.push({"scope":value});
+      }
+    }
+
+    return scopes;
+  }
+
+  $scope.convertRoleToModal = function(convertRole){
+    let role = angular.copy(convertRole);
+    role.scope_gardens = $scope.convertScopeToModal(role.scope_gardens);
+    role.scope_namespaces = $scope.convertScopeToModal(role.scope_namespaces);
+    role.scope_systems = $scope.convertScopeToModal(role.scope_systems);
+    role.scope_versions = $scope.convertScopeToModal(role.scope_versions);
+    role.scope_instances = $scope.convertScopeToModal(role.scope_instances);
+    role.scope_commands = $scope.convertScopeToModal(role.scope_commands);
+    return role;
+  }
+
+  $scope.convertScopeFromModal = function(scope_values){
+    let scopes = [];
+
+    if (scope_values !== undefined && scope_values != null && scope_values.length > 0){
+      for (const value of scope_values){
+        if (value.scope !== undefined && value.scope != null && value.scope.length > 0){ 
+          scopes.push(value.scope);
+        }
+      }
+    }
+
+    return scopes;
+  }
+
+  $scope.convertRoleFromModal = function(convertRole){
+    let role = angular.copy(convertRole);
+    role.scope_gardens = $scope.convertScopeFromModal(role.scope_gardens);
+    role.scope_namespaces = $scope.convertScopeFromModal(role.scope_namespaces);
+    role.scope_systems = $scope.convertScopeFromModal(role.scope_systems);
+    role.scope_versions = $scope.convertScopeFromModal(role.scope_versions);
+    role.scope_instances = $scope.convertScopeFromModal(role.scope_instances);
+    role.scope_commands = $scope.convertScopeFromModal(role.scope_commands);
+    return role;
+  }
+
+  $scope.editRole = $scope.convertRoleToModal(editRole);
 
   if (isNew) {
     $scope.editRole.name = null;
     $scope.editRole.id = null;
+    $scope.editRole.description = null;
   }
 
   $scope.garden = $rootScope.garden;
