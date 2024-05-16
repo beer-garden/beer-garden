@@ -5,6 +5,9 @@
 TBD
 
 - Upgraded Font-Awesome to Free version of 6.5.x
+- Refactored Mongo pruner to use APScheduler
+- Autobrew supports args and kwargs provided to client class
+- Updated order of Hidden and Command Type icons on Command Index and Request View pages
 - Migrates `Latest` system version from SystemClient to Request API supported
 - Adds support for filtering `SystemsList` API on `filter_latest` to return only latest version of each system
 
