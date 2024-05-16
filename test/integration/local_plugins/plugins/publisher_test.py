@@ -57,7 +57,7 @@ class TestPublish(object):
         )
         request = self.easy_client.create_request(request_dict)
 
-        time.sleep(2)
+        time.sleep(10)
         completed_request = self.easy_client.find_unique_request(id=request.id)
 
         for child_request in completed_request.children:
@@ -73,7 +73,7 @@ class TestPublish(object):
         )
         request = self.easy_client.create_request(request_dict)
 
-        time.sleep(2)
+        time.sleep(10)
         completed_request = self.easy_client.find_unique_request(id=request.id)
 
         for child_request in completed_request.children:
@@ -88,7 +88,7 @@ class TestPublish(object):
         )
         request = self.easy_client.create_request(request_dict)
 
-        time.sleep(2)
+        time.sleep(10)
         completed_request = self.easy_client.find_unique_request(id=request.id)
 
         for child_request in completed_request.children:
@@ -102,7 +102,7 @@ class TestPublish(object):
         )
         request = self.easy_client.create_request(request_dict)
 
-        time.sleep(2)
+        time.sleep(10)
         completed_request = self.easy_client.find_unique_request(id=request.id)
 
         for child_request in completed_request.children:
@@ -119,7 +119,7 @@ class TestPublish(object):
         )
         request = self.easy_client.create_request(request_dict)
 
-        time.sleep(2)
+        time.sleep(10)
         completed_request = self.easy_client.find_unique_request(id=request.id)
 
         for child_request in completed_request.children:
