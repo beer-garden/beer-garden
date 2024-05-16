@@ -319,7 +319,7 @@ export default function adminGardenController(
     }
     let gardenNotFound = true;
     for (let i = 0; i < $scope.data.length; i++) {
-      if ($scope.data[i].id == garden.id) {
+      if ($scope.data[i].name == garden.name) {
         // Min fields to update
         let updateValues = ["status", "receiving_connections", "publishing_connections", "metadata"];
 
