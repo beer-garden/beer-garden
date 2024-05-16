@@ -2,7 +2,7 @@
 
 # 3.26.0
 
-TBD
+5/16/2024
 
 - Fixed large output handling when updating parent requests
 - Upgraded Font-Awesome to Free version of 6.5.x
