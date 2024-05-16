@@ -98,11 +98,11 @@ export default function runDTRenderer(DTRendererService) {
         const autoRefresh = $('<span>')
             .attr('id', 'autoRefreshContainer')
             .css('margin-left', '20px')
-            //.css('margin-bottom', '5px')
             .append(
               $('<input>')
                   .attr('id', 'autoRefreshCheck')
                   .attr('type', 'checkbox')
+                  .attr('checked', true)
                   .css('margin-top', '-4px')
             )
             .append(
