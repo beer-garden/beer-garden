@@ -12,6 +12,7 @@ TBD
 - Updated Garden Update/Delete/Create events to trigger Publish Garden Sync
 - Fixed bug in routing logic when syncing Garden 2+ hops away
 - Fixed bug where downstream garden deletes on 1-hop did not reflect locally
+- Fixed bug where Garden Events caused duplicate Gardens to appear if event came from 2+ hops away
 
 # 3.25.1
 
