@@ -4,6 +4,7 @@
 
 TBD
 
+- Fixed large output handling when updating parent requests
 - Upgraded Font-Awesome to Free version of 6.5.x
 - Refactored Mongo pruner to use APScheduler
 - Autobrew supports args and kwargs provided to client class

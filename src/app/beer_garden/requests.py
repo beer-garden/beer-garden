@@ -16,7 +16,6 @@ import time
 from asyncio import Future
 from builtins import str
 from copy import deepcopy
-from datetime import datetime
 from typing import Dict, List, Sequence, Union
 
 import six
@@ -908,18 +907,6 @@ def update_request(request: Request):
     return db.create(request)
 
 
-@publish_event(Events.REQUEST_UPDATED)
-def modify_request(request: Request = None, **kwargs):
-
-    # Clean commands are not run for modify, so have to add this in here instead
-    status_key = f"{request.status}_{config.get('garden.name')}"
-    if status_key not in request.metadata:
-        request.metadata[status_key] = int(datetime.utcnow().timestamp() * 1000)
-        kwargs["metadata"] = request.metadata
-
-    return db.modify(request, **kwargs)
-
-
 def process_wait(request: Request, timeout: float) -> Request:
     """Helper to process a request and wait for completion using a threading.Event
 
@@ -1001,18 +988,6 @@ def handle_event(event):
         requests = db.query(
             Request,
             filter_params={"id": event.payload.id},
-            include_fields=[
-                "id",
-                # Required to check if change in fields from child
-                "status",
-                "status_updated_at",
-                "target_garden",
-                "updated_at",
-                # Required for latency tracking
-                "metadata",
-                # Required for TEMP check
-                "command_type",
-            ],
         )
 
         if requests:
@@ -1052,6 +1027,7 @@ def handle_event(event):
 
                     if getattr(existing_request, field) != new_value:
                         request_changed[field] = new_value
+                        setattr(existing_request, field, new_value)
 
                 # Add output fields only if the status changes to a compelted state
                 if "status" in request_changed:
@@ -1063,14 +1039,14 @@ def handle_event(event):
                     ):
                         if event.payload.output:
                             request_changed["output"] = event.payload.output
+                            existing_request.output = event.payload.output
                         if event.payload.error_class:
                             request_changed["error_class"] = event.payload.error_class
+                            existing_request.error_class = event.payload.error_class
 
                 if request_changed:
                     try:
-                        existing_request = modify_request(
-                            existing_request, _publish_error=False, **request_changed
-                        )
+                        existing_request = update_request(existing_request)
                     except RequestStatusTransitionError:
                         pass
 
