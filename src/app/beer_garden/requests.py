@@ -908,18 +908,6 @@ def update_request(request: Request):
     return db.create(request)
 
 
-@publish_event(Events.REQUEST_UPDATED)
-def modify_request(request: Request = None, **kwargs):
-
-    # Clean commands are not run for modify, so have to add this in here instead
-    status_key = f"{request.status}_{config.get('garden.name')}"
-    if status_key not in request.metadata:
-        request.metadata[status_key] = int(datetime.utcnow().timestamp() * 1000)
-        kwargs["metadata"] = request.metadata
-
-    return db.modify(request, **kwargs)
-
-
 def process_wait(request: Request, timeout: float) -> Request:
     """Helper to process a request and wait for completion using a threading.Event
 
@@ -1001,23 +989,6 @@ def handle_event(event):
         requests = db.query(
             Request,
             filter_params={"id": event.payload.id},
-            include_fields=[
-                "id",
-                "system",
-                "system_version",
-                "instance_name",
-                "command",
-                "namespace",
-                # Required to check if change in fields from child
-                "status",
-                "status_updated_at",
-                "target_garden",
-                "updated_at",
-                # Required for latency tracking
-                "metadata",
-                # Required for TEMP check
-                "command_type",
-            ],
         )
 
         if requests:
