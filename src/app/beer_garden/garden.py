@@ -664,6 +664,7 @@ def rescan():
                     garden = create_garden(
                         Garden(name=garden_name, connection_type="Remote")
                     )
+                    # TODO: Add sync
 
                 # Garden was created by child, update the connection information if available
                 for connection in garden.publishing_connections:

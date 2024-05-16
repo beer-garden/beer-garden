@@ -6,6 +6,7 @@ import os
 from brewtils.models import Garden as BrewtilsGarden
 from brewtils.models import Connection as BrewtilsConnection
 from brewtils.models import System as BrewtilsSystem
+from brewtils.models import Event, Events
 from mongoengine import DoesNotExist, connect
 from datetime import datetime, timedelta
 
@@ -22,6 +23,7 @@ from beer_garden.garden import (
     update_garden_status,
     upsert_garden,
     garden_unresponsive_trigger,
+    handle_event,
 )
 from beer_garden.systems import create_system
 
@@ -625,3 +627,28 @@ stomp:
         assert len(garden.receiving_connections) > 0
         for connection in garden.receiving_connections:
             assert connection.status == "RECEIVING"
+
+    def test_handle_event_child_delete_garden(self):
+        grand_parent = create_garden(
+            BrewtilsGarden(
+                name="grand_parent", connection_type="LOCAL"
+            )
+        )
+
+        parent = create_garden(
+            BrewtilsGarden(
+                name="parent", connection_type="REMOTE", has_parent=True, parent=grand_parent.name
+            )
+        )
+
+        child = create_garden(
+            BrewtilsGarden(
+                name="parent", connection_type="REMOTE", has_parent=True, parent=parent.name
+            )
+        )
+
+        event = Event(name=Events.GARDEN_SYNC.name, payload=parent, garden=parent.name)
+
+        handle_event(event)
+
+        
