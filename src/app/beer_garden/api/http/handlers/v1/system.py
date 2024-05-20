@@ -282,6 +282,12 @@ class SystemListAPI(AuthorizationHandler):
             description: Commands and instances will be an object id
             type: boolean
             default: true
+          - name: filter_latest
+            in: query
+            required: false
+            description: Filter latest system versions
+            type: boolean
+            default: false
         responses:
           200:
             description: All Systems
@@ -304,6 +310,12 @@ class SystemListAPI(AuthorizationHandler):
             dereference_nested = True
         else:
             dereference_nested = bool(dereference_nested.lower() == "true")
+
+        filter_latest = self.get_query_argument("filter_latest", None)
+        if filter_latest is None:
+            filter_latest = False
+        else:
+            filter_latest = bool(filter_latest.lower() == "true")
 
         include_fields = self.get_query_argument("include_fields", None)
         if include_fields:
@@ -338,6 +350,7 @@ class SystemListAPI(AuthorizationHandler):
                     "include_fields": include_fields,
                     "exclude_fields": exclude_fields,
                     "dereference_nested": dereference_nested,
+                    "filter_latest": filter_latest,
                 },
             )
         )

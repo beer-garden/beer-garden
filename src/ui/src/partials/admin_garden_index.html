@@ -37,7 +37,7 @@
                   title="Start Garden {{garden.name}}"></button>
                 <button type="button" class="btn btn-default fa fa-stop" ng-click="stopGarden(garden)"
                   title="Stop Garden {{garden.name}}"></button>
-                <button type="button" class="btn btn-default fa fa-trash-o" ng-click="deleteGarden(garden)"
+                <button type="button" class="btn btn-default fa fa-trash" ng-click="deleteGarden(garden)"
                   title="Delete Garden {{garden.name}}"></button>
               </div>
             </div>
@@ -102,7 +102,9 @@
             ng-if="isChild(garden)" title="Stop Garden {{garden.name}}"></button>
           <button type="button" class="btn btn-default fa fa-refresh" ng-click="syncGarden(garden)"
             title="Sync Garden {{garden.name}}"></button>
-          <button type="button" class="btn btn-default fa fa-trash-o" ng-click="deleteGarden(garden)"
+        </div>
+        <div class="btn-group btn-group-sm pull-right">
+          <button type="button" class="btn btn-default fa fa-trash" ng-click="deleteGarden(garden)"
             title="Delete Garden {{garden.name}}"></button>
         </div>
       </div>

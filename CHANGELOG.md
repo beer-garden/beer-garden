@@ -1,5 +1,46 @@
 # Beer Garden Changelog
 
+# 3.26.1
+
+TBD
+
+- Fixed logging statement
+
+# 3.26.0
+
+5/16/2024
+
+- Fixed large output handling when updating parent requests
+- Upgraded Font-Awesome to Free version of 6.5.x
+- Refactored Mongo pruner to use APScheduler
+- Autobrew supports args and kwargs provided to client class
+- Updated order of Hidden and Command Type icons on Command Index and Request View pages
+- Migrates `Latest` system version from SystemClient to Request API supported
+- Adds support for filtering `SystemsList` API on `filter_latest` to return only latest version of each system
+- Updated Garden Syncs to include sync of targeted garden children
+- Updated Garden Admin page to not show duplicative info alerts
+- Updated Garden Update/Delete/Create events to trigger Publish Garden Sync
+- Fixed bug in routing logic when syncing Garden 2+ hops away
+- Fixed bug where downstream garden deletes on 1-hop did not reflect locally
+- Fixed bug where Garden Events caused duplicate Gardens to appear if event came from 2+ hops away
+
+# 3.25.1
+
+5/3/2024
+
+- Added auto refresh checkbox to requests page
+- Added support for cross-server parent/child requests
+- Reuse existing rabbit admin queue by purging messages instead of creating new queue
+- Fixed bug where Auto brew plugins did not parse NAME/VERSION properly from the beer.conf
+- Fixed bug where unresponsive Garden API was referencing a non existing configuration for default. New default is -1.
+- Fixed bug where Garden unresponsive metadata was cleared during child garden shutdown
+- Fixed bug where tailing plugin logs fails if the logs are not updating
+- Fixed bug where locally connected plugin commands ran as TEMP did not auto delete after completion
+- Fixed bug where commands page did not load properly if opened up directly
+- Fixed bug where `Pour It Again` on Request View page was generated before Systems were loaded from API
+- Fixed bug where Autobrew plugins passed PLUGIN_ARGS to Client class
+- Fixed bug where outstanding Requests will prevent Plugin from shutting down. 
+
 # 3.25.0
 
 4/11/2024

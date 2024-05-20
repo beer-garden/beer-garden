@@ -181,10 +181,6 @@ def publish_garden(status: str = "RUNNING") -> Garden:
     get_children_garden(garden)
     garden.connection_type = None
     garden.status = status
-    if config.get("parent.sync_interval") > 0:
-        garden.metadata["_unresponsive_timeout"] = (
-            config.get("parent.sync_interval") * 3
-        )
 
     return garden
 
@@ -673,8 +669,9 @@ def rescan():
                 for connection in garden.publishing_connections:
                     if connection.status == "MISSING_CONFIGURATION":
                         load_garden_config(garden=garden)
-                        garden_sync(garden.name)
                         break
+
+                garden_sync(garden.name)
 
 
 def garden_sync(sync_target: str = None):
@@ -701,23 +698,22 @@ def garden_sync(sync_target: str = None):
         publish_garden()
         publish_command_publishing_blocklist()
 
-    else:
-        from beer_garden.router import route
+    from beer_garden.router import route
 
-        # Iterate over all gardens and forward the sync requests
-        for garden in get_gardens(include_local=False):
-            try:
-                logger.debug(f"About to create sync operation for garden {garden.name}")
+    # Iterate over all gardens and forward the sync requests
+    for garden in get_gardens(include_local=False):
+        try:
+            logger.debug(f"About to create sync operation for garden {garden.name}")
 
-                route(
-                    Operation(
-                        operation_type="GARDEN_SYNC",
-                        target_garden_name=garden.name,
-                        kwargs={"sync_target": garden.name},
-                    )
+            route(
+                Operation(
+                    operation_type="GARDEN_SYNC",
+                    target_garden_name=garden.name,
+                    kwargs={"sync_target": garden.name},
                 )
-            except ForwardException:
-                pass
+            )
+        except ForwardException:
+            pass
 
 
 def publish_local_garden():
@@ -734,9 +730,7 @@ def publish_local_garden():
 
 def garden_unresponsive_trigger():
     for garden in get_gardens(include_local=False):
-        interval_value = garden.metadata.get(
-            "_unresponsive_timeout", config.get("children.unresponsive_timeout")
-        )
+        interval_value = garden.metadata.get("_unresponsive_timeout", -1)
 
         if interval_value > 0:
             timeout = datetime.utcnow() - timedelta(minutes=interval_value)
@@ -746,6 +740,9 @@ def garden_unresponsive_trigger():
                     if connection.status_info["heartbeat"] < timeout:
                         update_garden_receiving(
                             "UNRESPONSIVE", api=connection.api, garden=garden
+                        )
+                        logger.error(
+                            f"{garden.name} Timed out {interval_value} minutes"
                         )
 
 
@@ -791,6 +788,26 @@ def handle_event(event):
                     remote_systems.append(system)
             event.payload.systems = remote_systems
 
+            if event.name == Events.GARDEN_SYNC.name:
+                logger.info(f"Garden sync event for {event.payload.name}")
+                try:
+                    # Check if child garden as deleted
+                    db_garden = get_garden(event.payload.name)
+                    for db_child in db_garden.children:
+                        child_deleted = True
+                        if event.payload.children:
+                            for event_child in event.payload.children:
+                                if db_child.name == event_child.name:
+                                    child_deleted = False
+                                    break
+                        if child_deleted:
+                            logger.error(
+                                f"Unable to find {db_child.name} in Garden sync"
+                            )
+                            remove_garden(garden=db_child)
+                except DoesNotExist:
+                    pass
+
             upsert_garden(event.payload)
 
             # Publish update events for UI to dynamically load changes for Systems
@@ -822,7 +839,12 @@ def handle_event(event):
         if target_garden.status == "NOT_CONFIGURED":
             update_garden_status(event.payload.target_garden_name, "NOT_CONFIGURED")
 
-    elif event.name == Events.GARDEN_CONFIGURED.name:
+    elif event.name in [
+        Events.GARDEN_CONFIGURED.name,
+        Events.GARDEN_REMOVED.name,
+        Events.GARDEN_CREATED.name,
+        Events.GARDEN_UPDATED.name,
+    ]:
         publish_garden()
 
     if "SYSTEM" in event.name or "INSTANCE" in event.name:

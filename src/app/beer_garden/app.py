@@ -6,7 +6,6 @@ in Beer-Garden will be initialized within this class.
 """
 import logging
 import signal
-from datetime import timedelta
 from functools import partial
 from multiprocessing.managers import BaseManager
 from typing import Callable
@@ -24,6 +23,7 @@ import beer_garden.api.entry_point
 import beer_garden.command_publishing_blocklist
 import beer_garden.config as config
 import beer_garden.db.api as db
+import beer_garden.db.mongo.pruner
 import beer_garden.events
 import beer_garden.garden
 import beer_garden.local_plugins.manager
@@ -93,38 +93,50 @@ class Application(StoppableThread):
             )
         ]
 
-        # Only want to run the MongoPruner if it would do anything
-        ttl_config = config.get("db.ttl")
+        # Add scheduled jobs for Mongo Pruner
+        prune_interval = config.get("db.prune_interval")
+        if prune_interval > 0:
+            ttl_config = config.get("db.ttl")
+            if ttl_config.get("info") > 0:
+                self.scheduler.add_schedule(
+                    beer_garden.db.mongo.pruner.prune_info_requests,
+                    interval=prune_interval,
+                    max_running_jobs=1,
+                )
 
-        tasks, run_every = db.prune_tasks(**ttl_config)
-        if run_every:
-            if ttl_config.get("multithread", False):
-                for task in tasks:
-                    self.helper_threads.append(
-                        HelperThread(
-                            db.get_pruner(),
-                            tasks=[task],
-                            run_every=timedelta(minutes=run_every),
-                            cancel_threshold=-1,
-                        )
-                    )
-                    if ttl_config.in_progress > 0:
-                        self.helper_threads.append(
-                            HelperThread(
-                                db.get_pruner(),
-                                tasks=[],
-                                run_every=timedelta(minutes=run_every),
-                                cancel_threshold=ttl_config.in_progress,
-                            )
-                        )
-            else:
-                self.helper_threads.append(
-                    HelperThread(
-                        db.get_pruner(),
-                        tasks=tasks,
-                        run_every=timedelta(minutes=run_every),
-                        cancel_threshold=ttl_config.in_progress,
-                    )
+            if ttl_config.get("action") > 0:
+                self.scheduler.add_schedule(
+                    beer_garden.db.mongo.pruner.prune_action_requests,
+                    interval=prune_interval,
+                    max_running_jobs=1,
+                )
+
+            if ttl_config.get("admin") > 0:
+                self.scheduler.add_schedule(
+                    beer_garden.db.mongo.pruner.prune_admin_requests,
+                    interval=prune_interval,
+                    max_running_jobs=1,
+                )
+
+            if ttl_config.get("temp") > 0:
+                self.scheduler.add_schedule(
+                    beer_garden.db.mongo.pruner.prune_temp_requests,
+                    interval=prune_interval,
+                    max_running_jobs=1,
+                )
+
+            if ttl_config.get("file") > 0:
+                self.scheduler.add_schedule(
+                    beer_garden.db.mongo.pruner.prune_files,
+                    interval=prune_interval,
+                    max_running_jobs=1,
+                )
+
+            if ttl_config.get("in_progress") > 0:
+                self.scheduler.add_schedule(
+                    beer_garden.db.mongo.pruner.prune_outstanding,
+                    interval=prune_interval,
+                    max_running_jobs=1,
                 )
 
         # Add scheduled job for checking unresponsive gardens

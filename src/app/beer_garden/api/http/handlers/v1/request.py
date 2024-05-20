@@ -427,7 +427,7 @@ class RequestListAPI(AuthorizationHandler):
             default: -1
           - name: request
             in: formData
-            required: true
+            required: false
             description: |
               For multipart/form-data requests (required when uploading a
               a file as a parameter) this field acts the same as the request (body)

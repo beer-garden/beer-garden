@@ -221,14 +221,12 @@ class TestEnsureLocalGarden:
     def teardown_method(self):
         beer_garden.db.mongo.models.Garden.drop_collection()
 
-    def config_get(self, config_name):
-        return "testgarden"
-
     def test_ensure_local_garden_creates_new_garden_from_config(self, monkeypatch):
         """ensure_local_garden should create a Garden entry in the database with
         name derived from the "garden.name" config setting and a connection type of
         LOCAL"""
-        monkeypatch.setattr(config, "get", self.config_get)
+
+        config._CONFIG = {"garden": {"name": "parent"}, "parent": {"sync_interval": 1}}
 
         ensure_local_garden()
         garden = Garden.objects.get(connection_type="LOCAL")
@@ -238,7 +236,7 @@ class TestEnsureLocalGarden:
     def test_ensure_local_garden_updates_garden_from_config(self, monkeypatch):
         """ensure_local_garden should update the name of an existing Garden entry in the
         database with a connection type of LOCAL"""
-        monkeypatch.setattr(config, "get", self.config_get)
+        config._CONFIG = {"garden": {"name": "parent"}, "parent": {"sync_interval": 1}}
 
         Garden(name="thisshouldchange", connection_type="LOCAL").save()
         ensure_local_garden()

@@ -23,16 +23,16 @@ db:
     port: 27017
     username: null
   name: beer_garden
+  prune_interval: 15
   ttl:
     action: -1
     file: 15
     in_progress: 15
     info: 15   
     temp: 15
-    admin: -1
+    admin: 15
 
     batch_size: -1
-    multithread: false
     
 entry:
   http:

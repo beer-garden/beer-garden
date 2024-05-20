@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
-from typing import List, Optional, Tuple, Type, Union
+from typing import List, Optional, Type, Union
 
 import brewtils.models
 from box import Box
@@ -19,7 +19,6 @@ from mongoengine.queryset.visitor import Q, QCombination
 import beer_garden.db.mongo.models
 from beer_garden.db.mongo.models import MongoModel
 from beer_garden.db.mongo.parser import MongoParser
-from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.db.mongo.util import (
     check_indexes,
     ensure_local_garden,
@@ -190,14 +189,6 @@ def initial_setup():
     ensure_local_garden()
     # ensure_roles()
     # ensure_users()
-
-
-def get_pruner():
-    return MongoPruner
-
-
-def prune_tasks(**kwargs) -> Tuple[List[dict], int]:
-    return MongoPruner.determine_tasks(**kwargs)
 
 
 def get_job_store():

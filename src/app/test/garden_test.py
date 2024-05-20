@@ -1,29 +1,31 @@
 # -*- coding: utf-8 -*-
-import pytest
-from pathlib import Path
 import os
-
-from brewtils.models import Garden as BrewtilsGarden
-from brewtils.models import Connection as BrewtilsConnection
-from brewtils.models import System as BrewtilsSystem
-from mongoengine import DoesNotExist, connect
 from datetime import datetime, timedelta
+from pathlib import Path
+
+import pytest
+from mongoengine import DoesNotExist, connect
 
 from beer_garden import config
 from beer_garden.db.mongo.models import Garden, System
 from beer_garden.garden import (
+    check_garden_receiving_heartbeat,
     create_garden,
+    garden_unresponsive_trigger,
     get_garden,
     get_gardens,
+    handle_event,
+    load_garden_connections,
     local_garden,
     remove_garden,
-    load_garden_connections,
-    check_garden_receiving_heartbeat,
     update_garden_status,
     upsert_garden,
-    garden_unresponsive_trigger,
 )
 from beer_garden.systems import create_system
+from brewtils.models import Connection as BrewtilsConnection
+from brewtils.models import Event, Events
+from brewtils.models import Garden as BrewtilsGarden
+from brewtils.models import System as BrewtilsSystem
 
 
 @pytest.fixture(autouse=True)
@@ -546,13 +548,13 @@ stomp:
         assert updated_garden.status == "STOPPED"
 
     def test_garden_unresponsive_trigger(self, bg_garden):
-        config._CONFIG = {"children": {"unresponsive_timeout": 15}}
 
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
             connection.status_info["heartbeat"] = datetime.utcnow() - timedelta(
                 minutes=60
             )
+        bg_garden.metadata = {"_unresponsive_timeout": 15}
 
         create_garden(bg_garden)
 
@@ -565,13 +567,14 @@ stomp:
             assert connection.status == "UNRESPONSIVE"
 
     def test_garden_unresponsive_trigger_in_window(self, bg_garden):
-        config._CONFIG = {"children": {"unresponsive_timeout": 15}}
 
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
             connection.status_info["heartbeat"] = datetime.utcnow() - timedelta(
                 minutes=10
             )
+
+        bg_garden.metadata = {"_unresponsive_timeout": 15}
 
         create_garden(bg_garden)
 
@@ -584,13 +587,14 @@ stomp:
             assert connection.status == "RECEIVING"
 
     def test_garden_unresponsive_trigger_child_metadata(self, bg_garden):
-        config._CONFIG = {"children": {"unresponsive_timeout": 15}}
 
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
             connection.status_info["heartbeat"] = datetime.utcnow() - timedelta(
                 minutes=10
             )
+
+        bg_garden.metadata = {"_unresponsive_timeout": 15}
 
         bg_garden.metadata["_unresponsive_timeout"] = 5
 
@@ -605,13 +609,14 @@ stomp:
             assert connection.status == "UNRESPONSIVE"
 
     def test_garden_unresponsive_trigger_missing_window(self, bg_garden):
-        config._CONFIG = {"children": {"unresponsive_timeout": -1}}
 
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
             connection.status_info["heartbeat"] = datetime.utcnow() - timedelta(
                 minutes=10
             )
+
+        bg_garden.metadata = {"_unresponsive_timeout": 15}
 
         create_garden(bg_garden)
 
@@ -622,3 +627,36 @@ stomp:
         assert len(garden.receiving_connections) > 0
         for connection in garden.receiving_connections:
             assert connection.status == "RECEIVING"
+
+    def test_handle_event_child_delete_garden(self):
+        grand_parent = create_garden(
+            BrewtilsGarden(
+                name="grand",
+                connection_type="LOCAL",
+            )
+        )
+
+        parent = create_garden(
+            BrewtilsGarden(
+                name="parent",
+                connection_type="REMOTE",
+                has_parent=True,
+                parent=grand_parent.name,
+            )
+        )
+
+        child = create_garden(
+            BrewtilsGarden(
+                name="child",
+                connection_type="REMOTE",
+                has_parent=True,
+                parent=parent.name,
+            )
+        )
+
+        event = Event(name=Events.GARDEN_SYNC.name, payload=parent, garden=parent.name)
+
+        handle_event(event)
+
+        with pytest.raises(DoesNotExist):
+            get_garden(child.name)

@@ -85,11 +85,6 @@
           </td>
           <td>
             <span
-              ng-show="request.hidden"
-              class="fa fa-user-secret pull-right"
-              style="font-size: 20px"
-            ></span>
-            <span
                 class="fa fa-hourglass pull-right"
                 style="font-size: 20px"
                 title="Temp Command"
@@ -116,6 +111,11 @@
                 popover-animation="true"
                 popover-placement="top-left"
                 ng-show="request.is_event"
+              ></span>
+              <span
+                ng-show="request.hidden"
+                class="fa fa-user-secret pull-right"
+                style="font-size: 20px"
               ></span>
           </td>
           <td>{{request.namespace}}</td>

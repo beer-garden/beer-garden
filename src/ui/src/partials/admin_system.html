@@ -83,7 +83,7 @@
           <div class="btn-group btn-group-sm pull-right">
             <button
               type="button"
-              class="btn btn-default fa fa-trash-o"
+              class="btn btn-default fa fa-trash"
               ng-click="deleteRunners(runners)"
               title="Delete Runners in {{runners[0].name}}"
             ></button>
@@ -121,7 +121,7 @@
             ></button>
             <button
               type="button"
-              class="btn btn-default fa fa-trash-o"
+              class="btn btn-default fa fa-trash"
               ng-disabled="runner.waiting"
               ng-click="deleteRunner(runner)"
               title="Delete Runner {{runner.id}}"
@@ -189,7 +189,7 @@
               <div class="btn-group btn-group-sm pull-right">
                 <button
                   type="button"
-                  class="btn btn-default fa fa-trash-o"
+                  class="btn btn-default fa fa-trash"
                   ng-click="deleteSystem(system)"
                   confirm="Are you sure you want to delete a system with running instances?"
                   confirm-if="hasRunningInstances(system)"

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import copy
 import json
 import logging
 import os
@@ -145,6 +146,10 @@ def handle_event(event: Event) -> None:
             lpm_proxy.handle_stopped(event)
 
 
+def flatten_kwargs(kwargs: dict) -> list:
+    return [f"{k}={v}" for k, v in kwargs.items()]
+
+
 class PluginManager(StoppableThread):
     """Manage creation and destruction of PluginRunners.
 
@@ -280,9 +285,16 @@ class PluginManager(StoppableThread):
         the_runner = self._from_instance_id(event.payload.id)
 
         if the_runner is not None:
-            the_runner.stopped = True
-            the_runner.restart = False
-            the_runner.dead = False
+            if not the_runner.stopped:
+                # Allow for plugin to finish processing the current requests
+                the_runner.stopped = True
+                the_runner.restart = False
+                the_runner.dead = False
+            else:
+                # The double tap, shutdown the thread and don't wait for requests to finish
+                self.stop_one(
+                    runner_id=the_runner.runner_id, send_sigterm=False, remove=False
+                )
 
     def start(
         self, runner_id: Optional[str] = None, instance_id: Optional[str] = None
@@ -665,7 +677,7 @@ class PluginManager(StoppableThread):
                 plugin_version = plugin_config.get("VERSION")
 
                 if plugin_version is not None:
-                    process_args += ["VERSION=" + plugin_name]
+                    process_args += ["VERSION=" + plugin_version]
 
             elif plugin_name is not None:
                 process_args += ["-m", plugin_name]
@@ -676,6 +688,18 @@ class PluginManager(StoppableThread):
 
         if plugin_args is not None:
             process_args += plugin_args
+
+        if plugin_config["AUTO_BREW_ARGS"]:
+            plugin_auto_args = plugin_config["AUTO_BREW_ARGS"].get(instance_name)
+            if plugin_auto_args is not None:
+                process_args += ["ARG=" + arg for arg in plugin_auto_args]
+
+        if plugin_config["AUTO_BREW_KWARGS"]:
+            plugin_auto_kwargs = plugin_config["AUTO_BREW_KWARGS"].get(instance_name)
+            if plugin_auto_kwargs is not None:
+                process_args += [
+                    f"KWARG={k}={v}" for k, v in plugin_auto_kwargs.items()
+                ]
 
         return process_args
 
@@ -757,6 +781,8 @@ class ConfigKeys(Enum):
 
     AUTO_BREW_MODULE = 16
     AUTO_BREW_CLASS = 17
+    AUTO_BREW_ARGS = 18
+    AUTO_BREW_KWARGS = 19
 
 
 class ConfigLoader(object):
@@ -779,6 +805,8 @@ class ConfigLoader(object):
                 config_dict.get("INSTANCES"),
                 config_dict.get("PLUGIN_ARGS"),
                 config_dict.get("MAX_INSTANCES"),
+                config_dict.get("AUTO_BREW_ARGS"),
+                config_dict.get("AUTO_BREW_KWARGS"),
             )
         )
 
@@ -806,12 +834,103 @@ class ConfigLoader(object):
         return config_module
 
     @staticmethod
-    def _normalize(instances, args, max_instances):
+    def _normalize(instances, args, max_instances, auto_args, auto_kwargs):
         """Normalize the config
 
         Will reconcile the different ways instances and arguments can be specified as
         well as determine the correct MAX_INSTANCE value
         """
+
+        if auto_args or auto_kwargs:
+            if auto_args:
+                # Global Args
+                if isinstance(auto_args, list):
+                    if instances is None:
+                        instances = ["default"]
+                        auto_args = {"default": auto_args}
+                    else:
+                        temp_args = {}
+                        for instance in instances:
+                            temp_args[instance] = copy.deepcopy(auto_args)
+                        auto_args = temp_args
+
+                # Instance-based args
+                if isinstance(auto_args, dict):
+                    if instances is None:
+                        instances = [key for key in auto_args.keys()]
+                        temp_args = {}
+                        for instance in instances:
+                            temp_args[instance] = auto_args[instance]
+                        auto_args = temp_args
+                    else:
+                        temp_instances = [key for key in auto_args.keys()]
+                        temp_args = {}
+                        for instance in temp_instances:
+                            temp_args[instance] = auto_args[instance]
+                        if instances:
+                            # Instances that are in the args but not in the instances list
+                            missing_instances = list(
+                                set(temp_instances) - set(instances)
+                            )
+                            for missing_instance in missing_instances:
+                                instances.append(missing_instance)
+                            # Instances that are in the instances list but not in the args list
+                            diff_instances = list(set(instances) - set(temp_instances))
+                            for diff_instance in diff_instances:
+                                instances.append(diff_instance)
+                                temp_args[diff_instance] = None
+                        auto_args = temp_args
+
+            if auto_kwargs:
+                if not isinstance(auto_kwargs, dict):
+                    raise ValueError("AUTO_BREW_KWARGS must be dict")
+
+                key = next(iter(auto_kwargs))
+                # Global kwargs
+                if isinstance(auto_kwargs[key], str):
+                    if instances is None:
+                        auto_kwargs = {"default": flatten_kwargs(auto_kwargs)}
+                    else:
+                        temp_kwargs = {}
+                        for instance in instances:
+                            try:
+                                temp_kwargs[instance].append(
+                                    flatten_kwargs(auto_kwargs)[0]
+                                )
+                            except KeyError:
+                                temp_kwargs[instance] = flatten_kwargs(auto_kwargs)
+                        auto_kwargs = temp_kwargs
+                # Instance-based kwargs
+                elif isinstance(auto_kwargs[key], dict):
+                    temp_kwargs = {}
+                    temp_instances = (
+                        [] if not instances or "default" in instances else instances
+                    )
+                    for key, val in auto_kwargs.items():
+                        temp_instances.append(key)
+                        try:
+                            temp_kwargs[key].append(flatten_kwargs(val)[0])
+                        except KeyError:
+                            temp_kwargs[key] = flatten_kwargs(val)
+                    instances = list(set(temp_instances))
+                    auto_kwargs = temp_kwargs
+
+            if instances is None:
+                instances = ["default"]
+            else:
+                instances = sorted(instances)
+                if auto_args and auto_args.get("default"):
+                    def_args = auto_args.pop("default")
+                    for instance in instances:
+                        auto_args[instance] = def_args
+                if auto_args is None:
+                    auto_args = {instance: None for instance in instances}
+                if not auto_kwargs:
+                    auto_kwargs = {instance: None for instance in instances}
+            if auto_args is None:
+                auto_args = {"default": None}
+            if auto_kwargs is None:
+                auto_kwargs = {"default": None}
 
         if isinstance(instances, list) and isinstance(args, dict):
             # Fully specified, nothing to translate
@@ -854,6 +973,8 @@ class ConfigLoader(object):
             "INSTANCES": instances,
             "PLUGIN_ARGS": args,
             "MAX_INSTANCES": max_instances,
+            "AUTO_BREW_ARGS": auto_args,
+            "AUTO_BREW_KWARGS": auto_kwargs,
         }
 
     @staticmethod

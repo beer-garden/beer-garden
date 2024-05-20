@@ -1,0 +1,24 @@
+version: '3.5'
+
+services:
+
+    echo:
+        
+        image: bgio/example-plugins
+        networks:
+            - bg-network
+        command: ["echo"]
+        stop_signal: SIGINT
+        deploy:
+            restart_policy:
+                condition: any
+            replicas: 50
+        environment:
+            BG_HOST: beer-garden-child
+            BG_SSL_ENABLED: "False"
+
+
+networks:
+    bg-network:
+        name: bg-network
+        external: true

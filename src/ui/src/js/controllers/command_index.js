@@ -123,6 +123,22 @@ export default function commandIndexController(
     const breadCrumbs = [];
 
     systems.forEach((system) => {
+      if ($stateParams.namespace) {
+        if (system.namespace != $stateParams.namespace){
+          return;
+        }
+        if ($stateParams.systemName) {
+          if ((system.display_name || system.name) != $stateParams.systemName){
+            return;
+          }
+
+          if ($stateParams.systemVersion) {
+            if (system.version != $stateParams.systemVersion) {
+              return;
+            }
+          }
+        }
+      }
       system.commands.forEach((command) => {
         commands.push({
           id: command.id,
@@ -140,24 +156,19 @@ export default function commandIndexController(
     });
 
     if ($stateParams.namespace) {
-      commands = _.filter(commands, {namespace: $stateParams.namespace});
       breadCrumbs.push($stateParams.namespace);
 
       if ($stateParams.systemName) {
-        commands = _.filter(commands, {system: $stateParams.systemName});
         breadCrumbs.push($stateParams.systemName);
 
         if ($stateParams.systemVersion) {
-          commands = _.filter(commands, {
-            version: $stateParams.systemVersion,
-          });
           breadCrumbs.push($stateParams.systemVersion);
 
           // If there's a fully specified system, and it has a template, show it
           const foundSystem = SystemService.findSystem(
-              $stateParams.namespace,
-              $stateParams.systemName,
-              $stateParams.systemVersion,
+            $stateParams.namespace,
+            $stateParams.systemName,
+            $stateParams.systemVersion,
           );
           if (foundSystem.template) {
             if ($scope.config.executeJavascript) {
@@ -188,6 +199,19 @@ export default function commandIndexController(
     $scope.data = {};
   };
 
-  $scope.successCallback($rootScope.gardensResponse, $rootScope.systems);
+  if ($rootScope.gardensResponse !== undefined){
+    $scope.successCallback($rootScope.gardensResponse, $rootScope.systems);
+  } 
+  else {
+    setTimeout(function delaySystemLoad() {
+      if ($rootScope.gardensResponse !== undefined){
+        $scope.successCallback($rootScope.gardensResponse, $rootScope.systems);
+        $scope.$digest();
+      } else {
+        setTimeout(delaySystemLoad, 10);
+      }
+    }, 10);
+  }
+
 
 }

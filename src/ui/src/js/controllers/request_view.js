@@ -4,6 +4,7 @@ import {formatDate, formatJsonDisplay} from '../services/utility_service.js';
 
 requestViewController.$inject = [
   '$scope',
+  '$rootScope',
   '$state',
   '$stateParams',
   '$timeout',
@@ -18,6 +19,7 @@ requestViewController.$inject = [
 /**
  * requestViewController - Angular Controller for viewing an individual Request.
  * @param  {$scope} $scope             Angular's $scope object.
+ * @param  {$rootScope} $rootScope     Angular's $rootScope object.
  * @param  {$state} $state             Angular's $state object.
  * @param  {$stateParams} $stateParams Angular's $stateParams object.
  * @param  {$timeout} $timeout         Angular's $timeout object.
@@ -30,6 +32,7 @@ requestViewController.$inject = [
  */
 export default function requestViewController(
     $scope,
+    $rootScope,
     $state,
     $stateParams,
     $timeout,
@@ -248,16 +251,7 @@ export default function requestViewController(
 
     $scope.formattedParameters = $scope.stringify($scope.request.parameters);
 
-    // Grab the status of the instance this request targets to display if necessary
-    const system = SystemService.findSystem(
-        $scope.request.namespace,
-        $scope.request.system,
-        $scope.request.system_version,
-    );
-    $scope.instanceStatus = _.find(system.instances, {
-      name: $scope.request.instance_name,
-    }).status;
-
+    
     // Need to update the children list, but don't update if it's empty - Events don't
     // send children so the final REQUEST_COMPLETED update would clobber the list
     if ($scope.request.children) {
@@ -267,6 +261,17 @@ export default function requestViewController(
         $scope.childrenDisplay = $scope.request.children;
       }
     }
+
+    // Grab the status of the instance this request targets to display if necessary
+    const system = SystemService.findSystem(
+      $scope.request.namespace,
+      $scope.request.system,
+      $scope.request.system_version,
+    );
+    $scope.instanceStatus = _.find(system.instances, {
+      name: $scope.request.instance_name,
+    }).status;
+
   };
 
   $scope.failureCallback = function(response) {
@@ -392,7 +397,7 @@ export default function requestViewController(
     EventService.removeCallback('request_view');
   });
 
-  function loadRequest() {
+  $scope.loadRequest = function() {
     $scope.response = undefined;
     $scope.request = {};
 
@@ -403,10 +408,24 @@ export default function requestViewController(
   }
 
   $scope.$on('userChange', function() {
-    loadRequest();
+    $scope.loadRequest();
+    $scope.$digest();
   });
 
-  loadRequest();
+  if ($rootScope.gardensResponse !== undefined){
+    $scope.loadRequest();
+  } 
+  else {
+    setTimeout(function delaySystemLoad() {
+      if ($rootScope.gardensResponse !== undefined){
+        $scope.loadRequest();
+        $scope.$digest();
+      } else {
+        setTimeout(delaySystemLoad, 10);
+      }
+    }, 10);
+  }
+  
 }
 
 /**

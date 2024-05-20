@@ -59,11 +59,7 @@
             <td>{{command.version}}</td>
             <td>
               {{command.name}}
-              <span
-                ng-show="command.hidden"
-                class="fa fa-user-secret pull-right"
-                style="font-size: 20px"
-              ></span>
+              
               <span
                 class="fa fa-hourglass pull-right"
                 style="font-size: 20px"
@@ -93,7 +89,7 @@
                 popover-animation="true"
                 popover-placement="top-left"
                 ng-show="command.command_type == 'ACTION'"
-              ></span>
+              ></span>        
               <span
                 class="fa fa-envelope pull-right"
                 style="font-size: 20px"
@@ -103,6 +99,11 @@
                 popover-animation="true"
                 popover-placement="top-left"
                 ng-show="command.topics.length > 0"
+              ></span>
+              <span
+                ng-show="command.hidden"
+                class="fa fa-user-secret pull-right"
+                style="font-size: 20px"
               ></span>
             </td>
             <td>

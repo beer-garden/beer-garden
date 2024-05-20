@@ -16,7 +16,6 @@ import time
 from asyncio import Future
 from builtins import str
 from copy import deepcopy
-from datetime import datetime
 from typing import Dict, List, Sequence, Union
 
 import six
@@ -30,6 +29,9 @@ from brewtils.errors import (
 )
 from brewtils.models import Choices, Events, Operation, Request, RequestTemplate, System
 from brewtils.pika import PERSISTENT_DELIVERY_MODE
+from mongoengine import DoesNotExist
+from packaging.version import InvalidVersion
+from packaging.version import parse as versionParse
 from requests import Session
 
 import beer_garden.config as config
@@ -585,6 +587,35 @@ def get_requests(**kwargs) -> List[Request]:
     return db.query(Request, **kwargs)
 
 
+def determine_latest_system_version(request: Request):
+    if request.system_version and request.system_version.lower() != "latest":
+        return request
+
+    systems = db.query(
+        System,
+        filter_params={
+            "namespace": request.namespace,
+            "name": request.system,
+        },
+    )
+
+    versions = []
+    legacy_versions = []
+
+    for system in systems:
+        try:
+            versions.append(versionParse(system.version))
+        except InvalidVersion:
+            legacy_versions.append(system.version)
+
+    eligible_versions = versions if versions else legacy_versions
+
+    if eligible_versions:
+        request.system_version = str(sorted(eligible_versions, reverse=True)[0])
+
+    return request
+
+
 # TODO: Add support for Request Delete event type
 # @publish_event(Events.REQUEST_DELETED)
 def delete_requests(**kwargs) -> dict:
@@ -866,22 +897,14 @@ def invalid_request(request: Request = None):
 @publish_event(Events.REQUEST_UPDATED)
 def update_request(request: Request):
     if request.id:
-        request = db.update(request)
-    else:
-        request = db.create(request)
-    return request
+        try:
+            return db.update(request)
+        except DoesNotExist:
+            logger.warning(
+                f"Failed to update request {request.id}. Creating new request instead."
+            )
 
-
-@publish_event(Events.REQUEST_UPDATED)
-def modify_request(request: Request = None, **kwargs):
-
-    # Clean commands are not run for modify, so have to add this in here instead
-    status_key = f"{request.status}_{config.get('garden.name')}"
-    if status_key not in request.metadata:
-        request.metadata[status_key] = int(datetime.utcnow().timestamp() * 1000)
-        kwargs["metadata"] = request.metadata
-
-    return db.modify(request, **kwargs)
+    return db.create(request)
 
 
 def process_wait(request: Request, timeout: float) -> Request:
@@ -965,18 +988,6 @@ def handle_event(event):
         requests = db.query(
             Request,
             filter_params={"id": event.payload.id},
-            include_fields=[
-                "id",
-                # Required to check if change in fields from child
-                "status",
-                "status_updated_at",
-                "target_garden",
-                "updated_at",
-                # Required for latency tracking
-                "metadata",
-                # Required for TEMP check
-                "command_type",
-            ],
         )
 
         if requests:
@@ -984,7 +995,7 @@ def handle_event(event):
         else:
             existing_request = None
 
-        if existing_request:
+        if existing_request and existing_request.status != event.payload.status:
             # Skip status that revert
             if existing_request.status in ("CANCELED", "SUCCESS", "ERROR", "INVALID"):
                 return
@@ -1031,6 +1042,7 @@ def handle_event(event):
 
                     if getattr(existing_request, field) != new_value:
                         request_changed[field] = new_value
+                        setattr(existing_request, field, new_value)
 
                 # Add output fields only if the status changes to a compelted state
                 if "status" in request_changed:
@@ -1042,14 +1054,14 @@ def handle_event(event):
                     ):
                         if event.payload.output:
                             request_changed["output"] = event.payload.output
+                            existing_request.output = event.payload.output
                         if event.payload.error_class:
                             request_changed["error_class"] = event.payload.error_class
+                            existing_request.error_class = event.payload.error_class
 
                 if request_changed:
                     try:
-                        existing_request = modify_request(
-                            existing_request, _publish_error=False, **request_changed
-                        )
+                        existing_request = update_request(existing_request)
                     except RequestStatusTransitionError:
                         pass
 

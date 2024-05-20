@@ -725,6 +725,11 @@ _DB_SPEC = {
             "description": "Name of the database to use",
             "previous_names": ["db_name"],
         },
+        "prune_interval": {
+            "type": "int",
+            "default": 15,
+            "description": ("Number of minutes to wait before running db pruner"),
+        },
         "connection": {
             "type": "dict",
             "items": {
@@ -828,12 +833,6 @@ _DB_SPEC = {
                         "Batch size for deleting documents "
                         "(negative number for never)"
                     ),
-                    "alt_env_names": [],
-                },
-                "multithread": {
-                    "type": "bool",
-                    "default": False,
-                    "description": ("Runs pruners in seperate threads"),
                     "alt_env_names": [],
                 },
             },
