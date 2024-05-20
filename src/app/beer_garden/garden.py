@@ -789,7 +789,7 @@ def handle_event(event):
             event.payload.systems = remote_systems
 
             if event.name == Events.GARDEN_SYNC.name:
-                logger.info("Garden sync event for {event.payload.name}")
+                logger.info(f"Garden sync event for {event.payload.name}")
                 try:
                     # Check if child garden as deleted
                     db_garden = get_garden(event.payload.name)
