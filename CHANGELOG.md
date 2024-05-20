@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.26.1
+
+TBD
+
+- Fixed logging statement
+
 # 3.26.0
 
 5/16/2024
