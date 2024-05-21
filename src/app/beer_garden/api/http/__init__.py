@@ -125,6 +125,7 @@ def _get_published_url_specs(
             rf"{prefix}api/v1/commandpublishingblocklist/?",
             v1.command_publishing_blocklist.CommandPublishingBlocklistAPI,
         ),
+        (rf"{prefix}api/v1/roles/(\w+)/?", v1.role.RoleAPI),
         (rf"{prefix}api/v1/roles/?", v1.role.RoleListAPI),
         # Beta
         (rf"{prefix}api/vbeta/events/?", vbeta.event.EventPublisherAPI),

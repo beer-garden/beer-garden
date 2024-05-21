@@ -9,14 +9,18 @@ roleService.$inject = ['$http'];
  */
 export default function roleService($http) {
   const service = {
-    getRole: (roleId) => {
-      return $http.get('api/v1/roles/' + roleId);
+    getRole: (roleName) => {
+      return $http.get('api/v1/roles/' + roleName);
     },
-    deleteRole: (roleId) => {
-      return $http.delete('api/v1/roles/' + roleId);
+    deleteRole: (roleName) => {
+      return $http.delete('api/v1/roles/' + roleName);
     },
-    updateRole: (roleId, operations) => {
-      return $http.patch('api/v1/roles/' + roleId, {operations: operations});
+    editRole: (role) => {
+      return $http.patch('api/v1/roles/' + role.name, {
+        operation: 'update_role',
+        path: '',
+        value: role,
+      });
     },
     getRoles: () => {
       return $http.get('api/v1/roles/');

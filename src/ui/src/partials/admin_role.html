@@ -51,7 +51,7 @@
         <td>{{role.permission}}</td>
         <td>{{role.description}}</td>
         <td>
-          <div ng-if="role.scope_gardens.lenght > 0">
+          <div ng-if="role.scope_gardens.length > 0">
             <ul>
               <li ng-repeat="scope in role.scope_gardens">
                 {{scope}}
@@ -60,7 +60,7 @@
           </div>
         </td>
         <td>
-          <div ng-if="role.scope_namespaces.lenght > 0">
+          <div ng-if="role.scope_namespaces.length > 0">
             <ul>
               <li ng-repeat="scope in role.scope_namespaces">
                 {{scope}}
@@ -69,7 +69,7 @@
           </div>
         </td>
         <td>
-          <div ng-if="role.scope_systems.lenght > 0">
+          <div ng-if="role.scope_systems.length > 0">
             <ul>
               <li ng-repeat="scope in role.scope_systems">
                 {{scope}}
@@ -78,7 +78,7 @@
           </div>
         </td>
         <td>
-          <div ng-if="role.scope_versions.lenght > 0">
+          <div ng-if="role.scope_versions.length > 0">
             <ul>
               <li ng-repeat="scope in role.scope_versions">
                 {{scope}}
@@ -87,7 +87,7 @@
           </div>
         </td>
         <td>
-          <div ng-if="role.scope_instances.lenght > 0">
+          <div ng-if="role.scope_instances.length > 0">
             <ul>
               <li ng-repeat="scope in role.scope_instances">
                 {{scope}}
@@ -96,7 +96,7 @@
           </div>
         </td>
         <td>
-          <div ng-if="role.scope_commands.lenght > 0">
+          <div ng-if="role.scope_commands.length > 0">
             <ul>
               <li ng-repeat="scope in role.scope_commands">
                 {{scope}}

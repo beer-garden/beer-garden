@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from brewtils.schema_parser import SchemaParser
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.garden import local_garden
 
@@ -7,10 +8,49 @@ from brewtils.models import Operation
 
 class RoleAPI(AuthorizationHandler):
 
+    parser = SchemaParser()
+    
+    async def get(self, role):
+        """
+        ---
+        summary: Retrieve a specific Request
+        parameters:
+          - name: role
+            in: path
+            required: true
+            description: The role name of the Role
+            type: string
+        responses:
+          200:
+            description: Role with the given role name
+            schema:
+              $ref: '#/definitions/Role'
+          404:
+            $ref: '#/definitions/404Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Roles
+        """
+        self.minimum_permission = self.GARDEN_ADMIN
+        self.verify_user_global_permission()
+
+        response = await self.process_operation(
+                    Operation(
+                        operation_type="ROLE_READ",
+                        kwargs={
+                            "role_name": role,
+                        },
+                    )
+                )
+
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(response)
+
     async def delete(self, role):
         """
         ---
-        summary: Delete a specific User
+        summary: Delete a specific Role
         parameters:
           - name: role
             in: path
@@ -25,7 +65,7 @@ class RoleAPI(AuthorizationHandler):
           50x:
             $ref: '#/definitions/50xError'
         tags:
-          - Users
+          - Roles
         """
         self.minimum_permission = self.GARDEN_ADMIN
         self.verify_user_global_permission()
@@ -43,7 +83,7 @@ class RoleAPI(AuthorizationHandler):
     async def patch(self, role):
         """
         ---
-        summary: Partially update a User
+        summary: Partially update a Role
         parameters:
           - name: role
             in: path
@@ -56,12 +96,12 @@ class RoleAPI(AuthorizationHandler):
             description: |
               A subset of Role attributes to update
             schema:
-              $ref: '#/definitions/UserPatch'
+              $ref: '#/definitions/Patch'
         responses:
           200:
             description: Role with the given role name
             schema:
-              $ref: '#/definitions/User'
+              $ref: '#/definitions/Role'
           400:
             $ref: '#/definitions/400Error'
           404:
@@ -85,7 +125,7 @@ class RoleAPI(AuthorizationHandler):
                         operation_type="ROLE_UPDATE",
                         kwargs={
                             "role_name": role,
-                            "role": op.value,
+                            "role": self.parser.parse_role(op.value, from_string=False),
                         },
                     )
                 )
@@ -94,6 +134,8 @@ class RoleAPI(AuthorizationHandler):
 
 
 class RoleListAPI(AuthorizationHandler):
+    parser = SchemaParser()
+
     async def get(self):
         """
         ---

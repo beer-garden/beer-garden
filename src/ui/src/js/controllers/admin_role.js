@@ -25,22 +25,6 @@ export function adminRoleController(
 ) {
   $scope.setWindowTitle('roles');
 
-  // $scope.doCreate = function() {
-  //   const modalInstance = $uibModal.open({
-  //     controller: 'NewRoleController',
-  //     size: 'sm',
-  //     template: template,
-  //   });
-
-  //   modalInstance.result.then(
-  //       (create) => {
-  //         RoleService.createRole(create).then(loadAll);
-  //       },
-  //       // We don't really need to do anything if canceled
-  //       () => {},
-  //   );
-  // };
-
   $scope.doCreate = function(role) {
     const modalInstance = $uibModal.open({
       controller: 'NewRoleController',
@@ -48,13 +32,13 @@ export function adminRoleController(
       template: template,
       backdrop: 'static',
       resolve: {
-        isNew: false,
+        isNew: true,
         editRole: role,
       },
     });
     modalInstance.result.then(
       (create) => {
-        RoleService.createRole(create).then(loadAll);
+        RoleService.createRole(create).then($scope.loadRoles);
       },
       // We don't really need to do anything if canceled
       () => {},
@@ -75,7 +59,7 @@ export function adminRoleController(
 
     modalInstance.result.then(
         (create) => {
-          RoleService.createRole(create).then(loadAll);
+          RoleService.createRole(create).then($scope.loadRoles);
         },
         // We don't really need to do anything if canceled
         () => {},
@@ -96,7 +80,7 @@ export function adminRoleController(
 
     modalInstance.result.then(
         (create) => {
-          RoleService.createRole(create).then(loadAll);
+          RoleService.editRole(create).then($scope.loadRoles);
         },
         // We don't really need to do anything if canceled
         () => {},
@@ -104,7 +88,7 @@ export function adminRoleController(
   };
 
   $scope.doDelete = function(role) {
-    RoleService.deleteRole(role.id).then(loadAll);
+    RoleService.deleteRole(role.name).then($scope.loadRoles);
   };
 
 
@@ -133,17 +117,17 @@ export function adminRoleController(
     $scope.roles = [];
   };
 
-  const loadRoles = function () {
+  $scope.loadRoles = function () {
     $scope.alerts = [];
     RoleService.getRoles().then($scope.successCallback, $scope.failureCallback);
   }
 
   $scope.$on('userChange', () => {
     $scope.response = undefined;
-    loadRoles();
+    $scope.loadRoles();
   });
 
-  loadRoles();
+  $scope.loadRoles();
 }
 
 newRoleController.$inject = ['$rootScope', '$scope', '$uibModalInstance', 'isNew', 'editRole'];
@@ -712,9 +696,10 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, isNew, 
           htmlClass: 'col-xs-4',
           items: [
             {
-              type: 'submit',
+              type: 'button',
               style: 'btn-success w-10',
               title: 'Submit',
+              onClick: 'submitRole()',
             },
           ],
         },
@@ -735,8 +720,8 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, isNew, 
 
   generateRoleForm();
 
-  $scope.ok = function() {
-    $uibModalInstance.close($scope.editRole);
+  $scope.submitRole = function() {
+    $uibModalInstance.close($scope.convertRoleFromModal($scope.editRole));
   };
 
   $scope.cancel = function() {
