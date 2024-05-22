@@ -3,6 +3,7 @@ import syncUsersTemplate from '../../templates/sync_users.html';
 import addRemoveRoles from '../../templates/add_remove_roles.html';
 import userGardenAccounts from '../../templates/user_garden_account.html';
 import changePasswordTemplate from '../../templates/change_password.html';
+import {formatDate} from '../services/utility_service.js';
 
 adminUserIndexController.$inject = ['$rootScope', '$scope', '$uibModal', 'UserService', 'TokenService'];
 
@@ -27,6 +28,8 @@ export default function adminUserIndexController($rootScope, $scope, $uibModal, 
     $scope.response = response;
     $scope.users = [];
   };
+
+  $scope.formatDate = formatDate;
 
   $scope.maxPermission = function(user) {
 
@@ -70,7 +73,7 @@ export default function adminUserIndexController($rootScope, $scope, $uibModal, 
     if (user.metadata === undefined || user.metadata.last_authentication === undefined || user.metadata.last_authentication === null ){
       return "NEVER"
     }
-    return formatDate(user.metadata.last_authentication);
+    return $scope.formatDate(user.metadata.last_authentication);
   }
 
   $scope.roleTitle = function(role) {
