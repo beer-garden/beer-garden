@@ -88,7 +88,7 @@ export function adminRoleController(
   };
 
   $scope.doDelete = function(role) {
-    RoleService.deleteRole(role.name).then($scope.loadRoles);
+    RoleService.deleteRole(role.id).then($scope.loadRoles);
   };
 
 

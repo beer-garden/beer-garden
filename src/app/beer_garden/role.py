@@ -18,16 +18,22 @@ logger = logging.getLogger(__name__)
 def create_role(role: Role) -> Role:
     return db.create(role)
 
-def get_role(role_name: str):
-    return db.query_unique(Role, name=role_name, raise_missing=True)
+def get_role(role_name: str = None, role_id: str = None):
+    if role_name:
+        return db.query_unique(Role, name=role_name, raise_missing=True)
+    
+    return db.query_unique(Role, id=role_id, raise_missing=True)
 
 def get_roles():
     return db.query(Role)
 
-def update_role(role: Role = None, role_name: str = None, **kwargs) -> Role:
+def update_role(role: Role = None, role_name: str = None, role_id: str = None,  **kwargs) -> Role:
     
     if not role:
-        role = db.query_unique(Role, name=role_name, raise_missing=True)
+        if role_name:
+            role = db.query_unique(Role, name=role_name, raise_missing=True)
+        else:
+            role = db.query_unique(Role, id=role_id, raise_missing=True)
 
     for key, value in kwargs.items():
         setattr(role, key, value)
@@ -35,9 +41,12 @@ def update_role(role: Role = None, role_name: str = None, **kwargs) -> Role:
     return db.update(role)
 
 # @publish_event(Events.ROLE_DELETE)
-def delete_role(role: Role = None, role_name: str = None) -> Role:
+def delete_role(role: Role = None, role_name: str = None, role_id: str = None) -> Role:
     if not role:
-        role = db.query_unique(Role, name=role_name, raise_missing=True)
+        if role_name:
+            role = db.query_unique(Role, name=role_name, raise_missing=True)
+        else:
+            role = db.query_unique(Role, id=role_id, raise_missing=True)
 
     #remove_local_role_assignments_for_role(role)
 

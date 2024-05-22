@@ -10,15 +10,15 @@ class RoleAPI(AuthorizationHandler):
 
     parser = SchemaParser()
     
-    async def get(self, role):
+    async def get(self, role_id):
         """
         ---
         summary: Retrieve a specific Request
         parameters:
-          - name: role
+          - name: role_id
             in: path
             required: true
-            description: The role name of the Role
+            description: The role id name of the Role
             type: string
         responses:
           200:
@@ -39,7 +39,7 @@ class RoleAPI(AuthorizationHandler):
                     Operation(
                         operation_type="ROLE_READ",
                         kwargs={
-                            "role_name": role,
+                            "role_id": role_id,
                         },
                     )
                 )
@@ -47,15 +47,15 @@ class RoleAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    async def delete(self, role):
+    async def delete(self, role_id):
         """
         ---
         summary: Delete a specific Role
         parameters:
-          - name: role
+          - name: role_id
             in: path
             required: true
-            description: The role name of the Role
+            description: The role id name of the Role
             type: string
         responses:
           204:
@@ -73,22 +73,22 @@ class RoleAPI(AuthorizationHandler):
             Operation(
                 operation_type="ROLE_DELETE",
                 kwargs={
-                    "role_name": role,
+                    "role_id": role_id,
                 },
             )
         )
 
         self.set_status(204)
 
-    async def patch(self, role):
+    async def patch(self, role_id):
         """
         ---
         summary: Partially update a Role
         parameters:
-          - name: role
+          - name: role_id
             in: path
             required: true
-            description: The role name of the Role
+            description: The role id name of the Role
             type: string
           - name: patch
             in: body
@@ -124,7 +124,7 @@ class RoleAPI(AuthorizationHandler):
                     Operation(
                         operation_type="ROLE_UPDATE",
                         kwargs={
-                            "role_name": role,
+                            "role_id": role_id,
                             "role": self.parser.parse_role(op.value, from_string=False),
                         },
                     )
