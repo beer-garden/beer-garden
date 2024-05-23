@@ -5,6 +5,7 @@
 TBD
 
 - Fixed logging statement
+- Updated Publish/Subscribe Request to only support Systems that are in the `RUNNING` status. 
 
 # 3.26.0
 
