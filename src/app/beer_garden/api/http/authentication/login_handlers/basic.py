@@ -34,12 +34,12 @@ class BasicLoginHandler(BaseLoginHandler):
 
             if username and password:
                 try:
-                    user = get_user(username)
+                    user = get_user(username=username)
 
                     if verify_password(user, password):
                         authenticated_user = user
                         authenticated_user.metadata["last_authentication"] = datetime.utcnow().timestamp()
-                        authenticated_user = update_user(authenticated_user)
+                        authenticated_user = update_user(user=authenticated_user)
 
                 except User.DoesNotExist:
                     pass

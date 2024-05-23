@@ -9,7 +9,7 @@ from brewtils.models import User, UserToken
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden import config
-from beer_garden.user import create_token, get_user, get_token, delete_token
+from beer_garden.user import create_token, get_user, get_token, delete_token, revoke_tokens
 from beer_garden.api.http.authentication.login_handlers import enabled_login_handlers
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
 from mongoengine import DoesNotExist
@@ -143,7 +143,7 @@ def get_user_from_token(access_token: dict, revoke_expired=True) -> User:
         _ = get_token(uuid=access_token["jti"])
     except DoesNotExist:
         if revoke_expired:
-            user.revoke_tokens()
+            revoke_tokens(user=user)
 
         raise ExpiredTokenException
 
