@@ -35,7 +35,7 @@ def localgarden_system(command_topic_one, command_topic_one_and_two, command_top
         version="1.2.3",
         namespace="localgarden",
         local=True,
-        instances=[Instance(name="default")],
+        instances=[Instance(name="default", status="RUNNING")],
         commands=[command_topic_one, command_topic_one_and_two, command_topic_any],
     )
 
