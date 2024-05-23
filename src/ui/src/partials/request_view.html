@@ -104,7 +104,7 @@
               ></span>
               <span
                 class="fa fa-envelope pull-right"
-                style="font-size: 20px"
+                style="font-size: 20px; padding-right: 2px;"
                 uib-popover="{{getTopic(request)}}"
                 popover-trigger="'mouseenter'"
                 popover-title="Subscription Topic"
@@ -115,7 +115,7 @@
               <span
                 ng-show="request.hidden"
                 class="fa fa-user-secret pull-right"
-                style="font-size: 20px"
+                style="font-size: 20px; padding-right: 2px;"
               ></span>
           </td>
           <td>{{request.namespace}}</td>
@@ -181,13 +181,13 @@
               ></span>
               <span
                 class="fa fa-font pull-right"
-                style="font-size: 20px"
+                style="font-size: 20px; padding-right: 2px;"
                 title="Action Command"
                 ng-show="child.command_type == 'ACTION'"
               ></span>
               <span
                 class="fa fa-envelope pull-right"
-                style="font-size: 20px"
+                style="font-size: 20px; padding-right: 2px;"
                 uib-popover="{{getTopic(child)}}"
                 popover-trigger="'mouseenter'"
                 popover-title="Subscription Topic"
@@ -235,6 +235,7 @@
                 margin-top: 11px;
                 color: black;
                 cursor: pointer;
+                padding-top: 1px;
               "
             ></a>
             <a
@@ -247,11 +248,14 @@
                 margin-top: 11px;
                 color: black;
                 cursor: pointer;
+                padding-top: 1px;
               "
             ></a>
+            <!-- class="fa fa-file-arrow-down fa-download pull-right" -->
             <a
-              class="fa fa-download pull-right"
-              style="font-size: 0.8em; margin-top: 12px; color: black"
+              
+              class="fa fa-file-arrow-down pull-right"
+              style="font-size: 0.8em; margin-top: 12px; color: black; padding-right: 2px;"
               ng-href="api/v1/requests/output/{{request.id}}"
               download="{{filename}}"
               ng-show="downloadVisible"
@@ -333,6 +337,7 @@
                 margin-top: 11px;
                 color: black;
                 cursor: pointer;
+                padding-top: 1px;
               "
             ></a>
             <a
@@ -345,6 +350,7 @@
                 margin-top: 11px;
                 color: black;
                 cursor: pointer;
+                padding-top: 1px;
               "
             ></a>
           </span>

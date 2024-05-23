@@ -4,6 +4,7 @@
 
 TBD
 
+- Fixed icon padding
 - Updated Garden Admin page to only update page data based on Local Garden Update Events and notify when a child sync is being processed 
 - Fixed logging statement
 - Updated Publish/Subscribe Request to only support Systems that are in the `RUNNING` status. 

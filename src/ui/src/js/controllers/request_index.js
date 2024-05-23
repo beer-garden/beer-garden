@@ -124,7 +124,7 @@ export default function requestIndexController(
 
           if (full.hidden) {
             display +=
-            '<span class="fa fa-user-secret pull-right" style="font-size: 20px;"></span>';
+            '<span class="fa fa-user-secret pull-right" style="font-size: 20px; padding-right: 2px;"></span>';
           }
 
           return display;
