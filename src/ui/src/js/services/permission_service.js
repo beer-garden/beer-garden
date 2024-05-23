@@ -6,17 +6,17 @@ permissionService.$inject = ['$rootScope'];
  * @return {Object}                For use by a controller.
  */
 export default function permissionService($rootScope) {
-    return {
+    const service = {
         hasPermission: (permission, global = false, garden_name = null, namespace = null, system_name = null, instance_name = null, system_version = null, command_name = null) => {
             if (!$rootScope.config.authEnabled) return true;
             if (_.isUndefined($rootScope.user)) return false;
 
-            let permissions = get_permissions(permission);
+            let permissions = service.get_permissions(permission);
 
             if ($rootScope.user.local_roles !== undefined) {
                 for (let i = 0; i < $rootScope.user.local_roles.length; i++) {
                     if (permissions.includes($rootScope.user.local_roles[i].permission)) {
-                        if (checkRole($rootScope.user.local_roles[i], global = global, garden_name = garden_name, namespace = namespace, system_name = system_name, instance_name = instance_name, system_version = system_version, command_name = command_name)) {
+                        if (service.checkRole($rootScope.user.local_roles[i], global = global, garden_name = garden_name, namespace = namespace, system_name = system_name, instance_name = instance_name, system_version = system_version, command_name = command_name)) {
                             return true;
                         }
                     }
@@ -26,7 +26,7 @@ export default function permissionService($rootScope) {
             if ($rootScope.user.remote_roles !== undefined) {
                 for (let i = 0; i < $rootScope.user.remote_roles.length; i++) {
                     if (permissions.includes($rootScope.user.remote_roles[i].permission)) {
-                        if (checkRole($rootScope.user.remote_roles[i], global = global, garden_name = garden_name, namespace = namespace, system_name = system_name, instance_name = instance_name, system_version = system_version, command_name = command_name)) {
+                        if (service.checkRole($rootScope.user.remote_roles[i], global = global, garden_name = garden_name, namespace = namespace, system_name = system_name, instance_name = instance_name, system_version = system_version, command_name = command_name)) {
                             return true;
                         }
                     }
@@ -114,7 +114,7 @@ export default function permissionService($rootScope) {
 
             if (garden.children !== undefined || garden.children != null) {
                 for (let i = 0; i < garden.children.length; i++) {
-                    garden_name = findGardenScope(garden = garden.children[i], namespace = namespace, system_name = system_name, instance_name = instance_name, system_version = system_version)
+                    garden_name = service.findGardenScope(garden = garden.children[i], namespace = namespace, system_name = system_name, instance_name = instance_name, system_version = system_version)
                     if (garden_name !== undefined || garden_name != null) {
                         return garden_name;
                     }
@@ -124,4 +124,6 @@ export default function permissionService($rootScope) {
             return null;
         },
     };
+
+    return service;
 }

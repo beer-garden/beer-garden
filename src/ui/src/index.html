@@ -106,33 +106,32 @@
           <a
             ui-sref="base.jobs"
             ng-class="{active: ($state.current.name.startsWith('job'))}"
-            ng-show="hasPermission(user, 'job:read')"
             >Scheduler</a
           >
         </li>
         <!-- Admin Drop Down Menu -->
         <li
           class="dropdown"
-          ng-show="hasPermission(user, 'system:update') || hasPermission(user, 'garden:update')"
+          ng-show="hasPermission('PLUGIN_ADMIN')"
         >
           <a href="" data-toggle="dropdown" title="Admin Drop Down">Admin</a>
           <ul class="dropdown-menu">
-            <li ng-show="hasPermission(user, 'system:update')">
+            <li ng-show="hasPermission('PLUGIN_ADMIN')">
               <a ui-sref="base.system_admin" ui-sref-active="active">
                 <span>Systems</span>
               </a>
             </li>
-            <li ng-show="authEnabled() && hasPermission(user, 'user:update')">
+            <li ng-show="authEnabled() && hasPermission('GARDEN_ADMIN')">
               <a ui-sref="base.user_admin" ui-sref-active="active">
                 <span>Users</span>
               </a>
             </li>
-            <li ng-show="hasPermission(user, 'garden:update')">
+            <li ng-show="hasPermission('GARDEN_ADMIN')">
               <a ui-sref="base.garden_admin" ui-sref-active="active">
                 <span>Gardens</span>
               </a>
             </li>
-            <li ng-show="hasPermission(user, 'garden:update')">
+            <li ng-show="hasPermission('PLUGIN_ADMIN')">
               <a ui-sref="base.commandblocklist" ui-sref-active="active">
                 <span>Command Publishing Blocklist</span>
               </a>

@@ -173,10 +173,6 @@ export default function appRun(
     // );
   };
 
-  $rootScope.hasPermission = function(permission) {
-    if (!$rootScope.config.authEnabled) return true;
-    return $rootScope.hasPermission(permission)
-  };
 
   $rootScope.hasGardenPermission = function(permission, garden, global = false) {
     if (!$rootScope.config.authEnabled) return true;
