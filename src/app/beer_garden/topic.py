@@ -9,7 +9,7 @@ from beer_garden.events import publish_event
 
 
 @publish_event(Events.TOPIC_CREATED)
-def create_topic(topic: Topic) -> Topic:
+def create_topic(new_topic: Topic) -> Topic:
     """Creates a topic with the provided fields
 
     Args:
@@ -17,8 +17,16 @@ def create_topic(topic: Topic) -> Topic:
     Returns:
         Topic
     """
-    topic = db.create(topic)
-    return topic
+    try:
+        topic = db.query_unique(Topic, name=new_topic.name, raise_missing=True)
+        # If there are new subscribers, combine them
+        if new_topic.subscribers:
+            for subscriber in new_topic.subscribers:
+                if subscriber not in topic.subscribers:
+                    topic.subscribers.append(subscriber)
+        return update_topic(topic)
+    except DoesNotExist:
+        return db.create(new_topic)
 
 
 def get_topic(topic_id: str) -> Topic:
