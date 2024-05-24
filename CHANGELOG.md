@@ -2,7 +2,7 @@
 
 # 3.26.1
 
-TBD
+5/24/2024
 
 - Fixed icon padding
 - Updated Garden Admin page to only update page data based on Local Garden Update Events and notify when a child sync is being processed 
