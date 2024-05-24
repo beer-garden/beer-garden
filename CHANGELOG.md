@@ -11,6 +11,8 @@ TBD
 - Updated Publish/Subscribe Request to only support Systems that are in the `RUNNING` status. 
 - Updated Topics API to support upserting topics
 - Changed various log levels
+- Fixed monitoring of Plugin Runners
+- Added notification icons to Instances on System Admin page to reflect current status of runner
 - Updated Child Request handling to update missing Command Types
 
 # 3.26.0

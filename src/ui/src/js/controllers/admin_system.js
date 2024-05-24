@@ -154,7 +154,15 @@ export default function adminSystemController(
   $scope.instanceIcon = function(instance) {
     if ('runner_id' in instance.metadata) {
       if (instance.metadata['runner_id'] != null && instance.metadata['runner_id'] != ""){
-        return $rootScope.getIcon('fa-folder-open');
+        for (const runner of $scope.runners) {
+          if (runner.id == instance.metadata['runner_id'] && !runner.dead){
+            if (instance.status == "UNRESPONSIVE"){
+              return $rootScope.getIcon('fa-triangle-exclamation');
+            }
+            return $rootScope.getIcon('fa-folder-open');
+          }
+        }
+        return $rootScope.getIcon('fa-skull');
       }
     }
     return $rootScope.getIcon('fa-rss');
@@ -165,7 +173,10 @@ export default function adminSystemController(
       if (instance.metadata['runner_id'] != null && instance.metadata['runner_id'] != ""){
         for (const runner of $scope.runners) {
           if (runner.id == instance.metadata['runner_id']){
-            return "../" + runner.path;
+            if (!runner.dead) {
+              return "../" + runner.path;
+            }
+            return "Subprocess dead: ../" + runner.path;
           }
         }
         return "Unable to find Local Runner";
