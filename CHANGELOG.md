@@ -11,6 +11,7 @@ TBD
 - Updated Publish/Subscribe Request to only support Systems that are in the `RUNNING` status. 
 - Updated Topics API to support upserting topics
 - Changed various log levels
+- Updated Child Request handling to update missing Command Types
 
 # 3.26.0
 
