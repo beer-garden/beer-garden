@@ -207,6 +207,7 @@ class Application(StoppableThread):
                     helper.start()
 
             self.entry_manager.check_entry_points()
+            beer_garden.local_plugins.manager.lpm_proxy.monitor()
 
         self._shutdown()
 
