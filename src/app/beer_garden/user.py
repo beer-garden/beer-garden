@@ -416,9 +416,8 @@ def remote_users_sync(remote_users: list[User] = []):
 
 def ensure_users():
     """Create user accounts if necessary"""
-    if db.count(User) == 0:
-        _create_admin()
-        _create_plugin_user()
+    _create_admin()
+    _create_plugin_user()
 
 
 def _create_admin():

@@ -66,7 +66,7 @@ def ensure_roles():
 def configure_superuser_role():
     """Creates or updates the superuser role as needed"""
     try:
-        superuser = get_role("superuser")
+        superuser = get_role(role_name="superuser")
     except DoesNotExist:
         logger.info("Creating superuser role with all permissions")
         superuser = Role(name="superuser", description = "Role containing max permissions", permission="GARDEN_ADMIN")
@@ -75,7 +75,7 @@ def configure_superuser_role():
 def configure_plugin_role():
     """Creates or updates the plugin role as needed"""
     try:
-        plugin_role = get_role("plugin")
+        plugin_role = get_role(role_name="plugin")
     except DoesNotExist:
         logger.info("Creating plugin role with select permissions")
         plugin_role = Role(name="plugin", description = "Role containing plugin permissions", permission="PLUGIN_ADMIN")
