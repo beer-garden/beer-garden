@@ -7,7 +7,7 @@ permissionService.$inject = ['$rootScope'];
  */
 export default function permissionService($rootScope) {
     const service = {
-        hasPermission: (permission, global = false, garden_name = null, namespace = null, system_name = null, instance_name = null, system_version = null, command_name = null) => {
+        hasPermission: (permission, global = false, garden_name = null, namespace = null, system_name = null, system_version = null, command_name = null, instance_name = null) => {
             if (!$rootScope.config.authEnabled) return true;
             if (_.isUndefined($rootScope.user)) return false;
 

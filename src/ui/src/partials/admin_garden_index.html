@@ -5,7 +5,7 @@
       Rescan Garden Directory
     </button>
     <button type="button" class="btn btn-primary" ng-click="syncGardens()"
-      ng-show="hasPermission(user, 'system:update')">
+      ng-show="hasPermission('GARDEN_ADMIN', true)">
       Sync All
     </button>
   </span>
