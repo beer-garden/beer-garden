@@ -105,7 +105,6 @@ import adminSystemController from './js/controllers/admin_system.js';
 import adminSystemLogsController from './js/controllers/admin_system_logs.js';
 import adminSystemForceDeleteController from './js/controllers/admin_system_force_delete.js';
 import adminUserIndexController from './js/controllers/admin_user_index.js';
-import adminUserViewController from './js/controllers/admin_user_view.js';
 import {
   adminRoleController,
   newRoleController,
@@ -147,7 +146,6 @@ import './partials/about.html';
 import './partials/command_publishing_blocklist.html';
 import './partials/admin_system.html';
 import './partials/admin_user_index.html';
-import './partials/admin_user_view.html';
 import './partials/admin_role.html';
 import './partials/admin_garden_index.html';
 import './partials/command_index.html';
