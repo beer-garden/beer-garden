@@ -105,6 +105,7 @@ import adminSystemController from './js/controllers/admin_system.js';
 import adminSystemLogsController from './js/controllers/admin_system_logs.js';
 import adminSystemForceDeleteController from './js/controllers/admin_system_force_delete.js';
 import adminUserIndexController from './js/controllers/admin_user_index.js';
+import adminUserViewController from './js/controllers/admin_user_view.js';
 import {
   adminRoleController,
   newRoleController,
