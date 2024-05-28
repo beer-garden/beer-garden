@@ -334,7 +334,7 @@ class ModelFilter:
                 system_namespace = system.namespace
 
         if system_name and check_garden and garden_name is None:
-            if system and system.id:
+            if system and system.id and not system.local:
                 gardens = db.query(BrewtilsGarden, filter_params={"systems":system})
 
                 if gardens and len(gardens) == 1:
