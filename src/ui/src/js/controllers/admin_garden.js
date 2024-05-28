@@ -365,12 +365,14 @@ export default function adminGardenController(
       case 'GARDEN_CREATED':
       case 'GARDEN_CONFIGURED':
       case 'GARDEN_UPDATED':
-        $scope.eventUpsetGarden(event.payload)
-        $scope.$digest();
+        if (event.payload.name == $scope.config.gardenName) {
+          $scope.eventUpsetGarden(event.payload)
+          $scope.$digest();
+        }
         break;
       case 'GARDEN_SYNC':
         if (event.payload.name != $scope.config.gardenName) {
-          $scope.pushAlert('info', 'Garden sync event seen from ' + event.payload.name);
+          $scope.pushAlert('info', 'Processing Garden sync event from ' + event.payload.name);
         }
     }
   });

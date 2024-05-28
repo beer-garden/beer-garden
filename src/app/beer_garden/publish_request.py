@@ -62,45 +62,47 @@ def process_publish_event(
     for system in garden.systems:
         for command in system.commands:
             for instance in system.instances:
-                match = (
-                    not regex_only
-                    and f"{system.namespace}.{system.name}.{system.version}.{instance.name}.{command.name}"
-                    == event.metadata["topic"]
-                )
-                if not match:
-                    for topic in command.topics:
-                        if topic == event.metadata["topic"] or event.metadata[
-                            "topic"
-                        ] in re.findall(topic, event.metadata["topic"]):
-                            match = True
-                            break
 
-                if not match:
-                    event_subscriber = Subscriber(
-                        garden=garden.name,
-                        system=system.name,
-                        namespace=system.namespace,
-                        version=system.version,
-                        instance=instance.name,
-                        command=command.name,
+                if instance.status == "RUNNING":
+                    match = (
+                        not regex_only
+                        and f"{system.namespace}.{system.name}.{system.version}.{instance.name}.{command.name}"
+                        == event.metadata["topic"]
                     )
-                    if subscribers:
-                        for subscriber in subscribers:
-                            if subscriber_match(subscriber, event_subscriber):
+                    if not match:
+                        for topic in command.topics:
+                            if topic == event.metadata["topic"] or event.metadata[
+                                "topic"
+                            ] in re.findall(topic, event.metadata["topic"]):
                                 match = True
                                 break
 
-                if match:
-                    event_request = copy.deepcopy(event.payload)
-                    event_request.system = system.name
-                    event_request.system_version = system.version
-                    event_request.namespace = system.namespace
-                    event_request.instance_name = instance.name
-                    event_request.command = command.name
-                    event_request.is_event = True
+                    if not match:
+                        event_subscriber = Subscriber(
+                            garden=garden.name,
+                            system=system.name,
+                            namespace=system.namespace,
+                            version=system.version,
+                            instance=instance.name,
+                            command=command.name,
+                        )
+                        if subscribers:
+                            for subscriber in subscribers:
+                                if subscriber_match(subscriber, event_subscriber):
+                                    match = True
+                                    break
 
-                    try:
-                        process_request(event_request)
-                    except Exception as ex:
-                        # If an error occurs while trying to process request, log it and keep running
-                        logger.exception(ex)
+                    if match:
+                        event_request = copy.deepcopy(event.payload)
+                        event_request.system = system.name
+                        event_request.system_version = system.version
+                        event_request.namespace = system.namespace
+                        event_request.instance_name = instance.name
+                        event_request.command = command.name
+                        event_request.is_event = True
+
+                        try:
+                            process_request(event_request)
+                        except Exception as ex:
+                            # If an error occurs while trying to process request, log it and keep running
+                            logger.exception(ex)
