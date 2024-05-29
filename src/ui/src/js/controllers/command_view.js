@@ -61,6 +61,7 @@ export default function commandViewController(
         requestPrototype['system_version'] || $scope.system.version,
       instance_name:
         requestPrototype['instance_name'] || $scope.model['instance_name'],
+      parameters: requestPrototype['parameters'] || {},
     };
 
     // If a system has more than one instance this will be undefined on initial page
@@ -75,7 +76,6 @@ export default function commandViewController(
 
     // If parameters are specified we need to use the model value
     if (angular.isDefined(requestPrototype['parameterNames'])) {
-      request['parameters'] = {};
       const nameList = requestPrototype['parameterNames'];
       for (let i = 0; i < nameList.length; i++) {
         request['parameters'][nameList[i]] = args[i];

@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.26.2
+
+TBD
+
+- Upgraded @beer-garden/angular-schema-form-builder to support static parameters for Command Choices
+
 # 3.26.1
 
 5/24/2024
