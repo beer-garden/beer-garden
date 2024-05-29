@@ -8,47 +8,17 @@ The metrics service manages:
 """
 
 import datetime
-import logging
-from http.server import ThreadingHTTPServer
 
 from brewtils.models import Request
-from brewtils.stoppable_thread import StoppableThread
 from prometheus_client import Counter, Gauge, Summary
-from prometheus_client.exposition import MetricsHandler
+from prometheus_client.exposition import generate_latest
 from prometheus_client.registry import REGISTRY
 
 import beer_garden.db.api as db
 
 
-class PrometheusServer(StoppableThread):
-    """Wraps a ThreadingHTTPServer to serve Prometheus metrics"""
-
-    def __init__(self, host, port):
-        self.logger = logging.getLogger(__name__)
-        self.display_name = "Prometheus Server"
-
-        self._host = host
-        self._port = port
-
-        # Basically prometheus_client.exposition.start_http_server
-        metrics_handler = MetricsHandler.factory(REGISTRY)
-        self.httpd = ThreadingHTTPServer((host, port), metrics_handler)
-
-        super(PrometheusServer, self).__init__(
-            logger=self.logger, name="PrometheusServer"
-        )
-
-    def run(self):
-        self.logger.debug("Initializing metric counts")
-        initialize_counts()
-
-        self.logger.info(f"Starting {self.display_name} on {self._host}:{self._port}")
-        self.httpd.serve_forever()
-
-        self.logger.info(f"{self.display_name} is stopped")
-
-    def stop(self):
-        self.httpd.shutdown()
+def get_metrics():
+    return generate_latest(REGISTRY)
 
 
 # Summaries:

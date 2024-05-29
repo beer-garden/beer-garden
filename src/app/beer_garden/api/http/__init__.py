@@ -42,6 +42,7 @@ import beer_garden
 import beer_garden.api.http.handlers.misc as misc
 import beer_garden.api.http.handlers.v1 as v1
 import beer_garden.api.http.handlers.vbeta as vbeta
+import beer_garden.api.http.handlers.metrics as metrics
 import beer_garden.config as config
 import beer_garden.db.mongo.motor as moto
 import beer_garden.events
@@ -144,6 +145,8 @@ def _get_published_url_specs(
         # V2
         (rf"{prefix}api/v2/users/?", v1.user.UserListAPI),
         (rf"{prefix}api/v2/users/(\w+)/?", v1.user.UserAPI),
+        # Metrics
+        (rf"{prefix}api/metrics/?", metrics.metrics.MetricsAPI),
         # Deprecated
         (rf"{prefix}api/v1/commands/?", v1.command.CommandListAPI),
         (rf"{prefix}api/v1/commands/(\w+)/?", v1.command.CommandAPIOld),

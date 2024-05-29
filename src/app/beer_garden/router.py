@@ -46,6 +46,7 @@ import beer_garden.scheduler
 import beer_garden.systems
 import beer_garden.topic
 import beer_garden.user
+import beer_garden.metrics
 from beer_garden.api.stomp.transport import Connection, consolidate_headers, process
 from beer_garden.errors import (
     ForwardException,
@@ -178,6 +179,7 @@ route_functions = {
     "RUNNER_RESCAN": beer_garden.local_plugins.manager.rescan,
     "PUBLISH_EVENT": beer_garden.events.publish,
     "USER_SYNC": beer_garden.user.user_sync,
+    "METRICS_READ": beer_garden.metrics.get_metrics,
     "COMMAND_BLOCKLIST_ADD": (
         beer_garden.command_publishing_blocklist.command_publishing_blocklist_add
     ),

@@ -98,7 +98,7 @@ services:
             - mongo-config:/data/configdb
 
     prometheus:
-        image: prom/prometheus:v2.3.2
+        image: prom/prometheus:v2.52.0
         ports:
           - "9091:9090"
         networks:
