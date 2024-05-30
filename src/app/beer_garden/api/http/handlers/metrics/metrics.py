@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from brewtils.errors import ModelValidationError
-from brewtils.models import Operation, Resolvable
+from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
-from tornado.escape import json_decode
 
 from beer_garden.api.http.base_handler import BaseHandler
 
