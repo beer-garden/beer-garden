@@ -31,13 +31,13 @@ export default function requestService($q, $http, $interval) {
     createRequest: (request, waitForCompletion, isFormData) => {
       let promise = undefined;
       if (isFormData) {
-        promise = $http.post('api/v1/requests', request, {
+        promise = $http.post('api/v1/requests?blocking='+waitForCompletion, request, {
           headers: {
             'Content-Type': undefined,
           },
         });
       } else {
-        promise = $http.post('api/v1/requests', request);
+        promise = $http.post('api/v1/requests?blocking='+waitForCompletion, request);
       }
 
       if (!waitForCompletion) {
@@ -47,28 +47,9 @@ export default function requestService($q, $http, $interval) {
       const deferred = $q.defer();
       promise.then(
           (response) => {
-            const maxTries = 60;
-            let curTry = 0;
-
-            const inter = $interval(() => {
-              service.getRequest(response.data.id).then(
-                  (response) => {
-                    if (service.isComplete(response.data)) {
-                      deferred.resolve(response.data);
-                      $interval.cancel(inter);
-                    }
-
-                    if (curTry++ >= maxTries) {
-                      deferred.reject('Timeout expired');
-                      $interval.cancel(inter);
-                    }
-                  },
-                  (errorResponse) => {
-                    deferred.reject(errorResponse.data);
-                    $interval.cancel(inter);
-                  },
-              );
-            }, 500);
+            if (service.isComplete(response.data)) {
+              deferred.resolve(response.data);
+            }
           },
           (errorResponse) => {
             deferred.reject(errorResponse.data);
