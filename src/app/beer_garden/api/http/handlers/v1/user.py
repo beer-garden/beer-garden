@@ -214,6 +214,58 @@ class UserListAPI(AuthorizationHandler):
         self.write(response)
         self.set_status(201)
 
+    async def patch(self):
+        """
+        ---
+        summary: Partially update a User
+        description: |
+          The body of the request needs to contain a set of instructions detailing the
+          updates to apply. Currently the only operations are:
+
+          * rescan
+
+          ```JSON
+          [
+            { "operation": "" }
+          ]
+          ```
+        parameters:
+          - name: patch
+            in: body
+            required: true
+            description: |
+              Instructions for how to update the User
+            schema:
+              $ref: '#/definitions/Patch'
+        responses:
+          204:
+            description: Patch operation has been successfully forwarded
+          400:
+            $ref: '#/definitions/400Error'
+          404:
+            $ref: '#/definitions/404Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Users
+        """
+        self.minimum_permission = self.GARDEN_ADMIN
+        self.verify_user_global_permission()
+
+        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
+
+        for op in patch:
+            operation = op.operation.lower()
+
+            if operation == "rescan":
+                    await self.process_operation(
+                        Operation(
+                            operation_type="USER_RESCAN"
+                        )
+                    )
+
+        self.set_status(204)
+
 
 class UserPasswordChangeAPI(AuthorizationHandler):
     async def post(self):

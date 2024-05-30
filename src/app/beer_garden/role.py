@@ -1,4 +1,5 @@
 import logging
+import yaml
 from typing import List
 
 # from brewtils.models import Event as BrewtilsEvent
@@ -54,14 +55,26 @@ def delete_role(role: Role = None, role_name: str = None, role_id: str = None) -
 
     return role
 
+def load_roles_config():
+    roles_yaml = "example_configs/roles.yaml"
+    with open(roles_yaml, "r") as config:
+        return yaml.safe_load(config)
+
 def rescan():
     """ Rescan the roles configuration file"""
-    pass
+    roles_config = load_roles_config()
+    for role in roles_config:
+        role = Role(name=role.get("name"), permission=role.get("permission"))
+        try:
+            get_role(role.name)
+        except DoesNotExist:
+            create_role(role)
 
 def ensure_roles():
     """Create roles if necessary"""
     configure_superuser_role()
     configure_plugin_role()
+    rescan()
 
 def configure_superuser_role():
     """Creates or updates the superuser role as needed"""

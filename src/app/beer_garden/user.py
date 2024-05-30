@@ -1,4 +1,5 @@
 import logging
+import yaml
 
 from brewtils.models import Event, Events, Operation, User, Garden, Role, UserToken
 from copy import deepcopy
@@ -96,6 +97,21 @@ def get_users() -> list:
 
         user.metadata["has_token"] = has_token(user.username)
     return users
+
+def load_users_config():
+    users_yaml = "example_configs/users.yaml"
+    with open(users_yaml, "r") as config:
+        return yaml.safe_load(config)
+
+def rescan():
+    """Recan the users config"""
+    users_config = load_users_config()
+    for user in users_config:
+        user = User(username=user.get("username"), roles=user.get("roles"))
+        try:
+            get_user(user.username)
+        except DoesNotExist:
+            create_user(user)
 
 
 def create_user(user: User) -> User:
@@ -418,6 +434,7 @@ def ensure_users():
     """Create user accounts if necessary"""
     _create_admin()
     _create_plugin_user()
+    rescan()
 
 
 def _create_admin():
