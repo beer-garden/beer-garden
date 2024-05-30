@@ -41,7 +41,7 @@ passlib==1.7.4
     # via beer-garden (setup.py)
 pika==1.2.0
     # via brewtils
-prometheus-client==0.20.0
+prometheus-client==0.17.1
     # via beer-garden (setup.py)
 pyjwt==2.8.0
     # via beer-garden (setup.py)

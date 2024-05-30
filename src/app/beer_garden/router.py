@@ -37,6 +37,7 @@ import beer_garden.files
 import beer_garden.garden
 import beer_garden.local_plugins.manager
 import beer_garden.log
+import beer_garden.metrics
 import beer_garden.namespace
 import beer_garden.plugin
 import beer_garden.queues
@@ -46,7 +47,6 @@ import beer_garden.scheduler
 import beer_garden.systems
 import beer_garden.topic
 import beer_garden.user
-import beer_garden.metrics
 from beer_garden.api.stomp.transport import Connection, consolidate_headers, process
 from beer_garden.errors import (
     ForwardException,
