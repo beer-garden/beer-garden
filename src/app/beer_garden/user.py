@@ -481,8 +481,8 @@ def handle_event(event: Event) -> None:
     if event.garden == config.get("garden.name"):
         if event.name == "ROLE_DELETE":
             remove_local_role_assignments_for_role(event.payload)
-        elif event.name == "USER_UPDATED":
-            initiate_user_sync()
+        # elif event.name == "USER_UPDATED":
+        #     initiate_user_sync()
 
 
 

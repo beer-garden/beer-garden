@@ -169,6 +169,14 @@ class GardenAPI(AuthorizationHandler):
                     )
                 )
 
+            elif operation == "sync_users":
+                response = await self.process_operation(
+                    Operation(
+                        operation_type="USER_SYNC_GARDEN",
+                        kwargs={"garden_name": garden.name},
+                    )
+                )
+
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
@@ -320,12 +328,13 @@ class GardenListAPI(AuthorizationHandler):
                         operation_type="GARDEN_SYNC",
                     )
                 )
-            elif operation == "sync_users":
-                # requires GARDEN_UPDATE for all gardens
-                for garden in Garden.objects.all():
-                    self.verify_user_permission_for_object(garden)
 
-                initiate_user_sync()
+            elif operation == "sync_users":
+                await self.process_operation(
+                    Operation(
+                        operation_type="USER_SYNC",
+                    )
+                )
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 

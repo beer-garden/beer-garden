@@ -187,6 +187,8 @@ route_functions = {
     "USER_CREATE": beer_garden.user.create_user,
     "USER_UPDATE": beer_garden.user.update_user,
     "USER_DELETE": beer_garden.user.delete_user,
+    "USER_SYNC_GARDEN": beer_garden.user.initiate_garden_user_sync,
+    "USER_SYNC": beer_garden.user.initiate_user_sync,
     "USER_REMOTE_SYNC": beer_garden.user.remote_users_sync,
     "PUBLISH_EVENT": beer_garden.events.publish,
     # "USER_SYNC": beer_garden.user.user_sync,
