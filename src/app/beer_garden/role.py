@@ -56,15 +56,21 @@ def delete_role(role: Role = None, role_name: str = None, role_id: str = None) -
     return role
 
 def load_roles_config():
-    roles_yaml = "example_configs/roles.yaml"
-    with open(roles_yaml, "r") as config:
-        return yaml.safe_load(config)
+    with open(config.get("auth.role_definition_file"), "r") as config_file:
+        return yaml.safe_load(config_file)
 
 def rescan():
     """ Rescan the roles configuration file"""
     roles_config = load_roles_config()
     for role in roles_config:
-        role = Role(name=role.get("name"), permission=role.get("permission"))
+        role = Role(name=role.get("name"), permission=role.get("permission"),
+                    description=role.get("description"),
+                    scope_gardens=role.get("scope_gardens"),
+                    scope_namespaces=role.get("scope_namespaces"),
+                    scope_systems=role.get("scope_systems"),
+                    scope_instances=role.get("scope_instances"),
+                    scope_versions=role.get("scope_versions"),
+                    scope_commands=role.get("scope_commands"))
         try:
             get_role(role.name)
         except DoesNotExist:

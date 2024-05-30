@@ -12,8 +12,9 @@ auth:
     username: admin
   enabled: false
   group_definition_file: null
-  role_definition_file: null
+  role_definition_file: example_configs/roles.yaml
   token_secret: IAMSUPERSECRET
+  user_definition_file: example_configs/users.yaml
 children:
   directory: ./children
 db:

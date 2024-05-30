@@ -699,13 +699,20 @@ _AUTH_SPEC = {
             "description": "Secret to use when signing authentication tokens",
             "default": "",
         },
-        # "role_definition_file": {
-        #     "type": "str",
-        #     "description": (
-        #         "Path to the yaml file that defines roles used for authorization"
-        #     ),
-        #     "required": False,
-        # },
+        "role_definition_file": {
+            "type": "str",
+            "description": (
+                "Path to the yaml file that defines roles used for authorization"
+            ),
+            "required": False,
+        },
+        "user_definition_file": {
+            "type": "str",
+            "description": (
+                "Path to the yaml file that defines users used for authorization"
+            ),
+            "required": False,
+        },
         # "group_definition_file": {
         #     "type": "str",
         #     "description": "Path to the file containg a mapping of "
