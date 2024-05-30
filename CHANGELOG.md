@@ -5,7 +5,7 @@
 TBD
 
 - Fixed bug where Request View would fail loading Dynamic Choices for TEMP commands
-- Defaulted all Dynamicaly loaded commands from the Request View to TEMP
+- Defaulted all Dynamically loaded commands from the Request View to TEMP
 
 # 3.26.1
 
