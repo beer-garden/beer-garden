@@ -495,143 +495,15 @@ def remove_local_role_assignments_for_role(role: Role) -> int:
 
     return len(impacted_users)
 
-#Old Stuff
-################################
-
-# def initiate_user_sync() -> None:
-#     """Syncs all users from this garden down to all remote gardens. Only the role
-#     assignments relevant to each remote garden will be included in the sync.
-
-#     Returns:
-#         None
-#     """
-#     # Avoiding circular imports
-#     from beer_garden.api.http.schemas.v1.user import UserSyncSchema
-#     from beer_garden.router import route
-
-#     users = User.objects.all()
-#     gardens = Garden.objects.filter(
-#         connection_type__nin=["LOCAL", None], status="RUNNING"
-#     )
-
-#     for garden in gardens:
-#         filtered_users = [
-#             _filter_role_assigments_by_garden(user, garden) for user in users
-#         ]
-#         serialized_users = (
-#             UserSyncSchema(many=True, strict=True).dump(filtered_users).data
-#         )
-
-#         roles = Role.objects.all()
-#         serialized_roles = RoleSyncSchema(many=True).dump(roles).data
-
-#         operation = Operation(
-#             operation_type="USER_SYNC",
-#             target_garden_name=garden.name,
-#             kwargs={
-#                 "serialized_roles": serialized_roles,
-#                 "serialized_users": serialized_users,
-#             },
-#         )
-
-#         route(operation)
-
-
-# def user_sync(serialized_roles: List[dict], serialized_users: List[dict]) -> None:
-#     """Function called for the USER_SYNC operation type. This imports the supplied list
-#     of serialized_users and then initiates a USER_SYNC on any remote gardens. The
-#     serialized_users dicts are expected to have been generated via UserSyncSchema.
-#     NOTE: Existing users (matched by username) will be updated if present in the
-#     serialized_users list.
-
-#     Args:
-#         serialized_users: Serialized list of users
-
-#     Returns:
-#         None
-#     """
-#     sync_roles(serialized_roles)
-#     _import_users(serialized_users)
-#     _publish_users_imported()
-#     initiate_user_sync()
-
-
 
 def handle_event(event: Event) -> None:
     # Only handle events from downstream gardens
     if event.garden == config.get("garden.name"):
         if event.name == "ROLE_DELETE":
             remove_local_role_assignments_for_role(event.payload)
+        # elif event.name == "USER_UPDATED":
+        #     initiate_user_sync()
 
-
-    # if event.name == "USER_UPDATED":
-    #     _handle_user_updated_event(event)
-
-
-# def _import_users(serialized_users: List[dict]) -> None:
-#     """Imports users from a list of dictionaries."""
-#     # Avoiding circular import. Schemas should probably be moved outside of the http
-#     # heirarchy.
-#     from beer_garden.api.http.schemas.v1.user import UserPatchSchema
-
-#     for serialized_user in serialized_users:
-#         username = serialized_user["username"]
-
-#         try:
-#             updated_user_data = UserPatchSchema(strict=True).load(serialized_user).data
-
-#             try:
-#                 user = User.objects.get(username=username)
-#             except User.DoesNotExist:
-#                 if len(updated_user_data["role_assignments"]) > 0:
-#                     user = User(username=username)
-#                     user.save()
-#                 else:
-#                     continue
-
-#             update_user(user, **updated_user_data)
-
-#         except ValidationError as exc:
-#             logger.info(f"Failed to import user {username} due to error: {exc}")
-
-
-# def _handle_user_updated_event(event):
-#     """Handling for USER_UPDATED events"""
-#     # NOTE: This event stores its data in the metadata field as a workaround to the
-#     # brewtils models dependency inherent in the more typical event publishing flow
-#     try:
-#         garden = event.metadata["garden"]
-#         updated_user = event.metadata["user"]
-#         updated_at = event.timestamp
-
-#         username = updated_user["username"]
-#         role_assignments = updated_user["role_assignments"]
-
-#         try:
-#             remote_user = RemoteUser.objects.get(garden=garden, username=username)
-#         except RemoteUser.DoesNotExist:
-#             remote_user = RemoteUser(garden=garden, username=username)
-
-#         remote_user.role_assignments = role_assignments
-#         remote_user.updated_at = updated_at
-#         remote_user.save()
-#     except KeyError:
-#         logger.error("Error parsing %s event from garden %s", event.name, event.garden)
-
-
-
-
-
-# def _publish_users_imported():
-#     """Publish an event indicating that a user sync was completed"""
-#     publish(
-#         Event(
-#             name=Events.USERS_IMPORTED.name,
-#             metadata={
-#                 "garden": config.get("garden.name"),
-#             },
-#         )
-#     )
 
 
 def _publish_user_updated(user):

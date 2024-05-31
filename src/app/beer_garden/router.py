@@ -189,6 +189,9 @@ route_functions = {
     "USER_UPDATE": beer_garden.user.update_user,
     "USER_DELETE": beer_garden.user.delete_user,
     "USER_RESCAN": beer_garden.user.rescan,
+    "USER_SYNC_GARDEN": beer_garden.user.initiate_garden_user_sync,
+    "USER_SYNC": beer_garden.user.initiate_user_sync,
+    "USER_REMOTE_SYNC": beer_garden.user.remote_users_sync,
     "PUBLISH_EVENT": beer_garden.events.publish,
     # "USER_SYNC": beer_garden.user.user_sync,
     "COMMAND_BLOCKLIST_ADD": (
@@ -718,7 +721,7 @@ def _pre_forward(operation: Operation) -> Operation:
         if operation.model.requester:
             user_default_user = True
             requester = beer_garden.user.get_user(operation.model.requester)
-            for remote_user_map in requester.remote_user_mapping():
+            for remote_user_map in requester.remote_user_mapping:
                 if remote_user_map.target_garden == operation.target_garden_name:
                     operation.model.requester = remote_user_map.username
                     user_default_user = False

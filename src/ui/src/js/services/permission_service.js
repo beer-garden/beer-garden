@@ -90,7 +90,7 @@ export default function permissionService($rootScope) {
 
             return true;
         },
-        findGardenScope: (garden = null, namespace = null, system_name = null, system_version = null) => {
+        findGardenScope: (garden = null, namespace = null, system_name = null, instance_name = null, system_version = null) => {
             if (garden === undefined || garden == null) {
                 garden = $rootScope.garden;
             }
@@ -108,13 +108,18 @@ export default function permissionService($rootScope) {
                         continue;
                     }
 
-                    return true;
+                    for (const instance of garden.systems[i].instances){
+                        if (instance.name == instance_name){
+                            return true;
+                        }
+                    }
+
                 }
             }
 
             if (garden.children !== undefined || garden.children != null) {
                 for (let i = 0; i < garden.children.length; i++) {
-                    garden_name = service.findGardenScope(garden = garden.children[i], namespace = namespace, system_name = system_name, instance_name = instance_name, system_version = system_version)
+                    let garden_name = service.findGardenScope(garden = garden.children[i], namespace = namespace, system_name = system_name, instance_name = instance_name, system_version = system_version)
                     if (garden_name !== undefined || garden_name != null) {
                         return garden_name;
                     }
