@@ -176,7 +176,7 @@ export default function appRun(
 
   $rootScope.hasGardenPermission = function(permission, garden, global = false) {
     if (!$rootScope.config.authEnabled) return true;
-    return $rootScope.hasPermission(permission, global = global, garden_name = garden.name);
+    return $rootScope.hasPermission(permission, global, garden.name);
   };
 
   $rootScope.hasSystemPermission = function(permission, system, global = false) {

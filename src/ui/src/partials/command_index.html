@@ -47,7 +47,7 @@
             <th style="width: 10%" scope="col">Version</th>
             <th style="width: 25%" scope="col">Command</th>
             <th style="width: 35%" scope="col">Description</th>
-            <th style="width: 10%" scope="col" ng-if="userCanTask"></th>
+            <th style="width: 10%" scope="col"></th>
           </tr>
         </thead>
         <tbody>
@@ -112,11 +112,12 @@
                 <br>{{"TAGS = " + command.tags}}
               </span>
             </td>
-            <td ng-if="hasCommandPermission('OPERATOR', command)">
+            <td>
               <a
                 class="btn btn-primary center-block word-wrap-button"
                 ui-sref="base.command({systemName: command.system, systemVersion: command.version, namespace: command.namespace, commandName: command.name})"
                 title="Run {{command.name}}"
+                ng-if="hasCommandPermission('OPERATOR', command)"
                 >Make it Happen!</a
               >
             </td>
