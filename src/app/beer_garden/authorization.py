@@ -713,6 +713,7 @@ class ModelFilter:
 
             if len(filtered_commands) == 0:
                 return None
+            system.commands = filtered_commands
 
         return system
 
@@ -768,7 +769,7 @@ class ModelFilter:
                     if filtered_system:
                         new_systems.append(filtered_system)
 
-                garden.systems = filtered_system
+                garden.systems = new_systems
 
         new_child_gardens = []
         if garden.children:
