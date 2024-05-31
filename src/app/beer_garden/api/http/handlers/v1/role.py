@@ -150,7 +150,7 @@ class RoleListAPI(AuthorizationHandler):
         tags:
           - Roles
         """
-        self.minimum_permission = self.GARDEN_ADMIN
+        self.minimum_permission = self.READ_ONLY
         self.verify_user_permission_for_object(local_garden())
 
         response = await self.process_operation(

@@ -112,11 +112,10 @@
         <!-- Admin Drop Down Menu -->
         <li
           class="dropdown"
-          ng-show="hasPermission('PLUGIN_ADMIN')"
         >
           <a href="" data-toggle="dropdown" title="Admin Drop Down">Admin</a>
           <ul class="dropdown-menu">
-            <li ng-show="hasPermission('PLUGIN_ADMIN')">
+            <li>
               <a ui-sref="base.system_admin" ui-sref-active="active">
                 <span>Systems</span>
               </a>
@@ -131,7 +130,7 @@
                 <span>Roles</span>
               </a>
             </li>
-            <li ng-show="hasPermission('GARDEN_ADMIN')">
+            <li>
               <a ui-sref="base.garden_admin" ui-sref-active="active">
                 <span>Gardens</span>
               </a>

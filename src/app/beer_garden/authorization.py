@@ -433,8 +433,9 @@ class ModelFilter:
             return role
 
         # Can return the role information, if the user has the role
-        if role.name in user.roles:
-            return role
+        for user_role in user.local_roles:
+            if role.name == user_role.name:
+                return role
 
         return None
 

@@ -5,7 +5,7 @@
       type="button"
       class="btn btn-primary"
       ng-click="doCreate()"
-      ng-show="hasPermission('GARDEN_ADMIN', global=true)"
+      ng-if="hasPermission('GARDEN_ADMIN', true)"
     >
       Create Role
     </button>
@@ -109,18 +109,21 @@
               class="fa fa-trash pull-right"
               style="font-size: 20px"
               ng-click="doDelete(role)"
+              ng-if="hasPermission('GARDEN_ADMIN', true)"
               title="Delete Role"
             ></button>
             <button
               class="fa fa-clone pull-right"
               style="font-size: 20px"
               ng-click="doClone(role)"
+              ng-if="hasPermission('GARDEN_ADMIN', true)"
               title="Copy Role"
             ></button>
             <button
               class="fa fa-pencil pull-right"
               style="font-size: 20px"
               ng-click="doEdit(role)"
+              ng-if="hasPermission('GARDEN_ADMIN', true)"
               title="Edit Role"
             ></button>
         </td>
