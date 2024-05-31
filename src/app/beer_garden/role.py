@@ -63,16 +63,20 @@ def rescan():
     """ Rescan the roles configuration file"""
     roles_config = load_roles_config()
     for role in roles_config:
-        role = Role(name=role.get("name"), permission=role.get("permission"),
-                    description=role.get("description"),
-                    scope_gardens=role.get("scope_gardens"),
-                    scope_namespaces=role.get("scope_namespaces"),
-                    scope_systems=role.get("scope_systems"),
-                    scope_instances=role.get("scope_instances"),
-                    scope_versions=role.get("scope_versions"),
-                    scope_commands=role.get("scope_commands"))
+        kwargs = {"name": role.get("name"), 
+                  "permission": role.get("permission"),
+                  "description": role.get("description"),
+                  "scope_gardens": role.get("scope_gardens"),
+                  "scope_namespaces": role.get("scope_namespaces"),
+                  "scope_systems": role.get("scope_systems"),
+                  "scope_instances": role.get("scope_instances"),
+                  "scope_versions": role.get("scope_versions"),
+                  "scope_commands": role.get("scope_commands")}
+        role = Role(**kwargs)
         try:
-            get_role(role.name)
+            existing = get_role(role.name)
+            if existing:
+                update_role(existing, **kwargs)
         except DoesNotExist:
             create_role(role)
 

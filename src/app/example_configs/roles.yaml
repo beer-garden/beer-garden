@@ -5,7 +5,7 @@
   permission: "OPERATOR"
 
 - name: "read_only"
-  permissions: "READ_ONLY"
+  permission: "READ_ONLY"
   
 - name: "plugin_admin"
-  permissions: "PLUGIN_ADMIN"
+  permission: "PLUGIN_ADMIN"

@@ -106,9 +106,13 @@ def rescan():
     """Recan the users config"""
     users_config = load_users_config()
     for user in users_config:
-        user = User(username=user.get("username"), roles=user.get("roles"))
+        kwargs = {"username": user.get("username"), "roles": user.get("roles")}
+        user = User(**kwargs)
         try:
-            get_user(user.username)
+            existing = get_user(user.username)
+            if existing:
+                update_user(existing,
+                            **kwargs)
         except DoesNotExist:
             create_user(user)
 
@@ -153,7 +157,7 @@ def delete_user(username: str = None, user: User = None) -> User:
 
 
 
-def update_user(username: str = None, user: User = None, new_password: str = None, current_password: str = None, **kwargs) -> User:
+def update_user(user: User = None, username: str = None, new_password: str = None, current_password: str = None, **kwargs) -> User:
     """Updates the provided User by setting its attributes to those provided by kwargs.
     The updated user object is then saved to the database and returned.
 
