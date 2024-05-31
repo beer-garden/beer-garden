@@ -72,7 +72,7 @@ def revoke_tokens(user: User = None, username: str = None) -> None:
     requiring the user to explicitly login, which one may want to do for a variety
     of reasons.
     """
-    for user_token in db.query(UserToken, username=user.username if user else username):
+    for user_token in db.query(UserToken, filter_params={"username":user.username if user else username}):
         db.delete(user_token)
 
 def get_user(username: str = None, id: str = None, include_roles: bool = True) -> User:
