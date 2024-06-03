@@ -1,4 +1,5 @@
 import logging
+import yaml
 
 from brewtils.models import Event, Events, Operation, User, Garden, Role, UserToken
 from copy import deepcopy
@@ -97,6 +98,24 @@ def get_users() -> list:
         user.metadata["has_token"] = has_token(user.username)
     return users
 
+def load_users_config():
+    with open(config.get("auth.user_definition_file"), "r") as config_file:
+        return yaml.safe_load(config_file)
+
+def rescan():
+    """Recan the users config"""
+    users_config = load_users_config()
+    for user in users_config:
+        kwargs = {"username": user.get("username"), "roles": user.get("roles")}
+        user = User(**kwargs)
+        try:
+            existing = get_user(user.username)
+            if existing:
+                update_user(existing,
+                            **kwargs)
+        except DoesNotExist:
+            create_user(user)
+
 
 def create_user(user: User) -> User:
     """Creates a User using the provided kwargs. The created user is saved to the
@@ -138,7 +157,7 @@ def delete_user(username: str = None, user: User = None) -> User:
 
 
 
-def update_user(username: str = None, user: User = None, new_password: str = None, current_password: str = None, **kwargs) -> User:
+def update_user(user: User = None, username: str = None, new_password: str = None, current_password: str = None, **kwargs) -> User:
     """Updates the provided User by setting its attributes to those provided by kwargs.
     The updated user object is then saved to the database and returned.
 
@@ -418,6 +437,7 @@ def ensure_users():
     """Create user accounts if necessary"""
     _create_admin()
     _create_plugin_user()
+    rescan()
 
 
 def _create_admin():
