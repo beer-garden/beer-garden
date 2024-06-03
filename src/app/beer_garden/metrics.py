@@ -39,6 +39,11 @@ request_counter_total = Counter(
     "Number of requests.",
     ["system", "instance_name", "system_version", "command"],
 )
+canceled_request_counter = Counter(
+    "bg_canceled_requests_total",
+    "Number of canceled requests.",
+    ["system", "instance_name", "system_version", "command"],
+)
 
 # Gauges:
 queued_request_gauge = Gauge(
@@ -125,3 +130,17 @@ def request_completed(request):
 
     completed_request_counter.labels(**labels).inc()
     plugin_command_latency.labels(**labels).observe(latency)
+
+def request_canceled(request):
+    """Update metrics associated with a Request canceled
+
+    This call should happen after the save to the database.
+
+    """
+    labels = {
+        "system": request.system,
+        "system_version": request.system_version,
+        "instance_name": request.instance_name,
+    }
+
+    canceled_request_counter.labels(**labels).inc()
