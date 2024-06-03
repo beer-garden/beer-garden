@@ -480,7 +480,7 @@ class RequestListAPI(AuthorizationHandler):
 
         self.verify_user_permission_for_object(request_model)
 
-        if self.current_user:
+        if self.current_user and not request_model.requester:
             request_model.requester = self.current_user.username
 
         wait_future = None
@@ -574,7 +574,7 @@ class RequestListAPI(AuthorizationHandler):
 
         self.verify_user_permission_for_object(request_model)
 
-        if self.current_user:
+        if self.current_user and not request_model.requester:
             request_model.requester = self.current_user.username
 
         try:

@@ -163,7 +163,7 @@ export default function adminUserIndexController($rootScope, $scope, $uibModal, 
       },
       controller: 'addRemoveRolesController',
       windowClass: 'app-modal-window',
-    });
+    }).result.then(loadUsers);
     
   };
 
@@ -178,7 +178,7 @@ export default function adminUserIndexController($rootScope, $scope, $uibModal, 
       },
       controller: 'userGardenAccountsController',
       windowClass: 'app-modal-window',
-    });
+    }).result.then(loadUsers);
     
   };
 
@@ -205,11 +205,7 @@ export default function adminUserIndexController($rootScope, $scope, $uibModal, 
       controller: 'SyncUsersController',
       size: 'md',
       template: syncUsersTemplate,
-    }).result.then(() => {
-      loadUsers();
-    }, () => {
-      loadUsers();
-    });
+    }).result.then(loadUsers);
   };
 
   const loadUsers = function() {

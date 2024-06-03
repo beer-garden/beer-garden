@@ -44,7 +44,7 @@ export default function addRemoveRolesController($scope, $uibModalInstance, User
     $scope.submitRoles = function() {
         $scope.user.roles = $scope.user_roles;
 
-        UserService.updateUserRoles($scope.user.username, $scope.user);
+        UserService.updateUserRoles($scope.user.username, $scope.user).then($scope.close);
     }
 
     $scope.data = RoleService.getRoles().then(
