@@ -1043,6 +1043,7 @@ class User(MongoModel, Document):
     is_remote = BooleanField(required=True, default=False)
     remote_user_mapping = EmbeddedDocumentListField("RemoteUserMap")
     metadata = DictField()
+    protected = BooleanField(required=True, default=False)
 
     meta = {
         "indexes": [{"name": "unique_index", "fields": ["username"], "unique": True}],

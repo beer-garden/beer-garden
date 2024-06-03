@@ -47,7 +47,8 @@
     </thead>
     <tbody>
       <tr ng-repeat="role in roles">
-        <td>{{role.name}}</td>
+        <td><i ng-if="role.protected " class="fa fa-lock"
+          title="Protected Role" style="padding-right: 2px;"></i>{{role.name}}</td>
         <td>{{role.permission}}</td>
         <td>{{role.description}}</td>
         <td>
@@ -109,7 +110,7 @@
               class="fa fa-trash pull-right"
               style="font-size: 20px"
               ng-click="doDelete(role)"
-              ng-if="hasPermission('GARDEN_ADMIN', true)"
+              ng-if="hasPermission('GARDEN_ADMIN', true) && !role.protected"
               title="Delete Role"
             ></button>
             <button
@@ -123,7 +124,7 @@
               class="fa fa-pencil pull-right"
               style="font-size: 20px"
               ng-click="doEdit(role)"
-              ng-if="hasPermission('GARDEN_ADMIN', true)"
+              ng-if="hasPermission('GARDEN_ADMIN', true) && !role.protected"
               title="Edit Role"
             ></button>
         </td>

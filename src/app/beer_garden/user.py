@@ -430,7 +430,7 @@ def _create_admin():
         db.update(admin)
     except DoesNotExist:
         logger.info("Creating default admin user with username: %s", username)
-        admin = User(username=username, roles=["superuser"])
+        admin = User(username=username, roles=["superuser"], protected=True)
         set_password(admin, password)
         db.create(admin)
 
@@ -448,7 +448,7 @@ def _create_plugin_user():
         # Sanity check to make sure we don't accidentally create two
         # users with the same name      
         logger.info("Creating default plugin user with username: %s", username)
-        plugin_user = User(username=username, roles=["plugin"])
+        plugin_user = User(username=username, roles=["plugin"], protected=True)
         set_password(plugin_user, password)
         db.create(plugin_user)
 

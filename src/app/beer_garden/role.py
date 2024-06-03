@@ -69,7 +69,7 @@ def configure_superuser_role():
         superuser = get_role(role_name="superuser")
     except DoesNotExist:
         logger.info("Creating superuser role with all permissions")
-        superuser = Role(name="superuser", description = "Role containing max permissions", permission="GARDEN_ADMIN")
+        superuser = Role(name="superuser", description = "Role containing max permissions", permission="GARDEN_ADMIN", protected=True)
         create_role(superuser)
 
 def configure_plugin_role():
@@ -78,7 +78,7 @@ def configure_plugin_role():
         plugin_role = get_role(role_name="plugin")
     except DoesNotExist:
         logger.info("Creating plugin role with select permissions")
-        plugin_role = Role(name="plugin", description = "Role containing plugin permissions", permission="PLUGIN_ADMIN")
+        plugin_role = Role(name="plugin", description = "Role containing plugin permissions", permission="PLUGIN_ADMIN", protected=True)
         create_role(plugin_role)
 
 
