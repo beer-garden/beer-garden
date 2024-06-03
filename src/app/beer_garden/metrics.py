@@ -131,6 +131,7 @@ def request_completed(request):
     completed_request_counter.labels(**labels).inc()
     plugin_command_latency.labels(**labels).observe(latency)
 
+
 def request_canceled(request):
     """Update metrics associated with a Request canceled
 

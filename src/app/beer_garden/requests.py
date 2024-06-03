@@ -40,7 +40,12 @@ import beer_garden.queue.api as queue
 from beer_garden.db.mongo.models import RawFile
 from beer_garden.errors import NotUniqueException, ShutdownError
 from beer_garden.events import publish_event
-from beer_garden.metrics import request_completed, request_created, request_started, request_canceled
+from beer_garden.metrics import (
+    request_completed,
+    request_created,
+    request_started,
+    request_canceled,
+)
 
 logger = logging.getLogger(__name__)
 
