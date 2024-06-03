@@ -693,7 +693,7 @@ def garden_sync(sync_target: str = None):
     """
     # If a Garden Name is provided, determine where to route the request
     if sync_target:
-        logger.debug("Processing garden sync, about to publish")
+        logger.info("Processing garden sync, about to publish")
 
         publish_garden()
         publish_command_publishing_blocklist()
@@ -703,7 +703,7 @@ def garden_sync(sync_target: str = None):
     # Iterate over all gardens and forward the sync requests
     for garden in get_gardens(include_local=False):
         try:
-            logger.debug(f"About to create sync operation for garden {garden.name}")
+            logger.info(f"About to create sync operation for garden {garden.name}")
 
             route(
                 Operation(

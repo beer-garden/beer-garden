@@ -55,6 +55,7 @@ export default function commandViewController(
   $scope.createRequestWrapper = function(requestPrototype, ...args) {
     const request = {
       command: requestPrototype['command'],
+      command_type: requestPrototype['command_type'] || 'TEMP',
       namespace: requestPrototype['namespace'] || $scope.system.namespace,
       system: requestPrototype['system'] || $scope.system.name,
       system_version:

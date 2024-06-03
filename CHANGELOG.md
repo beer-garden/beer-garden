@@ -1,12 +1,26 @@
 # Beer Garden Changelog
 
-# 3.26.1
+# 3.26.2
 
 TBD
 
+- Fixed bug where Request View would fail loading Dynamic Choices for TEMP commands
+- Defaulted all Dynamically loaded commands from the Request View to TEMP
+
+# 3.26.1
+
+5/24/2024
+
+- Fixed icon padding
 - Updated Garden Admin page to only update page data based on Local Garden Update Events and notify when a child sync is being processed 
 - Fixed logging statement
+- Fixed icon order of Child Requests on Request View page
 - Updated Publish/Subscribe Request to only support Systems that are in the `RUNNING` status. 
+- Updated Topics API to support upserting topics
+- Changed various log levels
+- Fixed monitoring of Plugin Runners
+- Added notification icons to Instances on System Admin page to reflect current status of runner
+- Updated Child Request handling to update missing Command Types
 
 # 3.26.0
 

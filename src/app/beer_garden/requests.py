@@ -1028,6 +1028,7 @@ def handle_event(event):
                     "status_updated_at",
                     "target_garden",
                     "updated_at",
+                    "command_type",
                 ):
                     new_value = getattr(event.payload, field)
 

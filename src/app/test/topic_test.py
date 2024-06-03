@@ -91,6 +91,13 @@ class TestTopic:
         t = get_all_topics()
         assert len(t) == 2
 
+    def test_upsert_subscriber(self, topic1, subscriber):
+        """add subscriber to existing topic"""
+        assert len(get_topic(topic1.id).subscribers) == 0
+        new_topic = BrewtilsTopic(name=topic1.name, subscribers=[subscriber])
+        create_topic(new_topic)
+        assert len(get_topic(topic1.id).subscribers) == 1
+
     def test_remove_topic(self, topic1):
         """remove_topic should remove topic"""
         remove_topic(topic1.id)
