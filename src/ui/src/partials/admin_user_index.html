@@ -48,8 +48,26 @@
           <td>
             <i
             ng-if="user.protected && !user.is_remote"
-              class="fa fa-lock"
+              class="fa fa-user-shield"
               title="Protected Account"
+              style="padding-right: 2px;"
+            ></i>
+            <i
+            ng-if="!user.protected && !user.is_remote && user.config_generated"
+              class="fa fa-user-tag"
+              title="Protected Account"
+              style="padding-right: 2px;"
+            ></i>
+            <i
+            ng-if="!user.protected && !user.is_remote"
+              class="fa fa-user"
+              title="Protected Account"
+              style="padding-right: 2px;"
+            ></i>
+            <i
+              ng-if="user.is_remote"
+              class="fa-regular fa-user"
+              title="Remote Account"
               style="padding-right: 2px;"
             ></i>
             {{user.username}}
