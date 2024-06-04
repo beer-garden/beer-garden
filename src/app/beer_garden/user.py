@@ -267,56 +267,59 @@ def remote_role_match_garden(role: Role, target_garden: Garden) -> bool:
     if role.scope_gardens and len(role.scope_gardens) > 0:
         if target_garden.name not in role.scope_gardens:
             return False
-        
-    for system in target_garden.systems:
 
-        # Check for Command Role Filter
-        if role.scope_commands and len(role.scope_commands) > 0:
-            match = False
-            for command in system.commands:
-                if command.name in role.scope_commands:
+    if target_garden.systems:
+        for system in target_garden.systems:
+
+            # Check for Command Role Filter
+            if role.scope_commands and len(role.scope_commands) > 0:
+                match = False
+                for command in system.commands:
+                    if command.name in role.scope_commands:
+                        match = True
+                        break
+            
+                if not match:
+                    continue
+
+            # Check for Instance Role Filter
+            if role.scope_instances and len(role.scope_instances) > 0:
+                match = False
+                for instance in system.instances:
+                    if instance.name in role.scope_instances:
+                        match = True
+                        break
+            
+                if not match:
+                    continue
+
+            # Check for Version Role Filter
+            if role.scope_versions and len(role.scope_versions) > 0:
+                match = False
+                if system.version in role.scope_versions:
                     match = True
-                    break
-        
-            if not match:
-                continue
+                if not match:
+                    continue
 
-        # Check for Instance Role Filter
-        if role.scope_instances and len(role.scope_instances) > 0:
-            match = False
-            for instance in system.instances:
-                if instance.name in role.scope_instances:
+            # Check for System Role Filter    
+            if role.scope_namespaces and len(role.scope_namespaces) > 0:
+                match = False
+                if system.name in role.scope_namespaces:
                     match = True
-                    break
-        
-            if not match:
-                continue
 
-        # Check for Version Role Filter
-        if role.scope_versions and len(role.scope_versions) > 0:
-            match = False
-            if system.version in role.scope_versions:
-                match = True
-            if not match:
-                continue
+                if not match:
+                    continue
 
-        # Check for System Role Filter    
-        if role.scope_namespaces and len(role.scope_namespaces) > 0:
-            match = False
-            if system.name in role.scope_namespaces:
-                match = True
+            # Check for System Role Filter
+            if role.scope_systems and len(role.scope_systems) > 0:
+                match = False
+                if system.name in role.scope_systems:
+                    match = True
+                if not match:
+                    continue
 
-            if not match:
-                continue
-
-        # Check for System Role Filter
-        if role.scope_systems and len(role.scope_systems) > 0:
-            match = False
-            if system.name in role.scope_systems:
-                match = True
-            if not match:
-                continue
-
+            return True
+    else:
         return True
 
     return False
@@ -417,21 +420,32 @@ def remote_user_sync(remote_user: User) -> User:
 def remote_users_sync(remote_users: list[dict] = []):
 
     remote_users_brewtils = SchemaParser.parse_user(remote_users, many=True, from_string=False)
+    local_users = get_users()
 
-    for user in get_users():
-        remote_user = next((remote_user for remote_user in remote_users_brewtils if remote_user.username == user.username), None)
+    # Add/Update Remote Users
+    for remote_user in remote_users_brewtils:
+        new_user = True
+        for user in local_users:
+            if remote_user.username != user.username:
+                continue
+            new_user = False
+            user.remote_user_mapping = remote_user.remote_user_mapping
+            user.remote_roles = remote_user.remote_roles
+            db.update(user)
+        if new_user:
+            remote_user = db.create(remote_user)
 
-        if user.is_remote:                    
-            if remote_user is None:
-                # If remote and not in the provided list, then the user was deleted upstream
-                db.delete(user)
-            else:
-                db.update(remote_user)
-        else:
-            if remote_user:
-                # Update only the remote fields
-                user.remote_user_mapping = remote_user.remote_user_mapping
-                user.remote_roles = remote_user.remote_roles
+    # Purge Remote Users not provided
+    for user in local_users:
+        if user.is_remote:
+            user_found = False
+            for remote_user in remote_users_brewtils:
+                if remote_user.username == user.username:
+                    user_found = True
+                    continue
+            if user_found:
+                continue
+            db.delete(user)
 
     # Sync child gardens
     initiate_user_sync()

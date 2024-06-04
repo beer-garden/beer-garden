@@ -1015,6 +1015,9 @@ class RemoteRole(MongoModel, EmbeddedDocument):
     scope_versions = ListField(field=StringField())
     scope_commands = ListField(field=StringField())
 
+    protected = BooleanField(default=False)
+    file_generated = BooleanField(required=True, default=False)
+
     def __str__(self) -> str:
         return self.name
 
