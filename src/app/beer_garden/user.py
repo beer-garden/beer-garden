@@ -136,6 +136,10 @@ def create_user(user: User) -> User:
     user.local_roles = []
     for role in user.roles:
         user.local_roles.append(get_role(role))
+
+    # Sync child gardens
+    initiate_user_sync()
+
     return user
 
 def delete_user(username: str = None, user: User = None) -> User:
@@ -153,6 +157,9 @@ def delete_user(username: str = None, user: User = None) -> User:
         user = db.query_unique(User, username=username, raise_missing=True)
 
     db.delete(user)
+
+    # Sync child gardens
+    initiate_user_sync()
 
     return user
 
@@ -204,6 +211,9 @@ def update_user(user: User = None, username: str = None, new_password: str = Non
 
     user = db.update(user)
     _publish_user_updated(user)
+    
+    # Sync child gardens
+    initiate_user_sync()
 
     return user
 
