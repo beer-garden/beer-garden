@@ -28,6 +28,7 @@ import beer_garden.local_plugins.manager as lpm
 import beer_garden.queue.api as queue
 from beer_garden.errors import NotFoundException, NotUniqueException
 from beer_garden.events import publish_event
+from beer_garden.metrics import system_created, system_removed, system_updated
 from beer_garden.plugin import publish_stop
 
 REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
@@ -133,6 +134,9 @@ def create_system(system: System) -> System:
 
     add_routing_system(system=system)
 
+    # Metrics
+    system_created(system)
+
     return system
 
 
@@ -235,6 +239,9 @@ def update_system(
 
     add_routing_system(system=system)
 
+    # Metrics
+    system_updated(system)
+
     return system
 
 
@@ -302,6 +309,9 @@ def remove_system(system_id: str = None, system: System = None) -> System:
     from beer_garden.router import remove_routing_system
 
     remove_routing_system(system=system)
+
+    # Metrics
+    system_removed(system)
 
     return system
 

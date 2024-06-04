@@ -44,6 +44,67 @@ canceled_request_counter = Counter(
     "Number of canceled requests.",
     ["system", "instance_name", "system_version", "command"],
 )
+system_created_counter = Counter(
+    "bg_system_created_total",
+    "Number of times system created",
+    [
+        "system",
+        "system_version",
+    ],
+)
+system_removed_counter = Counter(
+    "bg_system_removed_total",
+    "Number of times system removed",
+    [
+        "system",
+        "system_version",
+    ],
+)
+system_updated_counter = Counter(
+    "bg_system_updated_total",
+    "Number of times system updated",
+    [
+        "system",
+        "system_version",
+    ],
+)
+instance_initialized_counter = Counter(
+    "bg_instance_initialized_total",
+    "Number of times instance initialized",
+    [
+        "instance_name",
+        "system",
+        "system_version",
+    ],
+)
+instance_started_counter = Counter(
+    "bg_instance_started_total",
+    "Number of times instance started",
+    [
+        "instance_name",
+        "system",
+        "system_version",
+    ],
+)
+instance_stopped_counter = Counter(
+    "bg_instance_stopped_total",
+    "Number of times instance stopped",
+    [
+        "instance_name",
+        "system",
+        "system_version",
+    ],
+)
+instance_updated_counter = Counter(
+    "bg_instance_updated_total",
+    "Number of times instance updated",
+    [
+        "instance_name",
+        "system",
+        "system_version",
+    ],
+)
+
 
 # Gauges:
 queued_request_gauge = Gauge(
@@ -145,3 +206,80 @@ def request_canceled(request):
     }
 
     canceled_request_counter.labels(**labels).inc()
+
+
+def system_created(system):
+    """Update plugin started metric"""
+    labels = {
+        "system": system.name,
+        "system_version": system.version,
+    }
+    system_created_counter.labels(**labels).inc()
+
+
+def system_removed(system):
+    """
+    Update plugin stopped metric
+    """
+    labels = {
+        "system": system.name,
+        "system_version": system.version,
+    }
+    system_removed_counter.labels(**labels).inc()
+
+
+def system_updated(system):
+    """
+    Update plugin stopped metric
+    """
+    labels = {
+        "system": system.name,
+        "system_version": system.version,
+    }
+    system_updated_counter.labels(**labels).inc()
+
+
+def instance_started(instance, system):
+    """Update plugin started metric"""
+    labels = {
+        "instance_name": instance.name,
+        "system": system.name,
+        "system_version": system.version,
+    }
+    instance_started_counter.labels(**labels).inc()
+
+
+def instance_stopped(instance, system):
+    """
+    Update plugin stopped metric
+    """
+    labels = {
+        "instance_name": instance.name,
+        "system": system.name,
+        "system_version": system.version,
+    }
+    instance_stopped_counter.labels(**labels).inc()
+
+
+def instance_updated(instance, system):
+    """
+    Update plugin stopped metric
+    """
+    labels = {
+        "instance_name": instance.name,
+        "system": system.name,
+        "system_version": system.version,
+    }
+    instance_updated_counter.labels(**labels).inc()
+
+
+def instance_initialized(instance, system):
+    """
+    Update plugin stopped metric
+    """
+    labels = {
+        "instance_name": instance.name,
+        "system": system.name,
+        "system_version": system.version,
+    }
+    instance_initialized_counter.labels(**labels).inc()
