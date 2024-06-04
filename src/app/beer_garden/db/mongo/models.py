@@ -984,6 +984,7 @@ class Role(MongoModel, Document):
     scope_commands = ListField(field=StringField())
 
     protected = BooleanField(default=False)
+    file_generated = BooleanField(required=True, default=False)
 
     meta = {
         "indexes": [{"name": "unique_index", "fields": ["name"], "unique": True}],
@@ -1044,6 +1045,7 @@ class User(MongoModel, Document):
     remote_user_mapping = EmbeddedDocumentListField("RemoteUserMap")
     metadata = DictField()
     protected = BooleanField(required=True, default=False)
+    file_generated = BooleanField(required=True, default=False)
 
     meta = {
         "indexes": [{"name": "unique_index", "fields": ["username"], "unique": True}],

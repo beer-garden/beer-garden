@@ -28,6 +28,11 @@ export default function roleService($http) {
     createRole: (newRole) => {
       return $http.post('api/v1/roles/', newRole);
     },
+    rescan: () => {
+      return $http.patch('api/v1/roles/', {
+        operation: 'rescan',
+      });
+    },
   };
 
   /**

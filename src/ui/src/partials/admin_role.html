@@ -4,6 +4,14 @@
     <button
       type="button"
       class="btn btn-primary"
+      ng-click="doRescan()"
+      ng-if="hasPermission('GARDEN_ADMIN', true)"
+    >
+      Rescan Roles
+    </button>
+    <button
+      type="button"
+      class="btn btn-primary"
       ng-click="doCreate()"
       ng-if="hasPermission('GARDEN_ADMIN', true)"
     >
@@ -47,8 +55,12 @@
     </thead>
     <tbody>
       <tr ng-repeat="role in roles">
-        <td><i ng-if="role.protected " class="fa fa-lock"
-          title="Protected Role" style="padding-right: 2px;"></i>{{role.name}}</td>
+        <td>
+          <i ng-if="role.protected" class="fa fa-user-shield" title="Protected Role" style="padding-right: 2px;"></i>
+          <i ng-if="!role.protected && role.file_generated" class="fa fa-user-tag" title="File Generated Role" style="padding-right: 2px;"></i>
+          <i ng-if="!role.protected && !role.file_generated" class="fa fa-user-gear" title="Protected Role" style="padding-right: 2px;"></i>
+          {{role.name}}
+        </td>
         <td>{{role.permission}}</td>
         <td>{{role.description}}</td>
         <td>
@@ -110,7 +122,7 @@
               class="fa fa-trash pull-right"
               style="font-size: 20px"
               ng-click="doDelete(role)"
-              ng-if="hasPermission('GARDEN_ADMIN', true) && !role.protected"
+              ng-if="hasPermission('GARDEN_ADMIN', true) && !role.protected && !role.file_generated"
               title="Delete Role"
             ></button>
             <button
@@ -124,7 +136,7 @@
               class="fa fa-pencil pull-right"
               style="font-size: 20px"
               ng-click="doEdit(role)"
-              ng-if="hasPermission('GARDEN_ADMIN', true) && !role.protected"
+              ng-if="hasPermission('GARDEN_ADMIN', true) && !role.protected && !role.file_generated"
               title="Edit Role"
             ></button>
         </td>

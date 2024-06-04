@@ -126,6 +126,12 @@ export default function adminUserIndexController($rootScope, $scope, $uibModal, 
     );
   };
 
+  $scope.doRescan = function() {
+    UserService.rescan().then(
+      loadUsers,
+    );
+  };
+
   $scope.doRevokeToken = function(user) {
     TokenService.revokeUserToken(user.username).then(
       loadUsers,

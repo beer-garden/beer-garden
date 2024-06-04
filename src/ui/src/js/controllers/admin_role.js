@@ -91,8 +91,9 @@ export function adminRoleController(
     RoleService.deleteRole(role.id).then($scope.loadRoles);
   };
 
-
-  
+  $scope.doRescan = function() {
+    RoleService.rescan().then($scope.loadRoles);
+  };
 
   $scope.addErrorAlert = function(response) {
     $scope.alerts.push({

@@ -4,6 +4,14 @@
     <button
       type="button"
       class="btn btn-primary"
+      ng-click="doRescan()"
+      ng-if="hasPermission('GARDEN_ADMIN', true)"
+    >
+      Rescan Roles
+    </button>
+    <button
+      type="button"
+      class="btn btn-primary"
       ng-click="doCreate()"
       ng-if="hasPermission('GARDEN_ADMIN', true)"
     >
@@ -53,15 +61,15 @@
               style="padding-right: 2px;"
             ></i>
             <i
-            ng-if="!user.protected && !user.is_remote && user.config_generated"
+            ng-if="!user.protected && !user.is_remote && user.file_generated"
               class="fa fa-user-tag"
               title="Protected Account"
               style="padding-right: 2px;"
             ></i>
             <i
-            ng-if="!user.protected && !user.is_remote"
+            ng-if="!user.protected && !user.is_remote && !user.file_generated"
               class="fa fa-user"
-              title="Protected Account"
+              title="File Generated Account"
               style="padding-right: 2px;"
             ></i>
             <i

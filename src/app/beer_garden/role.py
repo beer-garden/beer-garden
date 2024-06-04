@@ -71,7 +71,9 @@ def rescan():
                   "scope_systems": role.get("scope_systems"),
                   "scope_instances": role.get("scope_instances"),
                   "scope_versions": role.get("scope_versions"),
-                  "scope_commands": role.get("scope_commands")}
+                  "scope_commands": role.get("scope_commands"),
+                  "file_generated":True, 
+                  "protected":role.get("protected", False)}
         role = Role(**kwargs)
         try:
             existing = get_role(role.name)

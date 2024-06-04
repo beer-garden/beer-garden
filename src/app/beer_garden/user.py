@@ -106,7 +106,7 @@ def rescan():
     """Recan the users config"""
     users_config = load_users_config()
     for user in users_config:
-        kwargs = {"username": user.get("username"), "roles": user.get("roles")}
+        kwargs = {"username": user.get("username"), "roles": user.get("roles"), "file_generated":True, "protected":user.get("protected", False)}
         user = User(**kwargs)
         try:
             existing = get_user(user.username)
@@ -450,7 +450,7 @@ def _create_admin():
         db.update(admin)
     except DoesNotExist:
         logger.info("Creating default admin user with username: %s", username)
-        admin = User(username=username, roles=["superuser"], protected=True)
+        admin = User(username=username, roles=["superuser"], protected=True, file_generated=True)
         set_password(admin, password)
         db.create(admin)
 
@@ -468,7 +468,7 @@ def _create_plugin_user():
         # Sanity check to make sure we don't accidentally create two
         # users with the same name      
         logger.info("Creating default plugin user with username: %s", username)
-        plugin_user = User(username=username, roles=["plugin"], protected=True)
+        plugin_user = User(username=username, roles=["plugin"], protected=True, file_generated=True)
         set_password(plugin_user, password)
         db.create(plugin_user)
 

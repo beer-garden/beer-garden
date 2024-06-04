@@ -60,7 +60,12 @@ export default function userService($http, GardenService, SystemService) {
         current_password: currentPassword,
         new_password: newPassword,
       });
-    }
+    },
+    rescan: () => {
+      return $http.patch('api/v1/users/', {
+        operation: 'rescan',
+      });
+    },
   };
 
   _.assign(service, {
