@@ -2,6 +2,7 @@ import logging
 import yaml
 
 from brewtils.models import Event, Events, Operation, User, Garden, Role, UserToken
+from brewtils.schema_parser import SchemaParser
 from copy import deepcopy
 
 from beer_garden import config
@@ -368,7 +369,7 @@ def initiate_garden_user_sync(garden_name: str = None, garden: Garden = None) ->
         operation_type="USER_REMOTE_SYNC",
         target_garden_name=garden.name,
         kwargs={
-            "remote_users": garden_remote_users,
+            "remote_users": SchemaParser.serialize_user(garden_remote_users, to_string=False, many=True),
         },
     )
 
@@ -389,12 +390,12 @@ def initiate_user_sync() -> None:
             remote_user = generate_remote_user(child, user)
             if remote_user:
                 child_remote_users.append(remote_user)
-        
+
         operation = Operation(
             operation_type="USER_REMOTE_SYNC",
             target_garden_name=child.name,
             kwargs={
-                "remote_users": child_remote_users,
+                "remote_users": SchemaParser.serialize_user(child_remote_users, to_string=False, many=True),
             },
         )
 
@@ -413,10 +414,12 @@ def remote_user_sync(remote_user: User) -> User:
     local_user.remote_roles = remote_user.remote_roles
     return db.update(local_user)
 
-def remote_users_sync(remote_users: list[User] = []):
+def remote_users_sync(remote_users: list[dict] = []):
+
+    remote_users_brewtils = SchemaParser.parse_user(remote_users, many=True, from_string=False)
 
     for user in get_users():
-        remote_user = next((remote_user for remote_user in remote_users if remote_user.username == user.username), None)
+        remote_user = next((remote_user for remote_user in remote_users_brewtils if remote_user.username == user.username), None)
 
         if user.is_remote:                    
             if remote_user is None:

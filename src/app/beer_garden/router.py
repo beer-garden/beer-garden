@@ -72,7 +72,7 @@ routable_operations = [
     "GARDEN_SYNC",
     "COMMAND_BLOCKLIST_ADD",
     "COMMAND_BLOCKLIST_REMOVE",
-    "USER_SYNC",
+    "USER_REMOTE_SYNC",
 ]
 
 # Executor used to run REQUEST_CREATE operations in an async context
@@ -756,6 +756,7 @@ def _determine_target(operation: Operation) -> str:
 
     See https://github.com/beer-garden/beer-garden/issues/1076
     """
+
     target_garden = _target_from_type(operation)
 
     if not target_garden:
@@ -780,7 +781,6 @@ def _target_from_type(operation: Operation) -> str:
         "READ" in operation.operation_type
         or "JOB" in operation.operation_type
         or "FILE" in operation.operation_type
-        or "USER" in operation.operation_type
         or "TOKEN" in operation.operation_type
         or operation.operation_type
         in (
@@ -858,7 +858,9 @@ def _target_from_type(operation: Operation) -> str:
         )
 
     if "USER" in operation.operation_type:
-        return operation.target_garden_name
+        if operation.target_garden_name:
+            return operation.target_garden_name
+        return config.get("garden.name")
 
     raise Exception(f"Bad operation type {operation.operation_type}")
 
