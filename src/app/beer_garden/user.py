@@ -210,7 +210,7 @@ def update_user(user: User = None, username: str = None, new_password: str = Non
         setattr(user, key, value)
 
     user = db.update(user)
-    _publish_user_updated(user)
+    # _publish_user_updated(user)
     
     # Sync child gardens
     initiate_user_sync()
