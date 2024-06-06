@@ -7,9 +7,8 @@ from brewtils.models import Operation
 
 
 class RoleAPI(AuthorizationHandler):
-
     parser = SchemaParser()
-    
+
     async def get(self, role_id):
         """
         ---
@@ -36,13 +35,14 @@ class RoleAPI(AuthorizationHandler):
         self.verify_user_global_permission()
 
         response = await self.process_operation(
-                    Operation(
-                        operation_type="ROLE_READ",
-                        kwargs={
-                            "role_id": role_id,
-                        },
-                    )
-                )
+            Operation(
+                operation_type="ROLE_READ",
+                kwargs={
+                    "role_id": role_id,
+                },
+            ),
+            filter_results=False,
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -75,7 +75,8 @@ class RoleAPI(AuthorizationHandler):
                 kwargs={
                     "role_id": role_id,
                 },
-            )
+            ),
+            filter_results=False,
         )
 
         self.set_status(204)
@@ -127,7 +128,8 @@ class RoleAPI(AuthorizationHandler):
                             "role_id": role_id,
                             "role": self.parser.parse_role(op.value, from_string=False),
                         },
-                    )
+                    ),
+                    filter_results=False,
                 )
 
         self.write(response)
@@ -190,7 +192,8 @@ class RoleListAPI(AuthorizationHandler):
         role_model = self.parser.parse_role(self.request.decoded_body, from_string=True)
 
         response = await self.process_operation(
-            Operation(operation_type="ROLE_CREATE", args=[role_model])
+            Operation(operation_type="ROLE_CREATE", args=[role_model]),
+            filter_results=False,
         )
 
         self.write(response)
@@ -239,9 +242,7 @@ class RoleListAPI(AuthorizationHandler):
         for op in patch:
             operation = op.operation.lower()
         if operation == "rescan":
-                await self.process_operation(
-                    Operation(
-                        operation_type="ROLE_RESCAN"
-                    )
-                )
+            await self.process_operation(
+                Operation(operation_type="ROLE_RESCAN"), filter_results=False
+            )
         self.set_status(204)

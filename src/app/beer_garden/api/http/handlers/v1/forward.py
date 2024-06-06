@@ -51,7 +51,9 @@ class ForwardAPI(AuthorizationHandler):
             self.request.decoded_body, from_string=True
         )
 
-        task = asyncio.create_task(self.process_operation(operation))
+        task = asyncio.create_task(
+            self.process_operation(operation, filter_results=False)
+        )
 
         # Deal with blocking
         blocking = self.get_argument("blocking", default="").lower() == "true"

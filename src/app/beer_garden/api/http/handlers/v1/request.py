@@ -721,7 +721,8 @@ class RequestListAPI(AuthorizationHandler):
                 query_kwargs[supportedArg] = value
 
         await self.process_operation(
-            Operation(operation_type="REQUEST_DELETE", kwargs=query_kwargs)
+            Operation(operation_type="REQUEST_DELETE", kwargs=query_kwargs),
+            filter_results=False,
         )
 
         self.set_status(204)

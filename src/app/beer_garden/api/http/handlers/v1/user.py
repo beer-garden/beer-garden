@@ -72,7 +72,8 @@ class UserAPI(AuthorizationHandler):
             Operation(
                 operation_type="USER_DELETE",
                 args=[username],
-            )
+            ),
+            filter_results=False,
         )
 
         self.set_status(204)
@@ -125,7 +126,8 @@ class UserAPI(AuthorizationHandler):
                             "roles": op.value["roles"],
                             "local_roles": [],
                         },
-                    )
+                    ),
+                    filter_results=False,
                 )
             elif operation == "update_user_mappings":
                 response = await self.process_operation(
@@ -133,9 +135,14 @@ class UserAPI(AuthorizationHandler):
                         operation_type="USER_UPDATE",
                         kwargs={
                             "username": username,
-                            "remote_user_mapping": SchemaParser.parse_remote_user_map(op.value["remote_user_mapping"], from_string=False, many=True),
+                            "remote_user_mapping": SchemaParser.parse_remote_user_map(
+                                op.value["remote_user_mapping"],
+                                from_string=False,
+                                many=True,
+                            ),
                         },
-                    )
+                    ),
+                    filter_results=False,
                 )
             elif operation == "update_user_password":
                 response = await self.process_operation(
@@ -145,10 +152,10 @@ class UserAPI(AuthorizationHandler):
                             "username": username,
                             "new_password": op.value["password"],
                         },
-                    )
+                    ),
+                    filter_results=False,
                 )
 
-        
         self.write(response)
 
 
@@ -208,7 +215,8 @@ class UserListAPI(AuthorizationHandler):
         user_model = self.parser.parse_user(self.request.decoded_body, from_string=True)
 
         response = await self.process_operation(
-            Operation(operation_type="USER_CREATE", args=[user_model])
+            Operation(operation_type="USER_CREATE", args=[user_model]),
+            filter_results=False,
         )
 
         self.write(response)
@@ -258,11 +266,9 @@ class UserListAPI(AuthorizationHandler):
             operation = op.operation.lower()
 
             if operation == "rescan":
-                    await self.process_operation(
-                        Operation(
-                            operation_type="USER_RESCAN"
-                        )
-                    )
+                await self.process_operation(
+                    Operation(operation_type="USER_RESCAN"), filter_results=False
+                )
 
         self.set_status(204)
 
