@@ -2,7 +2,7 @@
 
 # 3.26.2
 
-TBD
+6/6/2024
 
 - Fixed bug where Request View would fail loading Dynamic Choices for TEMP commands
 - Fixed bug where configured receiving connections for child Gardens duplicated at restart
