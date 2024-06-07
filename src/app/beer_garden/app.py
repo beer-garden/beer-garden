@@ -160,14 +160,16 @@ class Application(StoppableThread):
         if config.get("replication.enabled"):
             self.scheduler.add_schedule(
                 beer_garden.replication.update_heartbeat,
-                interval=config.get("replication.expires_at") / 4,
+                interval=0.1,
                 max_running_jobs=1,
             )
 
+            # Add 5 second jitter to help prevent all nodes re-assigning the jobs
             self.scheduler.add_schedule(
                 beer_garden.scheduler.update_replication_id,
-                interval=config.get("replication.expires_at"),
+                interval=0.5,
                 max_running_jobs=1,
+                jitter=5,
             )
 
         metrics_config = config.get("metrics")

@@ -23,7 +23,7 @@ import beer_garden.db.api as db
 from beer_garden.db.mongo.jobstore import construct_trigger
 from beer_garden.events import publish, publish_event
 from beer_garden.requests import get_request
-from beer_garden.replication import get_replications, get_repliation_id
+from beer_garden.replication import get_replication, get_replication_id
 
 logger = logging.getLogger(__name__)
 
@@ -339,7 +339,7 @@ def run_job(job_id, request_template, **kwargs):
     
     # Job is owned by a different node of Beer Garden
     if config.get("replication.enabled"):
-        if db_job.replication_id and db_job.replication_id != get_repliation_id:
+        if db_job.replication and db_job.replication.id != get_replication_id():
             return
 
     try:
@@ -411,7 +411,7 @@ def create_job(job: Job) -> Job:
     """
     # Save first so we have an ID to pass to the scheduler
     if config.get("replication.enabled"):
-        job.replication_id = get_repliation_id
+        job.replication = get_replication()
     job = db.create(job)
 
     return job
@@ -530,15 +530,17 @@ def execute_job(job_id: str, reset_interval=False) -> Job:
 
 
 def update_replication_id() -> None:
-    replication_ids = []
 
-    for replication in get_replications:
-        replication_ids.append(replication.replication_id)
+    # jobs = db.modify(Job, query={"replication": None}, replication = get_replication())
 
-    jobs = db.modify(Job, query={"replication_id_nin": replication_ids}, replication_id = get_repliation_id)
+    # for job in jobs:
+    #     publish(Event(name=Events.JOB_UPDATED.name, payload=job))
 
-    for job in jobs:
+    for job in db.query(Job, query={"replication": None}):
+        job.replication = get_replication()
+        job = db.update(job)
         publish(Event(name=Events.JOB_UPDATED.name, payload=job))
+
 
 def handle_event(event: Event) -> None:
     """Handle JOB events
@@ -554,7 +556,7 @@ def handle_event(event: Event) -> None:
 
     if event.garden == config.get("garden.name"):
         if event.name in [Events.JOB_CREATED.name, Events.JOB_UPDATED.name, Events.JOB_PAUSED.name, Events.JOB_RESUMED.name, Events.JOB_DELETED.name, Events.JOB_EXECUTED.name]:
-            if not config.get("replication.enabled") or not event.payload.replication_id or event.payload.replication_id == get_repliation_id:
+            if not config.get("replication.enabled") or not event.payload.replication or event.payload.replication.id == get_replication_id():
                 if event.name in [Events.JOB_CREATED.name, Events.JOB_UPDATED.name]:
                     try:
                         beer_garden.application.scheduler.add_job(

@@ -1543,14 +1543,9 @@ _REPLICATION_SPEC = {
     "items": {
         "enabled": {
             "type": "bool",
-            "default": False,
+            "default": True,
             "description": "Publish subset of events to Rabbit to allow all Gardens to stay in sync when replicated",
-        },
-        "expires_at": {
-            "type": "int",
-            "default": 1,
-            "description": "Interval that replicated node releases jobs",
-        },
+        }
     },
 }
 
