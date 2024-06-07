@@ -156,6 +156,20 @@ class Application(StoppableThread):
                 max_running_jobs=1,
             )
 
+        # Add Replication Heartbeat Scheduler
+        if config.get("replication.enabled"):
+            self.scheduler.add_schedule(
+                beer_garden.replication.update_heartbeat,
+                interval=config.get("replication.expires_at") / 4,
+                max_running_jobs=1,
+            )
+
+            self.scheduler.add_schedule(
+                beer_garden.scheduler.update_replication_id,
+                interval=config.get("replication.expires_at"),
+                max_running_jobs=1,
+            )
+
         metrics_config = config.get("metrics")
         if metrics_config.prometheus.enabled:
             self.helper_threads.append(

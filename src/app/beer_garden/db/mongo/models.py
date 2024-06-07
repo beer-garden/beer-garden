@@ -1228,3 +1228,18 @@ class RemoteUser(Document):
 
     def __str__(self):
         return f"{self.garden}:{self.username}"
+
+class Replication(MongoModel, Document):
+    brewtils_model = brewtils.models.Replication
+
+    replication_id = StringField(required=True)
+    expires_at = DateTimeField(required=True)
+
+    meta = {
+        "auto_create_index": False,  # We need to manage this ourselves
+        "index_background": True,
+        "indexes": [
+            {"name": "unique_index", "fields": ["replication_id"], "unique": True},
+            {"fields": ["expires_at"], "expireAfterSeconds": 0},
+        ],
+    }
