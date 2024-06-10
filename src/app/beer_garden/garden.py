@@ -538,6 +538,8 @@ def load_garden_connections(garden: Garden):
             Connection(api="STOMP", status="CONFIGURATION_ERROR")
         )
         return garden
+    
+    garden.default_user = config.get("default_user", garden_config)
 
     if config.get("http.enabled", garden_config):
         config_map = {

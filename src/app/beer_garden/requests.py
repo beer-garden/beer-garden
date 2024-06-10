@@ -1007,22 +1007,39 @@ def handle_event(event):
 
         if event.garden != config.get("garden.name") and not event.error:
             if existing_request is None:
-                if 'get_users' not in dir():
-                    from beer_garden.user import get_users
+                
 
                 # Attempt to create the request, if it already exists then continue on
                 try:
                     # User mappings back to local usernames
-                    if event.payload.requester:
+                    if event.payload.requester and config.get("auth.enabled"):
+
                         foundUser = False
-                        for user in get_users():
-                            for remote_user_map in user.remote_user_mapping:
-                                if remote_user_map.target_garden == event.garden and remote_user_map.username == event.payload.requester:
-                                    event.payload.requester = user.username
-                                    foundUser = True
+
+                        # First try to grab requester from Parent Request
+                        if event.payload.has_parent:
+                            parent_requests = db.query(
+                                Request,
+                                filter_params={"id": event.payload.parent.id},
+                            )
+
+                            if parent_requests and parent_requests[0].requester:
+                                event.payload.requester = parent_requests[0].requester
+                                foundUser = True
+                        
+                        # If no parent request is found or request on it, update via remote user mappings
+                        if not foundUser:
+                            if 'get_users' not in dir():
+                                from beer_garden.user import get_users
+                            
+                            for user in get_users():
+                                for remote_user_map in user.remote_user_mapping:
+                                    if remote_user_map.target_garden == event.garden and remote_user_map.username == event.payload.requester:
+                                        event.payload.requester = user.username
+                                        foundUser = True
+                                        break
+                                if foundUser:
                                     break
-                            if foundUser:
-                                break
 
                     existing_request = db.create(event.payload)
                 except NotUniqueException:
