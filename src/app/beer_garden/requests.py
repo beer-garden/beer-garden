@@ -1007,7 +1007,7 @@ def handle_event(event):
 
         if event.garden != config.get("garden.name") and not event.error:
             if existing_request is None:
-                if not get_users:
+                if 'get_users' not in dir():
                     from beer_garden.user import get_users
 
                 # Attempt to create the request, if it already exists then continue on
@@ -1016,7 +1016,7 @@ def handle_event(event):
                     if event.payload.requester:
                         foundUser = False
                         for user in get_users():
-                            for remote_user_map in user.remote_user_mappings:
+                            for remote_user_map in user.remote_user_mapping:
                                 if remote_user_map.target_garden == event.garden and remote_user_map.username == event.payload.requester:
                                     event.payload.requester = user.username
                                     foundUser = True
