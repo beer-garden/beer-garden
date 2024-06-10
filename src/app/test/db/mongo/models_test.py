@@ -604,8 +604,6 @@ class TestUserToken:
             expires_at=datetime.utcnow() + timedelta(minutes=10),
             username=user.username,
             uuid=str(uuid4()),
-            username=user.username,
-            uuid=str(uuid4()),
         ).save()
 
         yield user_token

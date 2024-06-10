@@ -116,20 +116,22 @@ def remote_system():
     yield system
     system.delete()
 
-@pytest.fixture(autouse=True)
-def local_garden(local_system):
-    garden = Garden(name="somegarden", connection_type="LOCAL", systems=[local_system]).save()
-
-    yield garden
-    garden.delete()
 
 
 @pytest.fixture(autouse=True)
 def remote_garden(remote_system):
-    garden = Garden(name="remotegarden", connection_type="HTTP", systems=[remote_system]).save()
+    garden = Garden(name="remotegarden", connection_type="HTTP", has_parent=True, systems=[remote_system]).save()
 
     yield garden
     garden.delete()
+
+@pytest.fixture(autouse=True)
+def local_garden(local_system, remote_garden):
+    garden = Garden(name="somegarden", connection_type="LOCAL", children=[remote_garden], systems=[local_system]).save()
+
+    yield garden
+    garden.delete()
+
 
 @pytest.fixture(autouse=True)
 def request_permitted(remote_system):
