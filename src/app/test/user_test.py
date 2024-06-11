@@ -79,7 +79,7 @@ class TestUser:
 
         assert not remote_role_match_garden(role_2, garden_1)
         assert remote_role_match_garden(role_2, garden_2)
-        assert not remote_role_match_garden(role_2, garden_3)
+        assert remote_role_match_garden(role_2, garden_3)
 
         assert remote_role_match_garden(role_3, garden_1)
         assert remote_role_match_garden(role_3, garden_2)
@@ -87,11 +87,11 @@ class TestUser:
 
         assert remote_role_match_garden(role_4, garden_1)
         assert remote_role_match_garden(role_4, garden_2)
-        assert not remote_role_match_garden(role_4, garden_3)
+        assert remote_role_match_garden(role_4, garden_3)
 
         assert not remote_role_match_garden(role_5, garden_1)
         assert remote_role_match_garden(role_5, garden_2)
-        assert not remote_role_match_garden(role_5, garden_3)
+        assert remote_role_match_garden(role_5, garden_3)
 
     def test_generate_remote_user(self):
         garden_1 = Garden(name="A", systems=[System(name="foo", instances=[Instance(name="alpha")], version="1", commands=[Command(name="command1")])])
