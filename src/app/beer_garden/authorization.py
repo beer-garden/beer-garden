@@ -789,7 +789,7 @@ class ModelFilter:
         obj: BrewtilsModel = None,
         user: BrewtilsUser = None,
         permission: str = None,
-        permission_levels: list[str] = None,
+        permission_levels = None,
         **kwargs
     ) -> BrewtilsModel:
         
