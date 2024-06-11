@@ -5,19 +5,30 @@ from tornado.httpclient import HTTPError, HTTPRequest
 
 from beer_garden.api.http import CommandPublishingBlocklistListSchema
 from beer_garden.api.http.authentication import issue_token_pair
-from beer_garden.db.mongo.models import (
-    CommandPublishingBlocklist,
-    Garden,
-    System,
-)
-from beer_garden.user import create_user, delete_user
+from beer_garden.db.mongo.models import CommandPublishingBlocklist
+from beer_garden.db.mongo.models import Garden
+from beer_garden.db.mongo.models import Garden as DB_Garden
+from beer_garden.db.mongo.models import Role as DB_Role
+from beer_garden.db.mongo.models import System
+from beer_garden.db.mongo.models import System as DB_System
+from beer_garden.db.mongo.models import User as DB_User
 from beer_garden.role import create_role, delete_role
-
+from beer_garden.user import create_user, delete_user
 from brewtils.models import Role, User
 
 garden_name = "somegarden"
 system_name = "somesystem"
 command_name = "somecommand"
+
+
+@pytest.fixture
+def drop():
+    yield
+    DB_User.drop_collection()
+    DB_Role.drop_collection()
+    DB_Garden.drop_collection()
+    DB_System.drop_collection()
+    CommandPublishingBlocklist.drop_collection()
 
 
 @pytest.fixture
@@ -32,40 +43,38 @@ def blocklist():
 
 
 @pytest.fixture
-def garden():
-    garden = Garden(name=garden_name)
+def garden(drop):
+    garden = Garden(name=garden_name, connection_type="LOCAL")
     garden.save()
 
     yield garden
-    garden.delete()
 
 
 @pytest.fixture
-def system():
+def system(drop):
     system = System(name=system_name, namespace=garden_name, version="1.0.0dev0")
     system.save()
 
     yield system
-    system.delete()
 
 
 @pytest.fixture
-def user_admin_role():
-    role = create_role(Role(
-        name="garden_admin",
-        permission="GARDEN_ADMIN",
-    ))
+def user_admin_role(drop):
+    role = create_role(
+        Role(
+            name="garden_admin",
+            permission="GARDEN_ADMIN",
+        )
+    )
 
     yield role
-    delete_role(role)
 
 
 @pytest.fixture
-def user_admin(user_admin_role):
+def user_admin(user_admin_role, drop):
     user = create_user(User(username="admin_user", local_roles=[user_admin_role]))
 
     yield user
-    delete_user(user=user)
 
 
 @pytest.fixture
@@ -74,33 +83,27 @@ def access_token_user_admin(user_admin):
 
 
 @pytest.fixture
-def user_role():
-    role = create_role(Role(
-        name="read_only",
-        permission="READ_ONLY",
-    ))
+def user_role(drop):
+    role = create_role(
+        Role(
+            name="read_only",
+            permission="READ_ONLY",
+        )
+    )
 
     yield role
-    delete_role(role)
 
 
 @pytest.fixture
-def user(user_role):
+def user(user_role, drop):
     user = create_user(User(username="testuser", local_roles=[user_role]))
 
     yield user
-    delete_user(user)
 
 
 @pytest.fixture
 def access_token_user(user):
     yield issue_token_pair(user)["access"]
-
-
-@pytest.fixture
-def blocklist_cleanup():
-    yield
-    CommandPublishingBlocklist.drop_collection()
 
 
 class TestCommandPublishingBlocklistAPI:
@@ -229,7 +232,7 @@ class TestCommandPublishingBlocklistAPI:
         assert excinfo.value.code == 403
 
     @pytest.mark.gen_test
-    def test_post(self, http_client, base_url, garden, system, blocklist_cleanup):
+    def test_post(self, http_client, base_url, garden, system, drop):
         url = f"{base_url}/api/v1/commandpublishingblocklist/"
 
         headers = {"Content-Type": "application/json"}
@@ -278,7 +281,7 @@ class TestCommandPublishingBlocklistAPI:
         system,
         app_config_auth_enabled,
         access_token_user_admin,
-        blocklist_cleanup,
+        drop,
     ):
         url = f"{base_url}/api/v1/commandpublishingblocklist/"
 
