@@ -5,7 +5,6 @@ import logging
 
 import pytz
 import six
-from passlib.apps import custom_app_context
 
 try:
     from lark import ParseError
@@ -14,7 +13,7 @@ except ImportError:
     from lark.common import ParseError
 
     LarkError = ParseError
-from typing import Optional, Tuple
+from typing import Tuple
 
 import brewtils.models
 from brewtils.choices import parse
@@ -44,8 +43,6 @@ from mongoengine import (
     ObjectIdField,
     ReferenceField,
     StringField,
-    UUIDField,
-    ValidationError,
 )
 from mongoengine.errors import DoesNotExist
 

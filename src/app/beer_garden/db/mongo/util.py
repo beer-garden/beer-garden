@@ -1,25 +1,18 @@
 # -*- coding: utf-8 -*-
 import logging
-from typing import Union
 
-import yaml
-
-# from marshmallow.exceptions import ValidationError as SchemaValidationError
 from mongoengine.connection import get_db
 from mongoengine.errors import (
     DoesNotExist,
     FieldDoesNotExist,
     InvalidDocumentError,
-    ValidationError,
 )
 from pymongo.errors import OperationFailure
 
 from beer_garden import config
 
-# from beer_garden.db.mongo.models import Role, RoleAssignment, User
-from beer_garden.errors import ConfigurationError, IndexOperationError
+from beer_garden.errors import IndexOperationError
 
-# from beer_garden.role import sync_roles
 
 logger = logging.getLogger(__name__)
 

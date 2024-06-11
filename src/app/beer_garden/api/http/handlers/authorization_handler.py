@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-from typing import Type, Union
+from typing import Type
 
 from brewtils.models import BaseModel as BrewtilsModel
 from brewtils.models import Role, User, Operation
-from mongoengine import Document, QuerySet, ValidationError
+from mongoengine import Document, QuerySet
 from mongoengine.queryset.visitor import Q, QCombination
 
 import beer_garden.config as config

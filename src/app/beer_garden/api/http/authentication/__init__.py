@@ -62,7 +62,7 @@ def issue_token_pair(user: User, refresh_expiration: Optional[datetime] = None) 
     access_token = _generate_access_token(user, token_uuid)
     refresh_token = _generate_refresh_token(user, token_uuid, expiration)
 
-    token = create_token(
+    create_token(
         UserToken(expires_at=expiration, username=user.username, uuid=token_uuid)
     )
 
