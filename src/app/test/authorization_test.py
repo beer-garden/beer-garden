@@ -25,6 +25,7 @@ from brewtils.models import (
 def role_for_garden_scope():
     return Role(name="garden", permission="GARDEN_ADMIN")
 
+
 @pytest.fixture()
 def role_for_plugin_scope():
     return Role(name="plugin", permission="PLUGIN_ADMIN")
@@ -40,6 +41,7 @@ def user_for_garden_scope(role_for_garden_scope):
     return User(
         username="global", roles=["garden"], local_roles=[role_for_garden_scope]
     )
+
 
 @pytest.fixture()
 def user_for_plugin_scope(role_for_plugin_scope):
@@ -126,15 +128,23 @@ def base_garden(base_system):
 class TestAuthorization:
     def test_query_filter_garden_check(self, user_for_garden_scope):
         """get_garden should allow for retrieval by name"""
-        assert check_global_roles(user_for_garden_scope, permission_level="GARDEN_ADMIN")
-        assert check_global_roles(user_for_garden_scope, permission_level="PLUGIN_ADMIN")
+        assert check_global_roles(
+            user_for_garden_scope, permission_level="GARDEN_ADMIN"
+        )
+        assert check_global_roles(
+            user_for_garden_scope, permission_level="PLUGIN_ADMIN"
+        )
         assert check_global_roles(user_for_garden_scope, permission_level="OPERATOR")
         assert check_global_roles(user_for_garden_scope, permission_level="READ_ONLY")
 
     def test_query_filter_read_check(self, user_for_read_scope):
         """get_garden should allow for retrieval by name"""
-        assert not check_global_roles(user_for_read_scope, permission_level="GARDEN_ADMIN")
-        assert not check_global_roles(user_for_read_scope, permission_level="PLUGIN_ADMIN")
+        assert not check_global_roles(
+            user_for_read_scope, permission_level="GARDEN_ADMIN"
+        )
+        assert not check_global_roles(
+            user_for_read_scope, permission_level="PLUGIN_ADMIN"
+        )
         assert not check_global_roles(user_for_read_scope, permission_level="OPERATOR")
         assert check_global_roles(user_for_read_scope, permission_level="READ_ONLY")
 
@@ -145,8 +155,15 @@ class TestAuthorization:
             "PLUGIN_ADMIN",
             "GARDEN_ADMIN",
         ]
-        assert generate_permission_levels("OPERATOR") == ["OPERATOR", "PLUGIN_ADMIN", "GARDEN_ADMIN"]
-        assert generate_permission_levels("PLUGIN_ADMIN") == ["PLUGIN_ADMIN","GARDEN_ADMIN"]
+        assert generate_permission_levels("OPERATOR") == [
+            "OPERATOR",
+            "PLUGIN_ADMIN",
+            "GARDEN_ADMIN",
+        ]
+        assert generate_permission_levels("PLUGIN_ADMIN") == [
+            "PLUGIN_ADMIN",
+            "GARDEN_ADMIN",
+        ]
         assert generate_permission_levels("GARDEN_ADMIN") == ["GARDEN_ADMIN"]
 
     def test__has_empty_scopes(self):
