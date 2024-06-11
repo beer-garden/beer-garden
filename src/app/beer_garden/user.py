@@ -427,7 +427,7 @@ def remote_user_sync(remote_user: User) -> User:
     local_user.remote_roles = remote_user.remote_roles
     return db.update(local_user)
 
-def remote_users_sync(remote_users: list = []):
+def remote_users_sync(remote_users = []):
 
     remote_users_brewtils = SchemaParser.parse_user(remote_users, many=True, from_string=False)
     local_users = get_users()
