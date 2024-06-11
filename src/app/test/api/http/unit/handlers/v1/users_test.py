@@ -81,7 +81,7 @@ class TestUserAPI:
         headers = {"Content-Type": "application/json"}
 
         body = json.dumps(
-            {"operation": "update", "value": {"roles": [user_admin_role.name]}}
+            {"operation": "update_roles", "value": {"roles": [user_admin_role.name]}}
         )
         assert len(user.roles) == 0
 
@@ -137,7 +137,7 @@ class TestUserAPI:
         }
 
         body = json.dumps(
-            {"operation": "update", "value": {"password": "differentpassword"}}
+            {"operation": "update_user_password", "value": {"password": "differentpassword"}}
         )
 
         response = yield http_client.fetch(
