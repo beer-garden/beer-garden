@@ -17,7 +17,11 @@ from brewtils.models import User, Role
 
 @pytest.fixture(autouse=True)
 def garden(system_permitted, system_not_permitted):
-    garden = Garden(name="somegarden", connection_type="LOCAL", systems=[system_permitted, system_not_permitted]).save()
+    garden = Garden(
+        name="somegarden",
+        connection_type="LOCAL",
+        systems=[system_permitted, system_not_permitted],
+    ).save()
 
     yield garden
     garden.delete()
@@ -51,7 +55,14 @@ def system_not_permitted():
 
 @pytest.fixture
 def system_read_role(system_permitted):
-    role = create_role(Role(name="system_admin", permission="READ_ONLY", scope_systems=[system_permitted.name], scope_namespaces=[system_permitted.namespace]))
+    role = create_role(
+        Role(
+            name="system_admin",
+            permission="READ_ONLY",
+            scope_systems=[system_permitted.name],
+            scope_namespaces=[system_permitted.namespace],
+        )
+    )
     yield role
     delete_role(role)
 

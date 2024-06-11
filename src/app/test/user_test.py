@@ -1,7 +1,18 @@
 # -*- coding: utf-8 -*-
 import pytest
-from brewtils.models import Event, Events, Role, User, Garden, System, Command, Instance, RemoteUserMap
+from brewtils.models import (
+    Event,
+    Events,
+    Role,
+    User,
+    Garden,
+    System,
+    Command,
+    Instance,
+    RemoteUserMap,
+)
 from mock import Mock
+
 # from mongoengine import connect
 
 from brewtils.schema_parser import SchemaParser
@@ -9,6 +20,7 @@ from brewtils.schema_parser import SchemaParser
 # import beer_garden.events
 # import beer_garden.router
 import beer_garden.user
+
 # from beer_garden.api.http.schemas.v1.user import UserSyncSchema
 # from beer_garden.db.mongo.models import (
 #     Garden,
@@ -35,44 +47,143 @@ from beer_garden.user import (
 class TestUser:
 
     def test_flatten_user_role(self):
-        role = Role(name="test", scope_gardens=["A","B"], scope_systems=["foo", "bar"], scope_commands=["command1", "command2"])
+        role = Role(
+            name="test",
+            scope_gardens=["A", "B"],
+            scope_systems=["foo", "bar"],
+            scope_commands=["command1", "command2"],
+        )
         flatten_roles = []
         flatten_user_role(role, flatten_roles)
 
         assert len(flatten_roles) == 8
         valid_roles = [
-            SchemaParser.serialize_role(Role(name="test", scope_gardens=["A"], scope_systems=["foo"], scope_commands=["command1"])),
-            SchemaParser.serialize_role(Role(name="test", scope_gardens=["B"], scope_systems=["foo"], scope_commands=["command1"])),
-            SchemaParser.serialize_role(Role(name="test", scope_gardens=["A"], scope_systems=["bar"], scope_commands=["command1"])),
-            SchemaParser.serialize_role(Role(name="test", scope_gardens=["B"], scope_systems=["bar"], scope_commands=["command1"])),
-            SchemaParser.serialize_role(Role(name="test", scope_gardens=["A"], scope_systems=["foo"], scope_commands=["command2"])),
-            SchemaParser.serialize_role(Role(name="test", scope_gardens=["B"], scope_systems=["foo"], scope_commands=["command2"])),
-            SchemaParser.serialize_role(Role(name="test", scope_gardens=["A"], scope_systems=["bar"], scope_commands=["command2"])),
-            SchemaParser.serialize_role(Role(name="test", scope_gardens=["B"], scope_systems=["bar"], scope_commands=["command2"])),
+            SchemaParser.serialize_role(
+                Role(
+                    name="test",
+                    scope_gardens=["A"],
+                    scope_systems=["foo"],
+                    scope_commands=["command1"],
+                )
+            ),
+            SchemaParser.serialize_role(
+                Role(
+                    name="test",
+                    scope_gardens=["B"],
+                    scope_systems=["foo"],
+                    scope_commands=["command1"],
+                )
+            ),
+            SchemaParser.serialize_role(
+                Role(
+                    name="test",
+                    scope_gardens=["A"],
+                    scope_systems=["bar"],
+                    scope_commands=["command1"],
+                )
+            ),
+            SchemaParser.serialize_role(
+                Role(
+                    name="test",
+                    scope_gardens=["B"],
+                    scope_systems=["bar"],
+                    scope_commands=["command1"],
+                )
+            ),
+            SchemaParser.serialize_role(
+                Role(
+                    name="test",
+                    scope_gardens=["A"],
+                    scope_systems=["foo"],
+                    scope_commands=["command2"],
+                )
+            ),
+            SchemaParser.serialize_role(
+                Role(
+                    name="test",
+                    scope_gardens=["B"],
+                    scope_systems=["foo"],
+                    scope_commands=["command2"],
+                )
+            ),
+            SchemaParser.serialize_role(
+                Role(
+                    name="test",
+                    scope_gardens=["A"],
+                    scope_systems=["bar"],
+                    scope_commands=["command2"],
+                )
+            ),
+            SchemaParser.serialize_role(
+                Role(
+                    name="test",
+                    scope_gardens=["B"],
+                    scope_systems=["bar"],
+                    scope_commands=["command2"],
+                )
+            ),
         ]
 
         for flatten_role in flatten_roles:
             assert SchemaParser.serialize_role(flatten_role) in valid_roles
 
     def test_flatten_user_role_no_change(self):
-        role = Role(name="test", scope_gardens=["A"], scope_systems=["foo"], scope_commands=["command1"])
+        role = Role(
+            name="test",
+            scope_gardens=["A"],
+            scope_systems=["foo"],
+            scope_commands=["command1"],
+        )
         flatten_roles = flatten_user_role(role, [])
 
         assert len(flatten_roles) == 1
-        assert SchemaParser.serialize_role(flatten_roles[0]) == SchemaParser.serialize_role(Role(name="test", scope_gardens=["A"], scope_systems=["foo"], scope_commands=["command1"]))
-
+        assert SchemaParser.serialize_role(
+            flatten_roles[0]
+        ) == SchemaParser.serialize_role(
+            Role(
+                name="test",
+                scope_gardens=["A"],
+                scope_systems=["foo"],
+                scope_commands=["command1"],
+            )
+        )
 
     def test_remote_role_match_garden(self):
-        role_1 = Role(name="test_1", scope_gardens=["A"], scope_systems=["foo"], scope_commands=["command1"])
+        role_1 = Role(
+            name="test_1",
+            scope_gardens=["A"],
+            scope_systems=["foo"],
+            scope_commands=["command1"],
+        )
         role_2 = Role(name="test_2", scope_systems=["bar"])
         role_3 = Role(name="test_3")
         role_4 = Role(name="test_3", scope_versions=["1"])
         role_5 = Role(name="test_3", scope_instances=["beta"])
 
-        garden_1 = Garden(name="A", systems=[System(name="foo", instances=[Instance(name="alpha")], version="1", commands=[Command(name="command1")])])
-        garden_2 = Garden(name="B", systems=[System(name="bar", instances=[Instance(name="beta")], version="1", commands=[Command(name="command2")])])
+        garden_1 = Garden(
+            name="A",
+            systems=[
+                System(
+                    name="foo",
+                    instances=[Instance(name="alpha")],
+                    version="1",
+                    commands=[Command(name="command1")],
+                )
+            ],
+        )
+        garden_2 = Garden(
+            name="B",
+            systems=[
+                System(
+                    name="bar",
+                    instances=[Instance(name="beta")],
+                    version="1",
+                    commands=[Command(name="command2")],
+                )
+            ],
+        )
         garden_3 = Garden(name="C")
-        
+
         assert remote_role_match_garden(role_1, garden_1)
         assert not remote_role_match_garden(role_1, garden_2)
         assert not remote_role_match_garden(role_1, garden_3)
@@ -94,17 +205,51 @@ class TestUser:
         assert remote_role_match_garden(role_5, garden_3)
 
     def test_generate_remote_user(self):
-        garden_1 = Garden(name="A", systems=[System(name="foo", instances=[Instance(name="alpha")], version="1", commands=[Command(name="command1")])])
-        garden_2 = Garden(name="B", children=[garden_1], systems=[System(name="bar", instances=[Instance(name="beta")], version="1", commands=[Command(name="command2")])])
+        garden_1 = Garden(
+            name="A",
+            systems=[
+                System(
+                    name="foo",
+                    instances=[Instance(name="alpha")],
+                    version="1",
+                    commands=[Command(name="command1")],
+                )
+            ],
+        )
+        garden_2 = Garden(
+            name="B",
+            children=[garden_1],
+            systems=[
+                System(
+                    name="bar",
+                    instances=[Instance(name="beta")],
+                    version="1",
+                    commands=[Command(name="command2")],
+                )
+            ],
+        )
         garden_3 = Garden(name="C", shared_users=True)
 
-        local_user = User(username="test", 
-                          local_roles=[
-                            Role(name="test_1", scope_gardens=["A"], scope_systems=["foo"], scope_commands=["command1"]),
-                            Role(name="test_2", scope_systems=["bar"], scope_commands=["command1","command2"]),
-                            ],
-                            remote_user_mapping=[RemoteUserMap(target_garden="A", username="USER1"), RemoteUserMap(target_garden="B", username="USER2")])
-        
+        local_user = User(
+            username="test",
+            local_roles=[
+                Role(
+                    name="test_1",
+                    scope_gardens=["A"],
+                    scope_systems=["foo"],
+                    scope_commands=["command1"],
+                ),
+                Role(
+                    name="test_2",
+                    scope_systems=["bar"],
+                    scope_commands=["command1", "command2"],
+                ),
+            ],
+            remote_user_mapping=[
+                RemoteUserMap(target_garden="A", username="USER1"),
+                RemoteUserMap(target_garden="B", username="USER2"),
+            ],
+        )
 
         remote_user_1 = generate_remote_user(garden_1, local_user)
         assert remote_user_1.username == "USER1"
@@ -124,8 +269,9 @@ class TestUser:
         assert remote_user_3.username == local_user.username
         assert len(remote_user_3.local_roles) == 0
         assert len(remote_user_3.remote_roles) == len(local_user.local_roles)
-        assert len(remote_user_3.remote_user_mapping) == len(local_user.remote_user_mapping)
-
+        assert len(remote_user_3.remote_user_mapping) == len(
+            local_user.remote_user_mapping
+        )
 
     # @classmethod
     # def setup_class(cls):

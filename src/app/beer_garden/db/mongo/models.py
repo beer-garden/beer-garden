@@ -679,6 +679,7 @@ class Event(MongoModel, Document):
     metadata = DictField()
     timestamp = DateTimeField()
 
+
 class RequestTemplate(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.RequestTemplate
 
@@ -1000,7 +1001,7 @@ class Role(MongoModel, Document):
             raise ModelValidationError(
                 f"Cannot save Role. No permission type {self.permission}"
             )
-    
+
 
 class RemoteRole(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.RemoteRole
@@ -1032,9 +1033,10 @@ class RemoteRole(MongoModel, EmbeddedDocument):
 
 class RemoteUserMap(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.RemoteUserMap
-    
+
     target_garden = StringField()
     username = StringField()
+
 
 class User(MongoModel, Document):
     brewtils_model = brewtils.models.User
@@ -1073,7 +1075,7 @@ class User(MongoModel, Document):
 
     def __str__(self) -> str:
         return self.username
-    
+
     def delete(self, *args, **kwargs):
         try:
             UserToken.objects.get(username=self.username).delete()
@@ -1108,8 +1110,6 @@ class User(MongoModel, Document):
     #     self._permissions_cache = permissions
 
 
-
-
 class UserToken(MongoModel, Document):
     brewtils_model = brewtils.models.UserToken
 
@@ -1125,6 +1125,3 @@ class UserToken(MongoModel, Document):
             {"fields": ["expires_at"], "expireAfterSeconds": 0},
         ]
     }
-
-
-

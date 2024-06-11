@@ -56,7 +56,7 @@ ModelItem = Union[
     brewtils.models.FileChunk,
     brewtils.models.Topic,
     brewtils.models.Subscriber,
-    brewtils.models.RemoteUserMap
+    brewtils.models.RemoteUserMap,
 ]
 
 _model_map = {}

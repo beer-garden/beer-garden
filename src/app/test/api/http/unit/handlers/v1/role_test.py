@@ -5,6 +5,8 @@ import pytest
 from beer_garden.role import create_role, delete_role
 from brewtils.models import Role
 from beer_garden.db.mongo.models import Garden
+
+
 @pytest.fixture()
 def roles():
     role1 = create_role(Role(name="role1", permission="OPERATOR"))
@@ -13,12 +15,14 @@ def roles():
     delete_role(role1)
     delete_role(role2)
 
+
 @pytest.fixture(autouse=True)
 def local_garden():
     garden = Garden(name="somegarden", connection_type="LOCAL").save()
 
     yield garden
     garden.delete()
+
 
 class TestRoleAPI:
     @pytest.mark.gen_test

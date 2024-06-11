@@ -52,7 +52,13 @@ def system(garden_permitted):
 
 @pytest.fixture
 def garden_admin_role(garden_permitted):
-    role = create_role(Role(name="garden_admin", permission="GARDEN_ADMIN", scope_gardens=[garden_permitted.name]))
+    role = create_role(
+        Role(
+            name="garden_admin",
+            permission="GARDEN_ADMIN",
+            scope_gardens=[garden_permitted.name],
+        )
+    )
     yield role
     delete_role(role)
 
@@ -66,7 +72,13 @@ def garden_create_role():
 
 @pytest.fixture
 def garden_read_role(garden_permitted):
-    role = create_role(Role(name="garden_read", permission="READ_ONLY", scope_gardens=[garden_permitted.name]))
+    role = create_role(
+        Role(
+            name="garden_read",
+            permission="READ_ONLY",
+            scope_gardens=[garden_permitted.name],
+        )
+    )
     yield role
     delete_role(role)
 
@@ -78,7 +90,6 @@ def garden_none_role():
     delete_role(role)
 
 
-
 @pytest.fixture
 def garden_cleanup():
     yield
@@ -87,7 +98,9 @@ def garden_cleanup():
 
 @pytest.fixture
 def user(garden_admin_role, garden_create_role):
-    user = create_user(User(username="testuser", local_roles=[garden_admin_role, garden_create_role]))
+    user = create_user(
+        User(username="testuser", local_roles=[garden_admin_role, garden_create_role])
+    )
     yield user
     delete_user(user=user)
 
@@ -104,7 +117,6 @@ def read_only_user(garden_read_role):
     user = create_user(User(username="testuser", local_roles=[garden_read_role]))
     yield user
     delete_user(user=user)
-
 
 
 @pytest.fixture

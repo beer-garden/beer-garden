@@ -4,7 +4,7 @@ from brewtils.models import Role as BrewtilsRole
 
 
 def validate_permissions(permissions):
-    
+
     for permission in permissions:
         if permission not in BrewtilsRole.PERMISSION_TYPES:
             raise ValidationError(

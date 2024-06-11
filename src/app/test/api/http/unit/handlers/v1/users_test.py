@@ -137,7 +137,10 @@ class TestUserAPI:
         }
 
         body = json.dumps(
-            {"operation": "update_user_password", "value": {"password": "differentpassword"}}
+            {
+                "operation": "update_user_password",
+                "value": {"password": "differentpassword"},
+            }
         )
 
         response = yield http_client.fetch(

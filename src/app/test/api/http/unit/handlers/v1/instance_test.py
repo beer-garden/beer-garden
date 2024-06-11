@@ -9,11 +9,7 @@ from tornado.httpclient import HTTPError, HTTPRequest
 import beer_garden.router
 from beer_garden.api.http.authentication import issue_token_pair
 from beer_garden.api.http.handlers.v1.instance import InstanceLogAPI
-from beer_garden.db.mongo.models import (
-    Garden,
-    Instance,
-    System
-)
+from beer_garden.db.mongo.models import Garden, Instance, System
 from beer_garden.user import create_user, delete_user
 from beer_garden.role import create_role, delete_role
 from brewtils.models import User, Role
@@ -45,10 +41,16 @@ def system():
 
 @pytest.fixture
 def system_admin_role(system):
-    role = create_role(Role(name="system_admin", permission="PLUGIN_ADMIN", scope_systems=[system.name], scope_namespaces=[system.namespace]))
+    role = create_role(
+        Role(
+            name="system_admin",
+            permission="PLUGIN_ADMIN",
+            scope_systems=[system.name],
+            scope_namespaces=[system.namespace],
+        )
+    )
     yield role
     delete_role(role)
-
 
 
 @pytest.fixture

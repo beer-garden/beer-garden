@@ -1,5 +1,6 @@
 from typing import Union
 import logging
+
 # from typing import TYPE_CHECKING, Optional, Type, Union
 
 from brewtils.models import BaseModel as BrewtilsModel
@@ -30,7 +31,9 @@ import beer_garden.config as config
 # )
 
 import beer_garden.db.api as db
+
 logger = logging.getLogger(__name__)
+
 
 def check_global_roles(
     user: BrewtilsUser,
@@ -40,18 +43,23 @@ def check_global_roles(
     if permission_levels is None:
         permission_levels = generate_permission_levels(permission_level)
 
-    for roles in [user.local_roles if user.local_roles else [], user.remote_roles if user.remote_roles else []]:
+    for roles in [
+        user.local_roles if user.local_roles else [],
+        user.remote_roles if user.remote_roles else [],
+    ]:
         if any(
             role.permission in permission_levels and _has_empty_scopes(role)
             for role in roles
         ):
             return True
-        
+
         # Check is the user has Garden Admin for the current Garden
         if any(
-            role.permission == "GARDEN_ADMIN" and (
-                    len(role.scope_gardens) == 0 or config.get("garden.name") in role.scope_gardens
-                ) 
+            role.permission == "GARDEN_ADMIN"
+            and (
+                len(role.scope_gardens) == 0
+                or config.get("garden.name") in role.scope_gardens
+            )
             for role in roles
         ):
             return True
@@ -65,13 +73,13 @@ def generate_permission_levels(permission_level: str) -> list:
 
     if permission_level == "OPERATOR":
         return ["OPERATOR", "PLUGIN_ADMIN", "GARDEN_ADMIN"]
-    
+
     if permission_level == "PLUGIN_ADMIN":
         return ["PLUGIN_ADMIN", "GARDEN_ADMIN"]
-    
+
     if permission_level == "GARDEN_ADMIN":
         return ["GARDEN_ADMIN"]
-    
+
     return []
 
 
@@ -128,7 +136,7 @@ class QueryFilterBuilder:
                         filter["command__in"] = role.scope_commands
 
                     if len(filter) > 0:
-                       filters.append(Q(**filter))
+                        filters.append(Q(**filter))
 
         if len(filters) == 0:
             return Q()
@@ -157,9 +165,13 @@ class QueryFilterBuilder:
                     if len(role.scope_systems) > 0:
                         filter["request_template__system__in"] = role.scope_systems
                     if len(role.scope_instances) > 0:
-                        filter["request_template__instance_name__in"] = role.scope_instances
+                        filter["request_template__instance_name__in"] = (
+                            role.scope_instances
+                        )
                     if len(role.scope_versions) > 0:
-                        filter["request_template__system_version__in"] = role.scope_versions
+                        filter["request_template__system_version__in"] = (
+                            role.scope_versions
+                        )
                     if len(role.scope_commands) > 0:
                         filter["request_template__command__in"] = role.scope_commands
 
@@ -290,8 +302,8 @@ class ModelFilter:
         instance_id: str = None,
         command_name: str = None,
     ):
-        """Core check for filtering. If provided a nested record with some parent attributes, 
-        attempt to find it's source for the checks. If None is provided, then skip the check 
+        """Core check for filtering. If provided a nested record with some parent attributes,
+        attempt to find it's source for the checks. If None is provided, then skip the check
         because we can't determine the value"""
 
         if not permission_levels and permission:
@@ -311,19 +323,23 @@ class ModelFilter:
                     )
                 elif system_name and system_namespace and system_version:
                     system = db.query_unique(
-                        BrewtilsSystem, name=system_name, version=system_version, namespace=system_namespace, raise_missing=True
+                        BrewtilsSystem,
+                        name=system_name,
+                        version=system_version,
+                        namespace=system_namespace,
+                        raise_missing=True,
                     )
                 elif system_name:
                     system = db.query_unique(
                         BrewtilsSystem, name=system_name, raise_missing=True
-                    )                 
+                    )
                 elif instance_id:
                     system = db.query_unique(
                         BrewtilsSystem, instances__id=instance_id, raise_missing=True
                     )
-                
+
         if system:
-            
+
             if check_system and system_name is None:
                 system_name = system.name
             if check_instances and system_instances is None:
@@ -335,17 +351,17 @@ class ModelFilter:
 
         if system_name and check_garden and garden_name is None:
             if system and system.id and not system.local:
-                gardens = db.query(BrewtilsGarden, filter_params={"systems":system})
+                gardens = db.query(BrewtilsGarden, filter_params={"systems": system})
 
                 if gardens and len(gardens) == 1:
                     garden_name = gardens[0].name
                 else:
                     # TODO: Add better Exception
-                    raise Exception("Unable to find source garden for Authorization checks")
+                    raise Exception(
+                        "Unable to find source garden for Authorization checks"
+                    )
             else:
                 config.get("garden.name")
-                
-                
 
         for roles in [user.local_roles, user.remote_roles]:
             if any(
@@ -411,7 +427,9 @@ class ModelFilter:
         if user_output.username == user.username:
             return user_output
 
-        if not skip_global and check_global_roles(user, permission_levels=permission_levels):
+        if not skip_global and check_global_roles(
+            user, permission_levels=permission_levels
+        ):
             return user_output
 
         if self._checks(user, permission_levels=permission_levels, **kwargs):
@@ -429,7 +447,9 @@ class ModelFilter:
     ) -> BrewtilsSystem:
         """Returns a filtered User object based on the roles of the user"""
 
-        if not skip_global and check_global_roles(user, permission_levels=permission_levels):
+        if not skip_global and check_global_roles(
+            user, permission_levels=permission_levels
+        ):
             return role
 
         # Can return the role information, if the user has the role
@@ -450,7 +470,9 @@ class ModelFilter:
     ) -> BrewtilsSystem:
         """Returns a filtered Job object based on the roles of the user"""
 
-        if not skip_global and check_global_roles(user, permission_levels=permission_levels):
+        if not skip_global and check_global_roles(
+            user, permission_levels=permission_levels
+        ):
             return job
 
         filtered_request_template = self._get_request_filter(
@@ -478,7 +500,9 @@ class ModelFilter:
     ) -> BrewtilsSystem:
         """Returns a filtered Job object based on the roles of the user"""
 
-        if not skip_global and check_global_roles(user, permission_levels=permission_levels):
+        if not skip_global and check_global_roles(
+            user, permission_levels=permission_levels
+        ):
             return request
 
         # Owner of the request can always see what they submitted
@@ -523,7 +547,9 @@ class ModelFilter:
     ) -> BrewtilsSystem:
         """Returns a filtered Command object based on the roles of the user"""
 
-        if not skip_global and check_global_roles(user, permission_levels=permission_levels):
+        if not skip_global and check_global_roles(
+            user, permission_levels=permission_levels
+        ):
             return command
 
         if self._checks(
@@ -564,7 +590,9 @@ class ModelFilter:
     ) -> BrewtilsSystem:
         """Returns a filtered Command object based on the roles of the user"""
 
-        if not skip_global and check_global_roles(user, permission_levels=permission_levels):
+        if not skip_global and check_global_roles(
+            user, permission_levels=permission_levels
+        ):
             return instance
 
         if self._checks(
@@ -586,7 +614,6 @@ class ModelFilter:
         ):
             return instance
 
-
         return None
 
     def _get_system_filter(
@@ -600,7 +627,9 @@ class ModelFilter:
     ) -> BrewtilsSystem:
         """Returns a filtered System object based on the roles of the user"""
 
-        if not skip_global and check_global_roles(user, permission_levels=permission_levels):
+        if not skip_global and check_global_roles(
+            user, permission_levels=permission_levels
+        ):
             return system
 
         if not self._checks(
@@ -661,7 +690,7 @@ class ModelFilter:
                     skip_global=True,
                     skip_system=True,
                 )
-                
+
                 if filtered_instance:
                     filtered_instances.append(filtered_instance)
 
@@ -728,7 +757,9 @@ class ModelFilter:
     ) -> BrewtilsGarden:
         """Returns a filtered Garden object based on the roles of the user"""
 
-        if not skip_global and check_global_roles(user, permission_levels=permission_levels):
+        if not skip_global and check_global_roles(
+            user, permission_levels=permission_levels
+        ):
             return garden
 
         if not self._checks(
@@ -789,13 +820,13 @@ class ModelFilter:
         obj: BrewtilsModel = None,
         user: BrewtilsUser = None,
         permission: str = None,
-        permission_levels = None,
+        permission_levels=None,
         **kwargs
     ) -> BrewtilsModel:
-        
+
         if isinstance(obj, BrewtilsUser):
             del obj.password
-        
+
         if not permission_levels:
             permission_levels = generate_permission_levels(permission)
 
@@ -859,11 +890,11 @@ class ModelFilter:
                     return None
         if isinstance(obj, str) or isinstance(obj, dict):
             # Source of String is unknown, so ensure that a role has the basic permissions
-            for roles in [user.local_roles if user.local_roles else [], user.remote_roles if user.remote_roles else []]:
-                if any(
-                    role.permission in permission_levels
-                    for role in roles
-                ):
+            for roles in [
+                user.local_roles if user.local_roles else [],
+                user.remote_roles if user.remote_roles else [],
+            ]:
+                if any(role.permission in permission_levels for role in roles):
                     return obj
 
             return None

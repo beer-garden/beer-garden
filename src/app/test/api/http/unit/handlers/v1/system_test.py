@@ -22,7 +22,11 @@ from brewtils.models import User, Role
 
 @pytest.fixture(autouse=True)
 def garden(system_permitted, system_not_permitted):
-    garden = Garden(name="somegarden", connection_type="LOCAL", systems=[system_permitted, system_not_permitted]).save()
+    garden = Garden(
+        name="somegarden",
+        connection_type="LOCAL",
+        systems=[system_permitted, system_not_permitted],
+    ).save()
 
     yield garden
     garden.delete()
@@ -53,36 +57,45 @@ def system_not_permitted():
     yield system
     system.delete()
 
+
 @pytest.fixture
 def system_read_role(system_permitted):
-    role = create_role(Role(
-        name="system_read",
-        permission="READ_ONLY",
-        scope_namespaces=[system_permitted.namespace],
-        scope_systems=[system_permitted.name],
-    ))
+    role = create_role(
+        Role(
+            name="system_read",
+            permission="READ_ONLY",
+            scope_namespaces=[system_permitted.namespace],
+            scope_systems=[system_permitted.name],
+        )
+    )
 
     yield role
     delete_role(role)
+
 
 @pytest.fixture
 def system_admin_role(system_permitted):
-    role = create_role(Role(
-        name="system_admin",
-        permission="PLUGIN_ADMIN",
-        scope_namespaces=[system_permitted.namespace],
-        scope_systems=[system_permitted.name],
-    ))
+    role = create_role(
+        Role(
+            name="system_admin",
+            permission="PLUGIN_ADMIN",
+            scope_namespaces=[system_permitted.namespace],
+            scope_systems=[system_permitted.name],
+        )
+    )
 
     yield role
     delete_role(role)
 
+
 @pytest.fixture
 def system_global_admin_role():
-    role = create_role(Role(
-        name="system_global_admin",
-        permission="PLUGIN_ADMIN",
-    ))
+    role = create_role(
+        Role(
+            name="system_global_admin",
+            permission="PLUGIN_ADMIN",
+        )
+    )
 
     yield role
     delete_role(role)
@@ -100,6 +113,7 @@ def user(system_admin_role):
     yield user
     delete_user(user=user)
 
+
 @pytest.fixture
 def read_user(system_read_role):
     user = create_user(User(username="testreaduser", local_roles=[system_read_role]))
@@ -110,6 +124,7 @@ def read_user(system_read_role):
 @pytest.fixture
 def access_token(user):
     yield issue_token_pair(user)["access"]
+
 
 @pytest.fixture
 def read_access_token(read_user):

@@ -10,22 +10,26 @@ from beer_garden.role import create_role, delete_role
 from brewtils.models import User, Role
 
 
-
-
-
 @pytest.fixture(autouse=True)
 def garden_not_permitted():
     garden = Garden(
-        name="notpermitted", connection_type="HTTP", has_parent = True, namespaces=["notpermitted"]
+        name="notpermitted",
+        connection_type="HTTP",
+        has_parent=True,
+        namespaces=["notpermitted"],
     ).save()
 
     yield garden
     garden.delete()
 
+
 @pytest.fixture(autouse=True)
 def garden_permitted(garden_not_permitted):
     garden = Garden(
-        name="somegarden", connection_type="LOCAL", children=[garden_not_permitted], namespaces=["somegarden"]
+        name="somegarden",
+        connection_type="LOCAL",
+        children=[garden_not_permitted],
+        namespaces=["somegarden"],
     ).save()
 
     yield garden
@@ -34,7 +38,13 @@ def garden_permitted(garden_not_permitted):
 
 @pytest.fixture
 def garden_read_role(garden_permitted):
-    role = create_role(Role(name="garden_read", permission="READ_ONLY", scope_gardens=[garden_permitted.name]))
+    role = create_role(
+        Role(
+            name="garden_read",
+            permission="READ_ONLY",
+            scope_gardens=[garden_permitted.name],
+        )
+    )
     yield role
     delete_role(role)
 

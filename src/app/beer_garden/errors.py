@@ -98,6 +98,7 @@ class InvalidTokenException(Exception):
 
     pass
 
+
 # User
 class InvalidPasswordException(Exception):
     """Pasword for User is invalid"""

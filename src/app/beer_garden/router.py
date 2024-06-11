@@ -183,7 +183,7 @@ route_functions = {
     "RUNNER_DELETE": beer_garden.local_plugins.manager.remove,
     "RUNNER_RELOAD": beer_garden.local_plugins.manager.reload,
     "RUNNER_RESCAN": beer_garden.local_plugins.manager.rescan,
-    "USER_READ_ALL":beer_garden.user.get_users,
+    "USER_READ_ALL": beer_garden.user.get_users,
     "USER_READ": beer_garden.user.get_user,
     "USER_CREATE": beer_garden.user.create_user,
     "USER_UPDATE": beer_garden.user.update_user,
@@ -728,8 +728,9 @@ def _pre_forward(operation: Operation) -> Operation:
                     break
 
             if user_default_user:
-                operation.model.requester = get_garden(operation.target_garden_name).default_user
-
+                operation.model.requester = get_garden(
+                    operation.target_garden_name
+                ).default_user
 
         # Pull out and store the wait event, if it exists
         wait_event = operation.kwargs.pop("wait_event", None)

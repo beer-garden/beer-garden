@@ -22,7 +22,6 @@ def garden():
     db.delete(garden)
 
 
-
 @pytest.fixture
 def garden_admin_role():
     role = Role(name="garden_admin", permission="GARDEN_ADMIN")

@@ -1007,7 +1007,6 @@ def handle_event(event):
 
         if event.garden != config.get("garden.name") and not event.error:
             if existing_request is None:
-                
 
                 # Attempt to create the request, if it already exists then continue on
                 try:
@@ -1026,15 +1025,19 @@ def handle_event(event):
                             if parent_requests and parent_requests[0].requester:
                                 event.payload.requester = parent_requests[0].requester
                                 foundUser = True
-                        
+
                         # If no parent request is found or request on it, update via remote user mappings
                         if not foundUser:
-                            if 'get_users' not in dir():
+                            if "get_users" not in dir():
                                 from beer_garden.user import get_users
-                            
+
                             for user in get_users():
                                 for remote_user_map in user.remote_user_mapping:
-                                    if remote_user_map.target_garden == event.garden and remote_user_map.username == event.payload.requester:
+                                    if (
+                                        remote_user_map.target_garden == event.garden
+                                        and remote_user_map.username
+                                        == event.payload.requester
+                                    ):
                                         event.payload.requester = user.username
                                         foundUser = True
                                         break

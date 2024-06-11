@@ -8,6 +8,7 @@ from copy import deepcopy
 from beer_garden import config
 import beer_garden.db.api as db
 from beer_garden.events import publish
+
 # from beer_garden.role import RoleSyncSchema, role_sync_status, sync_roles
 from beer_garden.errors import InvalidPasswordException
 from beer_garden.garden import get_gardens, get_garden
@@ -26,6 +27,7 @@ does not. Where anyone monitoring the parent events could see unfiltered user up
 on child.
 """
 
+
 def set_password(user: User, password: str = None):
     """This helper should be used to set the user's password, rather than directly
     assigning a value. This ensures that the password is stored as a hash rather
@@ -39,6 +41,7 @@ def set_password(user: User, password: str = None):
     """
     user.password = custom_app_context.hash(password or user.password)
 
+
 def verify_password(user: User, password: str):
     """Checks the provided plaintext password against thea user's stored password
     hash
@@ -51,35 +54,39 @@ def verify_password(user: User, password: str):
     """
     return custom_app_context.verify(password, user.password)
 
+
 def create_token(token: UserToken):
-    """
-    """
+    """ """
     return db.create(token)
 
+
 def get_token(uuid: str):
-    """
-    """
+    """ """
     return db.query_unique(UserToken, uuid=uuid, raise_missing=True)
 
+
 def delete_token(token: UserToken):
-    """
-    """
+    """ """
     return db.delete(token)
+
 
 def has_token(username: str):
     return db.count(UserToken, username=username) > 0
+
 
 def revoke_tokens(user: User = None, username: str = None) -> None:
     """Remove all tokens from the user's list of valid tokens. This is useful for
     requiring the user to explicitly login, which one may want to do for a variety
     of reasons.
     """
-    for user_token in db.query(UserToken, filter_params={"username":user.username if user else username}):
+    for user_token in db.query(
+        UserToken, filter_params={"username": user.username if user else username}
+    ):
         db.delete(user_token)
 
+
 def get_user(username: str = None, id: str = None, include_roles: bool = True) -> User:
-    """
-    """
+    """ """
     if username:
         user = db.query_unique(User, username=username, raise_missing=True)
     else:
@@ -87,8 +94,9 @@ def get_user(username: str = None, id: str = None, include_roles: bool = True) -
     if include_roles:
         for role in user.roles:
             user.local_roles.append(get_role(role))
-    
+
     return user
+
 
 def get_users() -> list:
     users = db.query(User)
@@ -99,23 +107,29 @@ def get_users() -> list:
         user.metadata["has_token"] = has_token(user.username)
     return users
 
+
 def load_users_config():
     if config.get("auth.user_definition_file"):
         with open(config.get("auth.user_definition_file"), "r") as config_file:
             return yaml.safe_load(config_file)
     return []
 
+
 def rescan():
     """Recan the users config"""
     users_config = load_users_config()
     for user in users_config:
-        kwargs = {"username": user.get("username"), "roles": user.get("roles"), "file_generated":True, "protected":user.get("protected", False)}
+        kwargs = {
+            "username": user.get("username"),
+            "roles": user.get("roles"),
+            "file_generated": True,
+            "protected": user.get("protected", False),
+        }
         user = User(**kwargs)
         try:
             existing = get_user(user.username)
             if existing:
-                update_user(existing,
-                            **kwargs)
+                update_user(existing, **kwargs)
         except DoesNotExist:
             create_user(user)
 
@@ -144,6 +158,7 @@ def create_user(user: User) -> User:
 
     return user
 
+
 def delete_user(username: str = None, user: User = None) -> User:
     """Creates a User using the provided kwargs. The created user is saved to the
     database and returned.
@@ -166,8 +181,13 @@ def delete_user(username: str = None, user: User = None) -> User:
     return user
 
 
-
-def update_user(user: User = None, username: str = None, new_password: str = None, current_password: str = None, **kwargs) -> User:
+def update_user(
+    user: User = None,
+    username: str = None,
+    new_password: str = None,
+    current_password: str = None,
+    **kwargs
+) -> User:
     """Updates the provided User by setting its attributes to those provided by kwargs.
     The updated user object is then saved to the database and returned.
 
@@ -183,7 +203,7 @@ def update_user(user: User = None, username: str = None, new_password: str = Non
     """
     if not user:
         user = db.query_unique(User, username=username, raise_missing=True)
-    
+
     if not user.is_remote:
         # Only local accounts have passwords associated
         if new_password:
@@ -191,7 +211,7 @@ def update_user(user: User = None, username: str = None, new_password: str = Non
                 set_password(user, password=new_password)
             else:
                 raise InvalidPasswordException("Current password incorrect")
- 
+
     else:
         existing_user = db.query_unique(User, username=user.username)
 
@@ -199,21 +219,21 @@ def update_user(user: User = None, username: str = None, new_password: str = Non
             # Update remote roles, and remote user mappings
             if existing_user.remote_roles != user.remote_roles:
                 # Roles changed, so cached tokens are no longer valid
-                revoke_tokens(user = existing_user)
+                revoke_tokens(user=existing_user)
             existing_user.remote_roles = user.remote_roles
             existing_user.remote_user_mapping = user.remote_user_mapping
 
             user = existing_user
-    
+
     for key, value in kwargs.items():
         if key == "roles":
             # Roles changed, so cached tokens are no longer valid
-            revoke_tokens(user = user)
+            revoke_tokens(user=user)
         setattr(user, key, value)
 
     user = db.update(user)
     # _publish_user_updated(user)
-    
+
     # Sync child gardens
     initiate_user_sync()
 
@@ -222,53 +242,71 @@ def update_user(user: User = None, username: str = None, new_password: str = Non
 
 def flatten_user_role(role: Role, flatten_roles: list):
     new_roles = []
-    #loop through each scope to determine if we need to flatten further
-    for scope_attribute in ["scope_gardens","scope_namespaces", "scope_systems", "scope_instances", "scope_versions","scope_commands"]:
+    # loop through each scope to determine if we need to flatten further
+    for scope_attribute in [
+        "scope_gardens",
+        "scope_namespaces",
+        "scope_systems",
+        "scope_instances",
+        "scope_versions",
+        "scope_commands",
+    ]:
         if len(getattr(role, scope_attribute, [])) > 1:
             # Split scope and rerun
-            
+
             for attribute_value in getattr(role, scope_attribute, []):
                 new_role = deepcopy(role)
                 setattr(new_role, scope_attribute, [attribute_value])
                 new_roles.append(new_role)
-            
+
             break
 
     # Role is as flat as it can be
     if len(new_roles) == 0:
         flatten_roles.append(role)
-    
+
     # Keep Looping to flatten role
     for flatten_role in new_roles:
         flatten_user_role(flatten_role, flatten_roles)
 
     return flatten_roles
 
-def generate_remote_user_mappings(user: User, target_garden: Garden, remote_user_mapping: list):
+
+def generate_remote_user_mappings(
+    user: User, target_garden: Garden, remote_user_mapping: list
+):
     if target_garden.children:
         for child in target_garden.children:
             for remote_user_map in remote_user_mapping:
                 if remote_user_map.target_garden == child.name:
                     user.remote_user_mapping.append(remote_user_map)
             generate_remote_user_mappings(user, child, remote_user_mapping)
-    
+
 
 def remote_role_match(role: Role, target_garden: Garden):
     if remote_role_match_garden(role, target_garden):
         return True
-    
+
     if target_garden.children:
         for child in target_garden.children:
             if remote_role_match(role, child):
                 return True
-    
+
     return False
+
 
 def remote_role_match_garden(role: Role, target_garden: Garden) -> bool:
 
     # If no scope attributes are populated, then it matches everything
     matchAll = True
-    for scope_attribute in ["scope_gardens","scope_namespaces", "scope_systems", "scope_instances", "scope_versions","scope_commands"]:
+    for scope_attribute in [
+        "scope_gardens",
+        "scope_namespaces",
+        "scope_systems",
+        "scope_instances",
+        "scope_versions",
+        "scope_commands",
+    ]:
         if len(getattr(role, scope_attribute, [])) > 0:
             matchAll = False
             break
@@ -290,7 +328,7 @@ def remote_role_match_garden(role: Role, target_garden: Garden) -> bool:
                     if command.name in role.scope_commands:
                         match = True
                         break
-            
+
                 if not match:
                     continue
 
@@ -301,7 +339,7 @@ def remote_role_match_garden(role: Role, target_garden: Garden) -> bool:
                     if instance.name in role.scope_instances:
                         match = True
                         break
-            
+
                 if not match:
                     continue
 
@@ -313,7 +351,7 @@ def remote_role_match_garden(role: Role, target_garden: Garden) -> bool:
                 if not match:
                     continue
 
-            # Check for System Role Filter    
+            # Check for System Role Filter
             if role.scope_namespaces and len(role.scope_namespaces) > 0:
                 match = False
                 if system.name in role.scope_namespaces:
@@ -336,11 +374,17 @@ def remote_role_match_garden(role: Role, target_garden: Garden) -> bool:
 
     return False
 
+
 def generate_remote_user(target_garden: Garden, user: User) -> User:
 
     # Garden shares accounts, no filering applied
     if target_garden.shared_users:
-        return User(username=user.username, is_remote=True, remote_roles=user.local_roles, remote_user_mapping=user.remote_user_mapping)
+        return User(
+            username=user.username,
+            is_remote=True,
+            remote_roles=user.local_roles,
+            remote_user_mapping=user.remote_user_mapping,
+        )
 
     remote_user = None
 
@@ -348,7 +392,9 @@ def generate_remote_user(target_garden: Garden, user: User) -> User:
         if remote_user_map.target_garden == target_garden.name:
             remote_user = User(username=remote_user_map.username, is_remote=True)
 
-            generate_remote_user_mappings(remote_user, target_garden, user.remote_user_mapping)
+            generate_remote_user_mappings(
+                remote_user, target_garden, user.remote_user_mapping
+            )
 
             for role in user.local_roles:
                 for flatten_role in flatten_user_role(role, []):
@@ -359,8 +405,9 @@ def generate_remote_user(target_garden: Garden, user: User) -> User:
                 for flatten_role in flatten_user_role(role, []):
                     if remote_role_match(flatten_role, target_garden):
                         remote_user.remote_roles.append(flatten_role)
-    
+
     return remote_user
+
 
 def initiate_garden_user_sync(garden_name: str = None, garden: Garden = None) -> None:
     """Syncs all users from this garden down to requested garden. Only the role
@@ -373,23 +420,26 @@ def initiate_garden_user_sync(garden_name: str = None, garden: Garden = None) ->
 
     if not garden:
         garden = get_garden(garden_name)
-    
+
     garden_remote_users = []
     for user in get_users():
         remote_user = generate_remote_user(garden, user)
         if remote_user:
             garden_remote_users.append(remote_user)
-    
+
     operation = Operation(
         operation_type="USER_REMOTE_SYNC",
         target_garden_name=garden.name,
         kwargs={
-            "remote_users": SchemaParser.serialize_user(garden_remote_users, to_string=False, many=True),
+            "remote_users": SchemaParser.serialize_user(
+                garden_remote_users, to_string=False, many=True
+            ),
         },
     )
 
-    route(operation)  
-        
+    route(operation)
+
+
 def initiate_user_sync() -> None:
     """Syncs all users from this garden down to all remote gardens. Only the role
     assignments relevant to each remote garden will be included in the sync.
@@ -398,7 +448,7 @@ def initiate_user_sync() -> None:
         None
     """
     from beer_garden.router import route
-    
+
     for child in get_gardens(include_local=False):
         child_remote_users = []
         for user in get_users():
@@ -410,28 +460,34 @@ def initiate_user_sync() -> None:
             operation_type="USER_REMOTE_SYNC",
             target_garden_name=child.name,
             kwargs={
-                "remote_users": SchemaParser.serialize_user(child_remote_users, to_string=False, many=True),
+                "remote_users": SchemaParser.serialize_user(
+                    child_remote_users, to_string=False, many=True
+                ),
             },
         )
 
         route(operation)
+
 
 def remote_user_sync(remote_user: User) -> User:
     local_user = db.query_unique(User, username=remote_user.username)
 
     if local_user is None:
         return db.create(remote_user)
-    
+
     if local_user.is_remote:
         return db.update(remote_user)
-    
+
     local_user.remote_user_mapping = remote_user.remote_user_mapping
     local_user.remote_roles = remote_user.remote_roles
     return db.update(local_user)
 
-def remote_users_sync(remote_users = []):
 
-    remote_users_brewtils = SchemaParser.parse_user(remote_users, many=True, from_string=False)
+def remote_users_sync(remote_users=[]):
+
+    remote_users_brewtils = SchemaParser.parse_user(
+        remote_users, many=True, from_string=False
+    )
     local_users = get_users()
 
     # Add/Update Remote Users
@@ -462,6 +518,7 @@ def remote_users_sync(remote_users = []):
     # Sync child gardens
     initiate_user_sync()
 
+
 def ensure_users():
     """Create user accounts if necessary"""
     _create_admin()
@@ -479,10 +536,11 @@ def _create_admin():
         db.update(admin)
     except DoesNotExist:
         logger.info("Creating default admin user with username: %s", username)
-        admin = User(username=username, roles=["superuser"], protected=True, file_generated=True)
+        admin = User(
+            username=username, roles=["superuser"], protected=True, file_generated=True
+        )
         set_password(admin, password)
         db.create(admin)
-
 
 
 def _create_plugin_user():
@@ -495,11 +553,14 @@ def _create_plugin_user():
         db.update(plugin_user)
     except DoesNotExist:
         # Sanity check to make sure we don't accidentally create two
-        # users with the same name      
+        # users with the same name
         logger.info("Creating default plugin user with username: %s", username)
-        plugin_user = User(username=username, roles=["plugin"], protected=True, file_generated=True)
+        plugin_user = User(
+            username=username, roles=["plugin"], protected=True, file_generated=True
+        )
         set_password(plugin_user, password)
         db.create(plugin_user)
+
 
 def remove_local_role_assignments_for_role(role: Role) -> int:
     """Remove all User role assignments for the provided Role.
@@ -511,16 +572,14 @@ def remove_local_role_assignments_for_role(role: Role) -> int:
         int: The number of users role was removed from
     """
     # Avoid circular import
-    
-    impacted_users = db.query(
-            User, filter_params={"roles__match": role.name}
-        )
+
+    impacted_users = db.query(User, filter_params={"roles__match": role.name})
 
     for user in impacted_users:
         user.roles.remove(role.name)
         update_user(user=user)
         # Roles changed, so cached tokens are no longer valid
-        revoke_tokens(user = user)
+        revoke_tokens(user=user)
 
     return len(impacted_users)
 
@@ -532,7 +591,6 @@ def handle_event(event: Event) -> None:
             remove_local_role_assignments_for_role(event.payload)
         # elif event.name == "USER_UPDATED":
         #     initiate_user_sync()
-
 
 
 def _publish_user_updated(user):

@@ -11,8 +11,9 @@ from beer_garden.user import create_user, delete_user
 from beer_garden.role import create_role, delete_role
 from brewtils.models import User, Role
 
+
 @pytest.fixture(autouse=True)
-def garden_permitted():    
+def garden_permitted():
     garden = Garden(name="garden_permitted", connection_type="LOCAL").save()
 
     yield garden
@@ -21,7 +22,13 @@ def garden_permitted():
 
 @pytest.fixture
 def garden_admin_role(garden_permitted):
-    role = create_role(Role(name="garden_admin", permission="GARDEN_ADMIN", scope_gardens=[garden_permitted.name]))
+    role = create_role(
+        Role(
+            name="garden_admin",
+            permission="GARDEN_ADMIN",
+            scope_gardens=[garden_permitted.name],
+        )
+    )
     yield role
     delete_role(role)
 

@@ -16,7 +16,11 @@ from brewtils.models import User, Role
 
 @pytest.fixture(autouse=True)
 def garden(system_permitted, system_not_permitted):
-    garden = Garden(name="permitted", connection_type="LOCAL", systems=[system_permitted, system_not_permitted]).save()
+    garden = Garden(
+        name="permitted",
+        connection_type="LOCAL",
+        systems=[system_permitted, system_not_permitted],
+    ).save()
 
     yield garden
     garden.delete()
@@ -40,10 +44,16 @@ def system_not_permitted():
 
 @pytest.fixture
 def job_manager_role(system_permitted):
-    role = create_role(Role(name="job_manager", permission="OPERATOR", scope_systems=[system_permitted.name], scope_namespaces=[system_permitted.namespace]))
+    role = create_role(
+        Role(
+            name="job_manager",
+            permission="OPERATOR",
+            scope_systems=[system_permitted.name],
+            scope_namespaces=[system_permitted.namespace],
+        )
+    )
     yield role
     delete_role(role)
-
 
 
 @pytest.fixture
@@ -418,10 +428,7 @@ class TestJobExecutionAPI:
     @pytest.mark.gen_test
     @pytest.mark.parametrize(
         "job_id",
-        [
-            ObjectId(),
-            "111111111111111111111111"
-        ],
+        [ObjectId(), "111111111111111111111111"],
     )
     def test_execute_job_not_found(self, http_client, base_url, job_id):
         url = f"{base_url}/api/v1/jobs/{job_id}/execute"

@@ -95,13 +95,9 @@ def db_cleanup():
     Request.drop_collection()
 
 
-
-
 @pytest.fixture(autouse=True)
 def local_system():
-    system = System(
-        name="somesystem", version="1.0.0", namespace="somegarden"
-    ).save()
+    system = System(name="somesystem", version="1.0.0", namespace="somegarden").save()
 
     yield system
     system.delete()
@@ -109,25 +105,33 @@ def local_system():
 
 @pytest.fixture(autouse=True)
 def remote_system():
-    system = System(
-        name="somesystem", version="1.0.0", namespace="remotegarden"
-    ).save()
+    system = System(name="somesystem", version="1.0.0", namespace="remotegarden").save()
 
     yield system
     system.delete()
 
 
-
 @pytest.fixture(autouse=True)
 def remote_garden(remote_system):
-    garden = Garden(name="remotegarden", connection_type="HTTP", has_parent=True, systems=[remote_system]).save()
+    garden = Garden(
+        name="remotegarden",
+        connection_type="HTTP",
+        has_parent=True,
+        systems=[remote_system],
+    ).save()
 
     yield garden
     garden.delete()
 
+
 @pytest.fixture(autouse=True)
 def local_garden(local_system, remote_garden):
-    garden = Garden(name="somegarden", connection_type="LOCAL", children=[remote_garden], systems=[local_system]).save()
+    garden = Garden(
+        name="somegarden",
+        connection_type="LOCAL",
+        children=[remote_garden],
+        systems=[local_system],
+    ).save()
 
     yield garden
     garden.delete()
@@ -208,7 +212,14 @@ def request_with_gridfs_output(monkeypatch, local_system):
 
 @pytest.fixture
 def operator_role(request_permitted):
-    role = create_role(Role(name="operator", permission="OPERATOR", scope_systems=[request_permitted.system], scope_namespaces=[request_permitted.namespace]))
+    role = create_role(
+        Role(
+            name="operator",
+            permission="OPERATOR",
+            scope_systems=[request_permitted.system],
+            scope_namespaces=[request_permitted.namespace],
+        )
+    )
     yield role
     delete_role(role)
 
@@ -218,7 +229,6 @@ def user(operator_role):
     user = create_user(User(username="testuser", local_roles=[operator_role]))
     yield user
     delete_user(user=user)
-
 
 
 @pytest.fixture

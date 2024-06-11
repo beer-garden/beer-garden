@@ -540,7 +540,6 @@ class TestUser:
         yield user
         user.delete()
 
-
     @pytest.fixture()
     def user_token(self, user):
         user_token = UserToken(
@@ -555,16 +554,14 @@ class TestUser:
     def test_create(self, user):
         assert User.objects.filter(username="testuser").count() == 1
 
-        
     def test_local_role_map_to_roles(self, user, role):
-        
+
         assert len(user.roles) == 0
         user.local_roles = []
         user.local_roles.append(role)
         user = user.save()
 
         assert len(user.roles) == 1
-        
 
     # def test_role_assignment_missing_identifiers_raises_validation_error(
     #     self, user, role_assignment_missing_identifiers
@@ -608,7 +605,6 @@ class TestUserToken:
 
         yield user_token
         user_token.delete()
-
 
     def test_user_delete_cascades_to_user_token(self, user, user_token):
         assert len(UserToken.objects.filter(id=user_token.id)) == 1

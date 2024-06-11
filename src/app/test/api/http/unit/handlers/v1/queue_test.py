@@ -24,7 +24,13 @@ def garden_permitted():
 
 @pytest.fixture
 def queue_manager_role(garden_permitted):
-    role = create_role(Role(name="queue_manager", permission="PLUGIN_ADMIN", scope_gardens=[garden_permitted.name]))
+    role = create_role(
+        Role(
+            name="queue_manager",
+            permission="PLUGIN_ADMIN",
+            scope_gardens=[garden_permitted.name],
+        )
+    )
     yield role
     delete_role(role)
 
