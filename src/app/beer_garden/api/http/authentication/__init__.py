@@ -9,7 +9,13 @@ from brewtils.models import User, UserToken
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden import config
-from beer_garden.user import create_token, get_user, get_token, delete_token, revoke_tokens
+from beer_garden.user import (
+    create_token,
+    get_user,
+    get_token,
+    delete_token,
+    revoke_tokens,
+)
 from beer_garden.api.http.authentication.login_handlers import enabled_login_handlers
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
 from mongoengine import DoesNotExist
@@ -56,7 +62,9 @@ def issue_token_pair(user: User, refresh_expiration: Optional[datetime] = None) 
     access_token = _generate_access_token(user, token_uuid)
     refresh_token = _generate_refresh_token(user, token_uuid, expiration)
 
-    token = create_token(UserToken(expires_at=expiration, username=user.username, uuid=token_uuid))
+    token = create_token(
+        UserToken(expires_at=expiration, username=user.username, uuid=token_uuid)
+    )
 
     return {"access": access_token, "refresh": refresh_token}
 
@@ -148,7 +156,9 @@ def get_user_from_token(access_token: dict, revoke_expired=True) -> User:
         raise ExpiredTokenException
 
     user.roles = []
-    user.local_roles = SchemaParser.parse_role(access_token["roles"], many=True, from_string=False)
+    user.local_roles = SchemaParser.parse_role(
+        access_token["roles"], many=True, from_string=False
+    )
     user.remote_roles = []
 
     return user
@@ -201,10 +211,12 @@ def _generate_access_token(user: User, identifier: UUID) -> str:
     if user.local_roles:
         for role in user.local_roles:
             roles.append(SchemaParser.serialize_role(role, to_string=False, many=False))
-    
+
     if user.remote_roles:
         for role in user.remote_roles:
-            roles.append(SchemaParser.serialize_remote_role(role, to_string=False, many=False))
+            roles.append(
+                SchemaParser.serialize_remote_role(role, to_string=False, many=False)
+            )
 
     jwt_headers = {"alg": "HS256", "typ": "JWT"}
     jwt_payload = {
@@ -216,7 +228,6 @@ def _generate_access_token(user: User, identifier: UUID) -> str:
         "username": user.username,
         "roles": roles,
     }
-    
 
     access_token = jwt.encode(jwt_payload, key=secret_key, headers=jwt_headers)
 

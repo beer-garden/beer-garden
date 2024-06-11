@@ -9,7 +9,6 @@ from beer_garden.api.http.base_handler import future_wait
 from beer_garden.api.http.handlers import AuthorizationHandler
 
 
-
 class InstanceAPI(AuthorizationHandler):
     async def get(self, instance_id):
         """

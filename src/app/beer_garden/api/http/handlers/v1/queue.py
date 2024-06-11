@@ -6,6 +6,7 @@ from beer_garden.garden import local_garden
 
 # TODO: Better way to determine which systems own the Queue before deleting
 
+
 class QueueAPI(AuthorizationHandler):
     async def delete(self, queue_name):
         """
@@ -30,7 +31,9 @@ class QueueAPI(AuthorizationHandler):
         self.minimum_permission = self.PLUGIN_ADMIN
         self.verify_user_permission_for_object(local_garden())
 
-        await self.process_operation(Operation(operation_type="QUEUE_DELETE", args=[queue_name]))
+        await self.process_operation(
+            Operation(operation_type="QUEUE_DELETE", args=[queue_name])
+        )
 
         self.set_status(204)
 

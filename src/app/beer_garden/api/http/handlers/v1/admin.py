@@ -63,7 +63,9 @@ class AdminAPI(AuthorizationHandler):
                 await self.process_operation(Operation(operation_type="RUNNER_RESCAN"))
             elif op.operation == "reload":
                 if op.path == "/config/logging/plugin":
-                    await self.process_operation(Operation(operation_type="PLUGIN_LOG_RELOAD"))
+                    await self.process_operation(
+                        Operation(operation_type="PLUGIN_LOG_RELOAD")
+                    )
                 else:
                     raise ModelValidationError(f"Unsupported path '{op.path}'")
             else:

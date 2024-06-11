@@ -72,7 +72,9 @@ class LoggingConfigAPI(AuthorizationHandler):
         self.minimum_permission = self.PLUGIN_ADMIN
         self.verify_user_permission_for_object(local_garden())
 
-        response = await self.process_operation(Operation(operation_type="PLUGIN_LOG_READ_LEGACY"))
+        response = await self.process_operation(
+            Operation(operation_type="PLUGIN_LOG_READ_LEGACY")
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -106,7 +108,7 @@ class LoggingConfigAPI(AuthorizationHandler):
           - Deprecated
         """
         self.minimum_permission = self.PLUGIN_ADMIN
-        self.verify_user_permission_for_object( local_garden())
+        self.verify_user_permission_for_object(local_garden())
 
         patch = SchemaParser.parse_patch(
             self.request.decoded_body, many=True, from_string=True

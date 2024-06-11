@@ -54,12 +54,8 @@ from beer_garden.api.http.schemas.v1.command_publishing_blocklist import (
     CommandPublishingBlocklistListSchema,
     CommandPublishingBlocklistSchema,
 )
-# from beer_garden.api.http.schemas.v1.role import RoleListSchema
-# from beer_garden.api.http.schemas.v1.token import (
-#     TokenInputSchema,
-#     TokenRefreshInputSchema,
-#     TokenResponseSchema,
-# )
+
+
 from beer_garden.api.http.schemas.v1.user import (
     UserPasswordChangeSchema,
 )
@@ -387,7 +383,6 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition("FileStatus", schema=FileStatusSchema)
     api_spec.definition("UserToken", schema=UserTokenSchema)
     api_spec.definition("Topic", schema=TopicSchema)
-
 
     api_spec.definition("Garden", schema=GardenSchema)
     api_spec.definition("Runner", schema=RunnerSchema)

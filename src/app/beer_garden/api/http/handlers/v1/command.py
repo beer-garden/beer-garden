@@ -98,7 +98,12 @@ class CommandListAPI(AuthorizationHandler):
         permitted_objects_filter = self.permissioned_queryset(System)
 
         response = await self.process_operation(
-            Operation(operation_type="COMMAND_READ_ALL", kwargs={"q_filter": permitted_objects_filter,})
+            Operation(
+                operation_type="COMMAND_READ_ALL",
+                kwargs={
+                    "q_filter": permitted_objects_filter,
+                },
+            )
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")

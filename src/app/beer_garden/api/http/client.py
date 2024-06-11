@@ -11,12 +11,21 @@ import beer_garden.api
 import beer_garden.router
 from beer_garden.authorization import ModelFilter
 
+
 class SerializeHelper(object):
 
     def __init__(self):
         self.model_filter = ModelFilter()
 
-    async def __call__(self, operation: Operation, serialize_kwargs=None, current_user: User=None, minimum_permission:str=None, filter_results:bool=True, **kwargs):
+    async def __call__(
+        self,
+        operation: Operation,
+        serialize_kwargs=None,
+        current_user: User = None,
+        minimum_permission: str = None,
+        filter_results: bool = True,
+        **kwargs
+    ):
         operation.source_api = "HTTP"
         result = beer_garden.router.route(operation)
 
@@ -25,7 +34,9 @@ class SerializeHelper(object):
             result = await result
 
         if filter_results and minimum_permission and current_user:
-            result = self.model_filter.filter_object(user=current_user, permission=minimum_permission, obj=result)
+            result = self.model_filter.filter_object(
+                user=current_user, permission=minimum_permission, obj=result
+            )
 
         # Handlers overwhelmingly just write the response so default to serializing
         serialize_kwargs = serialize_kwargs or {}

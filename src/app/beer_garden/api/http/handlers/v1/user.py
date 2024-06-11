@@ -158,12 +158,11 @@ class UserAPI(AuthorizationHandler):
                 )
 
             else:
-              raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
         if response:
-          self.write(response)
+            self.write(response)
         else:
             raise ModelValidationError(f"Missing Operations '{patch}'")
-        
 
 
 class UserListAPI(AuthorizationHandler):

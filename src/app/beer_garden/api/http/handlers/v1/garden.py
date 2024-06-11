@@ -68,7 +68,9 @@ class GardenAPI(AuthorizationHandler):
         self.minimum_permission = self.GARDEN_ADMIN
         garden = self.get_or_raise(Garden, name=garden_name)
 
-        await self.process_operation(Operation(operation_type="GARDEN_DELETE", args=[garden.name]))
+        await self.process_operation(
+            Operation(operation_type="GARDEN_DELETE", args=[garden.name])
+        )
 
         self.set_status(204)
 

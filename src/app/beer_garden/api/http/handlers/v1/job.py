@@ -147,7 +147,9 @@ class JobAPI(AuthorizationHandler):
         self.minimum_permission = self.OPERATOR
         _ = self.get_or_raise(Job, id=job_id)
 
-        await self.process_operation(Operation(operation_type="JOB_DELETE", args=[job_id]))
+        await self.process_operation(
+            Operation(operation_type="JOB_DELETE", args=[job_id])
+        )
 
         self.set_status(204)
 

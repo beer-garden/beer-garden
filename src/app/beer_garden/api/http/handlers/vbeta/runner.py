@@ -164,7 +164,9 @@ class RunnerListAPI(AuthorizationHandler):
 
         self.minimum_permission = self.READ_ONLY
 
-        response = await self.process_operation(Operation(operation_type="RUNNER_READ_ALL"))
+        response = await self.process_operation(
+            Operation(operation_type="RUNNER_READ_ALL")
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

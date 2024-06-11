@@ -39,7 +39,7 @@ class CommandPublishingBlocklistPathAPI(AuthorizationHandler):
 
         self.minimum_permission = self.GARDEN_ADMIN
         self.verify_user_global_permission()
-        
+
         blocked_command = CommandPublishingBlocklist.objects.get(
             id=command_publishing_id
         )
@@ -88,7 +88,9 @@ class CommandPublishingBlocklistAPI(AuthorizationHandler):
         )
         response = {
             "command_publishing_blocklist": CommandPublishingBlocklistSchema(many=True)
-            .dump(CommandPublishingBlocklist.objects.filter(permitted_blocklist_entries))
+            .dump(
+                CommandPublishingBlocklist.objects.filter(permitted_blocklist_entries)
+            )
             .data
         }
 

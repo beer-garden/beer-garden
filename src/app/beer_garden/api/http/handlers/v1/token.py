@@ -53,7 +53,7 @@ class TokenAPI(BaseHandler):
 
 
 class TokenListAPI(AuthorizationHandler):
-    
+
     async def delete(self, username):
         """
         ---
@@ -78,7 +78,7 @@ class TokenListAPI(AuthorizationHandler):
         """
 
         self.minimum_permission = self.GARDEN_ADMIN
-        _ = self.get_or_raise(User, username = username)
+        _ = self.get_or_raise(User, username=username)
 
         await self.process_operation(
             Operation(

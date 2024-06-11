@@ -14,7 +14,12 @@ from beer_garden.api.http.exceptions import (
     NotFound,
     RequestForbidden,
 )
-from beer_garden.authorization import QueryFilterBuilder, ModelFilter, check_global_roles
+from beer_garden.authorization import (
+    QueryFilterBuilder,
+    ModelFilter,
+    check_global_roles,
+)
+
 # from beer_garden.db.mongo.models import User
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
 import beer_garden.db.api as db
@@ -33,7 +38,6 @@ class AuthorizationHandler(BaseHandler):
 
     minimum_permission = READ_ONLY
 
-
     def get_current_user(self) -> User:
         """Retrieve the appropriate User object for the request. If the auth setting
         is enabled, the User is determined by the token provided in the Bearer
@@ -51,10 +55,14 @@ class AuthorizationHandler(BaseHandler):
                 raise AuthorizationRequired(reason="Authorization token expired")
         else:
             return self._anonymous_superuser()
-        
-    async def process_operation(self, operation: Operation, **kwargs):
-        return await self.client(operation, current_user=self.current_user, minimum_permission=self.minimum_permission, **kwargs)
 
+    async def process_operation(self, operation: Operation, **kwargs):
+        return await self.client(
+            operation,
+            current_user=self.current_user,
+            minimum_permission=self.minimum_permission,
+            **kwargs,
+        )
 
     def get_or_raise(self, model: Type[BrewtilsModel], **kwargs):  # Updated
         """Get Document model objects specified by **kwargs if the requesting user
@@ -81,21 +89,20 @@ class AuthorizationHandler(BaseHandler):
 
         requested_objects = db.query(model, q_filter=provided_filter)
         if len(requested_objects) > 1:
-            raise NotFound(f"Multiple records returned for schema query: {model.schema}, {provided_filter}")
+            raise NotFound(
+                f"Multiple records returned for schema query: {model.schema}, {provided_filter}"
+            )
         elif len(requested_objects) == 0:
-            if len(db.query(model, q_filter=Q(**kwargs) )) > 0:
+            if len(db.query(model, q_filter=Q(**kwargs))) > 0:
                 raise RequestForbidden
             else:
                 raise NotFound
-
 
         self.verify_user_permission_for_object(requested_objects[0])
 
         return requested_objects[0]
 
-    def permissioned_queryset(
-        self, model: Type[Document]
-    ) -> QuerySet:  # Updated
+    def permissioned_queryset(self, model: Type[Document]) -> QuerySet:  # Updated
         """Returns a QuerySet for the provided Document model filtered down to only
         the objects for which the requesting user has the given permission
 
@@ -108,7 +115,9 @@ class AuthorizationHandler(BaseHandler):
               has access to.
         """
 
-        return self.queryFilter.build_filter(self.current_user, self.minimum_permission, model)
+        return self.queryFilter.build_filter(
+            self.current_user, self.minimum_permission, model
+        )
 
     def permitted_objects_filter(
         self, model: Type[Document]
@@ -129,7 +138,9 @@ class AuthorizationHandler(BaseHandler):
                 model type
         """
 
-        q_filter = self.queryFilter.build_filter(self.current_user, self.minimum_permission, model)
+        q_filter = self.queryFilter.build_filter(
+            self.current_user, self.minimum_permission, model
+        )
 
         if q_filter is None:
             raise RequestForbidden
@@ -162,12 +173,12 @@ class AuthorizationHandler(BaseHandler):
         Returns:
             None
         """
-        if not check_global_roles(self.current_user, permission_level=self.minimum_permission):
+        if not check_global_roles(
+            self.current_user, permission_level=self.minimum_permission
+        ):
             raise RequestForbidden
 
-    def verify_user_permission_for_object(
-        self, obj: BrewtilsModel
-    ) -> None:  # Updated
+    def verify_user_permission_for_object(self, obj: BrewtilsModel) -> None:  # Updated
         """Verifies that the requesting user has the specified permission for the
         given object.
 
@@ -182,13 +193,17 @@ class AuthorizationHandler(BaseHandler):
             None
         """
 
-        if not self.modelFilter.filter_object(user=self.current_user, permission=self.minimum_permission, obj=obj):
+        if not self.modelFilter.filter_object(
+            user=self.current_user, permission=self.minimum_permission, obj=obj
+        ):
             raise RequestForbidden
 
     def _anonymous_superuser(self) -> User:  # Updated
         """Return a User object with all permissions for all gardens"""
         anonymous_superuser = User(
-            username="anonymous", remote_roles=[], local_roles=[Role(name="superuser", permission="GARDEN_ADMIN")]
+            username="anonymous",
+            remote_roles=[],
+            local_roles=[Role(name="superuser", permission="GARDEN_ADMIN")],
         )
 
         # Manually set the permissions cache (to all permissions for all gardens) since
