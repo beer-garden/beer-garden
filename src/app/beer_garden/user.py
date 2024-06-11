@@ -103,6 +103,7 @@ def load_users_config():
     if config.get("auth.user_definition_file"):
         with open(config.get("auth.user_definition_file"), "r") as config_file:
             return yaml.safe_load(config_file)
+    return []
 
 def rescan():
     """Recan the users config"""

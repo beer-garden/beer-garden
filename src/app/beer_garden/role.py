@@ -59,6 +59,7 @@ def load_roles_config():
     if config.get("auth.role_definition_file"):
         with open(config.get("auth.role_definition_file"), "r") as config_file:
             return yaml.safe_load(config_file)
+    return []
 
 def rescan():
     """ Rescan the roles configuration file"""
