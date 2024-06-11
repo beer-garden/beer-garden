@@ -1,21 +1,11 @@
 # -*- coding: utf-8 -*-
-from brewtils.models import (
-    Role,
-    User,
-    Garden,
-    System,
-    Command,
-    Instance,
-    RemoteUserMap,
-)
-
+from brewtils.models import Command, Garden, Instance, RemoteUserMap, Role, System, User
 from brewtils.schema_parser import SchemaParser
-
 
 from beer_garden.user import (
     flatten_user_role,
-    remote_role_match_garden,
     generate_remote_user,
+    remote_role_match_garden,
 )
 
 

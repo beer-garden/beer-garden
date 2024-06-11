@@ -8,10 +8,8 @@ import beer_garden.db.mongo.models
 import beer_garden.db.mongo.util
 from beer_garden import config
 from beer_garden.db.mongo.models import Garden, Role, User
-from beer_garden.db.mongo.util import (
+from beer_garden.db.mongo.util import (  # ensure_roles,; ensure_users,
     ensure_local_garden,
-    # ensure_roles,
-    # ensure_users,
 )
 from beer_garden.errors import ConfigurationError, IndexOperationError
 

@@ -1,5 +1,7 @@
 import pytest
 from box import Box
+from brewtils.models import RemoteUserMap, Role, User
+from brewtils.schema_parser import SchemaParser
 from marshmallow import ValidationError
 from tornado.httputil import HTTPHeaders, HTTPServerRequest
 
@@ -11,8 +13,6 @@ from beer_garden.db.mongo.models import Role as DB_Role
 from beer_garden.db.mongo.models import User as DB_User
 from beer_garden.role import create_role
 from beer_garden.user import create_user
-from brewtils.models import RemoteUserMap, Role, User
-from brewtils.schema_parser import SchemaParser
 
 
 @pytest.fixture(autouse=True)

@@ -2,14 +2,14 @@
 import json
 
 import pytest
+from brewtils.models import Role, User
 from tornado.httpclient import HTTPError
 
 from beer_garden.api.http.authentication import issue_token_pair
 from beer_garden.db.mongo.models import Garden
 from beer_garden.log import PluginLoggingManager
-from beer_garden.user import create_user, delete_user
 from beer_garden.role import create_role, delete_role
-from brewtils.models import User, Role
+from beer_garden.user import create_user, delete_user
 
 
 @pytest.fixture(autouse=True)

@@ -1,6 +1,7 @@
 import json
 
 import pytest
+from brewtils.models import Role, User
 from tornado.httpclient import HTTPError, HTTPRequest
 
 from beer_garden.api.http import CommandPublishingBlocklistListSchema
@@ -14,7 +15,6 @@ from beer_garden.db.mongo.models import System as DB_System
 from beer_garden.db.mongo.models import User as DB_User
 from beer_garden.role import create_role, delete_role
 from beer_garden.user import create_user, delete_user
-from brewtils.models import Role, User
 
 garden_name = "somegarden"
 system_name = "somesystem"

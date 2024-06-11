@@ -1,10 +1,10 @@
 import json
 
 import pytest
-
-from beer_garden.role import create_role, delete_role
 from brewtils.models import Role
+
 from beer_garden.db.mongo.models import Garden
+from beer_garden.role import create_role, delete_role
 
 
 @pytest.fixture()

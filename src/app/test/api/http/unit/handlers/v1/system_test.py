@@ -1,23 +1,21 @@
 # -*- coding: utf-8 -*-
 import json
 
-import beer_garden.events
-import beer_garden.router
 import pytest
-from beer_garden.api.http.authentication import issue_token_pair
-from beer_garden.db.mongo.models import (
-    Command,
-    Garden,
-    System,
-)
-from beer_garden.systems import create_system
 from brewtils.models import Command as BrewtilsCommand
 from brewtils.models import Instance as BrewtilsInstance
+from brewtils.models import Role
 from brewtils.models import System as BrewtilsSystem
+from brewtils.models import User
 from tornado.httpclient import HTTPError, HTTPRequest
-from beer_garden.user import create_user, delete_user
+
+import beer_garden.events
+import beer_garden.router
+from beer_garden.api.http.authentication import issue_token_pair
+from beer_garden.db.mongo.models import Command, Garden, System
 from beer_garden.role import create_role, delete_role
-from brewtils.models import User, Role
+from beer_garden.systems import create_system
+from beer_garden.user import create_user, delete_user
 
 
 @pytest.fixture(autouse=True)

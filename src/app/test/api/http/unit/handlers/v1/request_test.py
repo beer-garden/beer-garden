@@ -2,6 +2,7 @@
 import json
 
 import pytest
+from brewtils.models import Role, User
 from mongomock.gridfs import enable_gridfs_integration
 from tornado.httpclient import HTTPError, HTTPRequest
 
@@ -9,17 +10,10 @@ import beer_garden.db.mongo.models
 import beer_garden.events
 import beer_garden.requests
 import beer_garden.router
-from beer_garden.user import create_user, delete_user
-from beer_garden.role import create_role, delete_role
 from beer_garden.api.http.authentication import issue_token_pair
-from beer_garden.db.mongo.models import (
-    Garden,
-    RawFile,
-    Request,
-    System,
-)
-
-from brewtils.models import User, Role
+from beer_garden.db.mongo.models import Garden, RawFile, Request, System
+from beer_garden.role import create_role, delete_role
+from beer_garden.user import create_user, delete_user
 
 enable_gridfs_integration()
 

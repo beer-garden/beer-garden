@@ -4,16 +4,16 @@ from datetime import datetime, timedelta, timezone
 
 import jwt
 import pytest
+from brewtils.models import User, UserToken
+from mongoengine import DoesNotExist
 from tornado.httpclient import HTTPError
 
 from beer_garden.api.http.authentication import issue_token_pair
-from beer_garden.db.mongo.models import User, UserToken
-from brewtils.models import User, UserToken
-from beer_garden.user import create_user, delete_user, get_token
-from beer_garden.errors import ExpiredTokenException, InvalidTokenException
-from mongoengine import DoesNotExist
-
+from beer_garden.db.mongo.models import User
+from beer_garden.db.mongo.models import UserToken
 from beer_garden.db.mongo.models import UserToken as MongoUserToken
+from beer_garden.errors import ExpiredTokenException, InvalidTokenException
+from beer_garden.user import create_user, delete_user, get_token
 
 
 @pytest.fixture

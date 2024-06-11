@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 import json
 
-import beer_garden.events
-import beer_garden.router
 import pytest
-from beer_garden.db.mongo.models import Topic
-import beer_garden.api.http.handlers.v1.garden
-from beer_garden.api.http.authentication import issue_token_pair
-from beer_garden.topic import create_topic
-
 from brewtils.models import Subscriber as BrewtilsSubscriber
 from tornado.httpclient import HTTPError, HTTPRequest
+
+import beer_garden.api.http.handlers.v1.garden
+import beer_garden.events
+import beer_garden.router
+from beer_garden.api.http.authentication import issue_token_pair
+from beer_garden.db.mongo.models import Topic
+from beer_garden.topic import create_topic
 
 
 @pytest.fixture(autouse=True)

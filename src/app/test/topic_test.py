@@ -1,18 +1,18 @@
 import pytest
+from brewtils.models import Subscriber as BrewtilsSubscriber
+from brewtils.models import Topic as BrewtilsTopic
 from mongoengine import connect
 
-from brewtils.models import Topic as BrewtilsTopic
-from brewtils.models import Subscriber as BrewtilsSubscriber
+from beer_garden.db.mongo.models import Topic
 from beer_garden.topic import (
     create_topic,
+    get_all_topics,
     get_topic,
     remove_topic,
-    get_all_topics,
+    subscriber_match,
     topic_add_subscriber,
     topic_remove_subscriber,
-    subscriber_match,
 )
-from beer_garden.db.mongo.models import Topic
 
 
 @pytest.fixture(autouse=True)

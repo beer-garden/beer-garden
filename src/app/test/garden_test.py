@@ -4,6 +4,10 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
+from brewtils.models import Connection as BrewtilsConnection
+from brewtils.models import Event, Events
+from brewtils.models import Garden as BrewtilsGarden
+from brewtils.models import System as BrewtilsSystem
 from mongoengine import DoesNotExist, connect
 
 from beer_garden import config
@@ -22,10 +26,6 @@ from beer_garden.garden import (
     upsert_garden,
 )
 from beer_garden.systems import create_system
-from brewtils.models import Connection as BrewtilsConnection
-from brewtils.models import Event, Events
-from brewtils.models import Garden as BrewtilsGarden
-from brewtils.models import System as BrewtilsSystem
 
 
 @pytest.fixture(autouse=True)

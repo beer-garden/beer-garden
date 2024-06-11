@@ -1,13 +1,4 @@
 import pytest
-
-from beer_garden.authorization import (
-    ModelFilter,
-    QueryFilterBuilder,
-    _has_empty_scopes,
-    check_global_roles,
-    generate_permission_levels,
-)
-from beer_garden.db.mongo import models
 from brewtils.models import (
     Command,
     Garden,
@@ -19,6 +10,15 @@ from brewtils.models import (
     System,
     User,
 )
+
+from beer_garden.authorization import (
+    ModelFilter,
+    QueryFilterBuilder,
+    _has_empty_scopes,
+    check_global_roles,
+    generate_permission_levels,
+)
+from beer_garden.db.mongo import models
 
 
 @pytest.fixture()

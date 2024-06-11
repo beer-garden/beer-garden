@@ -7,14 +7,12 @@ from mongoengine import connect
 import beer_garden
 import beer_garden.config as config
 import beer_garden.events
-from beer_garden.db.mongo.models import (
+from beer_garden.db.mongo.models import (  # RemoteRole,; RemoteUser,
     Event,
     File,
     Garden,
     Job,
     RawFile,
-    # RemoteRole,
-    # RemoteUser,
     Request,
     Role,
     System,

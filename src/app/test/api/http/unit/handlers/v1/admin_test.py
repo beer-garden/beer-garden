@@ -3,14 +3,14 @@ import json
 from unittest.mock import Mock
 
 import pytest
+from brewtils.models import Garden, Role, User
 from tornado.httpclient import HTTPError, HTTPRequest
 
+import beer_garden.db.api as db
 import beer_garden.router
 from beer_garden.api.http.authentication import issue_token_pair
-from brewtils.models import Garden, Role, User
-import beer_garden.db.api as db
-from beer_garden.user import create_user, delete_user
 from beer_garden.role import create_role, delete_role
+from beer_garden.user import create_user, delete_user
 
 
 @pytest.fixture(autouse=True)

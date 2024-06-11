@@ -1,15 +1,16 @@
 import pytest
-from mock import Mock
 from brewtils.models import (
+    Command,
     Event,
     Events,
     Garden,
-    System,
-    Command,
-    Request,
     Instance,
+    Request,
     Subscriber,
+    System,
 )
+from mock import Mock
+
 from beer_garden import publish_request
 
 
