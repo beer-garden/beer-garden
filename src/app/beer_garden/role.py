@@ -56,8 +56,9 @@ def delete_role(role: Role = None, role_name: str = None, role_id: str = None) -
     return role
 
 def load_roles_config():
-    with open(config.get("auth.role_definition_file"), "r") as config_file:
-        return yaml.safe_load(config_file)
+    if config.get("auth.role_definition_file"):
+        with open(config.get("auth.role_definition_file"), "r") as config_file:
+            return yaml.safe_load(config_file)
 
 def rescan():
     """ Rescan the roles configuration file"""
