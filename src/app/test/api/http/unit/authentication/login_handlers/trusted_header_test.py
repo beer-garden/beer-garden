@@ -60,7 +60,7 @@ def app_config_trusted_handler_missing_group_definition_file(
     yield app_config_trusted_handler
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def drop():
     yield
     DB_User.drop_collection()
@@ -68,17 +68,17 @@ def drop():
 
 
 @pytest.fixture
-def user(drop):
+def user():
     yield create_user(User(username="testuser"))
 
 
 @pytest.fixture
-def role_1(drop):
+def role_1():
     yield create_role(Role(name="role1", permission="OPERATOR"))
 
 
 @pytest.fixture
-def role_2(drop):
+def role_2():
     yield create_role(Role(name="role2", permission="OPERATOR"))
 
 
@@ -152,7 +152,7 @@ class TestTrustedHeaderLoginHandler:
         assert authenticated_user.username == user.username
         assert len(authenticated_user.remote_roles) == 2
 
-    def test_get_user_creates_new_user(self, drop, role_1, role_2):
+    def test_get_user_creates_new_user(self, role_1, role_2):
         handler = TrustedHeaderLoginHandler()
         headers = HTTPHeaders(
             {

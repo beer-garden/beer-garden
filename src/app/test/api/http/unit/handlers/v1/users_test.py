@@ -2,33 +2,44 @@
 import json
 
 import pytest
+from mongoengine.errors import DoesNotExist
 from tornado.httpclient import HTTPError
 
 from beer_garden.api.http.authentication import issue_token_pair
-from brewtils.models import User, Role
-from beer_garden.user import create_user, delete_user, get_user, verify_password
-from beer_garden.role import create_role, delete_role
-from mongoengine.errors import DoesNotExist
+from beer_garden.db.mongo.models import Role as DB_Role
+from beer_garden.db.mongo.models import User as DB_User
+from beer_garden.role import create_role
+from beer_garden.user import create_user, get_user, verify_password
+from brewtils.models import Role, User
+
+
+@pytest.fixture(autouse=True)
+def drop():
+    yield
+    DB_User.drop_collection()
+    DB_Role.drop_collection()
+
 
 @pytest.fixture
 def user_admin_role():
-    role = create_role(Role(name="user_admin", permission="GARDEN_ADMIN"))
-    yield role
-    delete_role(role)
+    yield create_role(Role(name="user_admin", permission="GARDEN_ADMIN"))
 
 
 @pytest.fixture
 def user():
-    user = create_user(User(username="testuser", password="password", is_remote=False))
-    yield user
-    delete_user(user=user)
+    yield create_user(User(username="testuser", password="password", is_remote=False))
 
 
 @pytest.fixture
 def user_admin(user_admin_role):
-    user = create_user(User(username="testuser_admin", password="password", local_roles=[user_admin_role], is_remote=False))
-    yield user
-    delete_user(user=user)
+    yield create_user(
+        User(
+            username="testuser_admin",
+            password="password",
+            local_roles=[user_admin_role],
+            is_remote=False,
+        )
+    )
 
 
 @pytest.fixture
@@ -78,8 +89,8 @@ class TestUserAPI:
             url, method="PATCH", headers=headers, body=body
         )
         assert response.code == 200
-        
-        assert len(get_user(id = user.id).roles) == 1
+
+        assert len(get_user(id=user.id).roles) == 1
 
     @pytest.mark.gen_test
     def test_patch_responds_400_for_no_matching_role(
@@ -88,10 +99,8 @@ class TestUserAPI:
         url = f"{base_url}/api/v1/users/{user.username}"
         headers = {"Content-Type": "application/json"}
 
-        body = json.dumps(
-            {"operation": "update", "value": {"roles": ["badrolename"]}}
-        )
-        
+        body = json.dumps({"operation": "update", "value": {"roles": ["badrolename"]}})
+
         assert len(user.roles) == 0
 
         with pytest.raises(HTTPError) as excinfo:
@@ -177,7 +186,6 @@ class TestUserAPI:
         assert response.code == 204
         with pytest.raises(DoesNotExist):
             get_user(id=user.id)
-
 
     @pytest.mark.gen_test
     def test_auth_enabled_rejects_delete_for_not_permitted_user(
@@ -279,7 +287,7 @@ class TestUserPasswordChangeAPI:
         assert response.code == 204
 
         # Verify password successfully changed
-        assert verify_password(get_user(id = user.id), new_password)
+        assert verify_password(get_user(id=user.id), new_password)
 
     @pytest.mark.gen_test
     def test_post_responds_400_on_incorrect_current_password(
@@ -301,7 +309,7 @@ class TestUserPasswordChangeAPI:
         assert excinfo.value.code == 400
 
         # Verify password remains unchanged
-        assert verify_password(get_user(id = user.id), "password")
+        assert verify_password(get_user(id=user.id), "password")
 
     @pytest.mark.gen_test
     def test_post_responds_400_when_required_fields_are_missing(
@@ -319,4 +327,4 @@ class TestUserPasswordChangeAPI:
         assert excinfo.value.code == 400
 
         # Verify password remains unchanged
-        assert verify_password(get_user(id = user.id), "password")
+        assert verify_password(get_user(id=user.id), "password")
