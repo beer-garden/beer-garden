@@ -1,21 +1,24 @@
-from typing import Union
 import logging
-
-# from typing import TYPE_CHECKING, Optional, Type, Union
+from typing import Union
 
 from brewtils.models import BaseModel as BrewtilsModel
+from brewtils.models import Command as BrewtilsCommand
+from brewtils.models import Event as BrewtilsEvent
 from brewtils.models import Garden as BrewtilsGarden
+from brewtils.models import Instance as BrewtilsInstance
 from brewtils.models import Job as BrewtilsJob
 from brewtils.models import Request as BrewtilsRequest
 from brewtils.models import RequestTemplate as BrewtilsRequestTemplate
+from brewtils.models import Role as BrewtilsRole
 from brewtils.models import System as BrewtilsSystem
 from brewtils.models import User as BrewtilsUser
-from brewtils.models import Role as BrewtilsRole
-from brewtils.models import Command as BrewtilsCommand
-from brewtils.models import Instance as BrewtilsInstance
-from brewtils.models import Event as BrewtilsEvent
 from mongoengine import Q
+
 import beer_garden.config as config
+import beer_garden.db.api as db
+
+# from typing import TYPE_CHECKING, Optional, Type, Union
+
 
 # from mongoengine import Document, DoesNaotExist, Q, QuerySet
 # from mongoengine.fields import ObjectIdField
@@ -30,7 +33,6 @@ import beer_garden.config as config
 #     System,
 # )
 
-import beer_garden.db.api as db
 
 logger = logging.getLogger(__name__)
 

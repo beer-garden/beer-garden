@@ -2,13 +2,11 @@
 import logging
 
 from brewtils.errors import ModelValidationError
-from brewtils.models import Operation, Garden
+from brewtils.models import Garden, Operation
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.handlers import AuthorizationHandler
-
 from beer_garden.garden import local_garden
-
 
 logger = logging.getLogger(__name__)
 

@@ -2,11 +2,12 @@
 from typing import Type
 
 from brewtils.models import BaseModel as BrewtilsModel
-from brewtils.models import Role, User, Operation
+from brewtils.models import Operation, Role, User
 from mongoengine import Document, QuerySet
 from mongoengine.queryset.visitor import Q, QCombination
 
 import beer_garden.config as config
+import beer_garden.db.api as db
 from beer_garden.api.http.authentication import decode_token, get_user_from_token
 from beer_garden.api.http.base_handler import BaseHandler
 from beer_garden.api.http.exceptions import (
@@ -15,14 +16,13 @@ from beer_garden.api.http.exceptions import (
     RequestForbidden,
 )
 from beer_garden.authorization import (
-    QueryFilterBuilder,
     ModelFilter,
+    QueryFilterBuilder,
     check_global_roles,
 )
 
 # from beer_garden.db.mongo.models import User
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
-import beer_garden.db.api as db
 
 
 class AuthorizationHandler(BaseHandler):

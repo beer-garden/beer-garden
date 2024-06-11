@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
-from brewtils.schema_parser import SchemaParser
+from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
+from brewtils.schema_parser import SchemaParser
 from marshmallow import ValidationError
 
-from brewtils.errors import ModelValidationError
 from beer_garden.api.http.exceptions import BadRequest
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.api.http.schemas.v1.user import (
-    UserPasswordChangeSchema,
-)
+from beer_garden.api.http.schemas.v1.user import UserPasswordChangeSchema
 from beer_garden.errors import InvalidPasswordException
 
 

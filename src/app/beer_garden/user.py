@@ -1,22 +1,20 @@
 import logging
-import yaml
-
-from brewtils.models import Event, Events, Operation, User, Garden, Role, UserToken
-from brewtils.schema_parser import SchemaParser
 from copy import deepcopy
 
-from beer_garden import config
+import yaml
+from brewtils.models import Event, Events, Garden, Operation, Role, User, UserToken
+from brewtils.schema_parser import SchemaParser
+from mongoengine import DoesNotExist
+from passlib.apps import custom_app_context
+
 import beer_garden.db.api as db
-from beer_garden.events import publish
+from beer_garden import config
 
 # from beer_garden.role import RoleSyncSchema, role_sync_status, sync_roles
 from beer_garden.errors import InvalidPasswordException
-from beer_garden.garden import get_gardens, get_garden
+from beer_garden.events import publish
+from beer_garden.garden import get_garden, get_gardens
 from beer_garden.role import get_role
-from mongoengine import DoesNotExist
-
-from passlib.apps import custom_app_context
-
 
 logger = logging.getLogger(__name__)
 

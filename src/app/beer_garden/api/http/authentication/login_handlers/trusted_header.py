@@ -5,6 +5,8 @@ from typing import List, Optional, cast
 from uuid import uuid4
 
 from box import Box
+from brewtils.models import User
+from brewtils.schema_parser import SchemaParser
 from marshmallow import ValidationError
 from mongoengine import DoesNotExist
 from tornado.httputil import HTTPHeaders, HTTPServerRequest
@@ -13,8 +15,6 @@ from beer_garden import config
 from beer_garden.api.http.authentication.login_handlers.base import BaseLoginHandler
 from beer_garden.role import get_role
 from beer_garden.user import create_user, get_user, set_password, update_user
-from brewtils.models import User
-from brewtils.schema_parser import SchemaParser
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from brewtils.models import Operation, Garden, Request, System
+from brewtils.models import Garden, Operation, Request, System
 
 from beer_garden.api.http.handlers import AuthorizationHandler
 

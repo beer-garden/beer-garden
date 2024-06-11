@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
+from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
+
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.garden import local_garden
-
-from brewtils.models import Operation
 
 
 class RoleAPI(AuthorizationHandler):

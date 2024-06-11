@@ -1,12 +1,12 @@
 import logging
-import yaml
 from typing import List
 
-from brewtils.models import Role, Event
+import yaml
+from brewtils.models import Event, Role
 from mongoengine import DoesNotExist
 
-from beer_garden import config
 import beer_garden.db.api as db
+from beer_garden import config
 
 logger = logging.getLogger(__name__)
 

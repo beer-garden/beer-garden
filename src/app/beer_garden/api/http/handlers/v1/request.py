@@ -6,8 +6,7 @@ from asyncio import Future
 from typing import Sequence
 
 from brewtils.errors import ModelValidationError
-from brewtils.models import Operation
-from brewtils.models import Request, System
+from brewtils.models import Operation, Request, System
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden.db.api as db

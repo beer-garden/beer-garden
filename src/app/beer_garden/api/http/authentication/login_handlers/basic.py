@@ -1,11 +1,11 @@
+from datetime import datetime
 from typing import Optional
 
-from tornado.httputil import HTTPServerRequest
 from brewtils.models import User
-from datetime import datetime
+from tornado.httputil import HTTPServerRequest
+
 from beer_garden.api.http.authentication.login_handlers.base import BaseLoginHandler
 from beer_garden.api.http.schemas.v1.token import TokenInputSchema
-
 from beer_garden.user import get_user, update_user, verify_password
 
 

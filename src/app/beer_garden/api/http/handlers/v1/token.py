@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from brewtils.models import Operation, User
+
 from beer_garden.api.http.authentication import (
     issue_token_pair,
     refresh_token_pair,
@@ -6,11 +8,10 @@ from beer_garden.api.http.authentication import (
     user_login,
 )
 from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.api.http.exceptions import AuthenticationFailed, BadRequest
+from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.api.http.schemas.v1.token import TokenRefreshInputSchema
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
-from brewtils.models import Operation, User
 
 
 class TokenAPI(BaseHandler):

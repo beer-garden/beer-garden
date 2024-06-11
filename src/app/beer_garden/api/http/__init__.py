@@ -20,13 +20,13 @@ from brewtils.schemas import (
     JobExportInputSchema,
     JobExportSchema,
     JobSchema,
-    RoleSchema,
     LoggingConfigSchema,
     OperationSchema,
     ParameterSchema,
     PatchSchema,
     QueueSchema,
     RequestSchema,
+    RoleSchema,
     RunnerSchema,
     SystemSchema,
     TopicSchema,
@@ -54,11 +54,7 @@ from beer_garden.api.http.schemas.v1.command_publishing_blocklist import (
     CommandPublishingBlocklistListSchema,
     CommandPublishingBlocklistSchema,
 )
-
-
-from beer_garden.api.http.schemas.v1.user import (
-    UserPasswordChangeSchema,
-)
+from beer_garden.api.http.schemas.v1.user import UserPasswordChangeSchema
 from beer_garden.events import publish
 
 io_loop: IOLoop = None

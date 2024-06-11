@@ -2,17 +2,11 @@
 import logging
 
 from mongoengine.connection import get_db
-from mongoengine.errors import (
-    DoesNotExist,
-    FieldDoesNotExist,
-    InvalidDocumentError,
-)
+from mongoengine.errors import DoesNotExist, FieldDoesNotExist, InvalidDocumentError
 from pymongo.errors import OperationFailure
 
 from beer_garden import config
-
 from beer_garden.errors import IndexOperationError
-
 
 logger = logging.getLogger(__name__)
 

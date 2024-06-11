@@ -1,6 +1,5 @@
-from mongoengine import ValidationError
-
 from brewtils.models import Role as BrewtilsRole
+from mongoengine import ValidationError
 
 
 def validate_permissions(permissions):

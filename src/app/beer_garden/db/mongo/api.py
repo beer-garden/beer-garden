@@ -19,12 +19,10 @@ from mongoengine.queryset.visitor import Q, QCombination
 import beer_garden.db.mongo.models
 from beer_garden.db.mongo.models import MongoModel
 from beer_garden.db.mongo.parser import MongoParser
-from beer_garden.db.mongo.util import (
+from beer_garden.db.mongo.util import (  # ensure_roles,; ensure_users,
     check_indexes,
     ensure_local_garden,
     ensure_model_migration,
-    # ensure_roles,
-    # ensure_users,
 )
 from beer_garden.errors import NotUniqueException
 

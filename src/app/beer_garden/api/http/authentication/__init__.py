@@ -3,22 +3,21 @@ from typing import Optional
 from uuid import UUID, uuid4
 
 import jwt
-from tornado.httputil import HTTPServerRequest
-
 from brewtils.models import User, UserToken
 from brewtils.schema_parser import SchemaParser
+from mongoengine import DoesNotExist
+from tornado.httputil import HTTPServerRequest
 
 from beer_garden import config
-from beer_garden.user import (
-    create_token,
-    get_user,
-    get_token,
-    delete_token,
-    revoke_tokens,
-)
 from beer_garden.api.http.authentication.login_handlers import enabled_login_handlers
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
-from mongoengine import DoesNotExist
+from beer_garden.user import (
+    create_token,
+    delete_token,
+    get_token,
+    get_user,
+    revoke_tokens,
+)
 
 
 def user_login(request: HTTPServerRequest) -> Optional[User]:
