@@ -1,22 +1,18 @@
-import builtins
-
 import pytest
-import yaml
 from box import Box
-from mock import mock_open
+from marshmallow import ValidationError
 from tornado.httputil import HTTPHeaders, HTTPServerRequest
 
 from beer_garden import config
 from beer_garden.api.http.authentication.login_handlers.trusted_header import (
     TrustedHeaderLoginHandler,
 )
-from beer_garden.db.mongo.models import Role, User
-
-
-@pytest.fixture
-def drop():
-    yield
-    User.drop_collection()
+from beer_garden.db.mongo.models import Role as DB_Role
+from beer_garden.db.mongo.models import User as DB_User
+from beer_garden.role import create_role
+from beer_garden.user import create_user
+from brewtils.models import RemoteUserMap, Role, User
+from brewtils.schema_parser import SchemaParser
 
 
 @pytest.fixture(autouse=True)
@@ -25,12 +21,13 @@ def app_config_trusted_handler(monkeypatch):
         {
             "auth": {
                 "enabled": True,
-                "group_definition_file": "/some/fake/path",
                 "authentication_handlers": {
                     "trusted_header": {
                         "enabled": True,
                         "username_header": "bg-username",
-                        "user_groups_header": "bg-user-groups",
+                        "user_remote_roles_header": "bg-user-remote-roles",
+                        "user_local_roles_header": "bg-user-local-roles",
+                        "user_remote_user_mapping_header": "bg-user-remote-user-mapping",
                         "create_users": True,
                     }
                 },
@@ -64,112 +61,45 @@ def app_config_trusted_handler_missing_group_definition_file(
 
 
 @pytest.fixture
-def user():
-    user = User(username="testuser").save()
-
-    yield user
-    user.delete()
-
-
-@pytest.fixture
-def role1():
-    role = Role(name="role1").save()
-
-    yield role
-    role.delete()
+def drop():
+    yield
+    DB_User.drop_collection()
+    DB_Role.drop_collection()
 
 
 @pytest.fixture
-def role2():
-    role = Role(name="role2").save()
-
-    yield role
-    role.delete()
+def user(drop):
+    yield create_user(User(username="testuser"))
 
 
 @pytest.fixture
-def group_mapping_yaml(role1, role2):
-    group1 = {
-        "group": "group1",
-        "role_assignments": [
-            {
-                "role_name": role1.name,
-                "domain": {"scope": "Global"},
-            }
-        ],
-    }
-    group2 = {
-        "group": "group2",
-        "role_assignments": [
-            {
-                "role_name": role1.name,
-                "domain": {"scope": "Garden", "identifiers": {"name": "garden1"}},
-            },
-            {
-                "role_name": role2.name,
-                "domain": {"scope": "Garden", "identifiers": {"name": "garden1"}},
-            },
-        ],
-    }
-
-    group_mapping = [group1, group2]
-    return yaml.dump(group_mapping)
+def role_1(drop):
+    yield create_role(Role(name="role1", permission="OPERATOR"))
 
 
 @pytest.fixture
-def group_mapping_yaml_missing_role():
-    group1 = {
-        "group": "group1",
-        "role_assignments": [
-            {
-                "role_name": "notarealrole",
-                "domain": {"scope": "Global"},
-            }
-        ],
-    }
-
-    group_mapping = [group1]
-    return yaml.dump(group_mapping)
+def role_2(drop):
+    yield create_role(Role(name="role2", permission="OPERATOR"))
 
 
 @pytest.fixture
-def group_mapping_yaml_malformed():
-    group1 = {
-        "group": "doesntmatter",
-        "role_assignments": [
-            {
-                "not_role_name": "should_have_been_role_name",
-                "domain": {"scope": "Global"},
-            }
-        ],
-    }
-
-    group_mapping = [group1]
-    return yaml.dump(group_mapping)
+def remote_user_mapping_1():
+    return RemoteUserMap(target_garden="child", username="child")
 
 
 @pytest.fixture
-def mock_group_mapping_yaml(monkeypatch, group_mapping_yaml):
-    monkeypatch.setattr(builtins, "open", mock_open(read_data=group_mapping_yaml))
+def remote_user_mapping_2():
+    return RemoteUserMap(target_garden="grandchild", username="grandchild")
 
 
 @pytest.fixture
-def mock_group_mapping_yaml_missing_role(monkeypatch, group_mapping_yaml_missing_role):
-    monkeypatch.setattr(
-        builtins, "open", mock_open(read_data=group_mapping_yaml_missing_role)
-    )
+def malformed_role():
+    return '[{ name": "role1","permission": "Operator","scope_garden": ["child"]}]'
 
 
 @pytest.fixture
-def mock_group_mapping_yaml_malformed(monkeypatch, group_mapping_yaml_malformed):
-    monkeypatch.setattr(
-        builtins, "open", mock_open(read_data=group_mapping_yaml_malformed)
-    )
-
-
-@pytest.fixture
-def mock_group_mapping_yaml_invalid_yaml(monkeypatch):
-    monkeypatch.setattr(builtins, "open", mock_open(read_data="{ThisAintYaml"))
+def malformed_user_mappings():
+    return '[{"target_gardens":"bad_garden", "username":"user"}]'
 
 
 def error_logged(caplog, module) -> bool:
@@ -185,59 +115,13 @@ def error_logged(caplog, module) -> bool:
 
 
 class TestTrustedHeaderLoginHandler:
-    def test_init_logs_error_for_malformed_mapping(
-        self, caplog, mock_group_mapping_yaml_malformed
-    ):
-        TrustedHeaderLoginHandler()
 
-        assert error_logged(
-            caplog,
-            "beer_garden.api.http.authentication.login_handlers.trusted_header",
-        )
-
-    def test_init_logs_error_for_invalid_yaml(
-        self, caplog, mock_group_mapping_yaml_invalid_yaml
-    ):
-        TrustedHeaderLoginHandler()
-
-        assert error_logged(
-            caplog,
-            "beer_garden.api.http.authentication.login_handlers.trusted_header",
-        )
-
-    def test_init_logs_error_for_missing_group_definition_file(
-        self, monkeypatch, caplog
-    ):
-        def file_not_found(*args, **kwargs):
-            raise FileNotFoundError
-
-        monkeypatch.setattr(builtins, "open", file_not_found)
-        TrustedHeaderLoginHandler()
-
-        assert error_logged(
-            caplog,
-            "beer_garden.api.http.authentication.login_handlers.trusted_header",
-        )
-
-    def test_init_logs_error_for_missing_group_definition_file_config(
-        self,
-        monkeypatch,
-        caplog,
-        app_config_trusted_handler_missing_group_definition_file,
-    ):
-        TrustedHeaderLoginHandler()
-
-        assert error_logged(
-            caplog,
-            "beer_garden.api.http.authentication.login_handlers.trusted_header",
-        )
-
-    def test_get_user_returns_existing_user(self, user, mock_group_mapping_yaml):
+    def test_get_user_returns_existing_user(self, user, role_1, role_2):
         handler = TrustedHeaderLoginHandler()
         headers = HTTPHeaders(
             {
                 handler.username_header: user.username,
-                handler.user_groups_header: "group2",
+                handler.user_local_roles_header: f'["{role_1.name}", "{role_2.name}"]',
             }
         )
         request = HTTPServerRequest(headers=headers)
@@ -245,34 +129,52 @@ class TestTrustedHeaderLoginHandler:
 
         assert authenticated_user is not None
         assert authenticated_user.username == user.username
-        assert len(authenticated_user.role_assignments) == 2
+        assert len(authenticated_user.roles) == 2
 
-    def test_get_user_creates_new_user(self, drop, mock_group_mapping_yaml):
+    def test_get_user_returns_existing_user_remote_roles(self, user):
         handler = TrustedHeaderLoginHandler()
         headers = HTTPHeaders(
             {
-                handler.username_header: "newuser",
-                handler.user_groups_header: "group2,unmappedgroup",
+                handler.username_header: user.username,
+                handler.user_remote_roles_header: SchemaParser.serialize_role(
+                    [
+                        Role(name="newRole1", permission="OPERATOR"),
+                        Role(name="newRole2", permission="OPERATOR"),
+                    ],
+                    to_string=True,
+                ),
             }
         )
         request = HTTPServerRequest(headers=headers)
         authenticated_user = handler.get_user(request)
 
         assert authenticated_user is not None
-        assert authenticated_user.username == "newuser"
-        assert len(authenticated_user.role_assignments) == 2
+        assert authenticated_user.username == user.username
+        assert len(authenticated_user.remote_roles) == 2
+
+    def test_get_user_creates_new_user(self, drop, role_1, role_2):
+        handler = TrustedHeaderLoginHandler()
+        headers = HTTPHeaders(
+            {
+                handler.username_header: "createNewUser",
+                handler.user_local_roles_header: f'["{role_1.name}", "{role_2.name}"]',
+            }
+        )
+        request = HTTPServerRequest(headers=headers)
+        authenticated_user = handler.get_user(request)
+
+        assert authenticated_user is not None
+        assert authenticated_user.username == "createNewUser"
+        assert len(authenticated_user.roles) == 2
 
     def test_get_user_handles_create_users_set_to_false(
-        self,
-        caplog,
-        mock_group_mapping_yaml,
-        app_config_trusted_handler_create_users_false,
+        self, app_config_trusted_handler_create_users_false, caplog, role_1, role_2
     ):
         handler = TrustedHeaderLoginHandler()
         headers = HTTPHeaders(
             {
-                handler.username_header: "newuser",
-                handler.user_groups_header: "group2,unmappedgroup",
+                handler.username_header: "createNewUser",
+                handler.user_local_roles_header: f'["{role_1.name}", "{role_2.name}"]',
             }
         )
         request = HTTPServerRequest(headers=headers)
@@ -280,23 +182,55 @@ class TestTrustedHeaderLoginHandler:
 
         assert authenticated_user is None
 
-    def test_get_user_logs_error_for_invalid_role(
-        self, caplog, user, mock_group_mapping_yaml_missing_role
+    def test_get_user_logs_error_for_invalid_role(self, user, role_1, role_2):
+        handler = TrustedHeaderLoginHandler()
+        headers = HTTPHeaders(
+            {
+                handler.username_header: user.username,
+                handler.user_local_roles_header: f'["{role_1.name}", "role3"]',
+            }
+        )
+        request = HTTPServerRequest(headers=headers)
+        with pytest.raises(ValidationError):
+            handler.get_user(request)
+
+    def test_get_user_returns_existing_user_remote_roles_malformed(
+        self, user, malformed_role
     ):
         handler = TrustedHeaderLoginHandler()
         headers = HTTPHeaders(
             {
                 handler.username_header: user.username,
-                handler.user_groups_header: "group1",
+                handler.user_remote_roles_header: malformed_role,
             }
         )
         request = HTTPServerRequest(headers=headers)
-        authenticated_user = handler.get_user(request)
 
-        assert authenticated_user is not None
-        assert authenticated_user.username == user.username
-        assert len(authenticated_user.role_assignments) == 0
-        assert error_logged(
-            caplog,
-            "beer_garden.api.http.authentication.login_handlers.trusted_header",
+        with pytest.raises(ValidationError):
+            handler.get_user(request)
+
+    def test_get_user_returns_existing_user_local_roles_malformed(self, user):
+        handler = TrustedHeaderLoginHandler()
+        headers = HTTPHeaders(
+            {
+                handler.username_header: user.username,
+                handler.user_local_roles_header: "[user]",
+            }
         )
+        request = HTTPServerRequest(headers=headers)
+
+        with pytest.raises(ValidationError):
+            handler.get_user(request)
+
+    def test_get_user_returns_existing_user_remote_user_mapping_malformed(self, user):
+        handler = TrustedHeaderLoginHandler()
+        headers = HTTPHeaders(
+            {
+                handler.username_header: user.username,
+                handler.user_remote_user_mapping_header: "[remotemappingbad]",
+            }
+        )
+        request = HTTPServerRequest(headers=headers)
+
+        with pytest.raises(ValidationError):
+            handler.get_user(request)
