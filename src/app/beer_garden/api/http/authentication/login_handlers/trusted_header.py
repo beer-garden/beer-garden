@@ -96,7 +96,7 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                 from_string=True,
                 many=True,
             )
-        except:
+        except Exception:
             raise ValidationError(
                 f"Unable to parse Remote Roles: {headers.get(self.user_remote_roles_header, '[]')}"
             )
@@ -117,10 +117,8 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                     get_role(role_name=role_name)
                     local_roles.append(role_name)
                 except DoesNotExist:
-                    raise ValidationError(
-                        f"Invalid role_name {role_name}. No such role found."
-                    )
-        except:
+                    pass
+        except Exception:
             raise ValidationError(
                 f"Unable to parse Local Roles: {headers.get(self.user_local_roles_header, '[]')}"
             )
@@ -139,7 +137,7 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                 from_string=True,
                 many=True,
             )
-        except:
+        except Exception:
             raise ValidationError(
                 f"Unable to parse Remote User Mapping: {headers.get(self.user_remote_user_mapping_header, '[]')}"
             )
