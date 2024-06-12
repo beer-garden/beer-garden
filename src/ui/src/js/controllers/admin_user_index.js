@@ -50,7 +50,7 @@ export default function adminUserIndexController($rootScope, $scope, $uibModal, 
       }
     }
 
-    for (const role of user.remote_roles){
+    for (const role of user.upstream_roles){
       if (role.permission == "GARDEN_ADMIN"){
         return "GARDEN_ADMIN";
       }

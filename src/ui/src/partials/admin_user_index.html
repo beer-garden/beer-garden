@@ -45,8 +45,8 @@
           <th scope="col">Max Permission</th>
           <th scope="col">Last Login</th>
           <th scope="col">Roles</th>
-          <th scope="col">Remote Roles</th>
-          <th scope="col">Remote Garden Accounts</th>
+          <th scope="col">Upstream Roles</th>
+          <th scope="col">Alias Garden Accounts</th>
           <th scope="col">Active User Token</th>
           <th scope="col"></th>
         </tr>
@@ -88,12 +88,12 @@
             </div>
           </td>
           <td>
-            <div ng-repeat="role in user.remote_roles">
+            <div ng-repeat="role in user.upstream_roles">
               <div title="{{roleTitle(role)}}">{{role.name}}</div>
             </div>
           </td>
           <td>
-            <div ng-if="user.remote_user_mapping.length > 0">
+            <div ng-if="user.alias_user_mapping.length > 0">
               <table 
                 class="table table-bordered"
                 style="width: 100%"
@@ -105,9 +105,9 @@
                   </tr>
                   </thead>
                 <tbody>
-                  <tr ng-repeat="remote_user in user.remote_user_mapping">
-                    <td>{{remote_user.target_garden}}</td>
-                    <td>{{remote_user.username}}</td>
+                  <tr ng-repeat="alias_user in user.alias_user_mapping">
+                    <td>{{alias_user.target_garden}}</td>
+                    <td>{{alias_user.username}}</td>
                   </tr>
                 </tbody>
               </table>

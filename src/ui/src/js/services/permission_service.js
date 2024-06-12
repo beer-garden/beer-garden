@@ -23,10 +23,10 @@ export default function permissionService($rootScope) {
                 }
             }
 
-            if ($rootScope.user.remote_roles !== undefined) {
-                for (let i = 0; i < $rootScope.user.remote_roles.length; i++) {
-                    if (permissions.includes($rootScope.user.remote_roles[i].permission)) {
-                        if (service.checkRole($rootScope.user.remote_roles[i], global = global, garden_name = garden_name, namespace = namespace, system_name = system_name, instance_name = instance_name, system_version = system_version, command_name = command_name)) {
+            if ($rootScope.user.upstream_roles !== undefined) {
+                for (let i = 0; i < $rootScope.user.upstream_roles.length; i++) {
+                    if (permissions.includes($rootScope.user.upstream_roles[i].permission)) {
+                        if (service.checkRole($rootScope.user.upstream_roles[i], global = global, garden_name = garden_name, namespace = namespace, system_name = system_name, instance_name = instance_name, system_version = system_version, command_name = command_name)) {
                             return true;
                         }
                     }

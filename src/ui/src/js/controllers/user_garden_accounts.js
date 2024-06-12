@@ -21,12 +21,12 @@ export default function userGardenAccountsController($scope, $rootScope, $uibMod
       if (garden == null){
         garden = $rootScope.garden;
       } else {
-        if ($scope.editUser.remote_user_mapping.length == 0){
-          $scope.editUser.remote_user_mapping.push({"target_garden":garden.name, "username":null})
+        if ($scope.editUser.alias_user_mapping.length == 0){
+          $scope.editUser.alias_user_mapping.push({"target_garden":garden.name, "username":null})
         } else {
           let foundMapping = false;
 
-          for (const user_mapping of $scope.editUser.remote_user_mapping){
+          for (const user_mapping of $scope.editUser.alias_user_mapping){
             if (garden.name == user_mapping.target_garden){
               foundMapping = true;
               break;
@@ -34,7 +34,7 @@ export default function userGardenAccountsController($scope, $rootScope, $uibMod
           }
 
           if (!foundMapping){
-            $scope.editUser.remote_user_mapping.push({"target_garden":garden.name, "username":null})
+            $scope.editUser.alias_user_mapping.push({"target_garden":garden.name, "username":null})
           }
         }
        
@@ -99,7 +99,7 @@ export default function userGardenAccountsController($scope, $rootScope, $uibMod
         return $scope.editUser.username;
       }
 
-      for (const user_mapping of $scope.editUser.remote_user_mapping){
+      for (const user_mapping of $scope.editUser.alias_user_mapping){
         if (parentGarden == user_mapping.target_garden){
           if (user_mapping.username !== undefined && user_mapping.username != null){
             return user_mapping.username;
@@ -113,12 +113,12 @@ export default function userGardenAccountsController($scope, $rootScope, $uibMod
 
     $scope.submitAccounts = function() {
       let populatedAccounts = [];
-      for (const user_mapping of $scope.editUser.remote_user_mapping){
+      for (const user_mapping of $scope.editUser.alias_user_mapping){
         if (user_mapping.username !== undefined && user_mapping.username != null && user_mapping.username.length > 0){
           populatedAccounts.push(user_mapping);
         }
       }
-      $scope.user.remote_user_mapping = populatedAccounts;
+      $scope.user.alias_user_mapping = populatedAccounts;
       UserService.updateUserAccounts($scope.user.username, $scope.user);
     }
    
