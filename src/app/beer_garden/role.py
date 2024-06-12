@@ -29,7 +29,6 @@ def get_roles():
 def update_role(
     role: Role = None, role_name: str = None, role_id: str = None, **kwargs
 ) -> Role:
-
     if not role:
         if role_name:
             role = db.query_unique(Role, name=role_name, raise_missing=True)

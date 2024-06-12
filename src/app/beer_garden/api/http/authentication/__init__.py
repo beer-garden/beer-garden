@@ -224,7 +224,7 @@ def _generate_access_token(user: User, identifier: UUID, max_permission: str) ->
         "jti": str(identifier),
         "sub": str(user.id),
         "iat": datetime.utcnow(),
-        "exp": _get_access_token_expiration(max_permission = max_permission),
+        "exp": _get_access_token_expiration(max_permission=max_permission),
         "type": "access",
         "username": user.username,
         "roles": roles,
@@ -253,23 +253,39 @@ def _generate_refresh_token(user: User, identifier: UUID, expiration: datetime) 
     return refresh_token
 
 
-def _get_access_token_expiration(max_permission = None) -> datetime:
+def _get_access_token_expiration(max_permission=None) -> datetime:
     """Calculate and return the access token expiration time"""
     if max_permission == "GARDEN_ADMIN":
-        return datetime.utcnow() + timedelta(minutes=config.get("auth.token_access_ttl.garden_admin"))
+        return datetime.utcnow() + timedelta(
+            minutes=config.get("auth.token_access_ttl.garden_admin")
+        )
     elif max_permission == "PLUGIN_ADMIN":
-        return datetime.utcnow() + timedelta(minutes=config.get("auth.token_access_ttl.plugin_admin"))
+        return datetime.utcnow() + timedelta(
+            minutes=config.get("auth.token_access_ttl.plugin_admin")
+        )
     elif max_permission == "OPERATOR":
-        return datetime.utcnow() + timedelta(minutes=config.get("auth.token_access_ttl.operator"))
-    return datetime.utcnow() + timedelta(minutes=config.get("auth.token_access_ttl.read_only"))
+        return datetime.utcnow() + timedelta(
+            minutes=config.get("auth.token_access_ttl.operator")
+        )
+    return datetime.utcnow() + timedelta(
+        minutes=config.get("auth.token_access_ttl.read_only")
+    )
 
 
-def _get_refresh_token_expiration(max_permission = None) -> datetime:
+def _get_refresh_token_expiration(max_permission=None) -> datetime:
     """Calculate and return the refresh token expiration time"""
     if max_permission == "GARDEN_ADMIN":
-        return datetime.utcnow() + timedelta(minutes=config.get("auth.token_refresh_ttl.garden_admin"))
+        return datetime.utcnow() + timedelta(
+            minutes=config.get("auth.token_refresh_ttl.garden_admin")
+        )
     elif max_permission == "PLUGIN_ADMIN":
-        return datetime.utcnow() + timedelta(minutes=config.get("auth.token_refresh_ttl.plugin_admin"))
+        return datetime.utcnow() + timedelta(
+            minutes=config.get("auth.token_refresh_ttl.plugin_admin")
+        )
     elif max_permission == "OPERATOR":
-        return datetime.utcnow() + timedelta(minutes=config.get("auth.token_refresh_ttl.operator"))
-    return datetime.utcnow() + timedelta(minutes=config.get("auth.token_refresh_ttl.read_only"))
+        return datetime.utcnow() + timedelta(
+            minutes=config.get("auth.token_refresh_ttl.operator")
+        )
+    return datetime.utcnow() + timedelta(
+        minutes=config.get("auth.token_refresh_ttl.read_only")
+    )

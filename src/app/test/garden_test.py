@@ -548,7 +548,6 @@ stomp:
         assert updated_garden.status == "STOPPED"
 
     def test_garden_unresponsive_trigger(self, bg_garden):
-
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
             connection.status_info["heartbeat"] = datetime.utcnow() - timedelta(
@@ -567,7 +566,6 @@ stomp:
             assert connection.status == "UNRESPONSIVE"
 
     def test_garden_unresponsive_trigger_in_window(self, bg_garden):
-
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
             connection.status_info["heartbeat"] = datetime.utcnow() - timedelta(
@@ -587,7 +585,6 @@ stomp:
             assert connection.status == "RECEIVING"
 
     def test_garden_unresponsive_trigger_child_metadata(self, bg_garden):
-
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
             connection.status_info["heartbeat"] = datetime.utcnow() - timedelta(
@@ -609,7 +606,6 @@ stomp:
             assert connection.status == "UNRESPONSIVE"
 
     def test_garden_unresponsive_trigger_missing_window(self, bg_garden):
-
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
             connection.status_info["heartbeat"] = datetime.utcnow() - timedelta(

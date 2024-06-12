@@ -167,13 +167,13 @@ class QueryFilterBuilder:
                     if len(role.scope_systems) > 0:
                         filter["request_template__system__in"] = role.scope_systems
                     if len(role.scope_instances) > 0:
-                        filter["request_template__instance_name__in"] = (
-                            role.scope_instances
-                        )
+                        filter[
+                            "request_template__instance_name__in"
+                        ] = role.scope_instances
                     if len(role.scope_versions) > 0:
-                        filter["request_template__system_version__in"] = (
-                            role.scope_versions
-                        )
+                        filter[
+                            "request_template__system_version__in"
+                        ] = role.scope_versions
                     if len(role.scope_commands) > 0:
                         filter["request_template__command__in"] = role.scope_commands
 
@@ -341,7 +341,6 @@ class ModelFilter:
                     )
 
         if system:
-
             if check_system and system_name is None:
                 system_name = system.name
             if check_instances and system_instances is None:
@@ -825,7 +824,6 @@ class ModelFilter:
         permission_levels=None,
         **kwargs
     ) -> BrewtilsModel:
-
         if isinstance(obj, BrewtilsUser):
             del obj.password
 
@@ -904,5 +902,3 @@ class ModelFilter:
         # If object is outside of the filters, check for permissions at a minimum
         if check_global_roles(user, permission_levels=permission_levels):
             return obj
-
-

@@ -82,10 +82,15 @@ def revoke_tokens(user: User = None, username: str = None) -> None:
     ):
         db.delete(user_token)
 
+
 def validated_token_ttl():
-    for ttl in ["garden_admin","plugin_admin", "operator","read_only"]:
-        if config.get(f"auth.token_access_ttl.{ttl}") > config.get(f"auth.token_refresh_ttl.{ttl}"):
-            raise ConfigurationError(f"Refresh Token TTL {ttl} expires prior to Access Token TTL {ttl}")
+    for ttl in ["garden_admin", "plugin_admin", "operator", "read_only"]:
+        if config.get(f"auth.token_access_ttl.{ttl}") > config.get(
+            f"auth.token_refresh_ttl.{ttl}"
+        ):
+            raise ConfigurationError(
+                f"Refresh Token TTL {ttl} expires prior to Access Token TTL {ttl}"
+            )
 
 
 def get_user(username: str = None, id: str = None, include_roles: bool = True) -> User:
@@ -189,7 +194,7 @@ def update_user(
     username: str = None,
     new_password: str = None,
     current_password: str = None,
-    **kwargs
+    **kwargs,
 ) -> User:
     """Updates the provided User by setting its attributes to those provided by kwargs.
     The updated user object is then saved to the database and returned.
@@ -242,8 +247,8 @@ def update_user(
 
     return user
 
-def determine_max_permission(user: User) -> str:
 
+def determine_max_permission(user: User) -> str:
     max_permission = "READ_ONLY"
 
     for roles in [user.local_roles, user.upstream_roles]:
@@ -253,18 +258,19 @@ def determine_max_permission(user: User) -> str:
                     continue
                 if role.permission == "GARDEN_ADMIN":
                     return role.permission
-                
+
                 if max_permission == "PLUGIN_ADMIN":
                     continue
 
                 if role.permission == "PLUGIN_ADMIN":
                     max_permission = role.permission
-                    continue       
+                    continue
 
                 if role.permission == "OPERATOR":
                     max_permission = role.permission
 
     return max_permission
+
 
 def flatten_user_role(role: Role, flatten_roles: list):
     new_roles = []
@@ -322,7 +328,6 @@ def upstream_role_match(role: Role, target_garden: Garden):
 
 
 def upstream_role_match_garden(role: Role, target_garden: Garden) -> bool:
-
     # If no scope attributes are populated, then it matches everything
     matchAll = True
     for scope_attribute in [
@@ -346,7 +351,6 @@ def upstream_role_match_garden(role: Role, target_garden: Garden) -> bool:
 
     if target_garden.systems:
         for system in target_garden.systems:
-
             # Check for Command Role Filter
             if role.scope_commands and len(role.scope_commands) > 0:
                 match = False
@@ -402,7 +406,6 @@ def upstream_role_match_garden(role: Role, target_garden: Garden) -> bool:
 
 
 def generate_downstream_user(target_garden: Garden, user: User) -> User:
-
     # Garden shares accounts, no filering applied
     if target_garden.shared_users:
         return User(
@@ -510,7 +513,6 @@ def upstream_user_sync(upstream_user: User) -> User:
 
 
 def upstream_users_sync(upstream_users=[]):
-
     upstream_users_brewtils = SchemaParser.parse_user(
         upstream_users, many=True, from_string=False
     )

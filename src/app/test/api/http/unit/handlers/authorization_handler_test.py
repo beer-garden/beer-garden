@@ -24,23 +24,26 @@ application = tornado.web.Application(
 
 @pytest.fixture
 def app_config_auth_enabled(monkeypatch):
-    app_config = Box({
-        "auth": {
-            "enabled": True, 
-            "token_secret": "notsosecret",
-            "token_access_ttl": {
+    app_config = Box(
+        {
+            "auth": {
+                "enabled": True,
+                "token_secret": "notsosecret",
+                "token_access_ttl": {
                     "garden_admin": 15,
                     "operator": 15,
                     "plugin_admin": 15,
                     "read_only": 15,
-                },     
-                "token_refresh_ttl":{
+                },
+                "token_refresh_ttl": {
                     "garden_admin": 720,
                     "operator": 720,
                     "plugin_admin": 720,
                     "read_only": 720,
-                }, 
-            }})
+                },
+            }
+        }
+    )
     monkeypatch.setattr(config, "_CONFIG", app_config)
 
     yield app_config
@@ -175,7 +178,7 @@ class TestAuthorizationHandler:
     def test_auth_enabled_blocks_access_with_expired_token(
         self, monkeypatch, http_client, base_url, app_config_auth_enabled, user
     ):
-        def yesterday(max_permission = None):
+        def yesterday(max_permission=None):
             return datetime.utcnow() - timedelta(days=1)
 
         monkeypatch.setattr(

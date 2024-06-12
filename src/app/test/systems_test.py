@@ -67,7 +67,6 @@ class TestSystem:
         ), "System command should be updated with the new command name"
 
     def test_get_systems(self, system, system2):
-
         systems = get_systems()
 
         assert len(systems) == 2
@@ -84,7 +83,6 @@ class TestSystem:
         assert system_2_found
 
     def test_get_systems_filtered(self, system, system2):
-
         systems = get_systems(filter_latest=True)
 
         assert len(systems) == 1

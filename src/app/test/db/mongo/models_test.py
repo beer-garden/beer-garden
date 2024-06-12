@@ -509,14 +509,12 @@ class TestRole:
         Role.drop_collection()
 
     def test_create_with_valid_permissions(self):
-
         role = Role(name="test_role", permission="READ_ONLY")
         role.save()
 
         assert Role.objects.filter(name="test_role").count() == 1
 
     def test_create_with_invalid_permissions(self):
-
         role = Role(name="test_role", permission="invalid_permission")
 
         with pytest.raises(ModelValidationError):
@@ -555,7 +553,6 @@ class TestUser:
         assert User.objects.filter(username="testuser").count() == 1
 
     def test_local_role_map_to_roles(self, user, role):
-
         assert len(user.roles) == 0
         user.local_roles = []
         user.local_roles.append(role)
@@ -587,7 +584,6 @@ class TestUser:
 
 
 class TestUserToken:
-
     @pytest.fixture()
     def user(self):
         user = User(username="testuser").save()
@@ -596,7 +592,6 @@ class TestUserToken:
 
     @pytest.fixture()
     def user_token(self, user):
-
         user_token = UserToken(
             expires_at=datetime.utcnow() + timedelta(minutes=10),
             username=user.username,
@@ -776,7 +771,6 @@ class TestGarden:
 
 
 class TestFileUpdates:
-
     @pytest.fixture()
     def raw_file(self):
         rawfile = RawFile().save()

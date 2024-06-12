@@ -58,7 +58,6 @@ def job_manager_role(system_permitted):
 
 @pytest.fixture
 def user(job_manager_role):
-
     user = create_user(User(username="testuser", local_roles=[job_manager_role]))
     yield user
     delete_user(user=user)
@@ -66,7 +65,6 @@ def user(job_manager_role):
 
 @pytest.fixture
 def access_token(user):
-    
     yield issue_token_pair(user)["access"]
 
 

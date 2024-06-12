@@ -10,7 +10,6 @@ from beer_garden.user import (
 
 
 class TestUser:
-
     def test_flatten_user_role(self):
         role = Role(
             name="test",

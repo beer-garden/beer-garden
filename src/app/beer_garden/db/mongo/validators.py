@@ -3,7 +3,6 @@ from mongoengine import ValidationError
 
 
 def validate_permissions(permissions):
-
     for permission in permissions:
         if permission not in BrewtilsRole.PERMISSION_TYPES:
             raise ValidationError(

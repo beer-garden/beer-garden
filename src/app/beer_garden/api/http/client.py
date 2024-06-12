@@ -13,7 +13,6 @@ from beer_garden.authorization import ModelFilter
 
 
 class SerializeHelper(object):
-
     def __init__(self):
         self.model_filter = ModelFilter()
 

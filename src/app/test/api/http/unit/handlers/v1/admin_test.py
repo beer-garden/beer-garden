@@ -33,7 +33,6 @@ def garden_admin_role():
 
 @pytest.fixture
 def user_with_permission(garden, garden_admin_role):
-
     user = User(username="testuser", roles=["garden_admin"], password="password")
 
     user = create_user(user)

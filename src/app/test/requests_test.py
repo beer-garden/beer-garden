@@ -1127,7 +1127,6 @@ class TestHandleEvent:
 
 
 class TestLatestRequest(object):
-
     @pytest.fixture
     def system_v1(self):
         yield create_system(

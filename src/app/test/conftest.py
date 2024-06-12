@@ -54,20 +54,20 @@ def app_config_auth_disabled(local_garden_name):
     app_config = Box(
         {
             "auth": {
-                "enabled": False, 
+                "enabled": False,
                 "token_secret": "notsosecret",
-                 "token_access_ttl": {
+                "token_access_ttl": {
                     "garden_admin": 15,
                     "operator": 15,
                     "plugin_admin": 15,
                     "read_only": 15,
-                },     
-                "token_refresh_ttl":{
+                },
+                "token_refresh_ttl": {
                     "garden_admin": 720,
                     "operator": 720,
                     "plugin_admin": 720,
                     "read_only": 720,
-                },  
+                },
             },
             "garden": {"name": local_garden_name},
         }
@@ -91,13 +91,13 @@ def app_config_auth_enabled(monkeypatch, local_garden_name):
                     "operator": 15,
                     "plugin_admin": 15,
                     "read_only": 15,
-                },     
-                "token_refresh_ttl":{
+                },
+                "token_refresh_ttl": {
                     "garden_admin": 720,
                     "operator": 720,
                     "plugin_admin": 720,
                     "read_only": 720,
-                },   
+                },
             },
             "garden": {"name": local_garden_name},
         }

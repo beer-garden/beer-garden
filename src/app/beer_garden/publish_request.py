@@ -25,9 +25,9 @@ def handle_event(event: Event):
             if "_topic" in event.payload.metadata:
                 event.metadata["topic"] = event.payload.metadata["_topic"]
             else:
-                event.metadata["topic"] = (
-                    f"{event.payload.namespace}.{event.payload.system}.{event.payload.system_version}.{event.payload.instance_name}.{event.payload.comment}"
-                )
+                event.metadata[
+                    "topic"
+                ] = f"{event.payload.namespace}.{event.payload.system}.{event.payload.system_version}.{event.payload.instance_name}.{event.payload.comment}"
 
             if "_propagate" in event.payload.metadata:
                 event.metadata["propagate"] = event.payload.metadata["propagate"]
@@ -62,7 +62,6 @@ def process_publish_event(
     for system in garden.systems:
         for command in system.commands:
             for instance in system.instances:
-
                 if instance.status == "RUNNING":
                     match = (
                         not regex_only

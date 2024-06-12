@@ -27,7 +27,9 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
             Box, config.get("auth.authentication_handlers.trusted_header")
         )
         self.username_header = handler_config.get("username_header")
-        self.user_upstream_roles_header = handler_config.get("user_upstream_roles_header")
+        self.user_upstream_roles_header = handler_config.get(
+            "user_upstream_roles_header"
+        )
         self.user_local_roles_header = handler_config.get("user_local_roles_header")
         self.user_alias_user_mapping_header = handler_config.get(
             "user_alias_user_mapping_header"
@@ -50,9 +52,7 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
             username = request.headers.get(self.username_header)
             upstream_roles = self._upstream_roles_from_headers(request.headers)
             local_roles = self._local_roles_from_headers(request.headers)
-            alias_user_mappings = self._alias_user_mapping_from_headers(
-                request.headers
-            )
+            alias_user_mappings = self._alias_user_mapping_from_headers(request.headers)
 
             if username:
                 try:
@@ -77,9 +77,9 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                     if alias_user_mappings:
                         authenticated_user.alias_user_mapping = alias_user_mappings
 
-                    authenticated_user.metadata["last_authentication"] = (
-                        datetime.utcnow().timestamp()
-                    )
+                    authenticated_user.metadata[
+                        "last_authentication"
+                    ] = datetime.utcnow().timestamp()
                     authenticated_user = update_user(authenticated_user)
 
         return authenticated_user

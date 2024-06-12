@@ -410,7 +410,6 @@ class TestSystemListAPI:
         system_global_admin_role,
         system_cleanup,
     ):
-
         user.local_roles.append(system_global_admin_role)
         access_token = issue_token_pair(user)["access"]
 

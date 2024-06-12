@@ -14,7 +14,6 @@ from beer_garden.errors import ExpiredTokenException, InvalidTokenException
 from beer_garden.user import create_user, delete_user, get_token
 
 
-
 @pytest.fixture
 def user_password():
     yield "supersecret"

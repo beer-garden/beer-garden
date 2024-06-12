@@ -115,7 +115,6 @@ def error_logged(caplog, module) -> bool:
 
 
 class TestTrustedHeaderLoginHandler:
-
     def test_get_user_returns_existing_user(self, user, role_1, role_2):
         handler = TrustedHeaderLoginHandler()
         headers = HTTPHeaders(

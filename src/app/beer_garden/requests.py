@@ -1007,12 +1007,10 @@ def handle_event(event):
 
         if event.garden != config.get("garden.name") and not event.error:
             if existing_request is None:
-
                 # Attempt to create the request, if it already exists then continue on
                 try:
                     # User mappings back to local usernames
                     if event.payload.requester and config.get("auth.enabled"):
-
                         foundUser = False
 
                         # First try to grab requester from Parent Request

@@ -54,7 +54,6 @@ class TokenAPI(BaseHandler):
 
 
 class TokenListAPI(AuthorizationHandler):
-
     async def delete(self, username):
         """
         ---
