@@ -1,6 +1,6 @@
 import pytest
 from box import Box
-from brewtils.models import RemoteUserMap, Role, User
+from brewtils.models import AliasUserMap, Role, User
 from brewtils.schema_parser import SchemaParser
 from marshmallow import ValidationError
 from tornado.httputil import HTTPHeaders, HTTPServerRequest
@@ -25,9 +25,9 @@ def app_config_trusted_handler(monkeypatch):
                     "trusted_header": {
                         "enabled": True,
                         "username_header": "bg-username",
-                        "user_remote_roles_header": "bg-user-remote-roles",
+                        "user_upstream_roles_header": "bg-user-upstream-roles",
                         "user_local_roles_header": "bg-user-local-roles",
-                        "user_remote_user_mapping_header": "bg-user-remote-user-mapping",
+                        "user_alias_user_mapping_header": "bg-user-alias-user-mapping",
                         "create_users": True,
                     }
                 },
@@ -83,13 +83,13 @@ def role_2():
 
 
 @pytest.fixture
-def remote_user_mapping_1():
-    return RemoteUserMap(target_garden="child", username="child")
+def alias_user_mapping_1():
+    return AliasUserMap(target_garden="child", username="child")
 
 
 @pytest.fixture
-def remote_user_mapping_2():
-    return RemoteUserMap(target_garden="grandchild", username="grandchild")
+def alias_user_mapping_2():
+    return AliasUserMap(target_garden="grandchild", username="grandchild")
 
 
 @pytest.fixture
@@ -131,12 +131,12 @@ class TestTrustedHeaderLoginHandler:
         assert authenticated_user.username == user.username
         assert len(authenticated_user.roles) == 2
 
-    def test_get_user_returns_existing_user_remote_roles(self, user):
+    def test_get_user_returns_existing_user_upstream_roles(self, user):
         handler = TrustedHeaderLoginHandler()
         headers = HTTPHeaders(
             {
                 handler.username_header: user.username,
-                handler.user_remote_roles_header: SchemaParser.serialize_role(
+                handler.user_upstream_roles_header: SchemaParser.serialize_role(
                     [
                         Role(name="newRole1", permission="OPERATOR"),
                         Role(name="newRole2", permission="OPERATOR"),
@@ -150,7 +150,7 @@ class TestTrustedHeaderLoginHandler:
 
         assert authenticated_user is not None
         assert authenticated_user.username == user.username
-        assert len(authenticated_user.remote_roles) == 2
+        assert len(authenticated_user.upstream_roles) == 2
 
     def test_get_user_creates_new_user(self, role_1, role_2):
         handler = TrustedHeaderLoginHandler()
@@ -191,17 +191,20 @@ class TestTrustedHeaderLoginHandler:
             }
         )
         request = HTTPServerRequest(headers=headers)
-        with pytest.raises(ValidationError):
-            handler.get_user(request)
+        authenticated_user = handler.get_user(request)
 
-    def test_get_user_returns_existing_user_remote_roles_malformed(
+        assert authenticated_user is not None
+        assert authenticated_user.username == user.username
+        assert len(authenticated_user.roles) == 1
+
+    def test_get_user_returns_existing_user_upstream_roles_malformed(
         self, user, malformed_role
     ):
         handler = TrustedHeaderLoginHandler()
         headers = HTTPHeaders(
             {
                 handler.username_header: user.username,
-                handler.user_remote_roles_header: malformed_role,
+                handler.user_upstream_roles_header: malformed_role,
             }
         )
         request = HTTPServerRequest(headers=headers)
@@ -222,12 +225,12 @@ class TestTrustedHeaderLoginHandler:
         with pytest.raises(ValidationError):
             handler.get_user(request)
 
-    def test_get_user_returns_existing_user_remote_user_mapping_malformed(self, user):
+    def test_get_user_returns_existing_user_alias_user_mapping_malformed(self, user):
         handler = TrustedHeaderLoginHandler()
         headers = HTTPHeaders(
             {
                 handler.username_header: user.username,
-                handler.user_remote_user_mapping_header: "[remotemappingbad]",
+                handler.user_alias_user_mapping_header: "[remotemappingbad]",
             }
         )
         request = HTTPServerRequest(headers=headers)

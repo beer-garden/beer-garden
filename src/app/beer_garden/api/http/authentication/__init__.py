@@ -160,7 +160,7 @@ def get_user_from_token(access_token: dict, revoke_expired=True) -> User:
     user.local_roles = SchemaParser.parse_role(
         access_token["roles"], many=True, from_string=False
     )
-    user.remote_roles = []
+    user.upstream_roles = []
 
     return user
 
@@ -213,8 +213,8 @@ def _generate_access_token(user: User, identifier: UUID, max_permission: str) ->
         for role in user.local_roles:
             roles.append(SchemaParser.serialize_role(role, to_string=False, many=False))
 
-    if user.remote_roles:
-        for role in user.remote_roles:
+    if user.upstream_roles:
+        for role in user.upstream_roles:
             roles.append(
                 SchemaParser.serialize_remote_role(role, to_string=False, many=False)
             )
@@ -224,7 +224,7 @@ def _generate_access_token(user: User, identifier: UUID, max_permission: str) ->
         "jti": str(identifier),
         "sub": str(user.id),
         "iat": datetime.utcnow(),
-        "exp": _get_access_token_expiration(max_permission),
+        "exp": _get_access_token_expiration(max_permission = max_permission),
         "type": "access",
         "username": user.username,
         "roles": roles,

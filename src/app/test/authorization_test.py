@@ -545,7 +545,7 @@ class TestModelFilter:
                             scope_commands=["command2"],
                         )
                     ],
-                    remote_roles=[
+                    upstream_roles=[
                         Role(
                             permission="ADMIN",
                             name="role2",
@@ -790,7 +790,7 @@ class TestModelFilter:
                             scope_commands=["command2"],
                         )
                     ],
-                    remote_roles=[
+                    upstream_roles=[
                         Role(
                             permission="ADMIN",
                             name="role2",

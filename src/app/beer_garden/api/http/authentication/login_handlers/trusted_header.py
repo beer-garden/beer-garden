@@ -27,10 +27,10 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
             Box, config.get("auth.authentication_handlers.trusted_header")
         )
         self.username_header = handler_config.get("username_header")
-        self.user_remote_roles_header = handler_config.get("user_remote_roles_header")
+        self.user_upstream_roles_header = handler_config.get("user_upstream_roles_header")
         self.user_local_roles_header = handler_config.get("user_local_roles_header")
-        self.user_remote_user_mapping_header = handler_config.get(
-            "user_remote_user_mapping_header"
+        self.user_alias_user_mapping_header = handler_config.get(
+            "user_alias_user_mapping_header"
         )
         self.create_users = handler_config.get("create_users")
 
@@ -48,9 +48,9 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
 
         if request.headers:
             username = request.headers.get(self.username_header)
-            remote_roles = self._remote_roles_from_headers(request.headers)
+            upstream_roles = self._upstream_roles_from_headers(request.headers)
             local_roles = self._local_roles_from_headers(request.headers)
-            remote_user_mappings = self._remote_user_mapping_from_headers(
+            alias_user_mappings = self._alias_user_mapping_from_headers(
                 request.headers
             )
 
@@ -68,14 +68,14 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                         authenticated_user = create_user(authenticated_user)
 
                 if authenticated_user:
-                    if remote_roles:
-                        authenticated_user.remote_roles = remote_roles
+                    if upstream_roles:
+                        authenticated_user.upstream_roles = upstream_roles
 
                     if local_roles:
                         authenticated_user.roles = local_roles
 
-                    if remote_user_mappings:
-                        authenticated_user.remote_user_mapping = remote_user_mappings
+                    if alias_user_mappings:
+                        authenticated_user.alias_user_mapping = alias_user_mappings
 
                     authenticated_user.metadata["last_authentication"] = (
                         datetime.utcnow().timestamp()
@@ -84,21 +84,21 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
 
         return authenticated_user
 
-    def _remote_roles_from_headers(self, headers: HTTPHeaders) -> List[str]:
+    def _upstream_roles_from_headers(self, headers: HTTPHeaders) -> List[str]:
         """Parse the header containing the user's groups and return them as a list"""
 
-        if not headers.get(self.user_remote_roles_header, None):
+        if not headers.get(self.user_upstream_roles_header, None):
             return None
 
         try:
             return SchemaParser.parse_role(
-                headers.get(self.user_remote_roles_header, "[]"),
+                headers.get(self.user_upstream_roles_header, "[]"),
                 from_string=True,
                 many=True,
             )
         except Exception:
             raise ValidationError(
-                f"Unable to parse Remote Roles: {headers.get(self.user_remote_roles_header, '[]')}"
+                f"Unable to parse Remote Roles: {headers.get(self.user_upstream_roles_header, '[]')}"
             )
 
     def _local_roles_from_headers(self, headers: HTTPHeaders) -> List[str]:
@@ -125,19 +125,19 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
 
         return local_roles
 
-    def _remote_user_mapping_from_headers(self, headers: HTTPHeaders) -> List[str]:
+    def _alias_user_mapping_from_headers(self, headers: HTTPHeaders) -> List[str]:
         """Parse the header containing the user's groups and return them as a list"""
 
-        if not headers.get(self.user_remote_user_mapping_header, None):
+        if not headers.get(self.user_alias_user_mapping_header, None):
             return None
 
         try:
-            return SchemaParser.parse_remote_user_map(
-                headers.get(self.user_remote_user_mapping_header, "[]"),
+            return SchemaParser.parse_alias_user_map(
+                headers.get(self.user_alias_user_mapping_header, "[]"),
                 from_string=True,
                 many=True,
             )
         except Exception:
             raise ValidationError(
-                f"Unable to parse Remote User Mapping: {headers.get(self.user_remote_user_mapping_header, '[]')}"
+                f"Unable to parse Alias User Mapping: {headers.get(self.user_alias_user_mapping_header, '[]')}"
             )

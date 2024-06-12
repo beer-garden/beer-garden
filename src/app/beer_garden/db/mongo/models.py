@@ -71,8 +71,8 @@ __all__ = [
     "File",
     "FileChunk",
     "Role",
-    "RemoteRole",
-    "RemoteUserMap",
+    "UpstreamRole",
+    "AliasUserMap",
     "User",
     "CommandPublishingBlocklist",
     "Topic",
@@ -1000,8 +1000,8 @@ class Role(MongoModel, Document):
             )
 
 
-class RemoteRole(MongoModel, EmbeddedDocument):
-    brewtils_model = brewtils.models.RemoteRole
+class UpstreamRole(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.UpstreamRole
 
     name = StringField()
     description = StringField()
@@ -1028,8 +1028,8 @@ class RemoteRole(MongoModel, EmbeddedDocument):
             )
 
 
-class RemoteUserMap(MongoModel, EmbeddedDocument):
-    brewtils_model = brewtils.models.RemoteUserMap
+class AliasUserMap(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.AliasUserMap
 
     target_garden = StringField()
     username = StringField()
@@ -1042,9 +1042,9 @@ class User(MongoModel, Document):
     password = StringField()
     roles = ListField(field=StringField())
     local_roles = DummyField(required=False)
-    remote_roles = EmbeddedDocumentListField("RemoteRole")
+    upstream_roles = EmbeddedDocumentListField("UpstreamRole")
     is_remote = BooleanField(required=True, default=False)
-    remote_user_mapping = EmbeddedDocumentListField("RemoteUserMap")
+    alias_user_mapping = EmbeddedDocumentListField("AliasUserMap")
     metadata = DictField()
     protected = BooleanField(required=True, default=False)
     file_generated = BooleanField(required=True, default=False)

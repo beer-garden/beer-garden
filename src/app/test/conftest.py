@@ -7,7 +7,7 @@ from mongoengine import connect
 import beer_garden
 import beer_garden.config as config
 import beer_garden.events
-from beer_garden.db.mongo.models import (  # RemoteRole,; RemoteUser,
+from beer_garden.db.mongo.models import (
     Event,
     File,
     Garden,
@@ -38,8 +38,6 @@ def data_cleanup():
     Job.drop_collection()
     RawFile.drop_collection()
     Request.drop_collection()
-    # RemoteRole.drop_collection()
-    # RemoteUser.drop_collection()
     Role.drop_collection()
     System.drop_collection()
     User.drop_collection()
@@ -55,7 +53,22 @@ def local_garden_name():
 def app_config_auth_disabled(local_garden_name):
     app_config = Box(
         {
-            "auth": {"enabled": False, "token_secret": "notsosecret"},
+            "auth": {
+                "enabled": False, 
+                "token_secret": "notsosecret",
+                 "token_access_ttl": {
+                    "garden_admin": 15,
+                    "operator": 15,
+                    "plugin_admin": 15,
+                    "read_only": 15,
+                },     
+                "token_refresh_ttl":{
+                    "garden_admin": 720,
+                    "operator": 720,
+                    "plugin_admin": 720,
+                    "read_only": 720,
+                },  
+            },
             "garden": {"name": local_garden_name},
         }
     )
@@ -73,6 +86,18 @@ def app_config_auth_enabled(monkeypatch, local_garden_name):
                 "authentication_handlers": {
                     "basic": {"enabled": True},
                 },
+                "token_access_ttl": {
+                    "garden_admin": 15,
+                    "operator": 15,
+                    "plugin_admin": 15,
+                    "read_only": 15,
+                },     
+                "token_refresh_ttl":{
+                    "garden_admin": 720,
+                    "operator": 720,
+                    "plugin_admin": 720,
+                    "read_only": 720,
+                },   
             },
             "garden": {"name": local_garden_name},
         }

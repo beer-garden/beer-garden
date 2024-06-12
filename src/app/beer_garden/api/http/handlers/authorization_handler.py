@@ -202,7 +202,7 @@ class AuthorizationHandler(BaseHandler):
         """Return a User object with all permissions for all gardens"""
         anonymous_superuser = User(
             username="anonymous",
-            remote_roles=[],
+            upstream_roles=[],
             local_roles=[Role(name="superuser", permission="GARDEN_ADMIN")],
         )
 

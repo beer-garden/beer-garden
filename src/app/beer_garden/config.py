@@ -649,9 +649,9 @@ _AUTHENTICATION_HANDLERS_SPEC = {
                     "default": "bg-username",
                     "description": "The http header containing the username",
                 },
-                "user_remote_roles_header": {
+                "user_upstream_roles_header": {
                     "type": "str",
-                    "default": "bg-user-remote-roles",
+                    "default": "bg-user-upstream-roles",
                     "description": "The http header containing the JSON list of the user's roles",
                 },
                 "user_local_roles_header": {
@@ -659,10 +659,10 @@ _AUTHENTICATION_HANDLERS_SPEC = {
                     "default": "bg-user-local-roles",
                     "description": "The http header containing the str list of the user's local role names",
                 },
-                "user_remote_user_mapping_header": {
+                "user_alias_user_mapping_header": {
                     "type": "str",
-                    "default": "bg-user-remote-user-mapping",
-                    "description": "The http header containing the JSON list of the user's remote user accounts mapping",
+                    "default": "bg-user-alias-user-mapping",
+                    "description": "The http header containing the JSON list of the user's alias user accounts mapping",
                 },
                 "create_users": {
                     "type": "bool",

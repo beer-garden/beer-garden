@@ -6,7 +6,7 @@ from mock import Mock
 from mongoengine import DoesNotExist, connect
 
 from beer_garden import config
-from beer_garden.db.mongo.models import Garden, RemoteRole, Role, User
+from beer_garden.db.mongo.models import Garden, UpstreamRole, Role, User
 
 # from beer_garden.role import handle_event, role_sync_status, sync_roles
 

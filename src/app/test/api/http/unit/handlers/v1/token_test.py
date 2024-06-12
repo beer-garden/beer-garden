@@ -9,11 +9,10 @@ from mongoengine import DoesNotExist
 from tornado.httpclient import HTTPError
 
 from beer_garden.api.http.authentication import issue_token_pair
-from beer_garden.db.mongo.models import User
-from beer_garden.db.mongo.models import UserToken
 from beer_garden.db.mongo.models import UserToken as MongoUserToken
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
 from beer_garden.user import create_user, delete_user, get_token
+
 
 
 @pytest.fixture
@@ -122,7 +121,7 @@ class TestTokenRefreshAPI:
 
     @pytest.mark.gen_test
     def test_post_with_expired_refresh_token_returns_400(
-        self, http_client, base_url, user
+        self, app_config_auth_enabled, http_client, base_url, user
     ):
         url = f"{base_url}/api/v1/token/refresh"
         refresh_token = issue_token_pair(user, refresh_expiration=datetime.utcnow())[
@@ -137,7 +136,7 @@ class TestTokenRefreshAPI:
 
     @pytest.mark.gen_test
     def test_post_with_revoked_refresh_token_returns_400(
-        self, http_client, base_url, user
+        self, app_config_auth_enabled, http_client, base_url, user
     ):
         url = f"{base_url}/api/v1/token/refresh"
         refresh_token = issue_token_pair(user, refresh_expiration=datetime.utcnow())[
@@ -192,7 +191,7 @@ class TestTokenRevokeAPI:
 
     @pytest.mark.gen_test
     def test_post_with_expired_refresh_token_returns_204(
-        self, http_client, base_url, user
+        self, app_config_auth_enabled, http_client, base_url, user
     ):
         url = f"{base_url}/api/v1/token/revoke"
         refresh_token = issue_token_pair(user, refresh_expiration=datetime.utcnow())[
@@ -206,7 +205,7 @@ class TestTokenRevokeAPI:
 
     @pytest.mark.gen_test
     def test_post_with_revoked_refresh_token_returns_204(
-        self, http_client, base_url, user
+        self, app_config_auth_enabled, http_client, base_url, user
     ):
         url = f"{base_url}/api/v1/token/revoke"
         refresh_token = issue_token_pair(user)["refresh"]

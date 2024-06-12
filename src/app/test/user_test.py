@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-from brewtils.models import Command, Garden, Instance, RemoteUserMap, Role, System, User
+from brewtils.models import Command, Garden, Instance, AliasUserMap, Role, System, User
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.user import (
     flatten_user_role,
-    generate_remote_user,
-    remote_role_match_garden,
+    generate_downstream_user,
+    upstream_role_match_garden,
 )
 
 
@@ -113,7 +113,7 @@ class TestUser:
             )
         )
 
-    def test_remote_role_match_garden(self):
+    def test_upstream_role_match_garden(self):
         role_1 = Role(
             name="test_1",
             scope_gardens=["A"],
@@ -149,27 +149,27 @@ class TestUser:
         )
         garden_3 = Garden(name="C")
 
-        assert remote_role_match_garden(role_1, garden_1)
-        assert not remote_role_match_garden(role_1, garden_2)
-        assert not remote_role_match_garden(role_1, garden_3)
+        assert upstream_role_match_garden(role_1, garden_1)
+        assert not upstream_role_match_garden(role_1, garden_2)
+        assert not upstream_role_match_garden(role_1, garden_3)
 
-        assert not remote_role_match_garden(role_2, garden_1)
-        assert remote_role_match_garden(role_2, garden_2)
-        assert remote_role_match_garden(role_2, garden_3)
+        assert not upstream_role_match_garden(role_2, garden_1)
+        assert upstream_role_match_garden(role_2, garden_2)
+        assert upstream_role_match_garden(role_2, garden_3)
 
-        assert remote_role_match_garden(role_3, garden_1)
-        assert remote_role_match_garden(role_3, garden_2)
-        assert remote_role_match_garden(role_3, garden_3)
+        assert upstream_role_match_garden(role_3, garden_1)
+        assert upstream_role_match_garden(role_3, garden_2)
+        assert upstream_role_match_garden(role_3, garden_3)
 
-        assert remote_role_match_garden(role_4, garden_1)
-        assert remote_role_match_garden(role_4, garden_2)
-        assert remote_role_match_garden(role_4, garden_3)
+        assert upstream_role_match_garden(role_4, garden_1)
+        assert upstream_role_match_garden(role_4, garden_2)
+        assert upstream_role_match_garden(role_4, garden_3)
 
-        assert not remote_role_match_garden(role_5, garden_1)
-        assert remote_role_match_garden(role_5, garden_2)
-        assert remote_role_match_garden(role_5, garden_3)
+        assert not upstream_role_match_garden(role_5, garden_1)
+        assert upstream_role_match_garden(role_5, garden_2)
+        assert upstream_role_match_garden(role_5, garden_3)
 
-    def test_generate_remote_user(self):
+    def test_generate_downstream_user(self):
         garden_1 = Garden(
             name="A",
             systems=[
@@ -210,30 +210,30 @@ class TestUser:
                     scope_commands=["command1", "command2"],
                 ),
             ],
-            remote_user_mapping=[
-                RemoteUserMap(target_garden="A", username="USER1"),
-                RemoteUserMap(target_garden="B", username="USER2"),
+            alias_user_mapping=[
+                AliasUserMap(target_garden="A", username="USER1"),
+                AliasUserMap(target_garden="B", username="USER2"),
             ],
         )
 
-        remote_user_1 = generate_remote_user(garden_1, local_user)
-        assert remote_user_1.username == "USER1"
-        assert len(remote_user_1.local_roles) == 0
-        assert len(remote_user_1.remote_roles) == 1
-        assert len(remote_user_1.remote_user_mapping) == 0
+        downstream_user_1 = generate_downstream_user(garden_1, local_user)
+        assert downstream_user_1.username == "USER1"
+        assert len(downstream_user_1.local_roles) == 0
+        assert len(downstream_user_1.upstream_roles) == 1
+        assert len(downstream_user_1.alias_user_mapping) == 0
 
-        remote_user_2 = generate_remote_user(garden_2, local_user)
-        assert remote_user_2.username == "USER2"
-        assert len(remote_user_2.local_roles) == 0
-        assert len(remote_user_2.remote_roles) == 2
-        assert len(remote_user_2.remote_user_mapping) == 1
-        assert remote_user_2.remote_user_mapping[0].target_garden == "A"
-        assert remote_user_2.remote_user_mapping[0].username == "USER1"
+        downstream_user_2 = generate_downstream_user(garden_2, local_user)
+        assert downstream_user_2.username == "USER2"
+        assert len(downstream_user_2.local_roles) == 0
+        assert len(downstream_user_2.upstream_roles) == 2
+        assert len(downstream_user_2.alias_user_mapping) == 1
+        assert downstream_user_2.alias_user_mapping[0].target_garden == "A"
+        assert downstream_user_2.alias_user_mapping[0].username == "USER1"
 
-        remote_user_3 = generate_remote_user(garden_3, local_user)
-        assert remote_user_3.username == local_user.username
-        assert len(remote_user_3.local_roles) == 0
-        assert len(remote_user_3.remote_roles) == len(local_user.local_roles)
-        assert len(remote_user_3.remote_user_mapping) == len(
-            local_user.remote_user_mapping
+        downstream_user_3 = generate_downstream_user(garden_3, local_user)
+        assert downstream_user_3.username == local_user.username
+        assert len(downstream_user_3.local_roles) == 0
+        assert len(downstream_user_3.upstream_roles) == len(local_user.local_roles)
+        assert len(downstream_user_3.alias_user_mapping) == len(
+            local_user.alias_user_mapping
         )

@@ -66,6 +66,7 @@ def user(job_manager_role):
 
 @pytest.fixture
 def access_token(user):
+    
     yield issue_token_pair(user)["access"]
 
 

@@ -219,12 +219,12 @@ def update_user(
         existing_user = db.query_unique(User, username=user.username)
 
         if existing_user and not existing_user.is_remote:
-            # Update remote roles, and remote user mappings
-            if existing_user.remote_roles != user.remote_roles:
+            # Update upstream roles, and alias user mappings
+            if existing_user.upstream_roles != user.upstream_roles:
                 # Roles changed, so cached tokens are no longer valid
                 revoke_tokens(user=existing_user)
-            existing_user.remote_roles = user.remote_roles
-            existing_user.remote_user_mapping = user.remote_user_mapping
+            existing_user.upstream_roles = user.upstream_roles
+            existing_user.alias_user_mapping = user.alias_user_mapping
 
             user = existing_user
 
@@ -246,37 +246,23 @@ def determine_max_permission(user: User) -> str:
 
     max_permission = "READ_ONLY"
 
-    for role in user.local_roles:
-        if role.permission == max_permission:
-            continue
-        if role.permission == "GARDEN_ADMIN":
-            return role.permission
-        
-        if max_permission == "PLUGIN_ADMIN":
-            continue
+    for roles in [user.local_roles, user.upstream_roles]:
+        if roles:
+            for role in roles:
+                if role.permission == max_permission:
+                    continue
+                if role.permission == "GARDEN_ADMIN":
+                    return role.permission
+                
+                if max_permission == "PLUGIN_ADMIN":
+                    continue
 
-        if role.permission == "PLUGIN_ADMIN":
-            max_permission = role.permission
-            continue       
+                if role.permission == "PLUGIN_ADMIN":
+                    max_permission = role.permission
+                    continue       
 
-        if role.permission == "OPERATOR":
-            max_permission = role.permission
-
-    for role in user.remote_roles:
-        if role.permission == max_permission:
-            continue
-        if role.permission == "GARDEN_ADMIN":
-            return role.permission
-        
-        if max_permission == "PLUGIN_ADMIN":
-            continue
-
-        if role.permission == "PLUGIN_ADMIN":
-            max_permission = role.permission
-            continue       
-
-        if role.permission == "OPERATOR":
-            max_permission = role.permission
+                if role.permission == "OPERATOR":
+                    max_permission = role.permission
 
     return max_permission
 
@@ -312,30 +298,30 @@ def flatten_user_role(role: Role, flatten_roles: list):
     return flatten_roles
 
 
-def generate_remote_user_mappings(
-    user: User, target_garden: Garden, remote_user_mapping: list
+def generate_alias_user_mappings(
+    user: User, target_garden: Garden, alias_user_mapping: list
 ):
     if target_garden.children:
         for child in target_garden.children:
-            for remote_user_map in remote_user_mapping:
-                if remote_user_map.target_garden == child.name:
-                    user.remote_user_mapping.append(remote_user_map)
-            generate_remote_user_mappings(user, child, remote_user_mapping)
+            for alias_user_map in alias_user_mapping:
+                if alias_user_map.target_garden == child.name:
+                    user.alias_user_mapping.append(alias_user_map)
+            generate_alias_user_mappings(user, child, alias_user_mapping)
 
 
-def remote_role_match(role: Role, target_garden: Garden):
-    if remote_role_match_garden(role, target_garden):
+def upstream_role_match(role: Role, target_garden: Garden):
+    if upstream_role_match_garden(role, target_garden):
         return True
 
     if target_garden.children:
         for child in target_garden.children:
-            if remote_role_match(role, child):
+            if upstream_role_match(role, child):
                 return True
 
     return False
 
 
-def remote_role_match_garden(role: Role, target_garden: Garden) -> bool:
+def upstream_role_match_garden(role: Role, target_garden: Garden) -> bool:
 
     # If no scope attributes are populated, then it matches everything
     matchAll = True
@@ -415,38 +401,38 @@ def remote_role_match_garden(role: Role, target_garden: Garden) -> bool:
     return False
 
 
-def generate_remote_user(target_garden: Garden, user: User) -> User:
+def generate_downstream_user(target_garden: Garden, user: User) -> User:
 
     # Garden shares accounts, no filering applied
     if target_garden.shared_users:
         return User(
             username=user.username,
             is_remote=True,
-            remote_roles=user.local_roles,
-            remote_user_mapping=user.remote_user_mapping,
+            upstream_roles=user.local_roles,
+            alias_user_mapping=user.alias_user_mapping,
         )
 
-    remote_user = None
+    downstream_user = None
 
-    for remote_user_map in user.remote_user_mapping:
-        if remote_user_map.target_garden == target_garden.name:
-            remote_user = User(username=remote_user_map.username, is_remote=True)
+    for alias_user_map in user.alias_user_mapping:
+        if alias_user_map.target_garden == target_garden.name:
+            downstream_user = User(username=alias_user_map.username, is_remote=True)
 
-            generate_remote_user_mappings(
-                remote_user, target_garden, user.remote_user_mapping
+            generate_alias_user_mappings(
+                downstream_user, target_garden, user.alias_user_mapping
             )
 
             for role in user.local_roles:
                 for flatten_role in flatten_user_role(role, []):
-                    if remote_role_match(flatten_role, target_garden):
-                        remote_user.remote_roles.append(flatten_role)
+                    if upstream_role_match(flatten_role, target_garden):
+                        downstream_user.upstream_roles.append(flatten_role)
 
-            for role in user.remote_roles:
+            for role in user.upstream_roles:
                 for flatten_role in flatten_user_role(role, []):
-                    if remote_role_match(flatten_role, target_garden):
-                        remote_user.remote_roles.append(flatten_role)
+                    if upstream_role_match(flatten_role, target_garden):
+                        downstream_user.upstream_roles.append(flatten_role)
 
-    return remote_user
+    return downstream_user
 
 
 def initiate_garden_user_sync(garden_name: str = None, garden: Garden = None) -> None:
@@ -461,18 +447,18 @@ def initiate_garden_user_sync(garden_name: str = None, garden: Garden = None) ->
     if not garden:
         garden = get_garden(garden_name)
 
-    garden_remote_users = []
+    garden_users = []
     for user in get_users():
-        remote_user = generate_remote_user(garden, user)
-        if remote_user:
-            garden_remote_users.append(remote_user)
+        downstream_user = generate_downstream_user(garden, user)
+        if downstream_user:
+            garden_users.append(downstream_user)
 
     operation = Operation(
-        operation_type="USER_REMOTE_SYNC",
+        operation_type="USER_UPSTREAM_SYNC",
         target_garden_name=garden.name,
         kwargs={
-            "remote_users": SchemaParser.serialize_user(
-                garden_remote_users, to_string=False, many=True
+            "upstream_users": SchemaParser.serialize_user(
+                garden_users, to_string=False, many=True
             ),
         },
     )
@@ -481,8 +467,8 @@ def initiate_garden_user_sync(garden_name: str = None, garden: Garden = None) ->
 
 
 def initiate_user_sync() -> None:
-    """Syncs all users from this garden down to all remote gardens. Only the role
-    assignments relevant to each remote garden will be included in the sync.
+    """Syncs all users from this garden down to all gardens. Only the role
+    assignments relevant to each garden will be included in the sync.
 
     Returns:
         None
@@ -490,18 +476,18 @@ def initiate_user_sync() -> None:
     from beer_garden.router import route
 
     for child in get_gardens(include_local=False):
-        child_remote_users = []
+        child_users = []
         for user in get_users():
-            remote_user = generate_remote_user(child, user)
-            if remote_user:
-                child_remote_users.append(remote_user)
+            downstream_user = generate_downstream_user(child, user)
+            if downstream_user:
+                child_users.append(downstream_user)
 
         operation = Operation(
-            operation_type="USER_REMOTE_SYNC",
+            operation_type="USER_UPSTREAM_SYNC",
             target_garden_name=child.name,
             kwargs={
-                "remote_users": SchemaParser.serialize_user(
-                    child_remote_users, to_string=False, many=True
+                "upstream_users": SchemaParser.serialize_user(
+                    child_users, to_string=False, many=True
                 ),
             },
         )
@@ -509,46 +495,46 @@ def initiate_user_sync() -> None:
         route(operation)
 
 
-def remote_user_sync(remote_user: User) -> User:
-    local_user = db.query_unique(User, username=remote_user.username)
+def upstream_user_sync(upstream_user: User) -> User:
+    local_user = db.query_unique(User, username=upstream_user.username)
 
     if local_user is None:
-        return db.create(remote_user)
+        return db.create(upstream_user)
 
     if local_user.is_remote:
-        return db.update(remote_user)
+        return db.update(upstream_user)
 
-    local_user.remote_user_mapping = remote_user.remote_user_mapping
-    local_user.remote_roles = remote_user.remote_roles
+    local_user.alias_user_mapping = upstream_user.alias_user_mapping
+    local_user.upstream_roles = upstream_user.upstream_roles
     return db.update(local_user)
 
 
-def remote_users_sync(remote_users=[]):
+def upstream_users_sync(upstream_users=[]):
 
-    remote_users_brewtils = SchemaParser.parse_user(
-        remote_users, many=True, from_string=False
+    upstream_users_brewtils = SchemaParser.parse_user(
+        upstream_users, many=True, from_string=False
     )
     local_users = get_users()
 
-    # Add/Update Remote Users
-    for remote_user in remote_users_brewtils:
+    # Add/Update Upstream Users
+    for upstream_user in upstream_users:
         new_user = True
         for user in local_users:
-            if remote_user.username != user.username:
+            if upstream_user.username != user.username:
                 continue
             new_user = False
-            user.remote_user_mapping = remote_user.remote_user_mapping
-            user.remote_roles = remote_user.remote_roles
+            user.alias_user_mapping = upstream_user.alias_user_mapping
+            user.upstream_roles = upstream_user.upstream_roles
             db.update(user)
         if new_user:
-            remote_user = db.create(remote_user)
+            upstream_user = db.create(upstream_user)
 
     # Purge Remote Users not provided
     for user in local_users:
         if user.is_remote:
             user_found = False
-            for remote_user in remote_users_brewtils:
-                if remote_user.username == user.username:
+            for upstream_user in upstream_users_brewtils:
+                if upstream_user.username == user.username:
                     user_found = True
                     continue
             if user_found:
