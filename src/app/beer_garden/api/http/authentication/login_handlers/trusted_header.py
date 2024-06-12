@@ -15,6 +15,7 @@ from beer_garden import config
 from beer_garden.api.http.authentication.login_handlers.base import BaseLoginHandler
 from beer_garden.role import get_role
 from beer_garden.user import create_user, get_user, set_password, update_user
+from beer_garden.garden import get_garden
 
 logger = logging.getLogger(__name__)
 
@@ -70,12 +71,41 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                 if authenticated_user:
                     if upstream_roles:
                         authenticated_user.upstream_roles = upstream_roles
+                        authenticated_user.metadata[
+                            "last_authentication_headers_upstream_roles"
+                        ] = json.loads(
+                            request.headers.get(self.user_upstream_roles_header, "[]")
+                        )
+                    elif "last_authentication_headers_upstream_roles" in authenticated_user.metadata:
+                        del authenticated_user.metadata[
+                            "last_authentication_headers_upstream_roles"
+                        ]
 
                     if local_roles:
                         authenticated_user.roles = local_roles
+                        authenticated_user.metadata[
+                            "last_authentication_headers_local_roles"
+                        ] = json.loads(
+                            request.headers.get(self.user_local_roles_header, "[]")
+                        )
+                    elif "last_authentication_headers_local_roles" in authenticated_user.metadata:
+                        del authenticated_user.metadata[
+                            "last_authentication_headers_local_roles"
+                        ]
 
                     if alias_user_mappings:
                         authenticated_user.alias_user_mapping = alias_user_mappings
+                        authenticated_user.metadata[
+                            "last_authentication_headers_alias_user_mapping"
+                        ] = json.loads(
+                            request.headers.get(
+                                self.user_alias_user_mapping_header, "[]"
+                            )
+                        )
+                    elif "last_authentication_headers_alias_user_mapping" in authenticated_user.metadata:
+                        del authenticated_user.metadata[
+                            "last_authentication_headers_alias_user_mapping"
+                        ]
 
                     authenticated_user.metadata[
                         "last_authentication"
@@ -131,13 +161,21 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
         if not headers.get(self.user_alias_user_mapping_header, None):
             return None
 
+        alias_user_mappings = []
         try:
-            return SchemaParser.parse_alias_user_map(
+            for alias_user_mapping in SchemaParser.parse_alias_user_map(
                 headers.get(self.user_alias_user_mapping_header, "[]"),
                 from_string=True,
                 many=True,
-            )
+            ):
+                try:
+                    get_garden(alias_user_mapping.target_garden)
+                    alias_user_mappings.append(alias_user_mapping)
+                except DoesNotExist:
+                    pass
         except Exception:
             raise ValidationError(
                 f"Unable to parse Alias User Mapping: {headers.get(self.user_alias_user_mapping_header, '[]')}"
             )
+
+        return alias_user_mappings
