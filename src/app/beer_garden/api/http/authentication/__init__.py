@@ -17,6 +17,7 @@ from beer_garden.user import (
     get_token,
     get_user,
     revoke_tokens,
+    determine_max_permission,
 )
 
 
@@ -55,10 +56,11 @@ def issue_token_pair(user: User, refresh_expiration: Optional[datetime] = None) 
         dict: A dictionary containing an access and refresh token
             { "access": <str>, "refresh": <str> }
     """
-    expiration = refresh_expiration or _get_refresh_token_expiration()
+    max_permission = determine_max_permission(user)
+    expiration = refresh_expiration or _get_refresh_token_expiration(max_permission)
     token_uuid = uuid4()
 
-    access_token = _generate_access_token(user, token_uuid)
+    access_token = _generate_access_token(user, token_uuid, max_permission)
     refresh_token = _generate_refresh_token(user, token_uuid, expiration)
 
     create_token(
@@ -201,7 +203,7 @@ def decode_token(encoded_token: str, expected_type: str = None) -> dict:
     return decoded_token
 
 
-def _generate_access_token(user: User, identifier: UUID) -> str:
+def _generate_access_token(user: User, identifier: UUID, max_permission: str) -> str:
     """Generates a JWT access token for a user containing the user's permissions"""
     secret_key = config.get("auth").token_secret
 
@@ -222,7 +224,7 @@ def _generate_access_token(user: User, identifier: UUID) -> str:
         "jti": str(identifier),
         "sub": str(user.id),
         "iat": datetime.utcnow(),
-        "exp": _get_access_token_expiration(),
+        "exp": _get_access_token_expiration(max_permission),
         "type": "access",
         "username": user.username,
         "roles": roles,
@@ -251,11 +253,23 @@ def _generate_refresh_token(user: User, identifier: UUID, expiration: datetime) 
     return refresh_token
 
 
-def _get_access_token_expiration() -> datetime:
+def _get_access_token_expiration(max_permission = None) -> datetime:
     """Calculate and return the access token expiration time"""
-    return datetime.utcnow() + timedelta(minutes=15)
+    if max_permission == "GARDEN_ADMIN":
+        return datetime.utcnow() + timedelta(minutes=config.get("auth.token_access_ttl.garden_admin"))
+    elif max_permission == "PLUGIN_ADMIN":
+        return datetime.utcnow() + timedelta(minutes=config.get("auth.token_access_ttl.plugin_admin"))
+    elif max_permission == "OPERATOR":
+        return datetime.utcnow() + timedelta(minutes=config.get("auth.token_access_ttl.operator"))
+    return datetime.utcnow() + timedelta(minutes=config.get("auth.token_access_ttl.read_only"))
 
 
-def _get_refresh_token_expiration() -> datetime:
+def _get_refresh_token_expiration(max_permission = None) -> datetime:
     """Calculate and return the refresh token expiration time"""
-    return datetime.utcnow() + timedelta(hours=12)
+    if max_permission == "GARDEN_ADMIN":
+        return datetime.utcnow() + timedelta(minutes=config.get("auth.token_refresh_ttl.garden_admin"))
+    elif max_permission == "PLUGIN_ADMIN":
+        return datetime.utcnow() + timedelta(minutes=config.get("auth.token_refresh_ttl.plugin_admin"))
+    elif max_permission == "OPERATOR":
+        return datetime.utcnow() + timedelta(minutes=config.get("auth.token_refresh_ttl.operator"))
+    return datetime.utcnow() + timedelta(minutes=config.get("auth.token_refresh_ttl.read_only"))

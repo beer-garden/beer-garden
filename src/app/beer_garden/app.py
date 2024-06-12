@@ -72,6 +72,9 @@ class Application(StoppableThread):
 
         load_plugin_log_config()
 
+        if config.get("auth.enabled"):
+            beer_garden.user.validated_token_ttl()
+
         if config.get("replication.enabled"):
             import secrets
 

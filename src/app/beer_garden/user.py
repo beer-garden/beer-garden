@@ -11,7 +11,7 @@ import beer_garden.db.api as db
 from beer_garden import config
 
 # from beer_garden.role import RoleSyncSchema, role_sync_status, sync_roles
-from beer_garden.errors import InvalidPasswordException
+from beer_garden.errors import ConfigurationError, InvalidPasswordException
 from beer_garden.events import publish
 from beer_garden.garden import get_garden, get_gardens
 from beer_garden.role import get_role
@@ -81,6 +81,11 @@ def revoke_tokens(user: User = None, username: str = None) -> None:
         UserToken, filter_params={"username": user.username if user else username}
     ):
         db.delete(user_token)
+
+def validated_token_ttl():
+    for ttl in ["garden_admin","plugin_admin", "operator","read_only"]:
+        if config.get(f"auth.token_access_ttl.{ttl}") > config.get(f"auth.token_refresh_ttl.{ttl}"):
+            raise ConfigurationError(f"Refresh Token TTL {ttl} expires prior to Access Token TTL {ttl}")
 
 
 def get_user(username: str = None, id: str = None, include_roles: bool = True) -> User:
@@ -237,6 +242,43 @@ def update_user(
 
     return user
 
+def determine_max_permission(user: User) -> str:
+
+    max_permission = "READ_ONLY"
+
+    for role in user.local_roles:
+        if role.permission == max_permission:
+            continue
+        if role.permission == "GARDEN_ADMIN":
+            return role.permission
+        
+        if max_permission == "PLUGIN_ADMIN":
+            continue
+
+        if role.permission == "PLUGIN_ADMIN":
+            max_permission = role.permission
+            continue       
+
+        if role.permission == "OPERATOR":
+            max_permission = role.permission
+
+    for role in user.remote_roles:
+        if role.permission == max_permission:
+            continue
+        if role.permission == "GARDEN_ADMIN":
+            return role.permission
+        
+        if max_permission == "PLUGIN_ADMIN":
+            continue
+
+        if role.permission == "PLUGIN_ADMIN":
+            max_permission = role.permission
+            continue       
+
+        if role.permission == "OPERATOR":
+            max_permission = role.permission
+
+    return max_permission
 
 def flatten_user_role(role: Role, flatten_roles: list):
     new_roles = []
