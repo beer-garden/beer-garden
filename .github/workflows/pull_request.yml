@@ -161,6 +161,9 @@ jobs:
           coverage report -m
           coverage xml
 
+      - name: Print dir
+        run: ls -al
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
