@@ -156,14 +156,17 @@ jobs:
           pip install pytest-cov
 
       - name: Generate coverage report
-        continue-on-error: true
         run: |
           coverage run --source beer_garden -m pytest test --tb=no
           coverage report -m
           coverage xml
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: true
+          verbose: true
 
   SecurityCheck:
     runs-on: ${{ matrix.os }}
