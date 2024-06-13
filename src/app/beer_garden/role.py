@@ -1,12 +1,13 @@
 import logging
-from typing import List
+import os
 
 import yaml
-from brewtils.models import Event, Role
+from brewtils.models import Event, Role, Events
 from mongoengine import DoesNotExist
 
 import beer_garden.db.api as db
 from beer_garden import config
+from beer_garden.events import publish_event
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ def get_role(role_name: str = None, role_id: str = None):
 def get_roles():
     return db.query(Role)
 
-
+@publish_event(Events.ROLE_UPDATED)
 def update_role(
     role: Role = None, role_name: str = None, role_id: str = None, **kwargs
 ) -> Role:
@@ -40,16 +41,13 @@ def update_role(
 
     return db.update(role)
 
-
-# @publish_event(Events.ROLE_DELETE)
+@publish_event(Events.ROLE_DELETED)
 def delete_role(role: Role = None, role_name: str = None, role_id: str = None) -> Role:
     if not role:
         if role_name:
             role = db.query_unique(Role, name=role_name, raise_missing=True)
         else:
             role = db.query_unique(Role, id=role_id, raise_missing=True)
-
-    # remove_local_role_assignments_for_role(role)
 
     db.delete(role)
 
@@ -58,8 +56,11 @@ def delete_role(role: Role = None, role_name: str = None, role_id: str = None) -
 
 def load_roles_config():
     if config.get("auth.role_definition_file"):
-        with open(config.get("auth.role_definition_file"), "r") as config_file:
-            return yaml.safe_load(config_file)
+        if os.path.isfile(config.get("auth.role_definition_file")):
+            with open(config.get("auth.role_definition_file"), "r") as config_file:
+                return yaml.safe_load(config_file)
+        else:
+            logger.error(f"Unable to load Roles file: {config.get('auth.role_definition_file')}")
     return []
 
 

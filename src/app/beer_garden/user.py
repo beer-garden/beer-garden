@@ -611,14 +611,33 @@ def remove_local_role_assignments_for_role(role: Role) -> int:
 
     return len(impacted_users)
 
+def update_local_role_assignments_for_role(role: Role) -> int:
+    """Update all User role assignments for the provided Role.
+
+    Args:
+        role: The Role document object
+
+    Returns:
+        int: The number of users role was removed from
+    """
+    # Avoid circular import
+
+    impacted_users = db.query(User, filter_params={"roles__match": role.name})
+
+    for user in impacted_users:
+        # Roles changed, so cached tokens are no longer valid
+        revoke_tokens(user=user)
+
+    return len(impacted_users)
+
 
 def handle_event(event: Event) -> None:
     # Only handle events from downstream gardens
     if event.garden == config.get("garden.name"):
-        if event.name == "ROLE_DELETE":
+        if event.name == "ROLE_DELETED":
             remove_local_role_assignments_for_role(event.payload)
-        # elif event.name == "USER_UPDATED":
-        #     initiate_user_sync()
+        elif event.name == "USER_UPDATED":
+            initiate_user_sync()
 
 
 def _publish_user_updated(user):

@@ -1,227 +1,158 @@
 # -*- coding: utf-8 -*-
 import pytest
-from brewtils.models import Event, Events
-from marshmallow import ValidationError
-from mock import Mock
+from pathlib import Path
 from mongoengine import DoesNotExist, connect
+from box import Box
 
 from beer_garden import config
-from beer_garden.db.mongo.models import Garden, UpstreamRole, Role, User
 
-# from beer_garden.role import handle_event, role_sync_status, sync_roles
+from brewtils.models import Role
 
-
-# @pytest.fixture(autouse=True)
-# def drop():
-#     Role.drop_collection()
+from beer_garden.db.mongo.models import Role as DB_Role
+from beer_garden.db.mongo.models import User as DB_User
+from brewtils.errors import ModelValidationError
 
 
-# @pytest.fixture
-# def garden():
-#     _garden = Garden(name="garden", connection_type="HTTP", status="RUNNING").save()
+from beer_garden.role import create_role, get_role, update_role, delete_role, configure_superuser_role, configure_plugin_role, rescan
+from beer_garden.user import create_user
 
-#     yield _garden
-#     _garden.delete()
+@pytest.fixture(autouse=True)
+def drop():
+    DB_Role.drop_collection()
+    DB_User.drop_collection()
 
+@pytest.fixture
+def role():
+    return create_role(Role(name="role",permission="READ_ONLY"))
 
-# @pytest.fixture
-# def role_sync_data():
-#     role_data = [
-#         {
-#             "name": "testrole1",
-#             "description": "a test role",
-#             "permissions": ["garden:read", "garden:create", "garden:update"],
-#         },
-#         {
-#             "name": "testrole2",
-#             "permissions": ["garden:read", "garden:delete"],
-#         },
-#     ]
+@pytest.fixture
+def roles_file_path(tmpdir):
+    roles_file = Path(tmpdir, f"roles.yaml")
 
-#     yield role_data
+    raw_roles = """- name: "garden_admin"
+  permission: "GARDEN_ADMIN"
 
+- name: "operator"
+  permission: "OPERATOR"
 
-# @pytest.fixture
-# def role_to_sync(role_sync_data):
-#     return Role(**role_sync_data[0])
+- name: "read_only"
+  permission: "READ_ONLY"
 
+- name: "plugin_admin"
+  permission: "PLUGIN_ADMIN"
+"""
 
-# @pytest.fixture
-# def remote_role(role_to_sync, garden):
-#     remote_role = RemoteRole(
-#         name=role_to_sync.name,
-#         garden=garden.name,
-#         description=role_to_sync.description,
-#         permissions=role_to_sync.permissions,
-#     )
-#     remote_role.save()
+    with open(roles_file, "w") as f:
+        f.write(raw_roles)
 
-#     yield remote_role
-#     remote_role.delete()
+    return str(roles_file)
 
+@pytest.fixture
+def app_config_roles_file(monkeypatch, roles_file_path):
+    app_config = Box(
+        {
+            "auth": {
+                "enabled": True,
+                "role_definition_file": roles_file_path,
+            }
+        }
+    )
+    monkeypatch.setattr(config, "_CONFIG", app_config)
+    yield app_config
 
-# @pytest.fixture
-# def role_sync_data_missing_fields():
-#     role_data = [
-#         {
-#             "name": "badrole",
-#             "description": "hey",
-#         },
-#     ]
-
-#     yield role_data
-
-
-# @pytest.fixture
-# def role_sync_data_protected_role():
-#     role_data = [
-#         {
-#             "name": "protected_role",
-#             "description": "can't touch this",
-#             "permissions": ["garden:read"],
-#             "protected": True,
-#         }
-#     ]
-
-#     yield role_data
+@pytest.fixture
+def app_config_roles_file_missing(monkeypatch):
+    app_config = Box(
+        {
+            "auth": {
+                "enabled": True,
+                "role_definition_file": "tmp/roles.yaml",
+            }
+        }
+    )
+    monkeypatch.setattr(config, "_CONFIG", app_config)
+    yield app_config
 
 
-# @pytest.fixture
-# def user_with_role_assignments():
-#     role = Role(name="assignedrole1", permissions=["garden:read"]).save()
-#     role_assignment = RoleAssignment(
-#         domain={"scope": "Garden", "identifiers": {"name": "garden1"}}, role=role
-#     )
-#     user = User(username="testuser", role_assignments=[role_assignment]).save()
-
-#     yield user
-#     user.delete()
-#     role.delete()
+@pytest.fixture
+def user(role):
+    return create_user(username="user", local_roles=[role])
 
 
-# class TestRole:
-#     @classmethod
-#     def setup_class(cls):
-#         connect("beer_garden", host="mongomock://localhost")
-#         config._CONFIG = {"garden": {"name": "localgarden"}}
+class TestRole:
+    @classmethod
+    def setup_class(cls):
+        connect("beer_garden", host="mongomock://localhost")
 
-#     def test_sync_roles_creates_new_roles(self, role_sync_data):
-#         """sync_roles should create new roles when none exists"""
-#         role_names = [role["name"] for role in role_sync_data]
+    @pytest.mark.parametrize(
+        "permission",
+        ["READ_ONLY","OPERATOR","PLUGIN_ADMIN","GARDEN_ADMIN"])
+    def test_create_valid_permissions(self, permission):
 
-#         sync_roles(role_sync_data)
+        role = create_role(Role(name="test", permission=permission))
+        assert role.id != None
 
-#         assert len(Role.objects.filter(name__in=role_names)) == len(role_sync_data)
+    def test_create_invalid_permission(self):
+        with pytest.raises(ModelValidationError):
+            create_role(Role(name="test", permission="Bad_Permission"))
 
-#     def test_sync_roles_deletes_roles_not_present(self, role_sync_data):
-#         """sync_roles should delete roles in the database that are are not present in
-#         the role_sync_data
-#         """
-#         Role(name="notinsyncdata", permissions=["garden:read"]).save()
 
-#         sync_roles(role_sync_data)
+    def test_get_role(self, role):
+        assert get_role(role_id=role.id) == role
+        assert get_role(role_name=role.name) == role
 
-#         with pytest.raises(DoesNotExist):
-#             Role.objects.get(name="notinsyncdata")
+    def test_update_role(self, role):
+        
+        role.permission = "OPERATOR"
+        update_role(role)
+        db_role = get_role(role_id=role.id)
+        assert role.permission == db_role.permission
 
-#     def test_sync_roles_updates_existing_roles(self, role_sync_data):
-#         """sync_roles should update any existing Roles based on what is in the provided
-#         role_sync_data
-#         """
-#         Role(
-#             name="testrole1", description="somethingwitty", permissions=["system:read"]
-#         ).save()
+        update_role(role_name = role.name, permission = "PLUGIN_ADMIN")
+        db_role = get_role(role_name=role.name)
+        assert db_role.permission == "PLUGIN_ADMIN"
 
-#         sync_roles(role_sync_data)
+        update_role(role_id = role.id, permission = "GARDEN_ADMIN")
+        db_role = get_role(role_id=role.id)
+        assert db_role.permission == "GARDEN_ADMIN"
 
-#         role = Role.objects.get(name="testrole1")
 
-#         assert role.description == role_sync_data[0]["description"]
-#         assert role.permissions == role_sync_data[0]["permissions"]
 
-#     def test_sync_roles_raises_validation_error_for_missing_fields(
-#         self, role_sync_data_missing_fields
-#     ):
-#         """sync_roles should raise a ValidationError if any required fields are missing
-#         in the supply input sync data
-#         """
-#         with pytest.raises(ValidationError):
-#             sync_roles(role_sync_data_missing_fields)
 
-#     def test_sync_roles_removes_user_role_assignments(
-#         self, role_sync_data, user_with_role_assignments
-#     ):
-#         """sync_roles should remove role assignments references Roles that are deleted
-#         as part of the sync process
-#         """
-#         assert len(user_with_role_assignments.role_assignments) > 0
+    def test_delete_role(self, role):
 
-#         sync_roles(role_sync_data)
-#         user_with_role_assignments.reload()
+        delete_role(role)
 
-#         assert len(user_with_role_assignments.role_assignments) == 0
+        with pytest.raises(DoesNotExist):
+            get_role(role_id=role.id)
 
-#     def test_role_synced_with_garden_returns_false_for_no_remote_role(
-#         self, role_to_sync, garden
-#     ):
-#         role_status = role_sync_status([role_to_sync])[role_to_sync.name]
+    def test_create_generated_roles(self):
+        configure_superuser_role()
+        configure_plugin_role()
 
-#         assert role_status[garden.name] is False
+        assert get_role(role_name="superuser") is not None
+        assert get_role(role_name="plugin") is not None
 
-#     def test_role_synced_with_garden_returns_false_for_non_matching_permissions(
-#         self, role_to_sync, remote_role
-#     ):
-#         garden = Garden.objects.get(name=remote_role.garden)
-#         role_to_sync.permissions = []
+    def test_rescan_roles(self, app_config_roles_file):
+        rescan()
 
-#         role_status = role_sync_status([role_to_sync])[role_to_sync.name]
+        assert get_role(role_name="garden_admin") is not None
+        assert get_role(role_name="plugin_admin") is not None
+        assert get_role(role_name="operator") is not None
+        assert get_role(role_name="read_only") is not None
 
-#         assert role_status[garden.name] is False
+    def test_rescan_roles_missing_file(self, app_config_roles_file_missing):
+        rescan()
 
-#     def test_role_synced_with_garden_returns_true_for_matching_permissions(
-#         self, role_to_sync, remote_role
-#     ):
-#         role_status = role_sync_status([role_to_sync])[role_to_sync.name]
-#         garden = Garden.objects.get(name=remote_role.garden)
+        with pytest.raises(DoesNotExist):
+            get_role(role_name="garden_admin")
+        with pytest.raises(DoesNotExist):
+            get_role(role_name="plugin_admin")
+        with pytest.raises(DoesNotExist):
+            get_role(role_name="operator")
+        with pytest.raises(DoesNotExist):
+            get_role(role_name="read_only")
 
-#         assert role_status[garden.name] is True
 
-#     def test_handle_event_for_role_updated(self):
-#         permissions = ["queue:read", "queue:delete"]
-#         role_updated_result = {
-#             "garden": "garden1",
-#             "role": {"name": "role1", "permissions": permissions},
-#         }
 
-#         event = Event(
-#             name=Events.ROLE_UPDATED.name,
-#             garden="garden1",
-#             metadata=role_updated_result,
-#         )
 
-#         assert len(RemoteRole.objects.filter(name="role1", garden="garden1")) == 0
-
-#         handle_event(event)
-#         remote_role = RemoteRole.objects.get(name="role1", garden="garden1")
-
-#         assert remote_role.permissions == permissions
-
-#     def test_sync_roles_skips_protected_roles(
-#         self, monkeypatch, role_sync_data_protected_role
-#     ):
-#         Role(**role_sync_data_protected_role[0]).save()
-#         monkeypatch.setattr(Role, "save", Mock())
-
-#         sync_roles(role_sync_data_protected_role)
-
-#         assert Role.save.called is False
-
-#     def test_sync_roles_preserves_unlisted_protected_roles(
-#         self, role_sync_data_protected_role, role_sync_data
-#     ):
-#         protected_role = Role(**role_sync_data_protected_role[0]).save()
-
-#         # role_sync_data does not include the protected role
-#         sync_roles(role_sync_data)
-
-#         assert Role.objects.get(name=protected_role.name).id == protected_role.id
