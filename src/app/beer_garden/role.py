@@ -13,10 +13,27 @@ logger = logging.getLogger(__name__)
 
 
 def create_role(role: Role) -> Role:
+    """Create provided Role
+
+    Args:
+        role (Role): Role to create
+
+    Returns:
+        Role: Created Role
+    """
     return db.create(role)
 
 
-def get_role(role_name: str = None, role_id: str = None):
+def get_role(role_name: str = None, role_id: str = None) -> Role:
+    """Get Role from database
+
+    Args:
+        role_name (str, optional):  Role Name of Role to retrieve. Defaults to None.
+        role_id (str, optional): Role Name of Role to retrieve. Defaults to None.
+
+    Returns:
+        Role: Requested Role
+    """
     if role_name:
         return db.query_unique(Role, name=role_name, raise_missing=True)
 
@@ -24,6 +41,11 @@ def get_role(role_name: str = None, role_id: str = None):
 
 
 def get_roles():
+    """Get all roles
+
+    Returns:
+        List[Role]: List of roles from database
+    """
     return db.query(Role)
 
 
@@ -31,6 +53,16 @@ def get_roles():
 def update_role(
     role: Role = None, role_name: str = None, role_id: str = None, **kwargs
 ) -> Role:
+    """Updates provided Role
+
+    Args:
+        role (Role, optional): Role to update. Defaults to None.
+        role_name (str, optional): Role Name of Role to update. Defaults to None.
+        role_id (str, optional): Role ID of Role to update. Defaults to None.
+
+    Returns:
+        Role: Updated Role
+    """
     if not role:
         if role_name:
             role = db.query_unique(Role, name=role_name, raise_missing=True)
@@ -45,6 +77,16 @@ def update_role(
 
 @publish_event(Events.ROLE_DELETED)
 def delete_role(role: Role = None, role_name: str = None, role_id: str = None) -> Role:
+    """Delete provided role
+
+    Args:
+        role (Role, optional): Role to delete. Defaults to None.
+        role_name (str, optional): Role Name of Role to delete. Defaults to None.
+        role_id (str, optional): Role Id of Role to delete. Defaults to None.
+
+    Returns:
+        Role: Deleted Role
+    """
     if not role:
         if role_name:
             role = db.query_unique(Role, name=role_name, raise_missing=True)
@@ -57,6 +99,7 @@ def delete_role(role: Role = None, role_name: str = None, role_id: str = None) -
 
 
 def load_roles_config():
+    """Load local role definition file, if configured and exists"""
     if config.get("auth.role_definition_file"):
         if os.path.isfile(config.get("auth.role_definition_file")):
             with open(config.get("auth.role_definition_file"), "r") as config_file:
