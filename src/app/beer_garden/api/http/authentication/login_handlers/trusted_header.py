@@ -13,9 +13,9 @@ from tornado.httputil import HTTPHeaders, HTTPServerRequest
 
 from beer_garden import config
 from beer_garden.api.http.authentication.login_handlers.base import BaseLoginHandler
+from beer_garden.garden import get_garden
 from beer_garden.role import get_role
 from beer_garden.user import create_user, get_user, set_password, update_user
-from beer_garden.garden import get_garden
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +76,10 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                         ] = json.loads(
                             request.headers.get(self.user_upstream_roles_header, "[]")
                         )
-                    elif "last_authentication_headers_upstream_roles" in authenticated_user.metadata:
+                    elif (
+                        "last_authentication_headers_upstream_roles"
+                        in authenticated_user.metadata
+                    ):
                         del authenticated_user.metadata[
                             "last_authentication_headers_upstream_roles"
                         ]
@@ -88,7 +91,10 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                         ] = json.loads(
                             request.headers.get(self.user_local_roles_header, "[]")
                         )
-                    elif "last_authentication_headers_local_roles" in authenticated_user.metadata:
+                    elif (
+                        "last_authentication_headers_local_roles"
+                        in authenticated_user.metadata
+                    ):
                         del authenticated_user.metadata[
                             "last_authentication_headers_local_roles"
                         ]
@@ -102,14 +108,17 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                                 self.user_alias_user_mapping_header, "[]"
                             )
                         )
-                    elif "last_authentication_headers_alias_user_mapping" in authenticated_user.metadata:
+                    elif (
+                        "last_authentication_headers_alias_user_mapping"
+                        in authenticated_user.metadata
+                    ):
                         del authenticated_user.metadata[
                             "last_authentication_headers_alias_user_mapping"
                         ]
 
-                    authenticated_user.metadata[
-                        "last_authentication"
-                    ] = datetime.utcnow().timestamp()
+                    authenticated_user.metadata["last_authentication"] = (
+                        datetime.utcnow().timestamp()
+                    )
                     authenticated_user = update_user(authenticated_user)
 
         return authenticated_user

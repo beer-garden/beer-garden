@@ -14,10 +14,10 @@ from beer_garden.errors import ExpiredTokenException, InvalidTokenException
 from beer_garden.user import (
     create_token,
     delete_token,
+    determine_max_permission,
     get_token,
     get_user,
     revoke_tokens,
-    determine_max_permission,
 )
 
 

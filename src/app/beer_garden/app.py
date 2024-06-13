@@ -482,12 +482,16 @@ class Application(StoppableThread):
                 plugin_dir=config.get("plugin.local.directory"),
                 log_dir=config.get("plugin.local.log_directory"),
                 connection_info=config.get("entry.http"),
-                username=config.get("plugin.local.auth.username")
-                if config.get("auth.enabled")
-                else None,
-                password=config.get("plugin.local.auth.password")
-                if config.get("auth.enabled")
-                else None,
+                username=(
+                    config.get("plugin.local.auth.username")
+                    if config.get("auth.enabled")
+                    else None
+                ),
+                password=(
+                    config.get("plugin.local.auth.password")
+                    if config.get("auth.enabled")
+                    else None
+                ),
             ),
         )
 

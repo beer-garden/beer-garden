@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from brewtils.models import Command, Garden, Instance, AliasUserMap, Role, System, User
+from brewtils.models import AliasUserMap, Command, Garden, Instance, Role, System, User
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.user import (

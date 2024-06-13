@@ -2,7 +2,7 @@ import logging
 import os
 
 import yaml
-from brewtils.models import Event, Role, Events
+from brewtils.models import Event, Events, Role
 from mongoengine import DoesNotExist
 
 import beer_garden.db.api as db
@@ -26,6 +26,7 @@ def get_role(role_name: str = None, role_id: str = None):
 def get_roles():
     return db.query(Role)
 
+
 @publish_event(Events.ROLE_UPDATED)
 def update_role(
     role: Role = None, role_name: str = None, role_id: str = None, **kwargs
@@ -40,6 +41,7 @@ def update_role(
         setattr(role, key, value)
 
     return db.update(role)
+
 
 @publish_event(Events.ROLE_DELETED)
 def delete_role(role: Role = None, role_name: str = None, role_id: str = None) -> Role:
@@ -60,7 +62,9 @@ def load_roles_config():
             with open(config.get("auth.role_definition_file"), "r") as config_file:
                 return yaml.safe_load(config_file)
         else:
-            logger.error(f"Unable to load Roles file: {config.get('auth.role_definition_file')}")
+            logger.error(
+                f"Unable to load Roles file: {config.get('auth.role_definition_file')}"
+            )
     return []
 
 

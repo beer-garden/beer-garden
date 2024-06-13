@@ -611,6 +611,7 @@ def remove_local_role_assignments_for_role(role: Role) -> int:
 
     return len(impacted_users)
 
+
 def update_local_role_assignments_for_role(role: Role) -> int:
     """Update all User role assignments for the provided Role.
 
