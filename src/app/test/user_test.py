@@ -6,10 +6,40 @@ from beer_garden.user import (
     flatten_user_role,
     generate_downstream_user,
     upstream_role_match_garden,
+    create_user
 )
+import pytest
+
+from beer_garden.role import create_role
+
+from beer_garden.db.mongo.models import Role as DB_Role
+from beer_garden.db.mongo.models import User as DB_User
+
+@pytest.fixture(autouse=True)
+def drop():
+    DB_Role.drop_collection()
+    DB_User.drop_collection()
+
+@pytest.fixture
+def local_role():
+    return create_role(Role(name="local_role", permission="READ_ONLY"))
+
+@pytest.fixture
+def upstream_role():
+    return Role(name="upstream_role", permission="READ_ONLY")
+
+@pytest.fixture
+def user(local_role, upstream_role):
+    return create_user(User(username="user", local_roles=[local_role], upstream_roles=[upstream_role]))
 
 
 class TestUser:
+
+    def test_create_user(self, local_role, upstream_role):
+        user_created = create_user(User(username="created", local_roles=[local_role], upstream_roles=[upstream_role]))
+
+        assert user_created.id is not None
+
     def test_flatten_user_role(self):
         role = Role(
             name="test",
