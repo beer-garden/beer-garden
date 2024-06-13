@@ -2,7 +2,7 @@ import logging
 from copy import deepcopy
 
 import yaml
-from brewtils.models import Event, Events, Garden, Operation, Role, User, UserToken
+from brewtils.models import Event, Garden, Operation, Role, User, UserToken
 from brewtils.schema_parser import SchemaParser
 from mongoengine import DoesNotExist
 from passlib.apps import custom_app_context
@@ -10,7 +10,6 @@ from passlib.apps import custom_app_context
 import beer_garden.db.api as db
 from beer_garden import config
 
-# from beer_garden.role import RoleSyncSchema, role_sync_status, sync_roles
 from beer_garden.errors import ConfigurationError, InvalidPasswordException
 from beer_garden.events import publish
 from beer_garden.garden import get_garden, get_gardens
@@ -53,22 +52,51 @@ def verify_password(user: User, password: str):
     return custom_app_context.verify(password, user.password)
 
 
-def create_token(token: UserToken):
-    """ """
+def create_token(token: UserToken) -> UserToken:
+    """Create new Token
+
+    Args:
+        token (UserToken): UserToken to create
+
+    Returns:
+        UserToken: Created UserToken
+    """
     return db.create(token)
 
 
-def get_token(uuid: str):
-    """ """
+def get_token(uuid: str) -> UserToken:
+    """Get User Token by UUID
+
+    Args:
+        uuid (str): UUID for User Token
+
+    Returns:
+        UserToken: User Token
+    """
     return db.query_unique(UserToken, uuid=uuid, raise_missing=True)
 
 
-def delete_token(token: UserToken):
-    """ """
+def delete_token(token: UserToken) -> UserToken:
+    """Delete UserToken
+
+    Args:
+        token (UserToken): UserToken to delete
+
+    Returns:
+        UserToken: Deleted UserToken
+    """
     return db.delete(token)
 
 
-def has_token(username: str):
+def has_token(username: str) -> bool:
+    """Determine if User has active token
+
+    Args:
+        username (str): Username of User to check
+
+    Returns:
+        bool: If token exists
+    """
     return db.count(UserToken, username=username) > 0
 
 
@@ -76,7 +104,11 @@ def revoke_tokens(user: User = None, username: str = None) -> None:
     """Remove all tokens from the user's list of valid tokens. This is useful for
     requiring the user to explicitly login, which one may want to do for a variety
     of reasons.
+    Args:
+        user (User, optional): User account to revoke Tokens. Defaults to None.
+        username (str, optional): username of User to revoke Tokens. Defaults to None.
     """
+
     for user_token in db.query(
         UserToken, filter_params={"username": user.username if user else username}
     ):
@@ -84,6 +116,11 @@ def revoke_tokens(user: User = None, username: str = None) -> None:
 
 
 def validated_token_ttl():
+    """Validate the configuration settings for Token TTL
+
+    Raises:
+        ConfigurationError: Refresh Token expires before Access Token
+    """
     for ttl in ["garden_admin", "plugin_admin", "operator", "read_only"]:
         if config.get(f"auth.token_access_ttl.{ttl}") > config.get(
             f"auth.token_refresh_ttl.{ttl}"
@@ -94,7 +131,16 @@ def validated_token_ttl():
 
 
 def get_user(username: str = None, id: str = None, include_roles: bool = True) -> User:
-    """ """
+    """Get User
+
+    Args:
+        username (str, optional): Username of requested user. Defaults to None.
+        id (str, optional): ID of requested User. Defaults to None.
+        include_roles (bool, optional): Load local role models on User Model. Defaults to True.
+
+    Returns:
+        User: User requested
+    """
     if username:
         user = db.query_unique(User, username=username, raise_missing=True)
     else:
@@ -107,6 +153,11 @@ def get_user(username: str = None, id: str = None, include_roles: bool = True) -
 
 
 def get_users() -> list:
+    """Get all local users
+
+    Returns:
+        list[User]: Users List
+    """
     users = db.query(User)
     for user in users:
         for role in user.roles:
@@ -116,10 +167,20 @@ def get_users() -> list:
     return users
 
 
-def load_users_config():
+def load_users_config() -> list:
+    """Load Users from configuration file
+
+    Returns:
+        list[dict]: List of User models in dictionary format
+    """
     if config.get("auth.user_definition_file"):
-        with open(config.get("auth.user_definition_file"), "r") as config_file:
-            return yaml.safe_load(config_file)
+        if os.path.isfile(config.get("auth.user_definition_file")):
+            with open(config.get("auth.user_definition_file"), "r") as config_file:
+                return yaml.safe_load(config_file)
+        else:
+            logger.error(
+                f"Unable to load User file: {config.get('auth.user_definition_file')}"
+            )
     return []
 
 
@@ -240,7 +301,6 @@ def update_user(
         setattr(user, key, value)
 
     user = db.update(user)
-    # _publish_user_updated(user)
 
     # Sync child gardens
     initiate_user_sync()
@@ -249,6 +309,14 @@ def update_user(
 
 
 def determine_max_permission(user: User) -> str:
+    """Generate max permission level
+
+    Args:
+        user (User): User to evaluate Roles
+
+    Returns:
+        str: Highest permission level
+    """
     max_permission = "READ_ONLY"
 
     for roles in [user.local_roles, user.upstream_roles]:
@@ -273,6 +341,16 @@ def determine_max_permission(user: User) -> str:
 
 
 def flatten_user_role(role: Role, flatten_roles: list):
+    """Flatten role into unique combinations for determining if it applies to
+       downstream garden
+
+    Args:
+        role (Role): Role to be flatten
+        flatten_roles (list): List of roles to append to
+
+    Returns:
+        list[Role]: List of Flatten Roles
+    """
     new_roles = []
     # loop through each scope to determine if we need to flatten further
     for scope_attribute in [
@@ -285,7 +363,6 @@ def flatten_user_role(role: Role, flatten_roles: list):
     ]:
         if len(getattr(role, scope_attribute, [])) > 1:
             # Split scope and rerun
-
             for attribute_value in getattr(role, scope_attribute, []):
                 new_role = deepcopy(role)
                 setattr(new_role, scope_attribute, [attribute_value])
@@ -307,6 +384,13 @@ def flatten_user_role(role: Role, flatten_roles: list):
 def generate_alias_user_mappings(
     user: User, target_garden: Garden, alias_user_mapping: list
 ):
+    """Generate sublist of Alias user mappings for Target Garden
+
+    Args:
+        user (User): User for evaluation
+        target_garden (Garden): Target garden to compare against
+        alias_user_mapping (list): Valid alias mappings for Target Garden
+    """
     if target_garden.children:
         for child in target_garden.children:
             for alias_user_map in alias_user_mapping:
@@ -315,7 +399,16 @@ def generate_alias_user_mappings(
             generate_alias_user_mappings(user, child, alias_user_mapping)
 
 
-def upstream_role_match(role: Role, target_garden: Garden):
+def upstream_role_match(role: Role, target_garden: Garden) -> bool:
+    """Determine if role can be forwarded to Target Garden and children
+
+    Args:
+        role (Role): Role to evaluate
+        target_garden (Garden): Target Garden
+
+    Returns:
+        bool: If Role can be forwarded
+    """
     if upstream_role_match_garden(role, target_garden):
         return True
 
@@ -328,6 +421,15 @@ def upstream_role_match(role: Role, target_garden: Garden):
 
 
 def upstream_role_match_garden(role: Role, target_garden: Garden) -> bool:
+    """Determine if role can be forwarded to Target Garden
+
+    Args:
+        role (Role): Role to evaluate
+        target_garden (Garden): Target Garden
+
+    Returns:
+        bool: If Role can be forwarded
+    """
     # If no scope attributes are populated, then it matches everything
     matchAll = True
     for scope_attribute in [
@@ -406,6 +508,15 @@ def upstream_role_match_garden(role: Role, target_garden: Garden) -> bool:
 
 
 def generate_downstream_user(target_garden: Garden, user: User) -> User:
+    """Generate minimized User model for Target Garden
+
+    Args:
+        target_garden (Garden): Target Garden
+        user (User): User to minimize
+
+    Returns:
+        User: Minimized User account
+    """
     # Garden shares accounts, no filering applied
     if target_garden.shared_users:
         return User(
@@ -442,9 +553,11 @@ def initiate_garden_user_sync(garden_name: str = None, garden: Garden = None) ->
     """Syncs all users from this garden down to requested garden. Only the role
     assignments relevant to the garden will be included in the sync.
 
-    Returns:
-        None
+    Args:
+        garden_name (str, optional): Target Garden Name. Defaults to None.
+        garden (Garden, optional): Target Garden. Defaults to None.
     """
+    
     from beer_garden.router import route
 
     if not garden:
@@ -472,9 +585,6 @@ def initiate_garden_user_sync(garden_name: str = None, garden: Garden = None) ->
 def initiate_user_sync() -> None:
     """Syncs all users from this garden down to all gardens. Only the role
     assignments relevant to each garden will be included in the sync.
-
-    Returns:
-        None
     """
     from beer_garden.router import route
 
@@ -499,6 +609,14 @@ def initiate_user_sync() -> None:
 
 
 def upstream_user_sync(upstream_user: User) -> User:
+    """Upstream user account sync
+
+    Args:
+        upstream_user (User): User account from Upstream to store locally
+
+    Returns:
+        User: Update User Account
+    """
     local_user = db.query_unique(User, username=upstream_user.username)
 
     if local_user is None:
@@ -513,6 +631,15 @@ def upstream_user_sync(upstream_user: User) -> User:
 
 
 def upstream_users_sync(upstream_users=[]):
+    """List of user accounts from Upstream source to sync locally.
+
+    **Notes**
+    - Accounts that are marked remote and not provided in this list will be deleted
+    - Remote Roles and Alias User Mappings are override by incoming changes
+
+    Args:
+        upstream_users (list, optional): List of User Accounts to sync. Defaults to [].
+    """
     upstream_users_brewtils = SchemaParser.parse_user(
         upstream_users, many=True, from_string=False
     )
@@ -639,20 +766,3 @@ def handle_event(event: Event) -> None:
             remove_local_role_assignments_for_role(event.payload)
         elif event.name == "USER_UPDATED":
             initiate_user_sync()
-
-
-def _publish_user_updated(user):
-    """Publish an event with the updated user information"""
-
-    # We use publish rather than publish_event here so that we can hijack the metadata
-    # field to store our actual data. This is done to avoid needing to deal in brewtils
-    # models, which the publish_event decorator requires us to do.
-    publish(
-        Event(
-            name=Events.USER_UPDATED.name,
-            metadata={
-                "garden": config.get("garden.name"),
-                "user": user,
-            },
-        )
-    )
