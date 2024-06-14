@@ -35,7 +35,7 @@ def role():
 
 @pytest.fixture
 def roles_file_path(tmpdir):
-    roles_file = Path(tmpdir, f"roles.yaml")
+    roles_file = Path(tmpdir, "roles.yaml")
 
     raw_roles = """- name: "garden_admin"
   permission: "GARDEN_ADMIN"
@@ -99,7 +99,7 @@ class TestRole:
     )
     def test_create_valid_permissions(self, permission):
         role = create_role(Role(name="test", permission=permission))
-        assert role.id != None
+        assert role.id is not None
 
     def test_create_invalid_permission(self):
         with pytest.raises(ModelValidationError):

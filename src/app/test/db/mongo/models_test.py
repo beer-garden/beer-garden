@@ -7,7 +7,7 @@ import pytest
 from brewtils.errors import ModelValidationError, RequestStatusTransitionError
 from brewtils.schemas import RequestTemplateSchema
 from mock import Mock
-from mongoengine import NotUniqueError, ValidationError, connect
+from mongoengine import NotUniqueError, connect
 from mongomock.gridfs import enable_gridfs_integration
 
 import beer_garden.db.api as db

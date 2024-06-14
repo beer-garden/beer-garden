@@ -50,7 +50,6 @@ from beer_garden import config
 from beer_garden.db.mongo.querysets import FileFieldHandlingQuerySet
 
 from .fields import DummyField, StatusInfo
-from .validators import validate_permissions
 
 __all__ = [
     "System",
@@ -1079,32 +1078,6 @@ class User(MongoModel, Document):
         except DoesNotExist:
             pass
         return super().delete(*args, **kwargs)
-
-    # def clear_permissions_cache(self) -> None:
-    #     """Clear the cached permission set for the user. This is useful if the user's
-    #     role assignments have been changed and you want to perform a permission check
-    #     using those new role assignments without reloading the entire user object.
-    #     """
-    #     self._permissions_cache = None
-
-    # def set_permissions_cache(self, permissions: dict) -> None:
-    #     """Manually set the cached permission set for the user. This cache is typically
-    #     set and checked by the permissions property method. In cases where those
-    #     permissions are externally sourced (such as an access token in a web request
-    #     that was provided via initial authentication), this method can be used to
-    #     manually set the _permissions_cache value so that subsequent calls to
-    #     permissions related helper functions do not unnecessarily recalculate the user
-    #     permissions.
-
-    #     Args:
-    #         permissions: A dictionary containing the user's permissions. The format
-    #             should match the one produced by permissions_for_user in
-    #             beer_garden.authorization
-
-    #     Returns:
-    #         None
-    #     """
-    #     self._permissions_cache = permissions
 
 
 class UserToken(MongoModel, Document):

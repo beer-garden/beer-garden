@@ -60,7 +60,7 @@ def drop():
 
 @pytest.fixture
 def user_file_path(tmpdir):
-    user_file = Path(tmpdir, f"users.yaml")
+    user_file = Path(tmpdir, "users.yaml")
 
     raw_users = """- username: "user1"
   roles:
@@ -87,7 +87,7 @@ def user_file_path(tmpdir):
 
 @pytest.fixture
 def roles_file_path(tmpdir):
-    roles_file = Path(tmpdir, f"roles.yaml")
+    roles_file = Path(tmpdir, "roles.yaml")
 
     raw_roles = """- name: "garden_admin"
   permission: "GARDEN_ADMIN"
@@ -232,7 +232,7 @@ class TestUserToken:
         validated_token_ttl()
         assert True
 
-    def test_validated_token_ttl(self, app_config_invalid_ttl):
+    def test_validated_invalid_token_ttl(self, app_config_invalid_ttl):
         with pytest.raises(ConfigurationError):
             validated_token_ttl()
 
@@ -304,7 +304,7 @@ class TestUser:
 
         db_user = get_user(username=user.username)
 
-        assert len(user.upstream_roles) == 2
+        assert len(db_user.upstream_roles) == 2
 
     def test_update_user_change_invalid_password(self, user):
         password = "test"

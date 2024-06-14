@@ -11,7 +11,6 @@ from passlib.apps import custom_app_context
 import beer_garden.db.api as db
 from beer_garden import config
 from beer_garden.errors import ConfigurationError, InvalidPasswordException
-from beer_garden.events import publish
 from beer_garden.garden import get_garden, get_gardens
 from beer_garden.role import get_role
 
