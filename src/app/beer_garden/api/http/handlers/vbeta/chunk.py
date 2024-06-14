@@ -5,10 +5,10 @@ from brewtils.models import Operation, Resolvable
 from brewtils.schema_parser import SchemaParser
 from tornado.escape import json_decode
 
-from beer_garden.api.http.base_handler import BaseHandler
+from beer_garden.api.http.handlers import AuthorizationHandler
 
 
-class FileChunkAPI(BaseHandler):
+class FileChunkAPI(AuthorizationHandler):
     async def get(self):
         """
         ---

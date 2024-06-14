@@ -4,12 +4,12 @@ import io
 from brewtils.models import Resolvable
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.api.http.base_handler import BaseHandler
+from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.db.mongo.models import RawFile
 from beer_garden.garden import local_garden
 
 
-class RawFileAPI(BaseHandler):
+class RawFileAPI(AuthorizationHandler):
     async def get(self, file_id):
         """
         ---
