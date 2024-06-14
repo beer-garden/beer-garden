@@ -1,6 +1,6 @@
 import logging
-from copy import deepcopy
 import os
+from copy import deepcopy
 
 import yaml
 from brewtils.models import Event, Garden, Operation, Role, User, UserToken
@@ -10,7 +10,6 @@ from passlib.apps import custom_app_context
 
 import beer_garden.db.api as db
 from beer_garden import config
-
 from beer_garden.errors import ConfigurationError, InvalidPasswordException
 from beer_garden.events import publish
 from beer_garden.garden import get_garden, get_gardens
@@ -285,7 +284,6 @@ def update_user(
         if user.roles != existing_user.roles:
             revoke_tokens(user=existing_user)
 
-
     if not user.is_remote:
         # Only local accounts have passwords associated
         if new_password:
@@ -309,13 +307,15 @@ def update_user(
             user = existing_user
 
     if "roles" in kwargs and "local_roles" in kwargs:
-        raise ValueError("Roles and Local Roles both being updated, please only update one key per transaction")
-    
+        raise ValueError(
+            "Roles and Local Roles both being updated, please only update one key per transaction"
+        )
+
     for key, value in kwargs.items():
-        if key in ["roles","local_roles","remote_roles"]:
+        if key in ["roles", "local_roles", "remote_roles"]:
             # Roles changed, so cached tokens are no longer valid
             revoke_tokens(user=user)
-        
+
         if key == "roles":
             # If roles are updated, clear local roles
             user.local_roles = []
@@ -582,7 +582,7 @@ def initiate_garden_user_sync(garden_name: str = None, garden: Garden = None) ->
         garden_name (str, optional): Target Garden Name. Defaults to None.
         garden (Garden, optional): Target Garden. Defaults to None.
     """
-    
+
     from beer_garden.router import route
 
     if not garden:

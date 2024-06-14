@@ -1,42 +1,54 @@
 # -*- coding: utf-8 -*-
-from brewtils.models import AliasUserMap, Command, Garden, Instance, Role, System, User, UserToken
-from brewtils.schema_parser import SchemaParser
-from uuid import uuid4
 from datetime import datetime, timedelta
-from beer_garden.user import (
-    flatten_user_role,
-    generate_downstream_user,
-    upstream_role_match_garden,
-    create_user,
-    set_password,
-    verify_password,
-    create_token,
-    get_token,
-    delete_token,
-    has_token,
-    revoke_tokens,
-    validated_token_ttl,
-    get_user,
-    get_users,
-    rescan,
-    delete_user,
-    update_user,
-    generate_alias_user_mappings,
-    upstream_user_sync
-)
-from mock import Mock
-import pytest
-from mongoengine import DoesNotExist
-from beer_garden.role import create_role, get_role
-from beer_garden.role import rescan as role_rescan
 from pathlib import Path
+from uuid import uuid4
+
+import pytest
+from box import Box
+from brewtils.models import (
+    AliasUserMap,
+    Command,
+    Garden,
+    Instance,
+    Role,
+    System,
+    User,
+    UserToken,
+)
+from brewtils.schema_parser import SchemaParser
+from mock import Mock
+from mongoengine import DoesNotExist
+
 import beer_garden
+from beer_garden import config
 from beer_garden.db.mongo.models import Role as DB_Role
 from beer_garden.db.mongo.models import User as DB_User
 from beer_garden.db.mongo.models import UserToken as DB_UserToken
-from beer_garden import config
-from box import Box
 from beer_garden.errors import ConfigurationError, InvalidPasswordException
+from beer_garden.role import create_role, get_role
+from beer_garden.role import rescan as role_rescan
+from beer_garden.user import (
+    create_token,
+    create_user,
+    delete_token,
+    delete_user,
+    flatten_user_role,
+    generate_alias_user_mappings,
+    generate_downstream_user,
+    get_token,
+    get_user,
+    get_users,
+    has_token,
+    rescan,
+    revoke_tokens,
+    set_password,
+    update_user,
+    upstream_role_match_garden,
+    upstream_user_sync,
+    validated_token_ttl,
+    verify_password,
+)
+
 
 @pytest.fixture(autouse=True)
 def drop():
@@ -44,6 +56,7 @@ def drop():
     DB_Role.drop_collection()
     DB_User.drop_collection()
     DB_UserToken.drop_collection()
+
 
 @pytest.fixture
 def user_file_path(tmpdir):
@@ -71,6 +84,7 @@ def user_file_path(tmpdir):
 
     return str(user_file)
 
+
 @pytest.fixture
 def roles_file_path(tmpdir):
     roles_file = Path(tmpdir, f"roles.yaml")
@@ -93,22 +107,33 @@ def roles_file_path(tmpdir):
 
     return str(roles_file)
 
+
 @pytest.fixture
 def local_role():
     return create_role(Role(name="local_role", permission="READ_ONLY"))
+
 
 @pytest.fixture
 def upstream_role():
     return Role(name="upstream_role", permission="READ_ONLY")
 
+
 @pytest.fixture
 def user(local_role, upstream_role):
-    return create_user(User(username="user", local_roles=[local_role], upstream_roles=[upstream_role]))
+    return create_user(
+        User(username="user", local_roles=[local_role], upstream_roles=[upstream_role])
+    )
+
 
 @pytest.fixture
 def user_token(user):
-    return create_token(UserToken(uuid=uuid4(), username=user.username, expires_at=datetime.utcnow() + timedelta(hours=12)))
-
+    return create_token(
+        UserToken(
+            uuid=uuid4(),
+            username=user.username,
+            expires_at=datetime.utcnow() + timedelta(hours=12),
+        )
+    )
 
 
 @pytest.fixture
@@ -124,6 +149,7 @@ def app_config_users_file(monkeypatch, roles_file_path, user_file_path):
     )
     monkeypatch.setattr(config, "_CONFIG", app_config)
     yield app_config
+
 
 @pytest.fixture
 def app_config_valid_ttl(monkeypatch):
@@ -142,16 +168,18 @@ def app_config_valid_ttl(monkeypatch):
                     "operator": 720,
                     "plugin_admin": 720,
                     "read_only": 720,
-                }
+                },
             }
         }
     )
     monkeypatch.setattr(config, "_CONFIG", app_config)
     yield app_config
 
+
 @pytest.fixture
 def roles_loaded(app_config_users_file):
     role_rescan()
+
 
 @pytest.fixture
 def app_config_invalid_ttl(monkeypatch):
@@ -170,15 +198,15 @@ def app_config_invalid_ttl(monkeypatch):
                     "operator": 720,
                     "plugin_admin": 720,
                     "read_only": 720,
-                }
+                },
             }
         }
     )
     monkeypatch.setattr(config, "_CONFIG", app_config)
     yield app_config
 
-class TestUserToken:
 
+class TestUserToken:
     def test_get_user_token(self, user_token):
         assert get_token(user_token.uuid) is not None
 
@@ -193,11 +221,11 @@ class TestUserToken:
         assert not has_token("NO_MATCH")
 
     def test_revoke_tokens_by_username(self, user_token):
-        revoke_tokens(username = user_token.username)
+        revoke_tokens(username=user_token.username)
         assert not has_token(user_token.username)
 
     def test_revoke_tokens_by_user(self, user_token, user):
-        revoke_tokens(user = user)
+        revoke_tokens(user=user)
         assert not has_token(user.username)
 
     def test_validated_token_ttl(self, app_config_valid_ttl):
@@ -208,10 +236,16 @@ class TestUserToken:
         with pytest.raises(ConfigurationError):
             validated_token_ttl()
 
-class TestUser:
 
+class TestUser:
     def test_create_user(self, local_role, upstream_role):
-        user_created = create_user(User(username="created", local_roles=[local_role], upstream_roles=[upstream_role]))
+        user_created = create_user(
+            User(
+                username="created",
+                local_roles=[local_role],
+                upstream_roles=[upstream_role],
+            )
+        )
 
         assert user_created.id is not None
 
@@ -235,12 +269,10 @@ class TestUser:
     def test_update_user(self, user, monkeypatch, app_config_users_file):
         revoke_mock = Mock()
 
-        monkeypatch.setattr(
-            beer_garden.user, "revoke_tokens", revoke_mock
-        )
+        monkeypatch.setattr(beer_garden.user, "revoke_tokens", revoke_mock)
 
         role_rescan()
-        updated_user = update_user(user=user, roles=["read_only","plugin_admin"])
+        updated_user = update_user(user=user, roles=["read_only", "plugin_admin"])
 
         assert len(updated_user.roles) == 2
         revoke_mock.assert_called_once()
@@ -248,12 +280,12 @@ class TestUser:
     def test_update_user_local_roles(self, user, monkeypatch, app_config_users_file):
         revoke_mock = Mock()
 
-        monkeypatch.setattr(
-            beer_garden.user, "revoke_tokens", revoke_mock
-        )
+        monkeypatch.setattr(beer_garden.user, "revoke_tokens", revoke_mock)
         role_rescan()
-        
-        updated_user = update_user(user=user, local_roles=[get_role("read_only"), get_role("plugin_admin")])
+
+        updated_user = update_user(
+            user=user, local_roles=[get_role("read_only"), get_role("plugin_admin")]
+        )
 
         assert len(updated_user.roles) == 2
         revoke_mock.assert_called_once()
@@ -262,7 +294,10 @@ class TestUser:
         user.is_remote = True
         user = update_user(user=user)
 
-        user.upstream_roles = [ Role(name="test1",permission="READ_ONLY"), Role(name="test2",permission="READ_ONLY")]
+        user.upstream_roles = [
+            Role(name="test1", permission="READ_ONLY"),
+            Role(name="test2", permission="READ_ONLY"),
+        ]
 
         update_user(user=user)
 
@@ -297,10 +332,9 @@ class TestUser:
     def test_verify_invalid_password(self, user):
         password = "test"
         set_password(user, password=password)
-  
+
         assert not verify_password(user, "invalid")
 
-    
     def test_rescan_users(self, app_config_users_file):
         role_rescan()
         rescan()
@@ -321,8 +355,8 @@ class TestUser:
         for role in user4.local_roles:
             assert role.name == "plugin_admin"
 
-class TestUserForwarding:
 
+class TestUserForwarding:
     def test_flatten_user_role(self):
         role = Role(
             name="test",
@@ -551,28 +585,51 @@ class TestUserForwarding:
         )
 
     def test_generate_alias_user_mappings(self, user):
-        alias_user_mapping = [AliasUserMap(target_garden="a",username="test"), AliasUserMap(target_garden="b",username="test"), AliasUserMap(target_garden="c",username="test")]
+        alias_user_mapping = [
+            AliasUserMap(target_garden="a", username="test"),
+            AliasUserMap(target_garden="b", username="test"),
+            AliasUserMap(target_garden="c", username="test"),
+        ]
 
         one_match_garden = Garden(name="target", children=[Garden(name="a")])
-        two_match_garden = Garden(name="target", children=[Garden(name="b", children=[Garden(name="c")])])
-        three_match_garden = Garden(name="target", children=[Garden(name="c", children=[Garden(name="b", children=[Garden(name="a")])])])
-        
+        two_match_garden = Garden(
+            name="target", children=[Garden(name="b", children=[Garden(name="c")])]
+        )
+        three_match_garden = Garden(
+            name="target",
+            children=[
+                Garden(
+                    name="c", children=[Garden(name="b", children=[Garden(name="a")])]
+                )
+            ],
+        )
+
         one_match_user = User(username="username")
         two_match_user = User(username="username")
         three_match_user = User(username="username")
 
-        generate_alias_user_mappings(one_match_user, one_match_garden, alias_user_mapping)
-        generate_alias_user_mappings(two_match_user, two_match_garden, alias_user_mapping)
-        generate_alias_user_mappings(three_match_user, three_match_garden, alias_user_mapping)
+        generate_alias_user_mappings(
+            one_match_user, one_match_garden, alias_user_mapping
+        )
+        generate_alias_user_mappings(
+            two_match_user, two_match_garden, alias_user_mapping
+        )
+        generate_alias_user_mappings(
+            three_match_user, three_match_garden, alias_user_mapping
+        )
 
         assert len(one_match_user.alias_user_mapping) == 1
         assert len(two_match_user.alias_user_mapping) == 2
         assert len(three_match_user.alias_user_mapping) == 3
 
-class TestUpstreamSync:
 
+class TestUpstreamSync:
     def test_upstream_user_sync_create(self):
-        new_user = User(username="test_user", is_remote=True, upstream_roles=[Role(name="upstream", permission="READ_ONLY")])
+        new_user = User(
+            username="test_user",
+            is_remote=True,
+            upstream_roles=[Role(name="upstream", permission="READ_ONLY")],
+        )
         upstream_user_sync(new_user)
 
         db_user = get_user(username=new_user.username)
@@ -581,7 +638,11 @@ class TestUpstreamSync:
         assert db_user.is_remote
 
     def test_upstream_user_sync_local(self, user):
-        new_user = User(username=user.username, is_remote=True, upstream_roles=[Role(name="upstream", permission="READ_ONLY")])
+        new_user = User(
+            username=user.username,
+            is_remote=True,
+            upstream_roles=[Role(name="upstream", permission="READ_ONLY")],
+        )
         upstream_user_sync(new_user)
 
         db_user = get_user(username=new_user.username)
@@ -594,7 +655,13 @@ class TestUpstreamSync:
         user.is_remote = True
         create_user(User(username=username, is_remote=True, roles=["plugin_admin"]))
 
-        upstream_user_sync(User(username=username, is_remote=True, upstream_roles=[Role(name="upstream", permission="READ_ONLY")]))
+        upstream_user_sync(
+            User(
+                username=username,
+                is_remote=True,
+                upstream_roles=[Role(name="upstream", permission="READ_ONLY")],
+            )
+        )
 
         db_user = get_user(username=username)
 

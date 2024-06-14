@@ -167,13 +167,13 @@ class QueryFilterBuilder:
                     if len(role.scope_systems) > 0:
                         filter["request_template__system__in"] = role.scope_systems
                     if len(role.scope_instances) > 0:
-                        filter["request_template__instance_name__in"] = (
-                            role.scope_instances
-                        )
+                        filter[
+                            "request_template__instance_name__in"
+                        ] = role.scope_instances
                     if len(role.scope_versions) > 0:
-                        filter["request_template__system_version__in"] = (
-                            role.scope_versions
-                        )
+                        filter[
+                            "request_template__system_version__in"
+                        ] = role.scope_versions
                     if len(role.scope_commands) > 0:
                         filter["request_template__command__in"] = role.scope_commands
 

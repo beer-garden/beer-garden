@@ -98,7 +98,6 @@ class TestRole:
         "permission", ["READ_ONLY", "OPERATOR", "PLUGIN_ADMIN", "GARDEN_ADMIN"]
     )
     def test_create_valid_permissions(self, permission):
-
         role = create_role(Role(name="test", permission=permission))
         assert role.id != None
 
@@ -111,7 +110,6 @@ class TestRole:
         assert get_role(role_name=role.name) == role
 
     def test_update_role(self, role):
-
         role.permission = "OPERATOR"
         update_role(role)
         db_role = get_role(role_id=role.id)
@@ -126,7 +124,6 @@ class TestRole:
         assert db_role.permission == "GARDEN_ADMIN"
 
     def test_delete_role(self, role):
-
         delete_role(role)
 
         with pytest.raises(DoesNotExist):
