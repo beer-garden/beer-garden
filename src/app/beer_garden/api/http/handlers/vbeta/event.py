@@ -1,10 +1,10 @@
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.api.http.base_handler import BaseHandler
+from beer_garden.api.http.base_handler import AuthorizationHandler
 from beer_garden.events import publish
 
 
-class EventPublisherAPI(BaseHandler):
+class EventPublisherAPI(AuthorizationHandler):
     parser = SchemaParser()
 
     def post(self):
