@@ -1,5 +1,6 @@
 import logging
 from copy import deepcopy
+import os
 
 import yaml
 from brewtils.models import Event, Garden, Operation, Role, User, UserToken
@@ -25,7 +26,7 @@ on child.
 """
 
 
-def set_password(user: User, password: str = None):
+def set_password(user: User, password: str = None) -> User:
     """This helper should be used to set the user's password, rather than directly
     assigning a value. This ensures that the password is stored as a hash rather
     than in plain text
@@ -34,9 +35,10 @@ def set_password(user: User, password: str = None):
         password: String to set as the user's password.
 
     Returns:
-        None
+        User: Updated User model with password
     """
     user.password = custom_app_context.hash(password or user.password)
+    return user
 
 
 def verify_password(user: User, password: str):

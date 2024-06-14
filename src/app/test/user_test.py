@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
-from brewtils.models import AliasUserMap, Command, Garden, Instance, Role, System, User
+from brewtils.models import AliasUserMap, Command, Garden, Instance, Role, System, User, UserToken
 from brewtils.schema_parser import SchemaParser
-
+from uuid import uuid4
+from datetime import datetime, timedelta
 from beer_garden.user import (
     flatten_user_role,
     generate_downstream_user,
     upstream_role_match_garden,
-    create_user
+    create_user,
+    set_password,
+    verify_password,
+    create_token,
+    get_token
 )
 import pytest
 
@@ -14,11 +19,16 @@ from beer_garden.role import create_role
 
 from beer_garden.db.mongo.models import Role as DB_Role
 from beer_garden.db.mongo.models import User as DB_User
+from beer_garden.db.mongo.models import UserToken as DB_UserToken
+
+
 
 @pytest.fixture(autouse=True)
 def drop():
+    yield
     DB_Role.drop_collection()
     DB_User.drop_collection()
+    DB_UserToken.drop_collection()
 
 @pytest.fixture
 def local_role():
@@ -32,6 +42,10 @@ def upstream_role():
 def user(local_role, upstream_role):
     return create_user(User(username="user", local_roles=[local_role], upstream_roles=[upstream_role]))
 
+@pytest.fixture
+def user_token(user):
+    return create_token(UserToken(uuid=uuid4(), username=user.username, expires_at=datetime.utcnow() + timedelta(hours=12)))
+
 
 class TestUser:
 
@@ -39,6 +53,26 @@ class TestUser:
         user_created = create_user(User(username="created", local_roles=[local_role], upstream_roles=[upstream_role]))
 
         assert user_created.id is not None
+
+    def test_set_password(self, user):
+        password = "test"
+        set_password(user, password=password)
+
+        assert user.password != password
+
+    def test_verify_password(self, user):
+        password = "test"
+        set_password(user, password=password)
+
+        assert user.password != password
+
+        assert verify_password(user, password)
+
+    def test_get_user_token(self, user_token):
+        assert get_token(user_token.uuid) is not None
+
+    
+
 
     def test_flatten_user_role(self):
         role = Role(
