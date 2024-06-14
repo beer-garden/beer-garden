@@ -10,6 +10,6 @@
   roles:
     - "read_only"
 
-- username: "user2"
+- username: "user4"
   roles:
     - "plugin_admin"

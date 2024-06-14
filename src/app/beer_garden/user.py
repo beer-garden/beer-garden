@@ -274,6 +274,17 @@ def update_user(
     """
     if not user:
         user = db.query_unique(User, username=username, raise_missing=True)
+    else:
+        existing_user = db.query_unique(User, username=user.username)
+
+        if user.local_roles:
+            for local_role in user.local_roles:
+                if local_role.name not in user.roles:
+                    user.roles.append(local_role.name)
+
+        if user.roles != existing_user.roles:
+            revoke_tokens(user=existing_user)
+
 
     if not user.is_remote:
         # Only local accounts have passwords associated
@@ -284,7 +295,8 @@ def update_user(
                 raise InvalidPasswordException("Current password incorrect")
 
     else:
-        existing_user = db.query_unique(User, username=user.username)
+        if not existing_user:
+            existing_user = db.query_unique(User, username=user.username)
 
         if existing_user and not existing_user.is_remote:
             # Update upstream roles, and alias user mappings
@@ -296,10 +308,21 @@ def update_user(
 
             user = existing_user
 
+    if "roles" in kwargs and "local_roles" in kwargs:
+        raise ValueError("Roles and Local Roles both being updated, please only update one key per transaction")
+    
     for key, value in kwargs.items():
-        if key == "roles":
+        if key in ["roles","local_roles","remote_roles"]:
             # Roles changed, so cached tokens are no longer valid
             revoke_tokens(user=user)
+        
+        if key == "roles":
+            # If roles are updated, clear local roles
+            user.local_roles = []
+        elif key == "local_roles":
+            # If local roles are updated, clear roles
+            user.roles = []
+
         setattr(user, key, value)
 
     user = db.update(user)
@@ -625,6 +648,7 @@ def upstream_user_sync(upstream_user: User) -> User:
         return db.create(upstream_user)
 
     if local_user.is_remote:
+        upstream_user.id = local_user.id
         return db.update(upstream_user)
 
     local_user.alias_user_mapping = upstream_user.alias_user_mapping

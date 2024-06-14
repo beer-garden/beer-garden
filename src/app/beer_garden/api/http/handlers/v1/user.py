@@ -123,7 +123,6 @@ class UserAPI(AuthorizationHandler):
                         kwargs={
                             "username": username,
                             "roles": op.value["roles"],
-                            "local_roles": [],
                         },
                     ),
                     filter_results=False,
