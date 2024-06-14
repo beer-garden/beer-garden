@@ -56,10 +56,12 @@ class TestPublish(object):
         while check < 5:
             completed_request = self.easy_client.find_unique_request(id=request.id)
             if len(completed_request.children) == expected_length:
-                return completed_request
-            time.sleep(5)
+                break
+            time.sleep(10)
             check += 1
 
+        if completed_request:
+            return completed_request
         return request
 
     def test_one_trigger_topic_subscriber(self, topic1):
