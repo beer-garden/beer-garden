@@ -266,22 +266,23 @@ class TestUser:
         with pytest.raises(DoesNotExist):
             get_user(username=user.username)
 
-    def test_update_user(self, user, monkeypatch, app_config_users_file):
+    def test_update_user(self, user, monkeypatch, roles_loaded):
         revoke_mock = Mock()
-
         monkeypatch.setattr(beer_garden.user, "revoke_tokens", revoke_mock)
 
-        role_rescan()
         updated_user = update_user(user=user, roles=["read_only", "plugin_admin"])
 
         assert len(updated_user.roles) == 2
         revoke_mock.assert_called_once()
 
-    def test_update_user_local_roles(self, user, monkeypatch, app_config_users_file):
-        revoke_mock = Mock()
+    def test_update_user_invalid_password(self, user):
+        set_password(user, password="good")
+        with pytest.raises(InvalidPasswordException):
+            update_user(user=user, new_password="bad", current_password="bad")
 
+    def test_update_user_local_roles(self, user, monkeypatch, roles_loaded):
+        revoke_mock = Mock()
         monkeypatch.setattr(beer_garden.user, "revoke_tokens", revoke_mock)
-        role_rescan()
 
         updated_user = update_user(
             user=user, local_roles=[get_role("read_only"), get_role("plugin_admin")]
