@@ -580,8 +580,8 @@ jobs:
         working-directory: ./test/integration
 
       - name: Test Plugins
-        # run: python${{ matrix.python-version }} -m pytest local_plugins --ignore=local_plugins/plugins/autobrew_test.py --ignore=local_plugins/plugins/complex_test.py --ignore=local_plugins/plugins/dynamic_test.py
-        run: python${{ matrix.python-version }} -m pytest local_plugins/plugins/echo_sleeper_test.py
+        run: python${{ matrix.python-version }} -m pytest local_plugins --ignore=local_plugins/plugins/autobrew_test.py --ignore=local_plugins/plugins/complex_test.py --ignore=local_plugins/plugins/dynamic_test.py
+        # run: python${{ matrix.python-version }} -m pytest local_plugins/plugins/echo_sleeper_test.py
         working-directory: ./test/integration
         timeout-minutes: 2
 
