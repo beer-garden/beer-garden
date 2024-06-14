@@ -73,7 +73,7 @@ class RawFileAPI(AuthorizationHandler):
         self.set_status(204)
 
 
-class RawFileListAPI(BaseHandler):
+class RawFileListAPI(AuthorizationHandler):
     async def post(self):
         """
         ---

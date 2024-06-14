@@ -163,7 +163,7 @@ class FileChunkAPI(AuthorizationHandler):
         self.write(response)
 
 
-class ChunkNameAPI(BaseHandler):
+class ChunkNameAPI(AuthorizationHandler):
     async def get(self):
         """
         ---
