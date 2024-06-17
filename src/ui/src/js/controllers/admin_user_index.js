@@ -76,6 +76,30 @@ export default function adminUserIndexController($rootScope, $scope, $uibModal, 
     return $scope.formatDate(user.metadata.last_authentication);
   }
 
+  $scope.getMissingRoles = function (user) {
+   
+    if (user.metadata === undefined || user.metadata.last_authentication_headers_local_roles === undefined || user.metadata.last_authentication_headers_local_roles === null ){
+      return [];
+    }
+
+    let missingRoles = [];
+    for (const auth_role of user.metadata.last_authentication_headers_local_roles){
+      let isMissing = true;
+      for (const user_role of user.local_roles){
+        if (user_role.name == auth_role){
+          isMissing = false;
+          break;
+        }
+      }
+
+      if (isMissing){
+        missingRoles.push(auth_role);
+      }
+
+    }
+    return missingRoles;
+  }
+
   $scope.roleTitle = function(role) {
     let title = role.permission;
 

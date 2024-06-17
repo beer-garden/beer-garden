@@ -21,16 +21,6 @@
 </h1>
 
 <div
-  uib-alert
-  ng-repeat="alert in alerts"
-  ng-class="'alert-' + alert.type"
-  close="closeAlert($index)"
->
-  {{alert.msg}}
-</div>
-
-
-<div
   class="container-fluid animate-if"
   ng-show="responseState(response) === 'success'"
 >
@@ -95,6 +85,9 @@
           <td>
             <div ng-repeat="role in user.local_roles">
               <div title="{{roleTitle(role)}}">{{role.name}}</div>
+            </div>
+            <div ng-repeat="role in getMissingRoles()">
+              <div title="Failed Authentication"><s>{{role.name}}</s></div>
             </div>
           </td>
           <td>
