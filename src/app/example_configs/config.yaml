@@ -7,7 +7,7 @@ auth:
     trusted_header:
       create_users: true
       enabled: false
-      user_alias_user_mapping_header: bg-user-alias-user-mapping
+      user_alias_mapping_header: bg-user-alias-user-mapping
       user_local_roles_header: bg-user-local-roles
       user_upstream_roles_header: bg-user-upstream-roles
       username_header: bg-username

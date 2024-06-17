@@ -32,8 +32,8 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
             "user_upstream_roles_header"
         )
         self.user_local_roles_header = handler_config.get("user_local_roles_header")
-        self.user_alias_user_mapping_header = handler_config.get(
-            "user_alias_user_mapping_header"
+        self.user_alias_mapping_header = handler_config.get(
+            "user_alias_mapping_header"
         )
         self.create_users = handler_config.get("create_users")
 
@@ -105,7 +105,7 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                             "last_authentication_headers_alias_user_mapping"
                         ] = json.loads(
                             request.headers.get(
-                                self.user_alias_user_mapping_header, "[]"
+                                self.user_alias_mapping_header, "[]"
                             )
                         )
                     elif (
@@ -167,13 +167,13 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
     def _alias_user_mapping_from_headers(self, headers: HTTPHeaders) -> List[str]:
         """Parse the header containing the user's groups and return them as a list"""
 
-        if not headers.get(self.user_alias_user_mapping_header, None):
+        if not headers.get(self.user_alias_mapping_header, None):
             return None
 
         alias_user_mappings = []
         try:
             for alias_user_mapping in SchemaParser.parse_alias_user_map(
-                headers.get(self.user_alias_user_mapping_header, "[]"),
+                headers.get(self.user_alias_mapping_header, "[]"),
                 from_string=True,
                 many=True,
             ):
@@ -184,7 +184,7 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                     pass
         except Exception:
             raise ValidationError(
-                f"Unable to parse Alias User Mapping: {headers.get(self.user_alias_user_mapping_header, '[]')}"
+                f"Unable to parse Alias User Mapping: {headers.get(self.user_alias_mapping_header, '[]')}"
             )
 
         return alias_user_mappings

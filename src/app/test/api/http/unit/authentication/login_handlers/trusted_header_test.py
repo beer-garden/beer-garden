@@ -27,7 +27,7 @@ def app_config_trusted_handler(monkeypatch):
                         "username_header": "bg-username",
                         "user_upstream_roles_header": "bg-user-upstream-roles",
                         "user_local_roles_header": "bg-user-local-roles",
-                        "user_alias_user_mapping_header": "bg-user-alias-user-mapping",
+                        "user_alias_mapping_header": "bg-user-alias-mapping",
                         "create_users": True,
                     }
                 },
@@ -224,12 +224,12 @@ class TestTrustedHeaderLoginHandler:
         with pytest.raises(ValidationError):
             handler.get_user(request)
 
-    def test_get_user_returns_existing_user_alias_user_mapping_malformed(self, user):
+    def test_get_user_returns_existing_user_alias_mapping_malformed(self, user):
         handler = TrustedHeaderLoginHandler()
         headers = HTTPHeaders(
             {
                 handler.username_header: user.username,
-                handler.user_alias_user_mapping_header: "[remotemappingbad]",
+                handler.user_alias_mapping_header: "[remotemappingbad]",
             }
         )
         request = HTTPServerRequest(headers=headers)
