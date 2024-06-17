@@ -681,7 +681,6 @@ class ModelFilter:
         if filter_instances and system.instances:
             filtered_instances = []
             for instance in system.instances:
-                logger.error("Check Instance")
                 filtered_instance = self._get_instance_filter(
                     instance,
                     user,
@@ -882,7 +881,7 @@ class ModelFilter:
         if isinstance(obj, BrewtilsEvent):
             if obj.payload:
                 payload_filtered = self.filter_object(
-                    user, obj.payload, permission_levels=permission_levels, **kwargs
+                    obj.payload, user, permission_levels=permission_levels, **kwargs
                 )
                 if payload_filtered:
                     obj.payload = payload_filtered
