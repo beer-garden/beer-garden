@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import copy
 import logging
 from json import JSONDecodeError
 from typing import TYPE_CHECKING, Optional
@@ -10,8 +11,7 @@ from tornado.websocket import WebSocketHandler
 
 from beer_garden import config
 from beer_garden.api.http.authentication import decode_token, get_user_from_token
-
-# from beer_garden.authorization import user_has_permission_for_object
+from beer_garden.authorization import ModelFilter
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
 
 if TYPE_CHECKING:
@@ -31,24 +31,6 @@ def _auth_enabled():
     return config.get("auth").enabled
 
 
-def _user_can_receive_messages_for_event(user: "User", event: "Event"):
-    """Check a that a user has access to view the supplied event"""
-    user_permitted = True
-
-    # Event types that won't have a payload, but still require a permission check
-    # TODO: Really every event type ought to be included here
-    # event_permission_map = {Events.USERS_IMPORTED.name: Permissions.GARDEN_UPDATE.value}
-
-    # if event.payload and event.payload_type:
-    #     user_permitted = user_has_permission_for_object(
-    #         user, f"{event.payload_type.lower()}:read", event.payload
-    #     )
-    # elif event.name in event_permission_map:
-    #     user_permitted = event_permission_map[event.name] in user.global_permissions
-
-    return user_permitted
-
-
 class IncomingMessageSchema(Schema):
     """A simple schema for validating incoming messages. Currently only handles access
     token updates."""
@@ -60,6 +42,7 @@ class IncomingMessageSchema(Schema):
 class EventSocket(WebSocketHandler):
     closing = False
     listeners = set()
+    model_filter = ModelFilter()
 
     def __init__(self, *args, **kwargs):
         self.access_token: Optional[dict] = None
@@ -150,7 +133,15 @@ class EventSocket(WebSocketHandler):
                         listener.request_authorization("Valid access token required")
                         continue
 
-                    if not _user_can_receive_messages_for_event(user, event):
+                    filtered_event = cls.model_filter.filter_object(
+                        obj=copy.deepcopy(event), user=user, permission="READ_ONLY"
+                    )
+
+                    if filtered_event:
+                        listener.write_message(
+                            SchemaParser.serialize(filtered_event, to_string=True)
+                        )
+                    else:
                         logger.debug(
                             "Skipping websocket publish of event %s to user %s due to "
                             "lack of access",
@@ -158,8 +149,8 @@ class EventSocket(WebSocketHandler):
                             user.username,
                         )
                         continue
-
-                listener.write_message(message)
+                else:
+                    listener.write_message(message)
 
     @classmethod
     def shutdown(cls):

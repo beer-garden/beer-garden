@@ -369,8 +369,6 @@ def _load_swagger(url_specs, title=None):
         "CommandPublishingBlocklistListInputSchema",
         schema=CommandPublishingBlocklistListInputSchema,
     )
-    # api_spec.definition("UserList", schema=UserListSchema)
-    # api_spec.definition("UserPatch", schema=UserPatchSchema)
     api_spec.definition("UserPasswordChange", schema=UserPasswordChangeSchema)
     api_spec.definition("Role", schema=RoleSchema)
 
