@@ -122,8 +122,11 @@ def validated_token_ttl():
         ConfigurationError: Refresh Token expires before Access Token
     """
     for ttl in ["garden_admin", "plugin_admin", "operator", "read_only"]:
-        if config.get(f"auth.token_access_ttl.{ttl}") > config.get(
-            f"auth.token_refresh_ttl.{ttl}"
+        if (
+            config.get(f"auth.token_access_ttl.{ttl}")
+            and config.get(f"auth.token_refresh_ttl.{ttl}")
+            and config.get(f"auth.token_access_ttl.{ttl}")
+            > config.get(f"auth.token_refresh_ttl.{ttl}")
         ):
             raise ConfigurationError(
                 f"Refresh Token TTL {ttl} expires prior to Access Token TTL {ttl}"

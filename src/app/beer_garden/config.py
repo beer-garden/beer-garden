@@ -672,56 +672,6 @@ _AUTHENTICATION_HANDLERS_SPEC = {
                 },
             },
         },
-        "token_access_ttl": {
-            "type": "dict",
-            "items": {
-                "garden_admin": {
-                    "type": "int",
-                    "default": 15,
-                    "description": "The Garden Admin Permission access token expiration time",
-                },
-                "plugin_admin": {
-                    "type": "int",
-                    "default": 15,
-                    "description": "The Plugin Admin Permission access token expiration time",
-                },
-                "operator": {
-                    "type": "int",
-                    "default": 15,
-                    "description": "The Operator Permission access token expiration time",
-                },
-                "read_only": {
-                    "type": "int",
-                    "default": 15,
-                    "description": "The Read Only Permission access token expiration time",
-                },
-            },
-        },
-        "token_refresh_ttl": {
-            "type": "dict",
-            "items": {
-                "garden_admin": {
-                    "type": "int",
-                    "default": 720,
-                    "description": "The Garden Admin Permission refresh token expiration time",
-                },
-                "plugin_admin": {
-                    "type": "int",
-                    "default": 720,
-                    "description": "The Plugin Admin Permission refresh token expiration time",
-                },
-                "operator": {
-                    "type": "int",
-                    "default": 720,
-                    "description": "The Operator Permission refresh token expiration time",
-                },
-                "read_only": {
-                    "type": "int",
-                    "default": 720,
-                    "description": "The Read Only Permission refresh token expiration time",
-                },
-            },
-        },
     },
 }
 
@@ -773,12 +723,56 @@ _AUTH_SPEC = {
             ),
             "required": False,
         },
-        # "group_definition_file": {
-        #     "type": "str",
-        #     "description": "Path to the file containg a mapping of "
-        #     "groups to beer garden role assignments",
-        #     "required": False,
-        # },
+        "token_access_ttl": {
+            "type": "dict",
+            "items": {
+                "garden_admin": {
+                    "type": "int",
+                    "default": 15,
+                    "description": "The Garden Admin Permission access token expiration time",
+                },
+                "plugin_admin": {
+                    "type": "int",
+                    "default": 15,
+                    "description": "The Plugin Admin Permission access token expiration time",
+                },
+                "operator": {
+                    "type": "int",
+                    "default": 15,
+                    "description": "The Operator Permission access token expiration time",
+                },
+                "read_only": {
+                    "type": "int",
+                    "default": 15,
+                    "description": "The Read Only Permission access token expiration time",
+                },
+            },
+        },
+        "token_refresh_ttl": {
+            "type": "dict",
+            "items": {
+                "garden_admin": {
+                    "type": "int",
+                    "default": 720,
+                    "description": "The Garden Admin Permission refresh token expiration time",
+                },
+                "plugin_admin": {
+                    "type": "int",
+                    "default": 720,
+                    "description": "The Plugin Admin Permission refresh token expiration time",
+                },
+                "operator": {
+                    "type": "int",
+                    "default": 720,
+                    "description": "The Operator Permission refresh token expiration time",
+                },
+                "read_only": {
+                    "type": "int",
+                    "default": 720,
+                    "description": "The Read Only Permission refresh token expiration time",
+                },
+            },
+        },
         "authentication_handlers": _AUTHENTICATION_HANDLERS_SPEC,
     },
 }
