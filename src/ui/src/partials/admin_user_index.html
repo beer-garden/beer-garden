@@ -86,8 +86,8 @@
             <div ng-repeat="role in user.local_roles">
               <div title="{{roleTitle(role)}}">{{role.name}}</div>
             </div>
-            <div ng-repeat="role in getMissingRoles()">
-              <div title="Failed Authentication"><s>{{role.name}}</s></div>
+            <div ng-repeat="missingRole in getMissingRoles(user)">
+              <div title="Failed Authentication"><s>{{missingRole}}</s></div>
             </div>
           </td>
           <td>
