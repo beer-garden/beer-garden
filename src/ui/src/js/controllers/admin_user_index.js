@@ -79,7 +79,7 @@ export default function adminUserIndexController($rootScope, $scope, $uibModal, 
   $scope.getMissingRoles = function (user) {
    
     if (user.metadata === undefined || user.metadata.last_authentication_headers_local_roles === undefined || user.metadata.last_authentication_headers_local_roles === null ){
-      return ["bad_role"];
+      return [];
     }
 
     let missingRoles = [];
