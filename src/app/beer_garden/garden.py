@@ -322,14 +322,6 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
     return update_garden(garden)
 
 
-# def remove_remote_users(garden: Garden):
-#     RemoteUser.objects.filter(garden=garden.name).delete()
-
-#     if garden.children:
-#         for children in garden.children:
-#             remove_remote_users(children)
-
-
 def remove_remote_systems(garden: Garden):
     for system in garden.systems:
         remove_system(system.id)

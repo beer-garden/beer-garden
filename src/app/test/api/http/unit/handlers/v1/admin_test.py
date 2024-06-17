@@ -101,27 +101,27 @@ class TestAdminAPI:
         assert response.code == 204
         assert rescan_mock.called is True
 
-    # @pytest.mark.gen_test
-    # def test_auth_enabled_rejects_patch_for_user_without_permission(
-    #     self,
-    #     http_client,
-    #     app_config_auth_enabled,
-    #     base_url,
-    #     access_token_not_permitted,
-    #     rescan_mock,
-    # ):
-    #     url = f"{base_url}/api/v1/admin"
-    #     headers = {
-    #         "Authorization": f"Bearer {access_token_not_permitted}",
-    #         "Content-Type": "application/json",
-    #     }
-    #     patch_body = [{"operation": "rescan"}]
+    @pytest.mark.gen_test
+    def test_auth_enabled_rejects_patch_for_user_without_permission(
+        self,
+        http_client,
+        app_config_auth_enabled,
+        base_url,
+        access_token_not_permitted,
+        rescan_mock,
+    ):
+        url = f"{base_url}/api/v1/admin"
+        headers = {
+            "Authorization": f"Bearer {access_token_not_permitted}",
+            "Content-Type": "application/json",
+        }
+        patch_body = [{"operation": "rescan"}]
 
-    #     request = HTTPRequest(
-    #         url, method="PATCH", headers=headers, body=json.dumps(patch_body)
-    #     )
-    #     with pytest.raises(HTTPError) as excinfo:
-    #         yield http_client.fetch(request)
+        request = HTTPRequest(
+            url, method="PATCH", headers=headers, body=json.dumps(patch_body)
+        )
+        with pytest.raises(HTTPError) as excinfo:
+            yield http_client.fetch(request)
 
-    #     assert excinfo.value.code == 403
-    #     assert rescan_mock.called is False
+        assert excinfo.value.code == 403
+        assert rescan_mock.called is False

@@ -19,7 +19,7 @@ from mongoengine.queryset.visitor import Q, QCombination
 import beer_garden.db.mongo.models
 from beer_garden.db.mongo.models import MongoModel
 from beer_garden.db.mongo.parser import MongoParser
-from beer_garden.db.mongo.util import (  # ensure_roles,; ensure_users,
+from beer_garden.db.mongo.util import (
     check_indexes,
     ensure_local_garden,
     ensure_model_migration,
@@ -185,8 +185,6 @@ def initial_setup():
         check_indexes(doc)
 
     ensure_local_garden()
-    # ensure_roles()
-    # ensure_users()
 
 
 def get_job_store():
