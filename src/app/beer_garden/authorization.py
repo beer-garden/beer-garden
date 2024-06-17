@@ -12,27 +12,11 @@ from brewtils.models import RequestTemplate as BrewtilsRequestTemplate
 from brewtils.models import Role as BrewtilsRole
 from brewtils.models import System as BrewtilsSystem
 from brewtils.models import User as BrewtilsUser
+from brewtils.models import Runner as BrewtilsRunner
 from mongoengine import Q
 
 import beer_garden.config as config
 import beer_garden.db.api as db
-
-# from typing import TYPE_CHECKING, Optional, Type, Union
-
-
-# from mongoengine import Document, DoesNaotExist, Q, QuerySet
-# from mongoengine.fields import ObjectIdField
-# from mongoengine.queryset.visitor import QCombination
-
-# import beer_garden.db.mongo.models
-# from beer_garden.api.authorization import Permissions
-# from beer_garden.db.mongo.models import (
-#     Garden,
-#     Job,
-#     Request,
-#     System,
-# )
-
 
 logger = logging.getLogger(__name__)
 
@@ -574,6 +558,47 @@ class ModelFilter:
             return command
 
         return None
+    
+    def _get_runner_filter(
+        self,
+        runner: BrewtilsRunner,
+        user: BrewtilsUser,
+        permission_levels: list,
+        source_system: BrewtilsSystem = None,
+        source_garden_name: str = None,
+        source_system_namespace: str = None,
+        source_system_name: str = None,
+        source_system_version: str = None,
+        source_system_instances: list = None,
+        skip_global: bool = False,
+        skip_system: bool = False,
+        **kwargs  
+    ):
+        if not skip_global and check_global_roles(
+            user, permission_levels=permission_levels
+        ):
+            return runner
+
+        if self._checks(
+            user,
+            permission_levels=permission_levels,
+            system=source_system,
+            garden_name=source_garden_name,
+            system_namespace=source_system_namespace,
+            system_name=source_system_name,
+            system_version=source_system_version,
+            system_instances=source_system_instances,
+            check_garden=True,
+            check_system=not skip_system,
+            check_namespace=not skip_system,
+            check_version=not skip_system,
+            check_instances=True,
+            instance_id=runner.instance_id,
+            **kwargs,
+        ):
+            return runner
+
+        return None
 
     def _get_instance_filter(
         self,
@@ -887,6 +912,10 @@ class ModelFilter:
                     obj.payload = payload_filtered
                 else:
                     return None
+        if isinstance(obj, BrewtilsRunner):
+            return self._get_runner_filter(
+                obj, user, permission_levels, skip_global=True, **kwargs
+            )
         if isinstance(obj, str) or isinstance(obj, dict):
             # Source of String is unknown, so ensure that a role has the basic permissions
             for roles in [
