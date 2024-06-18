@@ -10,9 +10,9 @@ from brewtils.models import Job as BrewtilsJob
 from brewtils.models import Request as BrewtilsRequest
 from brewtils.models import RequestTemplate as BrewtilsRequestTemplate
 from brewtils.models import Role as BrewtilsRole
+from brewtils.models import Runner as BrewtilsRunner
 from brewtils.models import System as BrewtilsSystem
 from brewtils.models import User as BrewtilsUser
-from brewtils.models import Runner as BrewtilsRunner
 from mongoengine import Q
 
 import beer_garden.config as config
@@ -558,7 +558,7 @@ class ModelFilter:
             return command
 
         return None
-    
+
     def _get_runner_filter(
         self,
         runner: BrewtilsRunner,
@@ -572,7 +572,7 @@ class ModelFilter:
         source_system_instances: list = None,
         skip_global: bool = False,
         skip_system: bool = False,
-        **kwargs  
+        **kwargs
     ):
         if not skip_global and check_global_roles(
             user, permission_levels=permission_levels

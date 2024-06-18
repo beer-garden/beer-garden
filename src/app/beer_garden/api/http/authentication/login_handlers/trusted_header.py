@@ -32,9 +32,7 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
             "user_upstream_roles_header"
         )
         self.user_local_roles_header = handler_config.get("user_local_roles_header")
-        self.user_alias_mapping_header = handler_config.get(
-            "user_alias_mapping_header"
-        )
+        self.user_alias_mapping_header = handler_config.get("user_alias_mapping_header")
         self.create_users = handler_config.get("create_users")
 
     def get_user(self, request: HTTPServerRequest) -> Optional[User]:
@@ -104,9 +102,7 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                         authenticated_user.metadata[
                             "last_authentication_headers_alias_user_mapping"
                         ] = json.loads(
-                            request.headers.get(
-                                self.user_alias_mapping_header, "[]"
-                            )
+                            request.headers.get(self.user_alias_mapping_header, "[]")
                         )
                     elif (
                         "last_authentication_headers_alias_user_mapping"

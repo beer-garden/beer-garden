@@ -11,7 +11,7 @@ from brewtils.schema_parser import SchemaParser
 
 import beer_garden.db.api as db
 from beer_garden.api.http.base_handler import future_wait
-from beer_garden.api.http.exceptions import BadRequest
+from beer_garden.api.http.exceptions import BadRequest, RequestForbidden
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.errors import UnknownGardenException
 from beer_garden.requests import remove_bytes_parameter_base64
@@ -697,9 +697,9 @@ class RequestListAPI(AuthorizationHandler):
           - Requests
         """
         self.minimum_permission = self.PLUGIN_ADMIN
-        self.verify_user_global_permission()
 
         query_kwargs = {}
+        global_check = True
         for supportedArg in [
             "system",
             "system_version",
@@ -718,6 +718,42 @@ class RequestListAPI(AuthorizationHandler):
             value = self.get_argument(supportedArg, default=None)
             if value is not None:
                 query_kwargs[supportedArg] = value
+                if supportedArg in [
+                    "system",
+                    "system_version",
+                    "instance_name",
+                    "namespace",
+                    "command",
+                ]:
+                    global_check = False
+
+        # Either have global PLUGIN_ADMIN or access to specific filtering
+        if global_check:
+            self.verify_user_global_permission()
+        else:
+            check_kwargs = {}
+            if "system" in query_kwargs:
+                check_kwargs["system_name"] = query_kwargs["system"]
+                check_kwargs["check_system"] = True
+            if "system_version" in query_kwargs:
+                check_kwargs["system_version"] = query_kwargs["system_version"]
+                check_kwargs["check_version"] = True
+            if "instance_name" in query_kwargs:
+                check_kwargs["system_instances"] = [query_kwargs["instance_name"]]
+                check_kwargs["check_instances"] = True
+            if "namespace" in query_kwargs:
+                check_kwargs["system_namespace"] = query_kwargs["namespace"]
+                check_kwargs["check_namespace"] = True
+            if "command" in query_kwargs:
+                check_kwargs["system_name"] = query_kwargs["command"]
+                check_kwargs["command_name"] = True
+
+            if not self.modelFilter._checks(
+                user=self.current_user,
+                permission=self.minimum_permission,
+                **check_kwargs,
+            ):
+                raise RequestForbidden
 
         await self.process_operation(
             Operation(operation_type="REQUEST_DELETE", kwargs=query_kwargs),

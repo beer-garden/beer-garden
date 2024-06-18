@@ -108,9 +108,12 @@ export default function permissionService($rootScope) {
                         continue;
                     }
 
+                    if (instance_name === undefined || instance_name == null){
+                        return garden.name;
+                    }
                     for (const instance of garden.systems[i].instances){
                         if (instance.name == instance_name){
-                            return true;
+                            return garden.name;
                         }
                     }
 
