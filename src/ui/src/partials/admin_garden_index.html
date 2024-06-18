@@ -1,7 +1,8 @@
 <h1 class="page-header">
   <span>Garden Management</span>
-  <span class="pull-right" ng-show="responseState(response) !== 'loading'" ng-show="hasPermission('GARDEN_ADMIN')">
-    <button type="button" class="btn btn-primary" ng-click="rescan()">
+  <span class="pull-right" ng-show="responseState(response) !== 'loading'" >
+    <button type="button" class="btn btn-primary" ng-click="rescan()"
+      ng-show="hasPermission('GARDEN_ADMIN')">
       Rescan Garden Directory
     </button>
     <button type="button" class="btn btn-primary" ng-click="syncGardens()"
