@@ -15,7 +15,6 @@ from beer_garden.authorization import ModelFilter
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
 
 if TYPE_CHECKING:
-    from brewtils.models import Event
 
     from beer_garden.db.mongo.models import User
 
