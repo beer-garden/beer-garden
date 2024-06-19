@@ -357,7 +357,6 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition("LoggingConfig", schema=LoggingConfigSchema)
     api_spec.definition("Event", schema=EventSchema)
     api_spec.definition("User", schema=UserSchema)
-    # api_spec.definition("UserCreate", schema=UserCreateSchema)
     api_spec.definition(
         "CommandPublishingBlocklist", schema=CommandPublishingBlocklistSchema
     )
