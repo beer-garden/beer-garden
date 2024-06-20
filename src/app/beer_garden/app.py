@@ -157,20 +157,22 @@ class Application(StoppableThread):
             )
 
         # Add Replication Heartbeat Scheduler
-        if config.get("replication.enabled"):
-            self.scheduler.add_schedule(
-                beer_garden.replication.update_heartbeat,
-                interval=0.1,
-                max_running_jobs=1,
-            )
+        # if config.get("replication.enabled"):
+        self.scheduler.add_schedule(
+            beer_garden.replication.update_heartbeat,
+            interval=10,
+            seconds = True,
+            max_running_jobs=1,
+        )
 
-            # Add 5 second jitter to help prevent all nodes re-assigning the jobs
-            self.scheduler.add_schedule(
-                beer_garden.scheduler.update_replication_id,
-                interval=0.5,
-                max_running_jobs=1,
-                jitter=5,
-            )
+        # Add 5 second jitter to help prevent all nodes re-assigning the jobs
+        self.scheduler.add_schedule(
+            beer_garden.scheduler.update_replication_id,
+            interval=30,
+            seconds = True,
+            max_running_jobs=1,
+            jitter=5,
+        )
 
         metrics_config = config.get("metrics")
         if metrics_config.prometheus.enabled:

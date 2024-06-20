@@ -12,6 +12,7 @@ from pytz import utc
 
 from beer_garden.db.mongo.api import delete, query, query_unique, update
 from beer_garden.db.mongo.models import Job as MongoJob
+from beer_garden.replication import get_replication_id
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +77,10 @@ class MongoJobStore(BaseJobStore):
         Returns:
             An apscheduler job or None.
         """
-        return construct_job(query_unique(Job, id=job_id), self._scheduler, self._alias)
+        db_job = query_unique(Job, id=job_id)
+        if not db_job.replication_id or db_job.replication_id == get_replication_id():
+            return construct_job(db_job, self._scheduler, self._alias)
+        return None
 
     def get_due_jobs(self, now):
         """Find due jobs and convert them to apscheduler jobs."""
@@ -86,7 +90,7 @@ class MongoJobStore(BaseJobStore):
         """Get the next run time as a localized datetime."""
         jobs = query(
             Job,
-            filter_params={"next_run_time__ne": None},
+            filter_params={"next_run_time__ne": None, "replication_id":get_replication_id()},
             include_fields=["next_run_time"],
             order_by="next_run_time",
         )
@@ -110,22 +114,29 @@ class MongoJobStore(BaseJobStore):
             job: The job from the scheduler
         """
         db_job = query_unique(Job, id=job.kwargs["job_id"])
+        # if not db_job.replication_id or db_job.replication_id == get_replication_id():
         db_job.next_run_time = job.next_run_time
         update(db_job)
 
     def update_job(self, job: APJob) -> None:
         """Update the next_run_time for the job."""
         db_job = query_unique(Job, id=job.id)
-        db_job.next_run_time = job.next_run_time
-        update(db_job)
+        if not db_job.replication_id or db_job.replication_id == get_replication_id():
+            db_job.next_run_time = job.next_run_time
+            update(db_job)
 
     def remove_job(self, job_id):
         """Remove job with the given ID."""
-        delete(query_unique(Job, id=job_id))
+        job = query_unique(Job, id=job_id)
+        if not job.replication_id or job.replication_id == get_replication_id():
+            delete(job)
 
     def remove_all_jobs(self):
         """Remove all jobs."""
-        MongoJob.objects.delete()
+        for job in query(Job):
+            if not job.replication_id or job.replication_id == get_replication_id():
+                delete(job)
+        # MongoJob.objects.delete()
 
     def _get_jobs(self, conditions=None):
         jobs = []
@@ -133,7 +144,8 @@ class MongoJobStore(BaseJobStore):
 
         for job in query(Job, filter_params=conditions, order_by="next_run_time"):
             try:
-                jobs.append(construct_job(job, self._scheduler, self._alias))
+                if not job.replication_id or job.replication_id == get_replication_id():
+                    jobs.append(construct_job(job, self._scheduler, self._alias))
             except Exception as ex:
                 failed_jobs.append(job)
                 logger.exception(

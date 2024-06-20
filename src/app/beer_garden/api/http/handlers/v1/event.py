@@ -140,7 +140,10 @@ class EventSocket(WebSocketHandler):
             return
 
         if len(cls.listeners) > 0:
-            message = SchemaParser.serialize(event, to_string=True)
+            try:
+                message = SchemaParser.serialize(event, to_string=True)
+            except:
+                return
 
             for listener in cls.listeners:
                 if _auth_enabled():

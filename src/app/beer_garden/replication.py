@@ -25,7 +25,8 @@ def update_heartbeat() -> Replication:
     replication = db.query_unique(Replication, replication_id=replication_id, raise_missing=False)
 
     if not replication:
-        return db.create(Replication(replication_id=replication_id, expires_at=datetime.now(timezone.utc) + timedelta(seconds=30) ))
+        # TODO: Revert back to 30 seconds
+        return db.create(Replication(replication_id=replication_id, expires_at=datetime.now(timezone.utc) + timedelta(seconds=120) ))
     else:
         replication.expires_at=datetime.now(timezone.utc) + timedelta(seconds=30)
         return db.update(replication)
