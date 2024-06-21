@@ -74,6 +74,29 @@ export default function userGardenAccountsController($scope, $rootScope, $uibMod
       return null;
     }
 
+    $scope.findGardenDefaultUsername = function (gardenName, garden = null) {
+      if (garden == null){
+        garden = $rootScope.garden;
+      }
+
+      if (garden.name == gardenName){
+        if (garden.default_user !== undefined && garden.default_user != null){
+          return garden.default_user;
+        }
+      }
+
+      if (garden.children !== undefined && garden.children != null && garden.children.length > 0){
+        for (let i = 0; i < garden.children.length; i++) {
+          let childDefaultUser = $scope.findGardenDefaultUsername(gardenName, garden.children[i]);
+          if (childDefaultUser != null){
+            return childDefaultUser;
+          }   
+        }
+      }
+
+      return null;
+    }
+
     $scope.findParentGardenRoute = function(gardenName) {
       return $sce.trustAsHtml($scope.findParentGardenRouteHtml(gardenName))
     }
@@ -94,6 +117,12 @@ export default function userGardenAccountsController($scope, $rootScope, $uibMod
     }
 
     $scope.findDefaultUsername = function(gardenName) {
+
+      let gardenDefaultUsername = $scope.findGardenDefaultUsername(gardenName);
+      if (gardenDefaultUsername != null){
+        return gardenDefaultUsername;
+      }
+      
       let parentGarden = $scope.findParentGarden(gardenName);
       if (parentGarden == null) {
         return $scope.editUser.username;
