@@ -304,7 +304,7 @@ def update_user(
                 # Roles changed, so cached tokens are no longer valid
                 revoke_tokens(user=existing_user)
             existing_user.upstream_roles = user.upstream_roles
-            existing_user.alias_user_mapping = user.alias_user_mapping
+            existing_user.user_alias_mapping = user.user_alias_mapping
 
             user = existing_user
 
@@ -408,22 +408,22 @@ def flatten_user_role(role: Role, flatten_roles: list):
     return flatten_roles
 
 
-def generate_alias_user_mappings(
-    user: User, target_garden: Garden, alias_user_mapping: list
+def generate_user_alias_mappings(
+    user: User, target_garden: Garden, user_alias_mapping: list
 ):
     """Generate sublist of Alias user mappings for Target Garden
 
     Args:
         user (User): User for evaluation
         target_garden (Garden): Target garden to compare against
-        alias_user_mapping (list): Valid alias mappings for Target Garden
+        user_alias_mapping (list): Valid alias mappings for Target Garden
     """
     if target_garden.children:
         for child in target_garden.children:
-            for alias_user_map in alias_user_mapping:
+            for alias_user_map in user_alias_mapping:
                 if alias_user_map.target_garden == child.name:
-                    user.alias_user_mapping.append(alias_user_map)
-            generate_alias_user_mappings(user, child, alias_user_mapping)
+                    user.user_alias_mapping.append(alias_user_map)
+            generate_user_alias_mappings(user, child, user_alias_mapping)
 
 
 def upstream_role_match(role: Role, target_garden: Garden) -> bool:
@@ -550,17 +550,17 @@ def generate_downstream_user(target_garden: Garden, user: User) -> User:
             username=user.username,
             is_remote=True,
             upstream_roles=user.local_roles,
-            alias_user_mapping=user.alias_user_mapping,
+            user_alias_mapping=user.user_alias_mapping,
         )
 
     downstream_user = None
 
-    for alias_user_map in user.alias_user_mapping:
+    for alias_user_map in user.user_alias_mapping:
         if alias_user_map.target_garden == target_garden.name:
             downstream_user = User(username=alias_user_map.username, is_remote=True)
 
-            generate_alias_user_mappings(
-                downstream_user, target_garden, user.alias_user_mapping
+            generate_user_alias_mappings(
+                downstream_user, target_garden, user.user_alias_mapping
             )
 
             for role in user.local_roles:
@@ -653,7 +653,7 @@ def upstream_user_sync(upstream_user: User) -> User:
         upstream_user.id = local_user.id
         return db.update(upstream_user)
 
-    local_user.alias_user_mapping = upstream_user.alias_user_mapping
+    local_user.user_alias_mapping = upstream_user.user_alias_mapping
     local_user.upstream_roles = upstream_user.upstream_roles
     return db.update(local_user)
 
@@ -680,7 +680,7 @@ def upstream_users_sync(upstream_users=[]):
             if upstream_user.username != user.username:
                 continue
             new_user = False
-            user.alias_user_mapping = upstream_user.alias_user_mapping
+            user.user_alias_mapping = upstream_user.user_alias_mapping
             user.upstream_roles = upstream_user.upstream_roles
             db.update(user)
         if new_user:

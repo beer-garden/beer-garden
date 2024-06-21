@@ -83,12 +83,12 @@ def role_2():
 
 
 @pytest.fixture
-def alias_user_mapping_1():
+def user_alias_mapping_1():
     return AliasUserMap(target_garden="child", username="child")
 
 
 @pytest.fixture
-def alias_user_mapping_2():
+def user_alias_mapping_2():
     return AliasUserMap(target_garden="grandchild", username="grandchild")
 
 

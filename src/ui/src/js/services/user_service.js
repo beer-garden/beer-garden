@@ -36,7 +36,7 @@ export default function userService($http, GardenService, SystemService) {
       return $http.patch('api/v1/users/' + userName, {
         operation: 'update_user_mappings',
         path: '',
-        value: {'alias_user_mapping':userData.alias_user_mapping},
+        value: {'user_alias_mapping':userData.user_alias_mapping},
       });
     },
     getUsers: () => {

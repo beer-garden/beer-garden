@@ -51,7 +51,7 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
             username = request.headers.get(self.username_header)
             upstream_roles = self._upstream_roles_from_headers(request.headers)
             local_roles = self._local_roles_from_headers(request.headers)
-            alias_user_mappings = self._alias_user_mapping_from_headers(request.headers)
+            user_alias_mappings = self._user_alias_mapping_from_headers(request.headers)
 
             if username:
                 try:
@@ -97,19 +97,19 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                             "last_authentication_headers_local_roles"
                         ]
 
-                    if alias_user_mappings:
-                        authenticated_user.alias_user_mapping = alias_user_mappings
+                    if user_alias_mappings:
+                        authenticated_user.user_alias_mapping = user_alias_mappings
                         authenticated_user.metadata[
-                            "last_authentication_headers_alias_user_mapping"
+                            "last_authentication_headers_user_alias_mapping"
                         ] = json.loads(
                             request.headers.get(self.user_alias_mapping_header, "[]")
                         )
                     elif (
-                        "last_authentication_headers_alias_user_mapping"
+                        "last_authentication_headers_user_alias_mapping"
                         in authenticated_user.metadata
                     ):
                         del authenticated_user.metadata[
-                            "last_authentication_headers_alias_user_mapping"
+                            "last_authentication_headers_user_alias_mapping"
                         ]
 
                     authenticated_user.metadata["last_authentication"] = (
@@ -160,22 +160,22 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
 
         return local_roles
 
-    def _alias_user_mapping_from_headers(self, headers: HTTPHeaders) -> List[str]:
+    def _user_alias_mapping_from_headers(self, headers: HTTPHeaders) -> List[str]:
         """Parse the header containing the user's groups and return them as a list"""
 
         if not headers.get(self.user_alias_mapping_header, None):
             return None
 
-        alias_user_mappings = []
+        user_alias_mappings = []
         try:
-            for alias_user_mapping in SchemaParser.parse_alias_user_map(
+            for user_alias_mapping in SchemaParser.parse_alias_user_map(
                 headers.get(self.user_alias_mapping_header, "[]"),
                 from_string=True,
                 many=True,
             ):
                 try:
-                    get_garden(alias_user_mapping.target_garden)
-                    alias_user_mappings.append(alias_user_mapping)
+                    get_garden(user_alias_mapping.target_garden)
+                    user_alias_mappings.append(user_alias_mapping)
                 except DoesNotExist:
                     pass
         except Exception:
@@ -183,4 +183,4 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                 f"Unable to parse Alias User Mapping: {headers.get(self.user_alias_mapping_header, '[]')}"
             )
 
-        return alias_user_mappings
+        return user_alias_mappings

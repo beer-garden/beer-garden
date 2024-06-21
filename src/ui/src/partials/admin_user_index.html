@@ -96,7 +96,7 @@
             </div>
           </td>
           <td>
-            <div ng-if="user.alias_user_mapping.length > 0">
+            <div ng-if="user.user_alias_mapping.length > 0">
               <table 
                 class="table table-bordered"
                 style="width: 100%"
@@ -108,9 +108,9 @@
                   </tr>
                   </thead>
                 <tbody>
-                  <tr ng-repeat="alias_user in user.alias_user_mapping">
-                    <td>{{alias_user.target_garden}}</td>
-                    <td>{{alias_user.username}}</td>
+                  <tr ng-repeat="user_alias in user.user_alias_mapping">
+                    <td>{{user_alias.target_garden}}</td>
+                    <td>{{user_alias.username}}</td>
                   </tr>
                 </tbody>
               </table>

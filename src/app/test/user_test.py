@@ -33,7 +33,7 @@ from beer_garden.user import (
     delete_token,
     delete_user,
     flatten_user_role,
-    generate_alias_user_mappings,
+    generate_user_alias_mappings,
     generate_downstream_user,
     get_token,
     get_user,
@@ -557,7 +557,7 @@ class TestUserForwarding:
                     scope_commands=["command1", "command2"],
                 ),
             ],
-            alias_user_mapping=[
+            user_alias_mapping=[
                 AliasUserMap(target_garden="A", username="USER1"),
                 AliasUserMap(target_garden="B", username="USER2"),
             ],
@@ -567,26 +567,26 @@ class TestUserForwarding:
         assert downstream_user_1.username == "USER1"
         assert len(downstream_user_1.local_roles) == 0
         assert len(downstream_user_1.upstream_roles) == 1
-        assert len(downstream_user_1.alias_user_mapping) == 0
+        assert len(downstream_user_1.user_alias_mapping) == 0
 
         downstream_user_2 = generate_downstream_user(garden_2, local_user)
         assert downstream_user_2.username == "USER2"
         assert len(downstream_user_2.local_roles) == 0
         assert len(downstream_user_2.upstream_roles) == 2
-        assert len(downstream_user_2.alias_user_mapping) == 1
-        assert downstream_user_2.alias_user_mapping[0].target_garden == "A"
-        assert downstream_user_2.alias_user_mapping[0].username == "USER1"
+        assert len(downstream_user_2.user_alias_mapping) == 1
+        assert downstream_user_2.user_alias_mapping[0].target_garden == "A"
+        assert downstream_user_2.user_alias_mapping[0].username == "USER1"
 
         downstream_user_3 = generate_downstream_user(garden_3, local_user)
         assert downstream_user_3.username == local_user.username
         assert len(downstream_user_3.local_roles) == 0
         assert len(downstream_user_3.upstream_roles) == len(local_user.local_roles)
-        assert len(downstream_user_3.alias_user_mapping) == len(
-            local_user.alias_user_mapping
+        assert len(downstream_user_3.user_alias_mapping) == len(
+            local_user.user_alias_mapping
         )
 
-    def test_generate_alias_user_mappings(self, user):
-        alias_user_mapping = [
+    def test_generate_user_alias_mappings(self, user):
+        user_alias_mapping = [
             AliasUserMap(target_garden="a", username="test"),
             AliasUserMap(target_garden="b", username="test"),
             AliasUserMap(target_garden="c", username="test"),
@@ -609,19 +609,19 @@ class TestUserForwarding:
         two_match_user = User(username="username")
         three_match_user = User(username="username")
 
-        generate_alias_user_mappings(
-            one_match_user, one_match_garden, alias_user_mapping
+        generate_user_alias_mappings(
+            one_match_user, one_match_garden, user_alias_mapping
         )
-        generate_alias_user_mappings(
-            two_match_user, two_match_garden, alias_user_mapping
+        generate_user_alias_mappings(
+            two_match_user, two_match_garden, user_alias_mapping
         )
-        generate_alias_user_mappings(
-            three_match_user, three_match_garden, alias_user_mapping
+        generate_user_alias_mappings(
+            three_match_user, three_match_garden, user_alias_mapping
         )
 
-        assert len(one_match_user.alias_user_mapping) == 1
-        assert len(two_match_user.alias_user_mapping) == 2
-        assert len(three_match_user.alias_user_mapping) == 3
+        assert len(one_match_user.user_alias_mapping) == 1
+        assert len(two_match_user.user_alias_mapping) == 2
+        assert len(three_match_user.user_alias_mapping) == 3
 
 
 class TestUpstreamSync:

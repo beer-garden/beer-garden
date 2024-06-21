@@ -1043,7 +1043,7 @@ class User(MongoModel, Document):
     local_roles = DummyField(required=False)
     upstream_roles = EmbeddedDocumentListField("UpstreamRole")
     is_remote = BooleanField(required=True, default=False)
-    alias_user_mapping = EmbeddedDocumentListField("AliasUserMap")
+    user_alias_mapping = EmbeddedDocumentListField("AliasUserMap")
     metadata = DictField()
     protected = BooleanField(required=True, default=False)
     file_generated = BooleanField(required=True, default=False)

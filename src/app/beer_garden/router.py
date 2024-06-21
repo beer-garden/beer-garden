@@ -721,7 +721,7 @@ def _pre_forward(operation: Operation) -> Operation:
         if operation.model.requester:
             user_default_user = True
             requester = beer_garden.user.get_user(operation.model.requester)
-            for alias_user_map in requester.alias_user_mapping:
+            for alias_user_map in requester.user_alias_mapping:
                 if alias_user_map.target_garden == operation.target_garden_name:
                     operation.model.requester = alias_user_map.username
                     user_default_user = False

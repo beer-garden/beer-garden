@@ -134,7 +134,7 @@ class UserAPI(AuthorizationHandler):
                         kwargs={
                             "username": username,
                             "remote_user_mapping": SchemaParser.parse_alias_user_map(
-                                op.value["alias_user_mapping"],
+                                op.value["user_alias_mapping"],
                                 from_string=False,
                                 many=True,
                             ),
