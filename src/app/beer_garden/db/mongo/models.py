@@ -16,16 +16,6 @@ except ImportError:
     LarkError = ParseError
 from typing import Optional, Tuple
 
-import brewtils.models
-from brewtils.choices import parse
-from brewtils.errors import ModelValidationError, RequestStatusTransitionError
-from brewtils.models import Command as BrewtilsCommand
-from brewtils.models import Event as BrewtilsEvent
-from brewtils.models import Events as BrewtilsEvents
-from brewtils.models import Instance as BrewtilsInstance
-from brewtils.models import Job as BrewtilsJob
-from brewtils.models import Parameter as BrewtilsParameter
-from brewtils.models import Request as BrewtilsRequest
 from mongoengine import (
     CASCADE,
     NULLIFY,
@@ -51,8 +41,18 @@ from mongoengine import (
 )
 from mongoengine.errors import DoesNotExist
 
+import brewtils.models
 from beer_garden import config
 from beer_garden.db.mongo.querysets import FileFieldHandlingQuerySet
+from brewtils.choices import parse
+from brewtils.errors import ModelValidationError, RequestStatusTransitionError
+from brewtils.models import Command as BrewtilsCommand
+from brewtils.models import Event as BrewtilsEvent
+from brewtils.models import Events as BrewtilsEvents
+from brewtils.models import Instance as BrewtilsInstance
+from brewtils.models import Job as BrewtilsJob
+from brewtils.models import Parameter as BrewtilsParameter
+from brewtils.models import Request as BrewtilsRequest
 
 from .fields import DummyField, StatusInfo
 from .validators import validate_permissions
@@ -761,6 +761,7 @@ class CronTrigger(MongoModel, EmbeddedDocument):
     timezone = StringField(required=False, default="utc", chocies=pytz.all_timezones)
     jitter = IntField(required=False)
 
+
 class Replication(MongoModel, Document):
     brewtils_model = brewtils.models.Replication
 
@@ -772,6 +773,7 @@ class Replication(MongoModel, Document):
             {"fields": ["expires_at"], "expireAfterSeconds": 0},
         ],
     }
+
 
 class Job(MongoModel, Document):
     brewtils_model = brewtils.models.Job
@@ -818,9 +820,10 @@ class Job(MongoModel, Document):
     )
     max_instances = IntField(default=3, min_value=1)
     timeout = IntField()
-    replication = ReferenceField(Replication, required=False, dbref=True, reverse_delete_rule=NULLIFY)
+    replication = ReferenceField(
+        Replication, required=False, dbref=True, reverse_delete_rule=NULLIFY
+    )
     replication_id = StringField(required=False)
-    
 
     def clean(self):
         """Validate before saving to the database"""

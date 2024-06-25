@@ -1,32 +1,107 @@
-import beer_garden.db.api as db
+import logging
 import os
-import beer_garden.config as config
-from uuid import uuid4
-from brewtils.models import Replication
 from datetime import datetime, timedelta, timezone
+from uuid import uuid4
 
-def get_replication_id() ->str:
-    replication_id = os.environ.get('BG_REPLICATION_ID', None)
+import beer_garden
+import beer_garden.config as config
+import beer_garden.db.api as db
+from beer_garden.events import publish_event
+from brewtils.models import Event, Events, Replication
+from brewtils.stoppable_thread import StoppableThread
+
+logger = logging.getLogger(__name__)
+
+
+def get_replication_id() -> str:
+    replication_id = os.environ.get("BG_REPLICATION_ID", None)
 
     if not replication_id:
         replication_id = str(uuid4())
-        os.environ['BG_REPLICATION_ID'] = replication_id
+        os.environ["BG_REPLICATION_ID"] = replication_id
     return replication_id
 
-def get_replication(replication_id = None) -> Replication:
-    if not replication_id:
+
+@publish_event(Events.REPLICATION_CREATE)
+def create_replication(replication: Replication):
+    return db.create(replication)
+
+
+@publish_event(Events.REPLICATION_UPDATE)
+def update_replication(replication: Replication):
+    return db.update(replication)
+
+
+class PrimaryReplicationMonitor(StoppableThread):
+    """Monitor the Primary status of Replications"""
+
+    def __init__(self, heartbeat_interval=10, timeout_seconds=30):
+        self.logger = logging.getLogger(__name__)
+        self.display_name = "Primary Replication Status Monitor"
+        self.heartbeat_interval = heartbeat_interval
+        self.timeout = timedelta(seconds=timeout_seconds)
+
+        super(PrimaryReplicationMonitor, self).__init__(
+            logger=self.logger, name="PrimaryReplicationMonitor"
+        )
+
+    def run(self):
+        self.logger.debug(self.display_name + " is started")
+
+        while not self.wait(self.heartbeat_interval):
+            self.primary_check(self.timeout)
+
+        self.logger.debug(self.display_name + " is stopped")
+
+    def primary_check(self, timeout: timedelta) -> None:
         replication_id = get_replication_id()
-    return db.query_unique(Replication, replication_id = replication_id)
 
-def update_heartbeat() -> Replication:
+        replications = db.query(Replication)
 
-    replication_id = get_replication_id()
+        # Set self as Primary Replication
+        if len(replications) == 0:
+            self.logger.error(
+                f"Setting to Primary Replication Instance {replication_id}"
+            )
+            create_replication(
+                Replication(
+                    replication_id=replication_id,
+                    expires_at=datetime.now(timezone.utc) + timeout,
+                )
+            )
 
-    replication = db.query_unique(Replication, replication_id=replication_id, raise_missing=False)
+        # Check if Primary Replication
+        elif len(replications) == 1:
+            if replications[0].replication_id == replication_id:
+                replications[0].expires_at = datetime.now(timezone.utc) + timeout
+                update_replication(replications[0])
 
-    if not replication:
-        # TODO: Revert back to 30 seconds
-        return db.create(Replication(replication_id=replication_id, expires_at=datetime.now(timezone.utc) + timedelta(seconds=120) ))
-    else:
-        replication.expires_at=datetime.now(timezone.utc) + timedelta(seconds=30)
-        return db.update(replication)
+        # Two instances claimed Primary Replication, wait until one times out
+        else:
+            self.logger.error(
+                f"Found {len(replications)} Instances as Primary Replication"
+            )
+
+
+def handle_event(event: Event) -> None:
+    """Handle REPLICATION events
+
+    BG should only handle events that are designated for the local environment. If BG
+    triggers off a non-local Replication ID, then no schedulers will run
+
+    Args:
+        event: The event to handle
+    """
+
+    if event.garden == config.get("garden.name"):
+        if event.name in [
+            Events.REPLICATION_CREATE.name,
+            Events.REPLICATION_UPDATE.name,
+        ]:
+            if event.payload.replication_id == get_replication_id():
+                if not beer_garden.application.scheduler.running:
+                    logger.debug("Starting Scheduler")
+                    beer_garden.application.scheduler.start()
+            elif beer_garden.application.scheduler.running:
+                logger.debug("Stopping Scheduler")
+                beer_garden.application.scheduler.shutdown(wait=False)

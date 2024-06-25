@@ -7,23 +7,24 @@ The schedule service is responsible for:
 """
 import logging
 import threading
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Dict, List, Optional
 
 from apscheduler.events import EVENT_JOB_MAX_INSTANCES
+from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
-from brewtils.errors import ModelValidationError
-from brewtils.models import DateTrigger, Event, Events, Job, Operation, Request, Replication
 from mongoengine import ValidationError
+from pytz import utc
 
 import beer_garden
 import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.db.mongo.jobstore import construct_trigger
-from beer_garden.events import publish, publish_event
+from beer_garden.events import publish_event
 from beer_garden.requests import get_request
-from beer_garden.replication import get_replication_id
+from brewtils.errors import ModelValidationError
+from brewtils.models import DateTrigger, Event, Events, Job, Operation, Request
 
 logger = logging.getLogger(__name__)
 
@@ -127,30 +128,48 @@ class MixedScheduler(object):
     A wrapper that tracks an interval-based scheduler.
     """
 
-    _sync_scheduler = BackgroundScheduler()
+    _sync_scheduler = None
 
     running = False
 
-    def __init__(self, interval_config=None):
-        """Initializes the underlying scheduler
-
-        Args:
-            interval_config: Any scheduler-specific arguments for the APScheduler
-        """
-        self._sync_scheduler.configure(**interval_config)
-        self._sync_scheduler.add_listener(
-            self.max_concurrence_listener, EVENT_JOB_MAX_INSTANCES
-        )
-
     def max_concurrence_listener(scheduler, event):
         db_job = db.query_unique(Job, id=event.job_id)
-        if not db_job.replication_id or db_job.replication_id == get_replication_id():
-            db.modify(db_job, inc__skip_count=1)
+        db.modify(db_job, inc__skip_count=1)
 
     def start(self):
         """Starts the scheduler"""
+        if self._sync_scheduler is None:
+            self._sync_scheduler = BackgroundScheduler()
+            job_stores = {"beer_garden": db.get_job_store()}
+            scheduler_config = config.get("scheduler")
+            executors = {"default": APThreadPoolExecutor(scheduler_config.max_workers)}
+            job_defaults = scheduler_config.job_defaults.to_dict()
+
+            ap_config = {
+                "jobstores": job_stores,
+                "executors": executors,
+                "job_defaults": job_defaults,
+                "timezone": utc,
+            }
+            self._sync_scheduler.configure(**ap_config)
+            self._sync_scheduler.add_listener(
+                self.max_concurrence_listener, EVENT_JOB_MAX_INSTANCES
+            )
+
+            self.internal_scheduled_jobs()
+
         self._sync_scheduler.start()
         self.running = True
+
+    def resume(self):
+        """Resume the scheduler"""
+        self._sync_scheduler.resume()
+        self.running = True
+
+    def pause(self):
+        """pause the scheduler"""
+        self._sync_scheduler.pause()
+        self.running = False
 
     def shutdown(self, **kwargs):
         """Stops the scheduler
@@ -168,6 +187,7 @@ class MixedScheduler(object):
         """
         self._sync_scheduler.shutdown(**kwargs)
         self.running = False
+        self._sync_scheduler = None
 
     def reschedule_job(self, job_id, **kwargs):
         """Passes through to the sync scheduler
@@ -221,7 +241,6 @@ class MixedScheduler(object):
             reset_interval: Whether to set the job's interval begin time to now
         """
         job = db.query_unique(Job, id=job_id)
-
         self.add_job(
             run_job,
             trigger=DateTrigger(datetime.utcnow(), timezone="UTC"),
@@ -288,6 +307,70 @@ class MixedScheduler(object):
             func, trigger=APInterval(minutes=interval), **kwargs
         )
 
+    def internal_scheduled_jobs(self):
+        # Add scheduled jobs for Mongo Pruner
+        prune_interval = config.get("db.prune_interval")
+        if prune_interval > 0:
+            ttl_config = config.get("db.ttl")
+            if ttl_config.get("info") > 0:
+                self.add_schedule(
+                    beer_garden.db.mongo.pruner.prune_info_requests,
+                    interval=prune_interval,
+                    max_running_jobs=1,
+                )
+
+            if ttl_config.get("action") > 0:
+                self.add_schedule(
+                    beer_garden.db.mongo.pruner.prune_action_requests,
+                    interval=prune_interval,
+                    max_running_jobs=1,
+                )
+
+            if ttl_config.get("admin") > 0:
+                self.add_schedule(
+                    beer_garden.db.mongo.pruner.prune_admin_requests,
+                    interval=prune_interval,
+                    max_running_jobs=1,
+                )
+
+            if ttl_config.get("temp") > 0:
+                self.add_schedule(
+                    beer_garden.db.mongo.pruner.prune_temp_requests,
+                    interval=prune_interval,
+                    max_running_jobs=1,
+                )
+
+            if ttl_config.get("file") > 0:
+                self.add_schedule(
+                    beer_garden.db.mongo.pruner.prune_files,
+                    interval=prune_interval,
+                    max_running_jobs=1,
+                )
+
+            if ttl_config.get("in_progress") > 0:
+                self.add_schedule(
+                    beer_garden.db.mongo.pruner.prune_outstanding,
+                    interval=prune_interval,
+                    max_running_jobs=1,
+                )
+
+        # Add scheduled job for checking unresponsive gardens
+        self.add_schedule(
+            beer_garden.garden.garden_unresponsive_trigger,
+            interval=15,
+            max_running_jobs=1,
+        )
+
+        # Add Garden Sync Scheduler
+        if config.get("parent.sync_interval") > 0 and (
+            config.get("parent.stomp.enabled") or config.get("parent.http.enabled")
+        ):
+            self.add_schedule(
+                beer_garden.garden.publish_garden,
+                interval=config.get("parent.sync_interval"),
+                max_running_jobs=1,
+            )
+
 
 class IntervalTrigger(APInterval):
     """Beergarden implementation of an apscheduler IntervalTrigger"""
@@ -338,46 +421,43 @@ def run_job(job_id, request_template, **kwargs):
     if not db_job:
         logger.error(f"Could not find job {job_id} in database, job will not be run")
         return
-    
-    # Job is owned by a different node of Beer Garden
-    if not config.get("replication.enabled") or not db_job.replication_id or db_job.replication_id == get_replication_id():
 
-        try:
-            logger.debug(f"About to execute {db_job!r}")
+    try:
+        logger.debug(f"About to execute {db_job!r}")
 
-            request = beer_garden.router.route(
-                Operation(
-                    operation_type="REQUEST_CREATE",
-                    model=Request.from_template(request_template),
-                    model_type="Request",
-                    kwargs={"wait_event": wait_event},
-                )
+        request = beer_garden.router.route(
+            Operation(
+                operation_type="REQUEST_CREATE",
+                model=Request.from_template(request_template),
+                model_type="Request",
+                kwargs={"wait_event": wait_event},
             )
+        )
 
-            # Wait for the request to complete
-            timeout = db_job.timeout or None
-            if not wait_event.wait(timeout=timeout):
-                logger.warning(f"Execution of job {db_job} timed out.")
-                return
+        # Wait for the request to complete
+        timeout = db_job.timeout or None
+        if not wait_event.wait(timeout=timeout):
+            logger.warning(f"Execution of job {db_job} timed out.")
+            return
 
-            request = get_request(request.id)
+        request = get_request(request.id)
 
-            updates = {}
-            if request.status == "ERROR":
-                updates["inc__error_count"] = 1
-                logger.debug(f"{db_job!r} request completed with {request.status} status")
-            elif request.status == "CANCELED":
-                updates["inc__canceled_count"] = 1
-                logger.debug(f"{db_job!r} request completed with {request.status} status")
-            elif request.status == "SUCCESS":
-                logger.debug(f"{db_job!r} request completed with SUCCESS status")
-                updates["inc__success_count"] = 1
+        updates = {}
+        if request.status == "ERROR":
+            updates["inc__error_count"] = 1
+            logger.debug(f"{db_job!r} request completed with {request.status} status")
+        elif request.status == "CANCELED":
+            updates["inc__canceled_count"] = 1
+            logger.debug(f"{db_job!r} request completed with {request.status} status")
+        elif request.status == "SUCCESS":
+            logger.debug(f"{db_job!r} request completed with SUCCESS status")
+            updates["inc__success_count"] = 1
 
-            if updates != {}:
-                db.modify(db_job, **updates)
-        except Exception as ex:
-            logger.error(f"Error executing {db_job}: {ex}")
-            db.modify(db_job, inc__error_count=1)
+        if updates != {}:
+            db.modify(db_job, **updates)
+    except Exception as ex:
+        logger.error(f"Error executing {db_job}: {ex}")
+        db.modify(db_job, inc__error_count=1)
 
     # Be a little careful here as the job could have been removed or paused
     job = beer_garden.application.scheduler.get_job(job_id)
@@ -410,8 +490,6 @@ def create_job(job: Job) -> Job:
         The added Job
     """
     # Save first so we have an ID to pass to the scheduler
-    if config.get("replication.enabled"):
-        job.replication_id = get_replication_id()
     job = db.create(job)
 
     return job
@@ -528,49 +606,6 @@ def execute_job(job_id: str, reset_interval=False) -> Job:
 
     return job
 
-def valid_replication(replication_id: str):
-
-    replication = db.query_unique(Replication, replication_id=replication_id, raise_missing=False)
-    if not replication:
-        return False
-
-    if replication.expires_at < datetime.now():
-        return False
-    
-    return True
-
-
-def update_replication_id() -> None:
-
-    local_replication_id = get_replication_id()
-
-    expired_replication_ids = []
-    valid_replication_ids = [local_replication_id]
-    
-
-    for job in db.query(Job):
-        
-        if job.replication_id in valid_replication_ids:
-            logger.error(f"Job {job.name} is running on valid Replication Instance")
-            continue
-
-        if job.replication_id is None or job.replication_id in expired_replication_ids:
-            job.replication_id = local_replication_id
-            job = db.update(job)
-            logger.error(f"Migrated Job {job.name} to this Replication instance")
-            publish(Event(name=Events.JOB_UPDATED.name, payload=job, payload_type="Job"))
-            continue
-
-        if valid_replication(job.replication_id):
-            valid_replication_ids.append(job.replication_id)
-            logger.error(f"Job {job.name} is running on valid Replication Instance")
-        else:
-            expired_replication_ids.append(job.replication_id)
-
-            job.replication_id = local_replication_id
-            job = db.update(job)
-            logger.error(f"Migrated Job {job.name} to this Replication instance")
-            publish(Event(name=Events.JOB_UPDATED.name, payload=job, payload_type="Job"))
 
 def handle_event(event: Event) -> None:
     """Handle JOB events
@@ -584,50 +619,47 @@ def handle_event(event: Event) -> None:
         event: The event to handle
     """
 
-    if event.garden == config.get("garden.name"):
-        if event.name in [Events.JOB_CREATED.name, Events.JOB_UPDATED.name, Events.JOB_PAUSED.name, Events.JOB_RESUMED.name, Events.JOB_DELETED.name, Events.JOB_EXECUTED.name]:
-            if not event.payload.replication_id or event.payload.replication_id == get_replication_id():
-                if event.name in [Events.JOB_CREATED.name, Events.JOB_UPDATED.name]:
-                    try:
-                        beer_garden.application.scheduler.add_job(
-                            run_job,
-                            trigger=event.payload.trigger,
-                            trigger_type=event.payload.trigger_type,
-                            kwargs={
-                                "request_template": event.payload.request_template,
-                                "job_id": str(event.payload.id),
-                            },
-                            name=event.payload.name,
-                            misfire_grace_time=event.payload.misfire_grace_time,
-                            coalesce=event.payload.coalesce,
-                            max_instances=event.payload.max_instances,
-                            jobstore="beer_garden",
-                            replace_existing=True,
-                            id=event.payload.id,
-                        )
-                    except Exception:
-                        db.delete(event.payload)
-                        raise
-
-            elif event.name == Events.JOB_PAUSED.name:
-                beer_garden.application.scheduler.pause_job(
-                    event.payload.id, jobstore="beer_garden"
-                )
-            elif event.name == Events.JOB_RESUMED.name:
-                beer_garden.application.scheduler.resume_job(
-                    event.payload.id, jobstore="beer_garden"
-                )
-            elif event.name == Events.JOB_DELETED.name:
-                beer_garden.application.scheduler.remove_job(
-                    event.payload.id, jobstore="beer_garden"
-                )
-            elif event.name == Events.JOB_EXECUTED.name:
-                beer_garden.application.scheduler.execute_job(
-                    event.payload.id,
+    if (
+        event.garden == config.get("garden.name")
+        and beer_garden.application.scheduler.running
+    ):
+        if event.name in [Events.JOB_CREATED.name, Events.JOB_UPDATED.name]:
+            try:
+                beer_garden.application.scheduler.add_job(
+                    run_job,
+                    trigger=event.payload.trigger,
+                    trigger_type=event.payload.trigger_type,
+                    kwargs={
+                        "request_template": event.payload.request_template,
+                        "job_id": str(event.payload.id),
+                    },
+                    name=event.payload.name,
+                    misfire_grace_time=event.payload.misfire_grace_time,
+                    coalesce=event.payload.coalesce,
+                    max_instances=event.payload.max_instances,
                     jobstore="beer_garden",
-                    reset_interval=event.payload.reset_interval,
+                    replace_existing=True,
+                    id=event.payload.id,
                 )
-            # else:
-            #     beer_garden.application.scheduler.remove_job(
-            #             event.payload.id, jobstore="beer_garden"
-            #         )
+            except Exception:
+                db.delete(event.payload)
+                raise
+
+        elif event.name == Events.JOB_PAUSED.name:
+            beer_garden.application.scheduler.pause_job(
+                event.payload.id, jobstore="beer_garden"
+            )
+        elif event.name == Events.JOB_RESUMED.name:
+            beer_garden.application.scheduler.resume_job(
+                event.payload.id, jobstore="beer_garden"
+            )
+        elif event.name == Events.JOB_DELETED.name:
+            beer_garden.application.scheduler.remove_job(
+                event.payload.id, jobstore="beer_garden"
+            )
+        elif event.name == Events.JOB_EXECUTED.name:
+            beer_garden.application.scheduler.execute_job(
+                event.payload.id,
+                jobstore="beer_garden",
+                reset_interval=event.payload.reset_interval,
+            )

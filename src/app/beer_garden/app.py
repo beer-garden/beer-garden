@@ -10,14 +10,6 @@ from functools import partial
 from multiprocessing.managers import BaseManager
 from typing import Callable
 
-from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
-
-# from apscheduler.schedulers.background import BackgroundScheduler
-from brewtils import EasyClient
-from brewtils.models import Event, Events
-from brewtils.stoppable_thread import StoppableThread
-from pytz import utc
-
 import beer_garden.api
 import beer_garden.api.entry_point
 import beer_garden.command_publishing_blocklist
@@ -39,6 +31,11 @@ from beer_garden.metrics import PrometheusServer
 from beer_garden.monitor import MonitorFile
 from beer_garden.plugin import StatusMonitor
 from beer_garden.scheduler import MixedScheduler
+
+# from apscheduler.schedulers.background import BackgroundScheduler
+from brewtils import EasyClient
+from brewtils.models import Event, Events
+from brewtils.stoppable_thread import StoppableThread
 
 
 class Application(StoppableThread):
@@ -68,7 +65,10 @@ class Application(StoppableThread):
     def initialize(self):
         """Actually construct all the various component pieces"""
 
-        self.scheduler = self._setup_scheduler()
+        # Setup Replication ID for environment
+        beer_garden.replication.get_replication_id()
+
+        self.scheduler = MixedScheduler()
 
         load_plugin_log_config()
 
@@ -93,87 +93,6 @@ class Application(StoppableThread):
             )
         ]
 
-        # Add scheduled jobs for Mongo Pruner
-        prune_interval = config.get("db.prune_interval")
-        if prune_interval > 0:
-            ttl_config = config.get("db.ttl")
-            if ttl_config.get("info") > 0:
-                self.scheduler.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_info_requests,
-                    interval=prune_interval,
-                    max_running_jobs=1,
-                )
-
-            if ttl_config.get("action") > 0:
-                self.scheduler.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_action_requests,
-                    interval=prune_interval,
-                    max_running_jobs=1,
-                )
-
-            if ttl_config.get("admin") > 0:
-                self.scheduler.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_admin_requests,
-                    interval=prune_interval,
-                    max_running_jobs=1,
-                )
-
-            if ttl_config.get("temp") > 0:
-                self.scheduler.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_temp_requests,
-                    interval=prune_interval,
-                    max_running_jobs=1,
-                )
-
-            if ttl_config.get("file") > 0:
-                self.scheduler.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_files,
-                    interval=prune_interval,
-                    max_running_jobs=1,
-                )
-
-            if ttl_config.get("in_progress") > 0:
-                self.scheduler.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_outstanding,
-                    interval=prune_interval,
-                    max_running_jobs=1,
-                )
-
-        # Add scheduled job for checking unresponsive gardens
-        self.scheduler.add_schedule(
-            beer_garden.garden.garden_unresponsive_trigger,
-            interval=15,
-            max_running_jobs=1,
-        )
-
-        # Add Garden Sync Scheduler
-        if config.get("parent.sync_interval") > 0 and (
-            config.get("parent.stomp.enabled") or config.get("parent.http.enabled")
-        ):
-            self.scheduler.add_schedule(
-                beer_garden.garden.publish_garden,
-                interval=config.get("parent.sync_interval"),
-                max_running_jobs=1,
-            )
-
-        # Add Replication Heartbeat Scheduler
-        # if config.get("replication.enabled"):
-        self.scheduler.add_schedule(
-            beer_garden.replication.update_heartbeat,
-            interval=10,
-            seconds = True,
-            max_running_jobs=1,
-        )
-
-        # Add 5 second jitter to help prevent all nodes re-assigning the jobs
-        self.scheduler.add_schedule(
-            beer_garden.scheduler.update_replication_id,
-            interval=30,
-            seconds = True,
-            max_running_jobs=1,
-            jitter=5,
-        )
-
         metrics_config = config.get("metrics")
         if metrics_config.prometheus.enabled:
             self.helper_threads.append(
@@ -183,6 +102,14 @@ class Application(StoppableThread):
                     metrics_config.prometheus.port,
                 )
             )
+
+        self.helper_threads.append(
+            HelperThread(
+                beer_garden.replication.PrimaryReplicationMonitor,
+                10,
+                30,
+            )
+        )
 
         beer_garden.router.forward_processor = QueueListener(
             action=beer_garden.router.forward, name="forwarder"
@@ -340,8 +267,8 @@ class Application(StoppableThread):
         self.logger.debug("Loading child configurations...")
         beer_garden.garden.rescan()
 
-        self.logger.debug("Starting scheduler")
-        self.scheduler.start()
+        # self.logger.debug("Starting scheduler")
+        # self.scheduler.start()
 
         self.logger.debug("Publishing startup sync")
         beer_garden.garden.publish_garden()
@@ -452,30 +379,6 @@ class Application(StoppableThread):
             )
 
         return event_manager
-
-    @staticmethod
-    def _setup_scheduler():
-        """Initializes scheduled jobs stored in the database"""
-        job_stores = {"beer_garden": db.get_job_store()}
-        scheduler_config = config.get("scheduler")
-        executors = {"default": APThreadPoolExecutor(scheduler_config.max_workers)}
-        job_defaults = scheduler_config.job_defaults.to_dict()
-
-        ap_config = {
-            "jobstores": job_stores,
-            "executors": executors,
-            "job_defaults": job_defaults,
-            "timezone": utc,
-        }
-
-        # return BackgroundScheduler(
-        #     jobstores=job_stores,
-        #     executors=executors,
-        #     job_defaults=job_defaults,
-        #     timezone=utc,
-        # )
-
-        return MixedScheduler(interval_config=ap_config)
 
     @staticmethod
     def _setup_multiprocessing_manager():
