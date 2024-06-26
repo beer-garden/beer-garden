@@ -8,7 +8,6 @@ from beer_garden import config
 from beer_garden.api.http.authentication.login_handlers.base import BaseLoginHandler
 from beer_garden.api.http.schemas.v1.token import TokenInputSchema
 from beer_garden.db.mongo.models import User
-from beer_garden.user import verify_ldap_password
 
 
 class LdapLoginHandler(BaseLoginHandler):

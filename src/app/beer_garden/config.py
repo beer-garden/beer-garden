@@ -1564,6 +1564,7 @@ _LDAP_SPEC = {
         },
         "base_dn": {
             "type": "str",
+            "default": "dc=example,dc=org",
             "description": "Base dn in directory tree for search queries",
         },
     },
