@@ -32,7 +32,6 @@ from beer_garden.command_publishing_blocklist import (
     publish_command_publishing_blocklist,
 )
 
-# from beer_garden.db.mongo.models import RemoteUser
 from beer_garden.errors import ForwardException
 from beer_garden.events import publish, publish_event
 from beer_garden.namespace import get_namespaces
@@ -344,7 +343,6 @@ def remove_garden(garden_name: str = None, garden: Garden = None) -> None:
 
     garden = garden or get_garden(garden_name)
 
-    # remove_remote_users(garden)
     remove_remote_systems(garden)
 
     for child in garden.children:

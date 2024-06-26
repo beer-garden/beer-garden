@@ -193,7 +193,6 @@ route_functions = {
     "USER_SYNC": beer_garden.user.initiate_user_sync,
     "USER_UPSTREAM_SYNC": beer_garden.user.upstream_users_sync,
     "PUBLISH_EVENT": beer_garden.events.publish,
-    # "USER_SYNC": beer_garden.user.user_sync,
     "COMMAND_BLOCKLIST_ADD": (
         beer_garden.command_publishing_blocklist.command_publishing_blocklist_add
     ),

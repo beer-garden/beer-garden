@@ -560,28 +560,6 @@ class TestUser:
 
         assert len(user.roles) == 1
 
-    # def test_role_assignment_missing_identifiers_raises_validation_error(
-    #     self, user, role_assignment_missing_identifiers
-    # ):
-    #     user.role_assignments = [role_assignment_missing_identifiers]
-
-    #     with pytest.raises(ValidationError):
-    #         user.save()
-
-    # def test_role_assignment_empty_identifiers_are_discarded(
-    #     self, user, role_assignment_empty_identifiers
-    # ):
-    #     user.role_assignments = [role_assignment_empty_identifiers]
-
-    #     assert len(user.role_assignments[0].domain["identifiers"]) == 2
-    #     user.save()
-    #     assert len(user.role_assignments[0].domain["identifiers"]) == 1
-
-    # def test_revoke_tokens(self, user, user_token):
-    #     assert len(UserToken.objects.filter(user=user)) > 0
-    #     user.revoke_tokens()
-    #     assert len(UserToken.objects.filter(user=user)) == 0
-
 
 class TestUserToken:
     @pytest.fixture()
