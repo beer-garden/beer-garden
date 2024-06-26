@@ -162,7 +162,7 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, isNew, 
     role.scope_instances = $scope.convertScopeToModal(role.scope_instances);
     role.scope_commands = $scope.convertScopeToModal(role.scope_commands);
     return role;
-  }
+  };
 
   $scope.convertScopeFromModal = function(scope_values){
     let scopes = [];
