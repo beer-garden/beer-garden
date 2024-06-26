@@ -20,7 +20,6 @@ class LdapLoginHandler(BaseLoginHandler):
         dn_parts = (f"cn={username}", f"ou={ou}", config.get("ldap.base_dn"))
         return ",".join(dn_parts)
 
-
     def verify_ldap_password(self, username: str, password: str):
         """Checks the provided plaintext password against the user's stored password
 
@@ -46,7 +45,6 @@ class LdapLoginHandler(BaseLoginHandler):
             raise
 
         return False
-
 
     def get_user_roles(self, username: str, password: str):
         """Checks the users roles against the provided"""

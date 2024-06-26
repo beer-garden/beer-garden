@@ -1564,9 +1564,9 @@ _LDAP_SPEC = {
         },
         "base_dn": {
             "type": "str",
-            "description": "Base dn in directory tree for search queries"
-        }
-    }
+            "description": "Base dn in directory tree for search queries",
+        },
+    },
 }
 
 _SPECIFICATION = {
