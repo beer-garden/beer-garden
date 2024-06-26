@@ -516,6 +516,7 @@ def load_garden_connections(garden: Garden):
     path = Path(f"{config.get('children.directory')}/{garden.name}.yaml")
 
     garden.publishing_connections.clear()
+    garden.receiving_connections.clear()
 
     if not path.exists():
         garden.status = "NOT_CONFIGURED"
