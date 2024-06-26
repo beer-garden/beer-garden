@@ -31,7 +31,6 @@ import beer_garden.db.api as db
 from beer_garden.command_publishing_blocklist import (
     publish_command_publishing_blocklist,
 )
-
 from beer_garden.errors import ForwardException
 from beer_garden.events import publish, publish_event
 from beer_garden.namespace import get_namespaces
