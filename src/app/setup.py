@@ -32,6 +32,7 @@ setup(
         "apscheduler<4",
         "python-box>=3.3.0",
         "brewtils>=3.26.1",
+        "ldap3>=2.9.1",
         "marshmallow<3",
         "mongoengine<0.21",
         "more-itertools<9",

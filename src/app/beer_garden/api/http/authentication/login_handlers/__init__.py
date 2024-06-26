@@ -4,9 +4,10 @@ from beer_garden import config
 
 from .base import BaseLoginHandler
 from .basic import BasicLoginHandler
+from .ldap import LdapLoginHandler
 from .trusted_header import TrustedHeaderLoginHandler
 
-LOGIN_HANDLERS = [BasicLoginHandler, TrustedHeaderLoginHandler]
+LOGIN_HANDLERS = [BasicLoginHandler, TrustedHeaderLoginHandler, LdapLoginHandler]
 
 
 def enabled_login_handlers() -> List[Type[BaseLoginHandler]]:
@@ -19,6 +20,7 @@ def enabled_login_handlers() -> List[Type[BaseLoginHandler]]:
     handler_config_map = {
         "basic": BasicLoginHandler,
         "trusted_header": TrustedHeaderLoginHandler,
+        "ldap": LdapLoginHandler,
     }
     enabled_handlers = []
 

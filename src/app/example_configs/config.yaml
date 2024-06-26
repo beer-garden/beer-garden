@@ -176,3 +176,7 @@ ui:
   execute_javascript: false
   icon_default: fa-beer
   name: Beer Garden
+ldap:
+  host: localhost
+  port: 389
+  base_dn: dc=example,dc=org

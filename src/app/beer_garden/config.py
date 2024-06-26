@@ -1549,6 +1549,26 @@ _REPLICATION_SPEC = {
     },
 }
 
+_LDAP_SPEC = {
+    "type": "dict",
+    "items": {
+        "host": {
+            "type": "str",
+            "default": "localhost",
+            "description": "Host for the LDAP Server to bind to",
+        },
+        "port": {
+            "type": "int",
+            "default": 389,
+            "description": "Serve content on this port",
+        },
+        "base_dn": {
+            "type": "str",
+            "description": "Base dn in directory tree for search queries"
+        }
+    }
+}
+
 _SPECIFICATION = {
     "auth": _AUTH_SPEC,
     "children": _CHILDREN_GARDEN_SPEC,
@@ -1565,6 +1585,7 @@ _SPECIFICATION = {
     "scheduler": _SCHEDULER_SPEC,
     "replication": _REPLICATION_SPEC,
     "ui": _UI_SPEC,
+    "ldap": _LDAP_SPEC,
 }
 
 _CHILD_SPECIFICATION = {
