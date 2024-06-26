@@ -90,7 +90,7 @@ class LdapLoginHandler(BaseLoginHandler):
                 try:
                     user = User.objects.get(username=username)
 
-                    if verify_ldap_password(username, password):
+                    if self.verify_ldap_password(username, password):
                         authenticated_user = user
                 except User.DoesNotExist:
                     pass
