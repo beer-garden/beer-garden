@@ -32,7 +32,6 @@ from beer_garden.monitor import MonitorFile
 from beer_garden.plugin import StatusMonitor
 from beer_garden.scheduler import MixedScheduler
 
-# from apscheduler.schedulers.background import BackgroundScheduler
 from brewtils import EasyClient
 from brewtils.models import Event, Events
 from brewtils.stoppable_thread import StoppableThread
@@ -266,9 +265,6 @@ class Application(StoppableThread):
 
         self.logger.debug("Loading child configurations...")
         beer_garden.garden.rescan()
-
-        # self.logger.debug("Starting scheduler")
-        # self.scheduler.start()
 
         self.logger.debug("Publishing startup sync")
         beer_garden.garden.publish_garden()

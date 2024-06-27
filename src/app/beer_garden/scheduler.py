@@ -163,13 +163,15 @@ class MixedScheduler(object):
 
     def resume(self):
         """Resume the scheduler"""
-        self._sync_scheduler.resume()
-        self.running = True
+        if self._sync_scheduler:
+            self._sync_scheduler.resume()
+            self.running = True
 
     def pause(self):
         """pause the scheduler"""
-        self._sync_scheduler.pause()
-        self.running = False
+        if self._sync_scheduler:
+            self._sync_scheduler.pause()
+            self.running = False
 
     def shutdown(self, **kwargs):
         """Stops the scheduler
@@ -185,9 +187,10 @@ class MixedScheduler(object):
         Args:
             kwargs: Any other scheduler-specific arguments
         """
-        self._sync_scheduler.shutdown(**kwargs)
-        self.running = False
-        self._sync_scheduler = None
+        if self._sync_scheduler:
+            self._sync_scheduler.shutdown(**kwargs)
+            self.running = False
+            self._sync_scheduler = None
 
     def reschedule_job(self, job_id, **kwargs):
         """Passes through to the sync scheduler

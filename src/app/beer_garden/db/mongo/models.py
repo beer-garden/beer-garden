@@ -820,10 +820,6 @@ class Job(MongoModel, Document):
     )
     max_instances = IntField(default=3, min_value=1)
     timeout = IntField()
-    replication = ReferenceField(
-        Replication, required=False, dbref=True, reverse_delete_rule=NULLIFY
-    )
-    replication_id = StringField(required=False)
 
     def clean(self):
         """Validate before saving to the database"""
