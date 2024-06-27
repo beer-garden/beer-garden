@@ -10,6 +10,10 @@ from functools import partial
 from multiprocessing.managers import BaseManager
 from typing import Callable
 
+from brewtils import EasyClient
+from brewtils.models import Event, Events
+from brewtils.stoppable_thread import StoppableThread
+
 import beer_garden.api
 import beer_garden.api.entry_point
 import beer_garden.command_publishing_blocklist
@@ -31,10 +35,6 @@ from beer_garden.metrics import PrometheusServer
 from beer_garden.monitor import MonitorFile
 from beer_garden.plugin import StatusMonitor
 from beer_garden.scheduler import MixedScheduler
-
-from brewtils import EasyClient
-from brewtils.models import Event, Events
-from brewtils.stoppable_thread import StoppableThread
 
 
 class Application(StoppableThread):

@@ -16,6 +16,16 @@ except ImportError:
     LarkError = ParseError
 from typing import Optional, Tuple
 
+import brewtils.models
+from brewtils.choices import parse
+from brewtils.errors import ModelValidationError, RequestStatusTransitionError
+from brewtils.models import Command as BrewtilsCommand
+from brewtils.models import Event as BrewtilsEvent
+from brewtils.models import Events as BrewtilsEvents
+from brewtils.models import Instance as BrewtilsInstance
+from brewtils.models import Job as BrewtilsJob
+from brewtils.models import Parameter as BrewtilsParameter
+from brewtils.models import Request as BrewtilsRequest
 from mongoengine import (
     CASCADE,
     NULLIFY,
@@ -41,18 +51,8 @@ from mongoengine import (
 )
 from mongoengine.errors import DoesNotExist
 
-import brewtils.models
 from beer_garden import config
 from beer_garden.db.mongo.querysets import FileFieldHandlingQuerySet
-from brewtils.choices import parse
-from brewtils.errors import ModelValidationError, RequestStatusTransitionError
-from brewtils.models import Command as BrewtilsCommand
-from brewtils.models import Event as BrewtilsEvent
-from brewtils.models import Events as BrewtilsEvents
-from brewtils.models import Instance as BrewtilsInstance
-from brewtils.models import Job as BrewtilsJob
-from brewtils.models import Parameter as BrewtilsParameter
-from brewtils.models import Request as BrewtilsRequest
 
 from .fields import DummyField, StatusInfo
 from .validators import validate_permissions

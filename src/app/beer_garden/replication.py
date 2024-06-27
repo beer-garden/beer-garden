@@ -3,12 +3,13 @@ import os
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
+from brewtils.models import Event, Events, Replication
+from brewtils.stoppable_thread import StoppableThread
+
 import beer_garden
 import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.events import publish_event
-from brewtils.models import Event, Events, Replication
-from brewtils.stoppable_thread import StoppableThread
 
 logger = logging.getLogger(__name__)
 
