@@ -2,7 +2,7 @@
 from typing import Type
 
 from brewtils.models import BaseModel as BrewtilsModel
-from brewtils.models import Operation, Role, User
+from brewtils.models import Operation, Permissions, Role, User
 from mongoengine import Document, QuerySet
 from mongoengine.queryset.visitor import Q, QCombination
 
@@ -29,14 +29,10 @@ class AuthorizationHandler(BaseHandler):
     """Handler that builds on BaseHandler and adds support for authorizing requests
     via a jwt access token supplied in the Authorization header"""
 
-    GARDEN_ADMIN = "GARDEN_ADMIN"
-    PLUGIN_ADMIN = "PLUGIN_ADMIN"
-    OPERATOR = "OPERATOR"
-    READ_ONLY = "READ_ONLY"
     queryFilter = QueryFilterBuilder()
     modelFilter = ModelFilter()
 
-    minimum_permission = READ_ONLY
+    minimum_permission = Permissions.READ_ONLY.name
 
     def get_current_user(self) -> User:
         """Retrieve the appropriate User object for the request. If the auth setting
@@ -203,7 +199,9 @@ class AuthorizationHandler(BaseHandler):
         anonymous_superuser = User(
             username="anonymous",
             upstream_roles=[],
-            local_roles=[Role(name="superuser", permission="GARDEN_ADMIN")],
+            local_roles=[
+                Role(name="superuser", permission=Permissions.GARDEN_ADMIN.name)
+            ],
         )
 
         # Manually set the permissions cache (to all permissions for all gardens) since

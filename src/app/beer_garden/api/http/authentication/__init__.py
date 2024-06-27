@@ -3,7 +3,7 @@ from typing import Optional
 from uuid import UUID, uuid4
 
 import jwt
-from brewtils.models import User, UserToken
+from brewtils.models import Permissions, User, UserToken
 from brewtils.schema_parser import SchemaParser
 from mongoengine import DoesNotExist
 from tornado.httputil import HTTPServerRequest
@@ -255,15 +255,15 @@ def _generate_refresh_token(user: User, identifier: UUID, expiration: datetime) 
 
 def _get_access_token_expiration(max_permission=None) -> datetime:
     """Calculate and return the access token expiration time"""
-    if max_permission == "GARDEN_ADMIN":
+    if max_permission == Permissions.GARDEN_ADMIN.name:
         return datetime.utcnow() + timedelta(
             minutes=config.get("auth.token_access_ttl.garden_admin")
         )
-    elif max_permission == "PLUGIN_ADMIN":
+    elif max_permission == Permissions.PLUGIN_ADMIN.name:
         return datetime.utcnow() + timedelta(
             minutes=config.get("auth.token_access_ttl.plugin_admin")
         )
-    elif max_permission == "OPERATOR":
+    elif max_permission == Permissions.OPERATOR.name:
         return datetime.utcnow() + timedelta(
             minutes=config.get("auth.token_access_ttl.operator")
         )
@@ -274,15 +274,15 @@ def _get_access_token_expiration(max_permission=None) -> datetime:
 
 def _get_refresh_token_expiration(max_permission=None) -> datetime:
     """Calculate and return the refresh token expiration time"""
-    if max_permission == "GARDEN_ADMIN":
+    if max_permission == Permissions.GARDEN_ADMIN.name:
         return datetime.utcnow() + timedelta(
             minutes=config.get("auth.token_refresh_ttl.garden_admin")
         )
-    elif max_permission == "PLUGIN_ADMIN":
+    elif max_permission == Permissions.PLUGIN_ADMIN.name:
         return datetime.utcnow() + timedelta(
             minutes=config.get("auth.token_refresh_ttl.plugin_admin")
         )
-    elif max_permission == "OPERATOR":
+    elif max_permission == Permissions.OPERATOR.name:
         return datetime.utcnow() + timedelta(
             minutes=config.get("auth.token_refresh_ttl.operator")
         )

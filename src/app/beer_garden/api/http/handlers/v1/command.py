@@ -33,7 +33,7 @@ class CommandAPI(AuthorizationHandler):
         tags:
           - Commands
         """
-        self.minimum_permission = self.READ_ONLY
+
         _ = self.get_or_raise(System, id=system_id)
 
         response = await self.process_operation(
@@ -93,7 +93,6 @@ class CommandListAPI(AuthorizationHandler):
         tags:
           - Deprecated
         """
-        self.minimum_permission = self.READ_ONLY
 
         permitted_objects_filter = self.permissioned_queryset(System)
 

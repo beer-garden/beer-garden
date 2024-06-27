@@ -2,7 +2,7 @@
 import logging
 
 from brewtils.errors import ModelValidationError
-from brewtils.models import Garden, Operation
+from brewtils.models import Garden, Operation, Permissions
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.handlers import AuthorizationHandler
@@ -34,7 +34,6 @@ class GardenAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-        self.minimum_permission = self.READ_ONLY
         response = await self.process_operation(
             Operation(operation_type="GARDEN_READ", args=[garden_name])
         )
@@ -62,7 +61,7 @@ class GardenAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-        self.minimum_permission = self.GARDEN_ADMIN
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
         garden = self.get_or_raise(Garden, name=garden_name)
 
         await self.process_operation(
@@ -116,7 +115,7 @@ class GardenAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-        self.minimum_permission = self.GARDEN_ADMIN
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
         garden = self.get_or_raise(Garden, name=garden_name)
 
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
@@ -202,36 +201,11 @@ class GardenListAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-        # permitted_gardens = self.permissioned_queryset(Garden, GARDEN_READ)
-        # response_gardens = []
 
-        # permitted_gardens_list = list(
-        #     permitted_gardens.filter(connection_type__ne="LOCAL").no_cache()
-        # )
-        # _local_garden = local_garden(all_systems=True)
-
-        # if user_has_permission_for_object(
-        #     self.current_user, GARDEN_READ, _local_garden
-        # ):
-        #     permitted_gardens_list.append(_local_garden)
-        self.minimum_permission = self.READ_ONLY
         permitted_gardens_list = await self.process_operation(
             Operation(operation_type="GARDEN_READ_ALL")
         )
         self.write(permitted_gardens_list)
-
-        # response_gardens = []
-        # for garden in SchemaParser.parse_garden(
-        #     permitted_gardens_list, from_string=True, many=True
-        # ):
-        #     if user_has_permission_for_object(self.current_user, GARDEN_READ, garden):
-        #         response_gardens.append(garden)
-
-        # self.set_header("Content-Type", "application/json; charset=UTF-8")
-
-        # self.write(
-        #     SchemaParser.serialize_garden(response_gardens, to_string=True, many=True)
-        # )
 
     async def post(self):
         """
@@ -255,7 +229,7 @@ class GardenListAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-        self.minimum_permission = self.GARDEN_ADMIN
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
         garden = SchemaParser.parse_garden(self.request.decoded_body, from_string=True)
 
         self.verify_user_permission_for_object(garden)
@@ -306,7 +280,7 @@ class GardenListAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-        self.minimum_permission = self.GARDEN_ADMIN
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
         self.verify_user_permission_for_object(local_garden())
 
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)

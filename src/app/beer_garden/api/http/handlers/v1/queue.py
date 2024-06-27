@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from brewtils.models import Operation
+from brewtils.models import Operation, Permissions
 
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.garden import local_garden
@@ -28,7 +28,7 @@ class QueueAPI(AuthorizationHandler):
         tags:
           - Queues
         """
-        self.minimum_permission = self.PLUGIN_ADMIN
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         self.verify_user_permission_for_object(local_garden())
 
         await self.process_operation(
@@ -55,7 +55,7 @@ class QueueListAPI(AuthorizationHandler):
         tags:
           - Queues
         """
-        self.minimum_permission = self.PLUGIN_ADMIN
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         self.verify_user_permission_for_object(local_garden())
 
         response = await self.process_operation(Operation(operation_type="QUEUE_READ"))
@@ -75,7 +75,7 @@ class QueueListAPI(AuthorizationHandler):
         tags:
           - Queues
         """
-        self.minimum_permission = self.PLUGIN_ADMIN
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         self.verify_user_permission_for_object(local_garden())
 
         await self.process_operation(Operation(operation_type="QUEUE_DELETE_ALL"))

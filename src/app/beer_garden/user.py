@@ -3,7 +3,7 @@ import os
 from copy import deepcopy
 
 import yaml
-from brewtils.models import Event, Garden, Operation, Role, User, UserToken
+from brewtils.models import Event, Garden, Operation, Permissions, Role, User, UserToken
 from brewtils.schema_parser import SchemaParser
 from mongoengine import DoesNotExist
 from passlib.apps import custom_app_context
@@ -121,12 +121,17 @@ def validated_token_ttl():
     Raises:
         ConfigurationError: Refresh Token expires before Access Token
     """
-    for ttl in ["garden_admin", "plugin_admin", "operator", "read_only"]:
+    for ttl in [
+        Permissions.GARDEN_ADMIN.name,
+        Permissions.PLUGIN_ADMIN.name,
+        Permissions.OPERATOR.name,
+        Permissions.READ_ONLY.name,
+    ]:
         if (
-            config.get(f"auth.token_access_ttl.{ttl}")
-            and config.get(f"auth.token_refresh_ttl.{ttl}")
-            and config.get(f"auth.token_access_ttl.{ttl}")
-            > config.get(f"auth.token_refresh_ttl.{ttl}")
+            config.get(f"auth.token_access_ttl.{ttl.lower()}")
+            and config.get(f"auth.token_refresh_ttl.{ttl.lower()}")
+            and config.get(f"auth.token_access_ttl.{ttl.lower()}")
+            > config.get(f"auth.token_refresh_ttl.{ttl.lower()}")
         ):
             raise ConfigurationError(
                 f"Refresh Token TTL {ttl} expires prior to Access Token TTL {ttl}"
@@ -344,24 +349,21 @@ def determine_max_permission(user: User) -> str:
     Returns:
         str: Highest permission level
     """
-    max_permission = "READ_ONLY"
+    max_permission = Permissions.READ_ONLY.name
 
     for roles in [user.local_roles, user.upstream_roles]:
         if roles:
             for role in roles:
                 if role.permission == max_permission:
                     continue
-                if role.permission == "GARDEN_ADMIN":
+                if role.permission == Permissions.GARDEN_ADMIN.name:
                     return role.permission
 
-                if max_permission == "PLUGIN_ADMIN":
-                    continue
-
-                if role.permission == "PLUGIN_ADMIN":
+                if role.permission == Permissions.PLUGIN_ADMIN.name:
                     max_permission = role.permission
                     continue
 
-                if role.permission == "OPERATOR":
+                if role.permission == Permissions.OPERATOR.name:
                     max_permission = role.permission
 
     return max_permission

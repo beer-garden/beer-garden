@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from brewtils.models import Operation
+from brewtils.models import Operation, Permissions
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.handlers import AuthorizationHandler
@@ -31,7 +31,7 @@ class RoleAPI(AuthorizationHandler):
         tags:
           - Roles
         """
-        self.minimum_permission = self.GARDEN_ADMIN
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
         self.verify_user_global_permission()
 
         response = await self.process_operation(
@@ -67,7 +67,7 @@ class RoleAPI(AuthorizationHandler):
         tags:
           - Roles
         """
-        self.minimum_permission = self.GARDEN_ADMIN
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
         self.verify_user_global_permission()
         await self.process_operation(
             Operation(
@@ -112,7 +112,7 @@ class RoleAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        self.minimum_permission = self.GARDEN_ADMIN
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
         self.verify_user_global_permission()
 
         patch = self.parser.parse_patch(self.request.decoded_body, from_string=True)
@@ -152,7 +152,7 @@ class RoleListAPI(AuthorizationHandler):
         tags:
           - Roles
         """
-        self.minimum_permission = self.READ_ONLY
+
         self.verify_user_permission_for_object(local_garden())
 
         response = await self.process_operation(
@@ -186,7 +186,7 @@ class RoleListAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        self.minimum_permission = self.GARDEN_ADMIN
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
         self.verify_user_global_permission()
 
         role_model = self.parser.parse_role(self.request.decoded_body, from_string=True)
@@ -234,7 +234,7 @@ class RoleListAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        self.minimum_permission = self.GARDEN_ADMIN
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
         self.verify_user_global_permission()
 
         patch = self.parser.parse_patch(self.request.decoded_body, from_string=True)

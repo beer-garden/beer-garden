@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from brewtils.errors import ModelValidationError
-from brewtils.models import Operation
+from brewtils.models import Operation, Permissions
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.handlers import AuthorizationHandler
@@ -30,7 +30,7 @@ class LoggingAPI(AuthorizationHandler):
         tags:
           - Logging
         """
-        self.minimum_permission = self.PLUGIN_ADMIN
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         self.verify_user_permission_for_object(local_garden())
 
         local = self.get_query_argument("local", None)
@@ -69,7 +69,7 @@ class LoggingConfigAPI(AuthorizationHandler):
         tags:
           - Deprecated
         """
-        self.minimum_permission = self.PLUGIN_ADMIN
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         self.verify_user_permission_for_object(local_garden())
 
         response = await self.process_operation(
@@ -107,7 +107,7 @@ class LoggingConfigAPI(AuthorizationHandler):
         tags:
           - Deprecated
         """
-        self.minimum_permission = self.PLUGIN_ADMIN
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         self.verify_user_permission_for_object(local_garden())
 
         patch = SchemaParser.parse_patch(

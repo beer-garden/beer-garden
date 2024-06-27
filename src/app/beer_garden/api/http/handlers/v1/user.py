@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from brewtils.errors import ModelValidationError
-from brewtils.models import Operation
+from brewtils.models import Operation, Permissions
 from brewtils.schema_parser import SchemaParser
 from marshmallow import ValidationError
 
@@ -35,7 +35,7 @@ class UserAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        self.minimum_permission = self.GARDEN_ADMIN
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
         response = await self.process_operation(
             Operation(
                 operation_type="USER_READ",
@@ -65,7 +65,7 @@ class UserAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        self.minimum_permission = self.GARDEN_ADMIN
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
         self.verify_user_global_permission()
         await self.process_operation(
             Operation(
@@ -108,7 +108,7 @@ class UserAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        self.minimum_permission = self.GARDEN_ADMIN
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
         self.verify_user_global_permission()
 
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
@@ -179,7 +179,7 @@ class UserListAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        self.minimum_permission = self.GARDEN_ADMIN
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
         response = await self.process_operation(
             Operation(
                 operation_type="USER_READ_ALL",
@@ -212,7 +212,7 @@ class UserListAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        self.minimum_permission = self.GARDEN_ADMIN
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
         self.verify_user_global_permission()
 
         user_model = self.parser.parse_user(self.request.decoded_body, from_string=True)
@@ -260,7 +260,7 @@ class UserListAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        self.minimum_permission = self.GARDEN_ADMIN
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
         self.verify_user_global_permission()
 
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)

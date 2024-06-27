@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from brewtils.errors import ModelValidationError, NotFoundError
-from brewtils.models import Job, Operation
+from brewtils.models import Job, Operation, Permissions
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import JobExportInputSchema, JobSchema
 from mongoengine.errors import ValidationError
@@ -33,7 +33,7 @@ class JobAPI(AuthorizationHandler):
         tags:
           - Jobs
         """
-        self.minimum_permission = self.OPERATOR
+        self.minimum_permission = Permissions.OPERATOR.name
         _ = self.get_or_raise(Job, id=job_id)
 
         response = await self.process_operation(
@@ -88,7 +88,7 @@ class JobAPI(AuthorizationHandler):
         tags:
           - Jobs
         """
-        self.minimum_permission = self.OPERATOR
+        self.minimum_permission = Permissions.OPERATOR.name
         _ = self.get_or_raise(Job, id=job_id)
 
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
@@ -144,7 +144,7 @@ class JobAPI(AuthorizationHandler):
         tags:
           - Jobs
         """
-        self.minimum_permission = self.OPERATOR
+        self.minimum_permission = Permissions.OPERATOR.name
         _ = self.get_or_raise(Job, id=job_id)
 
         await self.process_operation(
@@ -171,7 +171,7 @@ class JobListAPI(AuthorizationHandler):
         tags:
           - Jobs
         """
-        self.minimum_permission = self.READ_ONLY
+
         permitted_objects_filter = self.permitted_objects_filter(Job)
 
         filter_params = {}
@@ -217,7 +217,7 @@ class JobListAPI(AuthorizationHandler):
         tags:
           - Jobs
         """
-        self.minimum_permission = self.OPERATOR
+        self.minimum_permission = Permissions.OPERATOR.name
         job = SchemaParser.parse_job(
             self.request.body.decode("utf-8"), from_string=True
         )
@@ -264,7 +264,7 @@ class JobImportAPI(AuthorizationHandler):
         tags:
           - Jobs
         """
-        self.minimum_permission = self.OPERATOR
+        self.minimum_permission = Permissions.OPERATOR.name
         parsed_job_list = SchemaParser.parse_job(self.request_body, many=True)
 
         for job in parsed_job_list:
@@ -311,7 +311,6 @@ class JobExportAPI(AuthorizationHandler):
           - Jobs
         """
         filter_params_dict = {}
-        self.minimum_permission = self.READ_ONLY
         permitted_objects_filter = self.permitted_objects_filter(Job)
 
         # self.request_body is designed to return a 400 on a completely absent body
@@ -366,7 +365,7 @@ class JobExecutionAPI(AuthorizationHandler):
         tags:
           - Jobs
         """
-        self.minimum_permission = self.OPERATOR
+        self.minimum_permission = Permissions.OPERATOR.name
         _ = self.get_or_raise(Job, id=job_id)
 
         reset_interval = (

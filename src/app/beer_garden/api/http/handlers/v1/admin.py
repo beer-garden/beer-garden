@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from brewtils.errors import ModelValidationError
-from brewtils.models import Operation
+from brewtils.models import Operation, Permissions
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.handlers import AuthorizationHandler
@@ -50,7 +50,7 @@ class AdminAPI(AuthorizationHandler):
         tags:
           - Admin
         """
-        self.minimum_permission = self.GARDEN_ADMIN
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
 
         self.verify_user_permission_for_object(local_garden())
 

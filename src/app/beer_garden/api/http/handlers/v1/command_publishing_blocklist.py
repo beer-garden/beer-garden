@@ -1,3 +1,5 @@
+from brewtils.models import Permissions
+
 import beer_garden.config as config
 from beer_garden.api.http.exceptions import BadRequest, NotFound, RoutingException
 from beer_garden.api.http.handlers import AuthorizationHandler
@@ -37,7 +39,7 @@ class CommandPublishingBlocklistPathAPI(AuthorizationHandler):
           - Command Block List
         """
 
-        self.minimum_permission = self.GARDEN_ADMIN
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
         self.verify_user_global_permission()
 
         blocked_command = CommandPublishingBlocklist.objects.get(
@@ -80,7 +82,7 @@ class CommandPublishingBlocklistAPI(AuthorizationHandler):
         tags:
           - Command Block List
         """
-        self.minimum_permission = self.GARDEN_ADMIN
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
         self.verify_user_global_permission()
 
         permitted_blocklist_entries = self.permissioned_queryset(
@@ -120,7 +122,7 @@ class CommandPublishingBlocklistAPI(AuthorizationHandler):
         tags:
           - Command Block List
         """
-        self.minimum_permission = self.GARDEN_ADMIN
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
         self.verify_user_global_permission()
 
         commands = self.schema_validated_body(CommandPublishingBlocklistListInputSchema)

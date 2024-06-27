@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from brewtils.errors import ModelValidationError
-from brewtils.models import Operation, System
+from brewtils.models import Operation, Permissions, System
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import SystemSchema as BrewtilsSystemSchema
 
@@ -50,7 +50,7 @@ class SystemAPI(AuthorizationHandler):
         tags:
           - Systems
         """
-        self.minimum_permission = self.READ_ONLY
+
         system = self.get_or_raise(System, id=system_id)
 
         # This is only here because of backwards compatibility
@@ -97,7 +97,7 @@ class SystemAPI(AuthorizationHandler):
         tags:
           - Systems
         """
-        self.minimum_permission = self.PLUGIN_ADMIN
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         _ = self.get_or_raise(System, id=system_id)
 
         await self.process_operation(
@@ -159,7 +159,7 @@ class SystemAPI(AuthorizationHandler):
         tags:
           - Systems
         """
-        self.minimum_permission = self.PLUGIN_ADMIN
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         _ = self.get_or_raise(System, id=system_id)
 
         kwargs = {}
@@ -300,7 +300,7 @@ class SystemListAPI(AuthorizationHandler):
         tags:
           - Systems
         """
-        self.minimum_permission = self.READ_ONLY
+
         permitted_objects_filter = self.permitted_objects_filter(System)
 
         order_by = self.get_query_argument("order_by", None)
@@ -387,7 +387,7 @@ class SystemListAPI(AuthorizationHandler):
         tags:
           - Systems
         """
-        self.minimum_permission = self.PLUGIN_ADMIN
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         system = SchemaParser.parse_system(self.request.decoded_body, from_string=True)
 
         self.verify_user_permission_for_object(system)

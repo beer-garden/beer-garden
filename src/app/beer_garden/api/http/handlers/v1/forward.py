@@ -2,6 +2,7 @@
 import asyncio
 
 from brewtils.errors import TimeoutExceededError
+from brewtils.models import Permissions
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.handlers import AuthorizationHandler
@@ -44,7 +45,7 @@ class ForwardAPI(AuthorizationHandler):
         tags:
           - Forward
         """
-        self.minimum_permission = self.GARDEN_ADMIN
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
         self.verify_user_global_permission()
 
         operation = SchemaParser.parse_operation(

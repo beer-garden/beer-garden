@@ -6,7 +6,7 @@ from asyncio import Future
 from typing import Sequence
 
 from brewtils.errors import ModelValidationError
-from brewtils.models import Operation, Request, System
+from brewtils.models import Operation, Permissions, Request, System
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden.db.api as db
@@ -40,7 +40,7 @@ class RequestAPI(AuthorizationHandler):
         tags:
           - Requests
         """
-        self.minimum_permission = self.READ_ONLY
+
         _ = self.get_or_raise(Request, id=request_id)
 
         response = await self.process_operation(
@@ -91,7 +91,7 @@ class RequestAPI(AuthorizationHandler):
         tags:
           - Requests
         """
-        self.minimum_permission = self.OPERATOR
+        self.minimum_permission = Permissions.OPERATOR.name
         _ = self.get_or_raise(Request, id=request_id)
 
         operation = Operation(args=[request_id])
@@ -154,7 +154,7 @@ class RequestOutputAPI(AuthorizationHandler):
         tags:
           - Requests
         """
-        self.minimum_permission = self.READ_ONLY
+
         _ = self.get_or_raise(Request, id=request_id)
 
         response = await self.process_operation(
@@ -358,7 +358,7 @@ class RequestListAPI(AuthorizationHandler):
         tags:
           - Requests
         """
-        self.minimum_permission = self.READ_ONLY
+
         # V1 API is a mess, it's basically written for datatables
         query_args = self._parse_datatables_parameters()
 
@@ -464,7 +464,7 @@ class RequestListAPI(AuthorizationHandler):
         tags:
           - Requests
         """
-        self.minimum_permission = self.OPERATOR
+        self.minimum_permission = Permissions.OPERATOR.name
 
         if self.request.mime_type == "application/json":
             request_model = self.parser.parse_request(
@@ -561,7 +561,7 @@ class RequestListAPI(AuthorizationHandler):
         tags:
           - Requests
         """
-        self.minimum_permission = self.OPERATOR
+        self.minimum_permission = Permissions.OPERATOR.name
         request_model = self.parser.parse_request(
             (
                 self.request.body.decode()
@@ -696,7 +696,7 @@ class RequestListAPI(AuthorizationHandler):
         tags:
           - Requests
         """
-        self.minimum_permission = self.PLUGIN_ADMIN
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
 
         query_kwargs = {}
         global_check = True

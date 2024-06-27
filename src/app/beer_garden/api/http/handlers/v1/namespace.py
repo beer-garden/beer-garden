@@ -18,7 +18,7 @@ class NamespaceListAPI(AuthorizationHandler):
         tags:
           - Namespace
         """
-        self.minimum_permission = self.READ_ONLY
+
         permitted_gardens = self.permissioned_queryset(Garden)
         permitted_requests = self.permissioned_queryset(Request)
         permitted_systems = self.permissioned_queryset(System)

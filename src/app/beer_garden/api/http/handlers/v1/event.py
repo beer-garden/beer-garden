@@ -4,7 +4,7 @@ import logging
 from json import JSONDecodeError
 from typing import TYPE_CHECKING, Optional
 
-from brewtils.models import Events
+from brewtils.models import Events, Permissions
 from brewtils.schema_parser import SchemaParser
 from marshmallow import Schema, ValidationError, fields, validate
 from tornado.websocket import WebSocketHandler
@@ -133,7 +133,9 @@ class EventSocket(WebSocketHandler):
                         continue
 
                     filtered_event = cls.model_filter.filter_object(
-                        obj=copy.deepcopy(event), user=user, permission="READ_ONLY"
+                        obj=copy.deepcopy(event),
+                        user=user,
+                        permission=Permissions.READ_ONLY.name,
                     )
 
                     if filtered_event:

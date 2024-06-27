@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import io
 
-from brewtils.models import Resolvable
+from brewtils.models import Permissions, Resolvable
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.handlers import AuthorizationHandler
@@ -32,7 +32,6 @@ class RawFileAPI(AuthorizationHandler):
         tags:
           - Files
         """
-        self.minimum_permission = self.READ_ONLY
 
         self.verify_user_permission_for_object(local_garden())
         db_file = RawFile.objects.get(id=file_id)
@@ -63,7 +62,7 @@ class RawFileAPI(AuthorizationHandler):
         tags:
           - Files
         """
-        self.minimum_permission = self.OPERATOR
+        self.minimum_permission = Permissions.OPERATOR.name
 
         self.verify_user_permission_for_object(local_garden())
         db_file = RawFile.objects.get(id=file_id)
@@ -95,7 +94,7 @@ class RawFileListAPI(AuthorizationHandler):
         tags:
           - Files
         """
-        self.minimum_permission = self.OPERATOR
+        self.minimum_permission = Permissions.OPERATOR.name
 
         self.verify_user_permission_for_object(local_garden())
         db_file = RawFile()

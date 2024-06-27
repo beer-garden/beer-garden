@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from brewtils.errors import ModelValidationError
-from brewtils.models import Operation
+from brewtils.models import Operation, Permissions
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.handlers import AuthorizationHandler
@@ -31,7 +31,7 @@ class RunnerAPI(AuthorizationHandler):
         tags:
           - Runners
         """
-        self.minimum_permission = self.READ_ONLY
+
         response = await self.process_operation(
             Operation(operation_type="RUNNER_READ", kwargs={"runner_id": runner_id})
         )
@@ -61,7 +61,7 @@ class RunnerAPI(AuthorizationHandler):
         tags:
           - Runners
         """
-        self.minimum_permission = self.PLUGIN_ADMIN
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         response = await self.process_operation(
             Operation(
                 operation_type="RUNNER_DELETE",
@@ -114,7 +114,7 @@ class RunnerAPI(AuthorizationHandler):
         tags:
           - Runners
         """
-        self.minimum_permission = self.PLUGIN_ADMIN
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
         for op in patch:
@@ -162,8 +162,6 @@ class RunnerListAPI(AuthorizationHandler):
           - Runners
         """
 
-        self.minimum_permission = self.READ_ONLY
-
         response = await self.process_operation(
             Operation(operation_type="RUNNER_READ_ALL")
         )
@@ -207,7 +205,7 @@ class RunnerListAPI(AuthorizationHandler):
         tags:
           - Runners
         """
-        self.minimum_permission = self.PLUGIN_ADMIN
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
         for op in patch:

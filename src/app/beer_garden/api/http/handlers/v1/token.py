@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from brewtils.models import Operation, User
+from brewtils.models import Operation, Permissions, User
 
 from beer_garden.api.http.authentication import (
     issue_token_pair,
@@ -77,7 +77,7 @@ class TokenListAPI(AuthorizationHandler):
           - Token
         """
 
-        self.minimum_permission = self.GARDEN_ADMIN
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
         _ = self.get_or_raise(User, username=username)
 
         await self.process_operation(

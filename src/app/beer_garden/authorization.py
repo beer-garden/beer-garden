@@ -7,6 +7,7 @@ from brewtils.models import Event as BrewtilsEvent
 from brewtils.models import Garden as BrewtilsGarden
 from brewtils.models import Instance as BrewtilsInstance
 from brewtils.models import Job as BrewtilsJob
+from brewtils.models import Permissions
 from brewtils.models import Request as BrewtilsRequest
 from brewtils.models import RequestTemplate as BrewtilsRequestTemplate
 from brewtils.models import Role as BrewtilsRole
@@ -41,7 +42,7 @@ def check_global_roles(
 
         # Check is the user has Garden Admin for the current Garden
         if any(
-            role.permission == "GARDEN_ADMIN"
+            role.permission == Permissions.GARDEN_ADMIN.name
             and (
                 len(role.scope_gardens) == 0
                 or config.get("garden.name") in role.scope_gardens
@@ -54,17 +55,26 @@ def check_global_roles(
 
 
 def generate_permission_levels(permission_level: str) -> list:
-    if permission_level == "READ_ONLY":
-        return ["READ_ONLY", "OPERATOR", "PLUGIN_ADMIN", "GARDEN_ADMIN"]
+    if permission_level == Permissions.READ_ONLY.name:
+        return [
+            Permissions.READ_ONLY.name,
+            Permissions.OPERATOR.name,
+            Permissions.PLUGIN_ADMIN.name,
+            Permissions.GARDEN_ADMIN.name,
+        ]
 
-    if permission_level == "OPERATOR":
-        return ["OPERATOR", "PLUGIN_ADMIN", "GARDEN_ADMIN"]
+    if permission_level == Permissions.OPERATOR.name:
+        return [
+            Permissions.OPERATOR.name,
+            Permissions.PLUGIN_ADMIN.name,
+            Permissions.GARDEN_ADMIN.name,
+        ]
 
-    if permission_level == "PLUGIN_ADMIN":
-        return ["PLUGIN_ADMIN", "GARDEN_ADMIN"]
+    if permission_level == Permissions.PLUGIN_ADMIN.name:
+        return [Permissions.PLUGIN_ADMIN.name, Permissions.GARDEN_ADMIN.name]
 
-    if permission_level == "GARDEN_ADMIN":
-        return ["GARDEN_ADMIN"]
+    if permission_level == Permissions.GARDEN_ADMIN.name:
+        return [Permissions.GARDEN_ADMIN.name]
 
     return []
 

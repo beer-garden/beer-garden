@@ -2,7 +2,7 @@ import logging
 import os
 
 import yaml
-from brewtils.models import Event, Events, Role
+from brewtils.models import Event, Events, Permissions, Role
 from mongoengine import DoesNotExist
 
 import beer_garden.db.api as db
@@ -153,7 +153,7 @@ def configure_superuser_role():
         superuser = Role(
             name="superuser",
             description="Role containing max permissions",
-            permission="GARDEN_ADMIN",
+            permission=Permissions.GARDEN_ADMIN.name,
             protected=True,
         )
         create_role(superuser)

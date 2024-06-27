@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from brewtils.errors import ModelValidationError
-from brewtils.models import Operation, Resolvable
+from brewtils.models import Operation, Permissions, Resolvable
 from brewtils.schema_parser import SchemaParser
 from tornado.escape import json_decode
 
@@ -42,7 +42,7 @@ class FileChunkAPI(AuthorizationHandler):
         tags:
           - Files
         """
-        self.minimum_permission = self.READ_ONLY
+
         file_id = self.get_argument("file_id", default=None)
         chunk = self.get_argument("chunk", default=None)
         verify = self.get_argument("verify", default="").lower() == "true"
@@ -100,7 +100,7 @@ class FileChunkAPI(AuthorizationHandler):
         tags:
           - Files
         """
-        self.minimum_permission = self.OPERATOR
+        self.minimum_permission = Permissions.OPERATOR.name
         file_id = self.get_argument("file_id", default=None)
         upsert = self.get_argument("upsert", default="").lower() == "true"
 
@@ -150,7 +150,7 @@ class FileChunkAPI(AuthorizationHandler):
         tags:
           - Files
         """
-        self.minimum_permission = self.OPERATOR
+        self.minimum_permission = Permissions.OPERATOR.name
         file_id = self.get_argument("file_id", default=None)
         if file_id is None:
             raise ValueError("Cannot delete a file without an id.")
@@ -216,7 +216,7 @@ class ChunkNameAPI(AuthorizationHandler):
         tags:
           - Files
         """
-        self.minimum_permission = self.READ_ONLY
+
         file_name = self.get_argument("file_name", default="")
         file_size = self.get_argument("file_size", default=None)
         chunk_size = self.get_argument("chunk_size", default=None)

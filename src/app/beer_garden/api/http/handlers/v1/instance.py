@@ -2,7 +2,7 @@
 from asyncio import Future
 
 from brewtils.errors import ModelValidationError, RequestProcessingError
-from brewtils.models import Operation, System
+from brewtils.models import Operation, Permissions, System
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.base_handler import future_wait
@@ -32,7 +32,7 @@ class InstanceAPI(AuthorizationHandler):
         tags:
           - Instances
         """
-        self.minimum_permission = self.READ_ONLY
+
         _ = self.get_or_raise(System, instances__id=instance_id)
 
         response = await self.process_operation(
@@ -62,7 +62,7 @@ class InstanceAPI(AuthorizationHandler):
         tags:
           - Instances
         """
-        self.minimum_permission = self.PLUGIN_ADMIN
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         _ = self.get_or_raise(System, instances__id=instance_id)
 
         await self.process_operation(
@@ -116,7 +116,7 @@ class InstanceAPI(AuthorizationHandler):
         tags:
           - Instances
         """
-        self.minimum_permission = self.PLUGIN_ADMIN
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         _ = self.get_or_raise(System, instances__id=instance_id)
 
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
@@ -227,7 +227,7 @@ class InstanceLogAPI(AuthorizationHandler):
         tags:
           - Instances
         """
-        self.minimum_permission = self.PLUGIN_ADMIN
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         _ = self.get_or_raise(System, instances__id=instance_id)
 
         start_line = self.get_query_argument("start_line", default=None)
@@ -303,7 +303,7 @@ class InstanceQueuesAPI(AuthorizationHandler):
         tags:
           - Queues
         """
-        self.minimum_permission = self.PLUGIN_ADMIN
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         _ = self.get_or_raise(System, instances__id=instance_id)
 
         response = await self.process_operation(
