@@ -31,6 +31,7 @@ def create_replication(replication: Replication):
 def update_replication(replication: Replication):
     return db.update(replication)
 
+
 def get_replications():
     return db.query(Replication)
 
