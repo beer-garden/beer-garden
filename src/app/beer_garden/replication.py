@@ -31,6 +31,9 @@ def create_replication(replication: Replication):
 def update_replication(replication: Replication):
     return db.update(replication)
 
+def get_replications():
+    return db.query(Replication)
+
 
 class PrimaryReplicationMonitor(StoppableThread):
     """Monitor the Primary status of Replications"""
@@ -56,7 +59,7 @@ class PrimaryReplicationMonitor(StoppableThread):
     def primary_check(self, timeout: timedelta) -> None:
         replication_id = get_replication_id()
 
-        replications = db.query(Replication)
+        replications = get_replications()
 
         # Set self as Primary Replication
         if len(replications) == 0:
