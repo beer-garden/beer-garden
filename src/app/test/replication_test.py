@@ -1,4 +1,3 @@
-import pytest
 import os
 
 from beer_garden.replication import (
