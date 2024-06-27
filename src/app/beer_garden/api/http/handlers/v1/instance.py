@@ -307,7 +307,8 @@ class InstanceQueuesAPI(AuthorizationHandler):
         _ = self.get_or_raise(System, instances__id=instance_id)
 
         response = await self.process_operation(
-            Operation(operation_type="QUEUE_READ_INSTANCE", args=[instance_id])
+            Operation(operation_type="QUEUE_READ_INSTANCE", args=[instance_id]),
+            filter_results=False,
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")

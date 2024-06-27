@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
-from brewtils.models import Operation, Permissions
+from brewtils.models import Operation, Permissions, Queue, System
 
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.garden import local_garden
-
-# TODO: Better way to determine which systems own the Queue before deleting
 
 
 class QueueAPI(AuthorizationHandler):
@@ -29,7 +27,7 @@ class QueueAPI(AuthorizationHandler):
           - Queues
         """
         self.minimum_permission = Permissions.PLUGIN_ADMIN.name
-        self.verify_user_permission_for_object(local_garden())
+        self.get_or_raise(Queue, name=queue_name)
 
         await self.process_operation(
             Operation(operation_type="QUEUE_DELETE", args=[queue_name])
@@ -56,9 +54,16 @@ class QueueListAPI(AuthorizationHandler):
           - Queues
         """
         self.minimum_permission = Permissions.PLUGIN_ADMIN.name
-        self.verify_user_permission_for_object(local_garden())
+        permitted_objects_filter = self.permitted_objects_filter(System)
 
-        response = await self.process_operation(Operation(operation_type="QUEUE_READ"))
+        response = await self.process_operation(
+            Operation(
+                operation_type="QUEUE_READ",
+                kwargs={
+                    "q_filter": permitted_objects_filter,
+                },
+            )
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

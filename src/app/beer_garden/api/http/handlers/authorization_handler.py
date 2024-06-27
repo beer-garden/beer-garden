@@ -2,7 +2,7 @@
 from typing import Type
 
 from brewtils.models import BaseModel as BrewtilsModel
-from brewtils.models import Operation, Permissions, Role, User
+from brewtils.models import Operation, Permissions, Queue, Role, System, User
 from mongoengine import Document, QuerySet
 from mongoengine.queryset.visitor import Q, QCombination
 
@@ -78,21 +78,41 @@ class AuthorizationHandler(BaseHandler):
             RequestForbidden: This is raised through the permission verification call
               if the requesting user does not have permissions to the object
         """
-        # Change to brewtils query
-        provided_filter = Q(**kwargs) & self.queryFilter.build_filter(
-            self.current_user, self.minimum_permission, model
-        )
+        if model is Queue:
+            if "name" in kwargs:
+                system = db.query_unique(
+                    System,
+                    raise_missing=False,
+                    instances__queue_info__request__name=kwargs["name"],
+                )
+                if not system:
+                    system = db.query_unique(
+                        System,
+                        raise_missing=False,
+                        instances__queue_info__admin__name=kwargs["name"],
+                    )
+                if not system:
+                    raise NotFound
 
-        requested_objects = db.query(model, q_filter=provided_filter)
-        if len(requested_objects) > 1:
-            raise NotFound(
-                f"Multiple records returned for schema query: {model.schema}, {provided_filter}"
-            )
-        elif len(requested_objects) == 0:
-            if len(db.query(model, q_filter=Q(**kwargs))) > 0:
-                raise RequestForbidden
+                requested_objects = [system]
             else:
                 raise NotFound
+        else:
+            # Change to brewtils query
+            provided_filter = Q(**kwargs) & self.queryFilter.build_filter(
+                self.current_user, self.minimum_permission, model
+            )
+
+            requested_objects = db.query(model, q_filter=provided_filter)
+            if len(requested_objects) > 1:
+                raise NotFound(
+                    f"Multiple records returned for schema query: {model.schema}, {provided_filter}"
+                )
+            elif len(requested_objects) == 0:
+                if len(db.query(model, q_filter=Q(**kwargs))) > 0:
+                    raise RequestForbidden
+                else:
+                    raise NotFound
 
         self.verify_user_permission_for_object(requested_objects[0])
 
