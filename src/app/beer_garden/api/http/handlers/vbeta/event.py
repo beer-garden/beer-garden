@@ -2,6 +2,7 @@ from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.events import publish
+from brewtils.models import Permissions
 
 
 class EventPublisherAPI(AuthorizationHandler):
