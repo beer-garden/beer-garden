@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.26.3
+
+TBD
+
+- Fixed bug that prevented Autobrew Kwargs from being properly passed to the class object
+
 # 3.26.2
 
 6/6/2024
