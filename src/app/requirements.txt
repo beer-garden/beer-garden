@@ -45,8 +45,10 @@ pika==1.2.0
     # via brewtils
 prometheus-client==0.17.1
     # via beer-garden (setup.py)
-pyasn1==0.6.0
-    # via ldap3
+pyasn1==0.5.1
+    # via
+    #   beer-garden (setup.py)
+    #   ldap3
 pyjwt==2.8.0
     # via beer-garden (setup.py)
 pymongo==3.13.0
