@@ -21,7 +21,6 @@ export default function adminUserIndexController($rootScope, $scope, $uibModal, 
     $scope.response = response;
     $scope.users = response.data;
     $scope.displaySyncStatus = false;
-    // setUserFullySynced();
   };
 
   $scope.failureCallback = function(response) {
