@@ -23,12 +23,12 @@ def get_replication_id() -> str:
     return replication_id
 
 
-@publish_event(Events.REPLICATION_CREATE)
+@publish_event(Events.REPLICATION_CREATED)
 def create_replication(replication: Replication):
     return db.create(replication)
 
 
-@publish_event(Events.REPLICATION_UPDATE)
+@publish_event(Events.REPLICATION_UPDATED)
 def update_replication(replication: Replication):
     return db.update(replication)
 
@@ -100,8 +100,8 @@ def handle_event(event: Event) -> None:
 
     if event.garden == config.get("garden.name"):
         if event.name in [
-            Events.REPLICATION_CREATE.name,
-            Events.REPLICATION_UPDATE.name,
+            Events.REPLICATION_CREATED.name,
+            Events.REPLICATION_UPDATED.name,
         ]:
             if event.payload.replication_id == get_replication_id():
                 if not beer_garden.application.scheduler.running:
