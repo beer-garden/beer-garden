@@ -140,7 +140,6 @@ class EventSocket(WebSocketHandler):
             return
 
         if len(cls.listeners) > 0:
-
             message = SchemaParser.serialize(event, to_string=True)
 
             for listener in cls.listeners:
