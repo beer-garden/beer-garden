@@ -1,8 +1,14 @@
 # Beer Garden Changelog
 
-# 3.26.2
+# 3.27.0
 
 TBD
+
+- Added Replication Awareness to ensure only one Replicated instance can process the scheduled jobs.
+
+# 3.26.2
+
+6/6/2024
 
 - Fixed bug where Request View would fail loading Dynamic Choices for TEMP commands
 - Defaulted all Dynamically loaded commands from the Request View to TEMP
