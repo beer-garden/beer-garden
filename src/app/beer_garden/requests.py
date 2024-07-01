@@ -40,7 +40,12 @@ import beer_garden.queue.api as queue
 from beer_garden.db.mongo.models import RawFile
 from beer_garden.errors import NotUniqueException, ShutdownError
 from beer_garden.events import publish_event
-from beer_garden.metrics import request_completed, request_created, request_started
+from beer_garden.metrics import (
+    request_canceled,
+    request_completed,
+    request_created,
+    request_started,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -883,7 +888,8 @@ def cancel_request(request_id: str = None, request: Request = None) -> Request:
     request.status = "CANCELED"
     request = db.update(request)
 
-    # TODO - Metrics here?
+    # Metrics
+    request_canceled(request)
 
     return request
 

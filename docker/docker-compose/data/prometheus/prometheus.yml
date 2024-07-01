@@ -26,4 +26,9 @@ scrape_configs:
     # scheme defaults to 'http'.
 
     static_configs:
-            - targets: ['prometheus:9091','brew-view:2338']
+            - targets: ['prometheus:9090']
+
+  - job_name: 'beer-garden'
+    metrics_path: '/api/metrics'
+    static_configs:
+      - targets: ['beer-garden:2337']

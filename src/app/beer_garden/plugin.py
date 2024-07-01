@@ -42,6 +42,12 @@ import beer_garden.queue.api as queue
 import beer_garden.requests as requests
 from beer_garden.errors import NotFoundException
 from beer_garden.events import publish, publish_event, publish_event_async
+from beer_garden.metrics import (
+    instance_initialized,
+    instance_started,
+    instance_stopped,
+    instance_updated,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +101,9 @@ def initialize(
     if runner_id:
         lpm.map_runner_to_instance(runner_id, instance.id)
 
+    # Metrics
+    instance_initialized(instance, system)
+
     return system.get_instance_by_name(instance.name)
 
 
@@ -123,6 +132,9 @@ def start(
 
     # Publish the start request
     publish_start(system, instance)
+
+    # Metrics
+    instance_started(instance, system)
 
     return instance
 
@@ -153,6 +165,9 @@ def restart(
     # Publish the start request
     publish_start(system, instance)
 
+    # Metrics
+    instance_started(instance, system)
+
     return instance
 
 
@@ -180,6 +195,9 @@ def stop(
 
     # Publish the stop request
     publish_stop(system, instance)
+
+    # Metrics
+    instance_stopped(instance, system)
 
     return instance
 
@@ -261,6 +279,9 @@ def update(
         updates["set__instances__S__metadata"] = metadata_update
 
     system = db.modify(system, query={"instances__name": instance.name}, **updates)
+
+    # Metrics
+    instance_updated(instance, system)
 
     return system.get_instance_by_name(instance.name)
 

@@ -8,47 +8,17 @@ The metrics service manages:
 """
 
 import datetime
-import logging
-from http.server import ThreadingHTTPServer
 
 from brewtils.models import Request
-from brewtils.stoppable_thread import StoppableThread
 from prometheus_client import Counter, Gauge, Summary
-from prometheus_client.exposition import MetricsHandler
+from prometheus_client.exposition import generate_latest
 from prometheus_client.registry import REGISTRY
 
 import beer_garden.db.api as db
 
 
-class PrometheusServer(StoppableThread):
-    """Wraps a ThreadingHTTPServer to serve Prometheus metrics"""
-
-    def __init__(self, host, port):
-        self.logger = logging.getLogger(__name__)
-        self.display_name = "Prometheus Server"
-
-        self._host = host
-        self._port = port
-
-        # Basically prometheus_client.exposition.start_http_server
-        metrics_handler = MetricsHandler.factory(REGISTRY)
-        self.httpd = ThreadingHTTPServer((host, port), metrics_handler)
-
-        super(PrometheusServer, self).__init__(
-            logger=self.logger, name="PrometheusServer"
-        )
-
-    def run(self):
-        self.logger.debug("Initializing metric counts")
-        initialize_counts()
-
-        self.logger.info(f"Starting {self.display_name} on {self._host}:{self._port}")
-        self.httpd.serve_forever()
-
-        self.logger.info(f"{self.display_name} is stopped")
-
-    def stop(self):
-        self.httpd.shutdown()
+def get_metrics():
+    return generate_latest(REGISTRY)
 
 
 # Summaries:
@@ -69,6 +39,72 @@ request_counter_total = Counter(
     "Number of requests.",
     ["system", "instance_name", "system_version", "command"],
 )
+canceled_request_counter = Counter(
+    "bg_canceled_requests_total",
+    "Number of canceled requests.",
+    ["system", "instance_name", "system_version", "command"],
+)
+system_created_counter = Counter(
+    "bg_system_created_total",
+    "Number of times system created",
+    [
+        "system",
+        "system_version",
+    ],
+)
+system_removed_counter = Counter(
+    "bg_system_removed_total",
+    "Number of times system removed",
+    [
+        "system",
+        "system_version",
+    ],
+)
+system_updated_counter = Counter(
+    "bg_system_updated_total",
+    "Number of times system updated",
+    [
+        "system",
+        "system_version",
+    ],
+)
+instance_initialized_counter = Counter(
+    "bg_instance_initialized_total",
+    "Number of times instance initialized",
+    [
+        "instance_name",
+        "system",
+        "system_version",
+    ],
+)
+instance_started_counter = Counter(
+    "bg_instance_started_total",
+    "Number of times instance started",
+    [
+        "instance_name",
+        "system",
+        "system_version",
+    ],
+)
+instance_stopped_counter = Counter(
+    "bg_instance_stopped_total",
+    "Number of times instance stopped",
+    [
+        "instance_name",
+        "system",
+        "system_version",
+    ],
+)
+instance_updated_counter = Counter(
+    "bg_instance_updated_total",
+    "Number of times instance updated",
+    [
+        "instance_name",
+        "system",
+        "system_version",
+    ],
+)
+
 
 # Gauges:
 queued_request_gauge = Gauge(
@@ -155,3 +191,95 @@ def request_completed(request):
 
     completed_request_counter.labels(**labels).inc()
     plugin_command_latency.labels(**labels).observe(latency)
+
+
+def request_canceled(request):
+    """Update metrics associated with a Request canceled
+
+    This call should happen after the save to the database.
+
+    """
+    labels = {
+        "system": request.system,
+        "system_version": request.system_version,
+        "instance_name": request.instance_name,
+    }
+
+    canceled_request_counter.labels(**labels).inc()
+
+
+def system_created(system):
+    """Update plugin started metric"""
+    labels = {
+        "system": system.name,
+        "system_version": system.version,
+    }
+    system_created_counter.labels(**labels).inc()
+
+
+def system_removed(system):
+    """
+    Update plugin stopped metric
+    """
+    labels = {
+        "system": system.name,
+        "system_version": system.version,
+    }
+    system_removed_counter.labels(**labels).inc()
+
+
+def system_updated(system):
+    """
+    Update plugin stopped metric
+    """
+    labels = {
+        "system": system.name,
+        "system_version": system.version,
+    }
+    system_updated_counter.labels(**labels).inc()
+
+
+def instance_started(instance, system):
+    """Update plugin started metric"""
+    labels = {
+        "instance_name": instance.name,
+        "system": system.name,
+        "system_version": system.version,
+    }
+    instance_started_counter.labels(**labels).inc()
+
+
+def instance_stopped(instance, system):
+    """
+    Update plugin stopped metric
+    """
+    labels = {
+        "instance_name": instance.name,
+        "system": system.name,
+        "system_version": system.version,
+    }
+    instance_stopped_counter.labels(**labels).inc()
+
+
+def instance_updated(instance, system):
+    """
+    Update plugin stopped metric
+    """
+    labels = {
+        "instance_name": instance.name,
+        "system": system.name,
+        "system_version": system.version,
+    }
+    instance_updated_counter.labels(**labels).inc()
+
+
+def instance_initialized(instance, system):
+    """
+    Update plugin stopped metric
+    """
+    labels = {
+        "instance_name": instance.name,
+        "system": system.name,
+        "system_version": system.version,
+    }
+    instance_initialized_counter.labels(**labels).inc()

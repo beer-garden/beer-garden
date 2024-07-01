@@ -37,6 +37,7 @@ import beer_garden.files
 import beer_garden.garden
 import beer_garden.local_plugins.manager
 import beer_garden.log
+import beer_garden.metrics
 import beer_garden.namespace
 import beer_garden.plugin
 import beer_garden.queues
@@ -178,6 +179,7 @@ route_functions = {
     "RUNNER_RESCAN": beer_garden.local_plugins.manager.rescan,
     "PUBLISH_EVENT": beer_garden.events.publish,
     "USER_SYNC": beer_garden.user.user_sync,
+    "METRICS_READ": beer_garden.metrics.get_metrics,
     "COMMAND_BLOCKLIST_ADD": (
         beer_garden.command_publishing_blocklist.command_publishing_blocklist_add
     ),

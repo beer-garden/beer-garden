@@ -35,7 +35,6 @@ from beer_garden.events.parent_procesors import HttpParentUpdater
 from beer_garden.events.processors import EventProcessor, FanoutProcessor, QueueListener
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
-from beer_garden.metrics import PrometheusServer
 from beer_garden.monitor import MonitorFile
 from beer_garden.plugin import StatusMonitor
 from beer_garden.scheduler import MixedScheduler
@@ -154,16 +153,6 @@ class Application(StoppableThread):
                 beer_garden.garden.publish_garden,
                 interval=config.get("parent.sync_interval"),
                 max_running_jobs=1,
-            )
-
-        metrics_config = config.get("metrics")
-        if metrics_config.prometheus.enabled:
-            self.helper_threads.append(
-                HelperThread(
-                    PrometheusServer,
-                    metrics_config.prometheus.host,
-                    metrics_config.prometheus.port,
-                )
             )
 
         beer_garden.router.forward_processor = QueueListener(
