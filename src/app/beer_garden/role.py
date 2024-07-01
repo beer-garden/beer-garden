@@ -4,6 +4,7 @@ import os
 import yaml
 from brewtils.models import Event, Events, Permissions, Role
 from mongoengine import DoesNotExist
+from mongoengine.errors import FieldDoesNotExist
 
 import beer_garden.db.api as db
 from beer_garden import config
@@ -139,6 +140,15 @@ def rescan():
 
 def ensure_roles():
     """Create roles if necessary"""
+
+    try:
+        get_roles()
+    except FieldDoesNotExist:
+        logger.error("Legacy Role Models found, clearing collections")
+        import beer_garden.db.mongo.models
+
+        beer_garden.db.mongo.models.Role.drop_collection()
+
     configure_superuser_role()
     configure_plugin_role()
     rescan()

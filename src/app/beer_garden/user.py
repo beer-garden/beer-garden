@@ -6,6 +6,7 @@ import yaml
 from brewtils.models import Event, Garden, Operation, Permissions, Role, User, UserToken
 from brewtils.schema_parser import SchemaParser
 from mongoengine import DoesNotExist
+from mongoengine.errors import FieldDoesNotExist
 from passlib.apps import custom_app_context
 
 import beer_garden.db.api as db
@@ -706,6 +707,15 @@ def upstream_users_sync(upstream_users=[]):
 
 def ensure_users():
     """Create user accounts if necessary"""
+
+    try:
+        get_users()
+    except FieldDoesNotExist:
+        logger.error("Legacy User Models found, clearing collections")
+        import beer_garden.db.mongo.models
+
+        beer_garden.db.mongo.models.User.drop_collection()
+
     _create_admin()
     _create_plugin_user()
     rescan()
