@@ -100,7 +100,7 @@ services:
     prometheus:
         image: prom/prometheus:v2.52.0
         ports:
-          - "9091:9090"
+          - "9090:9090"
         networks:
             - bg-network
         volumes:
