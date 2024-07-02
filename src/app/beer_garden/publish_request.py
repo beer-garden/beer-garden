@@ -1,14 +1,14 @@
 import copy
 import logging
 import re
-from typing import List, Optional
+from typing import List
 
 from brewtils.models import Event, Events, Garden, Subscriber
 
 import beer_garden.config as config
 from beer_garden.garden import get_gardens, local_garden
 from beer_garden.requests import process_request
-from beer_garden.topic import get_all_topics, subscriber_match
+from beer_garden.topic import get_all_topics
 
 logger = logging.getLogger(__name__)
 
