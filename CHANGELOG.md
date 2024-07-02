@@ -1,10 +1,11 @@
 # Beer Garden Changelog
 
-# 3.26.3
+# 3.27.0
 
 TBD
 
 - Fixed bug that prevented Autobrew Kwargs from being properly passed to the class object
+- Supporting Subscriber Types for Generated/Annotated/Dynamic, all stored in Topics Collection for quick reference
 
 # 3.26.2
 

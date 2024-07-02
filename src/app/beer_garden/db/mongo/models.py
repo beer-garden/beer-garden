@@ -611,6 +611,7 @@ class Subscriber(MongoModel, EmbeddedDocument):
     version = StringField()
     instance = StringField()
     command = StringField()
+    subscriber_type = StringField()
 
 
 class Topic(MongoModel, Document):
@@ -642,6 +643,7 @@ class System(MongoModel, Document):
     local = BooleanField(default=True)
     template = StringField()
     groups = ListField(field=StringField())
+    prefix_topic = StringField()
 
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves
