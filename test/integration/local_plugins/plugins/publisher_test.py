@@ -57,7 +57,7 @@ class TestPublish(object):
             completed_request = self.easy_client.find_unique_request(id=request.id)
             if len(completed_request.children) == expected_length:
                 return completed_request
-            time.sleep(15)
+            time.sleep(5)
             check += 1
 
         return request
