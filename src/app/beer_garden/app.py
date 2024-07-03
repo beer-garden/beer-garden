@@ -404,7 +404,9 @@ class Application(StoppableThread):
         event_manager.register(self.entry_manager, manage=False)
 
         # Register the callback processor
-        event_manager.register(InternalQueueListener(action=garden_callbacks, name="callbacks"))
+        event_manager.register(
+            InternalQueueListener(action=garden_callbacks, name="callbacks")
+        )
 
         # Set up parent connection
         cfg = config.get("parent.http")
