@@ -42,6 +42,7 @@ def handle_event(event: Event):
             del event.payload.metadata["_publish"]
 
         subscribers = []
+        logger.error(f"Processing Event Topic {event.metadata["topic"]} =======================")
         for topic in get_all_topics():
             # TODO: Down the road, determine if we need to filter by Subscriber Type because
             # someone will do something non standard
@@ -103,6 +104,7 @@ def process_publish_event(garden: Garden, event: Event, subscribers: List[Subscr
                                     event_request.is_event = True
 
                                     try:
+                                        logger.error(f"Executing Event Topic {event.metadata["topic"]} =======================")
                                         process_request(event_request)
                                     except Exception as ex:
                                         # If an error occurs while trying to process request, log it and keep running

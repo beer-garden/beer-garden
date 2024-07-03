@@ -39,6 +39,8 @@ def garden_callbacks(event: Event) -> None:
     else:
         logger.debug(f"{event!r}")
 
+    logger.error(f"Internal Event: {event.name}")
+
     # These are all the MAIN PROCESS subsystems that care about events
     for handler, handler_tag in [
         (beer_garden.application.handle_event, "Application"),
