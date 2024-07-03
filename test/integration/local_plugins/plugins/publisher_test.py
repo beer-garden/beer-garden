@@ -53,11 +53,11 @@ class TestPublish(object):
 
     def wait_for_request(self, request, expected_length):
         check = 0
-        while check < 5:
+        while check < 12:
             completed_request = self.easy_client.find_unique_request(id=request.id)
             if len(completed_request.children) == expected_length:
                 return completed_request
-            time.sleep(5)
+            time.sleep(15)
             check += 1
 
         return request

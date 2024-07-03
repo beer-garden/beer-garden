@@ -725,7 +725,7 @@ def publish_local_garden_to_api():
             garden=config.get("garden.name"),
             payload_type="Garden",
             payload=local_garden,
-            metadata={"API_ONLY":True},
+            metadata={"API_ONLY": True},
         )
     )
 

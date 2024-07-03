@@ -60,6 +60,7 @@ class QueueListener(BaseProcessor):
             except Empty:
                 pass
 
+
 class InternalQueueListener(QueueListener):
     """Listener for internal events only"""
 
