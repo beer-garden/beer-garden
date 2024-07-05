@@ -218,11 +218,10 @@ def create_garden_topics(garden: Garden):
 
             for instance in system.instances:
                 if len(command.topics) > 0:
-                    subscribers = []
+                    
                     for topic in command.topics:
-
-                        subscribers.append(
-                            Subscriber(
+                        logger.error(f"Annotation Creation ::::::: Command='{command.name}' == Topic={topic}")
+                        create_topic(Topic(name=topic, subscribers=[Subscriber(
                                 garden=garden.name,
                                 namespace=system.namespace,
                                 system=system.name,
@@ -230,10 +229,7 @@ def create_garden_topics(garden: Garden):
                                 instance=instance.name,
                                 command=command.name,
                                 subscriber_type="ANNOTATED",
-                            )
-                        )
-                    logger.error(f"Annotation Creation ::::::: Command='{command.name}' == Topic={topic}")
-                    create_topic(Topic(name=topic, subscribers=subscribers))
+                            )]))
 
                 if not default_topic:
                     topic_generated = f"{system.namespace}.{system.name}.{system.version}.{instance.name}.{command.name}"
