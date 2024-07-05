@@ -10,7 +10,7 @@ import beer_garden.log
 import beer_garden.requests
 import beer_garden.router
 from beer_garden.api.stomp.transport import Connection, parse_header_list
-from beer_garden.events import event_blocklisted, publish
+from beer_garden.events import publish
 from beer_garden.events.processors import BaseProcessor
 
 logger = logging.getLogger(__name__)
@@ -179,16 +179,16 @@ class StompManager(BaseProcessor):
                 self.remove_garden_from_list(
                     garden_name=event.payload.name, skip_key=skip_key
                 )
-        if not event_blocklisted(event):
-            for value in self.conn_dict.values():
-                conn = value["conn"]
-                if conn:
-                    if conn.is_connected():
-                        if value["headers_list"]:
-                            for headers in value["headers_list"]:
-                                conn.send(event, headers=headers)
-                        else:
-                            conn.send(event)
+
+        for value in self.conn_dict.values():
+            conn = value["conn"]
+            if conn:
+                if conn.is_connected():
+                    if value["headers_list"]:
+                        for headers in value["headers_list"]:
+                            conn.send(event, headers=headers)
+                    else:
+                        conn.send(event)
 
     def handle_event(self, event):
         """Main event entry point
