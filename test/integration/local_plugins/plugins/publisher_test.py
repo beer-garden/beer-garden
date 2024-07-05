@@ -66,7 +66,7 @@ class TestPublish(object):
             time.sleep(5)
             check += 1
 
-        return request
+        return completed_request
 
     def test_one_trigger_topic_subscriber(self, topic1):
         newtopic = self.easy_client.create_topic(topic1)

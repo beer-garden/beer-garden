@@ -55,7 +55,7 @@ def handle_event(event: Event):
                 subscribers.extend(topic.subscribers)
             
             if any(subscriber.subscriber_type != "GENERATED" for subscriber in topic.subscribers):
-                logger.error(f"{topic.name} {'==' if (event.metadata['topic'] in re.findall(topic.name, event.metadata['topic'])) else '!='} {event.metadata['topic']}")
+                logger.error(f"{topic.name} {'==' if (event.metadata['topic'] in re.findall(topic.name, event.metadata['topic'])) else '!='} {event.metadata['topic']} x Subscribers {len(subscribers)}")
 
         logger.error(f"Processing Event Topic {event.metadata['topic']} x Subscribers {len(subscribers)}=======================")
         if subscribers:
