@@ -20,7 +20,6 @@ from pytz import utc
 
 import beer_garden.api
 import beer_garden.api.entry_point
-import beer_garden.command_publishing_blocklist
 import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.db.mongo.pruner
@@ -327,7 +326,6 @@ class Application(StoppableThread):
 
         self.logger.debug("Publishing startup sync")
         beer_garden.garden.publish_garden()
-        beer_garden.command_publishing_blocklist.publish_command_publishing_blocklist()
 
         self.logger.debug("Starting plugin log config file monitors")
         if config.get("plugin.logging.config_file"):
@@ -347,7 +345,6 @@ class Application(StoppableThread):
         )
 
         self.logger.debug("Publishing shutdown sync")
-        beer_garden.command_publishing_blocklist.publish_command_publishing_blocklist()
         beer_garden.garden.publish_garden(status="STOPPED")
 
         if self.scheduler.running:
@@ -428,6 +425,7 @@ class Application(StoppableThread):
             event_manager.register(
                 HttpParentUpdater(
                     easy_client=easy_client,
+                    # TODO
                     blocklist=config.get("parent.skip_events"),
                     reconnect_action=reconnect_action,
                 )
