@@ -28,8 +28,12 @@ def create_topic(new_topic: Topic) -> Topic:
             for subscriber in new_topic.subscribers:
                 if subscriber not in topic.subscribers:
                     topic.subscribers.append(subscriber)
+        if any(subscriber.subscriber_type != "GENERATED" for subscriber in topic.subscribers):
+            logger.error(f"Update {topic.name} to {len(topic.subscribers)} subscribers")
         return update_topic(topic)
     except DoesNotExist:
+        if any(subscriber.subscriber_type != "GENERATED" for subscriber in new_topic.subscribers):
+            logger.error(f"Create {new_topic.name} to {len(new_topic.subscribers)} subscribers")
         return db.create(new_topic)
 
 
@@ -228,6 +232,7 @@ def create_garden_topics(garden: Garden):
                                 subscriber_type="ANNOTATED",
                             )
                         )
+                    logger.error(f"Annotation Creation ::::::: Command='{command.name}' == Topic={topic}")
                     create_topic(Topic(name=topic, subscribers=subscribers))
 
                 if not default_topic:
