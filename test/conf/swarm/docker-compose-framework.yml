@@ -22,7 +22,7 @@ services:
         environment:
             TZ: UTC
 
-            # BG_GARDEN_NAME: docker-replicated
+            BG_GARDEN_NAME: docker
             BG_REPLICATION_ENABLED: "true"
 
             # Point at the correct database

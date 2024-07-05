@@ -47,6 +47,10 @@ def topic():
         ],
     )
 
+@pytest.fixture(autouse=True)
+def force_garden_sync(easy_client):
+    easy_client.client.patch_garden('docker', '[{"operation": "sync"}]')
+
 
 @pytest.mark.usefixtures("easy_client", "request_generator")
 class TestPublish(object):
