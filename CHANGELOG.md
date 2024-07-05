@@ -6,6 +6,7 @@ TBD
 
 - Fixed bug that prevented Autobrew Kwargs from being properly passed to the class object
 - Supporting Subscriber Types for Generated/Annotated/Dynamic, all stored in Topics Collection for quick reference
+- Optimized internal event processing to support API only events
 
 # 3.26.2
 
