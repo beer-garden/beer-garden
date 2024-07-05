@@ -42,7 +42,7 @@ def handle_event(event: Event):
             del event.payload.metadata["_publish"]
 
         subscribers = []
-        # logger.error(f"Processing Event Topic {event.metadata['topic']} =======================")
+
         for topic in get_all_topics():
             # TODO: Down the road, determine if we need to filter by Subscriber Type because
             # someone will do something non standard
@@ -53,11 +53,7 @@ def handle_event(event: Event):
             ):
                 # get a list of subscribers for matching topic
                 subscribers.extend(topic.subscribers)
-            
-            if any(subscriber.subscriber_type != "GENERATED" for subscriber in topic.subscribers):
-                logger.error(f"{topic.name} {'==' if (event.metadata['topic'] in re.findall(topic.name, event.metadata['topic'])) else '!='} {event.metadata['topic']} x Subscribers {len(subscribers)}")
 
-        logger.error(f"Processing Event Topic {event.metadata['topic']} x Subscribers {len(subscribers)}=======================")
         if subscribers:
             if "propagate" in event.metadata and event.metadata["propagate"]:
                 for garden in get_gardens(include_local=False):
@@ -108,7 +104,6 @@ def process_publish_event(garden: Garden, event: Event, subscribers: List[Subscr
                                     event_request.is_event = True
 
                                     try:
-                                        logger.error(f"Executing Event Topic {event.metadata['topic']} =======================")
                                         process_request(event_request)
                                     except Exception as ex:
                                         # If an error occurs while trying to process request, log it and keep running

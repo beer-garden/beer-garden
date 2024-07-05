@@ -28,12 +28,8 @@ def create_topic(new_topic: Topic) -> Topic:
             for subscriber in new_topic.subscribers:
                 if subscriber not in topic.subscribers:
                     topic.subscribers.append(subscriber)
-        if any(subscriber.subscriber_type != "GENERATED" for subscriber in topic.subscribers):
-            logger.error(f"Update {topic.name} to {len(topic.subscribers)} subscribers")
         return update_topic(topic)
     except DoesNotExist:
-        if any(subscriber.subscriber_type != "GENERATED" for subscriber in new_topic.subscribers):
-            logger.error(f"Create {new_topic.name} to {len(new_topic.subscribers)} subscribers")
         return db.create(new_topic)
 
 
@@ -218,18 +214,24 @@ def create_garden_topics(garden: Garden):
 
             for instance in system.instances:
                 if len(command.topics) > 0:
-                    
+
                     for topic in command.topics:
-                        logger.error(f"Annotation Creation ::::::: Command='{command.name}' == Topic={topic}")
-                        create_topic(Topic(name=topic, subscribers=[Subscriber(
-                                garden=garden.name,
-                                namespace=system.namespace,
-                                system=system.name,
-                                version=system.version,
-                                instance=instance.name,
-                                command=command.name,
-                                subscriber_type="ANNOTATED",
-                            )]))
+                        create_topic(
+                            Topic(
+                                name=topic,
+                                subscribers=[
+                                    Subscriber(
+                                        garden=garden.name,
+                                        namespace=system.namespace,
+                                        system=system.name,
+                                        version=system.version,
+                                        instance=instance.name,
+                                        command=command.name,
+                                        subscriber_type="ANNOTATED",
+                                    )
+                                ],
+                            )
+                        )
 
                 if not default_topic:
                     topic_generated = f"{system.namespace}.{system.name}.{system.version}.{instance.name}.{command.name}"

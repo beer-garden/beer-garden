@@ -759,7 +759,6 @@ def create_request(request: Request) -> Request:
     if request.target_garden is None:
         request.target_garden = config.get("garden.name")
 
-    logger.error(f"Create {'Child' if (request.has_parent or request.parent) else 'Parent'} Request")
     return db.create(request)
 
 
