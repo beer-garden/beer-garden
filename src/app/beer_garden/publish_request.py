@@ -42,7 +42,7 @@ def handle_event(event: Event):
             del event.payload.metadata["_publish"]
 
         subscribers = []
-        logger.error(f"Processing Event Topic {event.metadata['topic']} =======================")
+        # logger.error(f"Processing Event Topic {event.metadata['topic']} =======================")
         for topic in get_all_topics():
             # TODO: Down the road, determine if we need to filter by Subscriber Type because
             # someone will do something non standard
@@ -53,7 +53,10 @@ def handle_event(event: Event):
             ):
                 # get a list of subscribers for matching topic
                 subscribers.extend(topic.subscribers)
+            
+            logger.error(f"{event.metadata["topic"]} {'==' if (event.metadata["topic"] in re.findall(topic.name, event.metadata["topic"])) else '!='} {topic.name}")
 
+        logger.error(f"Processing Event Topic {event.metadata['topic']} x Subscribers {len(subscribers)}=======================")
         if subscribers:
             if "propagate" in event.metadata and event.metadata["propagate"]:
                 for garden in get_gardens(include_local=False):
