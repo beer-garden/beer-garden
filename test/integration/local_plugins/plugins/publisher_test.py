@@ -49,7 +49,9 @@ def topic():
 
 @pytest.fixture(autouse=True)
 def force_garden_sync(easy_client):
+    # Sync Local Garden and give it a second to process it
     easy_client.client.patch_garden('docker', '[{"operation": "sync"}]')
+    time.sleep(10)
 
 
 @pytest.mark.usefixtures("easy_client", "request_generator")
