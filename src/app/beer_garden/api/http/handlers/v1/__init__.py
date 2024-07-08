@@ -2,6 +2,7 @@
 
 import beer_garden.api.http.handlers.v1.admin
 import beer_garden.api.http.handlers.v1.command
+import beer_garden.api.http.handlers.v1.command_publishing_blocklist
 import beer_garden.api.http.handlers.v1.event
 import beer_garden.api.http.handlers.v1.forward
 import beer_garden.api.http.handlers.v1.garden
