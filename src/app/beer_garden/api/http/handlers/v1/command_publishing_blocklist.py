@@ -1,9 +1,5 @@
 from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.api.http.schemas.v1.command_publishing_blocklist import (
-    CommandPublishingBlocklistListInputSchema,
-    CommandPublishingBlocklistSchema,
-)
 from beer_garden.errors import EndpointRemovedException
 
 SYSTEM_UPDATE = Permissions.SYSTEM_UPDATE.value
@@ -26,7 +22,7 @@ class CommandPublishingBlocklistPathAPI(AuthorizationHandler):
           204:
             description: Command has been successfully removed from block list
             schema:
-              $ref: '#/definitions/CommandPublishingBlocklistListSchema'
+              $ref: '#/definitions/CommandPublishingBlocklist'
           404:
             $ref: '#/definitions/404Error'
           50x:
