@@ -1,6 +1,5 @@
 # Beer Garden Changelog
 
-
 # 3.27.0
 
 TBD
