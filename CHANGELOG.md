@@ -5,6 +5,7 @@
 TBD
 
 - Fixed bug that prevented Autobrew Kwargs from being properly passed to the class object
+- Fixed Command Index UI bug where breadcrumbs were not shown if Namespace and System Name matched
 
 # 3.26.2
 
