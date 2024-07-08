@@ -5,6 +5,7 @@
 TBD
 
 - Fixed bug that prevented Autobrew Kwargs from being properly passed to the class object
+- Updated About page to support new tab for links
 
 # 3.26.2
 
