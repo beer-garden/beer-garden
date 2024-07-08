@@ -132,6 +132,14 @@ def _get_published_url_specs(
         (rf"{prefix}api/v2/users/?", v1.user.UserListAPI),
         (rf"{prefix}api/v2/users/(\w+)/?", v1.user.UserAPI),
         # Deprecated
+        (
+            rf"{prefix}api/v1/commandpublishingblocklist/(\w+)/?",
+            v1.command_publishing_blocklist.CommandPublishingBlocklistPathAPI,
+        ),
+        (
+            rf"{prefix}api/v1/commandpublishingblocklist/?",
+            v1.command_publishing_blocklist.CommandPublishingBlocklistAPI,
+        ),
         (rf"{prefix}api/v1/commands/?", v1.command.CommandListAPI),
         (rf"{prefix}api/v1/commands/(\w+)/?", v1.command.CommandAPIOld),
         (rf"{prefix}api/v1/config/logging/?", v1.logging.LoggingConfigAPI),
