@@ -82,7 +82,6 @@ __all__ = [
     "RoleAssignment",
     "User",
     "RemoteUser",
-    "CommandPublishingBlocklist",
     "Topic",
     "Subscriber",
 ]
@@ -992,17 +991,6 @@ class RawFile(Document):
     request = LazyReferenceField(Request, required=False, reverse_delete_rule=CASCADE)
 
     meta = {"queryset_class": FileFieldHandlingQuerySet}
-
-
-class CommandPublishingBlocklist(Document):
-    namespace = StringField(required=True)
-    system = StringField(required=True)
-    command = StringField(required=True)
-    status = StringField(required=False)
-
-    meta = {
-        "indexes": [{"fields": ["namespace", "system", "command"], "unique": True}],
-    }
 
 
 class Role(Document):

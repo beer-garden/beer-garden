@@ -7,6 +7,8 @@ TBD
 - Fixed bug that prevented Autobrew Kwargs from being properly passed to the class object
 - Supporting Subscriber Types for Generated/Annotated/Dynamic, all stored in Topics Collection for quick reference
 - Optimized internal event processing to support API only events
+- Command publishing blocklist UI and REST API removed
+- Fixed Command Index UI bug where breadcrumbs were not shown if Namespace and System Name matched
 
 # 3.26.2
 
