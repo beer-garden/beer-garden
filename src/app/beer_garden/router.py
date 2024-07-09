@@ -29,7 +29,6 @@ from brewtils.models import Event, Events, Garden, Operation, Request, System
 from stomp.exception import ConnectFailedException
 
 import beer_garden
-import beer_garden.command_publishing_blocklist
 import beer_garden.commands
 import beer_garden.config as config
 import beer_garden.db.api as db
@@ -70,8 +69,6 @@ routable_operations = [
     "REQUEST_CREATE",
     "SYSTEM_DELETE",
     "GARDEN_SYNC",
-    "COMMAND_BLOCKLIST_ADD",
-    "COMMAND_BLOCKLIST_REMOVE",
     "USER_SYNC",
 ]
 
@@ -178,12 +175,6 @@ route_functions = {
     "RUNNER_RESCAN": beer_garden.local_plugins.manager.rescan,
     "PUBLISH_EVENT": beer_garden.events.publish,
     "USER_SYNC": beer_garden.user.user_sync,
-    "COMMAND_BLOCKLIST_ADD": (
-        beer_garden.command_publishing_blocklist.command_publishing_blocklist_add
-    ),
-    "COMMAND_BLOCKLIST_REMOVE": (
-        beer_garden.command_publishing_blocklist.command_publishing_blocklist_delete
-    ),
 }
 
 # Filter for fields that should not be published outside of Beer Garden
@@ -763,12 +754,6 @@ def _target_from_type(operation: Operation) -> str:
         in ("PLUGIN_LOG_RELOAD", "QUEUE_DELETE_ALL", "SYSTEM_CREATE", "REQUEST_DELETE")
     ):
         return config.get("garden.name")
-
-    if operation.operation_type in (
-        "COMMAND_BLOCKLIST_ADD",
-        "COMMAND_BLOCKLIST_REMOVE",
-    ):
-        return operation.target_garden_name
 
     # Otherwise, each operation needs to be "parsed"
     if operation.operation_type in ("SYSTEM_RELOAD", "SYSTEM_UPDATE"):

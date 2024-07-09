@@ -84,7 +84,6 @@ publish-rpm: ## publish the rpm
 # Setup Environment
 setup:
 	docker-compose -f docker/docker-compose/docker-compose.yml up -d mongodb rabbitmq activemq
-	. $(NVM_DIR)/nvm.sh && nvm install 16 && nvm use 16;
 	$(MAKE) -C $(UI_DIR) deps
 	$(MAKE) -C $(APP_DIR) deps-python install
 	git clone https://github.com/beer-garden/example-plugins.git $(APP_DIR)/plugins

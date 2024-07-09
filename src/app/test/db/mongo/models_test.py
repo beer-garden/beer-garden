@@ -16,7 +16,6 @@ from beer_garden.api.authorization import Permissions
 from beer_garden.db.mongo.models import (
     Choices,
     Command,
-    CommandPublishingBlocklist,
     DateTrigger,
     Garden,
     Instance,
@@ -638,30 +637,6 @@ class TestUserToken:
         assert len(UserToken.objects.filter(id=user_token.id)) == 1
         user_token.user.fetch().delete()
         assert len(UserToken.objects.filter(id=user_token.id)) == 0
-
-
-class TestCommandBlocklist:
-    namespace = "test"
-    system = "system_test"
-    command = "command_test"
-
-    @pytest.fixture()
-    def command_blocklist(self):
-        blocklist = CommandPublishingBlocklist(
-            namespace=self.namespace, system=self.system, command=self.command
-        ).save()
-
-        yield blocklist
-        blocklist.delete()
-
-    def test_blocklist_entries_are_required_to_be_unique(self, command_blocklist):
-        """Attempting to create a blocklist entry already in database should raise an
-        exception
-        """
-        with pytest.raises(NotUniqueError):
-            CommandPublishingBlocklist(
-                namespace=self.namespace, system=self.system, command=self.command
-            ).save()
 
 
 class TestGarden:
