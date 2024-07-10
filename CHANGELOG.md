@@ -2,7 +2,7 @@
 
 # 3.26.3
 
-TBD
+7/10/2024
 
 - Fixed bug that prevented Autobrew Kwargs from being properly passed to the class object
 - Supporting Subscriber Types for Generated/Annotated/Dynamic, all stored in Topics Collection for quick reference
