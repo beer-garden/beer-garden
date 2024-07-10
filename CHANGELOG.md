@@ -5,6 +5,7 @@
 TBD
 
 - Fixed bug that prevented Autobrew Kwargs from being properly passed to the class object
+- Updated About page to support new tab for links
 - Command publishing blocklist UI and REST API removed
 - Fixed Command Index UI bug where breadcrumbs were not shown if Namespace and System Name matched
 
