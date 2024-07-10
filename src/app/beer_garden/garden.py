@@ -219,7 +219,7 @@ def check_garden_receiving_heartbeat(
             if connection.status not in ["DISABLED", "RECEIVING"]:
                 connection.status = "RECEIVING"
 
-            connection.status_info["heartbeat"] = datetime.utcnow()
+            connection.status_info.set_status_heartbeat(connection.status)
 
     # If the receiving type is unknown, enable it by default and set heartbeat
     if not connection_set:
@@ -232,7 +232,7 @@ def check_garden_receiving_heartbeat(
             if config.get("receiving", config=garden_config):
                 connection.status = "RECEIVING"
 
-        connection.status_info["heartbeat"] = datetime.utcnow()
+        connection.status_info.set_status_heartbeat(connection.status)
         garden.receiving_connections.append(connection)
 
     return update_receiving_connections(garden)
@@ -313,7 +313,7 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
                 )
 
     garden.status = new_status
-    garden.status_info["heartbeat"] = datetime.utcnow()
+    garden.status_info.set_status_heartbeat(garden.status)
 
     return update_garden(garden)
 
@@ -376,7 +376,7 @@ def create_garden(garden: Garden) -> Garden:
             Connection(api="STOMP", status="MISSING_CONFIGURATION"),
         ]
 
-    garden.status_info["heartbeat"] = datetime.utcnow()
+    garden.status_info.set_status_heartbeat(garden.status)
 
     return db.create(garden)
 
@@ -556,7 +556,8 @@ def load_garden_connections(garden: Garden):
             api="HTTP",
             status="PUBLISHING" if garden_config.get("publishing") else "DISABLED",
         )
-        http_connection.status_info["heartbeat"] = datetime.utcnow()
+
+        http_connection.status_info.set_status_heartbeat(http_connection.status)
 
         for key in config_map:
             http_connection.config.setdefault(
@@ -583,7 +584,8 @@ def load_garden_connections(garden: Garden):
             api="STOMP",
             status="PUBLISHING" if garden_config.get("publishing") else "DISABLED",
         )
-        stomp_connection.status_info["heartbeat"] = datetime.utcnow()
+
+        stomp_connection.status_info.set_status_heartbeat(stomp_connection.status)
 
         for key in config_map:
             stomp_connection.config.setdefault(
@@ -735,7 +737,7 @@ def garden_unresponsive_trigger():
 
             for connection in garden.receiving_connections:
                 if connection.status in ["RECEIVING"]:
-                    if connection.status_info["heartbeat"] < timeout:
+                    if connection.status_info.heartbeat < timeout:
                         update_garden_receiving(
                             "UNRESPONSIVE", api=connection.api, garden=garden
                         )

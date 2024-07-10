@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from mongoengine import DateTimeField, EmbeddedDocument
 from mongoengine.base import BaseField
 
 
@@ -13,5 +12,4 @@ class DummyField(BaseField):
         return None
 
 
-class StatusInfo(EmbeddedDocument):
-    heartbeat = DateTimeField()
+

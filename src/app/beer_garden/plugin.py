@@ -589,7 +589,7 @@ class StatusMonitor(StoppableThread):
                 if self.stopped():
                     break
 
-                last_heartbeat = instance.status_info["heartbeat"]
+                last_heartbeat = instance.status_info.heartbeat
 
                 if last_heartbeat:
                     if (
