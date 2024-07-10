@@ -713,7 +713,7 @@ def garden_sync(sync_target: str = None):
             pass
 
 
-def publish_local_garden():
+def publish_local_garden_to_api():
     local_garden = get_garden(config.get("garden.name"))
     publish(
         Event(
@@ -721,6 +721,7 @@ def publish_local_garden():
             garden=config.get("garden.name"),
             payload_type="Garden",
             payload=local_garden,
+            metadata={"API_ONLY": True},
         )
     )
 
@@ -808,7 +809,7 @@ def handle_event(event):
             upsert_garden(event.payload)
 
             # Publish update events for UI to dynamically load changes for Systems
-            publish_local_garden()
+            publish_local_garden_to_api()
 
     elif event.name == Events.GARDEN_UNREACHABLE.name:
         target_garden = get_garden(event.payload.target_garden_name)
@@ -846,4 +847,4 @@ def handle_event(event):
 
     if "SYSTEM" in event.name or "INSTANCE" in event.name:
         # If a System or Instance is updated, publish updated Local Garden Model for UI
-        publish_local_garden()
+        publish_local_garden_to_api()

@@ -61,6 +61,20 @@ class QueueListener(BaseProcessor):
                 pass
 
 
+class InternalQueueListener(QueueListener):
+    """Listener for internal events only"""
+
+    def put(self, event: Event):
+        """Put a new item on the queue to be processed
+
+        Args:
+            item: New item
+        """
+        if event.metadata.get("API_ONLY", False):
+            return
+        self._queue.put(event)
+
+
 class DelayListener(QueueListener):
     """Listener that waits for an Event before running"""
 
