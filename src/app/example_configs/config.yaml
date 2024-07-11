@@ -156,6 +156,7 @@ plugin:
       fallback_level: INFO
   status_heartbeat: 5
   status_timeout: 30
+  status_history: 50
 replication:
   enabled: false
 request_validation:

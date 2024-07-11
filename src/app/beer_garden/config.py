@@ -1463,6 +1463,11 @@ _PLUGIN_SPEC = {
             ),
             "previous_names": ["plugin_status_timeout "],
         },
+        "status_history": {
+            "type": "int",
+            "default": 50,
+            "description": ("Amount of historical status heartbeats tracked"),
+        },
     },
 }
 
