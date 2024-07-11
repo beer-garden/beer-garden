@@ -404,7 +404,9 @@ _GARDEN_SPEC = {
         "status_history": {
             "type": "int",
             "default": 50,
-            "description": ("Amount of historical status heartbeats tracked for Garden and Connections"),
+            "description": (
+                "Amount of historical status heartbeats tracked for Garden and Connections"
+            ),
         },
     },
 }
