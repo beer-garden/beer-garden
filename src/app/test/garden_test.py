@@ -594,8 +594,6 @@ stomp:
                 minutes=10
             )
 
-        bg_garden.metadata = {"_unresponsive_timeout": 15}
-
         bg_garden.metadata["_unresponsive_timeout"] = 5
 
         create_garden(bg_garden)

@@ -279,7 +279,7 @@ class StatusHistory(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.StatusHistory
 
     heartbeat = DateTimeField()
-    status = StringField(required=True)
+    status = StringField()
 
 class StatusInfo(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.StatusInfo
