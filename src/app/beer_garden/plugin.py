@@ -440,10 +440,12 @@ async def update_async(
     query = {"instances._id": ObjectIdField().to_mongo(instance_id)}
     projection = {"instances.$": 1, "_id": 0}
     update = {}
+    push = {}
 
     if new_status:
         update["instances.$.status"] = new_status
         update["instances.$.status_info.heartbeat"] = datetime.utcnow()
+        push["instances.$.status_info.history"] = {"status":new_status,"heartbeat":datetime.utcnow()}
 
         if new_status == "STOPPED":
             lpm.update(instance_id=instance_id, restart=False, stopped=True)
@@ -452,7 +454,7 @@ async def update_async(
         for k, v in metadata.items():
             update[f"instances.$.metadata.{k}"] = v
 
-    return await _update_instance_async(query, projection, {"$set": update})
+    return await _update_instance_async(query, projection, {"$set": update, "$push": push})
 
 
 async def heartbeat_async(
@@ -460,7 +462,7 @@ async def heartbeat_async(
 ) -> dict:
     query = {"instances._id": ObjectIdField().to_mongo(instance_id)}
     projection = {"instances.$": 1, "_id": 0}
-    update = {"$set": {"instances.$.status_info.heartbeat": datetime.utcnow()}}
+    update = {"$set": {"instances.$.status_info.heartbeat": datetime.utcnow()}, "$push":{"instances.$.status_info.history":{"status":"RUNNING","heartbeat":datetime.utcnow()}}}
 
     return await _update_instance_async(query, projection, update)
 
