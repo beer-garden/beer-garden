@@ -400,7 +400,12 @@ _GARDEN_SPEC = {
             "required": True,
             "default": "default",
             "description": "The routing name for upstream Beer Gardens to use",
-        }
+        },
+        "status_history": {
+            "type": "int",
+            "default": 50,
+            "description": ("Amount of historical status heartbeats tracked for Garden and Connections"),
+        },
     },
 }
 

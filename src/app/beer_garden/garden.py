@@ -219,7 +219,9 @@ def check_garden_receiving_heartbeat(
             if connection.status not in ["DISABLED", "RECEIVING"]:
                 connection.status = "RECEIVING"
 
-            connection.status_info.set_status_heartbeat(connection.status)
+            connection.status_info.set_status_heartbeat(
+                connection.status, max_history=config.get("garden.status_history")
+            )
 
     # If the receiving type is unknown, enable it by default and set heartbeat
     if not connection_set:
@@ -232,7 +234,9 @@ def check_garden_receiving_heartbeat(
             if config.get("receiving", config=garden_config):
                 connection.status = "RECEIVING"
 
-        connection.status_info.set_status_heartbeat(connection.status)
+        connection.status_info.set_status_heartbeat(
+            connection.status, max_history=config.get("garden.status_history")
+        )
         garden.receiving_connections.append(connection)
 
     return update_receiving_connections(garden)
@@ -313,7 +317,9 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
                 )
 
     garden.status = new_status
-    garden.status_info.set_status_heartbeat(garden.status)
+    garden.status_info.set_status_heartbeat(
+        garden.status, max_history=config.get("garden.status_history")
+    )
 
     return update_garden(garden)
 
@@ -376,7 +382,9 @@ def create_garden(garden: Garden) -> Garden:
             Connection(api="STOMP", status="MISSING_CONFIGURATION"),
         ]
 
-    garden.status_info.set_status_heartbeat(garden.status)
+    garden.status_info.set_status_heartbeat(
+        garden.status, max_history=config.get("garden.status_history")
+    )
 
     return db.create(garden)
 
@@ -557,7 +565,9 @@ def load_garden_connections(garden: Garden):
             status="PUBLISHING" if garden_config.get("publishing") else "DISABLED",
         )
 
-        http_connection.status_info.set_status_heartbeat(http_connection.status)
+        http_connection.status_info.set_status_heartbeat(
+            http_connection.status, max_history=config.get("garden.status_history")
+        )
 
         for key in config_map:
             http_connection.config.setdefault(
@@ -585,7 +595,9 @@ def load_garden_connections(garden: Garden):
             status="PUBLISHING" if garden_config.get("publishing") else "DISABLED",
         )
 
-        stomp_connection.status_info.set_status_heartbeat(stomp_connection.status)
+        stomp_connection.status_info.set_status_heartbeat(
+            stomp_connection.status, max_history=config.get("garden.status_history")
+        )
 
         for key in config_map:
             stomp_connection.config.setdefault(
