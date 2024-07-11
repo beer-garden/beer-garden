@@ -551,9 +551,7 @@ stomp:
 
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
-            connection.status_info.heartbeat = datetime.utcnow() - timedelta(
-                minutes=60
-            )
+            connection.status_info.heartbeat = datetime.utcnow() - timedelta(minutes=60)
         bg_garden.metadata = {"_unresponsive_timeout": 15}
 
         create_garden(bg_garden)
@@ -570,9 +568,7 @@ stomp:
 
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
-            connection.status_info.heartbeat = datetime.utcnow() - timedelta(
-                minutes=10
-            )
+            connection.status_info.heartbeat = datetime.utcnow() - timedelta(minutes=10)
 
         bg_garden.metadata = {"_unresponsive_timeout": 15}
 
@@ -590,9 +586,7 @@ stomp:
 
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
-            connection.status_info.heartbeat = datetime.utcnow() - timedelta(
-                minutes=10
-            )
+            connection.status_info.heartbeat = datetime.utcnow() - timedelta(minutes=10)
 
         bg_garden.metadata["_unresponsive_timeout"] = 5
 
@@ -610,9 +604,7 @@ stomp:
 
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
-            connection.status_info.heartbeat = datetime.utcnow() - timedelta(
-                minutes=10
-            )
+            connection.status_info.heartbeat = datetime.utcnow() - timedelta(minutes=10)
 
         bg_garden.metadata = {"_unresponsive_timeout": 15}
 
