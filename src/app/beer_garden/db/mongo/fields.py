@@ -10,6 +10,3 @@ class DummyField(BaseField):
 
     def to_mongo(self, value):
         return None
-
-
-

@@ -275,11 +275,13 @@ class Command(MongoModel, EmbeddedDocument):
                 f"Can not save Command {self}: Contains Parameters with duplicate keys"
             )
 
+
 class StatusHistory(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.StatusHistory
 
     heartbeat = DateTimeField()
     status = StringField()
+
 
 class StatusInfo(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.StatusInfo
