@@ -428,7 +428,7 @@ def create_jobs(jobs: List[Job]) -> dict:
 
     for job in jobs:
         try:
-            if job.id and get_job(job.id):
+            if job.id and db.query(Job, filter_params={"id": job.id}):
                 updated.append(update_job(job))
             else:
                 if job.id:
