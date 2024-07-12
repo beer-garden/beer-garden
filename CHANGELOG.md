@@ -2,7 +2,7 @@
 
 # 3.26.4
 
-TBD
+7/12/2024
 
 - Fixed bug where job updates did not maintian counters
 - Fixed bug where bulk job import did not support updates
