@@ -81,6 +81,11 @@ publish-docker-unstable: ## push the unstable docker image
 publish-rpm: ## publish the rpm
 	rpm/bin/upload.sh $(VERSION) $(ITERATION)
 
+publish-docker-rpm: rpm-build
+	$(MAKE) -C $(APP_DIR) docker-build-alpine
+	docker build -t bgio/beer-garden:$(VERSION)_RPM -f docker/dockerfiles/bundle_rpm/Dockerfile --build-arg VERSION=$(VERSION) .
+	docker push bgio/beer-garden:$(VERSION)_RPM
+
 # Setup Environment
 setup:
 	docker-compose -f docker/docker-compose/docker-compose.yml up -d mongodb rabbitmq activemq
