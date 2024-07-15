@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+# 3.27.0
+
+TBD
+
+- New feature to track the last N heartbeats timestamps for Instances and Gardens. The range to history stored is 
+  controlled by configurations `garden.status_history` and `plugin.status_history`
+
 # 3.26.4
 
 7/12/2024
