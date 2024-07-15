@@ -82,7 +82,6 @@ publish-rpm: ## publish the rpm
 	rpm/bin/upload.sh $(VERSION) $(ITERATION)
 
 publish-docker-rpm: rpm-build
-	$(MAKE) -C $(APP_DIR) docker-build-alpine
 	docker build -t bgio/beer-garden:$(VERSION)_RPM -f docker/dockerfiles/bundle_rpm/Dockerfile --build-arg VERSION=$(VERSION) .
 	docker push bgio/beer-garden:$(VERSION)_RPM
 
