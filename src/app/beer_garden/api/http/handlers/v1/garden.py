@@ -7,6 +7,7 @@ from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.handlers import AuthorizationHandler
+from beer_garden.api.http.schemas.v1.garden import GardenRemoveStatusInfoSchema
 
 # from beer_garden.authorization import user_has_permission_for_object
 from beer_garden.db.mongo.models import Garden
@@ -20,6 +21,16 @@ GARDEN_DELETE = Permissions.GARDEN_DELETE.value
 
 
 logger = logging.getLogger(__name__)
+
+
+def _heartbeat_history(response: str, many: bool = False) -> str:
+    """Strips out the status_info.history models
+
+    This balloons out the size of the returned object, and isn't currently
+    required for the UI for display purposes, so we are clearing the list
+    """
+    system_data = GardenRemoveStatusInfoSchema(many=many).loads(response).data
+    return GardenRemoveStatusInfoSchema(many=many).dumps(system_data).data
 
 
 class GardenAPI(AuthorizationHandler):
@@ -51,7 +62,7 @@ class GardenAPI(AuthorizationHandler):
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(response)
+        self.write(_heartbeat_history(response))
 
     async def delete(self, garden_name):
         """
@@ -179,7 +190,7 @@ class GardenAPI(AuthorizationHandler):
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(response)
+        self.write(_heartbeat_history(response))
 
 
 class GardenListAPI(AuthorizationHandler):
@@ -217,7 +228,7 @@ class GardenListAPI(AuthorizationHandler):
         permitted_gardens_list = await self.client(
             Operation(operation_type="GARDEN_READ_ALL")
         )
-        self.write(permitted_gardens_list)
+        self.write(_heartbeat_history(permitted_gardens_list, many=True))
 
         # response_gardens = []
         # for garden in SchemaParser.parse_garden(
@@ -267,7 +278,7 @@ class GardenListAPI(AuthorizationHandler):
 
         self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(response)
+        self.write(_heartbeat_history(response))
 
     async def patch(self):
         """

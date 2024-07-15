@@ -8,9 +8,15 @@ class GardenReadSchema(GardenSchema):
     class Meta:
         exclude = ["connection_params"]
 
+
 class GardenRemoveStatusInfoSchema(GardenSchema):
     """Garden schema for users with read only access. It removes the connection
-    paramters, which should be considered sensitive data"""
+    parameters, which should be considered sensitive data"""
 
     class Meta:
-        exclude = ["systems.instances.status_info.history"]
+        exclude = [
+            "status_info.history",
+            "systems.instances.status_info.history",
+            "receiving_connections.status_info.history",
+            "publishing_connections.status_info.history",
+        ]
