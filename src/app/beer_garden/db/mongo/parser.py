@@ -26,6 +26,7 @@ class MongoParser(SchemaParser):
             "JobSchema": beer_garden.db.mongo.models.Job,
             "DateTriggerSchema": beer_garden.db.mongo.models.DateTrigger,
             "IntervalTriggerSchema": beer_garden.db.mongo.models.IntervalTrigger,
+            "FileTriggerSchema": beer_garden.db.mongo.models.FileTrigger,
             "CronTriggerSchema": beer_garden.db.mongo.models.CronTrigger,
             "GardenSchema": beer_garden.db.mongo.models.Garden,
             "FileSchema": beer_garden.db.mongo.models.File,

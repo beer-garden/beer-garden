@@ -32,6 +32,8 @@ def construct_trigger(trigger_type: str, bg_trigger) -> BaseTrigger:
         return IntervalTrigger(**bg_trigger.scheduler_kwargs)
     elif trigger_type == "cron":
         return CronTrigger(**bg_trigger.scheduler_kwargs)
+    elif trigger_type == "file":
+        return DateTrigger(**bg_trigger.scheduler_kwargs)
     else:
         raise ValueError("Trigger type %s not supported by APScheduler" % trigger_type)
 

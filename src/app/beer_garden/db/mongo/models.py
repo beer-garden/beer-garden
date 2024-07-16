@@ -74,6 +74,7 @@ __all__ = [
     "DateTrigger",
     "CronTrigger",
     "IntervalTrigger",
+    "FileTrigger",
     "Garden",
     "File",
     "FileChunk",
@@ -761,6 +762,13 @@ class CronTrigger(MongoModel, EmbeddedDocument):
     timezone = StringField(required=False, default="utc", chocies=pytz.all_timezones)
     jitter = IntField(required=False)
 
+class FileTrigger(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.FileTrigger
+
+    path = StringField(required=True)
+    pattern = StringField(required=False)
+    recursive = StringField(default=False)
+
 
 class Job(MongoModel, Document):
     brewtils_model = brewtils.models.Job
@@ -789,6 +797,7 @@ class Job(MongoModel, Document):
         "date": DateTrigger,
         "cron": CronTrigger,
         "interval": IntervalTrigger,
+        "file": FileTrigger,
     }
 
     name = StringField(required=True)

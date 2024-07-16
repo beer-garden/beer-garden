@@ -212,7 +212,7 @@ export default function jobService($http, NamespaceService) {
     return serviceModel;
   };
 
-  JobService.TRIGGER_TYPES = ['cron', 'date', 'interval'];
+  JobService.TRIGGER_TYPES = ['cron', 'date', 'interval', 'file'];
   JobService.CRON_KEYS = [
     'minute',
     'hour',
@@ -237,6 +237,7 @@ export default function jobService($http, NamespaceService) {
     'interval_reschedule_on_finish',
   ];
   JobService.DATE_KEYS = ['run_date', 'date_timezone'];
+  JobService.FILE_KEYS = ['path', 'recursive']
 
   JobService.getRequiredKeys = function(triggerType) {
     if (triggerType === 'cron') {
@@ -256,6 +257,8 @@ export default function jobService($http, NamespaceService) {
       return requiredKeys;
     } else if (triggerType === 'date') {
       return JobService.DATE_KEYS;
+    } else if (triggerType === 'file') {
+      return JobService.FILE_KEYS;
     } else {
       const requiredKeys = [];
       for (const key of JobService.INTERVAL_KEYS) {
@@ -326,6 +329,22 @@ export default function jobService($http, NamespaceService) {
         description: 'The timezone associated with this job.',
         type: 'string',
         default: 'UTC',
+      },
+      path: {
+        title: 'Path',
+        description: 'Full file path of directory to monitor',
+        type: 'string',
+      },
+      pattern: {
+        title: 'Pattern',
+        description: 'Regex pattern (optional)',
+        type: 'string',
+      },
+      recursive: {
+        title: 'Recursive',
+        description: 'Recursively monitor sub-directories',
+        type: 'boolean',
+        default: false,
       },
       year: {
         title: 'Year',
@@ -538,6 +557,20 @@ export default function jobService($http, NamespaceService) {
                   items: [
                     {key: 'run_date', htmlClass: 'col-md-6'},
                     {key: 'date_timezone', htmlClass: 'col-md-2'},
+                  ],
+                },
+              ],
+            },
+            {
+              title: 'File Trigger',
+              items: [
+                {
+                  type: 'section',
+                  htmlClass: 'row',
+                  items: [
+                    {key: 'path', htmlClass: 'col-md-6'},
+                    {key: 'pattern', htmlClass: 'col-md-3'},
+                    {key: 'recursive', htmlClass: 'col-md-3'},
                   ],
                 },
               ],
