@@ -84,7 +84,13 @@ export default function jobService($http, NamespaceService) {
   };
 
   const getTrigger = function(triggerType, formModel) {
-    if (triggerType === 'date') {
+    if (triggerType === 'file') {
+      return {
+        path: formModel['path'],
+        pattern: formModel['pattern'],
+        recursive: formModel['recursive'],
+      }
+    } else if (triggerType === 'date') {
       return {
         run_date: formModel['run_date'],
         timezone: formModel['date_timezone'],

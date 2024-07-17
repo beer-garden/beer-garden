@@ -767,7 +767,7 @@ class FileTrigger(MongoModel, EmbeddedDocument):
 
     path = StringField(required=True)
     pattern = StringField(required=False)
-    recursive = StringField(default=False)
+    recursive = BooleanField(default=False)
 
 
 class Job(MongoModel, Document):

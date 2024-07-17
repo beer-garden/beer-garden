@@ -23,6 +23,13 @@ class IntervalTrigger(APInterval):
         self.reschedule_on_finish = kwargs.pop("reschedule_on_finish", False)
         super(IntervalTrigger, self).__init__(*args, **kwargs)
 
+class FileTrigger(DateTrigger):
+    """Beergarden implementation of File Trigger"""
+    def __init__(self, *args, **kwargs):
+        self.pattern = kwargs.pop("pattern", False)
+        self.path = kwargs.pop("path", False)
+        self.recursive = kwargs.pop("recursive", False)
+        super(FileTrigger, self).__init__(*args, **kwargs)
 
 def construct_trigger(trigger_type: str, bg_trigger) -> BaseTrigger:
     """Convert a Beergarden trigger to an APScheduler one."""
@@ -33,7 +40,7 @@ def construct_trigger(trigger_type: str, bg_trigger) -> BaseTrigger:
     elif trigger_type == "cron":
         return CronTrigger(**bg_trigger.scheduler_kwargs)
     elif trigger_type == "file":
-        return DateTrigger(**bg_trigger.scheduler_kwargs)
+        return FileTrigger(**bg_trigger.scheduler_kwargs)
     else:
         raise ValueError("Trigger type %s not supported by APScheduler" % trigger_type)
 
