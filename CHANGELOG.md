@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.27.0
+
+TBD
+
+- Add counter support for Topics/Subscribers that are triggered to generate requests
+
 # 3.26.4
 
 7/12/2024

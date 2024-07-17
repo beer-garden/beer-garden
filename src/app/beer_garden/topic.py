@@ -259,6 +259,22 @@ def create_garden_topics(garden: Garden):
         create_garden_topics(child)
 
 
+def increase_publish_count(topic: Topic):
+    return db.modify(topic, inc__publisher_count=1)
+
+
+def increase_consumer_count(topic: Topic, subscriber: Subscriber):
+    db_topic = get_topic(topic_id=topic.id)
+
+    for db_subscriber in db_topic.subscribers:
+        if db_subscriber == subscriber:
+            db_subscriber.consumer_count += 1
+            break
+
+    updated = db.update(db_topic)
+    return updated
+
+
 def handle_event(event: Event) -> None:
     """Handle TOPIC events
 

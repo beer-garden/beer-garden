@@ -12,6 +12,8 @@ from beer_garden.topic import (
     create_topic,
     get_all_topics,
     get_topic,
+    increase_consumer_count,
+    increase_publish_count,
     remove_topic,
     subscriber_match,
     topic_add_subscriber,
@@ -280,3 +282,20 @@ class TestTopic:
 
         assert mock_remove_topic.call_count == 0
         assert mock_update_topic.call_count == 0
+
+    def test_increase_topic_counter(self, topic1):
+        assert topic1.publisher_count == 0
+
+        increase_publish_count(topic1)
+
+        db_topic = get_topic(topic_id=topic1.id)
+        assert db_topic.publisher_count == 1
+
+    def test_increase_subscriber_counter(self, topic1, subscriber):
+        topic_add_subscriber(subscriber, topic1.id)
+
+        increase_consumer_count(topic1, subscriber)
+
+        db_topic = get_topic(topic_id=topic1.id)
+
+        assert db_topic.subscribers[0].consumer_count == 1
