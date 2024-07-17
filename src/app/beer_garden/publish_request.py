@@ -69,7 +69,6 @@ def handle_event(event: Event):
 
 def process_publish_event(garden: Garden, event: Event, topics: List[Topic]):
 
-    event_requests = []
     requests = []
     requests_hash = []
 
