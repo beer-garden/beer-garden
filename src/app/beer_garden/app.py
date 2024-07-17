@@ -20,7 +20,6 @@ from pytz import utc
 
 import beer_garden.api
 import beer_garden.api.entry_point
-import beer_garden.command_publishing_blocklist
 import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.db.mongo.pruner
@@ -32,7 +31,12 @@ import beer_garden.queue.api as queue
 import beer_garden.router
 from beer_garden.events.handlers import garden_callbacks
 from beer_garden.events.parent_procesors import HttpParentUpdater
-from beer_garden.events.processors import EventProcessor, FanoutProcessor, QueueListener
+from beer_garden.events.processors import (
+    EventProcessor,
+    FanoutProcessor,
+    InternalQueueListener,
+    QueueListener,
+)
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
@@ -336,7 +340,6 @@ class Application(StoppableThread):
 
         self.logger.debug("Publishing startup sync")
         beer_garden.garden.publish_garden()
-        beer_garden.command_publishing_blocklist.publish_command_publishing_blocklist()
 
         self.logger.debug("Starting plugin log config file monitors")
         if config.get("plugin.logging.config_file"):
@@ -356,7 +359,6 @@ class Application(StoppableThread):
         )
 
         self.logger.debug("Publishing shutdown sync")
-        beer_garden.command_publishing_blocklist.publish_command_publishing_blocklist()
         beer_garden.garden.publish_garden(status="STOPPED")
 
         if self.scheduler.running:
@@ -408,7 +410,9 @@ class Application(StoppableThread):
         event_manager.register(self.entry_manager, manage=False)
 
         # Register the callback processor
-        event_manager.register(QueueListener(action=garden_callbacks, name="callbacks"))
+        event_manager.register(
+            InternalQueueListener(action=garden_callbacks, name="callbacks")
+        )
 
         # Set up parent connection
         cfg = config.get("parent.http")
@@ -437,7 +441,6 @@ class Application(StoppableThread):
             event_manager.register(
                 HttpParentUpdater(
                     easy_client=easy_client,
-                    blocklist=config.get("parent.skip_events"),
                     reconnect_action=reconnect_action,
                 )
             )

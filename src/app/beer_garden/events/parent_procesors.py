@@ -2,7 +2,6 @@ from brewtils.models import Event, Events, Operation
 from requests import RequestException
 
 import beer_garden.config as conf
-from beer_garden.events import event_blocklisted
 from beer_garden.events.processors import QueueListener
 from beer_garden.garden import local_garden, update_garden
 
@@ -18,11 +17,8 @@ class HttpParentUpdater(QueueListener):
 
     """
 
-    def __init__(
-        self, easy_client=None, blocklist=None, reconnect_action=None, **kwargs
-    ):
+    def __init__(self, easy_client=None, reconnect_action=None, **kwargs):
         self._ez_client = easy_client
-        self._blocklist = blocklist or []
         self._reconnect_action = reconnect_action
         self._connected = True
 
@@ -58,20 +54,19 @@ class HttpParentUpdater(QueueListener):
                     connection.config = {}
                 event.payload.has_parent = True
 
-        if not event_blocklisted(event):
-            try:
-                operation = Operation(
-                    operation_type="PUBLISH_EVENT",
-                    model=event,
-                    model_type="Event",
-                    source_garden_name=conf.get("garden.name"),
-                )
-                self._ez_client.forward(operation)
-            except RequestException as ex:
-                self.logger.error(f"Error while publishing event to parent: {ex}")
+        try:
+            operation = Operation(
+                operation_type="PUBLISH_EVENT",
+                model=event,
+                model_type="Event",
+                source_garden_name=conf.get("garden.name"),
+            )
+            self._ez_client.forward(operation)
+        except RequestException as ex:
+            self.logger.error(f"Error while publishing event to parent: {ex}")
 
-                self._connected = False
-                self._reconnect()
+            self._connected = False
+            self._reconnect()
 
     def _update_garden_connection(self, status):
         garden = local_garden()

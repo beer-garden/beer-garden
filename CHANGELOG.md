@@ -18,6 +18,24 @@ TBD
 - New UI pages for User and Role management
 - Upgraded Brewtils version to [3.27.0](https://github.com/beer-garden/brewtils/releases/tag/3.27.0)
 
+# 3.26.4
+
+7/12/2024
+
+- Fixed bug where job updates did not maintian counters
+- Fixed bug where bulk job import did not support updates
+
+# 3.26.3
+
+7/10/2024
+
+- Fixed bug that prevented Autobrew Kwargs from being properly passed to the class object
+- Supporting Subscriber Types for Generated/Annotated/Dynamic, all stored in Topics Collection for quick reference
+- Optimized internal event processing to support API only events
+- Updated About page to support new tab for links
+- Command publishing blocklist UI and REST API removed
+- Fixed Command Index UI bug where breadcrumbs were not shown if Namespace and System Name matched
+
 # 3.26.2
 
 6/6/2024

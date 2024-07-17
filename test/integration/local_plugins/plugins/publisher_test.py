@@ -48,21 +48,26 @@ def topic():
     )
 
 
+@pytest.fixture(autouse=True)
+def force_garden_sync(easy_client):
+    # Sync Local Garden and give it a second to process it
+    easy_client.client.patch_garden("docker", '[{"operation": "sync"}]')
+    time.sleep(10)
+
+
 @pytest.mark.usefixtures("easy_client", "request_generator")
 class TestPublish(object):
 
     def wait_for_request(self, request, expected_length):
         check = 0
-        while check < 5:
-            completed_request = self.easy_client.get_request(request.id)
+        while check < 12:
+            completed_request = self.easy_client.find_unique_request(id=request.id)
             if len(completed_request.children) == expected_length:
                 break
             time.sleep(10)
             check += 1
 
-        if completed_request:
-            return completed_request
-        return request
+        return completed_request
 
     def test_one_trigger_topic_subscriber(self, topic1):
         newtopic = self.easy_client.create_topic(topic1)

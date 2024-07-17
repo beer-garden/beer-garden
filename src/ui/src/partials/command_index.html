@@ -6,7 +6,7 @@
   <h1 class="page-header">Commands</h1>
 
   <ol class="tagline breadcrumb">
-    <li ng-repeat="crumb in breadCrumbs" ng-class="{active: $last}">
+    <li ng-repeat="crumb in breadCrumbs track by $index" ng-class="{active: $last}">
       <span ng-if="!$last"
         ><a ng-if="$index==0" ui-sref="{systemName: null, systemVersion: null}"
           >{{crumb}}</a

@@ -73,7 +73,6 @@ __all__ = [
     "UpstreamRole",
     "AliasUserMap",
     "User",
-    "CommandPublishingBlocklist",
     "Topic",
     "Subscriber",
 ]
@@ -602,6 +601,7 @@ class Subscriber(MongoModel, EmbeddedDocument):
     version = StringField()
     instance = StringField()
     command = StringField()
+    subscriber_type = StringField()
 
 
 class Topic(MongoModel, Document):
@@ -633,6 +633,7 @@ class System(MongoModel, Document):
     local = BooleanField(default=True)
     template = StringField()
     groups = ListField(field=StringField())
+    prefix_topic = StringField()
 
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves
@@ -954,17 +955,6 @@ class RawFile(Document):
     request = LazyReferenceField(Request, required=False, reverse_delete_rule=CASCADE)
 
     meta = {"queryset_class": FileFieldHandlingQuerySet}
-
-
-class CommandPublishingBlocklist(Document):
-    namespace = StringField(required=True)
-    system = StringField(required=True)
-    command = StringField(required=True)
-    status = StringField(required=False)
-
-    meta = {
-        "indexes": [{"fields": ["namespace", "system", "command"], "unique": True}],
-    }
 
 
 class Role(MongoModel, Document):
