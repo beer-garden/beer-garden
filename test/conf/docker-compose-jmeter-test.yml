@@ -74,6 +74,18 @@ services:
         depends_on:
             - beer-garden-child   
 
+    jmeter-testing-start-stop:
+        image: justb4/jmeter
+        volumes:
+            - ./data/jmeter:/tests
+            - ./data/reports:/reports
+        networks:
+            - bg-network 
+        command: -n -l log.jtl -t /tests/stop_start_instance.jmx -e -o /reports/html/
+        depends_on:
+            - beer-garden-child   
+
+
     beer-garden-parent:
         image: bgio/beer-garden:parent
         networks:
@@ -83,6 +95,7 @@ services:
         volumes:
             - ./data/logging-config.yaml:/src/example_configs/logging-config.yaml
             - ./beer_garden_jmeter_parent_children:/children
+            - ./data/localplugins:/plugins
         environment:
             <<: *env
 
