@@ -549,26 +549,27 @@ def handle_event(event: Event) -> None:
 
     if event.garden == config.get("garden.name"):
         if event.name in [Events.JOB_CREATED.name, Events.JOB_UPDATED.name]:
-            try:
-                beer_garden.application.scheduler.add_job(
-                    run_job,
-                    trigger=event.payload.trigger,
-                    trigger_type=event.payload.trigger_type,
-                    kwargs={
-                        "request_template": event.payload.request_template,
-                        "job_id": str(event.payload.id),
-                    },
-                    name=event.payload.name,
-                    misfire_grace_time=event.payload.misfire_grace_time,
-                    coalesce=event.payload.coalesce,
-                    max_instances=event.payload.max_instances,
-                    jobstore="beer_garden",
-                    replace_existing=True,
-                    id=event.payload.id,
-                )
-            except Exception:
-                db.delete(event.payload)
-                raise
+            if event.payload.trigger_type != "file":
+                try:
+                    beer_garden.application.scheduler.add_job(
+                        run_job,
+                        trigger=event.payload.trigger,
+                        trigger_type=event.payload.trigger_type,
+                        kwargs={
+                            "request_template": event.payload.request_template,
+                            "job_id": str(event.payload.id),
+                        },
+                        name=event.payload.name,
+                        misfire_grace_time=event.payload.misfire_grace_time,
+                        coalesce=event.payload.coalesce,
+                        max_instances=event.payload.max_instances,
+                        jobstore="beer_garden",
+                        replace_existing=True,
+                        id=event.payload.id,
+                    )
+                except Exception:
+                    db.delete(event.payload)
+                    raise
 
         elif event.name == Events.JOB_PAUSED.name:
             beer_garden.application.scheduler.pause_job(
