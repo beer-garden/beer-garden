@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+# 3.26.4
+
+7/12/2024
+
+- Fixed bug where job updates did not maintian counters
+- Fixed bug where bulk job import did not support updates
+
 # 3.26.3
 
 7/10/2024
