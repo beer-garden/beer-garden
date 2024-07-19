@@ -1,9 +1,7 @@
 #!/bin/bash
 
-## declare an array variable
-# declare -a versions=("3.26.4" "3.26.3" "3.26.2")
-# declare -a versions=("3.26.4")
-versions=("3.26.4")
+## All of the versions to test
+versions=("3.23.0","3.23.1","3.24.0","3.24.1","3.24.2","3.24.3","3.24.4","3.25.0","3.25.1","3.26.0","3.26.1","3.26.2","3.26.3","3.26.4")
 
 ## now loop through the above array
 for version in "${versions[@]}"
@@ -43,4 +41,5 @@ do
 	docker volume rm $(docker volume ls -q)
 	
 	docker rmi bgio/beer-garden:regression
+
 done

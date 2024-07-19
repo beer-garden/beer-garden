@@ -67,7 +67,6 @@ services:
         image: justb4/jmeter
         volumes:
             - ./data/jmeter:/tests
-            - ./data/reports:/reports
         networks:
             - bg-network 
         command: -n -l log.jtl -t /tests/stress_test.jmx -e -o /reports/html/
@@ -78,7 +77,6 @@ services:
         image: justb4/jmeter
         volumes:
             - ./data/jmeter:/tests
-            - ./data/reports:/reports
         networks:
             - bg-network 
         command: -n -l log.jtl -t /tests/stop_start_instance.jmx -e -o /reports/html/
