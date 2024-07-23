@@ -23,8 +23,10 @@ class IntervalTrigger(APInterval):
         self.reschedule_on_finish = kwargs.pop("reschedule_on_finish", False)
         super(IntervalTrigger, self).__init__(*args, **kwargs)
 
+
 class FileTrigger(DateTrigger):
     """Beergarden implementation of File Trigger"""
+
     def __init__(self, *args, **kwargs):
         self.pattern = kwargs.pop("pattern", False)
         self.path = kwargs.pop("path", False)

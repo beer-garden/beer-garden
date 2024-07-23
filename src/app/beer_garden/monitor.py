@@ -3,13 +3,17 @@
 
 These are abstract classes generated to be utilizes for functions based off OS file events
 """
+import logging
 from pathlib import Path
 
+from brewtils.models import Events, Job
 from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers.polling import PollingObserver
 
 from beer_garden.db.mongo.models import Event
-from beer_garden.events import publish
+from beer_garden.events import publish, publish_event
+
+logger = logging.getLogger()
 
 
 class MonitorFile(PatternMatchingEventHandler):
@@ -83,3 +87,74 @@ class MonitorFile(PatternMatchingEventHandler):
         """
         if self.deleted_event:
             publish(self.deleted_event)
+
+
+class MonitorDirectory(PatternMatchingEventHandler):
+    """Monitor files and create Beergarden events
+
+    This is a wrapper around a watchdog PollingObserver. PollingObserver is used instead
+    of Observer because Observer throws events on each file transaction.
+
+    Note that the events generated are NOT watchdog events, they are whatever
+    Beergarden events are specified during initialization.
+
+    """
+
+    def __init__(self, path: str, pattern: str, recursive: bool, job: Job):
+        super().__init__(patterns=[pattern], ignore_directories=True)
+
+        self._path = path
+        self._pattern = pattern
+        self._recursive = recursive
+        self._job = job
+        self._observer = PollingObserver()
+        self._observer.schedule(self, self._path, recursive=self._recursive)
+
+    def start(self):
+        logger.info(f"Start dir monitor on {self._path} for {self._job.id}")
+        try:
+            self._observer.start()
+        except RuntimeError:
+            self._observer = PollingObserver()
+            self._observer.schedule(self, self._path, recursive=True)
+            self._observer.start()
+
+    def stop(self):
+        logger.info(f"Stop dir monitor on {self._path}  for {self._job.id}")
+        if self._observer.is_alive():
+            self._observer.stop()
+            self._observer.join()
+
+    @publish_event(Events.DIRECTORY_FILE_CHANGE)
+    def on_created(self, event):
+        """Callback invoked when the file is created
+
+        When a user VIM edits a file it DELETES, then CREATES the file, this
+        captures that case
+        """
+        logger.info(f"Dir file changed: {event.src_path} for {self._job.id}")
+        return self._job
+
+    def on_modified(self, _):
+        """Callback invoked when the file is modified
+
+        This captures all other modification events that occur against the file
+        """
+        if self.modify_event:
+            publish(self.modify_event)
+
+    def on_moved(self, _):
+        """Callback invoked when the file is moved
+
+        This captures if the file is moved into or from the directory
+        """
+        if self.moved_event:
+            publish(self.moved_event)
+
+    def on_deleted(self, event):
+        """Callback invoked when the file is deleted
+
+        This captures if the file was deleted (be warned that VIM does this by
+        default during write actions)
+        """
+        publish(Event(name=Events.DIRECTORY_FILE_CHANGE.name))

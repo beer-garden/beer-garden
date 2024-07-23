@@ -762,6 +762,7 @@ class CronTrigger(MongoModel, EmbeddedDocument):
     timezone = StringField(required=False, default="utc", chocies=pytz.all_timezones)
     jitter = IntField(required=False)
 
+
 class FileTrigger(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.FileTrigger
 
