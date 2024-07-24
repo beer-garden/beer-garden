@@ -21,22 +21,15 @@
         <stringProp name="TestPlan.comments">Update here for testing outside of pipeline</stringProp>
       </UserParameters>
       <hashTree/>
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Beer Garden Common UI Tests">
-        <intProp name="ThreadGroup.num_threads">200</intProp>
-        <intProp name="ThreadGroup.ramp_time">120</intProp>
-        <longProp name="ThreadGroup.duration">1200</longProp>
-        <boolProp name="ThreadGroup.same_user_on_next_iteration">false</boolProp>
-        <boolProp name="ThreadGroup.scheduler">true</boolProp>
+      <OpenModelThreadGroup guiclass="OpenModelThreadGroupGui" testclass="OpenModelThreadGroup" testname="Beer Garden Common UI Tests">
+        <stringProp name="OpenModelThreadGroup.schedule">rate(100/sec) random_arrivals(20 min)</stringProp>
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
-        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
-          <intProp name="LoopController.loops">-1</intProp>
-          <boolProp name="LoopController.continue_forever">false</boolProp>
-        </elementProp>
-      </ThreadGroup>
+        <elementProp name="ThreadGroup.main_controller" elementType="OpenModelThreadGroupController"/>
+      </OpenModelThreadGroup>
       <hashTree>
         <RandomOrderController guiclass="RandomOrderControllerGui" testclass="RandomOrderController" testname="Random Order Controller"/>
         <hashTree>
-          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Request Table Loader">
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Request Table Loader" enabled="true">
             <stringProp name="HTTPSampler.domain">${parentHostname}</stringProp>
             <stringProp name="HTTPSampler.port">2337</stringProp>
             <stringProp name="HTTPSampler.protocol">http</stringProp>
@@ -50,7 +43,7 @@
             </elementProp>
           </HTTPSamplerProxy>
           <hashTree/>
-          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Garden Loader">
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Garden Loader" enabled="true">
             <stringProp name="HTTPSampler.domain">${parentHostname}</stringProp>
             <stringProp name="HTTPSampler.port">2337</stringProp>
             <stringProp name="HTTPSampler.protocol">http</stringProp>
@@ -64,7 +57,7 @@
             </elementProp>
           </HTTPSamplerProxy>
           <hashTree/>
-          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Runners Loader">
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Runners Loader" enabled="true">
             <stringProp name="HTTPSampler.domain">${parentHostname}</stringProp>
             <stringProp name="HTTPSampler.port">2337</stringProp>
             <stringProp name="HTTPSampler.protocol">http</stringProp>

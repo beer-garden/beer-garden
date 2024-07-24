@@ -69,7 +69,8 @@ services:
             - ./data/jmeter:/tests
         networks:
             - bg-network 
-        command: -n -l log.jtl -t /tests/stress_test.jmx -e -o /reports/html/
+        command: -n -l log.jtl -t /tests/stress_test.jmx
+        # command: -n -l log.jtl -t /tests/stress_test.jmx -e -o /reports/html/
         depends_on:
             - beer-garden-child   
 
@@ -79,7 +80,8 @@ services:
             - ./data/jmeter:/tests
         networks:
             - bg-network 
-        command: -n -l log.jtl -t /tests/start_stop_instance.jmx -e -o /reports/html/
+        # command: -n -l log.jtl -t /tests/start_stop_instance.jmx -e -o /reports/html/
+        command: -n -l log.jtl -t /tests/start_stop_instance.jmx
         depends_on:
             - beer-garden-child   
 
@@ -89,7 +91,19 @@ services:
             - ./data/jmeter:/tests
         networks:
             - bg-network 
-        command: -n -l log.jtl -t /tests/common_ui_calls.jmx -e -o /reports/html/
+        # command: -n -l log.jtl -t /tests/common_ui_calls.jmx -e -o /reports/html/
+        command: -n -l log.jtl -t /tests/common_ui_calls.jmx
+        depends_on:
+            - beer-garden-child   
+
+    jmeter-testing-events:
+        image: justb4/jmeter
+        volumes:
+            - ./data/jmeter:/tests
+        networks:
+            - bg-network 
+        # command: -n -l log.jtl -t /tests/common_ui_calls.jmx -e -o /reports/html/
+        command: -n -l log.jtl -t /tests/events_flooding.jmx
         depends_on:
             - beer-garden-child   
 
@@ -116,6 +130,9 @@ services:
             BG_CHILDREN_CONFIG_DIRECTORY: /children
             BG_CHILDREN_UNRESPONSIVE_TIMEOUT_ENABLED: "true"
             BG_METRICS_GARDEN_LATENCY_METRICS_ENABLED: "true"
+
+            # Set action requests to expire for average time for data base loader to complete
+            BG_DB_TTL_ACTION: 20
 
             # Point at the correct database
             BG_DB_HOST: mongodb
@@ -153,6 +170,7 @@ services:
             - "2358:2338"
         volumes:
             - ./data/logging-config.yaml:/src/example_configs/logging-config.yaml
+            - ./data/localplugins:/plugins
         environment:
             <<: *env
 
