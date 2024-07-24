@@ -227,7 +227,7 @@ class TestFileOperations(object):
         return Job(
             trigger_type="file",
             trigger=FileTrigger(
-                pattern="do_not_care", path="./", callbacks={"on_created": True}
+                pattern="do_not_care", path="./", recursive=False,
             ),
             request_template=RequestTemplate(
                 system="something_v3",
