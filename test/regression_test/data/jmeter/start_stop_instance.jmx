@@ -15,9 +15,9 @@
           <stringProp name="642691418">systemName</stringProp>
         </collectionProp>
         <collectionProp name="UserParameters.thread_values">
-          <collectionProp name="-554548145">
-            <stringProp name="-1204607085">beer-garden-parent</stringProp>
-            <stringProp name="110546223">topic</stringProp>
+          <collectionProp name="739021202">
+            <stringProp name="-1752233883">beer-garden-parent</stringProp>
+            <stringProp name="96784904">error</stringProp>
           </collectionProp>
         </collectionProp>
         <boolProp name="UserParameters.per_iteration">false</boolProp>
@@ -31,7 +31,7 @@
         <boolProp name="ThreadGroup.same_user_on_next_iteration">false</boolProp>
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
-          <stringProp name="LoopController.loops">100</stringProp>
+          <stringProp name="LoopController.loops">200</stringProp>
           <boolProp name="LoopController.continue_forever">false</boolProp>
         </elementProp>
       </ThreadGroup>
@@ -50,7 +50,7 @@
           </elementProp>
         </HTTPSamplerProxy>
         <hashTree>
-          <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="JSON Extractor">
+          <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="JSON Extractor" enabled="true">
             <stringProp name="JSONPostProcessor.referenceNames">instance_id</stringProp>
             <stringProp name="JSONPostProcessor.jsonPathExprs">$..[?(@.path==&quot;${systemName}&quot;)].instance_id;</stringProp>
             <stringProp name="JSONPostProcessor.match_numbers">-1</stringProp>
@@ -58,7 +58,7 @@
           </JSONPostProcessor>
           <hashTree/>
         </hashTree>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Stop Instance">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Stop Instance" enabled="true">
           <stringProp name="HTTPSampler.domain">${parentHostname}</stringProp>
           <stringProp name="HTTPSampler.port">2337</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
@@ -78,7 +78,7 @@
           </elementProp>
         </HTTPSamplerProxy>
         <hashTree>
-          <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="JSON Extractor">
+          <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="JSON Extractor" enabled="true">
             <stringProp name="JSONPostProcessor.referenceNames">instance_id</stringProp>
             <stringProp name="JSONPostProcessor.jsonPathExprs">$..[?(@.path==&quot;${systemName}&quot;)].instance_id;</stringProp>
             <stringProp name="JSONPostProcessor.match_numbers">-1</stringProp>
@@ -109,14 +109,14 @@
           </elementProp>
         </HTTPSamplerProxy>
         <hashTree>
-          <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="JSON Extractor">
+          <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="JSON Extractor" enabled="true">
             <stringProp name="JSONPostProcessor.referenceNames">runner_stopped</stringProp>
             <stringProp name="JSONPostProcessor.jsonPathExprs">$..[?(@.path==&quot;${systemName}&quot;)].stopped;</stringProp>
             <stringProp name="JSONPostProcessor.match_numbers">-1</stringProp>
             <stringProp name="JSONPostProcessor.defaultValues">missing</stringProp>
           </JSONPostProcessor>
           <hashTree/>
-          <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="JSON Extractor">
+          <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="JSON Extractor" enabled="true">
             <stringProp name="JSONPostProcessor.referenceNames">instance_id</stringProp>
             <stringProp name="JSONPostProcessor.jsonPathExprs">$..[?(@.path==&quot;${systemName}&quot;)].instance_id;</stringProp>
             <stringProp name="JSONPostProcessor.match_numbers">-1</stringProp>
@@ -124,11 +124,11 @@
           </JSONPostProcessor>
           <hashTree/>
         </hashTree>
-        <WhileController guiclass="WhileControllerGui" testclass="WhileController" testname="While Controller">
+        <WhileController guiclass="WhileControllerGui" testclass="WhileController" testname="Wait for Runner to Stop">
           <stringProp name="WhileController.condition">${__groovy(vars.get(&quot;runner_stopped_1&quot;) != &quot;true&quot;,)}</stringProp>
         </WhileController>
         <hashTree>
-          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Keep checking for stopped status">
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Keep checking for stopped status" enabled="true">
             <stringProp name="HTTPSampler.domain">${parentHostname}</stringProp>
             <stringProp name="HTTPSampler.port">2337</stringProp>
             <stringProp name="HTTPSampler.protocol">http</stringProp>
@@ -142,14 +142,14 @@
             </elementProp>
           </HTTPSamplerProxy>
           <hashTree>
-            <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="JSON Extractor">
+            <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="JSON Extractor" enabled="true">
               <stringProp name="JSONPostProcessor.referenceNames">runner_stopped</stringProp>
               <stringProp name="JSONPostProcessor.jsonPathExprs">$..[?(@.path==&quot;${systemName}&quot;)].stopped</stringProp>
               <stringProp name="JSONPostProcessor.match_numbers">-1</stringProp>
               <stringProp name="JSONPostProcessor.defaultValues">true</stringProp>
             </JSONPostProcessor>
             <hashTree/>
-            <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="JSON Extractor">
+            <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="JSON Extractor" enabled="true">
               <stringProp name="JSONPostProcessor.referenceNames">instance_id</stringProp>
               <stringProp name="JSONPostProcessor.jsonPathExprs">$..[?(@.path==&quot;${systemName}&quot;)].instance_id;</stringProp>
               <stringProp name="JSONPostProcessor.match_numbers">-1</stringProp>
@@ -158,7 +158,7 @@
             <hashTree/>
           </hashTree>
         </hashTree>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Start Instance">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Start Instance" enabled="true">
           <stringProp name="HTTPSampler.domain">${parentHostname}</stringProp>
           <stringProp name="HTTPSampler.port">2337</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
@@ -178,7 +178,7 @@
           </elementProp>
         </HTTPSamplerProxy>
         <hashTree>
-          <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager">
+          <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
             <collectionProp name="HeaderManager.headers">
               <elementProp name="" elementType="Header">
                 <stringProp name="Header.name">Content-Type</stringProp>
@@ -202,31 +202,25 @@
           </elementProp>
         </HTTPSamplerProxy>
         <hashTree>
-          <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="JSON Extractor">
+          <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="JSON Extractor" enabled="true">
             <stringProp name="JSONPostProcessor.referenceNames">runner_stopped</stringProp>
             <stringProp name="JSONPostProcessor.jsonPathExprs">$..[?(@.path==&quot;${systemName}&quot;)].stopped</stringProp>
             <stringProp name="JSONPostProcessor.match_numbers">-1</stringProp>
             <stringProp name="JSONPostProcessor.defaultValues">true</stringProp>
           </JSONPostProcessor>
           <hashTree/>
-          <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="JSON Instance ID Extractor">
+          <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="JSON Instance ID Extractor" enabled="true">
             <stringProp name="JSONPostProcessor.referenceNames">instance_id</stringProp>
             <stringProp name="JSONPostProcessor.jsonPathExprs">$..[?(@.path==&quot;${systemName}&quot;)].instance_id;</stringProp>
             <stringProp name="JSONPostProcessor.match_numbers">-1</stringProp>
           </JSONPostProcessor>
           <hashTree/>
         </hashTree>
-        <DebugSampler guiclass="TestBeanGUI" testclass="DebugSampler" testname="Debug Sampler" enabled="false">
-          <boolProp name="displayJMeterProperties">false</boolProp>
-          <boolProp name="displayJMeterVariables">true</boolProp>
-          <boolProp name="displaySystemProperties">false</boolProp>
-        </DebugSampler>
-        <hashTree/>
-        <WhileController guiclass="WhileControllerGui" testclass="WhileController" testname="While Controller">
+        <WhileController guiclass="WhileControllerGui" testclass="WhileController" testname="Wait for Runner to associated with Instance">
           <stringProp name="WhileController.condition">${__groovy(vars.get(&quot;instance_id_1&quot;).allWhitespace)}</stringProp>
         </WhileController>
         <hashTree>
-          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Keep checking for started status">
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Keep checking for started status" enabled="true">
             <stringProp name="HTTPSampler.domain">${parentHostname}</stringProp>
             <stringProp name="HTTPSampler.port">2337</stringProp>
             <stringProp name="HTTPSampler.protocol">http</stringProp>
@@ -240,7 +234,7 @@
             </elementProp>
           </HTTPSamplerProxy>
           <hashTree>
-            <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="JSON Instance ID Extractor">
+            <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="JSON Instance ID Extractor" enabled="true">
               <stringProp name="JSONPostProcessor.referenceNames">instance_id</stringProp>
               <stringProp name="JSONPostProcessor.jsonPathExprs">$..[?(@.path==&quot;${systemName}&quot;)].instance_id;</stringProp>
               <stringProp name="JSONPostProcessor.match_numbers">-1</stringProp>

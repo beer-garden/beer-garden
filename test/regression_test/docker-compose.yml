@@ -63,7 +63,7 @@ services:
         depends_on:
             - beer-garden-parent   
 
-    jmeter-testing:
+    jmeter-testing-requests:
         image: justb4/jmeter
         volumes:
             - ./data/jmeter:/tests
@@ -79,7 +79,17 @@ services:
             - ./data/jmeter:/tests
         networks:
             - bg-network 
-        command: -n -l log.jtl -t /tests/stop_start_instance.jmx -e -o /reports/html/
+        command: -n -l log.jtl -t /tests/start_stop_instance.jmx -e -o /reports/html/
+        depends_on:
+            - beer-garden-child   
+
+    jmeter-testing-ui:
+        image: justb4/jmeter
+        volumes:
+            - ./data/jmeter:/tests
+        networks:
+            - bg-network 
+        command: -n -l log.jtl -t /tests/common_ui_calls.jmx -e -o /reports/html/
         depends_on:
             - beer-garden-child   
 

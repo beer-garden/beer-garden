@@ -24,11 +24,15 @@ do
 	# Pre-Load database
     echo "Load Database"
 	docker compose up jmeter-loader
+
+	# Give BG a minute to process requests
+    echo "Wait 120 seconds"
+	sleep 120s
 	
 	# Run testing
     echo "Run Tests"
-	docker compose up jmeter-testing | tee $version-jmeter-request.log &
-	# docker compose up jmeter-ui | tee $version-jmeter-ui.log &
+	docker compose up jmeter-testing-requests | tee $version-jmeter-request.log &
+	docker compose up jmeter-testing-ui | tee $version-jmeter-ui.log &
 	docker compose up jmeter-testing-start-stop | tee $version-jmeter-start-stop.log &
 	wait
 	
