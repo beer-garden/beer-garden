@@ -400,7 +400,14 @@ _GARDEN_SPEC = {
             "required": True,
             "default": "default",
             "description": "The routing name for upstream Beer Gardens to use",
-        }
+        },
+        "status_history": {
+            "type": "int",
+            "default": 50,
+            "description": (
+                "Amount of historical status heartbeats tracked for Garden and Connections"
+            ),
+        },
     },
 }
 
@@ -1522,6 +1529,11 @@ _PLUGIN_SPEC = {
                 "Amount of time to wait before marking a plugin asunresponsive"
             ),
             "previous_names": ["plugin_status_timeout "],
+        },
+        "status_history": {
+            "type": "int",
+            "default": 50,
+            "description": ("Amount of historical status heartbeats tracked"),
         },
     },
 }

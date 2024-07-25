@@ -1,13 +1,14 @@
 import os
+from datetime import datetime, timedelta, timezone
+
+from brewtils.models import Replication
 
 from beer_garden.replication import (
-    get_replication_id,
     create_replication,
+    get_replication_id,
     get_replications,
     update_replication,
 )
-from brewtils.models import Replication
-from datetime import datetime, timedelta, timezone
 
 
 class TestReplication(object):

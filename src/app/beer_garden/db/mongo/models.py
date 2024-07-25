@@ -49,10 +49,12 @@ from mongoengine.errors import DoesNotExist
 from beer_garden import config
 from beer_garden.db.mongo.querysets import FileFieldHandlingQuerySet
 
-from .fields import DummyField, StatusInfo
+from .fields import DummyField
 
 __all__ = [
     "System",
+    "StatusHistory",
+    "StatusInfo",
     "Instance",
     "Command",
     "Connection",
@@ -266,6 +268,20 @@ class Command(MongoModel, EmbeddedDocument):
             )
 
 
+class StatusHistory(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.StatusHistory
+
+    heartbeat = DateTimeField()
+    status = StringField()
+
+
+class StatusInfo(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.StatusInfo
+
+    heartbeat = DateTimeField()
+    history = EmbeddedDocumentListField("StatusHistory")
+
+
 def generate_objectid():
     return ObjectIdField().to_python(None)
 
@@ -278,7 +294,7 @@ class Instance(MongoModel, EmbeddedDocument):
     name = StringField(required=True, default="default")
     description = StringField()
     status = StringField(default="INITIALIZING")
-    status_info = EmbeddedDocumentField("StatusInfo", default=StatusInfo())
+    status_info = EmbeddedDocumentField("StatusInfo")
     queue_type = StringField()
     queue_info = DictField()
     icon_name = StringField()
@@ -804,7 +820,7 @@ class Connection(MongoModel, EmbeddedDocument):
 
     api = StringField(required=True)
     status = StringField(default="UNKOWN")
-    status_info = EmbeddedDocumentField("StatusInfo", default=StatusInfo())
+    status_info = EmbeddedDocumentField("StatusInfo")
     config = DictField()
 
 
@@ -813,7 +829,7 @@ class Garden(MongoModel, Document):
 
     name = StringField(required=True, default="default")
     status = StringField(default="INITIALIZING")
-    status_info = EmbeddedDocumentField("StatusInfo", default=StatusInfo())
+    status_info = EmbeddedDocumentField("StatusInfo")
     namespaces = ListField()
 
     connection_type = StringField(required=False)

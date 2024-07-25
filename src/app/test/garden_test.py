@@ -550,9 +550,7 @@ stomp:
     def test_garden_unresponsive_trigger(self, bg_garden):
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
-            connection.status_info["heartbeat"] = datetime.utcnow() - timedelta(
-                minutes=60
-            )
+            connection.status_info.heartbeat = datetime.utcnow() - timedelta(minutes=60)
         bg_garden.metadata = {"_unresponsive_timeout": 15}
 
         create_garden(bg_garden)
@@ -568,9 +566,7 @@ stomp:
     def test_garden_unresponsive_trigger_in_window(self, bg_garden):
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
-            connection.status_info["heartbeat"] = datetime.utcnow() - timedelta(
-                minutes=10
-            )
+            connection.status_info.heartbeat = datetime.utcnow() - timedelta(minutes=10)
 
         bg_garden.metadata = {"_unresponsive_timeout": 15}
 
@@ -587,11 +583,7 @@ stomp:
     def test_garden_unresponsive_trigger_child_metadata(self, bg_garden):
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
-            connection.status_info["heartbeat"] = datetime.utcnow() - timedelta(
-                minutes=10
-            )
-
-        bg_garden.metadata = {"_unresponsive_timeout": 15}
+            connection.status_info.heartbeat = datetime.utcnow() - timedelta(minutes=10)
 
         bg_garden.metadata["_unresponsive_timeout"] = 5
 
@@ -608,9 +600,7 @@ stomp:
     def test_garden_unresponsive_trigger_missing_window(self, bg_garden):
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
-            connection.status_info["heartbeat"] = datetime.utcnow() - timedelta(
-                minutes=10
-            )
+            connection.status_info.heartbeat = datetime.utcnow() - timedelta(minutes=10)
 
         bg_garden.metadata = {"_unresponsive_timeout": 15}
 
