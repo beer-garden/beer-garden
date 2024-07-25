@@ -4,10 +4,14 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
+from brewtils.models import Connection as BrewtilsConnection
+from brewtils.models import Event, Events
+from brewtils.models import Garden as BrewtilsGarden
+from brewtils.models import System as BrewtilsSystem
 from mongoengine import DoesNotExist, connect
 
 from beer_garden import config
-from beer_garden.db.mongo.models import Garden, RemoteUser, System
+from beer_garden.db.mongo.models import Garden, System
 from beer_garden.garden import (
     check_garden_receiving_heartbeat,
     create_garden,
@@ -22,10 +26,6 @@ from beer_garden.garden import (
     upsert_garden,
 )
 from beer_garden.systems import create_system
-from brewtils.models import Connection as BrewtilsConnection
-from brewtils.models import Event, Events
-from brewtils.models import Garden as BrewtilsGarden
-from brewtils.models import System as BrewtilsSystem
 
 
 @pytest.fixture(autouse=True)
@@ -378,18 +378,18 @@ stomp:
 
         os.remove(config_file)
 
-    def test_remove_garden_cleans_up_remote_user_entries(self, bg_garden):
-        """remove_garden should remove any RemoteUser entries for that garden"""
-        garden = create_garden(bg_garden)
-        remote_user = RemoteUser(username="remoteuser", garden=garden.name).save()
+    # def test_remove_garden_cleans_up_remote_user_entries(self, bg_garden):
+    #     """remove_garden should remove any RemoteUser entries for that garden"""
+    #     garden = create_garden(bg_garden)
+    #     remote_user = RemoteUser(username="remoteuser", garden=garden.name).save()
 
-        remove_garden(garden.name)
+    #     remove_garden(garden.name)
 
-        remote_user_count = len(
-            RemoteUser.objects.filter(username=remote_user.username, garden=garden.name)
-        )
+    #     remote_user_count = len(
+    #         RemoteUser.objects.filter(username=remote_user.username, garden=garden.name)
+    #     )
 
-        assert remote_user_count == 0
+    #     assert remote_user_count == 0
 
     def test_check_garden_receiving_heartbeat_update_heartbeat(self):
         garden = check_garden_receiving_heartbeat("http", garden_name="new_garden")
@@ -548,7 +548,6 @@ stomp:
         assert updated_garden.status == "STOPPED"
 
     def test_garden_unresponsive_trigger(self, bg_garden):
-
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
             connection.status_info.heartbeat = datetime.utcnow() - timedelta(minutes=60)
@@ -565,7 +564,6 @@ stomp:
             assert connection.status == "UNRESPONSIVE"
 
     def test_garden_unresponsive_trigger_in_window(self, bg_garden):
-
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
             connection.status_info.heartbeat = datetime.utcnow() - timedelta(minutes=10)
@@ -583,7 +581,6 @@ stomp:
             assert connection.status == "RECEIVING"
 
     def test_garden_unresponsive_trigger_child_metadata(self, bg_garden):
-
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
             connection.status_info.heartbeat = datetime.utcnow() - timedelta(minutes=10)
@@ -601,7 +598,6 @@ stomp:
             assert connection.status == "UNRESPONSIVE"
 
     def test_garden_unresponsive_trigger_missing_window(self, bg_garden):
-
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
             connection.status_info.heartbeat = datetime.utcnow() - timedelta(minutes=10)

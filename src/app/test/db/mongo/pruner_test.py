@@ -8,15 +8,14 @@ from mongomock.gridfs import enable_gridfs_integration
 
 from beer_garden import config
 from beer_garden.db.mongo.models import File, RawFile, Request
-
 from beer_garden.db.mongo.pruner import (
+    determine_tasks,
     prune_action_requests,
     prune_admin_requests,
-    prune_info_requests,
-    prune_temp_requests,
     prune_files,
-    determine_tasks,
+    prune_info_requests,
     prune_outstanding,
+    prune_temp_requests,
 )
 
 enable_gridfs_integration()

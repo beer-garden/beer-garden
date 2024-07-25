@@ -4,19 +4,18 @@
     <button
       type="button"
       class="btn btn-primary"
-      ng-click="doCreate()"
-      ng-show="hasPermission(user, 'user:create')"
+      ng-click="doRescan()"
+      ng-if="hasPermission('GARDEN_ADMIN', true)"
     >
-      Create User
+      Rescan Roles
     </button>
     <button
       type="button"
       class="btn btn-primary"
-      ng-if="displaySyncStatus"
-      ng-click="doSync()"
-      ng-show="hasPermission(user, 'garden:update')"
+      ng-click="doCreate()"
+      ng-if="hasPermission('GARDEN_ADMIN', true)"
     >
-      Sync Users
+      Create User
     </button>
   </div>
 </h1>
@@ -42,34 +41,132 @@
     >
       <thead>
         <tr>
-          <th id="th_username" scope="col">Username</th>
-          <th ng-if="displaySyncStatus" id="th_fullysynced" scope="col">
-            Fully Synced
-          </th>
+          <th scope="col">Username</th>
+          <th scope="col">Max Permission</th>
+          <th scope="col">Last Login</th>
+          <th scope="col">Roles</th>
+          <th scope="col">Upstream Roles</th>
+          <th scope="col">Alias Garden Accounts</th>
+          <th scope="col">Active User Token</th>
+          <th scope="col"></th>
         </tr>
       </thead>
       <tbody>
         <tr ng-repeat="user in users | filter:query">
           <td>
-            <a ui-sref="base.user_view({username: user.username})"
-              >{{user.username}}</a
-            >
-          </td>
-          <td ng-if="displaySyncStatus">
             <i
-              ng-if="user.fullySynced"
+            ng-if="user.protected && !user.is_remote"
+              class="fa fa-user-shield"
+              title="Protected Account"
+              style="padding-right: 2px;"
+            ></i>
+            <i
+            ng-if="!user.protected && !user.is_remote && user.file_generated"
+              class="fa fa-user-tag"
+              title="Protected Account"
+              style="padding-right: 2px;"
+            ></i>
+            <i
+            ng-if="!user.protected && !user.is_remote && !user.file_generated"
+              class="fa fa-user"
+              title="File Generated Account"
+              style="padding-right: 2px;"
+            ></i>
+            <i
+              ng-if="user.is_remote"
+              class="fa-regular fa-user"
+              title="Remote Account"
+              style="padding-right: 2px;"
+            ></i>
+            {{user.username}}
+          </td>
+          <td>{{maxPermission(user)}}</td>
+          <td>{{getLastAuth(user)}}</td>
+          <td>
+            <div ng-repeat="role in user.local_roles">
+              <div title="{{roleTitle(role)}}">{{role.name}}</div>
+            </div>
+            <div ng-repeat="missingRole in getMissingRoles(user)">
+              <div title="Failed Authentication"><s>{{missingRole}}</s></div>
+            </div>
+          </td>
+          <td>
+            <div ng-repeat="role in user.upstream_roles">
+              <div title="{{roleTitle(role)}}">{{role.name}}</div>
+            </div>
+          </td>
+          <td>
+            <div ng-if="user.user_alias_mapping.length > 0">
+              <table 
+                class="table table-bordered"
+                style="width: 100%"
+                >
+                <thead>
+                  <tr>
+                    <th scope="col">Garden</th>
+                    <th scope="col">Account</th>
+                  </tr>
+                  </thead>
+                <tbody>
+                  <tr ng-repeat="user_alias in user.user_alias_mapping">
+                    <td>{{user_alias.target_garden}}</td>
+                    <td>{{user_alias.username}}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </td>
+          <td>
+            <i
+              ng-if="user.metadata !== undefined && user.metadata.has_token !== undefined && user.metadata.has_token"
               class="glyphicon glyphicon-ok"
               style="color: green"
-              title="true"
+              title="Active"
             ></i>
             <i
-              ng-if="!user.fullySynced"
+            ng-if="user.metadata === undefined || user.metadata.has_token === undefined ||  !user.metadata.has_token"
               class="glyphicon glyphicon-remove"
               style="color: red"
-              title="false"
+              title="Inactive"
             ></i>
-            <span hidden>{{user.fullySynced}}</span>
           </td>
+          <td>
+            <button
+              class="fa fa-trash pull-right"
+              style="font-size: 20px"
+              ng-click="doDelete(user)"
+              ng-if="hasPermission('GARDEN_ADMIN', true) && (!user.protected || user.is_remote)"
+              title="Delete User"
+            ></button>
+            <button
+              class="fa fa-sign-out pull-right"
+              style="font-size: 20px"
+              ng-click="doRevokeToken(user)"
+              ng-if="hasPermission('GARDEN_ADMIN', true)"
+              title="Delete User Token"
+            ></button>
+            <button
+              class="fa fa-user-plus pull-right"
+              style="font-size: 20px"
+              ng-click="showAddRemoveRoles(user)"
+              ng-if="hasPermission('GARDEN_ADMIN', true) && (!user.protected || user.is_remote)"
+              title="Add/Remove Roles"
+            ></button>
+            <button
+              class="fa fa-globe pull-right"
+              style="font-size: 20px"
+              ng-click="showUserGardenAccounts(user)"
+              ng-if="hasPermission('GARDEN_ADMIN', true)"
+              title="Garden Account Mapping"
+            ></button>
+            <button
+              class="fa fa-pencil pull-right"
+              style="font-size: 20px"
+              ng-click="doAdminChangePassword(user)"
+              ng-if="hasPermission('GARDEN_ADMIN', true) && (!user.protected || user.is_remote)"
+              title="Change Password"
+            ></button>
+        </td>
         </tr>
       </tbody>
     </table>

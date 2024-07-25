@@ -28,7 +28,6 @@ from yapconf.exceptions import (
 
 import beer_garden.config as config
 import beer_garden.db.api as db
-from beer_garden.db.mongo.models import RemoteUser
 from beer_garden.errors import ForwardException
 from beer_garden.events import publish, publish_event
 from beer_garden.namespace import get_namespaces
@@ -324,14 +323,6 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
     return update_garden(garden)
 
 
-def remove_remote_users(garden: Garden):
-    RemoteUser.objects.filter(garden=garden.name).delete()
-
-    if garden.children:
-        for children in garden.children:
-            remove_remote_users(children)
-
-
 def remove_remote_systems(garden: Garden):
     for system in garden.systems:
         remove_system(system.id)
@@ -354,7 +345,6 @@ def remove_garden(garden_name: str = None, garden: Garden = None) -> None:
 
     garden = garden or get_garden(garden_name)
 
-    remove_remote_users(garden)
     remove_remote_systems(garden)
 
     for child in garden.children:
@@ -543,6 +533,8 @@ def load_garden_connections(garden: Garden):
             Connection(api="STOMP", status="CONFIGURATION_ERROR")
         )
         return garden
+
+    garden.default_user = config.get("default_user", garden_config)
 
     if config.get("http.enabled", garden_config):
         config_map = {

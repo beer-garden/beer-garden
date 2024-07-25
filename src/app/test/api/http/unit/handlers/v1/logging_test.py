@@ -2,11 +2,14 @@
 import json
 
 import pytest
+from brewtils.models import Role, User
 from tornado.httpclient import HTTPError
 
 from beer_garden.api.http.authentication import issue_token_pair
-from beer_garden.db.mongo.models import Garden, Role, RoleAssignment, User
+from beer_garden.db.mongo.models import Garden
 from beer_garden.log import PluginLoggingManager
+from beer_garden.role import create_role, delete_role
+from beer_garden.user import create_user, delete_user
 
 
 @pytest.fixture(autouse=True)
@@ -18,32 +21,23 @@ def garden_permitted():
 
 
 @pytest.fixture
-def garden_admin_role():
-    role = Role(
-        name="garden_admin",
-        permissions=["garden:read", "garden:update"],
-    ).save()
-
+def garden_admin_role(garden_permitted):
+    role = create_role(
+        Role(
+            name="garden_admin",
+            permission="GARDEN_ADMIN",
+            scope_gardens=[garden_permitted.name],
+        )
+    )
     yield role
-    role.delete()
+    delete_role(role)
 
 
 @pytest.fixture
-def user_with_permission(garden_permitted, garden_admin_role):
-    role_assignment = RoleAssignment(
-        role=garden_admin_role,
-        domain={
-            "scope": "Garden",
-            "identifiers": {
-                "name": garden_permitted.name,
-            },
-        },
-    )
-
-    user = User(username="testuser", role_assignments=[role_assignment]).save()
-
+def user_with_permission(garden_admin_role):
+    user = create_user(User(username="testuser", local_roles=[garden_admin_role]))
     yield user
-    user.delete()
+    delete_user(user=user)
 
 
 @pytest.fixture
