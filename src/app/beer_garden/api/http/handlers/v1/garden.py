@@ -7,13 +7,12 @@ from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.api.http.schemas.v1.garden import GardenRemoveStatusInfoSchema
-
 from beer_garden.garden import local_garden
 
 logger = logging.getLogger(__name__)
 
 
-def _remove_heartbeat_history (response: str, many: bool = False) -> str:
+def _remove_heartbeat_history(response: str, many: bool = False) -> str:
     """Strips out the status_info.history models
 
     This balloons out the size of the returned object, and isn't currently
@@ -51,7 +50,7 @@ class GardenAPI(AuthorizationHandler):
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(_remove_heartbeat_history (response))
+        self.write(_remove_heartbeat_history(response))
 
     async def delete(self, garden_name):
         """
@@ -191,7 +190,7 @@ class GardenAPI(AuthorizationHandler):
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(_remove_heartbeat_history (response))
+        self.write(_remove_heartbeat_history(response))
 
 
 class GardenListAPI(AuthorizationHandler):
@@ -217,7 +216,7 @@ class GardenListAPI(AuthorizationHandler):
         permitted_gardens_list = await self.process_operation(
             Operation(operation_type="GARDEN_READ_ALL")
         )
-        self.write(_remove_heartbeat_history (permitted_gardens_list, many=True))
+        self.write(_remove_heartbeat_history(permitted_gardens_list, many=True))
 
     async def post(self):
         """
@@ -255,7 +254,7 @@ class GardenListAPI(AuthorizationHandler):
 
         self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(_remove_heartbeat_history (response))
+        self.write(_remove_heartbeat_history(response))
 
     async def patch(self):
         """
