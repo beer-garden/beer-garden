@@ -4,6 +4,8 @@
 
 TBD
 
+- Added Replication Awareness to ensure only one Replicated instance can process the scheduled jobs.
+
 ## Overhauled User Authentication Logic
 - Roles allow filtering on combinations of Garden/Namespace/System Name/System Version/Instance/Command
 - User Alias mapping will update the Requester on Child Garden requests based on their alias. Maps requests

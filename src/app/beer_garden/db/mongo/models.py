@@ -75,6 +75,7 @@ __all__ = [
     "User",
     "Topic",
     "Subscriber",
+    "Replication",
 ]
 
 REQUEST_MAX_PARAM_SIZE = 5 * 1_000_000
@@ -721,6 +722,19 @@ class CronTrigger(MongoModel, EmbeddedDocument):
     end_date = DateTimeField(required=False)
     timezone = StringField(required=False, default="utc", chocies=pytz.all_timezones)
     jitter = IntField(required=False)
+
+
+class Replication(MongoModel, Document):
+    brewtils_model = brewtils.models.Replication
+
+    replication_id = StringField(required=True)
+    expires_at = DateTimeField(required=True)
+
+    meta = {
+        "indexes": [
+            {"fields": ["expires_at"], "expireAfterSeconds": 0},
+        ],
+    }
 
 
 class Job(MongoModel, Document):
