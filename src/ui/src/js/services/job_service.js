@@ -156,6 +156,10 @@ export default function jobService($http, NamespaceService) {
     if (job['trigger_type'] === 'date') {
       formModel['run_date'] = job['trigger']['run_date'];
       formModel['date_timezone'] = job['trigger']['timezone'];
+    } else if (job['trigger_type'] === 'file') {
+      formModel['path'] = job['trigger']['path'];
+      formModel['pattern'] = job['trigger']['pattern'];
+      formModel['recursive'] = job['trigger']['recursive'];
     } else if (job['trigger_type'] === 'interval') {
       formModel['weeks'] = job['trigger']['weeks'] || 0;
       formModel['minutes'] = job['trigger']['minutes'] || 0;

@@ -296,7 +296,7 @@ class MixedScheduler(object):
         bg_trigger = construct_trigger(trigger_type, trigger)
         job_id = kwargs.get("id")
         # Add entry to keep track of file trigger threads
-        if job_id and trigger_type == "file":
+        if job_id and trigger_type == "file" and job_id not in observer_threads:
             observer_threads[job_id] = Monitor(job_id, bg_trigger)
 
         # Add all triggers to schedule except file
