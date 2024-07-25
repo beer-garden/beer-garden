@@ -7,7 +7,7 @@ import logging
 from pathlib import Path
 
 from brewtils.models import Events, Job
-from watchdog.events import PatternMatchingEventHandler
+from watchdog.events import PatternMatchingEventHandler, RegexMatchingEventHandler
 from watchdog.observers.polling import PollingObserver
 
 from beer_garden.db.mongo.models import Event
@@ -89,7 +89,7 @@ class MonitorFile(PatternMatchingEventHandler):
             publish(self.deleted_event)
 
 
-class MonitorDirectory(PatternMatchingEventHandler):
+class MonitorDirectory(RegexMatchingEventHandler):
     """Monitor files and create Beergarden events
 
     This is a wrapper around a watchdog PollingObserver. PollingObserver is used instead
@@ -100,8 +100,8 @@ class MonitorDirectory(PatternMatchingEventHandler):
 
     """
 
-    def __init__(self, path: str, pattern: str, recursive: bool, job: Job):
-        super().__init__(patterns=[pattern], ignore_directories=True)
+    def __init__(self, path: str, pattern: str, recursive: bool=True, job: Job=None):
+        super().__init__(regexes=[pattern], ignore_directories=False)
 
         self._path = path
         self._pattern = pattern
@@ -111,16 +111,16 @@ class MonitorDirectory(PatternMatchingEventHandler):
         self._observer.schedule(self, self._path, recursive=self._recursive)
 
     def start(self):
-        logger.info(f"Start dir monitor on {self._path} for {self._job.id}")
+        logger.info(f"Start dir monitor on {self._path}")
         try:
             self._observer.start()
         except RuntimeError:
             self._observer = PollingObserver()
-            self._observer.schedule(self, self._path, recursive=True)
+            self._observer.schedule(self, self._path, recursive=self._recursive)
             self._observer.start()
 
     def stop(self):
-        logger.info(f"Stop dir monitor on {self._path}  for {self._job.id}")
+        logger.info(f"Stop dir monitor on {self._path}")
         if self._observer.is_alive():
             self._observer.stop()
             self._observer.join()
@@ -132,24 +132,24 @@ class MonitorDirectory(PatternMatchingEventHandler):
         When a user VIM edits a file it DELETES, then CREATES the file, this
         captures that case
         """
-        logger.info(f"Dir file changed: {event.src_path} for {self._job.id}")
+        logger.info(f"Dir file created: {event.src_path}")
         return self._job
 
-    def on_modified(self, _):
-        """Callback invoked when the file is modified
+    # def on_modified(self, _):
+    #     """Callback invoked when the file is modified
 
-        This captures all other modification events that occur against the file
-        """
-        if self.modify_event:
-            publish(self.modify_event)
+    #     This captures all other modification events that occur against the file
+    #     """
+    #     if self.modify_event:
+    #         publish(self.modify_event)
 
-    def on_moved(self, _):
-        """Callback invoked when the file is moved
+    # def on_moved(self, _):
+    #     """Callback invoked when the file is moved
 
-        This captures if the file is moved into or from the directory
-        """
-        if self.moved_event:
-            publish(self.moved_event)
+    #     This captures if the file is moved into or from the directory
+    #     """
+    #     if self.moved_event:
+    #         publish(self.moved_event)
 
     def on_deleted(self, event):
         """Callback invoked when the file is deleted

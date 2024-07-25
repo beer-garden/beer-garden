@@ -243,7 +243,7 @@ export default function jobService($http, NamespaceService) {
     'interval_reschedule_on_finish',
   ];
   JobService.DATE_KEYS = ['run_date', 'date_timezone'];
-  JobService.FILE_KEYS = ['path', 'recursive']
+  JobService.FILE_KEYS = ['path', 'pattern', 'recursive']
 
   JobService.getRequiredKeys = function(triggerType) {
     if (triggerType === 'cron') {
@@ -343,8 +343,9 @@ export default function jobService($http, NamespaceService) {
       },
       pattern: {
         title: 'Pattern',
-        description: 'Regex pattern (optional)',
+        description: 'Regex string',
         type: 'string',
+        default: '.*'
       },
       recursive: {
         title: 'Recursive',

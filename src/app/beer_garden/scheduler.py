@@ -33,9 +33,8 @@ observer_threads = dict()
 class Monitor(object):
     def __init__(self, job_id, bg_trigger):
         self.job = get_job(job_id)
-        self.trigger = bg_trigger
         self.file_monitor = MonitorDirectory(
-            path="./input", pattern="*", recursive=True, job=self.job
+            path=bg_trigger.path, pattern=bg_trigger.pattern, recursive=bg_trigger.recursive, job=self.job
         )
         self.start()
 
@@ -616,7 +615,6 @@ def handle_event(event: Event) -> None:
                 event.payload.id, jobstore="beer_garden"
             )
         elif event.name == Events.JOB_RESUMED.name:
-            logger.info("Resume job here")
             logger.info(event.payload.trigger_type)
             beer_garden.application.scheduler.resume_job(
                 event.payload.id, jobstore="beer_garden"
