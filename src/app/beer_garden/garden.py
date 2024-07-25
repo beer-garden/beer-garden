@@ -28,10 +28,6 @@ from yapconf.exceptions import (
 
 import beer_garden.config as config
 import beer_garden.db.api as db
-from beer_garden.command_publishing_blocklist import (
-    publish_command_publishing_blocklist,
-)
-from beer_garden.db.mongo.models import RemoteUser
 from beer_garden.errors import ForwardException
 from beer_garden.events import publish, publish_event
 from beer_garden.namespace import get_namespaces
@@ -321,14 +317,6 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
     return update_garden(garden)
 
 
-def remove_remote_users(garden: Garden):
-    RemoteUser.objects.filter(garden=garden.name).delete()
-
-    if garden.children:
-        for children in garden.children:
-            remove_remote_users(children)
-
-
 def remove_remote_systems(garden: Garden):
     for system in garden.systems:
         remove_system(system.id)
@@ -351,7 +339,6 @@ def remove_garden(garden_name: str = None, garden: Garden = None) -> None:
 
     garden = garden or get_garden(garden_name)
 
-    remove_remote_users(garden)
     remove_remote_systems(garden)
 
     for child in garden.children:
@@ -516,6 +503,7 @@ def load_garden_connections(garden: Garden):
     path = Path(f"{config.get('children.directory')}/{garden.name}.yaml")
 
     garden.publishing_connections.clear()
+    garden.receiving_connections.clear()
 
     if not path.exists():
         garden.status = "NOT_CONFIGURED"
@@ -537,6 +525,8 @@ def load_garden_connections(garden: Garden):
             Connection(api="STOMP", status="CONFIGURATION_ERROR")
         )
         return garden
+
+    garden.default_user = config.get("default_user", garden_config)
 
     if config.get("http.enabled", garden_config):
         config_map = {
@@ -696,7 +686,6 @@ def garden_sync(sync_target: str = None):
         logger.info("Processing garden sync, about to publish")
 
         publish_garden()
-        publish_command_publishing_blocklist()
 
     from beer_garden.router import route
 
@@ -716,7 +705,7 @@ def garden_sync(sync_target: str = None):
             pass
 
 
-def publish_local_garden():
+def publish_local_garden_to_api():
     local_garden = get_garden(config.get("garden.name"))
     publish(
         Event(
@@ -724,6 +713,7 @@ def publish_local_garden():
             garden=config.get("garden.name"),
             payload_type="Garden",
             payload=local_garden,
+            metadata={"API_ONLY": True},
         )
     )
 
@@ -811,7 +801,7 @@ def handle_event(event):
             upsert_garden(event.payload)
 
             # Publish update events for UI to dynamically load changes for Systems
-            publish_local_garden()
+            publish_local_garden_to_api()
 
     elif event.name == Events.GARDEN_UNREACHABLE.name:
         target_garden = get_garden(event.payload.target_garden_name)
@@ -849,4 +839,4 @@ def handle_event(event):
 
     if "SYSTEM" in event.name or "INSTANCE" in event.name:
         # If a System or Instance is updated, publish updated Local Garden Model for UI
-        publish_local_garden()
+        publish_local_garden_to_api()

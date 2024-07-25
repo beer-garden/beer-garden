@@ -61,11 +61,6 @@ export default function routeConfig(
         templateUrl: 'about.html',
         controller: 'AboutController',
       })
-      .state('base.commandblocklist', {
-        url: 'commandblocklist',
-        templateUrl: 'command_publishing_blocklist.html',
-        controller: 'CommandPublishingBlocklistController',
-      })
       .state('login', {
         templateUrl: 'login.html',
         controller: 'LoginController',
@@ -221,11 +216,6 @@ export default function routeConfig(
         url: 'admin/users/',
         templateUrl: 'admin_user_index.html',
         controller: 'AdminUserIndexController',
-      })
-      .state('base.user_view', {
-        url: 'admin/users/:username/',
-        templateUrl: 'admin_user_view.html',
-        controller: 'AdminUserViewController',
       })
       .state('base.role_admin', {
         url: 'admin/roles/',

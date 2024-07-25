@@ -512,15 +512,21 @@ def create_jobs(jobs: List[Job]) -> dict:
                     citing why it was rejected
     """
     created = []
+    updated = []
     rejected = []
 
     for job in jobs:
         try:
-            created.append(create_job(job))
+            if job.id and db.query(Job, filter_params={"id": job.id}):
+                updated.append(update_job(job))
+            else:
+                if job.id:
+                    job.id = None
+                created.append(create_job(job))
         except (ModelValidationError, ValidationError) as exc:
             rejected.append((job, str(exc)))
 
-    return {"created": created, "rejected": rejected}
+    return {"created": created, "updated": updated, "rejected": rejected}
 
 
 @publish_event(Events.JOB_UPDATED)
@@ -533,6 +539,14 @@ def update_job(job: Job) -> Job:
     Returns:
         The added Job
     """
+
+    # Map over job counts
+    original_job = get_job(job.id)
+
+    job.success_count = original_job.success_count
+    job.error_count = original_job.error_count
+    job.canceled_count = original_job.canceled_count
+    job.skip_count = original_job.skip_count
 
     return db.update(job)
 

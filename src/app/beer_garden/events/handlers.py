@@ -5,7 +5,6 @@ from copy import deepcopy
 
 from brewtils.models import Event
 
-import beer_garden.command_publishing_blocklist
 import beer_garden.config
 import beer_garden.files
 import beer_garden.garden
@@ -19,6 +18,7 @@ import beer_garden.role
 import beer_garden.router
 import beer_garden.scheduler
 import beer_garden.systems
+import beer_garden.topic
 import beer_garden.user
 
 logger = logging.getLogger(__name__)
@@ -50,16 +50,13 @@ def garden_callbacks(event: Event) -> None:
         (beer_garden.router.handle_event, "Router"),
         (beer_garden.systems.handle_event, "System"),
         (beer_garden.scheduler.handle_event, "Scheduler"),
+        (beer_garden.topic.handle_event, "Topic"),
         (beer_garden.log.handle_event, "Log"),
         (beer_garden.files.handle_event, "File"),
         (beer_garden.local_plugins.manager.handle_event, "Local plugins manager"),
         (beer_garden.user.handle_event, "User event handler"),
         (beer_garden.role.handle_event, "Role event handler"),
         (beer_garden.replication.handle_event, "Replication event handler"),
-        (
-            beer_garden.command_publishing_blocklist.handle_event,
-            "Command publishing blocklist handler",
-        ),
     ]:
         try:
             handler(deepcopy(event))

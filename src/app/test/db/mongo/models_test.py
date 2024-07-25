@@ -7,16 +7,14 @@ import pytest
 from brewtils.errors import ModelValidationError, RequestStatusTransitionError
 from brewtils.schemas import RequestTemplateSchema
 from mock import Mock
-from mongoengine import NotUniqueError, ValidationError, connect
+from mongoengine import NotUniqueError, connect
 from mongomock.gridfs import enable_gridfs_integration
 
 import beer_garden.db.api as db
 import beer_garden.db.mongo.models
-from beer_garden.api.authorization import Permissions
 from beer_garden.db.mongo.models import (
     Choices,
     Command,
-    CommandPublishingBlocklist,
     DateTrigger,
     Garden,
     Instance,
@@ -25,7 +23,6 @@ from beer_garden.db.mongo.models import (
     RawFile,
     Request,
     Role,
-    RoleAssignment,
     System,
     User,
     UserToken,
@@ -245,6 +242,7 @@ class TestRequest(object):
                 ("SUCCESS", "IN_PROGRESS"),
                 ("SUCCESS", "ERROR"),
                 ("IN_PROGRESS", "CREATED"),
+                ("CANCELED", "IN_PROGRESS"),
             ],
         )
         def test_invalid_transitions(self, bg_request, start, end):
@@ -510,19 +508,15 @@ class TestRole:
         Role.drop_collection()
 
     def test_create_with_valid_permissions(self):
-        permissions = [Permissions.REQUEST_READ.value, Permissions.REQUEST_CREATE.value]
-
-        role = Role(name="test_role", permissions=permissions)
+        role = Role(name="test_role", permission="READ_ONLY")
         role.save()
 
         assert Role.objects.filter(name="test_role").count() == 1
 
     def test_create_with_invalid_permissions(self):
-        permissions = ["invalid_permission"]
+        role = Role(name="test_role", permission="invalid_permission")
 
-        role = Role(name="test_role", permissions=permissions)
-
-        with pytest.raises(ValidationError):
+        with pytest.raises(ModelValidationError):
             role.save()
 
 
@@ -533,38 +527,13 @@ class TestUser:
 
     @pytest.fixture()
     def role(self):
-        role = Role(
-            name="test_role", permissions=[Permissions.REQUEST_READ.value]
-        ).save()
-
+        role = Role(name="test_role", permission="READ_ONLY").save()
         yield role
         role.delete()
 
     @pytest.fixture()
-    def role_assignment(self, role):
-        return RoleAssignment(
-            role=role,
-            domain={"scope": "Garden", "identifiers": {"name": "test_garden"}},
-        )
-
-    @pytest.fixture()
-    def role_assignment_missing_identifiers(self, role):
-        return RoleAssignment(role=role, domain={"scope": "Garden"})
-
-    @pytest.fixture()
-    def role_assignment_empty_identifiers(self, role):
-        return RoleAssignment(
-            role=role,
-            domain={
-                "scope": "System",
-                "identifiers": {"namespace": "", "name": "testsystem"},
-            },
-        )
-
-    @pytest.fixture()
-    def user(self, role_assignment):
-        user = User(username="testuser", role_assignments=[role_assignment]).save()
-
+    def user(self):
+        user = User(username="testuser").save()
         yield user
         user.delete()
 
@@ -582,86 +551,37 @@ class TestUser:
     def test_create(self, user):
         assert User.objects.filter(username="testuser").count() == 1
 
-    def test_set_password(self, user):
-        user.set_password("password")
+    def test_local_role_map_to_roles(self, user, role):
+        assert len(user.roles) == 0
+        user.local_roles = []
+        user.local_roles.append(role)
+        user = user.save()
 
-        # Testing for a specific value would be too tightly coupled with the hashing
-        # algorithm we use, so instead just verify that the password is not stored
-        # in its original form
-        assert user.password is not None
-        assert user.password != "password"
-
-    def test_verify_password(self, user):
-        user.set_password("password")
-
-        assert user.verify_password("password")
-        assert not user.verify_password("mismatch")
-
-    def test_role_assignment_missing_identifiers_raises_validation_error(
-        self, user, role_assignment_missing_identifiers
-    ):
-        user.role_assignments = [role_assignment_missing_identifiers]
-
-        with pytest.raises(ValidationError):
-            user.save()
-
-    def test_role_assignment_empty_identifiers_are_discarded(
-        self, user, role_assignment_empty_identifiers
-    ):
-        user.role_assignments = [role_assignment_empty_identifiers]
-
-        assert len(user.role_assignments[0].domain["identifiers"]) == 2
-        user.save()
-        assert len(user.role_assignments[0].domain["identifiers"]) == 1
-
-    def test_revoke_tokens(self, user, user_token):
-        assert len(UserToken.objects.filter(user=user)) > 0
-        user.revoke_tokens()
-        assert len(UserToken.objects.filter(user=user)) == 0
+        assert len(user.roles) == 1
 
 
 class TestUserToken:
     @pytest.fixture()
-    def user_token(self):
+    def user(self):
         user = User(username="testuser").save()
+        yield user
+        user.delete()
+
+    @pytest.fixture()
+    def user_token(self, user):
         user_token = UserToken(
             expires_at=datetime.utcnow() + timedelta(minutes=10),
-            user=user,
-            uuid=uuid4(),
+            username=user.username,
+            uuid=str(uuid4()),
         ).save()
 
         yield user_token
         user_token.delete()
-        user.delete()
 
-    def test_user_delete_cascades_to_user_token(self, user_token):
+    def test_user_delete_cascades_to_user_token(self, user, user_token):
         assert len(UserToken.objects.filter(id=user_token.id)) == 1
-        user_token.user.fetch().delete()
+        User.objects.get(username="testuser").delete()
         assert len(UserToken.objects.filter(id=user_token.id)) == 0
-
-
-class TestCommandBlocklist:
-    namespace = "test"
-    system = "system_test"
-    command = "command_test"
-
-    @pytest.fixture()
-    def command_blocklist(self):
-        blocklist = CommandPublishingBlocklist(
-            namespace=self.namespace, system=self.system, command=self.command
-        ).save()
-
-        yield blocklist
-        blocklist.delete()
-
-    def test_blocklist_entries_are_required_to_be_unique(self, command_blocklist):
-        """Attempting to create a blocklist entry already in database should raise an
-        exception
-        """
-        with pytest.raises(NotUniqueError):
-            CommandPublishingBlocklist(
-                namespace=self.namespace, system=self.system, command=self.command
-            ).save()
 
 
 class TestGarden:
@@ -804,7 +724,6 @@ class TestGarden:
 
 
 class TestFileUpdates:
-
     @pytest.fixture()
     def raw_file(self):
         rawfile = RawFile().save()

@@ -274,34 +274,32 @@ def publish_status_update(instance: Instance):
     """
     system, instance = _from_kwargs(instance_id=instance.id)
 
-    # Publish event for plugins to monitor the status of other plugins
-    publish(
-        Event(
-            name=Events.REQUEST_TOPIC_PUBLISH.name,
-            metadata={
-                "topic": "{0}.{1}.{2}.{3}".format(
-                    system.namespace,
-                    system.name,
-                    system.version,
-                    instance.name,
-                ),
-                "propagate": False,
-                "regex_only": False,
-            },
-            payload=Request(
-                parameters={
-                    "message": {
-                        "status": instance.status,
-                        "namespace": system.namespace,
-                        "system": system.name,
-                        "version": system.version,
-                        "instance": instance.name,
-                    }
+    if system.local:
+
+        # Publish event for plugins to monitor the status of other plugins
+        publish(
+            Event(
+                name=Events.REQUEST_TOPIC_PUBLISH.name,
+                metadata={
+                    "topic": config.get("garden.name"),
+                    "propagate": True,
                 },
-            ),
-            payload_type="Request",
+                payload=Request(
+                    parameters={
+                        "message": {
+                            "status": instance.status,
+                            "namespace": system.namespace,
+                            "system": system.name,
+                            "version": system.version,
+                            "instance": instance.name,
+                            "garden": config.get("garden.name"),
+                            "event": Events.INSTANCE_UPDATED.name,
+                        }
+                    },
+                ),
+                payload_type="Request",
+            )
         )
-    )
 
 
 def heartbeat(

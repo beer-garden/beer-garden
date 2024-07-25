@@ -697,9 +697,7 @@ class PluginManager(StoppableThread):
         if plugin_config["AUTO_BREW_KWARGS"]:
             plugin_auto_kwargs = plugin_config["AUTO_BREW_KWARGS"].get(instance_name)
             if plugin_auto_kwargs is not None:
-                process_args += [
-                    f"KWARG={k}={v}" for k, v in plugin_auto_kwargs.items()
-                ]
+                process_args += [f"KWARG={k}" for k in plugin_auto_kwargs]
 
         return process_args
 
@@ -732,10 +730,16 @@ class PluginManager(StoppableThread):
                 "BG_INSTANCE_NAME": instance_name,
                 "BG_RUNNER_ID": runner_id,
                 "BG_PLUGIN_PATH": plugin_path.resolve(),
-                "BG_USERNAME": self._username,
-                "BG_PASSWORD": self._password,
             }
         )
+
+        if self._username and self._password:
+            env.update(
+                {
+                    "BG_USERNAME": self._username,
+                    "BG_PASSWORD": self._password,
+                }
+            )
 
         if "LOG_LEVEL" in plugin_config:
             env["BG_LOG_LEVEL"] = plugin_config["LOG_LEVEL"]

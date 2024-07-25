@@ -6,11 +6,44 @@ TBD
 
 - Added Replication Awareness to ensure only one Replicated instance can process the scheduled jobs.
 
+## Overhauled User Authentication Logic
+- Roles allow filtering on combinations of Garden/Namespace/System Name/System Version/Instance/Command
+- User Alias mapping will update the Requester on Child Garden requests based on their alias. Maps requests
+  spawned from Child Garden to the local User account if Alias mapping matches.
+- When User has Alias accounts, Roles that can be applied to that Child Garden will be forwarded as UpstreamRoles. 
+  This is to ensure admin's at the Child Garden can see the permissions utilized to execute Request
+- Updated Permission accesses on UI with new Role schema
+- Updated API Permission access with new Role schema
+- API filters returned data based on User Roles
+- Access Token have custom Access and Refresh timeouts based on Users Max Permission that are controlled in the config
+- Users and Roles can be loaded through configuration files, and are protected models
+- New UI pages for User and Role management
+- Upgraded Brewtils version to [3.27.0](https://github.com/beer-garden/brewtils/releases/tag/3.27.0)
+
+# 3.26.4
+
+7/12/2024
+
+- Fixed bug where job updates did not maintian counters
+- Fixed bug where bulk job import did not support updates
+
+# 3.26.3
+
+7/10/2024
+
+- Fixed bug that prevented Autobrew Kwargs from being properly passed to the class object
+- Supporting Subscriber Types for Generated/Annotated/Dynamic, all stored in Topics Collection for quick reference
+- Optimized internal event processing to support API only events
+- Updated About page to support new tab for links
+- Command publishing blocklist UI and REST API removed
+- Fixed Command Index UI bug where breadcrumbs were not shown if Namespace and System Name matched
+
 # 3.26.2
 
 6/6/2024
 
 - Fixed bug where Request View would fail loading Dynamic Choices for TEMP commands
+- Fixed bug where configured receiving connections for child Gardens duplicated at restart
 - Defaulted all Dynamically loaded commands from the Request View to TEMP
 
 # 3.26.1

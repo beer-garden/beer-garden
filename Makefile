@@ -81,10 +81,14 @@ publish-docker-unstable: ## push the unstable docker image
 publish-rpm: ## publish the rpm
 	rpm/bin/upload.sh $(VERSION) $(ITERATION)
 
+# Requires the docker image already built and UI packaged
+publish-docker-rpm: rpm-build
+	docker build -t bgio/beer-garden:$(VERSION)_RPM -f docker/dockerfiles/bundle_rpm/Dockerfile --build-arg VERSION=$(VERSION) .
+	docker push bgio/beer-garden:$(VERSION)_RPM
+
 # Setup Environment
 setup:
 	docker-compose -f docker/docker-compose/docker-compose.yml up -d mongodb rabbitmq activemq
-	. $(NVM_DIR)/nvm.sh && nvm install 16 && nvm use 16;
 	$(MAKE) -C $(UI_DIR) deps
 	$(MAKE) -C $(APP_DIR) deps-python install
 	git clone https://github.com/beer-garden/example-plugins.git $(APP_DIR)/plugins
