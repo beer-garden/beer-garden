@@ -2,22 +2,11 @@
 import logging
 
 from brewtils.errors import ModelValidationError
-from brewtils.models import Operation
+from brewtils.models import Garden, Operation, Permissions
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.handlers import AuthorizationHandler
-
-# from beer_garden.authorization import user_has_permission_for_object
-from beer_garden.db.mongo.models import Garden
 from beer_garden.garden import local_garden
-from beer_garden.user import initiate_user_sync
-
-GARDEN_CREATE = Permissions.GARDEN_CREATE.value
-GARDEN_READ = Permissions.GARDEN_READ.value
-GARDEN_UPDATE = Permissions.GARDEN_UPDATE.value
-GARDEN_DELETE = Permissions.GARDEN_DELETE.value
-
 
 logger = logging.getLogger(__name__)
 
@@ -45,8 +34,7 @@ class GardenAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-
-        response = await self.client(
+        response = await self.process_operation(
             Operation(operation_type="GARDEN_READ", args=[garden_name])
         )
 
@@ -73,9 +61,12 @@ class GardenAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-        garden = self.get_or_raise(Garden, GARDEN_DELETE, name=garden_name)
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
+        garden = self.get_or_raise(Garden, name=garden_name)
 
-        await self.client(Operation(operation_type="GARDEN_DELETE", args=[garden.name]))
+        await self.process_operation(
+            Operation(operation_type="GARDEN_DELETE", args=[garden.name])
+        )
 
         self.set_status(204)
 
@@ -124,7 +115,8 @@ class GardenAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-        garden = self.get_or_raise(Garden, GARDEN_UPDATE, name=garden_name)
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
+        garden = self.get_or_raise(Garden, name=garden_name)
 
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
@@ -132,14 +124,14 @@ class GardenAPI(AuthorizationHandler):
             operation = op.operation.lower()
 
             if operation in ["initializing", "running", "stopped", "block"]:
-                response = await self.client(
+                response = await self.process_operation(
                     Operation(
                         operation_type="GARDEN_UPDATE_STATUS",
                         args=[garden.name, operation.upper()],
                     )
                 )
             elif operation == "heartbeat":
-                response = await self.client(
+                response = await self.process_operation(
                     Operation(
                         operation_type="GARDEN_UPDATE_STATUS",
                         args=[garden.name, "RUNNING"],
@@ -151,7 +143,7 @@ class GardenAPI(AuthorizationHandler):
                 api = op.value.get("api")
 
                 if connection_type.upper() == "PUBLISHING":
-                    response = await self.client(
+                    response = await self.process_operation(
                         Operation(
                             operation_type="GARDEN_UPDATE_PUBLISHING_STATUS",
                             kwargs={"garden_name": garden.name, "api": api},
@@ -159,7 +151,7 @@ class GardenAPI(AuthorizationHandler):
                         )
                     )
                 elif connection_type.upper() == "RECEIVING":
-                    response = await self.client(
+                    response = await self.process_operation(
                         Operation(
                             operation_type="GARDEN_UPDATE_RECEIVING_STATUS",
                             kwargs={"garden_name": garden.name, "api": api},
@@ -168,10 +160,18 @@ class GardenAPI(AuthorizationHandler):
                     )
 
             elif operation == "sync":
-                response = await self.client(
+                response = await self.process_operation(
                     Operation(
                         operation_type="GARDEN_SYNC",
                         kwargs={"sync_target": garden.name},
+                    )
+                )
+
+            elif operation == "sync_users":
+                response = await self.process_operation(
+                    Operation(
+                        operation_type="USER_SYNC_GARDEN",
+                        kwargs={"garden_name": garden.name},
                     )
                 )
 
@@ -201,36 +201,11 @@ class GardenListAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-        # permitted_gardens = self.permissioned_queryset(Garden, GARDEN_READ)
-        # response_gardens = []
 
-        # permitted_gardens_list = list(
-        #     permitted_gardens.filter(connection_type__ne="LOCAL").no_cache()
-        # )
-        # _local_garden = local_garden(all_systems=True)
-
-        # if user_has_permission_for_object(
-        #     self.current_user, GARDEN_READ, _local_garden
-        # ):
-        #     permitted_gardens_list.append(_local_garden)
-
-        permitted_gardens_list = await self.client(
+        permitted_gardens_list = await self.process_operation(
             Operation(operation_type="GARDEN_READ_ALL")
         )
         self.write(permitted_gardens_list)
-
-        # response_gardens = []
-        # for garden in SchemaParser.parse_garden(
-        #     permitted_gardens_list, from_string=True, many=True
-        # ):
-        #     if user_has_permission_for_object(self.current_user, GARDEN_READ, garden):
-        #         response_gardens.append(garden)
-
-        # self.set_header("Content-Type", "application/json; charset=UTF-8")
-
-        # self.write(
-        #     SchemaParser.serialize_garden(response_gardens, to_string=True, many=True)
-        # )
 
     async def post(self):
         """
@@ -254,11 +229,12 @@ class GardenListAPI(AuthorizationHandler):
         tags:
           - Garden
         """
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
         garden = SchemaParser.parse_garden(self.request.decoded_body, from_string=True)
 
-        self.verify_user_permission_for_object(GARDEN_CREATE, garden)
+        self.verify_user_permission_for_object(garden)
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(
                 operation_type="GARDEN_CREATE",
                 args=[garden],
@@ -304,7 +280,8 @@ class GardenListAPI(AuthorizationHandler):
         tags:
           - Garden
         """
-        self.verify_user_permission_for_object(GARDEN_UPDATE, local_garden())
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
+        self.verify_user_permission_for_object(local_garden())
 
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
@@ -312,24 +289,25 @@ class GardenListAPI(AuthorizationHandler):
             operation = op.operation.lower()
 
             if operation == "rescan":
-                await self.client(
+                await self.process_operation(
                     Operation(
                         operation_type="GARDEN_RESCAN",
                     )
                 )
 
             elif operation == "sync":
-                await self.client(
+                await self.process_operation(
                     Operation(
                         operation_type="GARDEN_SYNC",
                     )
                 )
-            elif operation == "sync_users":
-                # requires GARDEN_UPDATE for all gardens
-                for garden in Garden.objects.all():
-                    self.verify_user_permission_for_object(GARDEN_UPDATE, garden)
 
-                initiate_user_sync()
+            elif operation == "sync_users":
+                await self.process_operation(
+                    Operation(
+                        operation_type="USER_SYNC",
+                    )
+                )
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 

@@ -76,6 +76,9 @@ class Application(StoppableThread):
 
         load_plugin_log_config()
 
+        if config.get("auth.enabled"):
+            beer_garden.user.validated_token_ttl()
+
         if config.get("replication.enabled"):
             import secrets
 
@@ -313,6 +316,12 @@ class Application(StoppableThread):
         self.logger.debug("Setting up garden routing...")
         beer_garden.router.setup_routing()
 
+        self.logger.debug("Loading Roles...")
+        beer_garden.role.ensure_roles()
+
+        self.logger.debug("Loading Users...")
+        beer_garden.user.ensure_users()
+
         self.logger.debug("Starting forwarding processor...")
         beer_garden.router.forward_processor.start()
 
@@ -471,8 +480,16 @@ class Application(StoppableThread):
                 plugin_dir=config.get("plugin.local.directory"),
                 log_dir=config.get("plugin.local.log_directory"),
                 connection_info=config.get("entry.http"),
-                username=config.get("plugin.local.auth.username"),
-                password=config.get("plugin.local.auth.password"),
+                username=(
+                    config.get("plugin.local.auth.username")
+                    if config.get("auth.enabled")
+                    else None
+                ),
+                password=(
+                    config.get("plugin.local.auth.password")
+                    if config.get("auth.enabled")
+                    else None
+                ),
             ),
         )
 

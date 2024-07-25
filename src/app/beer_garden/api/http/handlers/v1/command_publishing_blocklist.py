@@ -1,9 +1,5 @@
-from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.errors import EndpointRemovedException
-
-SYSTEM_UPDATE = Permissions.SYSTEM_UPDATE.value
-SYSTEM_READ = Permissions.SYSTEM_READ.value
 
 
 class CommandPublishingBlocklistPathAPI(AuthorizationHandler):

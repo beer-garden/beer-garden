@@ -21,8 +21,9 @@ class MongoParser(SchemaParser):
             "RequestTemplateSchema": beer_garden.db.mongo.models.RequestTemplate,
             "ChoicesSchema": beer_garden.db.mongo.models.Choices,
             "EventSchema": beer_garden.db.mongo.models.Event,
-            "PrincipalSchema": beer_garden.db.mongo.models.Principal,
-            "LegacyRoleSchema": beer_garden.db.mongo.models.LegacyRole,
+            "UserSchema": beer_garden.db.mongo.models.User,
+            "RoleSchema": beer_garden.db.mongo.models.Role,
+            "UpstreamRoleSchema": beer_garden.db.mongo.models.UpstreamRole,
             "JobSchema": beer_garden.db.mongo.models.Job,
             "DateTriggerSchema": beer_garden.db.mongo.models.DateTrigger,
             "IntervalTriggerSchema": beer_garden.db.mongo.models.IntervalTrigger,
@@ -30,8 +31,10 @@ class MongoParser(SchemaParser):
             "GardenSchema": beer_garden.db.mongo.models.Garden,
             "FileSchema": beer_garden.db.mongo.models.File,
             "FileChunkSchema": beer_garden.db.mongo.models.FileChunk,
+            "UserTokenSchema": beer_garden.db.mongo.models.UserToken,
             "TopicSchema": beer_garden.db.mongo.models.Topic,
             "SubscriberSchema": beer_garden.db.mongo.models.Subscriber,
+            "AliasUserMapSchema": beer_garden.db.mongo.models.AliasUserMap,
         }
     )
 

@@ -4,38 +4,33 @@ import json
 from unittest.mock import Mock
 
 import pytest
+from brewtils.models import Request as BrewtilsRequest
+from brewtils.models import Role, User
 from tornado.httpclient import HTTPError, HTTPRequest
 
 import beer_garden.router
 from beer_garden.api.http.authentication import issue_token_pair
 from beer_garden.api.http.handlers.v1.instance import InstanceLogAPI
-from beer_garden.db.mongo.models import (
-    Garden,
-    Instance,
-    Role,
-    RoleAssignment,
-    System,
-    User,
-)
-
-from brewtils.models import Request as BrewtilsRequest
+from beer_garden.db.mongo.models import Garden, Instance, System
+from beer_garden.role import create_role, delete_role
+from beer_garden.user import create_user, delete_user
 
 
-@pytest.fixture
-def garden():
-    garden = Garden(name="somegarden", connection_type="LOCAL").save()
+@pytest.fixture(autouse=True)
+def garden(system):
+    garden = Garden(name="somegarden", connection_type="LOCAL", systems=[system]).save()
 
     yield garden
     garden.delete()
 
 
-@pytest.fixture(autouse=True)
-def system(garden):
+@pytest.fixture
+def system():
     instance = Instance(name="instance")
     system = System(
         name="system",
         version="1.0.0",
-        namespace=garden.name,
+        namespace="somegarden",
         instances=[instance],
     ).save()
 
@@ -44,33 +39,24 @@ def system(garden):
 
 
 @pytest.fixture
-def system_admin_role():
-    role = Role(
-        name="system_admin",
-        permissions=["instance:read", "instance:update", "queue:read"],
-    ).save()
-
+def system_admin_role(system):
+    role = create_role(
+        Role(
+            name="system_admin",
+            permission="PLUGIN_ADMIN",
+            scope_systems=[system.name],
+            scope_namespaces=[system.namespace],
+        )
+    )
     yield role
-    role.delete()
+    delete_role(role)
 
 
 @pytest.fixture
-def user_with_permission(system, system_admin_role):
-    role_assignment = RoleAssignment(
-        role=system_admin_role,
-        domain={
-            "scope": "System",
-            "identifiers": {
-                "name": system.name,
-                "namespace": system.namespace,
-            },
-        },
-    )
-
-    user = User(username="testuser", role_assignments=[role_assignment]).save()
-
+def user_with_permission(system_admin_role):
+    user = create_user(User(username="testuser", local_roles=[system_admin_role]))
     yield user
-    user.delete()
+    delete_user(user=user)
 
 
 @pytest.fixture
@@ -100,9 +86,9 @@ def router_mocks(monkeypatch, instance_function_mock):
 
 
 @pytest.fixture(autouse=True)
-def common_mocks(monkeypatch, system, instance_function_mock):
+def common_mocks(monkeypatch, garden, instance_function_mock):
     def mock_determine_target(operation):
-        return system.namespace
+        return garden.name
 
     def generic_mock(*args, **kwargs):
         pass

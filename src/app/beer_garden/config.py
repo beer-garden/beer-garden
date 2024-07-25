@@ -649,11 +649,20 @@ _AUTHENTICATION_HANDLERS_SPEC = {
                     "default": "bg-username",
                     "description": "The http header containing the username",
                 },
-                "user_groups_header": {
+                "user_upstream_roles_header": {
                     "type": "str",
-                    "default": "bg-user-groups",
-                    "description": "The http header containing the comma separated "
-                    "list of the user's groups.",
+                    "default": "bg-user-upstream-roles",
+                    "description": "The http header containing the JSON list of the user's roles",
+                },
+                "user_local_roles_header": {
+                    "type": "str",
+                    "default": "bg-user-local-roles",
+                    "description": "The http header containing the str list of the user's local role names",
+                },
+                "user_alias_mapping_header": {
+                    "type": "str",
+                    "default": "bg-user-alias-mapping",
+                    "description": "The http header containing the JSON list of the user's alias user accounts mapping",
                 },
                 "create_users": {
                     "type": "bool",
@@ -707,11 +716,62 @@ _AUTH_SPEC = {
             ),
             "required": False,
         },
-        "group_definition_file": {
+        "user_definition_file": {
             "type": "str",
-            "description": "Path to the file containg a mapping of "
-            "groups to beer garden role assignments",
+            "description": (
+                "Path to the yaml file that defines users used for authorization"
+            ),
             "required": False,
+        },
+        "token_access_ttl": {
+            "type": "dict",
+            "items": {
+                "garden_admin": {
+                    "type": "int",
+                    "default": 15,
+                    "description": "The Garden Admin Permission access token expiration time",
+                },
+                "plugin_admin": {
+                    "type": "int",
+                    "default": 15,
+                    "description": "The Plugin Admin Permission access token expiration time",
+                },
+                "operator": {
+                    "type": "int",
+                    "default": 15,
+                    "description": "The Operator Permission access token expiration time",
+                },
+                "read_only": {
+                    "type": "int",
+                    "default": 15,
+                    "description": "The Read Only Permission access token expiration time",
+                },
+            },
+        },
+        "token_refresh_ttl": {
+            "type": "dict",
+            "items": {
+                "garden_admin": {
+                    "type": "int",
+                    "default": 720,
+                    "description": "The Garden Admin Permission refresh token expiration time",
+                },
+                "plugin_admin": {
+                    "type": "int",
+                    "default": 720,
+                    "description": "The Plugin Admin Permission refresh token expiration time",
+                },
+                "operator": {
+                    "type": "int",
+                    "default": 720,
+                    "description": "The Operator Permission refresh token expiration time",
+                },
+                "read_only": {
+                    "type": "int",
+                    "default": 720,
+                    "description": "The Read Only Permission refresh token expiration time",
+                },
+            },
         },
         "authentication_handlers": _AUTHENTICATION_HANDLERS_SPEC,
     },
@@ -1577,6 +1637,11 @@ _CHILD_SPECIFICATION = {
         "type": "bool",
         "default": False,
         "description": "If disabled, requires manual start for receiving operations",
+    },
+    "default_user": {
+        "type": "str",
+        "description": "Default username when passing operations, if none is found with current user",
+        "required": False,
     },
     "http": {
         "type": "dict",

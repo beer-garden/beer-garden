@@ -730,10 +730,16 @@ class PluginManager(StoppableThread):
                 "BG_INSTANCE_NAME": instance_name,
                 "BG_RUNNER_ID": runner_id,
                 "BG_PLUGIN_PATH": plugin_path.resolve(),
-                "BG_USERNAME": self._username,
-                "BG_PASSWORD": self._password,
             }
         )
+
+        if self._username and self._password:
+            env.update(
+                {
+                    "BG_USERNAME": self._username,
+                    "BG_PASSWORD": self._password,
+                }
+            )
 
         if "LOG_LEVEL" in plugin_config:
             env["BG_LOG_LEVEL"] = plugin_config["LOG_LEVEL"]

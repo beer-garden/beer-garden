@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 from brewtils.errors import ModelValidationError
-from brewtils.models import Operation
+from brewtils.models import Operation, Permissions
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.api.http.base_handler import BaseHandler
+from beer_garden.api.http.handlers import AuthorizationHandler
 
 
-class RunnerAPI(BaseHandler):
+class RunnerAPI(AuthorizationHandler):
     parser = SchemaParser()
 
     async def get(self, runner_id):
@@ -32,7 +32,7 @@ class RunnerAPI(BaseHandler):
           - Runners
         """
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(operation_type="RUNNER_READ", kwargs={"runner_id": runner_id})
         )
 
@@ -61,8 +61,8 @@ class RunnerAPI(BaseHandler):
         tags:
           - Runners
         """
-
-        response = await self.client(
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
+        response = await self.process_operation(
             Operation(
                 operation_type="RUNNER_DELETE",
                 kwargs={"runner_id": runner_id, "remove": True},
@@ -114,13 +114,14 @@ class RunnerAPI(BaseHandler):
         tags:
           - Runners
         """
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
         for op in patch:
             operation = op.operation.lower()
 
             if operation == "start":
-                response = await self.client(
+                response = await self.process_operation(
                     Operation(
                         operation_type="RUNNER_START", kwargs={"runner_id": runner_id}
                     )
@@ -141,7 +142,7 @@ class RunnerAPI(BaseHandler):
         self.write(response)
 
 
-class RunnerListAPI(BaseHandler):
+class RunnerListAPI(AuthorizationHandler):
     parser = SchemaParser()
 
     async def get(self):
@@ -161,7 +162,9 @@ class RunnerListAPI(BaseHandler):
           - Runners
         """
 
-        response = await self.client(Operation(operation_type="RUNNER_READ_ALL"))
+        response = await self.process_operation(
+            Operation(operation_type="RUNNER_READ_ALL")
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -202,13 +205,14 @@ class RunnerListAPI(BaseHandler):
         tags:
           - Runners
         """
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
         for op in patch:
             operation = op.operation.lower()
 
             if operation == "reload":
-                response = await self.client(
+                response = await self.process_operation(
                     Operation(operation_type="RUNNER_RELOAD", kwargs={"path": op.path})
                 )
 

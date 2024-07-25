@@ -1,20 +1,13 @@
 # -*- coding: utf-8 -*-
 from brewtils.errors import ModelValidationError, NotFoundError
-from brewtils.models import Operation
+from brewtils.models import Job, Operation, Permissions
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import JobExportInputSchema, JobSchema
 from mongoengine.errors import ValidationError
 
-from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.exceptions import BadRequest
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.db.mongo.models import Job
 from beer_garden.scheduler import create_jobs
-
-JOB_CREATE = Permissions.JOB_CREATE.value
-JOB_READ = Permissions.JOB_READ.value
-JOB_UPDATE = Permissions.JOB_UPDATE.value
-JOB_DELETE = Permissions.JOB_DELETE.value
 
 
 class JobAPI(AuthorizationHandler):
@@ -40,9 +33,10 @@ class JobAPI(AuthorizationHandler):
         tags:
           - Jobs
         """
-        _ = self.get_or_raise(Job, JOB_READ, id=job_id)
+        self.minimum_permission = Permissions.OPERATOR.name
+        _ = self.get_or_raise(Job, id=job_id)
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(operation_type="JOB_READ", args=[job_id])
         )
 
@@ -94,7 +88,8 @@ class JobAPI(AuthorizationHandler):
         tags:
           - Jobs
         """
-        _ = self.get_or_raise(Job, JOB_UPDATE, id=job_id)
+        self.minimum_permission = Permissions.OPERATOR.name
+        _ = self.get_or_raise(Job, id=job_id)
 
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
@@ -102,11 +97,11 @@ class JobAPI(AuthorizationHandler):
             if op.operation == "update":
                 if op.path == "/status":
                     if str(op.value).upper() == "PAUSED":
-                        response = await self.client(
+                        response = await self.process_operation(
                             Operation(operation_type="JOB_PAUSE", args=[job_id])
                         )
                     elif str(op.value).upper() == "RUNNING":
-                        response = await self.client(
+                        response = await self.process_operation(
                             Operation(operation_type="JOB_RESUME", args=[job_id])
                         )
                     else:
@@ -114,7 +109,7 @@ class JobAPI(AuthorizationHandler):
                             f"Unsupported status value '{op.value}'"
                         )
                 elif op.path == "/job":
-                    response = await self.client(
+                    response = await self.process_operation(
                         Operation(
                             operation_type="JOB_UPDATE",
                             args=[SchemaParser.parse_job(op.value)],
@@ -149,9 +144,12 @@ class JobAPI(AuthorizationHandler):
         tags:
           - Jobs
         """
-        _ = self.get_or_raise(Job, JOB_DELETE, id=job_id)
+        self.minimum_permission = Permissions.OPERATOR.name
+        _ = self.get_or_raise(Job, id=job_id)
 
-        await self.client(Operation(operation_type="JOB_DELETE", args=[job_id]))
+        await self.process_operation(
+            Operation(operation_type="JOB_DELETE", args=[job_id])
+        )
 
         self.set_status(204)
 
@@ -173,14 +171,15 @@ class JobListAPI(AuthorizationHandler):
         tags:
           - Jobs
         """
-        permitted_objects_filter = self.permitted_objects_filter(Job, JOB_READ)
+
+        permitted_objects_filter = self.permitted_objects_filter(Job)
 
         filter_params = {}
         for key in self.request.arguments.keys():
             if key in JobSchema.get_attribute_names():
                 filter_params[key] = self.get_query_argument(key)
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(
                 operation_type="JOB_READ_ALL",
                 kwargs={
@@ -218,13 +217,14 @@ class JobListAPI(AuthorizationHandler):
         tags:
           - Jobs
         """
+        self.minimum_permission = Permissions.OPERATOR.name
         job = SchemaParser.parse_job(
             self.request.body.decode("utf-8"), from_string=True
         )
 
-        self.verify_user_permission_for_object(JOB_CREATE, job)
+        self.verify_user_permission_for_object(job)
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(
                 operation_type="JOB_CREATE",
                 args=[job],
@@ -264,10 +264,11 @@ class JobImportAPI(AuthorizationHandler):
         tags:
           - Jobs
         """
+        self.minimum_permission = Permissions.OPERATOR.name
         parsed_job_list = SchemaParser.parse_job(self.request_body, many=True)
 
         for job in parsed_job_list:
-            self.verify_user_permission_for_object(JOB_CREATE, job)
+            self.verify_user_permission_for_object(job)
 
         create_jobs_output = create_jobs(parsed_job_list)
         created_jobs = create_jobs_output["created"]
@@ -310,7 +311,7 @@ class JobExportAPI(AuthorizationHandler):
           - Jobs
         """
         filter_params_dict = {}
-        permitted_objects_filter = self.permitted_objects_filter(Job, JOB_READ)
+        permitted_objects_filter = self.permitted_objects_filter(Job)
 
         # self.request_body is designed to return a 400 on a completely absent body
         # but we want to return all jobs if that's the case
@@ -322,7 +323,7 @@ class JobExportAPI(AuthorizationHandler):
                 validated_input_data_dict = input_schema.load(decoded_body_as_dict).data
                 filter_params_dict["id__in"] = validated_input_data_dict["ids"]
 
-        response_objects = await self.client(
+        response_objects = await self.process_operation(
             Operation(
                 operation_type="JOB_READ_ALL",
                 kwargs={
@@ -364,7 +365,8 @@ class JobExecutionAPI(AuthorizationHandler):
         tags:
           - Jobs
         """
-        _ = self.get_or_raise(Job, JOB_CREATE, id=job_id)
+        self.minimum_permission = Permissions.OPERATOR.name
+        _ = self.get_or_raise(Job, id=job_id)
 
         reset_interval = (
             True
@@ -373,7 +375,7 @@ class JobExecutionAPI(AuthorizationHandler):
         )
 
         try:
-            await self.client(
+            await self.process_operation(
                 Operation(operation_type="JOB_EXECUTE", args=[job_id, reset_interval])
             )
         except ValidationError:
