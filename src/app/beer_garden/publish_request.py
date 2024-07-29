@@ -17,7 +17,7 @@ from beer_garden.topic import (
 logger = logging.getLogger(__name__)
 
 
-def deterimine_target_garden(request: Request, garden: Garden = None) -> str:
+def determine_target_garden(request: Request, garden: Garden = None) -> str:
     """Determine the Garden name of a request
 
     Args:
@@ -47,7 +47,7 @@ def deterimine_target_garden(request: Request, garden: Garden = None) -> str:
                         return garden.name
 
     for child in garden.children:
-        garden_name = deterimine_target_garden(request, garden=child)
+        garden_name = determine_target_garden(request, garden=child)
         if garden_name:
             return garden_name
 
@@ -67,7 +67,7 @@ def handle_event(event: Event):
                 event.metadata["topic"] = event.payload.metadata["_topic"]
             else:
                 # Need to find the source garden for the system
-                garden_name = deterimine_target_garden(event.payload)
+                garden_name = determine_target_garden(event.payload)
                 if garden_name:
                     event.metadata["topic"] = (
                         f"{garden_name}.{event.payload.namespace}.{event.payload.system}.{event.payload.system_version}.{event.payload.instance_name}.{event.payload.command}"
@@ -80,7 +80,7 @@ def handle_event(event: Event):
             if "_propagate" in event.payload.metadata:
                 event.metadata["propagate"] = event.payload.metadata["propagate"]
 
-            # Clear values from exisitng request
+            # Clear values from existing request
             event.payload.id = None
             event.payload.namespace = None
             event.payload.system = None
