@@ -4,7 +4,7 @@
 
 TBD
 
-- Expanded the Topics API to support `/topics/name/` for passing `topic.name` as a variable instead of `topic.id`
+- Expanded the Topics API to support `api/v1/topics/name/` for passing `topic.name` as a variable instead of `topic.id`
 - New feature to track the last N heartbeats timestamps for Instances and Gardens. The range to history stored is 
   controlled by configurations `garden.status_history` and `plugin.status_history`
 - Added Replication Awareness to ensure only one Replicated instance can process the scheduled jobs.
