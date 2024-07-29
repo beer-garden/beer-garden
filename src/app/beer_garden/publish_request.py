@@ -3,7 +3,7 @@ import logging
 import re
 from typing import List
 
-from brewtils.models import Event, Events, Garden, Topic, Request
+from brewtils.models import Event, Events, Garden, Request, Topic
 
 import beer_garden.config as config
 from beer_garden.garden import get_gardens, local_garden
@@ -16,6 +16,7 @@ from beer_garden.topic import (
 
 logger = logging.getLogger(__name__)
 
+
 def deterimine_target_garden(request: Request, garden: Garden = None) -> str:
     """Determine the Garden name of a request
 
@@ -25,12 +26,16 @@ def deterimine_target_garden(request: Request, garden: Garden = None) -> str:
 
     Returns:
         str: Garden Name
-    """    
+    """
     if garden is None:
         garden = local_garden(all_systems=True)
 
     for system in garden.systems:
-        if system.namespace == request.namespace and system.name == request.system and system.version == request.system_version:
+        if (
+            system.namespace == request.namespace
+            and system.name == request.system
+            and system.version == request.system_version
+        ):
             instance_match = False
             for instance in system.instances:
                 if instance.name == request.instance_name:
@@ -40,15 +45,14 @@ def deterimine_target_garden(request: Request, garden: Garden = None) -> str:
                 for command in system.commands:
                     if command.name == request.command:
                         return garden.name
-                    
+
     for child in garden.children:
         garden_name = deterimine_target_garden(request, garden=child)
         if garden_name:
             return garden_name
-        
+
     return None
-                    
-                
+
 
 def handle_event(event: Event):
     if (event.name == Events.REQUEST_TOPIC_PUBLISH.name) or (
@@ -69,7 +73,9 @@ def handle_event(event: Event):
                         f"{garden_name}.{event.payload.namespace}.{event.payload.system}.{event.payload.system_version}.{event.payload.instance_name}.{event.payload.command}"
                     )
                 else:
-                    logger.error(f"Unable to determine target Garden for system {event.payload.namespace}.{event.payload.system}.{event.payload.system_version}.{event.payload.instance_name}.{event.payload.command}")
+                    logger.error(
+                        f"Unable to determine target Garden for system {event.payload.namespace}.{event.payload.system}.{event.payload.system_version}.{event.payload.instance_name}.{event.payload.command}"
+                    )
 
             if "_propagate" in event.payload.metadata:
                 event.metadata["propagate"] = event.payload.metadata["propagate"]
