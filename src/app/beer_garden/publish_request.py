@@ -76,6 +76,7 @@ def handle_event(event: Event):
                     logger.error(
                         f"Unable to determine target Garden for system {event.payload.namespace}.{event.payload.system}.{event.payload.system_version}.{event.payload.instance_name}.{event.payload.command}"
                     )
+                    return
 
             if "_propagate" in event.payload.metadata:
                 event.metadata["propagate"] = event.payload.metadata["propagate"]
