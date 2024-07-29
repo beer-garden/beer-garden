@@ -33,9 +33,9 @@ def get_namespaces(
     Returns:
         List
     """
-    gardens = garden_queryset or Garden.objects
-    systems = system_queryset or System.objects
-    requests = request_queryset or Request.objects
+    gardens = Garden.objects.filter(garden_queryset)
+    systems = System.objects.filter(system_queryset)
+    requests = Request.objects.filter(request_queryset)
 
     namespaces = set()
     namespaces |= set(requests.distinct("namespace"))

@@ -1,57 +1,23 @@
+import json
 import logging
+from datetime import datetime
 from typing import List, Optional, cast
 from uuid import uuid4
 
-import yaml
 from box import Box
-from brewtils.schemas import RoleAssignmentSchema as BrewtilsRoleAssignmentSchema
-from marshmallow import Schema, ValidationError, fields, post_load, validates
+from brewtils.models import User
+from brewtils.schema_parser import SchemaParser
+from marshmallow import ValidationError
+from mongoengine import DoesNotExist
 from tornado.httputil import HTTPHeaders, HTTPServerRequest
-from yaml.parser import ParserError
 
 from beer_garden import config
 from beer_garden.api.http.authentication.login_handlers.base import BaseLoginHandler
-from beer_garden.db.mongo.models import Role, RoleAssignment, User
-from beer_garden.errors import ConfigurationError
+from beer_garden.garden import get_garden
+from beer_garden.role import get_role
+from beer_garden.user import create_user, get_user, set_password, update_user
 
 logger = logging.getLogger(__name__)
-
-
-class SimpleRoleAssignmentSchema(BrewtilsRoleAssignmentSchema):
-    """Schema for RoleAssignment that allows specifying a role name rather than a
-    Role object"""
-
-    role_name = fields.Str(required=True)
-
-
-class RoleAssignmentSchema(SimpleRoleAssignmentSchema):
-    """Schema for deserializing role assignments from the group mapping config"""
-
-    _role = None
-
-    @validates("role_name")
-    def validate_role_name(self, value):
-        try:
-            # Stash the Role so that we don't have to re-query the db for it later
-            self._role = Role.objects.get(name=value)
-        except Role.DoesNotExist:
-            raise ValidationError(f"Invalid role_name {value}. No such role found.")
-
-    @post_load
-    def load_obj(self, item, **kwargs):
-        item["role"] = self._role
-        del item["role_name"]
-
-        return RoleAssignment(**item)
-
-
-class GroupMappingSchema(Schema):
-    """Schema for validating the group mapping config"""
-
-    group = fields.Str(required=True)
-    role_assignments = fields.List(
-        fields.Nested(SimpleRoleAssignmentSchema), required=True
-    )
 
 
 class TrustedHeaderLoginHandler(BaseLoginHandler):
@@ -62,24 +28,12 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
             Box, config.get("auth.authentication_handlers.trusted_header")
         )
         self.username_header = handler_config.get("username_header")
-        self.user_groups_header = handler_config.get("user_groups_header")
+        self.user_upstream_roles_header = handler_config.get(
+            "user_upstream_roles_header"
+        )
+        self.user_local_roles_header = handler_config.get("user_local_roles_header")
+        self.user_alias_mapping_header = handler_config.get("user_alias_mapping_header")
         self.create_users = handler_config.get("create_users")
-        self.group_definition_file = cast(str, config.get("auth.group_definition_file"))
-        self.group_mapping = {}
-
-        if self.group_definition_file:
-            try:
-                self.group_mapping = self._load_group_mapping(
-                    self.group_definition_file
-                )
-            except ConfigurationError as exc:
-                logger.error("Error loading group definitions: %s", exc)
-        else:
-            logger.error(
-                "No group_definition_file defined. Users will not be assigned to any "
-                "groups. To fix this, set the 'auth.group_definition_file' "
-                "configuration parameter and restart beer garden."
-            )
 
     def get_user(self, request: HTTPServerRequest) -> Optional[User]:
         """Gets the User based on certificates supplied with in the request body
@@ -93,94 +47,140 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
         """
         authenticated_user: Optional[User] = None
 
-        if request.headers and self.group_mapping:
+        if request.headers:
             username = request.headers.get(self.username_header)
-            groups = self._groups_from_headers(request.headers)
+            upstream_roles = self._upstream_roles_from_headers(request.headers)
+            local_roles = self._local_roles_from_headers(request.headers)
+            user_alias_mappings = self._user_alias_mapping_from_headers(request.headers)
 
-            if username and groups:
+            if username:
                 try:
-                    authenticated_user = User.objects.get(username=username)
-                except User.DoesNotExist:
+                    authenticated_user = get_user(username)
+                except DoesNotExist:
                     if self.create_users:
-                        authenticated_user = User(username=username)
+                        authenticated_user = User(username=username, is_remote=True)
 
                         # TODO: Really we should just have an option on User to disable
                         # password logins. For now, just set a random-ish value.
-                        authenticated_user.set_password(str(uuid4()))
+                        set_password(authenticated_user, str(uuid4()))
+
+                        authenticated_user = create_user(authenticated_user)
 
                 if authenticated_user:
-                    authenticated_user.role_assignments = (
-                        self._role_assignments_from_groups(groups)
-                    )
+                    if upstream_roles:
+                        authenticated_user.upstream_roles = upstream_roles
+                        authenticated_user.metadata[
+                            "last_authentication_headers_upstream_roles"
+                        ] = json.loads(
+                            request.headers.get(self.user_upstream_roles_header, "[]")
+                        )
+                    elif (
+                        "last_authentication_headers_upstream_roles"
+                        in authenticated_user.metadata
+                    ):
+                        del authenticated_user.metadata[
+                            "last_authentication_headers_upstream_roles"
+                        ]
 
-                    authenticated_user.save()
+                    if local_roles:
+                        authenticated_user.roles = local_roles
+                        authenticated_user.metadata[
+                            "last_authentication_headers_local_roles"
+                        ] = json.loads(
+                            request.headers.get(self.user_local_roles_header, "[]")
+                        )
+                    elif (
+                        "last_authentication_headers_local_roles"
+                        in authenticated_user.metadata
+                    ):
+                        del authenticated_user.metadata[
+                            "last_authentication_headers_local_roles"
+                        ]
+
+                    if user_alias_mappings:
+                        authenticated_user.user_alias_mapping = user_alias_mappings
+                        authenticated_user.metadata[
+                            "last_authentication_headers_user_alias_mapping"
+                        ] = json.loads(
+                            request.headers.get(self.user_alias_mapping_header, "[]")
+                        )
+                    elif (
+                        "last_authentication_headers_user_alias_mapping"
+                        in authenticated_user.metadata
+                    ):
+                        del authenticated_user.metadata[
+                            "last_authentication_headers_user_alias_mapping"
+                        ]
+
+                    authenticated_user.metadata["last_authentication"] = (
+                        datetime.utcnow().timestamp()
+                    )
+                    authenticated_user = update_user(authenticated_user)
 
         return authenticated_user
 
-    def _groups_from_headers(self, headers: HTTPHeaders) -> List[str]:
+    def _upstream_roles_from_headers(self, headers: HTTPHeaders) -> List[str]:
         """Parse the header containing the user's groups and return them as a list"""
-        return [
-            group.strip()
-            for group in headers.get(self.user_groups_header, "").split(",")
-        ]
 
-    def _role_assignments_from_groups(self, groups: List[str]):
-        """Generate a list of RoleAssignments using the supplied groups and the
-        configured group to role assignment mapping
-        """
-        role_assignments = []
-        schema = RoleAssignmentSchema(strict=True)
+        if not headers.get(self.user_upstream_roles_header, None):
+            return None
 
-        for group in groups:
-            group_role_assignments = self.group_mapping.get(group)
+        try:
+            return SchemaParser.parse_role(
+                headers.get(self.user_upstream_roles_header, "[]"),
+                from_string=True,
+                many=True,
+            )
+        except Exception:
+            raise ValidationError(
+                f"Unable to parse Remote Roles: {headers.get(self.user_upstream_roles_header, '[]')}"
+            )
 
-            if group_role_assignments is None:
-                continue
+    def _local_roles_from_headers(self, headers: HTTPHeaders) -> List[str]:
+        """Parse the header containing the user's groups and return them as a list"""
 
-            for item in group_role_assignments:
+        if not headers.get(self.user_local_roles_header, None):
+            return None
+
+        local_roles = []
+
+        try:
+            for role_name in json.loads(
+                headers.get(self.user_local_roles_header, "[]")
+            ):
                 try:
-                    role_assignment = schema.load(item).data
-                    role_assignments.append(role_assignment)
-                except ValidationError as exc:
-                    logger.error(
-                        f"Role assignment definition for {group} is malformed. One or "
-                        "more role assignments will be not be mapped for this group. "
-                        f"Failed to load with error: {exc}"
-                    )
-                    continue
+                    get_role(role_name=role_name)
+                    local_roles.append(role_name)
+                except DoesNotExist:
+                    pass
+        except Exception:
+            raise ValidationError(
+                f"Unable to parse Local Roles: {headers.get(self.user_local_roles_header, '[]')}"
+            )
 
-        return role_assignments
+        return local_roles
 
-    def _group_mapping_by_group_name(self, raw_group_mapping: List[dict]) -> dict:
-        """Organize the group mapping by group name for ease of use"""
-        group_mapping = {}
+    def _user_alias_mapping_from_headers(self, headers: HTTPHeaders) -> List[str]:
+        """Parse the header containing the user's groups and return them as a list"""
 
-        for mapping in raw_group_mapping:
-            group_mapping[mapping["group"]] = mapping["role_assignments"]
+        if not headers.get(self.user_alias_mapping_header, None):
+            return None
 
-        return group_mapping
-
-    def _load_group_mapping(self, group_definition_file: str) -> dict:
-        """Read the supplied mapping file and return group mapping"""
+        user_alias_mappings = []
         try:
-            with open(group_definition_file, "r") as filestream:
-                unvalidated_group_mapping = yaml.safe_load(filestream)
-        except FileNotFoundError:
-            raise ConfigurationError(
-                f"Group mapping configuration file {group_definition_file} not found."
-            )
-        except ParserError as exc:
-            raise ConfigurationError(
-                f"Group mapping configuration file {group_definition_file} is "
-                f"malformed. Failed to load with error: {exc}"
-            )
-
-        try:
-            schema = GroupMappingSchema(strict=True, many=True)
-            raw_group_mapping = schema.load(unvalidated_group_mapping).data
-        except ValidationError as exc:
-            raise ConfigurationError(
-                f"Group mapping file is malformed. Validation error was: {exc}"
+            for user_alias_mapping in SchemaParser.parse_alias_user_map(
+                headers.get(self.user_alias_mapping_header, "[]"),
+                from_string=True,
+                many=True,
+            ):
+                try:
+                    get_garden(user_alias_mapping.target_garden)
+                    user_alias_mappings.append(user_alias_mapping)
+                except DoesNotExist:
+                    pass
+        except Exception:
+            raise ValidationError(
+                f"Unable to parse Alias User Mapping: {headers.get(self.user_alias_mapping_header, '[]')}"
             )
 
-        return self._group_mapping_by_group_name(raw_group_mapping)
+        return user_alias_mappings

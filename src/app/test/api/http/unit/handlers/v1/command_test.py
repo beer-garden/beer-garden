@@ -2,33 +2,33 @@
 import json
 
 import pytest
+from brewtils.models import Role, User
 from tornado.httpclient import HTTPError
 
 from beer_garden.api.http.authentication import issue_token_pair
-from beer_garden.db.mongo.models import (
-    Command,
-    Garden,
-    Role,
-    RoleAssignment,
-    System,
-    User,
-)
+from beer_garden.db.mongo.models import Command, Garden, System
+from beer_garden.role import create_role, delete_role
+from beer_garden.user import create_user, delete_user
 
 
-@pytest.fixture
-def garden():
-    garden = Garden(name="somegarden", connection_type="LOCAL").save()
+@pytest.fixture(autouse=True)
+def garden(system_permitted, system_not_permitted):
+    garden = Garden(
+        name="somegarden",
+        connection_type="LOCAL",
+        systems=[system_permitted, system_not_permitted],
+    ).save()
 
     yield garden
     garden.delete()
 
 
-@pytest.fixture(autouse=True)
-def system_permitted(garden):
+@pytest.fixture()
+def system_permitted():
     system = System(
         name="system_permitted",
         version="0.0.1",
-        namespace=garden.name,
+        namespace="somegarden",
         commands=[Command(name="command_permitted")],
     ).save()
 
@@ -36,12 +36,12 @@ def system_permitted(garden):
     system.delete()
 
 
-@pytest.fixture(autouse=True)
-def system_not_permitted(garden):
+@pytest.fixture()
+def system_not_permitted():
     system = System(
         name="system_not_permitted",
         version="0.0.1",
-        namespace=garden.name,
+        namespace="somegarden",
         commands=[Command(name="command_not_permitted")],
     ).save()
 
@@ -50,33 +50,24 @@ def system_not_permitted(garden):
 
 
 @pytest.fixture
-def system_read_role():
-    role = Role(
-        name="system_admin",
-        permissions=["system:read"],
-    ).save()
-
+def system_read_role(system_permitted):
+    role = create_role(
+        Role(
+            name="system_admin",
+            permission="READ_ONLY",
+            scope_systems=[system_permitted.name],
+            scope_namespaces=[system_permitted.namespace],
+        )
+    )
     yield role
-    role.delete()
+    delete_role(role)
 
 
 @pytest.fixture
-def user(system_permitted, system_read_role):
-    role_assignment = RoleAssignment(
-        role=system_read_role,
-        domain={
-            "scope": "System",
-            "identifiers": {
-                "name": system_permitted.name,
-                "namespace": system_permitted.namespace,
-            },
-        },
-    )
-
-    user = User(username="testuser", role_assignments=[role_assignment]).save()
-
+def user(system_read_role):
+    user = create_user(User(username="testuser", local_roles=[system_read_role]))
     yield user
-    user.delete()
+    delete_user(user=user)
 
 
 @pytest.fixture

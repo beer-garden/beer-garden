@@ -7,7 +7,7 @@ from copy import deepcopy
 from typing import List, Optional, Tuple
 
 from apispec import APISpec
-from brewtils.models import Event, Events, Principal
+from brewtils.models import Event, Events, User
 from brewtils.schemas import (
     CommandSchema,
     CronTriggerSchema,
@@ -20,19 +20,18 @@ from brewtils.schemas import (
     JobExportInputSchema,
     JobExportSchema,
     JobSchema,
-    LegacyRoleSchema,
     LoggingConfigSchema,
     OperationSchema,
     ParameterSchema,
     PatchSchema,
     QueueSchema,
     RequestSchema,
+    RoleSchema,
     RunnerSchema,
     SystemSchema,
     TopicSchema,
-    UserCreateSchema,
-    UserListSchema,
     UserSchema,
+    UserTokenSchema,
 )
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
@@ -55,16 +54,7 @@ from beer_garden.api.http.schemas.v1.command_publishing_blocklist import (
     CommandPublishingBlocklistListSchema,
     CommandPublishingBlocklistSchema,
 )
-from beer_garden.api.http.schemas.v1.role import RoleListSchema
-from beer_garden.api.http.schemas.v1.token import (
-    TokenInputSchema,
-    TokenRefreshInputSchema,
-    TokenResponseSchema,
-)
-from beer_garden.api.http.schemas.v1.user import (
-    UserPasswordChangeSchema,
-    UserPatchSchema,
-)
+from beer_garden.api.http.schemas.v1.user import UserPasswordChangeSchema
 from beer_garden.events import publish
 
 io_loop: IOLoop = None
@@ -73,7 +63,7 @@ tornado_app: Application
 logger: logging.Logger = None
 event_publishers = None
 api_spec: APISpec
-anonymous_principal: Principal
+anonymous_principal: User
 client_ssl: ssl.SSLContext
 
 
@@ -113,12 +103,14 @@ def _get_published_url_specs(
         (rf"{prefix}api/v1/import/jobs/?", v1.job.JobImportAPI),
         (rf"{prefix}api/v1/password/change/?", v1.user.UserPasswordChangeAPI),
         (rf"{prefix}api/v1/token/?", v1.token.TokenAPI),
+        (rf"{prefix}api/v1/tokens/(\w+)/?", v1.token.TokenListAPI),
         (rf"{prefix}api/v1/token/revoke/?", v1.token.TokenRevokeAPI),
         (rf"{prefix}api/v1/token/refresh/?", v1.token.TokenRefreshAPI),
         (rf"{prefix}api/v1/topics/?", v1.topic.TopicListAPI),
         (rf"{prefix}api/v1/topics/(\w+)/?", v1.topic.TopicAPI),
         (rf"{prefix}api/v1/topics/name/(\w+)/?", v1.topic.TopicNameAPI),
         (rf"{prefix}api/v1/whoami/?", v1.user.WhoAmIAPI),
+        (rf"{prefix}api/v1/roles/(\w+)/?", v1.role.RoleAPI),
         (rf"{prefix}api/v1/roles/?", v1.role.RoleListAPI),
         # Beta
         (rf"{prefix}api/vbeta/events/?", vbeta.event.EventPublisherAPI),
@@ -366,7 +358,6 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition("LoggingConfig", schema=LoggingConfigSchema)
     api_spec.definition("Event", schema=EventSchema)
     api_spec.definition("User", schema=UserSchema)
-    api_spec.definition("UserCreate", schema=UserCreateSchema)
     api_spec.definition(
         "CommandPublishingBlocklist", schema=CommandPublishingBlocklistSchema
     )
@@ -378,17 +369,13 @@ def _load_swagger(url_specs, title=None):
         "CommandPublishingBlocklistListInputSchema",
         schema=CommandPublishingBlocklistListInputSchema,
     )
-    api_spec.definition("UserList", schema=UserListSchema)
-    api_spec.definition("UserPatch", schema=UserPatchSchema)
     api_spec.definition("UserPasswordChange", schema=UserPasswordChangeSchema)
-    api_spec.definition("Role", schema=LegacyRoleSchema)
-    api_spec.definition("RoleList", schema=RoleListSchema)
+    api_spec.definition("Role", schema=RoleSchema)
+
     api_spec.definition("Queue", schema=QueueSchema)
     api_spec.definition("Operation", schema=OperationSchema)
     api_spec.definition("FileStatus", schema=FileStatusSchema)
-    api_spec.definition("TokenInput", schema=TokenInputSchema)
-    api_spec.definition("TokenRefreshInput", schema=TokenRefreshInputSchema)
-    api_spec.definition("TokenResponse", schema=TokenResponseSchema)
+    api_spec.definition("UserToken", schema=UserTokenSchema)
     api_spec.definition("Topic", schema=TopicSchema)
 
     api_spec.definition("Garden", schema=GardenSchema)
