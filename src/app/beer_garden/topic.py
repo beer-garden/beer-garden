@@ -49,7 +49,9 @@ def get_topic(topic_id: str = None, topic_name: str = None) -> Topic:
 
 
 @publish_event(Events.TOPIC_REMOVED)
-def remove_topic(topic_id: str = None, topic_name: str = None, topic: Topic = None) -> Topic:
+def remove_topic(
+    topic_id: str = None, topic_name: str = None, topic: Topic = None
+) -> Topic:
     """Remove a topic
 
     Args:
@@ -80,7 +82,9 @@ def get_all_topics(**kwargs) -> List[Topic]:
     return db.query(Topic, **kwargs)
 
 
-def topic_add_subscriber(subscriber: Subscriber, topic_id: str = None, topic_name: str = None) -> Topic:
+def topic_add_subscriber(
+    subscriber: Subscriber, topic_id: str = None, topic_name: str = None
+) -> Topic:
     """Add a Subscriber to a Topic
 
     Args:
@@ -107,7 +111,9 @@ def topic_add_subscriber(subscriber: Subscriber, topic_id: str = None, topic_nam
     return update_topic(topic)
 
 
-def topic_remove_subscriber(subscriber: Subscriber, topic_id: str = None, topic_name: str = None) -> Topic:
+def topic_remove_subscriber(
+    subscriber: Subscriber, topic_id: str = None, topic_name: str = None
+) -> Topic:
     """Remove a Subscriber from a Topic
 
     Args:
