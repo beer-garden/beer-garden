@@ -83,12 +83,19 @@ class TestTopic:
     def setup_class(cls):
         connect("beer_garden", host="mongomock://localhost")
 
-    def test_get_topic(self, topic1):
+    def test_get_topic_id(self, topic1):
         """get_topic should allow for retrieval by name"""
-        t = get_topic(topic1.id)
+        t = get_topic(topic_id=topic1.id)
 
         assert type(t) is BrewtilsTopic
         assert t.id == topic1.id
+
+    def test_get_topic_name(self, topic1):
+        """get_topic should allow for retrieval by name"""
+        t = get_topic(topic_name=topic1.name)
+
+        assert type(t) is BrewtilsTopic
+        assert t.name == topic1.name
 
     def test_get_all_topics(self, topic1, topic2):
         """get_all_topics should get all topics"""
@@ -102,9 +109,14 @@ class TestTopic:
         create_topic(new_topic)
         assert len(get_topic(topic1.id).subscribers) == 1
 
-    def test_remove_topic(self, topic1):
+    def test_remove_topic_id(self, topic1):
         """remove_topic should remove topic"""
-        remove_topic(topic1.id)
+        remove_topic(topic_id=topic1.id)
+        assert len(Topic.objects.filter(id=topic1.id)) == 0
+
+    def test_remove_topic_name(self, topic1):
+        """remove_topic should remove topic"""
+        remove_topic(topic_name=topic1.name)
         assert len(Topic.objects.filter(id=topic1.id)) == 0
 
     def test_add_subscriber(self, topic1, subscriber):

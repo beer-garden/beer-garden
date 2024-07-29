@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.27.0
+
+TBD
+
+- Expanded the Topics API to support `/topics/name/` for passing `topic.name` as a variable instead of `topic.id`
+
 # 3.26.4
 
 7/12/2024
