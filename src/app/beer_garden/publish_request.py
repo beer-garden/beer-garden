@@ -3,7 +3,7 @@ import logging
 import re
 from typing import List
 
-from brewtils.models import Event, Events, Garden, Topic
+from brewtils.models import Event, Events, Garden, Topic, Request
 
 import beer_garden.config as config
 from beer_garden.garden import get_gardens, local_garden
@@ -16,6 +16,39 @@ from beer_garden.topic import (
 
 logger = logging.getLogger(__name__)
 
+def deterimine_target_garden(request: Request, garden: Garden = None) -> str:
+    """Determine the Garden name of a request
+
+    Args:
+        request (Request): Request to find target System from
+        garden (Garden, optional): Garden to search for matching System. Defaults to None.
+
+    Returns:
+        str: Garden Name
+    """    
+    if garden is None:
+        garden = local_garden(all_systems=True)
+
+    for system in garden.systems:
+        if system.namespace == request.namespace and system.name == request.system and system.version == request.system_version:
+            instance_match = False
+            for instance in system.instances:
+                if instance.name == request.instance_name:
+                    instance_match = True
+                    break
+            if instance_match:
+                for command in system.commands:
+                    if command.name == request.command:
+                        return garden.name
+                    
+    for child in garden.children:
+        garden_name = deterimine_target_garden(request, garden=child)
+        if garden_name:
+            return garden_name
+        
+    return None
+                    
+                
 
 def handle_event(event: Event):
     if (event.name == Events.REQUEST_TOPIC_PUBLISH.name) or (
@@ -25,13 +58,18 @@ def handle_event(event: Event):
         and event.payload.metadata["_publish"]
     ):
         if event.name == Events.REQUEST_CREATED.name:
-            event.metadata["regex_only"] = True
+
             if "_topic" in event.payload.metadata:
                 event.metadata["topic"] = event.payload.metadata["_topic"]
             else:
-                event.metadata["topic"] = (
-                    f"{event.payload.namespace}.{event.payload.system}.{event.payload.system_version}.{event.payload.instance_name}.{event.payload.comment}"
-                )
+                # Need to find the source garden for the system
+                garden_name = deterimine_target_garden(event.payload)
+                if garden_name:
+                    event.metadata["topic"] = (
+                        f"{garden_name}.{event.payload.namespace}.{event.payload.system}.{event.payload.system_version}.{event.payload.instance_name}.{event.payload.command}"
+                    )
+                else:
+                    logger.error(f"Unable to determine target Garden for system {event.payload.namespace}.{event.payload.system}.{event.payload.system_version}.{event.payload.instance_name}.{event.payload.command}")
 
             if "_propagate" in event.payload.metadata:
                 event.metadata["propagate"] = event.payload.metadata["propagate"]
@@ -116,7 +154,7 @@ def process_publish_event(garden: Garden, event: Event, topics: List[Topic]):
                                         event_request.command = command.name
                                         event_request.is_event = True
 
-                                        request_hash = f"{system.name}.{system.version}.{system.namespace}.{instance.name}.{command.name}"
+                                        request_hash = f"{garden.name}.{system.namespace}.{system.name}.{system.version}.{instance.name}.{command.name}"
                                         if request_hash not in requests_hash:
                                             requests_hash.append(request_hash)
                                             requests.append(event_request)
