@@ -1,16 +1,8 @@
 # -*- coding: utf-8 -*-
-from brewtils.models import Operation
+from brewtils.models import Operation, System
 
-from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.db.mongo.api import MongoParser
-from beer_garden.db.mongo.models import System
 from beer_garden.errors import EndpointRemovedException
-
-SYSTEM_CREATE = Permissions.SYSTEM_CREATE.value
-SYSTEM_READ = Permissions.SYSTEM_READ.value
-SYSTEM_UPDATE = Permissions.SYSTEM_UPDATE.value
-SYSTEM_DELETE = Permissions.SYSTEM_DELETE.value
 
 
 class CommandAPI(AuthorizationHandler):
@@ -41,9 +33,10 @@ class CommandAPI(AuthorizationHandler):
         tags:
           - Commands
         """
-        _ = self.get_or_raise(System, SYSTEM_READ, id=system_id)
 
-        response = await self.client(
+        _ = self.get_or_raise(System, id=system_id)
+
+        response = await self.process_operation(
             Operation(operation_type="COMMAND_READ", args=[system_id, command_name])
         )
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -100,13 +93,17 @@ class CommandListAPI(AuthorizationHandler):
         tags:
           - Deprecated
         """
-        systems = self.permissioned_queryset(System, SYSTEM_READ)
-        commands = []
 
-        for system in systems:
-            commands.extend(system.commands)
+        permitted_objects_filter = self.permissioned_queryset(System)
 
-        response = MongoParser.serialize(commands, to_string=True)
+        response = await self.process_operation(
+            Operation(
+                operation_type="COMMAND_READ_ALL",
+                kwargs={
+                    "q_filter": permitted_objects_filter,
+                },
+            )
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

@@ -11,11 +11,13 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 from apscheduler.events import EVENT_JOB_MAX_INSTANCES
+from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
 from brewtils.errors import ModelValidationError
 from brewtils.models import DateTrigger, Event, Events, Job, Operation, Request
 from mongoengine import ValidationError
+from pytz import utc
 
 import beer_garden
 import beer_garden.config as config
@@ -126,20 +128,9 @@ class MixedScheduler(object):
     A wrapper that tracks an interval-based scheduler.
     """
 
-    _sync_scheduler = BackgroundScheduler()
+    _sync_scheduler = None
 
     running = False
-
-    def __init__(self, interval_config=None):
-        """Initializes the underlying scheduler
-
-        Args:
-            interval_config: Any scheduler-specific arguments for the APScheduler
-        """
-        self._sync_scheduler.configure(**interval_config)
-        self._sync_scheduler.add_listener(
-            self.max_concurrence_listener, EVENT_JOB_MAX_INSTANCES
-        )
 
     def max_concurrence_listener(scheduler, event):
         db_job = db.query_unique(Job, id=event.job_id)
@@ -147,8 +138,40 @@ class MixedScheduler(object):
 
     def start(self):
         """Starts the scheduler"""
+        if self._sync_scheduler is None:
+            self._sync_scheduler = BackgroundScheduler()
+            job_stores = {"beer_garden": db.get_job_store()}
+            scheduler_config = config.get("scheduler")
+            executors = {"default": APThreadPoolExecutor(scheduler_config.max_workers)}
+            job_defaults = scheduler_config.job_defaults.to_dict()
+
+            ap_config = {
+                "jobstores": job_stores,
+                "executors": executors,
+                "job_defaults": job_defaults,
+                "timezone": utc,
+            }
+            self._sync_scheduler.configure(**ap_config)
+            self._sync_scheduler.add_listener(
+                self.max_concurrence_listener, EVENT_JOB_MAX_INSTANCES
+            )
+
+            self.internal_scheduled_jobs()
+
         self._sync_scheduler.start()
         self.running = True
+
+    def resume(self):
+        """Resume the scheduler"""
+        if self._sync_scheduler:
+            self._sync_scheduler.resume()
+            self.running = True
+
+    def pause(self):
+        """pause the scheduler"""
+        if self._sync_scheduler:
+            self._sync_scheduler.pause()
+            self.running = False
 
     def shutdown(self, **kwargs):
         """Stops the scheduler
@@ -164,8 +187,10 @@ class MixedScheduler(object):
         Args:
             kwargs: Any other scheduler-specific arguments
         """
-        self._sync_scheduler.shutdown(**kwargs)
-        self.running = False
+        if self._sync_scheduler:
+            self._sync_scheduler.shutdown(**kwargs)
+            self.running = False
+            self._sync_scheduler = None
 
     def reschedule_job(self, job_id, **kwargs):
         """Passes through to the sync scheduler
@@ -284,6 +309,70 @@ class MixedScheduler(object):
         self._sync_scheduler.add_job(
             func, trigger=APInterval(minutes=interval), **kwargs
         )
+
+    def internal_scheduled_jobs(self):
+        # Add scheduled jobs for Mongo Pruner
+        prune_interval = config.get("db.prune_interval")
+        if prune_interval > 0:
+            ttl_config = config.get("db.ttl")
+            if ttl_config.get("info") > 0:
+                self.add_schedule(
+                    beer_garden.db.mongo.pruner.prune_info_requests,
+                    interval=prune_interval,
+                    max_running_jobs=1,
+                )
+
+            if ttl_config.get("action") > 0:
+                self.add_schedule(
+                    beer_garden.db.mongo.pruner.prune_action_requests,
+                    interval=prune_interval,
+                    max_running_jobs=1,
+                )
+
+            if ttl_config.get("admin") > 0:
+                self.add_schedule(
+                    beer_garden.db.mongo.pruner.prune_admin_requests,
+                    interval=prune_interval,
+                    max_running_jobs=1,
+                )
+
+            if ttl_config.get("temp") > 0:
+                self.add_schedule(
+                    beer_garden.db.mongo.pruner.prune_temp_requests,
+                    interval=prune_interval,
+                    max_running_jobs=1,
+                )
+
+            if ttl_config.get("file") > 0:
+                self.add_schedule(
+                    beer_garden.db.mongo.pruner.prune_files,
+                    interval=prune_interval,
+                    max_running_jobs=1,
+                )
+
+            if ttl_config.get("in_progress") > 0:
+                self.add_schedule(
+                    beer_garden.db.mongo.pruner.prune_outstanding,
+                    interval=prune_interval,
+                    max_running_jobs=1,
+                )
+
+        # Add scheduled job for checking unresponsive gardens
+        self.add_schedule(
+            beer_garden.garden.garden_unresponsive_trigger,
+            interval=15,
+            max_running_jobs=1,
+        )
+
+        # Add Garden Sync Scheduler
+        if config.get("parent.sync_interval") > 0 and (
+            config.get("parent.stomp.enabled") or config.get("parent.http.enabled")
+        ):
+            self.add_schedule(
+                beer_garden.garden.publish_garden,
+                interval=config.get("parent.sync_interval"),
+                max_running_jobs=1,
+            )
 
 
 class IntervalTrigger(APInterval):
@@ -547,7 +636,10 @@ def handle_event(event: Event) -> None:
         event: The event to handle
     """
 
-    if event.garden == config.get("garden.name"):
+    if (
+        event.garden == config.get("garden.name")
+        and beer_garden.application.scheduler.running
+    ):
         if event.name in [Events.JOB_CREATED.name, Events.JOB_UPDATED.name]:
             try:
                 beer_garden.application.scheduler.add_job(
