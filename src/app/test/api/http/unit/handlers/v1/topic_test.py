@@ -100,6 +100,7 @@ class TestTopicAPI:
         assert mongo_subscriber.instance == subscriber.instance
         assert mongo_subscriber.command == subscriber.command
 
+
 class TestTopicNameAPI:
     @pytest.mark.gen_test
     def test_get_topic(self, http_client, base_url, topic_permitted):

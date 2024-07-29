@@ -63,7 +63,9 @@ class TopicAPI(BaseHandler):
           - Topics
         """
 
-        await self.client(Operation(operation_type="TOPIC_DELETE", kwargs={"topic_id": topic_id}))
+        await self.client(
+            Operation(operation_type="TOPIC_DELETE", kwargs={"topic_id": topic_id})
+        )
 
         self.set_status(204)
 
@@ -138,6 +140,7 @@ class TopicAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
+
 class TopicNameAPI(BaseHandler):
     parser = SchemaParser()
 
@@ -194,7 +197,9 @@ class TopicNameAPI(BaseHandler):
           - Topics
         """
 
-        await self.client(Operation(operation_type="TOPIC_DELETE", kwargs={"topic_name": topic_name}))
+        await self.client(
+            Operation(operation_type="TOPIC_DELETE", kwargs={"topic_name": topic_name})
+        )
 
         self.set_status(204)
 
@@ -268,6 +273,7 @@ class TopicNameAPI(BaseHandler):
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
+
 
 class TopicListAPI(BaseHandler):
     parser = SchemaParser()
