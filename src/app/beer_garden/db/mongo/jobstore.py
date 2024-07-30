@@ -33,6 +33,7 @@ class FileTrigger(DateTrigger):
         self.recursive = kwargs.pop("recursive", False)
         super(FileTrigger, self).__init__(*args, **kwargs)
 
+
 def construct_trigger(trigger_type: str, bg_trigger) -> BaseTrigger:
     """Convert a Beergarden trigger to an APScheduler one."""
     if trigger_type == "date":

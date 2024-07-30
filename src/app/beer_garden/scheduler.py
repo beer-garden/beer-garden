@@ -34,7 +34,10 @@ class Monitor(object):
     def __init__(self, job_id, bg_trigger):
         self.job = get_job(job_id)
         self.file_monitor = MonitorDirectory(
-            path=bg_trigger.path, pattern=bg_trigger.pattern, recursive=bg_trigger.recursive, job=self.job
+            path=bg_trigger.path,
+            pattern=bg_trigger.pattern,
+            recursive=bg_trigger.recursive,
+            job=self.job,
         )
         self.start()
 
@@ -172,7 +175,6 @@ class MixedScheduler(object):
         file_jobs = get_jobs(filter_params={"trigger_type": "file"})
         for job in file_jobs:
             observer_threads[job.id] = Monitor(job.id, job.trigger)
-
 
     def shutdown(self, **kwargs):
         """Stops the scheduler

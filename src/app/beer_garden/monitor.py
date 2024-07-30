@@ -100,7 +100,9 @@ class MonitorDirectory(RegexMatchingEventHandler):
 
     """
 
-    def __init__(self, path: str, pattern: str, recursive: bool=True, job: Job=None):
+    def __init__(
+        self, path: str, pattern: str, recursive: bool = True, job: Job = None
+    ):
         super().__init__(regexes=[pattern], ignore_directories=False)
 
         self._path = path
