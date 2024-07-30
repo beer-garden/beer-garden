@@ -37,6 +37,7 @@ from brewtils.schemas import (
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 from tornado.web import Application, RedirectHandler, RequestHandler
+from elasticapm.contrib.tornado import ElasticAPM
 
 import beer_garden
 import beer_garden.api.http.handlers.misc as misc
@@ -75,6 +76,7 @@ event_publishers = None
 api_spec: APISpec
 anonymous_principal: Principal
 client_ssl: ssl.SSLContext
+elastic_apm: ElasticAPM
 
 
 def _get_published_url_specs(
@@ -261,7 +263,7 @@ async def shutdown():
 
 def _setup_application():
     """Setup things that can be taken care of before io loop is started"""
-    global io_loop, tornado_app, server, client_ssl
+    global io_loop, tornado_app, server, client_ssl, elastic_apm
 
     io_loop = IOLoop.current()
 
@@ -292,6 +294,12 @@ def _setup_application():
     # ).url
 
     tornado_app = _setup_tornado_app()
+    tornado_app.settings['ELASTIC_APM'] = {
+        'SERVICE_NAME': 'beer-garden-http',
+        'ELASTIC_APM_SERVER_URL': 'http://127.0.0.1:8200',
+    }
+    elastic_apm = ElasticAPM(tornado_app)
+    
     server_ssl, client_ssl = _setup_ssl_context()
 
     server = HTTPServer(tornado_app, ssl_options=server_ssl)

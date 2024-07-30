@@ -12,9 +12,11 @@ import beer_garden.events
 from beer_garden.api.stomp.manager import StompManager
 from beer_garden.events import publish
 from beer_garden.garden import get_gardens
+from elasticapm import Client
 
 logger: logging.Logger = logging.getLogger(__name__)
 shutdown_event = threading.Event()
+client = None
 
 
 def signal_handler(_: int, __: types.FrameType):
@@ -25,6 +27,11 @@ def run(ep_conn):
     conn_manager = StompManager(ep_conn)
 
     _setup_event_handling(conn_manager)
+
+    client = Client({
+            'SERVICE_NAME': 'beer-garden-stomp',
+            'ELASTIC_APM_SERVER_URL': 'http://127.0.0.1:8200',
+        })
 
     entry_config = config.get("entry.stomp")
     parent_config = config.get("parent.stomp")

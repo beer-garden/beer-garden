@@ -9,6 +9,8 @@ from brewtils.models import Event, Events
 
 from beer_garden import config as config
 
+import elasticapm
+
 # In this master process this should be an instance of EventManager, and in entry points
 # it should be an instance of EntryPointManager
 manager = None
@@ -70,11 +72,11 @@ def publish_event(event_type: Events):
         event = Event(name=event_type.name)
         client = None
 
-        if config.get("apm.enabled"):
+        # if config.get("apm.enabled"):
+        if True:
             client = elasticapm.get_client()
-            transaction_id = elasticapm.get_transaction_id()
-            client.begin_transaction(event_type.name, trace_parent=transaction_id)
-
+            if client:
+                client.begin_transaction(event_type.name)
 
         try:
             result = wrapped(*args, **kwargs)
@@ -82,6 +84,8 @@ def publish_event(event_type: Events):
             event.payload_type = result.__class__.__name__
             event.payload = result
             if client:
+                if hasattr(result, "id"):
+                    elasticapm.set_custom_context({'id': getattr(result, "id")})
                 client.end_transaction(event_type.name, 'success')
 
             return result

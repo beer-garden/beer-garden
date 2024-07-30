@@ -19,6 +19,7 @@ from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.db.mongo.models import Request
 from beer_garden.errors import UnknownGardenException
 from beer_garden.requests import remove_bytes_parameter_base64
+from beer_garden.api.http.handlers.misc import audit_api
 
 REQUEST_CREATE = Permissions.REQUEST_CREATE.value
 REQUEST_READ = Permissions.REQUEST_READ.value
@@ -27,6 +28,8 @@ REQUEST_DELETE = Permissions.REQUEST_DELETE.value
 
 
 class RequestAPI(AuthorizationHandler):
+    
+    @audit_api("RequestAPI")
     async def get(self, request_id):
         """
         ---
@@ -58,6 +61,7 @@ class RequestAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
+    @audit_api("RequestAPI")
     async def patch(self, request_id):
         """
         ---
@@ -140,6 +144,8 @@ class RequestAPI(AuthorizationHandler):
 
 
 class RequestOutputAPI(AuthorizationHandler):
+    
+    @audit_api("RequestOutputAPI")
     async def get(self, request_id):
         """
         ---
@@ -186,6 +192,7 @@ class RequestOutputAPI(AuthorizationHandler):
 class RequestListAPI(AuthorizationHandler):
     parser = SchemaParser()
 
+    @audit_api("RequestListAPI")
     async def get(self):
         """
         ---
@@ -407,6 +414,7 @@ class RequestListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(json.dumps(requests))
 
+    @audit_api("RequestListAPI")
     async def post(self):
         """
         ---
@@ -534,6 +542,8 @@ class RequestListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
+
+    @audit_api("RequestListAPI")
     async def put(self):
         """
         ---
@@ -604,6 +614,7 @@ class RequestListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
+    @audit_api("RequestListAPI")
     async def delete(self):
         """
         ---

@@ -43,6 +43,7 @@ from beer_garden.metrics import PrometheusServer
 from beer_garden.monitor import MonitorFile
 from beer_garden.plugin import StatusMonitor
 from beer_garden.scheduler import MixedScheduler
+from elasticapm import Client
 
 
 class Application(StoppableThread):
@@ -61,6 +62,7 @@ class Application(StoppableThread):
     mp_manager = None
     plugin_log_config_observer: MonitorFile = None
     plugin_local_log_config_observer: MonitorFile = None
+    client = None
 
     def __init__(self):
         super(Application, self).__init__(
@@ -71,6 +73,11 @@ class Application(StoppableThread):
 
     def initialize(self):
         """Actually construct all the various component pieces"""
+
+        self.client = Client({
+            'SERVICE_NAME': 'beer-garden-core',
+            'ELASTIC_APM_SERVER_URL': 'http://127.0.0.1:8200',
+        })
 
         self.scheduler = self._setup_scheduler()
 
