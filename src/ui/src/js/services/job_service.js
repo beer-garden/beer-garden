@@ -357,6 +357,30 @@ export default function jobService($http, NamespaceService) {
         type: 'boolean',
         default: false,
       },
+      create: {
+        title: 'Create',
+        description: 'Modify for created files',
+        type: 'boolean',
+        default: true,
+      },
+      modify: {
+        title: 'Modify',
+        description: 'Monitor for modified files',
+        type: 'boolean',
+        default: false,
+      },
+      move: {
+        title: 'Move',
+        description: 'Monitor for moved files',
+        type: 'boolean',
+        default: false,
+      },
+      delete: {
+        title: 'Delete',
+        description: 'Monitor for deleted files',
+        type: 'boolean',
+        default: false,
+      },
       year: {
         title: 'Year',
         description: 'Cron year value',
@@ -582,6 +606,34 @@ export default function jobService($http, NamespaceService) {
                     {key: 'path', htmlClass: 'col-md-6'},
                     {key: 'pattern', htmlClass: 'col-md-3'},
                     {key: 'recursive', htmlClass: 'col-md-3'},
+                  ],
+                },
+                {
+                  type: 'section',
+                  htmlClass: 'row',
+                  items: [
+                    {key: 'create', htmlClass: 'col-md-3'},
+                  ],
+                },
+                {
+                  type: 'section',
+                  htmlClass: 'row',
+                  items: [
+                    {key: 'modify', htmlClass: 'col-md-3'},
+                  ],
+                },
+                {
+                  type: 'section',
+                  htmlClass: 'row',
+                  items: [
+                    {key: 'move', htmlClass: 'col-md-3'},
+                  ],
+                },
+                {
+                  type: 'section',
+                  htmlClass: 'row',
+                  items: [
+                    {key: 'delete', htmlClass: 'col-md-3'},
                   ],
                 },
               ],
