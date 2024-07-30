@@ -68,18 +68,28 @@ def publish_event(event_type: Events):
         _publish_error = kwargs.pop("_publish_error", True)
 
         event = Event(name=event_type.name)
+        client = None
+
+        if config.get("apm.enabled"):
+            client = elasticapm.get_client()
+            transaction_id = elasticapm.get_transaction_id()
+            client.begin_transaction(event_type.name, trace_parent=transaction_id)
+
 
         try:
             result = wrapped(*args, **kwargs)
 
             event.payload_type = result.__class__.__name__
             event.payload = result
+            if client:
+                client.end_transaction(event_type.name, 'success')
 
             return result
         except Exception as ex:
             event.error = True
             event.error_message = str(ex)
-
+            if client:
+                client.end_transaction(event_type.name, 'failure')
             raise
         finally:
             if (not event.error and _publish_success) or (
