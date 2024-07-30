@@ -169,6 +169,10 @@ class MixedScheduler(object):
         """Starts the scheduler"""
         self._sync_scheduler.start()
         self.running = True
+        file_jobs = get_jobs(filter_params={"trigger_type": "file"})
+        for job in file_jobs:
+            observer_threads[job.id] = Monitor(job.id, job.trigger)
+
 
     def shutdown(self, **kwargs):
         """Stops the scheduler
