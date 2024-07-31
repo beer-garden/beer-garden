@@ -24,7 +24,7 @@ class IntervalTrigger(APInterval):
         super(IntervalTrigger, self).__init__(*args, **kwargs)
 
 
-class FileTrigger(DateTrigger):
+class FileTrigger(BaseTrigger):
     """Beergarden implementation of File Trigger"""
 
     def __init__(self, *args, **kwargs):
@@ -32,6 +32,9 @@ class FileTrigger(DateTrigger):
         self.path = kwargs.pop("path", False)
         self.recursive = kwargs.pop("recursive", False)
         super(FileTrigger, self).__init__(*args, **kwargs)
+    
+    def get_next_fire_time(self, previous_fire_time, now):
+        return super().get_next_fire_time(previous_fire_time, now)
 
 
 def construct_trigger(trigger_type: str, bg_trigger) -> BaseTrigger:
