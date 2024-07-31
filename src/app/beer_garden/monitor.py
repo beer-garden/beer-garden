@@ -6,12 +6,11 @@ These are abstract classes generated to be utilizes for functions based off OS f
 import logging
 from pathlib import Path
 
-from brewtils.models import Events, Job
+from brewtils.models import Event, Events, Job
 from watchdog.events import PatternMatchingEventHandler, RegexMatchingEventHandler
 from watchdog.observers.polling import PollingObserver
 
-from beer_garden.db.mongo.models import Event
-from beer_garden.events import publish, publish_event
+from beer_garden.events import publish
 
 logger = logging.getLogger()
 
@@ -127,7 +126,6 @@ class MonitorDirectory(RegexMatchingEventHandler):
             self._observer.stop()
             self._observer.join()
 
-    @publish_event(Events.DIRECTORY_FILE_CHANGE)
     def on_created(self, event):
         """Callback invoked when the file is created
 
@@ -135,9 +133,8 @@ class MonitorDirectory(RegexMatchingEventHandler):
         captures that case
         """
         logger.info(f"Dir file created: {event.src_path}")
-        # Add src_path to request metadata
-        self._job.request_template.metadata["src_path"] = event.src_path
-        return self._job
+        if True:
+            self.publish_file_event(event)
 
     # def on_modified(self, _):
     #     """Callback invoked when the file is modified
@@ -161,4 +158,18 @@ class MonitorDirectory(RegexMatchingEventHandler):
         This captures if the file was deleted (be warned that VIM does this by
         default during write actions)
         """
-        publish(Event(name=Events.DIRECTORY_FILE_CHANGE.name))
+        logger.info(f"Dir file deleted: {event.src_path}")
+        if True:
+            self.publish_file_event(event)
+
+    def publish_file_event(self, event):
+        publish(
+                Event(
+                    name=Events.DIRECTORY_FILE_CHANGE.name,
+                    metadata={
+                        "src_path": event.src_path
+                    },
+                    payload=self._job,
+                    payload_type=self._job.__class__.__name__
+                )
+            )
