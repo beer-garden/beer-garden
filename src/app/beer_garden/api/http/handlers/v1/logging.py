@@ -6,12 +6,15 @@ from brewtils.schema_parser import SchemaParser
 from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.garden import local_garden
+from beer_garden.api.http.handlers.misc import audit_api
 
 GARDEN_READ = Permissions.GARDEN_READ.value
 GARDEN_UPDATE = Permissions.GARDEN_UPDATE.value
 
 
 class LoggingAPI(AuthorizationHandler):
+
+    @audit_api("LoggingAPI")
     async def get(self):
         """
         ---
@@ -51,6 +54,8 @@ class LoggingAPI(AuthorizationHandler):
 
 
 class LoggingConfigAPI(AuthorizationHandler):
+
+    @audit_api("LoggingConfigAPI")
     async def get(self):
         """
         ---
@@ -79,6 +84,7 @@ class LoggingConfigAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
+    @audit_api("LoggingConfigAPI")
     async def patch(self):
         """
         ---

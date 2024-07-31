@@ -6,9 +6,11 @@ from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.base_handler import BaseHandler
 from beer_garden.db.mongo.models import RawFile
-
+from beer_garden.api.http.handlers.misc import audit_api
 
 class RawFileAPI(BaseHandler):
+
+    @audit_api("RawFileAPI")
     async def get(self, file_id):
         """
         ---
@@ -37,6 +39,7 @@ class RawFileAPI(BaseHandler):
         self.set_header("Content-Type", "application/octet-stream")
         self.write(file)
 
+    @audit_api("RawFileAPI")
     async def delete(self, file_id):
         """
         ---
@@ -67,6 +70,8 @@ class RawFileAPI(BaseHandler):
 
 
 class RawFileListAPI(BaseHandler):
+
+    @audit_api("RawFileListAPI")
     async def post(self):
         """
         ---

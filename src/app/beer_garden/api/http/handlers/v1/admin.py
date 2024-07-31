@@ -6,11 +6,14 @@ from brewtils.schema_parser import SchemaParser
 from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.garden import local_garden
+from beer_garden.api.http.handlers.misc import audit_api
 
 GARDEN_UPDATE = Permissions.GARDEN_UPDATE.value
 
 
 class AdminAPI(AuthorizationHandler):
+
+    @audit_api("AdminAPI")
     async def patch(self):
         """
         ---

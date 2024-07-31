@@ -6,11 +6,14 @@ from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.handlers import AuthorizationHandler
+from beer_garden.api.http.handlers.misc import audit_api
 
 EVENT_FORWARD = Permissions.EVENT_FORWARD.value
 
 
 class ForwardAPI(AuthorizationHandler):
+
+    @audit_api("ForwardAPI")
     async def post(self):
         """
         ---

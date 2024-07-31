@@ -6,6 +6,7 @@ from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.db.mongo.api import MongoParser
 from beer_garden.db.mongo.models import System
 from beer_garden.errors import EndpointRemovedException
+from beer_garden.api.http.handlers.misc import audit_api
 
 SYSTEM_CREATE = Permissions.SYSTEM_CREATE.value
 SYSTEM_READ = Permissions.SYSTEM_READ.value
@@ -14,6 +15,8 @@ SYSTEM_DELETE = Permissions.SYSTEM_DELETE.value
 
 
 class CommandAPI(AuthorizationHandler):
+  
+    @audit_api("CommandAPI")
     async def get(self, system_id, command_name):
         """
         ---
@@ -51,6 +54,8 @@ class CommandAPI(AuthorizationHandler):
 
 
 class CommandAPIOld(AuthorizationHandler):
+
+    @audit_api("CommandAPIOld")
     async def get(self, command_id):
         """
         ---
@@ -83,6 +88,8 @@ class CommandAPIOld(AuthorizationHandler):
 
 
 class CommandListAPI(AuthorizationHandler):
+
+    @audit_api("CommandListAPI")
     async def get(self):
         """
         ---

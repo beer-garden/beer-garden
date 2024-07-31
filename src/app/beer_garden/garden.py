@@ -33,10 +33,10 @@ from beer_garden.errors import ForwardException
 from beer_garden.events import publish, publish_event
 from beer_garden.namespace import get_namespaces
 from beer_garden.systems import get_systems, remove_system
-
+import elasticapm
 logger = logging.getLogger(__name__)
 
-
+@elasticapm.capture_span()
 def filter_router_result(garden: Garden) -> Garden:
     """Filter values for API output"""
 
@@ -72,7 +72,7 @@ def filter_router_result(garden: Garden) -> Garden:
             filter_router_result(child)
     return filtered_garden
 
-
+@elasticapm.capture_span()
 def get_children_garden(garden: Garden) -> Garden:
     if garden.connection_type == "LOCAL":
         garden.children = db.query(
@@ -93,7 +93,7 @@ def get_children_garden(garden: Garden) -> Garden:
 
     return garden
 
-
+@elasticapm.capture_span()
 def get_garden(garden_name: str) -> Garden:
     """Retrieve an individual Garden
 
@@ -111,7 +111,7 @@ def get_garden(garden_name: str) -> Garden:
     get_children_garden(garden)
     return garden
 
-
+@elasticapm.capture_span()
 def get_gardens(include_local: bool = True) -> List[Garden]:
     """Retrieve list of all Gardens
 
@@ -136,7 +136,7 @@ def get_gardens(include_local: bool = True) -> List[Garden]:
 
     return gardens
 
-
+@elasticapm.capture_span()
 def local_garden(all_systems: bool = False) -> Garden:
     """Get the local garden definition
 
@@ -181,7 +181,7 @@ def publish_garden(status: str = "RUNNING") -> Garden:
 
     return garden
 
-
+@elasticapm.capture_span()
 def update_garden_config(garden: Garden) -> Garden:
     """Update Garden configuration parameters
 
@@ -199,7 +199,7 @@ def update_garden_config(garden: Garden) -> Garden:
 
     return update_garden(db_garden)
 
-
+@elasticapm.capture_span()
 def check_garden_receiving_heartbeat(
     api: str, garden_name: str = None, garden: Garden = None
 ):
@@ -251,7 +251,7 @@ def update_receiving_connections(garden: Garden):
 
     return garden
 
-
+@elasticapm.capture_span()
 def update_garden_status(garden_name: str, new_status: str) -> Garden:
     """Update an Garden status.
 
@@ -317,7 +317,7 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
 
     return update_garden(garden)
 
-
+@elasticapm.capture_span()
 def remove_remote_users(garden: Garden):
     RemoteUser.objects.filter(garden=garden.name).delete()
 
@@ -325,7 +325,7 @@ def remove_remote_users(garden: Garden):
         for children in garden.children:
             remove_remote_users(children)
 
-
+@elasticapm.capture_span()
 def remove_remote_systems(garden: Garden):
     for system in garden.systems:
         remove_system(system.id)
@@ -380,7 +380,7 @@ def create_garden(garden: Garden) -> Garden:
 
     return db.create(garden)
 
-
+@elasticapm.capture_span()
 def garden_add_system(system: System, garden_name: str) -> Garden:
     """Add a System to a Garden
 
@@ -421,7 +421,7 @@ def update_garden(garden: Garden) -> Garden:
 
     return db.update(garden)
 
-
+@elasticapm.capture_span()
 def upsert_garden(garden: Garden, skip_connections: bool = True) -> Garden:
     """Updates or inserts Garden"""
 
@@ -508,7 +508,7 @@ def update_garden_receiving(
 
     return db.update(garden)
 
-
+@elasticapm.capture_span()
 def load_garden_connections(garden: Garden):
     path = Path(f"{config.get('children.directory')}/{garden.name}.yaml")
 
@@ -633,7 +633,7 @@ def load_garden_config(garden: Garden = None, garden_name: str = None):
 
     return db.update(garden)
 
-
+@elasticapm.capture_span()
 def rescan():
     if config.get("children.directory"):
         children_directory = Path(config.get("children.directory"))
@@ -671,7 +671,7 @@ def rescan():
 
                 garden_sync(garden.name)
 
-
+@elasticapm.capture_span()
 def garden_sync(sync_target: str = None):
     """Do a garden sync
 
@@ -712,7 +712,7 @@ def garden_sync(sync_target: str = None):
         except ForwardException:
             pass
 
-
+@elasticapm.capture_span()
 def publish_local_garden_to_api():
     local_garden = get_garden(config.get("garden.name"))
     publish(
@@ -725,7 +725,7 @@ def publish_local_garden_to_api():
         )
     )
 
-
+@elasticapm.capture_span()
 def garden_unresponsive_trigger():
     for garden in get_gardens(include_local=False):
         interval_value = garden.metadata.get("_unresponsive_timeout", -1)

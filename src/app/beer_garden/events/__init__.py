@@ -64,6 +64,7 @@ def publish_event(event_type: Events):
     """
 
     @wrapt.decorator
+    @elasticapm.capture_span(name=event_type.name)
     def wrapper(wrapped, _, args, kwargs):
         # Allows for conditionally disabling publishing
         _publish_success = kwargs.pop("_publish_success", True)
@@ -72,28 +73,16 @@ def publish_event(event_type: Events):
         event = Event(name=event_type.name)
         client = None
 
-        # if config.get("apm.enabled"):
-        if True:
-            client = elasticapm.get_client()
-            if client:
-                client.begin_transaction(event_type.name)
-
         try:
             result = wrapped(*args, **kwargs)
 
             event.payload_type = result.__class__.__name__
             event.payload = result
-            if client:
-                if hasattr(result, "id"):
-                    elasticapm.set_custom_context({'id': getattr(result, "id")})
-                client.end_transaction(event_type.name, 'success')
 
             return result
         except Exception as ex:
             event.error = True
             event.error_message = str(ex)
-            if client:
-                client.end_transaction(event_type.name, 'failure')
             raise
         finally:
             if (not event.error and _publish_success) or (

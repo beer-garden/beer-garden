@@ -9,6 +9,7 @@ from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.base_handler import future_wait
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.db.mongo.models import System
+from beer_garden.api.http.handlers.misc import audit_api
 
 INSTANCE_READ = Permissions.INSTANCE_READ.value
 INSTANCE_UPDATE = Permissions.INSTANCE_UPDATE.value
@@ -16,6 +17,8 @@ QUEUE_READ = Permissions.QUEUE_READ.value
 
 
 class InstanceAPI(AuthorizationHandler):
+
+    @audit_api("InstanceAPI")
     async def get(self, instance_id):
         """
         ---
@@ -47,6 +50,7 @@ class InstanceAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
+    @audit_api("InstanceAPI")
     async def delete(self, instance_id):
         """
         ---
@@ -75,6 +79,7 @@ class InstanceAPI(AuthorizationHandler):
 
         self.set_status(204)
 
+    @audit_api("InstanceAPI")
     async def patch(self, instance_id):
         """
         ---
@@ -192,6 +197,8 @@ class InstanceAPI(AuthorizationHandler):
 
 
 class InstanceLogAPI(AuthorizationHandler):
+
+    @audit_api("InstanceLogAPI")
     async def get(self, instance_id):
         """
         ---
@@ -283,6 +290,8 @@ class InstanceLogAPI(AuthorizationHandler):
 
 
 class InstanceQueuesAPI(AuthorizationHandler):
+
+    @audit_api("InstanceQueuesAPI")
     async def get(self, instance_id):
         """
         ---

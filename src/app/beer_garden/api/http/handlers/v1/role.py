@@ -3,9 +3,11 @@
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.api.http.schemas.v1.role import RoleListSchema
 from beer_garden.db.mongo.models import Role
-
+from beer_garden.api.http.handlers.misc import audit_api
 
 class RoleListAPI(AuthorizationHandler):
+
+    @audit_api("RoleListAPI")
     def get(self):
         """
         ---

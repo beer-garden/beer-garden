@@ -12,6 +12,7 @@ from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.db.mongo.models import Garden
 from beer_garden.garden import local_garden
 from beer_garden.user import initiate_user_sync
+from beer_garden.api.http.handlers.misc import audit_api
 
 GARDEN_CREATE = Permissions.GARDEN_CREATE.value
 GARDEN_READ = Permissions.GARDEN_READ.value
@@ -23,6 +24,8 @@ logger = logging.getLogger(__name__)
 
 
 class GardenAPI(AuthorizationHandler):
+
+    @audit_api("GardenAPI")
     async def get(self, garden_name):
         """
         ---
@@ -53,6 +56,7 @@ class GardenAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
+    @audit_api("GardenAPI")
     async def delete(self, garden_name):
         """
         ---
@@ -79,6 +83,7 @@ class GardenAPI(AuthorizationHandler):
 
         self.set_status(204)
 
+    @audit_api("GardenAPI")
     async def patch(self, garden_name):
         """
         ---
@@ -183,6 +188,8 @@ class GardenAPI(AuthorizationHandler):
 
 
 class GardenListAPI(AuthorizationHandler):
+
+    @audit_api("GardenListAPI")
     async def get(self):
         """
         ---
@@ -232,6 +239,7 @@ class GardenListAPI(AuthorizationHandler):
         #     SchemaParser.serialize_garden(response_gardens, to_string=True, many=True)
         # )
 
+    @audit_api("GardenListAPI")
     async def post(self):
         """
         ---
@@ -269,6 +277,7 @@ class GardenListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
+    @audit_api("GardenListAPI")
     async def patch(self):
         """
         ---

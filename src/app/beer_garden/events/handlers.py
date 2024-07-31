@@ -19,6 +19,7 @@ import beer_garden.scheduler
 import beer_garden.systems
 import beer_garden.topic
 import beer_garden.user
+import elasticapm
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +58,14 @@ def garden_callbacks(event: Event) -> None:
         (beer_garden.role.handle_event, "Role event handler"),
     ]:
         try:
+            client = elasticapm.get_client()
+            if client:
+                transaction_id = elasticapm.get_trace_parent_header()
+                client.begin_transaction(f"Event Handler - {handler_tag}", trace_parent=transaction_id)
+                
             handler(deepcopy(event))
+            if client:
+                client.end_transaction(f"Event Handler - {handler_tag}", 'success')
         except Exception as ex:
             logger.error(
                 "'%s' handler received an error executing callback for event %s: %s: %s"

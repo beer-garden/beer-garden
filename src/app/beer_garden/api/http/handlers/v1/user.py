@@ -13,6 +13,7 @@ from beer_garden.api.http.schemas.v1.user import (
 )
 from beer_garden.db.mongo.models import User
 from beer_garden.user import create_user, update_user
+from beer_garden.api.http.handlers.misc import audit_api
 
 USER_CREATE = Permissions.USER_CREATE.value
 USER_READ = Permissions.USER_READ.value
@@ -21,6 +22,7 @@ USER_DELETE = Permissions.USER_DELETE.value
 
 
 class UserAPI(AuthorizationHandler):
+    @audit_api("UserAPI")
     def get(self, username):
         """
         ---
@@ -48,6 +50,7 @@ class UserAPI(AuthorizationHandler):
 
         self.write(response)
 
+    @audit_api("UserAPI")
     def delete(self, username):
         """
         ---
@@ -75,6 +78,7 @@ class UserAPI(AuthorizationHandler):
 
         self.set_status(204)
 
+    @audit_api("UserAPI")
     def patch(self, username):
         """
         ---
@@ -123,6 +127,8 @@ class UserAPI(AuthorizationHandler):
 
 
 class UserListAPI(AuthorizationHandler):
+
+    @audit_api("UserListAPI")
     def get(self):
         """
         ---
@@ -142,6 +148,7 @@ class UserListAPI(AuthorizationHandler):
 
         self.write(response)
 
+    @audit_api("UserListAPI")
     def post(self):
         """
         ---
@@ -175,6 +182,8 @@ class UserListAPI(AuthorizationHandler):
 
 
 class UserPasswordChangeAPI(AuthorizationHandler):
+
+    @audit_api("UserPasswordChangeAPI")
     def post(self):
         """
         ---
@@ -216,6 +225,7 @@ class UserPasswordChangeAPI(AuthorizationHandler):
 
 
 class WhoAmIAPI(AuthorizationHandler):
+    @audit_api("WhoAmIAPI")
     def get(self):
         """
         ---

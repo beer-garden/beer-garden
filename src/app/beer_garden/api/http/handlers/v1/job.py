@@ -10,6 +10,7 @@ from beer_garden.api.http.exceptions import BadRequest
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.db.mongo.models import Job
 from beer_garden.scheduler import create_jobs
+from beer_garden.api.http.handlers.misc import audit_api
 
 JOB_CREATE = Permissions.JOB_CREATE.value
 JOB_READ = Permissions.JOB_READ.value
@@ -18,6 +19,8 @@ JOB_DELETE = Permissions.JOB_DELETE.value
 
 
 class JobAPI(AuthorizationHandler):
+
+    @audit_api("JobAPI")
     async def get(self, job_id):
         """
         ---
@@ -49,6 +52,7 @@ class JobAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
+    @audit_api("JobAPI")
     async def patch(self, job_id):
         """
         ---
@@ -128,6 +132,7 @@ class JobAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
+    @audit_api("JobAPI")
     async def delete(self, job_id):
         """
         ---
@@ -157,6 +162,8 @@ class JobAPI(AuthorizationHandler):
 
 
 class JobListAPI(AuthorizationHandler):
+
+    @audit_api("JobListAPI")
     async def get(self):
         """
         ---
@@ -193,6 +200,7 @@ class JobListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
+    @audit_api("JobListAPI")
     async def post(self):
         """
         ---
@@ -237,6 +245,8 @@ class JobListAPI(AuthorizationHandler):
 
 
 class JobImportAPI(AuthorizationHandler):
+
+    @audit_api("JobImportAPI")
     async def post(self):
         """
         ---
@@ -280,6 +290,8 @@ class JobImportAPI(AuthorizationHandler):
 
 
 class JobExportAPI(AuthorizationHandler):
+
+    @audit_api("JobExportAPI")
     async def post(self):
         """
         ---
@@ -341,6 +353,8 @@ class JobExportAPI(AuthorizationHandler):
 
 
 class JobExecutionAPI(AuthorizationHandler):
+
+    @audit_api("JobExecutionAPI")
     async def post(self, job_id):
         """
         ---

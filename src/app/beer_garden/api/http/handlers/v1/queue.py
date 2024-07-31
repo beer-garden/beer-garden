@@ -4,12 +4,14 @@ from brewtils.models import Operation
 from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.garden import local_garden
+from beer_garden.api.http.handlers.misc import audit_api
 
 QUEUE_READ = Permissions.QUEUE_READ.value
 QUEUE_DELETE = Permissions.QUEUE_DELETE.value
 
 
 class QueueAPI(AuthorizationHandler):
+    @audit_api("QueueAPI")
     async def delete(self, queue_name):
         """
         ---
@@ -38,6 +40,8 @@ class QueueAPI(AuthorizationHandler):
 
 
 class QueueListAPI(AuthorizationHandler):
+
+    @audit_api("QueueListAPI")
     async def get(self):
         """
         ---
@@ -61,6 +65,7 @@ class QueueListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
+    @audit_api("QueueListAPI")
     async def delete(self):
         """
         ---

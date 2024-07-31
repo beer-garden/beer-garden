@@ -9,9 +9,11 @@ from beer_garden.api.http.base_handler import BaseHandler
 from beer_garden.api.http.exceptions import AuthenticationFailed, BadRequest
 from beer_garden.api.http.schemas.v1.token import TokenRefreshInputSchema
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
+from beer_garden.api.http.handlers.misc import audit_api
 
 
 class TokenAPI(BaseHandler):
+    @audit_api("TokenAPI")
     def post(self):
         """
         ---
@@ -51,6 +53,8 @@ class TokenAPI(BaseHandler):
 
 
 class TokenRefreshAPI(BaseHandler):
+
+    @audit_api("TokenRefreshAPI")
     def post(self):
         """
         ---
@@ -91,6 +95,8 @@ class TokenRefreshAPI(BaseHandler):
 
 
 class TokenRevokeAPI(BaseHandler):
+
+    @audit_api("TokenRevokeAPI")
     def post(self):
         """
         ---

@@ -79,11 +79,7 @@ def audit_api(api_label: str):
         if True:
             client = elasticapm.get_client()
             if client:
-                logger.error(f"Tracking {api_label} - {wrapped.__name__}")
-                transaction_id = elasticapm.get_transaction_id()
-                client.begin_transaction(f"{api_label} - {wrapped.__name__}", trace_parent=transaction_id)
-            else:
-                logger.error(f"Not Tracking {api_label} - {wrapped.__name__}")
+                client.begin_transaction(f"{api_label} - {wrapped.__name__}")
 
         try:
             result = wrapped(*args, **kwargs)
