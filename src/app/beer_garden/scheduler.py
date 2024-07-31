@@ -644,5 +644,5 @@ def handle_event(event: Event) -> None:
                 event.payload.id,
                 jobstore="beer_garden",
                 reset_interval=None,
-                src_path=event.metadata["src_path"]
+                src_path=event.metadata["src_path"],
             )

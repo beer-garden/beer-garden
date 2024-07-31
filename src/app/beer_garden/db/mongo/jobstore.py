@@ -32,7 +32,7 @@ class FileTrigger(BaseTrigger):
         self.path = kwargs.pop("path", False)
         self.recursive = kwargs.pop("recursive", False)
         super(FileTrigger, self).__init__(*args, **kwargs)
-    
+
     def get_next_fire_time(self, previous_fire_time, now):
         return super().get_next_fire_time(previous_fire_time, now)
 

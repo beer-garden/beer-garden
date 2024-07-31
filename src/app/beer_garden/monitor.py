@@ -164,12 +164,10 @@ class MonitorDirectory(RegexMatchingEventHandler):
 
     def publish_file_event(self, event):
         publish(
-                Event(
-                    name=Events.DIRECTORY_FILE_CHANGE.name,
-                    metadata={
-                        "src_path": event.src_path
-                    },
-                    payload=self._job,
-                    payload_type=self._job.__class__.__name__
-                )
+            Event(
+                name=Events.DIRECTORY_FILE_CHANGE.name,
+                metadata={"src_path": event.src_path},
+                payload=self._job,
+                payload_type=self._job.__class__.__name__,
             )
+        )
