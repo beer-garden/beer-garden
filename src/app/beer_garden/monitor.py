@@ -135,6 +135,8 @@ class MonitorDirectory(RegexMatchingEventHandler):
         captures that case
         """
         logger.info(f"Dir file created: {event.src_path}")
+        # Add src_path to request metadata
+        self._job.request_template.metadata["src_path"] = event.src_path
         return self._job
 
     # def on_modified(self, _):

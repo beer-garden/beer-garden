@@ -254,6 +254,9 @@ class MixedScheduler(object):
             reset_interval: Whether to set the job's interval begin time to now
         """
         job = db.query_unique(Job, id=job_id)
+        src_path = kwargs.get("src_path", False)
+        if src_path:
+            job.request_template.metadata["src_path"] = src_path
         self.add_job(
             run_job,
             trigger=DateTrigger(datetime.utcnow(), timezone="UTC"),
@@ -641,4 +644,5 @@ def handle_event(event: Event) -> None:
                 event.payload.id,
                 jobstore="beer_garden",
                 reset_interval=None,
+                src_path=event.payload.request_template.metadata["src_path"]
             )
