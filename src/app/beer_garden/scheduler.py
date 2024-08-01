@@ -37,6 +37,10 @@ class Monitor(object):
             path=bg_trigger.path,
             pattern=bg_trigger.pattern,
             recursive=bg_trigger.recursive,
+            create=bg_trigger.create,
+            modify=bg_trigger.modify,
+            move=bg_trigger.move,
+            delete=bg_trigger.delete,
             job=self.job,
         )
         self.start()
@@ -242,7 +246,7 @@ class MixedScheduler(object):
             kwargs: Any other scheduler-specific arguments
         """
         if job_id in observer_threads:
-            observer_threads[job_id].stop()
+            remove_job(job_id)
             return
         self._sync_scheduler.remove_job(job_id, **kwargs)
 
@@ -305,7 +309,11 @@ class MixedScheduler(object):
         bg_trigger = construct_trigger(trigger_type, trigger)
         job_id = kwargs.get("id")
         # Add entry to keep track of file trigger threads
-        if job_id and trigger_type == "file" and job_id not in observer_threads:
+        # Recreate monitor in case the job has been updated
+        if job_id and trigger_type == "file":
+            if job_id in observer_threads:
+                observer_threads[job_id].stop()
+                del observer_threads[job_id]
             observer_threads[job_id] = Monitor(job_id, bg_trigger)
 
         # Add all triggers to schedule except file
@@ -624,7 +632,6 @@ def handle_event(event: Event) -> None:
                 event.payload.id, jobstore="beer_garden"
             )
         elif event.name == Events.JOB_RESUMED.name:
-            logger.info(event.payload.trigger_type)
             beer_garden.application.scheduler.resume_job(
                 event.payload.id, jobstore="beer_garden"
             )

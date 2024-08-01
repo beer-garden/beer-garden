@@ -84,24 +84,6 @@ export default function jobCreateTriggerController(
       }
     }
 
-    if (triggerType == 'file') {
-      if (
-        (angular.isDefined(model['create']) &&
-          model['create'] == false) &&
-        (angular.isDefined(model['modify']) &&
-          model['modify'] == false) &&
-        (angular.isDefined(model['move']) &&
-          model['move'] == false)
-        (angular.isDefined(model['delete']) &&
-            model['delete'] == false)
-    ) {
-      $scope.alerts.push(
-        'You must specify at least one file change event to monitor',
-        );
-        valid = false;
-      }
-    }
-
     return valid;
   };
 

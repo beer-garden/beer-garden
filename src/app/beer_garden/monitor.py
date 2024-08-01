@@ -100,13 +100,18 @@ class MonitorDirectory(RegexMatchingEventHandler):
     """
 
     def __init__(
-        self, path: str, pattern: str, recursive: bool = True, job: Job = None
+        self, path: str, pattern: str, recursive: bool,
+        create: bool, modify: bool, move: bool, delete: bool, job: Job = None
     ):
-        super().__init__(regexes=[pattern], ignore_directories=False)
+        super().__init__(regexes=[pattern], ignore_directories=True)
 
         self._path = path
         self._pattern = pattern
         self._recursive = recursive
+        self._create = create
+        self._modify = modify
+        self._move = move
+        self._delete = delete
         self._job = job
         self._observer = PollingObserver()
         self._observer.schedule(self, self._path, recursive=self._recursive)
@@ -126,31 +131,39 @@ class MonitorDirectory(RegexMatchingEventHandler):
             self._observer.stop()
             self._observer.join()
 
+    def on_any_event(self, event):
+        """Call back invoked when any event occurs"""
+        if not (self._create and self._modify and self._move and self._delete):
+            logger.info(f"Dir file any change: {event.src_path} {self._job.id}")
+            self.publish_file_event(event)
+
     def on_created(self, event):
         """Callback invoked when the file is created
 
         When a user VIM edits a file it DELETES, then CREATES the file, this
         captures that case
         """
-        logger.info(f"Dir file created: {event.src_path}")
-        if True:
+        if self._create:
+            logger.info(f"Dir file created: {event.src_path} {self._job.id}")
             self.publish_file_event(event)
 
-    # def on_modified(self, _):
-    #     """Callback invoked when the file is modified
+    def on_modified(self, event):
+        """Callback invoked when the file is modified
 
-    #     This captures all other modification events that occur against the file
-    #     """
-    #     if self.modify_event:
-    #         publish(self.modify_event)
+        This captures all other modification events that occur against the file
+        """
+        if self._modify:
+            logger.info(f"Dir file modified: {event.src_path} {self._job.id}")
+            self.publish_file_event(event)
 
-    # def on_moved(self, _):
-    #     """Callback invoked when the file is moved
+    def on_moved(self, event):
+        """Callback invoked when the file is moved
 
-    #     This captures if the file is moved into or from the directory
-    #     """
-    #     if self.moved_event:
-    #         publish(self.moved_event)
+        This captures if the file is moved into or from the directory
+        """
+        if self._move:
+            logger.info(f"Dir file moved: {event.src_path} {self._job.id}")
+            self.publish_file_event(event)
 
     def on_deleted(self, event):
         """Callback invoked when the file is deleted
@@ -158,8 +171,8 @@ class MonitorDirectory(RegexMatchingEventHandler):
         This captures if the file was deleted (be warned that VIM does this by
         default during write actions)
         """
-        logger.info(f"Dir file deleted: {event.src_path}")
-        if True:
+        if self._delete:
+            logger.info(f"Dir file deleted: {event.src_path} {self._job.id}")
             self.publish_file_event(event)
 
     def publish_file_event(self, event):

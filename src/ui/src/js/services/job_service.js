@@ -89,6 +89,10 @@ export default function jobService($http, NamespaceService) {
         path: formModel['path'],
         pattern: formModel['pattern'],
         recursive: formModel['recursive'],
+        create: formModel['create'],
+        modify: formModel['modify'],
+        move: formModel['move'],
+        delete: formModel['delete'],
       }
     } else if (triggerType === 'date') {
       return {
@@ -160,6 +164,10 @@ export default function jobService($http, NamespaceService) {
       formModel['path'] = job['trigger']['path'];
       formModel['pattern'] = job['trigger']['pattern'];
       formModel['recursive'] = job['trigger']['recursive'];
+      formModel['create'] = job['trigger']['create'];
+      formModel['modify'] = job['trigger']['modify'];
+      formModel['move'] = job['trigger']['move'];
+      formModel['delete'] = job['trigger']['delete'];
     } else if (job['trigger_type'] === 'interval') {
       formModel['weeks'] = job['trigger']['weeks'] || 0;
       formModel['minutes'] = job['trigger']['minutes'] || 0;
@@ -247,7 +255,7 @@ export default function jobService($http, NamespaceService) {
     'interval_reschedule_on_finish',
   ];
   JobService.DATE_KEYS = ['run_date', 'date_timezone'];
-  JobService.FILE_KEYS = ['path', 'pattern', 'recursive']
+  JobService.FILE_KEYS = ['path', 'pattern', 'recursive', 'create', 'modify', 'move', 'delete']
 
   JobService.getRequiredKeys = function(triggerType) {
     if (triggerType === 'cron') {
@@ -359,9 +367,9 @@ export default function jobService($http, NamespaceService) {
       },
       create: {
         title: 'Create',
-        description: 'Modify for created files',
+        description: 'Monitor for created files',
         type: 'boolean',
-        default: true,
+        default: false,
       },
       modify: {
         title: 'Modify',

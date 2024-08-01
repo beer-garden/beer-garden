@@ -230,6 +230,10 @@ class TestFileOperations(object):
                 pattern="do_not_care",
                 path="./",
                 recursive=False,
+                create=False,
+                modify=False,
+                move=False,
+                delete=False,
             ),
             request_template=RequestTemplate(
                 system="something_v3",
