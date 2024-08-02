@@ -140,7 +140,7 @@ class MonitorDirectory(RegexMatchingEventHandler):
 
     def on_any_event(self, event):
         """Call back invoked when any event occurs"""
-        if not (self._create and self._modify and self._move and self._delete):
+        if not (self._create or self._modify or self._move or self._delete):
             logger.info(f"Dir file any change: {event.src_path} {self._job.id}")
             self.publish_file_event(event)
 
