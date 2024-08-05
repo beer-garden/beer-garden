@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List
 
+import elasticapm
 from brewtils.errors import PluginError
 from brewtils.models import Connection, Event, Events, Garden, Operation, System
 from mongoengine import DoesNotExist
@@ -28,13 +29,13 @@ from yapconf.exceptions import (
 
 import beer_garden.config as config
 import beer_garden.db.api as db
-from beer_garden.db.mongo.models import RemoteUser
 from beer_garden.errors import ForwardException
 from beer_garden.events import publish, publish_event
 from beer_garden.namespace import get_namespaces
 from beer_garden.systems import get_systems, remove_system
-import elasticapm
+
 logger = logging.getLogger(__name__)
+
 
 @elasticapm.capture_span()
 def filter_router_result(garden: Garden) -> Garden:
@@ -72,6 +73,7 @@ def filter_router_result(garden: Garden) -> Garden:
             filter_router_result(child)
     return filtered_garden
 
+
 @elasticapm.capture_span()
 def get_children_garden(garden: Garden) -> Garden:
     if garden.connection_type == "LOCAL":
@@ -93,6 +95,7 @@ def get_children_garden(garden: Garden) -> Garden:
 
     return garden
 
+
 @elasticapm.capture_span()
 def get_garden(garden_name: str) -> Garden:
     """Retrieve an individual Garden
@@ -110,6 +113,7 @@ def get_garden(garden_name: str) -> Garden:
         garden = db.query_unique(Garden, name=garden_name, raise_missing=True)
     get_children_garden(garden)
     return garden
+
 
 @elasticapm.capture_span()
 def get_gardens(include_local: bool = True) -> List[Garden]:
@@ -135,6 +139,7 @@ def get_gardens(include_local: bool = True) -> List[Garden]:
         get_children_garden(garden)
 
     return gardens
+
 
 @elasticapm.capture_span()
 def local_garden(all_systems: bool = False) -> Garden:
@@ -181,6 +186,7 @@ def publish_garden(status: str = "RUNNING") -> Garden:
 
     return garden
 
+
 @elasticapm.capture_span()
 def update_garden_config(garden: Garden) -> Garden:
     """Update Garden configuration parameters
@@ -198,6 +204,7 @@ def update_garden_config(garden: Garden) -> Garden:
     db_garden.status = "INITIALIZING"
 
     return update_garden(db_garden)
+
 
 @elasticapm.capture_span()
 def check_garden_receiving_heartbeat(
@@ -219,7 +226,9 @@ def check_garden_receiving_heartbeat(
             if connection.status not in ["DISABLED", "RECEIVING"]:
                 connection.status = "RECEIVING"
 
-            connection.status_info["heartbeat"] = datetime.utcnow()
+            connection.status_info.set_status_heartbeat(
+                connection.status, max_history=config.get("garden.status_history")
+            )
 
     # If the receiving type is unknown, enable it by default and set heartbeat
     if not connection_set:
@@ -232,7 +241,9 @@ def check_garden_receiving_heartbeat(
             if config.get("receiving", config=garden_config):
                 connection.status = "RECEIVING"
 
-        connection.status_info["heartbeat"] = datetime.utcnow()
+        connection.status_info.set_status_heartbeat(
+            connection.status, max_history=config.get("garden.status_history")
+        )
         garden.receiving_connections.append(connection)
 
     return update_receiving_connections(garden)
@@ -250,6 +261,7 @@ def update_receiving_connections(garden: Garden):
         return db.modify(garden, **updates)
 
     return garden
+
 
 @elasticapm.capture_span()
 def update_garden_status(garden_name: str, new_status: str) -> Garden:
@@ -313,17 +325,12 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
                 )
 
     garden.status = new_status
-    garden.status_info["heartbeat"] = datetime.utcnow()
+    garden.status_info.set_status_heartbeat(
+        garden.status, max_history=config.get("garden.status_history")
+    )
 
     return update_garden(garden)
 
-@elasticapm.capture_span()
-def remove_remote_users(garden: Garden):
-    RemoteUser.objects.filter(garden=garden.name).delete()
-
-    if garden.children:
-        for children in garden.children:
-            remove_remote_users(children)
 
 @elasticapm.capture_span()
 def remove_remote_systems(garden: Garden):
@@ -348,7 +355,6 @@ def remove_garden(garden_name: str = None, garden: Garden = None) -> None:
 
     garden = garden or get_garden(garden_name)
 
-    remove_remote_users(garden)
     remove_remote_systems(garden)
 
     for child in garden.children:
@@ -376,9 +382,12 @@ def create_garden(garden: Garden) -> Garden:
             Connection(api="STOMP", status="MISSING_CONFIGURATION"),
         ]
 
-    garden.status_info["heartbeat"] = datetime.utcnow()
+    garden.status_info.set_status_heartbeat(
+        garden.status, max_history=config.get("garden.status_history")
+    )
 
     return db.create(garden)
+
 
 @elasticapm.capture_span()
 def garden_add_system(system: System, garden_name: str) -> Garden:
@@ -420,6 +429,7 @@ def update_garden(garden: Garden) -> Garden:
     """
 
     return db.update(garden)
+
 
 @elasticapm.capture_span()
 def upsert_garden(garden: Garden, skip_connections: bool = True) -> Garden:
@@ -508,6 +518,7 @@ def update_garden_receiving(
 
     return db.update(garden)
 
+
 @elasticapm.capture_span()
 def load_garden_connections(garden: Garden):
     path = Path(f"{config.get('children.directory')}/{garden.name}.yaml")
@@ -536,6 +547,8 @@ def load_garden_connections(garden: Garden):
         )
         return garden
 
+    garden.default_user = config.get("default_user", garden_config)
+
     if config.get("http.enabled", garden_config):
         config_map = {
             "http.host": "host",
@@ -556,7 +569,10 @@ def load_garden_connections(garden: Garden):
             api="HTTP",
             status="PUBLISHING" if garden_config.get("publishing") else "DISABLED",
         )
-        http_connection.status_info["heartbeat"] = datetime.utcnow()
+
+        http_connection.status_info.set_status_heartbeat(
+            http_connection.status, max_history=config.get("garden.status_history")
+        )
 
         for key in config_map:
             http_connection.config.setdefault(
@@ -583,7 +599,10 @@ def load_garden_connections(garden: Garden):
             api="STOMP",
             status="PUBLISHING" if garden_config.get("publishing") else "DISABLED",
         )
-        stomp_connection.status_info["heartbeat"] = datetime.utcnow()
+
+        stomp_connection.status_info.set_status_heartbeat(
+            stomp_connection.status, max_history=config.get("garden.status_history")
+        )
 
         for key in config_map:
             stomp_connection.config.setdefault(
@@ -633,6 +652,7 @@ def load_garden_config(garden: Garden = None, garden_name: str = None):
 
     return db.update(garden)
 
+
 @elasticapm.capture_span()
 def rescan():
     if config.get("children.directory"):
@@ -670,6 +690,7 @@ def rescan():
                         break
 
                 garden_sync(garden.name)
+
 
 @elasticapm.capture_span()
 def garden_sync(sync_target: str = None):
@@ -712,6 +733,7 @@ def garden_sync(sync_target: str = None):
         except ForwardException:
             pass
 
+
 @elasticapm.capture_span()
 def publish_local_garden_to_api():
     local_garden = get_garden(config.get("garden.name"))
@@ -725,6 +747,7 @@ def publish_local_garden_to_api():
         )
     )
 
+
 @elasticapm.capture_span()
 def garden_unresponsive_trigger():
     for garden in get_gardens(include_local=False):
@@ -735,7 +758,7 @@ def garden_unresponsive_trigger():
 
             for connection in garden.receiving_connections:
                 if connection.status in ["RECEIVING"]:
-                    if connection.status_info["heartbeat"] < timeout:
+                    if connection.status_info.heartbeat < timeout:
                         update_garden_receiving(
                             "UNRESPONSIVE", api=connection.api, garden=garden
                         )

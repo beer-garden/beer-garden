@@ -3,6 +3,7 @@ import logging
 import traceback
 from copy import deepcopy
 
+import elasticapm
 from brewtils.models import Event
 
 import beer_garden.config
@@ -12,6 +13,7 @@ import beer_garden.local_plugins.manager
 import beer_garden.log
 import beer_garden.plugin
 import beer_garden.publish_request
+import beer_garden.replication
 import beer_garden.requests
 import beer_garden.role
 import beer_garden.router
@@ -19,7 +21,6 @@ import beer_garden.scheduler
 import beer_garden.systems
 import beer_garden.topic
 import beer_garden.user
-import elasticapm
 
 logger = logging.getLogger(__name__)
 
@@ -56,16 +57,19 @@ def garden_callbacks(event: Event) -> None:
         (beer_garden.local_plugins.manager.handle_event, "Local plugins manager"),
         (beer_garden.user.handle_event, "User event handler"),
         (beer_garden.role.handle_event, "Role event handler"),
+        (beer_garden.replication.handle_event, "Replication event handler"),
     ]:
         try:
             client = elasticapm.get_client()
             if client:
                 transaction_id = elasticapm.get_trace_parent_header()
-                client.begin_transaction(f"Event Handler - {handler_tag}", trace_parent=transaction_id)
-                
+                client.begin_transaction(
+                    f"Event Handler - {handler_tag}", trace_parent=transaction_id
+                )
+
             handler(deepcopy(event))
             if client:
-                client.end_transaction(f"Event Handler - {handler_tag}", 'success')
+                client.end_transaction(f"Event Handler - {handler_tag}", "success")
         except Exception as ex:
             logger.error(
                 "'%s' handler received an error executing callback for event %s: %s: %s"

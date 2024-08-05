@@ -463,6 +463,7 @@ def remove_instance(
 
     return instance
 
+
 def handle_event(event: Event) -> None:
     """Handle SYSTEM events
 

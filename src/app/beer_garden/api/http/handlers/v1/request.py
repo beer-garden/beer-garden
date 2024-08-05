@@ -6,29 +6,20 @@ from asyncio import Future
 from typing import Sequence
 
 from brewtils.errors import ModelValidationError
-from brewtils.models import Operation
-from brewtils.models import Request as BrewtilsRequest
-from brewtils.models import System as BrewtilsSystem
+from brewtils.models import Operation, Permissions, Request, System
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden.db.api as db
-from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.base_handler import future_wait
-from beer_garden.api.http.exceptions import BadRequest
+from beer_garden.api.http.exceptions import BadRequest, RequestForbidden
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.db.mongo.models import Request
+from beer_garden.api.http.handlers.misc import audit_api
 from beer_garden.errors import UnknownGardenException
 from beer_garden.requests import remove_bytes_parameter_base64
-from beer_garden.api.http.handlers.misc import audit_api
-
-REQUEST_CREATE = Permissions.REQUEST_CREATE.value
-REQUEST_READ = Permissions.REQUEST_READ.value
-REQUEST_UPDATE = Permissions.REQUEST_UPDATE.value
-REQUEST_DELETE = Permissions.REQUEST_DELETE.value
 
 
 class RequestAPI(AuthorizationHandler):
-    
+
     @audit_api("RequestAPI")
     async def get(self, request_id):
         """
@@ -52,9 +43,10 @@ class RequestAPI(AuthorizationHandler):
         tags:
           - Requests
         """
-        _ = self.get_or_raise(Request, REQUEST_READ, id=request_id)
 
-        response = await self.client(
+        _ = self.get_or_raise(Request, id=request_id)
+
+        response = await self.process_operation(
             Operation(operation_type="REQUEST_READ", args=[request_id])
         )
 
@@ -103,7 +95,8 @@ class RequestAPI(AuthorizationHandler):
         tags:
           - Requests
         """
-        _ = self.get_or_raise(Request, REQUEST_UPDATE, id=request_id)
+        self.minimum_permission = Permissions.OPERATOR.name
+        _ = self.get_or_raise(Request, id=request_id)
 
         operation = Operation(args=[request_id])
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
@@ -117,7 +110,7 @@ class RequestAPI(AuthorizationHandler):
                         operation.kwargs = {}
                         break
 
-                    elif op.value.upper() in BrewtilsRequest.COMPLETED_STATUSES:
+                    elif op.value.upper() in Request.COMPLETED_STATUSES:
                         operation.operation_type = "REQUEST_COMPLETE"
                         operation.kwargs["status"] = op.value
 
@@ -137,14 +130,14 @@ class RequestAPI(AuthorizationHandler):
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
-        response = await self.client(operation)
+        response = await self.process_operation(operation)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
 
 class RequestOutputAPI(AuthorizationHandler):
-    
+
     @audit_api("RequestOutputAPI")
     async def get(self, request_id):
         """
@@ -167,9 +160,10 @@ class RequestOutputAPI(AuthorizationHandler):
         tags:
           - Requests
         """
-        _ = self.get_or_raise(Request, REQUEST_READ, id=request_id)
 
-        response = await self.client(
+        _ = self.get_or_raise(Request, id=request_id)
+
+        response = await self.process_operation(
             Operation(operation_type="REQUEST_READ", args=[request_id]),
             serialize_kwargs={"to_string": False},
         )
@@ -371,11 +365,12 @@ class RequestListAPI(AuthorizationHandler):
         tags:
           - Requests
         """
+
         # V1 API is a mess, it's basically written for datatables
         query_args = self._parse_datatables_parameters()
 
         # Add the filter for only requests the user is permitted to see
-        q_filter = self.permitted_objects_filter(Request, REQUEST_READ)
+        q_filter = self.permitted_objects_filter(Request)
         query_args["q_filter"] = q_filter
 
         # There are also some sane parameters
@@ -390,7 +385,7 @@ class RequestListAPI(AuthorizationHandler):
         if query_args.get("include_fields"):
             serialize_kwargs["only"] = query_args.get("include_fields")
 
-        requests = await self.client(
+        requests = await self.process_operation(
             Operation(operation_type="REQUEST_READ_ALL", kwargs=query_args),
             serialize_kwargs=serialize_kwargs,
         )
@@ -401,9 +396,9 @@ class RequestListAPI(AuthorizationHandler):
             "length": len(requests),
             # And these are required by datatables
             "recordsFiltered": db.count(
-                BrewtilsRequest, q_filter=q_filter, **query_args["filter_params"]
+                Request, q_filter=q_filter, **query_args["filter_params"]
             ),
-            "recordsTotal": db.count(BrewtilsRequest, q_filter=q_filter),
+            "recordsTotal": db.count(Request, q_filter=q_filter),
             "draw": self.get_argument("draw", ""),
         }
 
@@ -477,6 +472,8 @@ class RequestListAPI(AuthorizationHandler):
         tags:
           - Requests
         """
+        self.minimum_permission = Permissions.OPERATOR.name
+
         if self.request.mime_type == "application/json":
             request_model = self.parser.parse_request(
                 self.request.decoded_body, from_string=True
@@ -488,9 +485,9 @@ class RequestListAPI(AuthorizationHandler):
         else:
             raise ModelValidationError("Unsupported or missing content-type header")
 
-        self.verify_user_permission_for_object(REQUEST_CREATE, request_model)
+        self.verify_user_permission_for_object(request_model)
 
-        if self.current_user:
+        if self.current_user and not request_model.requester:
             request_model.requester = self.current_user.username
 
         wait_future = None
@@ -501,7 +498,7 @@ class RequestListAPI(AuthorizationHandler):
             self.request.ignore_latency = True
 
         try:
-            created_request = await self.client(
+            created_request = await self.process_operation(
                 Operation(
                     operation_type="REQUEST_CREATE",
                     model=request_model,
@@ -511,7 +508,7 @@ class RequestListAPI(AuthorizationHandler):
                 serialize_kwargs={"to_string": False},
             )
         except UnknownGardenException as ex:
-            req_system = BrewtilsSystem(
+            req_system = System(
                 namespace=request_model.namespace,
                 name=request_model.system,
                 version=request_model.system_version,
@@ -541,7 +538,6 @@ class RequestListAPI(AuthorizationHandler):
         self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
-
 
     @audit_api("RequestListAPI")
     async def put(self):
@@ -574,7 +570,7 @@ class RequestListAPI(AuthorizationHandler):
         tags:
           - Requests
         """
-
+        self.minimum_permission = Permissions.OPERATOR.name
         request_model = self.parser.parse_request(
             (
                 self.request.body.decode()
@@ -584,13 +580,13 @@ class RequestListAPI(AuthorizationHandler):
             from_string=True,
         )
 
-        self.verify_user_permission_for_object(REQUEST_CREATE, request_model)
+        self.verify_user_permission_for_object(request_model)
 
-        if self.current_user:
+        if self.current_user and not request_model.requester:
             request_model.requester = self.current_user.username
 
         try:
-            update_request = await self.client(
+            update_request = await self.process_operation(
                 Operation(
                     operation_type="REQUEST_UPDATE",
                     model=request_model,
@@ -599,7 +595,7 @@ class RequestListAPI(AuthorizationHandler):
                 serialize_kwargs={"to_string": False},
             )
         except UnknownGardenException as ex:
-            req_system = BrewtilsSystem(
+            req_system = System(
                 namespace=request_model.namespace,
                 name=request_model.system,
                 version=request_model.system_version,
@@ -710,10 +706,10 @@ class RequestListAPI(AuthorizationHandler):
         tags:
           - Requests
         """
-
-        self.verify_user_global_permission(REQUEST_DELETE)
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
 
         query_kwargs = {}
+        global_check = True
         for supportedArg in [
             "system",
             "system_version",
@@ -732,14 +728,51 @@ class RequestListAPI(AuthorizationHandler):
             value = self.get_argument(supportedArg, default=None)
             if value is not None:
                 query_kwargs[supportedArg] = value
+                if supportedArg in [
+                    "system",
+                    "system_version",
+                    "instance_name",
+                    "namespace",
+                    "command",
+                ]:
+                    global_check = False
 
-        await self.client(
-            Operation(operation_type="REQUEST_DELETE", kwargs=query_kwargs)
+        # Either have global PLUGIN_ADMIN or access to specific filtering
+        if global_check:
+            self.verify_user_global_permission()
+        else:
+            check_kwargs = {}
+            if "system" in query_kwargs:
+                check_kwargs["system_name"] = query_kwargs["system"]
+                check_kwargs["check_system"] = True
+            if "system_version" in query_kwargs:
+                check_kwargs["system_version"] = query_kwargs["system_version"]
+                check_kwargs["check_version"] = True
+            if "instance_name" in query_kwargs:
+                check_kwargs["system_instances"] = [query_kwargs["instance_name"]]
+                check_kwargs["check_instances"] = True
+            if "namespace" in query_kwargs:
+                check_kwargs["system_namespace"] = query_kwargs["namespace"]
+                check_kwargs["check_namespace"] = True
+            if "command" in query_kwargs:
+                check_kwargs["system_name"] = query_kwargs["command"]
+                check_kwargs["command_name"] = True
+
+            if not self.modelFilter._checks(
+                user=self.current_user,
+                permission=self.minimum_permission,
+                **check_kwargs,
+            ):
+                raise RequestForbidden
+
+        await self.process_operation(
+            Operation(operation_type="REQUEST_DELETE", kwargs=query_kwargs),
+            filter_results=False,
         )
 
         self.set_status(204)
 
-    def _parse_form_request(self) -> BrewtilsRequest:
+    def _parse_form_request(self) -> Request:
         args = {"parameters": {}}
 
         for key, value in self.request.body_arguments.items():
@@ -750,7 +783,7 @@ class RequestListAPI(AuthorizationHandler):
             else:
                 args[key] = decoded_param
 
-        return BrewtilsRequest(**args)
+        return Request(**args)
 
     def _parse_datatables_parameters(self) -> dict:
         """Parse the HTTP request's datatables query parameters
@@ -897,7 +930,7 @@ class RequestListAPI(AuthorizationHandler):
 
         return "_".join(real_hint)
 
-    def _parse_multipart_form_data(self) -> BrewtilsRequest:
+    def _parse_multipart_form_data(self) -> Request:
         """Generate a Request object from multipart/form-data input"""
         request_form = self.get_body_argument("request")
 
@@ -913,7 +946,7 @@ class RequestListAPI(AuthorizationHandler):
 
         self._add_files_to_request(request_form_dict)
 
-        return BrewtilsRequest(**request_form_dict)
+        return Request(**request_form_dict)
 
     def _add_files_to_request(self, request_form_dict: dict) -> None:
         """Processes any files attached to the request and adds them as parameters to

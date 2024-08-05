@@ -18,6 +18,7 @@ from builtins import str
 from copy import deepcopy
 from typing import Dict, List, Sequence, Union
 
+import elasticapm
 import six
 import urllib3
 from brewtils.choices import parse
@@ -41,7 +42,7 @@ from beer_garden.db.mongo.models import RawFile
 from beer_garden.errors import NotUniqueException, ShutdownError
 from beer_garden.events import publish_event
 from beer_garden.metrics import request_completed, request_created, request_started
-import elasticapm
+
 logger = logging.getLogger(__name__)
 
 request_map: Dict[str, threading.Event] = {}
@@ -69,6 +70,7 @@ class RequestValidator(object):
         if not cls._instance:
             cls._instance = cls(config.get("request_validation"))
         return cls._instance
+
     @elasticapm.capture_span()
     def validate_request(self, request):
         """Validation to be called before you save a request from a user
@@ -84,6 +86,7 @@ class RequestValidator(object):
         self.validate_parent_status(request)
 
         return request
+
     @elasticapm.capture_span()
     def validate_parent_status(self, request):
         """Ensure that a Request's parent request hasn't already completed.
@@ -93,6 +96,7 @@ class RequestValidator(object):
         """
         if request.parent and request.parent.status in Request.COMPLETED_STATUSES:
             raise ConflictError("Parent request has already completed")
+
     @elasticapm.capture_span()
     def get_and_validate_system(self, request):
         """Ensure there is a system in the DB that corresponds to this Request.
@@ -123,6 +127,7 @@ class RequestValidator(object):
             "Found System %s-%s" % (request.system, request.instance_name)
         )
         return system
+
     @elasticapm.capture_span()
     def get_and_validate_command_for_system(self, request, system=None):
         """Ensure the System has a command with a name that matches this request.
@@ -175,6 +180,7 @@ class RequestValidator(object):
             "No Command with name: %s could be found. Valid Commands for %s are: %s"
             % (request.command, system.name, command_names)
         )
+
     @elasticapm.capture_span()
     def get_and_validate_parameters(
         self, request, command=None, command_parameters=None, request_parameters=None
@@ -234,6 +240,7 @@ class RequestValidator(object):
         self.logger.debug("Successfully Updated and Validated Parameters.")
         self.logger.debug("Parameters: %s", parameters_to_save)
         return parameters_to_save
+
     @elasticapm.capture_span()
     def _validate_value_in_choices(self, request, value, command_parameter):
         """Validate that the value(s) are valid according to the choice constraints"""
@@ -374,6 +381,7 @@ class RequestValidator(object):
                         "Valid choices are: %s"
                         % (value, command_parameter.key, allowed_values)
                     )
+
     @elasticapm.capture_span()
     def _validate_maximum(self, value, command_parameter):
         """Validate that the value(s) are below the specified maximum"""
@@ -397,6 +405,7 @@ class RequestValidator(object):
                             "for parameter %s"
                             % (value, command_parameter.maximum, command_parameter.key)
                         )
+
     @elasticapm.capture_span()
     def _validate_minimum(self, value, command_parameter):
         """Validate that the value(s) are above the specified minimum"""
@@ -420,6 +429,7 @@ class RequestValidator(object):
                             "for parameter %s"
                             % (value, command_parameter.minimum, command_parameter.key)
                         )
+
     @elasticapm.capture_span()
     def _validate_regex(self, value, command_parameter):
         """Validate that the value matches the regex"""
@@ -501,6 +511,7 @@ class RequestValidator(object):
                     "Unknown key '%s' provided in the parameters. Valid Keys are: %s"
                     % (key, valid_keys)
                 )
+
     @elasticapm.capture_span()
     def _validate_parameter_based_on_type(self, value, parameter, command, request):
         """Validates the value passed in, ensures the type matches.
@@ -559,6 +570,7 @@ class RequestValidator(object):
                 % (parameter.key, parameter.type)
             )
 
+
 @elasticapm.capture_span()
 def get_request(request_id: str = None, request: Request = None) -> Request:
     """Retrieve an individual Request
@@ -576,6 +588,7 @@ def get_request(request_id: str = None, request: Request = None) -> Request:
 
     return request
 
+
 @elasticapm.capture_span()
 def get_requests(**kwargs) -> List[Request]:
     """Search for Requests
@@ -588,6 +601,7 @@ def get_requests(**kwargs) -> List[Request]:
 
     """
     return db.query(Request, **kwargs)
+
 
 @elasticapm.capture_span()
 def determine_latest_system_version(request: Request):
@@ -639,6 +653,7 @@ def delete_requests(**kwargs) -> dict:
     logger.info(f"Deleted {len(requests)} requests")
     return kwargs
 
+
 @elasticapm.capture_span()
 def _publish_request(request: Request, is_admin: bool, priority: int):
     """Publish a Request"""
@@ -651,10 +666,12 @@ def _publish_request(request: Request, is_admin: bool, priority: int):
         delivery_mode=PERSISTENT_DELIVERY_MODE,
     )
 
+
 @elasticapm.capture_span()
 def _validate_request(request: Request):
     """Validates a Request"""
     return RequestValidator.instance().validate_request(request)
+
 
 @elasticapm.capture_span()
 def process_request(
@@ -1012,6 +1029,39 @@ def handle_event(event):
             if existing_request is None:
                 # Attempt to create the request, if it already exists then continue on
                 try:
+                    # User mappings back to local usernames
+                    if event.payload.requester and config.get("auth.enabled"):
+                        foundUser = False
+
+                        # First try to grab requester from Parent Request
+                        if event.payload.has_parent:
+                            parent_requests = db.query(
+                                Request,
+                                filter_params={"id": event.payload.parent.id},
+                            )
+
+                            if parent_requests and parent_requests[0].requester:
+                                event.payload.requester = parent_requests[0].requester
+                                foundUser = True
+
+                        # If no parent request is found or request on it, update via remote user mappings
+                        if not foundUser:
+                            if "get_users" not in dir():
+                                from beer_garden.user import get_users
+
+                            for user in get_users():
+                                for remote_user_map in user.remote_user_mapping:
+                                    if (
+                                        remote_user_map.target_garden == event.garden
+                                        and remote_user_map.username
+                                        == event.payload.requester
+                                    ):
+                                        event.payload.requester = user.username
+                                        foundUser = True
+                                        break
+                                if foundUser:
+                                    break
+
                     existing_request = db.create(event.payload)
                 except NotUniqueException:
                     pass

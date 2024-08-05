@@ -4,12 +4,11 @@ import logging
 from datetime import datetime, timezone
 from functools import partial
 
+import elasticapm
 import wrapt
 from brewtils.models import Event, Events
 
 from beer_garden import config as config
-
-import elasticapm
 
 # In this master process this should be an instance of EventManager, and in entry points
 # it should be an instance of EntryPointManager
@@ -80,7 +79,7 @@ def publish_event(event_type: Events):
 
             if config.get("apm.enabled") and elasticapm.get_client():
                 if hasattr(result, "id"):
-                    elasticapm.set_custom_context({'id': getattr(result, "id")})
+                    elasticapm.set_custom_context({"id": getattr(result, "id")})
 
             return result
         except Exception as ex:

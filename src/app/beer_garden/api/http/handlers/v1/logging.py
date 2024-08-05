@@ -1,15 +1,11 @@
 # -*- coding: utf-8 -*-
 from brewtils.errors import ModelValidationError
-from brewtils.models import Operation
+from brewtils.models import Operation, Permissions
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.garden import local_garden
 from beer_garden.api.http.handlers.misc import audit_api
-
-GARDEN_READ = Permissions.GARDEN_READ.value
-GARDEN_UPDATE = Permissions.GARDEN_UPDATE.value
+from beer_garden.garden import local_garden
 
 
 class LoggingAPI(AuthorizationHandler):
@@ -37,7 +33,8 @@ class LoggingAPI(AuthorizationHandler):
         tags:
           - Logging
         """
-        self.verify_user_permission_for_object(GARDEN_READ, local_garden())
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
+        self.verify_user_permission_for_object(local_garden())
 
         local = self.get_query_argument("local", None)
         if local is None:
@@ -45,7 +42,7 @@ class LoggingAPI(AuthorizationHandler):
         else:
             local = bool(local.lower() == "true")
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(operation_type="PLUGIN_LOG_READ", kwargs={"local": local})
         )
 
@@ -77,9 +74,12 @@ class LoggingConfigAPI(AuthorizationHandler):
         tags:
           - Deprecated
         """
-        self.verify_user_permission_for_object(GARDEN_READ, local_garden())
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
+        self.verify_user_permission_for_object(local_garden())
 
-        response = await self.client(Operation(operation_type="PLUGIN_LOG_READ_LEGACY"))
+        response = await self.process_operation(
+            Operation(operation_type="PLUGIN_LOG_READ_LEGACY")
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -113,7 +113,8 @@ class LoggingConfigAPI(AuthorizationHandler):
         tags:
           - Deprecated
         """
-        self.verify_user_permission_for_object(GARDEN_UPDATE, local_garden())
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
+        self.verify_user_permission_for_object(local_garden())
 
         patch = SchemaParser.parse_patch(
             self.request.decoded_body, many=True, from_string=True
@@ -122,7 +123,7 @@ class LoggingConfigAPI(AuthorizationHandler):
         response = None
         for op in patch:
             if op.operation == "reload":
-                response = await self.client(
+                response = await self.process_operation(
                     Operation(operation_type="PLUGIN_LOG_RELOAD")
                 )
             else:

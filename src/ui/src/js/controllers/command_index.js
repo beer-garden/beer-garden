@@ -72,6 +72,8 @@ export default function commandIndexController(
     return checkbox || !hidden;
   };
 
+  $scope.userCanTask = false;
+
   $scope.nodeMove = function(location) {
     const node = document.getElementById('filterHidden');
     const list = document.getElementById(location);
@@ -121,7 +123,8 @@ export default function commandIndexController(
     // Pull out what we care about
     let commands = [];
     const breadCrumbs = [];
-
+    $scope.userCanTask = false;
+    
     systems.forEach((system) => {
       if ($stateParams.namespace) {
         if (system.namespace != $stateParams.namespace){
@@ -139,6 +142,11 @@ export default function commandIndexController(
           }
         }
       }
+
+      if (!$scope.userCanTask && $rootScope.hasSystemPermission("OPERATOR", system)){
+        $scope.userCanTask = true;
+      }
+      
       system.commands.forEach((command) => {
         commands.push({
           id: command.id,
@@ -184,11 +192,6 @@ export default function commandIndexController(
     $scope.response = response;
     $scope.data = commands;
 
-    $scope.userCanTask = $rootScope.hasCommandPermission(
-        $rootScope.user,
-        'request:create',
-        commands[0],
-    );
     $scope.dtOptions.withLanguage({
       info:
         'Showing _START_ to _END_ of _TOTAL_ entries (filtered from ' +

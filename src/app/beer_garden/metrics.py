@@ -8,20 +8,21 @@ The metrics service manages:
 """
 
 import datetime
+import functools
 import logging
 from http.server import ThreadingHTTPServer
 
+import elasticapm
+import wrapt
 from brewtils.models import Request
 from brewtils.stoppable_thread import StoppableThread
 from prometheus_client import Counter, Gauge, Summary
 from prometheus_client.exposition import MetricsHandler
 from prometheus_client.registry import REGISTRY
 
-import beer_garden.db.api as db
 import beer_garden.config as config
-import elasticapm
-import wrapt
-import functools
+import beer_garden.db.api as db
+
 
 class PrometheusServer(StoppableThread):
     """Wraps a ThreadingHTTPServer to serve Prometheus metrics"""
@@ -159,7 +160,8 @@ def request_completed(request):
     completed_request_counter.labels(**labels).inc()
     plugin_command_latency.labels(**labels).observe(latency)
 
-def collect_metrics(transaction_type:str = None, group: str = None):
+
+def collect_metrics(transaction_type: str = None, group: str = None):
     """Decorator that will result in the function being audited for metrics
 
     Args:
@@ -185,21 +187,24 @@ def collect_metrics(transaction_type:str = None, group: str = None):
             client = elasticapm.get_client()
             if client:
                 trace_id = elasticapm.get_trace_id()
-                client.begin_transaction(transaction_type=transaction_type, trace_parent= trace_id if trace_id else elasticapm.get_span_id())
+                client.begin_transaction(
+                    transaction_type=transaction_type,
+                    trace_parent=trace_id if trace_id else elasticapm.get_span_id(),
+                )
                 elasticapm.set_transaction_name(transaction_label)
 
         try:
             result = wrapped(*args, **kwargs)
 
             if client:
-                client.end_transaction(result='success')
+                client.end_transaction(result="success")
 
             return result
         except Exception as ex:
 
             if client:
                 client.capture_exception()
-                client.end_transaction(transaction_label, 'failure')
+                client.end_transaction(transaction_label, "failure")
             raise
 
     return wrapper

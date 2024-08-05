@@ -3,13 +3,22 @@ from typing import Optional
 from uuid import UUID, uuid4
 
 import jwt
+from brewtils.models import Permissions, User, UserToken
+from brewtils.schema_parser import SchemaParser
+from mongoengine import DoesNotExist
 from tornado.httputil import HTTPServerRequest
 
 from beer_garden import config
 from beer_garden.api.http.authentication.login_handlers import enabled_login_handlers
-from beer_garden.authorization import permissions_for_user
-from beer_garden.db.mongo.models import User, UserToken
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
+from beer_garden.user import (
+    create_token,
+    delete_token,
+    determine_max_permission,
+    get_token,
+    get_user,
+    revoke_tokens,
+)
 
 
 def user_login(request: HTTPServerRequest) -> Optional[User]:
@@ -47,13 +56,16 @@ def issue_token_pair(user: User, refresh_expiration: Optional[datetime] = None) 
         dict: A dictionary containing an access and refresh token
             { "access": <str>, "refresh": <str> }
     """
-    expiration = refresh_expiration or _get_refresh_token_expiration()
+    max_permission = determine_max_permission(user)
+    expiration = refresh_expiration or _get_refresh_token_expiration(max_permission)
     token_uuid = uuid4()
 
-    access_token = _generate_access_token(user, token_uuid)
+    access_token = _generate_access_token(user, token_uuid, max_permission)
     refresh_token = _generate_refresh_token(user, token_uuid, expiration)
 
-    UserToken(expires_at=expiration, user=user, uuid=token_uuid).save()
+    create_token(
+        UserToken(expires_at=expiration, username=user.username, uuid=token_uuid)
+    )
 
     return {"access": access_token, "refresh": refresh_token}
 
@@ -81,15 +93,16 @@ def refresh_token_pair(refresh_token: str) -> dict:
     decoded_refresh_token = decode_token(refresh_token)
 
     try:
-        refresh_token_obj = UserToken.objects.get(uuid=decoded_refresh_token["jti"])
-    except UserToken.DoesNotExist:
+        refresh_token_obj = get_token(uuid=decoded_refresh_token["jti"])
+    except DoesNotExist:
         raise ExpiredTokenException
 
     expiration = datetime.fromtimestamp(decoded_refresh_token["exp"], tz=timezone.utc)
-    user = User.objects.get(id=decoded_refresh_token["sub"])
+    user = get_user(id=decoded_refresh_token["sub"])
 
     new_token_pair = issue_token_pair(user, expiration)
-    refresh_token_obj.delete()
+
+    delete_token(refresh_token_obj)
 
     return new_token_pair
 
@@ -105,8 +118,8 @@ def revoke_token_pair(refresh_token: str) -> None:
     """
     try:
         decoded_refresh_token = decode_token(refresh_token)
-        UserToken.objects.get(uuid=decoded_refresh_token["jti"]).delete()
-    except (ExpiredTokenException, UserToken.DoesNotExist):
+        delete_token(get_token(uuid=decoded_refresh_token["jti"]))
+    except (ExpiredTokenException, DoesNotExist):
         # Since we're trying to revoke the token anyway, do nothing if it was already
         # expired or revoked
         pass
@@ -131,19 +144,23 @@ def get_user_from_token(access_token: dict, revoke_expired=True) -> User:
             longer exists.
     """
     try:
-        user = User.objects.get(id=access_token["sub"])
-    except User.DoesNotExist:
+        user = get_user(id=access_token["sub"], include_roles=False)
+    except DoesNotExist:
         raise InvalidTokenException
 
     try:
-        _ = UserToken.objects.get(uuid=access_token["jti"])
-    except UserToken.DoesNotExist:
+        _ = get_token(uuid=access_token["jti"])
+    except DoesNotExist:
         if revoke_expired:
-            user.revoke_tokens()
+            revoke_tokens(user=user)
 
         raise ExpiredTokenException
 
-    user.set_permissions_cache(access_token["permissions"])
+    user.roles = []
+    user.local_roles = SchemaParser.parse_role(
+        access_token["roles"], many=True, from_string=False
+    )
+    user.upstream_roles = []
 
     return user
 
@@ -186,19 +203,31 @@ def decode_token(encoded_token: str, expected_type: str = None) -> dict:
     return decoded_token
 
 
-def _generate_access_token(user: User, identifier: UUID) -> str:
+def _generate_access_token(user: User, identifier: UUID, max_permission: str) -> str:
     """Generates a JWT access token for a user containing the user's permissions"""
     secret_key = config.get("auth").token_secret
+
+    roles = []
+
+    if user.local_roles:
+        for role in user.local_roles:
+            roles.append(SchemaParser.serialize_role(role, to_string=False, many=False))
+
+    if user.upstream_roles:
+        for role in user.upstream_roles:
+            roles.append(
+                SchemaParser.serialize_remote_role(role, to_string=False, many=False)
+            )
 
     jwt_headers = {"alg": "HS256", "typ": "JWT"}
     jwt_payload = {
         "jti": str(identifier),
         "sub": str(user.id),
         "iat": datetime.utcnow(),
-        "exp": _get_access_token_expiration(),
+        "exp": _get_access_token_expiration(max_permission=max_permission),
         "type": "access",
         "username": user.username,
-        "permissions": permissions_for_user(user),
+        "roles": roles,
     }
 
     access_token = jwt.encode(jwt_payload, key=secret_key, headers=jwt_headers)
@@ -224,11 +253,39 @@ def _generate_refresh_token(user: User, identifier: UUID, expiration: datetime) 
     return refresh_token
 
 
-def _get_access_token_expiration() -> datetime:
+def _get_access_token_expiration(max_permission=None) -> datetime:
     """Calculate and return the access token expiration time"""
-    return datetime.utcnow() + timedelta(minutes=15)
+    if max_permission == Permissions.GARDEN_ADMIN.name:
+        return datetime.utcnow() + timedelta(
+            minutes=config.get("auth.token_access_ttl.garden_admin")
+        )
+    elif max_permission == Permissions.PLUGIN_ADMIN.name:
+        return datetime.utcnow() + timedelta(
+            minutes=config.get("auth.token_access_ttl.plugin_admin")
+        )
+    elif max_permission == Permissions.OPERATOR.name:
+        return datetime.utcnow() + timedelta(
+            minutes=config.get("auth.token_access_ttl.operator")
+        )
+    return datetime.utcnow() + timedelta(
+        minutes=config.get("auth.token_access_ttl.read_only")
+    )
 
 
-def _get_refresh_token_expiration() -> datetime:
+def _get_refresh_token_expiration(max_permission=None) -> datetime:
     """Calculate and return the refresh token expiration time"""
-    return datetime.utcnow() + timedelta(hours=12)
+    if max_permission == Permissions.GARDEN_ADMIN.name:
+        return datetime.utcnow() + timedelta(
+            minutes=config.get("auth.token_refresh_ttl.garden_admin")
+        )
+    elif max_permission == Permissions.PLUGIN_ADMIN.name:
+        return datetime.utcnow() + timedelta(
+            minutes=config.get("auth.token_refresh_ttl.plugin_admin")
+        )
+    elif max_permission == Permissions.OPERATOR.name:
+        return datetime.utcnow() + timedelta(
+            minutes=config.get("auth.token_refresh_ttl.operator")
+        )
+    return datetime.utcnow() + timedelta(
+        minutes=config.get("auth.token_refresh_ttl.read_only")
+    )

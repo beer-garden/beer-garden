@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 
 from brewtils.errors import ModelValidationError
-from brewtils.models import Operation, Resolvable
+from brewtils.models import Operation, Permissions, Resolvable
 from brewtils.schema_parser import SchemaParser
 from tornado.escape import json_decode
 
-from beer_garden.api.http.base_handler import BaseHandler
+from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.api.http.handlers.misc import audit_api
 
-class FileChunkAPI(BaseHandler):
 
-    @audit_api("FileChunkAPI")
+class FileChunkAPI(AuthorizationHandler):
+
     async def get(self):
         """
         ---
@@ -44,6 +44,7 @@ class FileChunkAPI(BaseHandler):
         tags:
           - Files
         """
+
         file_id = self.get_argument("file_id", default=None)
         chunk = self.get_argument("chunk", default=None)
         verify = self.get_argument("verify", default="").lower() == "true"
@@ -51,7 +52,7 @@ class FileChunkAPI(BaseHandler):
         if file_id is None:
             raise ValueError("Cannot fetch a file or chunk without a file ID.")
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(
                 operation_type="FILE_FETCH",
                 args=[file_id],
@@ -102,6 +103,7 @@ class FileChunkAPI(BaseHandler):
         tags:
           - Files
         """
+        self.minimum_permission = Permissions.OPERATOR.name
         file_id = self.get_argument("file_id", default=None)
         upsert = self.get_argument("upsert", default="").lower() == "true"
 
@@ -118,7 +120,7 @@ class FileChunkAPI(BaseHandler):
                 f"No offset sent with data to write to file {file_id}"
             )
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(
                 operation_type="FILE_CHUNK",
                 args=[file_id, offset, data],
@@ -152,11 +154,12 @@ class FileChunkAPI(BaseHandler):
         tags:
           - Files
         """
+        self.minimum_permission = Permissions.OPERATOR.name
         file_id = self.get_argument("file_id", default=None)
         if file_id is None:
             raise ValueError("Cannot delete a file without an id.")
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(operation_type="FILE_DELETE", args=[file_id])
         )
 
@@ -164,8 +167,8 @@ class FileChunkAPI(BaseHandler):
         self.write(response)
 
 
-class ChunkNameAPI(BaseHandler):
-    @audit_api("ChunkNameAPI")
+class ChunkNameAPI(AuthorizationHandler):
+
     async def get(self):
         """
         ---
@@ -218,6 +221,7 @@ class ChunkNameAPI(BaseHandler):
         tags:
           - Files
         """
+
         file_name = self.get_argument("file_name", default="")
         file_size = self.get_argument("file_size", default=None)
         chunk_size = self.get_argument("chunk_size", default=None)
@@ -231,7 +235,7 @@ class ChunkNameAPI(BaseHandler):
         if file_size is None:
             raise ModelValidationError(f"No file_size sent with file {file_name}.")
 
-        file_status = await self.client(
+        file_status = await self.process_operation(
             Operation(
                 operation_type="FILE_CREATE",
                 args=[file_name, int(file_size), int(chunk_size)],

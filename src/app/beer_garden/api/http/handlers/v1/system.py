@@ -1,19 +1,12 @@
 # -*- coding: utf-8 -*-
 from brewtils.errors import ModelValidationError
-from brewtils.models import Operation
+from brewtils.models import Operation, Permissions, System
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import SystemSchema as BrewtilsSystemSchema
 
-from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.api.http.schemas.v1.system import SystemSansQueueSchema
-from beer_garden.db.mongo.models import System
 from beer_garden.api.http.handlers.misc import audit_api
-
-SYSTEM_CREATE = Permissions.SYSTEM_CREATE.value
-SYSTEM_READ = Permissions.SYSTEM_READ.value
-SYSTEM_UPDATE = Permissions.SYSTEM_UPDATE.value
-SYSTEM_DELETE = Permissions.SYSTEM_DELETE.value
+from beer_garden.api.http.schemas.v1.system import SystemSansQueueSchema
 
 
 def _remove_queue_info(response: str, many: bool = False) -> str:
@@ -60,7 +53,8 @@ class SystemAPI(AuthorizationHandler):
         tags:
           - Systems
         """
-        system = self.get_or_raise(System, SYSTEM_READ, id=system_id)
+
+        system = self.get_or_raise(System, id=system_id)
 
         # This is only here because of backwards compatibility
         include_commands = (
@@ -107,16 +101,18 @@ class SystemAPI(AuthorizationHandler):
         tags:
           - Systems
         """
-        _ = self.get_or_raise(System, SYSTEM_DELETE, id=system_id)
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
+        _ = self.get_or_raise(System, id=system_id)
 
-        await self.client(
+        await self.process_operation(
             Operation(
                 operation_type="SYSTEM_DELETE",
                 args=[system_id],
                 kwargs={
                     "force": self.get_argument("force", default="").lower() == "true"
                 },
-            )
+            ),
+            filter_results=False,
         )
 
         self.set_status(204)
@@ -168,7 +164,8 @@ class SystemAPI(AuthorizationHandler):
         tags:
           - Systems
         """
-        _ = self.get_or_raise(System, SYSTEM_UPDATE, id=system_id)
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
+        _ = self.get_or_raise(System, id=system_id)
 
         kwargs = {}
         do_reload = False
@@ -221,7 +218,7 @@ class SystemAPI(AuthorizationHandler):
 
         if kwargs:
             response = _remove_queue_info(
-                await self.client(
+                await self.process_operation(
                     Operation(
                         operation_type="SYSTEM_UPDATE", args=[system_id], kwargs=kwargs
                     )
@@ -229,7 +226,7 @@ class SystemAPI(AuthorizationHandler):
             )
 
         if do_reload:
-            await self.client(
+            await self.process_operation(
                 Operation(operation_type="SYSTEM_RELOAD", args=[system_id])
             )
 
@@ -309,7 +306,8 @@ class SystemListAPI(AuthorizationHandler):
         tags:
           - Systems
         """
-        permitted_objects_filter = self.permitted_objects_filter(System, SYSTEM_READ)
+
+        permitted_objects_filter = self.permitted_objects_filter(System)
 
         order_by = self.get_query_argument("order_by", None)
 
@@ -347,7 +345,7 @@ class SystemListAPI(AuthorizationHandler):
         if exclude_fields:
             serialize_kwargs["exclude"] = exclude_fields
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(
                 operation_type="SYSTEM_READ_ALL",
                 kwargs={
@@ -396,11 +394,12 @@ class SystemListAPI(AuthorizationHandler):
         tags:
           - Systems
         """
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         system = SchemaParser.parse_system(self.request.decoded_body, from_string=True)
 
-        self.verify_user_permission_for_object(SYSTEM_CREATE, system)
+        self.verify_user_permission_for_object(system)
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(
                 operation_type="SYSTEM_CREATE",
                 args=[system],

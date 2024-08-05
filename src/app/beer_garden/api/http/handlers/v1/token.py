@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from brewtils.models import Operation, Permissions, User
+
 from beer_garden.api.http.authentication import (
     issue_token_pair,
     refresh_token_pair,
@@ -7,9 +9,10 @@ from beer_garden.api.http.authentication import (
 )
 from beer_garden.api.http.base_handler import BaseHandler
 from beer_garden.api.http.exceptions import AuthenticationFailed, BadRequest
+from beer_garden.api.http.handlers import AuthorizationHandler
+from beer_garden.api.http.handlers.misc import audit_api
 from beer_garden.api.http.schemas.v1.token import TokenRefreshInputSchema
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
-from beer_garden.api.http.handlers.misc import audit_api
 
 
 class TokenAPI(BaseHandler):
@@ -50,6 +53,43 @@ class TokenAPI(BaseHandler):
             raise AuthenticationFailed
 
         self.write(response)
+
+
+class TokenListAPI(AuthorizationHandler):
+    async def delete(self, username):
+        """
+        ---
+        summary: Delete a specific username tokens
+        description: Will remove all tokens authorized for a user. Next time the token
+                     is validated, the user will be prompted to re-authenticate
+        parameters:
+          - name: username
+            in: path
+            required: true
+            description: The username of the User
+            type: string
+        responses:
+          204:
+            description: User Token has been successfully deleted
+          404:
+            $ref: '#/definitions/404Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Token
+        """
+
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
+        _ = self.get_or_raise(User, username=username)
+
+        await self.process_operation(
+            Operation(
+                operation_type="TOKEN_USER_DELETE",
+                kwargs={"username": username},
+            )
+        )
+
+        self.set_status(204)
 
 
 class TokenRefreshAPI(BaseHandler):

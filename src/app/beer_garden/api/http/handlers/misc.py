@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import logging
 
+import elasticapm
+import wrapt
+
 import beer_garden.api.http
 import beer_garden.config as config
 from beer_garden.api.http.base_handler import BaseHandler
-import wrapt
-import elasticapm
+
 logger = logging.getLogger(__name__)
 
 
@@ -60,6 +62,7 @@ class SpecHandler(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(beer_garden.api.http.api_spec.to_dict())
 
+
 def audit_api(api_label: str):
     """Decorator that will result in the api being audited for metrics
 
@@ -85,13 +88,13 @@ def audit_api(api_label: str):
             result = wrapped(*args, **kwargs)
 
             if client:
-                client.end_transaction(f"{api_label} - {wrapped.__name__}", 'success')
+                client.end_transaction(f"{api_label} - {wrapped.__name__}", "success")
 
             return result
         except Exception as ex:
 
             if client:
-                client.end_transaction(f"{api_label} - {wrapped.__name__}", 'failure')
+                client.end_transaction(f"{api_label} - {wrapped.__name__}", "failure")
             raise
 
     return wrapper

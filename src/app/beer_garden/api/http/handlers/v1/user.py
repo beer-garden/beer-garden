@@ -1,29 +1,19 @@
 # -*- coding: utf-8 -*-
-from brewtils.schemas import UserCreateSchema
+from brewtils.errors import ModelValidationError
+from brewtils.models import Operation, Permissions
+from brewtils.schema_parser import SchemaParser
 from marshmallow import ValidationError
 
-from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.exceptions import BadRequest
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.api.http.schemas.v1.user import (
-    UserListSchema,
-    UserPasswordChangeSchema,
-    UserPatchSchema,
-    UserSchema,
-)
-from beer_garden.db.mongo.models import User
-from beer_garden.user import create_user, update_user
-from beer_garden.api.http.handlers.misc import audit_api
-
-USER_CREATE = Permissions.USER_CREATE.value
-USER_READ = Permissions.USER_READ.value
-USER_UPDATE = Permissions.USER_UPDATE.value
-USER_DELETE = Permissions.USER_DELETE.value
+from beer_garden.api.http.schemas.v1.user import UserPasswordChangeSchema
+from beer_garden.errors import InvalidPasswordException
 
 
 class UserAPI(AuthorizationHandler):
-    @audit_api("UserAPI")
-    def get(self, username):
+    parser = SchemaParser()
+
+    async def get(self, username):
         """
         ---
         summary: Retrieve a specific User
@@ -45,13 +35,17 @@ class UserAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        user = User.objects.get(username=username)
-        response = UserSchema().dump(user).data
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
+        response = await self.process_operation(
+            Operation(
+                operation_type="USER_READ",
+                args=[username],
+            )
+        )
 
         self.write(response)
 
-    @audit_api("UserAPI")
-    def delete(self, username):
+    async def delete(self, username):
         """
         ---
         summary: Delete a specific User
@@ -71,15 +65,19 @@ class UserAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        self.verify_user_global_permission(USER_DELETE)
-
-        user = User.objects.get(username=username)
-        user.delete()
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
+        self.verify_user_global_permission()
+        await self.process_operation(
+            Operation(
+                operation_type="USER_DELETE",
+                args=[username],
+            ),
+            filter_results=False,
+        )
 
         self.set_status(204)
 
-    @audit_api("UserAPI")
-    def patch(self, username):
+    async def patch(self, username):
         """
         ---
         summary: Partially update a User
@@ -110,26 +108,64 @@ class UserAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        self.verify_user_global_permission(USER_UPDATE)
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
+        self.verify_user_global_permission()
 
-        try:
-            user_data = (
-                UserPatchSchema(strict=True).load(self.request_body, partial=True).data
-            )
-            db_user = User.objects.get(username=username)
-        except (ValidationError, User.DoesNotExist) as exc:
-            raise BadRequest(reason=f"{exc}")
+        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
-        user = update_user(db_user, **user_data)
+        for op in patch:
+            operation = op.operation.lower()
 
-        response = UserSchema().dump(user).data
-        self.write(response)
+            if operation == "update_roles":
+                response = await self.process_operation(
+                    Operation(
+                        operation_type="USER_UPDATE",
+                        kwargs={
+                            "username": username,
+                            "roles": op.value["roles"],
+                        },
+                    ),
+                    filter_results=False,
+                )
+            elif operation == "update_user_mappings":
+                response = await self.process_operation(
+                    Operation(
+                        operation_type="USER_UPDATE",
+                        kwargs={
+                            "username": username,
+                            "remote_user_mapping": SchemaParser.parse_alias_user_map(
+                                op.value["user_alias_mapping"],
+                                from_string=False,
+                                many=True,
+                            ),
+                        },
+                    ),
+                    filter_results=False,
+                )
+            elif operation == "update_user_password":
+                response = await self.process_operation(
+                    Operation(
+                        operation_type="USER_UPDATE",
+                        kwargs={
+                            "username": username,
+                            "new_password": op.value["password"],
+                        },
+                    ),
+                    filter_results=False,
+                )
+
+            else:
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+        if response:
+            self.write(response)
+        else:
+            raise ModelValidationError(f"Missing Operations '{patch}'")
 
 
 class UserListAPI(AuthorizationHandler):
+    parser = SchemaParser()
 
-    @audit_api("UserListAPI")
-    def get(self):
+    async def get(self):
         """
         ---
         summary: Retrieve all Users
@@ -143,13 +179,16 @@ class UserListAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        users = User.objects.all()
-        response = UserListSchema().dump({"users": users}).data
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
+        response = await self.process_operation(
+            Operation(
+                operation_type="USER_READ_ALL",
+            )
+        )
 
         self.write(response)
 
-    @audit_api("UserListAPI")
-    def post(self):
+    async def post(self):
         """
         ---
         summary: Create a new User
@@ -173,18 +212,72 @@ class UserListAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        self.verify_user_global_permission(USER_CREATE)
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
+        self.verify_user_global_permission()
 
-        user_data = UserCreateSchema().load(self.request_body).data
-        create_user(**user_data)
+        user_model = self.parser.parse_user(self.request.decoded_body, from_string=True)
 
+        response = await self.process_operation(
+            Operation(operation_type="USER_CREATE", args=[user_model]),
+            filter_results=False,
+        )
+
+        self.write(response)
         self.set_status(201)
+
+    async def patch(self):
+        """
+        ---
+        summary: Partially update a User
+        description: |
+          The body of the request needs to contain a set of instructions detailing the
+          updates to apply. Currently the only operations are:
+
+          * rescan
+
+          ```JSON
+          [
+            { "operation": "" }
+          ]
+          ```
+        parameters:
+          - name: patch
+            in: body
+            required: true
+            description: |
+              Instructions for how to update the User
+            schema:
+              $ref: '#/definitions/Patch'
+        responses:
+          204:
+            description: Patch operation has been successfully forwarded
+          400:
+            $ref: '#/definitions/400Error'
+          404:
+            $ref: '#/definitions/404Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Users
+        """
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
+        self.verify_user_global_permission()
+
+        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
+
+        for op in patch:
+            operation = op.operation.lower()
+
+            if operation == "rescan":
+                await self.process_operation(
+                    Operation(operation_type="USER_RESCAN"), filter_results=False
+                )
+
+        self.set_status(204)
 
 
 class UserPasswordChangeAPI(AuthorizationHandler):
-
-    @audit_api("UserPasswordChangeAPI")
-    def post(self):
+    async def post(self):
         """
         ---
         summary: Allows a user to change their own password
@@ -215,11 +308,19 @@ class UserPasswordChangeAPI(AuthorizationHandler):
         except ValidationError as exc:
             raise BadRequest(reason=f"{exc}")
 
-        if user.verify_password(password_data["current_password"]):
-            user.set_password(password_data["new_password"])
-            user.save()
-        else:
-            raise BadRequest(reason="Current password incorrect")
+        try:
+            await self.process_operation(
+                Operation(
+                    operation_type="USER_UPDATE",
+                    kwargs={
+                        "user": user,
+                        "current_password": password_data["current_password"],
+                        "new_password": password_data["new_password"],
+                    },
+                )
+            )
+        except InvalidPasswordException as exc:
+            raise BadRequest(reason=f"{exc}")
 
         self.set_status(204)
 
@@ -242,7 +343,7 @@ class WhoAmIAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        user = self.current_user
-        response = UserSchema().dump(user).data
+
+        response = SchemaParser.serialize_user(self.current_user, to_string=False)
 
         self.write(response)
