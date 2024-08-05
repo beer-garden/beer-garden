@@ -1285,6 +1285,26 @@ _METRICS_SPEC = {
                 },
             },
         },
+        "elastic": {
+            "type": "dict",
+            "items": {
+                "enabled": {
+                    "type": "bool",
+                    "description": "Enable elastic APM server",
+                    "default": False,
+                },
+                "host": {
+                    "type": "str",
+                    "default": "0.0.0.0",
+                    "description": "Host to bind the elastic apm server to",
+                },
+                "port": {
+                    "type": "int",
+                    "description": "Port for elastic server to listen on.",
+                    "default": 2338,
+                },
+            },
+        },
     },
 }
 
