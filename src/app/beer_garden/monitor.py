@@ -138,12 +138,6 @@ class MonitorDirectory(RegexMatchingEventHandler):
             self._observer.stop()
             self._observer.join()
 
-    def on_any_event(self, event):
-        """Call back invoked when any event occurs"""
-        if not (self._create or self._modify or self._move or self._delete):
-            logger.info(f"Dir file any change: {event.src_path} {self._job.id}")
-            self.publish_file_event(event)
-
     def on_created(self, event):
         """Callback invoked when the file is created
 
