@@ -620,6 +620,11 @@ _UI_SPEC = {
             "description": "The title to display on the GUI",
             "previous_names": ["application_name"],
         },
+        "auto_refresh": {
+            "type": "bool",
+            "default": False,
+            "description": "Auto refresh user interface"
+        }
     },
 }
 
