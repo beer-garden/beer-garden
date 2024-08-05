@@ -623,8 +623,8 @@ _UI_SPEC = {
         "auto_refresh": {
             "type": "bool",
             "default": False,
-            "description": "Auto refresh user interface"
-        }
+            "description": "Auto refresh user interface",
+        },
     },
 }
 
