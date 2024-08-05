@@ -3,12 +3,12 @@
 from brewtils.models import Garden, Operation, Request, System
 
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.api.http.handlers.misc import audit_api
+from beer_garden.metrics import collect_metrics
 
 
 class NamespaceListAPI(AuthorizationHandler):
 
-    @audit_api("NamespaceListAPI")
+    @collect_metrics(transaction_type="API", group="NamespaceListAPI")
     async def get(self):
         """
         ---

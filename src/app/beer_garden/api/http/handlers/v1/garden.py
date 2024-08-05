@@ -6,7 +6,7 @@ from brewtils.models import Garden, Operation, Permissions
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.api.http.handlers.misc import audit_api
+from beer_garden.metrics import collect_metrics
 from beer_garden.api.http.schemas.v1.garden import GardenRemoveStatusInfoSchema
 from beer_garden.garden import local_garden
 
@@ -25,7 +25,7 @@ def _remove_heartbeat_history(response: str, many: bool = False) -> str:
 
 class GardenAPI(AuthorizationHandler):
 
-    @audit_api("GardenAPI")
+    @collect_metrics(transaction_type="API", group="GardenAPI")
     async def get(self, garden_name):
         """
         ---
@@ -55,7 +55,7 @@ class GardenAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(_remove_heartbeat_history(response))
 
-    @audit_api("GardenAPI")
+    @collect_metrics(transaction_type="API", group="GardenAPI")
     async def delete(self, garden_name):
         """
         ---
@@ -85,7 +85,7 @@ class GardenAPI(AuthorizationHandler):
 
         self.set_status(204)
 
-    @audit_api("GardenAPI")
+    @collect_metrics(transaction_type="API", group="GardenAPI")
     async def patch(self, garden_name):
         """
         ---
@@ -200,7 +200,7 @@ class GardenAPI(AuthorizationHandler):
 
 class GardenListAPI(AuthorizationHandler):
 
-    @audit_api("GardenListAPI")
+    @collect_metrics(transaction_type="API", group="GardenListAPI")
     async def get(self):
         """
         ---
@@ -225,7 +225,7 @@ class GardenListAPI(AuthorizationHandler):
         )
         self.write(_remove_heartbeat_history(permitted_gardens_list, many=True))
 
-    @audit_api("GardenListAPI")
+    @collect_metrics(transaction_type="API", group="GardenListAPI")
     async def post(self):
         """
         ---
@@ -264,7 +264,7 @@ class GardenListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(_remove_heartbeat_history(response))
 
-    @audit_api("GardenListAPI")
+    @collect_metrics(transaction_type="API", group="GardenListAPI")
     async def patch(self):
         """
         ---

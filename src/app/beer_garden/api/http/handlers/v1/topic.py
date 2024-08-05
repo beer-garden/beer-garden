@@ -5,13 +5,13 @@ from brewtils.models import Subscriber as BrewtilsSubscriber
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.api.http.handlers.misc import audit_api
+from beer_garden.metrics import collect_metrics
 
 
 class TopicAPI(BaseHandler):
     parser = SchemaParser()
 
-    @audit_api("TopicAPI")
+    @collect_metrics(transaction_type="API", group="TopicAPI")
     async def get(self, topic_id):
         """
         ---
@@ -42,7 +42,7 @@ class TopicAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @audit_api("TopicAPI")
+    @collect_metrics(transaction_type="API", group="TopicAPI")
     async def delete(self, topic_id):
         """
         ---
@@ -70,7 +70,7 @@ class TopicAPI(BaseHandler):
 
         self.set_status(204)
 
-    @audit_api("TopicAPI")
+    @collect_metrics(transaction_type="API", group="TopicAPI")
     async def patch(self, topic_id):
         """
         ---
@@ -146,7 +146,7 @@ class TopicAPI(BaseHandler):
 class TopicListAPI(BaseHandler):
     parser = SchemaParser()
 
-    @audit_api("TopicListAPI")
+    @collect_metrics(transaction_type="API", group="TopicListAPI")
     async def get(self):
         """
         ---
@@ -169,7 +169,7 @@ class TopicListAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @audit_api("TopicListAPI")
+    @collect_metrics(transaction_type="API", group="TopicListAPI")
     async def post(self):
         """
         ---

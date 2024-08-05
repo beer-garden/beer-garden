@@ -2,14 +2,14 @@ from brewtils.models import Permissions
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.api.http.handlers.misc import audit_api
+from beer_garden.metrics import collect_metrics
 from beer_garden.events import publish
 
 
 class EventPublisherAPI(AuthorizationHandler):
     parser = SchemaParser()
 
-    @audit_api("EventPublisherAPI")
+    @collect_metrics(transaction_type="API", group="EventPublisherAPI")
     def post(self):
         """
         ---

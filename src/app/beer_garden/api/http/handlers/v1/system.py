@@ -5,7 +5,7 @@ from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import SystemSchema as BrewtilsSystemSchema
 
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.api.http.handlers.misc import audit_api
+from beer_garden.metrics import collect_metrics
 from beer_garden.api.http.schemas.v1.system import SystemSansQueueSchema
 
 
@@ -24,7 +24,7 @@ def _remove_queue_info(response: str, many: bool = False) -> str:
 
 class SystemAPI(AuthorizationHandler):
 
-    @audit_api("SystemAPI")
+    @collect_metrics(transaction_type="API", group="SystemAPI")
     async def get(self, system_id):
         """
         ---
@@ -69,7 +69,7 @@ class SystemAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @audit_api("SystemAPI")
+    @collect_metrics(transaction_type="API", group="SystemAPI")
     async def delete(self, system_id):
         """
         Will give Bartender a chance to remove instances of this system from the
@@ -117,7 +117,7 @@ class SystemAPI(AuthorizationHandler):
 
         self.set_status(204)
 
-    @audit_api("SystemAPI")
+    @collect_metrics(transaction_type="API", group="SystemAPI")
     async def patch(self, system_id):
         """
         ---
@@ -237,7 +237,7 @@ class SystemAPI(AuthorizationHandler):
 class SystemListAPI(AuthorizationHandler):
     REQUEST_FIELDS = set(BrewtilsSystemSchema.get_attribute_names())
 
-    @audit_api("SystemListAPI")
+    @collect_metrics(transaction_type="API", group="SystemListAPI")
     async def get(self):
         """
         ---
@@ -364,7 +364,7 @@ class SystemListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(_remove_queue_info(response, many=True))
 
-    @audit_api("SystemListAPI")
+    @collect_metrics(transaction_type="API", group="SystemListAPI")
     async def post(self):
         """
         ---

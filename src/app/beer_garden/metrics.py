@@ -200,7 +200,7 @@ def collect_metrics(transaction_type: str = None, group: str = None):
                 client.end_transaction(result="success")
 
             return result
-        except Exception as ex:
+        except Exception:
 
             if client:
                 client.capture_exception()
