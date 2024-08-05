@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.27.0
+
+TBD
+
+- Request auto refresh configurable through `ui.auto_refresh` config option.
+
 # 3.26.4
 
 7/12/2024
