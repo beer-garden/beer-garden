@@ -1,5 +1,13 @@
 # Beer Garden Changelog
 
+# 3.27.0
+
+TBD
+
+- Added file trigger jobs to scheduler to monitor directory for file changes. If a watched file change event occurs, it will fire the
+specified request. File trigger can be customized using regex, recursively monitoring sub-directories, or by watching one or more file
+change events (i.e. create, modify, move, or delete).
+
 # 3.26.4
 
 7/12/2024
