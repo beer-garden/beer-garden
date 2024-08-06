@@ -13,8 +13,8 @@ import beer_garden.db.api as db
 from beer_garden.api.http.base_handler import future_wait
 from beer_garden.api.http.exceptions import BadRequest, RequestForbidden
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.metrics import collect_metrics
 from beer_garden.errors import UnknownGardenException
+from beer_garden.metrics import collect_metrics
 from beer_garden.requests import remove_bytes_parameter_base64
 
 

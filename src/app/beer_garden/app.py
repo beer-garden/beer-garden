@@ -13,7 +13,6 @@ from typing import Callable
 from brewtils import EasyClient
 from brewtils.models import Event, Events
 from brewtils.stoppable_thread import StoppableThread
-from elasticapm import Client
 
 import beer_garden.api
 import beer_garden.api.entry_point
@@ -36,7 +35,7 @@ from beer_garden.events.processors import (
 )
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
-from beer_garden.metrics import PrometheusServer
+from beer_garden.metrics import PrometheusServer, initialize_elastic_client
 from beer_garden.monitor import MonitorFile
 from beer_garden.plugin import StatusMonitor
 from beer_garden.scheduler import MixedScheduler
@@ -70,12 +69,7 @@ class Application(StoppableThread):
     def initialize(self):
         """Actually construct all the various component pieces"""
 
-        self.client = Client(
-            {
-                "SERVICE_NAME": "beer-garden-core",
-                "ELASTIC_APM_SERVER_URL": "http://127.0.0.1:8200",
-            }
-        )
+        initialize_elastic_client("core")
 
         # Setup Replication ID for environment
         beer_garden.replication.get_replication_id()

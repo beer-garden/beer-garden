@@ -10,13 +10,13 @@ from beer_garden.api.http.authentication import (
 from beer_garden.api.http.base_handler import BaseHandler
 from beer_garden.api.http.exceptions import AuthenticationFailed, BadRequest
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.metrics import collect_metrics
 from beer_garden.api.http.schemas.v1.token import TokenRefreshInputSchema
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
+from beer_garden.metrics import collect_metrics
 
 
 class TokenAPI(BaseHandler):
-    
+
     @collect_metrics(transaction_type="API", group="TokenAPI")
     def post(self):
         """

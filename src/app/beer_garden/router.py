@@ -23,8 +23,6 @@ from functools import partial
 from typing import Dict, Union
 
 import brewtils.models
-import elasticapm
-import wrapt
 from brewtils import EasyClient
 from brewtils.models import Connection as BrewtilsConnection
 from brewtils.models import Event, Events, Garden, Operation, Request, System
@@ -60,6 +58,7 @@ from beer_garden.garden import (
     load_garden_connections,
     update_garden,
 )
+from beer_garden.metrics import collect_metrics
 from beer_garden.requests import complete_request, create_request
 
 logger = logging.getLogger(__name__)
@@ -200,50 +199,7 @@ router_filter = {
 }
 
 
-def audit_api(target):
-    """Decorator that will result in the api being audited for metrics
-
-    Args:
-        audit_api: Label of the API
-
-    Raises:
-        Any: If the underlying function raised an exception it will be re-raised
-
-    Returns:
-        Any: The wrapped function result
-    """
-
-    @wrapt.decorator
-    def wrapper(wrapped, _, args, kwargs):
-        # if config.get("apm.enabled"):
-        if True:
-            client = elasticapm.get_client()
-            operation_type = args[0].operation_type
-            if client:
-                transaction_id = elasticapm.get_trace_parent_header()
-                if transaction_id:
-                    logger.error(f"FOUND PARENT: {transaction_id} for {operation_type}")
-                client.begin_transaction(operation_type, trace_parent=transaction_id)
-
-        try:
-            result = wrapped(*args, **kwargs)
-
-            if client:
-                if hasattr(result, "id"):
-                    elasticapm.set_custom_context({"id": getattr(result, "id")})
-                client.end_transaction(operation_type, "success")
-
-            return result
-        except Exception as ex:
-
-            if client:
-                client.end_transaction(operation_type, "failure")
-            raise
-
-    return wrapper
-
-
-@audit_api("router")
+@collect_metrics(transaction_type="router")
 def route(operation: Operation):
     """Entry point into the routing subsystem
 
@@ -284,7 +240,6 @@ def route(operation: Operation):
     return filter_result(result)
 
 
-@elasticapm.capture_span()
 def filter_result(result: [brewtils.models.BaseModel, list]):
     if result is None:
         return result
@@ -302,7 +257,6 @@ def filter_result(result: [brewtils.models.BaseModel, list]):
     return result
 
 
-@elasticapm.capture_span()
 def execute_local(operation: Operation):
     """Execute an operation on the local garden
 
@@ -318,35 +272,30 @@ def execute_local(operation: Operation):
     lookup = route_functions
 
     loop = None
-    with elasticapm.capture_span("execute_local-loop-lookup"):
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            pass
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        pass
 
     check_async = True
-    with elasticapm.capture_span("execute_local-async-check"):
-        if loop and operation.operation_type in async_functions:
-            lookup = async_functions
-            check_async = False
+    if loop and operation.operation_type in async_functions:
+        lookup = async_functions
+        check_async = False
 
     if check_async and loop and operation.operation_type in executor_functions:
-        with elasticapm.capture_span("execute_local-async-execute"):
-            response = asyncio.get_event_loop().run_in_executor(
-                t_pool,
-                partial(
-                    executor_functions[operation.operation_type],
-                    *operation.args,
-                    **operation.kwargs,
-                ),
-            )
+        response = asyncio.get_event_loop().run_in_executor(
+            t_pool,
+            partial(
+                executor_functions[operation.operation_type],
+                *operation.args,
+                **operation.kwargs,
+            ),
+        )
         return response
-    with elasticapm.capture_span("execute_local-local-execute"):
-        response = lookup[operation.operation_type](*operation.args, **operation.kwargs)
-    return response
+
+    return lookup[operation.operation_type](*operation.args, **operation.kwargs)
 
 
-@elasticapm.capture_span()
 def update_api_heartbeat(operation: Operation):
     if (
         operation.source_garden_name is not None
@@ -364,7 +313,6 @@ def update_api_heartbeat(operation: Operation):
             )
 
 
-@elasticapm.capture_span()
 def invalid_source_check(operation: Operation):
     # Unable to validate source or api
     if (
@@ -381,7 +329,6 @@ def invalid_source_check(operation: Operation):
     return True
 
 
-@elasticapm.capture_span()
 def initiate_forward(operation: Operation):
     """Forward an operation to a child garden
 
@@ -413,7 +360,6 @@ def initiate_forward(operation: Operation):
     return response
 
 
-@elasticapm.capture_span()
 def determine_route_garden(target_garden_name):
     target_garden = gardens.get(target_garden_name)
 
@@ -444,7 +390,6 @@ def determine_route_garden(target_garden_name):
     return target_garden
 
 
-@elasticapm.capture_span()
 def forward(operation: Operation):
     """Forward the operation to a child garden
 
@@ -527,7 +472,6 @@ def forward(operation: Operation):
         raise
 
 
-@elasticapm.capture_span()
 def setup_routing():
     """Initialize the routing subsystem
 
@@ -569,7 +513,6 @@ def setup_routing():
                 logger.warning(f"Garden with invalid connection info: {garden!r}")
 
 
-@elasticapm.capture_span()
 def add_routing_system(system=None, garden_name=None):
     """Update the gardens used for routing
 
@@ -593,7 +536,6 @@ def add_routing_system(system=None, garden_name=None):
             instance_id_routes[instance.id] = garden_name
 
 
-@elasticapm.capture_span()
 def remove_routing_system(system=None):
     """Update the gardens used for routing"""
     with routing_lock:
@@ -611,7 +553,6 @@ def remove_routing_system(system=None):
                 del instance_id_routes[instance.id]
 
 
-@elasticapm.capture_span()
 def remove_routing_garden(garden_name=None):
     """Remove all routing to a given garden"""
     global system_name_routes, system_id_routes, instance_id_routes
@@ -627,7 +568,6 @@ def remove_routing_garden(garden_name=None):
         }
 
 
-@elasticapm.capture_span()
 def add_routing_garden(garden: Garden, routing_garden: str):
     if garden.systems:
         for system in garden.systems:
@@ -638,7 +578,6 @@ def add_routing_garden(garden: Garden, routing_garden: str):
             add_routing_garden(child, routing_garden)
 
 
-@elasticapm.capture_span()
 def handle_event(event):
     """Handle events"""
     if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
@@ -706,7 +645,6 @@ def handle_event(event):
             gardens[event.payload.name] = event.payload
 
 
-@elasticapm.capture_span()
 def _operation_conversion(operation: Operation) -> Operation:
     # Use if the targeted function creates a Request object that
     # needs to be routed to any Garden
@@ -717,7 +655,6 @@ def _operation_conversion(operation: Operation) -> Operation:
     return operation
 
 
-@elasticapm.capture_span()
 def _pre_route(operation: Operation) -> Operation:
     """Called before any routing logic is applied"""
     # Determine if the operation needs to be converted first
@@ -744,7 +681,6 @@ def _pre_route(operation: Operation) -> Operation:
     return operation
 
 
-@elasticapm.capture_span()
 def _pre_forward(operation: Operation) -> Operation:
     """Called before forwarding an operation"""
 
@@ -799,7 +735,6 @@ def _pre_forward(operation: Operation) -> Operation:
     return operation
 
 
-@elasticapm.capture_span()
 def _pre_execute(operation: Operation) -> Operation:
     """Called before executing an operation"""
     # If there's a model present, shove it in the front
@@ -809,7 +744,6 @@ def _pre_execute(operation: Operation) -> Operation:
     return operation
 
 
-@elasticapm.capture_span()
 def _determine_target(operation: Operation) -> str:
     """Determine the garden the operation is targeting
 
@@ -836,7 +770,6 @@ def _determine_target(operation: Operation) -> str:
     return target_garden
 
 
-@elasticapm.capture_span()
 def _target_from_type(operation: Operation) -> str:
     """Determine the target garden based on the operation type"""
     # Certain operations are ASSUMED to be targeted at the local garden
@@ -922,7 +855,6 @@ def _target_from_type(operation: Operation) -> str:
     raise Exception(f"Bad operation type {operation.operation_type}")
 
 
-@elasticapm.capture_span()
 def _system_name_lookup(system: Union[str, System]) -> str:
     with routing_lock:
         route = system_name_routes.get(str(system))
@@ -951,13 +883,11 @@ def _system_name_lookup(system: Union[str, System]) -> str:
     return None
 
 
-@elasticapm.capture_span()
 def _system_id_lookup(system_id: str) -> str:
     with routing_lock:
         return system_id_routes.get(system_id)
 
 
-@elasticapm.capture_span()
 def _instance_id_lookup(instance_id: str) -> str:
     with routing_lock:
         return instance_id_routes.get(instance_id)
@@ -965,7 +895,8 @@ def _instance_id_lookup(instance_id: str) -> str:
 
 # TRANSPORT TYPE STUFF
 # This should be moved out of this module
-@elasticapm.capture_span()
+
+
 def create_stomp_connection(connection: BrewtilsConnection) -> Connection:
     """Create a stomp connection wrapper for a garden
 
@@ -989,7 +920,6 @@ def create_stomp_connection(connection: BrewtilsConnection) -> Connection:
     return Connection(**connection_params)
 
 
-@elasticapm.capture_span()
 def _forward_stomp(operation: Operation, target_garden: Garden) -> None:
     for connection in target_garden.publishing_connections:
         if connection.api == "STOMP" and connection.status not in [
@@ -1031,7 +961,6 @@ def _forward_stomp(operation: Operation, target_garden: Garden) -> None:
                 update_garden(target_garden)
 
 
-@elasticapm.capture_span()
 def _forward_http(operation: Operation, target_garden: Garden) -> None:
     """Actually forward an operation using HTTP"""
 

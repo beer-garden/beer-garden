@@ -1360,15 +1360,10 @@ _METRICS_SPEC = {
                     "description": "Enable elastic APM server",
                     "default": False,
                 },
-                "host": {
+                "url": {
                     "type": "str",
-                    "default": "0.0.0.0",
-                    "description": "Host to bind the elastic apm server to",
-                },
-                "port": {
-                    "type": "int",
-                    "description": "Port for elastic server to listen on.",
-                    "default": 2338,
+                    "description": "URL to elastic apm server.",
+                    "required": False,
                 },
             },
         },

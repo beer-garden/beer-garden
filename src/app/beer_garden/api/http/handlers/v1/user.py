@@ -284,7 +284,7 @@ class UserListAPI(AuthorizationHandler):
 
 
 class UserPasswordChangeAPI(AuthorizationHandler):
-    
+
     @collect_metrics(transaction_type="API", group="UserPasswordChangeAPI")
     async def post(self):
         """

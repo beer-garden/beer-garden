@@ -33,7 +33,6 @@ from brewtils.schemas import (
     UserSchema,
     UserTokenSchema,
 )
-from elasticapm.contrib.tornado import ElasticAPM
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 from tornado.web import Application, RedirectHandler, RequestHandler
@@ -57,6 +56,7 @@ from beer_garden.api.http.schemas.v1.command_publishing_blocklist import (
 )
 from beer_garden.api.http.schemas.v1.user import UserPasswordChangeSchema
 from beer_garden.events import publish
+from beer_garden.metrics import initialize_elastic_client
 
 io_loop: IOLoop = None
 server: HTTPServer
@@ -66,7 +66,6 @@ event_publishers = None
 api_spec: APISpec
 anonymous_principal: User
 client_ssl: ssl.SSLContext
-elastic_apm: ElasticAPM
 
 
 def _get_published_url_specs(
@@ -255,7 +254,7 @@ async def shutdown():
 
 def _setup_application():
     """Setup things that can be taken care of before io loop is started"""
-    global io_loop, tornado_app, server, client_ssl, elastic_apm
+    global io_loop, tornado_app, server, client_ssl
 
     io_loop = IOLoop.current()
 
@@ -286,11 +285,7 @@ def _setup_application():
     # ).url
 
     tornado_app = _setup_tornado_app()
-    tornado_app.settings["ELASTIC_APM"] = {
-        "SERVICE_NAME": "beer-garden-http",
-        "ELASTIC_APM_SERVER_URL": "http://127.0.0.1:8200",
-    }
-    elastic_apm = ElasticAPM(tornado_app)
+    initialize_elastic_client("http")
 
     server_ssl, client_ssl = _setup_ssl_context()
 

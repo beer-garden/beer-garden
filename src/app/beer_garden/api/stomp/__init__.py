@@ -6,13 +6,13 @@ import types
 from copy import deepcopy
 
 from brewtils.models import Event, Events
-from elasticapm import Client
 
 import beer_garden.config as config
 import beer_garden.events
 from beer_garden.api.stomp.manager import StompManager
 from beer_garden.events import publish
 from beer_garden.garden import get_gardens
+from beer_garden.metrics import initialize_elastic_client
 
 logger: logging.Logger = logging.getLogger(__name__)
 shutdown_event = threading.Event()
@@ -28,13 +28,7 @@ def run(ep_conn):
 
     _setup_event_handling(conn_manager)
 
-    client = Client(
-        {
-            "SERVICE_NAME": "beer-garden-stomp",
-            "ELASTIC_APM_SERVER_URL": "http://127.0.0.1:8200",
-        }
-    )
-
+    initialize_elastic_client("stomp")
     entry_config = config.get("entry.stomp")
     parent_config = config.get("parent.stomp")
     garden_name = config.get("garden.name")

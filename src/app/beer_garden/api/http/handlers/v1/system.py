@@ -5,8 +5,8 @@ from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import SystemSchema as BrewtilsSystemSchema
 
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.metrics import collect_metrics
 from beer_garden.api.http.schemas.v1.system import SystemSansQueueSchema
+from beer_garden.metrics import collect_metrics
 
 
 def _remove_queue_info(response: str, many: bool = False) -> str:

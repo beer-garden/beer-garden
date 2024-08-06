@@ -7,6 +7,7 @@ import elasticapm
 from brewtils.models import Event
 
 import beer_garden.config
+import beer_garden.config as config
 import beer_garden.files
 import beer_garden.garden
 import beer_garden.local_plugins.manager
@@ -60,16 +61,16 @@ def garden_callbacks(event: Event) -> None:
         (beer_garden.replication.handle_event, "Replication event handler"),
     ]:
         try:
-            client = elasticapm.get_client()
-            if client:
-                transaction_id = elasticapm.get_trace_parent_header()
-                client.begin_transaction(
-                    f"Event Handler - {handler_tag}", trace_parent=transaction_id
-                )
+            if config.get("apm.enabled") and elasticapm.get_client():
+                with elasticapm.capture_span(name=event_type.name, span_type="Event"):
+                    if hasattr(event, "payload") and hasattr(event.payload, "id"):
+                        elasticapm.set_custom_context(
+                            {"id": getattr(event.payload, "id")}
+                        )
+                    handler(deepcopy(event))
 
-            handler(deepcopy(event))
-            if client:
-                client.end_transaction(f"Event Handler - {handler_tag}", "success")
+            else:
+                handler(deepcopy(event))
         except Exception as ex:
             logger.error(
                 "'%s' handler received an error executing callback for event %s: %s: %s"

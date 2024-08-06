@@ -8,14 +8,14 @@ The metrics service manages:
 """
 
 import datetime
-import functools
 import logging
 from http.server import ThreadingHTTPServer
 
 import elasticapm
 import wrapt
-from brewtils.models import Request
+from brewtils.models import Operation, Request
 from brewtils.stoppable_thread import StoppableThread
+from elasticapm import Client
 from prometheus_client import Counter, Gauge, Summary
 from prometheus_client.exposition import MetricsHandler
 from prometheus_client.registry import REGISTRY
@@ -161,11 +161,49 @@ def request_completed(request):
     plugin_command_latency.labels(**labels).observe(latency)
 
 
+def initialize_elastic_client(label: str):
+    """Initializes the Elastic APM client connection
+
+    Args:
+        label (str): Name of services being tracked
+    """
+    if config.get("metrics.elastic.enabled"):
+        Client(
+            {
+                "SERVICE_NAME": f"{config.get('garden.name')}-{label}",
+                "ELASTIC_APM_SERVER_URL": config.get("metrics.elastic.url"),
+            }
+        )
+
+
+def extract_custom_context(result) -> None:
+    """Extracts values from models to be tracked in the custom context fields
+
+    Args:
+        result: Any object to be tracked
+    """
+    custom_context = {}
+
+    if type(result) == Operation:
+        if hasattr(result, "payload"):
+            return extract_custom_context(getattr(result, "payload"))
+    elif type(result) == Request:
+        if result.metadata:
+            for key, value in result.metadata.items():
+                custom_context[key] = value
+    if hasattr(result, "id"):
+        custom_context["id"] = getattr(result, "id")
+
+    if custom_context:
+        elasticapm.set_custom_context(custom_context)
+
+
 def collect_metrics(transaction_type: str = None, group: str = None):
     """Decorator that will result in the function being audited for metrics
 
     Args:
-        group: Grouping label for the function
+        transaction_type: Type of transaction that is being recorded
+        group: Grouping label to prepend function name
 
     Raises:
         Any: If the underlying function raised an exception it will be re-raised
@@ -178,8 +216,10 @@ def collect_metrics(transaction_type: str = None, group: str = None):
     def wrapper(wrapped, _, args, kwargs):
         client = None
 
-        if config.get("apm.enabled"):
-            if group:
+        if config.get("metrics.elastic.enabled"):
+            if args and type(args[0]) == Operation:
+                transaction_label = args[0].operation_type
+            elif group:
                 transaction_label = f"{group} - {wrapped.__name__}"
             else:
                 transaction_label = f"{wrapped.__name__}"
@@ -197,6 +237,7 @@ def collect_metrics(transaction_type: str = None, group: str = None):
             result = wrapped(*args, **kwargs)
 
             if client:
+                extract_custom_context(result)
                 client.end_transaction(result="success")
 
             return result

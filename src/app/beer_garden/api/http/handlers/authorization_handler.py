@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 from typing import Type
 
+import elasticapm
 from brewtils.models import BaseModel as BrewtilsModel
 from brewtils.models import Operation, Permissions, Queue, Role, System, User
 from mongoengine import Document, QuerySet
 from mongoengine.queryset.visitor import Q, QCombination
-import elasticapm
 
 import beer_garden.config as config
 import beer_garden.db.api as db
@@ -177,9 +177,14 @@ class AuthorizationHandler(BaseHandler):
         # duplication of the work required to identify and retrieve the User object.
         current_user = self.current_user
 
-        if current_user and config.get("metrics.elastic.enabled") and elasticapm.get_client():
-            elasticapm.set_user_context(username=current_user.username, user_id=current_user.id)
-
+        if (
+            current_user
+            and config.get("metrics.elastic.enabled")
+            and elasticapm.get_client()
+        ):
+            elasticapm.set_user_context(
+                username=current_user.username, user_id=current_user.id
+            )
 
     def verify_user_global_permission(self) -> None:  # Updated
         """Verifies that the requesting use has the specified permission for the Global
