@@ -379,6 +379,17 @@ def check_indexes(document_class):
             )
             raise
 
+    try:
+        document_class.objects.count()
+        logger.warning("%s table looks good", document_class.__name__)
+    except InvalidDocumentError:
+        logger.error(
+            "%s table failed to load properly, please check the Change Log for any major model changes",
+            document_class.__name__,
+        )
+        raise
+
+
 
 def _update_request_parent_field_type():
     """Change GenericReferenceField to ReferenceField"""
