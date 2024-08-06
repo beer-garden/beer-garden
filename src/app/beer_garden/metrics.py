@@ -213,7 +213,7 @@ def collect_metrics(transaction_type: str = None, group: str = None):
     """
 
     @wrapt.decorator
-    def wrapper(wrapped, _, args, kwargs):
+    def wrapper(wrapped, class_obj, args, kwargs):
         client = None
 
         if config.get("metrics.elastic.enabled"):
@@ -232,6 +232,13 @@ def collect_metrics(transaction_type: str = None, group: str = None):
                     trace_parent=trace_id if trace_id else elasticapm.get_span_id(),
                 )
                 elasticapm.set_transaction_name(transaction_label)
+
+                if hasattr(class_obj, "get_current_user"):
+                    current_user = class_obj.get_current_user()
+                    if current_user:
+                        elasticapm.set_user_context(
+                            username=current_user.username, user_id=current_user.id
+                        )
 
         try:
             result = wrapped(*args, **kwargs)

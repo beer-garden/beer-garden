@@ -175,16 +175,7 @@ class AuthorizationHandler(BaseHandler):
         # get_current_user(). The result is cached, so subsequent calls to
         # self.current_user within the life of the request will not result in a
         # duplication of the work required to identify and retrieve the User object.
-        current_user = self.current_user
-
-        if (
-            current_user
-            and config.get("metrics.elastic.enabled")
-            and elasticapm.get_client()
-        ):
-            elasticapm.set_user_context(
-                username=current_user.username, user_id=current_user.id
-            )
+        _ = self.current_user
 
     def verify_user_global_permission(self) -> None:  # Updated
         """Verifies that the requesting use has the specified permission for the Global
