@@ -24,7 +24,6 @@ change events (i.e. create, modify, move, or delete).
 - Users and Roles can be loaded through configuration files, and are protected models
 - New UI pages for User and Role management
 - Upgraded Brewtils version to [3.27.0](https://github.com/beer-garden/brewtils/releases/tag/3.27.0)
->>>>>>> 3.27.0_staged
 
 # 3.26.4
 
