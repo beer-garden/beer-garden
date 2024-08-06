@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from typing import Type
 
-import elasticapm
 from brewtils.models import BaseModel as BrewtilsModel
 from brewtils.models import Operation, Permissions, Queue, Role, System, User
 from mongoengine import Document, QuerySet
