@@ -88,6 +88,7 @@ import userService from './js/services/user_service.js';
 import roleService from './js/services/role_service.js';
 import tokenService from './js/services/token_service.js';
 import utilityService from './js/services/utility_service.js';
+import permissionService from './js/services/permission_service.js';
 import jobService from './js/services/job_service.js';
 import errorService from './js/services/error_service.js';
 import eventService from './js/services/event_service.js';
@@ -102,11 +103,12 @@ import adminSystemController from './js/controllers/admin_system.js';
 import adminSystemLogsController from './js/controllers/admin_system_logs.js';
 import adminSystemForceDeleteController from './js/controllers/admin_system_force_delete.js';
 import adminUserIndexController from './js/controllers/admin_user_index.js';
-import adminUserViewController from './js/controllers/admin_user_view.js';
 import {
   adminRoleController,
   newRoleController,
 } from './js/controllers/admin_role.js';
+import addRemoveRolesController from './js/controllers/add_remove_roles.js';
+import userGardenAccountsController from './js/controllers/user_garden_accounts.js';
 import adminGardenController from './js/controllers/admin_garden.js';
 import commandIndexController from './js/controllers/command_index.js';
 import commandViewController from './js/controllers/command_view.js';
@@ -132,6 +134,7 @@ import jobCreateTriggerController from './js/controllers/job/create_trigger.js';
 import loginController from './js/controllers/login.js';
 
 import changePasswordController from './js/controllers/change_password.js';
+import changePasswordAdminController from './js/controllers/change_password_admin.js';
 import newUserController from './js/controllers/user/new_user.js';
 import syncUsersController from './js/controllers/user/sync_users.js';
 
@@ -139,7 +142,6 @@ import syncUsersController from './js/controllers/user/sync_users.js';
 import './partials/about.html';
 import './partials/admin_system.html';
 import './partials/admin_user_index.html';
-import './partials/admin_user_view.html';
 import './partials/admin_role.html';
 import './partials/admin_garden_index.html';
 import './partials/command_index.html';
@@ -200,6 +202,7 @@ angular
     .factory('RoleService', roleService)
     .factory('TokenService', tokenService)
     .factory('UtilityService', utilityService)
+    .factory('PermissionService', permissionService)
     .factory('JobService', jobService)
     .factory('ErrorService', errorService)
     .factory('EventService', eventService)
@@ -214,7 +217,8 @@ angular
     .controller('AdminSystemController', adminSystemController)
     .controller('AdminSystemLogsController', adminSystemLogsController)
     .controller('AdminUserIndexController', adminUserIndexController)
-    .controller('AdminUserViewController', adminUserViewController)
+    .controller('addRemoveRolesController', addRemoveRolesController)
+    .controller('userGardenAccountsController', userGardenAccountsController)
     .controller('NewUserController', newUserController)
     .controller('SyncUsersController', syncUsersController)
     .controller('AdminRoleController', adminRoleController)
@@ -236,4 +240,5 @@ angular
     .controller('JobImportController', jobImportController)
     .controller('JobImportModalController', jobImportModalController)
     .controller('LoginController', loginController)
-    .controller('ChangePasswordController', changePasswordController);
+    .controller('ChangePasswordController', changePasswordController)
+    .controller('ChangePasswordAdminController', changePasswordAdminController);

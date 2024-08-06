@@ -63,8 +63,8 @@ class TestPublish(object):
         while check < 12:
             completed_request = self.easy_client.find_unique_request(id=request.id)
             if len(completed_request.children) == expected_length:
-                return completed_request
-            time.sleep(5)
+                break
+            time.sleep(10)
             check += 1
 
         return completed_request

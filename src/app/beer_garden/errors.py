@@ -97,3 +97,10 @@ class InvalidTokenException(Exception):
     """Token has expired"""
 
     pass
+
+
+# User
+class InvalidPasswordException(Exception):
+    """Pasword for User is invalid"""
+
+    pass
