@@ -184,10 +184,10 @@ def extract_custom_context(result) -> None:
     """
     custom_context = {}
 
-    if type(result) == Operation:
+    if isinstance(result, Operation):
         if hasattr(result, "payload"):
             return extract_custom_context(getattr(result, "payload"))
-    elif type(result) == Request:
+    elif isinstance(result, Request):
         if result.metadata:
             for key, value in result.metadata.items():
                 custom_context[key] = value
@@ -217,7 +217,7 @@ def collect_metrics(transaction_type: str = None, group: str = None):
         client = None
 
         if config.get("metrics.elastic.enabled"):
-            if args and type(args[0]) == Operation:
+            if args and isinstance(args[0], Operation):
                 transaction_label = args[0].operation_type
             elif group:
                 transaction_label = f"{group} - {wrapped.__name__}"

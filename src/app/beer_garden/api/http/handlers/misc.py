@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
 
-import elasticapm
-import wrapt
-
 import beer_garden.api.http
 import beer_garden.config as config
 from beer_garden.api.http.base_handler import BaseHandler
@@ -61,40 +58,3 @@ class SpecHandler(BaseHandler):
     def get(self):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(beer_garden.api.http.api_spec.to_dict())
-
-
-def audit_api(api_label: str):
-    """Decorator that will result in the api being audited for metrics
-
-    Args:
-        audit_api: Label of the API
-
-    Raises:
-        Any: If the underlying function raised an exception it will be re-raised
-
-    Returns:
-        Any: The wrapped function result
-    """
-
-    @wrapt.decorator
-    def wrapper(wrapped, _, args, kwargs):
-        # if config.get("apm.enabled"):
-        if True:
-            client = elasticapm.get_client()
-            if client:
-                client.begin_transaction(f"{api_label} - {wrapped.__name__}")
-
-        try:
-            result = wrapped(*args, **kwargs)
-
-            if client:
-                client.end_transaction(f"{api_label} - {wrapped.__name__}", "success")
-
-            return result
-        except Exception as ex:
-
-            if client:
-                client.end_transaction(f"{api_label} - {wrapped.__name__}", "failure")
-            raise
-
-    return wrapper
