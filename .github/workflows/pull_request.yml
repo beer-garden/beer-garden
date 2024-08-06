@@ -281,7 +281,7 @@ jobs:
         shell: bash
 
       - name: Grab logs from Beer-Garden
-        run: BG='unstable' docker-compose logs --tail 100 beer-garden
+        run: BG='unstable' docker compose logs --tail 100 beer-garden
         working-directory: ./docker/docker-compose
 
       - name: Check If Beer Garden is Operational
@@ -294,7 +294,7 @@ jobs:
           command: curl http://localhost:2337/config
 
       - name: Grab logs from Beer-Garden
-        run: BG='unstable' docker-compose logs --tail 100 beer-garden
+        run: BG='unstable' docker compose logs --tail 100 beer-garden
         working-directory: ./docker/docker-compose
 
       - name: Install Develop Version of Brewtils
@@ -310,7 +310,7 @@ jobs:
 
       - name: Grab logs from Beer-Garden
         if: always()
-        run: BG='unstable' docker-compose logs --tail 1000 beer-garden
+        run: BG='unstable' docker compose logs --tail 1000 beer-garden
         working-directory: ./docker/docker-compose
 
       - name: Shutdown Docker Containers
