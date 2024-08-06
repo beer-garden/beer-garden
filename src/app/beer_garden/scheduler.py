@@ -738,7 +738,6 @@ def handle_event(event: Event) -> None:
                 reset_interval=event.payload.reset_interval,
             )
         elif event.name == Events.DIRECTORY_FILE_CHANGE.name:
-            logger.info("DIR file change event")
             beer_garden.application.scheduler.execute_job(
                 event.payload.id,
                 jobstore="beer_garden",

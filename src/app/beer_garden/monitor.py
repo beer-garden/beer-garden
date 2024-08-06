@@ -12,7 +12,7 @@ from watchdog.observers.polling import PollingObserver
 
 from beer_garden.events import publish
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 class MonitorFile(PatternMatchingEventHandler):
@@ -124,7 +124,7 @@ class MonitorDirectory(RegexMatchingEventHandler):
         self._observer.schedule(self, self._path, recursive=self._recursive)
 
     def start(self):
-        logger.info(f"Start dir monitor on {self._path}")
+        logger.debug(f"Start dir monitor on {self._path}")
         try:
             self._observer.start()
         except RuntimeError:
@@ -133,7 +133,7 @@ class MonitorDirectory(RegexMatchingEventHandler):
             self._observer.start()
 
     def stop(self):
-        logger.info(f"Stop dir monitor on {self._path}")
+        logger.debug(f"Stop dir monitor on {self._path}")
         if self._observer.is_alive():
             self._observer.stop()
             self._observer.join()
@@ -145,7 +145,7 @@ class MonitorDirectory(RegexMatchingEventHandler):
         captures that case
         """
         if self._create:
-            logger.info(f"Dir file created: {event.src_path} {self._job.id}")
+            logger.debug(f"Dir file created: {event.src_path} {self._job.id}")
             self.publish_file_event(event)
 
     def on_modified(self, event):
@@ -154,7 +154,7 @@ class MonitorDirectory(RegexMatchingEventHandler):
         This captures all other modification events that occur against the file
         """
         if self._modify:
-            logger.info(f"Dir file modified: {event.src_path} {self._job.id}")
+            logger.debug(f"Dir file modified: {event.src_path} {self._job.id}")
             self.publish_file_event(event)
 
     def on_moved(self, event):
@@ -163,7 +163,7 @@ class MonitorDirectory(RegexMatchingEventHandler):
         This captures if the file is moved into or from the directory
         """
         if self._move:
-            logger.info(f"Dir file moved: {event.src_path} {self._job.id}")
+            logger.debug(f"Dir file moved: {event.src_path} {self._job.id}")
             self.publish_file_event(event)
 
     def on_deleted(self, event):
@@ -173,7 +173,7 @@ class MonitorDirectory(RegexMatchingEventHandler):
         default during write actions)
         """
         if self._delete:
-            logger.info(f"Dir file deleted: {event.src_path} {self._job.id}")
+            logger.debug(f"Dir file deleted: {event.src_path} {self._job.id}")
             self.publish_file_event(event)
 
     def publish_file_event(self, event):
