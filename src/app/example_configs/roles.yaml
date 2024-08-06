@@ -1,21 +1,11 @@
-- name: "job_manager"
-  permissions:
-    - "job:create"
-    - "job:read"
-    - "job:update"
-    - "job:delete"
+- name: "garden_admin"
+  permission: "GARDEN_ADMIN"
 
 - name: "operator"
-  permissions:
-    - "garden:read"
-    - "request:create"
-    - "request:read"
-    - "system:read"
+  permission: "OPERATOR"
 
 - name: "read_only"
-  permissions:
-    - "job:read"
-    - "garden:read"
-    - "queue:read"
-    - "request:read"
-    - "system:read"
+  permission: "READ_ONLY"
+  
+- name: "plugin_admin"
+  permission: "PLUGIN_ADMIN"

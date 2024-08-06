@@ -23,8 +23,6 @@ from beer_garden.db.mongo.util import (
     check_indexes,
     ensure_local_garden,
     ensure_model_migration,
-    ensure_roles,
-    ensure_users,
 )
 from beer_garden.errors import NotUniqueException
 
@@ -56,6 +54,7 @@ ModelItem = Union[
     brewtils.models.FileChunk,
     brewtils.models.Topic,
     brewtils.models.Subscriber,
+    brewtils.models.AliasUserMap,
 ]
 
 _model_map = {}
@@ -181,15 +180,11 @@ def initial_setup():
         beer_garden.db.mongo.models.Garden,
         beer_garden.db.mongo.models.Job,
         beer_garden.db.mongo.models.Request,
-        beer_garden.db.mongo.models.LegacyRole,
         beer_garden.db.mongo.models.System,
-        beer_garden.db.mongo.models.Principal,
     ):
         check_indexes(doc)
 
     ensure_local_garden()
-    ensure_roles()
-    ensure_users()
 
 
 def get_job_store():

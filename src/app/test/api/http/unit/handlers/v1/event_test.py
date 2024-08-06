@@ -2,7 +2,7 @@
 import json
 
 import pytest
-from brewtils.models import Event, System
+from brewtils.models import Event, Role, System, User
 from mock import Mock
 from tornado import gen
 from tornado.testing import AsyncHTTPTestCase, gen_test
@@ -18,23 +18,13 @@ from beer_garden.api.http.handlers.v1.event import (
 @pytest.fixture
 def get_current_user_mock(monkeypatch):
     def get_current_user(self):
-        return "someuser"
+        return User(
+            username="test",
+            local_roles=[Role(name="role", permission="READ_ONLY")],
+            upstream_roles=[],
+        )
 
     monkeypatch.setattr(EventSocket, "get_current_user", get_current_user)
-
-
-@pytest.fixture
-def eventsocket_mock(get_current_user_mock, monkeypatch):
-    from beer_garden.api.http.handlers.v1 import event
-
-    def _user_can_receive_messages_for_event(user, event):
-        return True
-
-    monkeypatch.setattr(
-        event,
-        "_user_can_receive_messages_for_event",
-        _user_can_receive_messages_for_event,
-    )
 
 
 @pytest.fixture
@@ -149,7 +139,7 @@ class TestEventSocket(AsyncHTTPTestCase):
         assert response_dict["name"] == "AUTHORIZATION_REQUIRED"
 
     @gen_test
-    @pytest.mark.usefixtures("app_config_auth_enabled", "eventsocket_mock")
+    @pytest.mark.usefixtures("app_config_auth_enabled", "get_current_user_mock")
     def test_publish_auth_enabled_publishes_event_for_authorized_user(self):
         ws_client = yield self.ws_connect()
         yield ws_client.read_message()  # Read the AUTHORIZATION_REQUIRED message

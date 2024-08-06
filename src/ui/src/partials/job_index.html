@@ -3,7 +3,7 @@
   
   <button type="button"
           ng-if="responseState(response) === 'success'"
-          ng-show="hasPermission(user, 'job:create')"
+          ng-show="hasPermission('OPERATOR')"
           class="btn btn-primary pull-right"
           ng-controller="JobImportController"
           ng-click="openImportJobsPopup()">
@@ -13,6 +13,7 @@
   <button type="button"
           ng-if="responseState(response) === 'success'"
           class="btn btn-primary pull-right"
+          ng-show="hasPermission('OPERATOR')"
           ng-controller="JobExportController"
           ng-click="exportAllJobs()">
     Export Jobs
@@ -20,7 +21,7 @@
   
   <button type="button"
           ng-if="responseState(response) === 'success'"
-          ng-show="hasPermission(user, 'job:create')"
+          ng-show="hasPermission('OPERATOR')"
           class="btn btn-primary pull-right"
           ui-sref="base.jobscreatesystem()">
     Schedule a Job
@@ -42,7 +43,7 @@
     </p>
     <br />
     <p>
-      <div class="btn-group d-flex w-100" role="group">
+      <div class="btn-group d-flex w-100" role="group" ng-show="hasPermission('OPERATOR')">
         <a role="button"
          class="btn btn-primary w-50 btn-lg"
          ui-sref="base.jobscreatesystem()">Create Your First Job</a>
@@ -50,6 +51,7 @@
           class="btn btn-primary w-50 btn-lg"
           ng-controller="JobImportController"
           ng-click="openImportJobsPopup()">
+          
           Import Jobs
         </button>
       </div>
@@ -80,7 +82,8 @@
     </thead>
     <tbody>
       <tr ng-repeat="job in data | filter:query">
-        <td><a ui-sref="base.job({id: job.id})">{{job.name}}</a></td>
+        <td ng-if="hasJobPermission('OPERATOR', job)"><a ui-sref="base.job({id: job.id})" >{{job.name}}</a></td>
+        <td ng-if="!hasJobPermission('OPERATOR', job)">{{job.name}}</td>
         <td>{{job.status}}</td>
         <td>{{job.request_template.system}}</td>
         <td>{{job.request_template.instance_name}}</td>

@@ -107,6 +107,9 @@ jobs:
       - name: Build and Publish Images
         run: make publish-docker VERSION=${GITHUB_REF#refs/tags/}
 
+      - name: Build and Publish RPM Images
+        run: make publish-docker-rpm VERSION=${GITHUB_REF#refs/tags/}
+
 
   rpm-publish:
     name: RPM Publish
@@ -125,15 +128,6 @@ jobs:
       - name: Get Version
         id: get_version
         uses: battila7/get-version-action@v2
-
-      - name: Download react-ui
-        uses: robinraju/release-downloader@v1.5
-        with:
-          repository: "beer-garden/react-ui"
-          latest: true
-          tarBall: true
-          zipBall: false
-          out-file-path: "src"
 
       - name: Build RPM
         run: make rpm-build VERSION=${{ steps.get_version.outputs.version }}

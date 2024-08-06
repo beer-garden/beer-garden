@@ -7,7 +7,7 @@ from mongoengine import connect
 
 from beer_garden import config
 from beer_garden.db.mongo.models import System
-from beer_garden.systems import create_system, update_system, get_systems
+from beer_garden.systems import create_system, get_systems, update_system
 
 
 @pytest.fixture
@@ -67,7 +67,6 @@ class TestSystem:
         ), "System command should be updated with the new command name"
 
     def test_get_systems(self, system, system2):
-
         systems = get_systems()
 
         assert len(systems) == 2
@@ -84,7 +83,6 @@ class TestSystem:
         assert system_2_found
 
     def test_get_systems_filtered(self, system, system2):
-
         systems = get_systems(filter_latest=True)
 
         assert len(systems) == 1

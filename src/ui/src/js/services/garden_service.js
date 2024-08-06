@@ -49,6 +49,14 @@ export default function gardenService($rootScope, $http) {
     });
   };
 
+  GardenService.syncUsersGarden = function(name) {
+    return $http.patch('api/v1/gardens/' + encodeURIComponent(name), {
+      operation: 'sync_users',
+      path: '',
+      value: '',
+    });
+  };
+
   GardenService.updateStatus = function(name, status) {
     return $http.patch('api/v1/gardens/' + encodeURIComponent(name), {
       operation: status,

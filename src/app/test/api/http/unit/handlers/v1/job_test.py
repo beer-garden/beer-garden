@@ -2,72 +2,65 @@
 import json
 
 import pytest
+from brewtils.models import Role, User
 from brewtils.schema_parser import SchemaParser
 from bson import ObjectId
 from tornado.httpclient import HTTPError, HTTPRequest
 
 from beer_garden.api.http.authentication import issue_token_pair
 from beer_garden.db.mongo.api import MongoParser, from_brewtils
-from beer_garden.db.mongo.models import Garden, Job, Role, RoleAssignment, System, User
+from beer_garden.db.mongo.models import Garden, Job, System
+from beer_garden.role import create_role, delete_role
+from beer_garden.user import create_user, delete_user
 
 
-@pytest.fixture
-def garden():
-    garden = Garden(name="permitted", connection_type="LOCAL").save()
+@pytest.fixture(autouse=True)
+def garden(system_permitted, system_not_permitted):
+    garden = Garden(
+        name="permitted",
+        connection_type="LOCAL",
+        systems=[system_permitted, system_not_permitted],
+    ).save()
 
     yield garden
     garden.delete()
 
 
 @pytest.fixture
-def system_permitted(garden):
-    system = System(name="permitted", version="1.0.0", namespace=garden.name).save()
+def system_permitted():
+    system = System(name="permitted", version="1.0.0", namespace="permitted").save()
 
     yield system
     system.delete()
 
 
 @pytest.fixture
-def system_not_permitted(garden):
-    system = System(name="not_permitted", version="1.0.0", namespace=garden.name).save()
+def system_not_permitted():
+    system = System(name="not_permitted", version="1.0.0", namespace="permitted").save()
 
     yield system
     system.delete()
 
 
 @pytest.fixture
-def job_manager_role():
-    role = Role(
-        name="job_manager",
-        permissions=[
-            "job:create",
-            "job:read",
-            "job:update",
-            "job:delete",
-        ],
-    ).save()
-
-    yield role
-    role.delete()
-
-
-@pytest.fixture
-def user(system_permitted, job_manager_role):
-    role_assignment = RoleAssignment(
-        role=job_manager_role,
-        domain={
-            "scope": "System",
-            "identifiers": {
-                "name": system_permitted.name,
-                "namespace": system_permitted.namespace,
-            },
-        },
+def job_manager_role(system_permitted):
+    role = create_role(
+        Role(
+            name="job_manager",
+            permission="OPERATOR",
+            scope_systems=[system_permitted.name],
+            scope_namespaces=[system_permitted.namespace],
+        )
     )
+    yield role
+    delete_role(role)
 
-    user = User(username="testuser", role_assignments=[role_assignment]).save()
 
+@pytest.fixture
+def user(job_manager_role):
+    user = create_user(User(username="testuser", local_roles=[job_manager_role]))
     yield user
-    user.delete()
+    delete_user(user=user)
 
 
 @pytest.fixture
@@ -434,10 +427,7 @@ class TestJobExecutionAPI:
     @pytest.mark.gen_test
     @pytest.mark.parametrize(
         "job_id",
-        [
-            ObjectId(),
-            "not_real",
-        ],
+        [ObjectId(), "111111111111111111111111"],
     )
     def test_execute_job_not_found(self, http_client, base_url, job_id):
         url = f"{base_url}/api/v1/jobs/{job_id}/execute"

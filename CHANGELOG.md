@@ -7,6 +7,24 @@ TBD
 - Added file trigger jobs to scheduler to monitor directory for file changes. If a watched file change event occurs, it will fire the
 specified request. File trigger can be customized using regex, recursively monitoring sub-directories, or by watching one or more file
 change events (i.e. create, modify, move, or delete).
+- New feature to track the last N heartbeats timestamps for Instances and Gardens. The range to history stored is 
+  controlled by configurations `garden.status_history` and `plugin.status_history`
+- Added Replication Awareness to ensure only one Replicated instance can process the scheduled jobs.
+
+## Overhauled User Authentication Logic
+- Roles allow filtering on combinations of Garden/Namespace/System Name/System Version/Instance/Command
+- User Alias mapping will update the Requester on Child Garden requests based on their alias. Maps requests
+  spawned from Child Garden to the local User account if Alias mapping matches.
+- When User has Alias accounts, Roles that can be applied to that Child Garden will be forwarded as UpstreamRoles. 
+  This is to ensure admin's at the Child Garden can see the permissions utilized to execute Request
+- Updated Permission accesses on UI with new Role schema
+- Updated API Permission access with new Role schema
+- API filters returned data based on User Roles
+- Access Token have custom Access and Refresh timeouts based on Users Max Permission that are controlled in the config
+- Users and Roles can be loaded through configuration files, and are protected models
+- New UI pages for User and Role management
+- Upgraded Brewtils version to [3.27.0](https://github.com/beer-garden/brewtils/releases/tag/3.27.0)
+>>>>>>> 3.27.0_staged
 
 # 3.26.4
 

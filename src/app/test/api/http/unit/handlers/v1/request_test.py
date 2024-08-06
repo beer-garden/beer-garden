@@ -2,6 +2,7 @@
 import json
 
 import pytest
+from brewtils.models import Role, User
 from mongomock.gridfs import enable_gridfs_integration
 from tornado.httpclient import HTTPError, HTTPRequest
 
@@ -10,15 +11,9 @@ import beer_garden.events
 import beer_garden.requests
 import beer_garden.router
 from beer_garden.api.http.authentication import issue_token_pair
-from beer_garden.db.mongo.models import (
-    Garden,
-    RawFile,
-    Request,
-    Role,
-    RoleAssignment,
-    System,
-    User,
-)
+from beer_garden.db.mongo.models import Garden, RawFile, Request, System
+from beer_garden.role import create_role, delete_role
+from beer_garden.user import create_user, delete_user
 
 enable_gridfs_integration()
 
@@ -94,40 +89,46 @@ def db_cleanup():
     Request.drop_collection()
 
 
-@pytest.fixture
-def local_garden():
-    garden = Garden(name="somegarden", connection_type="LOCAL").save()
-
-    yield garden
-    garden.delete()
-
-
-@pytest.fixture
-def remote_garden():
-    garden = Garden(name="remotegarden", connection_type="HTTP").save()
-
-    yield garden
-    garden.delete()
-
-
-@pytest.fixture
-def local_system(local_garden):
-    system = System(
-        name="somesystem", version="1.0.0", namespace=local_garden.name
-    ).save()
+@pytest.fixture(autouse=True)
+def local_system():
+    system = System(name="somesystem", version="1.0.0", namespace="somegarden").save()
 
     yield system
     system.delete()
 
 
-@pytest.fixture
-def remote_system(remote_garden):
-    system = System(
-        name="somesystem", version="1.0.0", namespace=remote_garden.name
-    ).save()
+@pytest.fixture(autouse=True)
+def remote_system():
+    system = System(name="somesystem", version="1.0.0", namespace="remotegarden").save()
 
     yield system
     system.delete()
+
+
+@pytest.fixture(autouse=True)
+def remote_garden(remote_system):
+    garden = Garden(
+        name="remotegarden",
+        connection_type="HTTP",
+        has_parent=True,
+        systems=[remote_system],
+    ).save()
+
+    yield garden
+    garden.delete()
+
+
+@pytest.fixture(autouse=True)
+def local_garden(local_system, remote_garden):
+    garden = Garden(
+        name="somegarden",
+        connection_type="LOCAL",
+        children=[remote_garden],
+        systems=[local_system],
+    ).save()
+
+    yield garden
+    garden.delete()
 
 
 @pytest.fixture(autouse=True)
@@ -204,38 +205,24 @@ def request_with_gridfs_output(monkeypatch, local_system):
 
 
 @pytest.fixture
-def operator_role():
-    role = Role(
-        name="operator",
-        permissions=[
-            "request:create",
-            "request:read",
-            "request:update",
-            "request:delete",
-        ],
-    ).save()
-
+def operator_role(request_permitted):
+    role = create_role(
+        Role(
+            name="operator",
+            permission="OPERATOR",
+            scope_systems=[request_permitted.system],
+            scope_namespaces=[request_permitted.namespace],
+        )
+    )
     yield role
-    role.delete()
+    delete_role(role)
 
 
 @pytest.fixture
-def user(request_permitted, operator_role):
-    role_assignment = RoleAssignment(
-        role=operator_role,
-        domain={
-            "scope": "System",
-            "identifiers": {
-                "name": request_permitted.system,
-                "namespace": request_permitted.namespace,
-            },
-        },
-    )
-
-    user = User(username="testuser", role_assignments=[role_assignment]).save()
-
+def user(operator_role):
+    user = create_user(User(username="testuser", local_roles=[operator_role]))
     yield user
-    user.delete()
+    delete_user(user=user)
 
 
 @pytest.fixture

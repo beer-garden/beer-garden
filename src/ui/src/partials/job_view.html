@@ -7,7 +7,7 @@
 </h1>
 <span
   ng-if="responseState(response) === 'success'"
-  ng-show="hasJobPermission(user, 'job:update', data)"
+  ng-show="hasJobPermission('OPERATOR', data)"
 >
   <button
     type="button"
