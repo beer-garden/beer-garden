@@ -314,7 +314,7 @@ jobs:
         working-directory: ./docker/docker-compose
 
       - name: Shutdown Docker Containers
-        run: docker-compose stop
+        run: docker compose stop
         working-directory: ./docker/docker-compose
 
   Grandchild-Testing:
@@ -426,17 +426,17 @@ jobs:
 
       - name: Grab logs from Child
         if: always()
-        run: docker-compose logs --tail 3000 beer-garden-child
+        run: docker compose logs --tail 3000 beer-garden-child
         working-directory: ./docker/docker-compose
 
       - name: Grab logs from Parent
         if: always()
-        run: docker-compose logs --tail 3000 beer-garden-parent
+        run: docker compose logs --tail 3000 beer-garden-parent
         working-directory: ./docker/docker-compose
 
       - name: Grab logs from Grand Parent
         if: always()
-        run: docker-compose logs --tail 3000 beer-garden-grandparent
+        run: docker compose logs --tail 3000 beer-garden-grandparent
         working-directory: ./docker/docker-compose
 
 
@@ -682,13 +682,13 @@ jobs:
       - name: Grab logs from Beer-Garden-Parent
         if: always()
         continue-on-error: true
-        run: docker-compose logs --tail 3000 beer-garden-parent
+        run: docker compose logs --tail 3000 beer-garden-parent
         working-directory: ./docker/docker-compose
 
       - name: Grab logs from Beer-Garden-Child
         if: always()
         continue-on-error: true
-        run: docker-compose logs --tail 3000 beer-garden-child
+        run: docker compose logs --tail 3000 beer-garden-child
         working-directory: ./docker/docker-compose
       
 
