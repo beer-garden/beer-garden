@@ -265,7 +265,7 @@ jobs:
         run: ls ./docker/docker-compose/data/localplugins
 
       - name: Run Docker Mongodb and RabbitMQ
-        run: docker-compose up -d mongodb rabbitmq
+        run: docker compose up -d mongodb rabbitmq
         working-directory: ./docker/docker-compose
 
       - name: Wait for Mongodb and RabbitMQ to start
@@ -273,7 +273,7 @@ jobs:
         shell: bash
 
       - name: Run Docker Beer Garden
-        run: BG='unstable' docker-compose up -d beer-garden
+        run: BG='unstable' docker compose up -d beer-garden
         working-directory: ./docker/docker-compose
 
       - name: Wait for Beer Garden to start
@@ -281,7 +281,7 @@ jobs:
         shell: bash
 
       - name: Grab logs from Beer-Garden
-        run: BG='unstable' docker-compose logs --tail 100 beer-garden
+        run: BG='unstable' docker compose logs --tail 100 beer-garden
         working-directory: ./docker/docker-compose
 
       - name: Check If Beer Garden is Operational
@@ -294,7 +294,7 @@ jobs:
           command: curl http://localhost:2337/config
 
       - name: Grab logs from Beer-Garden
-        run: BG='unstable' docker-compose logs --tail 100 beer-garden
+        run: BG='unstable' docker compose logs --tail 100 beer-garden
         working-directory: ./docker/docker-compose
 
       - name: Install Develop Version of Brewtils
@@ -310,11 +310,11 @@ jobs:
 
       - name: Grab logs from Beer-Garden
         if: always()
-        run: BG='unstable' docker-compose logs --tail 1000 beer-garden
+        run: BG='unstable' docker compose logs --tail 1000 beer-garden
         working-directory: ./docker/docker-compose
 
       - name: Shutdown Docker Containers
-        run: docker-compose stop
+        run: docker compose stop
         working-directory: ./docker/docker-compose
 
   Grandchild-Testing:
@@ -387,7 +387,7 @@ jobs:
         run: ls ./docker/docker-compose/data/localplugins
 
       - name: Run Docker Beer Garden Child
-        run: docker-compose up -d beer-garden-child
+        run: docker compose up -d beer-garden-child
         working-directory: ./docker/docker-compose
 
       - name: Wait for Beer Garden Grandparent to start
@@ -395,7 +395,7 @@ jobs:
         shell: bash
 
       - name: Run Docker Beer Garden Parent
-        run: docker-compose up -d beer-garden-parent
+        run: docker compose up -d beer-garden-parent
         working-directory: ./docker/docker-compose
 
       - name: Wait for Beer Garden Parent to start
@@ -403,7 +403,7 @@ jobs:
         shell: bash
 
       - name: Run Docker Beer Garden Grandparent
-        run: docker-compose up -d beer-garden-grandparent
+        run: docker compose up -d beer-garden-grandparent
         working-directory: ./docker/docker-compose
 
       - name: Check Docker
@@ -426,17 +426,17 @@ jobs:
 
       - name: Grab logs from Child
         if: always()
-        run: docker-compose logs --tail 3000 beer-garden-child
+        run: docker compose logs --tail 3000 beer-garden-child
         working-directory: ./docker/docker-compose
 
       - name: Grab logs from Parent
         if: always()
-        run: docker-compose logs --tail 3000 beer-garden-parent
+        run: docker compose logs --tail 3000 beer-garden-parent
         working-directory: ./docker/docker-compose
 
       - name: Grab logs from Grand Parent
         if: always()
-        run: docker-compose logs --tail 3000 beer-garden-grandparent
+        run: docker compose logs --tail 3000 beer-garden-grandparent
         working-directory: ./docker/docker-compose
 
 
@@ -658,7 +658,7 @@ jobs:
         run: docker network create -d overlay --attachable bg-network
 
       - name: Run Docker Beer Garden Child
-        run: docker-compose up -d beer-garden-child
+        run: docker compose up -d beer-garden-child
         working-directory: ./docker/docker-compose
 
       - name: Wait for Beer Garden Child to start
@@ -666,7 +666,7 @@ jobs:
         shell: bash
 
       - name: Run Docker Beer Garden Parent
-        run: docker-compose up -d beer-garden-parent
+        run: docker compose up -d beer-garden-parent
         working-directory: ./docker/docker-compose
 
       - name: Wait for Beer Garden to start
@@ -682,13 +682,13 @@ jobs:
       - name: Grab logs from Beer-Garden-Parent
         if: always()
         continue-on-error: true
-        run: docker-compose logs --tail 3000 beer-garden-parent
+        run: docker compose logs --tail 3000 beer-garden-parent
         working-directory: ./docker/docker-compose
 
       - name: Grab logs from Beer-Garden-Child
         if: always()
         continue-on-error: true
-        run: docker-compose logs --tail 3000 beer-garden-child
+        run: docker compose logs --tail 3000 beer-garden-child
         working-directory: ./docker/docker-compose
       
 
@@ -724,13 +724,13 @@ jobs:
       - if: steps.cache-mongo.outputs.cache-hit != 'true'
         name: Pre-load database
         continue-on-error: false
-        run: docker-compose up jmeter-loader
+        run: docker compose up jmeter-loader
         working-directory: ./docker/docker-compose
 
       - name: Run Jmeter Test
         id: jmeter
         run: |
-          docker-compose up jmeter-testing | tee jmeter.log
+          docker compose up jmeter-testing | tee jmeter.log
           echo "jmeter-rates=$(cat jmeter.log | grep 'summary' | tail -1 | cut -d '|' -f 2- | sed 's/^.*summary/summary/')\n" >> $GITHUB_OUTPUT         
         working-directory: ./docker/docker-compose
 
