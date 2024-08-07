@@ -4,6 +4,7 @@
 
 TBD
 
+- Added additional matching for topic subscriptions to include full string, empty, None, and regular expressions.
 - New feature to track the last N heartbeats timestamps for Instances and Gardens. The range to history stored is 
   controlled by configurations `garden.status_history` and `plugin.status_history`
 - Added Replication Awareness to ensure only one Replicated instance can process the scheduled jobs.
