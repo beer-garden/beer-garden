@@ -93,11 +93,11 @@ def topics():
             name="topic.*",
             subscribers=[
                 Subscriber(
-                    garden="localgarden",
-                    namespace="localgarden",
-                    system="localsystem",
-                    version="1.2.3",
-                    instance="default",
+                    garden=".*",
+                    namespace=None,
+                    system="",
+                    version="1.2.\\d+",
+                    instance="def.*",
                     command="command_any_topic",
                     subscriber_type="DYNAMIC",
                 )
