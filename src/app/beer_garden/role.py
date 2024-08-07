@@ -1,206 +1,197 @@
 import logging
-from typing import List
+import os
 
-from brewtils.models import Event as BrewtilsEvent
-from marshmallow import Schema, fields
+import yaml
+from brewtils.models import Event, Events, Permissions, Role
 from mongoengine import DoesNotExist
+from mongoengine.errors import FieldDoesNotExist
 
+import beer_garden.db.api as db
 from beer_garden import config
-from beer_garden.db.mongo.models import Garden, RemoteRole, Role, User
+from beer_garden.events import publish_event
 
 logger = logging.getLogger(__name__)
 
 
-class RoleSyncSchema(Schema):
-    """Role syncing input schema"""
-
-    name = fields.Str(required=True)
-    description = fields.Str(allow_none=True, missing=None)
-    permissions = fields.List(fields.Str(), required=True)
-
-
-def remove_role(role: Role):
-    """Remove a Role. This will also remove any references to the Role, such as those
-    in User role assignments.
+def create_role(role: Role) -> Role:
+    """Create provided Role
 
     Args:
-        role: The Role document object.
+        role (Role): Role to create
 
     Returns:
-        None
+        Role: Created Role
     """
-    remove_role_assignments_for_role(role)
-    role.delete()
+    return db.create(role)
 
 
-def remove_role_assignments_for_role(role: Role) -> int:
-    """Remove all User role assignments for the provided Role.
+def get_role(role_name: str = None, role_id: str = None) -> Role:
+    """Get Role from database
 
     Args:
-        role: The Role document object
+        role_name (str, optional):  Role Name of Role to retrieve. Defaults to None.
+        role_id (str, optional): Role Name of Role to retrieve. Defaults to None.
 
     Returns:
-        int: The number of role assignments removed
+        Role: Requested Role
     """
-    # Avoid circular import
-    from beer_garden.user import update_user
+    if role_name:
+        return db.query_unique(Role, name=role_name, raise_missing=True)
 
-    impacted_users = User.objects.filter(role_assignments__match={"role": role})
-    total_removed_count = 0
-
-    for user in impacted_users:
-        prev_role_assignment_count = len(user.role_assignments)
-
-        role_assignments = list(
-            filter(lambda ra: ra.role != role, user.role_assignments)
-        )
-        update_user(user, role_assignments=role_assignments)
-
-        total_removed_count += prev_role_assignment_count - len(user.role_assignments)
-
-    return total_removed_count
+    return db.query_unique(Role, id=role_id, raise_missing=True)
 
 
-def sync_roles(role_sync_data: list):
-    """Syncs the Roles in the database with a provided role list.
+def get_roles():
+    """Get all roles
+
+    Returns:
+        List[Role]: List of roles from database
+    """
+    return db.query(Role)
+
+
+@publish_event(Events.ROLE_UPDATED)
+def update_role(
+    role: Role = None, role_name: str = None, role_id: str = None, **kwargs
+) -> Role:
+    """Updates provided Role
 
     Args:
-        role_sync_data: A list of dictionaries containing role data. See RoleSyncSchema
-            for the expected format.
+        role (Role, optional): Role to update. Defaults to None.
+        role_name (str, optional): Role Name of Role to update. Defaults to None.
+        role_id (str, optional): Role ID of Role to update. Defaults to None.
 
     Returns:
-        None
+        Role: Updated Role
     """
-    roles = RoleSyncSchema(strict=True).load(role_sync_data, many=True).data
+    if not role:
+        if role_name:
+            role = db.query_unique(Role, name=role_name, raise_missing=True)
+        else:
+            role = db.query_unique(Role, id=role_id, raise_missing=True)
 
-    _delete_roles_not_in_list(roles)
+    for key, value in kwargs.items():
+        setattr(role, key, value)
 
-    for role in roles:
-        try:
-            role_obj = Role.objects.get(name=role["name"])
-
-            if role_obj.protected:
-                logger.info(
-                    "Role sync request for protected role %s will be ignored.",
-                    role_obj.name,
-                )
-                continue
-
-            role_obj.description = role["description"]
-            role_obj.permissions = role["permissions"]
-        except DoesNotExist:
-            role_obj = Role(**role)
-
-        role_obj.save()
+    return db.update(role)
 
 
-def _delete_roles_not_in_list(roles: list) -> int:
-    """Delete all Roles in the database not represented in the provided list by name.
+@publish_event(Events.ROLE_DELETED)
+def delete_role(role: Role = None, role_name: str = None, role_id: str = None) -> Role:
+    """Delete provided role
 
     Args:
-       roles: A list of dictionaries containing role data. Any role not present
-         in the list will be deleted.
+        role (Role, optional): Role to delete. Defaults to None.
+        role_name (str, optional): Role Name of Role to delete. Defaults to None.
+        role_id (str, optional): Role Id of Role to delete. Defaults to None.
 
     Returns:
-        int: The number of roles deleted
+        Role: Deleted Role
     """
-    role_names = [role["name"] for role in roles]
+    if not role:
+        if role_name:
+            role = db.query_unique(Role, name=role_name, raise_missing=True)
+        else:
+            role = db.query_unique(Role, id=role_id, raise_missing=True)
 
-    roles_to_remove = Role.objects.filter(name__nin=role_names, protected__ne=True)
+    db.delete(role)
 
-    for role in roles_to_remove:
-        remove_role(role)
-
-    return len(roles_to_remove)
-
-
-def _role_synced_with_garden(role: Role, garden: Garden) -> bool:
-    """Checks if the supplied role is currently synced to the supplied garden, based
-    on the corresponding RemoteRole entry. A role is considered synced if there is a
-    RemoteRole entry for the specified garden and the permissions and description of
-    that entry match those of the Role.
-
-    Args:
-        role: The role for which we are checking the sync status
-        garden: The remote garden to check the status against
-
-    Returns:
-        bool: True if the role is currently synced. False otherwise.
-    """
-    try:
-        remote_role = RemoteRole.objects.get(name=role.name, garden=garden.name)
-    except RemoteRole.DoesNotExist:
-        return False
-
-    return (set(role.permissions) == set(remote_role.permissions)) and (
-        role.description == remote_role.description
-    )
+    return role
 
 
-def role_sync_status(roles: List[Role]) -> dict:
-    """Provides the sync status of the provided Role with each remote garden. The
-    resulting dict formatting is:
+def load_roles_config():
+    """Load local role definition file, if configured and exists"""
+    if config.get("auth.role_definition_file"):
+        if os.path.isfile(config.get("auth.role_definition_file")):
+            with open(config.get("auth.role_definition_file"), "r") as config_file:
+                return yaml.safe_load(config_file)
+        else:
+            logger.error(
+                f"Unable to load Roles file: {config.get('auth.role_definition_file')}"
+            )
+    return []
 
-    {
-        "role_name": {
-            "remote_garden_name": bool,
-            "remote_garden_name": bool,
+
+def rescan():
+    """Rescan the roles configuration file"""
+    roles_config = load_roles_config()
+    for role in roles_config:
+        kwargs = {
+            "name": role.get("name"),
+            "permission": role.get("permission"),
+            "description": role.get("description"),
+            "scope_gardens": role.get("scope_gardens"),
+            "scope_namespaces": role.get("scope_namespaces"),
+            "scope_systems": role.get("scope_systems"),
+            "scope_instances": role.get("scope_instances"),
+            "scope_versions": role.get("scope_versions"),
+            "scope_commands": role.get("scope_commands"),
+            "file_generated": True,
+            "protected": role.get("protected", False),
         }
-    }
-
-    Args:
-        roles: The roles for which we are checking the sync status
-
-    Returns:
-        dict: Sync status by role name and garden name
-    """
-    sync_status = {}
-
-    for garden in Garden.objects.filter(connection_type__nin=["LOCAL"]):
-        for role in roles:
-            if role.name not in sync_status:
-                sync_status[role.name] = {}
-
-            sync_status[role.name][garden.name] = _role_synced_with_garden(role, garden)
-
-    return sync_status
+        role = Role(**kwargs)
+        try:
+            existing = get_role(role.name)
+            if existing:
+                update_role(existing, **kwargs)
+        except DoesNotExist:
+            create_role(role)
 
 
-def handle_event(event: BrewtilsEvent) -> None:
+def ensure_roles():
+    """Create roles if necessary"""
+
+    try:
+        get_roles()
+    except FieldDoesNotExist:
+        logger.error("Legacy Role Models found, clearing collections")
+        import beer_garden.db.mongo.models
+
+        beer_garden.db.mongo.models.Role.drop_collection()
+
+    configure_superuser_role()
+    configure_plugin_role()
+    rescan()
+
+
+def configure_superuser_role():
+    """Creates or updates the superuser role as needed"""
+    try:
+        superuser = get_role(role_name="superuser")
+    except DoesNotExist:
+        logger.info("Creating superuser role with all permissions")
+        superuser = Role(
+            name="superuser",
+            description="Role containing max permissions",
+            permission=Permissions.GARDEN_ADMIN.name,
+            protected=True,
+        )
+        create_role(superuser)
+
+
+def configure_plugin_role():
+    """Creates or updates the plugin role as needed"""
+    try:
+        plugin_role = get_role(role_name="plugin")
+    except DoesNotExist:
+        logger.info("Creating plugin role with select permissions")
+        plugin_role = Role(
+            name="plugin",
+            description="Role containing plugin permissions",
+            permission="PLUGIN_ADMIN",
+            protected=True,
+        )
+        create_role(plugin_role)
+
+
+def handle_event(event: Event) -> None:
     """Processes the provided event by calling the correct handler function(s) for the
     given event type.
 
     Args:
-        event: The BrewtilsEvent to process
+        event: The Event to process
 
     Returns:
         None
     """
-    # Only handle events from downstream gardens
-    if event.garden == config.get("garden.name"):
-        return
-
-    if event.name == "ROLE_UPDATED":
-        _handle_role_updated_event(event)
-
-
-def _handle_role_updated_event(event: BrewtilsEvent) -> None:
-    """Handling for ROLE_UPDATED events"""
-    # NOTE: This event stores its data in the metadata field as a workaround to the
-    # brewtils models dependency inherent in the more typical event publishing flow
-    try:
-        garden = event.metadata["garden"]
-        updated_role = event.metadata["role"]
-        name = updated_role["name"]
-
-        try:
-            remote_role = RemoteRole.objects.get(garden=garden, name=name)
-        except RemoteRole.DoesNotExist:
-            remote_role = RemoteRole(garden=garden, name=name)
-
-        remote_role.permissions = updated_role.get("permissions")
-        remote_role.description = updated_role.get("description")
-        remote_role.updated_at = event.timestamp
-        remote_role.save()
-    except KeyError:
-        logger.error("Error parsing %s event from garden %s", event.name, event.garden)
+    return

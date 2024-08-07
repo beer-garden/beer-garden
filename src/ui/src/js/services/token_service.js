@@ -37,6 +37,9 @@ export default function tokenService($http, localStorageService, EventService) {
       localStorageService.remove('token');
       $http.defaults.headers.common.Authorization = undefined;
     },
+    revokeUserToken: (userName) => {
+      return $http.delete('api/v1/tokens/' + userName);
+    },
     getRefresh: () => {
       return localStorageService.get('refresh');
     },

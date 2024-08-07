@@ -217,11 +217,6 @@ export default function routeConfig(
         templateUrl: 'admin_user_index.html',
         controller: 'AdminUserIndexController',
       })
-      .state('base.user_view', {
-        url: 'admin/users/:username/',
-        templateUrl: 'admin_user_view.html',
-        controller: 'AdminUserViewController',
-      })
       .state('base.role_admin', {
         url: 'admin/roles/',
         templateUrl: 'admin_role.html',

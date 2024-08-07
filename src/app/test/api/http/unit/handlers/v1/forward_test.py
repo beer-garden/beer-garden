@@ -2,10 +2,13 @@
 import json
 
 import pytest
+from brewtils.models import Role, User
 from tornado.httpclient import HTTPError, HTTPRequest
 
 from beer_garden.api.http.authentication import issue_token_pair
-from beer_garden.db.mongo.models import Garden, Role, RoleAssignment, User
+from beer_garden.db.mongo.models import Garden
+from beer_garden.role import create_role, delete_role
+from beer_garden.user import create_user, delete_user
 
 
 @pytest.fixture(autouse=True)
@@ -23,36 +26,23 @@ def operation_data():
 
 @pytest.fixture
 def event_forward_role():
-    role = Role(
-        name="event_forward",
-        permissions=["event:forward"],
-    ).save()
-
+    role = create_role(Role(name="event_forward", permission="GARDEN_ADMIN"))
     yield role
-    role.delete()
+    delete_role(role)
 
 
 @pytest.fixture
 def user_with_permission(event_forward_role):
-    role_assignment = RoleAssignment(
-        role=event_forward_role,
-        domain={
-            "scope": "Global",
-        },
-    )
-
-    user = User(username="testuser", role_assignments=[role_assignment]).save()
-
+    user = create_user(User(username="testuser", local_roles=[event_forward_role]))
     yield user
-    user.delete()
+    delete_user(user=user)
 
 
 @pytest.fixture
-def user_without_permission(event_forward_role):
-    user = User(username="testuser").save()
-
+def user_without_permission():
+    user = create_user(User(username="testuser"))
     yield user
-    user.delete()
+    delete_user(user=user)
 
 
 @pytest.fixture

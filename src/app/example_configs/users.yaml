@@ -1,0 +1,15 @@
+- username: "user1"
+  roles:
+    - "operator"
+
+- username: "user2"
+  roles:
+    - "garden_admin"
+
+- username: "user3"
+  roles:
+    - "read_only"
+
+- username: "user4"
+  roles:
+    - "plugin_admin"
