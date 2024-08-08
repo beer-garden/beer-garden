@@ -71,7 +71,6 @@ class RequestValidator(object):
             cls._instance = cls(config.get("request_validation"))
         return cls._instance
 
-    @elasticapm.capture_span()
     def validate_request(self, request):
         """Validation to be called before you save a request from a user
 
@@ -87,7 +86,6 @@ class RequestValidator(object):
 
         return request
 
-    @elasticapm.capture_span()
     def validate_parent_status(self, request):
         """Ensure that a Request's parent request hasn't already completed.
 
@@ -97,7 +95,6 @@ class RequestValidator(object):
         if request.parent and request.parent.status in Request.COMPLETED_STATUSES:
             raise ConflictError("Parent request has already completed")
 
-    @elasticapm.capture_span()
     def get_and_validate_system(self, request):
         """Ensure there is a system in the DB that corresponds to this Request.
 
@@ -128,7 +125,6 @@ class RequestValidator(object):
         )
         return system
 
-    @elasticapm.capture_span()
     def get_and_validate_command_for_system(self, request, system=None):
         """Ensure the System has a command with a name that matches this request.
 
@@ -181,7 +177,6 @@ class RequestValidator(object):
             % (request.command, system.name, command_names)
         )
 
-    @elasticapm.capture_span()
     def get_and_validate_parameters(
         self, request, command=None, command_parameters=None, request_parameters=None
     ):
@@ -241,7 +236,6 @@ class RequestValidator(object):
         self.logger.debug("Parameters: %s", parameters_to_save)
         return parameters_to_save
 
-    @elasticapm.capture_span()
     def _validate_value_in_choices(self, request, value, command_parameter):
         """Validate that the value(s) are valid according to the choice constraints"""
         if (
@@ -382,7 +376,6 @@ class RequestValidator(object):
                         % (value, command_parameter.key, allowed_values)
                     )
 
-    @elasticapm.capture_span()
     def _validate_maximum(self, value, command_parameter):
         """Validate that the value(s) are below the specified maximum"""
         if value is not None and not command_parameter.optional:
@@ -406,7 +399,6 @@ class RequestValidator(object):
                             % (value, command_parameter.maximum, command_parameter.key)
                         )
 
-    @elasticapm.capture_span()
     def _validate_minimum(self, value, command_parameter):
         """Validate that the value(s) are above the specified minimum"""
         if value is not None and not command_parameter.optional:
@@ -430,7 +422,6 @@ class RequestValidator(object):
                             % (value, command_parameter.minimum, command_parameter.key)
                         )
 
-    @elasticapm.capture_span()
     def _validate_regex(self, value, command_parameter):
         """Validate that the value matches the regex"""
         if value is not None and not command_parameter.optional:
@@ -441,7 +432,6 @@ class RequestValidator(object):
                         % (value, command_parameter.regex)
                     )
 
-    @elasticapm.capture_span()
     def _extract_parameter_value_from_request(
         self, request, command_parameter, request_parameters, command
     ):
@@ -476,7 +466,6 @@ class RequestValidator(object):
 
         return value_to_return
 
-    @elasticapm.capture_span()
     def _validate_required_parameter_is_included_in_request(
         self, request, command_parameter, request_parameters
     ):
@@ -495,7 +484,6 @@ class RequestValidator(object):
                     % (command_parameter.key, request.parameters)
                 )
 
-    @elasticapm.capture_span()
     def _validate_no_extra_request_parameter_keys(
         self, request_parameters, command_parameters
     ):
@@ -512,7 +500,6 @@ class RequestValidator(object):
                     % (key, valid_keys)
                 )
 
-    @elasticapm.capture_span()
     def _validate_parameter_based_on_type(self, value, parameter, command, request):
         """Validates the value passed in, ensures the type matches.
         Recursive calls for dictionaries which also have nested parameters"""
@@ -571,7 +558,6 @@ class RequestValidator(object):
             )
 
 
-@elasticapm.capture_span()
 def get_request(request_id: str = None, request: Request = None) -> Request:
     """Retrieve an individual Request
 
@@ -589,7 +575,6 @@ def get_request(request_id: str = None, request: Request = None) -> Request:
     return request
 
 
-@elasticapm.capture_span()
 def get_requests(**kwargs) -> List[Request]:
     """Search for Requests
 
@@ -603,7 +588,6 @@ def get_requests(**kwargs) -> List[Request]:
     return db.query(Request, **kwargs)
 
 
-@elasticapm.capture_span()
 def determine_latest_system_version(request: Request):
     if request.system_version and request.system_version.lower() != "latest":
         return request
@@ -654,7 +638,6 @@ def delete_requests(**kwargs) -> dict:
     return kwargs
 
 
-@elasticapm.capture_span()
 def _publish_request(request: Request, is_admin: bool, priority: int):
     """Publish a Request"""
     queue.put(
@@ -667,13 +650,11 @@ def _publish_request(request: Request, is_admin: bool, priority: int):
     )
 
 
-@elasticapm.capture_span()
 def _validate_request(request: Request):
     """Validates a Request"""
     return RequestValidator.instance().validate_request(request)
 
 
-@elasticapm.capture_span()
 def process_request(
     new_request: Union[Request, RequestTemplate],
     wait_event: Union[Future, threading.Event] = None,
