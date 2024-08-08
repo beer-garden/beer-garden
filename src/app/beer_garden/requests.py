@@ -18,7 +18,6 @@ from builtins import str
 from copy import deepcopy
 from typing import Dict, List, Sequence, Union
 
-import elasticapm
 import six
 import urllib3
 from brewtils.choices import parse

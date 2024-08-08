@@ -16,7 +16,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List
 
-import elasticapm
 from brewtils.errors import PluginError
 from brewtils.models import Connection, Event, Events, Garden, Operation, System
 from mongoengine import DoesNotExist
