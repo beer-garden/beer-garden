@@ -265,14 +265,3 @@ def _update_request_has_parent_model():
     raw_collection.update_many(
         {"parent": {"$not": {"$eq": None}}}, {"$set": {"has_parent": True}}
     )
-
-
-def _create_role(role):
-    """Create a role if it doesn't already exist"""
-    from .models import LegacyRole
-
-    try:
-        LegacyRole.objects.get(name=role.name)
-    except DoesNotExist:
-        logger.warning("Role %s missing, about to create" % role.name)
-        role.save()
