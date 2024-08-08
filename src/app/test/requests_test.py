@@ -1132,7 +1132,7 @@ class TestLatestRequest(object):
         yield create_system(
             System(
                 name="original",
-                version="1.0.0",
+                version="1.0.0dev",
                 namespace="beer_garden",
                 commands=[Command(name="original")],
             )

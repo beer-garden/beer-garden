@@ -4,6 +4,7 @@
 
 TBD
 
+- Fixed Request system version to return actual system version instead of parsed version when using latest.
 - New feature to track the last N heartbeats timestamps for Instances and Gardens. The range to history stored is 
   controlled by configurations `garden.status_history` and `plugin.status_history`
 - Added Replication Awareness to ensure only one Replicated instance can process the scheduled jobs.
