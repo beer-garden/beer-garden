@@ -49,7 +49,9 @@ def get_topic(topic_id: str = None, topic_name: str = None) -> Topic:
 
 
 @publish_event(Events.TOPIC_REMOVED)
-def remove_topic(topic_id: str = None, topic: Topic = None) -> Topic:
+def remove_topic(
+    topic_id: str = None, topic_name: str = None, topic: Topic = None
+) -> Topic:
     """Remove a topic
 
     Args:
@@ -60,7 +62,7 @@ def remove_topic(topic_id: str = None, topic: Topic = None) -> Topic:
         The removed Topic
 
     """
-    topic = topic or db.query_unique(Topic, id=topic_id)
+    topic = topic or get_topic(topic_id=topic_id, topic_name=topic_name)
 
     db.delete(topic)
 
@@ -80,7 +82,9 @@ def get_all_topics(**kwargs) -> List[Topic]:
     return db.query(Topic, **kwargs)
 
 
-def topic_add_subscriber(subscriber: Subscriber, topic_id: str) -> Topic:
+def topic_add_subscriber(
+    subscriber: Subscriber, topic_id: str = None, topic_name: str = None
+) -> Topic:
     """Add a Subscriber to a Topic
 
     Args:
@@ -92,11 +96,14 @@ def topic_add_subscriber(subscriber: Subscriber, topic_id: str) -> Topic:
 
     """
     try:
-        topic = get_topic(topic_id)
+        topic = get_topic(topic_id=topic_id, topic_name=topic_name)
     except DoesNotExist:
-        raise PluginError(
-            f"Topic '{topic_id}' does not exist, unable to map '{str(subscriber)}"
-        )
+        if topic_name:
+            topic = create_topic(Topic(name=topic_name))
+        else:
+            raise PluginError(
+                f"Topic '{topic_id}' does not exist, unable to map '{str(subscriber)}"
+            )
 
     if subscriber not in topic.subscribers:
         topic.subscribers.append(subscriber)
@@ -104,7 +111,9 @@ def topic_add_subscriber(subscriber: Subscriber, topic_id: str) -> Topic:
     return update_topic(topic)
 
 
-def topic_remove_subscriber(subscriber: Subscriber, topic_id: str) -> Topic:
+def topic_remove_subscriber(
+    subscriber: Subscriber, topic_id: str = None, topic_name: str = None
+) -> Topic:
     """Remove a Subscriber from a Topic
 
     Args:
@@ -115,7 +124,7 @@ def topic_remove_subscriber(subscriber: Subscriber, topic_id: str) -> Topic:
         The updated Topic
     """
     try:
-        topic = get_topic(topic_id)
+        topic = get_topic(topic_id=topic_id, topic_name=topic_name)
     except DoesNotExist:
         raise PluginError(
             f"Topic '{topic_id}' does not exist, unable to map '{str(subscriber)}"
@@ -257,6 +266,22 @@ def create_garden_topics(garden: Garden):
 
     for child in garden.children:
         create_garden_topics(child)
+
+
+def increase_publish_count(topic: Topic):
+    return db.modify(topic, inc__publisher_count=1)
+
+
+def increase_consumer_count(topic: Topic, subscriber: Subscriber):
+    db_topic = get_topic(topic_id=topic.id)
+
+    for db_subscriber in db_topic.subscribers:
+        if db_subscriber == subscriber:
+            db_subscriber.consumer_count += 1
+            break
+
+    updated = db.update(db_topic)
+    return updated
 
 
 def handle_event(event: Event) -> None:

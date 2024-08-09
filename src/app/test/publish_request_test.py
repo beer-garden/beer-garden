@@ -13,6 +13,14 @@ from brewtils.models import (
 from mock import Mock
 
 from beer_garden import publish_request
+from beer_garden.db.mongo.models import Topic as DB_Topic
+from beer_garden.topic import create_topic
+
+
+@pytest.fixture(autouse=True)
+def drop():
+    yield
+    DB_Topic.drop_collection()
 
 
 @pytest.fixture
@@ -52,56 +60,62 @@ def localgarden(localgarden_system):
 @pytest.fixture
 def topics():
     return [
-        Topic(
-            name="topic_1",
-            subscribers=[
-                Subscriber(
-                    garden="localgarden",
-                    namespace="localgarden",
-                    system="localsystem",
-                    version="1.2.3",
-                    instance="default",
-                    command="command_one_topic",
-                    subscriber_type="DYNAMIC",
-                ),
-                Subscriber(
-                    garden="localgarden",
-                    namespace="localgarden",
-                    system="localsystem",
-                    version="1.2.3",
-                    instance="default",
-                    command="command_two_topic",
-                    subscriber_type="DYNAMIC",
-                ),
-            ],
+        create_topic(
+            Topic(
+                name="topic_1",
+                subscribers=[
+                    Subscriber(
+                        garden="localgarden",
+                        namespace="localgarden",
+                        system="localsystem",
+                        version="1.2.3",
+                        instance="default",
+                        command="command_one_topic",
+                        subscriber_type="DYNAMIC",
+                    ),
+                    Subscriber(
+                        garden="localgarden",
+                        namespace="localgarden",
+                        system="localsystem",
+                        version="1.2.3",
+                        instance="default",
+                        command="command_two_topic",
+                        subscriber_type="DYNAMIC",
+                    ),
+                ],
+            )
         ),
-        Topic(
-            name="topic_2",
-            subscribers=[
-                Subscriber(
-                    garden="localgarden",
-                    namespace="localgarden",
-                    system="localsystem",
-                    version="1.2.3",
-                    instance="default",
-                    command="command_two_topic",
-                    subscriber_type="DYNAMIC",
-                )
-            ],
+        create_topic(
+            Topic(
+                name="topic_2",
+                subscribers=[
+                    Subscriber(
+                        garden="localgarden",
+                        namespace="localgarden",
+                        system="localsystem",
+                        version="1.2.3",
+                        instance="default",
+                        command="command_two_topic",
+                        subscriber_type="DYNAMIC",
+                    )
+                ],
+            )
         ),
-        Topic(
-            name="topic.*",
-            subscribers=[
-                Subscriber(
-                    garden="localgarden",
-                    namespace="localgarden",
-                    system="localsystem",
-                    version="1.2.3",
-                    instance="default",
-                    command="command_any_topic",
-                    subscriber_type="DYNAMIC",
-                )
-            ],
+        create_topic(
+            Topic(
+                name="topic.*",
+                subscribers=[
+                    Subscriber(
+                        garden="localgarden",
+                        namespace="localgarden",
+                        system="localsystem",
+                        version="1.2.3",
+                        instance="default",
+                        command="command_any_topic",
+                        subscriber_type="DYNAMIC",
+                    )
+                ],
+            )
         ),
     ]
 
