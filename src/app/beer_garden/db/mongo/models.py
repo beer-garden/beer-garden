@@ -620,6 +620,7 @@ class Subscriber(MongoModel, EmbeddedDocument):
     instance = StringField()
     command = StringField()
     subscriber_type = StringField()
+    consumer_count = IntField(default=0)
 
 
 class Topic(MongoModel, Document):
@@ -627,6 +628,7 @@ class Topic(MongoModel, Document):
 
     name = StringField(required=True)
     subscribers = EmbeddedDocumentListField("Subscriber")
+    publisher_count = IntField(default=0)
 
     meta = {
         "auto_create_index": True,  # We need to manage this ourselves

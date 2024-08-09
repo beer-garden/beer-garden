@@ -109,6 +109,7 @@ def _get_published_url_specs(
         (rf"{prefix}api/v1/token/refresh/?", v1.token.TokenRefreshAPI),
         (rf"{prefix}api/v1/topics/?", v1.topic.TopicListAPI),
         (rf"{prefix}api/v1/topics/(\w+)/?", v1.topic.TopicAPI),
+        (rf"{prefix}api/v1/topics/name/(\w+)/?", v1.topic.TopicNameAPI),
         (rf"{prefix}api/v1/whoami/?", v1.user.WhoAmIAPI),
         (rf"{prefix}api/v1/roles/(\w+)/?", v1.role.RoleAPI),
         (rf"{prefix}api/v1/roles/?", v1.role.RoleListAPI),

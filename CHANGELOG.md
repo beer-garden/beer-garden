@@ -7,6 +7,8 @@ TBD
 - Added file trigger jobs to scheduler to monitor directory for file changes. If a watched file change event occurs, it will fire the
 specified request. File trigger can be customized using regex, recursively monitoring sub-directories, or by watching one or more file
 change events (i.e. create, modify, move, or delete).
+- Expanded the Topics API to support `api/v1/topics/name/` for passing `topic.name` as a variable instead of `topic.id`
+- Add counter support for Topics/Subscribers that are triggered to generate requests
 - New feature to track the last N heartbeats timestamps for Instances and Gardens. The range to history stored is 
   controlled by configurations `garden.status_history` and `plugin.status_history`
 - Added Replication Awareness to ensure only one Replicated instance can process the scheduled jobs.
