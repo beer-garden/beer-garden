@@ -122,17 +122,25 @@ def process_publish_event(garden: Garden, event: Event, topics: List[Topic]):
         garden_subscribers = [
             subscriber
             for subscriber in topic.subscribers
-            if subscriber.garden is None or subscriber.garden == garden.name
+            if subscriber.garden is None
+            or len(subscriber.garden) == 0
+            or garden.name in re.findall(subscriber.garden, garden.name)
         ]
         if garden_subscribers:
             for system in garden.systems:
                 system_subscribers = [
                     subscriber
                     for subscriber in garden_subscribers
-                    if (subscriber.system is None or subscriber.system == system.name)
+                    if (
+                        subscriber.system is None
+                        or len(subscriber.system) == 0
+                        or system.name in re.findall(subscriber.system, system.name)
+                    )
                     and (
                         subscriber.version is None
-                        or subscriber.version == system.version
+                        or len(subscriber.version) == 0
+                        or system.version
+                        in re.findall(subscriber.version, system.version)
                     )
                 ]
                 if system_subscribers:
@@ -141,7 +149,9 @@ def process_publish_event(garden: Garden, event: Event, topics: List[Topic]):
                             subscriber
                             for subscriber in system_subscribers
                             if subscriber.command is None
-                            or subscriber.command == command.name
+                            or len(subscriber.command) == 0
+                            or command.name
+                            in re.findall(subscriber.command, command.name)
                         ]
                         if command_subscribers:
                             for instance in system.instances:
@@ -149,8 +159,12 @@ def process_publish_event(garden: Garden, event: Event, topics: List[Topic]):
                                     instance_subscribers = [
                                         subscriber
                                         for subscriber in system_subscribers
-                                        if subscriber.command is None
-                                        or subscriber.command == command.name
+                                        if subscriber.instance is None
+                                        or len(subscriber.instance) == 0
+                                        or instance.name
+                                        in re.findall(
+                                            subscriber.instance, instance.name
+                                        )
                                     ]
                                     if instance_subscribers:
                                         event_request = copy.deepcopy(event.payload)

@@ -193,3 +193,4 @@ ui:
   execute_javascript: false
   icon_default: fa-beer
   name: Beer Garden
+  auto_refresh: false
