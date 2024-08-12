@@ -5,6 +5,9 @@
 TBD
 
 - Added additional matching for topic subscriptions to include full string, empty, None, and regular expressions.
+- Fixed Request system version to return actual system version instead of parsed version when using latest.
+- Expanded the Topics API to support `api/v1/topics/name/` for passing `topic.name` as a variable instead of `topic.id`
+- Add counter support for Topics/Subscribers that are triggered to generate requests
 - New feature to track the last N heartbeats timestamps for Instances and Gardens. The range to history stored is 
   controlled by configurations `garden.status_history` and `plugin.status_history`
 - Added Replication Awareness to ensure only one Replicated instance can process the scheduled jobs.

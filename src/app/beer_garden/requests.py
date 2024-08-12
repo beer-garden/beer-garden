@@ -601,17 +601,21 @@ def determine_latest_system_version(request: Request):
 
     versions = []
     legacy_versions = []
+    system_versions_map = {}
 
     for system in systems:
         try:
             versions.append(versionParse(system.version))
+            system_versions_map[str(versionParse(system.version))] = system.version
         except InvalidVersion:
             legacy_versions.append(system.version)
+            system_versions_map[system.version] = system.version
 
     eligible_versions = versions if versions else legacy_versions
 
     if eligible_versions:
-        request.system_version = str(sorted(eligible_versions, reverse=True)[0])
+        latest_version = sorted(eligible_versions, reverse=True)[0]
+        request.system_version = system_versions_map.get(str(latest_version))
 
     return request
 
