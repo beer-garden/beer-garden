@@ -68,6 +68,7 @@ __all__ = [
     "DateTrigger",
     "CronTrigger",
     "IntervalTrigger",
+    "FileTrigger",
     "Garden",
     "File",
     "FileChunk",
@@ -742,6 +743,18 @@ class CronTrigger(MongoModel, EmbeddedDocument):
     jitter = IntField(required=False)
 
 
+class FileTrigger(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.FileTrigger
+
+    path = StringField(required=True)
+    pattern = StringField(required=False)
+    recursive = BooleanField(default=False)
+    create = BooleanField(default=False)
+    modify = BooleanField(default=False)
+    move = BooleanField(default=False)
+    delete = BooleanField(default=False)
+
+
 class Replication(MongoModel, Document):
     brewtils_model = brewtils.models.Replication
 
@@ -782,6 +795,7 @@ class Job(MongoModel, Document):
         "date": DateTrigger,
         "cron": CronTrigger,
         "interval": IntervalTrigger,
+        "file": FileTrigger,
     }
 
     name = StringField(required=True)

@@ -24,9 +24,36 @@ import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.db.mongo.jobstore import construct_trigger
 from beer_garden.events import publish_event
+from beer_garden.monitor import MonitorDirectory
 from beer_garden.requests import get_request
 
 logger = logging.getLogger(__name__)
+
+observer_threads = dict()
+
+
+class Monitor(object):
+    def __init__(self, job_id, bg_trigger):
+        self.job = get_job(job_id)
+        self.file_monitor = MonitorDirectory(
+            path=bg_trigger.path,
+            pattern=bg_trigger.pattern,
+            recursive=bg_trigger.recursive,
+            create=bg_trigger.create,
+            modify=bg_trigger.modify,
+            move=bg_trigger.move,
+            delete=bg_trigger.delete,
+            job=self.job,
+        )
+        self.start()
+
+    def start(self):
+        """Start monitoring a directory"""
+        self.file_monitor.start()
+
+    def stop(self):
+        """Stop monitoring a directory"""
+        self.file_monitor.stop()
 
 
 class InjectionDict(dict):
@@ -160,6 +187,9 @@ class MixedScheduler(object):
 
         self._sync_scheduler.start()
         self.running = True
+        file_jobs = get_jobs(filter_params={"trigger_type": "file"})
+        for job in file_jobs:
+            observer_threads[job.id] = Monitor(job.id, job.trigger)
 
     def resume(self):
         """Resume the scheduler"""
@@ -216,6 +246,9 @@ class MixedScheduler(object):
             job_id: The job id
             kwargs: Any other scheduler-specific arguments
         """
+        if job_id in observer_threads:
+            observer_threads[job_id].stop()
+            return
         self._sync_scheduler.pause_job(job_id, **kwargs)
 
     def resume_job(self, job_id, **kwargs):
@@ -225,6 +258,9 @@ class MixedScheduler(object):
             job_id: The job id
             kwargs: Any other scheduler-specific arguments
         """
+        if job_id in observer_threads:
+            observer_threads[job_id].start()
+            return
         self._sync_scheduler.resume_job(job_id, **kwargs)
 
     def remove_job(self, job_id, **kwargs):
@@ -234,6 +270,9 @@ class MixedScheduler(object):
             job_id: The job id to lookup
             kwargs: Any other scheduler-specific arguments
         """
+        if job_id in observer_threads:
+            remove_job(job_id)
+            return
         self._sync_scheduler.remove_job(job_id, **kwargs)
 
     def execute_job(self, job_id, reset_interval=False, **kwargs):
@@ -244,6 +283,9 @@ class MixedScheduler(object):
             reset_interval: Whether to set the job's interval begin time to now
         """
         job = db.query_unique(Job, id=job_id)
+        src_path = kwargs.get("src_path", False)
+        if src_path:
+            job.request_template.metadata["src_path"] = src_path
         self.add_job(
             run_job,
             trigger=DateTrigger(datetime.utcnow(), timezone="UTC"),
@@ -288,11 +330,25 @@ class MixedScheduler(object):
             logger.exception("Scheduler called with None-type trigger.")
             return
 
-        self._sync_scheduler.add_job(
-            func,
-            trigger=construct_trigger(kwargs.pop("trigger_type"), trigger),
-            **kwargs,
-        )
+        trigger_type = kwargs.pop("trigger_type")
+        bg_trigger = construct_trigger(trigger_type, trigger)
+        job_id = kwargs.get("id")
+        # Add entry to keep track of file trigger threads
+        # Recreate monitor in case the job has been updated
+        if job_id and trigger_type == "file":
+            if job_id in observer_threads:
+                observer_threads[job_id].stop()
+                del observer_threads[job_id]
+            observer_threads[job_id] = Monitor(job_id, bg_trigger)
+
+        # Add all triggers to schedule except file
+        # File triggers will handled by monitor
+        if not trigger_type == "file":
+            self._sync_scheduler.add_job(
+                func,
+                trigger=bg_trigger,
+                **kwargs,
+            )
 
     def add_schedule(self, func, interval=None, **kwargs):
         """Adds a schedule to one of the schedulers
@@ -561,7 +617,6 @@ def pause_job(job_id: str) -> Job:
     Returns:
         The Job definition
     """
-
     job = db.query_unique(Job, id=job_id)
     job.status = "PAUSED"
     job = db.update(job)
@@ -579,7 +634,6 @@ def resume_job(job_id: str) -> Job:
     Returns:
         The Job definition
     """
-
     job = db.query_unique(Job, id=job_id)
     job.status = "RUNNING"
     job = db.update(job)
@@ -597,6 +651,9 @@ def remove_job(job_id: str) -> None:
     Returns:
         The Job ID
     """
+    if job_id in observer_threads:
+        observer_threads[job_id].stop()
+        del observer_threads[job_id]
     # The scheduler takes care of removing the Job from the database
     return db.query_unique(Job, id=job_id)
 
@@ -679,4 +736,11 @@ def handle_event(event: Event) -> None:
                 event.payload.id,
                 jobstore="beer_garden",
                 reset_interval=event.payload.reset_interval,
+            )
+        elif event.name == Events.DIRECTORY_FILE_CHANGE.name:
+            beer_garden.application.scheduler.execute_job(
+                event.payload.id,
+                jobstore="beer_garden",
+                reset_interval=None,
+                src_path=event.metadata["src_path"],
             )

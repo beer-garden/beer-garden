@@ -14,6 +14,7 @@ from brewtils.schemas import (
     DateTriggerSchema,
     EventSchema,
     FileStatusSchema,
+    FileTriggerSchema,
     GardenSchema,
     InstanceSchema,
     IntervalTriggerSchema,
@@ -390,12 +391,14 @@ def _load_swagger(url_specs, title=None):
     )
     api_spec.definition("DateTrigger", schema=DateTriggerSchema)
     api_spec.definition("CronTrigger", schema=CronTriggerSchema)
+    api_spec.definition("FileTrigger", schema=FileTriggerSchema)
     api_spec.definition("IntervalTrigger", schema=IntervalTriggerSchema)
     api_spec.definition("Job", schema=JobSchema)
     trigger_properties = {
         "allOf": [
             {"$ref": "#/definitions/CronTrigger"},
             {"$ref": "#/definitions/DateTrigger"},
+            {"$ref": "#/definitions/FileTrigger"},
             {"$ref": "#/definitions/IntervalTrigger"},
         ]
     }
