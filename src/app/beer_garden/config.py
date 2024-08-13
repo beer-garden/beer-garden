@@ -1357,6 +1357,21 @@ _METRICS_SPEC = {
                 },
             },
         },
+        "elastic": {
+            "type": "dict",
+            "items": {
+                "enabled": {
+                    "type": "bool",
+                    "description": "Enable elastic APM server",
+                    "default": False,
+                },
+                "url": {
+                    "type": "str",
+                    "description": "URL to elastic apm server.",
+                    "required": False,
+                },
+            },
+        },
     },
 }
 

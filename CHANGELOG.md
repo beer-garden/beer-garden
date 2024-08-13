@@ -15,6 +15,7 @@ change events (i.e. create, modify, move, or delete).
 - New feature to track the last N heartbeats timestamps for Instances and Gardens. The range to history stored is 
   controlled by configurations `garden.status_history` and `plugin.status_history`
 - Added Replication Awareness to ensure only one Replicated instance can process the scheduled jobs.
+- Added new metrics collection support for publishing data to Elastic APM for APIs, Router, and Event Handling
 
 ## Overhauled User Authentication Logic
 - Roles allow filtering on combinations of Garden/Namespace/System Name/System Version/Instance/Command

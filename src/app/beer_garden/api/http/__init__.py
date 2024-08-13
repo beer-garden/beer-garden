@@ -57,6 +57,7 @@ from beer_garden.api.http.schemas.v1.command_publishing_blocklist import (
 )
 from beer_garden.api.http.schemas.v1.user import UserPasswordChangeSchema
 from beer_garden.events import publish
+from beer_garden.metrics import initialize_elastic_client
 
 io_loop: IOLoop = None
 server: HTTPServer
@@ -286,6 +287,8 @@ def _setup_application():
     # ).url
 
     tornado_app = _setup_tornado_app()
+    initialize_elastic_client("http")
+
     server_ssl, client_ssl = _setup_ssl_context()
 
     server = HTTPServer(tornado_app, ssl_options=server_ssl)

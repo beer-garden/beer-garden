@@ -8,11 +8,13 @@ from beer_garden.api.http.exceptions import BadRequest
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.api.http.schemas.v1.user import UserPasswordChangeSchema
 from beer_garden.errors import InvalidPasswordException
+from beer_garden.metrics import collect_metrics
 
 
 class UserAPI(AuthorizationHandler):
     parser = SchemaParser()
 
+    @collect_metrics(transaction_type="API", group="UserAPI")
     async def get(self, username):
         """
         ---
@@ -45,6 +47,7 @@ class UserAPI(AuthorizationHandler):
 
         self.write(response)
 
+    @collect_metrics(transaction_type="API", group="UserAPI")
     async def delete(self, username):
         """
         ---
@@ -77,6 +80,7 @@ class UserAPI(AuthorizationHandler):
 
         self.set_status(204)
 
+    @collect_metrics(transaction_type="API", group="UserAPI")
     async def patch(self, username):
         """
         ---
@@ -165,6 +169,7 @@ class UserAPI(AuthorizationHandler):
 class UserListAPI(AuthorizationHandler):
     parser = SchemaParser()
 
+    @collect_metrics(transaction_type="API", group="UserListAPI")
     async def get(self):
         """
         ---
@@ -188,6 +193,7 @@ class UserListAPI(AuthorizationHandler):
 
         self.write(response)
 
+    @collect_metrics(transaction_type="API", group="UserListAPI")
     async def post(self):
         """
         ---
@@ -225,6 +231,7 @@ class UserListAPI(AuthorizationHandler):
         self.write(response)
         self.set_status(201)
 
+    @collect_metrics(transaction_type="API", group="UserListAPI")
     async def patch(self):
         """
         ---
@@ -277,6 +284,8 @@ class UserListAPI(AuthorizationHandler):
 
 
 class UserPasswordChangeAPI(AuthorizationHandler):
+
+    @collect_metrics(transaction_type="API", group="UserPasswordChangeAPI")
     async def post(self):
         """
         ---
@@ -326,6 +335,8 @@ class UserPasswordChangeAPI(AuthorizationHandler):
 
 
 class WhoAmIAPI(AuthorizationHandler):
+
+    @collect_metrics(transaction_type="API", group="WhoAmIAPI")
     def get(self):
         """
         ---

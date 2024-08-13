@@ -58,6 +58,7 @@ from beer_garden.garden import (
     load_garden_connections,
     update_garden,
 )
+from beer_garden.metrics import collect_metrics
 from beer_garden.requests import complete_request, create_request
 
 logger = logging.getLogger(__name__)
@@ -198,6 +199,7 @@ router_filter = {
 }
 
 
+@collect_metrics(transaction_type="router")
 def route(operation: Operation):
     """Entry point into the routing subsystem
 
@@ -275,11 +277,13 @@ def execute_local(operation: Operation):
     except RuntimeError:
         pass
 
+    check_async = True
     if loop and operation.operation_type in async_functions:
         lookup = async_functions
+        check_async = False
 
-    elif loop and operation.operation_type in executor_functions:
-        return asyncio.get_event_loop().run_in_executor(
+    if check_async and loop and operation.operation_type in executor_functions:
+        response = asyncio.get_event_loop().run_in_executor(
             t_pool,
             partial(
                 executor_functions[operation.operation_type],
@@ -287,6 +291,7 @@ def execute_local(operation: Operation):
                 **operation.kwargs,
             ),
         )
+        return response
 
     return lookup[operation.operation_type](*operation.args, **operation.kwargs)
 
