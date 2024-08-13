@@ -601,17 +601,21 @@ def determine_latest_system_version(request: Request):
 
     versions = []
     legacy_versions = []
+    system_versions_map = {}
 
     for system in systems:
         try:
             versions.append(versionParse(system.version))
+            system_versions_map[str(versionParse(system.version))] = system.version
         except InvalidVersion:
             legacy_versions.append(system.version)
+            system_versions_map[system.version] = system.version
 
     eligible_versions = versions if versions else legacy_versions
 
     if eligible_versions:
-        request.system_version = str(sorted(eligible_versions, reverse=True)[0])
+        latest_version = sorted(eligible_versions, reverse=True)[0]
+        request.system_version = system_versions_map.get(str(latest_version))
 
     return request
 
@@ -1009,6 +1013,39 @@ def handle_event(event):
             if existing_request is None:
                 # Attempt to create the request, if it already exists then continue on
                 try:
+                    # User mappings back to local usernames
+                    if event.payload.requester and config.get("auth.enabled"):
+                        foundUser = False
+
+                        # First try to grab requester from Parent Request
+                        if event.payload.has_parent:
+                            parent_requests = db.query(
+                                Request,
+                                filter_params={"id": event.payload.parent.id},
+                            )
+
+                            if parent_requests and parent_requests[0].requester:
+                                event.payload.requester = parent_requests[0].requester
+                                foundUser = True
+
+                        # If no parent request is found or request on it, update via remote user mappings
+                        if not foundUser:
+                            if "get_users" not in dir():
+                                from beer_garden.user import get_users
+
+                            for user in get_users():
+                                for remote_user_map in user.remote_user_mapping:
+                                    if (
+                                        remote_user_map.target_garden == event.garden
+                                        and remote_user_map.username
+                                        == event.payload.requester
+                                    ):
+                                        event.payload.requester = user.username
+                                        foundUser = True
+                                        break
+                                if foundUser:
+                                    break
+
                     existing_request = db.create(event.payload)
                 except NotUniqueException:
                     pass

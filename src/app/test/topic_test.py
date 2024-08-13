@@ -12,6 +12,8 @@ from beer_garden.topic import (
     create_topic,
     get_all_topics,
     get_topic,
+    increase_consumer_count,
+    increase_publish_count,
     remove_topic,
     subscriber_match,
     topic_add_subscriber,
@@ -83,12 +85,19 @@ class TestTopic:
     def setup_class(cls):
         connect("beer_garden", host="mongomock://localhost")
 
-    def test_get_topic(self, topic1):
+    def test_get_topic_id(self, topic1):
         """get_topic should allow for retrieval by name"""
-        t = get_topic(topic1.id)
+        t = get_topic(topic_id=topic1.id)
 
         assert type(t) is BrewtilsTopic
         assert t.id == topic1.id
+
+    def test_get_topic_name(self, topic1):
+        """get_topic should allow for retrieval by name"""
+        t = get_topic(topic_name=topic1.name)
+
+        assert type(t) is BrewtilsTopic
+        assert t.name == topic1.name
 
     def test_get_all_topics(self, topic1, topic2):
         """get_all_topics should get all topics"""
@@ -102,9 +111,14 @@ class TestTopic:
         create_topic(new_topic)
         assert len(get_topic(topic1.id).subscribers) == 1
 
-    def test_remove_topic(self, topic1):
+    def test_remove_topic_id(self, topic1):
         """remove_topic should remove topic"""
-        remove_topic(topic1.id)
+        remove_topic(topic_id=topic1.id)
+        assert len(Topic.objects.filter(id=topic1.id)) == 0
+
+    def test_remove_topic_name(self, topic1):
+        """remove_topic should remove topic"""
+        remove_topic(topic_name=topic1.name)
         assert len(Topic.objects.filter(id=topic1.id)) == 0
 
     def test_add_subscriber(self, topic1, subscriber):
@@ -280,3 +294,20 @@ class TestTopic:
 
         assert mock_remove_topic.call_count == 0
         assert mock_update_topic.call_count == 0
+
+    def test_increase_topic_counter(self, topic1):
+        assert topic1.publisher_count == 0
+
+        increase_publish_count(topic1)
+
+        db_topic = get_topic(topic_id=topic1.id)
+        assert db_topic.publisher_count == 1
+
+    def test_increase_subscriber_counter(self, topic1, subscriber):
+        topic_add_subscriber(subscriber, topic1.id)
+
+        increase_consumer_count(topic1, subscriber)
+
+        db_topic = get_topic(topic_id=topic1.id)
+
+        assert db_topic.subscribers[0].consumer_count == 1

@@ -15,14 +15,23 @@ export default function roleService($http) {
     deleteRole: (roleId) => {
       return $http.delete('api/v1/roles/' + roleId);
     },
-    updateRole: (roleId, operations) => {
-      return $http.patch('api/v1/roles/' + roleId, {operations: operations});
+    editRole: (role) => {
+      return $http.patch('api/v1/roles/' + role.id, {
+        operation: 'update_role',
+        path: '',
+        value: role,
+      });
     },
     getRoles: () => {
       return $http.get('api/v1/roles/');
     },
     createRole: (newRole) => {
       return $http.post('api/v1/roles/', newRole);
+    },
+    rescan: () => {
+      return $http.patch('api/v1/roles/', {
+        operation: 'rescan',
+      });
     },
   };
 

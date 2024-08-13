@@ -102,7 +102,7 @@ export default function runDTRenderer(DTRendererService) {
               $('<input>')
                   .attr('id', 'autoRefreshCheck')
                   .attr('type', 'checkbox')
-                  .attr('checked', true)
+                  .attr('checked', options.autoRefreshChecked)
                   .css('margin-top', '-4px')
             )
             .append(

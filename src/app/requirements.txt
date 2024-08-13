@@ -13,11 +13,17 @@ apscheduler==3.10.1
 brewtils==3.26.4
     # via beer-garden (setup.py)
 certifi==2023.5.7
-    # via requests
+    # via
+    #   elastic-apm
+    #   requests
 charset-normalizer==3.2.0
     # via requests
 docopt==0.6.2
     # via stomp-py
+ecs-logging==2.2.0
+    # via elastic-apm
+elastic-apm==6.18.0
+    # via beer-garden (setup.py)
 idna==3.4
     # via requests
 lark-parser==0.6.7
@@ -86,6 +92,7 @@ tzlocal==5.0.1
 urllib3==1.26.16
     # via
     #   beer-garden (setup.py)
+    #   elastic-apm
     #   requests
 watchdog==3.0.0
     # via
@@ -95,6 +102,7 @@ wrapt==1.15.0
     # via
     #   beer-garden (setup.py)
     #   brewtils
+    #   elastic-apm
 yapconf==1.0.0
     # via
     #   beer-garden (setup.py)

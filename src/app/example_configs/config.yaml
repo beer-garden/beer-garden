@@ -1,19 +1,35 @@
 auth:
+  enabled: false
+
   authentication_handlers:
     basic:
       enabled: true
     trusted_header:
       create_users: true
       enabled: false
-      user_groups_header: bg-user-groups
+      user_alias_mapping_header: bg-user-alias-user-mapping
+      user_local_roles_header: bg-user-local-roles
+      user_upstream_roles_header: bg-user-upstream-roles
       username_header: bg-username
+    
   default_admin:
     password: password
     username: admin
-  enabled: false
-  group_definition_file: null
-  role_definition_file: null
+
+  role_definition_file: example_configs/roles.yaml
+  user_definition_file: example_configs/users.yaml
+
   token_secret: IAMSUPERSECRET
+  token_access_ttl:
+    garden_admin: 15
+    operator: 15
+    plugin_admin: 15
+    read_only: 15
+  token_refresh_ttl:
+    garden_admin: 720
+    operator: 720
+    plugin_admin: 720
+    read_only: 720
 children:
   directory: ./children
 db:
@@ -33,7 +49,6 @@ db:
     admin: 15
 
     batch_size: -1
-    
 entry:
   http:
     enabled: true
@@ -63,11 +78,15 @@ entry:
     username: beer_garden
 garden:
   name: default
+  status_history: 50
 log:
   config_file: example_configs/app-logging.yaml
   fallback_file: null
   fallback_level: INFO
 metrics:
+  elastic:
+    enabled: false
+    url: http://localhost:8200
   prometheus:
     enabled: false
     host: 0.0.0.0
@@ -156,6 +175,7 @@ plugin:
       fallback_level: INFO
   status_heartbeat: 5
   status_timeout: 30
+  status_history: 50
 replication:
   enabled: false
 request_validation:
@@ -176,3 +196,4 @@ ui:
   execute_javascript: false
   icon_default: fa-beer
   name: Beer Garden
+  auto_refresh: false

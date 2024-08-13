@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
-from brewtils.models import Operation
+from brewtils.models import Operation, Permissions, Queue, System
 
-from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.garden import local_garden
-
-QUEUE_READ = Permissions.QUEUE_READ.value
-QUEUE_DELETE = Permissions.QUEUE_DELETE.value
+from beer_garden.metrics import collect_metrics
 
 
 class QueueAPI(AuthorizationHandler):
+
+    @collect_metrics(transaction_type="API", group="QueueAPI")
     async def delete(self, queue_name):
         """
         ---
@@ -30,14 +29,19 @@ class QueueAPI(AuthorizationHandler):
         tags:
           - Queues
         """
-        self.verify_user_permission_for_object(QUEUE_DELETE, local_garden())
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
+        self.get_or_raise(Queue, name=queue_name)
 
-        await self.client(Operation(operation_type="QUEUE_DELETE", args=[queue_name]))
+        await self.process_operation(
+            Operation(operation_type="QUEUE_DELETE", args=[queue_name])
+        )
 
         self.set_status(204)
 
 
 class QueueListAPI(AuthorizationHandler):
+
+    @collect_metrics(transaction_type="API", group="QueueListAPI")
     async def get(self):
         """
         ---
@@ -54,13 +58,22 @@ class QueueListAPI(AuthorizationHandler):
         tags:
           - Queues
         """
-        self.verify_user_permission_for_object(QUEUE_READ, local_garden())
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
+        permitted_objects_filter = self.permitted_objects_filter(System)
 
-        response = await self.client(Operation(operation_type="QUEUE_READ"))
+        response = await self.process_operation(
+            Operation(
+                operation_type="QUEUE_READ",
+                kwargs={
+                    "q_filter": permitted_objects_filter,
+                },
+            )
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
+    @collect_metrics(transaction_type="API", group="QueueListAPI")
     async def delete(self):
         """
         ---
@@ -73,8 +86,9 @@ class QueueListAPI(AuthorizationHandler):
         tags:
           - Queues
         """
-        self.verify_user_permission_for_object(QUEUE_DELETE, local_garden())
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
+        self.verify_user_permission_for_object(local_garden())
 
-        await self.client(Operation(operation_type="QUEUE_DELETE_ALL"))
+        await self.process_operation(Operation(operation_type="QUEUE_DELETE_ALL"))
 
         self.set_status(204)
