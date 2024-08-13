@@ -585,6 +585,14 @@ jobs:
         working-directory: ./test/integration
         timeout-minutes: 2
 
+      - name: Check docker
+        if: always()
+        run: docker ps
+
+      - name: Check BG
+        if: always()
+        run: docker service ps --no-trunc beer-garden_beer-garden
+
       - name: Grab logs from Beer-Garden.1
         if: always()
         run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.1 --quiet | tail -1)
