@@ -15,6 +15,8 @@ change events (i.e. create, modify, move, or delete).
 - New feature to track the last N heartbeats timestamps for Instances and Gardens. The range to history stored is 
   controlled by configurations `garden.status_history` and `plugin.status_history`
 - Added Replication Awareness to ensure only one Replicated instance can process the scheduled jobs.
+- Adds Model Checks for DB collections to ensure classes can properly load between upgrades.
+- If Beer Garden catches an exception during shutdown, it will os.exit the application after all shutdown procedures are completed.
 - Added new metrics collection support for publishing data to Elastic APM for APIs, Router, and Event Handling
 
 ## Overhauled User Authentication Logic

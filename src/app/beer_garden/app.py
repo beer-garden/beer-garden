@@ -5,6 +5,7 @@ This is the core library for Beer-Garden. Anything that is spawned by the Main P
 in Beer-Garden will be initialized within this class.
 """
 import logging
+import os
 import signal
 from functools import partial
 from multiprocessing.managers import BaseManager
@@ -152,7 +153,12 @@ class Application(StoppableThread):
         if not self._verify_message_queue_connection():
             return
 
-        self._startup()
+        try:
+            self._startup()
+        except Exception as ex:
+            self.logger.error(ex)
+            self._shutdown()
+            return
 
         while not self.wait(0.1):
             for helper in self.helper_threads:
@@ -242,12 +248,12 @@ class Application(StoppableThread):
         """Initializes core requirements for Application"""
         self.logger.debug("Starting Application...")
 
-        self.logger.debug("Starting event manager...")
-        beer_garden.events.manager.start()
-
         self.logger.debug("Setting up database...")
         db.create_connection(db_config=config.get("db"))
         db.initial_setup()
+
+        self.logger.debug("Starting event manager...")
+        beer_garden.events.manager.start()
 
         self.logger.debug("Setting up message queues...")
         queue.initial_setup()
@@ -302,45 +308,116 @@ class Application(StoppableThread):
             "Closing time! You don't have to go home, but you can't stay here."
         )
 
-        self.logger.debug("Publishing shutdown sync")
-        beer_garden.garden.publish_garden(status="STOPPED")
+        shutdown_failure = False
+
+        try:
+            self.logger.debug("Publishing shutdown sync")
+            beer_garden.garden.publish_garden(status="STOPPED")
+        except Exception as ex:
+            self.logger.info("Failed: Publishing shutdown sync")
+            self.logger.error(ex)
+            shutdown_failure = True
 
         if self.scheduler.running:
-            self.logger.debug("Pausing scheduler - no more jobs will be run")
-            self.scheduler.pause()
+            try:
+                self.logger.debug("Pausing scheduler - no more jobs will be run")
+                self.scheduler.pause()
+            except Exception as ex:
+                self.logger.info("Failed: Pausing scheduler - no more jobs will be run")
+                self.logger.error(ex)
+                shutdown_failure = True
 
-        self.logger.debug("Stopping plugin log config file monitors")
-        self.plugin_log_config_observer.stop()
-        self.plugin_local_log_config_observer.stop()
+        try:
+            self.logger.debug("Stopping plugin log config file monitors")
+            self.plugin_log_config_observer.stop()
+            self.plugin_local_log_config_observer.stop()
+        except Exception as ex:
+            self.logger.info("Failed: Stopping plugin log config file monitors")
+            self.logger.error(ex)
+            shutdown_failure = True
 
-        self.logger.debug("Stopping forwarding processor...")
-        beer_garden.router.forward_processor.stop()
+        try:
+            self.logger.debug("Stopping forwarding processor...")
+            beer_garden.router.forward_processor.stop()
+        except Exception as ex:
+            self.logger.info("Failed: Stopping forwarding processor")
+            self.logger.error(ex)
+            shutdown_failure = True
 
-        self.logger.debug("Stopping helper threads")
-        for helper_thread in reversed(self.helper_threads):
-            helper_thread.stop()
+        try:
+            self.logger.debug("Stopping helper threads")
+            for helper_thread in reversed(self.helper_threads):
+                helper_thread.stop()
+        except Exception as ex:
+            self.logger.info("Failed: Stopping helper threads")
+            self.logger.error(ex)
+            shutdown_failure = True
 
         if self.scheduler.running:
-            self.logger.debug("Shutting down scheduler")
-            self.scheduler.shutdown(wait=False)
+            try:
+                self.logger.debug("Shutting down scheduler")
+                self.scheduler.shutdown(wait=False)
+            except Exception as ex:
+                self.logger.info("Failed: Shutting down scheduler")
+                self.logger.error(ex)
+                shutdown_failure = True
 
-        self.logger.debug("Stopping local plugin process monitoring")
-        beer_garden.local_plugins.manager.lpm_proxy.stop()
+        try:
+            self.logger.debug("Stopping local plugin process monitoring")
+            beer_garden.local_plugins.manager.lpm_proxy.stop()
+        except Exception as ex:
+            self.logger.info("Failed: Stopping local plugin process monitoring")
+            self.logger.error(ex)
+            shutdown_failure = True
 
-        self.logger.debug("Stopping local plugins")
-        beer_garden.local_plugins.manager.lpm_proxy.stop_all()
+        try:
+            self.logger.debug("Stopping local plugins")
+            beer_garden.local_plugins.manager.lpm_proxy.stop_all()
+        except Exception as ex:
+            self.logger.info("Failed: Stopping local plugins")
+            self.logger.error(ex)
+            shutdown_failure = True
 
-        self.logger.debug("Stopping entry points")
-        self.entry_manager.stop()
+        try:
+            self.logger.debug("Shutting Down local plugin process monitoring")
+            self.mp_manager.shutdown()
+        except Exception as ex:
+            self.logger.info("Failed: Shutting Down local plugin process monitoring")
+            self.logger.error(ex)
+            shutdown_failure = True
 
-        self.logger.debug("Stopping event manager")
-        beer_garden.events.manager.stop()
+        try:
+            self.logger.debug("Stopping entry points")
+            self.entry_manager.stop()
+        except Exception as ex:
+            self.logger.info("Failed: Stopping entry points")
+            self.logger.error(ex)
+            shutdown_failure = True
+
+        try:
+            self.logger.debug("Stopping event manager")
+            beer_garden.events.manager.stop()
+        except Exception as ex:
+            self.logger.info("Failed: Stopping event manager")
+            self.logger.error(ex)
+            shutdown_failure = True
 
         if config.get("replication.enabled"):
-            self.logger.debug("Stopping Event Consumer")
-            queue.shutdown_event_consumer()
+            try:
+                self.logger.debug("Stopping Event Consumer")
+                queue.shutdown_event_consumer()
+            except Exception as ex:
+                self.logger.info("Failed: Stopping Event Consumer")
+                self.logger.error(ex)
+                shutdown_failure = True
 
-        self.logger.info("Successfully shut down Beer-garden")
+        if shutdown_failure:
+            self.logger.info(
+                "Unsuccessfully shut down Beer-garden, forcing os.exit. Please check your processes for orphaned threads"
+            )
+            os._exit(os.EX_OK)
+        else:
+            self.logger.info("Successfully shut down Beer-garden")
 
     def _setup_events_manager(self):
         """Set up the event manager for the Main Processor"""
