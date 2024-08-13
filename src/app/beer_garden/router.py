@@ -895,8 +895,6 @@ def _instance_id_lookup(instance_id: str) -> str:
 
 # TRANSPORT TYPE STUFF
 # This should be moved out of this module
-
-
 def create_stomp_connection(connection: BrewtilsConnection) -> Connection:
     """Create a stomp connection wrapper for a garden
 
