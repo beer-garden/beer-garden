@@ -3,6 +3,7 @@ import pytest
 import yaml
 from mock import MagicMock, Mock, mock_open, patch
 from mongoengine import DoesNotExist, connect
+from mongoengine.errors import FieldDoesNotExist
 
 import beer_garden.db.mongo.models
 import beer_garden.db.mongo.util
@@ -18,12 +19,13 @@ from beer_garden.db.mongo.util import (
 from beer_garden.errors import ConfigurationError, IndexOperationError
 
 
+
 @pytest.fixture
 def model_mocks(monkeypatch):
-    request_mock = Mock()
-    system_mock = Mock()
-    role_mock = Mock()
-    job_mock = Mock()
+    request_mock = Mock(objects=Mock(count=Mock(return_value=1), get=Mock(return_value=[{}])))
+    system_mock = Mock(objects=Mock(count=Mock(return_value=1), get=Mock(return_value=[{}])))
+    role_mock = Mock(objects=Mock(count=Mock(return_value=1), get=Mock(return_value=[{}])))
+    job_mock = Mock(objects=Mock(count=Mock(return_value=1), get=Mock(return_value=[{}])))
 
     request_mock.__name__ = "Request"
     system_mock.__name__ = "System"
@@ -99,6 +101,9 @@ class TestCheckIndexes(object):
             model_mock._get_collection = Mock(
                 return_value=Mock(index_information=Mock(return_value={"index1": {}}))
             )
+            # model_mock.objects = Mock(
+            #     return_value=Mock(count=Mock(return_value=1))
+            # )
 
         [beer_garden.db.mongo.util.check_indexes(doc) for doc in model_mocks.values()]
         for model_mock in model_mocks.values():
@@ -172,6 +177,23 @@ class TestCheckIndexes(object):
 
         for doc in model_mocks.values():
             with pytest.raises(IndexOperationError):
+                beer_garden.db.mongo.util.check_indexes(doc)
+
+    @patch("mongoengine.connect", Mock())
+    @patch("mongoengine.connection.get_db", MagicMock())
+    def test_unsuccessful_read_objects(self, model_mocks):
+        for model_mock in model_mocks.values():
+            model_mock.list_indexes = Mock(return_value=["index1"])
+            model_mock._get_collection = Mock(
+                return_value=MagicMock(
+                    index_information=Mock(return_value={"index1": {}})
+                )
+            )
+
+            model_mock.objects.get.side_effect = FieldDoesNotExist("")
+
+        for doc in model_mocks.values():
+            with pytest.raises(FieldDoesNotExist):
                 beer_garden.db.mongo.util.check_indexes(doc)
 
     @patch("mongoengine.connection.get_db")
