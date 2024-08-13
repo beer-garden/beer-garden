@@ -66,9 +66,6 @@ class TestCheckIndexes(object):
             model_mock._get_collection = Mock(
                 return_value=Mock(index_information=Mock(return_value={"index1": {}}))
             )
-            # model_mock.objects = Mock(
-            #     return_value=Mock(count=Mock(return_value=1))
-            # )
 
         [beer_garden.db.mongo.util.check_indexes(doc) for doc in model_mocks.values()]
         for model_mock in model_mocks.values():
