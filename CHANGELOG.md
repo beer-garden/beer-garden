@@ -2,7 +2,7 @@
 
 # 3.27.0
 
-TBD
+8/13/2024
 
 - Added file trigger jobs to scheduler to monitor directory for file changes. If a watched file change event occurs, it will fire the
 specified request. File trigger can be customized using regex, recursively monitoring sub-directories, or by watching one or more file
