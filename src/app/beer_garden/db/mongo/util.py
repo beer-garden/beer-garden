@@ -241,7 +241,6 @@ def check_indexes(document_class):
         raise
 
 
-
 def _update_request_parent_field_type():
     """Change GenericReferenceField to ReferenceField"""
     from .models import Request

@@ -5,11 +5,11 @@ This is the core library for Beer-Garden. Anything that is spawned by the Main P
 in Beer-Garden will be initialized within this class.
 """
 import logging
+import os
 import signal
 from functools import partial
 from multiprocessing.managers import BaseManager
 from typing import Callable
-import os
 
 from brewtils import EasyClient
 from brewtils.models import Event, Events
@@ -306,7 +306,7 @@ class Application(StoppableThread):
         )
 
         shutdown_failure = False
-  
+
         try:
             self.logger.debug("Publishing shutdown sync")
             beer_garden.garden.publish_garden(status="STOPPED")
@@ -323,7 +323,7 @@ class Application(StoppableThread):
                 self.logger.info("Failed: Pausing scheduler - no more jobs will be run")
                 self.logger.error(ex)
                 shutdown_failure = True
-        
+
         try:
             self.logger.debug("Stopping plugin log config file monitors")
             self.plugin_log_config_observer.stop()
@@ -341,7 +341,6 @@ class Application(StoppableThread):
             self.logger.error(ex)
             shutdown_failure = True
 
-        
         try:
             self.logger.debug("Stopping helper threads")
             for helper_thread in reversed(self.helper_threads):
@@ -365,7 +364,7 @@ class Application(StoppableThread):
             beer_garden.local_plugins.manager.lpm_proxy.stop()
         except Exception as ex:
             self.logger.info("Failed: Stopping local plugin process monitoring")
-            self.logger.error(ex) 
+            self.logger.error(ex)
             shutdown_failure = True
 
         try:
@@ -373,7 +372,7 @@ class Application(StoppableThread):
             beer_garden.local_plugins.manager.lpm_proxy.stop_all()
         except Exception as ex:
             self.logger.info("Failed: Stopping local plugins")
-            self.logger.error(ex)  
+            self.logger.error(ex)
             shutdown_failure = True
 
         try:
@@ -383,13 +382,13 @@ class Application(StoppableThread):
             self.logger.info("Failed: Shutting Down local plugin process monitoring")
             self.logger.error(ex)
             shutdown_failure = True
-        
+
         try:
             self.logger.debug("Stopping entry points")
             self.entry_manager.stop()
         except Exception as ex:
             self.logger.info("Failed: Stopping entry points")
-            self.logger.error(ex)     
+            self.logger.error(ex)
             shutdown_failure = True
 
         try:
@@ -406,12 +405,14 @@ class Application(StoppableThread):
                 queue.shutdown_event_consumer()
             except Exception as ex:
                 self.logger.info("Failed: Stopping Event Consumer")
-                self.logger.error(ex)           
+                self.logger.error(ex)
                 shutdown_failure = True
 
         if shutdown_failure:
-           self.logger.info("Unsuccessfully shut down Beer-garden, forcing os.exit. Please check your processes for orphaned threads") 
-           os._exit(os.EX_OK)
+            self.logger.info(
+                "Unsuccessfully shut down Beer-garden, forcing os.exit. Please check your processes for orphaned threads"
+            )
+            os._exit(os.EX_OK)
         else:
             self.logger.info("Successfully shut down Beer-garden")
 
