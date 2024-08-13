@@ -17,13 +17,13 @@ from beer_garden.errors import IndexOperationError
 @pytest.fixture
 def model_mocks(monkeypatch):
     request_mock = Mock(
-        objects=Mock(count=Mock(return_value=1), get=Mock(return_value=[{}]))
+        objects=Mock(count=Mock(return_value=1), first=Mock(return_value=[{}]))
     )
     system_mock = Mock(
-        objects=Mock(count=Mock(return_value=1), get=Mock(return_value=[{}]))
+        objects=Mock(count=Mock(return_value=1), first=Mock(return_value=[{}]))
     )
     job_mock = Mock(
-        objects=Mock(count=Mock(return_value=1), get=Mock(return_value=[{}]))
+        objects=Mock(count=Mock(return_value=1), first=Mock(return_value=[{}]))
     )
 
     request_mock.__name__ = "Request"
@@ -155,7 +155,7 @@ class TestCheckIndexes(object):
                 )
             )
 
-            model_mock.objects.get.side_effect = FieldDoesNotExist("")
+            model_mock.objects.first.side_effect = FieldDoesNotExist("")
 
         for doc in model_mocks.values():
             with pytest.raises(FieldDoesNotExist):
