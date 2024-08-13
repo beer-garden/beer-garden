@@ -533,15 +533,15 @@ jobs:
 
       - name: Grab logs from Beer-Garden.1
         if: always()
-        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.1 --quiet)
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.1 --quiet | tail -1)
 
       - name: Grab logs from Beer-Garden.2
         if: always()
-        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.2 --quiet)
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.2 --quiet | tail -1)
 
       - name: Grab logs from Beer-Garden.3
         if: always()
-        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.3 --quiet)
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.3 --quiet | tail -1)
 
       - name: Run Docker Beer Garden Plugins
         run: docker stack deploy -c docker-compose-plugins.yml beer-plugins
@@ -587,15 +587,15 @@ jobs:
 
       - name: Grab logs from Beer-Garden.1
         if: always()
-        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.1 --quiet)
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.1 --quiet | tail -1)
 
       - name: Grab logs from Beer-Garden.2
         if: always()
-        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.2 --quiet)
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.2 --quiet | tail -1)
 
       - name: Grab logs from Beer-Garden.3
         if: always()
-        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.3 --quiet)
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.3 --quiet | tail -1)
 
       - name: Check services
         if: always()
