@@ -88,6 +88,7 @@ export default function requestIndexController(
       .withOption('serverSide', true)
       .withOption('refreshButton', true)
       .withOption('autoRefresh', true)
+      .withOption('autoRefreshChecked', $scope.config.autoRefresh)
       .withOption('childContainer', true)
       .withOption('hiddenRequestContainer', true)
       .withOption('newData', true)

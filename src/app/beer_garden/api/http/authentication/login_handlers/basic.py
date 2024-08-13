@@ -1,10 +1,12 @@
+from datetime import datetime
 from typing import Optional
 
+from brewtils.models import User
 from tornado.httputil import HTTPServerRequest
 
 from beer_garden.api.http.authentication.login_handlers.base import BaseLoginHandler
 from beer_garden.api.http.schemas.v1.token import TokenInputSchema
-from beer_garden.db.mongo.models import User
+from beer_garden.user import get_user, update_user, verify_password
 
 
 class BasicLoginHandler(BaseLoginHandler):
@@ -32,10 +34,15 @@ class BasicLoginHandler(BaseLoginHandler):
 
             if username and password:
                 try:
-                    user = User.objects.get(username=username)
+                    user = get_user(username=username)
 
-                    if user.verify_password(password):
+                    if verify_password(user, password):
                         authenticated_user = user
+                        authenticated_user.metadata["last_authentication"] = (
+                            datetime.utcnow().timestamp()
+                        )
+                        authenticated_user = update_user(user=authenticated_user)
+
                 except User.DoesNotExist:
                     pass
 

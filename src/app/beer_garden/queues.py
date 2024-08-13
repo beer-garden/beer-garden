@@ -58,14 +58,14 @@ def get_instance_queues(instance_id):
     return queues
 
 
-def get_all_queue_info():
+def get_all_queue_info(**kwargs):
     """Get queue information for all queues
 
     :return size of the queue
     :raises Exception: If queue does not exist
     """
     queues = []
-    systems = db.query(System)
+    systems = db.query(System, **kwargs)
 
     for system in systems:
         for instance in system.instances:

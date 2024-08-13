@@ -2,17 +2,11 @@
 from asyncio import Future
 
 from brewtils.errors import ModelValidationError, RequestProcessingError
-from brewtils.models import Operation
+from brewtils.models import Operation, Permissions, System
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.base_handler import future_wait
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.db.mongo.models import System
-
-INSTANCE_READ = Permissions.INSTANCE_READ.value
-INSTANCE_UPDATE = Permissions.INSTANCE_UPDATE.value
-QUEUE_READ = Permissions.QUEUE_READ.value
 
 
 class InstanceAPI(AuthorizationHandler):
@@ -38,9 +32,10 @@ class InstanceAPI(AuthorizationHandler):
         tags:
           - Instances
         """
-        _ = self.get_or_raise(System, INSTANCE_READ, instances__id=instance_id)
 
-        response = await self.client(
+        _ = self.get_or_raise(System, instances__id=instance_id)
+
+        response = await self.process_operation(
             Operation(operation_type="INSTANCE_READ", args=[instance_id])
         )
 
@@ -67,9 +62,10 @@ class InstanceAPI(AuthorizationHandler):
         tags:
           - Instances
         """
-        _ = self.get_or_raise(System, INSTANCE_UPDATE, instances__id=instance_id)
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
+        _ = self.get_or_raise(System, instances__id=instance_id)
 
-        await self.client(
+        await self.process_operation(
             Operation(operation_type="INSTANCE_DELETE", args=[instance_id])
         )
 
@@ -120,7 +116,8 @@ class InstanceAPI(AuthorizationHandler):
         tags:
           - Instances
         """
-        _ = self.get_or_raise(System, INSTANCE_UPDATE, instances__id=instance_id)
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
+        _ = self.get_or_raise(System, instances__id=instance_id)
 
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
@@ -132,7 +129,7 @@ class InstanceAPI(AuthorizationHandler):
                 if op.value:
                     runner_id = op.value.get("runner_id")
 
-                response = await self.client(
+                response = await self.process_operation(
                     Operation(
                         operation_type="INSTANCE_INITIALIZE",
                         args=[instance_id],
@@ -141,28 +138,28 @@ class InstanceAPI(AuthorizationHandler):
                 )
 
             elif operation == "start":
-                response = await self.client(
+                response = await self.process_operation(
                     Operation(operation_type="INSTANCE_START", args=[instance_id])
                 )
 
             elif operation == "restart":
-                response = await self.client(
+                response = await self.process_operation(
                     Operation(operation_type="INSTANCE_RESTART", args=[instance_id])
                 )
 
             elif operation == "stop":
-                response = await self.client(
+                response = await self.process_operation(
                     Operation(operation_type="INSTANCE_STOP", args=[instance_id])
                 )
 
             elif operation == "heartbeat":
-                response = await self.client(
+                response = await self.process_operation(
                     Operation(operation_type="INSTANCE_HEARTBEAT", args=[instance_id])
                 )
 
             elif operation == "replace":
                 if op.path.lower() == "/status":
-                    response = await self.client(
+                    response = await self.process_operation(
                         Operation(
                             operation_type="INSTANCE_UPDATE",
                             args=[instance_id],
@@ -174,7 +171,7 @@ class InstanceAPI(AuthorizationHandler):
 
             elif operation == "update":
                 if op.path.lower() == "/metadata":
-                    response = await self.client(
+                    response = await self.process_operation(
                         Operation(
                             operation_type="INSTANCE_UPDATE",
                             args=[instance_id],
@@ -230,7 +227,8 @@ class InstanceLogAPI(AuthorizationHandler):
         tags:
           - Instances
         """
-        _ = self.get_or_raise(System, INSTANCE_READ, instances__id=instance_id)
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
+        _ = self.get_or_raise(System, instances__id=instance_id)
 
         start_line = self.get_query_argument("start_line", default=None)
         if start_line == "":
@@ -253,7 +251,7 @@ class InstanceLogAPI(AuthorizationHandler):
     async def _generate_get_response(self, instance_id, start_line, end_line):
         wait_future = Future()
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(
                 operation_type="INSTANCE_LOGS",
                 kwargs={
@@ -305,10 +303,12 @@ class InstanceQueuesAPI(AuthorizationHandler):
         tags:
           - Queues
         """
-        _ = self.get_or_raise(System, QUEUE_READ, instances__id=instance_id)
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
+        _ = self.get_or_raise(System, instances__id=instance_id)
 
-        response = await self.client(
-            Operation(operation_type="QUEUE_READ_INSTANCE", args=[instance_id])
+        response = await self.process_operation(
+            Operation(operation_type="QUEUE_READ_INSTANCE", args=[instance_id]),
+            filter_results=False,
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")

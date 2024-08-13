@@ -1,46 +1,42 @@
 # -*- coding: utf-8 -*-
 import pytest
-import yaml
-from mock import MagicMock, Mock, mock_open, patch
-from mongoengine import DoesNotExist, connect
+from mock import MagicMock, Mock, patch
+from mongoengine import connect
 from mongoengine.errors import FieldDoesNotExist
 
 import beer_garden.db.mongo.models
 import beer_garden.db.mongo.util
 from beer_garden import config
-from beer_garden.api.authorization import Permissions
-from beer_garden.db.mongo.models import Garden, Role, User
-from beer_garden.db.mongo.util import (
-    PLUGIN_ROLE_PERMISSIONS,
+from beer_garden.db.mongo.models import Garden
+from beer_garden.db.mongo.util import (  # ensure_roles,; ensure_users,
     ensure_local_garden,
-    ensure_roles,
-    ensure_users,
 )
-from beer_garden.errors import ConfigurationError, IndexOperationError
-
+from beer_garden.errors import IndexOperationError
 
 
 @pytest.fixture
 def model_mocks(monkeypatch):
-    request_mock = Mock(objects=Mock(count=Mock(return_value=1), get=Mock(return_value=[{}])))
-    system_mock = Mock(objects=Mock(count=Mock(return_value=1), get=Mock(return_value=[{}])))
-    role_mock = Mock(objects=Mock(count=Mock(return_value=1), get=Mock(return_value=[{}])))
-    job_mock = Mock(objects=Mock(count=Mock(return_value=1), get=Mock(return_value=[{}])))
+    request_mock = Mock(
+        objects=Mock(count=Mock(return_value=1), get=Mock(return_value=[{}]))
+    )
+    system_mock = Mock(
+        objects=Mock(count=Mock(return_value=1), get=Mock(return_value=[{}]))
+    )
+    job_mock = Mock(
+        objects=Mock(count=Mock(return_value=1), get=Mock(return_value=[{}]))
+    )
 
     request_mock.__name__ = "Request"
     system_mock.__name__ = "System"
-    role_mock.__name__ = "LegacyRole"
     job_mock.__name__ = "Job"
 
     monkeypatch.setattr(beer_garden.db.mongo.models, "Request", request_mock)
     monkeypatch.setattr(beer_garden.db.mongo.models, "System", system_mock)
-    monkeypatch.setattr(beer_garden.db.mongo.models, "LegacyRole", role_mock)
     monkeypatch.setattr(beer_garden.db.mongo.models, "Job", job_mock)
 
     return {
         "request": request_mock,
         "system": system_mock,
-        "role": role_mock,
         "job": job_mock,
     }
 
@@ -59,37 +55,6 @@ def config_mock_none(monkeypatch):
         return None
 
     monkeypatch.setattr(config, "get", config_get_value)
-
-
-class TestEnsureUsers(object):
-    @pytest.fixture
-    def existing_user(self):
-        user = User(username="someuser").save()
-
-        yield user
-        user.delete()
-
-    @pytest.fixture
-    def roles(self):
-        ensure_roles()
-        yield
-        Role.drop_collection()
-
-    def test_admin_created_if_no_users_exist(
-        self, monkeypatch, roles, config_mock_value
-    ):
-        monkeypatch.setattr(User, "save", Mock())
-        ensure_users()
-
-        assert User.save.call_count == 2  # Default Admin, Plugin
-
-    def test_admin_not_created_if_users_exist(
-        self, monkeypatch, existing_user, roles, config_mock_value
-    ):
-        monkeypatch.setattr(User, "save", Mock())
-        ensure_users()
-
-        assert User.save.called is False
 
 
 class TestCheckIndexes(object):
@@ -241,22 +206,6 @@ class TestCheckIndexes(object):
         assert update_has_parent_mock.called is True
 
 
-class TestCreateLegacyRole(object):
-    def test_exists(self, model_mocks):
-        role = Mock()
-        model_mocks["role"].objects.get.return_value = role
-
-        beer_garden.db.mongo.util._create_role(role)
-        assert role.save.called is False
-
-    def test_missing(self, model_mocks):
-        role = Mock()
-        model_mocks["role"].objects.get.side_effect = DoesNotExist
-
-        beer_garden.db.mongo.util._create_role(role)
-        assert role.save.called is True
-
-
 class TestEnsureLocalGarden:
     @classmethod
     def setup_class(cls):
@@ -287,110 +236,3 @@ class TestEnsureLocalGarden:
         garden = Garden.objects.get(connection_type="LOCAL")
 
         assert garden.name == config.get("garden.name")
-
-
-class TestEnsureRoles:
-    @pytest.fixture
-    def role_definition_yaml(self):
-        role_list = [{"name": "testrole1", "permissions": ["garden:read"]}]
-        yield yaml.dump(role_list)
-
-    @classmethod
-    def setup_class(cls):
-        connect("beer_garden", host="mongomock://localhost")
-
-    def teardown_method(self):
-        beer_garden.db.mongo.models.Role.drop_collection()
-
-    def test_ensure_roles_creates_roles_defined_in_file(
-        self, role_definition_yaml, config_mock_value
-    ):
-        """ensure_roles should create the roles defined in the auth.role_definition_file
-        if specified"""
-        role_definition_file = config.get("auth.role_definition_file")
-
-        with patch(
-            "builtins.open", mock_open(read_data=role_definition_yaml)
-        ) as mock_file_read:
-            ensure_roles()
-            mock_file_read.assert_called_with(role_definition_file, "r")
-
-        assert len(Role.objects.filter(name="testrole1")) == 1
-
-    def test_ensure_roles_creates_no_roles_if_no_file_specified(self, config_mock_none):
-        """ensure_roles should not create anything if no auth.role_definition_file
-        is specified"""
-        ensure_roles()
-
-        assert len(Role.objects.filter(name="testrole1")) == 0
-
-    def test_ensure_roles_raises_exception_when_file_not_found(self, config_mock_value):
-        """ensure_roles should raise ConfigurationError if the file specified by
-        auth.role_definition_file is not found"""
-
-        def file_not_found(arg1, arg2):
-            raise FileNotFoundError
-
-        with patch("builtins.open", mock_open()) as mock_file_read:
-            mock_file_read.side_effect = file_not_found
-            with pytest.raises(ConfigurationError):
-                ensure_roles()
-
-    def test_ensure_roles_raises_exception_on_schema_errors(
-        self, monkeypatch, role_definition_yaml, config_mock_value
-    ):
-        """ensure_roles should raise ConfigurationError if the file specified by
-        raises a schema validation error (i.e. does not conform to the expected format)
-        """
-        from marshmallow.exceptions import ValidationError
-
-        def validation_error(arg):
-            raise ValidationError("error")
-
-        monkeypatch.setattr(beer_garden.db.mongo.util, "sync_roles", validation_error)
-
-        with patch("builtins.open", mock_open(read_data=role_definition_yaml)):
-            with pytest.raises(ConfigurationError):
-                ensure_roles()
-
-    def test_ensure_roles_raises_exception_on_permissions_error(
-        self, monkeypatch, role_definition_yaml, config_mock_value
-    ):
-        """ensure_roles should raise ConfigurationError if the file specified by
-        raises a mongo validation error (e.g. one of the specified permissions is not
-        a recognized, valid permission)
-        """
-        from mongoengine.errors import ValidationError
-
-        def validation_error(arg):
-            raise ValidationError("error")
-
-        monkeypatch.setattr(beer_garden.db.mongo.util, "sync_roles", validation_error)
-
-        with patch("builtins.open", mock_open(read_data=role_definition_yaml)):
-            with pytest.raises(ConfigurationError):
-                ensure_roles()
-
-    def test_ensure_roles_creates_superuser_role_if_none_exists(self, monkeypatch):
-        """A superuser role with all permissions should be created if none exists"""
-        monkeypatch.setattr(
-            beer_garden.db.mongo.util, "_sync_roles_from_role_definition_file", Mock()
-        )
-
-        assert len(Role.objects.filter(name="superuser")) == 0
-        ensure_roles()
-        superuser = Role.objects.get(name="superuser")
-
-        assert len(superuser.permissions) == len(Permissions)
-
-    def test_ensure_roles_creates_bg_plugin_role_if_none_exists(self, monkeypatch):
-        """A plugin role with all permissions should be created if none exists"""
-        monkeypatch.setattr(
-            beer_garden.db.mongo.util, "_sync_roles_from_role_definition_file", Mock()
-        )
-
-        assert len(Role.objects.filter(name="plugin")) == 0
-        ensure_roles()
-        plugin_role = Role.objects.get(name="plugin")
-
-        assert plugin_role.permissions == PLUGIN_ROLE_PERMISSIONS

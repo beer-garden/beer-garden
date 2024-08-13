@@ -3,43 +3,41 @@ import json
 from unittest.mock import Mock
 
 import pytest
+from brewtils.models import Garden, Role, User
 from tornado.httpclient import HTTPError, HTTPRequest
 
+import beer_garden.db.api as db
 import beer_garden.router
 from beer_garden.api.http.authentication import issue_token_pair
-from beer_garden.db.mongo.models import Garden, Role, RoleAssignment, User
+from beer_garden.role import create_role, delete_role
+from beer_garden.user import create_user, delete_user
 
 
 @pytest.fixture(autouse=True)
 def garden():
-    garden = Garden(name="somegarden", connection_type="LOCAL").save()
+    garden = Garden(name="somegarden", connection_type="LOCAL")
 
+    garden = db.create(garden)
     yield garden
-    garden.delete()
+    db.delete(garden)
 
 
 @pytest.fixture
 def garden_admin_role():
-    role = Role(name="garden_admin", permissions=["garden:update"]).save()
+    role = Role(name="garden_admin", permission="GARDEN_ADMIN")
 
+    role = create_role(role)
     yield role
-    role.delete()
+    delete_role(role=role)
 
 
 @pytest.fixture
 def user_with_permission(garden, garden_admin_role):
-    role_assignment = RoleAssignment(
-        role=garden_admin_role,
-        domain={
-            "scope": "Garden",
-            "identifiers": {"name": garden.name},
-        },
-    )
+    user = User(username="testuser", roles=["garden_admin"], password="password")
 
-    user = User(username="testuser", role_assignments=[role_assignment]).save()
-
+    user = create_user(user)
     yield user
-    user.delete()
+    delete_user(user=user)
 
 
 @pytest.fixture
