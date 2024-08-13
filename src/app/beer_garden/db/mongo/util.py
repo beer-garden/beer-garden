@@ -231,7 +231,8 @@ def check_indexes(document_class):
 
     try:
         if document_class.objects.count() > 0:
-            document_class.objects.get()[0]
+            for _ in document_class.objects.get():
+                break
         logger.warning("%s table looks good", document_class.__name__)
     except (FieldDoesNotExist, InvalidDocumentError):
         logger.error(
