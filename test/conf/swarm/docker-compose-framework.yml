@@ -19,13 +19,6 @@ services:
             - ./data/logging-config.yaml:/src/example_configs/logging-config.yaml
             - ./data/localplugins:/plugins
 
-        healthcheck:
-            test: curl --fail http://localhost:2337/config || exit 1
-            interval: 60s
-            retries: 5
-            start_period: 60s
-            timeout: 10s
-
         environment:
             TZ: UTC
 
