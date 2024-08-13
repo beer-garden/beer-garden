@@ -84,6 +84,9 @@ log:
   fallback_file: null
   fallback_level: INFO
 metrics:
+  elastic:
+    enabled: false
+    url: http://localhost:8200
   prometheus:
     enabled: false
     host: 0.0.0.0

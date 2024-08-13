@@ -3,11 +3,13 @@ from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.events import publish
+from beer_garden.metrics import collect_metrics
 
 
 class EventPublisherAPI(AuthorizationHandler):
     parser = SchemaParser()
 
+    @collect_metrics(transaction_type="API", group="EventPublisherAPI")
     def post(self):
         """
         ---

@@ -4,6 +4,7 @@ import logging
 from datetime import datetime, timezone
 from functools import partial
 
+import elasticapm
 import wrapt
 from brewtils.models import Event, Events
 
@@ -70,7 +71,13 @@ def publish_event(event_type: Events):
         event = Event(name=event_type.name)
 
         try:
-            result = wrapped(*args, **kwargs)
+            if config.get("apm.enabled") and elasticapm.get_client():
+                with elasticapm.capture_span(name=event_type.name, span_type="Event"):
+                    result = wrapped(*args, **kwargs)
+                    if hasattr(result, "id"):
+                        elasticapm.set_custom_context({"id": getattr(result, "id")})
+            else:
+                result = wrapped(*args, **kwargs)
 
             event.payload_type = result.__class__.__name__
             event.payload = result
@@ -79,7 +86,6 @@ def publish_event(event_type: Events):
         except Exception as ex:
             event.error = True
             event.error_message = str(ex)
-
             raise
         finally:
             if (not event.error and _publish_success) or (
