@@ -605,10 +605,6 @@ jobs:
         if: always()
         run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.3 --quiet | tail -1)
 
-      - name: Check services
-        if: always()
-        run: docker service ls
-
   JMeter-Testing:
     runs-on: ${{ matrix.os }}
 
