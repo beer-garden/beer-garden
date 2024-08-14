@@ -643,6 +643,7 @@ class System(MongoModel, Document):
     template = StringField()
     groups = ListField(field=StringField())
     prefix_topic = StringField()
+    requires = ListField(field=StringField())
 
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves

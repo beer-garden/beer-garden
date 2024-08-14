@@ -148,6 +148,7 @@ def update_system(
     metadata: dict = None,
     template: str = None,
     groups: list = None,
+    requires: list = None,
 ) -> System:
     """Update an already existing System
 
@@ -202,6 +203,9 @@ def update_system(
 
     if groups is not None:
         updates["groups"] = groups
+
+    if requires is not None:
+        updates["requires"] = requires
 
     if metadata:
         metadata_update = copy.deepcopy(system.metadata)

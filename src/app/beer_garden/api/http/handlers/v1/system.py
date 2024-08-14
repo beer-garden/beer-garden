@@ -182,6 +182,7 @@ class SystemAPI(AuthorizationHandler):
                     "/display_name",
                     "/template",
                     "/groups",
+                    "/requires",
                 ]:
                     kwargs[op.path.strip("/")] = op.value
                 else:

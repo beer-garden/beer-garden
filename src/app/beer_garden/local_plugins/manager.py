@@ -782,6 +782,8 @@ class ConfigKeys(Enum):
     AUTO_BREW_ARGS = 18
     AUTO_BREW_KWARGS = 19
 
+    REQUIRES = 20
+
 
 class ConfigLoader(object):
     @staticmethod
