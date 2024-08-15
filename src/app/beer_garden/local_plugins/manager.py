@@ -689,6 +689,11 @@ class PluginManager(StoppableThread):
         if plugin_args is not None:
             process_args += plugin_args
 
+        if plugin_config.get("REQUIRES"):
+            plugin_requires = plugin_config["REQUIRES"]
+            if plugin_requires is not None:
+                process_args += ["--requires=" + arg for arg in plugin_requires]
+
         if plugin_config["AUTO_BREW_ARGS"]:
             plugin_auto_args = plugin_config["AUTO_BREW_ARGS"].get(instance_name)
             if plugin_auto_args is not None:
