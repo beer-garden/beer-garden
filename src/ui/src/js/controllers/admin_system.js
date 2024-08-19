@@ -258,8 +258,6 @@ export default function adminSystemController(
     return false;
   };
 
-  $rootScope.$watchCollection('systems', groupSystems);
-
   $scope.showLogs = function(system, instance) {
     
     $uibModal.open({
@@ -333,6 +331,9 @@ export default function adminSystemController(
   groupRunners();
 
   // Systems to load async, have to monitor the systems for changes
-  $rootScope.$watchCollection('systems', groupRunners);
+  $rootScope.$watchCollection('systems', function systemUpdate(){
+    groupSystems();
+    groupRunners();
+  });
   
 }
