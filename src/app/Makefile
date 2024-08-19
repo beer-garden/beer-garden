@@ -144,9 +144,9 @@ docker-build: docker-build-alpine docker-build-debian ## build the docker images
 docker-build-alpine:
 	docker build -t $(DOCKER_NAME):latest -f docker/Dockerfile.alpine --build-arg VERSION=$(VERSION) .
 	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(VERSION)
-	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(VERSION)-python3.11
+	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(VERSION)-python3.12
 	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(SHORT_VERSION)
-	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(SHORT_VERSION)-python3.11
+	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(SHORT_VERSION)-python3.12
 	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(VERSION)-alpine
 	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(SHORT_VERSION)-alpine
 
