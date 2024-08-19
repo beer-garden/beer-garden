@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+# 3.27.1
+
+TBD
+
+- Expanded index checks at the start of Beer Garden to include User, Role, User Tokens, Topics, and Replication
+- If Beer Garden fails during shutdown, it will always do an `os._exit()` command after it attempts to shutdown 
+
 # 3.27.0
 
 8/13/2024
