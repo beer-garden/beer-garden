@@ -53,7 +53,6 @@ export default function adminSystemController(
   $scope.groupedSystems = [];
   $scope.alerts = [];
   $scope.runners = [];
-  $scope.showRunnersTile = false;
   $scope.groupedRunners = [];
 
   $scope.setWindowTitle('systems');
@@ -214,26 +213,40 @@ export default function adminSystemController(
   }
 
   function groupRunners() {
-    if ($scope.runners) {
-      $scope.showRunnersTile = false;
 
-      for (const runner of $scope.runners) {
-        runner.instance = instanceFromRunner(runner);
-
-        if ($scope.isRunnerUnassociated(runner)) {
-          $scope.showRunnersTile = true;
-        }
+    // Need to grab a clean instance of runners each time
+    RunnerService.getRunners().then((response) => {
+      $scope.runnerResponse = response;
+      $scope.runners = response.data;
+  
+      // This is kind of messy, but oh well
+      if (responseState($scope.response) === 'empty') {
+        $scope.response = response;
       }
+  
+      if ($scope.runners) {
 
-      const grouped = _.groupBy($scope.runners, (value) => {
-        return value.path;
-      });
-      $scope.groupedRunners = _.sortBy(grouped, (runnerList) => {
-        return runnerList[0].path;
-      });
-    } else {
-      $scope.groupedRunners = [];
-    }
+        const unassociatedRunners = [];
+  
+        for (const runner of $scope.runners) {
+  
+          if ($scope.isRunnerUnassociated(runner)) {
+            unassociatedRunners.push(runner)
+          }
+        }
+  
+        const grouped = _.groupBy(unassociatedRunners, (value) => {
+          return value.path;
+        });
+        $scope.groupedRunners = _.sortBy(grouped, (runnerList) => {
+          return runnerList[0].path;
+        });
+      } else {
+        $scope.groupedRunners = [];
+      }
+    });
+
+    
   }
 
   $scope.hasUnassociatedRunners = function(runners) {
@@ -287,16 +300,7 @@ export default function adminSystemController(
 
   function eventCallback(event) {
     if ($rootScope.garden !== undefined && event.garden == $rootScope.garden.name) {
-      if (event.name.startsWith('RUNNER')) {
-        _.remove($scope.runners, (value) => {
-          return value.id == event.payload.id;
-        });
-
-        if (event.name != 'RUNNER_REMOVED') {
-          $scope.runners.push(event.payload);
-        }
-        groupRunners();
-      } else if (event.name.startsWith('INSTANCE')) {
+      if (event.name.startsWith('RUNNER') || event.name.startsWith('INSTANCE')) {
         groupRunners();
       }
     }
@@ -312,10 +316,12 @@ export default function adminSystemController(
   });
 
   function instanceFromRunner(runner) {
-    for (const system of $rootScope.systems) {
-      for (const instance of system.instances) {
-        if (instance.metadata.runner_id == runner.id) {
-          return instance;
+    if ($rootScope.systems !== undefined){
+      for (const system of $rootScope.systems) {
+        for (const instance of system.instances) {
+          if (instance.metadata.runner_id == runner.id) {
+            return instance;
+          }
         }
       }
     }
@@ -324,16 +330,9 @@ export default function adminSystemController(
   }
 
   groupSystems();
+  groupRunners();
 
-  RunnerService.getRunners().then((response) => {
-    $scope.runnerResponse = response;
-    $scope.runners = response.data;
-
-    // This is kind of messy, but oh well
-    if (responseState($scope.response) === 'empty') {
-      $scope.response = response;
-    }
-
-    groupRunners();
-  });
+  // Systems to load async, have to monitor the systems for changes
+  $rootScope.$watchCollection('systems', groupRunners);
+  
 }
