@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.27.1
+
+TBD
+
+- Start support for Python 3.12.2+: [cpython ticket](https://github.com/python/cpython/issues/111615) has been resolved
+
 # 3.27.0
 
 8/13/2024
