@@ -331,7 +331,8 @@ export default function adminSystemController(
 
   // Systems to load async, have to monitor the systems for changes
   $rootScope.$watchCollection('systems', function systemUpdate(){
-    groupSystems();
     groupRunners();
+    groupSystems();
+    
   });
 }
