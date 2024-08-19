@@ -644,6 +644,7 @@ class System(MongoModel, Document):
     groups = ListField(field=StringField())
     prefix_topic = StringField()
     requires = ListField(field=StringField())
+    requires_timeout = IntField(default=300)
 
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves

@@ -149,6 +149,7 @@ def update_system(
     template: str = None,
     groups: list = None,
     requires: list = None,
+    requires_timeout: int = None
 ) -> System:
     """Update an already existing System
 
@@ -162,6 +163,8 @@ def update_system(
         icon_name: Replacement icon_name
         metadata: Dictionary that will be incorporated into current metadata
         template: Replacement template
+        requires: List of system dependencies
+        requires_timeout: Max time to wait for dependencies
 
     Returns:
         The updated System
@@ -206,6 +209,9 @@ def update_system(
 
     if requires is not None:
         updates["requires"] = requires
+
+    if requires_timeout is not None:
+        updates["requires_timeout"] = requires_timeout
 
     if metadata:
         metadata_update = copy.deepcopy(system.metadata)
