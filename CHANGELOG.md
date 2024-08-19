@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.27.1
+
+TBD
+
+- Fixed APM Service name to clean string based with only alphanumeric characters, spaces, underscores, and dashes
+
 # 3.27.0
 
 8/13/2024
