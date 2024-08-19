@@ -176,7 +176,7 @@ docker-build-unstable: package clean-python ## build nightly docker image
 	docker build -t $(DOCKER_NAME):unstable-python3.8 -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:3.8-alpine .
 	docker build -t $(DOCKER_NAME):unstable-python3.9 -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:3.9-alpine .
 	docker build -t $(DOCKER_NAME):unstable-python3.10 -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:3.10-alpine .
-	docker build -t $(DOCKER_NAME):unstable-python3.11 -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:3.10-alpine .
+	docker build -t $(DOCKER_NAME):unstable-python3.11 -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:3.11-alpine .
 
 	docker build -t $(DOCKER_NAME):unstable-debian -f docker/Dockerfile.unstable-debian .
 
