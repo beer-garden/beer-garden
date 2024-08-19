@@ -22,6 +22,7 @@ export default function systemStatusDirective() {
           case 'STOPPING':
           case 'UNRESPONSIVE':
           case 'MISSING_CONFIGURATION':
+          case 'AWAITING_SYSTEM':
             scope.labelClass = 'label-warning';
             break;
           case 'STARTING':
