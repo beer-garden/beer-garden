@@ -159,7 +159,7 @@ export default function adminSystemController(
               return $rootScope.getIcon('fa-triangle-exclamation');
             }
             if (instance.status == "AWAITING_SYSTEM"){
-              return $rootScope.getIcon('fa-face-grin-beam-sweat')
+              return $rootScope.getIcon('fa-hourglass')
             }
             return $rootScope.getIcon('fa-folder-open');
           }
