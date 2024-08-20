@@ -231,7 +231,7 @@ export default function adminSystemController(
         for (const runner of $scope.runners) {
   
           if ((runner.instance_id === undefined || runner.instance_id == null || runner.instance_id.length == 0) && $scope.isRunnerUnassociated(runner)) {
-            unassociatedRunners.push(runner)
+            unassociatedRunners.push(runner);
           }
         }
   
