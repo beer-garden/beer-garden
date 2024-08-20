@@ -157,7 +157,7 @@ class Application(StoppableThread):
             self._startup()
         except Exception as ex:
             self.logger.error(ex)
-            self._shutdown()
+            self._shutdown(shutdown_failure=True)
             return
 
         while not self.wait(0.1):
@@ -302,13 +302,11 @@ class Application(StoppableThread):
 
         self.logger.info("All set! Let me know if you need anything else!")
 
-    def _shutdown(self):
+    def _shutdown(self, shutdown_failure=False):
         """Shutdown core requirements for Application"""
         self.logger.info(
             "Closing time! You don't have to go home, but you can't stay here."
         )
-
-        shutdown_failure = False
 
         try:
             self.logger.debug("Publishing shutdown sync")
