@@ -4,6 +4,7 @@
 
 TBD
 
+- Fixed issue where Dead runners did not appear on the Unassociated Runners list
 - Start support for Python 3.12.2+: [cpython ticket](https://github.com/python/cpython/issues/111615) has been resolved
 - Expanded index checks at the start of Beer Garden to include User, Role, User Tokens, Topics, and Replication
 
