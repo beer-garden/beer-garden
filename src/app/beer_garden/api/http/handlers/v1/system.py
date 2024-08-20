@@ -339,7 +339,9 @@ class SystemListAPI(AuthorizationHandler):
         filter_params = {}
         for key in self.request.query_arguments:
             if key in self.REQUEST_FIELDS:
-                filter_params[key] = BrewtilsSystemSchema._declared_fields.get(key).deserialize(self.get_query_argument(key))
+                filter_params[key] = BrewtilsSystemSchema._declared_fields.get(
+                    key
+                ).deserialize(self.get_query_argument(key))
 
         serialize_kwargs = {"to_string": True, "many": True}
         if include_fields:
