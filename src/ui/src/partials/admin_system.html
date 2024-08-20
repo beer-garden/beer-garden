@@ -33,7 +33,7 @@
   <div
     class="container-item panel panel-danger"
     style="display: block"
-    ng-show="showRunnersTile"
+    ng-show="groupedRunners.length > 0"
   >
     <div class="panel-heading" style="font-size: 22px">
       <span>Unassociated Local Runners</span>
@@ -41,7 +41,7 @@
     <div
       class="panel-body"
       style="padding-bottom: 0px"
-      ng-repeat="runners in groupedRunners | filter:hasUnassociatedRunners"
+      ng-repeat="runners in groupedRunners"
     >
       <div
         class="list-group-item clearfix"
@@ -91,7 +91,7 @@
         </div>
       </div>
       <div
-        ng-repeat="runner in runners | filter:isRunnerUnassociated | orderBy:'id'"
+        ng-repeat="runner in runners | orderBy:'id'"
       >
         <div class="list-group-item container-fluid">
           <span
