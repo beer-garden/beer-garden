@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.26.5
+
+TBD
+
+- Backdating Patch: Fixed issue where Dead runners did not appear on the Unassociated Runners list
+
 # 3.26.4
 
 7/12/2024
