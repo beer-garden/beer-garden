@@ -33,6 +33,7 @@ def config_all():
         "MAX_INSTANCES": 1,
         "AUTO_BREW_ARGS": None,
         "AUTO_BREW_KWARGS": None,
+        "REQUIRES": [],
     }
 
 
