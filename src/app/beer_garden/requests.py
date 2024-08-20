@@ -988,6 +988,10 @@ def handle_event(event):
         Events.REQUEST_UPDATED.name,
         Events.REQUEST_CANCELED.name,
     ):
+        # No database actions for invalid requests
+        if event.payload.id is None and event.payload.status == "INVALID":
+            return
+
         # Only care about downstream garden
         requests = db.query(
             Request,
