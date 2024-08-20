@@ -44,7 +44,7 @@ def build_rpms(version, iteration, cli_dist, cli_python, local, docker_envs):
     else:
         build_dists = SUPPORTED_DISTRIBUTIONS
 
-    build_python = cli_python or "3.11"
+    build_python = cli_python or "3.7"
     if build_python not in SUPPORTED_PYTHONS:
         print("Invalid python (%s) for RPM build" % cli_python)
         print("Supported distributions are: %s" % SUPPORTED_PYTHONS)

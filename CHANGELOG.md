@@ -2,7 +2,7 @@
 
 # 3.26.5
 
-TBD
+8/20/2024
 
 - Backdating Patch: Fixed issue where Dead runners did not appear on the Unassociated Runners list
 
