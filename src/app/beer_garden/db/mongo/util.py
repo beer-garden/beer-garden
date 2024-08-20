@@ -1,37 +1,14 @@
 # -*- coding: utf-8 -*-
 import logging
-from typing import Union
 
-import yaml
-from marshmallow.exceptions import ValidationError as SchemaValidationError
 from mongoengine.connection import get_db
-from mongoengine.errors import (
-    DoesNotExist,
-    FieldDoesNotExist,
-    InvalidDocumentError,
-    ValidationError,
-)
+from mongoengine.errors import DoesNotExist, FieldDoesNotExist, InvalidDocumentError
 from pymongo.errors import OperationFailure
 
 from beer_garden import config
-from beer_garden.api.authorization import Permissions
-from beer_garden.db.mongo.models import Role, RoleAssignment, User
-from beer_garden.errors import ConfigurationError, IndexOperationError
-from beer_garden.role import sync_roles
+from beer_garden.errors import IndexOperationError
 
 logger = logging.getLogger(__name__)
-
-PLUGIN_ROLE_PERMISSIONS = [
-    Permissions.GARDEN_READ.value,
-    Permissions.INSTANCE_READ.value,
-    Permissions.INSTANCE_UPDATE.value,
-    Permissions.REQUEST_CREATE.value,
-    Permissions.REQUEST_READ.value,
-    Permissions.REQUEST_UPDATE.value,
-    Permissions.SYSTEM_CREATE.value,
-    Permissions.SYSTEM_READ.value,
-    Permissions.SYSTEM_UPDATE.value,
-]
 
 
 def ensure_local_garden():
@@ -105,132 +82,6 @@ def ensure_local_garden():
     garden.save()
 
 
-def ensure_roles():
-    """Create roles if necessary"""
-    _configure_superuser_role()
-    _configure_plugin_role()
-    _sync_roles_from_role_definition_file()
-
-
-def _sync_roles_from_role_definition_file():
-    """If auth.role_definition_file is set in the main application config, this will
-    load that file and pass it over to sync_roles to make the Role definitions in the
-    database match what is defined in the file.
-    """
-    role_definition_file: Union[str, None] = config.get("auth.role_definition_file")
-
-    if role_definition_file:
-        logger.info(f"Syncing role definitions from {role_definition_file}")
-
-        try:
-            with open(role_definition_file, "r") as filestream:
-                role_definitions = yaml.safe_load(filestream)
-                sync_roles(role_definitions)
-        except FileNotFoundError:
-            raise ConfigurationError(
-                f"Role definition file {role_definition_file} not found."
-            )
-        except SchemaValidationError:
-            raise ConfigurationError(
-                f"Error processing role definition file {role_definition_file}."
-            )
-        except ValidationError as validation_error:
-            raise ConfigurationError(
-                f"Invalid role definition in {role_definition_file}: {validation_error}"
-            )
-    else:
-        logger.info("auth.role_definition_file not defined. No roles will be synced.")
-
-
-def _configure_superuser_role():
-    """Creates or updates the superuser role as needed"""
-    try:
-        superuser = Role.objects.get(name="superuser")
-    except Role.DoesNotExist:
-        logger.info("Creating superuser role with all permissions")
-        superuser = Role(name="superuser")
-
-    superuser.permissions = [permission.value for permission in Permissions]
-    superuser.description = "Role containing all permissions"
-    superuser.protected = True
-
-    superuser.save()
-
-
-def _configure_plugin_role():
-    """Creates or updates the plugin role as needed"""
-    try:
-        plugin_role = Role.objects.get(name="plugin")
-    except Role.DoesNotExist:
-        logger.info("Creating plugin role with select permissions")
-        plugin_role = Role(name="plugin")
-
-    plugin_role.permissions = PLUGIN_ROLE_PERMISSIONS
-    plugin_role.description = "Role containing plugin permissions"
-    plugin_role.protected = True
-
-    plugin_role.save()
-
-
-def ensure_users():
-    """Create user accounts if necessary"""
-    if User.objects.count() == 0:
-        _create_admin()
-        _create_plugin_user()
-
-
-def _create_admin():
-    """Create the default admin user if necessary"""
-    username = config.get("auth.default_admin.username")
-    password = config.get("auth.default_admin.password")
-    superuser_role = Role.objects.get(name="superuser")
-
-    logger.info("Creating default admin user with username: %s", username)
-
-    admin = User(username=username)
-    admin.set_password(password)
-    admin.role_assignments = [
-        RoleAssignment(role=superuser_role, domain={"scope": "Global"})
-    ]
-    admin.save()
-
-
-def _create_plugin_user():
-    """Create the default user to run Plugins if necessary"""
-    username = config.get("plugin.local.auth.username")
-    plugin_user = User.objects(username=username).first()
-
-    # Sanity check to make sure we don't accidentally create two
-    # users with the same name
-    if not plugin_user:
-        password = config.get("plugin.local.auth.password")
-        plugin_user_role = Role.objects.get(name="plugin")
-
-        logger.info("Creating default plugin user with username: %s", username)
-
-        plugin_user = User(username=username)
-        plugin_user.set_password(password)
-        plugin_user.role_assignments = [
-            RoleAssignment(role=plugin_user_role, domain={"scope": "Global"})
-        ]
-        plugin_user.save()
-
-
-def ensure_trigger_migration():
-    """File Triggers didn't work all the time, they were removed in 3.14.
-    Remove any file trigger jobs."""
-
-    database = get_db()
-
-    for doc in database["job"].find():
-        try:
-            if doc["trigger_type"] == "file":
-                database["job"].delete_one({"_id": doc["_id"]})
-
-        except Exception:
-            logger.error(f"Error deleting file trigger {doc['_id']}")
-
-
 def ensure_v2_to_v3_model_migration():
     """Ensures that the Role model is flatten and Command model is an
     EmbeddedDocument
@@ -253,11 +104,11 @@ def ensure_v2_to_v3_model_migration():
     it would be better if we could seamlessly move the existing commands into existing
     Systems.
     """
-    from beer_garden.db.mongo.models import LegacyRole, System
+    from beer_garden.db.mongo.models import Role, System
 
     try:
-        if LegacyRole.objects.count() > 0:
-            _ = LegacyRole.objects()[0]
+        if Role.objects.count() > 0:
+            _ = Role.objects()[0]
         if System.objects.count() > 0:
             _ = System.objects()[0]
     except (FieldDoesNotExist, InvalidDocumentError):
@@ -281,7 +132,6 @@ def ensure_model_migration():
     single function for easy management"""
 
     ensure_v2_to_v3_model_migration()
-    ensure_trigger_migration()
 
 
 def check_indexes(document_class):
@@ -379,6 +229,17 @@ def check_indexes(document_class):
             )
             raise
 
+    try:
+        if document_class.objects.count() > 0:
+            document_class.objects.first()
+        logger.warning("%s table looks good", document_class.__name__)
+    except (FieldDoesNotExist, InvalidDocumentError):
+        logger.error(
+            "%s table failed to load properly to validate old indexes and fields, please check the Change Log for any major model changes",
+            document_class.__name__,
+        )
+        raise
+
 
 def _update_request_parent_field_type():
     """Change GenericReferenceField to ReferenceField"""
@@ -399,14 +260,3 @@ def _update_request_has_parent_model():
     raw_collection.update_many(
         {"parent": {"$not": {"$eq": None}}}, {"$set": {"has_parent": True}}
     )
-
-
-def _create_role(role):
-    """Create a role if it doesn't already exist"""
-    from .models import LegacyRole
-
-    try:
-        LegacyRole.objects.get(name=role.name)
-    except DoesNotExist:
-        logger.warning("Role %s missing, about to create" % role.name)
-        role.save()

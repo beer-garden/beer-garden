@@ -123,6 +123,10 @@ export default function adminGardenController(
     GardenService.syncGarden(garden.name);
   };
 
+  $scope.syncUsersGarden = function(garden) {
+    GardenService.syncUsersGarden(garden.name);
+  };
+
   $scope.deleteGarden = function(garden) {
     GardenService.deleteGarden(garden.name);
   };

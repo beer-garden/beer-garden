@@ -58,6 +58,7 @@ from beer_garden.garden import (
     load_garden_connections,
     update_garden,
 )
+from beer_garden.metrics import collect_metrics
 from beer_garden.requests import complete_request, create_request
 
 logger = logging.getLogger(__name__)
@@ -69,7 +70,7 @@ routable_operations = [
     "REQUEST_CREATE",
     "SYSTEM_DELETE",
     "GARDEN_SYNC",
-    "USER_SYNC",
+    "USER_UPSTREAM_SYNC",
 ]
 
 # Executor used to run REQUEST_CREATE operations in an async context
@@ -166,6 +167,13 @@ route_functions = {
     "TOPIC_DELETE": beer_garden.topic.remove_topic,
     "TOPIC_ADD_SUBSCRIBER": beer_garden.topic.topic_add_subscriber,
     "TOPIC_REMOVE_SUBSCRIBER": beer_garden.topic.topic_remove_subscriber,
+    "TOKEN_USER_DELETE": beer_garden.user.revoke_tokens,
+    "ROLE_CREATE": beer_garden.role.create_role,
+    "ROLE_UPDATE": beer_garden.role.update_role,
+    "ROLE_DELETE": beer_garden.role.delete_role,
+    "ROLE_READ_ALL": beer_garden.role.get_roles,
+    "ROLE_READ": beer_garden.role.get_role,
+    "ROLE_RESCAN": beer_garden.role.rescan,
     "RUNNER_READ": beer_garden.local_plugins.manager.runner,
     "RUNNER_READ_ALL": beer_garden.local_plugins.manager.runners,
     "RUNNER_START": beer_garden.local_plugins.manager.start,
@@ -173,8 +181,16 @@ route_functions = {
     "RUNNER_DELETE": beer_garden.local_plugins.manager.remove,
     "RUNNER_RELOAD": beer_garden.local_plugins.manager.reload,
     "RUNNER_RESCAN": beer_garden.local_plugins.manager.rescan,
+    "USER_READ_ALL": beer_garden.user.get_users,
+    "USER_READ": beer_garden.user.get_user,
+    "USER_CREATE": beer_garden.user.create_user,
+    "USER_UPDATE": beer_garden.user.update_user,
+    "USER_DELETE": beer_garden.user.delete_user,
+    "USER_RESCAN": beer_garden.user.rescan,
+    "USER_SYNC_GARDEN": beer_garden.user.initiate_garden_user_sync,
+    "USER_SYNC": beer_garden.user.initiate_user_sync,
+    "USER_UPSTREAM_SYNC": beer_garden.user.upstream_users_sync,
     "PUBLISH_EVENT": beer_garden.events.publish,
-    "USER_SYNC": beer_garden.user.user_sync,
 }
 
 # Filter for fields that should not be published outside of Beer Garden
@@ -183,6 +199,7 @@ router_filter = {
 }
 
 
+@collect_metrics(transaction_type="router")
 def route(operation: Operation):
     """Entry point into the routing subsystem
 
@@ -260,11 +277,13 @@ def execute_local(operation: Operation):
     except RuntimeError:
         pass
 
+    check_async = True
     if loop and operation.operation_type in async_functions:
         lookup = async_functions
+        check_async = False
 
-    elif loop and operation.operation_type in executor_functions:
-        return asyncio.get_event_loop().run_in_executor(
+    if check_async and loop and operation.operation_type in executor_functions:
+        response = asyncio.get_event_loop().run_in_executor(
             t_pool,
             partial(
                 executor_functions[operation.operation_type],
@@ -272,6 +291,7 @@ def execute_local(operation: Operation):
                 **operation.kwargs,
             ),
         )
+        return response
 
     return lookup[operation.operation_type](*operation.args, **operation.kwargs)
 
@@ -692,6 +712,21 @@ def _pre_forward(operation: Operation) -> Operation:
         operation.model.target_garden = None
         operation.model.metadata = {}
 
+        # Map requester to username on target garden
+        if operation.model.requester:
+            user_default_user = True
+            requester = beer_garden.user.get_user(operation.model.requester)
+            for alias_user_map in requester.user_alias_mapping:
+                if alias_user_map.target_garden == operation.target_garden_name:
+                    operation.model.requester = alias_user_map.username
+                    user_default_user = False
+                    break
+
+            if user_default_user:
+                operation.model.requester = get_garden(
+                    operation.target_garden_name
+                ).default_user
+
         # Pull out and store the wait event, if it exists
         wait_event = operation.kwargs.pop("wait_event", None)
         if wait_event:
@@ -717,6 +752,7 @@ def _determine_target(operation: Operation) -> str:
 
     See https://github.com/beer-garden/beer-garden/issues/1076
     """
+
     target_garden = _target_from_type(operation)
 
     if not target_garden:
@@ -741,6 +777,7 @@ def _target_from_type(operation: Operation) -> str:
         "READ" in operation.operation_type
         or "JOB" in operation.operation_type
         or "FILE" in operation.operation_type
+        or "TOKEN" in operation.operation_type
         or operation.operation_type
         in (
             "PLUGIN_LOG_RELOAD",
@@ -750,6 +787,7 @@ def _target_from_type(operation: Operation) -> str:
         or "PUBLISH_EVENT" in operation.operation_type
         or "RUNNER" in operation.operation_type
         or "TOPIC" in operation.operation_type
+        or "ROLE" in operation.operation_type
         or operation.operation_type
         in ("PLUGIN_LOG_RELOAD", "QUEUE_DELETE_ALL", "SYSTEM_CREATE", "REQUEST_DELETE")
     ):
@@ -810,7 +848,9 @@ def _target_from_type(operation: Operation) -> str:
         )
 
     if "USER" in operation.operation_type:
-        return operation.target_garden_name
+        if operation.target_garden_name:
+            return operation.target_garden_name
+        return config.get("garden.name")
 
     raise Exception(f"Bad operation type {operation.operation_type}")
 
@@ -927,7 +967,6 @@ def _forward_http(operation: Operation, target_garden: Garden) -> None:
             "DISABLED",
             "CONFIGURATION_ERROR",
         ]:
-
             easy_client = EasyClient(
                 bg_host=connection.config.get("host"),
                 bg_port=connection.config.get("port"),

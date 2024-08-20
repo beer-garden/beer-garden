@@ -52,6 +52,24 @@ export default function jobCreateTriggerController(
       }
     }
 
+    if (triggerType === 'file') {
+      if (
+        ((!angular.isDefined(model['create']) ||
+          model['create'] === false) &&
+          (!angular.isDefined(model['modify']) ||
+            model['modify'] === false) &&
+          (!angular.isDefined(model['move']) ||
+            model['move'] === false) &&
+          (!angular.isDefined(model['delete']) ||
+            model['delete'] === false))
+      ) {
+        $scope.alerts.push(
+            'At least one file event must be selected',
+        );
+        valid = false;
+      }
+    }
+
     if (triggerType === 'interval') {
       if (
         ((angular.isDefined(model['interval_start_date']) &&

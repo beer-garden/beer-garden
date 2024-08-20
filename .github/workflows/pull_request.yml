@@ -16,7 +16,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.12"]
         os: ["ubuntu-latest"]
 
     name: Linting OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
@@ -61,7 +61,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.7","3.8","3.9","3.11"]
+        python-version: ["3.7","3.8","3.9","3.10","3.11","3.12"]
         os: ["ubuntu-latest"]
 
     name: PyTests OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
@@ -111,7 +111,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.12"]
         os: ["ubuntu-latest"]
 
     env:
@@ -156,21 +156,25 @@ jobs:
           pip install pytest-cov
 
       - name: Generate coverage report
-        continue-on-error: true
         run: |
           coverage run --source beer_garden -m pytest test --tb=no
           coverage report -m
           coverage xml
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
+          verbose: true
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   SecurityCheck:
     runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.12"]
         os: ["ubuntu-latest"]
 
     env:
@@ -214,7 +218,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.7","3.8","3.9","3.10","3.11"]
+        python-version: ["3.7","3.8","3.9","3.10","3.11","3.12"]
         os: ["ubuntu-latest"]
       fail-fast: false
 
@@ -322,9 +326,9 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.12"]
         os: ["ubuntu-latest"]
-        child: ["unstable", "3.19.1","3.20.0","3.21.0","3.22.0","3.23.0"]
+        child: ["unstable", "3.19.1","3.20.0","3.21.0","3.22.0","3.23.0","3.24.0","3.25.0","3.26.0"]
         parent: ["unstable"]
       fail-fast: false
 
@@ -445,7 +449,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.12"]
         os: ["ubuntu-latest"]
       fail-fast: false
 
@@ -529,15 +533,15 @@ jobs:
 
       - name: Grab logs from Beer-Garden.1
         if: always()
-        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.1 --quiet)
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.1 --quiet | tail -1)
 
       - name: Grab logs from Beer-Garden.2
         if: always()
-        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.2 --quiet)
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.2 --quiet | tail -1)
 
       - name: Grab logs from Beer-Garden.3
         if: always()
-        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.3 --quiet)
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.3 --quiet | tail -1)
 
       - name: Run Docker Beer Garden Plugins
         run: docker stack deploy -c docker-compose-plugins.yml beer-plugins
@@ -581,28 +585,32 @@ jobs:
         working-directory: ./test/integration
         timeout-minutes: 2
 
+      - name: Check docker
+        if: always()
+        run: docker ps
+
+      - name: Check BG
+        if: always()
+        run: docker service ps --no-trunc beer-garden_beer-garden
+
       - name: Grab logs from Beer-Garden.1
         if: always()
-        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.1 --quiet)
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.1 --quiet | tail -1)
 
       - name: Grab logs from Beer-Garden.2
         if: always()
-        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.2 --quiet)
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.2 --quiet | tail -1)
 
       - name: Grab logs from Beer-Garden.3
         if: always()
-        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.3 --quiet)
-
-      - name: Check services
-        if: always()
-        run: docker service ls
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.3 --quiet | tail -1)
 
   JMeter-Testing:
     runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.12"]
         os: ["ubuntu-latest"]
         child: ["unstable"]
       fail-fast: false

@@ -12,9 +12,11 @@ import beer_garden.events
 from beer_garden.api.stomp.manager import StompManager
 from beer_garden.events import publish
 from beer_garden.garden import get_gardens
+from beer_garden.metrics import initialize_elastic_client
 
 logger: logging.Logger = logging.getLogger(__name__)
 shutdown_event = threading.Event()
+client = None
 
 
 def signal_handler(_: int, __: types.FrameType):
@@ -26,6 +28,7 @@ def run(ep_conn):
 
     _setup_event_handling(conn_manager)
 
+    initialize_elastic_client("stomp")
     entry_config = config.get("entry.stomp")
     parent_config = config.get("parent.stomp")
     garden_name = config.get("garden.name")

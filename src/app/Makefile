@@ -95,7 +95,7 @@ clean: clean-all ## alias of clean-all
 # Formatting
 format: ## Run black formatter in-line
 	black $(MODULE_NAME) $(TEST_DIR)
-	isort $(MODULE_NAME) $(TEST_DIR)
+	isort --thirdparty brewtils $(MODULE_NAME) $(TEST_DIR)
 
 
 # Linting
@@ -144,9 +144,9 @@ docker-build: docker-build-alpine docker-build-debian ## build the docker images
 docker-build-alpine:
 	docker build -t $(DOCKER_NAME):latest -f docker/Dockerfile.alpine --build-arg VERSION=$(VERSION) .
 	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(VERSION)
-	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(VERSION)-python3.11
+	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(VERSION)-python3.12
 	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(SHORT_VERSION)
-	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(SHORT_VERSION)-python3.11
+	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(SHORT_VERSION)-python3.12
 	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(VERSION)-alpine
 	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(SHORT_VERSION)-alpine
 
@@ -154,12 +154,14 @@ docker-build-alpine:
 	docker build -t $(DOCKER_NAME):$(VERSION)-python3.8 -f docker/Dockerfile.alpine --build-arg VERSION=$(VERSION) --build-arg PYTHON_IMAGE=python:3.8-alpine .
 	docker build -t $(DOCKER_NAME):$(VERSION)-python3.9 -f docker/Dockerfile.alpine --build-arg VERSION=$(VERSION) --build-arg PYTHON_IMAGE=python:3.9-alpine .
 	docker build -t $(DOCKER_NAME):$(VERSION)-python3.10 -f docker/Dockerfile.alpine --build-arg VERSION=$(VERSION) --build-arg PYTHON_IMAGE=python:3.10-alpine .
+	docker build -t $(DOCKER_NAME):$(VERSION)-python3.11 -f docker/Dockerfile.alpine --build-arg VERSION=$(VERSION) --build-arg PYTHON_IMAGE=python:3.11-alpine .
 
 	docker tag $(DOCKER_NAME):$(VERSION)-python3.7 $(DOCKER_NAME):$(SHORT_VERSION)-python3.7
 	docker tag $(DOCKER_NAME):$(VERSION)-python3.8 $(DOCKER_NAME):$(SHORT_VERSION)-python3.8
 	docker tag $(DOCKER_NAME):$(VERSION)-python3.9 $(DOCKER_NAME):$(SHORT_VERSION)-python3.9
 	docker tag $(DOCKER_NAME):$(VERSION)-python3.10 $(DOCKER_NAME):$(SHORT_VERSION)-python3.10
 	docker tag $(DOCKER_NAME):$(VERSION)-python3.11 $(DOCKER_NAME):$(SHORT_VERSION)-python3.11
+	docker tag $(DOCKER_NAME):$(VERSION)-python3.12 $(DOCKER_NAME):$(SHORT_VERSION)-python3.12
 
 
 docker-build-debian:
@@ -168,12 +170,13 @@ docker-build-debian:
 
 docker-build-unstable: package clean-python ## build nightly docker image
 	docker build -t $(DOCKER_NAME):unstable -f docker/Dockerfile.unstable .
-	docker tag $(DOCKER_NAME):unstable $(DOCKER_NAME):unstable-python3.11
+	docker tag $(DOCKER_NAME):unstable $(DOCKER_NAME):unstable-python3.12
 	
 	docker build -t $(DOCKER_NAME):unstable-python3.7 -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:3.7-alpine .
 	docker build -t $(DOCKER_NAME):unstable-python3.8 -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:3.8-alpine .
 	docker build -t $(DOCKER_NAME):unstable-python3.9 -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:3.9-alpine .
 	docker build -t $(DOCKER_NAME):unstable-python3.10 -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:3.10-alpine .
+	docker build -t $(DOCKER_NAME):unstable-python3.11 -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:3.11-alpine .
 
 	docker build -t $(DOCKER_NAME):unstable-debian -f docker/Dockerfile.unstable-debian .
 
@@ -193,12 +196,14 @@ publish-docker: docker-build ## push the docker images
 	docker push $(DOCKER_NAME):$(VERSION)-python3.9
 	docker push $(DOCKER_NAME):$(VERSION)-python3.10
 	docker push $(DOCKER_NAME):$(VERSION)-python3.11
+	docker push $(DOCKER_NAME):$(VERSION)-python3.12
 	docker push $(DOCKER_NAME):$(SHORT_VERSION)
 	docker push $(DOCKER_NAME):$(SHORT_VERSION)-python3.7
 	docker push $(DOCKER_NAME):$(SHORT_VERSION)-python3.8
 	docker push $(DOCKER_NAME):$(SHORT_VERSION)-python3.9
 	docker push $(DOCKER_NAME):$(SHORT_VERSION)-python3.10
 	docker push $(DOCKER_NAME):$(SHORT_VERSION)-python3.11
+	docker push $(DOCKER_NAME):$(SHORT_VERSION)-python3.12
 	docker push $(DOCKER_NAME):$(VERSION)-debian
 	docker push $(DOCKER_NAME):$(SHORT_VERSION)-debian
 
@@ -209,4 +214,5 @@ publish-docker-unstable: docker-build-unstable ## push the unstable docker image
 	docker push $(DOCKER_NAME):unstable-python3.9
 	docker push $(DOCKER_NAME):unstable-python3.10
 	docker push $(DOCKER_NAME):unstable-python3.11
+	docker push $(DOCKER_NAME):unstable-python3.12
 	docker push $(DOCKER_NAME):unstable-debian
