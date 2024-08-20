@@ -171,7 +171,7 @@ def initialize_elastic_client(label: str):
     if config.get("metrics.elastic.enabled"):
         Client(
             {
-                "SERVICE_NAME": f"{re.sub(r'[^a-zA-Z0-9 _-]+$', '', config.get('garden.name'))}-{label}",
+                "SERVICE_NAME": f"{re.sub(r'[^a-zA-Z0-9 _-]', '', config.get('garden.name'))}-{label}",
                 "ELASTIC_APM_SERVER_URL": config.get("metrics.elastic.url"),
             }
         )
