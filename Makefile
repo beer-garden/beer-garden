@@ -7,6 +7,7 @@ UI_DIR         = src/ui
 
 VERSION        ?= 0.0.0
 ITERATION      ?= 1
+PYTHON_VERSION ?=3.7
 
 .PHONY: clean clean-build clean-test clean-pyc help test
 
@@ -42,10 +43,10 @@ help:
 
 # RPM
 rpm-build:  ## build rpm
-	rpm/bin/build.py rpm $(VERSION) --iteration $(ITERATION)
+	rpm/bin/build.py rpm $(VERSION) --iteration $(ITERATION) --python $(PYTHON_VERSION) 
 
 rpm-build-local:  ## build local rpm
-	rpm/bin/build.py rpm --local $(VERSION)
+	rpm/bin/build.py rpm --local $(VERSION) --python $(PYTHON_VERSION) 
 
 
 # Docker
