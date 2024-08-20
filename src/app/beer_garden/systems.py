@@ -149,7 +149,7 @@ def update_system(
     template: str = None,
     groups: list = None,
     requires: list = None,
-    requires_timeout: int = None
+    requires_timeout: int = None,
 ) -> System:
     """Update an already existing System
 

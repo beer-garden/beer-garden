@@ -183,7 +183,7 @@ class SystemAPI(AuthorizationHandler):
                     "/template",
                     "/groups",
                     "/requires",
-                    "/requires_timeout"
+                    "/requires_timeout",
                 ]:
                     kwargs[op.path.strip("/")] = op.value
                 else:
