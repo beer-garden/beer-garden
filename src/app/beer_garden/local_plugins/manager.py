@@ -689,6 +689,16 @@ class PluginManager(StoppableThread):
         if plugin_args is not None:
             process_args += plugin_args
 
+        if plugin_config.get("REQUIRES"):
+            plugin_requires = plugin_config["REQUIRES"]
+            if plugin_requires is not None:
+                process_args += ["--requires=" + arg for arg in plugin_requires]
+
+        if plugin_config.get("REQUIRES_TIMEOUT"):
+            plugin_requires_timeout = plugin_config["REQUIRES_TIMEOUT"]
+            if plugin_requires_timeout is not None:
+                process_args += ["--requires_timeout=" + str(plugin_requires_timeout)]
+
         if plugin_config["AUTO_BREW_ARGS"]:
             plugin_auto_args = plugin_config["AUTO_BREW_ARGS"].get(instance_name)
             if plugin_auto_args is not None:
@@ -787,6 +797,9 @@ class ConfigKeys(Enum):
     AUTO_BREW_CLASS = 17
     AUTO_BREW_ARGS = 18
     AUTO_BREW_KWARGS = 19
+
+    REQUIRES = 20
+    REQUIRES_TIMEOUT = 21
 
 
 class ConfigLoader(object):
