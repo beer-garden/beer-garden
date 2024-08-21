@@ -4,10 +4,18 @@
 
 TBD
 
+- Added REQUIRES list and REQUIRES_TIMEOUT in beer.conf. Plugins will wait for system dependencies before starting.
+- Fixed APM Service name to clean string based with only alphanumeric characters, spaces, underscores, and dashes
 - Fixed issue where Dead runners did not appear on the Unassociated Runners list
 - Start support for Python 3.12.2+: [cpython ticket](https://github.com/python/cpython/issues/111615) has been resolved
 - Expanded index checks at the start of Beer Garden to include User, Role, User Tokens, Topics, and Replication
-- Added REQUIRES list and REQUIRES_TIMEOUT in beer.conf. Plugins will wait for system dependencies before starting.
+- Fixed issue where invalid requests threw errors in Request handler for REQUEST_UPDATE
+
+# 3.26.5
+
+8/20/2024
+
+- Backdating Patch: Fixed issue where Dead runners did not appear on the Unassociated Runners list (Not included in 3.27.0 Release)
 
 # 3.27.0
 
