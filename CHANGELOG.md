@@ -2,7 +2,7 @@
 
 # 3.27.1
 
-TBD
+8/21/2024
 
 - Added REQUIRES list and REQUIRES_TIMEOUT in beer.conf. Plugins will wait for system dependencies before starting.
 - Fixed APM Service name to clean string based with only alphanumeric characters, spaces, underscores, and dashes
