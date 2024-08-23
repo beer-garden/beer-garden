@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.27.2
+
+TBD
+
+- Fixed bug where Garden Sync response doesn't null check before evaluating API response
+
 # 3.27.1
 
 8/21/2024
