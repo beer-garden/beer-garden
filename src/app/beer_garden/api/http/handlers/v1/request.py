@@ -587,7 +587,11 @@ class RequestListAPI(AuthorizationHandler):
 
         self.verify_user_permission_for_object(request_model)
 
-        if config.get("auth.enabled") and self.current_user and not request_model.requester:
+        if (
+            config.get("auth.enabled")
+            and self.current_user
+            and not request_model.requester
+        ):
             request_model.requester = self.current_user.username
 
         try:
