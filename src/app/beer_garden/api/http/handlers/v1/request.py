@@ -9,6 +9,7 @@ from brewtils.errors import ModelValidationError
 from brewtils.models import Operation, Permissions, Request, System
 from brewtils.schema_parser import SchemaParser
 
+import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.api.http.base_handler import future_wait
 from beer_garden.api.http.exceptions import BadRequest, RequestForbidden
@@ -487,7 +488,11 @@ class RequestListAPI(AuthorizationHandler):
 
         self.verify_user_permission_for_object(request_model)
 
-        if self.current_user and not request_model.requester:
+        if (
+            config.get("auth.enabled")
+            and self.current_user
+            and not request_model.requester
+        ):
             request_model.requester = self.current_user.username
 
         wait_future = None
@@ -582,7 +587,7 @@ class RequestListAPI(AuthorizationHandler):
 
         self.verify_user_permission_for_object(request_model)
 
-        if self.current_user and not request_model.requester:
+        if config.get("auth.enabled") and self.current_user and not request_model.requester:
             request_model.requester = self.current_user.username
 
         try:
