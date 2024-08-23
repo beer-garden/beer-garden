@@ -14,6 +14,7 @@ from beer_garden import config
 from beer_garden.errors import ConfigurationError, InvalidPasswordException
 from beer_garden.garden import get_garden, get_gardens
 from beer_garden.role import get_role
+from beer_garden.errors import ForwardException
 
 logger = logging.getLogger(__name__)
 
@@ -635,7 +636,10 @@ def initiate_user_sync() -> None:
             },
         )
 
-        route(operation)
+        try:
+            route(operation)
+        except ForwardException:
+            logger.error(f"Failed to sync users to {child.name}")
 
 
 def upstream_user_sync(upstream_user: User) -> User:

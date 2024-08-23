@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.27.2
+
+TBD
+
+- Fixed issue where if user sync with child garden fails at startup will stop Beer Garden
+
 # 3.27.1
 
 8/21/2024
