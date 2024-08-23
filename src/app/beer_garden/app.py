@@ -21,12 +21,12 @@ import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.db.mongo.pruner
 import beer_garden.events
+import beer_garden.events.handlers
 import beer_garden.garden
 import beer_garden.local_plugins.manager
 import beer_garden.namespace
 import beer_garden.queue.api as queue
 import beer_garden.router
-from beer_garden.events.handlers import garden_callbacks
 from beer_garden.events.parent_procesors import HttpParentUpdater
 from beer_garden.events.processors import (
     EventProcessor,
@@ -429,9 +429,7 @@ class Application(StoppableThread):
         event_manager.register(self.entry_manager, manage=False)
 
         # Register the callback processor
-        event_manager.register(
-            InternalQueueListener(action=garden_callbacks, name="callbacks")
-        )
+        beer_garden.events.handlers.add_internal_events_handler(event_manager)
 
         # Set up parent connection
         cfg = config.get("parent.http")

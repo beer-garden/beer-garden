@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 import logging
+import traceback
 import uuid
+from copy import deepcopy
 from multiprocessing import Queue
 from queue import Empty
 
+import elasticapm
 from brewtils.models import Event, Events
 from brewtils.stoppable_thread import StoppableThread
 
@@ -64,6 +67,36 @@ class QueueListener(BaseProcessor):
 class InternalQueueListener(QueueListener):
     """Listener for internal events only"""
 
+    def __init__(self, handler, handler_tag, filters=None, **kwargs):
+        super().__init__(action=self.handle_event, **kwargs)
+
+        self._filters = filters
+        self._handler = handler
+        self._handler_tag = handler_tag
+
+    def handle_event(self, event):
+        try:
+            if config.get("apm.enabled") and elasticapm.get_client():
+                with elasticapm.capture_span(name=event.name, span_type="Event"):
+                    if hasattr(event, "payload") and hasattr(event.payload, "id"):
+                        elasticapm.set_custom_context(
+                            {"id": getattr(event.payload, "id")}
+                        )
+                    self._handler(deepcopy(event))
+
+            else:
+                self._handler(deepcopy(event))
+        except Exception as ex:
+            logger.error(
+                "'%s' handler received an error executing callback for event %s: %s: %s"
+                % (
+                    self._handler_tag,
+                    repr(event),
+                    str(ex),
+                    traceback.TracebackException.from_exception(ex),
+                )
+            )
+
     def put(self, event: Event):
         """Put a new item on the queue to be processed
 
@@ -72,7 +105,15 @@ class InternalQueueListener(QueueListener):
         """
         if event.metadata.get("API_ONLY", False):
             return
-        self._queue.put(event)
+        if event.error:
+            logger.error(f"Error event: {event!r}")
+            return
+
+        if self._filters:
+            if event.name in self._filters:
+                self._queue.put(event)
+        else:
+            self._queue.put(event)
 
 
 class DelayListener(QueueListener):
