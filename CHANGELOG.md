@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.27.2
+
+TBD
+
+- Fixed issue where Topic delete was called with `args` instead of `kwargs`
+
 # 3.27.1
 
 8/21/2024
