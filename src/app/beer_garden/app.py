@@ -28,12 +28,7 @@ import beer_garden.namespace
 import beer_garden.queue.api as queue
 import beer_garden.router
 from beer_garden.events.parent_procesors import HttpParentUpdater
-from beer_garden.events.processors import (
-    EventProcessor,
-    FanoutProcessor,
-    InternalQueueListener,
-    QueueListener,
-)
+from beer_garden.events.processors import EventProcessor, FanoutProcessor, QueueListener
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer, initialize_elastic_client
@@ -170,18 +165,6 @@ class Application(StoppableThread):
             beer_garden.local_plugins.manager.lpm_proxy.monitor()
 
         self._shutdown()
-
-    @staticmethod
-    def handle_event(event):
-        """Handle any events the application cares about"""
-        # Only care about local garden
-        if event.garden == beer_garden.config.get("garden.name"):
-            # Start local plugins after the HTTP entry point comes up
-            if (
-                event.name == Events.ENTRY_STARTED.name
-                and event.metadata["entry_point_type"] == "HTTP"
-            ):
-                beer_garden.local_plugins.manager.rescan()
 
     def _progressive_backoff(self, func: Callable, failure_message: str):
         """Execute a function until it returns truthy, increasing wait time each attempt

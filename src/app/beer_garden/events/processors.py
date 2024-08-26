@@ -67,12 +67,18 @@ class QueueListener(BaseProcessor):
 class InternalQueueListener(QueueListener):
     """Listener for internal events only"""
 
-    def __init__(self, handler, handler_tag, filters=None, **kwargs):
+    def __init__(self, handler, handler_tag, local_only=False, filters=None, **kwargs):
         super().__init__(action=self.handle_event, **kwargs)
 
-        self._filters = filters
+        self._filters = []
+
+        if filters:
+            for filter in filters:
+                self._filters.append(filter.name)
+
         self._handler = handler
         self._handler_tag = handler_tag
+        self._local_only = local_only
 
     def handle_event(self, event):
         try:
@@ -103,16 +109,21 @@ class InternalQueueListener(QueueListener):
         Args:
             item: New item
         """
+
+        if not self._filters:
+            return
+
+        if self._local_only and event.garden != config.get("garden.name"):
+            return
+
         if event.metadata.get("API_ONLY", False):
             return
+
         if event.error:
             logger.error(f"Error event: {event!r}")
             return
 
-        if self._filters:
-            if event.name in self._filters:
-                self._queue.put(event)
-        else:
+        if event.name in self._filters:
             self._queue.put(event)
 
 
