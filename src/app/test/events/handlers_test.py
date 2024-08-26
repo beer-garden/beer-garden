@@ -3,9 +3,10 @@ import pytest
 from brewtils.models import Events
 from mock import Mock
 
+from beer_garden import config
 from beer_garden.events.handlers import add_internal_events_handler
 from beer_garden.events.processors import FanoutProcessor
-from beer_garden import config
+
 
 class TestHandlers:
     @pytest.mark.parametrize(
@@ -72,26 +73,27 @@ class TestHandlers:
             (Events.DIRECTORY_FILE_CHANGE, 1),
         ],
     )
-    def test_garden_local_callbacks(self, monkeypatch, bg_event, event_name, expected_calls):
-        """garden_ballbacks should send a copy of event to handlers as to not mangle it"""
+    def test_garden_local_callbacks(
+        self, monkeypatch, bg_event, event_name, expected_calls
+    ):
+        """Tests to ensure the expected number of Handlers are called for local events"""
 
         bg_event.name = event_name.name
         bg_event.garden = "localgarden"
 
-        config._CONFIG = {"garden": {"name": bg_event.garden}}        
+        config._CONFIG = {"garden": {"name": bg_event.garden}}
 
         event_manager = FanoutProcessor(name="event manager")
         add_internal_events_handler(event_manager)
 
         assert len(event_manager._managed_processors) == 15
-        
+
         put_mock = Mock()
 
         for processor in event_manager._managed_processors:
-           
+
             monkeypatch.setattr(processor._queue, "put", put_mock)
             processor.put(bg_event)
-
 
         assert put_mock.call_count == expected_calls
 
@@ -143,7 +145,7 @@ class TestHandlers:
             (Events.RUNNER_STOPPED, 0),
             (Events.RUNNER_REMOVED, 0),
             (Events.JOB_UPDATED, 0),
-            (Events.JOB_EXECUTED,0),
+            (Events.JOB_EXECUTED, 0),
             (Events.USER_UPDATED, 0),
             (Events.USERS_IMPORTED, 0),
             (Events.ROLE_UPDATED, 0),
@@ -159,25 +161,26 @@ class TestHandlers:
             (Events.DIRECTORY_FILE_CHANGE, 0),
         ],
     )
-    def test_garden_remote_callbacks(self, monkeypatch, bg_event, event_name, expected_calls):
-        """garden_ballbacks should send a copy of event to handlers as to not mangle it"""
+    def test_garden_remote_callbacks(
+        self, monkeypatch, bg_event, event_name, expected_calls
+    ):
+        """Tests to ensure the expected number of Handlers are called for remote events"""
 
         bg_event.name = event_name.name
         bg_event.garden = "remotegarden"
 
-        config._CONFIG = {"garden": {"name": "localgarden"}}        
+        config._CONFIG = {"garden": {"name": "localgarden"}}
 
         event_manager = FanoutProcessor(name="event manager")
         add_internal_events_handler(event_manager)
 
         assert len(event_manager._managed_processors) == 15
-        
+
         put_mock = Mock()
 
         for processor in event_manager._managed_processors:
-           
+
             monkeypatch.setattr(processor._queue, "put", put_mock)
             processor.put(bg_event)
-
 
         assert put_mock.call_count == expected_calls
