@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.27.2
+
+TBD
+
+- Updated each `handle_event` function to be processed in independent threads
+
 # 3.27.1
 
 8/21/2024
