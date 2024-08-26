@@ -326,6 +326,16 @@ def invalid_source_check(operation: Operation):
         if connection.api == operation.source_api and connection.status != "DISABLED":
             return False
 
+    loaded_garden = beer_garden.garden.load_garden_connections(Garden(name=operation.source_garden_name))
+    if loaded_garden.status == "NOT_CONFIGURED":
+        return True
+    
+    beer_garden.garden.rescan()
+
+    for connection in loaded_garden.receiving_connections:
+        if connection.api == operation.source_api and connection.status != "DISABLED":
+            return False
+        
     return True
 
 
