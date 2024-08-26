@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import logging
-from copy import deepcopy
 
 from brewtils.models import Events
 
