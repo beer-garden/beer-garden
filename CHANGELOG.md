@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.27.2
+
+TBD
+
+- Beer Garden will only emit locally generated events to any listening or configured APIs. 
+
 # 3.27.1
 
 8/21/2024
