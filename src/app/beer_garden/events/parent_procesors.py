@@ -41,7 +41,7 @@ class HttpParentUpdater(QueueListener):
 
         if event.garden and event.garden != conf.get("garden.name"):
             return
-        
+
         # TODO - This shouldn't be set here
         event.garden = conf.get("garden.name")
         if event.name in (
