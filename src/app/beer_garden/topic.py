@@ -182,7 +182,7 @@ def prune_topics(garden):
             if update_subscribers:
                 if len(valid_subscribers) == 0:
                     logger.debug(f"Removing Topic {topic.name}")
-                    remove_topic(topic_name=topic)
+                    remove_topic(topic_name=topic.name)
                 else:
                     topic.subscribers = valid_subscribers
                     update_topic(topic)
