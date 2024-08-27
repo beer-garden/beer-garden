@@ -4,6 +4,7 @@
 
 TBD
 
+- Added logging messages for Garden rescan operation
 - Added router checking for configuration files in children folder if child garden is not loaded yet
 - Fixed issue where child requests were not getting cancelled when the parent is cancelled
 - Fixed issue where Topic delete was called with `args` instead of `kwargs`
