@@ -670,7 +670,7 @@ def rescan():
                         Garden(name=garden_name, connection_type="Remote")
                     )
                 else:
-                    logger.debug(
+                    logger.info(
                         f"Loading existing configuration file for {garden.name}"
                     )
 
