@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.27.2
+
+TBD
+
+- Added router checking for configuration files in children folder if child garden is not loaded yet
+
 # 3.27.1
 
 8/21/2024
