@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+#3.27.2
+
+TBD
+
+- Fixed issue where Requester was added to requests when auth was disabled
+
 # 3.27.1
 
 8/21/2024
