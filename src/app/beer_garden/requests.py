@@ -1135,6 +1135,11 @@ def clean_command_type_temp(request: Request, is_remote: bool):
 
 
 def cancel_request_children(request: Request):
+    """Cancel any children in a non completed status
+
+    Args:
+        request (Request): Parent Request
+    """    
     request.children = db.query(Request, filter_params={"parent": request})
 
     for child in request.children:
