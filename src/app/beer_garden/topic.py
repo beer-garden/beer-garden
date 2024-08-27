@@ -62,7 +62,29 @@ def remove_topic(
         The removed Topic
 
     """
-    topic = topic or get_topic(topic_id=topic_id, topic_name=topic_name)
+    if not topic:
+        topics = []
+        if topic_id:
+            topics = db.query(
+                Topic,
+                filter_params={"id": topic_id},
+            )
+        elif topic_name:
+            topics = db.query(
+                Topic,
+                filter_params={"name": topic_name},
+            )
+
+        if topics:
+            topic = topics[0]
+        else:
+            logger.error(
+                (
+                    "Attempted to delete topic not found in database, "
+                    f"{'ID: ' + topic_id if topic_id else 'Name: ' + topic_name}"
+                )
+            )
+            return None
 
     db.delete(topic)
 
