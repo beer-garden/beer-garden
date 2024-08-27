@@ -670,7 +670,9 @@ def rescan():
                         Garden(name=garden_name, connection_type="Remote")
                     )
                 else:
-                    logger.debug(f"Loading existing configuration file for {garden.name}")     
+                    logger.debug(
+                        f"Loading existing configuration file for {garden.name}"
+                    )
 
                 # Garden was created by child, update the connection information if available
                 for connection in garden.publishing_connections:
