@@ -715,7 +715,7 @@ def garden_sync(sync_target: str = None):
                     kwargs={"sync_target": garden.name},
                 )
             )
-        except (ForwardException, RoutingRequestException) as ex:
+        except (ForwardException, RoutingRequestException):
             logger.error(f"Failed to forward sync operation to garden {garden.name}")
 
 
