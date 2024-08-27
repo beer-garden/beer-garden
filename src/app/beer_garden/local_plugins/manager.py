@@ -145,6 +145,13 @@ def handle_event(event: Event) -> None:
         elif event.name == Events.INSTANCE_STOPPED.name:
             lpm_proxy.handle_stopped(event)
 
+        elif (
+            event.name == Events.ENTRY_STARTED.name
+            and event.metadata["entry_point_type"] == "HTTP"
+        ):
+            # Start local plugins after the HTTP entry point comes up
+            rescan()
+
 
 def flatten_kwargs(kwargs: dict) -> list:
     return [f"{k}={v}" for k, v in kwargs.items()]
