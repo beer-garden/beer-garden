@@ -104,6 +104,7 @@ jobs:
 
   CodeCoverage:
     runs-on: ${{ matrix.os }}
+    needs: PyTest
 
     defaults:
       run:
@@ -215,6 +216,7 @@ jobs:
 
   Local-Plugin-Testing:
     runs-on: ${{ matrix.os }}
+    needs: PyTest
 
     strategy:
       matrix:
@@ -323,6 +325,7 @@ jobs:
 
   Grandchild-Testing:
     runs-on: ${{ matrix.os }}
+    needs: Local-Plugin-Testing
 
     strategy:
       matrix:
@@ -446,6 +449,7 @@ jobs:
 
   Replication-Testing:
     runs-on: ${{ matrix.os }}
+    needs: Local-Plugin-Testing
 
     strategy:
       matrix:
@@ -607,6 +611,7 @@ jobs:
 
   JMeter-Testing:
     runs-on: ${{ matrix.os }}
+    needs: Grandchild-Testing
 
     strategy:
       matrix:
