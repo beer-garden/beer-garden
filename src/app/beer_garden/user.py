@@ -3,7 +3,16 @@ import os
 from copy import deepcopy
 
 import yaml
-from brewtils.models import Event, Garden, Operation, Permissions, Role, User, UserToken
+from brewtils.models import (
+    Event,
+    Events,
+    Garden,
+    Operation,
+    Permissions,
+    Role,
+    User,
+    UserToken,
+)
 from brewtils.schema_parser import SchemaParser
 from mongoengine import DoesNotExist
 from mongoengine.errors import FieldDoesNotExist
@@ -11,7 +20,11 @@ from passlib.apps import custom_app_context
 
 import beer_garden.db.api as db
 from beer_garden import config
-from beer_garden.errors import ConfigurationError, InvalidPasswordException
+from beer_garden.errors import (
+    ConfigurationError,
+    ForwardException,
+    InvalidPasswordException,
+)
 from beer_garden.garden import get_garden, get_gardens
 from beer_garden.role import get_role
 
@@ -635,7 +648,10 @@ def initiate_user_sync() -> None:
             },
         )
 
-        route(operation)
+        try:
+            route(operation)
+        except ForwardException:
+            logger.error(f"Failed to sync users to {child.name}")
 
 
 def upstream_user_sync(upstream_user: User) -> User:
@@ -802,7 +818,7 @@ def update_local_role_assignments_for_role(role: Role) -> int:
 def handle_event(event: Event) -> None:
     # Only handle events from downstream gardens
     if event.garden == config.get("garden.name"):
-        if event.name == "ROLE_DELETED":
+        if Events.ROLE_DELETED.name == event.name:
             remove_local_role_assignments_for_role(event.payload)
-        elif event.name == "USER_UPDATED":
+        elif Events.USER_UPDATED.name == event.name:
             initiate_user_sync()
