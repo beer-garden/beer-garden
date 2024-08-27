@@ -1139,7 +1139,7 @@ def cancel_request_children(request: Request):
 
     Args:
         request (Request): Parent Request
-    """    
+    """
     request.children = db.query(Request, filter_params={"parent": request})
 
     for child in request.children:
