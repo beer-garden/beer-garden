@@ -4,6 +4,7 @@
 
 TBD
 
+- Fixed issue where Topic delete was called with `args` instead of `kwargs`
 - Updated each `handle_event` function to be processed in independent threads
 - Beer Garden will only emit locally generated events to any listening or configured APIs. 
 - Fixed bug where Garden Sync response doesn't null check before evaluating API response
