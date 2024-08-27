@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.27.2
+
+TBD
+
+- Fixed issue where child requests were not getting cancelled when the parent is cancelled
+
 # 3.27.1
 
 8/21/2024
