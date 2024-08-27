@@ -3,7 +3,16 @@ import os
 from copy import deepcopy
 
 import yaml
-from brewtils.models import Event, Garden, Operation, Permissions, Role, User, UserToken
+from brewtils.models import (
+    Event,
+    Events,
+    Garden,
+    Operation,
+    Permissions,
+    Role,
+    User,
+    UserToken,
+)
 from brewtils.schema_parser import SchemaParser
 from mongoengine import DoesNotExist
 from mongoengine.errors import FieldDoesNotExist
@@ -809,7 +818,7 @@ def update_local_role_assignments_for_role(role: Role) -> int:
 def handle_event(event: Event) -> None:
     # Only handle events from downstream gardens
     if event.garden == config.get("garden.name"):
-        if event.name == "ROLE_DELETED":
+        if Events.ROLE_DELETED.name == event.name:
             remove_local_role_assignments_for_role(event.payload)
-        elif event.name == "USER_UPDATED":
+        elif Events.USER_UPDATED.name == event.name:
             initiate_user_sync()
