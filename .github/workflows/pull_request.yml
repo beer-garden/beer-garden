@@ -325,7 +325,7 @@ jobs:
 
   Grandchild-Testing:
     runs-on: ${{ matrix.os }}
-    needs: PyTest
+    needs: Local-Plugin-Testing
 
     strategy:
       matrix:
@@ -449,7 +449,7 @@ jobs:
 
   Replication-Testing:
     runs-on: ${{ matrix.os }}
-    needs: PyTest
+    needs: Local-Plugin-Testing
 
     strategy:
       matrix:
@@ -611,7 +611,7 @@ jobs:
 
   JMeter-Testing:
     runs-on: ${{ matrix.os }}
-    needs: PyTest
+    needs: Grandchild-Testing
 
     strategy:
       matrix:
