@@ -4,6 +4,7 @@
 
 TBD
 
+- Fixed issue where child requests were not getting cancelled when the parent is cancelled
 - Fixed issue where Topic delete was called with `args` instead of `kwargs`
 - Updated each `handle_event` function to be processed in independent threads
 - Beer Garden will only emit locally generated events to any listening or configured APIs. 

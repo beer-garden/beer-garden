@@ -1003,6 +1003,13 @@ def handle_event(event):
         else:
             existing_request = None
 
+        if (
+            event.garden == config.get("garden.name")
+            and not event.error
+            and event.name == Events.REQUEST_CANCELED.name
+        ):
+            cancel_request_children(event.payload)
+
         if existing_request and existing_request.status != event.payload.status:
             # Skip status that revert
             if existing_request.status in ("CANCELED", "SUCCESS", "ERROR", "INVALID"):
@@ -1125,3 +1132,20 @@ def clean_command_type_temp(request: Request, is_remote: bool):
             db.delete(child)
 
     return request
+
+
+def cancel_request_children(request: Request):
+    """Cancel any children in a non completed status
+
+    Args:
+        request (Request): Parent Request
+    """
+    request.children = db.query(Request, filter_params={"parent": request})
+
+    for child in request.children:
+        if child.status in [
+            "IN_PROGRESS",
+            "CREATED",
+            "RECEIVED",
+        ]:
+            cancel_request(request=child)
