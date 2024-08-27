@@ -19,6 +19,8 @@ def _remove_heartbeat_history(response: str, many: bool = False) -> str:
     This balloons out the size of the returned object, and isn't currently
     required for the UI for display purposes, so we are clearing the list
     """
+    if response == "" or response == "null":
+        return response
     system_data = GardenRemoveStatusInfoSchema(many=many).loads(response).data
     return GardenRemoveStatusInfoSchema(many=many).dumps(system_data).data
 
