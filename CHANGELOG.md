@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.27.2
+
+TBD
+
+- Added logging messages for Garden rescan operation
+
 # 3.27.1
 
 8/21/2024
