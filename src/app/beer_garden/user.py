@@ -20,7 +20,11 @@ from passlib.apps import custom_app_context
 
 import beer_garden.db.api as db
 from beer_garden import config
-from beer_garden.errors import ConfigurationError, InvalidPasswordException
+from beer_garden.errors import (
+    ConfigurationError,
+    ForwardException,
+    InvalidPasswordException,
+)
 from beer_garden.garden import get_garden, get_gardens
 from beer_garden.role import get_role
 
@@ -644,7 +648,10 @@ def initiate_user_sync() -> None:
             },
         )
 
-        route(operation)
+        try:
+            route(operation)
+        except ForwardException:
+            logger.error(f"Failed to sync users to {child.name}")
 
 
 def upstream_user_sync(upstream_user: User) -> User:
