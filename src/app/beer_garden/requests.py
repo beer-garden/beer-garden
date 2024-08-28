@@ -948,7 +948,10 @@ def process_wait(request: Request, timeout: float) -> Request:
 
 def handle_wait_events(event):
     # Whenever a request is completed check to see if this process is waiting for it
-    if not event.error and event.name in [Events.REQUEST_COMPLETED.name, Events.REQUEST_CANCELED.name]:
+    if not event.error and event.name in [
+        Events.REQUEST_COMPLETED.name,
+        Events.REQUEST_CANCELED.name,
+    ]:
         completion_event = request_map.pop(event.payload.id, None)
         if completion_event:
             # Async events return the result object

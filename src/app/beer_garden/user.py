@@ -24,7 +24,7 @@ from beer_garden.errors import (
     ConfigurationError,
     ForwardException,
     InvalidPasswordException,
-    RoutingRequestException
+    RoutingRequestException,
 )
 from beer_garden.garden import get_garden, get_gardens
 from beer_garden.role import get_role
