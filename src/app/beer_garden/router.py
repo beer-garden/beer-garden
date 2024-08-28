@@ -21,6 +21,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from copy import deepcopy
 from functools import partial
 from typing import Dict, Union
+from mongoengine import DoesNotExist
 
 import brewtils.models
 from brewtils import EasyClient
@@ -322,18 +323,32 @@ def invalid_source_check(operation: Operation):
     ):
         return False
 
+    # Receiving Connections have not been configured yet
+    if not gardens[operation.source_garden_name].receiving_connections:
+        return False
+    
     for connection in gardens[operation.source_garden_name].receiving_connections:
         if connection.api == operation.source_api and connection.status != "DISABLED":
             return False
 
-    loaded_garden = beer_garden.garden.load_garden_connections(
-        Garden(name=operation.source_garden_name)
-    )
+    try:
+        loaded_garden = beer_garden.garden.get_garden(operation.source_garden_name)
+    except DoesNotExist:
+        loaded_garden = beer_garden.garden.load_garden_connections(
+            Garden(name=operation.source_garden_name)
+        )
     if loaded_garden.status == "NOT_CONFIGURED":
         return True
 
+    with garden_lock.lock():
+        gardens[operation.source_garden_name] = loaded_garden
+    
     beer_garden.garden.rescan()
 
+    # Receiving Connections have not been configured yet
+    if not loaded_garden.receiving_connections:
+        return False
+    
     for connection in loaded_garden.receiving_connections:
         if connection.api == operation.source_api and connection.status != "DISABLED":
             return False
