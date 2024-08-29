@@ -152,11 +152,15 @@ class Application(StoppableThread):
         try:
             self._startup()
         except Exception as ex:
+            tbe = traceback.TracebackException.from_exception(ex)
+            stack_frames = traceback.extract_stack()
+            tbe.stack.extend(stack_frames)
+            formatted_traceback = ''.join(tbe.format())
             self.logger.error(
                 "Startup Failure %s: %s"
                 % (
                     str(ex),
-                    traceback.TracebackException.from_exception(ex),
+                    formatted_traceback,
                 )
             )
             self._shutdown(shutdown_failure=True)
