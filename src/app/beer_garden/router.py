@@ -333,17 +333,25 @@ def invalid_source_check(operation: Operation):
 
     try:
         loaded_garden = beer_garden.garden.get_garden(operation.source_garden_name)
+        logger.warning(f"Garden {operation.source_garden_name} exists in database and "
+                       " not in memory routing table, loading into routing table")
     except DoesNotExist:
+        
         loaded_garden = beer_garden.garden.load_garden_connections(
             Garden(name=operation.source_garden_name)
         )
-    if loaded_garden.status == "NOT_CONFIGURED":
-        return True
+
+        if loaded_garden.status == "NOT_CONFIGURED":
+            logger.error(f"There is no configuration file for {operation.source_garden_name}, "
+                        "please validate your children directory for the correct file name")
+            return True
+        
+        logger.warning(f"Loaded {operation.source_garden_name} from config file into in memory"
+                       " routing table, please manually kick off rescan of directories if this"
+                       " continues")
 
     with garden_lock.lock():
         gardens[operation.source_garden_name] = loaded_garden
-
-    beer_garden.garden.rescan()
 
     # Receiving Connections have not been configured yet
     if not loaded_garden.receiving_connections:
