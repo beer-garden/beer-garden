@@ -356,7 +356,7 @@ def invalid_source_check(operation: Operation):
             " continues"
         )
 
-    with garden_lock.lock():
+    with garden_lock:
         gardens[operation.source_garden_name] = loaded_garden
 
     # Receiving Connections have not been configured yet
