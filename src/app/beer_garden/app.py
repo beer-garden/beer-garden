@@ -155,7 +155,7 @@ class Application(StoppableThread):
             tbe = traceback.TracebackException.from_exception(ex)
             stack_frames = traceback.extract_stack()
             tbe.stack.extend(stack_frames)
-            formatted_traceback = ''.join(tbe.format())
+            formatted_traceback = "".join(tbe.format())
             self.logger.error(
                 "Startup Failure %s: %s"
                 % (
