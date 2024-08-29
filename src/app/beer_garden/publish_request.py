@@ -6,7 +6,7 @@ from typing import List
 from brewtils.models import Event, Events, Garden, Request, Topic
 
 import beer_garden.config as config
-from beer_garden.garden import get_gardens, local_garden
+from beer_garden.garden import local_garden
 from beer_garden.requests import process_request
 from beer_garden.topic import (
     get_all_topics,
