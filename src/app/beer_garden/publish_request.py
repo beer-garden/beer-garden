@@ -6,7 +6,7 @@ from typing import List
 from brewtils.models import Event, Events, Garden, Request, Topic
 
 import beer_garden.config as config
-from beer_garden.garden import get_gardens, local_garden
+from beer_garden.garden import local_garden
 from beer_garden.requests import process_request
 from beer_garden.topic import (
     get_all_topics,
@@ -78,9 +78,6 @@ def handle_event(event: Event):
                     )
                     return
 
-            if "_propagate" in event.payload.metadata:
-                event.metadata["propagate"] = event.payload.metadata["propagate"]
-
             # Clear values from existing request
             event.payload.id = None
             event.payload.namespace = None
@@ -105,10 +102,6 @@ def handle_event(event: Event):
                 topics.append(topic)
 
         if topics:
-            if "propagate" in event.metadata and event.metadata["propagate"]:
-                for garden in get_gardens(include_local=False):
-                    process_publish_event(garden, event, topics)
-
             process_publish_event(local_garden(), event, topics)
 
 
