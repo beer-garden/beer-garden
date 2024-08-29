@@ -26,6 +26,7 @@ import brewtils.models
 from brewtils import EasyClient
 from brewtils.models import Connection as BrewtilsConnection
 from brewtils.models import Event, Events, Garden, Operation, Request, System
+from mongoengine import DoesNotExist
 from stomp.exception import ConnectFailedException
 
 import beer_garden
@@ -322,17 +323,45 @@ def invalid_source_check(operation: Operation):
     ):
         return False
 
+    # Receiving Connections have not been configured yet
+    if not gardens[operation.source_garden_name].receiving_connections:
+        return False
+
     for connection in gardens[operation.source_garden_name].receiving_connections:
         if connection.api == operation.source_api and connection.status != "DISABLED":
             return False
 
-    loaded_garden = beer_garden.garden.load_garden_connections(
-        Garden(name=operation.source_garden_name)
-    )
-    if loaded_garden.status == "NOT_CONFIGURED":
-        return True
+    try:
+        loaded_garden = beer_garden.garden.get_garden(operation.source_garden_name)
+        logger.warning(
+            f"Garden {operation.source_garden_name} exists in database and "
+            " not in memory routing table, loading into routing table"
+        )
+    except DoesNotExist:
 
-    beer_garden.garden.rescan()
+        loaded_garden = beer_garden.garden.load_garden_connections(
+            Garden(name=operation.source_garden_name)
+        )
+
+        if loaded_garden.status == "NOT_CONFIGURED":
+            logger.error(
+                f"There is no configuration file for {operation.source_garden_name}, "
+                "please validate your children directory for the correct file name"
+            )
+            return True
+
+        logger.warning(
+            f"Loaded {operation.source_garden_name} from config file into in memory"
+            " routing table, please manually kick off rescan of directories if this"
+            " continues"
+        )
+
+    with garden_lock:
+        gardens[operation.source_garden_name] = loaded_garden
+
+    # Receiving Connections have not been configured yet
+    if not loaded_garden.receiving_connections:
+        return False
 
     for connection in loaded_garden.receiving_connections:
         if connection.api == operation.source_api and connection.status != "DISABLED":

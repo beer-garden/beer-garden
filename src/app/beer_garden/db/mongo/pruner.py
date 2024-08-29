@@ -233,7 +233,7 @@ def prune_outstanding():
                 logger.error(ex)
                 logger.error("Will attempt to check for parents")
 
-                if request.parent:
+                if request.has_parent:
                     try:
                         Request.objects.get(id=request.parent.id)
                     except DoesNotExist:

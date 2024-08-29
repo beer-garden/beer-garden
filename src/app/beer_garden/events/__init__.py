@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import asyncio
 import logging
+import traceback
 from datetime import datetime, timezone
 from functools import partial
 
@@ -85,7 +86,11 @@ def publish_event(event_type: Events):
             return result
         except Exception as ex:
             event.error = True
-            event.error_message = str(ex)
+            tbe = traceback.TracebackException.from_exception(ex)
+            stack_frames = traceback.extract_stack()
+            tbe.stack.extend(stack_frames)
+            formatted_traceback = "".join(tbe.format())
+            event.error_message = str(formatted_traceback)
             raise
         finally:
             if (not event.error and _publish_success) or (

@@ -14,6 +14,8 @@ TBD
 - Fixed issue where if user sync with child garden fails at startup will stop Beer Garden
 - Fixed issue where Requester was added to requests when auth was disabled
 - Fixed issue where System updates cancelled request with completed fails Request wait event checks
+- Fixed issue where if Garden Receiving Connections was nulled, it would not create new connections
+- Fixed issue where orphaned requests were not pruned properly
 
 # 3.27.1
 

@@ -28,7 +28,12 @@ from yapconf.exceptions import (
 
 import beer_garden.config as config
 import beer_garden.db.api as db
-from beer_garden.errors import ForwardException, RoutingRequestException
+from beer_garden.errors import (
+    ForwardException,
+    NotFoundException,
+    NotUniqueException,
+    RoutingRequestException,
+)
 from beer_garden.events import publish, publish_event
 from beer_garden.namespace import get_namespaces
 from beer_garden.systems import get_systems, remove_system
@@ -211,16 +216,19 @@ def check_garden_receiving_heartbeat(
 
     connection_set = False
 
-    for connection in garden.receiving_connections:
-        if connection.api == api:
-            connection_set = True
+    if garden.receiving_connections:
+        for connection in garden.receiving_connections:
+            if connection.api == api:
+                connection_set = True
 
-            if connection.status not in ["DISABLED", "RECEIVING"]:
-                connection.status = "RECEIVING"
+                if connection.status not in ["DISABLED", "RECEIVING"]:
+                    connection.status = "RECEIVING"
 
-            connection.status_info.set_status_heartbeat(
-                connection.status, max_history=config.get("garden.status_history")
-            )
+                connection.status_info.set_status_heartbeat(
+                    connection.status, max_history=config.get("garden.status_history")
+                )
+    else:
+        garden.receiving_connections = []
 
     # If the receiving type is unknown, enable it by default and set heartbeat
     if not connection_set:
@@ -665,20 +673,27 @@ def rescan():
                 garden = db.query_unique(Garden, name=garden_name)
 
                 if garden is None:
-                    logger.info(f"Loading new configuration file for {garden_name}")
-                    garden = create_garden(
-                        Garden(name=garden_name, connection_type="Remote")
-                    )
+                    try:
+                        logger.info(f"Loading new configuration file for {garden_name}")
+                        garden = Garden(name=garden_name, connection_type="Remote")
+                        garden = create_garden(garden)
+                    except NotUniqueException:
+                        logger.error(
+                            f"Write collision occurred when creating {garden_name}"
+                        )
+                        garden = db.query_unique(Garden, name=garden_name)
+
+                        if garden is None:
+                            raise NotFoundException(
+                                f"Failure to load {garden_name} after write collision occurred"
+                            )
                 else:
                     logger.info(
                         f"Loading existing configuration file for {garden_name}"
                     )
 
-                # Garden was created by child, update the connection information if available
-                for connection in garden.publishing_connections:
-                    if connection.status == "MISSING_CONFIGURATION":
-                        load_garden_config(garden=garden)
-                        break
+                load_garden_config(garden=garden)
+                garden = update_garden(garden)
 
                 garden_sync(garden.name)
 
@@ -700,28 +715,49 @@ def garden_sync(sync_target: str = None):
     Returns:
 
     """
-    # If a Garden Name is provided, determine where to route the request
-    if sync_target:
-        logger.info("Processing garden sync, about to publish")
-
-        publish_garden()
 
     from beer_garden.router import route
 
-    # Iterate over all gardens and forward the sync requests
-    for garden in get_gardens(include_local=False):
-        try:
-            logger.info(f"About to create sync operation for garden {garden.name}")
+    # If a Garden Name is provided, determine where to route the request
+    if sync_target:
+        if sync_target == config.get("garden.name"):
+            logger.info("Processing local garden sync, about to publish")
+            publish_garden()
+        else:
+            try:
+                logger.info(f"About to create sync operation for garden {sync_target}")
 
-            route(
-                Operation(
-                    operation_type="GARDEN_SYNC",
-                    target_garden_name=garden.name,
-                    kwargs={"sync_target": garden.name},
+                route(
+                    Operation(
+                        operation_type="GARDEN_SYNC",
+                        target_garden_name=sync_target,
+                        kwargs={"sync_target": sync_target},
+                    )
                 )
-            )
-        except (ForwardException, RoutingRequestException):
-            logger.error(f"Failed to forward sync operation to garden {garden.name}")
+            except (ForwardException, RoutingRequestException):
+                logger.error(
+                    f"Failed to forward sync operation to garden {sync_target}"
+                )
+    else:
+        # Iterate over all gardens and forward the sync requests
+        for garden in get_gardens(include_local=False):
+            try:
+                logger.info(f"About to create sync operation for garden {garden.name}")
+
+                route(
+                    Operation(
+                        operation_type="GARDEN_SYNC",
+                        target_garden_name=garden.name,
+                        kwargs={"sync_target": garden.name},
+                    )
+                )
+            except (ForwardException, RoutingRequestException):
+                logger.error(
+                    f"Failed to forward sync operation to garden {garden.name}"
+                )
+
+        logger.info("Processing local garden sync, about to publish")
+        publish_garden()
 
 
 def publish_local_garden_to_api():
