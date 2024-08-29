@@ -675,7 +675,7 @@ def rescan():
                     )
                     load_garden_config(garden=garden)
                     garden = update_garden(garden)
-        
+
                 garden_sync(garden.name)
 
 
@@ -716,7 +716,9 @@ def garden_sync(sync_target: str = None):
                     )
                 )
             except (ForwardException, RoutingRequestException):
-                logger.error(f"Failed to forward sync operation to garden {sync_target}")
+                logger.error(
+                    f"Failed to forward sync operation to garden {sync_target}"
+                )
     else:
         # Iterate over all gardens and forward the sync requests
         for garden in get_gardens(include_local=False):
@@ -731,8 +733,10 @@ def garden_sync(sync_target: str = None):
                     )
                 )
             except (ForwardException, RoutingRequestException):
-                logger.error(f"Failed to forward sync operation to garden {garden.name}")
-        
+                logger.error(
+                    f"Failed to forward sync operation to garden {garden.name}"
+                )
+
         logger.info("Processing local garden sync, about to publish")
         publish_garden()
 
