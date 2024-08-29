@@ -28,7 +28,12 @@ from yapconf.exceptions import (
 
 import beer_garden.config as config
 import beer_garden.db.api as db
-from beer_garden.errors import ForwardException, RoutingRequestException
+from beer_garden.errors import (
+    ForwardException,
+    NotFoundException,
+    NotUniqueException,
+    RoutingRequestException,
+)
 from beer_garden.events import publish, publish_event
 from beer_garden.namespace import get_namespaces
 from beer_garden.systems import get_systems, remove_system
@@ -665,16 +670,27 @@ def rescan():
                 garden = db.query_unique(Garden, name=garden_name)
 
                 if garden is None:
-                    logger.info(f"Loading new configuration file for {garden_name}")
-                    garden = Garden(name=garden_name, connection_type="Remote")
-                    load_garden_config(garden=garden)
-                    garden = create_garden(garden)
+                    try:
+                        logger.info(f"Loading new configuration file for {garden_name}")
+                        garden = Garden(name=garden_name, connection_type="Remote")
+                        garden = create_garden(garden)
+                    except NotUniqueException:
+                        logger.error(
+                            f"Write collision occurred when creating {garden_name}"
+                        )
+                        garden = db.query_unique(Garden, name=garden_name)
+
+                        if garden is None:
+                            raise NotFoundException(
+                                f"Failure to load {garden_name} after write collision occurred"
+                            )
                 else:
                     logger.info(
                         f"Loading existing configuration file for {garden_name}"
                     )
-                    load_garden_config(garden=garden)
-                    garden = update_garden(garden)
+
+                load_garden_config(garden=garden)
+                garden = update_garden(garden)
 
                 garden_sync(garden.name)
 
