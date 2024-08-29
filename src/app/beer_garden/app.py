@@ -153,7 +153,7 @@ class Application(StoppableThread):
             self._startup()
         except Exception as ex:
             self.logger.error(
-                "%s: %s"
+                "Startup Failure %s: %s"
                 % (
                     str(ex),
                     traceback.TracebackException.from_exception(ex),
