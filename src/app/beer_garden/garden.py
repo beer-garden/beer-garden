@@ -665,13 +665,13 @@ def rescan():
                 garden = db.query_unique(Garden, name=garden_name)
 
                 if garden is None:
-                    logger.info(f"Loading new configuration file for {garden.name}")
+                    logger.info(f"Loading new configuration file for {garden_name}")
                     garden = Garden(name=garden_name, connection_type="Remote")
                     load_garden_config(garden=garden)
                     garden = create_garden(garden)
                 else:
                     logger.info(
-                        f"Loading existing configuration file for {garden.name}"
+                        f"Loading existing configuration file for {garden_name}"
                     )
                     load_garden_config(garden=garden)
                     garden = update_garden(garden)
