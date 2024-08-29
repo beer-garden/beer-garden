@@ -216,16 +216,19 @@ def check_garden_receiving_heartbeat(
 
     connection_set = False
 
-    for connection in garden.receiving_connections:
-        if connection.api == api:
-            connection_set = True
+    if garden.receiving_connections:
+        for connection in garden.receiving_connections:
+            if connection.api == api:
+                connection_set = True
 
-            if connection.status not in ["DISABLED", "RECEIVING"]:
-                connection.status = "RECEIVING"
+                if connection.status not in ["DISABLED", "RECEIVING"]:
+                    connection.status = "RECEIVING"
 
-            connection.status_info.set_status_heartbeat(
-                connection.status, max_history=config.get("garden.status_history")
-            )
+                connection.status_info.set_status_heartbeat(
+                    connection.status, max_history=config.get("garden.status_history")
+                )
+    else:
+        garden.receiving_connections = []
 
     # If the receiving type is unknown, enable it by default and set heartbeat
     if not connection_set:
