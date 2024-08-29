@@ -7,6 +7,7 @@ in Beer-Garden will be initialized within this class.
 import logging
 import os
 import signal
+import traceback
 from functools import partial
 from multiprocessing.managers import BaseManager
 from typing import Callable
@@ -151,7 +152,13 @@ class Application(StoppableThread):
         try:
             self._startup()
         except Exception as ex:
-            self.logger.error(ex)
+            self.logger.error(
+                "%s: %s"
+                % (
+                    str(ex),
+                    traceback.TracebackException.from_exception(ex),
+                )
+            )
             self._shutdown(shutdown_failure=True)
             return
 
