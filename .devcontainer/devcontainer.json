@@ -1,7 +1,8 @@
 {
   "name": "Python 3",
-    "image": "mcr.microsoft.com/devcontainers/python:0-3.11",
-    "features": {
-        "ghcr.io/devcontainers/features/python:1": {}
-    }
+  // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+  "image": "mcr.microsoft.com/devcontainers/python:0-3.11-bullseye",
+  "features": {
+    "ghcr.io/devcontainers-contrib/features/coverage-py:2": {}
+  }
 }
