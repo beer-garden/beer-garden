@@ -39,7 +39,7 @@ class HttpParentUpdater(QueueListener):
 
     def process(self, event: Event):
 
-        if event.garden and event.garden != conf.get("garden.name"):
+        if event.error or (event.garden and event.garden != conf.get("garden.name")):
             return
 
         # TODO - This shouldn't be set here

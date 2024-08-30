@@ -18,9 +18,14 @@ import beer_garden.scheduler
 import beer_garden.systems
 import beer_garden.topic
 import beer_garden.user
-from beer_garden.events.processors import InternalQueueListener
+from beer_garden.events.processors import BaseProcessor, InternalQueueListener
 
 logger = logging.getLogger(__name__)
+
+
+def error_event_handler(event):
+    if event.error:
+        logger.error(f"ERROR EVENT SEEN:: Type: {event.name} Error Message:\n{event.error_message}")
 
 
 def add_internal_events_handler(event_manager):
@@ -148,3 +153,9 @@ def add_internal_events_handler(event_manager):
                 name=handler_tag,
             )
         )
+
+    event_manager.register(
+        BaseProcessor(
+            action=error_event_handler,
+        )
+    )
