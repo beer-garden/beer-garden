@@ -63,7 +63,7 @@ def handle_event(event: Event):
         )
     ) or (
         event.name == Events.REQUEST_CREATED.name
-        and event.payload.metadata.get("_publish", None)
+        and event.payload.metadata.get("_publish", False)
         and (
             event.garden == config.get("garden.name")
             or event.payload.metadata.get("_propagate", False)
