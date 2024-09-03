@@ -111,8 +111,6 @@ def handle_event(event: Event):
 
         if topics:
             process_publish_event(local_garden(), event, topics)
-    else:
-        return event
 
 
 def process_publish_event(garden: Garden, event: Event, topics: List[Topic]):
