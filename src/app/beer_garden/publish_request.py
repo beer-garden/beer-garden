@@ -58,13 +58,7 @@ def handle_event(event: Event):
     if (
         (
             event.name == Events.REQUEST_TOPIC_PUBLISH.name
-            and (
-                (
-                    "_propagate" in event.payload.metadata
-                    and event.payload.metadata["_propagate"]
-                )
-                or ("_propagate" in event.metadata and event.metadata["_propagate"])
-            )
+            and ("_propagate" in event.metadata and event.metadata["_propagate"])
         )
         or (
             event.name == Events.REQUEST_TOPIC_PUBLISH.name
