@@ -25,7 +25,9 @@ logger = logging.getLogger(__name__)
 
 def error_event_handler(event):
     if event.error:
-        logger.error(f"ERROR EVENT SEEN:: Type: {event.name} Error Message:\n{event.error_message}")
+        logger.error(
+            f"ERROR EVENT SEEN:: Type: {event.name} Error Message:\n{event.error_message}"
+        )
 
 
 def add_internal_events_handler(event_manager):

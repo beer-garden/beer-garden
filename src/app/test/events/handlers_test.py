@@ -94,7 +94,7 @@ class TestHandlers:
 
             if hasattr(processor, "_queue"):
                 monkeypatch.setattr(processor._queue, "put", put_mock)
-                
+
             processor.put(bg_event)
 
         assert put_mock.call_count == expected_calls
