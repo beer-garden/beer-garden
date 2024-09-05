@@ -121,7 +121,6 @@ def topics():
 
 
 class TestSubscriptionEvent(object):
-
     def test_newtopic(self, monkeypatch, topics, localgarden):
         mock_process_request = Mock(return_value=None)
         monkeypatch.setattr(publish_request, "process_request", mock_process_request)
