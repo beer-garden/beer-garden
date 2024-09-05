@@ -844,14 +844,19 @@ class RequestListAPI(AuthorizationHandler):
             query_columns.append(column)
 
             if column["data"]:
-                include_fields.append(column["data"])
+                if "__" in column["data"]:
+                    include_fields.append(column["data"].split("__")[0])
+                else:
+                    include_fields.append(column["data"])
 
             if (
                 "searchable" in column
                 and column["searchable"]
                 and column["search"]["value"]
             ):
-                if column["data"] in ["created_at", "updated_at"]:
+                if "__" in column["data"]:
+                    filter_params[column["data"]] = column["search"]["value"]
+                elif column["data"] in ["created_at", "updated_at"]:
                     search_dates = column["search"]["value"].split("~")
 
                     if search_dates[0]:
