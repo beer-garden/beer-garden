@@ -28,7 +28,7 @@ import beer_garden.local_plugins.manager
 import beer_garden.namespace
 import beer_garden.queue.api as queue
 import beer_garden.router
-from beer_garden.events.parent_procesors import HttpParentUpdater
+from beer_garden.events.parent_processors import HttpParentUpdater
 from beer_garden.events.processors import EventProcessor, FanoutProcessor, QueueListener
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
