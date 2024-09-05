@@ -20,7 +20,7 @@ class EventManager:
 
 def websocket_publish(event):
     """Publish an event to all websocket endpoints"""
-    if event.garden != config.get("garden.name"):
+    if event.garden != config.get("garden.name") or event.error:
         return
 
     try:

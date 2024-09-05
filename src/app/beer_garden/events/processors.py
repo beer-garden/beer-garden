@@ -113,14 +113,13 @@ class InternalQueueListener(QueueListener):
         if not self._filters:
             return
 
+        if event.error:
+            return
+
         if self._local_only and event.garden != config.get("garden.name"):
             return
 
         if event.metadata.get("API_ONLY", False):
-            return
-
-        if event.error:
-            logger.error(f"Error event: {event!r}")
             return
 
         if event.name in self._filters:

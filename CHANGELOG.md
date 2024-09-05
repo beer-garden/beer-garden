@@ -6,6 +6,8 @@ TBD
 
 - Added logging messages for Garden rescan operation
 - Added router checking for configuration files in children folder if child garden is not loaded yet
+- Added Error Event Handler to process
+- Updated Error Event message and all error events stay local/not published to UI
 - Fixed issue where multiple Published requests would be spawned if Publisher utilized `propagate=True`
   if matched on child garden topic
 - Fixed issue where child requests were not getting cancelled when the parent is cancelled

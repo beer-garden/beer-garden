@@ -86,13 +86,15 @@ class TestHandlers:
         event_manager = FanoutProcessor(name="event manager")
         add_internal_events_handler(event_manager)
 
-        assert len(event_manager._managed_processors) == 15
+        assert len(event_manager._managed_processors) == 16
 
         put_mock = Mock()
 
         for processor in event_manager._managed_processors:
 
-            monkeypatch.setattr(processor._queue, "put", put_mock)
+            if hasattr(processor, "_queue"):
+                monkeypatch.setattr(processor._queue, "put", put_mock)
+
             processor.put(bg_event)
 
         assert put_mock.call_count == expected_calls
@@ -174,13 +176,14 @@ class TestHandlers:
         event_manager = FanoutProcessor(name="event manager")
         add_internal_events_handler(event_manager)
 
-        assert len(event_manager._managed_processors) == 15
+        assert len(event_manager._managed_processors) == 16
 
         put_mock = Mock()
 
         for processor in event_manager._managed_processors:
 
-            monkeypatch.setattr(processor._queue, "put", put_mock)
+            if hasattr(processor, "_queue"):
+                monkeypatch.setattr(processor._queue, "put", put_mock)
             processor.put(bg_event)
 
         assert put_mock.call_count == expected_calls

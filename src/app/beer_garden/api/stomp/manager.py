@@ -180,7 +180,7 @@ class StompManager(BaseProcessor):
                     garden_name=event.payload.name, skip_key=skip_key
                 )
 
-        if event.garden == config.get("garden.name"):
+        if not event.error and event.garden == config.get("garden.name"):
             for value in self.conn_dict.values():
                 conn = value["conn"]
                 if conn:

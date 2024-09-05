@@ -86,11 +86,24 @@ def publish_event(event_type: Events):
             return result
         except Exception as ex:
             event.error = True
+
+            # Generate Traceback information
             tbe = traceback.TracebackException.from_exception(ex)
             stack_frames = traceback.extract_stack()
             tbe.stack.extend(stack_frames)
             formatted_traceback = "".join(tbe.format())
-            event.error_message = str(formatted_traceback)
+
+            # Replicate function call
+            args_str = ", ".join(str(arg) for arg in args)
+            kwargs_str = ", ".join(f"{key}={kwargs[key]!r}" for key in kwargs)
+
+            function_called = (
+                f"{wrapped.__name__}({args_str}{', ' if args else ''}{kwargs_str})"
+            )
+
+            event.error_message = (
+                f"{function_called}\nGenerated Error:\n{str(formatted_traceback)}"
+            )
             raise
         finally:
             if (not event.error and _publish_success) or (
