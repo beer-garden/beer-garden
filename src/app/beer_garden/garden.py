@@ -697,7 +697,9 @@ def rescan():
 
                 garden_sync(garden.name)
         else:
-            logger.error(f"Unable to find Children directory: {str(children_directory.resolve())}")
+            logger.error(
+                f"Unable to find Children directory: {str(children_directory.resolve())}"
+            )
 
 
 def garden_sync(sync_target: str = None):
