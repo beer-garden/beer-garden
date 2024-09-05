@@ -55,11 +55,19 @@ def determine_target_garden(request: Request, garden: Garden = None) -> str:
 
 
 def handle_event(event: Event):
-    if (event.name == Events.REQUEST_TOPIC_PUBLISH.name) or (
-        event.garden == config.get("garden.name")
-        and event.name == Events.REQUEST_CREATED.name
-        and "_publish" in event.payload.metadata
-        and event.payload.metadata["_publish"]
+    if (
+        event.name == Events.REQUEST_TOPIC_PUBLISH.name
+        and (
+            event.garden == config.get("garden.name")
+            or event.metadata.get("_propagate", False)
+        )
+    ) or (
+        event.name == Events.REQUEST_CREATED.name
+        and event.payload.metadata.get("_publish", False)
+        and (
+            event.garden == config.get("garden.name")
+            or event.payload.metadata.get("_propagate", False)
+        )
     ):
         if event.name == Events.REQUEST_CREATED.name:
 

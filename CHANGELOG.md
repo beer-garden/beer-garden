@@ -16,6 +16,7 @@ TBD
 - Beer Garden will only emit locally generated events to any listening or configured APIs. 
 - Fixed bug where Garden Sync response doesn't null check before evaluating API response
 - Fixed issue where if user sync with child garden fails at startup will stop Beer Garden
+- Fixed issue where parent garden would reprocess Publish Topic regardless of `_propagate` flag
 - Fixed issue where Requester was added to requests when auth was disabled
 - Fixed issue where System updates cancelled request with completed fails Request wait event checks
 - Fixed issue where if Garden Receiving Connections was nulled, it would not create new connections
