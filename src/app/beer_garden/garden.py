@@ -26,6 +26,7 @@ from yapconf.exceptions import (
     YapconfSpecError,
 )
 
+import beer_garden
 import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.errors import (
@@ -164,6 +165,7 @@ def local_garden(all_systems: bool = False) -> Garden:
 
     garden.systems = get_systems(filter_params=filter_params)
     garden.namespaces = get_namespaces()
+    garden.version = beer_garden.__version__
 
     return garden
 

@@ -10,6 +10,7 @@ from brewtils.models import Garden as BrewtilsGarden
 from brewtils.models import System as BrewtilsSystem
 from mongoengine import DoesNotExist, connect
 
+import beer_garden
 from beer_garden import config
 from beer_garden.db.mongo.models import Garden, System
 from beer_garden.garden import (
@@ -48,7 +49,10 @@ def localgarden_system():
 def localgarden(localgarden_system):
     yield create_garden(
         BrewtilsGarden(
-            name="localgarden", connection_type="LOCAL", systems=[localgarden_system]
+            name="localgarden",
+            connection_type="LOCAL",
+            systems=[localgarden_system],
+            version=beer_garden.__version__,
         )
     )
 
@@ -66,7 +70,10 @@ def remotegarden_system():
 def remotegarden(remotegarden_system):
     yield create_garden(
         BrewtilsGarden(
-            name="remotegarden", connection_type="REMOTE", systems=[remotegarden_system]
+            name="remotegarden",
+            connection_type="REMOTE",
+            systems=[remotegarden_system],
+            version="1.0.0",
         )
     )
 
