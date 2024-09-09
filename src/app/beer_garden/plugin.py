@@ -555,6 +555,7 @@ def _from_kwargs(
                     "System matching query does not exist. Performing garden sync."
                 )
                 from beer_garden.router import route
+
                 route(
                     Operation(
                         operation_type="GARDEN_SYNC",
