@@ -32,6 +32,7 @@ from brewtils.models import (
 )
 from brewtils.schema_parser import SchemaParser
 from brewtils.stoppable_thread import StoppableThread
+from mongoengine import DoesNotExist
 from mongoengine.fields import ObjectIdField
 
 import beer_garden.config as config
@@ -40,6 +41,7 @@ import beer_garden.db.mongo.motor as moto
 import beer_garden.local_plugins.manager as lpm
 import beer_garden.queue.api as queue
 import beer_garden.requests as requests
+import beer_garden.router as router
 from beer_garden.errors import NotFoundException
 from beer_garden.events import publish, publish_event, publish_event_async
 
@@ -546,9 +548,20 @@ def _from_kwargs(
                 System, raise_missing=True, instances__contains=instance
             )
         elif instance_id:
-            system = db.query_unique(
-                System, raise_missing=True, instances__id=instance_id
-            )
+            try:
+                system = db.query_unique(
+                    System, raise_missing=True, instances__id=instance_id
+                )
+            except DoesNotExist:
+                logger.error("System matching query does not exist. Performing garden sync.")
+                router.route(
+                    Operation(
+                        operation_type="GARDEN_SYNC",
+                        target_garden_name=config.get("garden.name"),
+                        kwargs={"sync_target": config.get("garden.name")},
+                    )
+                )
+                raise NotFoundException(f"Unable to find system matching instance id {instance_id}")
         else:
             raise NotFoundException("Unable to find System")
 
