@@ -41,7 +41,6 @@ import beer_garden.db.mongo.motor as moto
 import beer_garden.local_plugins.manager as lpm
 import beer_garden.queue.api as queue
 import beer_garden.requests as requests
-import beer_garden.router as router
 from beer_garden.errors import NotFoundException
 from beer_garden.events import publish, publish_event, publish_event_async
 
@@ -555,7 +554,8 @@ def _from_kwargs(
                 logger.error(
                     "System matching query does not exist. Performing garden sync."
                 )
-                router.route(
+                from beer_garden.router import route
+                route(
                     Operation(
                         operation_type="GARDEN_SYNC",
                         target_garden_name=config.get("garden.name"),
