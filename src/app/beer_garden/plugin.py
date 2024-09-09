@@ -285,7 +285,6 @@ def publish_status_update(instance: Instance):
     system, instance = _from_kwargs(instance_id=instance.id)
 
     if system.local:
-
         # Publish event for plugins to monitor the status of other plugins
         publish(
             Event(
@@ -553,7 +552,9 @@ def _from_kwargs(
                     System, raise_missing=True, instances__id=instance_id
                 )
             except DoesNotExist:
-                logger.error("System matching query does not exist. Performing garden sync.")
+                logger.error(
+                    "System matching query does not exist. Performing garden sync."
+                )
                 router.route(
                     Operation(
                         operation_type="GARDEN_SYNC",
@@ -561,7 +562,9 @@ def _from_kwargs(
                         kwargs={"sync_target": config.get("garden.name")},
                     )
                 )
-                raise NotFoundException(f"Unable to find system matching instance id {instance_id}")
+                raise NotFoundException(
+                    f"Unable to find system matching instance id {instance_id}"
+                )
         else:
             raise NotFoundException("Unable to find System")
 
