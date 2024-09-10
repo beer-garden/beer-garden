@@ -15,6 +15,7 @@ TBD
 - Fixed issue where child requests were not getting cancelled when the parent is cancelled
 - Fixed issue where Topic delete was called with `args` instead of `kwargs`
 - Updated each `handle_event` function to be processed in independent threads
+- Updating logging level for Replication notifications
 - Beer Garden will only emit locally generated events to any listening or configured APIs. 
 - Fixed counters displayed on Delete Request pop up to match exact values instead of starts with
 - Fixed bug where Garden Sync response doesn't null check before evaluating API response
