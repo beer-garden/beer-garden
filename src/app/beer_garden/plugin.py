@@ -546,26 +546,9 @@ def _from_kwargs(
                 System, raise_missing=True, instances__contains=instance
             )
         elif instance_id:
-            try:
-                system = db.query_unique(
-                    System, raise_missing=True, instances__id=instance_id
-                )
-            except DoesNotExist:
-                logger.error(
-                    "System matching query does not exist. Performing garden sync."
-                )
-                from beer_garden.router import route
-
-                route(
-                    Operation(
-                        operation_type="GARDEN_SYNC",
-                        target_garden_name=config.get("garden.name"),
-                        kwargs={"sync_target": config.get("garden.name")},
-                    )
-                )
-                raise NotFoundException(
-                    f"Unable to find system matching instance id {instance_id}"
-                )
+            system = db.query_unique(
+                System, raise_missing=True, instances__id=instance_id
+            )
         else:
             raise NotFoundException("Unable to find System")
 
@@ -598,6 +581,19 @@ def handle_event(event: Event) -> None:
                     instance_id=event.payload.id,
                     new_status=event.payload.status,
                     metadata=event.payload.metadata,
+                )
+            except DoesNotExist:
+                logger.error(
+                    f"Unable to find system matching instance {event.payload.id}:{event.payload.name} for garden {event.garden}"
+                )
+                from beer_garden.router import route
+
+                route(
+                    Operation(
+                        operation_type="GARDEN_SYNC",
+                        target_garden_name=event.garden,
+                        kwargs={"sync_target": event.garden},
+                    )
                 )
             except Exception as ex:
                 logger.error(f"{event.name} error: {ex} ({event!r})")
