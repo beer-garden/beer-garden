@@ -528,7 +528,7 @@ def forward_file(operation: Operation) -> None:
 
     for file_id in _find_chunk_params(operation.model.parameters):
         file = check_chunks(file_id)
-        args = [file.file_name, file.file_size, file.chunk_size]
+
         # Make sure we get all of the other data
         kwargs = _safe_build_object(
             dict,
@@ -541,16 +541,19 @@ def forward_file(operation: Operation) -> None:
             upsert=True,
         )
 
+        kwargs["file_name"] = file.file_name
+        kwargs["file_size"] = file.file_size
+        kwargs["chunk_size"] = file.chunk_size
+
         file_op = Operation(
             operation_type="FILE_CREATE",
-            args=args,
             kwargs=kwargs,
             target_garden_name=operation.target_garden_name,
             source_garden_name=operation.source_garden_name,
         )
 
         # This should put push the file operations before the current one
-        router.forward_processor.put(file_op)
+        router.forward(file_op)
 
         for chunk_id in file.chunks.values():
             chunk = check_chunk(chunk_id)
@@ -568,7 +571,7 @@ def forward_file(operation: Operation) -> None:
             )
 
             # This should put push the file operations before the current one
-            router.forward_processor.put(chunk_op)
+            router.forward(chunk_op)
 
 
 def handle_event(event: Event) -> None:

@@ -22,6 +22,7 @@ TBD
 - Fixed issue where parent garden would reprocess Publish Topic regardless of `_propagate` flag
 - Fixed issue where Requester was added to requests when auth was disabled
 - Fixed issue where System updates cancelled request with completed fails Request wait event checks
+- Fixed issue where `BASE64` parameters were not forwarded to Child garden
 - Fixed issue where if Garden Receiving Connections was nulled, it would not create new connections
 - Fixed issue where orphaned requests were not pruned properly
 
