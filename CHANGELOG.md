@@ -8,6 +8,7 @@ TBD
 - Added router checking for configuration files in children folder if child garden is not loaded yet
 - Added Error Event Handler to process
 - Added logging statement if `children` directory does not exist
+- Added Garden Version tracking and display on Garden Admin page
 - Updated Error Event message and all error events stay local/not published to UI
 - Fixed issue where multiple Published requests would be spawned if Publisher utilized `propagate=True`
   if matched on child garden topic

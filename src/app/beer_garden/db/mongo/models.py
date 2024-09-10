@@ -866,6 +866,8 @@ class Garden(MongoModel, Document):
 
     metadata = DictField()
 
+    version = StringField(required=True, default="0.0.0")
+
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves
         "index_background": True,
