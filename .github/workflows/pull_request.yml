@@ -557,7 +557,7 @@ jobs:
 
       - name: Grab logs from Plugin Echo
         if: always()
-        run: docker logs --tail 3000 $(docker ps --filter name=beer-plugins_echo --quiet | tail -1)
+        run: docker logs --tail 3000 $(docker ps --filter name=beer-plugins_echo.1 --quiet | tail -1)
 
       - name: Grab Garden Info
         uses: nick-invision/retry@v2
