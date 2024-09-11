@@ -4,6 +4,7 @@
 
 TBD
 
+- Updated form builder version to add dropdown on create request page to support latest as option
 - Added logging messages for Garden rescan operation
 - Added router checking for configuration files in children folder if child garden is not loaded yet
 - Added Error Event Handler to process
