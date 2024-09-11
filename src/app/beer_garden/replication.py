@@ -65,9 +65,10 @@ class PrimaryReplicationMonitor(StoppableThread):
 
         # Set self as Primary Replication
         if len(replications) == 0:
-            self.logger.error(
-                f"Setting to Primary Replication Instance {replication_id}"
-            )
+            if config.get("replication.enabled"):
+                self.logger.info(
+                    f"Setting to Primary Replication Instance {replication_id}"
+                )
             create_replication(
                 Replication(
                     replication_id=replication_id,
