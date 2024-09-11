@@ -567,10 +567,6 @@ jobs:
       - name: Check services
         run: docker service ls
 
-      - name: Grab logs from Plugin Echo
-        if: always()
-        run: docker logs --tail 3000 $(docker ps --filter name=beer-plugins_echo.1 --quiet | tail -1)
-
       - name: Check Publisher
         run: docker service ps --no-trunc beer-plugins_subscribe 
       
