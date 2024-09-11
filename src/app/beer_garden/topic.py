@@ -10,8 +10,8 @@ import beer_garden.db.api as db
 
 logger = logging.getLogger(__name__)
 
+
 # TODO: Add Publish Events back when UI supports it
-# @publish_event(Events.TOPIC_CREATED)
 def create_topic(new_topic: Topic) -> Topic:
     """Creates a topic with the provided fields
 
@@ -47,7 +47,6 @@ def get_topic(topic_id: str = None, topic_name: str = None) -> Topic:
     return db.query_unique(Topic, name=topic_name)
 
 
-# @publish_event(Events.TOPIC_REMOVED)
 def remove_topic(
     topic_id: str = None, topic_name: str = None, topic: Topic = None
 ) -> Topic:
@@ -157,7 +156,6 @@ def topic_remove_subscriber(
     return update_topic(topic)
 
 
-# @publish_event(Events.TOPIC_UPDATED)
 def update_topic(topic: Topic) -> Topic:
     """Update a Topic
 
