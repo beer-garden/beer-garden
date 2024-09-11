@@ -39,7 +39,7 @@ jobs:
 
       - name: Run Linting (src/app)
         run: |
-          pip install black flake8 isort
+          pip install "black>=23.3.0" flake8 "isort>=5.11.5"
           make lint
 
       - name: Run Linting (test/integration)
