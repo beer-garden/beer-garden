@@ -33,19 +33,19 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-${{ matrix.python-version }}-pip-lint-${{ hashFiles('**/setup.py') }}-${{ hashFiles('**/requirements.txt') }}
+          key: ${{ runner.os }}-${{ matrix.python-version }}-pip-lint-${{ hashFiles('**/setup.py') }}-${{ hashFiles('**/requirements-dev.txt') }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.python-version }}-pip-lint
 
       - name: Run Linting (src/app)
         run: |
-          pip install "black>=23.3.0" flake8 "isort>=5.11.5"
+          pip install -r requirements-dev.txt
           make lint
 
       - name: Run Linting (test/integration)
         working-directory: ./test/integration
         run: |
-          pip install black flake8 isort
+          pip install "black>=23.3.0" flake8 "isort>=5.11.5"
           make lint
 
   PyTest:
