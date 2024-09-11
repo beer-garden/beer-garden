@@ -27,6 +27,7 @@ TBD
 - Fixed issue where if Garden Receiving Connections was nulled, it would not create new connections
 - Fixed issue where orphaned requests were not pruned properly
 - Removed generation of Topic Events due to UI not supporting it and flooding of events to Upstream Gardens
+- Fixed issue handling system/instance update errors from children
 
 # 3.27.1
 

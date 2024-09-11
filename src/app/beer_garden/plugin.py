@@ -32,6 +32,7 @@ from brewtils.models import (
 )
 from brewtils.schema_parser import SchemaParser
 from brewtils.stoppable_thread import StoppableThread
+from mongoengine import DoesNotExist
 from mongoengine.fields import ObjectIdField
 
 import beer_garden.config as config
@@ -283,7 +284,6 @@ def publish_status_update(instance: Instance):
     system, instance = _from_kwargs(instance_id=instance.id)
 
     if system.local:
-
         # Publish event for plugins to monitor the status of other plugins
         publish(
             Event(
@@ -581,6 +581,19 @@ def handle_event(event: Event) -> None:
                     instance_id=event.payload.id,
                     new_status=event.payload.status,
                     metadata=event.payload.metadata,
+                )
+            except DoesNotExist:
+                logger.error(
+                    f"Unable to find system matching instance {event.payload.id}:{event.payload.name} for garden {event.garden}"
+                )
+                from beer_garden.router import route
+
+                route(
+                    Operation(
+                        operation_type="GARDEN_SYNC",
+                        target_garden_name=event.garden,
+                        kwargs={"sync_target": event.garden},
+                    )
                 )
             except Exception as ex:
                 logger.error(f"{event.name} error: {ex} ({event!r})")
