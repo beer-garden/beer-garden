@@ -232,7 +232,7 @@ def check_indexes(document_class):
     try:
         if document_class.objects.count() > 0:
             document_class.objects.first()
-        logger.warning("%s table looks good", document_class.__name__)
+        logger.info("%s table looks good", document_class.__name__)
     except (FieldDoesNotExist, InvalidDocumentError):
         logger.error(
             "%s table failed to load properly to validate old indexes and fields, please check the Change Log for any major model changes",
