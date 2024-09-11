@@ -38,7 +38,6 @@ class HttpParentUpdater(QueueListener):
             self._queue.put(event)
 
     def process(self, event: Event):
-
         if event.error or (event.garden and event.garden != conf.get("garden.name")):
             return
 

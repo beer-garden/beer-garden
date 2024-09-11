@@ -26,7 +26,6 @@ def _remove_heartbeat_history(response: str, many: bool = False) -> str:
 
 
 class GardenAPI(AuthorizationHandler):
-
     @collect_metrics(transaction_type="API", group="GardenAPI")
     async def get(self, garden_name):
         """
@@ -201,7 +200,6 @@ class GardenAPI(AuthorizationHandler):
 
 
 class GardenListAPI(AuthorizationHandler):
-
     @collect_metrics(transaction_type="API", group="GardenListAPI")
     async def get(self):
         """

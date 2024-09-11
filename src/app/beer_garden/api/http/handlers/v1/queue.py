@@ -7,7 +7,6 @@ from beer_garden.metrics import collect_metrics
 
 
 class QueueAPI(AuthorizationHandler):
-
     @collect_metrics(transaction_type="API", group="QueueAPI")
     async def delete(self, queue_name):
         """
@@ -40,7 +39,6 @@ class QueueAPI(AuthorizationHandler):
 
 
 class QueueListAPI(AuthorizationHandler):
-
     @collect_metrics(transaction_type="API", group="QueueListAPI")
     async def get(self):
         """

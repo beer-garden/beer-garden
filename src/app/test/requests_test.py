@@ -1203,7 +1203,6 @@ class TestLatestRequest(object):
 
 
 class TestCancelRequest(object):
-
     @pytest.fixture(autouse=True)
     def drop(self):
         yield

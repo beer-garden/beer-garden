@@ -140,7 +140,6 @@ class TestTopic:
         assert (subscriber_match(subscriber1, subscriber3)) is True
 
     def test_prune_topics(self, monkeypatch):
-
         garden = Garden(
             name="garden",
             children=[],
@@ -186,7 +185,6 @@ class TestTopic:
         assert mock_update_topic.call_count == 0
 
     def test_prune_topics_remove_one(self, monkeypatch):
-
         garden = Garden(
             name="garden",
             children=[],
@@ -241,7 +239,6 @@ class TestTopic:
         assert mock_update_topic.call_count == 1
 
     def test_prune_topics_remove_none(self, monkeypatch):
-
         garden = Garden(
             name="garden",
             children=[],

@@ -23,7 +23,6 @@ def _remove_queue_info(response: str, many: bool = False) -> str:
 
 
 class SystemAPI(AuthorizationHandler):
-
     @collect_metrics(transaction_type="API", group="SystemAPI")
     async def get(self, system_id):
         """

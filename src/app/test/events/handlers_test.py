@@ -91,7 +91,6 @@ class TestHandlers:
         put_mock = Mock()
 
         for processor in event_manager._managed_processors:
-
             if hasattr(processor, "_queue"):
                 monkeypatch.setattr(processor._queue, "put", put_mock)
 
@@ -181,7 +180,6 @@ class TestHandlers:
         put_mock = Mock()
 
         for processor in event_manager._managed_processors:
-
             if hasattr(processor, "_queue"):
                 monkeypatch.setattr(processor._queue, "put", put_mock)
             processor.put(bg_event)

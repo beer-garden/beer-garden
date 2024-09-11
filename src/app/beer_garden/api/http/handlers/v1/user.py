@@ -284,7 +284,6 @@ class UserListAPI(AuthorizationHandler):
 
 
 class UserPasswordChangeAPI(AuthorizationHandler):
-
     @collect_metrics(transaction_type="API", group="UserPasswordChangeAPI")
     async def post(self):
         """
@@ -335,7 +334,6 @@ class UserPasswordChangeAPI(AuthorizationHandler):
 
 
 class WhoAmIAPI(AuthorizationHandler):
-
     @collect_metrics(transaction_type="API", group="WhoAmIAPI")
     def get(self):
         """

@@ -10,7 +10,6 @@ from beer_garden.metrics import collect_metrics
 
 
 class FileChunkAPI(AuthorizationHandler):
-
     @collect_metrics(transaction_type="API", group="FileChunkAPI")
     async def get(self):
         """
@@ -169,7 +168,6 @@ class FileChunkAPI(AuthorizationHandler):
 
 
 class ChunkNameAPI(AuthorizationHandler):
-
     @collect_metrics(transaction_type="API", group="ChunkNameAPI")
     async def get(self):
         """

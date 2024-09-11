@@ -12,9 +12,7 @@ from beer_garden.replication import (
 
 
 class TestReplication(object):
-
     def test_get_replication_id(self):
-
         if "BG_REPLICATION_ID" in os.environ:
             del os.environ["BG_REPLICATION_ID"]
 

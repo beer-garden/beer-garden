@@ -12,7 +12,6 @@ from beer_garden.scheduler import create_jobs
 
 
 class JobAPI(AuthorizationHandler):
-
     @collect_metrics(transaction_type="API", group="JobAPI")
     async def get(self, job_id):
         """
@@ -160,7 +159,6 @@ class JobAPI(AuthorizationHandler):
 
 
 class JobListAPI(AuthorizationHandler):
-
     @collect_metrics(transaction_type="API", group="JobListAPI")
     async def get(self):
         """
@@ -245,7 +243,6 @@ class JobListAPI(AuthorizationHandler):
 
 
 class JobImportAPI(AuthorizationHandler):
-
     @collect_metrics(transaction_type="API", group="JobImportAPI")
     async def post(self):
         """
@@ -291,7 +288,6 @@ class JobImportAPI(AuthorizationHandler):
 
 
 class JobExportAPI(AuthorizationHandler):
-
     @collect_metrics(transaction_type="API", group="JobExportAPI")
     async def post(self):
         """
@@ -354,7 +350,6 @@ class JobExportAPI(AuthorizationHandler):
 
 
 class JobExecutionAPI(AuthorizationHandler):
-
     @collect_metrics(transaction_type="API", group="JobExecutionAPI")
     async def post(self, job_id):
         """
