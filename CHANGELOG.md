@@ -11,6 +11,7 @@ TBD
 - Added logging statement if `children` directory does not exist
 - Added Garden Version tracking and display on Garden Admin page
 - Updated Error Event message and all error events stay local/not published to UI
+- Updated Logging Levels for Collection Checks
 - Fixed issue where multiple Published requests would be spawned if Publisher utilized `propagate=True`
   if matched on child garden topic
 - Fixed issue where child requests were not getting cancelled when the parent is cancelled
