@@ -125,7 +125,9 @@ class LoggingConfigAPI(AuthorizationHandler):
                     Operation(operation_type="PLUGIN_LOG_RELOAD")
                 )
             else:
-                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+                raise ModelValidationError(
+                    f"Unsupported operation '{op.operation}'"
+                )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

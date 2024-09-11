@@ -98,7 +98,9 @@ def system_queue_manager_role(garden_permitted):
 
 @pytest.fixture
 def user_with_permission(queue_manager_role):
-    user = create_user(User(username="testuser", local_roles=[queue_manager_role]))
+    user = create_user(
+        User(username="testuser", local_roles=[queue_manager_role])
+    )
     yield user
     delete_user(user=user)
 
@@ -142,7 +144,9 @@ def common_mocks(monkeypatch, garden_permitted, queue_function_mock):
         "QUEUE_READ_INSTANCE": queue_function_mock,
     }
 
-    monkeypatch.setattr(beer_garden.router, "_determine_target", mock_determine_target)
+    monkeypatch.setattr(
+        beer_garden.router, "_determine_target", mock_determine_target
+    )
     monkeypatch.setattr(beer_garden.router, "route_functions", route_functions)
 
 
@@ -225,7 +229,9 @@ class TestQueueAPI:
         queue_function_mock,
     ):
         url = f"{base_url}/api/v1/queues/admin.not_queue"
-        headers = {"Authorization": f"Bearer {access_token_permitted_system_queue}"}
+        headers = {
+            "Authorization": f"Bearer {access_token_permitted_system_queue}"
+        }
 
         request = HTTPRequest(url, method="DELETE", headers=headers)
 
@@ -245,7 +251,9 @@ class TestQueueAPI:
         queue_function_mock,
     ):
         url = f"{base_url}/api/v1/queues/admin.queue"
-        headers = {"Authorization": f"Bearer {access_token_permitted_system_queue}"}
+        headers = {
+            "Authorization": f"Bearer {access_token_permitted_system_queue}"
+        }
 
         request = HTTPRequest(url, method="DELETE", headers=headers)
         response = yield http_client.fetch(request)
@@ -256,7 +264,9 @@ class TestQueueAPI:
 
 class TestQueueListAPI:
     @pytest.mark.gen_test
-    def test_auth_disabled_allows_get(self, http_client, base_url, queue_function_mock):
+    def test_auth_disabled_allows_get(
+        self, http_client, base_url, queue_function_mock
+    ):
         url = f"{base_url}/api/v1/queues/"
 
         response = yield http_client.fetch(url)

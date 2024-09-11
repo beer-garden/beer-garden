@@ -60,7 +60,10 @@ class TestPluginRunner(object):
             False,
             log_level=logging.DEBUG,
         )
-        assert runner.logger.level == logging.getLogger(__name__).getEffectiveLevel()
+        assert (
+            runner.logger.level
+            == logging.getLogger(__name__).getEffectiveLevel()
+        )
         assert runner.unformatted_logger.level == logging.DEBUG
 
     def test_generate_plugin_environment(self, plugin):
@@ -87,7 +90,9 @@ class TestPluginRunner(object):
         assert "BG_foo" not in generated_env
         assert "BG_NAME" in generated_env
 
-    def test_generate_plugin_environment_with_additional_environment(self, plugin):
+    def test_generate_plugin_environment_with_additional_environment(
+        self, plugin
+    ):
         plugin.environment = {"FOO": "BAR"}
         plugin_env = plugin._generate_plugin_environment()
         assert plugin_env.get("FOO") == "BAR"
@@ -102,8 +107,12 @@ class TestPluginRunner(object):
     def test_run_plugin_io_thread_stop(
         self, mocker, plugin, process_poll, stopped, error_called
     ):
-        thread_mock = mocker.patch("beer_garden.local_plugins.plugin_runner.Thread")
-        sleep_mock = mocker.patch("beer_garden.local_plugins.plugin_runner.sleep")
+        thread_mock = mocker.patch(
+            "beer_garden.local_plugins.plugin_runner.Thread"
+        )
+        sleep_mock = mocker.patch(
+            "beer_garden.local_plugins.plugin_runner.sleep"
+        )
         process_mock = mocker.patch(
             "beer_garden.local_plugins.plugin_runner.subprocess.Popen"
         )
@@ -156,8 +165,12 @@ class TestCheckIo(object):
         )
         plugin.stopped = Mock(return_value=True)
 
-        stdout_mock = Mock(name="stdout mock", readline=Mock(side_effect=stdout))
-        stderr_mock = Mock(name="stderr mock", readline=Mock(side_effect=stderr))
+        stdout_mock = Mock(
+            name="stdout mock", readline=Mock(side_effect=stdout)
+        )
+        stderr_mock = Mock(
+            name="stderr mock", readline=Mock(side_effect=stderr)
+        )
 
         process_mock.return_value = Mock(
             name="process mock",
@@ -172,7 +185,9 @@ class TestCheckIo(object):
 
         for logger_name, _logger_calls in logger_calls.items():
             for logger_call in _logger_calls:
-                assert logger_call in getattr(plugin, logger_name).log.mock_calls
+                assert (
+                    logger_call in getattr(plugin, logger_name).log.mock_calls
+                )
 
     def test_check_io_multiple_calls(self, plugin):
         stdout_mock = Mock(
@@ -188,7 +203,9 @@ class TestCheckIo(object):
         )
         check_io_mock = Mock(wraps=plugin._check_io)
         plugin.process = Mock(
-            name="process mock", poll=Mock(side_effect=[None, 0, 0]), stdout=stdout_mock
+            name="process mock",
+            poll=Mock(side_effect=[None, 0, 0]),
+            stdout=stdout_mock,
         )
         plugin._check_io = check_io_mock
 
@@ -224,7 +241,9 @@ class TestKill(object):
 class TestBadPlugin:
     """Test the failure modes of ProcessRunner.run"""
 
-    def test_plugin_instance_id_not_set_before_exit(self, caplog, monkeypatch, runner):
+    def test_plugin_instance_id_not_set_before_exit(
+        self, caplog, monkeypatch, runner
+    ):
         def mock_get_process(*args, **kwargs):
             class PopenWithBadWait:
                 def wait(self, timeout=None):

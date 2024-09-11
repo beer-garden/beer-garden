@@ -35,7 +35,9 @@ def garden_admin_role(garden_permitted):
 
 @pytest.fixture
 def user_with_permission(garden_admin_role):
-    user = create_user(User(username="testuser", local_roles=[garden_admin_role]))
+    user = create_user(
+        User(username="testuser", local_roles=[garden_admin_role])
+    )
     yield user
     delete_user(user=user)
 

@@ -87,6 +87,8 @@ class QueueListAPI(AuthorizationHandler):
         self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         self.verify_user_permission_for_object(local_garden())
 
-        await self.process_operation(Operation(operation_type="QUEUE_DELETE_ALL"))
+        await self.process_operation(
+            Operation(operation_type="QUEUE_DELETE_ALL")
+        )
 
         self.set_status(204)

@@ -40,7 +40,9 @@ class TestCommand(object):
         assert repr(c) == "<Command: foo>"
 
     def test_clean(self):
-        Command(name="foo", parameters=[Parameter(key="foo", optional=False)]).clean()
+        Command(
+            name="foo", parameters=[Parameter(key="foo", optional=False)]
+        ).clean()
 
     @pytest.mark.parametrize(
         "params",
@@ -81,7 +83,9 @@ class TestChoices(object):
         assert str(Choices(value="value")) == "value"
 
     def test_repr(self):
-        choices = Choices(type="static", display="select", strict=True, value=[1])
+        choices = Choices(
+            type="static", display="select", strict=True, value=[1]
+        )
         assert "static" in repr(choices)
         assert "select" in repr(choices)
         assert "[1]" in repr(choices)
@@ -135,11 +139,15 @@ class TestChoices(object):
 
 class TestParameter(object):
     def test_str(self):
-        p = Parameter(key="foo", description="bar", type="Boolean", optional=False)
+        p = Parameter(
+            key="foo", description="bar", type="Boolean", optional=False
+        )
         assert str(p) == "foo"
 
     def test_repr(self):
-        p = Parameter(key="foo", description="bar", type="Boolean", optional=False)
+        p = Parameter(
+            key="foo", description="bar", type="Boolean", optional=False
+        )
         assert repr(p) == "<Parameter: key=foo, type=Boolean, description=bar>"
 
     def test_default_display_name(self):
@@ -151,12 +159,16 @@ class TestParameter(object):
 
     def test_clean_fail_nullable_optional_but_no_default(self):
         with pytest.raises(ModelValidationError):
-            Parameter(key="foo", optional=True, default=None, nullable=False).clean()
+            Parameter(
+                key="foo", optional=True, default=None, nullable=False
+            ).clean()
 
     def test_clean_fail_duplicate_parameter_keys(self):
         nested = Parameter(key="foo")
         with pytest.raises(ModelValidationError):
-            Parameter(key="foo", optional=False, parameters=[nested, nested]).clean()
+            Parameter(
+                key="foo", optional=False, parameters=[nested, nested]
+            ).clean()
 
 
 class TestRequest(object):
@@ -231,7 +243,8 @@ class TestRequest(object):
             req2 = Request.objects.get(id=req.id)
             parent.delete()
             with pytest.raises(
-                ModelValidationError, match=".*parent value is not present in database"
+                ModelValidationError,
+                match=".*parent value is not present in database",
             ):
                 req2.clean()
 
@@ -640,7 +653,9 @@ class TestGarden:
     @pytest.fixture
     def child_garden(self, child_system_v1):
         garden = Garden(
-            name="child_garden", connection_type="http", systems=[child_system_v1]
+            name="child_garden",
+            connection_type="http",
+            systems=[child_system_v1],
         ).save()
 
         yield garden
@@ -657,19 +672,26 @@ class TestGarden:
         """Attempting to create more than one garden with connection_type of LOCAL
         should raise an exception"""
         with pytest.raises(NotUniqueError):
-            Garden(name=f"not{local_garden.name}", connection_type="LOCAL").save()
+            Garden(
+                name=f"not{local_garden.name}", connection_type="LOCAL"
+            ).save()
 
-    def test_child_garden_system_attrib_update(self, child_garden, child_system_v2):
+    def test_child_garden_system_attrib_update(
+        self, child_garden, child_system_v2
+    ):
         """If the systems of a child garden are updated such that their names,
         namespaces, or versions are changed, the original systems are removed and
         replaced with the new systems when the garden is saved."""
         orig_system_ids = set(
-            map(lambda x: str(getattr(x, "id")), child_garden.systems)  # noqa: B009
+            map(
+                lambda x: str(getattr(x, "id")), child_garden.systems
+            )  # noqa: B009
         )
 
         orig_system_versions = set(
             map(
-                lambda x: str(getattr(x, "version")), child_garden.systems  # noqa: B009
+                lambda x: str(getattr(x, "version")),
+                child_garden.systems,  # noqa: B009
             )
         )
 
@@ -688,10 +710,14 @@ class TestGarden:
         for system in db_garden.systems:
             print(system)
         new_system_ids = set(
-            map(lambda x: str(getattr(x, "id")), db_garden.systems)  # noqa: B009
+            map(
+                lambda x: str(getattr(x, "id")), db_garden.systems
+            )  # noqa: B009
         )
         new_system_versions = set(
-            map(lambda x: str(getattr(x, "version")), db_garden.systems)  # noqa: B009
+            map(
+                lambda x: str(getattr(x, "version")), db_garden.systems
+            )  # noqa: B009
         )
 
         assert (
@@ -700,12 +726,17 @@ class TestGarden:
         )
         assert new_system_ids.intersection(orig_system_ids) == set()
 
-    def test_child_garden_system_id_update(self, child_garden, child_system_v1_diff_id):
+    def test_child_garden_system_id_update(
+        self, child_garden, child_system_v1_diff_id
+    ):
         """If the systems of a child garden are updated such that the names, namespaces
         and versions remain constant, but the IDs are different, the original systms
-        are removed and replaced with the new systems when the garden is saved."""
+        are removed and replaced with the new systems when the garden is saved.
+        """
         orig_system_ids = set(
-            map(lambda x: str(getattr(x, "id")), child_garden.systems)  # noqa: B009
+            map(
+                lambda x: str(getattr(x, "id")), child_garden.systems
+            )  # noqa: B009
         )
         new_system_id = str(child_system_v1_diff_id.id)
 
@@ -716,7 +747,9 @@ class TestGarden:
         db_garden = Garden.objects().first()
 
         new_system_ids = set(
-            map(lambda x: str(getattr(x, "id")), db_garden.systems)  # noqa: B009
+            map(
+                lambda x: str(getattr(x, "id")), db_garden.systems
+            )  # noqa: B009
         )
 
         assert new_system_id in new_system_ids
@@ -753,7 +786,9 @@ class TestFileUpdates:
     @pytest.fixture()
     def max_size(self, monkeypatch):
         """mock max request size to be arbitrarily small"""
-        monkeypatch.setattr(beer_garden.db.mongo.models, "REQUEST_MAX_PARAM_SIZE", 100)
+        monkeypatch.setattr(
+            beer_garden.db.mongo.models, "REQUEST_MAX_PARAM_SIZE", 100
+        )
         return beer_garden.db.mongo.models.REQUEST_MAX_PARAM_SIZE + 10
 
     def test_save_stores_in_gridfs_after_maxsize(self, request_model, max_size):
@@ -829,7 +864,9 @@ class TestFileUpdates:
 
     def test_save_updates_raw_file_reference(self, request_model):
         request_model.status = "CREATED"
-        beer_garden.config._CONFIG = {"garden": {"name": request_model.namespace}}
+        beer_garden.config._CONFIG = {
+            "garden": {"name": request_model.namespace}
+        }
         request_model.save()
 
         assert len(RawFile.objects.filter(request=request_model)) == 1

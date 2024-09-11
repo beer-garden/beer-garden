@@ -111,7 +111,9 @@ def to_brewtils(
         obj.pre_serialize()
 
     serialized = MongoParser.serialize(obj, to_string=True)
-    parsed = SchemaParser.parse(serialized, model_class, from_string=True, many=many)
+    parsed = SchemaParser.parse(
+        serialized, model_class, from_string=True, many=many
+    )
 
     return parsed
 
@@ -154,7 +156,9 @@ def check_connection(db_config: Box):
     return True
 
 
-def create_connection(connection_alias: str = "default", db_config: Box = None) -> None:
+def create_connection(
+    connection_alias: str = "default", db_config: Box = None
+) -> None:
     """Register a database connection
 
     Args:
@@ -199,7 +203,9 @@ def get_job_store():
 
 
 def count(
-    model_class: ModelType, q_filter: Union[Q, QCombination, None] = None, **kwargs
+    model_class: ModelType,
+    q_filter: Union[Q, QCombination, None] = None,
+    **kwargs
 ) -> int:
     """Count the number of items matching a query
 
@@ -267,7 +273,9 @@ def query_unique(
 
 
 def query(
-    model_class: ModelType, q_filter: Union[Q, QCombination, None] = None, **kwargs
+    model_class: ModelType,
+    q_filter: Union[Q, QCombination, None] = None,
+    **kwargs
 ) -> List[ModelItem]:
     """Query a collection
 

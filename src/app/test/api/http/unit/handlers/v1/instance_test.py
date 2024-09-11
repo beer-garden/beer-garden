@@ -18,7 +18,9 @@ from beer_garden.user import create_user, delete_user
 
 @pytest.fixture(autouse=True)
 def garden(system):
-    garden = Garden(name="somegarden", connection_type="LOCAL", systems=[system]).save()
+    garden = Garden(
+        name="somegarden", connection_type="LOCAL", systems=[system]
+    ).save()
 
     yield garden
     garden.delete()
@@ -54,7 +56,9 @@ def system_admin_role(system):
 
 @pytest.fixture
 def user_with_permission(system_admin_role):
-    user = create_user(User(username="testuser", local_roles=[system_admin_role]))
+    user = create_user(
+        User(username="testuser", local_roles=[system_admin_role])
+    )
     yield user
     delete_user(user=user)
 
@@ -93,7 +97,9 @@ def common_mocks(monkeypatch, garden, instance_function_mock):
     def generic_mock(*args, **kwargs):
         pass
 
-    monkeypatch.setattr(beer_garden.router, "_determine_target", mock_determine_target)
+    monkeypatch.setattr(
+        beer_garden.router, "_determine_target", mock_determine_target
+    )
     monkeypatch.setattr(beer_garden.router, "forward", generic_mock)
     monkeypatch.setattr(
         InstanceLogAPI, "_generate_get_response", instance_function_mock

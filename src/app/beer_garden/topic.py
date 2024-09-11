@@ -172,7 +172,14 @@ def subscriber_match(
     first_subscriber: Subscriber, second_subscriber: Subscriber
 ) -> bool:
     match = False
-    for item in ["garden", "namespace", "system", "version", "instance", "command"]:
+    for item in [
+        "garden",
+        "namespace",
+        "system",
+        "version",
+        "instance",
+        "command",
+    ]:
         first_value = getattr(first_subscriber, item)
         second_value = getattr(second_subscriber, item)
         if first_value and second_value:
@@ -190,8 +197,9 @@ def prune_topics(garden):
             valid_subscribers = []
             update_subscribers = False
             for subscriber in topic.subscribers:
-                if subscriber.subscriber_type == "DYNAMIC" or subscriber_validate(
-                    subscriber, garden, topic.name
+                if (
+                    subscriber.subscriber_type == "DYNAMIC"
+                    or subscriber_validate(subscriber, garden, topic.name)
                 ):
                     valid_subscribers.append(subscriber)
                 else:

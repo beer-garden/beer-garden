@@ -121,7 +121,11 @@ def upstream_role():
 @pytest.fixture
 def user(local_role, upstream_role):
     return create_user(
-        User(username="user", local_roles=[local_role], upstream_roles=[upstream_role])
+        User(
+            username="user",
+            local_roles=[local_role],
+            upstream_roles=[upstream_role],
+        )
     )
 
 
@@ -270,7 +274,9 @@ class TestUser:
         revoke_mock = Mock()
         monkeypatch.setattr(beer_garden.user, "revoke_tokens", revoke_mock)
 
-        updated_user = update_user(user=user, roles=["read_only", "plugin_admin"])
+        updated_user = update_user(
+            user=user, roles=["read_only", "plugin_admin"]
+        )
 
         assert len(updated_user.roles) == 2
         revoke_mock.assert_called_once()
@@ -285,7 +291,8 @@ class TestUser:
         monkeypatch.setattr(beer_garden.user, "revoke_tokens", revoke_mock)
 
         updated_user = update_user(
-            user=user, local_roles=[get_role("read_only"), get_role("plugin_admin")]
+            user=user,
+            local_roles=[get_role("read_only"), get_role("plugin_admin")],
         )
 
         assert len(updated_user.roles) == 2
@@ -580,7 +587,9 @@ class TestUserForwarding:
         downstream_user_3 = generate_downstream_user(garden_3, local_user)
         assert downstream_user_3.username == local_user.username
         assert len(downstream_user_3.local_roles) == 0
-        assert len(downstream_user_3.upstream_roles) == len(local_user.local_roles)
+        assert len(downstream_user_3.upstream_roles) == len(
+            local_user.local_roles
+        )
         assert len(downstream_user_3.user_alias_mapping) == len(
             local_user.user_alias_mapping
         )
@@ -594,13 +603,15 @@ class TestUserForwarding:
 
         one_match_garden = Garden(name="target", children=[Garden(name="a")])
         two_match_garden = Garden(
-            name="target", children=[Garden(name="b", children=[Garden(name="c")])]
+            name="target",
+            children=[Garden(name="b", children=[Garden(name="c")])],
         )
         three_match_garden = Garden(
             name="target",
             children=[
                 Garden(
-                    name="c", children=[Garden(name="b", children=[Garden(name="a")])]
+                    name="c",
+                    children=[Garden(name="b", children=[Garden(name="a")])],
                 )
             ],
         )
@@ -654,7 +665,9 @@ class TestUpstreamSync:
     def test_upstream_user_sync_override(self, roles_loaded):
         username = "test_user"
         user.is_remote = True
-        create_user(User(username=username, is_remote=True, roles=["plugin_admin"]))
+        create_user(
+            User(username=username, is_remote=True, roles=["plugin_admin"])
+        )
 
         upstream_user_sync(
             User(

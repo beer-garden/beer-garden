@@ -91,7 +91,10 @@ class RequestValidator(object):
         :param request: The request to validate
         :raises ConflictError: The parent request has already completed
         """
-        if request.parent and request.parent.status in Request.COMPLETED_STATUSES:
+        if (
+            request.parent
+            and request.parent.status in Request.COMPLETED_STATUSES
+        ):
             raise ConflictError("Parent request has already completed")
 
     def get_and_validate_system(self, request):
@@ -148,14 +151,17 @@ class RequestValidator(object):
         command_names = []
         for command in system.commands:
             if command.name == request.command:
-                self.logger.debug("Found Command with name: %s" % request.command)
+                self.logger.debug(
+                    "Found Command with name: %s" % request.command
+                )
 
                 if request.command_type is None:
                     request.command_type = command.command_type
                 elif request.command_type not in Request.COMMAND_TYPES:
                     raise ModelValidationError(
                         "Command Type for Request was %s but the command specified "
-                        "the type as %s" % (request.command_type, command.command_type)
+                        "the type as %s"
+                        % (request.command_type, command.command_type)
                     )
 
                 if request.output_type is None:
@@ -163,7 +169,8 @@ class RequestValidator(object):
                 elif command.output_type != request.output_type:
                     raise ModelValidationError(
                         "Output Type for Request was %s but the command specified "
-                        "the type as %s" % (request.output_type, command.output_type)
+                        "the type as %s"
+                        % (request.output_type, command.output_type)
                     )
                 request.hidden = command.hidden
 
@@ -177,7 +184,11 @@ class RequestValidator(object):
         )
 
     def get_and_validate_parameters(
-        self, request, command=None, command_parameters=None, request_parameters=None
+        self,
+        request,
+        command=None,
+        command_parameters=None,
+        request_parameters=None,
     ):
         """Validates all request parameters
 
@@ -218,7 +229,9 @@ class RequestValidator(object):
             extracted_value = self._extract_parameter_value_from_request(
                 request, command_parameter, request_parameters, command
             )
-            self._validate_value_in_choices(request, extracted_value, command_parameter)
+            self._validate_value_in_choices(
+                request, extracted_value, command_parameter
+            )
             self._validate_maximum(extracted_value, command_parameter)
             self._validate_minimum(extracted_value, command_parameter)
             self._validate_regex(extracted_value, command_parameter)
@@ -227,9 +240,9 @@ class RequestValidator(object):
         if command.allow_any_kwargs:
             for request_parameter_key in request_parameters:
                 if request_parameter_key not in parameters_to_save:
-                    parameters_to_save[request_parameter_key] = request_parameters[
+                    parameters_to_save[
                         request_parameter_key
-                    ]
+                    ] = request_parameters[request_parameter_key]
 
         self.logger.debug("Successfully Updated and Validated Parameters.")
         self.logger.debug("Parameters: %s", parameters_to_save)
@@ -271,7 +284,9 @@ class RequestValidator(object):
                         key_reference_value = request.instance_name
                     else:
                         # Mongoengine stores None keys as 'null', use instead of None
-                        key_reference_value = request.parameters.get(key) or "null"
+                        key_reference_value = (
+                            request.parameters.get(key) or "null"
+                        )
 
                     raw_allowed = choices.value.get(key_reference_value)
                     if raw_allowed is None:
@@ -290,7 +305,9 @@ class RequestValidator(object):
                 query_params = map_param_values(parsed_value["args"])
 
                 raw_allowed = json.loads(
-                    self._session.get(parsed_value["address"], params=query_params).text
+                    self._session.get(
+                        parsed_value["address"], params=query_params
+                    ).text
                 )
             elif choices.type == "command":
                 if isinstance(choices.value, six.string_types):
@@ -305,29 +322,37 @@ class RequestValidator(object):
                         parameters=map_param_values(parsed_value["args"]),
                     )
                 elif isinstance(choices.value, dict):
-                    parsed_value = parse(choices.value["command"], parse_as="func")
+                    parsed_value = parse(
+                        choices.value["command"], parse_as="func"
+                    )
                     choices_request = Request(
                         system=choices.value.get("system"),
                         system_version=choices.value.get("version"),
                         namespace=choices.value.get(
                             "namespace", config.get("garden.name")
                         ),
-                        instance_name=choices.value.get("instance_name", "default"),
+                        instance_name=choices.value.get(
+                            "instance_name", "default"
+                        ),
                         command=parsed_value["name"],
                         parameters=map_param_values(parsed_value["args"]),
                     )
                 else:
                     raise ModelValidationError(
                         "Unable to validate choices for parameter '%s' - Choices value"
-                        " must be a string or dictionary " % command_parameter.key
+                        " must be a string or dictionary "
+                        % command_parameter.key
                     )
 
                 try:
-                    response = process_wait(choices_request, self._command_timeout)
+                    response = process_wait(
+                        choices_request, self._command_timeout
+                    )
                 except TimeoutError:
                     raise ModelValidationError(
                         "Unable to validate choices for parameter '%s' - Choices "
-                        "request took too long to complete" % command_parameter.key
+                        "request took too long to complete"
+                        % command_parameter.key
                     )
 
                 raw_allowed = json.loads(response.output)
@@ -336,7 +361,8 @@ class RequestValidator(object):
                     if len(raw_allowed) < 1:
                         raise ModelValidationError(
                             "Unable to validate choices for parameter '%s' - Result "
-                            "of choices query was empty list" % command_parameter.key
+                            "of choices query was empty list"
+                            % command_parameter.key
                         )
                 else:
                     raise ModelValidationError(
@@ -365,7 +391,11 @@ class RequestValidator(object):
                         raise ModelValidationError(
                             "Value '%s' is not a valid choice for parameter with key "
                             "'%s'. Valid choices are: %s"
-                            % (single_value, command_parameter.key, allowed_values)
+                            % (
+                                single_value,
+                                command_parameter.key,
+                                allowed_values,
+                            )
                         )
             else:
                 if value not in allowed_values:
@@ -395,7 +425,11 @@ class RequestValidator(object):
                         raise ModelValidationError(
                             "Value %s is greater than the maximum allowed value (%s) "
                             "for parameter %s"
-                            % (value, command_parameter.maximum, command_parameter.key)
+                            % (
+                                value,
+                                command_parameter.maximum,
+                                command_parameter.key,
+                            )
                         )
 
     def _validate_minimum(self, value, command_parameter):
@@ -418,7 +452,11 @@ class RequestValidator(object):
                         raise ModelValidationError(
                             "Value %s is less than the minimum allowed value (%s) "
                             "for parameter %s"
-                            % (value, command_parameter.minimum, command_parameter.key)
+                            % (
+                                value,
+                                command_parameter.minimum,
+                                command_parameter.key,
+                            )
                         )
 
     def _validate_regex(self, value, command_parameter):
@@ -499,7 +537,9 @@ class RequestValidator(object):
                     % (key, valid_keys)
                 )
 
-    def _validate_parameter_based_on_type(self, value, parameter, command, request):
+    def _validate_parameter_based_on_type(
+        self, value, parameter, command, request
+    ):
         """Validates the value passed in, ensures the type matches.
         Recursive calls for dictionaries which also have nested parameters"""
 
@@ -568,7 +608,9 @@ def get_request(request_id: str = None, request: Request = None) -> Request:
         The Request
 
     """
-    request = request or db.query_unique(Request, id=request_id, raise_missing=True)
+    request = request or db.query_unique(
+        Request, id=request_id, raise_missing=True
+    )
     request.children = db.query(Request, filter_params={"parent": request})
 
     return request
@@ -606,7 +648,9 @@ def determine_latest_system_version(request: Request):
     for system in systems:
         try:
             versions.append(versionParse(system.version))
-            system_versions_map[str(versionParse(system.version))] = system.version
+            system_versions_map[
+                str(versionParse(system.version))
+            ] = system.version
         except InvalidVersion:
             legacy_versions.append(system.version)
             system_versions_map[system.version] = system.version
@@ -790,7 +834,10 @@ def remove_bytes_parameter_base64(
 
     for param in parameters:
         request_param = parameters[param]
-        if isinstance(request_param, dict) and request_param.get("type") == "bytes":
+        if (
+            isinstance(request_param, dict)
+            and request_param.get("type") == "bytes"
+        ):
             bytes_base64 = request_param.get("base64")
 
             if bytes_base64 is not None:
@@ -818,7 +865,9 @@ def start_request(request_id: str = None, request: Request = None) -> Request:
         ModelValidationError: The Request is already completed
 
     """
-    request = request or db.query_unique(Request, raise_missing=True, id=request_id)
+    request = request or db.query_unique(
+        Request, raise_missing=True, id=request_id
+    )
 
     request.status = "IN_PROGRESS"
     request = db.update(request)
@@ -853,7 +902,9 @@ def complete_request(
         ModelValidationError: The Request is already completed
 
     """
-    request = request or db.query_unique(Request, raise_missing=True, id=request_id)
+    request = request or db.query_unique(
+        Request, raise_missing=True, id=request_id
+    )
 
     request.status = status
     request.output = output
@@ -882,7 +933,9 @@ def cancel_request(request_id: str = None, request: Request = None) -> Request:
         ModelValidationError: The Request is already completed
 
     """
-    request = request or db.query_unique(Request, raise_missing=True, id=request_id)
+    request = request or db.query_unique(
+        Request, raise_missing=True, id=request_id
+    )
 
     request.status = "CANCELED"
     request = db.update(request)
@@ -941,7 +994,9 @@ def process_wait(request: Request, timeout: float) -> Request:
     )
 
     if not req_complete.wait(timeout):
-        raise TimeoutError("Request did not complete before the specified timeout")
+        raise TimeoutError(
+            "Request did not complete before the specified timeout"
+        )
 
     return db.query_unique(Request, id=created_request.id)
 
@@ -973,7 +1028,9 @@ def handle_wait_events(event):
             for request_event in request_map:
                 if type(request_map[request_event]) is Future:
                     completion_event.set_exception(
-                        ShutdownError("Shutting down, cancelling all request waits")
+                        ShutdownError(
+                            "Shutting down, cancelling all request waits"
+                        )
                     )
                 else:
                     request_map[request_event].set()
@@ -1015,11 +1072,20 @@ def handle_event(event):
 
         if existing_request and existing_request.status != event.payload.status:
             # Skip status that revert
-            if existing_request.status in ("CANCELED", "SUCCESS", "ERROR", "INVALID"):
+            if existing_request.status in (
+                "CANCELED",
+                "SUCCESS",
+                "ERROR",
+                "INVALID",
+            ):
                 return
-            if existing_request.status == "IN_PROGRESS" and event.payload.status in (
-                "CREATED",
-                "RECEIVED",
+            if (
+                existing_request.status == "IN_PROGRESS"
+                and event.payload.status
+                in (
+                    "CREATED",
+                    "RECEIVED",
+                )
             ):
                 return
 
@@ -1039,7 +1105,9 @@ def handle_event(event):
                             )
 
                             if parent_requests and parent_requests[0].requester:
-                                event.payload.requester = parent_requests[0].requester
+                                event.payload.requester = parent_requests[
+                                    0
+                                ].requester
                                 foundUser = True
 
                         # If no parent request is found or request on it, update via remote user mappings
@@ -1050,7 +1118,8 @@ def handle_event(event):
                             for user in get_users():
                                 for remote_user_map in user.remote_user_mapping:
                                     if (
-                                        remote_user_map.target_garden == event.garden
+                                        remote_user_map.target_garden
+                                        == event.garden
                                         and remote_user_map.username
                                         == event.payload.requester
                                     ):
@@ -1093,8 +1162,12 @@ def handle_event(event):
                             request_changed["output"] = event.payload.output
                             existing_request.output = event.payload.output
                         if event.payload.error_class:
-                            request_changed["error_class"] = event.payload.error_class
-                            existing_request.error_class = event.payload.error_class
+                            request_changed[
+                                "error_class"
+                            ] = event.payload.error_class
+                            existing_request.error_class = (
+                                event.payload.error_class
+                            )
 
                 if request_changed:
                     try:

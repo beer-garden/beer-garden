@@ -95,7 +95,10 @@ def garden_cleanup():
 @pytest.fixture
 def user(garden_admin_role, garden_create_role):
     user = create_user(
-        User(username="testuser", local_roles=[garden_admin_role, garden_create_role])
+        User(
+            username="testuser",
+            local_roles=[garden_admin_role, garden_create_role],
+        )
     )
     yield user
     delete_user(user=user)
@@ -103,21 +106,27 @@ def user(garden_admin_role, garden_create_role):
 
 @pytest.fixture
 def user_none_role(garden_none_role):
-    user = create_user(User(username="testuser", local_roles=[garden_none_role]))
+    user = create_user(
+        User(username="testuser", local_roles=[garden_none_role])
+    )
     yield user
     delete_user(user=user)
 
 
 @pytest.fixture
 def read_only_user(garden_read_role):
-    user = create_user(User(username="testuser", local_roles=[garden_read_role]))
+    user = create_user(
+        User(username="testuser", local_roles=[garden_read_role])
+    )
     yield user
     delete_user(user=user)
 
 
 @pytest.fixture
 def global_admin_user(garden_admin_role):
-    user = create_user(User(username="testuser", local_roles=[garden_admin_role]))
+    user = create_user(
+        User(username="testuser", local_roles=[garden_admin_role])
+    )
     yield user
     delete_user(user=user)
 
@@ -151,7 +160,9 @@ def common_mocks(monkeypatch, garden_permitted):
         pass
 
     monkeypatch.setattr(beer_garden.events, "publish", generic_mock)
-    monkeypatch.setattr(beer_garden.router, "_determine_target", mock_determine_target)
+    monkeypatch.setattr(
+        beer_garden.router, "_determine_target", mock_determine_target
+    )
     monkeypatch.setattr(beer_garden.router, "forward", generic_mock)
 
 

@@ -52,7 +52,9 @@ def process(body) -> Tuple[str, dict]:
     many = isinstance(body, list)
 
     if body.__class__.__name__ == "Event":
-        body = Operation(operation_type="PUBLISH_EVENT", model=body, model_type="Event")
+        body = Operation(
+            operation_type="PUBLISH_EVENT", model=body, model_type="Event"
+        )
 
     model_class = (body[0] if many else body).__class__.__name__
 
@@ -91,7 +93,9 @@ def send(
 ):
     message, model_headers = process(body)
 
-    headers = consolidate_headers(request_headers, model_headers, garden_headers)
+    headers = consolidate_headers(
+        request_headers, model_headers, garden_headers
+    )
 
     if conn.is_connected() and send_destination:
         destination = send_destination
@@ -132,7 +136,9 @@ class OperationListener(stomp.ConnectionListener):
 
         try:
             if headers.get("model_class") == "Operation":
-                operation = SchemaParser.parse_operation(message, from_string=True)
+                operation = SchemaParser.parse_operation(
+                    message, from_string=True
+                )
                 operation.source_api = "STOMP"
 
                 if hasattr(operation, "kwargs"):
@@ -244,12 +250,16 @@ class Connection:
                             if (
                                 connection.config.get("host", None)
                                 and connection.config.get("port", None)
-                                and connection.config.get("subscribe_destination", None)
+                                and connection.config.get(
+                                    "subscribe_destination", None
+                                )
                             ):
                                 if (
                                     connection.config["host"] == self.host
                                     and connection.config["port"] == self.port
-                                    and connection.config["subscribe_destination"]
+                                    and connection.config[
+                                        "subscribe_destination"
+                                    ]
                                     == self.subscribe_destination
                                 ):
                                     connection.status = "RECEIVING"
@@ -263,7 +273,9 @@ class Connection:
                             if (
                                 connection.config.get("host", None)
                                 and connection.config.get("port", None)
-                                and connection.config.get("send_destination", None)
+                                and connection.config.get(
+                                    "send_destination", None
+                                )
                             ):
                                 if (
                                     connection.config["host"] == self.host
@@ -285,11 +297,16 @@ class Connection:
             for garden in get_gardens():
                 connection_updated = False
                 for connection in garden.receiving_connections:
-                    if connection.api == "STOMP" and connection.status != "DISABLED":
+                    if (
+                        connection.api == "STOMP"
+                        and connection.status != "DISABLED"
+                    ):
                         if (
                             connection.config.get("host", None)
                             and connection.config.get("port", None)
-                            and connection.config.get("subscribe_destination", None)
+                            and connection.config.get(
+                                "subscribe_destination", None
+                            )
                         ):
                             if (
                                 connection.config["host"] == self.host
@@ -301,7 +318,10 @@ class Connection:
                                 connection_updated = True
 
                 for connection in garden.publishing_connections:
-                    if connection.api == "STOMP" and connection.status != "DISABLED":
+                    if (
+                        connection.api == "STOMP"
+                        and connection.status != "DISABLED"
+                    ):
                         if (
                             connection.config.get("host", None)
                             and connection.config.get("port", None)

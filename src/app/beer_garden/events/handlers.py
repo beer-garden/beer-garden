@@ -56,7 +56,12 @@ def add_internal_events_handler(event_manager):
                 Events.INSTANCE_STOPPED,
             ],
         ),
-        (beer_garden.plugin.handle_event, "Plugin", False, [Events.INSTANCE_UPDATED]),
+        (
+            beer_garden.plugin.handle_event,
+            "Plugin",
+            False,
+            [Events.INSTANCE_UPDATED],
+        ),
         (
             beer_garden.requests.handle_event,
             "Requests",
@@ -79,7 +84,11 @@ def add_internal_events_handler(event_manager):
             beer_garden.requests.handle_wait_events,
             "Requests wait events",
             False,
-            [Events.REQUEST_COMPLETED, Events.REQUEST_CANCELED, Events.GARDEN_STOPPED],
+            [
+                Events.REQUEST_COMPLETED,
+                Events.REQUEST_CANCELED,
+                Events.GARDEN_STOPPED,
+            ],
         ),
         (
             beer_garden.router.handle_event,
@@ -98,7 +107,11 @@ def add_internal_events_handler(event_manager):
             beer_garden.systems.handle_event,
             "System",
             True,
-            [Events.SYSTEM_CREATED, Events.SYSTEM_UPDATED, Events.SYSTEM_REMOVED],
+            [
+                Events.SYSTEM_CREATED,
+                Events.SYSTEM_UPDATED,
+                Events.SYSTEM_REMOVED,
+            ],
         ),
         (
             beer_garden.scheduler.handle_event,
@@ -115,7 +128,12 @@ def add_internal_events_handler(event_manager):
             ],
         ),
         (beer_garden.topic.handle_event, "Topic", True, [Events.GARDEN_SYNC]),
-        (beer_garden.log.handle_event, "Log", True, [Events.PLUGIN_LOGGER_FILE_CHANGE]),
+        (
+            beer_garden.log.handle_event,
+            "Log",
+            True,
+            [Events.PLUGIN_LOGGER_FILE_CHANGE],
+        ),
         (
             beer_garden.files.handle_event,
             "File",

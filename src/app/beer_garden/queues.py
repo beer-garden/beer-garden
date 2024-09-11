@@ -41,7 +41,9 @@ def get_instance_queues(instance_id):
 
     if instance.queue_info:
         request_queue = Queue(
-            name=instance.queue_info["request"]["name"], instance=instance.name, size=-1
+            name=instance.queue_info["request"]["name"],
+            instance=instance.name,
+            size=-1,
         )
 
         try:
@@ -126,5 +128,6 @@ def clear_all_queues():
                 # that condition, but allow this to carry on so that the remaining
                 # queues can still be cleared.
                 logger.warning(
-                    "Attempted to clear queue %s, but it does not exist.", routing_key
+                    "Attempted to clear queue %s, but it does not exist.",
+                    routing_key,
                 )

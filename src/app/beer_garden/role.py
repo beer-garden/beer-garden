@@ -77,7 +77,9 @@ def update_role(
 
 
 @publish_event(Events.ROLE_DELETED)
-def delete_role(role: Role = None, role_name: str = None, role_id: str = None) -> Role:
+def delete_role(
+    role: Role = None, role_name: str = None, role_id: str = None
+) -> Role:
     """Delete provided role
 
     Args:
@@ -103,7 +105,9 @@ def load_roles_config():
     """Load local role definition file, if configured and exists"""
     if config.get("auth.role_definition_file"):
         if os.path.isfile(config.get("auth.role_definition_file")):
-            with open(config.get("auth.role_definition_file"), "r") as config_file:
+            with open(
+                config.get("auth.role_definition_file"), "r"
+            ) as config_file:
                 return yaml.safe_load(config_file)
         else:
             logger.error(

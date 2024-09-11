@@ -169,7 +169,9 @@ class MixedScheduler(object):
             self._sync_scheduler = BackgroundScheduler()
             job_stores = {"beer_garden": db.get_job_store()}
             scheduler_config = config.get("scheduler")
-            executors = {"default": APThreadPoolExecutor(scheduler_config.max_workers)}
+            executors = {
+                "default": APThreadPoolExecutor(scheduler_config.max_workers)
+            }
             job_defaults = scheduler_config.job_defaults.to_dict()
 
             ap_config = {
@@ -422,7 +424,8 @@ class MixedScheduler(object):
 
         # Add Garden Sync Scheduler
         if config.get("parent.sync_interval") > 0 and (
-            config.get("parent.stomp.enabled") or config.get("parent.http.enabled")
+            config.get("parent.stomp.enabled")
+            or config.get("parent.http.enabled")
         ):
             self.add_schedule(
                 beer_garden.garden.publish_garden,
@@ -457,7 +460,9 @@ def run_job(job_id, request_template, **kwargs):
         try:
             # This overloads the __missing__ function to allow partial injections
             injection_dict = InjectionDict()
-            build_injection_dict(injection_dict, kwargs["event"], prefix="event")
+            build_injection_dict(
+                injection_dict, kwargs["event"], prefix="event"
+            )
 
             try:
                 db_job = db.query_unique(Job, id=job_id)
@@ -467,7 +472,9 @@ def run_job(job_id, request_template, **kwargs):
                     )
 
             except Exception as ex:
-                logger.exception(f"Could not fetch job for parameter injection: {ex}")
+                logger.exception(
+                    f"Could not fetch job for parameter injection: {ex}"
+                )
 
             inject_values(request_template.parameters, injection_dict)
         except Exception as ex:
@@ -478,7 +485,9 @@ def run_job(job_id, request_template, **kwargs):
 
     # I'm not sure what would cause this, but just be safe
     if not db_job:
-        logger.error(f"Could not find job {job_id} in database, job will not be run")
+        logger.error(
+            f"Could not find job {job_id} in database, job will not be run"
+        )
         return
 
     try:
@@ -504,10 +513,14 @@ def run_job(job_id, request_template, **kwargs):
         updates = {}
         if request.status == "ERROR":
             updates["inc__error_count"] = 1
-            logger.debug(f"{db_job!r} request completed with {request.status} status")
+            logger.debug(
+                f"{db_job!r} request completed with {request.status} status"
+            )
         elif request.status == "CANCELED":
             updates["inc__canceled_count"] = 1
-            logger.debug(f"{db_job!r} request completed with {request.status} status")
+            logger.debug(
+                f"{db_job!r} request completed with {request.status} status"
+            )
         elif request.status == "SUCCESS":
             logger.debug(f"{db_job!r} request completed with SUCCESS status")
             updates["inc__success_count"] = 1
@@ -527,7 +540,9 @@ def run_job(job_id, request_template, **kwargs):
     ):
         # This essentially resets the timer on this job, which has the effect of
         # making the wait time start whenever the job finishes
-        beer_garden.application.scheduler.reschedule_job(job_id, trigger=job.trigger)
+        beer_garden.application.scheduler.reschedule_job(
+            job_id, trigger=job.trigger
+        )
 
 
 def get_job(job_id: str) -> Job:

@@ -52,7 +52,9 @@ def user_for_plugin_scope(role_for_plugin_scope):
 
 @pytest.fixture()
 def user_for_read_scope(role_for_read_scope):
-    return User(username="read", roles=["read"], local_roles=[role_for_read_scope])
+    return User(
+        username="read", roles=["read"], local_roles=[role_for_read_scope]
+    )
 
 
 @pytest.fixture()
@@ -112,7 +114,11 @@ def base_system(base_command, base_instance):
 @pytest.fixture
 def base_system_2():
     system = models.System(
-        name="system2", namespace="namespace", version="1", instances=[], commands=[]
+        name="system2",
+        namespace="namespace",
+        version="1",
+        instances=[],
+        commands=[],
     )
     system.save()
 
@@ -134,8 +140,12 @@ class TestAuthorization:
         assert check_global_roles(
             user_for_garden_scope, permission_level="PLUGIN_ADMIN"
         )
-        assert check_global_roles(user_for_garden_scope, permission_level="OPERATOR")
-        assert check_global_roles(user_for_garden_scope, permission_level="READ_ONLY")
+        assert check_global_roles(
+            user_for_garden_scope, permission_level="OPERATOR"
+        )
+        assert check_global_roles(
+            user_for_garden_scope, permission_level="READ_ONLY"
+        )
 
     def test_query_filter_read_check(self, user_for_read_scope):
         """get_garden should allow for retrieval by name"""
@@ -145,8 +155,12 @@ class TestAuthorization:
         assert not check_global_roles(
             user_for_read_scope, permission_level="PLUGIN_ADMIN"
         )
-        assert not check_global_roles(user_for_read_scope, permission_level="OPERATOR")
-        assert check_global_roles(user_for_read_scope, permission_level="READ_ONLY")
+        assert not check_global_roles(
+            user_for_read_scope, permission_level="OPERATOR"
+        )
+        assert check_global_roles(
+            user_for_read_scope, permission_level="READ_ONLY"
+        )
 
     def test_generate_permission_levels(self):
         assert generate_permission_levels("READ_ONLY") == [
@@ -361,7 +375,9 @@ class TestModelFilter:
         role_for_garden_scope,
     ):
         assert model_filter._get_role_filter(
-            user_for_read_scope.local_roles[0], user_for_read_scope, ["GARDEN_ADMIN"]
+            user_for_read_scope.local_roles[0],
+            user_for_read_scope,
+            ["GARDEN_ADMIN"],
         )
         assert not model_filter._get_role_filter(
             role_for_garden_scope, user_for_read_scope, ["GARDEN_ADMIN"]
@@ -380,7 +396,11 @@ class TestModelFilter:
                 User(
                     username="user2",
                     local_roles=[
-                        Role(permission="ADMIN", name="role", scope_gardens=["garden"])
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden"],
+                        )
                     ],
                 ),
                 True,
@@ -389,7 +409,11 @@ class TestModelFilter:
                 User(
                     username="user2",
                     local_roles=[
-                        Role(permission="ADMIN", name="role", scope_gardens=["garden2"])
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden2"],
+                        )
                     ],
                 ),
                 False,
@@ -607,7 +631,9 @@ class TestModelFilter:
             ),
         ],
     )
-    def test_get_request_filter(self, model_filter, base_request, user, returned):
+    def test_get_request_filter(
+        self, model_filter, base_request, user, returned
+    ):
         if returned:
             assert model_filter._get_request_filter(
                 base_request, user, ["ADMIN"], source_garden="garden"
@@ -625,7 +651,11 @@ class TestModelFilter:
                 User(
                     username="user2",
                     local_roles=[
-                        Role(permission="ADMIN", name="role", scope_gardens=["garden"])
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden"],
+                        )
                     ],
                 ),
                 True,
@@ -634,7 +664,11 @@ class TestModelFilter:
                 User(
                     username="user2",
                     local_roles=[
-                        Role(permission="ADMIN", name="role", scope_gardens=["garden2"])
+                        Role(
+                            permission="ADMIN",
+                            name="role",
+                            scope_gardens=["garden2"],
+                        )
                     ],
                 ),
                 False,
@@ -913,7 +947,9 @@ class TestModelFilter:
             )
 
         else:
-            assert not model_filter._get_garden_filter(base_garden, user, ["ADMIN"])
+            assert not model_filter._get_garden_filter(
+                base_garden, user, ["ADMIN"]
+            )
 
     @pytest.mark.parametrize(
         "user,returned",

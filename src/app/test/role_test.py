@@ -157,7 +157,9 @@ class TestRole:
             get_role(role_name="read_only")
 
     def test_rescan_roles_overwrite(self, app_config_roles_file):
-        garden_admin = create_role(Role(name="garden_admin", permission="READ_ONLY"))
+        garden_admin = create_role(
+            Role(name="garden_admin", permission="READ_ONLY")
+        )
         plugin_admin = create_role(
             Role(name="plugin_admin", scope_systems=["foo", "bar"])
         )

@@ -107,14 +107,18 @@ def system_cleanup():
 
 @pytest.fixture
 def user(system_admin_role):
-    user = create_user(User(username="testuser", local_roles=[system_admin_role]))
+    user = create_user(
+        User(username="testuser", local_roles=[system_admin_role])
+    )
     yield user
     delete_user(user=user)
 
 
 @pytest.fixture
 def read_user(system_read_role):
-    user = create_user(User(username="testreaduser", local_roles=[system_read_role]))
+    user = create_user(
+        User(username="testreaduser", local_roles=[system_read_role])
+    )
     yield user
     delete_user(user=user)
 
@@ -138,7 +142,9 @@ def common_mocks(monkeypatch, system_permitted):
         pass
 
     monkeypatch.setattr(beer_garden.events, "publish", generic_mock)
-    monkeypatch.setattr(beer_garden.router, "_determine_target", mock_determine_target)
+    monkeypatch.setattr(
+        beer_garden.router, "_determine_target", mock_determine_target
+    )
     monkeypatch.setattr(beer_garden.router, "forward", generic_mock)
 
 
@@ -291,7 +297,11 @@ class TestSystemAPI:
         }
 
         patch_body = [
-            {"operation": "replace", "path": "/description", "value": "new description"}
+            {
+                "operation": "replace",
+                "path": "/description",
+                "value": "new description",
+            }
         ]
         request = HTTPRequest(
             url, method="PATCH", headers=headers, body=json.dumps(patch_body)
@@ -300,7 +310,8 @@ class TestSystemAPI:
 
         assert response.code == 200
         assert (
-            System.objects.get(id=system_permitted.id).description == "new description"
+            System.objects.get(id=system_permitted.id).description
+            == "new description"
         )
 
     @pytest.mark.gen_test
@@ -319,7 +330,11 @@ class TestSystemAPI:
         }
 
         patch_body = [
-            {"operation": "replace", "path": "/description", "value": "new description"}
+            {
+                "operation": "replace",
+                "path": "/description",
+                "value": "new description",
+            }
         ]
         request = HTTPRequest(
             url, method="PATCH", headers=headers, body=json.dumps(patch_body)
@@ -356,7 +371,11 @@ class TestSystemAPI:
         }
 
         patch_body = [
-            {"operation": "replace", "path": "/description", "value": "new description"}
+            {
+                "operation": "replace",
+                "path": "/description",
+                "value": "new description",
+            }
         ]
         request = HTTPRequest(
             url, method="PATCH", headers=headers, body=json.dumps(patch_body)
@@ -432,7 +451,10 @@ class TestSystemListAPI:
         response = yield http_client.fetch(request)
 
         assert response.code == 201
-        assert len(System.objects.filter(name="newsystem", namespace=garden.name)) == 1
+        assert (
+            len(System.objects.filter(name="newsystem", namespace=garden.name))
+            == 1
+        )
 
     @pytest.mark.gen_test
     def test_auth_enabled_rejects_post_for_not_permitted_system(
@@ -468,7 +490,9 @@ class TestSystemListAPI:
         assert len(System.objects.all()) == system_count_before
 
     @pytest.mark.gen_test
-    def test_get_does_not_include_queue_info(self, http_client, base_url, systems_mock):
+    def test_get_does_not_include_queue_info(
+        self, http_client, base_url, systems_mock
+    ):
         url = f"{base_url}/api/v1/systems"
 
         response = yield http_client.fetch(url)

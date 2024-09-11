@@ -47,7 +47,9 @@ class PrometheusServer(StoppableThread):
         self.logger.debug("Initializing metric counts")
         initialize_counts()
 
-        self.logger.info(f"Starting {self.display_name} on {self._host}:{self._port}")
+        self.logger.info(
+            f"Starting {self.display_name} on {self._host}:{self._port}"
+        )
         self.httpd.serve_forever()
 
         self.logger.info(f"{self.display_name} is stopped")
@@ -230,7 +232,9 @@ def collect_metrics(transaction_type: str = None, group: str = None):
                 trace_id = elasticapm.get_trace_id()
                 client.begin_transaction(
                     transaction_type=transaction_type,
-                    trace_parent=trace_id if trace_id else elasticapm.get_span_id(),
+                    trace_parent=trace_id
+                    if trace_id
+                    else elasticapm.get_span_id(),
                 )
                 elasticapm.set_transaction_name(transaction_label)
 
@@ -238,7 +242,8 @@ def collect_metrics(transaction_type: str = None, group: str = None):
                     current_user = class_obj.get_current_user()
                     if current_user:
                         elasticapm.set_user_context(
-                            username=current_user.username, user_id=current_user.id
+                            username=current_user.username,
+                            user_id=current_user.id,
                         )
 
         try:

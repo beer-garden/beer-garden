@@ -41,7 +41,9 @@ class BasicLoginHandler(BaseLoginHandler):
                         authenticated_user.metadata[
                             "last_authentication"
                         ] = datetime.utcnow().timestamp()
-                        authenticated_user = update_user(user=authenticated_user)
+                        authenticated_user = update_user(
+                            user=authenticated_user
+                        )
 
                 except User.DoesNotExist:
                     pass

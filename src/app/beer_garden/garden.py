@@ -81,14 +81,17 @@ def filter_router_result(garden: Garden) -> Garden:
 def get_children_garden(garden: Garden) -> Garden:
     if garden.connection_type == "LOCAL":
         garden.children = db.query(
-            Garden, filter_params={"connection_type__ne": "LOCAL", "has_parent": False}
+            Garden,
+            filter_params={"connection_type__ne": "LOCAL", "has_parent": False},
         )
         if garden.children:
             for child in garden.children:
                 child.has_parent = True
                 child.parent = garden.name
     else:
-        garden.children = db.query(Garden, filter_params={"parent": garden.name})
+        garden.children = db.query(
+            Garden, filter_params={"parent": garden.name}
+        )
 
     if garden.children:
         for child in garden.children:
@@ -130,7 +133,8 @@ def get_gardens(include_local: bool = True) -> List[Garden]:
     # This is necessary for as long as local_garden is still needed. See the notes
     # there for more detail.
     gardens = db.query(
-        Garden, filter_params={"connection_type__ne": "LOCAL", "has_parent": False}
+        Garden,
+        filter_params={"connection_type__ne": "LOCAL", "has_parent": False},
     )
 
     if include_local:
@@ -214,7 +218,9 @@ def check_garden_receiving_heartbeat(
 
     # if garden doens't exist, create it
     if garden is None:
-        garden = create_garden(Garden(name=garden_name, connection_type="Remote"))
+        garden = create_garden(
+            Garden(name=garden_name, connection_type="Remote")
+        )
 
     connection_set = False
 
@@ -227,7 +233,8 @@ def check_garden_receiving_heartbeat(
                     connection.status = "RECEIVING"
 
                 connection.status_info.set_status_heartbeat(
-                    connection.status, max_history=config.get("garden.status_history")
+                    connection.status,
+                    max_history=config.get("garden.status_history"),
                 )
     else:
         garden.receiving_connections = []
@@ -257,7 +264,8 @@ def update_receiving_connections(garden: Garden):
 
     if update_garden:
         updates["receiving_connections"] = [
-            db.from_brewtils(connection) for connection in garden.receiving_connections
+            db.from_brewtils(connection)
+            for connection in garden.receiving_connections
         ]
 
         return db.modify(garden, **updates)
@@ -309,7 +317,10 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
                 "UNKNOWN",
             ]:
                 update_garden_publishing(
-                    "DISABLED", api=connection.api, garden=garden, override_status=False
+                    "DISABLED",
+                    api=connection.api,
+                    garden=garden,
+                    override_status=False,
                 )
 
         for connection in garden.receiving_connections:
@@ -322,7 +333,10 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
                 "UNKNOWN",
             ]:
                 update_garden_receiving(
-                    "DISABLED", api=connection.api, garden=garden, override_status=False
+                    "DISABLED",
+                    api=connection.api,
+                    garden=garden,
+                    override_status=False,
                 )
 
     garden.status = new_status
@@ -448,7 +462,13 @@ def upsert_garden(garden: Garden, skip_connections: bool = True) -> Garden:
     if existing_garden is None:
         return create_garden(garden)
     else:
-        for attr in ("status", "status_info", "namespaces", "systems", "metadata"):
+        for attr in (
+            "status",
+            "status_info",
+            "namespaces",
+            "systems",
+            "metadata",
+        ):
             setattr(existing_garden, attr, getattr(garden, attr))
         if not skip_connections:
             for attr in ("receiving_connections", "publishing_connections"):
@@ -564,11 +584,14 @@ def load_garden_connections(garden: Garden):
 
         http_connection = Connection(
             api="HTTP",
-            status="PUBLISHING" if garden_config.get("publishing") else "DISABLED",
+            status="PUBLISHING"
+            if garden_config.get("publishing")
+            else "DISABLED",
         )
 
         http_connection.status_info.set_status_heartbeat(
-            http_connection.status, max_history=config.get("garden.status_history")
+            http_connection.status,
+            max_history=config.get("garden.status_history"),
         )
 
         for key in config_map:
@@ -594,11 +617,14 @@ def load_garden_connections(garden: Garden):
 
         stomp_connection = Connection(
             api="STOMP",
-            status="PUBLISHING" if garden_config.get("publishing") else "DISABLED",
+            status="PUBLISHING"
+            if garden_config.get("publishing")
+            else "DISABLED",
         )
 
         stomp_connection.status_info.set_status_heartbeat(
-            stomp_connection.status, max_history=config.get("garden.status_history")
+            stomp_connection.status,
+            max_history=config.get("garden.status_history"),
         )
 
         for key in config_map:
@@ -676,8 +702,12 @@ def rescan():
 
                 if garden is None:
                     try:
-                        logger.info(f"Loading new configuration file for {garden_name}")
-                        garden = Garden(name=garden_name, connection_type="Remote")
+                        logger.info(
+                            f"Loading new configuration file for {garden_name}"
+                        )
+                        garden = Garden(
+                            name=garden_name, connection_type="Remote"
+                        )
                         garden = create_garden(garden)
                     except NotUniqueException:
                         logger.error(
@@ -731,7 +761,9 @@ def garden_sync(sync_target: str = None):
             publish_garden()
         else:
             try:
-                logger.info(f"About to create sync operation for garden {sync_target}")
+                logger.info(
+                    f"About to create sync operation for garden {sync_target}"
+                )
 
                 route(
                     Operation(
@@ -748,7 +780,9 @@ def garden_sync(sync_target: str = None):
         # Iterate over all gardens and forward the sync requests
         for garden in get_gardens(include_local=False):
             try:
-                logger.info(f"About to create sync operation for garden {garden.name}")
+                logger.info(
+                    f"About to create sync operation for garden {garden.name}"
+                )
 
                 route(
                     Operation(
@@ -873,7 +907,9 @@ def handle_event(event):
             "BLOCKED",
             "ERROR",
         ]:
-            update_garden_status(event.payload.target_garden_name, "UNREACHABLE")
+            update_garden_status(
+                event.payload.target_garden_name, "UNREACHABLE"
+            )
     elif event.name == Events.GARDEN_ERROR.name:
         target_garden = get_garden(event.payload.target_garden_name)
 
@@ -888,7 +924,9 @@ def handle_event(event):
         target_garden = get_garden(event.payload.target_garden_name)
 
         if target_garden.status == "NOT_CONFIGURED":
-            update_garden_status(event.payload.target_garden_name, "NOT_CONFIGURED")
+            update_garden_status(
+                event.payload.target_garden_name, "NOT_CONFIGURED"
+            )
 
     elif event.name in [
         Events.GARDEN_CONFIGURED.name,

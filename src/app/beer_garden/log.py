@@ -26,7 +26,9 @@ logger = logging.getLogger(__name__)
 # Overall application logging configuration
 _APP_LOGGING = None
 
-_default_formatter = {"format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"}
+_default_formatter = {
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+}
 
 _stdout_handler = {
     "class": "logging.StreamHandler",
@@ -276,5 +278,7 @@ def handle_event(event):
     """Only care about local garden"""
     if event.garden == config.get("garden.name"):
         if event.name == Events.PLUGIN_LOGGER_FILE_CHANGE.name:
-            logger.info("Detected change to plugin logging config file, reloading")
+            logger.info(
+                "Detected change to plugin logging config file, reloading"
+            )
             load_plugin_log_config()

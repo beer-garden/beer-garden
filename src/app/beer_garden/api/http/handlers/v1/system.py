@@ -57,7 +57,8 @@ class SystemAPI(AuthorizationHandler):
 
         # This is only here because of backwards compatibility
         include_commands = (
-            self.get_query_argument("include_commands", default="").lower() != "false"
+            self.get_query_argument("include_commands", default="").lower()
+            != "false"
         )
 
         if not include_commands:
@@ -108,7 +109,8 @@ class SystemAPI(AuthorizationHandler):
                 operation_type="SYSTEM_DELETE",
                 args=[system_id],
                 kwargs={
-                    "force": self.get_argument("force", default="").lower() == "true"
+                    "force": self.get_argument("force", default="").lower()
+                    == "true"
                 },
             ),
             filter_results=False,
@@ -171,7 +173,9 @@ class SystemAPI(AuthorizationHandler):
 
         response = ""
 
-        for op in SchemaParser.parse_patch(self.request.decoded_body, from_string=True):
+        for op in SchemaParser.parse_patch(
+            self.request.decoded_body, from_string=True
+        ):
             if op.operation == "replace":
                 if op.path == "/commands":
                     kwargs["new_commands"] = SchemaParser.parse_command(
@@ -201,7 +205,9 @@ class SystemAPI(AuthorizationHandler):
                         SchemaParser.parse_instance(op.value)
                     )
                 else:
-                    raise ModelValidationError(f"Unsupported path for add '{op.path}'")
+                    raise ModelValidationError(
+                        f"Unsupported path for add '{op.path}'"
+                    )
 
             elif op.operation == "update":
                 if op.path == "/metadata":
@@ -215,13 +221,17 @@ class SystemAPI(AuthorizationHandler):
                 do_reload = True
 
             else:
-                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+                raise ModelValidationError(
+                    f"Unsupported operation '{op.operation}'"
+                )
 
         if kwargs:
             response = _remove_queue_info(
                 await self.process_operation(
                     Operation(
-                        operation_type="SYSTEM_UPDATE", args=[system_id], kwargs=kwargs
+                        operation_type="SYSTEM_UPDATE",
+                        args=[system_id],
+                        kwargs=kwargs,
                     )
                 )
             )
@@ -326,11 +336,15 @@ class SystemListAPI(AuthorizationHandler):
 
         include_fields = self.get_query_argument("include_fields", None)
         if include_fields:
-            include_fields = set(include_fields.split(",")) & self.REQUEST_FIELDS
+            include_fields = (
+                set(include_fields.split(",")) & self.REQUEST_FIELDS
+            )
 
         exclude_fields = self.get_query_argument("exclude_fields", None)
         if exclude_fields:
-            exclude_fields = set(exclude_fields.split(",")) & self.REQUEST_FIELDS
+            exclude_fields = (
+                set(exclude_fields.split(",")) & self.REQUEST_FIELDS
+            )
 
         # TODO - Handle multiple query arguments with the same key
         # for example: (?name=foo&name=bar) ... what should that mean?
@@ -398,7 +412,9 @@ class SystemListAPI(AuthorizationHandler):
           - Systems
         """
         self.minimum_permission = Permissions.PLUGIN_ADMIN.name
-        system = SchemaParser.parse_system(self.request.decoded_body, from_string=True)
+        system = SchemaParser.parse_system(
+            self.request.decoded_body, from_string=True
+        )
 
         self.verify_user_permission_for_object(system)
 

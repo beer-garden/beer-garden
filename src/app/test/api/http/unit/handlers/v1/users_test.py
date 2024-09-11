@@ -27,7 +27,9 @@ def user_admin_role():
 
 @pytest.fixture
 def user():
-    yield create_user(User(username="testuser", password="password", is_remote=False))
+    yield create_user(
+        User(username="testuser", password="password", is_remote=False)
+    )
 
 
 @pytest.fixture
@@ -81,7 +83,10 @@ class TestUserAPI:
         headers = {"Content-Type": "application/json"}
 
         body = json.dumps(
-            {"operation": "update_roles", "value": {"roles": [user_admin_role.name]}}
+            {
+                "operation": "update_roles",
+                "value": {"roles": [user_admin_role.name]},
+            }
         )
         assert len(user.roles) == 0
 
@@ -99,12 +104,16 @@ class TestUserAPI:
         url = f"{base_url}/api/v1/users/{user.username}"
         headers = {"Content-Type": "application/json"}
 
-        body = json.dumps({"operation": "update", "value": {"roles": ["badrolename"]}})
+        body = json.dumps(
+            {"operation": "update", "value": {"roles": ["badrolename"]}}
+        )
 
         assert len(user.roles) == 0
 
         with pytest.raises(HTTPError) as excinfo:
-            yield http_client.fetch(url, method="PATCH", headers=headers, body=body)
+            yield http_client.fetch(
+                url, method="PATCH", headers=headers, body=body
+            )
 
         assert excinfo.value.code == 400
 
@@ -168,7 +177,9 @@ class TestUserAPI:
         )
 
         with pytest.raises(HTTPError) as excinfo:
-            yield http_client.fetch(url, method="PATCH", headers=headers, body=body)
+            yield http_client.fetch(
+                url, method="PATCH", headers=headers, body=body
+            )
 
         assert excinfo.value.code == 403
 
@@ -184,7 +195,9 @@ class TestUserAPI:
         url = f"{base_url}/api/v1/users/{user.username}"
         headers = {"Authorization": f"Bearer {access_token_user_admin}"}
 
-        response = yield http_client.fetch(url, method="DELETE", headers=headers)
+        response = yield http_client.fetch(
+            url, method="DELETE", headers=headers
+        )
 
         assert response.code == 204
         with pytest.raises(DoesNotExist):
@@ -223,7 +236,11 @@ class TestUserListAPI:
 
     @pytest.mark.gen_test
     def test_auth_enabled_allows_post_for_permitted_user(
-        self, http_client, base_url, app_config_auth_enabled, access_token_user_admin
+        self,
+        http_client,
+        base_url,
+        app_config_auth_enabled,
+        access_token_user_admin,
     ):
         url = f"{base_url}/api/v1/users/"
         headers = {
@@ -250,7 +267,9 @@ class TestUserListAPI:
         body = json.dumps({"username": "newuser", "password": "password"})
 
         with pytest.raises(HTTPError) as excinfo:
-            yield http_client.fetch(url, method="POST", headers=headers, body=body)
+            yield http_client.fetch(
+                url, method="POST", headers=headers, body=body
+            )
 
         assert excinfo.value.code == 403
 
@@ -262,7 +281,9 @@ class TestUserListAPI:
         headers = {"Content-Type": "application/json"}
 
         with pytest.raises(HTTPError) as excinfo:
-            yield http_client.fetch(url, method="POST", headers=headers, body="{}")
+            yield http_client.fetch(
+                url, method="POST", headers=headers, body="{}"
+            )
 
         assert excinfo.value.code == 400
 
@@ -270,7 +291,12 @@ class TestUserListAPI:
 class TestUserPasswordChangeAPI:
     @pytest.mark.gen_test
     def test_post_responds_204_on_success(
-        self, http_client, base_url, app_config_auth_enabled, access_token_user, user
+        self,
+        http_client,
+        base_url,
+        app_config_auth_enabled,
+        access_token_user,
+        user,
     ):
         url = f"{base_url}/api/v1/password/change/"
         headers = {
@@ -294,7 +320,12 @@ class TestUserPasswordChangeAPI:
 
     @pytest.mark.gen_test
     def test_post_responds_400_on_incorrect_current_password(
-        self, http_client, base_url, app_config_auth_enabled, access_token_user, user
+        self,
+        http_client,
+        base_url,
+        app_config_auth_enabled,
+        access_token_user,
+        user,
     ):
         url = f"{base_url}/api/v1/password/change/"
         headers = {
@@ -307,7 +338,9 @@ class TestUserPasswordChangeAPI:
         )
 
         with pytest.raises(HTTPError) as excinfo:
-            yield http_client.fetch(url, method="POST", headers=headers, body=body)
+            yield http_client.fetch(
+                url, method="POST", headers=headers, body=body
+            )
 
         assert excinfo.value.code == 400
 
@@ -316,7 +349,12 @@ class TestUserPasswordChangeAPI:
 
     @pytest.mark.gen_test
     def test_post_responds_400_when_required_fields_are_missing(
-        self, http_client, base_url, app_config_auth_enabled, access_token_user, user
+        self,
+        http_client,
+        base_url,
+        app_config_auth_enabled,
+        access_token_user,
+        user,
     ):
         url = f"{base_url}/api/v1/password/change/"
         headers = {
@@ -325,7 +363,9 @@ class TestUserPasswordChangeAPI:
         }
 
         with pytest.raises(HTTPError) as excinfo:
-            yield http_client.fetch(url, method="POST", headers=headers, body="{}")
+            yield http_client.fetch(
+                url, method="POST", headers=headers, body="{}"
+            )
 
         assert excinfo.value.code == 400
 

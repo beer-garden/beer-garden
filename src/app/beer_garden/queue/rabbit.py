@@ -125,7 +125,12 @@ def create(instance: Instance, system: System) -> dict:
     Returns:
         Dictionary describing the created queues
     """
-    routing_words = [system.namespace, system.name, system.version, instance.name]
+    routing_words = [
+        system.namespace,
+        system.name,
+        system.version,
+        instance.name,
+    ]
     request_queue_name = get_routing_key(*routing_words)
     clients["pika"].setup_queue(
         request_queue_name,
@@ -185,7 +190,9 @@ def put_event(event: Event, headers: dict = None, **kwargs) -> None:
     kwargs["headers"] = headers or {}
     kwargs["routing_key"] = ""
 
-    clients["pika_fanout"].publish(SchemaParser.serialize_event(event), **kwargs)
+    clients["pika_fanout"].publish(
+        SchemaParser.serialize_event(event), **kwargs
+    )
 
 
 def put(request: Request, headers: dict = None, **kwargs) -> None:
@@ -211,7 +218,9 @@ def put(request: Request, headers: dict = None, **kwargs) -> None:
         kwargs["headers"]["request_id"] = request.id
 
     # Set Expiration Time for non admin requests
-    if config.get("db.ttl.in_progress") > 0 and not kwargs.get("is_admin", False):
+    if config.get("db.ttl.in_progress") > 0 and not kwargs.get(
+        "is_admin", False
+    ):
         kwargs["expiration"] = str(config.get("db.ttl.in_progress") * 60 * 1000)
 
     if "routing_key" not in kwargs:
@@ -299,7 +308,8 @@ class PyrabbitClient(object):
             return self._client.get_vhost(self._virtual_host)
         except Exception:
             self.logger.error(
-                "Error verifying virtual host %s, does it exist?", self._virtual_host
+                "Error verifying virtual host %s, does it exist?",
+                self._virtual_host,
             )
             raise
 
@@ -312,7 +322,9 @@ class PyrabbitClient(object):
                 "priority": 1,
                 "apply-to": "queues",
             }
-            self._client.create_policy(self._virtual_host, "admin_expiry", **kwargs)
+            self._client.create_policy(
+                self._virtual_host, "admin_expiry", **kwargs
+            )
         except Exception:
             self.logger.error("Error creating admin queue expiration policy")
             raise
@@ -355,7 +367,9 @@ class PyrabbitClient(object):
         Args:
             queue_name: The queue name
         """
-        queue_dictionary = self._client.get_queue(self._virtual_host, queue_name)
+        queue_dictionary = self._client.get_queue(
+            self._virtual_host, queue_name
+        )
         number_of_messages = queue_dictionary.get("messages_ready", 0)
 
         self.logger.info("Clearing Queue: %s", queue_name)
@@ -393,7 +407,10 @@ class PyrabbitClient(object):
         self._client.delete_queue(self._virtual_host, queue_name)
 
     def destroy_queue(
-        self, queue_name: str, force_disconnect: bool = False, clear_queue: bool = True
+        self,
+        queue_name: str,
+        force_disconnect: bool = False,
+        clear_queue: bool = True,
     ) -> None:
         """Remove all remnants of a queue.
 
@@ -596,6 +613,8 @@ class EventConsumer(StoppableThread):
             return SchemaParser.parse_event(message, from_string=True)
         except Exception as ex:
             self.logger.exception(
-                "Unable to parse message body: {0}. Exception: {1}".format(message, ex)
+                "Unable to parse message body: {0}. Exception: {1}".format(
+                    message, ex
+                )
             )
             raise DiscardMessageException("Error parsing message body")

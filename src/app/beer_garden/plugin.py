@@ -214,7 +214,9 @@ def publish_stop(system, instance=None):
         request_args["instance_name"] = instance.name
 
     requests.process_request(
-        Request.from_template(stop_request, **request_args), is_admin=True, priority=1
+        Request.from_template(stop_request, **request_args),
+        is_admin=True,
+        priority=1,
     )
 
 
@@ -269,7 +271,9 @@ def update(
         metadata_update.update(metadata)
         updates["set__instances__S__metadata"] = metadata_update
 
-    system = db.modify(system, query={"instances__name": instance.name}, **updates)
+    system = db.modify(
+        system, query={"instances__name": instance.name}, **updates
+    )
 
     return system.get_instance_by_name(instance.name)
 
@@ -475,7 +479,10 @@ async def update_async(
 
 
 async def heartbeat_async(
-    instance_id: str = None, instance: Instance = None, system: System = None, **_
+    instance_id: str = None,
+    instance: Instance = None,
+    system: System = None,
+    **_,
 ) -> dict:
     query = {"instances._id": ObjectIdField().to_mongo(instance_id)}
     projection = {"instances.$": 1, "_id": 0}
@@ -494,7 +501,9 @@ async def heartbeat_async(
 
 async def _get_instance_async(filter, projection) -> dict:
     """Helper to get an instance async-style"""
-    result = await moto.query(collection="system", filter=filter, projection=projection)
+    result = await moto.query(
+        collection="system", filter=filter, projection=projection
+    )
 
     # TODO - This is not the best
     instance = result["instances"][0]
@@ -609,7 +618,9 @@ class StatusMonitor(StoppableThread):
         self.display_name = "Plugin Status Monitor"
         self.heartbeat_interval = heartbeat_interval
         self.timeout = timedelta(seconds=timeout_seconds)
-        self.status_request = Request(command="_status", command_type="EPHEMERAL")
+        self.status_request = Request(
+            command="_status", command_type="EPHEMERAL"
+        )
 
         super(StatusMonitor, self).__init__(
             logger=self.logger, name="PluginStatusMonitor"
@@ -660,7 +671,12 @@ class StatusMonitor(StoppableThread):
 
                     elif (
                         instance.status
-                        in ["UNRESPONSIVE", "STARTING", "INITIALIZING", "UNKNOWN"]
+                        in [
+                            "UNRESPONSIVE",
+                            "STARTING",
+                            "INITIALIZING",
+                            "UNKNOWN",
+                        ]
                         and datetime.utcnow() - last_heartbeat < self.timeout
                     ):
                         update(

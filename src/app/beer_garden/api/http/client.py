@@ -43,11 +43,15 @@ class SerializeHelper(object):
             serialize_kwargs["to_string"] = True
 
         # Don't serialize if that's not desired
-        if serialize_kwargs.get("return_raw") or isinstance(result, six.string_types):
+        if serialize_kwargs.get("return_raw") or isinstance(
+            result, six.string_types
+        ):
             return result
 
         if self.json_dump(result):
-            return json.dumps(result) if serialize_kwargs["to_string"] else result
+            return (
+                json.dumps(result) if serialize_kwargs["to_string"] else result
+            )
 
         return SchemaParser.serialize(result, **(serialize_kwargs or {}))
 

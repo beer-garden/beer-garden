@@ -272,7 +272,9 @@ class Manager:
                 try:
                     self.entry_points.append(self.create(entry_name))
                 except Exception as ex:
-                    logger.exception(f"Error creating entry point {entry_name}: {ex}")
+                    logger.exception(
+                        f"Error creating entry point {entry_name}: {ex}"
+                    )
 
     def create(self, module_name: str) -> EntryPoint:
         module = import_module(f"beer_garden.api.{module_name}")

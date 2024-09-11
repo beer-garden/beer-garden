@@ -328,7 +328,9 @@ def invalid_source_check(operation: Operation):
         if not gardens[operation.source_garden_name].receiving_connections:
             return False
 
-        for connection in gardens[operation.source_garden_name].receiving_connections:
+        for connection in gardens[
+            operation.source_garden_name
+        ].receiving_connections:
             if (
                 connection.api == operation.source_api
                 and connection.status != "DISABLED"
@@ -336,7 +338,9 @@ def invalid_source_check(operation: Operation):
                 return False
 
     try:
-        loaded_garden = beer_garden.garden.get_garden(operation.source_garden_name)
+        loaded_garden = beer_garden.garden.get_garden(
+            operation.source_garden_name
+        )
         logger.warning(
             f"Garden {operation.source_garden_name} exists in database and "
             " not in memory routing table, loading into routing table"
@@ -367,7 +371,10 @@ def invalid_source_check(operation: Operation):
         return False
 
     for connection in loaded_garden.receiving_connections:
-        if connection.api == operation.source_api and connection.status != "DISABLED":
+        if (
+            connection.api == operation.source_api
+            and connection.status != "DISABLED"
+        ):
             return False
 
     return True
@@ -392,7 +399,10 @@ def initiate_forward(operation: Operation):
         response = forward(operation)
     except RoutingRequestException:
         # TODO - Special case for dealing with removing downstream systems
-        if operation.operation_type == "SYSTEM_DELETE" and operation.kwargs["force"]:
+        if (
+            operation.operation_type == "SYSTEM_DELETE"
+            and operation.kwargs["force"]
+        ):
             return beer_garden.systems.remove_system(system=operation.model)
 
         raise
@@ -428,7 +438,9 @@ def determine_route_garden(target_garden_name):
             "been configured or the connection is DISABLED"
         )
 
-    if target_garden.has_parent and target_garden.parent != config.get("garden.name"):
+    if target_garden.has_parent and target_garden.parent != config.get(
+        "garden.name"
+    ):
         return determine_route_garden(target_garden.parent)
 
     return target_garden
@@ -543,7 +555,9 @@ def setup_routing():
             ):
                 with garden_lock:
                     gardens[garden.name] = load_garden_connections(garden)
-                    for connection in gardens[garden.name].publishing_connections:
+                    for connection in gardens[
+                        garden.name
+                    ].publishing_connections:
                         if (
                             connection.api.upper() == "STOMP"
                             and connection.status != "DISABLED"
@@ -554,7 +568,9 @@ def setup_routing():
                                 ] = create_stomp_connection(connection)
 
             else:
-                logger.warning(f"Garden with invalid connection info: {garden!r}")
+                logger.warning(
+                    f"Garden with invalid connection info: {garden!r}"
+                )
 
 
 def add_routing_system(system=None, garden_name=None):
@@ -576,7 +592,9 @@ def add_routing_system(system=None, garden_name=None):
         system_id_routes[system.id] = garden_name
 
         for instance in system.instances:
-            logger.debug(f"{garden_name}: Adding {system} instance ({instance.id})")
+            logger.debug(
+                f"{garden_name}: Adding {system} instance ({instance.id})"
+            )
             instance_id_routes[instance.id] = garden_name
 
 
@@ -671,9 +689,14 @@ def handle_event(event):
                             ] = create_stomp_connection(connection)
 
                         elif connection.status == "DISABLED":
-                            stomp_garden_connections[event.payload.name].disconnect()
+                            stomp_garden_connections[
+                                event.payload.name
+                            ].disconnect()
 
-            if not stomp_found and event.payload.name not in stomp_garden_connections:
+            if (
+                not stomp_found
+                and event.payload.name not in stomp_garden_connections
+            ):
                 stomp_garden_connections[event.payload.name].disconnect()
                 del stomp_garden_connections[event.payload.name]
 
@@ -720,7 +743,9 @@ def _pre_route(operation: Operation) -> Operation:
         # ing never runs. Intuition says that's not what was intended here, so
         # TODO: look into this
         if operation.kwargs.get("filter_params", {}).get("namespace") == "":
-            operation.kwargs["filter_params"]["namespace"] = config.get("garden.name")
+            operation.kwargs["filter_params"]["namespace"] = config.get(
+                "garden.name"
+            )
 
     return operation
 
@@ -835,7 +860,12 @@ def _target_from_type(operation: Operation) -> str:
         or "TOPIC" in operation.operation_type
         or "ROLE" in operation.operation_type
         or operation.operation_type
-        in ("PLUGIN_LOG_RELOAD", "QUEUE_DELETE_ALL", "SYSTEM_CREATE", "REQUEST_DELETE")
+        in (
+            "PLUGIN_LOG_RELOAD",
+            "QUEUE_DELETE_ALL",
+            "SYSTEM_CREATE",
+            "REQUEST_DELETE",
+        )
     ):
         return config.get("garden.name")
 
@@ -851,7 +881,10 @@ def _target_from_type(operation: Operation) -> str:
         return _system_id_lookup(operation.args[0])
 
     if "INSTANCE" in operation.operation_type:
-        if "system_id" in operation.kwargs and "instance_name" in operation.kwargs:
+        if (
+            "system_id" in operation.kwargs
+            and "instance_name" in operation.kwargs
+        ):
             return _system_id_lookup(operation.kwargs["system_id"])
         else:
             return _instance_id_lookup(operation.args[0])
@@ -920,7 +953,9 @@ def _system_name_lookup(system: Union[str, System]) -> str:
                     if systems[0].id == system.id:
                         with routing_lock:
                             # Then add routes to systems
-                            add_routing_system(system=system, garden_name=garden.name)
+                            add_routing_system(
+                                system=system, garden_name=garden.name
+                            )
                         logger.error(
                             "Router mapping is out of sync, you should consider re-syncing"
                         )

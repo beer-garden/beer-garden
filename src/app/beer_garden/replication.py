@@ -79,7 +79,9 @@ class PrimaryReplicationMonitor(StoppableThread):
         # Check if Primary Replication
         elif len(replications) == 1:
             if replications[0].replication_id == replication_id:
-                replications[0].expires_at = datetime.now(timezone.utc) + timeout
+                replications[0].expires_at = (
+                    datetime.now(timezone.utc) + timeout
+                )
                 update_replication(replications[0])
 
         # Two instances claimed Primary Replication, wait until one times out

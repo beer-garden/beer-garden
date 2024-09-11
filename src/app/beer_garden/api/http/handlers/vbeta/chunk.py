@@ -114,7 +114,9 @@ class FileChunkAPI(AuthorizationHandler):
         if file_id is None:
             raise ModelValidationError("No file id provided.")
         if data is None:
-            raise ModelValidationError(f"No data sent to write to file {file_id}")
+            raise ModelValidationError(
+                f"No data sent to write to file {file_id}"
+            )
         if offset is None:
             raise ModelValidationError(
                 f"No offset sent with data to write to file {file_id}"
@@ -231,9 +233,13 @@ class ChunkNameAPI(AuthorizationHandler):
         upsert = self.get_argument("upsert", default="").lower() == "true"
 
         if chunk_size is None:
-            raise ModelValidationError(f"No chunk_size sent with file {file_name}.")
+            raise ModelValidationError(
+                f"No chunk_size sent with file {file_name}."
+            )
         if file_size is None:
-            raise ModelValidationError(f"No file_size sent with file {file_name}.")
+            raise ModelValidationError(
+                f"No file_size sent with file {file_name}."
+            )
 
         file_status = await self.process_operation(
             Operation(

@@ -90,10 +90,19 @@ def _get_published_url_specs(
         (rf"{prefix}api/v1/namespaces/?", v1.namespace.NamespaceListAPI),
         (rf"{prefix}api/v1/instances/(\w+)/?", v1.instance.InstanceAPI),
         (rf"{prefix}api/v1/instances/(\w+)/logs/?", v1.instance.InstanceLogAPI),
-        (rf"{prefix}api/v1/instances/(\w+)/queues/?", v1.instance.InstanceQueuesAPI),
+        (
+            rf"{prefix}api/v1/instances/(\w+)/queues/?",
+            v1.instance.InstanceQueuesAPI,
+        ),
         (rf"{prefix}api/v1/requests/(\w+)/?", v1.request.RequestAPI),
-        (rf"{prefix}api/v1/requests/output/(\w+)/?", v1.request.RequestOutputAPI),
-        (rf"{prefix}api/v1/systems/(\w+)/commands/(\w+)/?", v1.command.CommandAPI),
+        (
+            rf"{prefix}api/v1/requests/output/(\w+)/?",
+            v1.request.RequestOutputAPI,
+        ),
+        (
+            rf"{prefix}api/v1/systems/(\w+)/commands/(\w+)/?",
+            v1.command.CommandAPI,
+        ),
         (rf"{prefix}api/v1/systems/(\w+)/?", v1.system.SystemAPI),
         (rf"{prefix}api/v1/queues/(.*)/?", v1.queue.QueueAPI),
         (rf"{prefix}api/v1/users/(.*)/?", v1.user.UserAPI),
@@ -213,13 +222,18 @@ async def startup():
     global anonymous_principal
 
     http_config = config.get("entry.http")
-    logger.debug(f"Starting HTTP server on {http_config.host}:{http_config.port}")
+    logger.debug(
+        f"Starting HTTP server on {http_config.host}:{http_config.port}"
+    )
     server.listen(http_config.port, http_config.host)
 
     logger.info("Http entry point started")
 
     publish(
-        Event(name=Events.ENTRY_STARTED.name, metadata={"entry_point_type": "HTTP"})
+        Event(
+            name=Events.ENTRY_STARTED.name,
+            metadata={"entry_point_type": "HTTP"},
+        )
     )
 
 
@@ -242,7 +256,10 @@ async def shutdown():
     # need to make it up to the main process and back down into this process. We just
     # publish this here in case the main process is looking for it.
     publish(
-        Event(name=Events.ENTRY_STOPPED.name, metadata={"entry_point_type": "HTTP"})
+        Event(
+            name=Events.ENTRY_STOPPED.name,
+            metadata={"entry_point_type": "HTTP"},
+        )
     )
 
     # We need to do this before the scheduler shuts down completely in order to kick any
@@ -311,12 +328,15 @@ def _setup_tornado_app() -> Application:
     )
 
 
-def _setup_ssl_context() -> Tuple[Optional[ssl.SSLContext], Optional[ssl.SSLContext]]:
+def _setup_ssl_context() -> (
+    Tuple[Optional[ssl.SSLContext], Optional[ssl.SSLContext]]
+):
     http_config = config.get("entry.http")
     if http_config.ssl.enabled:
         server_ssl = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         server_ssl.load_cert_chain(
-            certfile=http_config.ssl.public_key, keyfile=http_config.ssl.private_key
+            certfile=http_config.ssl.public_key,
+            keyfile=http_config.ssl.private_key,
         )
         server_ssl.verify_mode = getattr(
             ssl, "CERT_" + http_config.ssl.client_cert_verify.upper()
@@ -324,7 +344,8 @@ def _setup_ssl_context() -> Tuple[Optional[ssl.SSLContext], Optional[ssl.SSLCont
 
         client_ssl = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
         client_ssl.load_cert_chain(
-            certfile=http_config.ssl.public_key, keyfile=http_config.ssl.private_key
+            certfile=http_config.ssl.public_key,
+            keyfile=http_config.ssl.private_key,
         )
 
         if http_config.ssl.ca_cert or http_config.ssl.ca_path:
@@ -348,7 +369,11 @@ def _load_swagger(url_specs, title=None):
         version="1.0",
         plugins=("apispec.ext.marshmallow", "apispec.ext.tornado"),
         securityDefinitions={
-            "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"},
+            "Bearer": {
+                "type": "apiKey",
+                "name": "Authorization",
+                "in": "header",
+            },
         },
         security=[{"Bearer": []}],
     )
@@ -389,7 +414,10 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition(
         "Patch",
         properties={
-            "operations": {"type": "array", "items": {"$ref": "#/definitions/_patch"}}
+            "operations": {
+                "type": "array",
+                "items": {"$ref": "#/definitions/_patch"},
+            }
         },
     )
     api_spec.definition("DateTrigger", schema=DateTriggerSchema)
@@ -405,7 +433,9 @@ def _load_swagger(url_specs, title=None):
             {"$ref": "#/definitions/IntervalTrigger"},
         ]
     }
-    api_spec._definitions["Job"]["properties"]["trigger"] = trigger_properties  # noqa
+    api_spec._definitions["Job"]["properties"][
+        "trigger"
+    ] = trigger_properties  # noqa
 
     api_spec.definition("JobExport", schema=JobExportInputSchema)
     api_spec.definition("JobImport", schema=JobExportSchema)
@@ -420,14 +450,18 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition(
         "401Error", properties=error, description="Authorization required"
     )
-    api_spec.definition("403Error", properties=error, description="Access denied")
+    api_spec.definition(
+        "403Error", properties=error, description="Access denied"
+    )
     api_spec.definition(
         "404Error", properties=error, description="Resource does not exist"
     )
     api_spec.definition(
         "409Error", properties=error, description="Resource already exists"
     )
-    api_spec.definition("50xError", properties=error, description="Server exception")
+    api_spec.definition(
+        "50xError", properties=error, description="Server exception"
+    )
 
     # Finally, add documentation for all our published paths
     for url_spec in url_specs:
@@ -439,7 +473,9 @@ def _setup_event_handling(ep_conn):
     beer_garden.events.manager = EventManager(ep_conn)
 
     # Add a handler to process events coming from the main process
-    io_loop.add_handler(ep_conn, lambda c, _: _event_callback(c.recv()), IOLoop.READ)
+    io_loop.add_handler(
+        ep_conn, lambda c, _: _event_callback(c.recv()), IOLoop.READ
+    )
 
 
 def _event_callback(event):

@@ -89,8 +89,12 @@ def generate(args: Sequence[str]):
     """
     spec, cli_vars = _parse_args(args)
 
-    bootstrap = spec.load_filtered_config(cli_vars, "ENVIRONMENT", bootstrap=True)
-    config = spec.load_filtered_config(cli_vars, "ENVIRONMENT", exclude_bootstrap=True)
+    bootstrap = spec.load_filtered_config(
+        cli_vars, "ENVIRONMENT", bootstrap=True
+    )
+    config = spec.load_filtered_config(
+        cli_vars, "ENVIRONMENT", exclude_bootstrap=True
+    )
 
     dump_data(config, filename=bootstrap.configuration.file, file_type="yaml")
 
@@ -116,7 +120,9 @@ def migrate(args: Sequence[str]):
             "Please specify a config file to update in the CLI arguments (-c)"
         )
 
-    current_root, current_extension = os.path.splitext(config.configuration.file)
+    current_root, current_extension = os.path.splitext(
+        config.configuration.file
+    )
 
     current_type = current_extension[1:]
     if current_type == "yml":
@@ -172,7 +178,11 @@ def generate_app_logging(args: Sequence[str]):
         parsed_args.get("level"), parsed_args.get("filename")
     )
 
-    dump_data(logging_config, filename=parsed_args.get("config_file"), file_type="yaml")
+    dump_data(
+        logging_config,
+        filename=parsed_args.get("config_file"),
+        file_type="yaml",
+    )
 
     return logging_config
 
@@ -214,7 +224,11 @@ def generate_plugin_logging(args: Sequence[str]) -> dict:
         filename=parsed_args.get("filename"),
     )
 
-    dump_data(logging_config, filename=parsed_args.get("config_file"), file_type="yaml")
+    dump_data(
+        logging_config,
+        filename=parsed_args.get("config_file"),
+        file_type="yaml",
+    )
 
     return logging_config
 
@@ -268,12 +282,16 @@ def assign(new_config: Box, force: bool = False) -> None:
     """
     global _CONFIG
     if _CONFIG is not None and not force:
-        raise ConfigurationError("Attempting to reset config without force flag")
+        raise ConfigurationError(
+            "Attempting to reset config without force flag"
+        )
 
     _CONFIG = new_config
 
 
-def _setup_config_sources(spec: YapconfSpec, cli_vars: Iterable[str]) -> List[str]:
+def _setup_config_sources(
+    spec: YapconfSpec, cli_vars: Iterable[str]
+) -> List[str]:
     """Sets the sources for configuration loading
 
     Args:
@@ -540,8 +558,14 @@ _MQ_SPEC = {
                             "type": "str",
                             "default": "guest",
                             "description": "Password to login to the MQ admin",
-                            "previous_names": ["amq_admin_password", "amq_admin_pw"],
-                            "alt_env_names": ["AMQ_ADMIN_PASSWORD", "AMQ_ADMIN_PW"],
+                            "previous_names": [
+                                "amq_admin_password",
+                                "amq_admin_pw",
+                            ],
+                            "alt_env_names": [
+                                "AMQ_ADMIN_PASSWORD",
+                                "AMQ_ADMIN_PW",
+                            ],
                         },
                         "ssl": _MQ_SSL_SPEC,
                     },
@@ -644,7 +668,8 @@ _AUTHENTICATION_HANDLERS_SPEC = {
                 "enabled": {
                     "type": "bool",
                     "default": True,
-                    "description": "Enable authentication via username and" "password",
+                    "description": "Enable authentication via username and"
+                    "password",
                 }
             },
         },
@@ -801,7 +826,9 @@ _DB_SPEC = {
         "prune_interval": {
             "type": "int",
             "default": 15,
-            "description": ("Number of minutes to wait before running db pruner"),
+            "description": (
+                "Number of minutes to wait before running db pruner"
+            ),
         },
         "connection": {
             "type": "dict",
@@ -1323,7 +1350,14 @@ _LOG_SPEC = {
             "type": "str",
             "description": "Log level to use if config_file is not specified",
             "default": "INFO",
-            "choices": ["DEBUG", "INFO", "WARN", "WARNING", "ERROR", "CRITICAL"],
+            "choices": [
+                "DEBUG",
+                "INFO",
+                "WARN",
+                "WARNING",
+                "ERROR",
+                "CRITICAL",
+            ],
             "previous_names": ["log_level"],
         },
     },
@@ -1409,7 +1443,10 @@ _PLUGIN_SPEC = {
                     "description": "Directory where local plugins are located",
                     "required": False,
                     "previous_names": ["plugins_directory", "plugin_directory"],
-                    "alt_env_names": ["PLUGINS_DIRECTORY", "BG_PLUGIN_DIRECTORY"],
+                    "alt_env_names": [
+                        "PLUGINS_DIRECTORY",
+                        "BG_PLUGIN_DIRECTORY",
+                    ],
                 },
                 "host_env_vars": {
                     "type": "list",
@@ -1485,7 +1522,10 @@ _PLUGIN_SPEC = {
                         " resolvable."
                     ),
                     "default": "localhost",
-                    "alt_env_names": ["BG_PUBLISH_HOSTNAME", "PUBLISH_HOSTNAME"],
+                    "alt_env_names": [
+                        "BG_PUBLISH_HOSTNAME",
+                        "PUBLISH_HOSTNAME",
+                    ],
                 },
             },
         },

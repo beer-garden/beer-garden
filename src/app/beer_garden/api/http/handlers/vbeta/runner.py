@@ -35,7 +35,9 @@ class RunnerAPI(AuthorizationHandler):
         """
 
         response = await self.process_operation(
-            Operation(operation_type="RUNNER_READ", kwargs={"runner_id": runner_id})
+            Operation(
+                operation_type="RUNNER_READ", kwargs={"runner_id": runner_id}
+            )
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -119,7 +121,9 @@ class RunnerAPI(AuthorizationHandler):
           - Runners
         """
         self.minimum_permission = Permissions.PLUGIN_ADMIN.name
-        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
+        patch = SchemaParser.parse_patch(
+            self.request.decoded_body, from_string=True
+        )
 
         for op in patch:
             operation = op.operation.lower()
@@ -127,7 +131,8 @@ class RunnerAPI(AuthorizationHandler):
             if operation == "start":
                 response = await self.process_operation(
                     Operation(
-                        operation_type="RUNNER_START", kwargs={"runner_id": runner_id}
+                        operation_type="RUNNER_START",
+                        kwargs={"runner_id": runner_id},
                     )
                 )
 
@@ -140,7 +145,9 @@ class RunnerAPI(AuthorizationHandler):
                 )
 
             else:
-                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+                raise ModelValidationError(
+                    f"Unsupported operation '{op.operation}'"
+                )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -212,18 +219,24 @@ class RunnerListAPI(AuthorizationHandler):
           - Runners
         """
         self.minimum_permission = Permissions.PLUGIN_ADMIN.name
-        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
+        patch = SchemaParser.parse_patch(
+            self.request.decoded_body, from_string=True
+        )
 
         for op in patch:
             operation = op.operation.lower()
 
             if operation == "reload":
                 response = await self.process_operation(
-                    Operation(operation_type="RUNNER_RELOAD", kwargs={"path": op.path})
+                    Operation(
+                        operation_type="RUNNER_RELOAD", kwargs={"path": op.path}
+                    )
                 )
 
             else:
-                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+                raise ModelValidationError(
+                    f"Unsupported operation '{op.operation}'"
+                )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

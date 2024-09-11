@@ -72,17 +72,32 @@ class BaseHandler(RequestHandler):
         ValueError: {"status_code": 400},
         AuthorizationRequired: {"status_code": 401},
         RequestForbidden: {"status_code": 403},
-        DoesNotExist: {"status_code": 404, "message": "Resource does not exist"},
+        DoesNotExist: {
+            "status_code": 404,
+            "message": "Resource does not exist",
+        },
         NotFoundError: {"status_code": 404},
         NotFoundException: {"status_code": 404},
-        WaitExceededError: {"status_code": 408, "message": "Max wait time exceeded"},
+        WaitExceededError: {
+            "status_code": 408,
+            "message": "Max wait time exceeded",
+        },
         ConflictError: {"status_code": 409},
         NotUniqueException: {"status_code": 409},
-        NotUniqueError: {"status_code": 409, "message": "Resource already exists"},
-        EndpointRemovedException: {"status_code": 410, "message": "Endpoint removed"},
+        NotUniqueError: {
+            "status_code": 409,
+            "message": "Resource already exists",
+        },
+        EndpointRemovedException: {
+            "status_code": 410,
+            "message": "Endpoint removed",
+        },
         RequestPublishException: {"status_code": 502},
         RoutingException: {"status_code": 500},
-        socket.timeout: {"status_code": 504, "message": "Backend request timed out"},
+        socket.timeout: {
+            "status_code": 504,
+            "message": "Backend request timed out",
+        },
     }
 
     def set_default_headers(self):
@@ -96,7 +111,8 @@ class BaseHandler(RequestHandler):
                 "Content-Type, Origin, X-Requested-With, Authorization",
             )
             self.set_header(
-                "Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS"
+                "Access-Control-Allow-Methods",
+                "GET, POST, PATCH, DELETE, OPTIONS",
             )
 
     @property
@@ -126,7 +142,9 @@ class BaseHandler(RequestHandler):
                 "application/x-www-form-urlencoded",
                 "multipart/form-data",
             ]:
-                raise ModelValidationError("Unsupported or missing content-type header")
+                raise ModelValidationError(
+                    "Unsupported or missing content-type header"
+                )
 
             # Attempt to parse out the charset and decode the body, default to utf-8
             charset = "utf-8"
@@ -206,7 +224,9 @@ class BaseHandler(RequestHandler):
 
             if error_dict:
                 # Thrift exceptions should have a message attribute
-                message = error_dict.get("message", getattr(e, "message", str(e)))
+                message = error_dict.get(
+                    "message", getattr(e, "message", str(e))
+                )
                 code = error_dict.get("status_code", 500)
             elif issubclass(typ3, BaseHTTPError):
                 message = self._reason

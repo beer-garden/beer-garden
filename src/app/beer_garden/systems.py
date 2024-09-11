@@ -220,7 +220,11 @@ def update_system(
         updates["metadata"] = metadata_update
 
     if add_instances:
-        if -1 < system.max_instances < len(system.instances) + len(add_instances):
+        if (
+            -1
+            < system.max_instances
+            < len(system.instances) + len(add_instances)
+        ):
             raise ModelValidationError(
                 f"Unable to add instance(s) to {system} - would exceed "
                 f"the system instance limit of {system.max_instances}"
@@ -261,7 +265,10 @@ def upsert(system: System) -> System:
         return create_system(system, _publish_error=False)
     except NotUniqueException:
         existing = db.query_unique(
-            System, namespace=system.namespace, name=system.name, version=system.version
+            System,
+            namespace=system.namespace,
+            name=system.name,
+            version=system.version,
         )
 
         return update_system(
@@ -376,7 +383,9 @@ def purge_system(
         try:
             request_queue = instance.queue_info.get("request", {}).get("name")
             if request_queue:
-                queue.remove(request_queue, force_disconnect=force, clear_queue=True)
+                queue.remove(
+                    request_queue, force_disconnect=force, clear_queue=True
+                )
         except Exception as ex:
             if not force:
                 raise PluginError(
@@ -394,7 +403,9 @@ def purge_system(
         try:
             admin_queue = instance.queue_info.get("admin", {}).get("name")
             if admin_queue:
-                queue.remove(admin_queue, force_disconnect=force, clear_queue=False)
+                queue.remove(
+                    admin_queue, force_disconnect=force, clear_queue=False
+                )
         except Exception as ex:
             if not force:
                 raise PluginError(
@@ -438,14 +449,18 @@ def get_instance(
         system = db.query_unique(System, raise_missing=True, id=system_id)
 
         try:
-            return system.get_instance_by_name(instance_name, raise_missing=True)
+            return system.get_instance_by_name(
+                instance_name, raise_missing=True
+            )
         except BrewtilsException:
             raise NotFoundException(
                 f"System {system} does not have an instance with name '{instance_name}'"
             ) from None
 
     elif instance_id:
-        system = db.query_unique(System, raise_missing=True, instances__id=instance_id)
+        system = db.query_unique(
+            System, raise_missing=True, instances__id=instance_id
+        )
 
         try:
             return system.get_instance_by_id(instance_id, raise_missing=True)
@@ -487,7 +502,10 @@ def handle_event(event: Event) -> None:
         event: The event to handle
     """
     if event.garden != config.get("garden.name"):
-        if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
+        if event.name in (
+            Events.SYSTEM_CREATED.name,
+            Events.SYSTEM_UPDATED.name,
+        ):
             # Skip non local events that would override Local plugins
             if (
                 db.count(

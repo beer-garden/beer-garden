@@ -47,7 +47,9 @@ def token_update_message(token):
 
 class TestEventSocket(AsyncHTTPTestCase):
     path = "/api/v1/socket/events"
-    event = Event(name="EVENT", payload_type="System", payload=System(name="mysystem"))
+    event = Event(
+        name="EVENT", payload_type="System", payload=System(name="mysystem")
+    )
 
     def get_app(self):
         return Application([(self.path, EventSocket)])

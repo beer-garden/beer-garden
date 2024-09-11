@@ -36,7 +36,9 @@ class TopicAPI(BaseHandler):
         """
 
         response = await self.client(
-            Operation(operation_type="TOPIC_READ", kwargs={"topic_id": topic_id})
+            Operation(
+                operation_type="TOPIC_READ", kwargs={"topic_id": topic_id}
+            )
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -67,7 +69,9 @@ class TopicAPI(BaseHandler):
         """
 
         await self.client(
-            Operation(operation_type="TOPIC_DELETE", kwargs={"topic_id": topic_id})
+            Operation(
+                operation_type="TOPIC_DELETE", kwargs={"topic_id": topic_id}
+            )
         )
 
         self.set_status(204)
@@ -116,7 +120,9 @@ class TopicAPI(BaseHandler):
         tags:
           - Topics
         """
-        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
+        patch = SchemaParser.parse_patch(
+            self.request.decoded_body, from_string=True
+        )
 
         for op in patch:
             operation = op.operation.lower()
@@ -139,7 +145,9 @@ class TopicAPI(BaseHandler):
                 )
 
             else:
-                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+                raise ModelValidationError(
+                    f"Unsupported operation '{op.operation}'"
+                )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -172,7 +180,9 @@ class TopicNameAPI(BaseHandler):
         """
 
         response = await self.client(
-            Operation(operation_type="TOPIC_READ", kwargs={"topic_name": topic_name})
+            Operation(
+                operation_type="TOPIC_READ", kwargs={"topic_name": topic_name}
+            )
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -202,7 +212,9 @@ class TopicNameAPI(BaseHandler):
         """
 
         await self.client(
-            Operation(operation_type="TOPIC_DELETE", kwargs={"topic_name": topic_name})
+            Operation(
+                operation_type="TOPIC_DELETE", kwargs={"topic_name": topic_name}
+            )
         )
 
         self.set_status(204)
@@ -250,7 +262,9 @@ class TopicNameAPI(BaseHandler):
         tags:
           - Topics
         """
-        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
+        patch = SchemaParser.parse_patch(
+            self.request.decoded_body, from_string=True
+        )
 
         for op in patch:
             operation = op.operation.lower()
@@ -260,7 +274,10 @@ class TopicNameAPI(BaseHandler):
                 response = await self.client(
                     Operation(
                         operation_type="TOPIC_ADD_SUBSCRIBER",
-                        kwargs={"topic_name": topic_name, "subscriber": subscriber},
+                        kwargs={
+                            "topic_name": topic_name,
+                            "subscriber": subscriber,
+                        },
                     )
                 )
 
@@ -268,12 +285,17 @@ class TopicNameAPI(BaseHandler):
                 response = await self.client(
                     Operation(
                         operation_type="TOPIC_REMOVE_SUBSCRIBER",
-                        kwargs={"topic_name": topic_name, "subscriber": subscriber},
+                        kwargs={
+                            "topic_name": topic_name,
+                            "subscriber": subscriber,
+                        },
                     )
                 )
 
             else:
-                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+                raise ModelValidationError(
+                    f"Unsupported operation '{op.operation}'"
+                )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -328,7 +350,9 @@ class TopicListAPI(BaseHandler):
         tags:
           - Topics
         """
-        topic = SchemaParser.parse_topic(self.request.decoded_body, from_string=True)
+        topic = SchemaParser.parse_topic(
+            self.request.decoded_body, from_string=True
+        )
 
         response = await self.client(
             Operation(

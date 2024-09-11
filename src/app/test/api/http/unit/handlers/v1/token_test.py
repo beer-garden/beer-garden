@@ -30,10 +30,17 @@ def user(user_password):
 class TestTokenAPI:
     @pytest.mark.gen_test
     def test_post_returns_token_on_valid_login(
-        self, http_client, app_config_auth_enabled, base_url, user, user_password
+        self,
+        http_client,
+        app_config_auth_enabled,
+        base_url,
+        user,
+        user_password,
     ):
         url = f"{base_url}/api/v1/token"
-        body = json.dumps({"username": user.username, "password": user_password})
+        body = json.dumps(
+            {"username": user.username, "password": user_password}
+        )
 
         response = yield http_client.fetch(url, method="POST", body=body)
         response_body = json.loads(response.body.decode("utf-8"))
@@ -59,9 +66,13 @@ class TestTokenAPI:
         assert decoded_access_token["jti"] == decoded_refresh_token["jti"]
 
     @pytest.mark.gen_test
-    def test_post_returns_400_on_invalid_login(self, http_client, base_url, user):
+    def test_post_returns_400_on_invalid_login(
+        self, http_client, base_url, user
+    ):
         url = f"{base_url}/api/v1/token"
-        body = json.dumps({"username": user.username, "password": "notmypassword"})
+        body = json.dumps(
+            {"username": user.username, "password": "notmypassword"}
+        )
 
         with pytest.raises(HTTPError) as excinfo:
             yield http_client.fetch(url, method="POST", body=body)
@@ -71,7 +82,9 @@ class TestTokenAPI:
     @pytest.mark.gen_test
     def test_post_returns_400_when_user_not_found(self, http_client, base_url):
         url = f"{base_url}/api/v1/token"
-        body = json.dumps({"username": "cantfindme", "password": "doesntmatter"})
+        body = json.dumps(
+            {"username": "cantfindme", "password": "doesntmatter"}
+        )
 
         with pytest.raises(HTTPError) as excinfo:
             yield http_client.fetch(url, method="POST", body=body)
@@ -115,7 +128,9 @@ class TestTokenRefreshAPI:
         # Milliseconds get lost during jwt.encode, so we just check the timedelta
         assert (
             expiration
-            - datetime.fromtimestamp(decoded_refresh_token["exp"], tz=timezone.utc)
+            - datetime.fromtimestamp(
+                decoded_refresh_token["exp"], tz=timezone.utc
+            )
         ) < timedelta(seconds=1)
 
     @pytest.mark.gen_test
@@ -123,9 +138,9 @@ class TestTokenRefreshAPI:
         self, app_config_auth_enabled, http_client, base_url, user
     ):
         url = f"{base_url}/api/v1/token/refresh"
-        refresh_token = issue_token_pair(user, refresh_expiration=datetime.utcnow())[
-            "refresh"
-        ]
+        refresh_token = issue_token_pair(
+            user, refresh_expiration=datetime.utcnow()
+        )["refresh"]
         body = json.dumps({"refresh": refresh_token})
 
         with pytest.raises(HTTPError) as excinfo:
@@ -138,9 +153,9 @@ class TestTokenRefreshAPI:
         self, app_config_auth_enabled, http_client, base_url, user
     ):
         url = f"{base_url}/api/v1/token/refresh"
-        refresh_token = issue_token_pair(user, refresh_expiration=datetime.utcnow())[
-            "refresh"
-        ]
+        refresh_token = issue_token_pair(
+            user, refresh_expiration=datetime.utcnow()
+        )["refresh"]
         body = json.dumps({"refresh": refresh_token})
 
         MongoUserToken.drop_collection()
@@ -193,9 +208,9 @@ class TestTokenRevokeAPI:
         self, app_config_auth_enabled, http_client, base_url, user
     ):
         url = f"{base_url}/api/v1/token/revoke"
-        refresh_token = issue_token_pair(user, refresh_expiration=datetime.utcnow())[
-            "refresh"
-        ]
+        refresh_token = issue_token_pair(
+            user, refresh_expiration=datetime.utcnow()
+        )["refresh"]
         body = json.dumps({"refresh": refresh_token})
 
         response = yield http_client.fetch(url, method="POST", body=body)

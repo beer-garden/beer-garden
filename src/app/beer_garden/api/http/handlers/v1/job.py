@@ -94,7 +94,9 @@ class JobAPI(AuthorizationHandler):
         self.minimum_permission = Permissions.OPERATOR.name
         _ = self.get_or_raise(Job, id=job_id)
 
-        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
+        patch = SchemaParser.parse_patch(
+            self.request.decoded_body, from_string=True
+        )
 
         for op in patch:
             if op.operation == "update":
@@ -105,7 +107,9 @@ class JobAPI(AuthorizationHandler):
                         )
                     elif str(op.value).upper() == "RUNNING":
                         response = await self.process_operation(
-                            Operation(operation_type="JOB_RESUME", args=[job_id])
+                            Operation(
+                                operation_type="JOB_RESUME", args=[job_id]
+                            )
                         )
                     else:
                         raise ModelValidationError(
@@ -119,9 +123,13 @@ class JobAPI(AuthorizationHandler):
                         )
                     )
                 else:
-                    raise ModelValidationError(f"Unsupported path value '{op.path}'")
+                    raise ModelValidationError(
+                        f"Unsupported path value '{op.path}'"
+                    )
             else:
-                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+                raise ModelValidationError(
+                    f"Unsupported operation '{op.operation}'"
+                )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -328,7 +336,9 @@ class JobExportAPI(AuthorizationHandler):
 
             if len(decoded_body_as_dict) > 0:  # i.e. it has keys
                 input_schema = JobExportInputSchema()
-                validated_input_data_dict = input_schema.load(decoded_body_as_dict).data
+                validated_input_data_dict = input_schema.load(
+                    decoded_body_as_dict
+                ).data
                 filter_params_dict["id__in"] = validated_input_data_dict["ids"]
 
         response_objects = await self.process_operation(
@@ -385,7 +395,9 @@ class JobExecutionAPI(AuthorizationHandler):
 
         try:
             await self.process_operation(
-                Operation(operation_type="JOB_EXECUTE", args=[job_id, reset_interval])
+                Operation(
+                    operation_type="JOB_EXECUTE", args=[job_id, reset_interval]
+                )
             )
         except ValidationError:
             raise NotFoundError

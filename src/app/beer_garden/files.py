@@ -214,7 +214,10 @@ def create_chunk(
 
     file = check_file(file_id, upsert=kwargs.get("upsert", False))
     chunk = FileChunk(
-        file_id=file.id, offset=offset, data=data, owner=kwargs.get("owner", None)
+        file_id=file.id,
+        offset=offset,
+        data=data,
+        owner=kwargs.get("owner", None),
     )
 
     # This is starting to get DB-specific, but we want to be sure this is an atomic operation.
@@ -247,7 +250,9 @@ def _verify_chunks(file_id: str) -> FileStatus:
     length_ok = num_chunks == len(file.chunks)
 
     missing = [
-        x for x in range(len(file.chunks)) if file.chunks.get(str(x), None) is None
+        x
+        for x in range(len(file.chunks))
+        if file.chunks.get(str(x), None) is None
     ]
 
     return _safe_build_object(
@@ -288,7 +293,9 @@ def _fetch_chunk(file_id: str, chunk_num: int) -> FileStatus:
             operation_complete=True,
         )
     else:
-        raise ValueError(f"Chunk number {chunk_num} is invalid for file {file.id}")
+        raise ValueError(
+            f"Chunk number {chunk_num} is invalid for file {file.id}"
+        )
 
 
 def _fetch_file(file_id: str) -> FileStatus:
@@ -395,14 +402,23 @@ def create_file(
                 res,
                 **_unroll_object(
                     file,
-                    ignore=["id", "chunks", "owner", "job", "request", "updated_at"],
+                    ignore=[
+                        "id",
+                        "chunks",
+                        "owner",
+                        "job",
+                        "request",
+                        "updated_at",
+                    ],
                 ),
             )
 
         return _safe_build_object(FileStatus, file, operation_complete=True)
 
 
-def fetch_file(file_id: str, chunk: int = None, verify: bool = False) -> FileStatus:
+def fetch_file(
+    file_id: str, chunk: int = None, verify: bool = False
+) -> FileStatus:
     """Fetches file information
 
     Args:
@@ -438,7 +454,9 @@ def delete_file(file_id: str) -> FileStatus:
     return FileStatus(operation_complete=True, file_id=file_id)
 
 
-def set_owner(file_id: str, owner_id: str = None, owner_type: str = None) -> FileStatus:
+def set_owner(
+    file_id: str, owner_id: str = None, owner_type: str = None
+) -> FileStatus:
     """Sets the owner field of the file.
 
     This is used for DB pruning.
@@ -465,7 +483,9 @@ def set_owner(file_id: str, owner_id: str = None, owner_type: str = None) -> Fil
                     file,
                     owner_id=owner_id,
                     owner_type=owner_type,
-                    job=owner.id if owner is not None and owner_type == "JOB" else None,
+                    job=owner.id
+                    if owner is not None and owner_type == "JOB"
+                    else None,
                     request=(
                         owner.id
                         if owner is not None and owner_type == "REQUEST"
@@ -585,4 +605,6 @@ def handle_event(event: Event) -> None:
 
         if event.name == Events.REQUEST_CREATED.name:
             for file_id in _find_chunk_params(event.payload.parameters):
-                set_owner(file_id, owner_id=event.payload.id, owner_type="REQUEST")
+                set_owner(
+                    file_id, owner_id=event.payload.id, owner_type="REQUEST"
+                )

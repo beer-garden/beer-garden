@@ -40,7 +40,9 @@ def run(ep_conn):
 
     if parent_config.get("enabled"):
         conn_manager.add_connection(
-            stomp_config=parent_config, name=f"{garden_name}_parent", is_main=True
+            stomp_config=parent_config,
+            name=f"{garden_name}_parent",
+            is_main=True,
         )
 
     for garden in get_gardens(include_local=False):
@@ -65,7 +67,10 @@ def run(ep_conn):
     logger.info("Stomp entry point started")
 
     publish(
-        Event(name=Events.ENTRY_STARTED.name, metadata={"entry_point_type": "STOMP"})
+        Event(
+            name=Events.ENTRY_STARTED.name,
+            metadata={"entry_point_type": "STOMP"},
+        )
     )
 
     while not shutdown_event.wait(10):

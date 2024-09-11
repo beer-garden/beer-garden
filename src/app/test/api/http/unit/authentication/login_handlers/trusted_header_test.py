@@ -43,7 +43,9 @@ def app_config_trusted_handler(monkeypatch):
 def app_config_trusted_handler_create_users_false(
     monkeypatch, app_config_trusted_handler
 ):
-    pointer = app_config_trusted_handler.auth.authentication_handlers.trusted_header
+    pointer = (
+        app_config_trusted_handler.auth.authentication_handlers.trusted_header
+    )
     pointer.create_users = False
     monkeypatch.setattr(config, "_CONFIG", app_config_trusted_handler)
 
@@ -94,7 +96,9 @@ def user_alias_mapping_2():
 
 @pytest.fixture
 def malformed_role():
-    return '[{ name": "role1","permission": "Operator","scope_garden": ["child"]}]'
+    return (
+        '[{ name": "role1","permission": "Operator","scope_garden": ["child"]}]'
+    )
 
 
 @pytest.fixture
@@ -167,7 +171,11 @@ class TestTrustedHeaderLoginHandler:
         assert len(authenticated_user.roles) == 2
 
     def test_get_user_handles_create_users_set_to_false(
-        self, app_config_trusted_handler_create_users_false, caplog, role_1, role_2
+        self,
+        app_config_trusted_handler_create_users_false,
+        caplog,
+        role_1,
+        role_2,
     ):
         handler = TrustedHeaderLoginHandler()
         headers = HTTPHeaders(

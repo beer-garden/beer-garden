@@ -53,7 +53,9 @@ def localgarden_system(command_topic_one, command_topic_two, command_topic_any):
 @pytest.fixture
 def localgarden(localgarden_system):
     return Garden(
-        name="localgarden", connection_type="LOCAL", systems=[localgarden_system]
+        name="localgarden",
+        connection_type="LOCAL",
+        systems=[localgarden_system],
     )
 
 
@@ -123,7 +125,9 @@ def topics():
 class TestSubscriptionEvent(object):
     def test_newtopic(self, monkeypatch, topics, localgarden):
         mock_process_request = Mock(return_value=None)
-        monkeypatch.setattr(publish_request, "process_request", mock_process_request)
+        monkeypatch.setattr(
+            publish_request, "process_request", mock_process_request
+        )
         monkeypatch.setattr(
             publish_request, "get_all_topics", Mock(return_value=topics)
         )
@@ -145,7 +149,9 @@ class TestSubscriptionEvent(object):
 
     def test_topic_one(self, monkeypatch, topics, localgarden):
         mock_process_request = Mock(return_value=None)
-        monkeypatch.setattr(publish_request, "process_request", mock_process_request)
+        monkeypatch.setattr(
+            publish_request, "process_request", mock_process_request
+        )
 
         monkeypatch.setattr(
             publish_request, "get_all_topics", Mock(return_value=topics)
@@ -167,7 +173,9 @@ class TestSubscriptionEvent(object):
 
     def test_topic_two(self, monkeypatch, topics, localgarden):
         mock_process_request = Mock(return_value=None)
-        monkeypatch.setattr(publish_request, "process_request", mock_process_request)
+        monkeypatch.setattr(
+            publish_request, "process_request", mock_process_request
+        )
         monkeypatch.setattr(
             publish_request, "get_all_topics", Mock(return_value=topics)
         )
@@ -188,7 +196,9 @@ class TestSubscriptionEvent(object):
 
     def test_topic_wildcard(self, monkeypatch, topics, localgarden):
         mock_process_request = Mock(return_value=None)
-        monkeypatch.setattr(publish_request, "process_request", mock_process_request)
+        monkeypatch.setattr(
+            publish_request, "process_request", mock_process_request
+        )
         monkeypatch.setattr(
             publish_request, "get_all_topics", Mock(return_value=topics)
         )
@@ -209,7 +219,9 @@ class TestSubscriptionEvent(object):
 
     def test_topic_start_substring(self, monkeypatch, topics, localgarden):
         mock_process_request = Mock(return_value=None)
-        monkeypatch.setattr(publish_request, "process_request", mock_process_request)
+        monkeypatch.setattr(
+            publish_request, "process_request", mock_process_request
+        )
         monkeypatch.setattr(
             publish_request, "get_all_topics", Mock(return_value=topics)
         )
@@ -230,7 +242,9 @@ class TestSubscriptionEvent(object):
 
     def test_topic_non_match(self, monkeypatch, topics, localgarden):
         mock_process_request = Mock(return_value=None)
-        monkeypatch.setattr(publish_request, "process_request", mock_process_request)
+        monkeypatch.setattr(
+            publish_request, "process_request", mock_process_request
+        )
         monkeypatch.setattr(
             publish_request, "get_all_topics", Mock(return_value=topics)
         )
@@ -251,7 +265,9 @@ class TestSubscriptionEvent(object):
 
     def test_topic_one_not_local(self, monkeypatch, topics, localgarden):
         mock_process_request = Mock(return_value=None)
-        monkeypatch.setattr(publish_request, "process_request", mock_process_request)
+        monkeypatch.setattr(
+            publish_request, "process_request", mock_process_request
+        )
 
         monkeypatch.setattr(
             publish_request, "get_all_topics", Mock(return_value=topics)
@@ -271,9 +287,13 @@ class TestSubscriptionEvent(object):
 
         assert mock_process_request.call_count == 0
 
-    def test_topic_one_not_local_propagate(self, monkeypatch, topics, localgarden):
+    def test_topic_one_not_local_propagate(
+        self, monkeypatch, topics, localgarden
+    ):
         mock_process_request = Mock(return_value=None)
-        monkeypatch.setattr(publish_request, "process_request", mock_process_request)
+        monkeypatch.setattr(
+            publish_request, "process_request", mock_process_request
+        )
 
         monkeypatch.setattr(
             publish_request, "get_all_topics", Mock(return_value=topics)

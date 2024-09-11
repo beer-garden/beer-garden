@@ -6,5 +6,6 @@ class UserPasswordChangeSchema(Schema):
 
     current_password = fields.Str(required=True)
     new_password = fields.Str(
-        required=True, validate=validate.Length(min=1, error="Password required")
+        required=True,
+        validate=validate.Length(min=1, error="Password required"),
     )

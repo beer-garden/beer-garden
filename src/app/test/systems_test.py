@@ -51,7 +51,8 @@ class TestSystem:
 
         with pytest.raises(ModelValidationError):
             update_system(
-                system=system, new_commands=[BrewtilsCommand(name="changed_command")]
+                system=system,
+                new_commands=[BrewtilsCommand(name="changed_command")],
             )
 
     def test_allow_command_updates(self, system):
@@ -60,7 +61,8 @@ class TestSystem:
         """
         config._CONFIG = {"plugin": {"allow_command_updates": True}}
         updated_system = update_system(
-            system=system, new_commands=[BrewtilsCommand(name="changed_command")]
+            system=system,
+            new_commands=[BrewtilsCommand(name="changed_command")],
         )
         assert (
             updated_system.commands[0].name == "changed_command"

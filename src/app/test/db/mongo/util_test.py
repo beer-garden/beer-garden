@@ -64,10 +64,15 @@ class TestCheckIndexes(object):
         for model_mock in model_mocks.values():
             model_mock.list_indexes = Mock(return_value=["index1"])
             model_mock._get_collection = Mock(
-                return_value=Mock(index_information=Mock(return_value={"index1": {}}))
+                return_value=Mock(
+                    index_information=Mock(return_value={"index1": {}})
+                )
             )
 
-        [beer_garden.db.mongo.util.check_indexes(doc) for doc in model_mocks.values()]
+        [
+            beer_garden.db.mongo.util.check_indexes(doc)
+            for doc in model_mocks.values()
+        ]
         for model_mock in model_mocks.values():
             assert model_mock.ensure_indexes.call_count == 1
 
@@ -77,10 +82,15 @@ class TestCheckIndexes(object):
         for model_mock in model_mocks.values():
             model_mock.list_indexes = Mock(return_value=["index1", "index2"])
             model_mock._get_collection = Mock(
-                return_value=Mock(index_information=Mock(return_value={"index1": {}}))
+                return_value=Mock(
+                    index_information=Mock(return_value={"index1": {}})
+                )
             )
 
-        [beer_garden.db.mongo.util.check_indexes(doc) for doc in model_mocks.values()]
+        [
+            beer_garden.db.mongo.util.check_indexes(doc)
+            for doc in model_mocks.values()
+        ]
         for model_mock in model_mocks.values():
             assert model_mock.ensure_indexes.call_count == 1
 
@@ -98,12 +108,17 @@ class TestCheckIndexes(object):
             )
 
         # ... except for this one
-        model_mocks["request"].list_indexes.side_effect = IndexOperationError("")
+        model_mocks["request"].list_indexes.side_effect = IndexOperationError(
+            ""
+        )
 
         db_mock = MagicMock()
         get_db_mock.return_value = db_mock
 
-        [beer_garden.db.mongo.util.check_indexes(doc) for doc in model_mocks.values()]
+        [
+            beer_garden.db.mongo.util.check_indexes(doc)
+            for doc in model_mocks.values()
+        ]
         assert db_mock["request"].drop_indexes.call_count == 1
         assert model_mocks["request"].ensure_indexes.called is True
 
@@ -113,7 +128,9 @@ class TestCheckIndexes(object):
         for model_mock in model_mocks.values():
             model_mock.list_indexes = Mock(return_value=["index1"])
             model_mock._get_collection = Mock(
-                return_value=Mock(index_information=Mock(return_value={"index1": {}}))
+                return_value=Mock(
+                    index_information=Mock(return_value={"index1": {}})
+                )
             )
 
             model_mock.ensure_indexes.side_effect = IndexOperationError("")
@@ -196,7 +213,10 @@ class TestCheckIndexes(object):
         db_mock = MagicMock()
         get_db_mock.return_value = db_mock
 
-        [beer_garden.db.mongo.util.check_indexes(doc) for doc in model_mocks.values()]
+        [
+            beer_garden.db.mongo.util.check_indexes(doc)
+            for doc in model_mocks.values()
+        ]
         assert db_mock["request"].drop_indexes.call_count == 1
         assert model_mocks["request"].ensure_indexes.called is True
         assert update_parent_field_type_mock.called is True
@@ -211,12 +231,17 @@ class TestEnsureLocalGarden:
     def teardown_method(self):
         beer_garden.db.mongo.models.Garden.drop_collection()
 
-    def test_ensure_local_garden_creates_new_garden_from_config(self, monkeypatch):
+    def test_ensure_local_garden_creates_new_garden_from_config(
+        self, monkeypatch
+    ):
         """ensure_local_garden should create a Garden entry in the database with
         name derived from the "garden.name" config setting and a connection type of
         LOCAL"""
 
-        config._CONFIG = {"garden": {"name": "parent"}, "parent": {"sync_interval": 1}}
+        config._CONFIG = {
+            "garden": {"name": "parent"},
+            "parent": {"sync_interval": 1},
+        }
 
         ensure_local_garden()
         garden = Garden.objects.get(connection_type="LOCAL")
@@ -226,7 +251,10 @@ class TestEnsureLocalGarden:
     def test_ensure_local_garden_updates_garden_from_config(self, monkeypatch):
         """ensure_local_garden should update the name of an existing Garden entry in the
         database with a connection type of LOCAL"""
-        config._CONFIG = {"garden": {"name": "parent"}, "parent": {"sync_interval": 1}}
+        config._CONFIG = {
+            "garden": {"name": "parent"},
+            "parent": {"sync_interval": 1},
+        }
 
         Garden(name="thisshouldchange", connection_type="LOCAL").save()
         ensure_local_garden()

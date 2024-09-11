@@ -67,7 +67,9 @@ class QueueListener(BaseProcessor):
 class InternalQueueListener(QueueListener):
     """Listener for internal events only"""
 
-    def __init__(self, handler, handler_tag, local_only=False, filters=None, **kwargs):
+    def __init__(
+        self, handler, handler_tag, local_only=False, filters=None, **kwargs
+    ):
         super().__init__(action=self.handle_event, **kwargs)
 
         self._filters = []
@@ -83,8 +85,12 @@ class InternalQueueListener(QueueListener):
     def handle_event(self, event):
         try:
             if config.get("apm.enabled") and elasticapm.get_client():
-                with elasticapm.capture_span(name=event.name, span_type="Event"):
-                    if hasattr(event, "payload") and hasattr(event.payload, "id"):
+                with elasticapm.capture_span(
+                    name=event.name, span_type="Event"
+                ):
+                    if hasattr(event, "payload") and hasattr(
+                        event.payload, "id"
+                    ):
                         elasticapm.set_custom_context(
                             {"id": getattr(event.payload, "id")}
                         )

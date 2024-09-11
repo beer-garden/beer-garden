@@ -124,7 +124,9 @@ class TokenRefreshAPI(BaseHandler):
         tags:
           - Token
         """
-        refresh_token = self.schema_validated_body(TokenRefreshInputSchema)["refresh"]
+        refresh_token = self.schema_validated_body(TokenRefreshInputSchema)[
+            "refresh"
+        ]
 
         try:
             response = refresh_token_pair(refresh_token=refresh_token)
@@ -159,7 +161,9 @@ class TokenRevokeAPI(BaseHandler):
         tags:
           - Token
         """
-        refresh_token = self.schema_validated_body(TokenRefreshInputSchema)["refresh"]
+        refresh_token = self.schema_validated_body(TokenRefreshInputSchema)[
+            "refresh"
+        ]
 
         try:
             revoke_token_pair(refresh_token)
