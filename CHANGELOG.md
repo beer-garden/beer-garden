@@ -26,6 +26,7 @@ TBD
 - Fixed issue where `BASE64` parameters were not forwarded to Child garden
 - Fixed issue where if Garden Receiving Connections was nulled, it would not create new connections
 - Fixed issue where orphaned requests were not pruned properly
+- Fixed issue handling system/instance update errors from children
 
 # 3.27.1
 
