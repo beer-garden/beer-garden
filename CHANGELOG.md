@@ -26,6 +26,7 @@ TBD
 - Fixed issue where `BASE64` parameters were not forwarded to Child garden
 - Fixed issue where if Garden Receiving Connections was nulled, it would not create new connections
 - Fixed issue where orphaned requests were not pruned properly
+- Removed generation of Topic Events due to UI not supporting it and flooding of events to Upstream Gardens
 
 # 3.27.1
 
