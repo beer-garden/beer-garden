@@ -185,7 +185,6 @@ def subscriber_match(
 
 
 def prune_topics(garden):
-
     for topic in get_all_topics():
         if topic.subscribers:
             valid_subscribers = []
@@ -239,10 +238,8 @@ def create_garden_topics(garden: Garden):
     for system in garden.systems:
         default_topic = system.prefix_topic
         for command in system.commands:
-
             for instance in system.instances:
                 if len(command.topics) > 0:
-
                     for topic in command.topics:
                         create_topic(
                             Topic(
