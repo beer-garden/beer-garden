@@ -324,12 +324,16 @@ def invalid_source_check(operation: Operation):
         return False
 
     # Receiving Connections have not been configured yet
-    if not gardens[operation.source_garden_name].receiving_connections:
-        return False
-
-    for connection in gardens[operation.source_garden_name].receiving_connections:
-        if connection.api == operation.source_api and connection.status != "DISABLED":
+    if operation.source_garden_name in gardens:
+        if not gardens[operation.source_garden_name].receiving_connections:
             return False
+
+        for connection in gardens[operation.source_garden_name].receiving_connections:
+            if (
+                connection.api == operation.source_api
+                and connection.status != "DISABLED"
+            ):
+                return False
 
     try:
         loaded_garden = beer_garden.garden.get_garden(operation.source_garden_name)
@@ -744,6 +748,8 @@ def _pre_forward(operation: Operation) -> Operation:
             # want to replace the entire model, as we'd lose the base64 encoded file
             # parameter data.
             operation.model.id = local_request.id
+
+        beer_garden.files.forward_file(operation)
 
         # Clear parent before forwarding so the child doesn't freak out about an
         # unknown request
