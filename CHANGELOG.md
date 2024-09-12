@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.27.3
+
+TBD
+
+- Added config option to import scheduled jobs file at startup
+
 # 3.27.2
 
 9/12/2024
