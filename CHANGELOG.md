@@ -2,7 +2,7 @@
 
 # 3.27.2
 
-TBD
+9/12/2024
 
 - Updated form builder version to add dropdown on create request page to support latest as option
 - Added logging messages for Garden rescan operation
