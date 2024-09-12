@@ -94,7 +94,7 @@ clean: clean-all ## alias of clean-all
 
 # Formatting
 format: ## Run black formatter in-line
-	black --line-length 80 $(MODULE_NAME) $(TEST_DIR)
+	black --line-length 88 $(MODULE_NAME) $(TEST_DIR)
 	isort --thirdparty brewtils $(MODULE_NAME) $(TEST_DIR)
 
 

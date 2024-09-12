@@ -108,9 +108,7 @@ class TestJobStore(object):
 
     def test_get_due_jobs_invalid_job(self, jobstore, mongo_job):
         mongo_job.save()
-        with patch(
-            "beer_garden.db.mongo.jobstore.construct_job"
-        ) as convert_mock:
+        with patch("beer_garden.db.mongo.jobstore.construct_job") as convert_mock:
             convert_mock.side_effect = ValueError
             assert len(jobstore.get_all_jobs()) == 0
 
@@ -128,6 +126,4 @@ class TestJobStore(object):
         assert jobstore.get_next_run_time() is None
 
         mongo_job.save()
-        assert jobstore.get_next_run_time() == utc.localize(
-            mongo_job.next_run_time
-        )
+        assert jobstore.get_next_run_time() == utc.localize(mongo_job.next_run_time)

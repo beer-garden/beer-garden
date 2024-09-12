@@ -135,9 +135,7 @@ class GardenAPI(AuthorizationHandler):
         self.minimum_permission = Permissions.GARDEN_ADMIN.name
         garden = self.get_or_raise(Garden, name=garden_name)
 
-        patch = SchemaParser.parse_patch(
-            self.request.decoded_body, from_string=True
-        )
+        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
         for op in patch:
             operation = op.operation.lower()
@@ -195,9 +193,7 @@ class GardenAPI(AuthorizationHandler):
                 )
 
             else:
-                raise ModelValidationError(
-                    f"Unsupported operation '{op.operation}'"
-                )
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(_remove_heartbeat_history(response))
@@ -253,9 +249,7 @@ class GardenListAPI(AuthorizationHandler):
           - Garden
         """
         self.minimum_permission = Permissions.GARDEN_ADMIN.name
-        garden = SchemaParser.parse_garden(
-            self.request.decoded_body, from_string=True
-        )
+        garden = SchemaParser.parse_garden(self.request.decoded_body, from_string=True)
 
         self.verify_user_permission_for_object(garden)
 
@@ -309,9 +303,7 @@ class GardenListAPI(AuthorizationHandler):
         self.minimum_permission = Permissions.GARDEN_ADMIN.name
         self.verify_user_permission_for_object(local_garden())
 
-        patch = SchemaParser.parse_patch(
-            self.request.decoded_body, from_string=True
-        )
+        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
         for op in patch:
             operation = op.operation.lower()
@@ -337,8 +329,6 @@ class GardenListAPI(AuthorizationHandler):
                     )
                 )
             else:
-                raise ModelValidationError(
-                    f"Unsupported operation '{op.operation}'"
-                )
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
         self.set_status(204)

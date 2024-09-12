@@ -250,9 +250,7 @@ def _verify_chunks(file_id: str) -> FileStatus:
     length_ok = num_chunks == len(file.chunks)
 
     missing = [
-        x
-        for x in range(len(file.chunks))
-        if file.chunks.get(str(x), None) is None
+        x for x in range(len(file.chunks)) if file.chunks.get(str(x), None) is None
     ]
 
     return _safe_build_object(
@@ -293,9 +291,7 @@ def _fetch_chunk(file_id: str, chunk_num: int) -> FileStatus:
             operation_complete=True,
         )
     else:
-        raise ValueError(
-            f"Chunk number {chunk_num} is invalid for file {file.id}"
-        )
+        raise ValueError(f"Chunk number {chunk_num} is invalid for file {file.id}")
 
 
 def _fetch_file(file_id: str) -> FileStatus:
@@ -416,9 +412,7 @@ def create_file(
         return _safe_build_object(FileStatus, file, operation_complete=True)
 
 
-def fetch_file(
-    file_id: str, chunk: int = None, verify: bool = False
-) -> FileStatus:
+def fetch_file(file_id: str, chunk: int = None, verify: bool = False) -> FileStatus:
     """Fetches file information
 
     Args:
@@ -454,9 +448,7 @@ def delete_file(file_id: str) -> FileStatus:
     return FileStatus(operation_complete=True, file_id=file_id)
 
 
-def set_owner(
-    file_id: str, owner_id: str = None, owner_type: str = None
-) -> FileStatus:
+def set_owner(file_id: str, owner_id: str = None, owner_type: str = None) -> FileStatus:
     """Sets the owner field of the file.
 
     This is used for DB pruning.
@@ -484,9 +476,7 @@ def set_owner(
                     owner_id=owner_id,
                     owner_type=owner_type,
                     job=(
-                        owner.id
-                        if owner is not None and owner_type == "JOB"
-                        else None
+                        owner.id if owner is not None and owner_type == "JOB" else None
                     ),
                     request=(
                         owner.id
@@ -607,6 +597,4 @@ def handle_event(event: Event) -> None:
 
         if event.name == Events.REQUEST_CREATED.name:
             for file_id in _find_chunk_params(event.payload.parameters):
-                set_owner(
-                    file_id, owner_id=event.payload.id, owner_type="REQUEST"
-                )
+                set_owner(file_id, owner_id=event.payload.id, owner_type="REQUEST")

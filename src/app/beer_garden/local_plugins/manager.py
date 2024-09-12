@@ -188,16 +188,12 @@ class PluginManager(StoppableThread):
         username=None,
         password=None,
     ):
-        super().__init__(
-            logger=logging.getLogger(__name__), name="PluginManager"
-        )
+        super().__init__(logger=logging.getLogger(__name__), name="PluginManager")
 
         self._display_name = "Plugin Manager"
         self._runners: List[ProcessRunner] = []
 
-        self._plugin_path: Optional[Path] = (
-            Path(plugin_dir) if plugin_dir else None
-        )
+        self._plugin_path: Optional[Path] = Path(plugin_dir) if plugin_dir else None
         self._log_dir: Optional[str] = log_dir
         self._connection_info = connection_info
         self._username: Optional[str] = username
@@ -229,14 +225,10 @@ class PluginManager(StoppableThread):
 
             if the_runner.process and the_runner.process.poll() is not None:
                 if the_runner.restart:
-                    self.logger.warning(
-                        f"Runner {the_runner} stopped, restarting"
-                    )
+                    self.logger.warning(f"Runner {the_runner} stopped, restarting")
                     self._restart(the_runner)
                 elif not the_runner.stopped and not the_runner.dead:
-                    self.logger.warning(
-                        f"Runner {the_runner} is dead, not restarting"
-                    )
+                    self.logger.warning(f"Runner {the_runner} is dead, not restarting")
                     the_runner.dead = True
 
     def plugin_path(self):
@@ -476,14 +468,10 @@ class PluginManager(StoppableThread):
         try:
             for path in plugin_paths:
                 try:
-                    if self._is_valid_plugin_path(
-                        path, self.paths(), self.logger
-                    ):
+                    if self._is_valid_plugin_path(path, self.paths(), self.logger):
                         new_runners += self._create_runners(path)
                 except Exception as ex:
-                    self.logger.exception(
-                        f"Error loading plugin at {path}: {ex}"
-                    )
+                    self.logger.exception(f"Error loading plugin at {path}: {ex}")
 
         except Exception as ex:
             self.logger.exception(f"Error scanning plugin path: {ex}")
@@ -513,13 +501,9 @@ class PluginManager(StoppableThread):
             config_file = path / CONFIG_NAME
 
             if not config_file.exists():
-                raise PluginValidationError(
-                    f"config file {config_file} does not exist"
-                )
+                raise PluginValidationError(f"config file {config_file} does not exist")
             if not config_file.is_file():
-                raise PluginValidationError(
-                    f"config file {config_file} is not a file"
-                )
+                raise PluginValidationError(f"config file {config_file} is not a file")
 
             return path not in known_paths
         except PluginValidationError as plugin_error:
@@ -642,9 +626,7 @@ class PluginManager(StoppableThread):
         try:
             plugin_config = ConfigLoader.load(plugin_path / CONFIG_NAME)
         except PluginValidationError as ex:
-            self.logger.error(
-                f"Error loading config for plugin at {plugin_path}: {ex}"
-            )
+            self.logger.error(f"Error loading config for plugin at {plugin_path}: {ex}")
             return new_runners
 
         for instance_name in plugin_config["INSTANCES"]:
@@ -681,9 +663,7 @@ class PluginManager(StoppableThread):
     @staticmethod
     def _process_args(plugin_config: Dict[str, Any], instance_name: str):
         interp_path = plugin_config.get("INTERPRETER_PATH")
-        process_args = (
-            [interp_path] if interp_path is not None else [sys.executable]
-        )
+        process_args = [interp_path] if interp_path is not None else [sys.executable]
 
         plugin_entry = plugin_config.get("PLUGIN_ENTRY")
 
@@ -728,21 +708,15 @@ class PluginManager(StoppableThread):
         if plugin_config.get("REQUIRES_TIMEOUT"):
             plugin_requires_timeout = plugin_config["REQUIRES_TIMEOUT"]
             if plugin_requires_timeout is not None:
-                process_args += [
-                    "--requires_timeout=" + str(plugin_requires_timeout)
-                ]
+                process_args += ["--requires_timeout=" + str(plugin_requires_timeout)]
 
         if plugin_config["AUTO_BREW_ARGS"]:
-            plugin_auto_args = plugin_config["AUTO_BREW_ARGS"].get(
-                instance_name
-            )
+            plugin_auto_args = plugin_config["AUTO_BREW_ARGS"].get(instance_name)
             if plugin_auto_args is not None:
                 process_args += ["ARG=" + arg for arg in plugin_auto_args]
 
         if plugin_config["AUTO_BREW_KWARGS"]:
-            plugin_auto_kwargs = plugin_config["AUTO_BREW_KWARGS"].get(
-                instance_name
-            )
+            plugin_auto_kwargs = plugin_config["AUTO_BREW_KWARGS"].get(instance_name)
             if plugin_auto_kwargs is not None:
                 process_args += [f"KWARG={k}" for k in plugin_auto_kwargs]
 
@@ -793,9 +767,7 @@ class PluginManager(StoppableThread):
 
         # Ensure values are all strings
         for key, value in env.items():
-            env[key] = (
-                json.dumps(value) if isinstance(value, dict) else str(value)
-            )
+            env[key] = json.dumps(value) if isinstance(value, dict) else str(value)
 
         # Allowed host env vars
         for env_var in config.get("plugin.local.host_env_vars"):
@@ -883,9 +855,7 @@ class ConfigLoader(object):
 
         # Need to construct our own Loader here, the default doesn't work with .conf
         loader = SourceFileLoader("bg_plugin_config", str(config_file))
-        spec = spec_from_file_location(
-            "bg_plugin_config", config_file, loader=loader
-        )
+        spec = spec_from_file_location("bg_plugin_config", config_file, loader=loader)
         config_module = module_from_spec(spec)
         spec.loader.exec_module(config_module)
 
@@ -933,9 +903,7 @@ class ConfigLoader(object):
                             for missing_instance in missing_instances:
                                 instances.append(missing_instance)
                             # Instances that are in the instances list but not in the args list
-                            diff_instances = list(
-                                set(instances) - set(temp_instances)
-                            )
+                            diff_instances = list(set(instances) - set(temp_instances))
                             for diff_instance in diff_instances:
                                 instances.append(diff_instance)
                                 temp_args[diff_instance] = None
@@ -958,17 +926,13 @@ class ConfigLoader(object):
                                     flatten_kwargs(auto_kwargs)[0]
                                 )
                             except KeyError:
-                                temp_kwargs[instance] = flatten_kwargs(
-                                    auto_kwargs
-                                )
+                                temp_kwargs[instance] = flatten_kwargs(auto_kwargs)
                         auto_kwargs = temp_kwargs
                 # Instance-based kwargs
                 elif isinstance(auto_kwargs[key], dict):
                     temp_kwargs = {}
                     temp_instances = (
-                        []
-                        if not instances or "default" in instances
-                        else instances
+                        [] if not instances or "default" in instances else instances
                     )
                     for key, val in auto_kwargs.items():
                         temp_instances.append(key)
@@ -1028,9 +992,7 @@ class ConfigLoader(object):
             args = temp_args
 
         else:
-            raise PluginValidationError(
-                "Invalid INSTANCES and PLUGIN_ARGS combination"
-            )
+            raise PluginValidationError("Invalid INSTANCES and PLUGIN_ARGS combination")
 
         if max_instances is None:
             max_instances = -1

@@ -52,9 +52,7 @@ def construct_trigger(trigger_type: str, bg_trigger) -> BaseTrigger:
     elif trigger_type == "file":
         return FileTrigger(**bg_trigger.scheduler_kwargs)
     else:
-        raise ValueError(
-            "Trigger type %s not supported by APScheduler" % trigger_type
-        )
+        raise ValueError("Trigger type %s not supported by APScheduler" % trigger_type)
 
 
 def construct_job(job: Job, scheduler, alias="beer_garden"):
@@ -63,9 +61,7 @@ def construct_job(job: Job, scheduler, alias="beer_garden"):
         return None
 
     trigger = construct_trigger(job.trigger_type, job.trigger)
-    next_run_time = (
-        utc.localize(job.next_run_time) if job.next_run_time else None
-    )
+    next_run_time = utc.localize(job.next_run_time) if job.next_run_time else None
 
     ap_job = APJob.__new__(APJob)
     ap_job._scheduler = scheduler
@@ -102,9 +98,7 @@ class MongoJobStore(BaseJobStore):
         Returns:
             An apscheduler job or None.
         """
-        return construct_job(
-            query_unique(Job, id=job_id), self._scheduler, self._alias
-        )
+        return construct_job(query_unique(Job, id=job_id), self._scheduler, self._alias)
 
     def get_due_jobs(self, now):
         """Find due jobs and convert them to apscheduler jobs."""
@@ -159,9 +153,7 @@ class MongoJobStore(BaseJobStore):
         jobs = []
         failed_jobs = []
 
-        for job in query(
-            Job, filter_params=conditions, order_by="next_run_time"
-        ):
+        for job in query(Job, filter_params=conditions, order_by="next_run_time"):
             try:
                 jobs.append(construct_job(job, self._scheduler, self._alias))
             except Exception as ex:

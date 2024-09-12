@@ -222,9 +222,7 @@ async def startup():
     global anonymous_principal
 
     http_config = config.get("entry.http")
-    logger.debug(
-        f"Starting HTTP server on {http_config.host}:{http_config.port}"
-    )
+    logger.debug(f"Starting HTTP server on {http_config.host}:{http_config.port}")
     server.listen(http_config.port, http_config.host)
 
     logger.info("Http entry point started")
@@ -328,9 +326,7 @@ def _setup_tornado_app() -> Application:
     )
 
 
-def _setup_ssl_context() -> (
-    Tuple[Optional[ssl.SSLContext], Optional[ssl.SSLContext]]
-):
+def _setup_ssl_context() -> Tuple[Optional[ssl.SSLContext], Optional[ssl.SSLContext]]:
     http_config = config.get("entry.http")
     if http_config.ssl.enabled:
         server_ssl = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
@@ -433,9 +429,7 @@ def _load_swagger(url_specs, title=None):
             {"$ref": "#/definitions/IntervalTrigger"},
         ]
     }
-    api_spec._definitions["Job"]["properties"][
-        "trigger"
-    ] = trigger_properties  # noqa
+    api_spec._definitions["Job"]["properties"]["trigger"] = trigger_properties  # noqa
 
     api_spec.definition("JobExport", schema=JobExportInputSchema)
     api_spec.definition("JobImport", schema=JobExportSchema)
@@ -450,18 +444,14 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition(
         "401Error", properties=error, description="Authorization required"
     )
-    api_spec.definition(
-        "403Error", properties=error, description="Access denied"
-    )
+    api_spec.definition("403Error", properties=error, description="Access denied")
     api_spec.definition(
         "404Error", properties=error, description="Resource does not exist"
     )
     api_spec.definition(
         "409Error", properties=error, description="Resource already exists"
     )
-    api_spec.definition(
-        "50xError", properties=error, description="Server exception"
-    )
+    api_spec.definition("50xError", properties=error, description="Server exception")
 
     # Finally, add documentation for all our published paths
     for url_spec in url_specs:
@@ -473,9 +463,7 @@ def _setup_event_handling(ep_conn):
     beer_garden.events.manager = EventManager(ep_conn)
 
     # Add a handler to process events coming from the main process
-    io_loop.add_handler(
-        ep_conn, lambda c, _: _event_callback(c.recv()), IOLoop.READ
-    )
+    io_loop.add_handler(ep_conn, lambda c, _: _event_callback(c.recv()), IOLoop.READ)
 
 
 def _event_callback(event):

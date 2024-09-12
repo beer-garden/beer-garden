@@ -33,9 +33,7 @@ def garden_admin_role():
 
 @pytest.fixture
 def user_with_permission(garden, garden_admin_role):
-    user = User(
-        username="testuser", roles=["garden_admin"], password="password"
-    )
+    user = User(username="testuser", roles=["garden_admin"], password="password")
 
     user = create_user(user)
     yield user
@@ -66,9 +64,7 @@ def common_mocks(monkeypatch, rescan_mock):
 
 class TestAdminAPI:
     @pytest.mark.gen_test
-    def test_auth_disabled_allows_patch(
-        self, http_client, base_url, rescan_mock
-    ):
+    def test_auth_disabled_allows_patch(self, http_client, base_url, rescan_mock):
         url = f"{base_url}/api/v1/admin"
         headers = {"Content-Type": "application/json"}
         patch_body = [{"operation": "rescan"}]

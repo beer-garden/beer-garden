@@ -142,9 +142,7 @@ class BaseHandler(RequestHandler):
                 "application/x-www-form-urlencoded",
                 "multipart/form-data",
             ]:
-                raise ModelValidationError(
-                    "Unsupported or missing content-type header"
-                )
+                raise ModelValidationError("Unsupported or missing content-type header")
 
             # Attempt to parse out the charset and decode the body, default to utf-8
             charset = "utf-8"
@@ -224,9 +222,7 @@ class BaseHandler(RequestHandler):
 
             if error_dict:
                 # Thrift exceptions should have a message attribute
-                message = error_dict.get(
-                    "message", getattr(e, "message", str(e))
-                )
+                message = error_dict.get("message", getattr(e, "message", str(e)))
                 code = error_dict.get("status_code", 500)
             elif issubclass(typ3, BaseHTTPError):
                 message = self._reason

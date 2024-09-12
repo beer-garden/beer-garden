@@ -119,9 +119,7 @@ class RoleAPI(AuthorizationHandler):
         self.minimum_permission = Permissions.GARDEN_ADMIN.name
         self.verify_user_global_permission()
 
-        patch = self.parser.parse_patch(
-            self.request.decoded_body, from_string=True
-        )
+        patch = self.parser.parse_patch(self.request.decoded_body, from_string=True)
 
         for op in patch:
             operation = op.operation.lower()
@@ -132,9 +130,7 @@ class RoleAPI(AuthorizationHandler):
                         operation_type="ROLE_UPDATE",
                         kwargs={
                             "role_id": role_id,
-                            "role": self.parser.parse_role(
-                                op.value, from_string=False
-                            ),
+                            "role": self.parser.parse_role(op.value, from_string=False),
                         },
                     ),
                     filter_results=False,
@@ -199,9 +195,7 @@ class RoleListAPI(AuthorizationHandler):
         self.minimum_permission = Permissions.GARDEN_ADMIN.name
         self.verify_user_global_permission()
 
-        role_model = self.parser.parse_role(
-            self.request.decoded_body, from_string=True
-        )
+        role_model = self.parser.parse_role(self.request.decoded_body, from_string=True)
 
         response = await self.process_operation(
             Operation(operation_type="ROLE_CREATE", args=[role_model]),
@@ -250,9 +244,7 @@ class RoleListAPI(AuthorizationHandler):
         self.minimum_permission = Permissions.GARDEN_ADMIN.name
         self.verify_user_global_permission()
 
-        patch = self.parser.parse_patch(
-            self.request.decoded_body, from_string=True
-        )
+        patch = self.parser.parse_patch(self.request.decoded_body, from_string=True)
 
         for op in patch:
             operation = op.operation.lower()

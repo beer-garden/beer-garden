@@ -126,9 +126,7 @@ class TestLoadPlugins(object):
         loader.load_plugins(path=tmp_path)
 
     def test_exception(self, monkeypatch, tmp_path, loader):
-        monkeypatch.setattr(
-            loader, "load_plugin", Mock(side_effect=ValueError())
-        )
+        monkeypatch.setattr(loader, "load_plugin", Mock(side_effect=ValueError()))
 
         # Just ensure that an exception during loading does NOT propagate out
         loader.load_plugins(path=tmp_path)
@@ -232,9 +230,7 @@ class TestLoadPlugin(object):
             (lazy_fixture("_good_path_bad_config"), "is not a file"),
         ],
     )
-    def test_plugin_path_validator_bad_paths(
-        self, value, message, manager, caplog
-    ):
+    def test_plugin_path_validator_bad_paths(self, value, message, manager, caplog):
         logger = logging.getLogger(__name__)
 
         with caplog.at_level(logging.DEBUG):
@@ -304,9 +300,7 @@ class TestLoadPlugin(object):
         assert plugin_runners[0].entry_point == "entry.py"
 
     @pytest.mark.skip
-    def test_existing_multiple(
-        self, tmp_path, loader, registry, plugin_1, bg_instance
-    ):
+    def test_existing_multiple(self, tmp_path, loader, registry, plugin_1, bg_instance):
         """This is mainly to test that Instance IDs are correct
 
         We save a system with 2 instances:
@@ -608,9 +602,7 @@ class TestLoadConfig(object):
         assert loaded_config["AUTO_BREW_ARGS"] == {"a": ["foo"], "b": ["bar"]}
         assert loaded_config["AUTO_BREW_KWARGS"] == {"a": None, "b": None}
 
-    def test_auto_brew_instance_based_args_with_instances_mismatch(
-        self, tmp_path
-    ):
+    def test_auto_brew_instance_based_args_with_instances_mismatch(self, tmp_path):
         write_file(
             tmp_path,
             textwrap.dedent(
@@ -649,9 +641,7 @@ class TestLoadConfig(object):
         assert loaded_config["INSTANCES"] == ["default"]
         assert loaded_config["PLUGIN_ARGS"] == {"default": None}
         assert loaded_config["AUTO_BREW_ARGS"] == {"default": None}
-        assert loaded_config["AUTO_BREW_KWARGS"] == {
-            "default": ["foo=bar", "bar=baz"]
-        }
+        assert loaded_config["AUTO_BREW_KWARGS"] == {"default": ["foo=bar", "bar=baz"]}
 
     def test_auto_brew_global_kwargs_with_instances(self, tmp_path):
         write_file(
@@ -780,9 +770,7 @@ class TestLoadConfig(object):
             "b": ["foo=zed"],
         }
 
-    def test_auto_brew_instance_args_and_kwargs_with_no_instances(
-        self, tmp_path
-    ):
+    def test_auto_brew_instance_args_and_kwargs_with_no_instances(self, tmp_path):
         write_file(
             tmp_path,
             textwrap.dedent(
@@ -820,9 +808,7 @@ class TestConfigValidation(object):
 
     @pytest.fixture
     def config_file(self, tmp_path, config):
-        serialized_config = [
-            f"{key}='{value}'" for key, value in config.items()
-        ]
+        serialized_config = [f"{key}='{value}'" for key, value in config.items()]
 
         config_file = tmp_path / "beer.conf"
         config_file.write_text("\n".join(serialized_config))

@@ -97,9 +97,7 @@ def _has_empty_scopes(
 
 
 class QueryFilterBuilder:
-    def _get_garden_q_filter(
-        self, user: BrewtilsUser, permission_levels: list
-    ) -> Q:
+    def _get_garden_q_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
         """Returns a Q filter object for filtering a queryset for gardens"""
 
         if check_global_roles(user, permission_levels=permission_levels):
@@ -114,9 +112,7 @@ class QueryFilterBuilder:
 
         return Q(**{"name__in": garden_names})
 
-    def _get_request_filter(
-        self, user: BrewtilsUser, permission_levels: list
-    ) -> Q:
+    def _get_request_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
         if check_global_roles(user, permission_levels=permission_levels):
             return Q()
 
@@ -163,9 +159,7 @@ class QueryFilterBuilder:
                 if role.permission in permission_levels:
                     filter = {}
                     if len(role.scope_systems) > 0:
-                        filter["request_template__system__in"] = (
-                            role.scope_systems
-                        )
+                        filter["request_template__system__in"] = role.scope_systems
                     if len(role.scope_instances) > 0:
                         filter["request_template__instance_name__in"] = (
                             role.scope_instances
@@ -175,9 +169,7 @@ class QueryFilterBuilder:
                             role.scope_versions
                         )
                     if len(role.scope_commands) > 0:
-                        filter["request_template__command__in"] = (
-                            role.scope_commands
-                        )
+                        filter["request_template__command__in"] = role.scope_commands
 
                     if len(filter) > 0:
                         filters.append(Q(**filter))
@@ -195,9 +187,7 @@ class QueryFilterBuilder:
 
         return output
 
-    def _get_system_filter(
-        self, user: BrewtilsUser, permission_levels: list
-    ) -> Q:
+    def _get_system_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
         if check_global_roles(user, permission_levels=permission_levels):
             return Q()
 
@@ -232,9 +222,7 @@ class QueryFilterBuilder:
 
         return output
 
-    def _get_instance_filter(
-        self, user: BrewtilsUser, permission_levels: list
-    ) -> Q:
+    def _get_instance_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
         if check_global_roles(user, permission_levels=permission_levels):
             return Q()
 
@@ -264,11 +252,7 @@ class QueryFilterBuilder:
         return output
 
     def build_filter(
-        self,
-        user: BrewtilsUser,
-        permission: str,
-        model: BrewtilsModel,
-        **kwargs
+        self, user: BrewtilsUser, permission: str, model: BrewtilsModel, **kwargs
     ) -> Q:
         permission_levels = generate_permission_levels(permission)
 
@@ -327,10 +311,7 @@ class ModelFilter:
                 or (check_namespace and system_namespace is None)
                 or (check_instances and system_instances is None)
                 or (check_version and system_version is None)
-                or (
-                    check_garden
-                    and (garden_name is None or system_name is None)
-                )
+                or (check_garden and (garden_name is None or system_name is None))
             ):
                 if system_id:
                     system = db.query_unique(
@@ -367,9 +348,7 @@ class ModelFilter:
 
         if system_name and check_garden and garden_name is None:
             if system and system.id and not system.local:
-                gardens = db.query(
-                    BrewtilsGarden, filter_params={"systems": system}
-                )
+                gardens = db.query(BrewtilsGarden, filter_params={"systems": system})
 
                 if gardens and len(gardens) == 1:
                     garden_name = gardens[0].name

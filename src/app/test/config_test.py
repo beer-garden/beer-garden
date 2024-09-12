@@ -63,14 +63,10 @@ class TestGenerateConfig(object):
         config_file = os.path.join(str(tmpdir), "config.yaml")
         logging_config_file = os.path.join(str(tmpdir), "logging.json")
 
-        beer_garden.config.generate(
-            ["-c", config_file, "-l", logging_config_file]
-        )
+        beer_garden.config.generate(["-c", config_file, "-l", logging_config_file])
 
         spec = YapconfSpec(beer_garden.config._SPECIFICATION)
-        spec.add_source(
-            label="config_file", source_type="yaml", filename=config_file
-        )
+        spec.add_source(label="config_file", source_type="yaml", filename=config_file)
         config = spec.load_config("config_file")
 
         # Defaults from spec
@@ -145,9 +141,7 @@ class TestUpdateConfig(object):
         beer_garden.config.generate(["-c", config_file])
 
         error_mock = Mock(side_effect=ValueError)
-        monkeypatch.setattr(
-            yapconf.spec.YapconfSpec, "migrate_config_file", error_mock
-        )
+        monkeypatch.setattr(yapconf.spec.YapconfSpec, "migrate_config_file", error_mock)
 
         with pytest.raises(ValueError):
             beer_garden.config.migrate(["-c", config_file])
@@ -339,9 +333,7 @@ class TestSafeMigrate(object):
         # And the values should be unchanged
         assert beer_garden.config.get("log.level") == "INFO"
 
-    def test_rename_failure(
-        self, capsys, tmpdir, spec, config_file, old_config
-    ):
+    def test_rename_failure(self, capsys, tmpdir, spec, config_file, old_config):
         with open(config_file, "w") as f:
             yaml.safe_dump(
                 old_config, stream=f, default_flow_style=False, encoding="utf-8"

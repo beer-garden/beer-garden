@@ -28,9 +28,7 @@ def garden(system_permitted, system_not_permitted):
 
 @pytest.fixture
 def system_permitted():
-    system = System(
-        name="permitted", version="1.0.0", namespace="permitted"
-    ).save()
+    system = System(name="permitted", version="1.0.0", namespace="permitted").save()
 
     yield system
     system.delete()
@@ -38,9 +36,7 @@ def system_permitted():
 
 @pytest.fixture
 def system_not_permitted():
-    system = System(
-        name="not_permitted", version="1.0.0", namespace="permitted"
-    ).save()
+    system = System(name="not_permitted", version="1.0.0", namespace="permitted").save()
 
     yield system
     system.delete()
@@ -62,9 +58,7 @@ def job_manager_role(system_permitted):
 
 @pytest.fixture
 def user(job_manager_role):
-    user = create_user(
-        User(username="testuser", local_roles=[job_manager_role])
-    )
+    user = create_user(User(username="testuser", local_roles=[job_manager_role]))
     yield user
     delete_user(user=user)
 
@@ -113,9 +107,7 @@ def drop_jobs():
 
 class TestJobAPI:
     @pytest.mark.gen_test
-    def test_auth_disabled_allows_get(
-        self, base_url, http_client, job_not_permitted
-    ):
+    def test_auth_disabled_allows_get(self, base_url, http_client, job_not_permitted):
         url = f"{base_url}/api/v1/jobs/{job_not_permitted.id}"
 
         response = yield http_client.fetch(url)
@@ -160,9 +152,7 @@ class TestJobAPI:
         assert excinfo.value.code == 403
 
     @pytest.mark.gen_test
-    def test_auth_disabled_allows_patch(
-        self, base_url, http_client, job_not_permitted
-    ):
+    def test_auth_disabled_allows_patch(self, base_url, http_client, job_not_permitted):
         url = f"{base_url}/api/v1/jobs/{job_not_permitted.id}"
         patch_body = {
             "operation": "update",
@@ -406,9 +396,7 @@ class TestJobExecutionAPI:
         assert excinfo.value.code == 400
 
     @pytest.mark.gen_test
-    def test_auth_disabled_allows_post(
-        self, base_url, http_client, job_not_permitted
-    ):
+    def test_auth_disabled_allows_post(self, base_url, http_client, job_not_permitted):
         url = f"{base_url}/api/v1/jobs/{job_not_permitted.id}/execute"
 
         response = yield http_client.fetch(url, method="POST", body="")
@@ -427,9 +415,7 @@ class TestJobExecutionAPI:
         url = f"{base_url}/api/v1/jobs/{job_permitted.id}/execute"
         headers = {"Authorization": f"Bearer {access_token}"}
 
-        response = yield http_client.fetch(
-            url, method="POST", headers=headers, body=""
-        )
+        response = yield http_client.fetch(url, method="POST", headers=headers, body="")
 
         assert response.code == 202
 
@@ -446,9 +432,7 @@ class TestJobExecutionAPI:
         headers = {"Authorization": f"Bearer {access_token}"}
 
         with pytest.raises(HTTPError) as excinfo:
-            yield http_client.fetch(
-                url, method="POST", headers=headers, body=""
-            )
+            yield http_client.fetch(url, method="POST", headers=headers, body="")
 
         assert excinfo.value.code == 403
 
@@ -529,9 +513,7 @@ class TestJobExportAPI:
 
 class TestJobImportAPI:
     @pytest.mark.gen_test
-    def test_auth_disabled_allows_post(
-        self, base_url, http_client, job_not_permitted
-    ):
+    def test_auth_disabled_allows_post(self, base_url, http_client, job_not_permitted):
         url = f"{base_url}/api/v1/import/jobs"
 
         import_job = MongoParser.serialize(job_not_permitted)

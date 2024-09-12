@@ -76,9 +76,7 @@ class TestStatusMonitor(object):
         monitor.check_status()
         assert stopped_mock.called is True
 
-    def test_mark_as_unresponsive(
-        self, monkeypatch, monitor, bg_system, bg_instance
-    ):
+    def test_mark_as_unresponsive(self, monkeypatch, monitor, bg_system, bg_instance):
         stopped_mock = Mock(side_effect=[False, True])
         monkeypatch.setattr(monitor, "stopped", stopped_mock)
 
@@ -92,9 +90,7 @@ class TestStatusMonitor(object):
         monitor.check_status()
         assert update_mock.called is True
 
-    def test_mark_as_running(
-        self, monkeypatch, monitor, bg_system, bg_instance, ts_dt
-    ):
+    def test_mark_as_running(self, monkeypatch, monitor, bg_system, bg_instance, ts_dt):
         stopped_mock = Mock(side_effect=[False, True])
         monkeypatch.setattr(monitor, "stopped", stopped_mock)
 

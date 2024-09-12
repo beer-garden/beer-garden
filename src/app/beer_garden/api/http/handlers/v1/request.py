@@ -99,9 +99,7 @@ class RequestAPI(AuthorizationHandler):
         _ = self.get_or_raise(Request, id=request_id)
 
         operation = Operation(args=[request_id])
-        patch = SchemaParser.parse_patch(
-            self.request.decoded_body, from_string=True
-        )
+        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
         for op in patch:
             if op.operation == "replace":
@@ -130,9 +128,7 @@ class RequestAPI(AuthorizationHandler):
                 else:
                     raise ModelValidationError(f"Unsupported path '{op.path}'")
             else:
-                raise ModelValidationError(
-                    f"Unsupported operation '{op.operation}'"
-                )
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
         response = await self.process_operation(operation)
 
@@ -180,9 +176,7 @@ class RequestOutputAPI(AuthorizationHandler):
                 "STRING": "text/plain; charset=UTF-8",
                 None: "text/plain; charset=UTF-8",
             }
-            self.set_header(
-                "Content-Type", content_types[response["output_type"]]
-            )
+            self.set_header("Content-Type", content_types[response["output_type"]])
             self.write(response["output"])
         else:
             self.set_status(204)
@@ -488,9 +482,7 @@ class RequestListAPI(AuthorizationHandler):
         elif self.request.mime_type == "multipart/form-data":
             request_model = self._parse_multipart_form_data()
         else:
-            raise ModelValidationError(
-                "Unsupported or missing content-type header"
-            )
+            raise ModelValidationError("Unsupported or missing content-type header")
 
         self.verify_user_permission_for_object(request_model)
 
@@ -764,9 +756,7 @@ class RequestListAPI(AuthorizationHandler):
                 check_kwargs["system_version"] = query_kwargs["system_version"]
                 check_kwargs["check_version"] = True
             if "instance_name" in query_kwargs:
-                check_kwargs["system_instances"] = [
-                    query_kwargs["instance_name"]
-                ]
+                check_kwargs["system_instances"] = [query_kwargs["instance_name"]]
                 check_kwargs["check_instances"] = True
             if "namespace" in query_kwargs:
                 check_kwargs["system_namespace"] = query_kwargs["namespace"]
@@ -796,9 +786,7 @@ class RequestListAPI(AuthorizationHandler):
             decoded_param = value[0].decode(self.request.charset)
 
             if key.startswith("parameters."):
-                args["parameters"][
-                    key.replace("parameters.", "")
-                ] = decoded_param
+                args["parameters"][key.replace("parameters.", "")] = decoded_param
             else:
                 args[key] = decoded_param
 
@@ -870,36 +858,32 @@ class RequestListAPI(AuthorizationHandler):
                     search_dates = column["search"]["value"].split("~")
 
                     if search_dates[0]:
-                        filter_params[column["data"] + "__gte"] = search_dates[
-                            0
-                        ]
+                        filter_params[column["data"] + "__gte"] = search_dates[0]
                     if search_dates[1]:
-                        filter_params[column["data"] + "__lte"] = search_dates[
-                            1
-                        ]
+                        filter_params[column["data"] + "__lte"] = search_dates[1]
 
                 elif column["data"] == "status":
-                    filter_params[column["data"] + "__exact"] = column[
-                        "search"
-                    ]["value"]
+                    filter_params[column["data"] + "__exact"] = column["search"][
+                        "value"
+                    ]
 
                 elif column["search"]["value"].upper() in ["NOT", "NOT "]:
                     filter_params[column["data"] + "__exact"] = ""
                 elif column["data"] == "comment":
                     if column["search"]["value"].upper().startswith("NOT "):
-                        filter_params[column["data"] + "__not__contains"] = (
-                            column["search"]["value"][4:]
-                        )
-                    else:
-                        filter_params[column["data"] + "__contains"] = column[
+                        filter_params[column["data"] + "__not__contains"] = column[
                             "search"
-                        ]["value"]
+                        ]["value"][4:]
+                    else:
+                        filter_params[column["data"] + "__contains"] = column["search"][
+                            "value"
+                        ]
 
                 else:
                     if column["search"]["value"].upper().startswith("NOT "):
-                        filter_params[column["data"] + "__not__startswith"] = (
-                            column["search"]["value"][4:]
-                        )
+                        filter_params[column["data"] + "__not__startswith"] = column[
+                            "search"
+                        ]["value"][4:]
                     else:
                         filter_params[column["data"] + "__startswith"] = column[
                             "search"
@@ -920,9 +904,7 @@ class RequestListAPI(AuthorizationHandler):
             "include_fields": include_fields,
             "text_search": text_search,
             "order_by": order_by,
-            "hint": self._determine_hint(
-                hint_helper, include_children, include_hidden
-            ),
+            "hint": self._determine_hint(hint_helper, include_children, include_hidden),
         }
 
     @staticmethod

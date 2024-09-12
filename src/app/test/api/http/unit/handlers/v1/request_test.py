@@ -77,12 +77,8 @@ def common_mocks(monkeypatch, local_system):
 
     monkeypatch.setattr(beer_garden.events, "publish", generic_mock)
     monkeypatch.setattr(beer_garden.requests, "_publish_request", generic_mock)
-    monkeypatch.setattr(
-        beer_garden.requests, "_validate_request", mock_validate
-    )
-    monkeypatch.setattr(
-        beer_garden.router, "_determine_target", mock_determine_target
-    )
+    monkeypatch.setattr(beer_garden.requests, "_validate_request", mock_validate)
+    monkeypatch.setattr(beer_garden.router, "_determine_target", mock_determine_target)
     monkeypatch.setattr(beer_garden.router, "forward", generic_mock)
 
 
@@ -95,9 +91,7 @@ def db_cleanup():
 
 @pytest.fixture(autouse=True)
 def local_system():
-    system = System(
-        name="somesystem", version="1.0.0", namespace="somegarden"
-    ).save()
+    system = System(name="somesystem", version="1.0.0", namespace="somegarden").save()
 
     yield system
     system.delete()
@@ -105,9 +99,7 @@ def local_system():
 
 @pytest.fixture(autouse=True)
 def remote_system():
-    system = System(
-        name="somesystem", version="1.0.0", namespace="remotegarden"
-    ).save()
+    system = System(name="somesystem", version="1.0.0", namespace="remotegarden").save()
 
     yield system
     system.delete()
@@ -194,9 +186,7 @@ def _gridfs_output():
 
 @pytest.fixture
 def request_with_gridfs_output(monkeypatch, local_system):
-    monkeypatch.setattr(
-        beer_garden.db.mongo.models, "REQUEST_MAX_PARAM_SIZE", 0
-    )
+    monkeypatch.setattr(beer_garden.db.mongo.models, "REQUEST_MAX_PARAM_SIZE", 0)
 
     request = Request(
         system=local_system.name,
@@ -312,9 +302,7 @@ class TestRequestAPI:
         response = yield http_client.fetch(request)
 
         assert response.code == 200
-        assert (
-            Request.objects.get(id=request_permitted.id).status == "IN_PROGRESS"
-        )
+        assert Request.objects.get(id=request_permitted.id).status == "IN_PROGRESS"
 
     @pytest.mark.gen_test
     def test_auth_enabled_rejects_patch_for_not_permitted_request(
@@ -357,9 +345,7 @@ class TestRequestAPI:
 
         assert response.code == 200
         assert response_body["children"] is not None
-        assert response_body["children"][0]["id"] == str(
-            request_permitted_child.id
-        )
+        assert response_body["children"][0]["id"] == str(request_permitted_child.id)
 
     @pytest.mark.gen_test
     def test_get_populates_output_from_gridfs(

@@ -70,19 +70,13 @@ class StompManager(BaseProcessor):
     def add_connection(self, stomp_config=None, name=None, is_main=False):
         with self.ep_lock:
             if stomp_config.get("subscribe_destination"):
-                host_and_ports = [
-                    (stomp_config.get("host"), stomp_config.get("port"))
-                ]
-                subscribe_destination = stomp_config.get(
-                    "subscribe_destination"
-                )
+                host_and_ports = [(stomp_config.get("host"), stomp_config.get("port"))]
+                subscribe_destination = stomp_config.get("subscribe_destination")
 
                 ssl = stomp_config.get("ssl") or {}
                 use_ssl = ssl.get("use_ssl") or False
 
-                conn_dict_key = (
-                    f"{host_and_ports}{subscribe_destination}{use_ssl}"
-                )
+                conn_dict_key = f"{host_and_ports}{subscribe_destination}{use_ssl}"
 
                 if conn_dict_key in self.conn_dict:
                     if {"name": name, "main": is_main} not in self.conn_dict[
@@ -103,13 +97,8 @@ class StompManager(BaseProcessor):
                 if stomp_config.get("headers") and is_main:
                     headers = parse_header_list(stomp_config.get("headers"))
 
-                    if (
-                        headers
-                        not in self.conn_dict[conn_dict_key]["headers_list"]
-                    ):
-                        self.conn_dict[conn_dict_key]["headers_list"].append(
-                            headers
-                        )
+                    if headers not in self.conn_dict[conn_dict_key]["headers_list"]:
+                        self.conn_dict[conn_dict_key]["headers_list"].append(headers)
 
                 return conn_dict_key
 
@@ -160,9 +149,8 @@ class StompManager(BaseProcessor):
                 Events.GARDEN_STOPPED.name,
                 Events.GARDEN_SYNC.name,
             ):
-                if (
-                    event.payload.parent is None
-                    and event.payload.name != config.get("garden.name")
+                if event.payload.parent is None and event.payload.name != config.get(
+                    "garden.name"
                 ):
                     event.payload.parent = config.get("garden.name")
                     event.payload.has_parent = True
@@ -225,6 +213,4 @@ class StompManager(BaseProcessor):
             try:
                 handler(deepcopy(event))
             except Exception as ex:
-                logger.exception(
-                    f"Error executing callback for {event!r}: {ex}"
-                )
+                logger.exception(f"Error executing callback for {event!r}: {ex}")

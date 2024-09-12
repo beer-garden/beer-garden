@@ -67,11 +67,7 @@ class EventSocket(WebSocketHandler):
         """Process incoming messages. Called by WebSocketHandler automatically when
         a message is received."""
         try:
-            token = (
-                IncomingMessageSchema(strict=True)
-                .loads(message)
-                .data["payload"]
-            )
+            token = IncomingMessageSchema(strict=True).loads(message).data["payload"]
             self._update_access_token(token)
         except (ValidationError, JSONDecodeError) as exc:
             self._message_processing_error(
@@ -89,9 +85,7 @@ class EventSocket(WebSocketHandler):
 
         if _auth_enabled() and self.access_token is not None:
             try:
-                user = get_user_from_token(
-                    self.access_token, revoke_expired=False
-                )
+                user = get_user_from_token(self.access_token, revoke_expired=False)
             except (ExpiredTokenException, InvalidTokenException):
                 pass
 
@@ -134,9 +128,7 @@ class EventSocket(WebSocketHandler):
                     user = listener.get_current_user()
 
                     if user is None:
-                        listener.request_authorization(
-                            "Valid access token required"
-                        )
+                        listener.request_authorization("Valid access token required")
                         continue
 
                     filtered_event = cls.model_filter.filter_object(
@@ -147,9 +139,7 @@ class EventSocket(WebSocketHandler):
 
                     if filtered_event:
                         listener.write_message(
-                            SchemaParser.serialize(
-                                filtered_event, to_string=True
-                            )
+                            SchemaParser.serialize(filtered_event, to_string=True)
                         )
                     else:
                         logger.debug(

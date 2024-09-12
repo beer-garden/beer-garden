@@ -73,14 +73,10 @@ def publish_event(event_type: Events):
 
         try:
             if config.get("apm.enabled") and elasticapm.get_client():
-                with elasticapm.capture_span(
-                    name=event_type.name, span_type="Event"
-                ):
+                with elasticapm.capture_span(name=event_type.name, span_type="Event"):
                     result = wrapped(*args, **kwargs)
                     if hasattr(result, "id"):
-                        elasticapm.set_custom_context(
-                            {"id": getattr(result, "id")}
-                        )
+                        elasticapm.set_custom_context({"id": getattr(result, "id")})
             else:
                 result = wrapped(*args, **kwargs)
 
@@ -101,9 +97,13 @@ def publish_event(event_type: Events):
             args_str = ", ".join(str(arg) for arg in args)
             kwargs_str = ", ".join(f"{key}={kwargs[key]!r}" for key in kwargs)
 
-            function_called = f"{wrapped.__name__}({args_str}{', ' if args else ''}{kwargs_str})"
+            function_called = (
+                f"{wrapped.__name__}({args_str}{', ' if args else ''}{kwargs_str})"
+            )
 
-            event.error_message = f"{function_called}\nGenerated Error:\n{str(formatted_traceback)}"
+            event.error_message = (
+                f"{function_called}\nGenerated Error:\n{str(formatted_traceback)}"
+            )
             raise
         finally:
             if (not event.error and _publish_success) or (

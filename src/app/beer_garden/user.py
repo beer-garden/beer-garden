@@ -154,9 +154,7 @@ def validated_token_ttl():
             )
 
 
-def get_user(
-    username: str = None, id: str = None, include_roles: bool = True
-) -> User:
+def get_user(username: str = None, id: str = None, include_roles: bool = True) -> User:
     """Get User
 
     Args:
@@ -201,9 +199,7 @@ def load_users_config() -> list:
     """
     if config.get("auth.user_definition_file"):
         if os.path.isfile(config.get("auth.user_definition_file")):
-            with open(
-                config.get("auth.user_definition_file"), "r"
-            ) as config_file:
+            with open(config.get("auth.user_definition_file"), "r") as config_file:
                 return yaml.safe_load(config_file)
         else:
             logger.error(
@@ -579,9 +575,7 @@ def generate_downstream_user(target_garden: Garden, user: User) -> User:
 
     for alias_user_map in user.user_alias_mapping:
         if alias_user_map.target_garden == target_garden.name:
-            downstream_user = User(
-                username=alias_user_map.username, is_remote=True
-            )
+            downstream_user = User(username=alias_user_map.username, is_remote=True)
 
             generate_user_alias_mappings(
                 downstream_user, target_garden, user.user_alias_mapping
@@ -600,9 +594,7 @@ def generate_downstream_user(target_garden: Garden, user: User) -> User:
     return downstream_user
 
 
-def initiate_garden_user_sync(
-    garden_name: str = None, garden: Garden = None
-) -> None:
+def initiate_garden_user_sync(garden_name: str = None, garden: Garden = None) -> None:
     """Syncs all users from this garden down to requested garden. Only the role
     assignments relevant to the garden will be included in the sync.
 

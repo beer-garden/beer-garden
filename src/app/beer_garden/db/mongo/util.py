@@ -197,9 +197,7 @@ def check_indexes(document_class):
         try:
             db = get_db()
             db[document_class.__name__.lower()].drop_indexes()
-            logger.warning(
-                "Dropped indexes for %s collection", document_class.__name__
-            )
+            logger.warning("Dropped indexes for %s collection", document_class.__name__)
         except OperationFailure:
             logger.error(
                 "Dropping %s indexes failed, please check the database configuration",
@@ -223,9 +221,7 @@ def check_indexes(document_class):
 
         try:
             document_class.ensure_indexes()
-            logger.warning(
-                "%s indexes rebuilt successfully", document_class.__name__
-            )
+            logger.warning("%s indexes rebuilt successfully", document_class.__name__)
         except OperationFailure:
             logger.error(
                 "%s index rebuild failed, please check the database configuration",
@@ -261,9 +257,7 @@ def _update_request_has_parent_model():
     from .models import Request
 
     raw_collection = Request._get_collection()
-    raw_collection.update_many(
-        {"parent": None}, {"$set": {"has_parent": False}}
-    )
+    raw_collection.update_many({"parent": None}, {"$set": {"has_parent": False}})
     raw_collection.update_many(
         {"parent": {"$not": {"$eq": None}}}, {"$set": {"has_parent": True}}
     )

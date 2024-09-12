@@ -31,12 +31,8 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
         self.user_upstream_roles_header = handler_config.get(
             "user_upstream_roles_header"
         )
-        self.user_local_roles_header = handler_config.get(
-            "user_local_roles_header"
-        )
-        self.user_alias_mapping_header = handler_config.get(
-            "user_alias_mapping_header"
-        )
+        self.user_local_roles_header = handler_config.get("user_local_roles_header")
+        self.user_alias_mapping_header = handler_config.get("user_alias_mapping_header")
         self.create_users = handler_config.get("create_users")
 
     def get_user(self, request: HTTPServerRequest) -> Optional[User]:
@@ -55,18 +51,14 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
             username = request.headers.get(self.username_header)
             upstream_roles = self._upstream_roles_from_headers(request.headers)
             local_roles = self._local_roles_from_headers(request.headers)
-            user_alias_mappings = self._user_alias_mapping_from_headers(
-                request.headers
-            )
+            user_alias_mappings = self._user_alias_mapping_from_headers(request.headers)
 
             if username:
                 try:
                     authenticated_user = get_user(username)
                 except DoesNotExist:
                     if self.create_users:
-                        authenticated_user = User(
-                            username=username, is_remote=True
-                        )
+                        authenticated_user = User(username=username, is_remote=True)
 
                         # TODO: Really we should just have an option on User to disable
                         # password logins. For now, just set a random-ish value.
@@ -80,9 +72,7 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                         authenticated_user.metadata[
                             "last_authentication_headers_upstream_roles"
                         ] = json.loads(
-                            request.headers.get(
-                                self.user_upstream_roles_header, "[]"
-                            )
+                            request.headers.get(self.user_upstream_roles_header, "[]")
                         )
                     elif (
                         "last_authentication_headers_upstream_roles"
@@ -97,9 +87,7 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                         authenticated_user.metadata[
                             "last_authentication_headers_local_roles"
                         ] = json.loads(
-                            request.headers.get(
-                                self.user_local_roles_header, "[]"
-                            )
+                            request.headers.get(self.user_local_roles_header, "[]")
                         )
                     elif (
                         "last_authentication_headers_local_roles"
@@ -110,15 +98,11 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                         ]
 
                     if user_alias_mappings:
-                        authenticated_user.user_alias_mapping = (
-                            user_alias_mappings
-                        )
+                        authenticated_user.user_alias_mapping = user_alias_mappings
                         authenticated_user.metadata[
                             "last_authentication_headers_user_alias_mapping"
                         ] = json.loads(
-                            request.headers.get(
-                                self.user_alias_mapping_header, "[]"
-                            )
+                            request.headers.get(self.user_alias_mapping_header, "[]")
                         )
                     elif (
                         "last_authentication_headers_user_alias_mapping"
@@ -176,9 +160,7 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
 
         return local_roles
 
-    def _user_alias_mapping_from_headers(
-        self, headers: HTTPHeaders
-    ) -> List[str]:
+    def _user_alias_mapping_from_headers(self, headers: HTTPHeaders) -> List[str]:
         """Parse the header containing the user's groups and return them as a list"""
 
         if not headers.get(self.user_alias_mapping_header, None):

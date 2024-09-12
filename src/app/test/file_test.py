@@ -141,9 +141,7 @@ class TestFileOperations(object):
                     simple_file_chunk,
                 ]
             )
-            files.create_chunk(
-                simple_file.id, x, simple_file_chunk.data, upsert=True
-            )
+            files.create_chunk(simple_file.id, x, simple_file_chunk.data, upsert=True)
 
         # Fill out the metadata now
         query_mock.side_effect = iter([simple_file, modified_file])
@@ -192,9 +190,9 @@ class TestFileOperations(object):
             my_data += b64decode(
                 (files.fetch_file(simple_file.id, chunk=x)).data
             ).decode("utf-8")
-        assert my_data == b64decode(simple_file_chunk.data).decode(
-            "utf-8"
-        ) * len(simple_file.chunks)
+        assert my_data == b64decode(simple_file_chunk.data).decode("utf-8") * len(
+            simple_file.chunks
+        )
 
     def test_file_query(self, monkeypatch, base64_data, simple_file):
         query_mock = Mock()
@@ -372,9 +370,7 @@ class TestFileOperations(object):
             ]
         )
         assert not (
-            files.set_owner(
-                file_id, owner_type="REQUEST", owner_id=simple_request.id
-            )
+            files.set_owner(file_id, owner_type="REQUEST", owner_id=simple_request.id)
         ).operation_complete
         assert not (
             files.set_owner(
@@ -407,12 +403,9 @@ class TestFileOperations(object):
         assert status.chunk_size == simple_file.chunk_size
 
         # Test the multi-object function
-        status = files._safe_build_object(
-            FileStatus, simple_file, simple_file_chunk
-        )
+        status = files._safe_build_object(FileStatus, simple_file, simple_file_chunk)
         assert (
-            simple_file.id in status.file_id
-            and status.chunk_id == simple_file_chunk.id
+            simple_file.id in status.file_id and status.chunk_id == simple_file_chunk.id
         )
         assert status.data == simple_file_chunk.data
         assert status.file_size == simple_file.file_size

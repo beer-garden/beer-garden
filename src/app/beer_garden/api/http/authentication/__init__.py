@@ -46,9 +46,7 @@ def user_login(request: HTTPServerRequest) -> Optional[User]:
     return user
 
 
-def issue_token_pair(
-    user: User, refresh_expiration: Optional[datetime] = None
-) -> dict:
+def issue_token_pair(user: User, refresh_expiration: Optional[datetime] = None) -> dict:
     """Issues a JWT access and refresh token pair for a user
 
     Args:
@@ -59,18 +57,14 @@ def issue_token_pair(
             { "access": <str>, "refresh": <str> }
     """
     max_permission = determine_max_permission(user)
-    expiration = refresh_expiration or _get_refresh_token_expiration(
-        max_permission
-    )
+    expiration = refresh_expiration or _get_refresh_token_expiration(max_permission)
     token_uuid = uuid4()
 
     access_token = _generate_access_token(user, token_uuid, max_permission)
     refresh_token = _generate_refresh_token(user, token_uuid, expiration)
 
     create_token(
-        UserToken(
-            expires_at=expiration, username=user.username, uuid=token_uuid
-        )
+        UserToken(expires_at=expiration, username=user.username, uuid=token_uuid)
     )
 
     return {"access": access_token, "refresh": refresh_token}
@@ -103,9 +97,7 @@ def refresh_token_pair(refresh_token: str) -> dict:
     except DoesNotExist:
         raise ExpiredTokenException
 
-    expiration = datetime.fromtimestamp(
-        decoded_refresh_token["exp"], tz=timezone.utc
-    )
+    expiration = datetime.fromtimestamp(decoded_refresh_token["exp"], tz=timezone.utc)
     user = get_user(id=decoded_refresh_token["sub"])
 
     new_token_pair = issue_token_pair(user, expiration)
@@ -211,9 +203,7 @@ def decode_token(encoded_token: str, expected_type: str = None) -> dict:
     return decoded_token
 
 
-def _generate_access_token(
-    user: User, identifier: UUID, max_permission: str
-) -> str:
+def _generate_access_token(user: User, identifier: UUID, max_permission: str) -> str:
     """Generates a JWT access token for a user containing the user's permissions"""
     secret_key = config.get("auth").token_secret
 
@@ -221,16 +211,12 @@ def _generate_access_token(
 
     if user.local_roles:
         for role in user.local_roles:
-            roles.append(
-                SchemaParser.serialize_role(role, to_string=False, many=False)
-            )
+            roles.append(SchemaParser.serialize_role(role, to_string=False, many=False))
 
     if user.upstream_roles:
         for role in user.upstream_roles:
             roles.append(
-                SchemaParser.serialize_remote_role(
-                    role, to_string=False, many=False
-                )
+                SchemaParser.serialize_remote_role(role, to_string=False, many=False)
             )
 
     jwt_headers = {"alg": "HS256", "typ": "JWT"}
@@ -249,9 +235,7 @@ def _generate_access_token(
     return access_token
 
 
-def _generate_refresh_token(
-    user: User, identifier: UUID, expiration: datetime
-) -> str:
+def _generate_refresh_token(user: User, identifier: UUID, expiration: datetime) -> str:
     """Generates a JWT refresh token for a user"""
     secret_key = config.get("auth").token_secret
 

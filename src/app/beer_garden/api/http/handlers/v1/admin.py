@@ -62,9 +62,7 @@ class AdminAPI(AuthorizationHandler):
 
         for op in operations:
             if op.operation == "rescan":
-                await self.process_operation(
-                    Operation(operation_type="RUNNER_RESCAN")
-                )
+                await self.process_operation(Operation(operation_type="RUNNER_RESCAN"))
             elif op.operation == "reload":
                 if op.path == "/config/logging/plugin":
                     await self.process_operation(
@@ -73,8 +71,6 @@ class AdminAPI(AuthorizationHandler):
                 else:
                     raise ModelValidationError(f"Unsupported path '{op.path}'")
             else:
-                raise ModelValidationError(
-                    f"Unsupported operation '{op.operation}'"
-                )
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
         self.set_status(204)

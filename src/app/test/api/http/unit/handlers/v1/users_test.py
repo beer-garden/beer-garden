@@ -27,9 +27,7 @@ def user_admin_role():
 
 @pytest.fixture
 def user():
-    yield create_user(
-        User(username="testuser", password="password", is_remote=False)
-    )
+    yield create_user(User(username="testuser", password="password", is_remote=False))
 
 
 @pytest.fixture
@@ -104,16 +102,12 @@ class TestUserAPI:
         url = f"{base_url}/api/v1/users/{user.username}"
         headers = {"Content-Type": "application/json"}
 
-        body = json.dumps(
-            {"operation": "update", "value": {"roles": ["badrolename"]}}
-        )
+        body = json.dumps({"operation": "update", "value": {"roles": ["badrolename"]}})
 
         assert len(user.roles) == 0
 
         with pytest.raises(HTTPError) as excinfo:
-            yield http_client.fetch(
-                url, method="PATCH", headers=headers, body=body
-            )
+            yield http_client.fetch(url, method="PATCH", headers=headers, body=body)
 
         assert excinfo.value.code == 400
 
@@ -177,9 +171,7 @@ class TestUserAPI:
         )
 
         with pytest.raises(HTTPError) as excinfo:
-            yield http_client.fetch(
-                url, method="PATCH", headers=headers, body=body
-            )
+            yield http_client.fetch(url, method="PATCH", headers=headers, body=body)
 
         assert excinfo.value.code == 403
 
@@ -195,9 +187,7 @@ class TestUserAPI:
         url = f"{base_url}/api/v1/users/{user.username}"
         headers = {"Authorization": f"Bearer {access_token_user_admin}"}
 
-        response = yield http_client.fetch(
-            url, method="DELETE", headers=headers
-        )
+        response = yield http_client.fetch(url, method="DELETE", headers=headers)
 
         assert response.code == 204
         with pytest.raises(DoesNotExist):
@@ -267,9 +257,7 @@ class TestUserListAPI:
         body = json.dumps({"username": "newuser", "password": "password"})
 
         with pytest.raises(HTTPError) as excinfo:
-            yield http_client.fetch(
-                url, method="POST", headers=headers, body=body
-            )
+            yield http_client.fetch(url, method="POST", headers=headers, body=body)
 
         assert excinfo.value.code == 403
 
@@ -281,9 +269,7 @@ class TestUserListAPI:
         headers = {"Content-Type": "application/json"}
 
         with pytest.raises(HTTPError) as excinfo:
-            yield http_client.fetch(
-                url, method="POST", headers=headers, body="{}"
-            )
+            yield http_client.fetch(url, method="POST", headers=headers, body="{}")
 
         assert excinfo.value.code == 400
 
@@ -338,9 +324,7 @@ class TestUserPasswordChangeAPI:
         )
 
         with pytest.raises(HTTPError) as excinfo:
-            yield http_client.fetch(
-                url, method="POST", headers=headers, body=body
-            )
+            yield http_client.fetch(url, method="POST", headers=headers, body=body)
 
         assert excinfo.value.code == 400
 
@@ -363,9 +347,7 @@ class TestUserPasswordChangeAPI:
         }
 
         with pytest.raises(HTTPError) as excinfo:
-            yield http_client.fetch(
-                url, method="POST", headers=headers, body="{}"
-            )
+            yield http_client.fetch(url, method="POST", headers=headers, body="{}")
 
         assert excinfo.value.code == 400
 

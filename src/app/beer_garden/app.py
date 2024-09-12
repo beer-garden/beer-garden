@@ -123,9 +123,7 @@ class Application(StoppableThread):
 
         self.mp_manager = self._setup_multiprocessing_manager()
 
-        beer_garden.local_plugins.manager.lpm_proxy = (
-            self.mp_manager.PluginManager()
-        )
+        beer_garden.local_plugins.manager.lpm_proxy = self.mp_manager.PluginManager()
 
         self.entry_manager = beer_garden.api.entry_point.Manager()
 
@@ -171,9 +169,7 @@ class Application(StoppableThread):
         while not self.wait(0.1):
             for helper in self.helper_threads:
                 if not helper.thread.is_alive():
-                    self.logger.warning(
-                        f"{helper.display_name} is dead, restarting"
-                    )
+                    self.logger.warning(f"{helper.display_name} is dead, restarting")
                     helper.start()
 
             self.entry_manager.check_entry_points()
@@ -197,9 +193,7 @@ class Application(StoppableThread):
         wait_time = 0.1
         while not self.stopped() and not func():
             self.logger.warning(failure_message)
-            self.logger.warning(
-                "Waiting %.1f seconds before next attempt", wait_time
-            )
+            self.logger.warning("Waiting %.1f seconds before next attempt", wait_time)
 
             self.wait(wait_time)
             wait_time = min(wait_time * 2, 30)
@@ -315,14 +309,10 @@ class Application(StoppableThread):
 
         if self.scheduler.running:
             try:
-                self.logger.debug(
-                    "Pausing scheduler - no more jobs will be run"
-                )
+                self.logger.debug("Pausing scheduler - no more jobs will be run")
                 self.scheduler.pause()
             except Exception as ex:
-                self.logger.info(
-                    "Failed: Pausing scheduler - no more jobs will be run"
-                )
+                self.logger.info("Failed: Pausing scheduler - no more jobs will be run")
                 self.logger.error(ex)
                 shutdown_failure = True
 
@@ -381,9 +371,7 @@ class Application(StoppableThread):
             self.logger.debug("Shutting Down local plugin process monitoring")
             self.mp_manager.shutdown()
         except Exception as ex:
-            self.logger.info(
-                "Failed: Shutting Down local plugin process monitoring"
-            )
+            self.logger.info("Failed: Shutting Down local plugin process monitoring")
             self.logger.error(ex)
             shutdown_failure = True
 
@@ -522,18 +510,14 @@ class HelperThread(object):
                 self.display_name,
             )
         else:
-            self.logger.debug(
-                "%s is being requested to stop", self.display_name
-            )
+            self.logger.debug("%s is being requested to stop", self.display_name)
             self.thread.stop()
 
             self.logger.debug("Waiting for %s to stop...", self.display_name)
             self.thread.join(2)
 
             if self.thread.is_alive():
-                self.logger.warning(
-                    "%s did not stop successfully.", self.display_name
-                )
+                self.logger.warning("%s did not stop successfully.", self.display_name)
             else:
                 self.logger.debug("%s successfully stopped", self.display_name)
 

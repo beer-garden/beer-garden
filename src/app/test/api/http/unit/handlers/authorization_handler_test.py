@@ -51,9 +51,7 @@ def app_config_auth_enabled(monkeypatch):
 
 @pytest.fixture
 def app_config_auth_disabled(monkeypatch):
-    app_config = Box(
-        {"auth": {"enabled": False, "token_secret": "notsosecret"}}
-    )
+    app_config = Box({"auth": {"enabled": False, "token_secret": "notsosecret"}})
     monkeypatch.setattr(config, "_CONFIG", app_config)
 
     yield app_config
@@ -126,9 +124,7 @@ class TestAuthorizationHandler:
         url = f"{base_url}/api/v1/whoami"
 
         token_header, token_payload, token_signature = access_token.split(".")
-        access_token_bad_signature = (
-            f"{token_header}.{token_payload}.badsignature"
-        )
+        access_token_bad_signature = f"{token_header}.{token_payload}.badsignature"
 
         headers = {"Authorization": f"Bearer {access_token_bad_signature}"}
 
@@ -166,9 +162,7 @@ class TestAuthorizationHandler:
         url = f"{base_url}/api/v1/whoami"
 
         token_header, token_payload, token_signature = access_token.split(".")
-        access_token_bad_payload = (
-            f"{token_header}.badpayload.{token_signature}"
-        )
+        access_token_bad_payload = f"{token_header}.badpayload.{token_signature}"
 
         headers = {"Authorization": f"Bearer {access_token_bad_payload}"}
 

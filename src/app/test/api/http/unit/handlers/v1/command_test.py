@@ -65,9 +65,7 @@ def system_read_role(system_permitted):
 
 @pytest.fixture
 def user(system_read_role):
-    user = create_user(
-        User(username="testuser", local_roles=[system_read_role])
-    )
+    user = create_user(User(username="testuser", local_roles=[system_read_role]))
     yield user
     delete_user(user=user)
 
@@ -137,9 +135,7 @@ class TestCommandAPI:
 
 class TestCommandListAPI:
     @pytest.mark.gen_test
-    def test_auth_disabled_returns_commands_for_any_system(
-        self, http_client, base_url
-    ):
+    def test_auth_disabled_returns_commands_for_any_system(self, http_client, base_url):
         url = f"{base_url}/api/v1/commands/"
 
         response = yield http_client.fetch(url)

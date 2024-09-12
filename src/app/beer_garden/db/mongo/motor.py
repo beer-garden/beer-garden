@@ -40,9 +40,7 @@ async def query(
         Dict of the find_one result
 
     """
-    return await motor_db[collection].find_one(
-        filter=filter, projection=projection
-    )
+    return await motor_db[collection].find_one(filter=filter, projection=projection)
 
 
 async def update_one(

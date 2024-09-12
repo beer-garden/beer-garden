@@ -129,18 +129,14 @@ class TestGarden:
 
         assert len(garden.systems) == 2
 
-    def test_local_garden_returns_local_systems(
-        self, localgarden, remotegarden
-    ):
+    def test_local_garden_returns_local_systems(self, localgarden, remotegarden):
         """local_garden returns local systems (those of the local garden only)
         when requested"""
         garden = local_garden(all_systems=False)
 
         assert len(garden.systems) == 1
 
-    def test_remove_garden_removes_related_systems(
-        self, localgarden, remotegarden
-    ):
+    def test_remove_garden_removes_related_systems(self, localgarden, remotegarden):
         """remove_garden should also remove any systems of the garden"""
         remove_garden(remotegarden.name)
 
@@ -282,9 +278,7 @@ stomp:
 
         os.remove(config_file)
 
-    def test_load_configuration_file_disabled_publishing(
-        self, bg_garden, tmpdir
-    ):
+    def test_load_configuration_file_disabled_publishing(self, bg_garden, tmpdir):
         """Loads a yaml file containing configuration details"""
 
         contents = """publishing: false
@@ -412,9 +406,7 @@ stomp:
     #     assert remote_user_count == 0
 
     def test_check_garden_receiving_heartbeat_update_heartbeat(self):
-        garden = check_garden_receiving_heartbeat(
-            "http", garden_name="new_garden"
-        )
+        garden = check_garden_receiving_heartbeat("http", garden_name="new_garden")
 
         assert len(garden.receiving_connections) == 1
         assert garden.receiving_connections[0].status == "DISABLED"
@@ -471,9 +463,7 @@ stomp:
 
         config._CONFIG = {"children": {"directory": tmpdir}}
 
-        garden = check_garden_receiving_heartbeat(
-            "STOMP", garden_name=garden.name
-        )
+        garden = check_garden_receiving_heartbeat("STOMP", garden_name=garden.name)
 
         assert len(garden.receiving_connections) == 2
 
@@ -482,17 +472,13 @@ stomp:
 
         os.remove(config_file)
 
-    def test_check_garden_receiving_heartbeat_existing_garden_new_api(
-        self, bg_garden
-    ):
+    def test_check_garden_receiving_heartbeat_existing_garden_new_api(self, bg_garden):
         bg_garden.systems = []
 
         garden = create_garden(bg_garden)
         assert len(garden.receiving_connections) == 1
 
-        garden = check_garden_receiving_heartbeat(
-            "STOMP", garden_name=garden.name
-        )
+        garden = check_garden_receiving_heartbeat("STOMP", garden_name=garden.name)
 
         assert len(garden.receiving_connections) == 2
 
@@ -578,9 +564,7 @@ stomp:
     def test_garden_unresponsive_trigger(self, bg_garden):
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
-            connection.status_info.heartbeat = datetime.utcnow() - timedelta(
-                minutes=60
-            )
+            connection.status_info.heartbeat = datetime.utcnow() - timedelta(minutes=60)
         bg_garden.metadata = {"_unresponsive_timeout": 15}
 
         create_garden(bg_garden)
@@ -596,9 +580,7 @@ stomp:
     def test_garden_unresponsive_trigger_in_window(self, bg_garden):
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
-            connection.status_info.heartbeat = datetime.utcnow() - timedelta(
-                minutes=10
-            )
+            connection.status_info.heartbeat = datetime.utcnow() - timedelta(minutes=10)
 
         bg_garden.metadata = {"_unresponsive_timeout": 15}
 
@@ -615,9 +597,7 @@ stomp:
     def test_garden_unresponsive_trigger_child_metadata(self, bg_garden):
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
-            connection.status_info.heartbeat = datetime.utcnow() - timedelta(
-                minutes=10
-            )
+            connection.status_info.heartbeat = datetime.utcnow() - timedelta(minutes=10)
 
         bg_garden.metadata["_unresponsive_timeout"] = 5
 
@@ -634,9 +614,7 @@ stomp:
     def test_garden_unresponsive_trigger_missing_window(self, bg_garden):
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
-            connection.status_info.heartbeat = datetime.utcnow() - timedelta(
-                minutes=10
-            )
+            connection.status_info.heartbeat = datetime.utcnow() - timedelta(minutes=10)
 
         bg_garden.metadata = {"_unresponsive_timeout": 15}
 
@@ -676,9 +654,7 @@ stomp:
             )
         )
 
-        event = Event(
-            name=Events.GARDEN_SYNC.name, payload=parent, garden=parent.name
-        )
+        event = Event(name=Events.GARDEN_SYNC.name, payload=parent, garden=parent.name)
 
         handle_event(event)
 

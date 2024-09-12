@@ -9,9 +9,7 @@ from beer_garden.queue.rabbit import PyrabbitClient, get_routing_key, get_routin
 
 class TestGetRoutingKey(object):
     def test_basic(self):
-        assert "system.1-0-0.instance" == get_routing_key(
-            "system", "1.0.0", "instance"
-        )
+        assert "system.1-0-0.instance" == get_routing_key("system", "1.0.0", "instance")
 
     @pytest.mark.parametrize(
         "args,expected",
@@ -191,9 +189,7 @@ class TestPyrabbitClient(object):
         pyrabbit_client.get_messages.return_value = [{"payload": fake_request}]
 
         parser_mock = Mock(parse_request=Mock(return_value=fake_request))
-        monkeypatch.setattr(
-            "beer_garden.queue.rabbit.SchemaParser", parser_mock
-        )
+        monkeypatch.setattr("beer_garden.queue.rabbit.SchemaParser", parser_mock)
 
         cancel_mock = Mock()
         monkeypatch.setattr(beer_garden.requests, "cancel_request", cancel_mock)
@@ -201,17 +197,13 @@ class TestPyrabbitClient(object):
         client.clear_queue("queue")
         cancel_mock.assert_called_once_with(fake_request.id)
 
-    def test_clear_queue_bad_payload(
-        self, monkeypatch, client, pyrabbit_client
-    ):
+    def test_clear_queue_bad_payload(self, monkeypatch, client, pyrabbit_client):
         fake_request = Mock(id="id", status="CREATED")
         pyrabbit_client.get_queue.return_value = {"messages_ready": 1}
         pyrabbit_client.get_messages.return_value = [{"payload": fake_request}]
 
         parser_mock = Mock(parse_request=Mock(side_effect=ValueError))
-        monkeypatch.setattr(
-            "beer_garden.queue.rabbit.SchemaParser", parser_mock
-        )
+        monkeypatch.setattr("beer_garden.queue.rabbit.SchemaParser", parser_mock)
 
         client.clear_queue("queue")
         assert fake_request.status == "CREATED"
@@ -224,16 +216,12 @@ class TestPyrabbitClient(object):
             fake_request, from_string=True
         )
 
-    def test_clear_queue_race_condition(
-        self, monkeypatch, client, pyrabbit_client
-    ):
+    def test_clear_queue_race_condition(self, monkeypatch, client, pyrabbit_client):
         pyrabbit_client.get_queue.return_value = {"messages_ready": 1}
         pyrabbit_client.get_messages.return_value = []
 
         parser_mock = Mock()
-        monkeypatch.setattr(
-            "beer_garden.queue.rabbit.SchemaParser", parser_mock
-        )
+        monkeypatch.setattr("beer_garden.queue.rabbit.SchemaParser", parser_mock)
 
         client.clear_queue("queue")
         assert pyrabbit_client.get_messages.called is True

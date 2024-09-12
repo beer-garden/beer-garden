@@ -123,9 +123,7 @@ def determine_tasks(**kwargs) -> Tuple[List[dict], int]:
                 "field": "created_at",
                 "delete_after": timedelta(minutes=info_ttl),
                 "additional_query": (
-                    Q(status="SUCCESS")
-                    | Q(status="CANCELED")
-                    | Q(status="ERROR")
+                    Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
                 )
                 & Q(has_parent=False)
                 & Q(command_type="INFO"),
@@ -140,9 +138,7 @@ def determine_tasks(**kwargs) -> Tuple[List[dict], int]:
                 "field": "created_at",
                 "delete_after": timedelta(minutes=action_ttl),
                 "additional_query": (
-                    Q(status="SUCCESS")
-                    | Q(status="CANCELED")
-                    | Q(status="ERROR")
+                    Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
                 )
                 & Q(has_parent=False)
                 & Q(command_type="ACTION"),
@@ -157,9 +153,7 @@ def determine_tasks(**kwargs) -> Tuple[List[dict], int]:
                 "field": "created_at",
                 "delete_after": timedelta(minutes=admin_ttl),
                 "additional_query": (
-                    Q(status="SUCCESS")
-                    | Q(status="CANCELED")
-                    | Q(status="ERROR")
+                    Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
                 )
                 & Q(has_parent=False)
                 & Q(command_type="ADMIN"),
@@ -174,9 +168,7 @@ def determine_tasks(**kwargs) -> Tuple[List[dict], int]:
                 "field": "created_at",
                 "delete_after": timedelta(minutes=temp_ttl),
                 "additional_query": (
-                    Q(status="SUCCESS")
-                    | Q(status="CANCELED")
-                    | Q(status="ERROR")
+                    Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
                 )
                 & Q(has_parent=False)
                 & Q(command_type="TEMP"),

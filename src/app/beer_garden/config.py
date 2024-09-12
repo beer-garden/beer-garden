@@ -89,12 +89,8 @@ def generate(args: Sequence[str]):
     """
     spec, cli_vars = _parse_args(args)
 
-    bootstrap = spec.load_filtered_config(
-        cli_vars, "ENVIRONMENT", bootstrap=True
-    )
-    config = spec.load_filtered_config(
-        cli_vars, "ENVIRONMENT", exclude_bootstrap=True
-    )
+    bootstrap = spec.load_filtered_config(cli_vars, "ENVIRONMENT", bootstrap=True)
+    config = spec.load_filtered_config(cli_vars, "ENVIRONMENT", exclude_bootstrap=True)
 
     dump_data(config, filename=bootstrap.configuration.file, file_type="yaml")
 
@@ -120,9 +116,7 @@ def migrate(args: Sequence[str]):
             "Please specify a config file to update in the CLI arguments (-c)"
         )
 
-    current_root, current_extension = os.path.splitext(
-        config.configuration.file
-    )
+    current_root, current_extension = os.path.splitext(config.configuration.file)
 
     current_type = current_extension[1:]
     if current_type == "yml":
@@ -282,16 +276,12 @@ def assign(new_config: Box, force: bool = False) -> None:
     """
     global _CONFIG
     if _CONFIG is not None and not force:
-        raise ConfigurationError(
-            "Attempting to reset config without force flag"
-        )
+        raise ConfigurationError("Attempting to reset config without force flag")
 
     _CONFIG = new_config
 
 
-def _setup_config_sources(
-    spec: YapconfSpec, cli_vars: Iterable[str]
-) -> List[str]:
+def _setup_config_sources(spec: YapconfSpec, cli_vars: Iterable[str]) -> List[str]:
     """Sets the sources for configuration loading
 
     Args:
@@ -668,8 +658,7 @@ _AUTHENTICATION_HANDLERS_SPEC = {
                 "enabled": {
                     "type": "bool",
                     "default": True,
-                    "description": "Enable authentication via username and"
-                    "password",
+                    "description": "Enable authentication via username and" "password",
                 }
             },
         },
@@ -826,9 +815,7 @@ _DB_SPEC = {
         "prune_interval": {
             "type": "int",
             "default": 15,
-            "description": (
-                "Number of minutes to wait before running db pruner"
-            ),
+            "description": ("Number of minutes to wait before running db pruner"),
         },
         "connection": {
             "type": "dict",

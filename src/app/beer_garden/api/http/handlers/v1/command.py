@@ -39,9 +39,7 @@ class CommandAPI(AuthorizationHandler):
         _ = self.get_or_raise(System, id=system_id)
 
         response = await self.process_operation(
-            Operation(
-                operation_type="COMMAND_READ", args=[system_id, command_name]
-            )
+            Operation(operation_type="COMMAND_READ", args=[system_id, command_name])
         )
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

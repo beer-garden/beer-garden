@@ -115,9 +115,7 @@ class UserAPI(AuthorizationHandler):
         self.minimum_permission = Permissions.GARDEN_ADMIN.name
         self.verify_user_global_permission()
 
-        patch = SchemaParser.parse_patch(
-            self.request.decoded_body, from_string=True
-        )
+        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
         for op in patch:
             operation = op.operation.lower()
@@ -161,9 +159,7 @@ class UserAPI(AuthorizationHandler):
                 )
 
             else:
-                raise ModelValidationError(
-                    f"Unsupported operation '{op.operation}'"
-                )
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
         if response:
             self.write(response)
         else:
@@ -225,9 +221,7 @@ class UserListAPI(AuthorizationHandler):
         self.minimum_permission = Permissions.GARDEN_ADMIN.name
         self.verify_user_global_permission()
 
-        user_model = self.parser.parse_user(
-            self.request.decoded_body, from_string=True
-        )
+        user_model = self.parser.parse_user(self.request.decoded_body, from_string=True)
 
         response = await self.process_operation(
             Operation(operation_type="USER_CREATE", args=[user_model]),
@@ -276,9 +270,7 @@ class UserListAPI(AuthorizationHandler):
         self.minimum_permission = Permissions.GARDEN_ADMIN.name
         self.verify_user_global_permission()
 
-        patch = SchemaParser.parse_patch(
-            self.request.decoded_body, from_string=True
-        )
+        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
         for op in patch:
             operation = op.operation.lower()
@@ -320,9 +312,7 @@ class UserPasswordChangeAPI(AuthorizationHandler):
 
         try:
             password_data = (
-                UserPasswordChangeSchema(strict=True)
-                .load(self.request_body)
-                .data
+                UserPasswordChangeSchema(strict=True).load(self.request_body).data
             )
         except ValidationError as exc:
             raise BadRequest(reason=f"{exc}")
@@ -363,8 +353,6 @@ class WhoAmIAPI(AuthorizationHandler):
           - Users
         """
 
-        response = SchemaParser.serialize_user(
-            self.current_user, to_string=False
-        )
+        response = SchemaParser.serialize_user(self.current_user, to_string=False)
 
         self.write(response)

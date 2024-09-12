@@ -132,9 +132,7 @@ class TestTopic:
         topic_remove_subscriber(subscriber, topic2.id)
         assert len(get_topic(topic2.id).subscribers) == 0
 
-    def test_subscriber_match(
-        self, subscriber, subscriber1, subscriber2, subscriber3
-    ):
+    def test_subscriber_match(self, subscriber, subscriber1, subscriber2, subscriber3):
         """subscriber comparison"""
         assert (subscriber_match(subscriber, subscriber)) is True
         assert (subscriber_match(subscriber, subscriber1)) is True

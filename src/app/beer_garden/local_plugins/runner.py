@@ -11,9 +11,7 @@ from brewtils.models import Runner
 log_levels = [n for n in logging._nameToLevel.keys()]
 
 
-def read_stream(
-    process: subprocess.Popen, stream: TextIOBase, logger: logging.Logger
-):
+def read_stream(process: subprocess.Popen, stream: TextIOBase, logger: logging.Logger):
     """Helper function thread target to read a subprocess IO stream
 
     This will read line by line from STDOUT or STDERR and log each line at INFO level.

@@ -36,9 +36,7 @@ class EventPublisherAPI(AuthorizationHandler):
           - Event
         """
         self.minimum_permission = Permissions.OPERATOR.name
-        event = SchemaParser.parse_event(
-            self.request.decoded_body, from_string=True
-        )
+        event = SchemaParser.parse_event(self.request.decoded_body, from_string=True)
         self.verify_user_permission_for_object(event)
         publish(event)
 

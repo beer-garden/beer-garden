@@ -69,9 +69,7 @@ class TestTopicAPI:
         assert len(Topic.objects.filter(id=topic_permitted.id)) == 0
 
     @pytest.mark.gen_test
-    def test_patch_topic(
-        self, http_client, base_url, topic_permitted, subscriber
-    ):
+    def test_patch_topic(self, http_client, base_url, topic_permitted, subscriber):
         url = f"{base_url}/api/v1/topics/{topic_permitted.id}"
         headers = {
             "Content-Type": "application/json",
@@ -94,9 +92,7 @@ class TestTopicAPI:
         assert response.code == 200
         assert len(Topic.objects.get(id=topic_permitted.id).subscribers) == 1
         # Can't compare beer_garden.db.mongo.models.Subscriber and brewtils.models.Subscriber
-        mongo_subscriber = Topic.objects.get(id=topic_permitted.id).subscribers[
-            0
-        ]
+        mongo_subscriber = Topic.objects.get(id=topic_permitted.id).subscribers[0]
         assert mongo_subscriber.garden == subscriber.garden
         assert mongo_subscriber.namespace == subscriber.namespace
         assert mongo_subscriber.system == subscriber.system
@@ -133,9 +129,7 @@ class TestTopicNameAPI:
         assert len(Topic.objects.filter(name=topic_permitted.name)) == 0
 
     @pytest.mark.gen_test
-    def test_patch_topic(
-        self, http_client, base_url, topic_permitted, subscriber
-    ):
+    def test_patch_topic(self, http_client, base_url, topic_permitted, subscriber):
         url = f"{base_url}/api/v1/topics/name/{topic_permitted.name}"
         headers = {
             "Content-Type": "application/json",
@@ -156,13 +150,9 @@ class TestTopicNameAPI:
         response = yield http_client.fetch(request)
 
         assert response.code == 200
-        assert (
-            len(Topic.objects.get(name=topic_permitted.name).subscribers) == 1
-        )
+        assert len(Topic.objects.get(name=topic_permitted.name).subscribers) == 1
         # Can't compare beer_garden.db.mongo.models.Subscriber and brewtils.models.Subscriber
-        mongo_subscriber = Topic.objects.get(
-            name=topic_permitted.name
-        ).subscribers[0]
+        mongo_subscriber = Topic.objects.get(name=topic_permitted.name).subscribers[0]
         assert mongo_subscriber.garden == subscriber.garden
         assert mongo_subscriber.namespace == subscriber.namespace
         assert mongo_subscriber.system == subscriber.system

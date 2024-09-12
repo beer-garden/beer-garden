@@ -33,9 +33,7 @@ def event_forward_role():
 
 @pytest.fixture
 def user_with_permission(event_forward_role):
-    user = create_user(
-        User(username="testuser", local_roles=[event_forward_role])
-    )
+    user = create_user(User(username="testuser", local_roles=[event_forward_role]))
     yield user
     delete_user(user=user)
 

@@ -39,9 +39,7 @@ class HttpParentUpdater(QueueListener):
             self._queue.put(event)
 
     def process(self, event: Event):
-        if event.error or (
-            event.garden and event.garden != conf.get("garden.name")
-        ):
+        if event.error or (event.garden and event.garden != conf.get("garden.name")):
             return
 
         # TODO - This shouldn't be set here
@@ -52,10 +50,7 @@ class HttpParentUpdater(QueueListener):
             Events.GARDEN_STOPPED.name,
             Events.GARDEN_SYNC.name,
         ):
-            if (
-                event.payload.parent is None
-                and event.payload.name != event.garden
-            ):
+            if event.payload.parent is None and event.payload.name != event.garden:
                 event.payload.parent = event.garden
                 for connection in event.payload.publishing_connections:
                     connection.config = {}
@@ -84,8 +79,7 @@ class HttpParentUpdater(QueueListener):
             if (
                 connection.config["host"] == self._ez_client.client.bg_host
                 and connection.config["port"] == self._ez_client.client.bg_port
-                and connection.config["url_prefix"]
-                == self._ez_client.client.bg_prefix
+                and connection.config["url_prefix"] == self._ez_client.client.bg_prefix
             ):
                 connection.status = status
 
@@ -105,9 +99,7 @@ class HttpParentUpdater(QueueListener):
                 if self._ez_client.can_connect():
                     self._connected = True
 
-                    self.logger.warning(
-                        "Successfully reconnected to parent garden"
-                    )
+                    self.logger.warning("Successfully reconnected to parent garden")
                     self._update_garden_connection("PUBLISHING")
 
                     if self._reconnect_action:
@@ -117,8 +109,6 @@ class HttpParentUpdater(QueueListener):
 
             if not self._connected:
                 self._update_garden_connection("UNREACHABLE")
-                self.logger.debug(
-                    "Waiting %.1f seconds before next attempt", wait_time
-                )
+                self.logger.debug("Waiting %.1f seconds before next attempt", wait_time)
                 self.wait(wait_time)
                 wait_time = min(wait_time * 2, 30)

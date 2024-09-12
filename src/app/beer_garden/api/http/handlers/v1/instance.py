@@ -123,9 +123,7 @@ class InstanceAPI(AuthorizationHandler):
         self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         _ = self.get_or_raise(System, instances__id=instance_id)
 
-        patch = SchemaParser.parse_patch(
-            self.request.decoded_body, from_string=True
-        )
+        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
         for op in patch:
             operation = op.operation.lower()
@@ -145,30 +143,22 @@ class InstanceAPI(AuthorizationHandler):
 
             elif operation == "start":
                 response = await self.process_operation(
-                    Operation(
-                        operation_type="INSTANCE_START", args=[instance_id]
-                    )
+                    Operation(operation_type="INSTANCE_START", args=[instance_id])
                 )
 
             elif operation == "restart":
                 response = await self.process_operation(
-                    Operation(
-                        operation_type="INSTANCE_RESTART", args=[instance_id]
-                    )
+                    Operation(operation_type="INSTANCE_RESTART", args=[instance_id])
                 )
 
             elif operation == "stop":
                 response = await self.process_operation(
-                    Operation(
-                        operation_type="INSTANCE_STOP", args=[instance_id]
-                    )
+                    Operation(operation_type="INSTANCE_STOP", args=[instance_id])
                 )
 
             elif operation == "heartbeat":
                 response = await self.process_operation(
-                    Operation(
-                        operation_type="INSTANCE_HEARTBEAT", args=[instance_id]
-                    )
+                    Operation(operation_type="INSTANCE_HEARTBEAT", args=[instance_id])
                 )
 
             elif operation == "replace":
@@ -196,9 +186,7 @@ class InstanceAPI(AuthorizationHandler):
                     raise ModelValidationError(f"Unsupported path '{op.path}'")
 
             else:
-                raise ModelValidationError(
-                    f"Unsupported operation '{op.operation}'"
-                )
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -259,9 +247,7 @@ class InstanceLogAPI(AuthorizationHandler):
         elif end_line:
             end_line = int(end_line)
 
-        response = await self._generate_get_response(
-            instance_id, start_line, end_line
-        )
+        response = await self._generate_get_response(instance_id, start_line, end_line)
 
         self.set_header("request_id", response.id)
         self.set_header("Content-Type", "text/plain; charset=UTF-8")

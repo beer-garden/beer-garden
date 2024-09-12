@@ -48,9 +48,7 @@ class AuthorizationHandler(BaseHandler):
             except InvalidTokenException:
                 raise RequestForbidden(reason="Authorization token invalid")
             except ExpiredTokenException:
-                raise AuthorizationRequired(
-                    reason="Authorization token expired"
-                )
+                raise AuthorizationRequired(reason="Authorization token expired")
         else:
             return self._anonymous_superuser()
 
@@ -120,9 +118,7 @@ class AuthorizationHandler(BaseHandler):
 
         return requested_objects[0]
 
-    def permissioned_queryset(
-        self, model: Type[Document]
-    ) -> QuerySet:  # Updated
+    def permissioned_queryset(self, model: Type[Document]) -> QuerySet:  # Updated
         """Returns a QuerySet for the provided Document model filtered down to only
         the objects for which the requesting user has the given permission
 
@@ -198,9 +194,7 @@ class AuthorizationHandler(BaseHandler):
         ):
             raise RequestForbidden
 
-    def verify_user_permission_for_object(
-        self, obj: BrewtilsModel
-    ) -> None:  # Updated
+    def verify_user_permission_for_object(self, obj: BrewtilsModel) -> None:  # Updated
         """Verifies that the requesting user has the specified permission for the
         given object.
 
@@ -247,9 +241,7 @@ class AuthorizationHandler(BaseHandler):
         auth_header = self.request.headers.get("Authorization")
 
         if not auth_header or not auth_header.startswith("Bearer "):
-            raise AuthorizationRequired(
-                reason="No authorization token provided"
-            )
+            raise AuthorizationRequired(reason="No authorization token provided")
 
         try:
             token = auth_header.split(" ")[1]

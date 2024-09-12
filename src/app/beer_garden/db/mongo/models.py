@@ -129,9 +129,7 @@ class MongoModel:
 class Choices(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.Choices
 
-    display = StringField(
-        required=True, choices=brewtils.models.Choices.DISPLAYS
-    )
+    display = StringField(required=True, choices=brewtils.models.Choices.DISPLAYS)
     strict = BooleanField(required=True, default=True)
     type = StringField(
         required=True, default="static", choices=brewtils.models.Choices.TYPES
@@ -148,9 +146,7 @@ class Choices(MongoModel, EmbeddedDocument):
                 f"Can not save choices '{self}': type is 'static' but the value is "
                 "not a list or dictionary"
             )
-        elif self.type == "url" and not isinstance(
-            self.value, six.string_types
-        ):
+        elif self.type == "url" and not isinstance(self.value, six.string_types):
             raise ModelValidationError(
                 f"Can not save choices '{self}': type is 'url' but the value is "
                 "not a string"
@@ -188,9 +184,7 @@ class Parameter(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.Parameter
 
     key = StringField(required=True)
-    type = StringField(
-        required=True, default="Any", choices=BrewtilsParameter.TYPES
-    )
+    type = StringField(required=True, default="Any", choices=BrewtilsParameter.TYPES)
     multi = BooleanField(required=True, default=False)
     display_name = StringField(required=False)
     optional = BooleanField(required=True, default=True)
@@ -238,12 +232,8 @@ class Command(MongoModel, EmbeddedDocument):
     name = StringField(required=True)
     description = StringField()
     parameters = EmbeddedDocumentListField("Parameter")
-    command_type = StringField(
-        choices=BrewtilsCommand.COMMAND_TYPES, default="ACTION"
-    )
-    output_type = StringField(
-        choices=BrewtilsCommand.OUTPUT_TYPES, default="STRING"
-    )
+    command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES, default="ACTION")
+    output_type = StringField(choices=BrewtilsCommand.OUTPUT_TYPES, default="STRING")
     schema = DictField()
     form = DictField()
     template = StringField()
@@ -258,9 +248,7 @@ class Command(MongoModel, EmbeddedDocument):
         """Validate before saving to the database"""
 
         if not self.name:
-            raise ModelValidationError(
-                "Can not save a Command with an empty name"
-            )
+            raise ModelValidationError("Can not save a Command with an empty name")
 
         if self.command_type not in BrewtilsCommand.COMMAND_TYPES:
             raise ModelValidationError(
@@ -493,9 +481,7 @@ class Request(MongoModel, Document):
 
         if self.parameters_gridfs:
             self.logger.debug("Retrieving parameters from GridFS")
-            self.parameters = json.loads(
-                self.parameters_gridfs.read().decode(encoding)
-            )
+            self.parameters = json.loads(self.parameters_gridfs.read().decode(encoding))
             self.parameters_gridfs = None
 
     def _pre_save(self):
@@ -549,9 +535,7 @@ class Request(MongoModel, Document):
             )
 
     def _post_save(self):
-        if self.status == "CREATED" and self.namespace == config.get(
-            "garden.name"
-        ):
+        if self.status == "CREATED" and self.namespace == config.get("garden.name"):
             self._update_raw_file_references()
 
     def _update_raw_file_references(self):
@@ -625,8 +609,7 @@ class Request(MongoModel, Document):
             )
 
         if (
-            not self.target_garden
-            or self.target_garden == config.get("garden.name")
+            not self.target_garden or self.target_garden == config.get("garden.name")
         ) and ("status" in self.changed_fields or self.created):
             self.status_updated_at = datetime.datetime.utcnow()
 
@@ -676,9 +659,7 @@ class Topic(MongoModel, Document):
     meta = {
         "auto_create_index": True,  # We need to manage this ourselves
         "index_background": True,
-        "indexes": [
-            {"name": "unique_index", "fields": ["name"], "unique": True}
-        ],
+        "indexes": [{"name": "unique_index", "fields": ["name"], "unique": True}],
     }
 
 
@@ -755,9 +736,7 @@ class DateTrigger(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.DateTrigger
 
     run_date = DateTimeField(required=True)
-    timezone = StringField(
-        required=False, default="utc", chocies=pytz.all_timezones
-    )
+    timezone = StringField(required=False, default="utc", chocies=pytz.all_timezones)
 
 
 class IntervalTrigger(MongoModel, EmbeddedDocument):
@@ -770,9 +749,7 @@ class IntervalTrigger(MongoModel, EmbeddedDocument):
     seconds = IntField(default=0)
     start_date = DateTimeField(required=False)
     end_date = DateTimeField(required=False)
-    timezone = StringField(
-        required=False, default="utc", chocies=pytz.all_timezones
-    )
+    timezone = StringField(required=False, default="utc", chocies=pytz.all_timezones)
     jitter = IntField(required=False)
     reschedule_on_finish = BooleanField(required=False, default=False)
 
@@ -790,9 +767,7 @@ class CronTrigger(MongoModel, EmbeddedDocument):
     second = StringField(default="0")
     start_date = DateTimeField(required=False)
     end_date = DateTimeField(required=False)
-    timezone = StringField(
-        required=False, default="utc", chocies=pytz.all_timezones
-    )
+    timezone = StringField(required=False, default="utc", chocies=pytz.all_timezones)
     jitter = IntField(required=False)
 
 
@@ -853,9 +828,7 @@ class Job(MongoModel, Document):
 
     name = StringField(required=True)
     trigger_type = StringField(required=True, choices=BrewtilsJob.TRIGGER_TYPES)
-    trigger = GenericEmbeddedDocumentField(
-        choices=list(TRIGGER_MODEL_MAPPING.values())
-    )
+    trigger = GenericEmbeddedDocumentField(choices=list(TRIGGER_MODEL_MAPPING.values()))
     request_template = EmbeddedDocumentField("RequestTemplate", required=True)
     misfire_grace_time = IntField()
     coalesce = BooleanField(default=True)
@@ -993,9 +966,7 @@ class Garden(MongoModel, Document):
                 < 1
             ):
                 if triple in child_systems_already_known:
-                    system_id_to_remove = child_systems_already_known.pop(
-                        triple
-                    )
+                    system_id_to_remove = child_systems_already_known.pop(triple)
 
                     if system_id_to_remove != str(system.id):
                         # remove the system from before this update with the same triple
@@ -1033,9 +1004,7 @@ class File(MongoModel, Document):
 
     owner_id = StringField(required=False)
     owner_type = StringField(required=False)
-    request = LazyReferenceField(
-        Request, required=False, reverse_delete_rule=NULLIFY
-    )
+    request = LazyReferenceField(Request, required=False, reverse_delete_rule=NULLIFY)
     job = LazyReferenceField(Job, required=False, reverse_delete_rule=NULLIFY)
     updated_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
     file_name = StringField(required=True)
@@ -1056,17 +1025,13 @@ class FileChunk(MongoModel, Document):
     offset = IntField(required=True)
     data = StringField(required=True)
     # Delete Rule (2) = CASCADE; This causes this document to be deleted when the owner doc is.
-    owner = LazyReferenceField(
-        File, required=False, reverse_delete_rule=CASCADE
-    )
+    owner = LazyReferenceField(File, required=False, reverse_delete_rule=CASCADE)
 
 
 class RawFile(Document):
     file = FileField()
     created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
-    request = LazyReferenceField(
-        Request, required=False, reverse_delete_rule=CASCADE
-    )
+    request = LazyReferenceField(Request, required=False, reverse_delete_rule=CASCADE)
 
     meta = {"queryset_class": FileFieldHandlingQuerySet}
 
@@ -1088,9 +1053,7 @@ class Role(MongoModel, Document):
     file_generated = BooleanField(required=True, default=False)
 
     meta = {
-        "indexes": [
-            {"name": "unique_index", "fields": ["name"], "unique": True}
-        ],
+        "indexes": [{"name": "unique_index", "fields": ["name"], "unique": True}],
     }
 
     def __str__(self) -> str:
@@ -1155,9 +1118,7 @@ class User(MongoModel, Document):
     file_generated = BooleanField(required=True, default=False)
 
     meta = {
-        "indexes": [
-            {"name": "unique_index", "fields": ["username"], "unique": True}
-        ],
+        "indexes": [{"name": "unique_index", "fields": ["username"], "unique": True}],
     }
 
     # _permissions_cache: Optional[dict] = None
@@ -1173,9 +1134,7 @@ class User(MongoModel, Document):
                 try:
                     Role.objects.get(name=role)
                 except DoesNotExist:
-                    raise ModelValidationError(
-                        f"Local Role '{role}' does not exist"
-                    )
+                    raise ModelValidationError(f"Local Role '{role}' does not exist")
 
         return super().save(*args, **kwargs)
 

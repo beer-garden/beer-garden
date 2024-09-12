@@ -271,9 +271,7 @@ def update(
         metadata_update.update(metadata)
         updates["set__instances__S__metadata"] = metadata_update
 
-    system = db.modify(
-        system, query={"instances__name": instance.name}, **updates
-    )
+    system = db.modify(system, query={"instances__name": instance.name}, **updates)
 
     return system.get_instance_by_name(instance.name)
 
@@ -501,9 +499,7 @@ async def heartbeat_async(
 
 async def _get_instance_async(filter, projection) -> dict:
     """Helper to get an instance async-style"""
-    result = await moto.query(
-        collection="system", filter=filter, projection=projection
-    )
+    result = await moto.query(collection="system", filter=filter, projection=projection)
 
     # TODO - This is not the best
     instance = result["instances"][0]
@@ -618,9 +614,7 @@ class StatusMonitor(StoppableThread):
         self.display_name = "Plugin Status Monitor"
         self.heartbeat_interval = heartbeat_interval
         self.timeout = timedelta(seconds=timeout_seconds)
-        self.status_request = Request(
-            command="_status", command_type="EPHEMERAL"
-        )
+        self.status_request = Request(command="_status", command_type="EPHEMERAL")
 
         super(StatusMonitor, self).__init__(
             logger=self.logger, name="PluginStatusMonitor"

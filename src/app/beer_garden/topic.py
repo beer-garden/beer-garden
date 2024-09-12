@@ -197,9 +197,8 @@ def prune_topics(garden):
             valid_subscribers = []
             update_subscribers = False
             for subscriber in topic.subscribers:
-                if (
-                    subscriber.subscriber_type == "DYNAMIC"
-                    or subscriber_validate(subscriber, garden, topic.name)
+                if subscriber.subscriber_type == "DYNAMIC" or subscriber_validate(
+                    subscriber, garden, topic.name
                 ):
                     valid_subscribers.append(subscriber)
                 else:
