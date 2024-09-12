@@ -657,15 +657,17 @@ def _validate_request(request: Request):
     """Validates a Request"""
     return RequestValidator.instance().validate_request(request)
 
+
 def _is_local_request(request: Request) -> bool:
     system = db.query_unique(
-            System,
-            namespace=request.namespace,
-            name=request.system,
-            version=request.system_version,
-        )
-    
+        System,
+        namespace=request.namespace,
+        name=request.system,
+        version=request.system_version,
+    )
+
     return system.local
+
 
 def process_request(
     new_request: Union[Request, RequestTemplate],
