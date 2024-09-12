@@ -76,9 +76,9 @@ def handle_event(event: Event):
                 # Need to find the source garden for the system
                 garden_name = determine_target_garden(event.payload)
                 if garden_name:
-                    event.metadata[
-                        "topic"
-                    ] = f"{garden_name}.{event.payload.namespace}.{event.payload.system}.{event.payload.system_version}.{event.payload.instance_name}.{event.payload.command}"
+                    event.metadata["topic"] = (
+                        f"{garden_name}.{event.payload.namespace}.{event.payload.system}.{event.payload.system_version}.{event.payload.instance_name}.{event.payload.command}"
+                    )
                 else:
                     logger.error(
                         f"Unable to determine target Garden for system {event.payload.namespace}.{event.payload.system}.{event.payload.system_version}.{event.payload.instance_name}.{event.payload.command}"

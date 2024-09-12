@@ -483,9 +483,11 @@ def set_owner(
                     file,
                     owner_id=owner_id,
                     owner_type=owner_type,
-                    job=owner.id
-                    if owner is not None and owner_type == "JOB"
-                    else None,
+                    job=(
+                        owner.id
+                        if owner is not None and owner_type == "JOB"
+                        else None
+                    ),
                     request=(
                         owner.id
                         if owner is not None and owner_type == "REQUEST"

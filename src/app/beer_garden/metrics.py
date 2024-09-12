@@ -232,9 +232,9 @@ def collect_metrics(transaction_type: str = None, group: str = None):
                 trace_id = elasticapm.get_trace_id()
                 client.begin_transaction(
                     transaction_type=transaction_type,
-                    trace_parent=trace_id
-                    if trace_id
-                    else elasticapm.get_span_id(),
+                    trace_parent=(
+                        trace_id if trace_id else elasticapm.get_span_id()
+                    ),
                 )
                 elasticapm.set_transaction_name(transaction_label)
 

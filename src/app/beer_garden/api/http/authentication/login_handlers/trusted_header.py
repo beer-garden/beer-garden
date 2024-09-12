@@ -128,9 +128,9 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                             "last_authentication_headers_user_alias_mapping"
                         ]
 
-                    authenticated_user.metadata[
-                        "last_authentication"
-                    ] = datetime.utcnow().timestamp()
+                    authenticated_user.metadata["last_authentication"] = (
+                        datetime.utcnow().timestamp()
+                    )
                     authenticated_user = update_user(authenticated_user)
 
         return authenticated_user

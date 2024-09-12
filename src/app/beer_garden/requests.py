@@ -240,9 +240,9 @@ class RequestValidator(object):
         if command.allow_any_kwargs:
             for request_parameter_key in request_parameters:
                 if request_parameter_key not in parameters_to_save:
-                    parameters_to_save[
-                        request_parameter_key
-                    ] = request_parameters[request_parameter_key]
+                    parameters_to_save[request_parameter_key] = (
+                        request_parameters[request_parameter_key]
+                    )
 
         self.logger.debug("Successfully Updated and Validated Parameters.")
         self.logger.debug("Parameters: %s", parameters_to_save)
@@ -648,9 +648,9 @@ def determine_latest_system_version(request: Request):
     for system in systems:
         try:
             versions.append(versionParse(system.version))
-            system_versions_map[
-                str(versionParse(system.version))
-            ] = system.version
+            system_versions_map[str(versionParse(system.version))] = (
+                system.version
+            )
         except InvalidVersion:
             legacy_versions.append(system.version)
             system_versions_map[system.version] = system.version
@@ -1162,9 +1162,9 @@ def handle_event(event):
                             request_changed["output"] = event.payload.output
                             existing_request.output = event.payload.output
                         if event.payload.error_class:
-                            request_changed[
-                                "error_class"
-                            ] = event.payload.error_class
+                            request_changed["error_class"] = (
+                                event.payload.error_class
+                            )
                             existing_request.error_class = (
                                 event.payload.error_class
                             )
