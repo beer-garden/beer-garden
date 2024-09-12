@@ -133,7 +133,8 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
             )
         except Exception:
             raise ValidationError(
-                f"Unable to parse Remote Roles: {headers.get(self.user_upstream_roles_header, '[]')}"
+                "Unable to parse Remote Roles: "
+                f"{headers.get(self.user_upstream_roles_header, '[]')}"
             )
 
     def _local_roles_from_headers(self, headers: HTTPHeaders) -> List[str]:
@@ -155,7 +156,8 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                     pass
         except Exception:
             raise ValidationError(
-                f"Unable to parse Local Roles: {headers.get(self.user_local_roles_header, '[]')}"
+                "Unable to parse Local Roles: "
+                f"{headers.get(self.user_local_roles_header, '[]')}"
             )
 
         return local_roles
@@ -180,7 +182,8 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                     pass
         except Exception:
             raise ValidationError(
-                f"Unable to parse Alias User Mapping: {headers.get(self.user_alias_mapping_header, '[]')}"
+                "Unable to parse Alias User Mapping: "
+                f"{headers.get(self.user_alias_mapping_header, '[]')}"
             )
 
         return user_alias_mappings

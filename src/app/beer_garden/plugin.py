@@ -584,7 +584,11 @@ def handle_event(event: Event) -> None:
                 )
             except DoesNotExist:
                 logger.error(
-                    f"Unable to find system matching instance {event.payload.id}:{event.payload.name} for garden {event.garden}"
+                    (
+                        "Unable to find system matching instance "
+                        f"{event.payload.id}:{event.payload.name} "
+                        f"for garden {event.garden}"
+                    )
                 )
                 from beer_garden.router import route
 

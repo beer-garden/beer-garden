@@ -171,7 +171,10 @@ def initialize_elastic_client(label: str):
     if config.get("metrics.elastic.enabled"):
         Client(
             {
-                "SERVICE_NAME": f"{re.sub(r'[^a-zA-Z0-9 _-]', '', config.get('garden.name'))}-{label}",
+                "SERVICE_NAME": (
+                    f"{re.sub(r'[^a-zA-Z0-9 _-]', '', config.get('garden.name'))}"
+                    f"-{label}"
+                ),
                 "ELASTIC_APM_SERVER_URL": config.get("metrics.elastic.url"),
             }
         )
@@ -187,13 +190,13 @@ def extract_custom_context(result) -> None:
 
     if isinstance(result, Operation):
         if hasattr(result, "payload"):
-            return extract_custom_context(getattr(result, "payload"))
+            return extract_custom_context(result.payload)
     elif isinstance(result, Request):
         if result.metadata:
             for key, value in result.metadata.items():
                 custom_context[key] = value
     if hasattr(result, "id"):
-        custom_context["id"] = getattr(result, "id")
+        custom_context["id"] = result.id
 
     if custom_context:
         elasticapm.set_custom_context(custom_context)

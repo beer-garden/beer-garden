@@ -176,7 +176,11 @@ def process_publish_event(garden: Garden, event: Event, topics: List[Topic]):
                                         event_request.command = command.name
                                         event_request.is_event = True
 
-                                        request_hash = f"{garden.name}.{system.namespace}.{system.name}.{system.version}.{instance.name}.{command.name}"
+                                        request_hash = (
+                                            f"{garden.name}.{system.namespace}."
+                                            f"{system.name}.{system.version}."
+                                            f"{instance.name}.{command.name}"
+                                        )
                                         if request_hash not in requests_hash:
                                             requests_hash.append(request_hash)
                                             requests.append(event_request)

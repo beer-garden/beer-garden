@@ -694,7 +694,8 @@ def _operation_conversion(operation: Operation) -> Operation:
     # Use if the targeted function creates a Request object that
     # needs to be routed to any Garden
 
-    # Instance Logs is expected back a Request object, this converts the class so it can be routed
+    # Instance Logs is expected back a Request object,
+    # this converts the class so it can be routed
     if operation.operation_type == "INSTANCE_LOGS":
         return beer_garden.plugin.read_logs_operation(operation)
     return operation

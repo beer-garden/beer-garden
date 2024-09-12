@@ -235,7 +235,10 @@ def check_indexes(document_class):
         logger.info("%s table looks good", document_class.__name__)
     except (FieldDoesNotExist, InvalidDocumentError):
         logger.error(
-            "%s table failed to load properly to validate old indexes and fields, please check the Change Log for any major model changes",
+            (
+                "%s table failed to load properly to validate old indexes and "
+                "fields, please check the Change Log for any major model changes"
+            ),
             document_class.__name__,
         )
         raise

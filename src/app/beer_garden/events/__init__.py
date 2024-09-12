@@ -76,7 +76,7 @@ def publish_event(event_type: Events):
                 with elasticapm.capture_span(name=event_type.name, span_type="Event"):
                     result = wrapped(*args, **kwargs)
                     if hasattr(result, "id"):
-                        elasticapm.set_custom_context({"id": getattr(result, "id")})
+                        elasticapm.set_custom_context({"id": result.id})
             else:
                 result = wrapped(*args, **kwargs)
 
