@@ -106,7 +106,8 @@ class AuthorizationHandler(BaseHandler):
             requested_objects = db.query(model, q_filter=provided_filter)
             if len(requested_objects) > 1:
                 raise NotFound(
-                    f"Multiple records returned for schema query: {model.schema}, {provided_filter}"
+                    "Multiple records returned for schema query: "
+                    f"{model.schema}, {provided_filter}"
                 )
             elif len(requested_objects) == 0:
                 if len(db.query(model, q_filter=Q(**kwargs))) > 0:

@@ -16,7 +16,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.12"]
+        python-version: ["3.11"]
         os: ["ubuntu-latest"]
 
     name: Linting OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
@@ -39,14 +39,12 @@ jobs:
 
       - name: Run Linting (src/app)
         run: |
-          pip install black flake8 isort
+          pip install -r requirements-dev.txt
           make lint
 
       - name: Run Linting (test/integration)
         working-directory: ./test/integration
-        run: |
-          pip install black flake8 isort
-          make lint
+        run: make lint
 
   PyTest:
     runs-on: ${{ matrix.os }}

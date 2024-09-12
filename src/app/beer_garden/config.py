@@ -664,17 +664,26 @@ _AUTHENTICATION_HANDLERS_SPEC = {
                 "user_upstream_roles_header": {
                     "type": "str",
                     "default": "bg-user-upstream-roles",
-                    "description": "The http header containing the JSON list of the user's roles",
+                    "description": (
+                        "The http header containing the "
+                        "JSON list of the user's roles"
+                    ),
                 },
                 "user_local_roles_header": {
                     "type": "str",
                     "default": "bg-user-local-roles",
-                    "description": "The http header containing the str list of the user's local role names",
+                    "description": (
+                        "The http header containing the str "
+                        "list of the user's local role names"
+                    ),
                 },
                 "user_alias_mapping_header": {
                     "type": "str",
                     "default": "bg-user-alias-mapping",
-                    "description": "The http header containing the JSON list of the user's alias user accounts mapping",
+                    "description": (
+                        "The http header containing the JSON list "
+                        "of the user's alias user accounts mapping"
+                    ),
                 },
                 "create_users": {
                     "type": "bool",
@@ -1641,7 +1650,10 @@ _REPLICATION_SPEC = {
         "enabled": {
             "type": "bool",
             "default": False,
-            "description": "Publish subset of events to Rabbit to allow all Gardens to stay in sync when replicated",
+            "description": (
+                "Publish subset of events to Rabbit to allow "
+                "all Gardens to stay in sync when replicated"
+            ),
         }
     },
 }
@@ -1677,7 +1689,10 @@ _CHILD_SPECIFICATION = {
     },
     "default_user": {
         "type": "str",
-        "description": "Default username when passing operations, if none is found with current user",
+        "description": (
+            "Default username when passing operations, "
+            "if none is found with current user"
+        ),
         "required": False,
     },
     "http": {

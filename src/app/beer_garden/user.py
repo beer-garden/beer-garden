@@ -330,7 +330,10 @@ def update_user(
 
     if "roles" in kwargs and "local_roles" in kwargs:
         raise ValueError(
-            "Roles and Local Roles both being updated, please only update one key per transaction"
+            (
+                "Roles and Local Roles both being updated, "
+                "please only update one key per transaction"
+            )
         )
 
     for key, value in kwargs.items():
@@ -678,7 +681,7 @@ def upstream_user_sync(upstream_user: User) -> User:
     return db.update(local_user)
 
 
-def upstream_users_sync(upstream_users=[]):
+def upstream_users_sync(upstream_users=None):
     """List of user accounts from Upstream source to sync locally.
 
     **Notes**
@@ -688,6 +691,9 @@ def upstream_users_sync(upstream_users=[]):
     Args:
         upstream_users (list, optional): List of User Accounts to sync. Defaults to [].
     """
+    if upstream_users is None:
+        upstream_users = []
+
     upstream_users_brewtils = SchemaParser.parse_user(
         upstream_users, many=True, from_string=False
     )

@@ -259,7 +259,11 @@ def create_garden_topics(garden: Garden):
                         )
 
                 if not default_topic:
-                    topic_generated = f"{system.namespace}.{system.name}.{system.version}.{instance.name}.{command.name}"
+                    topic_generated = (
+                        f"{system.namespace}.{system.name}."
+                        f"{system.version}.{instance.name}."
+                        f"{command.name}"
+                    )
                 else:
                     topic_generated = f"{default_topic}.{command.name}"
 
