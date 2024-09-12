@@ -91,7 +91,9 @@ def db_cleanup():
 
 @pytest.fixture(autouse=True)
 def local_system():
-    system = System(name="somesystem", version="1.0.0", namespace="somegarden").save()
+    system = System(
+        name="somesystem", version="1.0.0", namespace="somegarden", local=True
+    ).save()
 
     yield system
     system.delete()
@@ -99,7 +101,9 @@ def local_system():
 
 @pytest.fixture(autouse=True)
 def remote_system():
-    system = System(name="somesystem", version="1.0.0", namespace="remotegarden").save()
+    system = System(
+        name="somesystem", version="1.0.0", namespace="remotegarden", local=False
+    ).save()
 
     yield system
     system.delete()
