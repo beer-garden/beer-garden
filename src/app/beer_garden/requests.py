@@ -657,6 +657,15 @@ def _validate_request(request: Request):
     """Validates a Request"""
     return RequestValidator.instance().validate_request(request)
 
+def _is_local_request(request: Request) -> bool:
+    system = db.query_unique(
+            System,
+            namespace=request.namespace,
+            name=request.system,
+            version=request.system_version,
+        )
+    
+    return system.local
 
 def process_request(
     new_request: Union[Request, RequestTemplate],
@@ -754,8 +763,7 @@ def create_request(request: Request) -> Request:
     # file parameters. This should be revisited to see if there is a way to persist
     # remote requests locally without the base64 encoded data while avoiding this copy.
     request = deepcopy(request)
-    replace_with_raw_file = request.namespace == config.get("garden.name")
-    remove_bytes_parameter_base64(request.parameters, replace_with_raw_file)
+    remove_bytes_parameter_base64(request.parameters, _is_local_request(request))
 
     if request.source_garden is None:
         request.source_garden = config.get("garden.name")

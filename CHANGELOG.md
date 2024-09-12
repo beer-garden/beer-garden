@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+# 3.27.3
+
+TBD
+
+- Fixed issue where using local systems with a Namespace not the Garden name would not be treated as a local
+  Request for internal features
+
 # 3.27.2
 
 9/12/2024
