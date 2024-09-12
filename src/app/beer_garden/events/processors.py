@@ -86,7 +86,7 @@ class InternalQueueListener(QueueListener):
                 with elasticapm.capture_span(name=event.name, span_type="Event"):
                     if hasattr(event, "payload") and hasattr(event.payload, "id"):
                         elasticapm.set_custom_context(
-                            {"id": getattr(event.payload, "id")}
+                            {"id": event.payload.id}
                         )
                     self._handler(deepcopy(event))
 
