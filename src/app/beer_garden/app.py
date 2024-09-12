@@ -402,7 +402,8 @@ class Application(StoppableThread):
 
         if shutdown_failure:
             self.logger.info(
-                "Unsuccessfully shut down Beer-garden, forcing os.exit. Please check your processes for orphaned threads"
+                "Unsuccessfully shut down Beer-garden, forcing os.exit. "
+                "Please check your processes for orphaned threads"
             )
             os._exit(os.EX_OK)
         else:

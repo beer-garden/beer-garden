@@ -78,11 +78,20 @@ def handle_event(event: Event):
                 garden_name = determine_target_garden(event.payload)
                 if garden_name:
                     event.metadata["topic"] = (
-                        f"{garden_name}.{event.payload.namespace}.{event.payload.system}.{event.payload.system_version}.{event.payload.instance_name}.{event.payload.command}"
+                        f"{garden_name}.{event.payload.namespace}."
+                        f"{event.payload.system}.{event.payload.system_version}."
+                        f"{event.payload.instance_name}.{event.payload.command}"
                     )
                 else:
                     logger.error(
-                        f"Unable to determine target Garden for system {event.payload.namespace}.{event.payload.system}.{event.payload.system_version}.{event.payload.instance_name}.{event.payload.command}"
+                        (
+                            f"Unable to determine target Garden for system "
+                            f"{event.payload.namespace}."
+                            f"{event.payload.system}."
+                            f"{event.payload.system_version}."
+                            f"{event.payload.instance_name}."
+                            f"{event.payload.command}"
+                        )
                     )
                     return
 
@@ -176,7 +185,11 @@ def process_publish_event(garden: Garden, event: Event, topics: List[Topic]):
                                         event_request.command = command.name
                                         event_request.is_event = True
 
-                                        request_hash = f"{garden.name}.{system.namespace}.{system.name}.{system.version}.{instance.name}.{command.name}"
+                                        request_hash = (
+                                            f"{garden.name}.{system.namespace}."
+                                            f"{system.name}.{system.version}."
+                                            f"{instance.name}.{command.name}"
+                                        )
                                         if request_hash not in requests_hash:
                                             requests_hash.append(request_hash)
                                             requests.append(event_request)

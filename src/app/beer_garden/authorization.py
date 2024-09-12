@@ -81,15 +81,18 @@ def generate_permission_levels(permission_level: str) -> list:
 
 def _has_empty_scopes(
     role: BrewtilsRole,
-    scopes: list = [
-        "scope_gardens",
-        "scope_namespaces",
-        "scope_systems",
-        "scope_instances",
-        "scope_versions",
-        "scope_commands",
-    ],
+    scopes: list = None,
 ):
+    if scopes is None:
+        scopes = [
+            "scope_gardens",
+            "scope_namespaces",
+            "scope_systems",
+            "scope_instances",
+            "scope_versions",
+            "scope_commands",
+        ]
+
     for scope_attribute in scopes:
         if len(getattr(role, scope_attribute, [])) > 0:
             return False

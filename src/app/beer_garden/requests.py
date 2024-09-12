@@ -981,7 +981,8 @@ def handle_wait_events(event):
 
 def handle_event(event):
     # TODO: Add support for Request Delete event type
-    # if event.name == Events.REQUEST_DELETED.name and event.garden != config.get("garden.name"):
+    # if event.name == Events.REQUEST_DELETED.name
+    #   and event.garden != config.get("garden.name"):
     #     delete_requests(**event.payload)
 
     if event.name in (
@@ -1042,7 +1043,8 @@ def handle_event(event):
                                 event.payload.requester = parent_requests[0].requester
                                 foundUser = True
 
-                        # If no parent request is found or request on it, update via remote user mappings
+                        # If no parent request is found or request on it,
+                        # update via remote user mappings
                         if not foundUser:
                             if "get_users" not in dir():
                                 from beer_garden.user import get_users
