@@ -39,14 +39,12 @@ jobs:
 
       - name: Run Linting (src/app)
         run: |
-          pip install black flake8 isort
+          pip install -r requirements-dev.txt
           make lint
 
       - name: Run Linting (test/integration)
         working-directory: ./test/integration
-        run: |
-          pip install black flake8 isort
-          make lint
+        run: make lint
 
   PyTest:
     runs-on: ${{ matrix.os }}
