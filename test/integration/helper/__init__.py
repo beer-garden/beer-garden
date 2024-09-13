@@ -244,9 +244,9 @@ def setup_easy_client(is_child=False, namespace="docker"):
     return client
 
 
-def setup_system_client(localhost=False, **kwargs):
+def setup_system_client(**kwargs):
     client_args = kwargs.copy()
-    client_args.update(get_config(is_child=localhost))
+    client_args.update(get_config())
     client = SystemClient(**client_args)
 
     namespace = kwargs.get("namespace", "docker")

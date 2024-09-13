@@ -69,7 +69,7 @@ except (ImportError, ValueError):
 @pytest.mark.usefixtures("easy_client")
 class TestSystemClient(object):
     def test_blocking(self):
-        sys_client = setup_system_client(localhost=True, system_name="sleeper", timeout=1)
+        sys_client = setup_system_client(system_name="sleeper", timeout=1)
 
         req = sys_client.sleep(amount=0)
         assert req.status == "SUCCESS"
@@ -79,7 +79,7 @@ class TestSystemClient(object):
 
     def test_non_blocking(self):
         sys_client = setup_system_client(
-            localhost=True, system_name="sleeper", blocking=False, timeout=1
+            system_name="sleeper", blocking=False, timeout=1
         )
 
         future = sys_client.sleep(amount=0)
@@ -87,3 +87,12 @@ class TestSystemClient(object):
 
         with pytest.raises(TimeoutExceededError):
             sys_client.sleep(amount=2).result()
+
+    def test_list_systems(self):
+        systems = self.easy_client.find_systems(filter_latest=True)
+
+        for system in systems:
+            if system.name == "sleeper":
+                assert system == {}
+        
+        assert systems == ["a"]
