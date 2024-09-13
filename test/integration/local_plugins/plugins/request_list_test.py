@@ -87,19 +87,3 @@ class TestSystemClient(object):
 
         with pytest.raises(TimeoutExceededError):
             sys_client.sleep(amount=2).result()
-
-    def test_client_list_systems(self):
-
-        sys_client = setup_system_client(
-            system_name="sleeper", blocking=False, timeout=1
-        )
-
-        systems = sys_client._easy_client.find_systems(name=sys_client._system_name,
-                                                        namespace=sys_client._system_namespace,
-                                                        filter_latest=True)
-
-        for system in systems:
-            if system.name == "sleeper":
-                assert system == {}
-        
-        assert systems == [{"system": sys_client._system_name, "namespace":sys_client._system_namespace}]

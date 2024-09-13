@@ -308,13 +308,9 @@ jobs:
         run: pip${{ matrix.python-version }} install -r requirements.txt
         working-directory: ./test/integration
 
-      - name: Test Plugins request_list_test.py
-        run: python${{ matrix.python-version }} -m pytest local_plugins/plugins/request_list_test.py
+      - name: Test Plugins
+        run: python${{ matrix.python-version }} -m pytest local_plugins/
         working-directory: ./test/integration
-
-      # - name: Test Plugins
-      #   run: python${{ matrix.python-version }} -m pytest local_plugins/
-      #   working-directory: ./test/integration
 
       - name: Grab logs from Beer-Garden
         if: always()
