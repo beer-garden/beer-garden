@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+# 3.27.3
+
+TBD
+
+- Added max_concurrent support for config.yml under `plugin.local.max_concurrent`
+- Added max concurrent support for beer.conf under `MAX_CONCURRENT`
+
 # 3.27.2
 
 9/12/2024

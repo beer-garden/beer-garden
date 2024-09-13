@@ -1458,6 +1458,14 @@ _PLUGIN_SPEC = {
                         },
                     },
                 },
+                "max_concurrent": {
+                    "type": "int",
+                    "default": 5,
+                    "description":  (
+                        "Maximum number of requests local plugins can process concurrently,"
+                        " -1 will default to min(32, os.cpu_count() + 4)"
+                    ),
+                },
                 "timeout": {
                     "type": "dict",
                     "items": {
