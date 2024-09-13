@@ -285,7 +285,9 @@ class Application(StoppableThread):
         if config.get("plugin.local.logging.config_file"):
             self.plugin_local_log_config_observer.start()
 
-        if config.get("scheduler.job_startup_file") and os.path.isfile(config.get("scheduler.job_startup_file")):
+        if config.get("scheduler.job_startup_file") and os.path.isfile(
+            config.get("scheduler.job_startup_file")
+        ):
             self.logger.debug("Loading job startup file")
             beer_garden.scheduler.import_jobs(config.get("scheduler.job_startup_file"))
 
