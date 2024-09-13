@@ -590,9 +590,12 @@ def create_jobs(jobs: List[Job]) -> dict:
 def import_jobs(jobs_file: str) -> None:
     # Load the jobs file
     with open(jobs_file) as import_file:
-        jobs_json = json.load(import_file)
-        jobs = SchemaParser.parse_job(jobs_json, many=True)
-        create_jobs(jobs)
+        try:
+            jobs_json = json.load(import_file)
+            jobs = SchemaParser.parse_job(jobs_json, many=True)
+            create_jobs(jobs)
+        except json.JSONDecodeError:
+            logger.debug(f"Failed to import jobs from {jobs_file}")
 
 
 @publish_event(Events.JOB_UPDATED)

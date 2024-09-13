@@ -40,6 +40,12 @@ if [ ! -d "$PLUGIN_HOME" ]; then
     mkdir -p "$PLUGIN_HOME"
 fi
 
+# Add a default scheduled_jobs.json file in the CONFIG_HOME
+JOB_STARTUP_FILE="${CONFIG_HOME}/scheduled_jobs.json"
+if [ -f "$JOB_STARTUP_FILE" ]; then
+    touch "$JOB_STARTUP_FILE"
+fi
+
 # Migrate old logging config files, if they exist
 # This is done for the old config files by after_remove
 # This just adds a ".old" extension to them
