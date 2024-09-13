@@ -96,3 +96,17 @@ class TestSystemClient(object):
                 assert system == {}
         
         assert systems == ["a"]
+
+    def test_client_list_systems(self):
+
+        sys_client = setup_system_client(
+            system_name="sleeper", blocking=False, timeout=1
+        )
+
+        systems = sys_client._easy_client.find_systems(filter_latest=True)
+
+        for system in systems:
+            if system.name == "sleeper":
+                assert system == {}
+        
+        assert systems == ["a"]
