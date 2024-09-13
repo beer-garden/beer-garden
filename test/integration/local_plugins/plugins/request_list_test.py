@@ -102,4 +102,4 @@ class TestSystemClient(object):
             if system.name == "sleeper":
                 assert system == {}
         
-        assert systems == ["a"]
+        assert systems == [{"system": sys_client._system_name, "namespace":sys_client._system_namespace}]
