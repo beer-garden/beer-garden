@@ -711,7 +711,9 @@ class PluginManager(StoppableThread):
             if plugin_max_concurrent is not None and plugin_max_concurrent > 0:
                 process_args += ["--max_concurrent=" + str(plugin_max_concurrent)]
             elif config.get("plugin.max_concurrent") > 0:
-                process_args += ["--max_concurrent=" + str(config.get("plugin.local.max_concurrent"))]
+                process_args += [
+                    "--max_concurrent=" + str(config.get("plugin.local.max_concurrent"))
+                ]
 
         if plugin_config["AUTO_BREW_ARGS"]:
             plugin_auto_args = plugin_config["AUTO_BREW_ARGS"].get(instance_name)
