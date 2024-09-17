@@ -982,6 +982,7 @@ class File(MongoModel, Document):
     file_size = IntField(required=True)
     chunks = DictField(required=False)
     chunk_size = IntField(required=True)
+    md5_sum = StringField(required=False)
 
     # This was originally used instead of request and job. See #833
     # We could probably have kept using this if a GenericLazyReferenceField could have
