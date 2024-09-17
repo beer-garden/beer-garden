@@ -244,12 +244,10 @@ def setup_easy_client(is_child=False, namespace="docker"):
     return client
 
 
-def setup_system_client(**kwargs):
+def setup_system_client(is_child=False, namespace="docker", **kwargs):
     client_args = kwargs.copy()
-    client_args.update(get_config())
+    client_args.update(get_config(is_child=is_child))
     client = SystemClient(**client_args)
-
-    namespace = kwargs.get("namespace", "docker")
 
     wait_for_connection(client._easy_client)
     wait_for_plugins(client._easy_client, namespace=namespace)
