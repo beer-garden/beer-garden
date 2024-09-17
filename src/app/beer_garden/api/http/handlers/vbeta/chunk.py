@@ -211,6 +211,11 @@ class ChunkNameAPI(AuthorizationHandler):
             description: Describes the type of owner.
                 This may be any value, or a pre-set one (e.g. JOB, REQUEST, MyCustomOwnerType)
             type: string
+          - name: md5_sum
+            in: query
+            required: false
+            description: Used to store the MD5 Hash generated on file
+            type: string
         responses:
           200:
             description: The File ID
@@ -231,6 +236,7 @@ class ChunkNameAPI(AuthorizationHandler):
         owner_id = self.get_argument("owner_id", default=None)
         owner_type = self.get_argument("owner_type", default=None)
         upsert = self.get_argument("upsert", default="").lower() == "true"
+        md5_sum = self.get_argument("md5_sum", default=None)
 
         if chunk_size is None:
             raise ModelValidationError(f"No chunk_size sent with file {file_name}.")
@@ -246,6 +252,7 @@ class ChunkNameAPI(AuthorizationHandler):
                     "upsert": upsert,
                     "owner_id": owner_id,
                     "owner_type": owner_type,
+                    "md5_sum": md5_sum,
                 },
             ),
             serialize_kwargs={"to_string": False},
