@@ -509,8 +509,20 @@ class Request(MongoModel, Document):
             )
 
     def _post_save(self):
-        if self.status == "CREATED" and self.namespace == config.get("garden.name"):
-            self._update_raw_file_references()
+        if self.status == "CREATED":
+            if self.target_garden and self.target_garden == config.get("garden.name"):
+                self._update_raw_file_references()
+            else:
+                try:
+                    ref_system = System.objects.get(
+                        namespace=self.namespace,
+                        name=self.system,
+                        version=self.system_version,
+                    )
+                    if ref_system.local:
+                        self._update_raw_file_references()
+                except DoesNotExist:
+                    pass
 
     def _update_raw_file_references(self):
         parameters = self.parameters or {}
