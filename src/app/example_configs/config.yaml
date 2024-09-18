@@ -190,6 +190,7 @@ scheduler:
     coalesce: true
     max_instances: 3
   max_workers: 10
+  job_startup_file: example_configs/scheduled_jobs.json
 ui:
   cors_enabled: true
   debug_mode: true

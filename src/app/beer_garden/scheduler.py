@@ -578,8 +578,6 @@ def create_jobs(jobs: List[Job]) -> dict:
             if job.id and db.query(Job, filter_params={"id": job.id}):
                 updated.append(update_job(job))
             else:
-                if job.id:
-                    job.id = None
                 created.append(create_job(job))
         except (ModelValidationError, ValidationError) as exc:
             rejected.append((job, str(exc)))
