@@ -17,7 +17,7 @@
         <collectionProp name="UserParameters.thread_values">
           <collectionProp name="-2118191308">
             <stringProp name="-995424086">parent</stringProp>
-            <stringProp name="-646914181">defaultchild</stringProp>
+            <stringProp name="-646914181">child</stringProp>
             <stringProp name="-1752233883">beer-garden-parent</stringProp>
           </collectionProp>
         </collectionProp>
