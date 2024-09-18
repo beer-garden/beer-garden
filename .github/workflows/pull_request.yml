@@ -684,9 +684,6 @@ jobs:
         run: sleep 60s
         shell: bash
 
-      - name: Check services
-        run: docker service ls
-
       - name: Check docker
         run: docker ps
 
@@ -761,6 +758,10 @@ jobs:
           name: jmeter-html-reports
           path: docker/docker-compose/data/reports
           if-no-files-found: error
+
+      - name: Check docker
+        if: always()
+        run: docker ps
 
       - name: Grab logs from Beer-Garden
         if: always()
