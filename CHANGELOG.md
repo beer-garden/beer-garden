@@ -4,6 +4,8 @@
 
 TBD
 
+- Fixed issue where using local systems with a Namespace not the Garden name would not be treated as a local
+  Request for internal features
 - Added config option to import scheduled jobs file at startup
 
 # 3.27.2

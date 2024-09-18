@@ -713,17 +713,6 @@ def _pre_route(operation: Operation) -> Operation:
         if operation.model.namespace is None:
             operation.model.namespace = config.get("garden.name")
 
-    elif operation.operation_type == "SYSTEM_READ_ALL":
-        # what looks like a sensible edit is to change the next line to:
-        #   operation.kwargs.get("filter_params", {}).get("namespace", "") == "":
-        # but that will break everything, as it turns out. So, unless
-        # operation.kwargs has a key called filter_params whose value is a dictionary
-        # that has a key called namespace and its value is an empty string, the follow-
-        # ing never runs. Intuition says that's not what was intended here, so
-        # TODO: look into this
-        if operation.kwargs.get("filter_params", {}).get("namespace") == "":
-            operation.kwargs["filter_params"]["namespace"] = config.get("garden.name")
-
     return operation
 
 
@@ -742,13 +731,7 @@ def _pre_forward(operation: Operation) -> Operation:
         # Save the request so it'll have an ID and we'll have something to update
         local_request = create_request(operation.model)
 
-        if operation.model.namespace == config.get("garden.name"):
-            operation.model = local_request
-        else:
-            # When the target is a remote garden, just capture the id. We don't
-            # want to replace the entire model, as we'd lose the base64 encoded file
-            # parameter data.
-            operation.model.id = local_request.id
+        operation.model.id = local_request.id
 
         beer_garden.files.forward_file(operation)
 

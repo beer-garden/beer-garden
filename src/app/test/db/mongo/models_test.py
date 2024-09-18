@@ -733,6 +733,7 @@ class TestFileUpdates:
 
     @pytest.fixture()
     def request_model(self, raw_file, local_garden_name):
+
         req = Request(
             system="foo",
             command="bar",
@@ -751,12 +752,37 @@ class TestFileUpdates:
         return req
 
     @pytest.fixture()
+    def request_local_system(self, request_model):
+        System(
+            namespace=request_model.namespace,
+            name=request_model.system,
+            version=request_model.system_version,
+            local=True,
+        ).save()
+        yield
+        System.drop_collection()
+
+    @pytest.fixture()
+    def request_remote_system(self, request_model):
+        System(
+            namespace=request_model.namespace,
+            name=request_model.system,
+            version=request_model.system_version,
+            local=True,
+        ).save()
+        yield
+        System.drop_collection()
+
+    @pytest.fixture()
     def max_size(self, monkeypatch):
         """mock max request size to be arbitrarily small"""
         monkeypatch.setattr(beer_garden.db.mongo.models, "REQUEST_MAX_PARAM_SIZE", 100)
         return beer_garden.db.mongo.models.REQUEST_MAX_PARAM_SIZE + 10
 
-    def test_save_stores_in_gridfs_after_maxsize(self, request_model, max_size):
+    def test_save_stores_in_gridfs_after_maxsize(
+        self, request_model, request_local_system, max_size
+    ):
+
         request_model.parameters = {"message": "a" * max_size}
         request_model.output = "a" * max_size
         request_model.save()
@@ -764,27 +790,33 @@ class TestFileUpdates:
         request_model.parameters_gridfs.put.assert_called_once()
         request_model.output_gridfs.put.assert_called_once()
 
-    def test_save_retains_if_under_maxsize(self, request_model, max_size):
+    def test_save_retains_if_under_maxsize(
+        self, request_model, request_local_system, max_size
+    ):
         request_model.save()
 
         request_model.parameters_gridfs.put.assert_not_called()
         request_model.output_gridfs.put.assert_not_called()
 
-    def test_save_retains_only_parameters(self, request_model, max_size):
+    def test_save_retains_only_parameters(
+        self, request_model, request_local_system, max_size
+    ):
         request_model.output = "a" * max_size
         request_model.save()
 
         request_model.parameters_gridfs.put.assert_not_called()
         request_model.output_gridfs.put.assert_called_once()
 
-    def test_save_retains_only_output(self, request_model, max_size):
+    def test_save_retains_only_output(
+        self, request_model, request_local_system, max_size
+    ):
         request_model.parameters = {"message": "a" * max_size}
         request_model.save()
 
         request_model.parameters_gridfs.put.assert_called_once()
         request_model.output_gridfs.put.assert_not_called()
 
-    def test_save_handles_bool(self, request_model, max_size):
+    def test_save_handles_bool(self, request_model, request_local_system, max_size):
         request_model.parameters = {"message": True}
         request_model.save()
 
@@ -792,7 +824,7 @@ class TestFileUpdates:
         request_model.output_gridfs.put.assert_not_called()
 
     def test_save_preserves_status_updated_at_field_when_status_is_not_updated(
-        self, request_model
+        self, request_model, request_local_system
     ):
         request_model.save()
         first_time = request_model.status_updated_at
@@ -801,7 +833,7 @@ class TestFileUpdates:
         assert first_time == request_model.status_updated_at
 
     def test_save_updates_status_updated_at_field_when_status_is_updated(
-        self, request_model
+        self, request_model, request_local_system
     ):
         request_model.save()
         first_time = request_model.status_updated_at
@@ -811,12 +843,21 @@ class TestFileUpdates:
         assert first_time != request_model.status_updated_at
 
     def test_save_preserves_status_updated_at_for_child_garden_requests(
-        self, request_model
+        self,
+        request_model,
     ):
         beer_garden.config._CONFIG = {"garden": {"name": "parent"}}
 
         request_model.namespace = "child_garden"
         request_model.target_garden = "child_garden"
+
+        System(
+            namespace=request_model.namespace,
+            name=request_model.system,
+            version=request_model.system_version,
+            local=True,
+        ).save()
+
         request_model.save()
 
         status_updated_at = datetime.utcnow() - timedelta(days=1)
@@ -826,15 +867,19 @@ class TestFileUpdates:
 
         assert request_model.status_updated_at == status_updated_at
         beer_garden.config._CONFIG = {}
+        System.drop_collection()
 
-    def test_save_updates_raw_file_reference(self, request_model):
+    def test_save_updates_raw_file_reference(
+        self, request_model, request_remote_system
+    ):
         request_model.status = "CREATED"
-        beer_garden.config._CONFIG = {"garden": {"name": request_model.namespace}}
         request_model.save()
 
         assert len(RawFile.objects.filter(request=request_model)) == 1
 
-    def test_delete_cascade_deletes_raw_file(self, request_model, raw_file):
+    def test_delete_cascade_deletes_raw_file(
+        self, request_model, request_local_system, raw_file
+    ):
         request_model.save()
         raw_file.request = request_model
         raw_file.save()
