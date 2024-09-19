@@ -1,4 +1,4 @@
-FROM nginx:1.19-alpine
+FROM nginx:1.27-alpine
 
 # Defaults for the application proxy info
 ENV BEERGARDEN_HOST=localhost \
