@@ -164,6 +164,7 @@ plugin:
     logging:
       config_file: example_configs/local-plugin-logging.yaml
       fallback_level: INFO
+    max_concurrent: 5
     timeout:
       shutdown: 10
       startup: 2
