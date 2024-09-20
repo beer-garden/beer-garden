@@ -99,7 +99,7 @@ class TestGardenSetup(object):
             elif garden.name == "grandparent":
                 assert len(garden.children) == 1
             else:
-                assert False
+                raise AssertionError()
 
     def test_parent_counter(self):
         self.sync_child()
@@ -128,7 +128,7 @@ class TestGardenSetup(object):
             elif garden.name == "parent":
                 assert len(garden.children) == 1
             else:
-                assert False
+                raise AssertionError()
 
     def test_child_counter(self):
         response = self.child_easy_client.client.session.get(

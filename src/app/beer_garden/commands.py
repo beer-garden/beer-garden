@@ -35,13 +35,13 @@ def get_command(system_id: str, command_name: str) -> Command:
             return command
 
 
-def get_commands() -> List[Command]:
+def get_commands(**kwargs) -> List[Command]:
     """Retrieve all Commands
 
     Returns:
         The Commands
 
     """
-    commands_list = [system.commands for system in db.query(System)]
+    commands_list = [system.commands for system in db.query(System, **kwargs)]
 
     return list(itertools.chain.from_iterable(commands_list))

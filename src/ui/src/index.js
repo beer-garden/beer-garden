@@ -82,13 +82,13 @@ import commandService from './js/services/command_service.js';
 import instanceService from './js/services/instance_service.js';
 import queueService from './js/services/queue_service.js';
 import requestService from './js/services/request_service.js';
-import commandPublishingBlocklistService from
-  './js/services/command_publishing_blocklist_service.js';
+
 import systemService from './js/services/system_service.js';
 import userService from './js/services/user_service.js';
 import roleService from './js/services/role_service.js';
 import tokenService from './js/services/token_service.js';
 import utilityService from './js/services/utility_service.js';
+import permissionService from './js/services/permission_service.js';
 import jobService from './js/services/job_service.js';
 import errorService from './js/services/error_service.js';
 import eventService from './js/services/event_service.js';
@@ -97,18 +97,18 @@ import gardenService from './js/services/garden_service.js';
 import runnerService from './js/services//runner_service.js';
 
 import aboutController from './js/controllers/about.js';
-import commandPublishingBlocklistController from './js/controllers/command_publishing_blocklist.js';
 import adminQueueController from './js/controllers/admin_queue.js';
 import adminRequestDeleteController from './js/controllers/admin_request_delete.js'
 import adminSystemController from './js/controllers/admin_system.js';
 import adminSystemLogsController from './js/controllers/admin_system_logs.js';
 import adminSystemForceDeleteController from './js/controllers/admin_system_force_delete.js';
 import adminUserIndexController from './js/controllers/admin_user_index.js';
-import adminUserViewController from './js/controllers/admin_user_view.js';
 import {
   adminRoleController,
   newRoleController,
 } from './js/controllers/admin_role.js';
+import addRemoveRolesController from './js/controllers/add_remove_roles.js';
+import userGardenAccountsController from './js/controllers/user_garden_accounts.js';
 import adminGardenController from './js/controllers/admin_garden.js';
 import commandIndexController from './js/controllers/command_index.js';
 import commandViewController from './js/controllers/command_view.js';
@@ -132,18 +132,16 @@ import jobCreateCommandController from './js/controllers/job/create_command.js';
 import jobCreateRequestController from './js/controllers/job/create_request.js';
 import jobCreateTriggerController from './js/controllers/job/create_trigger.js';
 import loginController from './js/controllers/login.js';
-import addCommandPublishingBlocklistController
-  from './js/controllers/add_command_publishing_blocklist.js';
+
 import changePasswordController from './js/controllers/change_password.js';
+import changePasswordAdminController from './js/controllers/change_password_admin.js';
 import newUserController from './js/controllers/user/new_user.js';
 import syncUsersController from './js/controllers/user/sync_users.js';
 
 // Partials
 import './partials/about.html';
-import './partials/command_publishing_blocklist.html';
 import './partials/admin_system.html';
 import './partials/admin_user_index.html';
-import './partials/admin_user_view.html';
 import './partials/admin_role.html';
 import './partials/admin_garden_index.html';
 import './partials/command_index.html';
@@ -199,12 +197,12 @@ angular
     .factory('InstanceService', instanceService)
     .factory('QueueService', queueService)
     .factory('RequestService', requestService)
-    .factory('CommandPublishingBlocklistService', commandPublishingBlocklistService)
     .factory('SystemService', systemService)
     .factory('UserService', userService)
     .factory('RoleService', roleService)
     .factory('TokenService', tokenService)
     .factory('UtilityService', utilityService)
+    .factory('PermissionService', permissionService)
     .factory('JobService', jobService)
     .factory('ErrorService', errorService)
     .factory('EventService', eventService)
@@ -213,15 +211,14 @@ angular
     .factory('RunnerService', runnerService)
 
     .controller('AboutController', aboutController)
-    .controller('CommandPublishingBlocklistController', commandPublishingBlocklistController)
-    .controller('AddCommandPublishingBlocklistController', addCommandPublishingBlocklistController)
     .controller('AdminQueueController', adminQueueController)
     .controller('AdminRequestDeleteController',adminRequestDeleteController)
     .controller('AdminSystemForceDeleteController', adminSystemForceDeleteController)
     .controller('AdminSystemController', adminSystemController)
     .controller('AdminSystemLogsController', adminSystemLogsController)
     .controller('AdminUserIndexController', adminUserIndexController)
-    .controller('AdminUserViewController', adminUserViewController)
+    .controller('addRemoveRolesController', addRemoveRolesController)
+    .controller('userGardenAccountsController', userGardenAccountsController)
     .controller('NewUserController', newUserController)
     .controller('SyncUsersController', syncUsersController)
     .controller('AdminRoleController', adminRoleController)
@@ -243,4 +240,5 @@ angular
     .controller('JobImportController', jobImportController)
     .controller('JobImportModalController', jobImportModalController)
     .controller('LoginController', loginController)
-    .controller('ChangePasswordController', changePasswordController);
+    .controller('ChangePasswordController', changePasswordController)
+    .controller('ChangePasswordAdminController', changePasswordAdminController);

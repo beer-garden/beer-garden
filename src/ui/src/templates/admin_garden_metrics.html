@@ -5,10 +5,20 @@
 </div>
 
 <div class="modal-body" id="modal-body">
+    <div>
+        <h4>Version</h4>
+        <ul>
+            <li>
+                <span>{{selectedGarden.version}}</span>
+            </li>
+        </ul>
+    </div>
     <div ng-if="selectedGarden.has_parent">
         <h4>Upstream</h4>
         <ul>
-            <li><span>{{selectedGarden.parent}}</span></li>
+            <li>
+                <span>{{selectedGarden.parent}}</span>
+            </li>
         </ul>
     </div>
 
@@ -17,7 +27,14 @@
         <ul>
             <li ng-repeat="child in selectedGarden.children">{{child.name}}</li>
         </ul>
-
+    </div>
+    <div ng-if="selectedGarden.default_user.length > 0">
+        <h4>Default User</h4>
+        <ul>
+            <li>
+                <span>{{selectedGarden.default_user}}</span>
+            </li>
+        </ul>
     </div>
 
 </div>

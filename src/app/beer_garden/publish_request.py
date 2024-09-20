@@ -1,38 +1,101 @@
 import copy
 import logging
 import re
-from typing import List, Optional
+from typing import List
 
-from brewtils.models import Event, Events, Garden, Subscriber
+from brewtils.models import Event, Events, Garden, Request, Topic
 
 import beer_garden.config as config
-from beer_garden.garden import get_gardens, local_garden
+from beer_garden.garden import local_garden
 from beer_garden.requests import process_request
-from beer_garden.topic import get_all_topics, subscriber_match
+from beer_garden.topic import (
+    get_all_topics,
+    increase_consumer_count,
+    increase_publish_count,
+)
 
 logger = logging.getLogger(__name__)
 
 
+def determine_target_garden(request: Request, garden: Garden = None) -> str:
+    """Determine the Garden name of a request
+
+    Args:
+        request (Request): Request to find target System from
+        garden (Garden, optional): Garden to search for matching System. Defaults to None.
+
+    Returns:
+        str: Garden Name
+    """
+    if garden is None:
+        garden = local_garden(all_systems=True)
+
+    for system in garden.systems:
+        if (
+            system.namespace == request.namespace
+            and system.name == request.system
+            and system.version == request.system_version
+        ):
+            instance_match = False
+            for instance in system.instances:
+                if instance.name == request.instance_name:
+                    instance_match = True
+                    break
+            if instance_match:
+                for command in system.commands:
+                    if command.name == request.command:
+                        return garden.name
+
+    for child in garden.children:
+        garden_name = determine_target_garden(request, garden=child)
+        if garden_name:
+            return garden_name
+
+    return None
+
+
 def handle_event(event: Event):
-    if (event.name == Events.REQUEST_TOPIC_PUBLISH.name) or (
-        event.garden == config.get("garden.name")
-        and event.name == Events.REQUEST_CREATED.name
-        and "_publish" in event.payload.metadata
-        and event.payload.metadata["_publish"]
+    if (
+        event.name == Events.REQUEST_TOPIC_PUBLISH.name
+        and (
+            event.garden == config.get("garden.name")
+            or event.metadata.get("_propagate", False)
+        )
+    ) or (
+        event.name == Events.REQUEST_CREATED.name
+        and event.payload.metadata.get("_publish", False)
+        and (
+            event.garden == config.get("garden.name")
+            or event.payload.metadata.get("_propagate", False)
+        )
     ):
         if event.name == Events.REQUEST_CREATED.name:
-            event.metadata["regex_only"] = True
+
             if "_topic" in event.payload.metadata:
                 event.metadata["topic"] = event.payload.metadata["_topic"]
             else:
-                event.metadata["topic"] = (
-                    f"{event.payload.namespace}.{event.payload.system}.{event.payload.system_version}.{event.payload.instance_name}.{event.payload.comment}"
-                )
+                # Need to find the source garden for the system
+                garden_name = determine_target_garden(event.payload)
+                if garden_name:
+                    event.metadata["topic"] = (
+                        f"{garden_name}.{event.payload.namespace}."
+                        f"{event.payload.system}.{event.payload.system_version}."
+                        f"{event.payload.instance_name}.{event.payload.command}"
+                    )
+                else:
+                    logger.error(
+                        (
+                            f"Unable to determine target Garden for system "
+                            f"{event.payload.namespace}."
+                            f"{event.payload.system}."
+                            f"{event.payload.system_version}."
+                            f"{event.payload.instance_name}."
+                            f"{event.payload.command}"
+                        )
+                    )
+                    return
 
-            if "_propagate" in event.payload.metadata:
-                event.metadata["propagate"] = event.payload.metadata["propagate"]
-
-            # Clear values from exisitng request
+            # Clear values from existing request
             event.payload.id = None
             event.payload.namespace = None
             event.payload.system = None
@@ -41,68 +104,111 @@ def handle_event(event: Event):
             event.payload.command = None
             del event.payload.metadata["_publish"]
 
-        subscribers = []
+        topics = []
+
         for topic in get_all_topics():
-            if re.findall(topic.name, event.metadata["topic"]):
-                # get a list of subscribers for matching topic
-                subscribers.extend(topic.subscribers)
+            # TODO: Down the road, determine if we need to filter by Subscriber Type because
+            # someone will do something non standard
 
-        if "propagate" in event.metadata and event.metadata["propagate"]:
-            for garden in get_gardens(include_local=False):
-                process_publish_event(garden, event, subscribers)
+            # The entire topic must be included in the findall output for a total match
+            if event.metadata["topic"] in re.findall(
+                topic.name, event.metadata["topic"]
+            ):
 
-        process_publish_event(local_garden(), event, subscribers)
+                topic = increase_publish_count(topic)
+                topics.append(topic)
+
+        if topics:
+            process_publish_event(local_garden(), event, topics)
 
 
-def process_publish_event(
-    garden: Garden, event: Event, subscribers: Optional[List[Subscriber]] = None
-):
-    # Iterate over commands on Garden to find matching topic
-    regex_only = "regex_only" in event.metadata and event.metadata["regex_only"]
-    for system in garden.systems:
-        for command in system.commands:
-            for instance in system.instances:
+def process_publish_event(garden: Garden, event: Event, topics: List[Topic]):
 
-                if instance.status == "RUNNING":
-                    match = (
-                        not regex_only
-                        and f"{system.namespace}.{system.name}.{system.version}.{instance.name}.{command.name}"
-                        == event.metadata["topic"]
+    requests = []
+    requests_hash = []
+
+    for topic in topics:
+        # Iterate over commands on Garden to find matching topic
+        garden_subscribers = [
+            subscriber
+            for subscriber in topic.subscribers
+            if subscriber.garden is None
+            or len(subscriber.garden) == 0
+            or garden.name in re.findall(subscriber.garden, garden.name)
+        ]
+        if garden_subscribers:
+            for system in garden.systems:
+                system_subscribers = [
+                    subscriber
+                    for subscriber in garden_subscribers
+                    if (
+                        subscriber.system is None
+                        or len(subscriber.system) == 0
+                        or system.name in re.findall(subscriber.system, system.name)
                     )
-                    if not match:
-                        for topic in command.topics:
-                            if topic == event.metadata["topic"] or event.metadata[
-                                "topic"
-                            ] in re.findall(topic, event.metadata["topic"]):
-                                match = True
-                                break
+                    and (
+                        subscriber.version is None
+                        or len(subscriber.version) == 0
+                        or system.version
+                        in re.findall(subscriber.version, system.version)
+                    )
+                ]
+                if system_subscribers:
+                    for command in system.commands:
+                        command_subscribers = [
+                            subscriber
+                            for subscriber in system_subscribers
+                            if subscriber.command is None
+                            or len(subscriber.command) == 0
+                            or command.name
+                            in re.findall(subscriber.command, command.name)
+                        ]
+                        if command_subscribers:
+                            for instance in system.instances:
+                                if instance.status == "RUNNING":
+                                    instance_subscribers = [
+                                        subscriber
+                                        for subscriber in system_subscribers
+                                        if subscriber.instance is None
+                                        or len(subscriber.instance) == 0
+                                        or instance.name
+                                        in re.findall(
+                                            subscriber.instance, instance.name
+                                        )
+                                    ]
+                                    if instance_subscribers:
+                                        event_request = copy.deepcopy(event.payload)
+                                        event_request.system = system.name
+                                        event_request.system_version = system.version
+                                        event_request.namespace = system.namespace
+                                        event_request.instance_name = instance.name
+                                        event_request.command = command.name
+                                        event_request.is_event = True
 
-                    if not match:
-                        event_subscriber = Subscriber(
-                            garden=garden.name,
-                            system=system.name,
-                            namespace=system.namespace,
-                            version=system.version,
-                            instance=instance.name,
-                            command=command.name,
-                        )
-                        if subscribers:
-                            for subscriber in subscribers:
-                                if subscriber_match(subscriber, event_subscriber):
-                                    match = True
-                                    break
+                                        request_hash = (
+                                            f"{garden.name}.{system.namespace}."
+                                            f"{system.name}.{system.version}."
+                                            f"{instance.name}.{command.name}"
+                                        )
+                                        if request_hash not in requests_hash:
+                                            requests_hash.append(request_hash)
+                                            requests.append(event_request)
+                                        else:
+                                            pass
 
-                    if match:
-                        event_request = copy.deepcopy(event.payload)
-                        event_request.system = system.name
-                        event_request.system_version = system.version
-                        event_request.namespace = system.namespace
-                        event_request.instance_name = instance.name
-                        event_request.command = command.name
-                        event_request.is_event = True
+                                        for instance_subscriber in instance_subscribers:
+                                            increase_consumer_count(
+                                                topic, instance_subscriber
+                                            )
 
-                        try:
-                            process_request(event_request)
-                        except Exception as ex:
-                            # If an error occurs while trying to process request, log it and keep running
-                            logger.exception(ex)
+    if requests:
+        for create_request in requests:
+            try:
+                process_request(create_request)
+            except Exception as ex:
+                # If an error occurs while trying to process request, log it and keep running
+                logger.exception(ex)
+
+    if garden.children:
+        for child in garden.children:
+            process_publish_event(child, event, topics)

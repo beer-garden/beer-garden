@@ -1,5 +1,111 @@
 # Beer Garden Changelog
 
+# 3.27.3
+
+TBD
+
+- Fixed issue where using local systems with a Namespace not the Garden name would not be treated as a local
+  Request for internal features
+
+# 3.27.2
+
+9/12/2024
+
+- Updated form builder version to add dropdown on create request page to support latest as option
+- Added logging messages for Garden rescan operation
+- Added router checking for configuration files in children folder if child garden is not loaded yet
+- Added Error Event Handler to process
+- Added logging statement if `children` directory does not exist
+- Added Garden Version tracking and display on Garden Admin page
+- Updated Error Event message and all error events stay local/not published to UI
+- Updated Logging Levels for Collection Checks
+- Fixed issue where multiple Published requests would be spawned if Publisher utilized `propagate=True`
+  if matched on child garden topic
+- Fixed issue where child requests were not getting cancelled when the parent is cancelled
+- Fixed issue where Topic delete was called with `args` instead of `kwargs`
+- Updated each `handle_event` function to be processed in independent threads
+- Updating logging level for Replication notifications
+- Beer Garden will only emit locally generated events to any listening or configured APIs. 
+- Fixed counters displayed on Delete Request pop up to match exact values instead of starts with
+- Fixed bug where Garden Sync response doesn't null check before evaluating API response
+- Fixed issue where if user sync with child garden fails at startup will stop Beer Garden
+- Fixed issue where parent garden would reprocess Publish Topic regardless of `_propagate` flag
+- Fixed issue where Requester was added to requests when auth was disabled
+- Fixed issue where System updates cancelled request with completed fails Request wait event checks
+- Fixed issue where `BASE64` parameters were not forwarded to Child garden
+- Fixed issue where if Garden Receiving Connections was nulled, it would not create new connections
+- Fixed issue where orphaned requests were not pruned properly
+- Removed generation of Topic Events due to UI not supporting it and flooding of events to Upstream Gardens
+- Fixed issue handling system/instance update errors from children
+
+# 3.27.1
+
+8/21/2024
+
+- Added REQUIRES list and REQUIRES_TIMEOUT in beer.conf. Plugins will wait for system dependencies before starting.
+- Fixed APM Service name to clean string based with only alphanumeric characters, spaces, underscores, and dashes
+- Fixed issue where Dead runners did not appear on the Unassociated Runners list
+- Start support for Python 3.12.2+: [cpython ticket](https://github.com/python/cpython/issues/111615) has been resolved
+- Expanded index checks at the start of Beer Garden to include User, Role, User Tokens, Topics, and Replication
+- Fixed issue where invalid requests threw errors in Request handler for REQUEST_UPDATE
+
+# 3.26.5
+
+8/20/2024
+
+- Backdating Patch: Fixed issue where Dead runners did not appear on the Unassociated Runners list (Not included in 3.27.0 Release)
+
+# 3.27.0
+
+8/13/2024
+
+- Added file trigger jobs to scheduler to monitor directory for file changes. If a watched file change event occurs, it will fire the
+specified request. File trigger can be customized using regex, recursively monitoring sub-directories, or by watching one or more file
+change events (i.e. create, modify, move, or delete).
+- Request auto refresh configurable through `ui.auto_refresh` config option.
+- Added additional matching for topic subscriptions to include full string, empty, None, and regular expressions.
+- Fixed Request system version to return actual system version instead of parsed version when using latest.
+- Expanded the Topics API to support `api/v1/topics/name/` for passing `topic.name` as a variable instead of `topic.id`
+- Add counter support for Topics/Subscribers that are triggered to generate requests
+- New feature to track the last N heartbeats timestamps for Instances and Gardens. The range to history stored is 
+  controlled by configurations `garden.status_history` and `plugin.status_history`
+- Added Replication Awareness to ensure only one Replicated instance can process the scheduled jobs.
+- Adds Model Checks for DB collections to ensure classes can properly load between upgrades.
+- If Beer Garden catches an exception during shutdown, it will os.exit the application after all shutdown procedures are completed.
+- Added new metrics collection support for publishing data to Elastic APM for APIs, Router, and Event Handling
+
+## Overhauled User Authentication Logic
+- Roles allow filtering on combinations of Garden/Namespace/System Name/System Version/Instance/Command
+- User Alias mapping will update the Requester on Child Garden requests based on their alias. Maps requests
+  spawned from Child Garden to the local User account if Alias mapping matches.
+- When User has Alias accounts, Roles that can be applied to that Child Garden will be forwarded as UpstreamRoles. 
+  This is to ensure admin's at the Child Garden can see the permissions utilized to execute Request
+- Updated Permission accesses on UI with new Role schema
+- Updated API Permission access with new Role schema
+- API filters returned data based on User Roles
+- Access Token have custom Access and Refresh timeouts based on Users Max Permission that are controlled in the config
+- Users and Roles can be loaded through configuration files, and are protected models
+- New UI pages for User and Role management
+- Upgraded Brewtils version to [3.27.0](https://github.com/beer-garden/brewtils/releases/tag/3.27.0)
+
+# 3.26.4
+
+7/12/2024
+
+- Fixed bug where job updates did not maintian counters
+- Fixed bug where bulk job import did not support updates
+
+# 3.26.3
+
+7/10/2024
+
+- Fixed bug that prevented Autobrew Kwargs from being properly passed to the class object
+- Supporting Subscriber Types for Generated/Annotated/Dynamic, all stored in Topics Collection for quick reference
+- Optimized internal event processing to support API only events
+- Updated About page to support new tab for links
+- Command publishing blocklist UI and REST API removed
+- Fixed Command Index UI bug where breadcrumbs were not shown if Namespace and System Name matched
+
 # 3.26.2
 
 6/6/2024

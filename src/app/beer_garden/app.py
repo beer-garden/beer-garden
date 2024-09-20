@@ -5,37 +5,34 @@ This is the core library for Beer-Garden. Anything that is spawned by the Main P
 in Beer-Garden will be initialized within this class.
 """
 import logging
+import os
 import signal
+import traceback
 from functools import partial
 from multiprocessing.managers import BaseManager
 from typing import Callable
 
-from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
-
-# from apscheduler.schedulers.background import BackgroundScheduler
 from brewtils import EasyClient
 from brewtils.models import Event, Events
 from brewtils.stoppable_thread import StoppableThread
-from pytz import utc
 
 import beer_garden.api
 import beer_garden.api.entry_point
-import beer_garden.command_publishing_blocklist
 import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.db.mongo.pruner
 import beer_garden.events
+import beer_garden.events.handlers
 import beer_garden.garden
 import beer_garden.local_plugins.manager
 import beer_garden.namespace
 import beer_garden.queue.api as queue
 import beer_garden.router
-from beer_garden.events.handlers import garden_callbacks
-from beer_garden.events.parent_procesors import HttpParentUpdater
+from beer_garden.events.parent_processors import HttpParentUpdater
 from beer_garden.events.processors import EventProcessor, FanoutProcessor, QueueListener
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
-from beer_garden.metrics import PrometheusServer
+from beer_garden.metrics import PrometheusServer, initialize_elastic_client
 from beer_garden.monitor import MonitorFile
 from beer_garden.plugin import StatusMonitor
 from beer_garden.scheduler import MixedScheduler
@@ -57,6 +54,7 @@ class Application(StoppableThread):
     mp_manager = None
     plugin_log_config_observer: MonitorFile = None
     plugin_local_log_config_observer: MonitorFile = None
+    client = None
 
     def __init__(self):
         super(Application, self).__init__(
@@ -68,9 +66,17 @@ class Application(StoppableThread):
     def initialize(self):
         """Actually construct all the various component pieces"""
 
-        self.scheduler = self._setup_scheduler()
+        initialize_elastic_client("core")
+
+        # Setup Replication ID for environment
+        beer_garden.replication.get_replication_id()
+
+        self.scheduler = MixedScheduler()
 
         load_plugin_log_config()
+
+        if config.get("auth.enabled"):
+            beer_garden.user.validated_token_ttl()
 
         if config.get("replication.enabled"):
             import secrets
@@ -93,69 +99,6 @@ class Application(StoppableThread):
             )
         ]
 
-        # Add scheduled jobs for Mongo Pruner
-        prune_interval = config.get("db.prune_interval")
-        if prune_interval > 0:
-            ttl_config = config.get("db.ttl")
-            if ttl_config.get("info") > 0:
-                self.scheduler.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_info_requests,
-                    interval=prune_interval,
-                    max_running_jobs=1,
-                )
-
-            if ttl_config.get("action") > 0:
-                self.scheduler.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_action_requests,
-                    interval=prune_interval,
-                    max_running_jobs=1,
-                )
-
-            if ttl_config.get("admin") > 0:
-                self.scheduler.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_admin_requests,
-                    interval=prune_interval,
-                    max_running_jobs=1,
-                )
-
-            if ttl_config.get("temp") > 0:
-                self.scheduler.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_temp_requests,
-                    interval=prune_interval,
-                    max_running_jobs=1,
-                )
-
-            if ttl_config.get("file") > 0:
-                self.scheduler.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_files,
-                    interval=prune_interval,
-                    max_running_jobs=1,
-                )
-
-            if ttl_config.get("in_progress") > 0:
-                self.scheduler.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_outstanding,
-                    interval=prune_interval,
-                    max_running_jobs=1,
-                )
-
-        # Add scheduled job for checking unresponsive gardens
-        self.scheduler.add_schedule(
-            beer_garden.garden.garden_unresponsive_trigger,
-            interval=15,
-            max_running_jobs=1,
-        )
-
-        # Add Garden Sync Scheduler
-        if config.get("parent.sync_interval") > 0 and (
-            config.get("parent.stomp.enabled") or config.get("parent.http.enabled")
-        ):
-            self.scheduler.add_schedule(
-                beer_garden.garden.publish_garden,
-                interval=config.get("parent.sync_interval"),
-                max_running_jobs=1,
-            )
-
         metrics_config = config.get("metrics")
         if metrics_config.prometheus.enabled:
             self.helper_threads.append(
@@ -165,6 +108,14 @@ class Application(StoppableThread):
                     metrics_config.prometheus.port,
                 )
             )
+
+        self.helper_threads.append(
+            HelperThread(
+                beer_garden.replication.PrimaryReplicationMonitor,
+                10,
+                30,
+            )
+        )
 
         beer_garden.router.forward_processor = QueueListener(
             action=beer_garden.router.forward, name="forwarder"
@@ -198,7 +149,22 @@ class Application(StoppableThread):
         if not self._verify_message_queue_connection():
             return
 
-        self._startup()
+        try:
+            self._startup()
+        except Exception as ex:
+            tbe = traceback.TracebackException.from_exception(ex)
+            stack_frames = traceback.extract_stack()
+            tbe.stack.extend(stack_frames)
+            formatted_traceback = "".join(tbe.format())
+            self.logger.error(
+                "Startup Failure %s: %s"
+                % (
+                    str(ex),
+                    formatted_traceback,
+                )
+            )
+            self._shutdown(shutdown_failure=True)
+            return
 
         while not self.wait(0.1):
             for helper in self.helper_threads:
@@ -210,18 +176,6 @@ class Application(StoppableThread):
             beer_garden.local_plugins.manager.lpm_proxy.monitor()
 
         self._shutdown()
-
-    @staticmethod
-    def handle_event(event):
-        """Handle any events the application cares about"""
-        # Only care about local garden
-        if event.garden == beer_garden.config.get("garden.name"):
-            # Start local plugins after the HTTP entry point comes up
-            if (
-                event.name == Events.ENTRY_STARTED.name
-                and event.metadata["entry_point_type"] == "HTTP"
-            ):
-                beer_garden.local_plugins.manager.rescan()
 
     def _progressive_backoff(self, func: Callable, failure_message: str):
         """Execute a function until it returns truthy, increasing wait time each attempt
@@ -288,12 +242,12 @@ class Application(StoppableThread):
         """Initializes core requirements for Application"""
         self.logger.debug("Starting Application...")
 
-        self.logger.debug("Starting event manager...")
-        beer_garden.events.manager.start()
-
         self.logger.debug("Setting up database...")
         db.create_connection(db_config=config.get("db"))
         db.initial_setup()
+
+        self.logger.debug("Starting event manager...")
+        beer_garden.events.manager.start()
 
         self.logger.debug("Setting up message queues...")
         queue.initial_setup()
@@ -302,12 +256,17 @@ class Application(StoppableThread):
             self.logger.debug("Setting up fanout message queues...")
             queue.setup_event_consumer(config.get("mq"))
 
-        self.logger.debug("Starting helper threads...")
-        for helper_thread in self.helper_threads:
-            helper_thread.start()
+        self.logger.debug("Loading child configurations...")
+        beer_garden.garden.rescan()
 
         self.logger.debug("Setting up garden routing...")
         beer_garden.router.setup_routing()
+
+        self.logger.debug("Loading Roles...")
+        beer_garden.role.ensure_roles()
+
+        self.logger.debug("Loading Users...")
+        beer_garden.user.ensure_users()
 
         self.logger.debug("Starting forwarding processor...")
         beer_garden.router.forward_processor.start()
@@ -319,73 +278,136 @@ class Application(StoppableThread):
         self.logger.debug("Starting local plugin process monitoring...")
         beer_garden.local_plugins.manager.lpm_proxy.start()
 
-        self.logger.debug("Loading child configurations...")
-        beer_garden.garden.rescan()
-
-        self.logger.debug("Starting scheduler")
-        self.scheduler.start()
-
-        self.logger.debug("Publishing startup sync")
-        beer_garden.garden.publish_garden()
-        beer_garden.command_publishing_blocklist.publish_command_publishing_blocklist()
-
         self.logger.debug("Starting plugin log config file monitors")
         if config.get("plugin.logging.config_file"):
             self.plugin_log_config_observer.start()
         if config.get("plugin.local.logging.config_file"):
             self.plugin_local_log_config_observer.start()
 
+        self.logger.debug("Starting helper threads...")
+        for helper_thread in self.helper_threads:
+            helper_thread.start()
+
         self.logger.debug("Publishing to Parent that we are online")
         beer_garden.garden.publish_garden()
 
         self.logger.info("All set! Let me know if you need anything else!")
 
-    def _shutdown(self):
+    def _shutdown(self, shutdown_failure=False):
         """Shutdown core requirements for Application"""
         self.logger.info(
             "Closing time! You don't have to go home, but you can't stay here."
         )
 
-        self.logger.debug("Publishing shutdown sync")
-        beer_garden.command_publishing_blocklist.publish_command_publishing_blocklist()
-        beer_garden.garden.publish_garden(status="STOPPED")
+        try:
+            self.logger.debug("Publishing shutdown sync")
+            beer_garden.garden.publish_garden(status="STOPPED")
+        except Exception as ex:
+            self.logger.info("Failed: Publishing shutdown sync")
+            self.logger.error(ex)
+            shutdown_failure = True
 
         if self.scheduler.running:
-            self.logger.debug("Pausing scheduler - no more jobs will be run")
-            self.scheduler.pause()
+            try:
+                self.logger.debug("Pausing scheduler - no more jobs will be run")
+                self.scheduler.pause()
+            except Exception as ex:
+                self.logger.info("Failed: Pausing scheduler - no more jobs will be run")
+                self.logger.error(ex)
+                shutdown_failure = True
 
-        self.logger.debug("Stopping plugin log config file monitors")
-        self.plugin_log_config_observer.stop()
-        self.plugin_local_log_config_observer.stop()
+        try:
+            self.logger.debug("Stopping plugin log config file monitors")
+            self.plugin_log_config_observer.stop()
+            self.plugin_local_log_config_observer.stop()
+        except Exception as ex:
+            self.logger.info("Failed: Stopping plugin log config file monitors")
+            self.logger.error(ex)
+            shutdown_failure = True
 
-        self.logger.debug("Stopping forwarding processor...")
-        beer_garden.router.forward_processor.stop()
+        try:
+            self.logger.debug("Stopping forwarding processor...")
+            beer_garden.router.forward_processor.stop()
+        except Exception as ex:
+            self.logger.info("Failed: Stopping forwarding processor")
+            self.logger.error(ex)
+            shutdown_failure = True
 
-        self.logger.debug("Stopping helper threads")
-        for helper_thread in reversed(self.helper_threads):
-            helper_thread.stop()
+        try:
+            self.logger.debug("Stopping helper threads")
+            for helper_thread in reversed(self.helper_threads):
+                helper_thread.stop()
+        except Exception as ex:
+            self.logger.info("Failed: Stopping helper threads")
+            self.logger.error(ex)
+            shutdown_failure = True
 
         if self.scheduler.running:
-            self.logger.debug("Shutting down scheduler")
-            self.scheduler.shutdown(wait=False)
+            try:
+                self.logger.debug("Shutting down scheduler")
+                self.scheduler.shutdown(wait=False)
+            except Exception as ex:
+                self.logger.info("Failed: Shutting down scheduler")
+                self.logger.error(ex)
+                shutdown_failure = True
 
-        self.logger.debug("Stopping local plugin process monitoring")
-        beer_garden.local_plugins.manager.lpm_proxy.stop()
+        try:
+            self.logger.debug("Stopping local plugin process monitoring")
+            beer_garden.local_plugins.manager.lpm_proxy.stop()
+        except Exception as ex:
+            self.logger.info("Failed: Stopping local plugin process monitoring")
+            self.logger.error(ex)
+            shutdown_failure = True
 
-        self.logger.debug("Stopping local plugins")
-        beer_garden.local_plugins.manager.lpm_proxy.stop_all()
+        try:
+            self.logger.debug("Stopping local plugins")
+            beer_garden.local_plugins.manager.lpm_proxy.stop_all()
+        except Exception as ex:
+            self.logger.info("Failed: Stopping local plugins")
+            self.logger.error(ex)
+            shutdown_failure = True
 
-        self.logger.debug("Stopping entry points")
-        self.entry_manager.stop()
+        try:
+            self.logger.debug("Shutting Down local plugin process monitoring")
+            self.mp_manager.shutdown()
+        except Exception as ex:
+            self.logger.info("Failed: Shutting Down local plugin process monitoring")
+            self.logger.error(ex)
+            shutdown_failure = True
 
-        self.logger.debug("Stopping event manager")
-        beer_garden.events.manager.stop()
+        try:
+            self.logger.debug("Stopping entry points")
+            self.entry_manager.stop()
+        except Exception as ex:
+            self.logger.info("Failed: Stopping entry points")
+            self.logger.error(ex)
+            shutdown_failure = True
+
+        try:
+            self.logger.debug("Stopping event manager")
+            beer_garden.events.manager.stop()
+        except Exception as ex:
+            self.logger.info("Failed: Stopping event manager")
+            self.logger.error(ex)
+            shutdown_failure = True
 
         if config.get("replication.enabled"):
-            self.logger.debug("Stopping Event Consumer")
-            queue.shutdown_event_consumer()
+            try:
+                self.logger.debug("Stopping Event Consumer")
+                queue.shutdown_event_consumer()
+            except Exception as ex:
+                self.logger.info("Failed: Stopping Event Consumer")
+                self.logger.error(ex)
+                shutdown_failure = True
 
-        self.logger.info("Successfully shut down Beer-garden")
+        if shutdown_failure:
+            self.logger.info(
+                "Unsuccessfully shut down Beer-garden, forcing os.exit. "
+                "Please check your processes for orphaned threads"
+            )
+            os._exit(os.EX_OK)
+        else:
+            self.logger.info("Successfully shut down Beer-garden")
 
     def _setup_events_manager(self):
         """Set up the event manager for the Main Processor"""
@@ -399,7 +421,7 @@ class Application(StoppableThread):
         event_manager.register(self.entry_manager, manage=False)
 
         # Register the callback processor
-        event_manager.register(QueueListener(action=garden_callbacks, name="callbacks"))
+        beer_garden.events.handlers.add_internal_events_handler(event_manager)
 
         # Set up parent connection
         cfg = config.get("parent.http")
@@ -428,36 +450,11 @@ class Application(StoppableThread):
             event_manager.register(
                 HttpParentUpdater(
                     easy_client=easy_client,
-                    blocklist=config.get("parent.skip_events"),
                     reconnect_action=reconnect_action,
                 )
             )
 
         return event_manager
-
-    @staticmethod
-    def _setup_scheduler():
-        """Initializes scheduled jobs stored in the database"""
-        job_stores = {"beer_garden": db.get_job_store()}
-        scheduler_config = config.get("scheduler")
-        executors = {"default": APThreadPoolExecutor(scheduler_config.max_workers)}
-        job_defaults = scheduler_config.job_defaults.to_dict()
-
-        ap_config = {
-            "jobstores": job_stores,
-            "executors": executors,
-            "job_defaults": job_defaults,
-            "timezone": utc,
-        }
-
-        # return BackgroundScheduler(
-        #     jobstores=job_stores,
-        #     executors=executors,
-        #     job_defaults=job_defaults,
-        #     timezone=utc,
-        # )
-
-        return MixedScheduler(interval_config=ap_config)
 
     @staticmethod
     def _setup_multiprocessing_manager():
@@ -468,8 +465,16 @@ class Application(StoppableThread):
                 plugin_dir=config.get("plugin.local.directory"),
                 log_dir=config.get("plugin.local.log_directory"),
                 connection_info=config.get("entry.http"),
-                username=config.get("plugin.local.auth.username"),
-                password=config.get("plugin.local.auth.password"),
+                username=(
+                    config.get("plugin.local.auth.username")
+                    if config.get("auth.enabled")
+                    else None
+                ),
+                password=(
+                    config.get("plugin.local.auth.password")
+                    if config.get("auth.enabled")
+                    else None
+                ),
             ),
         )
 

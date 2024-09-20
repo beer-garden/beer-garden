@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 import logging
+import traceback
 import uuid
+from copy import deepcopy
 from multiprocessing import Queue
 from queue import Empty
 
+import elasticapm
 from brewtils.models import Event, Events
 from brewtils.stoppable_thread import StoppableThread
 
@@ -59,6 +62,66 @@ class QueueListener(BaseProcessor):
                 self.process(self._queue.get(timeout=0.1))
             except Empty:
                 pass
+
+
+class InternalQueueListener(QueueListener):
+    """Listener for internal events only"""
+
+    def __init__(self, handler, handler_tag, local_only=False, filters=None, **kwargs):
+        super().__init__(action=self.handle_event, **kwargs)
+
+        self._filters = []
+
+        if filters:
+            for filter in filters:
+                self._filters.append(filter.name)
+
+        self._handler = handler
+        self._handler_tag = handler_tag
+        self._local_only = local_only
+
+    def handle_event(self, event):
+        try:
+            if config.get("apm.enabled") and elasticapm.get_client():
+                with elasticapm.capture_span(name=event.name, span_type="Event"):
+                    if hasattr(event, "payload") and hasattr(event.payload, "id"):
+                        elasticapm.set_custom_context({"id": event.payload.id})
+                    self._handler(deepcopy(event))
+
+            else:
+                self._handler(deepcopy(event))
+        except Exception as ex:
+            logger.error(
+                "'%s' handler received an error executing callback for event %s: %s: %s"
+                % (
+                    self._handler_tag,
+                    repr(event),
+                    str(ex),
+                    traceback.TracebackException.from_exception(ex),
+                )
+            )
+
+    def put(self, event: Event):
+        """Put a new item on the queue to be processed
+
+        Args:
+            item: New item
+        """
+
+        if not self._filters:
+            return
+
+        if event.error:
+            return
+
+        if self._local_only and event.garden != config.get("garden.name"):
+            return
+
+        if event.metadata.get("API_ONLY", False):
+            return
+
+        if event.name in self._filters:
+            self._queue.put(event)
 
 
 class DelayListener(QueueListener):

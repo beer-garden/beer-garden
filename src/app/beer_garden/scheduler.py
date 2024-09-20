@@ -11,20 +11,49 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 from apscheduler.events import EVENT_JOB_MAX_INSTANCES
+from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
 from brewtils.errors import ModelValidationError
 from brewtils.models import DateTrigger, Event, Events, Job, Operation, Request
 from mongoengine import ValidationError
+from pytz import utc
 
 import beer_garden
 import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.db.mongo.jobstore import construct_trigger
 from beer_garden.events import publish_event
+from beer_garden.monitor import MonitorDirectory
 from beer_garden.requests import get_request
 
 logger = logging.getLogger(__name__)
+
+observer_threads = dict()
+
+
+class Monitor(object):
+    def __init__(self, job_id, bg_trigger):
+        self.job = get_job(job_id)
+        self.file_monitor = MonitorDirectory(
+            path=bg_trigger.path,
+            pattern=bg_trigger.pattern,
+            recursive=bg_trigger.recursive,
+            create=bg_trigger.create,
+            modify=bg_trigger.modify,
+            move=bg_trigger.move,
+            delete=bg_trigger.delete,
+            job=self.job,
+        )
+        self.start()
+
+    def start(self):
+        """Start monitoring a directory"""
+        self.file_monitor.start()
+
+    def stop(self):
+        """Stop monitoring a directory"""
+        self.file_monitor.stop()
 
 
 class InjectionDict(dict):
@@ -126,20 +155,9 @@ class MixedScheduler(object):
     A wrapper that tracks an interval-based scheduler.
     """
 
-    _sync_scheduler = BackgroundScheduler()
+    _sync_scheduler = None
 
     running = False
-
-    def __init__(self, interval_config=None):
-        """Initializes the underlying scheduler
-
-        Args:
-            interval_config: Any scheduler-specific arguments for the APScheduler
-        """
-        self._sync_scheduler.configure(**interval_config)
-        self._sync_scheduler.add_listener(
-            self.max_concurrence_listener, EVENT_JOB_MAX_INSTANCES
-        )
 
     def max_concurrence_listener(scheduler, event):
         db_job = db.query_unique(Job, id=event.job_id)
@@ -147,8 +165,43 @@ class MixedScheduler(object):
 
     def start(self):
         """Starts the scheduler"""
+        if self._sync_scheduler is None:
+            self._sync_scheduler = BackgroundScheduler()
+            job_stores = {"beer_garden": db.get_job_store()}
+            scheduler_config = config.get("scheduler")
+            executors = {"default": APThreadPoolExecutor(scheduler_config.max_workers)}
+            job_defaults = scheduler_config.job_defaults.to_dict()
+
+            ap_config = {
+                "jobstores": job_stores,
+                "executors": executors,
+                "job_defaults": job_defaults,
+                "timezone": utc,
+            }
+            self._sync_scheduler.configure(**ap_config)
+            self._sync_scheduler.add_listener(
+                self.max_concurrence_listener, EVENT_JOB_MAX_INSTANCES
+            )
+
+            self.internal_scheduled_jobs()
+
         self._sync_scheduler.start()
         self.running = True
+        file_jobs = get_jobs(filter_params={"trigger_type": "file"})
+        for job in file_jobs:
+            observer_threads[job.id] = Monitor(job.id, job.trigger)
+
+    def resume(self):
+        """Resume the scheduler"""
+        if self._sync_scheduler:
+            self._sync_scheduler.resume()
+            self.running = True
+
+    def pause(self):
+        """pause the scheduler"""
+        if self._sync_scheduler:
+            self._sync_scheduler.pause()
+            self.running = False
 
     def shutdown(self, **kwargs):
         """Stops the scheduler
@@ -164,8 +217,10 @@ class MixedScheduler(object):
         Args:
             kwargs: Any other scheduler-specific arguments
         """
-        self._sync_scheduler.shutdown(**kwargs)
-        self.running = False
+        if self._sync_scheduler:
+            self._sync_scheduler.shutdown(**kwargs)
+            self.running = False
+            self._sync_scheduler = None
 
     def reschedule_job(self, job_id, **kwargs):
         """Passes through to the sync scheduler
@@ -191,6 +246,9 @@ class MixedScheduler(object):
             job_id: The job id
             kwargs: Any other scheduler-specific arguments
         """
+        if job_id in observer_threads:
+            observer_threads[job_id].stop()
+            return
         self._sync_scheduler.pause_job(job_id, **kwargs)
 
     def resume_job(self, job_id, **kwargs):
@@ -200,6 +258,9 @@ class MixedScheduler(object):
             job_id: The job id
             kwargs: Any other scheduler-specific arguments
         """
+        if job_id in observer_threads:
+            observer_threads[job_id].start()
+            return
         self._sync_scheduler.resume_job(job_id, **kwargs)
 
     def remove_job(self, job_id, **kwargs):
@@ -209,6 +270,9 @@ class MixedScheduler(object):
             job_id: The job id to lookup
             kwargs: Any other scheduler-specific arguments
         """
+        if job_id in observer_threads:
+            remove_job(job_id)
+            return
         self._sync_scheduler.remove_job(job_id, **kwargs)
 
     def execute_job(self, job_id, reset_interval=False, **kwargs):
@@ -219,6 +283,9 @@ class MixedScheduler(object):
             reset_interval: Whether to set the job's interval begin time to now
         """
         job = db.query_unique(Job, id=job_id)
+        src_path = kwargs.get("src_path", False)
+        if src_path:
+            job.request_template.metadata["src_path"] = src_path
         self.add_job(
             run_job,
             trigger=DateTrigger(datetime.utcnow(), timezone="UTC"),
@@ -263,11 +330,25 @@ class MixedScheduler(object):
             logger.exception("Scheduler called with None-type trigger.")
             return
 
-        self._sync_scheduler.add_job(
-            func,
-            trigger=construct_trigger(kwargs.pop("trigger_type"), trigger),
-            **kwargs,
-        )
+        trigger_type = kwargs.pop("trigger_type")
+        bg_trigger = construct_trigger(trigger_type, trigger)
+        job_id = kwargs.get("id")
+        # Add entry to keep track of file trigger threads
+        # Recreate monitor in case the job has been updated
+        if job_id and trigger_type == "file":
+            if job_id in observer_threads:
+                observer_threads[job_id].stop()
+                del observer_threads[job_id]
+            observer_threads[job_id] = Monitor(job_id, bg_trigger)
+
+        # Add all triggers to schedule except file
+        # File triggers will handled by monitor
+        if not trigger_type == "file":
+            self._sync_scheduler.add_job(
+                func,
+                trigger=bg_trigger,
+                **kwargs,
+            )
 
     def add_schedule(self, func, interval=None, **kwargs):
         """Adds a schedule to one of the schedulers
@@ -284,6 +365,70 @@ class MixedScheduler(object):
         self._sync_scheduler.add_job(
             func, trigger=APInterval(minutes=interval), **kwargs
         )
+
+    def internal_scheduled_jobs(self):
+        # Add scheduled jobs for Mongo Pruner
+        prune_interval = config.get("db.prune_interval")
+        if prune_interval > 0:
+            ttl_config = config.get("db.ttl")
+            if ttl_config.get("info") > 0:
+                self.add_schedule(
+                    beer_garden.db.mongo.pruner.prune_info_requests,
+                    interval=prune_interval,
+                    max_running_jobs=1,
+                )
+
+            if ttl_config.get("action") > 0:
+                self.add_schedule(
+                    beer_garden.db.mongo.pruner.prune_action_requests,
+                    interval=prune_interval,
+                    max_running_jobs=1,
+                )
+
+            if ttl_config.get("admin") > 0:
+                self.add_schedule(
+                    beer_garden.db.mongo.pruner.prune_admin_requests,
+                    interval=prune_interval,
+                    max_running_jobs=1,
+                )
+
+            if ttl_config.get("temp") > 0:
+                self.add_schedule(
+                    beer_garden.db.mongo.pruner.prune_temp_requests,
+                    interval=prune_interval,
+                    max_running_jobs=1,
+                )
+
+            if ttl_config.get("file") > 0:
+                self.add_schedule(
+                    beer_garden.db.mongo.pruner.prune_files,
+                    interval=prune_interval,
+                    max_running_jobs=1,
+                )
+
+            if ttl_config.get("in_progress") > 0:
+                self.add_schedule(
+                    beer_garden.db.mongo.pruner.prune_outstanding,
+                    interval=prune_interval,
+                    max_running_jobs=1,
+                )
+
+        # Add scheduled job for checking unresponsive gardens
+        self.add_schedule(
+            beer_garden.garden.garden_unresponsive_trigger,
+            interval=15,
+            max_running_jobs=1,
+        )
+
+        # Add Garden Sync Scheduler
+        if config.get("parent.sync_interval") > 0 and (
+            config.get("parent.stomp.enabled") or config.get("parent.http.enabled")
+        ):
+            self.add_schedule(
+                beer_garden.garden.publish_garden,
+                interval=config.get("parent.sync_interval"),
+                max_running_jobs=1,
+            )
 
 
 class IntervalTrigger(APInterval):
@@ -423,15 +568,21 @@ def create_jobs(jobs: List[Job]) -> dict:
                     citing why it was rejected
     """
     created = []
+    updated = []
     rejected = []
 
     for job in jobs:
         try:
-            created.append(create_job(job))
+            if job.id and db.query(Job, filter_params={"id": job.id}):
+                updated.append(update_job(job))
+            else:
+                if job.id:
+                    job.id = None
+                created.append(create_job(job))
         except (ModelValidationError, ValidationError) as exc:
             rejected.append((job, str(exc)))
 
-    return {"created": created, "rejected": rejected}
+    return {"created": created, "updated": updated, "rejected": rejected}
 
 
 @publish_event(Events.JOB_UPDATED)
@@ -444,6 +595,14 @@ def update_job(job: Job) -> Job:
     Returns:
         The added Job
     """
+
+    # Map over job counts
+    original_job = get_job(job.id)
+
+    job.success_count = original_job.success_count
+    job.error_count = original_job.error_count
+    job.canceled_count = original_job.canceled_count
+    job.skip_count = original_job.skip_count
 
     return db.update(job)
 
@@ -458,7 +617,6 @@ def pause_job(job_id: str) -> Job:
     Returns:
         The Job definition
     """
-
     job = db.query_unique(Job, id=job_id)
     job.status = "PAUSED"
     job = db.update(job)
@@ -476,7 +634,6 @@ def resume_job(job_id: str) -> Job:
     Returns:
         The Job definition
     """
-
     job = db.query_unique(Job, id=job_id)
     job.status = "RUNNING"
     job = db.update(job)
@@ -494,6 +651,9 @@ def remove_job(job_id: str) -> None:
     Returns:
         The Job ID
     """
+    if job_id in observer_threads:
+        observer_threads[job_id].stop()
+        del observer_threads[job_id]
     # The scheduler takes care of removing the Job from the database
     return db.query_unique(Job, id=job_id)
 
@@ -533,7 +693,10 @@ def handle_event(event: Event) -> None:
         event: The event to handle
     """
 
-    if event.garden == config.get("garden.name"):
+    if (
+        event.garden == config.get("garden.name")
+        and beer_garden.application.scheduler.running
+    ):
         if event.name in [Events.JOB_CREATED.name, Events.JOB_UPDATED.name]:
             try:
                 beer_garden.application.scheduler.add_job(
@@ -573,4 +736,11 @@ def handle_event(event: Event) -> None:
                 event.payload.id,
                 jobstore="beer_garden",
                 reset_interval=event.payload.reset_interval,
+            )
+        elif event.name == Events.DIRECTORY_FILE_CHANGE.name:
+            beer_garden.application.scheduler.execute_job(
+                event.payload.id,
+                jobstore="beer_garden",
+                reset_interval=None,
+                src_path=event.metadata["src_path"],
             )

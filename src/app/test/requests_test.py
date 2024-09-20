@@ -4,17 +4,23 @@ from datetime import datetime, timedelta
 import pytest
 from box import Box
 from brewtils.errors import ModelValidationError
-from brewtils.models import Choices, Command, Event, Events, Parameter, System
+from brewtils.models import Choices, Command, Event, Events
 from brewtils.models import Garden as BrewtilsGarden
+from brewtils.models import Parameter
 from brewtils.models import Request as BrewtilsRequest
+from brewtils.models import System
 from mock import Mock, call, patch
 from mongomock.gridfs import enable_gridfs_integration
 
 import beer_garden.config
 import beer_garden.requests
-from beer_garden.db.mongo.models import Request, Garden
-from beer_garden.requests import RequestValidator, determine_latest_system_version
+from beer_garden.db.mongo.models import Garden, Request
 from beer_garden.garden import create_garden
+from beer_garden.requests import (
+    RequestValidator,
+    cancel_request_children,
+    determine_latest_system_version,
+)
 from beer_garden.systems import create_system
 
 enable_gridfs_integration()
@@ -1125,13 +1131,12 @@ class TestHandleEvent:
 
 
 class TestLatestRequest(object):
-
     @pytest.fixture
     def system_v1(self):
         yield create_system(
             System(
                 name="original",
-                version="1.0.0",
+                version="1.0.0dev",
                 namespace="beer_garden",
                 commands=[Command(name="original")],
             )
@@ -1195,3 +1200,68 @@ class TestLatestRequest(object):
 
         assert latest_request.system_version != system_v1.version
         assert latest_request.system_version == system_v2.version
+
+
+class TestCancelRequest(object):
+
+    @pytest.fixture(autouse=True)
+    def drop(self):
+        yield
+        Request.drop_collection()
+
+    def active_child_request(self, parent_request):
+        request = Request(
+            namespace="parent",
+            system="testsystem",
+            system_version="1.0.0",
+            instance_name="instance1",
+            command="somecommand",
+            parameters={},
+            status="CREATED",
+            parent=parent_request,
+        )
+        request.save()
+
+        return request
+
+    def inactive_child_request(self, parent_request):
+        request = Request(
+            namespace="parent",
+            system="testsystem",
+            system_version="1.0.0",
+            instance_name="instance1",
+            command="somecommand",
+            parameters={},
+            status="SUCCESS",
+            parent=parent_request,
+        )
+        request.save()
+
+        return request
+
+    def parent_request(self):
+        request = Request(
+            namespace="parent",
+            system="testsystem",
+            system_version="1.0.0",
+            instance_name="instance1",
+            command="somecommand",
+            parameters={},
+            status="CANCELED",
+        )
+        request.save()
+
+        self.active_child_request(request)
+        self.inactive_child_request(request)
+
+        return request
+
+    def test_cancel_children(self, monkeypatch):
+        cancel_mock = Mock()
+        cancel_mock.return_value.output = None
+        monkeypatch.setattr(beer_garden.requests, "cancel_request", cancel_mock)
+
+        request = self.parent_request()
+        cancel_request_children(request)
+
+        cancel_mock.assert_called_once()

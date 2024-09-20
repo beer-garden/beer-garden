@@ -601,17 +601,21 @@ def determine_latest_system_version(request: Request):
 
     versions = []
     legacy_versions = []
+    system_versions_map = {}
 
     for system in systems:
         try:
             versions.append(versionParse(system.version))
+            system_versions_map[str(versionParse(system.version))] = system.version
         except InvalidVersion:
             legacy_versions.append(system.version)
+            system_versions_map[system.version] = system.version
 
     eligible_versions = versions if versions else legacy_versions
 
     if eligible_versions:
-        request.system_version = str(sorted(eligible_versions, reverse=True)[0])
+        latest_version = sorted(eligible_versions, reverse=True)[0]
+        request.system_version = system_versions_map.get(str(latest_version))
 
     return request
 
@@ -652,6 +656,21 @@ def _publish_request(request: Request, is_admin: bool, priority: int):
 def _validate_request(request: Request):
     """Validates a Request"""
     return RequestValidator.instance().validate_request(request)
+
+
+def _is_local_request(request: Request) -> bool:
+
+    if request.target_garden and request.target_garden == config.get("garden.name"):
+        return True
+
+    system = db.query_unique(
+        System,
+        namespace=request.namespace,
+        name=request.system,
+        version=request.system_version,
+    )
+
+    return system.local
 
 
 def process_request(
@@ -750,8 +769,7 @@ def create_request(request: Request) -> Request:
     # file parameters. This should be revisited to see if there is a way to persist
     # remote requests locally without the base64 encoded data while avoiding this copy.
     request = deepcopy(request)
-    replace_with_raw_file = request.namespace == config.get("garden.name")
-    remove_bytes_parameter_base64(request.parameters, replace_with_raw_file)
+    remove_bytes_parameter_base64(request.parameters, _is_local_request(request))
 
     if request.source_garden is None:
         request.source_garden = config.get("garden.name")
@@ -944,7 +962,10 @@ def process_wait(request: Request, timeout: float) -> Request:
 
 def handle_wait_events(event):
     # Whenever a request is completed check to see if this process is waiting for it
-    if event.name in [Events.REQUEST_COMPLETED.name, Events.REQUEST_CANCELED.name]:
+    if not event.error and event.name in [
+        Events.REQUEST_COMPLETED.name,
+        Events.REQUEST_CANCELED.name,
+    ]:
         completion_event = request_map.pop(event.payload.id, None)
         if completion_event:
             # Async events return the result object
@@ -974,7 +995,8 @@ def handle_wait_events(event):
 
 def handle_event(event):
     # TODO: Add support for Request Delete event type
-    # if event.name == Events.REQUEST_DELETED.name and event.garden != config.get("garden.name"):
+    # if event.name == Events.REQUEST_DELETED.name
+    #   and event.garden != config.get("garden.name"):
     #     delete_requests(**event.payload)
 
     if event.name in (
@@ -984,6 +1006,10 @@ def handle_event(event):
         Events.REQUEST_UPDATED.name,
         Events.REQUEST_CANCELED.name,
     ):
+        # No database actions for invalid requests
+        if event.payload.id is None and event.payload.status == "INVALID":
+            return
+
         # Only care about downstream garden
         requests = db.query(
             Request,
@@ -994,6 +1020,13 @@ def handle_event(event):
             existing_request = requests[0]
         else:
             existing_request = None
+
+        if (
+            event.garden == config.get("garden.name")
+            and not event.error
+            and event.name == Events.REQUEST_CANCELED.name
+        ):
+            cancel_request_children(event.payload)
 
         if existing_request and existing_request.status != event.payload.status:
             # Skip status that revert
@@ -1009,6 +1042,40 @@ def handle_event(event):
             if existing_request is None:
                 # Attempt to create the request, if it already exists then continue on
                 try:
+                    # User mappings back to local usernames
+                    if event.payload.requester and config.get("auth.enabled"):
+                        foundUser = False
+
+                        # First try to grab requester from Parent Request
+                        if event.payload.has_parent:
+                            parent_requests = db.query(
+                                Request,
+                                filter_params={"id": event.payload.parent.id},
+                            )
+
+                            if parent_requests and parent_requests[0].requester:
+                                event.payload.requester = parent_requests[0].requester
+                                foundUser = True
+
+                        # If no parent request is found or request on it,
+                        # update via remote user mappings
+                        if not foundUser:
+                            if "get_users" not in dir():
+                                from beer_garden.user import get_users
+
+                            for user in get_users():
+                                for remote_user_map in user.remote_user_mapping:
+                                    if (
+                                        remote_user_map.target_garden == event.garden
+                                        and remote_user_map.username
+                                        == event.payload.requester
+                                    ):
+                                        event.payload.requester = user.username
+                                        foundUser = True
+                                        break
+                                if foundUser:
+                                    break
+
                     existing_request = db.create(event.payload)
                 except NotUniqueException:
                     pass
@@ -1084,3 +1151,20 @@ def clean_command_type_temp(request: Request, is_remote: bool):
             db.delete(child)
 
     return request
+
+
+def cancel_request_children(request: Request):
+    """Cancel any children in a non completed status
+
+    Args:
+        request (Request): Parent Request
+    """
+    request.children = db.query(Request, filter_params={"parent": request})
+
+    for child in request.children:
+        if child.status in [
+            "IN_PROGRESS",
+            "CREATED",
+            "RECEIVED",
+        ]:
+            cancel_request(request=child)

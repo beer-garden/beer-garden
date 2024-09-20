@@ -86,7 +86,7 @@ export default function adminRequestDeleteController(
       "length": 1,
       "columns": [
         {
-          "data": "namespace",
+          "data": "namespace__exact",
           "name": "",
           "searchable": true,
           "orderable": true,
@@ -96,7 +96,7 @@ export default function adminRequestDeleteController(
           }
         },
         {
-          "data": "system",
+          "data": "system__exact",
           "name": "",
           "searchable": true,
           "orderable": true,
@@ -106,7 +106,7 @@ export default function adminRequestDeleteController(
           }
         },
         {
-          "data": "system_version",
+          "data": "system_version__exact",
           "name": "",
           "searchable": true,
           "orderable": true,
@@ -116,7 +116,7 @@ export default function adminRequestDeleteController(
           }
         },
         {
-          "data": "instance_name",
+          "data": "instance_name__exact",
           "name": "",
           "searchable": true,
           "orderable": true,

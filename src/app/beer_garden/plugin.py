@@ -32,6 +32,7 @@ from brewtils.models import (
 )
 from brewtils.schema_parser import SchemaParser
 from brewtils.stoppable_thread import StoppableThread
+from mongoengine import DoesNotExist
 from mongoengine.fields import ObjectIdField
 
 import beer_garden.config as config
@@ -80,12 +81,16 @@ def initialize(
 
     queue_spec = queue.create(instance, system)
 
+    instance.status_info.set_status_heartbeat(
+        instance.status, max_history=config.get("plugin.status_history")
+    )
+
     system = db.modify(
         system,
         query={"instances__name": instance.name},
         **{
             "set__instances__S__status": "INITIALIZING",
-            "set__instances__S__status_info__heartbeat": datetime.utcnow(),
+            "set__instances__S__status_info": instance.status_info,
             "set__instances__S__metadata__runner_id": runner_id,
             "set__instances__S__queue_type": queue_spec["queue_type"],
             "set__instances__S__queue_info": queue_spec["queue_info"],
@@ -253,7 +258,11 @@ def update(
             lpm.update(instance_id=instance_id, restart=False, stopped=True)
 
     if update_heartbeat:
-        updates["set__instances__S__status_info__heartbeat"] = datetime.utcnow()
+        instance.status_info.set_status_heartbeat(
+            instance.status, max_history=config.get("plugin.status_history")
+        )
+
+        updates["set__instances__S__status_info"] = instance.status_info
 
     if metadata:
         metadata_update = dict(instance.metadata)
@@ -274,34 +283,31 @@ def publish_status_update(instance: Instance):
     """
     system, instance = _from_kwargs(instance_id=instance.id)
 
-    # Publish event for plugins to monitor the status of other plugins
-    publish(
-        Event(
-            name=Events.REQUEST_TOPIC_PUBLISH.name,
-            metadata={
-                "topic": "{0}.{1}.{2}.{3}".format(
-                    system.namespace,
-                    system.name,
-                    system.version,
-                    instance.name,
-                ),
-                "propagate": False,
-                "regex_only": False,
-            },
-            payload=Request(
-                parameters={
-                    "message": {
-                        "status": instance.status,
-                        "namespace": system.namespace,
-                        "system": system.name,
-                        "version": system.version,
-                        "instance": instance.name,
-                    }
+    if system.local:
+        # Publish event for plugins to monitor the status of other plugins
+        publish(
+            Event(
+                name=Events.REQUEST_TOPIC_PUBLISH.name,
+                metadata={
+                    "topic": config.get("garden.name"),
+                    "propagate": True,
                 },
-            ),
-            payload_type="Request",
+                payload=Request(
+                    parameters={
+                        "message": {
+                            "status": instance.status,
+                            "namespace": system.namespace,
+                            "system": system.name,
+                            "version": system.version,
+                            "instance": instance.name,
+                            "garden": config.get("garden.name"),
+                            "event": Events.INSTANCE_UPDATED.name,
+                        }
+                    },
+                ),
+                payload_type="Request",
+            )
         )
-    )
 
 
 def heartbeat(
@@ -324,10 +330,14 @@ def heartbeat(
         system=system, instance=instance, instance_id=instance_id
     )
 
+    instance.status_info.set_status_heartbeat(
+        instance.status, max_history=config.get("plugin.status_history")
+    )
+
     system = db.modify(
         system,
         query={"instances__name": instance.name},
-        set__instances__S__status_info__heartbeat=datetime.utcnow(),
+        set__instances__S__status_info=instance.status_info,
     )
 
     return system.get_instance_by_name(instance.name)
@@ -442,10 +452,15 @@ async def update_async(
     query = {"instances._id": ObjectIdField().to_mongo(instance_id)}
     projection = {"instances.$": 1, "_id": 0}
     update = {}
+    push = {}
 
     if new_status:
         update["instances.$.status"] = new_status
         update["instances.$.status_info.heartbeat"] = datetime.utcnow()
+        push["instances.$.status_info.history"] = {
+            "status": new_status,
+            "heartbeat": datetime.utcnow(),
+        }
 
         if new_status == "STOPPED":
             lpm.update(instance_id=instance_id, restart=False, stopped=True)
@@ -454,7 +469,9 @@ async def update_async(
         for k, v in metadata.items():
             update[f"instances.$.metadata.{k}"] = v
 
-    return await _update_instance_async(query, projection, {"$set": update})
+    return await _update_instance_async(
+        query, projection, {"$set": update, "$push": push}
+    )
 
 
 async def heartbeat_async(
@@ -462,7 +479,15 @@ async def heartbeat_async(
 ) -> dict:
     query = {"instances._id": ObjectIdField().to_mongo(instance_id)}
     projection = {"instances.$": 1, "_id": 0}
-    update = {"$set": {"instances.$.status_info.heartbeat": datetime.utcnow()}}
+    update = {
+        "$set": {"instances.$.status_info.heartbeat": datetime.utcnow()},
+        "$push": {
+            "instances.$.status_info.history": {
+                "status": "RUNNING",
+                "heartbeat": datetime.utcnow(),
+            }
+        },
+    }
 
     return await _update_instance_async(query, projection, update)
 
@@ -476,6 +501,21 @@ async def _get_instance_async(filter, projection) -> dict:
     if "_id" in instance:
         instance["id"] = str(instance["_id"])
         del instance["_id"]
+
+    if config.get("plugin.status_history") > 0 and len(
+        instance["status_info"]["history"]
+    ) > config.get("plugin.status_history"):
+        return await _update_instance_async(
+            filter,
+            projection,
+            {
+                "$set": {
+                    "instances.$.status_info.history": instance["status_info"][
+                        "history"
+                    ][-1 * config.get("plugin.status_history") :]
+                }
+            },
+        )
 
     return SchemaParser.parse_instance(instance)
 
@@ -542,6 +582,23 @@ def handle_event(event: Event) -> None:
                     new_status=event.payload.status,
                     metadata=event.payload.metadata,
                 )
+            except DoesNotExist:
+                logger.error(
+                    (
+                        "Unable to find system matching instance "
+                        f"{event.payload.id}:{event.payload.name} "
+                        f"for garden {event.garden}"
+                    )
+                )
+                from beer_garden.router import route
+
+                route(
+                    Operation(
+                        operation_type="GARDEN_SYNC",
+                        target_garden_name=event.garden,
+                        kwargs={"sync_target": event.garden},
+                    )
+                )
             except Exception as ex:
                 logger.error(f"{event.name} error: {ex} ({event!r})")
         else:
@@ -591,7 +648,7 @@ class StatusMonitor(StoppableThread):
                 if self.stopped():
                     break
 
-                last_heartbeat = instance.status_info["heartbeat"]
+                last_heartbeat = instance.status_info.heartbeat
 
                 if last_heartbeat:
                     if (

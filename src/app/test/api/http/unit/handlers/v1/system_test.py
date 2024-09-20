@@ -1,39 +1,41 @@
 # -*- coding: utf-8 -*-
 import json
 
-import beer_garden.events
-import beer_garden.router
 import pytest
-from beer_garden.api.http.authentication import issue_token_pair
-from beer_garden.db.mongo.models import (
-    Command,
-    Garden,
-    Role,
-    RoleAssignment,
-    System,
-    User,
-)
-from beer_garden.systems import create_system
 from brewtils.models import Command as BrewtilsCommand
 from brewtils.models import Instance as BrewtilsInstance
+from brewtils.models import Role
 from brewtils.models import System as BrewtilsSystem
+from brewtils.models import User
 from tornado.httpclient import HTTPError, HTTPRequest
 
+import beer_garden.events
+import beer_garden.router
+from beer_garden.api.http.authentication import issue_token_pair
+from beer_garden.db.mongo.models import Command, Garden, System
+from beer_garden.role import create_role, delete_role
+from beer_garden.systems import create_system
+from beer_garden.user import create_user, delete_user
 
-@pytest.fixture
-def garden():
-    garden = Garden(name="somegarden", connection_type="LOCAL").save()
+
+@pytest.fixture(autouse=True)
+def garden(system_permitted, system_not_permitted):
+    garden = Garden(
+        name="somegarden",
+        connection_type="LOCAL",
+        systems=[system_permitted, system_not_permitted],
+    ).save()
 
     yield garden
     garden.delete()
 
 
 @pytest.fixture(autouse=True)
-def system_permitted(garden):
+def system_permitted():
     system = System(
         name="permitted_system",
         version="0.0.1",
-        namespace=garden.name,
+        namespace="somegarden",
         commands=[Command(name="icandoit")],
     ).save()
 
@@ -42,11 +44,11 @@ def system_permitted(garden):
 
 
 @pytest.fixture(autouse=True)
-def system_not_permitted(garden):
+def system_not_permitted():
     system = System(
         name="not_permitted_system",
         version="0.0.1",
-        namespace=garden.name,
+        namespace="somegarden",
         commands=[Command(name="notallowed")],
     ).save()
 
@@ -55,14 +57,46 @@ def system_not_permitted(garden):
 
 
 @pytest.fixture
-def system_admin_role():
-    role = Role(
-        name="system_admin",
-        permissions=["system:create", "system:read", "system:update", "system:delete"],
-    ).save()
+def system_read_role(system_permitted):
+    role = create_role(
+        Role(
+            name="system_read",
+            permission="READ_ONLY",
+            scope_namespaces=[system_permitted.namespace],
+            scope_systems=[system_permitted.name],
+        )
+    )
 
     yield role
-    role.delete()
+    delete_role(role)
+
+
+@pytest.fixture
+def system_admin_role(system_permitted):
+    role = create_role(
+        Role(
+            name="system_admin",
+            permission="PLUGIN_ADMIN",
+            scope_namespaces=[system_permitted.namespace],
+            scope_systems=[system_permitted.name],
+        )
+    )
+
+    yield role
+    delete_role(role)
+
+
+@pytest.fixture
+def system_global_admin_role():
+    role = create_role(
+        Role(
+            name="system_global_admin",
+            permission="PLUGIN_ADMIN",
+        )
+    )
+
+    yield role
+    delete_role(role)
 
 
 @pytest.fixture
@@ -72,27 +106,27 @@ def system_cleanup():
 
 
 @pytest.fixture
-def user(system_permitted, system_admin_role):
-    role_assignment = RoleAssignment(
-        role=system_admin_role,
-        domain={
-            "scope": "System",
-            "identifiers": {
-                "name": system_permitted.name,
-                "namespace": system_permitted.namespace,
-            },
-        },
-    )
-
-    user = User(username="testuser", role_assignments=[role_assignment]).save()
-
+def user(system_admin_role):
+    user = create_user(User(username="testuser", local_roles=[system_admin_role]))
     yield user
-    user.delete()
+    delete_user(user=user)
+
+
+@pytest.fixture
+def read_user(system_read_role):
+    user = create_user(User(username="testreaduser", local_roles=[system_read_role]))
+    yield user
+    delete_user(user=user)
 
 
 @pytest.fixture
 def access_token(user):
     yield issue_token_pair(user)["access"]
+
+
+@pytest.fixture
+def read_access_token(read_user):
+    yield issue_token_pair(read_user)["access"]
 
 
 @pytest.fixture(autouse=True)
@@ -352,11 +386,11 @@ class TestSystemListAPI:
         http_client,
         base_url,
         app_config_auth_enabled,
-        access_token,
+        read_access_token,
         system_permitted,
     ):
         url = f"{base_url}/api/v1/systems"
-        headers = {"Authorization": f"Bearer {access_token}"}
+        headers = {"Authorization": f"Bearer {read_access_token}"}
 
         response = yield http_client.fetch(url, headers=headers)
         response_body = json.loads(response.body.decode("utf-8"))
@@ -373,14 +407,10 @@ class TestSystemListAPI:
         app_config_auth_enabled,
         garden,
         user,
-        system_admin_role,
+        system_global_admin_role,
         system_cleanup,
     ):
-        garden_role_assignment = RoleAssignment(
-            role=system_admin_role,
-            domain={"scope": "Garden", "identifiers": {"name": garden.name}},
-        )
-        user.role_assignments.append(garden_role_assignment)
+        user.local_roles.append(system_global_admin_role)
         access_token = issue_token_pair(user)["access"]
 
         url = f"{base_url}/api/v1/systems"

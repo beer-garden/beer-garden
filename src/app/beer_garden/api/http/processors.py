@@ -2,6 +2,7 @@
 import logging
 
 import beer_garden.api.http
+import beer_garden.config as config
 from beer_garden.api.http.handlers.v1.event import EventSocket
 
 logger = logging.getLogger(__name__)
@@ -19,6 +20,9 @@ class EventManager:
 
 def websocket_publish(event):
     """Publish an event to all websocket endpoints"""
+    if event.garden != config.get("garden.name") or event.error:
+        return
+
     try:
         beer_garden.api.http.io_loop.add_callback(EventSocket.publish, event)
     except Exception as ex:

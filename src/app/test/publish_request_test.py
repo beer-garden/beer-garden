@@ -1,16 +1,26 @@
 import pytest
-from mock import Mock
 from brewtils.models import (
+    Command,
     Event,
     Events,
     Garden,
-    System,
-    Command,
-    Request,
     Instance,
+    Request,
     Subscriber,
+    System,
+    Topic,
 )
-from beer_garden import publish_request
+from mock import Mock
+
+from beer_garden import config, publish_request
+from beer_garden.db.mongo.models import Topic as DB_Topic
+from beer_garden.topic import create_topic
+
+
+@pytest.fixture(autouse=True)
+def drop():
+    yield
+    DB_Topic.drop_collection()
 
 
 @pytest.fixture
@@ -19,24 +29,24 @@ def command_topic_one():
 
 
 @pytest.fixture
-def command_topic_one_and_two():
-    return Command(name="command_one_topic", topics=["topic_1", "topic_2"])
+def command_topic_two():
+    return Command(name="command_two_topic", topics=["topic_1", "topic_2"])
 
 
 @pytest.fixture
 def command_topic_any():
-    return Command(name="command_one_topic", topics=["topic.*"])
+    return Command(name="command_any_topic", topics=["topic.*"])
 
 
 @pytest.fixture
-def localgarden_system(command_topic_one, command_topic_one_and_two, command_topic_any):
+def localgarden_system(command_topic_one, command_topic_two, command_topic_any):
     return System(
         name="localsystem",
         version="1.2.3",
         namespace="localgarden",
         local=True,
         instances=[Instance(name="default", status="RUNNING")],
-        commands=[command_topic_one, command_topic_one_and_two, command_topic_any],
+        commands=[command_topic_one, command_topic_two, command_topic_any],
     )
 
 
@@ -47,117 +57,238 @@ def localgarden(localgarden_system):
     )
 
 
-class TestSubscriptionEvent(object):
-    def test_newtopic(self, monkeypatch, localgarden):
-        mock_process_request = Mock(return_value=None)
-        monkeypatch.setattr(publish_request, "process_request", mock_process_request)
-        monkeypatch.setattr(publish_request, "get_gardens", Mock(return_value=[]))
-        monkeypatch.setattr(
-            publish_request, "local_garden", Mock(return_value=localgarden)
-        )
-
-        event = Event(
-            name=Events.REQUEST_TOPIC_PUBLISH.name,
-            metadata={"propagate": False, "topic": "newtopic"},
-            payload=Request(),
-        )
-        subscribers = [
-            Subscriber(
-                garden="localgarden",
-                system="localsystem",
-                version="1.2.3",
-                namespace="localgarden",
-                command="command_one_topic",
-                instance="default",
+@pytest.fixture
+def topics():
+    return [
+        create_topic(
+            Topic(
+                name="topic_1",
+                subscribers=[
+                    Subscriber(
+                        garden="localgarden",
+                        namespace="localgarden",
+                        system="localsystem",
+                        version="1.2.3",
+                        instance="default",
+                        command="command_one_topic",
+                        subscriber_type="DYNAMIC",
+                    ),
+                    Subscriber(
+                        garden="localgarden",
+                        namespace="localgarden",
+                        system="localsystem",
+                        version="1.2.3",
+                        instance="default",
+                        command="command_two_topic",
+                        subscriber_type="DYNAMIC",
+                    ),
+                ],
             )
-        ]
-        publish_request.process_publish_event(
-            localgarden, event, subscribers=subscribers
-        )
+        ),
+        create_topic(
+            Topic(
+                name="topic_2",
+                subscribers=[
+                    Subscriber(
+                        garden="localgarden",
+                        namespace="localgarden",
+                        system="localsystem",
+                        version="1.2.3",
+                        instance="default",
+                        command="command_two_topic",
+                        subscriber_type="DYNAMIC",
+                    )
+                ],
+            )
+        ),
+        create_topic(
+            Topic(
+                name="topic.*",
+                subscribers=[
+                    Subscriber(
+                        garden=".*",
+                        namespace=None,
+                        system="",
+                        version="1.2.\\d+",
+                        instance="def.*",
+                        command="command_any_topic",
+                        subscriber_type="DYNAMIC",
+                    )
+                ],
+            )
+        ),
+    ]
 
-        assert mock_process_request.call_count == 3
 
-    def test_topic_one(self, monkeypatch, localgarden):
+class TestSubscriptionEvent(object):
+    def test_newtopic(self, monkeypatch, topics, localgarden):
         mock_process_request = Mock(return_value=None)
         monkeypatch.setattr(publish_request, "process_request", mock_process_request)
-        monkeypatch.setattr(publish_request, "get_gardens", Mock(return_value=[]))
+        monkeypatch.setattr(
+            publish_request, "get_all_topics", Mock(return_value=topics)
+        )
         monkeypatch.setattr(
             publish_request, "local_garden", Mock(return_value=localgarden)
         )
 
+        config._CONFIG = {"garden": {"name": localgarden.name}}
         event = Event(
             name=Events.REQUEST_TOPIC_PUBLISH.name,
-            metadata={"propagate": False, "topic": "topic_1"},
+            metadata={"_propagate": False, "topic": "newtopic"},
+            garden=localgarden.name,
             payload=Request(),
         )
-        publish_request.process_publish_event(localgarden, event)
 
-        assert mock_process_request.call_count == 3
+        publish_request.handle_event(event)
 
-    def test_topic_two(self, monkeypatch, localgarden):
+        assert mock_process_request.call_count == 0
+
+    def test_topic_one(self, monkeypatch, topics, localgarden):
         mock_process_request = Mock(return_value=None)
         monkeypatch.setattr(publish_request, "process_request", mock_process_request)
-        monkeypatch.setattr(publish_request, "get_gardens", Mock(return_value=[]))
+
+        monkeypatch.setattr(
+            publish_request, "get_all_topics", Mock(return_value=topics)
+        )
         monkeypatch.setattr(
             publish_request, "local_garden", Mock(return_value=localgarden)
         )
+        config._CONFIG = {"garden": {"name": localgarden.name}}
 
         event = Event(
             name=Events.REQUEST_TOPIC_PUBLISH.name,
-            metadata={"propagate": False, "topic": "topic_2"},
+            metadata={"_propagate": False, "topic": "topic_1"},
+            garden=localgarden.name,
             payload=Request(),
         )
-        publish_request.process_publish_event(localgarden, event)
+        publish_request.handle_event(event)
+
+        assert mock_process_request.call_count == 3
+
+    def test_topic_two(self, monkeypatch, topics, localgarden):
+        mock_process_request = Mock(return_value=None)
+        monkeypatch.setattr(publish_request, "process_request", mock_process_request)
+        monkeypatch.setattr(
+            publish_request, "get_all_topics", Mock(return_value=topics)
+        )
+        monkeypatch.setattr(
+            publish_request, "local_garden", Mock(return_value=localgarden)
+        )
+        config._CONFIG = {"garden": {"name": localgarden.name}}
+
+        event = Event(
+            name=Events.REQUEST_TOPIC_PUBLISH.name,
+            metadata={"_propagate": False, "topic": "topic_2"},
+            garden=localgarden.name,
+            payload=Request(),
+        )
+        publish_request.handle_event(event)
 
         assert mock_process_request.call_count == 2
 
-    def test_topic_wildcard(self, monkeypatch, localgarden):
+    def test_topic_wildcard(self, monkeypatch, topics, localgarden):
         mock_process_request = Mock(return_value=None)
         monkeypatch.setattr(publish_request, "process_request", mock_process_request)
-        monkeypatch.setattr(publish_request, "get_gardens", Mock(return_value=[]))
+        monkeypatch.setattr(
+            publish_request, "get_all_topics", Mock(return_value=topics)
+        )
         monkeypatch.setattr(
             publish_request, "local_garden", Mock(return_value=localgarden)
         )
+        config._CONFIG = {"garden": {"name": localgarden.name}}
 
         event = Event(
             name=Events.REQUEST_TOPIC_PUBLISH.name,
-            metadata={"propagate": False, "topic": "topic_3"},
+            metadata={"_propagate": False, "topic": "topic_3"},
+            garden=localgarden.name,
             payload=Request(),
         )
-        publish_request.process_publish_event(localgarden, event)
+        publish_request.handle_event(event)
 
         assert mock_process_request.call_count == 1
 
-    def test_topic_start_substring(self, monkeypatch, localgarden):
+    def test_topic_start_substring(self, monkeypatch, topics, localgarden):
         mock_process_request = Mock(return_value=None)
         monkeypatch.setattr(publish_request, "process_request", mock_process_request)
-        monkeypatch.setattr(publish_request, "get_gardens", Mock(return_value=[]))
+        monkeypatch.setattr(
+            publish_request, "get_all_topics", Mock(return_value=topics)
+        )
         monkeypatch.setattr(
             publish_request, "local_garden", Mock(return_value=localgarden)
         )
+        config._CONFIG = {"garden": {"name": localgarden.name}}
 
         event = Event(
             name=Events.REQUEST_TOPIC_PUBLISH.name,
-            metadata={"propagate": False, "topic": "topic"},
+            metadata={"_propagate": False, "topic": "topic"},
+            garden=localgarden.name,
             payload=Request(),
         )
-        publish_request.process_publish_event(localgarden, event)
+        publish_request.handle_event(event)
 
         assert mock_process_request.call_count == 1
 
-    def test_topic_non_match(self, monkeypatch, localgarden):
+    def test_topic_non_match(self, monkeypatch, topics, localgarden):
         mock_process_request = Mock(return_value=None)
         monkeypatch.setattr(publish_request, "process_request", mock_process_request)
-        monkeypatch.setattr(publish_request, "get_gardens", Mock(return_value=[]))
+        monkeypatch.setattr(
+            publish_request, "get_all_topics", Mock(return_value=topics)
+        )
         monkeypatch.setattr(
             publish_request, "local_garden", Mock(return_value=localgarden)
         )
+        config._CONFIG = {"garden": {"name": localgarden.name}}
 
         event = Event(
             name=Events.REQUEST_TOPIC_PUBLISH.name,
-            metadata={"propagate": False, "topic": "badTopic"},
+            metadata={"_propagate": False, "topic": "badTopic"},
+            garden=localgarden.name,
             payload=Request(),
         )
-        publish_request.process_publish_event(localgarden, event)
+        publish_request.handle_event(event)
 
         assert mock_process_request.call_count == 0
+
+    def test_topic_one_not_local(self, monkeypatch, topics, localgarden):
+        mock_process_request = Mock(return_value=None)
+        monkeypatch.setattr(publish_request, "process_request", mock_process_request)
+
+        monkeypatch.setattr(
+            publish_request, "get_all_topics", Mock(return_value=topics)
+        )
+        monkeypatch.setattr(
+            publish_request, "local_garden", Mock(return_value=localgarden)
+        )
+        config._CONFIG = {"garden": {"name": localgarden.name}}
+
+        event = Event(
+            name=Events.REQUEST_TOPIC_PUBLISH.name,
+            metadata={"_propagate": False, "topic": "topic_1"},
+            garden="remote_garden",
+            payload=Request(),
+        )
+        publish_request.handle_event(event)
+
+        assert mock_process_request.call_count == 0
+
+    def test_topic_one_not_local_propagate(self, monkeypatch, topics, localgarden):
+        mock_process_request = Mock(return_value=None)
+        monkeypatch.setattr(publish_request, "process_request", mock_process_request)
+
+        monkeypatch.setattr(
+            publish_request, "get_all_topics", Mock(return_value=topics)
+        )
+        monkeypatch.setattr(
+            publish_request, "local_garden", Mock(return_value=localgarden)
+        )
+        config._CONFIG = {"garden": {"name": localgarden.name}}
+
+        event = Event(
+            name=Events.REQUEST_TOPIC_PUBLISH.name,
+            metadata={"_propagate": True, "topic": "topic_1"},
+            garden="remote_garden",
+            payload=Request(),
+        )
+        publish_request.handle_event(event)
+
+        assert mock_process_request.call_count == 3

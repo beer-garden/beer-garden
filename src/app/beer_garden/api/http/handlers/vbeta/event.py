@@ -1,12 +1,15 @@
+from brewtils.models import Permissions
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.api.http.base_handler import BaseHandler
+from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.events import publish
+from beer_garden.metrics import collect_metrics
 
 
-class EventPublisherAPI(BaseHandler):
+class EventPublisherAPI(AuthorizationHandler):
     parser = SchemaParser()
 
+    @collect_metrics(transaction_type="API", group="EventPublisherAPI")
     def post(self):
         """
         ---
@@ -32,6 +35,9 @@ class EventPublisherAPI(BaseHandler):
         tags:
           - Event
         """
-        publish(SchemaParser.parse_event(self.request.decoded_body, from_string=True))
+        self.minimum_permission = Permissions.OPERATOR.name
+        event = SchemaParser.parse_event(self.request.decoded_body, from_string=True)
+        self.verify_user_permission_for_object(event)
+        publish(event)
 
         self.set_status(204)

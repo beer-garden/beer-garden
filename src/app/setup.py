@@ -31,8 +31,7 @@ setup(
         "apispec<0.39",
         "apscheduler<4",
         "python-box>=3.3.0",
-        "brewtils>=3.26.2",
-        "ldap3>=2.9.1",
+        "brewtils>=3.27.2",
         "marshmallow<3",
         "mongoengine<0.21",
         "more-itertools<9",
@@ -49,8 +48,10 @@ setup(
         "tornado<7",
         "urllib3<2",
         "watchdog>2.1.0",
-        "wrapt<=1.15.0",
+        "wrapt",
         "yapconf>=1.0.0",
+        "elastic-apm",
+        "ldap3>=2.9.1"
     ],
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -60,6 +61,10 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
     ],
     entry_points={
         "console_scripts": [

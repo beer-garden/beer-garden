@@ -5,7 +5,6 @@ import logging
 
 import pytz
 import six
-from passlib.apps import custom_app_context
 
 try:
     from lark import ParseError
@@ -14,14 +13,12 @@ except ImportError:
     from lark.common import ParseError
 
     LarkError = ParseError
-from typing import Optional, Tuple
+from typing import Tuple
 
 import brewtils.models
 from brewtils.choices import parse
 from brewtils.errors import ModelValidationError, RequestStatusTransitionError
 from brewtils.models import Command as BrewtilsCommand
-from brewtils.models import Event as BrewtilsEvent
-from brewtils.models import Events as BrewtilsEvents
 from brewtils.models import Instance as BrewtilsInstance
 from brewtils.models import Job as BrewtilsJob
 from brewtils.models import Parameter as BrewtilsParameter
@@ -46,19 +43,18 @@ from mongoengine import (
     ObjectIdField,
     ReferenceField,
     StringField,
-    UUIDField,
-    ValidationError,
 )
 from mongoengine.errors import DoesNotExist
 
 from beer_garden import config
 from beer_garden.db.mongo.querysets import FileFieldHandlingQuerySet
 
-from .fields import DummyField, StatusInfo
-from .validators import validate_permissions
+from .fields import DummyField
 
 __all__ = [
     "System",
+    "StatusHistory",
+    "StatusInfo",
     "Instance",
     "Command",
     "Connection",
@@ -66,25 +62,23 @@ __all__ = [
     "Request",
     "Choices",
     "Event",
-    "Principal",
-    "LegacyRole",
     "UserToken",
     "Job",
     "RequestTemplate",
     "DateTrigger",
     "CronTrigger",
     "IntervalTrigger",
+    "FileTrigger",
     "Garden",
     "File",
     "FileChunk",
     "Role",
-    "RemoteRole",
-    "RoleAssignment",
+    "UpstreamRole",
+    "AliasUserMap",
     "User",
-    "RemoteUser",
-    "CommandPublishingBlocklist",
     "Topic",
     "Subscriber",
+    "Replication",
 ]
 
 REQUEST_MAX_PARAM_SIZE = 5 * 1_000_000
@@ -275,6 +269,20 @@ class Command(MongoModel, EmbeddedDocument):
             )
 
 
+class StatusHistory(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.StatusHistory
+
+    heartbeat = DateTimeField()
+    status = StringField()
+
+
+class StatusInfo(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.StatusInfo
+
+    heartbeat = DateTimeField()
+    history = EmbeddedDocumentListField("StatusHistory")
+
+
 def generate_objectid():
     return ObjectIdField().to_python(None)
 
@@ -287,7 +295,7 @@ class Instance(MongoModel, EmbeddedDocument):
     name = StringField(required=True, default="default")
     description = StringField()
     status = StringField(default="INITIALIZING")
-    status_info = EmbeddedDocumentField("StatusInfo", default=StatusInfo())
+    status_info = EmbeddedDocumentField("StatusInfo")
     queue_type = StringField()
     queue_info = DictField()
     icon_name = StringField()
@@ -501,8 +509,20 @@ class Request(MongoModel, Document):
             )
 
     def _post_save(self):
-        if self.status == "CREATED" and self.namespace == config.get("garden.name"):
-            self._update_raw_file_references()
+        if self.status == "CREATED":
+            if self.target_garden and self.target_garden == config.get("garden.name"):
+                self._update_raw_file_references()
+            else:
+                try:
+                    ref_system = System.objects.get(
+                        namespace=self.namespace,
+                        name=self.system,
+                        version=self.system_version,
+                    )
+                    if ref_system.local:
+                        self._update_raw_file_references()
+                except DoesNotExist:
+                    pass
 
     def _update_raw_file_references(self):
         parameters = self.parameters or {}
@@ -611,6 +631,8 @@ class Subscriber(MongoModel, EmbeddedDocument):
     version = StringField()
     instance = StringField()
     command = StringField()
+    subscriber_type = StringField()
+    consumer_count = IntField(default=0)
 
 
 class Topic(MongoModel, Document):
@@ -618,6 +640,7 @@ class Topic(MongoModel, Document):
 
     name = StringField(required=True)
     subscribers = EmbeddedDocumentListField("Subscriber")
+    publisher_count = IntField(default=0)
 
     meta = {
         "auto_create_index": True,  # We need to manage this ourselves
@@ -642,6 +665,9 @@ class System(MongoModel, Document):
     local = BooleanField(default=True)
     template = StringField()
     groups = ListField(field=StringField())
+    prefix_topic = StringField()
+    requires = ListField(field=StringField())
+    requires_timeout = IntField(default=300)
 
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves
@@ -683,36 +709,6 @@ class Event(MongoModel, Document):
     error = BooleanField()
     metadata = DictField()
     timestamp = DateTimeField()
-
-
-class LegacyRole(MongoModel, Document):
-    brewtils_model = brewtils.models.LegacyRole
-
-    name = StringField(required=True)
-    description = StringField()
-    permissions = ListField(field=StringField())
-
-    meta = {
-        "auto_create_index": False,  # We need to manage this ourselves
-        "index_background": True,
-        "indexes": [{"name": "unique_index", "fields": ["name"], "unique": True}],
-    }
-
-
-class Principal(MongoModel, Document):
-    brewtils_model = brewtils.models.Principal
-
-    username = StringField(required=True)
-    hash = StringField()
-    roles = ListField(field=ReferenceField("LegacyRole", reverse_delete_rule=PULL))
-    preferences = DictField()
-    metadata = DictField()
-
-    meta = {
-        "auto_create_index": False,  # We need to manage this ourselves
-        "index_background": True,
-        "indexes": [{"name": "unique_index", "fields": ["username"], "unique": True}],
-    }
 
 
 class RequestTemplate(MongoModel, EmbeddedDocument):
@@ -761,6 +757,31 @@ class CronTrigger(MongoModel, EmbeddedDocument):
     jitter = IntField(required=False)
 
 
+class FileTrigger(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.FileTrigger
+
+    path = StringField(required=True)
+    pattern = StringField(required=False)
+    recursive = BooleanField(default=False)
+    create = BooleanField(default=False)
+    modify = BooleanField(default=False)
+    move = BooleanField(default=False)
+    delete = BooleanField(default=False)
+
+
+class Replication(MongoModel, Document):
+    brewtils_model = brewtils.models.Replication
+
+    replication_id = StringField(required=True)
+    expires_at = DateTimeField(required=True)
+
+    meta = {
+        "indexes": [
+            {"fields": ["expires_at"], "expireAfterSeconds": 0},
+        ],
+    }
+
+
 class Job(MongoModel, Document):
     brewtils_model = brewtils.models.Job
 
@@ -788,6 +809,7 @@ class Job(MongoModel, Document):
         "date": DateTrigger,
         "cron": CronTrigger,
         "interval": IntervalTrigger,
+        "file": FileTrigger,
     }
 
     name = StringField(required=True)
@@ -828,7 +850,7 @@ class Connection(MongoModel, EmbeddedDocument):
 
     api = StringField(required=True)
     status = StringField(default="UNKOWN")
-    status_info = EmbeddedDocumentField("StatusInfo", default=StatusInfo())
+    status_info = EmbeddedDocumentField("StatusInfo")
     config = DictField()
 
 
@@ -837,7 +859,7 @@ class Garden(MongoModel, Document):
 
     name = StringField(required=True, default="default")
     status = StringField(default="INITIALIZING")
-    status_info = EmbeddedDocumentField("StatusInfo", default=StatusInfo())
+    status_info = EmbeddedDocumentField("StatusInfo")
     namespaces = ListField()
 
     connection_type = StringField(required=False)
@@ -851,7 +873,12 @@ class Garden(MongoModel, Document):
     children = DummyField(required=False)
     has_parent = BooleanField(required=False, default=False)
 
+    default_user = StringField(required=False)
+    shared_users = BooleanField(required=False, default=False)
+
     metadata = DictField()
+
+    version = StringField(required=True, default="0.0.0")
 
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves
@@ -992,22 +1019,21 @@ class RawFile(Document):
     meta = {"queryset_class": FileFieldHandlingQuerySet}
 
 
-class CommandPublishingBlocklist(Document):
-    namespace = StringField(required=True)
-    system = StringField(required=True)
-    command = StringField(required=True)
-    status = StringField(required=False)
+class Role(MongoModel, Document):
+    brewtils_model = brewtils.models.Role
 
-    meta = {
-        "indexes": [{"fields": ["namespace", "system", "command"], "unique": True}],
-    }
-
-
-class Role(Document):
-    name = StringField(required=True)
+    name = StringField()
     description = StringField()
-    permissions = ListField(field=StringField(), validation=validate_permissions)
+    permission = StringField()
+    scope_gardens = ListField(field=StringField())
+    scope_namespaces = ListField(field=StringField())
+    scope_systems = ListField(field=StringField())
+    scope_instances = ListField(field=StringField())
+    scope_versions = ListField(field=StringField())
+    scope_commands = ListField(field=StringField())
+
     protected = BooleanField(default=False)
+    file_generated = BooleanField(required=True, default=False)
 
     meta = {
         "indexes": [{"name": "unique_index", "fields": ["name"], "unique": True}],
@@ -1016,215 +1042,108 @@ class Role(Document):
     def __str__(self) -> str:
         return self.name
 
-    def save(self, publish: bool = True, *args, **kwargs):
-        """The regular mongoengine Document save(), with an optional event published
-        about the update.
+    def clean(self):
+        """Validate before saving to the database"""
 
-        Args:
-            publish: Whether or not to publish an event after the save. Default: True
-
-        Returns:
-            Role: The saved Role (self)
-        """
-        super().save(*args, **kwargs)
-
-        if publish:
-            self._publish_role_updated()
-
-        return self
-
-    def _publish_role_updated(self):
-        """Publish an event with the updated role information"""
-        # We use publish rather than publish_event here so that we can hijack the
-        # metadata field to store our actual data. This is done to avoid needing to deal
-        # in brewtils models, which the publish_event decorator requires us to do.
-        from beer_garden.events import publish
-
-        publish(
-            BrewtilsEvent(
-                name=BrewtilsEvents.ROLE_UPDATED.name,
-                metadata={
-                    "garden": config.get("garden.name"),
-                    "role": {
-                        "name": self.name,
-                        "description": self.description,
-                        "permissions": self.permissions,
-                    },
-                },
+        if self.permission not in brewtils.models.Role.PERMISSION_TYPES:
+            raise ModelValidationError(
+                f"Cannot save Role. No permission type {self.permission}"
             )
-        )
 
 
-class RemoteRole(Document):
-    name = StringField(required=True)
-    garden = StringField(required=True)
+class UpstreamRole(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.UpstreamRole
+
+    name = StringField()
     description = StringField()
-    permissions = ListField(field=StringField(), required=False)
-    updated_at = DateTimeField(required=True, default=datetime.datetime.utcnow)
+    permission = StringField()
+    scope_gardens = ListField(field=StringField())
+    scope_namespaces = ListField(field=StringField())
+    scope_systems = ListField(field=StringField())
+    scope_instances = ListField(field=StringField())
+    scope_versions = ListField(field=StringField())
+    scope_commands = ListField(field=StringField())
 
-    meta = {
-        "indexes": [
-            {"fields": ["name"]},
-            {"fields": ["garden", "name"], "unique": True},
-        ],
-    }
+    protected = BooleanField(default=False)
+    file_generated = BooleanField(required=True, default=False)
 
-    def __str__(self):
-        return f"{self.garden}:{self.name}"
-
-
-class RoleAssignmentDomain(EmbeddedDocument):
-    scope = StringField(required=True, choices=["Garden", "Global", "System"])
-    identifiers = DictField(required=False)
-
-    def _ensure_identifiers_are_present(self):
-        if self.identifiers == {} and self.scope != "Global":
-            raise ValidationError(
-                "identifiers field is required for all scopes other than Global"
-            )
-
-    def _remove_empty_identifiers(self):
-        for key in list(self.identifiers.keys()):
-            value = self.identifiers[key]
-            if value is None or value.strip() == "":
-                _ = self.identifiers.pop(key)
+    def __str__(self) -> str:
+        return self.name
 
     def clean(self):
-        self._remove_empty_identifiers()
-        self._ensure_identifiers_are_present()
+        """Validate before saving to the database"""
+
+        if self.permission not in brewtils.models.Role.PERMISSION_TYPES:
+            raise ModelValidationError(
+                f"Cannot save Role. No permission type {self.permission}"
+            )
 
 
-class RoleAssignment(EmbeddedDocument):
-    domain = EmbeddedDocumentField(RoleAssignmentDomain, required=True)
-    role = ReferenceField("Role", required=True)
+class AliasUserMap(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.AliasUserMap
+
+    target_garden = StringField()
+    username = StringField()
 
 
-class User(Document):
+class User(MongoModel, Document):
+    brewtils_model = brewtils.models.User
+
     username = StringField(required=True)
     password = StringField()
-    role_assignments = EmbeddedDocumentListField("RoleAssignment")
+    roles = ListField(field=StringField())
+    local_roles = DummyField(required=False)
+    upstream_roles = EmbeddedDocumentListField("UpstreamRole")
+    is_remote = BooleanField(required=True, default=False)
+    user_alias_mapping = EmbeddedDocumentListField("AliasUserMap")
+    metadata = DictField()
+    protected = BooleanField(required=True, default=False)
+    file_generated = BooleanField(required=True, default=False)
 
     meta = {
         "indexes": [{"name": "unique_index", "fields": ["username"], "unique": True}],
     }
 
-    _permissions_cache: Optional[dict] = None
+    # _permissions_cache: Optional[dict] = None
+
+    def save(self, *args, **kwargs):
+        if self.local_roles:
+            for local_role in self.local_roles:
+                if local_role.name not in self.roles:
+                    self.roles.append(local_role.name)
+
+        if self.roles:
+            for role in self.roles:
+                try:
+                    Role.objects.get(name=role)
+                except DoesNotExist:
+                    raise ModelValidationError(f"Local Role '{role}' does not exist")
+
+        return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return self.username
 
-    @property
-    def permissions(self) -> dict:
-        """Return the user's permissions organized by permission name. This is
-        calculated via beer_garden.authorization.permissions_for_user and is cached on
-        the User object to avoid unnecessary recalculation.
-
-        Returns:
-            dict: The user's permissions organized by permission name
-        """
-        from beer_garden.authorization import permissions_for_user
-
-        if self._permissions_cache is None:
-            self._permissions_cache = permissions_for_user(self)
-
-        return self._permissions_cache
-
-    @property
-    def domain_permissions(self) -> dict:
-        """Returns the domain_permissions portion of self.permissions"""
-        return self.permissions["domain_permissions"]
-
-    @property
-    def global_permissions(self) -> dict:
-        """Returns the global_permissions portion of self.permissions"""
-        return self.permissions["global_permissions"]
-
-    def clear_permissions_cache(self) -> None:
-        """Clear the cached permission set for the user. This is useful if the user's
-        role assignments have been changed and you want to perform a permission check
-        using those new role assignments without reloading the entire user object.
-        """
-        self._permissions_cache = None
-
-    def set_permissions_cache(self, permissions: dict) -> None:
-        """Manually set the cached permission set for the user. This cache is typically
-        set and checked by the permissions property method. In cases where those
-        permissions are externally sourced (such as an access token in a web request
-        that was provided via initial authentication), this method can be used to
-        manually set the _permissions_cache value so that subsequent calls to
-        permissions related helper functions do not unnecessarily recalculate the user
-        permissions.
-
-        Args:
-            permissions: A dictionary containing the user's permissions. The format
-                should match the one produced by permissions_for_user in
-                beer_garden.authorization
-
-        Returns:
-            None
-        """
-        self._permissions_cache = permissions
-
-    def set_password(self, password: str):
-        """This helper should be used to set the user's password, rather than directly
-        assigning a value. This ensures that the password is stored as a hash rather
-        than in plain text
-
-        Args:
-            password: String to set as the user's password.
-
-        Returns:
-            None
-        """
-        self.password = custom_app_context.hash(password)
-
-    def verify_password(self, password: str):
-        """Checks the provided plaintext password against thea user's stored password
-        hash
-
-        Args:
-            password: Plaintext string to check against user's password"
-
-        Returns:
-            bool: True if the password matches, False otherwise
-        """
-        return custom_app_context.verify(password, self.password)
-
-    def revoke_tokens(self) -> None:
-        """Remove all tokens from the user's list of valid tokens. This is useful for
-        requiring the user to explicitly login, which one may want to do for a variety
-        of reasons.
-        """
-        UserToken.objects.filter(user=self).delete()
+    def delete(self, *args, **kwargs):
+        try:
+            UserToken.objects.get(username=self.username).delete()
+        except DoesNotExist:
+            pass
+        return super().delete(*args, **kwargs)
 
 
-class UserToken(Document):
+class UserToken(MongoModel, Document):
+    brewtils_model = brewtils.models.UserToken
+
     issued_at = DateTimeField(required=True, default=datetime.datetime.utcnow)
     expires_at = DateTimeField(required=True)
-    user = LazyReferenceField("User", required=True, reverse_delete_rule=CASCADE)
-    uuid = UUIDField(binary=False, required=True, unique="True")
+    username = StringField()
+    uuid = StringField()
 
     meta = {
         "indexes": [
-            "user",
+            "username",
             "uuid",
             {"fields": ["expires_at"], "expireAfterSeconds": 0},
         ]
     }
-
-
-class RemoteUser(Document):
-    username = StringField(required=True)
-    garden = StringField(required=True)
-    role_assignments = ListField(field=DictField(), required=False)
-    updated_at = DateTimeField(required=True, default=datetime.datetime.utcnow)
-
-    meta = {
-        "indexes": [
-            {"fields": ["username"]},
-            {"fields": ["garden", "username"], "unique": True},
-        ],
-    }
-
-    def __str__(self):
-        return f"{self.garden}:{self.username}"

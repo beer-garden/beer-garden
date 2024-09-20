@@ -9,14 +9,19 @@ The metrics service manages:
 
 import datetime
 import logging
+import re
 from http.server import ThreadingHTTPServer
 
-from brewtils.models import Request
+import elasticapm
+import wrapt
+from brewtils.models import Operation, Request
 from brewtils.stoppable_thread import StoppableThread
+from elasticapm import Client
 from prometheus_client import Counter, Gauge, Summary
 from prometheus_client.exposition import MetricsHandler
 from prometheus_client.registry import REGISTRY
 
+import beer_garden.config as config
 import beer_garden.db.api as db
 
 
@@ -155,3 +160,103 @@ def request_completed(request):
 
     completed_request_counter.labels(**labels).inc()
     plugin_command_latency.labels(**labels).observe(latency)
+
+
+def initialize_elastic_client(label: str):
+    """Initializes the Elastic APM client connection
+
+    Args:
+        label (str): Name of services being tracked
+    """
+    if config.get("metrics.elastic.enabled"):
+        Client(
+            {
+                "SERVICE_NAME": (
+                    f"{re.sub(r'[^a-zA-Z0-9 _-]', '', config.get('garden.name'))}"
+                    f"-{label}"
+                ),
+                "ELASTIC_APM_SERVER_URL": config.get("metrics.elastic.url"),
+            }
+        )
+
+
+def extract_custom_context(result) -> None:
+    """Extracts values from models to be tracked in the custom context fields
+
+    Args:
+        result: Any object to be tracked
+    """
+    custom_context = {}
+
+    if isinstance(result, Operation):
+        if hasattr(result, "payload"):
+            return extract_custom_context(result.payload)
+    elif isinstance(result, Request):
+        if result.metadata:
+            for key, value in result.metadata.items():
+                custom_context[key] = value
+    if hasattr(result, "id"):
+        custom_context["id"] = result.id
+
+    if custom_context:
+        elasticapm.set_custom_context(custom_context)
+
+
+def collect_metrics(transaction_type: str = None, group: str = None):
+    """Decorator that will result in the function being audited for metrics
+
+    Args:
+        transaction_type: Type of transaction that is being recorded
+        group: Grouping label to prepend function name
+
+    Raises:
+        Any: If the underlying function raised an exception it will be re-raised
+
+    Returns:
+        Any: The wrapped function result
+    """
+
+    @wrapt.decorator
+    def wrapper(wrapped, class_obj, args, kwargs):
+        client = None
+
+        if config.get("metrics.elastic.enabled"):
+            if args and isinstance(args[0], Operation):
+                transaction_label = args[0].operation_type
+            elif group:
+                transaction_label = f"{group} - {wrapped.__name__}"
+            else:
+                transaction_label = f"{wrapped.__name__}"
+
+            client = elasticapm.get_client()
+            if client:
+                trace_id = elasticapm.get_trace_id()
+                client.begin_transaction(
+                    transaction_type=transaction_type,
+                    trace_parent=trace_id if trace_id else elasticapm.get_span_id(),
+                )
+                elasticapm.set_transaction_name(transaction_label)
+
+                if hasattr(class_obj, "get_current_user"):
+                    current_user = class_obj.get_current_user()
+                    if current_user:
+                        elasticapm.set_user_context(
+                            username=current_user.username, user_id=current_user.id
+                        )
+
+        try:
+            result = wrapped(*args, **kwargs)
+
+            if client:
+                extract_custom_context(result)
+                client.end_transaction(result="success")
+
+            return result
+        except Exception:
+
+            if client:
+                client.capture_exception()
+                client.end_transaction(transaction_label, "failure")
+            raise
+
+    return wrapper

@@ -145,6 +145,13 @@ def handle_event(event: Event) -> None:
         elif event.name == Events.INSTANCE_STOPPED.name:
             lpm_proxy.handle_stopped(event)
 
+        elif (
+            event.name == Events.ENTRY_STARTED.name
+            and event.metadata["entry_point_type"] == "HTTP"
+        ):
+            # Start local plugins after the HTTP entry point comes up
+            rescan()
+
 
 def flatten_kwargs(kwargs: dict) -> list:
     return [f"{k}={v}" for k, v in kwargs.items()]
@@ -689,6 +696,16 @@ class PluginManager(StoppableThread):
         if plugin_args is not None:
             process_args += plugin_args
 
+        if plugin_config.get("REQUIRES"):
+            plugin_requires = plugin_config["REQUIRES"]
+            if plugin_requires is not None:
+                process_args += ["--requires=" + arg for arg in plugin_requires]
+
+        if plugin_config.get("REQUIRES_TIMEOUT"):
+            plugin_requires_timeout = plugin_config["REQUIRES_TIMEOUT"]
+            if plugin_requires_timeout is not None:
+                process_args += ["--requires_timeout=" + str(plugin_requires_timeout)]
+
         if plugin_config["AUTO_BREW_ARGS"]:
             plugin_auto_args = plugin_config["AUTO_BREW_ARGS"].get(instance_name)
             if plugin_auto_args is not None:
@@ -697,9 +714,7 @@ class PluginManager(StoppableThread):
         if plugin_config["AUTO_BREW_KWARGS"]:
             plugin_auto_kwargs = plugin_config["AUTO_BREW_KWARGS"].get(instance_name)
             if plugin_auto_kwargs is not None:
-                process_args += [
-                    f"KWARG={k}={v}" for k, v in plugin_auto_kwargs.items()
-                ]
+                process_args += [f"KWARG={k}" for k in plugin_auto_kwargs]
 
         return process_args
 
@@ -732,10 +747,16 @@ class PluginManager(StoppableThread):
                 "BG_INSTANCE_NAME": instance_name,
                 "BG_RUNNER_ID": runner_id,
                 "BG_PLUGIN_PATH": plugin_path.resolve(),
-                "BG_USERNAME": self._username,
-                "BG_PASSWORD": self._password,
             }
         )
+
+        if self._username and self._password:
+            env.update(
+                {
+                    "BG_USERNAME": self._username,
+                    "BG_PASSWORD": self._password,
+                }
+            )
 
         if "LOG_LEVEL" in plugin_config:
             env["BG_LOG_LEVEL"] = plugin_config["LOG_LEVEL"]
@@ -783,6 +804,9 @@ class ConfigKeys(Enum):
     AUTO_BREW_CLASS = 17
     AUTO_BREW_ARGS = 18
     AUTO_BREW_KWARGS = 19
+
+    REQUIRES = 20
+    REQUIRES_TIMEOUT = 21
 
 
 class ConfigLoader(object):
