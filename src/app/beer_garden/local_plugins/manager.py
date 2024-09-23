@@ -743,7 +743,7 @@ class PluginManager(StoppableThread):
 
         # System info comes from config file
         for key in _SYSTEM_SPEC:
-            key = key.upper():q
+            key = key.upper()
 
             if key in plugin_config:
                 env["BG_" + key] = plugin_config.get(key)
