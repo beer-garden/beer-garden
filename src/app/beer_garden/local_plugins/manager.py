@@ -824,7 +824,8 @@ class ConfigKeys(Enum):
 
     MAX_CONCURRENT = 22
 
-    GROUPS = 23
+    GROUP = 23
+    GROUPS = 24
 
 
 class ConfigLoader(object):
