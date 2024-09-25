@@ -53,12 +53,7 @@ from beer_garden.errors import (
     UnknownGardenException,
 )
 from beer_garden.events import publish
-from beer_garden.garden import (
-    get_garden,
-    get_gardens,
-    load_garden_file,
-    update_garden,
-)
+from beer_garden.garden import get_garden, get_gardens, load_garden_file, update_garden
 from beer_garden.metrics import collect_metrics
 from beer_garden.requests import complete_request, create_request
 
