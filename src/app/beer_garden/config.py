@@ -1704,7 +1704,7 @@ _CHILD_SPECIFICATION = {
         "description": (
             "If local users should be shared without filtering based on "
             "the scope of the Child Garden"
-            ),
+        ),
     },
     "http": {
         "type": "dict",
