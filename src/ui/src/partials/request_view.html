@@ -2,33 +2,43 @@
   <span>Request View</span>
   <span ng-if="responseState(response) === 'success'">
     <small>{{request.id}}</small>
+    <span class="pull-right" ng-if="!complete && hasRequestPermission('OPERATOR', request)">
+      <button
+      type="button"
+      ng-click="cancelRequest(request)"
+      class="btn btn-warning"
+      uib-popover="Cancel Request and Children Requests"
+      popover-animation="true"
+      popover-placement="left"
+      popover-trigger="'mouseenter'"
+      >
+        Cancel Request
+      </button>
+    </span>
     <span class="pull-right" ng-if="complete && hasRequestPermission('OPERATOR', request)">
       <button
       type="button"
-      ng-if="complete && hasRequestPermission('OPERATOR', request)"
       ng-click="deleteRequest(request)"
-      ng-disabled="disabledPourItAgain"
       class="btn btn-danger"
-      uib-popover="{{msgPourItAgain}}"
+      uib-popover="Delete Request and Children Requests"
       popover-animation="true"
       popover-placement="left"
       popover-trigger="'mouseenter'"
-    >
-      Delete Request
-    </button>
-    <button
-      type="button"
-      ng-if="complete && hasRequestPermission('OPERATOR', request)"
-      ng-click="redoRequest(request)"
-      ng-disabled="disabledPourItAgain"
-      class="btn btn-success"
-      uib-popover="{{msgPourItAgain}}"
-      popover-animation="true"
-      popover-placement="left"
-      popover-trigger="'mouseenter'"
-    >
-      Pour it Again
-    </button>
+      >
+        Delete Request
+      </button>
+      <button
+        type="button"
+        ng-click="redoRequest(request)"
+        ng-disabled="disabledPourItAgain"
+        class="btn btn-success"
+        uib-popover="{{msgPourItAgain}}"
+        popover-animation="true"
+        popover-placement="left"
+        popover-trigger="'mouseenter'"
+      >
+        Pour it Again
+      </button>
     </span>
     <small
       class="pull-right"

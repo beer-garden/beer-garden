@@ -290,7 +290,7 @@ export default function requestViewController(
   };
 
   $scope.cancelRequest = function(request) {
-    RequestService.cancelRequest({"id":request.id})
+    RequestService.cancelRequest(request.id)
   }
 
   $scope.deleteRequest = function(request) {
