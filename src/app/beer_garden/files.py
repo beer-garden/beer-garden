@@ -261,6 +261,7 @@ def _verify_chunks(file_id: str) -> FileStatus:
         expected_number_of_chunks=num_chunks,
         number_of_chunks=len(file.chunks),
         chunks_ok=length_ok,
+        md5_sum=file.md5_sum,
     )
 
 
