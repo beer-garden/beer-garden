@@ -25,6 +25,13 @@ export default function requestService($q, $http, $interval) {
     deleteRequests: (data) => {
       return $http.delete('api/v1/requests', {params: data});
     },
+    cancelRequest: (id) => {
+      return $http.patch('api/v1/requests/' + id, {
+        operation: 'replace',
+        path: '/status',
+        value: 'CANCELED',
+      });
+    },
   };
 
   _.assign(service, {

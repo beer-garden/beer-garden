@@ -2,12 +2,26 @@
   <span>Request View</span>
   <span ng-if="responseState(response) === 'success'">
     <small>{{request.id}}</small>
+    <span class="pull-right" ng-if="complete && hasRequestPermission('OPERATOR', request)">
+      <button
+      type="button"
+      ng-if="complete && hasRequestPermission('OPERATOR', request)"
+      ng-click="deleteRequest(request)"
+      ng-disabled="disabledPourItAgain"
+      class="btn btn-danger"
+      uib-popover="{{msgPourItAgain}}"
+      popover-animation="true"
+      popover-placement="left"
+      popover-trigger="'mouseenter'"
+    >
+      Delete Request
+    </button>
     <button
       type="button"
       ng-if="complete && hasRequestPermission('OPERATOR', request)"
       ng-click="redoRequest(request)"
       ng-disabled="disabledPourItAgain"
-      class="btn btn-success pull-right"
+      class="btn btn-success"
       uib-popover="{{msgPourItAgain}}"
       popover-animation="true"
       popover-placement="left"
@@ -15,6 +29,7 @@
     >
       Pour it Again
     </button>
+    </span>
     <small
       class="pull-right"
       ng-if="showInstanceStatus(request, instanceStatus)"

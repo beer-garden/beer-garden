@@ -289,6 +289,14 @@ export default function requestViewController(
     $scope.setWindowTitle();
   };
 
+  $scope.cancelRequest = function(request) {
+    RequestService.cancelRequest({"id":request.id})
+  }
+
+  $scope.deleteRequest = function(request) {
+    RequestService.deleteRequests({"id":request.id})
+  }
+
   $scope.redoRequest = function(request) {
     const newRequest = {
       system: request.system,
