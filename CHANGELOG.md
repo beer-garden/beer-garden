@@ -9,6 +9,7 @@ TBD
 - Fixed issue where using local systems with a Namespace not the Garden name would not be treated as a local
   Request for internal features
 - Added config option to import scheduled jobs file at startup
+- Added support to configure `alias_user_mappings` in the user configuration file
 
 # 3.27.2
 

@@ -77,6 +77,11 @@ def user_file_path(tmpdir):
 - username: "user4"
   roles:
     - "plugin_admin"
+  user_alias_mapping:
+    - target_garden: "foo"
+      username: "alt_plugin_admin"
+    - target_garden: "bar"
+      username: "alt_plugin_admin"
 """
 
     with open(user_file, "w") as f:
@@ -355,6 +360,8 @@ class TestUser:
         user4 = get_user(username="user4")
         for role in user4.local_roles:
             assert role.name == "plugin_admin"
+
+        assert len(user4.user_alias_mapping) == 2
 
 
 class TestUserForwarding:

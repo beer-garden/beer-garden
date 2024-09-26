@@ -13,3 +13,8 @@
 - username: "user4"
   roles:
     - "plugin_admin"
+  user_alias_mapping:
+    - target_garden: "foo"
+      username: "alt_plugin_admin"
+    - target_garden: "bar"
+      username: "alt_plugin_admin"
