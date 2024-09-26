@@ -696,6 +696,11 @@ class PluginManager(StoppableThread):
         if plugin_args is not None:
             process_args += plugin_args
 
+        if plugin_config.get("GROUPS"):
+            plugin_groups = plugin_config["GROUPS"]
+            if plugin_groups is not None:
+                process_args += ["--groups=" + arg for arg in plugin_groups]
+
         if plugin_config.get("REQUIRES"):
             plugin_requires = plugin_config["REQUIRES"]
             if plugin_requires is not None:

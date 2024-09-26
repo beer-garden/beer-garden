@@ -4,6 +4,7 @@
 
 TBD
 
+- Added support for group/groups in beer.conf and group environment variable
 - Added max_concurrent support for config.yml under `plugin.local.max_concurrent`
 - Added max concurrent support for beer.conf under `MAX_CONCURRENT`
 - Fixed issue where using local systems with a Namespace not the Garden name would not be treated as a local
