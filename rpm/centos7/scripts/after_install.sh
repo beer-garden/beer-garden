@@ -14,6 +14,7 @@ CONFIG_FILE="${CONFIG_HOME}/config.yaml"
 APP_LOG_CONFIG="${CONFIG_HOME}/app-logging.yaml"
 LOCAL_PLUGIN_LOG_CONFIG="${CONFIG_HOME}/local-plugin-logging.yaml"
 REMOTE_PLUGIN_LOG_CONFIG="${CONFIG_HOME}/remote-plugin-logging.yaml"
+JOB_STARTUP_FILE="${CONFIG_HOME}/scheduled_jobs.json"
 
 APP_LOG_FILE="$LOG_HOME/beer-garden.log"
 PLUGIN_LOG_FILE="${PLUGIN_LOG_HOME}/%%(namespace)s/%%(system_name)s/%%(system_version)s/%%(instance_name)s.log"
@@ -60,7 +61,8 @@ if [ ! -f "$CONFIG_FILE" ]; then
         --plugin-local-directory "$PLUGIN_HOME" \
         --plugin-local-logging-config-file "$LOCAL_PLUGIN_LOG_CONFIG" \
         --plugin-remote-logging-config-file "$REMOTE_PLUGIN_LOG_CONFIG" \
-        --children-directory "$CHILDREN_CONFIG_HOME"
+        --children-directory "$CHILDREN_CONFIG_HOME" \
+        --scheduler-job-startup-file "$JOB_STARTUP_FILE"
 fi
 
 # Generate application logging config if it doesn't exist

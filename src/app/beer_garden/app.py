@@ -28,6 +28,7 @@ import beer_garden.local_plugins.manager
 import beer_garden.namespace
 import beer_garden.queue.api as queue
 import beer_garden.router
+import beer_garden.scheduler
 from beer_garden.events.parent_processors import HttpParentUpdater
 from beer_garden.events.processors import EventProcessor, FanoutProcessor, QueueListener
 from beer_garden.local_plugins.manager import PluginManager
@@ -283,6 +284,12 @@ class Application(StoppableThread):
             self.plugin_log_config_observer.start()
         if config.get("plugin.local.logging.config_file"):
             self.plugin_local_log_config_observer.start()
+
+        if config.get("scheduler.job_startup_file") and os.path.isfile(
+            config.get("scheduler.job_startup_file")
+        ):
+            self.logger.debug("Loading job startup file")
+            beer_garden.scheduler.import_jobs(config.get("scheduler.job_startup_file"))
 
         self.logger.debug("Starting helper threads...")
         for helper_thread in self.helper_threads:

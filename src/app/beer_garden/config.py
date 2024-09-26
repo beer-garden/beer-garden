@@ -1602,6 +1602,12 @@ _SCHEDULER_SPEC = {
                 },
             },
         },
+        "job_startup_file": {
+            "type": "str",
+            "default": "./scheduled_jobs.json",
+            "description": "Scheduled Jobs file to load at startup",
+            "required": False,
+        },
     },
 }
 

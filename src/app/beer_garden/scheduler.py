@@ -5,6 +5,7 @@ The schedule service is responsible for:
 * CRUD operations of `Job` operations
 * Triggering `Job` based `Requests`
 """
+import json
 import logging
 import threading
 from datetime import datetime
@@ -16,6 +17,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
 from brewtils.errors import ModelValidationError
 from brewtils.models import DateTrigger, Event, Events, Job, Operation, Request
+from brewtils.schema_parser import SchemaParser
 from mongoengine import ValidationError
 from pytz import utc
 
@@ -576,13 +578,22 @@ def create_jobs(jobs: List[Job]) -> dict:
             if job.id and db.query(Job, filter_params={"id": job.id}):
                 updated.append(update_job(job))
             else:
-                if job.id:
-                    job.id = None
                 created.append(create_job(job))
         except (ModelValidationError, ValidationError) as exc:
             rejected.append((job, str(exc)))
 
     return {"created": created, "updated": updated, "rejected": rejected}
+
+
+def import_jobs(jobs_file: str) -> None:
+    # Load the jobs file
+    with open(jobs_file) as import_file:
+        try:
+            jobs_json = json.load(import_file)
+            jobs = SchemaParser.parse_job(jobs_json, many=True)
+            create_jobs(jobs)
+        except json.JSONDecodeError:
+            logger.debug(f"Failed to import jobs from {jobs_file}")
 
 
 @publish_event(Events.JOB_UPDATED)
