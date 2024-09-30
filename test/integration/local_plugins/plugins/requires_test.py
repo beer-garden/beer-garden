@@ -4,7 +4,7 @@ import pytest
 from brewtils.rest.easy_client import EasyClient
 
 
-# @pytest.mark.usefixtures("easy_client")
+@pytest.mark.usefixtures("easy_client")
 class TestRequestLogic(object):
 
     COMPLETED_STATUSES = ["SUCCESS", "ERROR", "CANCELED"]
@@ -78,13 +78,11 @@ class TestRequestLogic(object):
 
         return request
 
-    def test_requires_sleeper_echo(self):
+    def test_requires_sleeper_echo(self, easy_client):
+
+        assert easy_client.can_connect()
 
         for execution_number in range(20):
-            easy_client = EasyClient(
-                bg_host="localhost", bg_port=2337, ssl_enabled=False
-            )
-            assert easy_client.can_connect()
 
             self.stop_system(easy_client, "sleeper")
             self.stop_system(easy_client, "echo")
