@@ -1,7 +1,6 @@
 import time
 
 import pytest
-from brewtils.rest.easy_client import EasyClient
 
 
 @pytest.mark.usefixtures("easy_client")
