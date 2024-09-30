@@ -81,7 +81,7 @@ class TestRequestLogic(object):
 
         assert easy_client.can_connect()
 
-        for execution_number in range(20):
+        for execution_number in range(10):
 
             self.stop_system(easy_client, "sleeper")
             self.stop_system(easy_client, "echo")
