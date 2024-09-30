@@ -1024,7 +1024,13 @@ def handle_event(event):
         if (
             event.garden == config.get("garden.name")
             and not event.error
-            and event.name == Events.REQUEST_CANCELED.name
+            and (
+                event.name == Events.REQUEST_CANCELED.name
+                or (
+                    event.name == Events.REQUEST_COMPLETED.name
+                    and event.payload.status == "CANCELED"
+                )
+            )
         ):
             cancel_request_children(event.payload)
 
