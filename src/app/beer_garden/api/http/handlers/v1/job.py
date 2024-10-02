@@ -369,6 +369,13 @@ class JobExecutionAPI(AuthorizationHandler):
             required: true
             description: The ID of the Job
             type: string
+          - name: reset_interval
+            in: query
+            required: false
+            description: Flag indicating whether to set the job's interval \
+              begin time to now
+            type: boolean
+            default: false
         responses:
           202:
             description: Job has been executed

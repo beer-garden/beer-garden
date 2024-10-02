@@ -6,10 +6,13 @@ TBD
 
 - Added max_concurrent support for config.yml under `plugin.local.max_concurrent`
 - Added max concurrent support for beer.conf under `MAX_CONCURRENT`
+- Added feature to cancel an ongoing request or delete a completed request
+- Fixed API swagger docs for Job execution
 - Fixed issue where using local systems with a Namespace not the Garden name would not be treated as a local
   Request for internal features
 - Added config option to import scheduled jobs file at startup
 - Added support to configure `alias_user_mappings` in the user configuration file
+- Added config option for child garden configuration file to share all users with child garden instead of filtering
 
 # 3.27.2
 

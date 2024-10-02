@@ -1704,6 +1704,14 @@ _CHILD_SPECIFICATION = {
         ),
         "required": False,
     },
+    "shared_users": {
+        "type": "bool",
+        "default": False,
+        "description": (
+            "If local users should be shared without filtering based on "
+            "the scope of the Child Garden"
+        ),
+    },
     "http": {
         "type": "dict",
         "items": {

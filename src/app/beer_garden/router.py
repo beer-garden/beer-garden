@@ -53,12 +53,7 @@ from beer_garden.errors import (
     UnknownGardenException,
 )
 from beer_garden.events import publish
-from beer_garden.garden import (
-    get_garden,
-    get_gardens,
-    load_garden_connections,
-    update_garden,
-)
+from beer_garden.garden import get_garden, get_gardens, load_garden_file, update_garden
 from beer_garden.metrics import collect_metrics
 from beer_garden.requests import complete_request, create_request
 
@@ -343,7 +338,7 @@ def invalid_source_check(operation: Operation):
         )
     except DoesNotExist:
 
-        loaded_garden = beer_garden.garden.load_garden_connections(
+        loaded_garden = beer_garden.garden.load_garden_file(
             Garden(name=operation.source_garden_name)
         )
 
@@ -543,7 +538,7 @@ def setup_routing():
                 and garden.connection_type.casefold() != "local"
             ):
                 with garden_lock:
-                    gardens[garden.name] = load_garden_connections(garden)
+                    gardens[garden.name] = load_garden_file(garden)
                     for connection in gardens[garden.name].publishing_connections:
                         if (
                             connection.api.upper() == "STOMP"
