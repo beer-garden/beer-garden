@@ -54,7 +54,7 @@
 
     <tr>
       <td>
-        <button type="button" class="btn btn-warning btn-block" ng-click="deleteCancelRequests('CREATED', is_cancel=True)"
+        <button type="button" class="btn btn-warning btn-block" ng-click="deleteCancelRequests('CREATED', is_cancel=true)"
           confirm="Are you sure you want to cancel Requests with status CREATED? Recommend clearing topics as well.">
           Cancel CREATED
         </button>
@@ -65,7 +65,7 @@
     </tr>
     <tr>
       <td>
-        <button type="button" class="btn btn-warning btn-block" ng-click="deleteCancelRequests('RECEIVED', is_cancel=True)"
+        <button type="button" class="btn btn-warning btn-block" ng-click="deleteCancelRequests('RECEIVED', is_cancel=true)"
           confirm="Are you sure you want to cancel Requests with status RECEIVED?">
           Cancel RECEIVED
         </button>
@@ -76,7 +76,7 @@
     </tr>
     <tr>
       <td>
-        <button type="button" class="btn btn-warning btn-block" ng-click="deleteCancelRequests('IN PROGRESS', is_cancel=True)"
+        <button type="button" class="btn btn-warning btn-block" ng-click="deleteCancelRequests('IN PROGRESS', is_cancel=true)"
           confirm="Are you sure you want to cancel Requests with status IN PROGRESS? There may be a plugin already running the request.">
           Cancel IN PROGRESS
         </button>
@@ -86,7 +86,7 @@
 
     <tr></tr>
       <td>
-        <button type="button" class="btn btn-danger btn-block" ng-click="deleteCancelRequests('ALL', is_cancel=True)"
+        <button type="button" class="btn btn-warning btn-block" ng-click="deleteCancelRequests('ALL', is_cancel=true)"
           confirm="Are you sure you want to cancel all non-completed Requests?">
           Cancel All
         </button>
@@ -95,7 +95,6 @@
         {{in_progress_count + received_count + created_count}}
       </td>
     </tr>
-
     <tr>
       <td>
         <button type="button" class="btn btn-danger btn-block" ng-click="deleteCancelRequests('ALL')"

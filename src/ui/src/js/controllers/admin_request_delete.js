@@ -37,16 +37,16 @@ export default function adminRequestDeleteController(
   $scope.in_progress_count = 0;
   $scope.all_count = 0;
 
-  $scope.deleteCancelRequests = function (status, is_cancel = False) {
+  $scope.deleteCancelRequests = function (status, is_cancel = false) {
     let deleteParams = {
       "namespace": $scope.system.namespace,
       "system": $scope.system.name,
       "system_version": $scope.system.version,
       "instance_name": $scope.instance.name
     };
-    
+
     if (is_cancel){
-      deleteParams["is_cancel"] = True
+      deleteParams["is_cancel"] = true
     }
 
     if (status != "ALL") {
