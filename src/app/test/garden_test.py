@@ -20,7 +20,7 @@ from beer_garden.garden import (
     get_garden,
     get_gardens,
     handle_event,
-    load_garden_connections,
+    load_garden_file,
     local_garden,
     remove_garden,
     update_garden_status,
@@ -196,7 +196,7 @@ stomp:
 
         config._CONFIG = {"children": {"directory": tmpdir}}
 
-        garden = load_garden_connections(bg_garden)
+        garden = load_garden_file(bg_garden)
         for connection in garden.publishing_connections:
             if connection.api == "HTTP":
                 assert connection.status == "PUBLISHING"
@@ -252,7 +252,7 @@ stomp:
 
         config._CONFIG = {"children": {"directory": tmpdir}}
 
-        garden = load_garden_connections(bg_garden)
+        garden = load_garden_file(bg_garden)
         for connection in garden.publishing_connections:
             if connection.api == "STOMP":
                 assert connection.status == "PUBLISHING"
@@ -319,7 +319,7 @@ stomp:
 
         config._CONFIG = {"children": {"directory": tmpdir}}
 
-        garden = load_garden_connections(bg_garden)
+        garden = load_garden_file(bg_garden)
         for connection in garden.publishing_connections:
             if connection.api == "HTTP":
                 assert connection.status == "DISABLED"
@@ -379,7 +379,7 @@ stomp:
             BrewtilsConnection(api="http", status="RECEIVING")
         ]
 
-        garden = load_garden_connections(bg_garden)
+        garden = load_garden_file(bg_garden)
         for connection in garden.receiving_connections:
             assert connection.status == "DISABLED"
 
