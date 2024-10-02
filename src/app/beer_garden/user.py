@@ -4,6 +4,7 @@ from copy import deepcopy
 
 import yaml
 from brewtils.models import (
+    AliasUserMap,
     Event,
     Events,
     Garden,
@@ -217,6 +218,16 @@ def rescan():
             "file_generated": True,
             "protected": user.get("protected", False),
         }
+        user_alias_mapping = []
+        for alias in user.get("user_alias_mapping", []):
+            user_alias_mapping.append(
+                AliasUserMap(
+                    target_garden=alias.get("target_garden"),
+                    username=alias.get("username"),
+                )
+            )
+
+        kwargs["user_alias_mapping"] = user_alias_mapping
         user = User(**kwargs)
         try:
             existing = get_user(user.username)
