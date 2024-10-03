@@ -55,7 +55,7 @@ class TestRequestLogic(object):
             "command": "say_sleep",
             "instance_name": "default",
             "comment": f"Execution {execution_number}",
-            "parameters": {"message": "test_string", "loud": True,"amount":1},
+            "parameters": {"message": "test_string", "loud": True, "amount": 1},
         }
 
         request = client.create_request(request)
