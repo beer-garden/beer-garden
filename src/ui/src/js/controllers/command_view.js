@@ -10,6 +10,7 @@ commandViewController.$inject = [
   '$q',
   'RequestService',
   'SFBuilderService',
+  'SystemService',
 ];
 
 /**
@@ -22,6 +23,7 @@ commandViewController.$inject = [
  * @param  {Object} $q                Angular's $q object.
  * @param  {Object} RequestService    Beer-Garden's request service object.
  * @param  {Object} SFBuilderService  Beer-Garden's schema-form builder service object.
+ * @param  {Object} SystemService     Beer-Garden's system service object.
  * @param  {Object} system
  * @param  {Object} command
  */
@@ -34,6 +36,7 @@ export default function commandViewController(
     $q,
     RequestService,
     SFBuilderService,
+    SystemService,
 ) {
 
   $scope.schema = {};
@@ -96,6 +99,29 @@ export default function commandViewController(
     }
 
     return instance.status != 'RUNNING';
+  };
+
+  $scope.displayInstanceAlert = function() {
+    let helptext = 'Instance is not RUNNING, ' +
+      'but you can still "Make Request"';
+    const instance = _.find($scope.system.instances, {
+      name: $scope.model.instance_name,
+    });
+    if (instance.status == 'AWAITING_SYSTEM') {
+      const requires = $scope.system.requires;
+      const missingSystems = [];
+      requires.forEach((req) => {
+        const system = SystemService.findSystem($scope.system.namespace, req, 'latest');
+        const notRunning = system.instances.every((instance) => instance.status != 'RUNNING');
+        if (notRunning) {
+          missingSystems.push(system.name);
+        }
+      });
+      helptext = 'Unable to determine the status of required system(s): ' +
+      missingSystems.join(', ') +
+      '. Proceed with caution.';
+    }
+    return helptext;
   };
 
   $scope.submitForm = function(form, model) {
