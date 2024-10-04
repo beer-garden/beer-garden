@@ -11,6 +11,7 @@ TBD
 - Fixed API swagger docs for Job execution
 - Fixed issue where using local systems with a Namespace not the Garden name would not be treated as a local
   Request for internal features
+- Fixed issue where Adding/Removing subscribers failed if topic didn't exist
 - Added config option to import scheduled jobs file at startup
 - Added support to configure `alias_user_mappings` in the user configuration file
 - Added config option for child garden configuration file to share all users with child garden instead of filtering
