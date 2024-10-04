@@ -310,7 +310,10 @@ def update_api_heartbeat(operation: Operation):
                 for child in local_garden.children:
                     if child.name == operation.model.payload.name:
                         logger.warning(
-                            f"Legacy (3.16 or prior) GARDEN_SYNC operation seen for Beer-Garden '{operation.model.payload.name}'"
+                            (
+                                "Legacy (3.16 or prior) GARDEN_SYNC operation "
+                                f"seen for Beer-Garden '{operation.model.payload.name}'"
+                            )
                         )
                         operation.source_garden_name = operation.model.payload.name
                         not_child_garden = False
