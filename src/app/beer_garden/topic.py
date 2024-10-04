@@ -115,9 +115,9 @@ def topic_add_subscriber(
         The updated Topic
 
     """
-    try:
-        topic = get_topic(topic_id=topic_id, topic_name=topic_name)
-    except DoesNotExist:
+    topic = get_topic(topic_id=topic_id, topic_name=topic_name)
+    
+    if topic is None:
         if topic_name:
             topic = create_topic(Topic(name=topic_name))
         else:
