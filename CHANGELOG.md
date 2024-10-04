@@ -5,6 +5,7 @@
 TBD
 
 - Added max_concurrent support for config.yml under `plugin.local.max_concurrent`
+- Added backwards compatibility for Garden Syncs for 3.16 or older releases
 - Added max concurrent support for beer.conf under `MAX_CONCURRENT`
 - Added feature to cancel an ongoing request or delete a completed request
 - Fixed API swagger docs for Job execution
