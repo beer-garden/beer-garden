@@ -11,7 +11,7 @@ import tarfile
 
 BUILD_IMAGE = "bgio/build"
 NODE_IMAGE = "node:18"
-SUPPORTED_DISTRIBUTIONS = ["centos7"]
+SUPPORTED_DISTRIBUTIONS = ["centos7", "rocky9"]
 SUPPORTED_PYTHONS = ["3.7","3.8","3.9","3.10","3.11","3.12"]
 BUILD_TYPES = ["rpm"]
 
