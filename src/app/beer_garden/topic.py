@@ -116,7 +116,7 @@ def topic_add_subscriber(
 
     """
     topic = get_topic(topic_id=topic_id, topic_name=topic_name)
-    
+
     if topic is None:
         if topic_name:
             topic = create_topic(Topic(name=topic_name))
@@ -144,7 +144,7 @@ def topic_remove_subscriber(
         The updated Topic
     """
     topic = get_topic(topic_id=topic_id, topic_name=topic_name)
-    
+
     if topic is None:
         raise PluginError(
             f"Topic '{topic_id}' does not exist, unable to map '{str(subscriber)}"
