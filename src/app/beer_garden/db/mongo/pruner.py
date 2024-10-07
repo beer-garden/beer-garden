@@ -137,7 +137,7 @@ def determine_tasks(**kwargs) -> Tuple[List[dict], int]:
                     Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
                 )
                 & Q(has_parent=False)
-                & Q(command_type="ACTION"),
+                & (Q(command_type="ACTION") | Q(command_type=None) | Q(command_type__exists=False)),
             }
         )
 
