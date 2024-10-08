@@ -26,6 +26,7 @@ commandViewController.$inject = [
  * @param  {Object} SystemService     Beer-Garden's system service object.
  * @param  {Object} system
  * @param  {Object} command
+ * @param  {Object} helptext
  */
 export default function commandViewController(
     $rootScope,
@@ -104,9 +105,7 @@ export default function commandViewController(
   $scope.displayInstanceAlert = function() {
     let helptext = 'Instance is not RUNNING, ' +
       'but you can still "Make Request"';
-    const instance = _.find($scope.system.instances, {
-      name: $scope.model.instance_name,
-    });
+    const instance = $scope.system.instances[0];
     if (instance.status == 'AWAITING_SYSTEM') {
       const requires = $scope.system.requires;
       const missingSystems = [];
@@ -239,7 +238,7 @@ export default function commandViewController(
   };
 
   const generateSF = function() {
-    const sf = SFBuilderService.build($scope.system, $scope.command);
+    const sf = SFBuilderService.build($scope.system, $scope.command, $scope.helptext);
 
     $scope.schema = sf['schema'];
     $scope.form = sf['form'];
@@ -261,6 +260,7 @@ export default function commandViewController(
     }
 
     $scope.command = _.find($scope.system.commands, {name: $stateParams.commandName});
+    $scope.helptext = $scope.displayInstanceAlert();
 
     $scope.jsonValues.command = JSON.stringify($scope.command, undefined, 2);
 
