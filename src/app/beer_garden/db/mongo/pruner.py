@@ -199,6 +199,48 @@ def determine_tasks(**kwargs) -> Tuple[List[dict], int]:
     return prune_tasks
 
 
+def prune_orphans():
+    # Gives three iterations before checking for orphans
+    logger.error("Starting Orphan Pruner")
+    ttl_orphan_interval = config.get("db.prune_interval") * 3
+
+    info_ttl = config.get("db.ttl.info")
+    action_ttl = config.get("db.ttl.action")
+    admin_ttl = config.get("db.ttl.admin")
+    temp_ttl = config.get("db.ttl.temp")
+
+    if info_ttl > 0:
+        prune_orphan_command_type(info_ttl + ttl_orphan_interval, "INFO")
+
+    if action_ttl > 0:
+        prune_orphan_command_type(action_ttl + ttl_orphan_interval, "ACTION")
+
+    if admin_ttl > 0:
+        prune_orphan_command_type(admin_ttl + ttl_orphan_interval, "ADMIN")
+
+    if temp_ttl > 0:
+        prune_orphan_command_type(temp_ttl + ttl_orphan_interval, "TEMP")
+
+
+def prune_orphan_command_type(ttl, command_type):
+
+    timeout = datetime.utcnow() - timedelta(minutes=ttl)
+
+    orphaned_requests = Request.objects.filter(
+        command_type=command_type,
+        status__in=["CANCELED", "SUCCESS", "ERROR", "INVALID"],
+        created_at__lte=timeout,
+        has_parent=True,
+    )
+    logger.info(f"Found  {len(orphaned_requests)} orphans for {command_type}")
+    for request in orphaned_requests:
+        try:
+            Request.objects.get(id=request.parent.id)
+        except DoesNotExist:
+            logger.error(f"Parent is missing, killing orphan request {request.id}")
+            request.delete()
+
+
 def prune_outstanding():
     """
     Helper function for run to mark requests still outstanding after a certain

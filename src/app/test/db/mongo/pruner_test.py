@@ -14,6 +14,7 @@ from beer_garden.db.mongo.pruner import (
     prune_admin_requests,
     prune_files,
     prune_info_requests,
+    prune_orphan_command_type,
     prune_outstanding,
     prune_temp_requests,
 )
@@ -264,3 +265,47 @@ class TestDetermineTasks(object):
         assert info_task["field"] == "created_at"
 
         assert info_task["delete_after"] == timedelta(minutes=5)
+
+
+class TestOrphanPruner(object):
+
+    @pytest.fixture
+    def child_request(self):
+
+        parent = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="T",
+            created_at=datetime.datetime(2024, 1, 17),
+            status="SUCCESS",
+            command_type="ACTION",
+        )
+        parent.save()
+
+        child = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="T",
+            created_at=datetime.datetime(2024, 1, 17),
+            status="SUCCESS",
+            command_type="ACTION",
+            has_parent=True,
+            parent=parent,
+        )
+
+        parent.delete()
+        child.save()
+
+        yield child
+
+        child.delete()
+
+    def test_orphan_pruner(self, child_request):
+        assert len(Request.objects.filter(command_type="ACTION")) == 1
+
+        prune_orphan_command_type(1, "ACTION")
+        assert len(Request.objects.filter(command_type="ACTION")) == 0
