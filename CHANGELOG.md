@@ -4,6 +4,7 @@
 
 TBD
 
+- Added support to prune legacy request with no command type
 - Added support for group/groups in beer.conf and group environment variable
 - Added max_concurrent support for config.yml under `plugin.local.max_concurrent`
 - Added max concurrent support for beer.conf under `MAX_CONCURRENT`
