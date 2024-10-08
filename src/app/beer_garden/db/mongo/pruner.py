@@ -201,25 +201,14 @@ def determine_tasks(**kwargs) -> Tuple[List[dict], int]:
 
 def prune_orphans():
     # Gives three iterations before checking for orphans
-    logger.error("Starting Orphan Pruner")
-    ttl_orphan_interval = config.get("db.prune_interval") * 3
 
-    info_ttl = config.get("db.ttl.info")
-    action_ttl = config.get("db.ttl.action")
-    admin_ttl = config.get("db.ttl.admin")
-    temp_ttl = config.get("db.ttl.temp")
+    orphan_ttl = config.get("db.ttl.orphan")
 
-    if info_ttl > 0:
-        prune_orphan_command_type(info_ttl + ttl_orphan_interval, "INFO")
-
-    if action_ttl > 0:
-        prune_orphan_command_type(action_ttl + ttl_orphan_interval, "ACTION")
-
-    if admin_ttl > 0:
-        prune_orphan_command_type(admin_ttl + ttl_orphan_interval, "ADMIN")
-
-    if temp_ttl > 0:
-        prune_orphan_command_type(temp_ttl + ttl_orphan_interval, "TEMP")
+    if orphan_ttl > 0:
+        prune_orphan_command_type(orphan_ttl, "INFO")
+        prune_orphan_command_type(orphan_ttl, "ACTION")
+        prune_orphan_command_type(orphan_ttl, "ADMIN")
+        prune_orphan_command_type(orphan_ttl, "TEMP")
 
 
 def prune_orphan_command_type(ttl, command_type):
@@ -232,7 +221,7 @@ def prune_orphan_command_type(ttl, command_type):
         created_at__lte=timeout,
         has_parent=True,
     )
-    logger.info(f"Found  {len(orphaned_requests)} orphans for {command_type}")
+
     for request in orphaned_requests:
         try:
             Request.objects.get(id=request.parent.id)
