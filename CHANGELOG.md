@@ -1,8 +1,8 @@
 # Beer Garden Changelog
 
-# 3.27.3
+# 3.28.0
 
-TBD
+10/9/2024
 
 - Updated create request page warning to identify required systems not in running status.
 - Added support to prune legacy request with no command type
