@@ -116,7 +116,7 @@ export default function commandViewController(
           missingSystems.push(system.name);
         }
       });
-      helptext = 'Unable to determine the status of required system(s): ' +
+      helptext = 'Required system(s) are not running: ' +
       missingSystems.join(', ') +
       '. Proceed with caution.';
     }
