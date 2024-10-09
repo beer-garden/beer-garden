@@ -881,6 +881,28 @@ def complete_request(
     return request
 
 
+def cancel_requests(**kwargs) -> dict:
+    """Cancel Requests
+
+    Args:
+        kwargs: Parameters to be passed to the DB query
+
+    Returns:
+        The kwargs used to match Requests
+
+    """
+    requests = db.query(Request, filter_params=kwargs)
+
+    for request in requests:
+        try:
+            cancel_request(request=request)
+        except RequestStatusTransitionError:
+            logger.error("Attempted to cancel an already completed Request")
+
+    logger.info(f"Cancled {len(requests)} requests")
+    return kwargs
+
+
 @publish_event(Events.REQUEST_CANCELED)
 def cancel_request(request_id: str = None, request: Request = None) -> Request:
     """Mark a Request as CANCELED

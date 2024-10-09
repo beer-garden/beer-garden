@@ -108,6 +108,7 @@ route_functions = {
     "REQUEST_READ": beer_garden.requests.get_request,
     "REQUEST_READ_ALL": beer_garden.requests.get_requests,
     "REQUEST_DELETE": beer_garden.requests.delete_requests,
+    "REQUEST_CANCEL": beer_garden.requests.cancel_requests,
     "REQUEST_UPDATE": beer_garden.requests.update_request,
     "COMMAND_READ": beer_garden.commands.get_command,
     "COMMAND_READ_ALL": beer_garden.commands.get_commands,
@@ -837,7 +838,13 @@ def _target_from_type(operation: Operation) -> str:
         or "TOPIC" in operation.operation_type
         or "ROLE" in operation.operation_type
         or operation.operation_type
-        in ("PLUGIN_LOG_RELOAD", "QUEUE_DELETE_ALL", "SYSTEM_CREATE", "REQUEST_DELETE")
+        in (
+            "PLUGIN_LOG_RELOAD",
+            "QUEUE_DELETE_ALL",
+            "SYSTEM_CREATE",
+            "REQUEST_DELETE",
+            "REQUEST_CANCEL",
+        )
     ):
         return config.get("garden.name")
 
