@@ -18,8 +18,10 @@ ENV LANG=en_US.UTF-8 \
 
 USER root
 
-RUN sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
+# Migrate to vault repos
+RUN sed -i 's/mirrorlist=/#mirrorlist=/g' /etc/yum.repos.d/CentOS-*
 RUN sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+RUN sed -i 's|# baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
 
 RUN yum install -y \
         gcc \
@@ -40,7 +42,7 @@ RUN yum install -y \
         zlib-devel
 
 # Install Openssl 1.1.1
-RUN wget --no-check-certificate https://ftp.openssl.org/source/openssl-1.1.1k.tar.gz && \
+RUN wget --no-check-certificate https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1k/openssl-1.1.1k.tar.gz && \
     tar -xzvf openssl-1.1.1k.tar.gz && \
     cd openssl-1.1.1k && \
     ./config --prefix=/usr/local/openssl --openssldir=/usr/local/openssl && \
@@ -51,7 +53,7 @@ RUN wget --no-check-certificate https://ftp.openssl.org/source/openssl-1.1.1k.ta
     export LD_LIBRARY_PATH=/usr/local/openssl/lib:\$LD_LIBRARY_PATH
 
 # Install GEM Packages
-RUN gem install fpm
+RUN gem install dotenv:2.8.1 insist:1.0.0 mustache:0.99.8 clamp:1.0.1 cabin:0.9.0 pleaserun:0.0.32 arr-pm:0.0.12 backports:3.25.0 fpm:1.15.0 --ignore-dependencies
 
 # Install Python
 RUN mkdir -p /usr/src/python && \
@@ -68,7 +70,6 @@ RUN mkdir -p /usr/src/python && \
     find $APP_HOME -type d '(' -name '__pycache__' -o -name 'test' -o -name 'tests' ')' -exec rm -rfv '{}' + && \
     find $APP_HOME -type f '(' -name '*.py[co]' -o -name '*.exe' ')' -exec rm -fv '{}' +  && \
     rm -rf /usr/src/python
-    
 
 
 
