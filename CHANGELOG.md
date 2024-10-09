@@ -15,6 +15,7 @@ TBD
 - Added support to configure `alias_user_mappings` in the user configuration file
 - Added config option for child garden configuration file to share all users with child garden instead of filtering
 - Added support for pruning completed orphaned child requests (`db.ttl.orphan`)
+- Added optimizaiton for TTL to only pull back IDs (instead of entire model) when deleting Requests
 
 # 3.27.2
 
