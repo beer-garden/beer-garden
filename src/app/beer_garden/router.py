@@ -293,7 +293,6 @@ def execute_local(operation: Operation):
 
 
 def update_api_heartbeat(operation: Operation):
-
     if (
         operation.source_api is not None
         and operation.operation_type == "PUBLISH_EVENT"
@@ -306,7 +305,7 @@ def update_api_heartbeat(operation: Operation):
                 local_garden = get_garden(config.get("garden.name"))
 
                 # Will only support mapping 1 hop away legacy Garden Syncs
-                not_child_garden = True
+                child_garden = False
                 for child in local_garden.children:
                     if child.name == operation.model.payload.name:
                         logger.warning(
@@ -316,9 +315,9 @@ def update_api_heartbeat(operation: Operation):
                             )
                         )
                         operation.source_garden_name = operation.model.payload.name
-                        not_child_garden = False
+                        child_garden = True
                         break
-                if not_child_garden:
+                if child_garden:
                     return
             else:
                 return
