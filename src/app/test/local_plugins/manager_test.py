@@ -34,6 +34,7 @@ def config_all():
         "MAX_INSTANCES": 1,
         "AUTO_BREW_ARGS": None,
         "AUTO_BREW_KWARGS": None,
+        "GROUPS": [],
         "REQUIRES": [],
     }
 
@@ -48,6 +49,7 @@ def config_all_serialized():
             DESCRIPTION=''
             INSTANCES=['default']
             PLUGIN_ARGS={'default': None}
+            GROUPS=[]
             REQUIRES=[]
             METADATA={}
             ENVIRONMENT={}

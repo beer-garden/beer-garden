@@ -696,6 +696,16 @@ class PluginManager(StoppableThread):
         if plugin_args is not None:
             process_args += plugin_args
 
+        if plugin_config.get("GROUPS"):
+            plugin_groups = plugin_config["GROUPS"]
+            if plugin_groups is not None:
+                process_args += ["--groups=" + arg for arg in plugin_groups]
+
+        if plugin_config.get("GROUP"):
+            plugin_group = plugin_config["GROUP"]
+            if plugin_group is not None:
+                process_args += ["--group=" + str(plugin_group)]
+
         if plugin_config.get("REQUIRES"):
             plugin_requires = plugin_config["REQUIRES"]
             if plugin_requires is not None:
@@ -818,6 +828,9 @@ class ConfigKeys(Enum):
     REQUIRES_TIMEOUT = 21
 
     MAX_CONCURRENT = 22
+
+    GROUP = 23
+    GROUPS = 24
 
 
 class ConfigLoader(object):

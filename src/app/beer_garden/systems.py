@@ -163,6 +163,7 @@ def update_system(
         icon_name: Replacement icon_name
         metadata: Dictionary that will be incorporated into current metadata
         template: Replacement template
+        groups: List of group labels
         requires: List of system dependencies
         requires_timeout: Max time to wait for dependencies
 
