@@ -218,7 +218,7 @@ def prune_orphan_command_type(ttl, command_type):
         command_type=command_type,
         status__in=["CANCELED", "SUCCESS", "ERROR", "INVALID"],
         created_at__lte=timeout,
-        has_parent=True,
+        has_parent=True, 
     )
 
     for request in orphaned_requests:
