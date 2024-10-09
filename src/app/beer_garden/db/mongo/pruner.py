@@ -38,7 +38,7 @@ def run_pruner(tasks, ttl_name):
             if task["batch_size"] > 0:
                 while (
                     task["batch_size"]
-                    < task["collection"].objects(query).only('id').no_cache().count()
+                    < task["collection"].objects(query).only("id").no_cache().count()
                 ):
                     logger.debug(
                         "Removing %s from %ss older than %s, batched by %s"
@@ -49,11 +49,11 @@ def run_pruner(tasks, ttl_name):
                             str(task["batch_size"]),
                         )
                     )
-                    task["collection"].objects(query).only('id').limit(
+                    task["collection"].objects(query).only("id").limit(
                         task["batch_size"]
                     ).no_cache().delete()
 
-            num = task["collection"].objects(query).only('id').no_cache().delete()
+            num = task["collection"].objects(query).only("id").no_cache().delete()
             if num:
                 logger.debug(
                     "Deleted %s %s from %ss"
@@ -200,7 +200,6 @@ def determine_tasks(**kwargs) -> Tuple[List[dict], int]:
 
 
 def prune_orphans():
-
     orphan_ttl = config.get("db.ttl.orphan")
 
     if orphan_ttl > 0:
@@ -211,14 +210,13 @@ def prune_orphans():
 
 
 def prune_orphan_command_type(ttl, command_type):
-
     timeout = datetime.utcnow() - timedelta(minutes=ttl)
 
-    orphaned_requests = Request.objects.only('parent','id').filter(
+    orphaned_requests = Request.objects.only("parent", "id").filter(
         command_type=command_type,
         status__in=["CANCELED", "SUCCESS", "ERROR", "INVALID"],
         created_at__lte=timeout,
-        has_parent=True, 
+        has_parent=True,
     )
 
     for request in orphaned_requests:
