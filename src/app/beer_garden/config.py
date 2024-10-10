@@ -1458,6 +1458,14 @@ _PLUGIN_SPEC = {
                         },
                     },
                 },
+                "max_concurrent": {
+                    "type": "int",
+                    "default": 5,
+                    "description": (
+                        "Maximum number of requests local plugins can process concurrently,"
+                        " -1 will default to min(32, os.cpu_count() + 4)"
+                    ),
+                },
                 "timeout": {
                     "type": "dict",
                     "items": {
@@ -1594,6 +1602,12 @@ _SCHEDULER_SPEC = {
                 },
             },
         },
+        "job_startup_file": {
+            "type": "str",
+            "default": "./scheduled_jobs.json",
+            "description": "Scheduled Jobs file to load at startup",
+            "required": False,
+        },
     },
 }
 
@@ -1711,6 +1725,14 @@ _CHILD_SPECIFICATION = {
             "if none is found with current user"
         ),
         "required": False,
+    },
+    "shared_users": {
+        "type": "bool",
+        "default": False,
+        "description": (
+            "If local users should be shared without filtering based on "
+            "the scope of the Child Garden"
+        ),
     },
     "http": {
         "type": "dict",

@@ -11,6 +11,7 @@ from mock import Mock
 from pytest_lazyfixture import lazy_fixture
 
 import beer_garden.db.api as db
+from beer_garden import config
 from beer_garden.errors import PluginValidationError
 from beer_garden.local_plugins.manager import CONFIG_NAME, ConfigLoader, PluginManager
 from beer_garden.systems import create_system
@@ -33,6 +34,7 @@ def config_all():
         "MAX_INSTANCES": 1,
         "AUTO_BREW_ARGS": None,
         "AUTO_BREW_KWARGS": None,
+        "GROUPS": [],
         "REQUIRES": [],
     }
 
@@ -47,6 +49,7 @@ def config_all_serialized():
             DESCRIPTION=''
             INSTANCES=['default']
             PLUGIN_ARGS={'default': None}
+            GROUPS=[]
             REQUIRES=[]
             METADATA={}
             ENVIRONMENT={}
@@ -139,6 +142,7 @@ class TestLoadNew(object):
 
     def test_single(self, tmp_path, manager, monkeypatch):
         monkeypatch.setattr(PluginManager, "_environment", _none_returner)
+        config._CONFIG = {"plugin": {"local": {"max_concurrent": 1}}}
 
         plugin_path = tmp_path / "tester"
         plugin_path.mkdir()
@@ -151,6 +155,7 @@ class TestLoadNew(object):
 
     def test_multiple(self, tmp_path, manager, monkeypatch):
         monkeypatch.setattr(PluginManager, "_environment", _none_returner)
+        config._CONFIG = {"plugin": {"local": {"max_concurrent": 1}}}
 
         plugin_path = tmp_path / "tester"
         plugin_path.mkdir()

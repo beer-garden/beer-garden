@@ -696,6 +696,16 @@ class PluginManager(StoppableThread):
         if plugin_args is not None:
             process_args += plugin_args
 
+        if plugin_config.get("GROUPS"):
+            plugin_groups = plugin_config["GROUPS"]
+            if plugin_groups is not None:
+                process_args += ["--groups=" + arg for arg in plugin_groups]
+
+        if plugin_config.get("GROUP"):
+            plugin_group = plugin_config["GROUP"]
+            if plugin_group is not None:
+                process_args += ["--group=" + str(plugin_group)]
+
         if plugin_config.get("REQUIRES"):
             plugin_requires = plugin_config["REQUIRES"]
             if plugin_requires is not None:
@@ -705,6 +715,15 @@ class PluginManager(StoppableThread):
             plugin_requires_timeout = plugin_config["REQUIRES_TIMEOUT"]
             if plugin_requires_timeout is not None:
                 process_args += ["--requires_timeout=" + str(plugin_requires_timeout)]
+
+        if plugin_config.get("MAX_CONCURRENT"):
+            plugin_max_concurrent = plugin_config["MAX_CONCURRENT"]
+            if plugin_max_concurrent is not None and plugin_max_concurrent > 0:
+                process_args += ["--max-concurrent=" + str(plugin_max_concurrent)]
+        elif config.get("plugin.local.max_concurrent") > 0:
+            process_args += [
+                "--max-concurrent=" + str(config.get("plugin.local.max_concurrent"))
+            ]
 
         if plugin_config["AUTO_BREW_ARGS"]:
             plugin_auto_args = plugin_config["AUTO_BREW_ARGS"].get(instance_name)
@@ -807,6 +826,11 @@ class ConfigKeys(Enum):
 
     REQUIRES = 20
     REQUIRES_TIMEOUT = 21
+
+    MAX_CONCURRENT = 22
+
+    GROUP = 23
+    GROUPS = 24
 
 
 class ConfigLoader(object):

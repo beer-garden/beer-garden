@@ -517,7 +517,7 @@ def update_garden_receiving(
     return db.update(garden)
 
 
-def load_garden_connections(garden: Garden):
+def load_garden_file(garden: Garden):
     path = Path(f"{config.get('children.directory')}/{garden.name}.yaml")
 
     garden.publishing_connections.clear()
@@ -545,6 +545,7 @@ def load_garden_connections(garden: Garden):
         return garden
 
     garden.default_user = config.get("default_user", garden_config)
+    garden.shared_users = config.get("shared_users", garden_config)
 
     if config.get("http.enabled", garden_config):
         config_map = {
@@ -645,7 +646,7 @@ def load_garden_config(garden: Garden = None, garden_name: str = None):
     if not garden:
         garden = db.query_unique(Garden, name=garden_name)
 
-    garden = load_garden_connections(garden)
+    garden = load_garden_file(garden)
 
     return db.update(garden)
 

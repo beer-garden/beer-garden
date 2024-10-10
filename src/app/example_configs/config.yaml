@@ -164,6 +164,7 @@ plugin:
     logging:
       config_file: example_configs/local-plugin-logging.yaml
       fallback_level: INFO
+    max_concurrent: 5
     timeout:
       shutdown: 10
       startup: 2
@@ -190,6 +191,7 @@ scheduler:
     coalesce: true
     max_instances: 3
   max_workers: 10
+  job_startup_file: example_configs/scheduled_jobs.json
 ui:
   cors_enabled: true
   debug_mode: true
