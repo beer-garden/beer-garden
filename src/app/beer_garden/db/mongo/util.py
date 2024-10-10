@@ -137,7 +137,7 @@ def ensure_v3_24_model_migration():
             _ = Garden.objects()[0]
     except (FieldDoesNotExist, InvalidDocumentError):
 
-        import yaml
+        import os, yaml
 
         logger.warning(
             "Encountered an error loading Gardens. This is most likely because"
@@ -149,6 +149,9 @@ def ensure_v3_24_model_migration():
         db = get_db()
 
         garden_collection = db.get_collection("garden")
+
+        if not os.path.exists(config.get('children.directory')):
+            os.makedirs(config.get('children.directory'))
 
         for legacy_garden in garden_collection.find():
             if legacy_garden["connection_type"] != "LOCAL":
