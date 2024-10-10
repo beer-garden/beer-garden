@@ -6,7 +6,6 @@ APP_DIR        = src/app
 UI_DIR         = src/ui
 
 VERSION        ?= 0.0.0
-ITERATION      ?= 1
 PYTHON_VERSION ?=3.7
 
 .PHONY: clean clean-build clean-test clean-pyc help test
@@ -43,7 +42,7 @@ help:
 
 # RPM
 rpm-build:  ## build rpm
-	rpm/bin/build.py rpm $(VERSION) --iteration $(ITERATION) --python $(PYTHON_VERSION) 
+	rpm/bin/build.py rpm $(VERSION) --iteration $(PYTHON_VERSION) --python $(PYTHON_VERSION) 
 
 rpm-build-local:  ## build local rpm
 	rpm/bin/build.py rpm --local $(VERSION) --python $(PYTHON_VERSION) 
@@ -80,7 +79,7 @@ publish-docker-unstable: ## push the unstable docker image
 	$(MAKE) -C $(UI_DIR) deps publish-docker-unstable
 
 publish-rpm: ## publish the rpm
-	rpm/bin/upload.sh $(VERSION) $(ITERATION)
+	rpm/bin/upload.sh $(VERSION) $(PYTHON_VERSION)
 
 # Requires the docker image already built and UI packaged
 publish-docker-rpm: rpm-build
