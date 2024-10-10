@@ -333,7 +333,7 @@ jobs:
         parent: ["unstable"]
       fail-fast: false
 
-    name: ${{ matrix.python-version }} Grandchild Test - unstable -> ${{ matrix.parent }} -> ${{ matrix.child }}
+    name: Grandchild Test - unstable -> ${{ matrix.parent }} -> ${{ matrix.child }} - Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
 
@@ -455,7 +455,7 @@ jobs:
         os: ["ubuntu-latest"]
       fail-fast: false
 
-    name: ${{ matrix.python-version }} Replicaiton Testing - Python ${{ matrix.python-version }}
+    name: Replicaiton Testing - Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
 
