@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.8.18", "3.9.18","3.10.13","3.11.6","3.12.7","3.13.0"]
 
