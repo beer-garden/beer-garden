@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+# Python 3.13 Support
+
+10/10/2024
+
+- Verified that Beer Garden can run on Python 3.13.0
+- Future builds will include a Python 3.13.0 RPM build feature
+
 # 3.28.0
 
 10/9/2024
