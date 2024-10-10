@@ -42,7 +42,7 @@ help:
 
 # RPM
 rpm-build:  ## build rpm
-	rpm/bin/build.py rpm $(VERSION) --iteration $(PYTHON_VERSION) --python $(PYTHON_VERSION) 
+	rpm/bin/build.py rpm $(VERSION) --iteration py$(PYTHON_VERSION) --python $(PYTHON_VERSION) 
 
 rpm-build-local:  ## build local rpm
 	rpm/bin/build.py rpm --local $(VERSION) --python $(PYTHON_VERSION) 
@@ -79,7 +79,7 @@ publish-docker-unstable: ## push the unstable docker image
 	$(MAKE) -C $(UI_DIR) deps publish-docker-unstable
 
 publish-rpm: ## publish the rpm
-	rpm/bin/upload.sh $(VERSION) $(PYTHON_VERSION)
+	rpm/bin/upload.sh $(VERSION) py$(PYTHON_VERSION)
 
 # Requires the docker image already built and UI packaged
 publish-docker-rpm: rpm-build
