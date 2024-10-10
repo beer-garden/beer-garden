@@ -126,6 +126,44 @@ def ensure_v2_to_v3_model_migration():
         db.drop_collection("instance")
         db.drop_collection("system")
 
+def ensure_v3_24_model_migration():
+    """ Ensures that the Garden model migration to yaml configs"""
+
+    from beer_garden.db.mongo.models import Garden
+
+    try:
+        if Garden.objects.count() > 0:
+            _ = Garden.objects()[0]
+    except (FieldDoesNotExist, InvalidDocumentError):
+
+        import yaml
+
+        logger.warning(
+            "Encountered an error loading Gardens. This is most likely because"
+            " the database is using the old (v3.23) style of storing in the database. To"
+            " fix this the Garden collections mapped to yaml files, then"
+            " drop the Garden collection."
+        )
+
+        db = get_db()
+
+        garden_collection = db.get_collection("garden")
+
+        for legacy_garden in garden_collection.find():
+            if legacy_garden["connection_type"] != "LOCAL":
+
+                garden_file_data = {"receiving": False, "publishing": False}
+
+                if legacy_garden["connection_type"] == "HTTP":
+                    garden_file_data["http"] = legacy_garden["connection_params"]
+                if legacy_garden["connection_type"] == "STOMP":
+                    garden_file_data["stomp"] = legacy_garden["connection_params"]
+
+                with open(f"{config.get("children.directory")}/{legacy_garden['name']}.yaml", 'w+') as ff:
+                    yaml.dump(garden_file_data, ff, allow_unicode=True)
+            
+        db.drop_collection("garden")
+
 
 def ensure_v3_27_model_migration():
     """Ensures that the Role model is consolidated
@@ -160,8 +198,35 @@ def ensure_v3_27_model_migration():
             db.drop_collection("user")
             db.drop_collection("remote_user")
             db.drop_collection("user_token")
+            db.drop_collection("legacy_role")
 
             return
+        
+    from beer_garden.db.mongo.models import Role, User, UserToken
+
+    try:
+        if Role.objects.count() > 0:
+            _ = Role.objects()[0]
+        if User.objects.count() > 0:
+            _ = User.objects()[0]
+        if UserToken.objects.count() > 0:
+            _ = UserToken.objects()[0]
+    except (FieldDoesNotExist, InvalidDocumentError):
+        logger.warning(
+            "Encountered an error loading Roles or Users or User Tokens. This is most"
+            " likely because the database is using the old (v3.26) style of storing in"
+            " the database. To fix this the roles, remote_roles, role_assignment, user,"
+            " remote_user, and user_token collections will be dropped."
+        )
+
+        db = get_db()
+        db.drop_collection("role")
+        db.drop_collection("remote_role")
+        db.drop_collection("role_assignment")
+        db.drop_collection("user")
+        db.drop_collection("remote_user")
+        db.drop_collection("user_token")
+        db.drop_collection("legacy_role")
 
 
 def ensure_model_migration():
@@ -169,6 +234,7 @@ def ensure_model_migration():
     single function for easy management"""
 
     ensure_v2_to_v3_model_migration()
+    ensure_v3_24_model_migration()
     ensure_v3_27_model_migration()
 
 
