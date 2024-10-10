@@ -126,6 +126,7 @@ def ensure_v2_to_v3_model_migration():
         db.drop_collection("instance")
         db.drop_collection("system")
 
+
 def ensure_v3_27_model_migration():
     """Ensures that the Role model is flatten and Command model is an
     EmbeddedDocument
@@ -172,7 +173,6 @@ def ensure_v3_27_model_migration():
         db.drop_collection("user")
         db.drop_collection("remote_user")
         db.drop_collection("user_token")
-
 
 
 def ensure_model_migration():
