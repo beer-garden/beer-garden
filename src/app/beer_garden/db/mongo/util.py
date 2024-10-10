@@ -126,8 +126,9 @@ def ensure_v2_to_v3_model_migration():
         db.drop_collection("instance")
         db.drop_collection("system")
 
+
 def ensure_v3_24_model_migration():
-    """ Ensures that the Garden model migration to yaml configs"""
+    """Ensures that the Garden model migration to yaml configs"""
 
     from beer_garden.db.mongo.models import Garden
 
@@ -159,9 +160,12 @@ def ensure_v3_24_model_migration():
                 if legacy_garden["connection_type"] == "STOMP":
                     garden_file_data["stomp"] = legacy_garden["connection_params"]
 
-                with open(f"{config.get("children.directory")}/{legacy_garden['name']}.yaml", 'w+') as ff:
+                with open(
+                    f"{config.get('children.directory')}/{legacy_garden['name']}.yaml",
+                    "w+",
+                ) as ff:
                     yaml.dump(garden_file_data, ff, allow_unicode=True)
-            
+
         db.drop_collection("garden")
 
 
@@ -201,7 +205,7 @@ def ensure_v3_27_model_migration():
             db.drop_collection("legacy_role")
 
             return
-        
+
     from beer_garden.db.mongo.models import Role, User, UserToken
 
     try:
