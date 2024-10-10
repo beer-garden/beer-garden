@@ -108,6 +108,7 @@ route_functions = {
     "REQUEST_READ": beer_garden.requests.get_request,
     "REQUEST_READ_ALL": beer_garden.requests.get_requests,
     "REQUEST_DELETE": beer_garden.requests.delete_requests,
+    "REQUEST_CANCEL": beer_garden.requests.cancel_requests,
     "REQUEST_UPDATE": beer_garden.requests.update_request,
     "COMMAND_READ": beer_garden.commands.get_command,
     "COMMAND_READ_ALL": beer_garden.commands.get_commands,
@@ -294,12 +295,34 @@ def execute_local(operation: Operation):
 
 def update_api_heartbeat(operation: Operation):
     if (
-        operation.source_garden_name is not None
-        and operation.source_garden_name != config.get("garden.name")
-        and operation.source_api is not None
+        operation.source_api is not None
         and operation.operation_type == "PUBLISH_EVENT"
         and operation.model.name == Events.GARDEN_SYNC.name
     ):
+        if operation.source_garden_name == config.get("garden.name"):
+
+            if operation.model.payload.name != operation.source_garden_name:
+
+                local_garden = get_garden(config.get("garden.name"))
+
+                # Will only support mapping 1 hop away legacy Garden Syncs
+                child_garden = False
+                for child in local_garden.children:
+                    if child.name == operation.model.payload.name:
+                        logger.warning(
+                            (
+                                "Legacy (3.16 or prior) GARDEN_SYNC operation "
+                                f"seen for Beer-Garden '{operation.model.payload.name}'"
+                            )
+                        )
+                        operation.source_garden_name = operation.model.payload.name
+                        child_garden = True
+                        break
+                if child_garden:
+                    return
+            else:
+                return
+
         source_garden = getattr(gardens, operation.source_garden_name, None)
         if operation.model.payload.name == operation.source_garden_name:
             beer_garden.garden.check_garden_receiving_heartbeat(
@@ -815,7 +838,13 @@ def _target_from_type(operation: Operation) -> str:
         or "TOPIC" in operation.operation_type
         or "ROLE" in operation.operation_type
         or operation.operation_type
-        in ("PLUGIN_LOG_RELOAD", "QUEUE_DELETE_ALL", "SYSTEM_CREATE", "REQUEST_DELETE")
+        in (
+            "PLUGIN_LOG_RELOAD",
+            "QUEUE_DELETE_ALL",
+            "SYSTEM_CREATE",
+            "REQUEST_DELETE",
+            "REQUEST_CANCEL",
+        )
     ):
         return config.get("garden.name")
 
