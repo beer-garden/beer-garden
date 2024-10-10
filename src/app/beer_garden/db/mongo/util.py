@@ -126,12 +126,61 @@ def ensure_v2_to_v3_model_migration():
         db.drop_collection("instance")
         db.drop_collection("system")
 
+def ensure_v3_27_model_migration():
+    """Ensures that the Role model is flatten and Command model is an
+    EmbeddedDocument
+
+    In Version 2 and earlier the Role model allowed for nested roles. This caused
+    recursive approach to determining Principal permissions. This is changed in
+    Version 3 to allow for Roles to add complexity of Namespace restrictions which
+    would not work properly with nesting.
+
+    Right now if the check fails this will just drop the Roles and Principle
+    collections. Since they'll be recreated anyway this isn't the worst, but
+    it would be better if we could seamlessly flatten existing permissions.
+
+    In version 2 and earlier the Command model was a top-level collection. This
+    causes organization and performance issues, so in version 3 it was changed to be an
+    embedded document of the System model. This ensures that's the case.
+
+    Right now if the check fails this will just drop the Systems, Commands, and
+    Instances collections. Since they'll be recreated anyway this isn't the worst, but
+    it would be better if we could seamlessly move the existing commands into existing
+    Systems.
+    """
+    from beer_garden.db.mongo.models import Role, User, UserToken
+
+    try:
+        if Role.objects.count() > 0:
+            _ = Role.objects()[0]
+        if User.objects.count() > 0:
+            _ = User.objects()[0]
+        if UserToken.objects.count() > 0:
+            _ = UserToken.objects()[0]
+    except (FieldDoesNotExist, InvalidDocumentError):
+        logger.warning(
+            "Encountered an error loading Roles or Users or User Tokens. This is most likely because"
+            " the database is using the old (v3.26) style of storing in the database. To"
+            " fix this the roles, remote_roles, role_assignment, user, remote_user, and user_token"
+            " collections will be dropped."
+        )
+
+        db = get_db()
+        db.drop_collection("role")
+        db.drop_collection("remote_role")
+        db.drop_collection("role_assignment")
+        db.drop_collection("user")
+        db.drop_collection("remote_user")
+        db.drop_collection("user_token")
+
+
 
 def ensure_model_migration():
     """Ensures that the database is properly migrated. All migrations ran from this
     single function for easy management"""
 
     ensure_v2_to_v3_model_migration()
+    ensure_v3_27_model_migration()
 
 
 def check_indexes(document_class):
@@ -181,7 +230,7 @@ def check_indexes(document_class):
 
         document_class.ensure_indexes()
 
-    except IndexOperationError:
+    except (IndexOperationError, OperationFailure):
         logger.warning(
             "%s collection indexes verification failed, attempting to rebuild",
             document_class.__name__,
