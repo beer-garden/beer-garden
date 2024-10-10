@@ -160,10 +160,10 @@ def ensure_v3_27_model_migration():
             _ = UserToken.objects()[0]
     except (FieldDoesNotExist, InvalidDocumentError):
         logger.warning(
-            "Encountered an error loading Roles or Users or User Tokens. This is most likely because"
-            " the database is using the old (v3.26) style of storing in the database. To"
-            " fix this the roles, remote_roles, role_assignment, user, remote_user, and user_token"
-            " collections will be dropped."
+            "Encountered an error loading Roles or Users or User Tokens. This is most"
+            " likely because the database is using the old (v3.26) style of storing in"
+            " the database. To fix this the roles, remote_roles, role_assignment, user,"
+            " remote_user, and user_token collections will be dropped."
         )
 
         db = get_db()
