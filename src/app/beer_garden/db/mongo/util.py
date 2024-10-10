@@ -130,12 +130,12 @@ def ensure_v2_to_v3_model_migration():
 def ensure_v3_27_model_migration():
     """Ensures that the Role model is consolidated
 
-    In Version 3.6 and earlier the utilized role assignments to determine the 
-    scope of the Role. In Version 3.7 these scopes were incorporated into the 
-    Role model. 
+    In Version 3.6 and earlier the utilized role assignments to determine the
+    scope of the Role. In Version 3.7 these scopes were incorporated into the
+    Role model.
 
     Right now if the check fails this will just drop any collection associated
-    with User Accounts.  Since they'll be recreated anyway this isn't the worst, 
+    with User Accounts.  Since they'll be recreated anyway this isn't the worst,
     but it would be better if we could seamlessly flatten existing permissions.
 
     """
@@ -144,13 +144,13 @@ def ensure_v3_27_model_migration():
 
     collections = db.collection_names()
 
-    for legacy_user_collection in ["remote_role", "role_assignment","remote_user"]:
+    for legacy_user_collection in ["remote_role", "role_assignment", "remote_user"]:
         if legacy_user_collection in collections:
             logger.warning(
-            "Encountered an error loading Roles or Users or User Tokens. This is most"
-            " likely because the database is using the old (v3.26) style of storing in"
-            " the database. To fix this the roles, remote_roles, role_assignment, user,"
-            " remote_user, and user_token collections will be dropped."
+                "Encountered an error loading Roles or Users or User Tokens. This is most"
+                " likely because the database is using the old (v3.26) style of storing in"
+                " the database. To fix this the roles, remote_roles, role_assignment, user,"
+                " remote_user, and user_token collections will be dropped."
             )
 
             db = get_db()
@@ -160,8 +160,9 @@ def ensure_v3_27_model_migration():
             db.drop_collection("user")
             db.drop_collection("remote_user")
             db.drop_collection("user_token")
-            
+
             return
+
 
 def ensure_model_migration():
     """Ensures that the database is properly migrated. All migrations ran from this
