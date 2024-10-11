@@ -152,9 +152,9 @@ def ensure_v3_24_model_migration():
 
         logger.warning(
             "Encountered an error loading Gardens. This is most likely because"
-            " the database is using the old (v3.23) style of storing in the database. To"
-            " fix this the Garden collections mapped to yaml files, then"
-            " drop the Garden collection."
+            " the database is using the old (v3.23 or prior) models. Migration"
+            " strategy is to map all records in the Garden collection to yaml"
+            " files, then drop the Garden collection to be rebuilt."
         )
 
         db = get_db()
@@ -217,9 +217,10 @@ def ensure_v3_27_model_migration():
         if legacy_user_collection in collections:
             logger.warning(
                 "Encountered an error loading Roles or Users or User Tokens. This is most"
-                " likely because the database is using the old (v3.26) style of storing in"
-                " the database. To fix this the roles, remote_roles, role_assignment, user,"
-                " remote_user, and user_token collections will be dropped."
+                " likely because the database is using the old (v3.26 or prior) models."
+                " Migration strategy is to drop the roles, remote_roles, role_assignment,"
+                " user, remote_user, and user_token collections. The required collections"
+                " will be rebuilt."
             )
 
             db = get_db()
