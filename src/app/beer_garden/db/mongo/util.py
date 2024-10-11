@@ -141,12 +141,11 @@ def contains_legacy_field(collection_name, legacy_fields):
 def ensure_v3_24_model_migration():
     """Ensures that the Garden model migration to yaml configs"""
 
-    garden_collection = db.get_collection("garden")
-
     # Look for 3.23 fields
     if contains_legacy_field("garden", ["connection_params"]):
         import os
         import yaml
+        from pathlib import Path
 
         db = get_db()
 
@@ -166,11 +165,9 @@ def ensure_v3_24_model_migration():
 
         for legacy_garden in garden_collection.find():
             if legacy_garden["connection_type"] != "LOCAL":
-                if not os.path.exists(
-                    config.get(
-                        f"{config.get('children.directory')}/{legacy_garden['name']}.yaml"
-                    )
-                ):
+                if not Path(
+                    f"{config.get('children.directory')}/{legacy_garden['name']}.yaml"
+                ).exists():
                     garden_file_data = {"receiving": False, "publishing": False}
 
                     if legacy_garden["connection_type"] == "HTTP":
