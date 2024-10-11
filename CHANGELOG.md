@@ -1,5 +1,14 @@
 # Beer Garden Changelog
 
+# 3.28.1
+
+TBD
+
+- Added database cleanup from Beer-Garden 3.16 User Models. Collections will be pruned and require
+  to be rebuilt to match the new user model approach
+- Added database cleanup from Beer-Garden 3.23 Garden Models. Models will be mapped to their YAML
+  file in the children directory, then the collection is pruned
+
 # Python 3.13 Support
 
 10/10/2024
