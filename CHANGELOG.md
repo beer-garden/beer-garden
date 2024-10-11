@@ -2,7 +2,7 @@
 
 # 3.28.2
 
-TBD
+10/11/2024
 
 - Fixed Child Garden sync for older Gardens that do not provide Namespace on Systems
 
