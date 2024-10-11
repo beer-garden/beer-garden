@@ -161,11 +161,13 @@ def ensure_v3_24_model_migration():
                 garden_file_data = {"receiving": False, "publishing": False}
 
                 if legacy_garden["connection_type"] == "HTTP":
-                    garden_file_data["http"] = legacy_garden["connection_params"]
+                    garden_file_data["http"] = legacy_garden["connection_params"]["http"]
                 if legacy_garden["connection_type"] == "STOMP":
-                    garden_file_data["stomp"] = legacy_garden["connection_params"]
+                    garden_file_data["stomp"] = legacy_garden["connection_params"]["stomp"]
 
                 logger.warning(f"Mapping Child Config: {config.get('children.directory')}/{legacy_garden['name']}.yaml")
+                logger.warning(f"Legacy={legacy_garden}")
+                logger.warning(f"Mapped={garden_file_data}")
                 with open(
                     f"{config.get('children.directory')}/{legacy_garden['name']}.yaml",
                     "w+",
