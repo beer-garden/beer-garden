@@ -177,8 +177,8 @@ def ensure_v3_24_model_migration():
 def ensure_v3_27_model_migration():
     """Ensures that the Role model is consolidated
 
-    In Version 3.6 and earlier the utilized role assignments to determine the
-    scope of the Role. In Version 3.7 these scopes were incorporated into the
+    In Version 3.26 and earlier the utilized role assignments to determine the
+    scope of the Role. In Version 3.27 these scopes were incorporated into the
     Role model.
 
     Right now if the check fails this will just drop any collection associated
