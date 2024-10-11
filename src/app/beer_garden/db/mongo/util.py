@@ -165,6 +165,7 @@ def ensure_v3_24_model_migration():
                 if legacy_garden["connection_type"] == "STOMP":
                     garden_file_data["stomp"] = legacy_garden["connection_params"]
 
+                logger.warning(f"Mapping Child Config: {config.get('children.directory')}/{legacy_garden['name']}.yaml")
                 with open(
                     f"{config.get('children.directory')}/{legacy_garden['name']}.yaml",
                     "w+",
