@@ -113,8 +113,9 @@ jobs:
     needs: pypi-verify
 
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.7","3.8","3.9","3.10","3.11","3.12"]
+        python-version: ["3.7","3.8","3.9","3.10","3.11","3.12","3.13"]
 
     steps:
       - uses: actions/checkout@v3
@@ -161,6 +162,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         with:
           upload_url: ${{ needs.github-release.outputs.upload_url }}
-          asset_path: ./rpm/dist/beer-garden-${{ steps.get_version.outputs.version }}-1.el7.x86_64.rpm
-          asset_name: beer-garden-${{ steps.get_version.outputs.version }}-1.el7.x86_64.rpm
+          asset_path: ./rpm/dist/beer-garden-${{ steps.get_version.outputs.version }}-py${{ matrix.python-version }}.el7.x86_64.rpm
+          asset_name: beer-garden-${{ steps.get_version.outputs.version }}-py${{ matrix.python-version }}.el7.x86_64.rpm
           asset_content_type: application/octet-stream

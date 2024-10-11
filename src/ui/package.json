@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "dependencies": {
     "@beer-garden/addons": "^3.4.0",
-    "@beer-garden/builder": "^3.2.2",
+    "@beer-garden/builder": "^3.2.3",
     "@uirouter/angularjs": "^1.0.30",
     "ace-builds": "^1.4.13",
     "angular": "^1.8.0",

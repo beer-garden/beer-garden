@@ -59,7 +59,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.7","3.8","3.9","3.10","3.11","3.12"]
+        python-version: ["3.7","3.8","3.9","3.10","3.11","3.12","3.13"]
         os: ["ubuntu-latest"]
 
     name: PyTests OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
@@ -218,7 +218,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.7","3.8","3.9","3.10","3.11","3.12"]
+        python-version: ["3.7","3.8","3.9","3.10","3.11","3.12","3.13"]
         os: ["ubuntu-latest"]
       fail-fast: false
 
@@ -333,7 +333,7 @@ jobs:
         parent: ["unstable"]
       fail-fast: false
 
-    name: Grandchild Test - unstable -> ${{ matrix.parent }} -> ${{ matrix.child }}
+    name: Grandchild Test - unstable -> ${{ matrix.parent }} -> ${{ matrix.child }} - Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
 
