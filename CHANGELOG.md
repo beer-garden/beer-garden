@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.28.2
+
+TBD
+
+- Fixed Child Garden sync for older Gardens that do not provide Namespace on Systems
+
 # 3.28.1
 
 10/11/2024

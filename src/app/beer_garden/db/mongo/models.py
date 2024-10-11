@@ -917,8 +917,9 @@ class Garden(MongoModel, Document):
         logger = logging.getLogger(self.__class__.__name__)
 
         def _get_system_triple(system: System) -> Tuple[str, str, str]:
+            namespace = getattr(system, "namespace", None)
             return (
-                system.namespace or self.name,
+                namespace or self.name,
                 system.name,
                 system.version,
             )
