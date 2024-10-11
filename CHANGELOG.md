@@ -2,7 +2,7 @@
 
 # 3.28.1
 
-TBD
+10/11/2024
 
 - Added database cleanup from Beer-Garden 3.16 User Models. Collections will be pruned and require
   to be rebuilt to match the new user model approach
