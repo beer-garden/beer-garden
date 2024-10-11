@@ -173,7 +173,10 @@ def ensure_v3_24_model_migration():
                         ]
 
                     logger.warning(
-                        f"Mapping Child Config: {config.get('children.directory')}/{legacy_garden['name']}.yaml"
+                        (
+                            "Mapping Child Config: "
+                            f"{config.get('children.directory')}/{legacy_garden['name']}.yaml"
+                        )
                     )
                     with open(
                         f"{config.get('children.directory')}/{legacy_garden['name']}.yaml",
