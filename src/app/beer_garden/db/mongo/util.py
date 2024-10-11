@@ -136,7 +136,6 @@ def ensure_v3_24_model_migration():
         if Garden.objects.count() > 0:
             _ = Garden.objects()[0]
     except (FieldDoesNotExist, InvalidDocumentError):
-
         import os
 
         import yaml
@@ -157,16 +156,25 @@ def ensure_v3_24_model_migration():
 
         for legacy_garden in garden_collection.find():
             if legacy_garden["connection_type"] != "LOCAL":
-
-                if not os.path.exists(config.get(f"{config.get('children.directory')}/{legacy_garden['name']}.yaml")):
+                if not os.path.exists(
+                    config.get(
+                        f"{config.get('children.directory')}/{legacy_garden['name']}.yaml"
+                    )
+                ):
                     garden_file_data = {"receiving": False, "publishing": False}
 
                     if legacy_garden["connection_type"] == "HTTP":
-                        garden_file_data["http"] = legacy_garden["connection_params"]["http"]
+                        garden_file_data["http"] = legacy_garden["connection_params"][
+                            "http"
+                        ]
                     if legacy_garden["connection_type"] == "STOMP":
-                        garden_file_data["stomp"] = legacy_garden["connection_params"]["stomp"]
+                        garden_file_data["stomp"] = legacy_garden["connection_params"][
+                            "stomp"
+                        ]
 
-                    logger.warning(f"Mapping Child Config: {config.get('children.directory')}/{legacy_garden['name']}.yaml")
+                    logger.warning(
+                        f"Mapping Child Config: {config.get('children.directory')}/{legacy_garden['name']}.yaml"
+                    )
                     with open(
                         f"{config.get('children.directory')}/{legacy_garden['name']}.yaml",
                         "w+",
