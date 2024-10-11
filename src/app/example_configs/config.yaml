@@ -47,6 +47,8 @@ db:
     info: 15   
     temp: 15
     admin: 15
+    
+    orphan: -1
 
     batch_size: -1
 entry:

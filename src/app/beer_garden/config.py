@@ -899,6 +899,14 @@ _DB_SPEC = {
                         "(negative number for never)"
                     ),
                 },
+                "orphan": {
+                    "type": "int",
+                    "default": -1,
+                    "description": (
+                        "Number of minutes to wait before deleting "
+                        "orphaned requests (negative number for never)"
+                    ),
+                },
                 "file": {
                     "type": "int",
                     "default": 15,

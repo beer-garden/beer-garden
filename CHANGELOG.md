@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+# 3.28.1
+
+TBD
+
+- Added support for pruning completed orphaned child requests (`db.ttl.orphan`)
+- Added optimizaiton for TTL to only pull back IDs (instead of entire model) when deleting Requests
+
 # Python 3.13 Support
 
 10/10/2024
