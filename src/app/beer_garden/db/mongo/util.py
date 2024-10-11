@@ -144,8 +144,9 @@ def ensure_v3_24_model_migration():
     # Look for 3.23 fields
     if contains_legacy_field("garden", ["connection_params"]):
         import os
-        import yaml
         from pathlib import Path
+
+        import yaml
 
         db = get_db()
 
