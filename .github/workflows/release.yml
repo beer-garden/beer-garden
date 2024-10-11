@@ -95,11 +95,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: pypi-verify
 
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.7","3.8","3.9","3.10","3.11","3.12","3.13"]
-
     steps:
       - uses: actions/checkout@v3
 
@@ -110,7 +105,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       - name: Build and Publish Images
-        run: make publish-docker VERSION=${GITHUB_REF#refs/tags/} PYTHON_VERSION=${{ matrix.python-version }}
+        run: make publish-docker VERSION=${GITHUB_REF#refs/tags/}
 
   docker-publish-rpm:
     name: Docker Publish
