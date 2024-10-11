@@ -108,6 +108,37 @@ services:
         command:
             --config.file=/prometheus-data/prometheus.yml
 
+    ldap:
+        image: osixia/openldap:latest
+        container_name: ldap
+        hostname: ldap
+        ports:
+            - "389:389"
+            - "636:636"
+        environment: 
+            - LDAP_ORGANISATION=Example
+            - LDAP_DOMAIN=example.com
+            - LDAP_ADMIN_USERNAME=admin
+            - LDAP_ADMIN_PASSWORD=admin
+            - LDAP_CONFIG_PASSWORD=config
+            - "LDAP_BASE_DN=dc=example,dc=com"
+        networks:
+            - bg-network
+
+    phpldapadmin:
+        image: osixia/phpldapadmin:latest
+        container_name: phpldapadmin
+        hostname: phpldapadmin
+        ports: 
+            - "9080:80"
+        environment: 
+            - PHPLDAPADMIN_LDAP_HOSTS=ldap
+            - PHPLDAPADMIN_HTTPS=false
+        networks:
+            - bg-network
+        depends_on:
+            - ldap
+
     rabbitmq:
         image: rabbitmq:3.8-management-alpine
         restart: always
