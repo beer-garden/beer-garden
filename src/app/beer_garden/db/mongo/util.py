@@ -127,18 +127,28 @@ def ensure_v2_to_v3_model_migration():
         db.drop_collection("system")
 
 
+def contains_legacy_field(collection_name, legacy_fields):
+    db = get_db()
+    collection = db.get_collection(collection_name)
+
+    for record in collection.find():
+        for legacy_field in legacy_fields:
+            if legacy_field in record:
+                return True
+    return False
+
+
 def ensure_v3_24_model_migration():
     """Ensures that the Garden model migration to yaml configs"""
 
-    from beer_garden.db.mongo.models import Garden
+    garden_collection = db.get_collection("garden")
 
-    try:
-        if Garden.objects.count() > 0:
-            _ = Garden.objects()[0]
-    except (FieldDoesNotExist, InvalidDocumentError):
+    # Look for 3.23 fields
+    if contains_legacy_field("garden", ["connection_params"]):
         import os
-
         import yaml
+
+        db = get_db()
 
         logger.warning(
             "Encountered an error loading Gardens. This is most likely because"
@@ -204,6 +214,7 @@ def ensure_v3_27_model_migration():
 
     collections = db.collection_names()
 
+    # Look for 3.26 Collections
     for legacy_user_collection in ["remote_role", "role_assignment", "remote_user"]:
         if legacy_user_collection in collections:
             logger.warning(
@@ -224,16 +235,12 @@ def ensure_v3_27_model_migration():
 
             return
 
-    from beer_garden.db.mongo.models import Role, User, UserToken
-
-    try:
-        if Role.objects.count() > 0:
-            _ = Role.objects()[0]
-        if User.objects.count() > 0:
-            _ = User.objects()[0]
-        if UserToken.objects.count() > 0:
-            _ = UserToken.objects()[0]
-    except (FieldDoesNotExist, InvalidDocumentError):
+    # Look for 3.26 fields
+    if (
+        contains_legacy_field("role", ["permissions"])
+        or contains_legacy_field("user", ["role_assignments"])
+        or contains_legacy_field("user_token", ["user"])
+    ):
         logger.warning(
             "Encountered an error loading Roles or Users or User Tokens. This is most"
             " likely because the database is using the old (v3.26) style of storing in"
