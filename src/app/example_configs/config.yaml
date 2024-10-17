@@ -1,5 +1,5 @@
 auth:
-  enabled: false
+  enabled: true
 
   authentication_handlers:
     basic:
@@ -11,6 +11,8 @@ auth:
       user_local_roles_header: bg-user-local-roles
       user_upstream_roles_header: bg-user-upstream-roles
       username_header: bg-username
+    ldap:
+      enabled: true
     
   default_admin:
     password: password
@@ -203,3 +205,6 @@ ldap:
   host: localhost
   port: 389
   base_dn: dc=example,dc=org
+  user_prefix: uid
+  user_attributes: cn=users,cn=accounts
+  use_ssl: false

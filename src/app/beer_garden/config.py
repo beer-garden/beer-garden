@@ -693,6 +693,16 @@ _AUTHENTICATION_HANDLERS_SPEC = {
                 },
             },
         },
+        "ldap": {
+            "type": "dict",
+            "items": {
+                "enabled": {
+                    "type": "bool",
+                    "default": False,
+                    "description": "Enable ldap authentication via username and" "password",
+                }
+            },
+        },
     },
 }
 
@@ -1685,6 +1695,21 @@ _LDAP_SPEC = {
             "default": "dc=example,dc=org",
             "description": "Base dn in directory tree for search queries",
         },
+        "user_prefix": {
+            "type": "str",
+            "default": "uid",
+            "description": "User dn prefix to indicate uid or cn",
+        },
+        "user_attributes": {
+            "type": "str",
+            "default": "cn=users,cn=accounts",
+            "description": "User attributes to specify user hierarchy",
+        },
+        "use_ssl": {
+            "type": "bool",
+            "default": False,
+            "description": "Use SSL when connecting to LDAP server",
+        }
     },
 }
 
