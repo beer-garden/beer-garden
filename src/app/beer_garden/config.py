@@ -699,7 +699,8 @@ _AUTHENTICATION_HANDLERS_SPEC = {
                 "enabled": {
                     "type": "bool",
                     "default": False,
-                    "description": "Enable ldap authentication via username and" "password",
+                    "description": "Enable ldap authentication via username and"
+                    "password",
                 }
             },
         },
@@ -1709,7 +1710,7 @@ _LDAP_SPEC = {
             "type": "bool",
             "default": False,
             "description": "Use SSL when connecting to LDAP server",
-        }
+        },
     },
 }
 
