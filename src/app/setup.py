@@ -38,6 +38,7 @@ setup(
         "motor<3",
         "passlib<1.8",
         "prometheus-client<1",
+        "pyasn1<0.6.0",
         "pyyaml<5.4",
         "pyrabbit2<2",
         "pytz<2021",
@@ -49,7 +50,8 @@ setup(
         "watchdog>2.1.0",
         "wrapt",
         "yapconf>=1.0.0",
-        "elastic-apm"
+        "elastic-apm",
+        "ldap3>=2.9.1"
     ],
     classifiers=[
         "Development Status :: 4 - Beta",

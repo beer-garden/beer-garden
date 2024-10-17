@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional
 
 from brewtils.models import User
+from mongoengine import DoesNotExist
 from tornado.httputil import HTTPServerRequest
 
 from beer_garden.api.http.authentication.login_handlers.base import BaseLoginHandler
@@ -43,7 +44,7 @@ class BasicLoginHandler(BaseLoginHandler):
                         )
                         authenticated_user = update_user(user=authenticated_user)
 
-                except User.DoesNotExist:
+                except DoesNotExist:
                     pass
 
         return authenticated_user
