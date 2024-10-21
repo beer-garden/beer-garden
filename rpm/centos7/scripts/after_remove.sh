@@ -37,5 +37,8 @@ case "$1" in
     ;;
 esac
 
+# Remove beerctl alias
+unalias beerctl
+
 # Reload units
 systemctl daemon-reload
