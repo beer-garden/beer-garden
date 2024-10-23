@@ -195,7 +195,7 @@ def prune_topics(garden: Garden = None, system: System = None):
                     or (garden and subscriber_validate(subscriber, garden, topic.name))
                     or (
                         system
-                        and subscriber_system_validate(subscriber, system, topic.name)
+                        and subscriber_systems_validate(subscriber, [system], topic.name)
                     )
                 ):
                     valid_subscribers.append(subscriber)
@@ -215,8 +215,7 @@ def subscriber_validate(
     subscriber: Subscriber, garden: Garden, topic_name: str
 ) -> bool:
     if subscriber.garden == garden.name:
-        for system in garden.systems:
-            subscriber_system_validate(subscriber, system, topic_name)
+        return subscriber_systems_validate(subscriber, garden.systems, topic_name)
 
     if garden.children:
         for child in garden.children:
@@ -225,19 +224,20 @@ def subscriber_validate(
     return False
 
 
-def subscriber_system_validate(subscriber, system, topic_name: str):
-    if subscriber.system == system.name and subscriber.version == system.version:
-        for instance in system.instances:
-            if subscriber.instance == instance.name:
-                for command in system.commands:
-                    if subscriber.command == command.name:
-                        if subscriber.subscriber_type == "GENERATED":
-                            return True
-                        if (
-                            subscriber.subscriber_type == "ANNOTATED"
-                            and topic_name in command.topics
-                        ):
-                            return True
+def subscriber_systems_validate(subscriber, systems, topic_name: str):
+    for system in systems:
+        if subscriber.system == system.name and subscriber.version == system.version:
+            for instance in system.instances:
+                if subscriber.instance == instance.name:
+                    for command in system.commands:
+                        if subscriber.command == command.name:
+                            if subscriber.subscriber_type == "GENERATED":
+                                return True
+                            if (
+                                subscriber.subscriber_type == "ANNOTATED"
+                                and topic_name in command.topics
+                            ):
+                                return True
 
 
 def create_garden_topics(garden: Garden):

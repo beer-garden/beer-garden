@@ -295,6 +295,144 @@ class TestTopic:
         assert mock_remove_topic.call_count == 0
         assert mock_update_topic.call_count == 0
 
+    def test_system_prune_topics(self, monkeypatch):
+
+        system = System(
+            name="local_system",
+            namespace="namespace",
+            version="1.2.3",
+            instances=[Instance(name="default")],
+            commands=[Command(name="command")],
+        )
+
+        topics = [
+            BrewtilsTopic(
+                name="topic_1",
+                subscribers=[
+                    BrewtilsSubscriber(
+                        garden="garden",
+                        namespace="namespace",
+                        system="system",
+                        version="1.2.3",
+                        instance="default",
+                        command="command",
+                        subscriber_type="ANNOTATED",
+                    ),
+                ],
+            ),
+        ]
+
+        monkeypatch.setattr(topic, "get_all_topics", Mock(return_value=topics))
+
+        mock_remove_topic = Mock(return_value=None)
+        monkeypatch.setattr(topic, "remove_topic", mock_remove_topic)
+
+        mock_update_topic = Mock(return_value=None)
+        monkeypatch.setattr(topic, "update_topic", mock_update_topic)
+
+        topic.prune_topics(system=system)
+
+        assert mock_remove_topic.call_count == 1
+        assert mock_update_topic.call_count == 0
+
+    def test_system_prune_topics_remove_one(self, monkeypatch):
+
+        system = System(
+            name="system",
+            namespace="namespace",
+            version="1.2.3",
+            instances=[Instance(name="default")],
+            commands=[Command(name="command", topics=["topic_1"])],
+        )
+
+        topics = [
+            BrewtilsTopic(
+                name="topic_1",
+                subscribers=[
+                    BrewtilsSubscriber(
+                        garden="garden",
+                        namespace="namespace",
+                        system="system",
+                        version="1.2.3",
+                        instance="default",
+                        command="command",
+                        subscriber_type="ANNOTATED",
+                    ),
+                    BrewtilsSubscriber(
+                        garden="other_garden",
+                        namespace="other_namespace",
+                        system="other_system",
+                        version="1.2.3",
+                        instance="other_default",
+                        command="other_command",
+                        subscriber_type="ANNOTATED",
+                    ),
+                ],
+            ),
+        ]
+
+        monkeypatch.setattr(topic, "get_all_topics", Mock(return_value=topics))
+
+        mock_remove_topic = Mock(return_value=None)
+        monkeypatch.setattr(topic, "remove_topic", mock_remove_topic)
+
+        mock_update_topic = Mock(return_value=None)
+        monkeypatch.setattr(topic, "update_topic", mock_update_topic)
+
+        topic.prune_topics(system=system)
+
+        assert mock_remove_topic.call_count == 0
+        assert mock_update_topic.call_count == 1
+
+    def test_system_prune_topics_remove_none(self, monkeypatch):
+
+        system = System(
+            name="system",
+            namespace="namespace",
+            version="1.2.3",
+            instances=[Instance(name="default")],
+            commands=[Command(name="command", topics=["topic_2"])],
+        )
+
+        topics = [
+            BrewtilsTopic(
+                name="topic_1",
+                subscribers=[
+                    BrewtilsSubscriber(
+                        garden="garden",
+                        namespace="namespace",
+                        system="system",
+                        version="1.2.3",
+                        instance="default",
+                        command="command",
+                        subscriber_type="GENERATED",
+                    ),
+                    BrewtilsSubscriber(
+                        garden="other_garden",
+                        namespace="other_namespace",
+                        system="other_system",
+                        version="1.2.3",
+                        instance="other_default",
+                        command="other_command",
+                        subscriber_type="DYNAMIC",
+                    ),
+                ],
+            ),
+        ]
+
+        monkeypatch.setattr(topic, "get_all_topics", Mock(return_value=topics))
+
+        mock_remove_topic = Mock(return_value=None)
+        monkeypatch.setattr(topic, "remove_topic", mock_remove_topic)
+
+        mock_update_topic = Mock(return_value=None)
+        monkeypatch.setattr(topic, "update_topic", mock_update_topic)
+
+        topic.prune_topics(system=system)
+
+        assert mock_remove_topic.call_count == 0
+        assert mock_update_topic.call_count == 0
+
     def test_increase_topic_counter(self, topic1):
         assert topic1.publisher_count == 0
 
