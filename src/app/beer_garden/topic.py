@@ -2,7 +2,7 @@ import logging
 from typing import List
 
 from brewtils.errors import PluginError
-from brewtils.models import Event, Events, Garden, Subscriber, Topic
+from brewtils.models import Event, Events, Garden, Subscriber, System, Topic
 from mongoengine import DoesNotExist
 
 import beer_garden.config as config
@@ -184,14 +184,21 @@ def subscriber_match(
     return match
 
 
-def prune_topics(garden):
+def prune_topics(garden: Garden = None, system: System = None):
     for topic in get_all_topics():
         if topic.subscribers:
             valid_subscribers = []
             update_subscribers = False
             for subscriber in topic.subscribers:
-                if subscriber.subscriber_type == "DYNAMIC" or subscriber_validate(
-                    subscriber, garden, topic.name
+                if (
+                    subscriber.subscriber_type == "DYNAMIC"
+                    or (garden and subscriber_validate(subscriber, garden, topic.name))
+                    or (
+                        system
+                        and subscriber_systems_validate(
+                            subscriber, [system], topic.name
+                        )
+                    )
                 ):
                     valid_subscribers.append(subscriber)
                 else:
@@ -210,28 +217,29 @@ def subscriber_validate(
     subscriber: Subscriber, garden: Garden, topic_name: str
 ) -> bool:
     if subscriber.garden == garden.name:
-        for system in garden.systems:
-            if (
-                subscriber.system == system.name
-                and subscriber.version == system.version
-            ):
-                for instance in system.instances:
-                    if subscriber.instance == instance.name:
-                        for command in system.commands:
-                            if subscriber.command == command.name:
-                                if subscriber.subscriber_type == "GENERATED":
-                                    return True
-                                if (
-                                    subscriber.subscriber_type == "ANNOTATED"
-                                    and topic_name in command.topics
-                                ):
-                                    return True
+        return subscriber_systems_validate(subscriber, garden.systems, topic_name)
 
     if garden.children:
         for child in garden.children:
             if subscriber_validate(subscriber, child, topic_name):
                 return True
     return False
+
+
+def subscriber_systems_validate(subscriber, systems, topic_name: str):
+    for system in systems:
+        if subscriber.system == system.name and subscriber.version == system.version:
+            for instance in system.instances:
+                if subscriber.instance == instance.name:
+                    for command in system.commands:
+                        if subscriber.command == command.name:
+                            if subscriber.subscriber_type == "GENERATED":
+                                return True
+                            if (
+                                subscriber.subscriber_type == "ANNOTATED"
+                                and topic_name in command.topics
+                            ):
+                                return True
 
 
 def create_garden_topics(garden: Garden):
@@ -320,4 +328,6 @@ def handle_event(event: Event) -> None:
     if event.garden == config.get("garden.name"):
         if event.name == Events.GARDEN_SYNC.name:
             create_garden_topics(event.payload)
-            prune_topics(event.payload)
+            prune_topics(garden=event.payload)
+        elif event.name == Events.SYSTEM_REMOVED.name:
+            prune_topics(system=event.payload)
