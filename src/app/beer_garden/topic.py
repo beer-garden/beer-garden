@@ -195,7 +195,9 @@ def prune_topics(garden: Garden = None, system: System = None):
                     or (garden and subscriber_validate(subscriber, garden, topic.name))
                     or (
                         system
-                        and subscriber_systems_validate(subscriber, [system], topic.name)
+                        and subscriber_systems_validate(
+                            subscriber, [system], topic.name
+                        )
                     )
                 ):
                     valid_subscribers.append(subscriber)
