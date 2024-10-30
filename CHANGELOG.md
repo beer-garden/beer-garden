@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.28.3
+
+TBD
+
+- Added topic pruning for system removed events
+
 # 3.28.2
 
 10/11/2024
