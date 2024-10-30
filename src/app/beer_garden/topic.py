@@ -184,21 +184,26 @@ def subscriber_match(
     return match
 
 
+def topic_has_system_subscribers(topic: Topic, system: System):
+    for subscriber in topic.subscribers:
+        if subscriber.system == system.name:
+            return True
+    return False
+
+
 def prune_topics(garden: Garden = None, system: System = None):
     for topic in get_all_topics():
-        if topic.subscribers:
+        if topic.subscribers or system and topic_has_system_subscribers(topic, system):
             valid_subscribers = []
             update_subscribers = False
             for subscriber in topic.subscribers:
-                if (
-                    subscriber.subscriber_type == "DYNAMIC"
-                    or (garden and subscriber_validate(subscriber, garden, topic.name))
-                    or (
-                        system
-                        and subscriber_systems_validate(
-                            subscriber, [system], topic.name
-                        )
-                    )
+                if subscriber.subscriber_type == "DYNAMIC" or (
+                    garden and subscriber_validate(subscriber, garden, topic.name)
+                ):
+                    valid_subscribers.append(subscriber)
+                elif subscriber.subscriber_type == "DYNAMIC" or (
+                    system
+                    and subscriber_system_validate(subscriber, system, topic.name)
                 ):
                     valid_subscribers.append(subscriber)
                 else:
@@ -217,13 +222,21 @@ def subscriber_validate(
     subscriber: Subscriber, garden: Garden, topic_name: str
 ) -> bool:
     if subscriber.garden == garden.name:
-        return subscriber_systems_validate(subscriber, garden.systems, topic_name)
+        if subscriber_systems_validate(subscriber, garden.systems, topic_name):
+            return True
 
     if garden.children:
         for child in garden.children:
             if subscriber_validate(subscriber, child, topic_name):
                 return True
     return False
+
+
+def subscriber_system_validate(subscriber, system, topic_name: str):
+    if subscriber.system == system.name:
+        if subscriber_systems_validate(subscriber, [system], topic_name):
+            return False
+    return True
 
 
 def subscriber_systems_validate(subscriber, systems, topic_name: str):
