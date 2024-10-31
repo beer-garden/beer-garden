@@ -204,7 +204,7 @@ ui:
 ldap:
   host: localhost
   port: 389
-  base_dn: dc=example,dc=org
+  base_dn: dc=example,dc=com
   user_prefix: uid
   user_attributes: cn=users,cn=accounts
   use_ssl: false

@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -10,7 +11,9 @@ from tornado.httputil import HTTPServerRequest
 from beer_garden import config
 from beer_garden.api.http.authentication.login_handlers.base import BaseLoginHandler
 from beer_garden.api.http.schemas.v1.token import TokenInputSchema
-from beer_garden.user import get_user, update_user
+from beer_garden.user import create_user, get_user, update_user
+
+logger = logging.getLogger(__name__)
 
 
 class LdapLoginHandler(BaseLoginHandler):
@@ -81,7 +84,7 @@ class LdapLoginHandler(BaseLoginHandler):
                 attributes=[self.user_prefix],
             )
             for entry in conn.entries:
-                groups.append(entry[self.user_prefix].value)
+                groups.append(entry["cn"].value)
 
         return groups
 
@@ -107,16 +110,17 @@ class LdapLoginHandler(BaseLoginHandler):
 
             if username and password:
                 try:
-                    user = get_user(username=username)
-
-                    if self.verify_ldap_password(user.username, password):
-                        authenticated_user = user
+                    if self.verify_ldap_password(username, password):
+                        try:
+                            authenticated_user = get_user(username=username)
+                        except DoesNotExist:
+                            authenticated_user = User(username=username, is_remote=True)
+                            authenticated_user = create_user(authenticated_user)
                         authenticated_user.metadata[
                             "last_authentication"
                         ] = datetime.now(timezone.utc).timestamp()
                         authenticated_user = update_user(user=authenticated_user)
-
-                except DoesNotExist:
-                    pass
+                except LDAPException as ex:
+                    logger.error(f"LDAP login failed: {ex}")
 
         return authenticated_user
