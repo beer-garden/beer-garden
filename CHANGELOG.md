@@ -1,5 +1,14 @@
 # Beer Garden Changelog
 
+# 3.29.0
+
+TBD
+
+- Added new beer.conf support for shutdown functions. These functions will be executed at the start
+  of the shutdown process. Function must be present on the client class object.
+- Added new beer.conf support for startup functions. These functions will be executed after `Plugin().run()` 
+  has completed startup processes. Function must be present on the client class object.
+
 # 3.28.2
 
 10/11/2024
