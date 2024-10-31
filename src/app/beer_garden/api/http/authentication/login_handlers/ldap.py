@@ -12,17 +12,13 @@ from beer_garden import config
 from beer_garden.api.http.authentication.login_handlers.base import BaseLoginHandler
 from beer_garden.api.http.schemas.v1.token import TokenInputSchema
 from beer_garden.user import create_user, get_user, update_user
+from beer_garden.role import get_role
 
 logger = logging.getLogger(__name__)
 
 
 class LdapLoginHandler(BaseLoginHandler):
     """Handler for username and password ldap based authentication"""
-
-    def __init__(self):
-        self.user_prefix = config.get("ldap.user_prefix")
-        self.user_attributes = config.get("ldap.user_attributes")
-        self.base_dn = config.get("ldap.base_dn")
 
     @staticmethod
     def get_user_dn(username: str):
@@ -34,7 +30,7 @@ class LdapLoginHandler(BaseLoginHandler):
         )
         return ",".join([s for s in dn_parts if s])
 
-    def verify_ldap_password(self, username: str, password: str):
+    def verify_ldap_password(self, conn: Connection):
         """Checks the provided plaintext password against the user's stored password
 
         Args:
@@ -43,50 +39,30 @@ class LdapLoginHandler(BaseLoginHandler):
         Returns:
             bool: True if the password matches, False otherwise
         """
-        try:
-            server = Server(
-                host=config.get("ldap.host"),
-                port=config.get("ldap.port"),
-                use_ssl=config.get("ldap.use_ssl"),
-            )
-            conn = Connection(
-                server,
-                self.get_user_dn(username),
-                password,
-                client_strategy=SAFE_SYNC,
-                auto_bind=True,
-            )
-            if conn.result["description"] == "success":
-                return True
-        except LDAPException:
-            raise
-
+        if conn.result["description"] == "success":
+            return True
         return False
 
-    def get_user_roles(self, username: str, password: str):
+    def get_user_roles(self, conn: Connection, username: str):
         """Checks the users roles against the provided"""
         groups = []
-        server = Server(
-            host=config.get("ldap.host"),
-            port=config.get("ldap.port"),
-            use_ssl=config.get("ldap.use_ssl"),
+        roles = []
+        conn.search(
+            config.get("ldap.base_dn"),
+            f"(&(objectclass=groupOfNames)(member={self.get_user_dn(username)}))",
+            attributes=["cn"],
         )
-        with Connection(
-            server,
-            self.get_user_dn(username),
-            password,
-            client_strategy=SAFE_SYNC,
-            auto_bind=True,
-        ) as conn:
-            conn.search(
-                self.base_dn,
-                f"(&(objectclass=groupOfNames)(member={self.get_user_dn(username)}))",
-                attributes=[self.user_prefix],
-            )
-            for entry in conn.entries:
-                groups.append(entry["cn"].value)
+        for entry in conn.entries:
+            groups.append(entry["cn"].value)
 
-        return groups
+        for group in groups:
+            try:
+                roles.append(get_role(role_name=group))
+            except DoesNotExist:
+                pass
+
+        logger.info(f"Updating {username} roles to {roles}")
+        return roles
 
     def get_user(self, request: HTTPServerRequest) -> Optional[User]:
         """Gets the User corresponding to the username and password supplied in the
@@ -110,16 +86,31 @@ class LdapLoginHandler(BaseLoginHandler):
 
             if username and password:
                 try:
-                    if self.verify_ldap_password(username, password):
-                        try:
-                            authenticated_user = get_user(username=username)
-                        except DoesNotExist:
-                            authenticated_user = User(username=username, is_remote=True)
-                            authenticated_user = create_user(authenticated_user)
-                        authenticated_user.metadata[
-                            "last_authentication"
-                        ] = datetime.now(timezone.utc).timestamp()
-                        authenticated_user = update_user(user=authenticated_user)
+                    server = Server(
+                        host=config.get("ldap.host"),
+                        port=config.get("ldap.port"),
+                        use_ssl=config.get("ldap.use_ssl"),
+                    )
+                    with Connection(
+                        server,
+                        self.get_user_dn(username),
+                        password,
+                    ) as conn:
+                        if self.verify_ldap_password(conn):
+                            try:
+                                authenticated_user = get_user(username=username)
+                            except DoesNotExist:
+                                authenticated_user = User(
+                                    username=username, is_remote=True
+                                )
+                                authenticated_user = create_user(authenticated_user)
+                            authenticated_user.metadata[
+                                "last_authentication"
+                            ] = datetime.now(timezone.utc).timestamp()
+                            authenticated_user.upstream_roles = self.get_user_roles(
+                                conn, username
+                            )
+                            authenticated_user = update_user(user=authenticated_user)
                 except LDAPException as ex:
                     logger.error(f"LDAP login failed: {ex}")
 
