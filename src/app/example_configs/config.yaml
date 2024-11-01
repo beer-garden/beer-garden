@@ -208,3 +208,4 @@ ldap:
   user_prefix: uid
   user_attributes: cn=users,cn=accounts
   use_ssl: false
+  use_full_user_dn: false

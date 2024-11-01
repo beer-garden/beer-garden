@@ -1711,6 +1711,11 @@ _LDAP_SPEC = {
             "default": False,
             "description": "Use SSL when connecting to LDAP server",
         },
+        "use_full_user_dn": {
+            "type": "bool",
+            "default": False,
+            "description": "Use full user dn for login. If false, build user dn using user prefix, user attributes, and base dn",
+        },
     },
 }
 

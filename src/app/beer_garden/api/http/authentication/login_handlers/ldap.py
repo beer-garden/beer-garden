@@ -23,12 +23,15 @@ class LdapLoginHandler(BaseLoginHandler):
     @staticmethod
     def get_user_dn(username: str):
         """This combines user information into a complete user DN"""
-        dn_parts = (
-            f"{config.get('ldap.user_prefix')}={username}",
-            config.get("ldap.user_attributes"),
-            config.get("ldap.base_dn"),
-        )
-        return ",".join([s for s in dn_parts if s])
+        if config.get("ldap.use_full_user_dn"):
+            return username
+        else:
+            dn_parts = (
+                f"{config.get('ldap.user_prefix')}={username}",
+                config.get("ldap.user_attributes"),
+                config.get("ldap.base_dn"),
+            )
+            return ",".join([s for s in dn_parts if s])
 
     def verify_ldap_password(self, conn: Connection):
         """Checks the provided plaintext password against the user's stored password
