@@ -1714,7 +1714,7 @@ _LDAP_SPEC = {
         "use_full_user_dn": {
             "type": "bool",
             "default": False,
-            "description": "Use full user dn for login. If false, build user dn using user prefix, user attributes, and base dn",
+            "description": "Use full user dn for login or build user dn from username",
         },
     },
 }

@@ -98,6 +98,7 @@ class LdapLoginHandler(BaseLoginHandler):
                         server,
                         self.get_user_dn(username),
                         password,
+                        client_strategy=SAFE_SYNC,
                     ) as conn:
                         if self.verify_ldap_password(conn):
                             try:
