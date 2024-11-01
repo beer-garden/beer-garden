@@ -335,7 +335,7 @@ class TestTopic:
         system = System(
             name="system",
             namespace="namespace",
-            version="1.2.3",
+            version="4.5.6",
             instances=[Instance(name="default")],
             commands=[Command(name="command", topics=["topic_1"])],
         )
@@ -349,6 +349,15 @@ class TestTopic:
                         namespace="namespace",
                         system="system",
                         version="1.2.3",
+                        instance="default",
+                        command="command",
+                        subscriber_type="ANNOTATED",
+                    ),
+                    BrewtilsSubscriber(
+                        garden="garden",
+                        namespace="namespace",
+                        system="system",
+                        version="4.5.6",
                         instance="default",
                         command="command",
                         subscriber_type="ANNOTATED",
@@ -378,12 +387,13 @@ class TestTopic:
 
         assert mock_remove_topic.call_count == 0
         assert mock_update_topic.call_count == 1
+        assert len(mock_update_topic.call_args.args[0].subscribers) == 2
 
     def test_system_prune_topics_remove_none(self, monkeypatch):
         system = System(
             name="system",
             namespace="namespace",
-            version="1.2.3",
+            version="4.5.6",
             instances=[Instance(name="default")],
             commands=[Command(name="command", topics=["topic_2"])],
         )

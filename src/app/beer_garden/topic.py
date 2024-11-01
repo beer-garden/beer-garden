@@ -186,7 +186,11 @@ def subscriber_match(
 
 def topic_has_system_subscribers(topic: Topic, system: System):
     for subscriber in topic.subscribers:
-        if subscriber.system == system.name:
+        if (
+            subscriber.system == system.name
+            and subscriber.namespace == system.namespace
+            and subscriber.version == system.version
+        ):
             return True
     return False
 
@@ -202,8 +206,7 @@ def prune_topics(garden: Garden = None, system: System = None):
                 ):
                     valid_subscribers.append(subscriber)
                 elif subscriber.subscriber_type == "DYNAMIC" or (
-                    system
-                    and subscriber_system_validate(subscriber, system, topic.name)
+                    system and subscriber_system_validate(subscriber, system)
                 ):
                     valid_subscribers.append(subscriber)
                 else:
@@ -232,10 +235,13 @@ def subscriber_validate(
     return False
 
 
-def subscriber_system_validate(subscriber, system, topic_name: str):
-    if subscriber.system == system.name:
-        if subscriber_systems_validate(subscriber, [system], topic_name):
-            return False
+def subscriber_system_validate(subscriber, system):
+    if (
+        subscriber.system == system.name
+        and subscriber.namespace == system.namespace
+        and subscriber.version == system.version
+    ):
+        return False
     return True
 
 
