@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.29.0
+
+TBD
+
+- Added python version to about page
+
 # 3.28.2
 
 10/11/2024

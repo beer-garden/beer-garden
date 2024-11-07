@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+import platform
 
 import beer_garden.api.http
 import beer_garden.config as config
@@ -38,6 +39,7 @@ class VersionHandler(BaseHandler):
         self.write(
             {
                 "beer_garden_version": beer_garden.__version__,
+                "python_version": platform.python_version(),
                 "current_api_version": "v1",
                 "supported_api_versions": ["v1"],
             }
