@@ -23,7 +23,6 @@ def _remove_queue_info(response: str, many: bool = False) -> str:
 
 
 class SystemAPI(AuthorizationHandler):
-
     @collect_metrics(transaction_type="API", group="SystemAPI")
     async def get(self, system_id):
         """
@@ -342,6 +341,9 @@ class SystemListAPI(AuthorizationHandler):
                 filter_params[key] = BrewtilsSystemSchema._declared_fields.get(
                     key
                 ).deserialize(self.get_query_argument(key))
+            # String query operators
+            elif "__" in key and key.split("__")[0] in self.REQUEST_FIELDS:
+                filter_params[key] = self.get_query_argument(key)
 
         serialize_kwargs = {"to_string": True, "many": True}
         if include_fields:
