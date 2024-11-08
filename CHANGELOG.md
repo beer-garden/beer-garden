@@ -5,6 +5,9 @@
 TBD
 
 - Added python version to about page
+- Added support for filtering `SystemsList` API on `filter_running` to return only running versions
+  of each system. Can be used in conjunction with 'filter_latest' to return only the latest running
+  version of each system.
 
 # 3.28.2
 

@@ -295,6 +295,12 @@ class SystemListAPI(AuthorizationHandler):
             description: Filter latest system versions
             type: boolean
             default: false
+          - name: filter_running
+            in: query
+            required: false
+            description: Filter running system versions
+            type: boolean
+            default: false
         responses:
           200:
             description: All Systems
@@ -323,6 +329,12 @@ class SystemListAPI(AuthorizationHandler):
             filter_latest = False
         else:
             filter_latest = bool(filter_latest.lower() == "true")
+
+        filter_running = self.get_query_argument("filter_running", None)
+        if filter_running is None:
+            filter_running = False
+        else:
+            filter_running = bool(filter_running.lower() == "true")
 
         include_fields = self.get_query_argument("include_fields", None)
         if include_fields:
@@ -363,6 +375,7 @@ class SystemListAPI(AuthorizationHandler):
                     "exclude_fields": exclude_fields,
                     "dereference_nested": dereference_nested,
                     "filter_latest": filter_latest,
+                    "filter_running": filter_running,
                 },
             )
         )

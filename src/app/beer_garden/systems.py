@@ -59,9 +59,10 @@ def get_systems(**kwargs) -> List[System]:
 
     """
     filter_latest = kwargs.pop("filter_latest", False)
+    filter_running = kwargs.pop("filter_running", False)
     systems = db.query(System, **kwargs)
 
-    if not filter_latest or not systems:
+    if not (filter_latest or filter_running) or not systems:
         return systems
 
     group_systems = {}
@@ -73,13 +74,29 @@ def get_systems(**kwargs) -> List[System]:
         else:
             group_systems[system_key].append(system)
 
+    running_groups = {}
+    running_systems = []
     latest_systems = []
 
-    for group_key in group_systems:
-        if len(group_systems[group_key]) == 1:
-            latest_systems.append(group_systems[group_key][0])
-        else:
-            latest_systems.append(_determine_latest(group_systems[group_key]))
+    if filter_running:
+        # Rebuild group_systems to only contain running instances in case filter_latest=True
+        for group_key in group_systems:
+            systems = group_systems[group_key]
+            running_groups[group_key] = []
+            for system in systems:
+                if (system.instances and any("RUNNING" == instance.status for instance in system.instances)):
+                    running_groups[group_key].append(system)
+                    running_systems.append(system)
+        group_systems = running_groups
+    
+    if filter_latest:
+        for group_key in group_systems:
+            if len(group_systems[group_key]) == 1:
+                latest_systems.append(group_systems[group_key][0])
+            else:
+                latest_systems.append(_determine_latest(group_systems[group_key]))
+    else:
+        return running_systems
 
     return latest_systems
 
