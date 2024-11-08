@@ -59,7 +59,7 @@ def system3():
 
 
 @pytest.fixture
-def system3():
+def system4():
     yield create_system(
         BrewtilsSystem(
             name="original",
