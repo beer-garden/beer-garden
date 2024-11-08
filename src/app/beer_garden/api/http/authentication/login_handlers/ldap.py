@@ -51,7 +51,7 @@ class LdapLoginHandler(BaseLoginHandler):
         groups = []
         roles = []
         conn.search(
-            config.get("ldap.base_dn"),
+            config.get("ldap.roles_search_base"),
             f"(&(objectclass=groupOfNames)(member={self.get_user_dn(username)}))",
             attributes=["cn"],
         )
@@ -64,7 +64,9 @@ class LdapLoginHandler(BaseLoginHandler):
             except DoesNotExist:
                 pass
 
-        logger.info(f"Updating {username} roles to {roles}")
+        logger.info(
+            f"Updating {username} upstream roles to {[role.name for role in roles]}"
+        )
         return roles
 
     def get_user(self, request: HTTPServerRequest) -> Optional[User]:
@@ -98,7 +100,6 @@ class LdapLoginHandler(BaseLoginHandler):
                         server,
                         self.get_user_dn(username),
                         password,
-                        client_strategy=SAFE_SYNC,
                     ) as conn:
                         if self.verify_ldap_password(conn):
                             try:
@@ -108,9 +109,9 @@ class LdapLoginHandler(BaseLoginHandler):
                                     username=username, is_remote=True
                                 )
                                 authenticated_user = create_user(authenticated_user)
-                            authenticated_user.metadata[
-                                "last_authentication"
-                            ] = datetime.now(timezone.utc).timestamp()
+                            authenticated_user.metadata["last_authentication"] = (
+                                datetime.now(timezone.utc).timestamp()
+                            )
                             authenticated_user.upstream_roles = self.get_user_roles(
                                 conn, username
                             )

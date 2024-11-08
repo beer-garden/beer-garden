@@ -209,3 +209,4 @@ ldap:
   user_attributes: cn=users,cn=accounts
   use_ssl: false
   use_full_user_dn: false
+  roles_search_base: ou=Roles,dc=example,dc=com

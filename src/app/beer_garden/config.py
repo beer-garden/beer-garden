@@ -1716,6 +1716,11 @@ _LDAP_SPEC = {
             "default": False,
             "description": "Use full user dn for login or build user dn from username",
         },
+        "roles_search_base": {
+            "type": "str",
+            "default": "dc=example,dc=org",
+            "description": "search base to use for roles query",
+        },
     },
 }
 
