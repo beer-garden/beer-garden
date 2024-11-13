@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from brewtils.models import User
-from ldap3 import SAFE_SYNC, Connection, Server
+from ldap3 import Connection, Server
 from ldap3.core.exceptions import LDAPException
 from mongoengine import DoesNotExist
 from tornado.httputil import HTTPServerRequest
