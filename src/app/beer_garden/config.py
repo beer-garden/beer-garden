@@ -1719,7 +1719,13 @@ _LDAP_SPEC = {
         "roles_search_base": {
             "type": "str",
             "default": "dc=example,dc=org",
-            "description": "search base to use for roles query",
+            "description": "Search base to use for roles query",
+        },
+        "default_user_roles": {
+            "type": "list",
+            "items": {"role": {"type": "str"}},
+            "default": ["read_only"],
+            "description": "Default roles on login",
         },
     },
 }

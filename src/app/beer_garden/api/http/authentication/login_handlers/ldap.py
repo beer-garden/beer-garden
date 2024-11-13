@@ -48,7 +48,7 @@ class LdapLoginHandler(BaseLoginHandler):
 
     def get_user_roles(self, conn: Connection, username: str):
         """Checks the users roles against the provided"""
-        groups = []
+        groups = set(config.get("ldap.default_user_roles"))
         roles = []
         conn.search(
             config.get("ldap.roles_search_base"),
@@ -56,7 +56,7 @@ class LdapLoginHandler(BaseLoginHandler):
             attributes=["cn"],
         )
         for entry in conn.entries:
-            groups.append(entry["cn"].value)
+            groups.add(entry["cn"].value)
 
         for group in groups:
             try:
