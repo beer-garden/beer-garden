@@ -161,7 +161,6 @@ class TestSystem:
         assert system_3_found
         assert system_4_found
 
-
     def test_get_systems_running_and_filtered(self, system, system2, system3, system4):
         systems = get_systems(filter_latest=True, filter_running=True)
 

@@ -84,11 +84,13 @@ def get_systems(**kwargs) -> List[System]:
             systems = group_systems[group_key]
             running_groups[group_key] = []
             for system in systems:
-                if (system.instances and any("RUNNING" == instance.status for instance in system.instances)):
+                if system.instances and any(
+                    "RUNNING" == instance.status for instance in system.instances
+                ):
                     running_groups[group_key].append(system)
                     running_systems.append(system)
         group_systems = running_groups
-    
+
     if filter_latest:
         for group_key in group_systems:
             if len(group_systems[group_key]) == 1:
