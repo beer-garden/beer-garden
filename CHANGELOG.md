@@ -5,6 +5,7 @@
 TBD
 
 - Added python version to about page
+- Added ldap login handler and configuration options to support ldap password-based login and pull user roles.
 
 # 3.28.2
 

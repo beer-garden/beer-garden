@@ -1,5 +1,5 @@
 auth:
-  enabled: true
+  enabled: false
 
   authentication_handlers:
     basic:
@@ -12,7 +12,7 @@ auth:
       user_upstream_roles_header: bg-user-upstream-roles
       username_header: bg-username
     ldap:
-      enabled: true
+      enabled: false
     
   default_admin:
     password: password
@@ -209,4 +209,4 @@ ldap:
   user_attributes: cn=users,cn=accounts
   use_ssl: false
   use_full_user_dn: false
-  roles_search_base: ou=Roles,dc=example,dc=com
+  roles_search_base: cn=groups,cn=accounts,dc=example,dc=com
