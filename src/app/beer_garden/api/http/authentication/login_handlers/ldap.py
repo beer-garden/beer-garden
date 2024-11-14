@@ -11,8 +11,8 @@ from tornado.httputil import HTTPServerRequest
 from beer_garden import config
 from beer_garden.api.http.authentication.login_handlers.base import BaseLoginHandler
 from beer_garden.api.http.schemas.v1.token import TokenInputSchema
-from beer_garden.user import create_user, get_user, update_user
 from beer_garden.role import get_role
+from beer_garden.user import create_user, get_user, update_user
 
 logger = logging.getLogger(__name__)
 
