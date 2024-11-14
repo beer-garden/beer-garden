@@ -4,7 +4,7 @@ build-all: | build-image-base build-image-python3.8.18 build-image-python3.9.18 
 	
 build-image-python3.8.18: 
 	echo "Building: centos7-python3.8"; \
-	docker build -f centos7/Dockerfile . \
+	docker build -f centos7/Dockerfile.nossl . \
 		--build-arg PYTHON_VERSION=3.8.18 \
 		-t bgio/build:centos7-python3.8.18 \
 		--build-arg PYTHON_MINOR_VERSION=3.8 \
@@ -14,7 +14,7 @@ build-image-python3.8.18:
 
 build-image-python3.9.18: 
 	echo "Building: centos7-python3.9"; \
-	docker build -f centos7/Dockerfile . \
+	docker build -f centos7/Dockerfile.nossl . \
 		--build-arg PYTHON_VERSION=3.9.18 \
 		-t bgio/build:centos7-python3.9.18 \
 		--build-arg PYTHON_MINOR_VERSION=3.9 \
