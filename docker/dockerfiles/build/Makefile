@@ -84,6 +84,16 @@ build-image-rocky9-python3.8.18:
 	docker push bgio/build:rocky9-python3.8; \
 	docker push bgio/build:rocky9-python3.8.18;
 
+build-image-rocky9-python3.9.18: 
+	echo "Building: rocky9-python3.9.18"; \
+	docker build -f rocky9/Dockerfile . \
+		--build-arg PYTHON_VERSION=3.9.18 \
+		-t bgio/build:rocky9-python3.9.18 \
+		--build-arg PYTHON_MINOR_VERSION=3.9 \
+		-t bgio/build:rocky9-python3.9; \
+	docker push bgio/build:rocky9-python3.9; \
+	docker push bgio/build:rocky9-python3.9.18;
+
 build-image-rocky9-python3.10.13: 
 	echo "Building: rocky9-python3.10"; \
 	docker build -f rocky9/Dockerfile . \
