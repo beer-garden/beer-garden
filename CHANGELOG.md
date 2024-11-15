@@ -1,19 +1,52 @@
 # Beer Garden Changelog
 
-# 3.27.3
+# 3.29.0
 
 TBD
 
+- Added python version to about page
+
+# 3.28.2
+
+10/11/2024
+
+- Fixed Child Garden sync for older Gardens that do not provide Namespace on Systems
+
+# 3.28.1
+
+10/11/2024
+
+- Added database cleanup from Beer-Garden 3.16 User Models. Collections will be pruned and require
+  to be rebuilt to match the new user model approach
+- Added database cleanup from Beer-Garden 3.23 Garden Models. Models will be mapped to their YAML
+  file in the children directory, then the collection is pruned
+
+# Python 3.13 Support
+
+10/10/2024
+
+- Verified that Beer Garden can run on Python 3.13.0
+- Future builds will include a Python 3.13.0 RPM build feature
+
+# 3.28.0
+
+10/9/2024
+
+- Updated create request page warning to identify required systems not in running status.
+- Added support to prune legacy request with no command type
 - Added support for group/groups in beer.conf and group environment variable
 - Added max_concurrent support for config.yml under `plugin.local.max_concurrent`
+- Added backwards compatibility for Garden Syncs for 3.16 or older releases
 - Added max concurrent support for beer.conf under `MAX_CONCURRENT`
 - Added feature to cancel an ongoing request or delete a completed request
 - Fixed API swagger docs for Job execution
 - Fixed issue where using local systems with a Namespace not the Garden name would not be treated as a local
   Request for internal features
+- Fixed issue where Adding/Removing subscribers failed if topic didn't exist
 - Added config option to import scheduled jobs file at startup
 - Added support to configure `alias_user_mappings` in the user configuration file
 - Added config option for child garden configuration file to share all users with child garden instead of filtering
+- Added System Admin feature to Cancel Non-Completed Requests in bulk, instead of Deleting
 
 # 3.27.2
 

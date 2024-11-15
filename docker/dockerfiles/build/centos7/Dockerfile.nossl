@@ -41,17 +41,6 @@ RUN yum install -y \
         wget \
         zlib-devel
 
-# Install Openssl 1.1.1
-RUN wget --no-check-certificate https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1k/openssl-1.1.1k.tar.gz && \
-    tar -xzvf openssl-1.1.1k.tar.gz && \
-    cd openssl-1.1.1k && \
-    ./config --prefix=/usr/local/openssl --openssldir=/usr/local/openssl && \
-    make -j $(nproc) && \
-    make install && \
-    ldconfig && \
-    export PATH=/usr/local/openssl/bin:\$PATH && \
-    export LD_LIBRARY_PATH=/usr/local/openssl/lib:\$LD_LIBRARY_PATH
-
 # Install Python
 RUN mkdir -p /usr/src/python && \
     mkdir -p $APP_HOME  && \
@@ -59,7 +48,7 @@ RUN mkdir -p /usr/src/python && \
     tar -xC /usr/src/python/ --strip-components=1 -f Python-${PYTHON_VERSION}.tar.xz && \
     rm -f Python-${PYTHON_VERSION}.tar.xz  && \
     cd /usr/src/python && \
-    ./configure --prefix=$APP_HOME --with-openssl=/usr/local/openssl --with-openssl-rpath=auto && \
+    ./configure --prefix=$APP_HOME && \
     make altinstall prefix=$APP_HOME exec-prefix=$APP_HOME && \
     $APP_HOME/bin/python${PYTHON_MINOR_VERSION} -m "ensurepip" && \
     cd $APP_HOME/bin && \

@@ -623,12 +623,14 @@ class RequestListAPI(AuthorizationHandler):
     async def delete(self):
         """
         ---
-        summary: Bulk delete of Requests
-        description: |
-
-          test holding
-
+        summary: Bulk delete or cancel of Requests
         parameters:
+          - name: is_cancel
+            in: query
+            required: false
+            description: |
+                Is this a cancellation request
+            type: bool
           - name: system
             in: query
             required: false
@@ -775,7 +777,14 @@ class RequestListAPI(AuthorizationHandler):
                 raise RequestForbidden
 
         await self.process_operation(
-            Operation(operation_type="REQUEST_DELETE", kwargs=query_kwargs),
+            Operation(
+                operation_type=(
+                    "REQUEST_CANCEL"
+                    if self.get_argument("is_cancel", default=False)
+                    else "REQUEST_DELETE"
+                ),
+                kwargs=query_kwargs,
+            ),
             filter_results=False,
         )
 

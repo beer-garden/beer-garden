@@ -10,6 +10,7 @@ commandViewController.$inject = [
   '$q',
   'RequestService',
   'SFBuilderService',
+  'SystemService',
 ];
 
 /**
@@ -22,8 +23,10 @@ commandViewController.$inject = [
  * @param  {Object} $q                Angular's $q object.
  * @param  {Object} RequestService    Beer-Garden's request service object.
  * @param  {Object} SFBuilderService  Beer-Garden's schema-form builder service object.
+ * @param  {Object} SystemService     Beer-Garden's system service object.
  * @param  {Object} system
  * @param  {Object} command
+ * @param  {Object} helptext
  */
 export default function commandViewController(
     $rootScope,
@@ -34,6 +37,7 @@ export default function commandViewController(
     $q,
     RequestService,
     SFBuilderService,
+    SystemService,
 ) {
 
   $scope.schema = {};
@@ -96,6 +100,27 @@ export default function commandViewController(
     }
 
     return instance.status != 'RUNNING';
+  };
+
+  $scope.displayInstanceAlert = function() {
+    let helptext = 'Instance is not RUNNING, ' +
+      'but you can still "Make Request"';
+    const instance = $scope.system.instances[0];
+    if (instance.status == 'AWAITING_SYSTEM') {
+      const requires = $scope.system.requires;
+      const missingSystems = [];
+      requires.forEach((req) => {
+        const system = SystemService.findSystem($scope.system.namespace, req, 'latest');
+        const notRunning = system.instances.every((instance) => instance.status != 'RUNNING');
+        if (notRunning) {
+          missingSystems.push(system.name);
+        }
+      });
+      helptext = 'Required system(s) are not running: ' +
+      missingSystems.join(', ') +
+      '. Proceed with caution.';
+    }
+    return helptext;
   };
 
   $scope.submitForm = function(form, model) {
@@ -213,7 +238,7 @@ export default function commandViewController(
   };
 
   const generateSF = function() {
-    const sf = SFBuilderService.build($scope.system, $scope.command);
+    const sf = SFBuilderService.build($scope.system, $scope.command, $scope.helptext);
 
     $scope.schema = sf['schema'];
     $scope.form = sf['form'];
@@ -235,6 +260,7 @@ export default function commandViewController(
     }
 
     $scope.command = _.find($scope.system.commands, {name: $stateParams.commandName});
+    $scope.helptext = $scope.displayInstanceAlert();
 
     $scope.jsonValues.command = JSON.stringify($scope.command, undefined, 2);
 

@@ -287,7 +287,7 @@ export default function adminSystemController(
     });
   };
 
-  $scope.deleteRequests = function (system, instance) {
+  $scope.cancelDeleteRequests = function (system, instance) {
     $uibModal.open({
       template: adminRequestDelete,
       resolve: {

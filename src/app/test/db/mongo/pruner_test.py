@@ -158,6 +158,22 @@ def created():
     created.delete()
 
 
+@pytest.fixture
+def canceled():
+    canceled = Request(
+        system="T1",
+        system_version="T",
+        instance_name="T",
+        namespace="T",
+        command="T",
+        created_at=datetime.datetime(2024, 1, 17),
+        status="CANCELED",
+    )
+    canceled.save()
+    yield canceled
+    canceled.delete()
+
+
 class TestMongoPruner(object):
     def test_prune_info_requests(self, info_request):
         config._CONFIG = {"db": {"ttl": {"info": 1, "batch_size": -1}}}
@@ -168,6 +184,12 @@ class TestMongoPruner(object):
         config._CONFIG = {"db": {"ttl": {"action": 1, "batch_size": -1}}}
         prune_action_requests()
         assert len(Request.objects.filter(command_type="ACTION")) == 0
+
+    def test_prune_action_request_no_command_type(self, in_progress, created, canceled):
+        config._CONFIG = {"db": {"ttl": {"action": 1, "batch_size": -1}}}
+        prune_action_requests()
+        assert len(Request.objects.filter(command_type="ACTION")) == 0
+        assert len(Request.objects.filter(command_type=None)) == 2
 
     def test_prune_admin_requests(self, admin_request):
         config._CONFIG = {"db": {"ttl": {"admin": 1, "batch_size": -1}}}
