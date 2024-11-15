@@ -45,7 +45,7 @@ done
 if [ -z "$RELEASE" ]; then
   echo "RELEASE not specified, using 7"
   RELEASE="7"
-elif [[ "$RELEASE" != "7" ] && [ "$RELEASE" != "9" ]]; then
+elif [ "$RELEASE" != "7" ] && [ "$RELEASE" != "9" ]; then
   echo "Unsupported RELEASE: ${RELEASE}"
   echo "Supported releases are 7 and 9"
   exit 1
