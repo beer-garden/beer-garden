@@ -137,6 +137,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.12"]
+        dist: ["rocky9", centos7]
 
     steps:
       - uses: actions/checkout@v3

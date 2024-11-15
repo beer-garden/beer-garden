@@ -34,7 +34,8 @@ RUN yum install -y \
         perl-core \
         pcre-devel \
         wget \
-        zlib-devel
+        zlib-devel \
+        openssl-devel
 
 
 # Install GEM Packages
