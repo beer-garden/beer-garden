@@ -68,6 +68,13 @@ class LdapLoginHandler(BaseLoginHandler):
             f"Updating {username} upstream roles to {[role.name for role in roles]}"
         )
         return roles
+    
+    def get_connection(self, server, username, password):
+        return Connection(
+            server,
+            self.get_user_dn(username),
+            password,
+        )
 
     def get_user(self, request: HTTPServerRequest) -> Optional[User]:
         """Gets the User corresponding to the username and password supplied in the
@@ -96,11 +103,7 @@ class LdapLoginHandler(BaseLoginHandler):
                         port=config.get("auth.authentication_handlers.ldap.port"),
                         use_ssl=config.get("auth.authentication_handlers.ldap.use_ssl"),
                     )
-                    with Connection(
-                        server,
-                        self.get_user_dn(username),
-                        password,
-                    ) as conn:
+                    with self.get_connection(server, username, password) as conn:
                         if self.verify_ldap_password(conn):
                             try:
                                 authenticated_user = get_user(username=username)
