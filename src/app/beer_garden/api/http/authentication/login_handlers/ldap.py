@@ -68,7 +68,7 @@ class LdapLoginHandler(BaseLoginHandler):
             f"Updating {username} upstream roles to {[role.name for role in roles]}"
         )
         return roles
-    
+
     def get_connection(self, server, username, password):
         return Connection(
             server,
