@@ -1,6 +1,6 @@
 SHELL:=/bin/bash
 PYTHON_VERSION       ?= 0.0.0
-PYTHON_MINOR_VERSION  = $(shell echo $(VERSION) | cut -f1,2 -d'.')
+PYTHON_MINOR_VERSION  = $(shell echo $(PYTHON_VERSION) | cut -f1,2 -d'.')
 
 build-image-centos7: 
 	echo "Building: centos7-python$(PYTHON_VERSION)"; \
