@@ -8,7 +8,7 @@ build-image-centos7:
 		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
 		-t bgio/build:centos7-python$(PYTHON_VERSION)\
 		--build-arg PYTHON_MINOR_VERSION=$(PYTHON_MINOR_VERSION) \
-		-t bgio/build:centos7-python$(PYTHON_SHORT_VERSION); \
+		-t bgio/build:centos7-python$(PYTHON_MINOR_VERSION); \
 	docker push bgio/build:centos7-python$(PYTHON_MINOR_VERSION); \
 	docker push bgio/build:centos7-python$(PYTHON_VERSION);
 
@@ -19,7 +19,7 @@ build-image-rocky9:
 		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
 		-t bgio/build:rocky9-python$(PYTHON_VERSION) \
 		--build-arg PYTHON_MINOR_VERSION=$(PYTHON_MINOR_VERSION) \
-		-t bgio/build:rocky9-python$(PYTHON_SHORT_VERSION); \
+		-t bgio/build:rocky9-python$(PYTHON_MINOR_VERSION); \
 	docker push bgio/build:rocky9-python$(PYTHON_MINOR_VERSION); \
 	docker push bgio/build:rocky9-python$(PYTHON_VERSION);
 
