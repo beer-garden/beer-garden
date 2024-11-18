@@ -90,10 +90,14 @@ jobs:
           command: pip install beer-garden==${GITHUB_REF#refs/tags/}
 
 
-  docker-publish:
+  docker-publish-ui:
     name: Docker Publish
     runs-on: ubuntu-latest
     needs: pypi-verify
+
+    defaults:
+      run:
+        working-directory: ./src/ui
 
     steps:
       - uses: actions/checkout@v3
@@ -105,12 +109,75 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       - name: Build and Publish Images
-        run: make publish-docker VERSION=${GITHUB_REF#refs/tags/}
+        run: make deps publish-docker VERSION=${GITHUB_REF#refs/tags/}
+
+  docker-publish-src:
+    name: Docker Publish
+    runs-on: ubuntu-latest
+    needs: pypi-verify
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.7","3.8","3.9","3.10","3.11","3.13"]
+
+
+    defaults:
+      run:
+        working-directory: ./src/app
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Build and Publish Images
+        run: make publish-docker VERSION=${GITHUB_REF#refs/tags/} PYTHON_VERSION=${{ matrix.python-version }}
+
+  docker-publish-src-latest:
+    name: Docker Publish
+    runs-on: ubuntu-latest
+    needs: pypi-verify
+
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+
+
+    defaults:
+      run:
+        working-directory: ./src/app
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Build and Publish Images
+        run: make publish-docker-latest VERSION=${GITHUB_REF#refs/tags/} PYTHON_VERSION=${{ matrix.python-version }}
 
   docker-publish-rpm:
     name: Docker Publish
     runs-on: ubuntu-latest
-    needs: docker-publish
+    needs: [docker-publish-src, docker-publish-src-latest]
 
     strategy:
       fail-fast: false
@@ -119,6 +186,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
 
       - name: Login to DockerHub
         uses: docker/login-action@v2
