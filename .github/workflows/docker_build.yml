@@ -24,7 +24,7 @@ jobs:
 
       - name: Build and Publish Images
         working-directory: ./docker/dockerfiles/build
-        run: make build-image-centos7-python${{ matrix.python-version }}
+        run: make build-image-centos7 PYTHON_VERSION=${{ matrix.python-version }}
 
   docker-publish-rocky9-python:
     name: Docker Publish bgio/build:rocky9-python${{ matrix.python-version }}
@@ -32,7 +32,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.7.13", "3.8.18", "3.9.18","3.10.13","3.11.6","3.12.7"]
+        python-version: ["3.8.18", "3.9.18","3.10.13","3.11.10","3.12.7","3.13.0"]
       fail-fast: false
 
     steps:
@@ -46,4 +46,4 @@ jobs:
 
       - name: Build and Publish Images
         working-directory: ./docker/dockerfiles/build
-        run: make build-image-rocky9-python${{ matrix.python-version }}
+        run: make build-image-rocky9 PYTHON_VERSION=${{ matrix.python-version }}
