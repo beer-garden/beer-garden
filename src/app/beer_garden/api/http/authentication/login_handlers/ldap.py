@@ -23,13 +23,13 @@ class LdapLoginHandler(BaseLoginHandler):
     @staticmethod
     def get_user_dn(username: str):
         """This combines user information into a complete user DN"""
-        if config.get("ldap.use_full_user_dn"):
+        if config.get("auth.authentication_handlers.ldap.use_full_user_dn"):
             return username
         else:
             dn_parts = (
-                f"{config.get('ldap.user_prefix')}={username}",
-                config.get("ldap.user_attributes"),
-                config.get("ldap.base_dn"),
+                f"{config.get('auth.authentication_handlers.ldap.user_prefix')}={username}",
+                config.get("auth.authentication_handlers.ldap.user_attributes"),
+                config.get("auth.authentication_handlers.ldap.base_dn"),
             )
             return ",".join([s for s in dn_parts if s])
 
@@ -48,10 +48,10 @@ class LdapLoginHandler(BaseLoginHandler):
 
     def get_user_roles(self, conn: Connection, username: str):
         """Checks the users roles against the provided"""
-        groups = set(config.get("ldap.default_user_roles"))
+        groups = set(config.get("auth.authentication_handlers.ldap.default_user_roles"))
         roles = []
         conn.search(
-            config.get("ldap.roles_search_base"),
+            config.get("auth.authentication_handlers.ldap.roles_search_base"),
             f"(&(objectclass=groupOfNames)(member={self.get_user_dn(username)}))",
             attributes=["cn"],
         )
@@ -92,9 +92,9 @@ class LdapLoginHandler(BaseLoginHandler):
             if username and password:
                 try:
                     server = Server(
-                        host=config.get("ldap.host"),
-                        port=config.get("ldap.port"),
-                        use_ssl=config.get("ldap.use_ssl"),
+                        host=config.get("auth.authentication_handlers.ldap.host"),
+                        port=config.get("auth.authentication_handlers.ldap.port"),
+                        use_ssl=config.get("auth.authentication_handlers.ldap.use_ssl"),
                     )
                     with Connection(
                         server,
@@ -112,7 +112,7 @@ class LdapLoginHandler(BaseLoginHandler):
                             authenticated_user.metadata["last_authentication"] = (
                                 datetime.now(timezone.utc).timestamp()
                             )
-                            authenticated_user.upstream_roles = self.get_user_roles(
+                            authenticated_user.roles = self.get_user_roles(
                                 conn, username
                             )
                             authenticated_user = update_user(user=authenticated_user)
