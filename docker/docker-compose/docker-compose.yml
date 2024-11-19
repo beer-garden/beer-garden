@@ -115,6 +115,11 @@ services:
         ports:
             - "389:389"
             - "636:636"
+        volumes:
+            - ./data/ldap:/container/service/slapd/assets/config/bootstrap/ldif/custom
+        command:
+            --copy-service
+            # --loglevel debug
         environment: 
             - LDAP_ORGANISATION=Example
             - LDAP_DOMAIN=example.com

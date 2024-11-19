@@ -1,0 +1,71 @@
+dn: ou=Roles,dc=example,dc=com
+objectclass: organizationalUnit
+objectclass: top
+ou: Roles
+
+dn: cn=garden_admin,ou=Roles,dc=example,dc=com
+cn: garden_admin
+description: tagGroup
+member: uid=jsmith1,ou=Users,dc=example,dc=com
+objectclass: top
+objectclass: groupOfNames
+ou: Roles
+
+dn: cn=manager,ou=Roles,dc=example,dc=com
+cn: manager
+description: tagGroup
+member: uid=jsmith1,ou=Users,dc=example,dc=com
+member: uid=sbrown20,ou=Users,dc=example,dc=com
+objectclass: top
+objectclass: groupOfNames
+ou: Roles
+
+dn: cn=operator,ou=Roles,dc=example,dc=com
+cn: operator
+description: tagGroup
+member: uid=jsmith1,ou=Users,dc=example,dc=com
+member: uid=sbrown20,ou=Users,dc=example,dc=com
+objectclass: top
+objectclass: groupOfNames
+ou: Roles
+
+dn: cn=plugin_admin,ou=Roles,dc=example,dc=com
+cn: plugin_admin
+description: tagGroup
+member: uid=jsmith1,ou=Users,dc=example,dc=com
+member: uid=sbrown20,ou=Users,dc=example,dc=com
+objectclass: top
+objectclass: groupOfNames
+ou: Roles
+
+dn: cn=read_only,ou=Roles,dc=example,dc=com
+cn: read_only
+description: tagGroup
+member: uid=jsmith1,ou=Users,dc=example,dc=com
+member: uid=sbrown20,ou=Users,dc=example,dc=com
+objectclass: top
+objectclass: groupOfNames
+ou: Roles
+
+dn: ou=Users,dc=example,dc=com
+objectclass: organizationalUnit
+objectclass: top
+ou: Users
+
+dn: uid=jsmith1,ou=Users,dc=example,dc=com
+cn: John Smith
+description: John Smith from Accounting.
+objectclass: inetOrgPerson
+objectclass: top
+sn: Smith
+uid: jsmith1
+userpassword: {MD5}zK81iclwhAY5pLePuw/e2A==
+
+dn: uid=sbrown20,ou=Users,dc=example,dc=com
+cn: Sally Brown
+description: Sally Brown from engineering.
+objectclass: inetOrgPerson
+objectclass: top
+sn: Brown
+uid: sbrown20
+userpassword: {MD5}d40l2guiflPAoUaMuUEywQ==
