@@ -65,7 +65,7 @@ class LdapLoginHandler(BaseLoginHandler):
                 pass
 
         logger.info(
-            f"Updating {username} upstream roles to {[role.name for role in roles]}"
+            f"Updating {username} local roles to {[role.name for role in roles]}"
         )
         return roles
 
@@ -95,12 +95,14 @@ class LdapLoginHandler(BaseLoginHandler):
             request_data = schema.loads(request.body.decode("utf-8")).data
             username = request_data.get("username")
             password = request_data.get("password")
+            host = config.get("auth.authentication_handlers.ldap.host")
+            port = config.get("auth.authentication_handlers.ldap.port")
 
             if username and password:
                 try:
                     server = Server(
-                        host=config.get("auth.authentication_handlers.ldap.host"),
-                        port=config.get("auth.authentication_handlers.ldap.port"),
+                        host=host,
+                        port=port,
                         use_ssl=config.get("auth.authentication_handlers.ldap.use_ssl"),
                     )
                     with self.get_connection(server, username, password) as conn:
@@ -120,6 +122,9 @@ class LdapLoginHandler(BaseLoginHandler):
                             )
                             authenticated_user = update_user(user=authenticated_user)
                 except LDAPException as ex:
-                    logger.error(f"LDAP login failed: {ex}")
+                    logger.error(
+                        f"LDAP login failed against {host}:{port} for account "
+                        f"{self.get_user_dn(username)}: {ex}"
+                    )
 
         return authenticated_user
