@@ -1,0 +1,440 @@
+{
+    "entries": [
+        {
+            "attributes": {
+                "dc": "example",
+                "o": [
+                    "Example"
+                ],
+                "objectClass": [
+                    "top",
+                    "dcObject",
+                    "organization"
+                ]
+            },
+            "dn": "dc=example,dc=com",
+            "raw": {
+                "dc": [
+                    "example"
+                ],
+                "o": [
+                    "Example"
+                ],
+                "objectClass": [
+                    "top",
+                    "dcObject",
+                    "organization"
+                ]
+            }
+        },
+        {
+            "attributes": {
+                "objectClass": [
+                    "organizationalUnit",
+                    "top"
+                ],
+                "ou": [
+                    "Users"
+                ]
+            },
+            "dn": "ou=Users,dc=example,dc=com",
+            "raw": {
+                "objectClass": [
+                    "organizationalUnit",
+                    "top"
+                ],
+                "ou": [
+                    "Users"
+                ]
+            }
+        },
+        {
+            "attributes": {
+                "objectClass": [
+                    "organizationalUnit",
+                    "top"
+                ],
+                "ou": [
+                    "Admin"
+                ],
+                "userPassword": [
+                    "{MD5}X03MO1qnZdYdgyfeuILPmQ=="
+                ]
+            },
+            "dn": "ou=Admin,dc=example,dc=com",
+            "raw": {
+                "objectClass": [
+                    "organizationalUnit",
+                    "top"
+                ],
+                "ou": [
+                    "Admin"
+                ],
+                "userPassword": [
+                    "{MD5}X03MO1qnZdYdgyfeuILPmQ=="
+                ]
+            }
+        },
+        {
+            "attributes": {
+                "cn": [
+                    "plugin_admin"
+                ],
+                "description": [
+                    "plugin admin"
+                ],
+                "objectClass": [
+                    "inetOrgPerson",
+                    "top"
+                ],
+                "sn": [
+                    "padmin"
+                ],
+                "uid": [
+                    "plugin_admin"
+                ],
+                "userPassword": [
+                    "{MD5}X03MO1qnZdYdgyfeuILPmQ=="
+                ]
+            },
+            "dn": "uid=plugin_admin,ou=Admin,dc=example,dc=com",
+            "raw": {
+                "cn": [
+                    "plugin_admin"
+                ],
+                "description": [
+                    "plugin admin"
+                ],
+                "objectClass": [
+                    "inetOrgPerson",
+                    "top"
+                ],
+                "sn": [
+                    "padmin"
+                ],
+                "uid": [
+                    "plugin_admin"
+                ],
+                "userPassword": [
+                    "{MD5}X03MO1qnZdYdgyfeuILPmQ=="
+                ]
+            }
+        },
+        {
+            "attributes": {
+                "cn": [
+                    "John Smith"
+                ],
+                "description": [
+                    "John Smith from Accounting.  John is the projectmanager of the building project, so contact him with any questions."
+                ],
+                "objectClass": [
+                    "inetOrgPerson",
+                    "top"
+                ],
+                "sn": [
+                    "Smith"
+                ],
+                "uid": [
+                    "jsmith1"
+                ],
+                "userPassword": [
+                    "jsmith1"
+                ]
+            },
+            "dn": "uid=jsmith1,ou=Users,dc=example,dc=com",
+            "raw": {
+                "cn": [
+                    "John Smith"
+                ],
+                "description": [
+                    "John Smith from Accounting.  John is the projectmanager of the building project, so contact him with any questions."
+                ],
+                "objectClass": [
+                    "inetOrgPerson",
+                    "top"
+                ],
+                "sn": [
+                    "Smith"
+                ],
+                "uid": [
+                    "jsmith1"
+                ],
+                "userPassword": [
+                    "jsmith1"
+                ]
+            }
+        },
+        {
+            "attributes": {
+                "cn": [
+                    "Sally Brown"
+                ],
+                "description": [
+                    "Sally Brown from engineering.  Sally is responsible for designing the blue prints and testing the structural integrity of the design."
+                ],
+                "objectClass": [
+                    "inetOrgPerson",
+                    "top"
+                ],
+                "sn": [
+                    "Brown"
+                ],
+                "uid": [
+                    "sbrown20"
+                ],
+                "userPassword": [
+                    "sbrown20"
+                ]
+            },
+            "dn": "uid=sbrown20,ou=Users,dc=example,dc=com",
+            "raw": {
+                "cn": [
+                    "Sally Brown"
+                ],
+                "description": [
+                    "Sally Brown from engineering.  Sally is responsible for designing the blue prints and testing the structural integrity of the design."
+                ],
+                "objectClass": [
+                    "inetOrgPerson",
+                    "top"
+                ],
+                "sn": [
+                    "Brown"
+                ],
+                "uid": [
+                    "sbrown20"
+                ],
+                "userPassword": [
+                    "sbrown20"
+                ]
+            }
+        },
+        {
+            "attributes": {
+                "objectClass": [
+                    "organizationalUnit",
+                    "top"
+                ],
+                "ou": [
+                    "Roles"
+                ]
+            },
+            "dn": "ou=Roles,dc=example,dc=com",
+            "raw": {
+                "objectClass": [
+                    "organizationalUnit",
+                    "top"
+                ],
+                "ou": [
+                    "Roles"
+                ]
+            }
+        },
+        {
+            "attributes": {
+                "cn": [
+                    "garden_admin"
+                ],
+                "description": [
+                    "tagGroup"
+                ],
+                "member": [
+                    "uid=jsmith1,ou=Users,dc=example,dc=com"
+                ],
+                "objectClass": [
+                    "top",
+                    "groupOfNames"
+                ],
+                "ou": [
+                    "Roles"
+                ]
+            },
+            "dn": "cn=garden_admin,ou=Roles,dc=example,dc=com",
+            "raw": {
+                "cn": [
+                    "garden_admin"
+                ],
+                "description": [
+                    "tagGroup"
+                ],
+                "member": [
+                    "uid=jsmith1,ou=Users,dc=example,dc=com"
+                ],
+                "objectClass": [
+                    "top",
+                    "groupOfNames"
+                ],
+                "ou": [
+                    "Roles"
+                ]
+            }
+        },
+        {
+            "attributes": {
+                "cn": [
+                    "plugin_admin"
+                ],
+                "description": [
+                    "tagGroup"
+                ],
+                "member": [
+                    "uid=jsmith1,ou=Users,dc=example,dc=com",
+                    "uid=sbrown20,ou=Users,dc=example,dc=com",
+                    "uid=plugin_admin,ou=Admin,dc=example,dc=com"
+                ],
+                "objectClass": [
+                    "top",
+                    "groupOfNames"
+                ],
+                "ou": [
+                    "Roles"
+                ]
+            },
+            "dn": "cn=plugin_admin,ou=Roles,dc=example,dc=com",
+            "raw": {
+                "cn": [
+                    "plugin_admin"
+                ],
+                "description": [
+                    "tagGroup"
+                ],
+                "member": [
+                    "uid=jsmith1,ou=Users,dc=example,dc=com",
+                    "uid=sbrown20,ou=Users,dc=example,dc=com",
+                    "uid=plugin_admin,ou=Admin,dc=example,dc=com"
+                ],
+                "objectClass": [
+                    "top",
+                    "groupOfNames"
+                ],
+                "ou": [
+                    "Roles"
+                ]
+            }
+        },
+        {
+            "attributes": {
+                "cn": [
+                    "operator"
+                ],
+                "description": [
+                    "tagGroup"
+                ],
+                "member": [
+                    "uid=jsmith1,ou=Users,dc=example,dc=com",
+                    "uid=sbrown20,ou=Users,dc=example,dc=com"
+                ],
+                "objectClass": [
+                    "top",
+                    "groupOfNames"
+                ],
+                "ou": [
+                    "Roles"
+                ]
+            },
+            "dn": "cn=operator,ou=Roles,dc=example,dc=com",
+            "raw": {
+                "cn": [
+                    "operator"
+                ],
+                "description": [
+                    "tagGroup"
+                ],
+                "member": [
+                    "uid=jsmith1,ou=Users,dc=example,dc=com",
+                    "uid=sbrown20,ou=Users,dc=example,dc=com"
+                ],
+                "objectClass": [
+                    "top",
+                    "groupOfNames"
+                ],
+                "ou": [
+                    "Roles"
+                ]
+            }
+        },
+        {
+            "attributes": {
+                "cn": [
+                    "read_only"
+                ],
+                "description": [
+                    "tagGroup"
+                ],
+                "member": [
+                    "uid=jsmith1,ou=Users,dc=example,dc=com",
+                    "uid=sbrown20,ou=Users,dc=example,dc=com"
+                ],
+                "objectClass": [
+                    "top",
+                    "groupOfNames"
+                ],
+                "ou": [
+                    "Roles"
+                ]
+            },
+            "dn": "cn=read_only,ou=Roles,dc=example,dc=com",
+            "raw": {
+                "cn": [
+                    "read_only"
+                ],
+                "description": [
+                    "tagGroup"
+                ],
+                "member": [
+                    "uid=jsmith1,ou=Users,dc=example,dc=com",
+                    "uid=sbrown20,ou=Users,dc=example,dc=com"
+                ],
+                "objectClass": [
+                    "top",
+                    "groupOfNames"
+                ],
+                "ou": [
+                    "Roles"
+                ]
+            }
+        },
+        {
+            "attributes": {
+                "cn": [
+                    "manager"
+                ],
+                "description": [
+                    "tagGroup"
+                ],
+                "member": [
+                    "uid=jsmith1,ou=Users,dc=example,dc=com",
+                    "uid=sbrown20,ou=Users,dc=example,dc=com"
+                ],
+                "objectClass": [
+                    "top",
+                    "groupOfNames"
+                ],
+                "ou": [
+                    "Roles"
+                ]
+            },
+            "dn": "cn=manager,ou=Roles,dc=example,dc=com",
+            "raw": {
+                "cn": [
+                    "manager"
+                ],
+                "description": [
+                    "tagGroup"
+                ],
+                "member": [
+                    "uid=jsmith1,ou=Users,dc=example,dc=com",
+                    "uid=sbrown20,ou=Users,dc=example,dc=com"
+                ],
+                "objectClass": [
+                    "top",
+                    "groupOfNames"
+                ],
+                "ou": [
+                    "Roles"
+                ]
+            }
+        }
+    ]
+}
