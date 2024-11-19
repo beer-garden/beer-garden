@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 import pytest
 from box import Box
 from ldap3 import MOCK_SYNC, Connection, Server
@@ -11,6 +14,231 @@ from beer_garden.db.mongo.models import User as DB_User
 from beer_garden.role import create_role
 from beer_garden.user import create_user
 from brewtils.models import Role, User
+
+ldap_groups_json = {
+    "entries": [
+        {
+            "attributes": {
+                "dc": "example",
+                "o": ["Example"],
+                "objectClass": ["top", "dcObject", "organization"],
+            },
+            "dn": "dc=example,dc=com",
+            "raw": {
+                "dc": ["example"],
+                "o": ["Example"],
+                "objectClass": ["top", "dcObject", "organization"],
+            },
+        },
+        {
+            "attributes": {
+                "objectClass": ["organizationalUnit", "top"],
+                "ou": ["Users"],
+            },
+            "dn": "ou=Users,dc=example,dc=com",
+            "raw": {"objectClass": ["organizationalUnit", "top"], "ou": ["Users"]},
+        },
+        {
+            "attributes": {
+                "objectClass": ["organizationalUnit", "top"],
+                "ou": ["Admin"],
+                "userPassword": ["{MD5}X03MO1qnZdYdgyfeuILPmQ=="],
+            },
+            "dn": "ou=Admin,dc=example,dc=com",
+            "raw": {
+                "objectClass": ["organizationalUnit", "top"],
+                "ou": ["Admin"],
+                "userPassword": ["{MD5}X03MO1qnZdYdgyfeuILPmQ=="],
+            },
+        },
+        {
+            "attributes": {
+                "cn": ["plugin_admin"],
+                "description": ["plugin admin"],
+                "objectClass": ["inetOrgPerson", "top"],
+                "sn": ["padmin"],
+                "uid": ["plugin_admin"],
+                "userPassword": ["{MD5}X03MO1qnZdYdgyfeuILPmQ=="],
+            },
+            "dn": "uid=plugin_admin,ou=Admin,dc=example,dc=com",
+            "raw": {
+                "cn": ["plugin_admin"],
+                "description": ["plugin admin"],
+                "objectClass": ["inetOrgPerson", "top"],
+                "sn": ["padmin"],
+                "uid": ["plugin_admin"],
+                "userPassword": ["{MD5}X03MO1qnZdYdgyfeuILPmQ=="],
+            },
+        },
+        {
+            "attributes": {
+                "cn": ["John Smith"],
+                "description": ["John Smith from Accounting."],
+                "objectClass": ["inetOrgPerson", "top"],
+                "sn": ["Smith"],
+                "uid": ["jsmith1"],
+                "userPassword": ["jsmith1"],
+            },
+            "dn": "uid=jsmith1,ou=Users,dc=example,dc=com",
+            "raw": {
+                "cn": ["John Smith"],
+                "description": ["John Smith from Accounting."],
+                "objectClass": ["inetOrgPerson", "top"],
+                "sn": ["Smith"],
+                "uid": ["jsmith1"],
+                "userPassword": ["jsmith1"],
+            },
+        },
+        {
+            "attributes": {
+                "cn": ["Sally Brown"],
+                "description": ["Sally Brown from engineering."],
+                "objectClass": ["inetOrgPerson", "top"],
+                "sn": ["Brown"],
+                "uid": ["sbrown20"],
+                "userPassword": ["sbrown20"],
+            },
+            "dn": "uid=sbrown20,ou=Users,dc=example,dc=com",
+            "raw": {
+                "cn": ["Sally Brown"],
+                "description": ["Sally Brown from engineering."],
+                "objectClass": ["inetOrgPerson", "top"],
+                "sn": ["Brown"],
+                "uid": ["sbrown20"],
+                "userPassword": ["sbrown20"],
+            },
+        },
+        {
+            "attributes": {
+                "objectClass": ["organizationalUnit", "top"],
+                "ou": ["Roles"],
+            },
+            "dn": "ou=Roles,dc=example,dc=com",
+            "raw": {"objectClass": ["organizationalUnit", "top"], "ou": ["Roles"]},
+        },
+        {
+            "attributes": {
+                "cn": ["garden_admin"],
+                "description": ["tagGroup"],
+                "member": ["uid=jsmith1,ou=Users,dc=example,dc=com"],
+                "objectClass": ["top", "groupOfNames"],
+                "ou": ["Roles"],
+            },
+            "dn": "cn=garden_admin,ou=Roles,dc=example,dc=com",
+            "raw": {
+                "cn": ["garden_admin"],
+                "description": ["tagGroup"],
+                "member": ["uid=jsmith1,ou=Users,dc=example,dc=com"],
+                "objectClass": ["top", "groupOfNames"],
+                "ou": ["Roles"],
+            },
+        },
+        {
+            "attributes": {
+                "cn": ["plugin_admin"],
+                "description": ["tagGroup"],
+                "member": [
+                    "uid=jsmith1,ou=Users,dc=example,dc=com",
+                    "uid=sbrown20,ou=Users,dc=example,dc=com",
+                    "uid=plugin_admin,ou=Admin,dc=example,dc=com",
+                ],
+                "objectClass": ["top", "groupOfNames"],
+                "ou": ["Roles"],
+            },
+            "dn": "cn=plugin_admin,ou=Roles,dc=example,dc=com",
+            "raw": {
+                "cn": ["plugin_admin"],
+                "description": ["tagGroup"],
+                "member": [
+                    "uid=jsmith1,ou=Users,dc=example,dc=com",
+                    "uid=sbrown20,ou=Users,dc=example,dc=com",
+                    "uid=plugin_admin,ou=Admin,dc=example,dc=com",
+                ],
+                "objectClass": ["top", "groupOfNames"],
+                "ou": ["Roles"],
+            },
+        },
+        {
+            "attributes": {
+                "cn": ["operator"],
+                "description": ["tagGroup"],
+                "member": [
+                    "uid=jsmith1,ou=Users,dc=example,dc=com",
+                    "uid=sbrown20,ou=Users,dc=example,dc=com",
+                ],
+                "objectClass": ["top", "groupOfNames"],
+                "ou": ["Roles"],
+            },
+            "dn": "cn=operator,ou=Roles,dc=example,dc=com",
+            "raw": {
+                "cn": ["operator"],
+                "description": ["tagGroup"],
+                "member": [
+                    "uid=jsmith1,ou=Users,dc=example,dc=com",
+                    "uid=sbrown20,ou=Users,dc=example,dc=com",
+                ],
+                "objectClass": ["top", "groupOfNames"],
+                "ou": ["Roles"],
+            },
+        },
+        {
+            "attributes": {
+                "cn": ["read_only"],
+                "description": ["tagGroup"],
+                "member": [
+                    "uid=jsmith1,ou=Users,dc=example,dc=com",
+                    "uid=sbrown20,ou=Users,dc=example,dc=com",
+                ],
+                "objectClass": ["top", "groupOfNames"],
+                "ou": ["Roles"],
+            },
+            "dn": "cn=read_only,ou=Roles,dc=example,dc=com",
+            "raw": {
+                "cn": ["read_only"],
+                "description": ["tagGroup"],
+                "member": [
+                    "uid=jsmith1,ou=Users,dc=example,dc=com",
+                    "uid=sbrown20,ou=Users,dc=example,dc=com",
+                ],
+                "objectClass": ["top", "groupOfNames"],
+                "ou": ["Roles"],
+            },
+        },
+        {
+            "attributes": {
+                "cn": ["manager"],
+                "description": ["tagGroup"],
+                "member": [
+                    "uid=jsmith1,ou=Users,dc=example,dc=com",
+                    "uid=sbrown20,ou=Users,dc=example,dc=com",
+                ],
+                "objectClass": ["top", "groupOfNames"],
+                "ou": ["Roles"],
+            },
+            "dn": "cn=manager,ou=Roles,dc=example,dc=com",
+            "raw": {
+                "cn": ["manager"],
+                "description": ["tagGroup"],
+                "member": [
+                    "uid=jsmith1,ou=Users,dc=example,dc=com",
+                    "uid=sbrown20,ou=Users,dc=example,dc=com",
+                ],
+                "objectClass": ["top", "groupOfNames"],
+                "ou": ["Roles"],
+            },
+        },
+    ]
+}
+
+
+@pytest.fixture
+def ldap_json_group_file(tmpdir):
+    config_file = Path(tmpdir, "ldap_entries.json")
+
+    with open(config_file, "w") as f:
+        f.write(json.dumps(ldap_groups_json))
+
+    return str(config_file)
 
 
 @pytest.fixture(autouse=True)
@@ -97,7 +325,7 @@ def no_user():
 
 
 @pytest.fixture
-def ldap_connection():
+def ldap_connection(ldap_json_group_file):
     server = Server(host="test-server", port=389, use_ssl=False)
     mock_connection = Connection(
         server,
@@ -106,13 +334,13 @@ def ldap_connection():
         client_strategy=MOCK_SYNC,
     )
 
-    mock_connection.strategy.entries_from_json("ldap_entries.json")
+    mock_connection.strategy.entries_from_json(ldap_json_group_file)
     mock_connection.bind()
     yield mock_connection
 
 
 @pytest.fixture
-def ldap_connection2():
+def ldap_connection2(ldap_json_group_file):
     server = Server(host="test-server", port=389, use_ssl=False)
     mock_connection = Connection(
         server,
@@ -121,7 +349,7 @@ def ldap_connection2():
         client_strategy=MOCK_SYNC,
     )
 
-    mock_connection.strategy.entries_from_json("ldap_entries.json")
+    mock_connection.strategy.entries_from_json(ldap_json_group_file)
     mock_connection.bind()
     yield mock_connection
 
