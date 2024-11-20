@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Tuple
 
 from brewtils.errors import ModelValidationError
@@ -214,7 +214,7 @@ def prune_orphans():
 
 
 def prune_orphan_command_type(ttl, command_type):
-    timeout = datetime.utcnow() - timedelta(minutes=ttl)
+    timeout = datetime.now(timezone.utc) - timedelta(minutes=ttl)
 
     orphaned_requests = Request.objects.only("parent", "id").filter(
         command_type=command_type,
