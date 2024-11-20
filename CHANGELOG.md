@@ -5,6 +5,7 @@
 TBD
 
 - Added python version to about page
+- Added Rocky 9 RPM Support
 
 # 3.28.2
 

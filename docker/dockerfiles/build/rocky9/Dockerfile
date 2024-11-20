@@ -37,7 +37,6 @@ RUN yum install -y \
         zlib-devel \
         openssl-devel
 
-
 # Install GEM Packages
 RUN yum install -y rubygems
 RUN gem install fpm
