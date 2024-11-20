@@ -505,5 +505,13 @@ class TestLdapLoginHandler:
         assert authenticated_user is not None
         assert authenticated_user.username == "sbrown20"
         assert len(authenticated_user.local_roles) == 2
-
-        authenticated_user = handler.get_user(request)
+        for local_role in authenticated_user.local_roles:
+            if local_role.name == role2.name or local_role.name == role3.name:
+                # Confirm that new roles were added
+                assert True
+            elif local_role.name == role0.name:
+                # Confirm that old role was removed
+                assert False
+            else:
+                # Unknown role added
+                assert False
