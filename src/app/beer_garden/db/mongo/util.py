@@ -127,11 +127,143 @@ def ensure_v2_to_v3_model_migration():
         db.drop_collection("system")
 
 
+def contains_legacy_field(collection_name, legacy_fields):
+    db = get_db()
+    collection = db.get_collection(collection_name)
+
+    for record in collection.find():
+        for legacy_field in legacy_fields:
+            if legacy_field in record:
+                return True
+    return False
+
+
+def ensure_v3_24_model_migration():
+    """Ensures that the Garden model migration to yaml configs"""
+
+    # Look for 3.23 fields
+    if contains_legacy_field("garden", ["connection_params"]):
+        import os
+        from pathlib import Path
+
+        import yaml
+
+        db = get_db()
+
+        logger.warning(
+            "Encountered an error loading Gardens. This is most likely because"
+            " the database is using the old (v3.23 or prior) models. Migration"
+            " strategy is to map all records in the Garden collection to yaml"
+            " files, then drop the Garden collection to be rebuilt."
+        )
+
+        db = get_db()
+
+        garden_collection = db.get_collection("garden")
+
+        if not os.path.exists(config.get("children.directory")):
+            os.makedirs(config.get("children.directory"))
+
+        for legacy_garden in garden_collection.find():
+            if legacy_garden["connection_type"] != "LOCAL":
+                if not Path(
+                    f"{config.get('children.directory')}/{legacy_garden['name']}.yaml"
+                ).exists():
+                    garden_file_data = {"receiving": False, "publishing": False}
+
+                    if legacy_garden["connection_type"] == "HTTP":
+                        garden_file_data["http"] = legacy_garden["connection_params"][
+                            "http"
+                        ]
+                    if legacy_garden["connection_type"] == "STOMP":
+                        garden_file_data["stomp"] = legacy_garden["connection_params"][
+                            "stomp"
+                        ]
+
+                    logger.warning(
+                        (
+                            "Mapping Child Config: "
+                            f"{config.get('children.directory')}/{legacy_garden['name']}.yaml"
+                        )
+                    )
+                    with open(
+                        f"{config.get('children.directory')}/{legacy_garden['name']}.yaml",
+                        "w+",
+                    ) as ff:
+                        yaml.dump(garden_file_data, ff, allow_unicode=True)
+
+        db.drop_collection("garden")
+
+
+def ensure_v3_27_model_migration():
+    """Ensures that the Role model is consolidated
+
+    In Version 3.26 and earlier the utilized role assignments to determine the
+    scope of the Role. In Version 3.27 these scopes were incorporated into the
+    Role model.
+
+    Right now if the check fails this will just drop any collection associated
+    with User Accounts.  Since they'll be recreated anyway this isn't the worst,
+    but it would be better if we could seamlessly flatten existing permissions.
+
+    """
+
+    db = get_db()
+
+    collections = db.collection_names()
+
+    # Look for 3.26 Collections
+    for legacy_user_collection in ["remote_role", "role_assignment", "remote_user"]:
+        if legacy_user_collection in collections:
+            logger.warning(
+                "Encountered an error loading Roles or Users or User Tokens. This is most"
+                " likely because the database is using the old (v3.26 or prior) models."
+                " Migration strategy is to drop the roles, remote_roles, role_assignment,"
+                " user, remote_user, and user_token collections. The required collections"
+                " will be rebuilt."
+            )
+
+            db = get_db()
+            db.drop_collection("role")
+            db.drop_collection("remote_role")
+            db.drop_collection("role_assignment")
+            db.drop_collection("user")
+            db.drop_collection("remote_user")
+            db.drop_collection("user_token")
+            db.drop_collection("legacy_role")
+
+            return
+
+    # Look for 3.26 fields
+    if (
+        contains_legacy_field("role", ["permissions"])
+        or contains_legacy_field("user", ["role_assignments"])
+        or contains_legacy_field("user_token", ["user"])
+    ):
+        logger.warning(
+            "Encountered an error loading Roles or Users or User Tokens. This is most"
+            " likely because the database is using the old (v3.26) style of storing in"
+            " the database. To fix this the roles, remote_roles, role_assignment, user,"
+            " remote_user, and user_token collections will be dropped."
+        )
+
+        db = get_db()
+        db.drop_collection("role")
+        db.drop_collection("remote_role")
+        db.drop_collection("role_assignment")
+        db.drop_collection("user")
+        db.drop_collection("remote_user")
+        db.drop_collection("user_token")
+        db.drop_collection("legacy_role")
+
+
 def ensure_model_migration():
     """Ensures that the database is properly migrated. All migrations ran from this
     single function for easy management"""
 
     ensure_v2_to_v3_model_migration()
+    ensure_v3_24_model_migration()
+    ensure_v3_27_model_migration()
 
 
 def check_indexes(document_class):
@@ -181,7 +313,7 @@ def check_indexes(document_class):
 
         document_class.ensure_indexes()
 
-    except IndexOperationError:
+    except (IndexOperationError, OperationFailure):
         logger.warning(
             "%s collection indexes verification failed, attempting to rebuild",
             document_class.__name__,

@@ -6,6 +6,22 @@ TBD
 
 - Added support for pruning completed orphaned child requests (`db.ttl.orphan`)
 - Added optimization for TTL to only pull back IDs (instead of entire model) when deleting Requests
+- Added python version to about page
+
+# 3.28.2
+
+10/11/2024
+
+- Fixed Child Garden sync for older Gardens that do not provide Namespace on Systems
+
+# 3.28.1
+
+10/11/2024
+
+- Added database cleanup from Beer-Garden 3.16 User Models. Collections will be pruned and require
+  to be rebuilt to match the new user model approach
+- Added database cleanup from Beer-Garden 3.23 Garden Models. Models will be mapped to their YAML
+  file in the children directory, then the collection is pruned
 
 # Python 3.13 Support
 
