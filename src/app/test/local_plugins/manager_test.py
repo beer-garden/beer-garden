@@ -36,6 +36,10 @@ def config_all():
         "AUTO_BREW_KWARGS": None,
         "GROUPS": [],
         "REQUIRES": [],
+        "CLIENT_STARTUP_FUNCTION": "startup_one",
+        "CLIENT_STARTUP_FUNCTIONS": ["startup_two", "startup_three"],
+        "CLIENT_SHUTDOWN_FUNCTION": "shutdown_one",
+        "CLIENT_SHUTDOWN_FUNCTIONS": ["shutdown_two", "shutdown_three"],
     }
 
 
@@ -59,6 +63,10 @@ def config_all_serialized():
             MAX_INSTANCES=1
             AUTO_BREW_ARGS=None
             AUTO_BREW_KWARGS=None
+            CLIENT_STARTUP_FUNCTION='startup_one'
+            CLIENT_STARTUP_FUNCTIONS=['startup_two','startup_three']
+            CLIENT_SHUTDOWN_FUNCTION='shutdown_one'
+            CLIENT_SHUTDOWN_FUNCTIONS=['shutdown_two','shutdown_three']
         """
     )
 
