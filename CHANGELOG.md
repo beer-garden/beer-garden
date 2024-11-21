@@ -12,6 +12,7 @@ TBD
   has completed startup processes. Function must be present on the client class object.
 - Added python version to about page
 - Added Rocky 9 RPM Support
+- Added topic pruning for system removed events
 
 # 3.28.2
 
