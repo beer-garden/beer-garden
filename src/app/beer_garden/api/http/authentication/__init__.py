@@ -216,7 +216,7 @@ def _generate_access_token(user: User, identifier: UUID, max_permission: str) ->
     if user.upstream_roles:
         for role in user.upstream_roles:
             roles.append(
-                SchemaParser.serialize_remote_role(role, to_string=False, many=False)
+                SchemaParser.serialize_upstream_role(role, to_string=False, many=False)
             )
 
     jwt_headers = {"alg": "HS256", "typ": "JWT"}

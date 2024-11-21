@@ -11,6 +11,7 @@ TBD
 - Added new beer.conf support for startup functions. These functions will be executed after `Plugin().run()` 
   has completed startup processes. Function must be present on the client class object.
 - Added python version to about page
+- Added ldap login handler and configuration options to support ldap password-based login and pull user roles.
 - Added Rocky 9 RPM Support
 - Added topic pruning for system removed events
 

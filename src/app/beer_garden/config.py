@@ -693,6 +693,63 @@ _AUTHENTICATION_HANDLERS_SPEC = {
                 },
             },
         },
+        "ldap": {
+            "type": "dict",
+            "items": {
+                "enabled": {
+                    "type": "bool",
+                    "default": False,
+                    "description": "Enable ldap authentication via username and"
+                    "password",
+                },
+                "host": {
+                    "type": "str",
+                    "default": "localhost",
+                    "description": "Host for the LDAP Server to bind to",
+                },
+                "port": {
+                    "type": "int",
+                    "default": 389,
+                    "description": "Serve content on this port",
+                },
+                "base_dn": {
+                    "type": "str",
+                    "default": "dc=example,dc=org",
+                    "description": "Base dn in directory tree for search queries",
+                },
+                "user_prefix": {
+                    "type": "str",
+                    "default": "uid",
+                    "description": "User dn prefix to indicate uid or cn",
+                },
+                "user_attributes": {
+                    "type": "str",
+                    "default": "cn=users,cn=accounts",
+                    "description": "User attributes to specify user hierarchy",
+                },
+                "use_ssl": {
+                    "type": "bool",
+                    "default": False,
+                    "description": "Use SSL when connecting to LDAP server",
+                },
+                "use_full_user_dn": {
+                    "type": "bool",
+                    "default": False,
+                    "description": "Use full user dn for login or build user dn from username",
+                },
+                "roles_search_base": {
+                    "type": "str",
+                    "default": "dc=example,dc=org",
+                    "description": "Search base to use for roles query",
+                },
+                "default_user_roles": {
+                    "type": "list",
+                    "items": {"role": {"type": "str"}},
+                    "default": ["read_only"],
+                    "description": "Default roles on login",
+                },
+            },
+        },
     },
 }
 

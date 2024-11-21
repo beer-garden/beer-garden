@@ -11,6 +11,18 @@ auth:
       user_local_roles_header: bg-user-local-roles
       user_upstream_roles_header: bg-user-upstream-roles
       username_header: bg-username
+    ldap:
+      enabled: false
+      host: localhost
+      port: 389
+      base_dn: dc=example,dc=com
+      user_prefix: uid
+      user_attributes: ou=Users
+      use_ssl: false
+      use_full_user_dn: false
+      roles_search_base: dc=example,dc=com
+      default_user_roles:
+      - read_only
     
   default_admin:
     password: password
