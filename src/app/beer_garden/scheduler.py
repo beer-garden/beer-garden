@@ -415,6 +415,12 @@ class MixedScheduler(object):
                     max_running_jobs=1,
                 )
 
+            self.add_schedule(
+                beer_garden.db.mongo.pruner.prune_orphans,
+                interval=prune_interval,
+                max_running_jobs=1,
+            )
+
         # Add scheduled job for checking unresponsive gardens
         self.add_schedule(
             beer_garden.garden.garden_unresponsive_trigger,

@@ -45,9 +45,9 @@ done
 if [ -z "$RELEASE" ]; then
   echo "RELEASE not specified, using 7"
   RELEASE="7"
-elif [[ "$RELEASE" != "7" ]]; then
+elif [ "$RELEASE" != "7" ] && [ "$RELEASE" != "9" ]; then
   echo "Unsupported RELEASE: ${RELEASE}"
-  echo "Supported releases are 7"
+  echo "Supported releases are 7 and 9"
   exit 1
 fi
 
@@ -76,13 +76,13 @@ PIP_BIN="$APP_PATH/bin/pip"
 
 SRC_PATH="/src"
 
-SCRIPT_BASE="/rpm/centos${RELEASE}/scripts"
+SHARED_SCRIPT_BASE="/rpm/shared-scripts"
 BEFORE_INSTALL="before_install.sh"
 AFTER_INSTALL="after_install.sh"
 BEFORE_REMOVE="before_remove.sh"
 AFTER_REMOVE="after_remove.sh"
 
-RESOURCE_BASE="/rpm/centos${RELEASE}/resources"
+SHARED_RESOURCES="/rpm/shared-resources"
 
 if [ -z "${TRUSTED_HOST}" ]
 then
@@ -119,9 +119,9 @@ install_apps() {
     cp -r "$SRC_PATH/ui/dist" "$UI_PATH/dist"
 
     mkdir -p "$UI_PATH/conf/conf.d"
-    cp "$RESOURCE_BASE/nginx/upstream.conf" "$UI_PATH/conf/conf.d/"
+    cp "$SHARED_RESOURCES/nginx/upstream.conf" "$UI_PATH/conf/conf.d/"
     mkdir -p "$UI_PATH/conf/default.d"
-    cp "$RESOURCE_BASE/nginx/bg.conf" "$UI_PATH/conf/default.d/"
+    cp "$SHARED_RESOURCES/nginx/bg.conf" "$UI_PATH/conf/default.d/"
 }
 
 create_rpm() {
@@ -168,10 +168,10 @@ create_rpm() {
         --directories $LIB_PATH
         --directories $SHARE_PATH
         --directories $UI_PATH
-        --before-install $SCRIPT_BASE/$BEFORE_INSTALL
-        --after-install $SCRIPT_BASE/$AFTER_INSTALL
-        --before-remove $SCRIPT_BASE/$BEFORE_REMOVE
-        --after-remove $SCRIPT_BASE/$AFTER_REMOVE
+        --before-install $SHARED_SCRIPT_BASE/$BEFORE_INSTALL
+        --after-install $SHARED_SCRIPT_BASE/$AFTER_INSTALL
+        --before-remove $SHARED_SCRIPT_BASE/$BEFORE_REMOVE
+        --after-remove $SHARED_SCRIPT_BASE/$AFTER_REMOVE
         --description "The beer-garden application"
         --license "MIT"
         --url "https://beer-garden.io"
@@ -181,11 +181,11 @@ create_rpm() {
     service_paths=()
 
     if [[ "$RELEASE" == "7" ]]; then
-        args+=(-d "openssl-libs >= 1:1.0.2a-1")
-
-        cp "$RESOURCE_BASE/service/beer-garden.service" "/lib/systemd/system/"
-        service_paths+=("/lib/systemd/system/beer-garden.service")
+        args+=(-d "openssl-libs >= 1:1.0.2a-1")   
     fi
+
+    cp "$SHARED_RESOURCES/service/beer-garden.service" "/lib/systemd/system/"
+    service_paths+=("/lib/systemd/system/beer-garden.service")
 
     # Make sure we have a place to put the rpm
     mkdir -p /rpm/dist
