@@ -8,6 +8,7 @@ TBD
   of the shutdown process. Function must be present on the client class object.
 - Added new beer.conf support for startup functions. These functions will be executed after `Plugin().run()` 
   has completed startup processes. Function must be present on the client class object.
+- Added python version to about page
 
 # 3.28.2
 
