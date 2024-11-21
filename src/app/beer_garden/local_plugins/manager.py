@@ -724,15 +724,15 @@ class PluginManager(StoppableThread):
             ]
 
         if plugin_config.get("CLIENT_STARTUP_FUNCTIONS") or plugin_config.get(
-            "CLIENT_STARTUP_FUNCTIONS"
+            "CLIENT_STARTUP_FUNCTION"
         ):
             startup_functions = plugin_config.get("CLIENT_STARTUP_FUNCTIONS", [])
             if (
-                plugin_config.get("CLIENT_STARTUP_FUNCTIONS")
-                and plugin_config.get("CLIENT_STARTUP_FUNCTIONS")
+                plugin_config.get("CLIENT_STARTUP_FUNCTION")
+                and plugin_config.get("CLIENT_STARTUP_FUNCTION")
                 not in startup_functions
             ):
-                startup_functions.append(plugin_config.get("CLIENT_STARTUP_FUNCTIONS"))
+                startup_functions.append(plugin_config.get("CLIENT_STARTUP_FUNCTION"))
 
             process_args += [
                 "--client_startup_functions=" + arg for arg in startup_functions
