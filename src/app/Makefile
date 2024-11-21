@@ -158,7 +158,7 @@ docker-tag-latest: docker-build
 	docker tag $(DOCKER_NAME):$(VERSION)-debian-python$(PYTHON_VERSION) $(DOCKER_NAME):$(VERSION)-debian
 	docker tag $(DOCKER_NAME):$(VERSION)-debian-python$(PYTHON_VERSION) $(DOCKER_NAME):$(SHORT_VERSION)-debian
 
-docker-build-unstable:
+docker-build-unstable: package clean-python
 	docker build -t $(DOCKER_NAME):unstable-python$(PYTHON_VERSION) -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-alpine .
 	docker build -t $(DOCKER_NAME):unstable-debian-python$(PYTHON_VERSION) -f docker/Dockerfile.unstable-debian --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-slim .
 
