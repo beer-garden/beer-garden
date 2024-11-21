@@ -7,6 +7,7 @@ UI_DIR         = src/ui
 
 VERSION        ?= 0.0.0
 PYTHON_VERSION ?=3.7
+DIST           ?=centos7
 
 .PHONY: clean clean-build clean-test clean-pyc help test
 
@@ -42,11 +43,10 @@ help:
 
 # RPM
 rpm-build:  ## build rpm
-	rpm/bin/build.py rpm $(VERSION) --iteration py$(PYTHON_VERSION) --python $(PYTHON_VERSION) 
+	rpm/bin/build.py rpm $(VERSION) --iteration py$(PYTHON_VERSION) --python $(PYTHON_VERSION) --distribution $(DIST)
 
 rpm-build-local:  ## build local rpm
-	rpm/bin/build.py rpm --local $(VERSION) --python $(PYTHON_VERSION) 
-
+	rpm/bin/build.py rpm --local $(VERSION) --python $(PYTHON_VERSION) --distribution $(DIST)
 
 # Docker
 docker-login: ## log in to the docker registry

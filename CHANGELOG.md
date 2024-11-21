@@ -4,8 +4,16 @@
 
 TBD
 
+- Added support for pruning completed orphaned child requests (`db.ttl.orphan`)
+- Added optimization for TTL to only pull back IDs (instead of entire model) when deleting Requests
+- Added new beer.conf support for shutdown functions. These functions will be executed at the start
+  of the shutdown process. Function must be present on the client class object.
+- Added new beer.conf support for startup functions. These functions will be executed after `Plugin().run()` 
+  has completed startup processes. Function must be present on the client class object.
 - Added python version to about page
 - Added ldap login handler and configuration options to support ldap password-based login and pull user roles.
+- Added Rocky 9 RPM Support
+- Added topic pruning for system removed events
 
 # 3.28.2
 
