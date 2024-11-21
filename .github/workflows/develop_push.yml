@@ -34,8 +34,8 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       - name: Install Dependencies 
-          run: make deps 
-          
+        run: make deps 
+
       - name: Build and Publish Unstable Images
         run: make publish-docker-unstable PYTHON_VERSION=${{ matrix.python-version }}
 
