@@ -706,6 +706,38 @@ class PluginManager(StoppableThread):
             if plugin_group is not None:
                 process_args += ["--group=" + str(plugin_group)]
 
+        if plugin_config.get("CLIENT_SHUTDOWN_FUNCTIONS") or plugin_config.get(
+            "CLIENT_SHUTDOWN_FUNCTIONS"
+        ):
+            shutdown_functions = plugin_config.get("CLIENT_SHUTDOWN_FUNCTIONS", [])
+            if (
+                plugin_config.get("CLIENT_SHUTDOWN_FUNCTIONS")
+                and plugin_config.get("CLIENT_SHUTDOWN_FUNCTIONS")
+                not in shutdown_functions
+            ):
+                shutdown_functions.append(
+                    plugin_config.get("CLIENT_SHUTDOWN_FUNCTIONS")
+                )
+
+            process_args += [
+                "--client_shutdown_functions=" + arg for arg in shutdown_functions
+            ]
+
+        if plugin_config.get("CLIENT_STARTUP_FUNCTIONS") or plugin_config.get(
+            "CLIENT_STARTUP_FUNCTION"
+        ):
+            startup_functions = plugin_config.get("CLIENT_STARTUP_FUNCTIONS", [])
+            if (
+                plugin_config.get("CLIENT_STARTUP_FUNCTION")
+                and plugin_config.get("CLIENT_STARTUP_FUNCTION")
+                not in startup_functions
+            ):
+                startup_functions.append(plugin_config.get("CLIENT_STARTUP_FUNCTION"))
+
+            process_args += [
+                "--client_startup_functions=" + arg for arg in startup_functions
+            ]
+
         if plugin_config.get("REQUIRES"):
             plugin_requires = plugin_config["REQUIRES"]
             if plugin_requires is not None:
@@ -831,6 +863,12 @@ class ConfigKeys(Enum):
 
     GROUP = 23
     GROUPS = 24
+
+    CLIENT_SHUTDOWN_FUNCTION = 25
+    CLIENT_SHUTDOWN_FUNCTIONS = 26
+
+    CLIENT_STARTUP_FUNCTION = 27
+    CLIENT_STARTUP_FUNCTIONS = 28
 
 
 class ConfigLoader(object):
