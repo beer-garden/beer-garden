@@ -7,7 +7,7 @@ on:
 
 jobs:
   docker-publish-src-unstable:
-    name: Docker Publish
+    name: Docker Publish Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
 
     strategy:
@@ -33,11 +33,14 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
+      - name: Install Dependencies 
+          run: make deps 
+          
       - name: Build and Publish Unstable Images
         run: make publish-docker-unstable PYTHON_VERSION=${{ matrix.python-version }}
 
   docker-publish-src-unstable-latest:
-    name: Docker Publish
+    name: Docker Publish Python ${{ matrix.python-version }} Latest
     runs-on: ubuntu-latest
 
     strategy:
@@ -62,11 +65,14 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
+      - name: Install Dependencies 
+        run: make deps    
+
       - name: Build and Publish Unstable Images
         run: make publish-docker-unstable-latest PYTHON_VERSION=${{ matrix.python-version }}
 
   docker-publish-ui-unstable:
-    name: Docker Publish
+    name: Docker Publish UI
     runs-on: ubuntu-latest
 
     defaults:
