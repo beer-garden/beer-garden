@@ -4,6 +4,8 @@
 
 TBD
 
+- Added support for pruning completed orphaned child requests (`db.ttl.orphan`)
+- Added optimization for TTL to only pull back IDs (instead of entire model) when deleting Requests
 - Added new beer.conf support for shutdown functions. These functions will be executed at the start
   of the shutdown process. Function must be present on the client class object.
 - Added new beer.conf support for startup functions. These functions will be executed after `Plugin().run()` 
