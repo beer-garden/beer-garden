@@ -230,6 +230,7 @@ class Command(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.Command
 
     name = StringField(required=True)
+    display_name = StringField()
     description = StringField()
     parameters = EmbeddedDocumentListField("Parameter")
     command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES, default="ACTION")

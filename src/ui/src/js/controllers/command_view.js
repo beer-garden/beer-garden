@@ -176,6 +176,16 @@ export default function commandViewController(
       };
     }
 
+    if (
+      $scope.command['display_name'] &&
+      $scope.command['display_name'] === newRequest['command']
+    ) {
+      newRequest['command'] = $scope.command['name'];
+      newRequest['metadata'] = {
+        command_display_name: $scope.command['display_name'],
+      };
+    }
+
     let isFormData = false;
     const fd = new FormData();
     for (const i in $scope.command.parameters) {
@@ -259,7 +269,14 @@ export default function commandViewController(
       }
     }
 
-    $scope.command = _.find($scope.system.commands, {name: $stateParams.commandName});
+    for (let i = 0; i < $scope.system.commands.length; i++) {
+      let command = $scope.system.commands[i];
+      if ((command.display_name || command.name) == $stateParams.commandName) {
+        $scope.command = command;
+        break;
+      }
+    }
+
     $scope.helptext = $scope.displayInstanceAlert();
 
     $scope.jsonValues.command = JSON.stringify($scope.command, undefined, 2);
@@ -281,11 +298,11 @@ export default function commandViewController(
       $scope.system.namespace,
       $scope.system.display_name || $scope.system.name,
       $scope.system.version,
-      $scope.command.name,
+      $scope.command.display_name || $scope.command.name,
     ];
 
     $scope.setWindowTitle(
-        $scope.command.name,
+        $scope.command.display_name || $scope.command.name,
         $scope.system.display_name || $scope.system.name,
         $scope.system.version,
         'command',
