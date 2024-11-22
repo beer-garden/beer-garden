@@ -29,7 +29,7 @@ class TestHandlers:
             (Events.INSTANCE_STOPPED, 2),
             (Events.SYSTEM_CREATED, 3),
             (Events.SYSTEM_UPDATED, 3),
-            (Events.SYSTEM_REMOVED, 2),
+            (Events.SYSTEM_REMOVED, 3),
             (Events.QUEUE_CLEARED, 0),
             (Events.ALL_QUEUES_CLEARED, 0),
             (Events.DB_CREATE, 0),
