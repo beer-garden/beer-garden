@@ -23,7 +23,6 @@ def _remove_queue_info(response: str, many: bool = False) -> str:
 
 
 class SystemAPI(AuthorizationHandler):
-
     @collect_metrics(transaction_type="API", group="SystemAPI")
     async def get(self, system_id):
         """
@@ -296,6 +295,12 @@ class SystemListAPI(AuthorizationHandler):
             description: Filter latest system versions
             type: boolean
             default: false
+          - name: filter_running
+            in: query
+            required: false
+            description: Filter running system versions
+            type: boolean
+            default: false
         responses:
           200:
             description: All Systems
@@ -325,6 +330,12 @@ class SystemListAPI(AuthorizationHandler):
         else:
             filter_latest = bool(filter_latest.lower() == "true")
 
+        filter_running = self.get_query_argument("filter_running", None)
+        if filter_running is None:
+            filter_running = False
+        else:
+            filter_running = bool(filter_running.lower() == "true")
+
         include_fields = self.get_query_argument("include_fields", None)
         if include_fields:
             include_fields = set(include_fields.split(",")) & self.REQUEST_FIELDS
@@ -342,6 +353,9 @@ class SystemListAPI(AuthorizationHandler):
                 filter_params[key] = BrewtilsSystemSchema._declared_fields.get(
                     key
                 ).deserialize(self.get_query_argument(key))
+            # String query operators
+            elif "__" in key and key.split("__")[0] in self.REQUEST_FIELDS:
+                filter_params[key] = self.get_query_argument(key)
 
         serialize_kwargs = {"to_string": True, "many": True}
         if include_fields:
@@ -361,6 +375,7 @@ class SystemListAPI(AuthorizationHandler):
                     "exclude_fields": exclude_fields,
                     "dereference_nested": dereference_nested,
                     "filter_latest": filter_latest,
+                    "filter_running": filter_running,
                 },
             )
         )
