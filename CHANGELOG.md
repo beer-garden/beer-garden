@@ -2,7 +2,7 @@
 
 # 3.29.0
 
-TBD
+11/25/2024
 
 - Added support for pruning completed orphaned child requests (`db.ttl.orphan`)
 - Added optimization for TTL to only pull back IDs (instead of entire model) when deleting Requests
