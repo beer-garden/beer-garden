@@ -145,8 +145,8 @@ docker-build:
 	docker build -t $(DOCKER_NAME):$(VERSION)-python$(PYTHON_VERSION) -f docker/Dockerfile.alpine --build-arg VERSION=$(VERSION) --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-alpine .	
 	docker tag $(DOCKER_NAME):$(VERSION)-python$(PYTHON_VERSION) $(DOCKER_NAME):$(SHORT_VERSION)-python$(PYTHON_VERSION)
 
-	docker build -t $(DOCKER_NAME):$(VERSION)-debian-python$(PYTHON_VERSION) -f docker/Dockerfile.debian --build-arg VERSION=$(VERSION) --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-slim .
-	docker tag $(DOCKER_NAME):$(VERSION)-debian-python$(PYTHON_VERSION) $(DOCKER_NAME):$(SHORT_VERSION)-debian-python$(PYTHON_VERSION)
+	docker build -t $(DOCKER_NAME):$(VERSION)-python$(PYTHON_VERSION)-debian -f docker/Dockerfile.debian --build-arg VERSION=$(VERSION) --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-slim .
+	docker tag $(DOCKER_NAME):$(VERSION)-python$(PYTHON_VERSION)-debian $(DOCKER_NAME):$(SHORT_VERSION)-python$(PYTHON_VERSION)-debian
 
 docker-tag-latest: docker-build
 	docker tag $(DOCKER_NAME):$(VERSION)-python$(PYTHON_VERSION) $(DOCKER_NAME):latest
@@ -160,11 +160,11 @@ docker-tag-latest: docker-build
 
 docker-build-unstable: package clean-python
 	docker build -t $(DOCKER_NAME):unstable-python$(PYTHON_VERSION) -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-alpine .
-	docker build -t $(DOCKER_NAME):unstable-debian-python$(PYTHON_VERSION) -f docker/Dockerfile.unstable-debian --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-slim .
+	docker build -t $(DOCKER_NAME):unstable-python$(PYTHON_VERSION)-debian -f docker/Dockerfile.unstable-debian --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-slim .
 
 docker-tag-latest-unstable: docker-build-unstable
 	docker tag $(DOCKER_NAME):unstable-python$(PYTHON_VERSION) $(DOCKER_NAME):unstable
-	docker tag $(DOCKER_NAME):unstable-debian-python$(PYTHON_VERSION) $(DOCKER_NAME):unstable-debian
+	docker tag $(DOCKER_NAME):unstable-python$(PYTHON_VERSION)-debian $(DOCKER_NAME):unstable-debian
 
 publish-docker: docker-build
 	docker push $(DOCKER_NAME):$(VERSION)-python$(PYTHON_VERSION)
