@@ -183,11 +183,11 @@ publish-docker-latest: docker-tag-latest publish-docker
 
 publish-docker-unstable: docker-build-unstable ## push the unstable docker image
 	docker push $(DOCKER_NAME):unstable-python$(PYTHON_VERSION)
-	docker push $(DOCKER_NAME):unstable-debian-python$(PYTHON_VERSION)
+	docker push $(DOCKER_NAME):unstable-python$(PYTHON_VERSION)-debian
 
 publish-docker-unstable-latest: docker-tag-latest-unstable publish-docker-unstable ## push the unstable docker image
 	docker push $(DOCKER_NAME):unstable-python$(PYTHON_VERSION)
-	docker push $(DOCKER_NAME):unstable-debian-python$(PYTHON_VERSION)
+	docker push $(DOCKER_NAME):unstable-python$(PYTHON_VERSION)-debian
 
 # Publishing
 publish-package-test: package ## upload a package to the testpypi
