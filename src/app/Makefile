@@ -166,13 +166,13 @@ docker-tag-latest-unstable: docker-build-unstable
 	docker tag $(DOCKER_NAME):unstable-python$(PYTHON_VERSION) $(DOCKER_NAME):unstable
 	docker tag $(DOCKER_NAME):unstable-debian-python$(PYTHON_VERSION) $(DOCKER_NAME):unstable-debian
 
-docker-publish: docker-build
+publish-docker: docker-build
 	docker push $(DOCKER_NAME):$(VERSION)-python$(PYTHON_VERSION)
 	docker push $(DOCKER_NAME):$(SHORT_VERSION)-python$(PYTHON_VERSION)
 	docker push $(DOCKER_NAME):$(VERSION)-python$(PYTHON_VERSION)-debian
 	docker push $(DOCKER_NAME):$(SHORT_VERSION)-python$(PYTHON_VERSION)-debian
 
-docker-publish-latest: docker-tag-latest docker-publish
+publish-docker-latest: docker-tag-latest publish-docker
 	docker push $(DOCKER_NAME):latest
 	docker push $(DOCKER_NAME):$(VERSION)
 	docker push $(DOCKER_NAME):$(SHORT_VERSION)
