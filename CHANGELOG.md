@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+# TBD
+
+TBD
+
+- Migrated from 408 to 400 HTTP error code for client defined wait time exceed. Required to prevent
+  client from reattempting to submit the API request. 
+
 # 3.29.0
 
 11/25/2024
