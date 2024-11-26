@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# TBD
+
+TBD
+
+- Updated Pypi release package name from `beer-garden` to `beer_garden` to comply with PEP 625. 
+
 # 3.29.0
 
 11/25/2024
