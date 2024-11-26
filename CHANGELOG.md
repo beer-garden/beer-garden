@@ -4,7 +4,7 @@
 
 TBD
 
-- Migrated from 408 to 500 HTTP error code for client defined wait time exceed. Required to prevent
+- Migrated from 408 to 504 HTTP error code for client defined wait time exceed. Required to prevent
   client from reattempting to submit the API request. 
 
 # 3.29.0
