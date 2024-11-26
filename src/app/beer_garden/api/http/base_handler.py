@@ -75,7 +75,7 @@ class BaseHandler(RequestHandler):
         DoesNotExist: {"status_code": 404, "message": "Resource does not exist"},
         NotFoundError: {"status_code": 404},
         NotFoundException: {"status_code": 404},
-        WaitExceededError: {"status_code": 400, "message": "Max wait time exceeded"},
+        WaitExceededError: {"status_code": 500, "message": "Max wait time exceeded"},
         ConflictError: {"status_code": 409},
         NotUniqueException: {"status_code": 409},
         NotUniqueError: {"status_code": 409, "message": "Resource already exists"},
