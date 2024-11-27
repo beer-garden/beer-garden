@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# TBD
+
+TBD
+
+- Added support for command display name as option to override default name.
+
 # 3.29.0
 
 11/25/2024

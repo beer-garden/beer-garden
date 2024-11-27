@@ -34,7 +34,6 @@ def garden(system_permitted, system_not_permitted):
 def system_permitted():
     system = System(
         name="permitted_system",
-        display_name="allowed_system",
         version="0.0.1",
         namespace="somegarden",
         commands=[Command(name="icandoit")],
@@ -48,7 +47,6 @@ def system_permitted():
 def system_not_permitted():
     system = System(
         name="not_permitted_system",
-        display_name="not_allowed_system",
         version="0.0.1",
         namespace="somegarden",
         commands=[Command(name="notallowed")],

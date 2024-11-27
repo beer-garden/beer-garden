@@ -42,7 +42,9 @@ def system_not_permitted():
         name="system_not_permitted",
         version="0.0.1",
         namespace="somegarden",
-        commands=[Command(name="command_not_permitted", display_name="command_not_allowed")],
+        commands=[
+            Command(name="command_not_permitted", display_name="command_not_allowed")
+        ],
     ).save()
 
     yield system
