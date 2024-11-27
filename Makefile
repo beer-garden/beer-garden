@@ -83,8 +83,8 @@ publish-rpm: ## publish the rpm
 
 # Requires the docker image already built and UI packaged
 publish-docker-rpm: rpm-build
-	docker build -t bgio/beer-garden:$(VERSION)_RPM_$(PYTHON_VERSION) -f docker/dockerfiles/bundle_rpm/Dockerfile --build-arg VERSION=$(VERSION) --build-arg PYTHON_VERSION=$(PYTHON_VERSION) .
-	docker push bgio/beer-garden:$(VERSION)_RPM_$(PYTHON_VERSION)
+	docker build -t bgio/beer-garden:$(VERSION)-RPM-$(PYTHON_VERSION)-${DIST} -f docker/dockerfiles/bundle_rpm/Dockerfile --build-arg VERSION=$(VERSION) --build-arg PYTHON_VERSION=$(PYTHON_VERSION) .
+	docker push bgio/beer-garden:$(VERSION)-RPM-$(PYTHON_VERSION)-${DIST}
 
 # Setup Environment
 setup:
