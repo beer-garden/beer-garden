@@ -205,7 +205,7 @@ export default function requestViewController(
       $scope.msgPourItAgain = 'Unable to find system';
     }
     $scope.setWindowTitle(
-        $scope.request.command,
+        $scope.request.metadata.command_display_name || $scope.request.command,
         $scope.request.metadata.system_display_name || $scope.request.system,
         $scope.request.system_version,
         $scope.request.instance_name,

@@ -103,6 +103,10 @@ export default function requestIndexController(
         .withTitle('Command')
         .renderWith(function(data, type, full) {
           let display = '';
+          let commandName = data;
+          if (full['metadata'] && full['metadata']['command_display_name']) {
+            commandName = full['metadata']['command_display_name'];
+          }
 
           if (full.parent) {
             display +=
@@ -120,7 +124,7 @@ export default function requestIndexController(
 
           display +=
           `<a ui-sref="base.request({requestId: '${full.id}'})">` +
-          data +
+          commandName +
           '</a>';
 
           if (full.hidden) {
