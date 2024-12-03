@@ -5,8 +5,6 @@ import json
 from asyncio import Future
 from typing import Sequence
 
-from mongoengine.queryset.visitor import Q
-
 import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.api.http.base_handler import future_wait
@@ -371,12 +369,6 @@ class RequestListAPI(AuthorizationHandler):
 
         # Add the filter for only requests the user is permitted to see
         q_filter = self.permitted_objects_filter(Request)
-        if q_filter:
-            query_args["q_filter"] = (
-                query_args["q_filter"] | q_filter
-                if query_args["q_filter"]
-                else q_filter
-            )
 
         # There are also some sane parameters
         query_args["start"] = self.get_argument("start", default="0")
@@ -824,7 +816,6 @@ class RequestListAPI(AuthorizationHandler):
         include_fields = []
         order_by = None
         text_search = None
-        q_filter = None
 
         # These are internal helpers
         query_columns = []
@@ -897,31 +888,13 @@ class RequestListAPI(AuthorizationHandler):
 
                 else:
                     if column["search"]["value"].upper().startswith("NOT "):
-                        if column["data"] == "command":
-                            q_filter = Q(
-                                command__not__startswith=column["search"]["value"]
-                            ) | Q(
-                                metadata__command_display_name__not__startswith=column[
-                                    "search"
-                                ]["value"]
-                            )
-                        else:
-                            filter_params[
-                                column["data"] + "__not__startswith"
-                            ] = column["search"]["value"][4:]
+                        filter_params[column["data"] + "__not__startswith"] = column[
+                            "search"
+                        ]["value"][4:]
                     else:
-                        if column["data"] == "command":
-                            q_filter = Q(
-                                command__startswith=column["search"]["value"]
-                            ) | Q(
-                                metadata__command_display_name__startswith=column[
-                                    "search"
-                                ]["value"]
-                            )
-                        else:
-                            filter_params[column["data"] + "__startswith"] = column[
-                                "search"
-                            ]["value"]
+                        filter_params[column["data"] + "__startswith"] = column[
+                            "search"
+                        ]["value"]
 
                 hint_helper.append(column["data"])
 
@@ -937,7 +910,6 @@ class RequestListAPI(AuthorizationHandler):
             "filter_params": filter_params,
             "include_fields": include_fields,
             "text_search": text_search,
-            "q_filter": q_filter,
             "order_by": order_by,
             "hint": self._determine_hint(hint_helper, include_children, include_hidden),
         }

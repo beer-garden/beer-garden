@@ -59,6 +59,7 @@ export default function commandViewController(
   $scope.createRequestWrapper = function(requestPrototype, ...args) {
     const request = {
       command: requestPrototype['command'],
+      command_display_name: requestPrototype['command_display_name'] || requestPrototype['command'],
       command_type: requestPrototype['command_type'] || 'TEMP',
       namespace: requestPrototype['namespace'] || $scope.system.namespace,
       system: requestPrototype['system'] || $scope.system.name,
@@ -181,9 +182,7 @@ export default function commandViewController(
       $scope.command['display_name'] === newRequest['command']
     ) {
       newRequest['command'] = $scope.command['name'];
-      newRequest['metadata'] = {
-        command_display_name: $scope.command['display_name'],
-      };
+      newRequest['command_display_name'] = $scope.command['display_name'];
     }
 
     let isFormData = false;

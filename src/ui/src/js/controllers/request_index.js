@@ -99,14 +99,11 @@ export default function requestIndexController(
       });
 
   $scope.dtColumns = [
-    DTColumnBuilder.newColumn('command')
+    DTColumnBuilder.newColumn('command_display_name')
         .withTitle('Command')
         .renderWith(function(data, type, full) {
           let display = '';
           let commandName = data;
-          if (full['metadata'] && full['metadata']['command_display_name']) {
-            commandName = full['metadata']['command_display_name'];
-          }
 
           if (full.parent) {
             display +=

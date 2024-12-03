@@ -322,6 +322,7 @@ class Request(MongoModel, Document):
         "instance_name": {"field": StringField, "kwargs": {"required": True}},
         "namespace": {"field": StringField, "kwargs": {"required": False}},
         "command": {"field": StringField, "kwargs": {"required": True}},
+        "command_display_name": {"field": StringField, "kwargs": {"required": False}},
         "command_type": {"field": StringField, "kwargs": {}},
         "parameters": {"field": DictField, "kwargs": {}},
         "comment": {"field": StringField, "kwargs": {"required": False}},
