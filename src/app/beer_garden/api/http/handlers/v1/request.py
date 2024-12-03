@@ -5,6 +5,10 @@ import json
 from asyncio import Future
 from typing import Sequence
 
+from brewtils.errors import ModelValidationError
+from brewtils.models import Operation, Permissions, Request, System
+from brewtils.schema_parser import SchemaParser
+
 import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.api.http.base_handler import future_wait
@@ -13,9 +17,6 @@ from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.errors import UnknownGardenException
 from beer_garden.metrics import collect_metrics
 from beer_garden.requests import remove_bytes_parameter_base64
-from brewtils.errors import ModelValidationError
-from brewtils.models import Operation, Permissions, Request, System
-from brewtils.schema_parser import SchemaParser
 
 
 class RequestAPI(AuthorizationHandler):
