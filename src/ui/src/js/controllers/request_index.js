@@ -179,7 +179,7 @@ export default function requestIndexController(
   };
 
   const lightColumnFilterOptions = {
-    command: {
+    command_display_name: {
       html: 'input',
       type: 'text',
       attr: {class: 'form-inline form-control', title: 'Command Filter'},
