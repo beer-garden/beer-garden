@@ -363,7 +363,7 @@ class Request(MongoModel, Document):
         "index_background": True,
         "indexes": [
             # These are used for sorting all requests
-            {"name": "command_index", "fields": ["command"]},
+            {"name": "command_index", "fields": ["command_display_name"]},
             {"name": "command_type_index", "fields": ["command_type"]},
             {"name": "system_index", "fields": ["system"]},
             {"name": "instance_name_index", "fields": ["instance_name"]},

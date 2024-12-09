@@ -370,6 +370,7 @@ class RequestListAPI(AuthorizationHandler):
 
         # Add the filter for only requests the user is permitted to see
         q_filter = self.permitted_objects_filter(Request)
+        query_args["q_filter"] = q_filter
 
         # There are also some sane parameters
         query_args["start"] = self.get_argument("start", default="0")

@@ -127,13 +127,13 @@ def ensure_v2_to_v3_model_migration():
         db.drop_collection("system")
 
 
-def contains_legacy_field(collection_name, legacy_fields):
+def contains_field(collection_name, fields):
     db = get_db()
     collection = db.get_collection(collection_name)
 
     for record in collection.find():
-        for legacy_field in legacy_fields:
-            if legacy_field in record:
+        for field in fields:
+            if field in record:
                 return True
     return False
 
@@ -142,7 +142,7 @@ def ensure_v3_24_model_migration():
     """Ensures that the Garden model migration to yaml configs"""
 
     # Look for 3.23 fields
-    if contains_legacy_field("garden", ["connection_params"]):
+    if contains_field("garden", ["connection_params"]):
         import os
         from pathlib import Path
 
@@ -236,9 +236,9 @@ def ensure_v3_27_model_migration():
 
     # Look for 3.26 fields
     if (
-        contains_legacy_field("role", ["permissions"])
-        or contains_legacy_field("user", ["role_assignments"])
-        or contains_legacy_field("user_token", ["user"])
+        contains_field("role", ["permissions"])
+        or contains_field("user", ["role_assignments"])
+        or contains_field("user_token", ["user"])
     ):
         logger.warning(
             "Encountered an error loading Roles or Users or User Tokens. This is most"
@@ -257,6 +257,15 @@ def ensure_v3_27_model_migration():
         db.drop_collection("legacy_role")
 
 
+def ensure_v3_29_model_migration():
+    db = get_db()
+    if not contains_field("request", ["command_display_name"]):
+        request_collection = db.get_collection("request")
+        for legacy_request in request_collection.find():
+            legacy_request.command_display_name = legacy_request.command
+            legacy_request.save()
+
+
 def ensure_model_migration():
     """Ensures that the database is properly migrated. All migrations ran from this
     single function for easy management"""
@@ -264,6 +273,7 @@ def ensure_model_migration():
     ensure_v2_to_v3_model_migration()
     ensure_v3_24_model_migration()
     ensure_v3_27_model_migration()
+    ensure_v3_29_model_migration()
 
 
 def check_indexes(document_class):

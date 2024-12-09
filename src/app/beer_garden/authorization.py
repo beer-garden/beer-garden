@@ -133,6 +133,7 @@ class QueryFilterBuilder:
                         filter["system_version__in"] = role.scope_versions
                     if len(role.scope_commands) > 0:
                         filter["command__in"] = role.scope_commands
+                        filter["command_display_name__in"] = role.scope_commands
 
                     if len(filter) > 0:
                         filters.append(Q(**filter))
@@ -208,6 +209,7 @@ class QueryFilterBuilder:
                         filter["version__in"] = role.scope_versions
                     if len(role.scope_commands) > 0:
                         filter["commands__name__in"] = role.scope_commands
+                        filter["commands__display_name__in"] = role.scope_commands
 
                     if len(filter) > 0:
                         filters.append(Q(**filter))

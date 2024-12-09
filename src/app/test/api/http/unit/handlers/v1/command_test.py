@@ -85,7 +85,7 @@ class TestCommandAPI:
         command = system_not_permitted.commands[0]
         url = (
             f"{base_url}/api/v1/systems/{system_not_permitted.id}/commands/"
-            f"{command.name}"
+            f"{command.display_name}"
         )
 
         response = yield http_client.fetch(url)
@@ -104,7 +104,7 @@ class TestCommandAPI:
         system_permitted,
     ):
         command = system_permitted.commands[0]
-        url = f"{base_url}/api/v1/systems/{system_permitted.id}/commands/{command.name}"
+        url = f"{base_url}/api/v1/systems/{system_permitted.id}/commands/{command.display_name}"
         headers = {"Authorization": f"Bearer {access_token}"}
 
         response = yield http_client.fetch(url, headers=headers)
