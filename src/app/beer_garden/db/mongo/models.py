@@ -504,6 +504,9 @@ class Request(MongoModel, Document):
         if not self.metadata:
             self.metadata = {}
 
+        if not self.command_display_name:
+            self.command_display_name = self.command
+
         status_key = f"{self.status}_{config.get('garden.name')}"
         if status_key not in self.metadata:
             self.metadata[status_key] = int(
