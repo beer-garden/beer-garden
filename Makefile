@@ -90,6 +90,6 @@ publish-docker-rpm: rpm-build
 setup:
 	docker-compose -f docker/docker-compose/docker-compose.yml up -d mongodb rabbitmq activemq
 	$(MAKE) -C $(UI_DIR) deps
-	$(MAKE) -C $(APP_DIR) deps-python install
+	$(MAKE) -C $(APP_DIR) deps-python
 	git clone https://github.com/beer-garden/example-plugins.git $(APP_DIR)/plugins
 
