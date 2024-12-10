@@ -99,6 +99,19 @@ def _has_empty_scopes(
     return True
 
 
+def combine_filters(filter: dict, or_filter: dict) -> Q:
+    q_filter = Q()
+    for item in or_filter:
+        q_filter |= Q(**{item: or_filter[item]})
+
+    if len(filter) > 0 and q_filter:
+        return Q(**filter) & q_filter
+    elif q_filter:
+        return q_filter
+    else:
+        return Q(**filter)
+
+
 class QueryFilterBuilder:
     def _get_garden_q_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
         """Returns a Q filter object for filtering a queryset for gardens"""
@@ -125,6 +138,7 @@ class QueryFilterBuilder:
             for role in roles:
                 if role.permission in permission_levels:
                     filter = {}
+                    or_filter = {}
                     if len(role.scope_systems) > 0:
                         filter["system__in"] = role.scope_systems
                     if len(role.scope_instances) > 0:
@@ -132,11 +146,12 @@ class QueryFilterBuilder:
                     if len(role.scope_versions) > 0:
                         filter["system_version__in"] = role.scope_versions
                     if len(role.scope_commands) > 0:
-                        filter["command__in"] = role.scope_commands
-                        filter["command_display_name__in"] = role.scope_commands
+                        or_filter["command__in"] = role.scope_commands
+                        or_filter["command_display_name__in"] = role.scope_commands
 
-                    if len(filter) > 0:
-                        filters.append(Q(**filter))
+                    q_filter = combine_filters(filter, or_filter)
+                    if q_filter:
+                        filters.append(q_filter)
 
         if len(filters) == 0:
             return Q()
@@ -201,6 +216,7 @@ class QueryFilterBuilder:
             for role in roles:
                 if role.permission in permission_levels:
                     filter = {}
+                    or_filter = {}
                     if len(role.scope_systems) > 0:
                         filter["name__in"] = role.scope_systems
                     if len(role.scope_instances) > 0:
@@ -208,11 +224,12 @@ class QueryFilterBuilder:
                     if len(role.scope_versions) > 0:
                         filter["version__in"] = role.scope_versions
                     if len(role.scope_commands) > 0:
-                        filter["commands__name__in"] = role.scope_commands
-                        filter["commands__display_name__in"] = role.scope_commands
+                        or_filter["commands__name__in"] = role.scope_commands
+                        or_filter["commands__display_name__in"] = role.scope_commands
 
-                    if len(filter) > 0:
-                        filters.append(Q(**filter))
+                    q_filter = combine_filters(filter, or_filter)
+                    if q_filter:
+                        filters.append(q_filter)
 
         if len(filters) == 0:
             return Q()
