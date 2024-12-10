@@ -260,10 +260,17 @@ def ensure_v3_27_model_migration():
 def ensure_v3_29_model_migration():
     db = get_db()
     if not contains_field("request", ["command_display_name"]):
+        logger.warning(
+            "Command display name was not found in Requests and will be added. This is most"
+            " likely because the database is using the old (v3.29) style of storing in"
+            " the database."
+        )
         request_collection = db.get_collection("request")
         for legacy_request in request_collection.find():
-            legacy_request.command_display_name = legacy_request.command
-            legacy_request.save()
+            legacy_request["command_display_name"] = legacy_request["command"]
+            request_collection.update_one(
+                {"_id": legacy_request["_id"]}, {"$set": legacy_request}
+            )
 
 
 def ensure_model_migration():
