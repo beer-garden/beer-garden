@@ -809,6 +809,38 @@ class ModelFilter:
         ):
             return None
 
+        # Filter Connection Params
+        allow_connection_params = False
+        for roles in [user.local_roles, user.upstream_roles]:
+            for role in roles:
+                if (
+                    role.permission == Permissions.GARDEN_ADMIN.name
+                    and garden.name in role.scope_gardens
+                    and _has_empty_scopes(
+                        role,
+                        [
+                            "scope_namespaces",
+                            "scope_systems",
+                            "scope_instances",
+                            "scope_versions",
+                            "scope_commands",
+                        ],
+                    )
+                ):
+                    allow_connection_params = True
+                    break
+            if allow_connection_params:
+                break
+
+        if not allow_connection_params:
+            for connections in [
+                garden.receiving_connections,
+                garden.publishing_connections,
+            ]:
+                for connection in connections:
+                    del connection.config
+
+        # Filter Garden Systems
         if garden.systems:
             filter_systems = True
             for roles in [user.local_roles, user.upstream_roles]:

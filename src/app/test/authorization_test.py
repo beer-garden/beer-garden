@@ -1,6 +1,7 @@
 import pytest
 from brewtils.models import (
     Command,
+    Connection,
     Garden,
     Instance,
     Job,
@@ -121,8 +122,15 @@ def base_system_2():
 
 
 @pytest.fixture()
-def base_garden(base_system):
-    return Garden(name="garden", systems=[base_system])
+def base_connection():
+    return Connection(api="HTTP", config={"host": "host"})
+
+
+@pytest.fixture()
+def base_garden(base_system, base_connection):
+    return Garden(
+        name="garden", receiving_connections=[base_connection], systems=[base_system]
+    )
 
 
 class TestAuthorization:
@@ -969,6 +977,59 @@ class TestModelFilter:
             assert not model_filter._get_garden_filter(
                 base_garden, user, ["ADMIN"]
             ).systems
+
+    @pytest.mark.parametrize(
+        "user,returned",
+        [
+            (
+                User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="GARDEN_ADMIN",
+                            name="role",
+                            scope_gardens=["garden"],
+                            scope_namespaces=[],
+                            scope_systems=[],
+                            scope_instances=[],
+                            scope_versions=[],
+                            scope_commands=[],
+                        )
+                    ],
+                ),
+                True,
+            ),
+            (
+                User(
+                    username="user2",
+                    local_roles=[
+                        Role(
+                            permission="OPERATOR",
+                            name="role",
+                            scope_gardens=["garden"],
+                            scope_namespaces=[],
+                            scope_systems=[],
+                            scope_instances=[],
+                            scope_versions=[],
+                            scope_commands=[],
+                        )
+                    ],
+                ),
+                False,
+            ),
+        ],
+    )
+    def test_get_garden_filter_connection_configs(
+        self, model_filter, base_garden, user, returned
+    ):
+        model = model_filter._get_garden_filter(
+            base_garden, user, ["OPERATOR", "GARDEN_ADMIN"]
+        )
+
+        if returned:
+            assert hasattr(model.receiving_connections[0], "config")
+        else:
+            assert not hasattr(model.receiving_connections[0], "config")
 
     @pytest.mark.parametrize(
         "user,returned",
