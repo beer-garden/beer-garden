@@ -47,7 +47,10 @@ class Monitor(object):
             delete=bg_trigger.delete,
             job=self.job,
         )
-        self.start()
+        if self.job.status == "RUNNING":
+            self.start()
+        else:
+            self.stop()
 
     def start(self):
         """Start monitoring a directory"""
