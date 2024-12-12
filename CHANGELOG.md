@@ -8,6 +8,7 @@ TBD
 - Migrated from 408 to 504 HTTP error code for client defined wait time exceed. Required to prevent
   client from reattempting to submit the API request. 
 - Updated Authorization Filtering to return Downstream configuration info for only Garden Admins
+- Fixed bug where Paused Jobs being imported were Running in the background
 
 # 3.29.0
 
