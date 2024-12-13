@@ -243,23 +243,6 @@ export default function commandViewController(
     $scope.schema = sf['schema'];
     $scope.form = sf['form'];
 
-    // Add file input field placeholder from parameters
-    if ($scope.model.parameters) {
-      let params = $scope.model.parameters;
-      for (const p in params) {
-        if (params.hasOwnProperty(p)) {
-          for (const el of $scope.form) {
-            if (el.key && Array.isArray(el.key)) {
-              if (el.key.indexOf(p) >= 0) {
-                el['placeholder'] = params[p].filename;
-                break;
-              }
-            }
-          }
-        }
-      }
-    }
-
     $scope.jsonValues.schema = JSON.stringify($scope.schema, undefined, 2);
     $scope.jsonValues.form = JSON.stringify($scope.form, undefined, 2);
   };
