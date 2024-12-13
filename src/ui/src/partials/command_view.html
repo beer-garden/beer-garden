@@ -9,7 +9,7 @@
   <div ng-show="(responseState(response) === 'success')">
     <div ng-show="!manualOverride">
       <h1 class="page-header" ng-show="!manualOverride">
-        <span>{{command.name}}<span>
+        <span>{{command.display_name || command.name}}<span>
         <small>{{command.description}}</small>
         <bg-status class="pull-right" target='system.status'></bg-status>
       </h1>

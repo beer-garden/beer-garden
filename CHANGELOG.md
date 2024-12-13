@@ -4,6 +4,7 @@
 
 TBD
 
+- Added support for command display name as option to override default name.
 - Updated Pypi release package name from `beer-garden` to `beer_garden` to comply with PEP 625. 
 - Migrated from 408 to 504 HTTP error code for client defined wait time exceed. Required to prevent
   client from reattempting to submit the API request. 
