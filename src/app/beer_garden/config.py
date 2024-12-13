@@ -1494,6 +1494,11 @@ _PLUGIN_SPEC = {
                         "to local plugin processes"
                     ),
                 },
+                "capture_streams": {
+                    "type": "bool",
+                    "default": False,
+                    "description": "Capture STDOUT and STDERR streams for plugin and output to file",
+                },
                 "logging": {
                     "type": "dict",
                     "items": {

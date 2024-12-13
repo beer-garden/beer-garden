@@ -175,6 +175,7 @@ plugin:
       username: plugin_admin
     directory: ./plugins
     host_env_vars: []
+    capture_streams: true
     logging:
       config_file: example_configs/local-plugin-logging.yaml
       fallback_level: INFO
