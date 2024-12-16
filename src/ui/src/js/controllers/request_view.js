@@ -205,7 +205,7 @@ export default function requestViewController(
       $scope.msgPourItAgain = 'Unable to find system';
     }
     $scope.setWindowTitle(
-        $scope.request.command,
+        $scope.request.command_display_name || $scope.request.command,
         $scope.request.metadata.system_display_name || $scope.request.system,
         $scope.request.system_version,
         $scope.request.instance_name,
@@ -301,7 +301,7 @@ export default function requestViewController(
     const newRequest = {
       system: request.system,
       system_version: request.system_version,
-      command: request.command,
+      command: request.command_display_name || request.command,
       instance_name: request.instance_name,
       comment: request.comment || '',
       parameters: request.parameters,
@@ -309,7 +309,7 @@ export default function requestViewController(
     $state.go('base.command', {
       systemName: request.system,
       systemVersion: request.system_version,
-      commandName: request.command,
+      commandName: request.command_display_name || request.command,
       // Fix for v2 requests w/o a namespace
       namespace: request.namespace || $scope.config.gardenName,
       request: newRequest,

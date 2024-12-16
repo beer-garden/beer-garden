@@ -20,7 +20,6 @@ from beer_garden.requests import remove_bytes_parameter_base64
 
 
 class RequestAPI(AuthorizationHandler):
-
     @collect_metrics(transaction_type="API", group="RequestAPI")
     async def get(self, request_id):
         """
@@ -138,7 +137,6 @@ class RequestAPI(AuthorizationHandler):
 
 
 class RequestOutputAPI(AuthorizationHandler):
-
     @collect_metrics(transaction_type="API", group="RequestOutputAPI")
     async def get(self, request_id):
         """

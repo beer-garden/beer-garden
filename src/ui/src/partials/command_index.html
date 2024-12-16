@@ -58,7 +58,7 @@
             <td>{{command.system}}</td>
             <td>{{command.version}}</td>
             <td>
-              {{command.name}}
+              {{command.display_name || command.name}}
               
               <span
                 class="fa fa-hourglass pull-right"
@@ -116,7 +116,7 @@
               <a
                 class="btn btn-primary center-block word-wrap-button"
                 ui-sref="base.command({systemName: command.system, systemVersion: command.version, namespace: command.namespace, commandName: command.name})"
-                title="Run {{command.name}}"
+                title="Run {{command.display_name || command.name}}"
                 ng-if="hasCommandPermission('OPERATOR', command)"
                 >Make it Happen!</a
               >

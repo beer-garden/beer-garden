@@ -16,7 +16,7 @@
     </thead>
     <tbody>
       <tr ng-repeat="command in system.commands | filter:query">
-        <td>{{command.name}}</td>
+        <td>{{command.display_name || command.name}}</td>
         <td>{{command.description || "No Description Given"}}</td>
         <td>
           <a

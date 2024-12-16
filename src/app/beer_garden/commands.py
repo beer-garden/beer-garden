@@ -27,11 +27,11 @@ def get_command(system_id: str, command_name: str) -> Command:
 
     """
     system = db.query_unique(
-        System, raise_missing=True, id=system_id, commands__name=command_name
+        System, raise_missing=True, id=system_id, commands__display_name=command_name
     )
 
     for command in system.commands:
-        if command.name == command_name:
+        if command.display_name == command_name:
             return command
 
 

@@ -152,7 +152,7 @@ export default function commandIndexController(
           id: command.id,
           hidden: command.hidden,
           namespace: system.namespace,
-          name: command.name,
+          name: command.display_name || command.name,
           command_type: command.command_type || 'ACTION',
           system: system.display_name || system.name,
           version: system.version,
