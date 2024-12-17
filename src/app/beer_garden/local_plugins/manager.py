@@ -627,8 +627,8 @@ class PluginManager(StoppableThread):
 
         for instance_name in plugin_config["INSTANCES"]:
             runner_id = self._get_runner_id()
-            capture_streams = plugin_config.get("CAPTURE_STREAMS") or config.get(
-                "plugin.local.capture_streams"
+            capture_streams = plugin_config.get(
+                "CAPTURE_STREAMS", config.get("plugin.local.capture_streams")
             )
             process_args = self._process_args(plugin_config, instance_name)
             process_env = self._environment(
