@@ -230,6 +230,7 @@ class Command(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.Command
 
     name = StringField(required=True)
+    display_name = StringField()
     description = StringField()
     parameters = EmbeddedDocumentListField("Parameter")
     command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES, default="ACTION")
@@ -321,6 +322,7 @@ class Request(MongoModel, Document):
         "instance_name": {"field": StringField, "kwargs": {"required": True}},
         "namespace": {"field": StringField, "kwargs": {"required": False}},
         "command": {"field": StringField, "kwargs": {"required": True}},
+        "command_display_name": {"field": StringField, "kwargs": {"required": False}},
         "command_type": {"field": StringField, "kwargs": {}},
         "parameters": {"field": DictField, "kwargs": {}},
         "comment": {"field": StringField, "kwargs": {"required": False}},
@@ -361,7 +363,7 @@ class Request(MongoModel, Document):
         "index_background": True,
         "indexes": [
             # These are used for sorting all requests
-            {"name": "command_index", "fields": ["command"]},
+            {"name": "command_index", "fields": ["command_display_name"]},
             {"name": "command_type_index", "fields": ["command_type"]},
             {"name": "system_index", "fields": ["system"]},
             {"name": "instance_name_index", "fields": ["instance_name"]},
@@ -501,6 +503,9 @@ class Request(MongoModel, Document):
 
         if not self.metadata:
             self.metadata = {}
+
+        if not self.command_display_name:
+            self.command_display_name = self.command
 
         status_key = f"{self.status}_{config.get('garden.name')}"
         if status_key not in self.metadata:

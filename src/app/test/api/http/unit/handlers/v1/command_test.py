@@ -29,7 +29,7 @@ def system_permitted():
         name="system_permitted",
         version="0.0.1",
         namespace="somegarden",
-        commands=[Command(name="command_permitted")],
+        commands=[Command(name="command_permitted", display_name="command_allowed")],
     ).save()
 
     yield system
@@ -42,7 +42,9 @@ def system_not_permitted():
         name="system_not_permitted",
         version="0.0.1",
         namespace="somegarden",
-        commands=[Command(name="command_not_permitted")],
+        commands=[
+            Command(name="command_not_permitted", display_name="command_not_allowed")
+        ],
     ).save()
 
     yield system
@@ -83,7 +85,7 @@ class TestCommandAPI:
         command = system_not_permitted.commands[0]
         url = (
             f"{base_url}/api/v1/systems/{system_not_permitted.id}/commands/"
-            f"{command.name}"
+            f"{command.display_name}"
         )
 
         response = yield http_client.fetch(url)
@@ -102,7 +104,7 @@ class TestCommandAPI:
         system_permitted,
     ):
         command = system_permitted.commands[0]
-        url = f"{base_url}/api/v1/systems/{system_permitted.id}/commands/{command.name}"
+        url = f"{base_url}/api/v1/systems/{system_permitted.id}/commands/{command.display_name}"
         headers = {"Authorization": f"Bearer {access_token}"}
 
         response = yield http_client.fetch(url, headers=headers)
