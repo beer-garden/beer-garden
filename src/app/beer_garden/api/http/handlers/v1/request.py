@@ -992,7 +992,9 @@ class RequestListAPI(AuthorizationHandler):
                     "ascii"
                 ),
                 "details": {
-                    "md5_sum": md5(file_contents, usedforsecurity=False).hexdigest(),
+                    # TODO: When upgrading to 3.9, update for security markings 
+                    # md5(file_contents, usedforsecurity=False).hexdigest()
+                    "md5_sum": md5(file_contents).hexdigest(),
                     "file_name": files[_file][0]["filename"],
                 },
             }
