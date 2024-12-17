@@ -992,7 +992,7 @@ class RequestListAPI(AuthorizationHandler):
                     "ascii"
                 ),
                 "details": {
-                    "md5_sum": md5(file_contents).hexdigest(),
+                    "md5_sum": md5(file_contents, usedforsecurity=False).hexdigest(),
                     "file_name": files[_file][0]["filename"],
                 },
             }
