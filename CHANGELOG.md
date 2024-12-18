@@ -4,7 +4,7 @@
 
 TBD
 
-- Prepopulate filename on pour again file uploads by adding filename to request parameters on submit.
+- Prepopulate file name on pour again file uploads by adding file name to request parameters on submit.
 - Added support for command display name as option to override default name.
 - Updated Pypi release package name from `beer-garden` to `beer_garden` to comply with PEP 625. 
 - Migrated from 408 to 504 HTTP error code for client defined wait time exceed. Required to prevent
