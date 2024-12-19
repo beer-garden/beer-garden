@@ -3,6 +3,7 @@ import base64
 import gzip
 import json
 from asyncio import Future
+from hashlib import md5
 from typing import Sequence
 
 from brewtils.errors import ModelValidationError
@@ -20,7 +21,6 @@ from beer_garden.requests import remove_bytes_parameter_base64
 
 
 class RequestAPI(AuthorizationHandler):
-
     @collect_metrics(transaction_type="API", group="RequestAPI")
     async def get(self, request_id):
         """
@@ -138,7 +138,6 @@ class RequestAPI(AuthorizationHandler):
 
 
 class RequestOutputAPI(AuthorizationHandler):
-
     @collect_metrics(transaction_type="API", group="RequestOutputAPI")
     async def get(self, request_id):
         """
@@ -992,6 +991,12 @@ class RequestListAPI(AuthorizationHandler):
                 "base64": base64.b64encode(gzip.compress(file_contents)).decode(
                     "ascii"
                 ),
+                "details": {
+                    # TODO: When upgrading to 3.9, update for security markings
+                    # md5(file_contents, usedforsecurity=False).hexdigest()
+                    "md5_sum": md5(file_contents).hexdigest(),
+                    "file_name": files[_file][0]["filename"],
+                },
             }
 
         request_form_dict["parameters"].update(file_parameters)

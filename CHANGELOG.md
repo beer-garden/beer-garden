@@ -4,12 +4,15 @@
 
 TBD
 
+- Prepopulate file name on pour again file uploads by adding file name from request parameter details.
+- Added support for command display name as option to override default name.
 - Updated Pypi release package name from `beer-garden` to `beer_garden` to comply with PEP 625. 
 - Migrated from 408 to 504 HTTP error code for client defined wait time exceed. Required to prevent
   client from reattempting to submit the API request. 
 - Updated Authorization Filtering to return Downstream configuration info for only Garden Admins
 - Fixed bug where Paused Jobs being imported were Running in the background
-
+- Updated Bytes File Uploads to generate MD5 Checksum values and store file name
+- 
 # 3.29.0
 
 11/25/2024

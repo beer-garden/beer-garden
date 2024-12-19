@@ -99,10 +99,11 @@ export default function requestIndexController(
       });
 
   $scope.dtColumns = [
-    DTColumnBuilder.newColumn('command')
+    DTColumnBuilder.newColumn('command_display_name')
         .withTitle('Command')
         .renderWith(function(data, type, full) {
           let display = '';
+          let commandName = data;
 
           if (full.parent) {
             display +=
@@ -120,7 +121,7 @@ export default function requestIndexController(
 
           display +=
           `<a ui-sref="base.request({requestId: '${full.id}'})">` +
-          data +
+          commandName +
           '</a>';
 
           if (full.hidden) {
@@ -178,7 +179,7 @@ export default function requestIndexController(
   };
 
   const lightColumnFilterOptions = {
-    command: {
+    command_display_name: {
       html: 'input',
       type: 'text',
       attr: {class: 'form-inline form-control', title: 'Command Filter'},

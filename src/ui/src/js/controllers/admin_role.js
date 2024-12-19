@@ -444,7 +444,7 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, isNew, 
       for (const system of garden.systems) {
         if ($scope.roleContainsNamespace(system.namespace) && $scope.roleContainsSystem(system.name) && $scope.roleContainsVersion(system.version) && $scope.roleContainsInstance(system.instances)) {
           for (const command of system.commands) {
-            if (command.name == value) {
+            if (command.display_name || command.name == value) {
               return true;
             }
           }
