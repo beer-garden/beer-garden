@@ -984,11 +984,9 @@ class RequestListAPI(AuthorizationHandler):
         files = self.request.files
 
         for _file in files:
-            file_name = files[_file][0]["filename"]
             file_contents = files[_file][0]["body"]
 
             file_parameters[_file] = {
-                "file_name": file_name,
                 "type": "bytes",
                 "base64": base64.b64encode(gzip.compress(file_contents)).decode(
                     "ascii"

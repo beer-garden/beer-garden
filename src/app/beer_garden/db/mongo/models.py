@@ -189,7 +189,6 @@ class Parameter(MongoModel, EmbeddedDocument):
     display_name = StringField(required=False)
     optional = BooleanField(required=True, default=True)
     default = DynamicField(required=False, default=None)
-    file_name = StringField(required=False)
     description = StringField(required=False)
     choices = EmbeddedDocumentField("Choices", default=None)
     nullable = BooleanField(required=False, default=False)
