@@ -10,6 +10,7 @@ TBD
 - Migrated from 408 to 504 HTTP error code for client defined wait time exceed. Required to prevent
   client from reattempting to submit the API request. 
 - Updated Authorization Filtering to return Downstream configuration info for only Garden Admins
+- Updated Bytes File Uploads to generate MD5 Checksum values and store file name
 
 # 3.29.0
 
