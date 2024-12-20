@@ -4,6 +4,7 @@
 
 TBD
 
+- Added capture streams config option for local plugins.
 - Prepopulate file name on pour again file uploads by adding file name from request parameter details.
 - Added support for command display name as option to override default name.
 - Updated Pypi release package name from `beer-garden` to `beer_garden` to comply with PEP 625. 
