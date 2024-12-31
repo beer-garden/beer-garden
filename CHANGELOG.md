@@ -2,7 +2,7 @@
 
 # 3.29.1
 
-TBD
+12/31/2024
 
 - Added capture streams config option for local plugins.
 - Prepopulate file name on pour again file uploads by adding file name from request parameter details.
