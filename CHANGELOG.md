@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.29.2
+
+TBD
+
+- Added support for deprecate kwarg for parameter or command
+
 # 3.29.1
 
 12/31/2024
