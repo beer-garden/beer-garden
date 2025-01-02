@@ -119,6 +119,14 @@ export default function commandIndexController(
     });
   }
 
+  $scope.updateDescription = function(command) {
+    let description = command.description || 'No Description Provided';
+    if (command.deprecated) {
+      description = '(Deprecated) ' + description;
+    }
+    return description;
+  };
+
   $scope.successCallback = function(response, systems) {
     // Pull out what we care about
     let commands = [];
@@ -156,7 +164,7 @@ export default function commandIndexController(
           command_type: command.command_type || 'ACTION',
           system: system.display_name || system.name,
           version: system.version,
-          description: command.description || 'No Description Provided',
+          description: $scope.updateDescription(command),
           topics: command.topics || [],
           tags: command.tags || [],
         });
