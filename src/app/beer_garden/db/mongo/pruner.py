@@ -10,7 +10,7 @@ from mongoengine import Q
 from mongoengine.errors import DoesNotExist
 
 import beer_garden.config as config
-from beer_garden.db.mongo.models import File, RawFile, Request, Job
+from beer_garden.db.mongo.models import File, Job, RawFile, Request
 from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.events import publish
 
@@ -213,6 +213,7 @@ def prune_orphans():
         prune_orphan_command_type(orphan_ttl, "ADMIN")
         prune_orphan_command_type(orphan_ttl, "TEMP")
         prune_orphan_files(orphan_ttl)
+
 
 def prune_orphan_files(ttl):
     timeout = datetime.now(timezone.utc) - timedelta(minutes=ttl)
