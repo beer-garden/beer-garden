@@ -5,6 +5,7 @@
 TBD
 
 - Updated orphan pruner to delete orphaned files
+- Fixed bug where Paused Jobs being imported were Running in the background
 
 # 3.29.1
 
