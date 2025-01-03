@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.29.2
+
+TBD
+
+- Updated orphan pruner to delete orphaned files
+
 # 3.29.1
 
 12/31/2024
