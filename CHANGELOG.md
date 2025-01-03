@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.29.2
+
+TBD
+
+- Fixed bug where Paused Jobs being imported were Running in the background
+
 # 3.29.1
 
 12/31/2024
@@ -11,9 +17,8 @@
 - Migrated from 408 to 504 HTTP error code for client defined wait time exceed. Required to prevent
   client from reattempting to submit the API request. 
 - Updated Authorization Filtering to return Downstream configuration info for only Garden Admins
-- Fixed bug where Paused Jobs being imported were Running in the background
 - Updated Bytes File Uploads to generate MD5 Checksum values and store file name
-- 
+
 # 3.29.0
 
 11/25/2024
