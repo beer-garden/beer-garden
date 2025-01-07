@@ -405,14 +405,75 @@ class TestOrphanFile(object):
 
         file.delete()
 
-    def test_orphan_file(self, orphan_request_file):
-        assert len(File.objects.all()) == 1
+    @pytest.fixture
+    def deleted_request_file(self):
+
+        owner = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="T",
+            created_at=datetime.datetime(2024, 1, 17),
+            status="SUCCESS",
+            command_type="ACTION",
+        )
+        owner.save()
+
+        file = File(
+            owner_id=str(owner.id),
+            file_name="T",
+            file_size=1,
+            chunk_size=1,
+            updated_at=datetime.datetime(2024, 1, 17),
+            owner_type="REQUEST",
+            request=owner,
+        )
+
+        file.save()
+        owner.delete()
+
+        yield file
+
+        file.delete()
+
+    @pytest.fixture
+    def deleted_job_file(self, ts_dt, request_template_dict):
+
+        owner = Job(
+            name="T",
+            trigger_type="date",
+            trigger=DateTrigger(run_date=ts_dt),
+            request_template=RequestTemplate(**request_template_dict),
+        )
+
+        owner.save()
+
+        file = File(
+            owner_id=str(owner.id),
+            file_name="T",
+            file_size=1,
+            chunk_size=1,
+            updated_at=datetime.datetime(2024, 1, 17),
+            owner_type="JOB",
+            job=owner,
+        )
+
+        file.save()
+        owner.delete()
+
+        yield file
+
+        file.delete()
+
+    def test_orphan_file(self, orphan_request_file, deleted_request_file):
+        assert len(File.objects.all()) == 2
 
         prune_orphan_files(1)
-        assert len(File.objects.all()) == 0
-
-    def test_orphan_job(self, orphan_job_file):
         assert len(File.objects.all()) == 1
 
+    def test_orphan_job(self, orphan_job_file, deleted_job_file):
+        assert len(File.objects.all()) == 2
+
         prune_orphan_files(1)
-        assert len(File.objects.all()) == 0
+        assert len(File.objects.all()) == 1
