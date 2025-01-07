@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import copy
 import datetime
 from datetime import timedelta
 
