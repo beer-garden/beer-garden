@@ -226,7 +226,7 @@ def prune_orphan_files(ttl):
         try:
             if file.owner_type == "JOB" and file.job is not None:
                 Job.objects.get(id=file.job.id)
-            elif file.owner_type == "REQUEST" and file.request is None:
+            elif file.owner_type == "REQUEST" and file.request is not None:
                 Request.objects.get(id=file.request.id)
         except DoesNotExist:
             logger.error(f"File missing owner, killing orphan file {file.id}")
