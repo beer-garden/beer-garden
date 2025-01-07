@@ -648,6 +648,16 @@ _AUTHENTICATION_HANDLERS_SPEC = {
                 }
             },
         },
+        "certificate": {
+            "type": "dict",
+            "items": {
+                "enabled": {
+                    "type": "bool",
+                    "default": True,
+                    "description": "Enable authentication via certificate",
+                }
+            },
+        },
         "trusted_header": {
             "type": "dict",
             "items": {

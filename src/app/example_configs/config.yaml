@@ -1,8 +1,10 @@
 auth:
-  enabled: false
+  enabled: true
 
   authentication_handlers:
     basic:
+      enabled: false
+    certificate:
       enabled: true
     trusted_header:
       create_users: true
@@ -71,7 +73,7 @@ entry:
     ssl:
       ca_cert: null
       ca_path: null
-      client_cert_verify: NONE
+      client_cert_verify: OPTIONAL
       enabled: false
       private_key: null
       public_key: null

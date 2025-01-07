@@ -6,8 +6,9 @@ from .base import BaseLoginHandler
 from .basic import BasicLoginHandler
 from .ldap import LdapLoginHandler
 from .trusted_header import TrustedHeaderLoginHandler
+from .certificate import CertificateLoginHandler
 
-LOGIN_HANDLERS = [BasicLoginHandler, TrustedHeaderLoginHandler, LdapLoginHandler]
+LOGIN_HANDLERS = [BasicLoginHandler, TrustedHeaderLoginHandler, LdapLoginHandler, CertificateLoginHandler]
 
 
 def enabled_login_handlers() -> List[Type[BaseLoginHandler]]:
@@ -21,6 +22,7 @@ def enabled_login_handlers() -> List[Type[BaseLoginHandler]]:
         "basic": BasicLoginHandler,
         "trusted_header": TrustedHeaderLoginHandler,
         "ldap": LdapLoginHandler,
+        "certificate": CertificateLoginHandler,
     }
     enabled_handlers = []
 
