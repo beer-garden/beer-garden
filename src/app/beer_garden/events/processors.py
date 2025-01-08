@@ -82,7 +82,7 @@ class InternalQueueListener(QueueListener):
 
     def handle_event(self, event):
         try:
-            if config.get("apm.enabled") and elasticapm.get_client():
+            if config.get("metrics.elastic.enabled") and elasticapm.get_client():
                 with elasticapm.capture_span(name=event.name, span_type="Event"):
                     if hasattr(event, "payload") and hasattr(event.payload, "id"):
                         elasticapm.set_custom_context({"id": event.payload.id})

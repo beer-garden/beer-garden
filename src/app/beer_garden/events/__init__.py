@@ -72,7 +72,7 @@ def publish_event(event_type: Events):
         event = Event(name=event_type.name)
 
         try:
-            if config.get("apm.enabled") and elasticapm.get_client():
+            if config.get("metrics.elastic.enabled") and elasticapm.get_client():
                 with elasticapm.capture_span(name=event_type.name, span_type="Event"):
                     result = wrapped(*args, **kwargs)
                     if hasattr(result, "id"):

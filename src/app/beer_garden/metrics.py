@@ -175,7 +175,7 @@ def initialize_elastic_client(label: str):
                     f"{re.sub(r'[^a-zA-Z0-9 _-]', '', config.get('garden.name'))}"
                     f"-{label}"
                 ),
-                "ELASTIC_APM_SERVER_URL": config.get("metrics.elastic.url"),
+                "SERVER_URL": config.get("metrics.elastic.url"),
             }
         )
 
