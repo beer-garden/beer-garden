@@ -3,7 +3,7 @@ auth:
 
   authentication_handlers:
     basic:
-      enabled: false
+      enabled: true
     certificate:
       enabled: true
     trusted_header:
@@ -73,7 +73,8 @@ entry:
     ssl:
       ca_cert: null
       ca_path: null
-      client_cert_verify: OPTIONAL
+      client_cert_verify: REQUIRED
+      client_cert: null
       enabled: false
       private_key: null
       public_key: null

@@ -1066,6 +1066,11 @@ _HTTP_SPEC = {
                     "previous_names": ["client_cert_verify"],
                     "alt_env_names": ["CLIENT_CERT_VERIFY"],
                 },
+                "client_cert": {
+                    "type": "str",
+                    "description": "Client certificate to use",
+                    "required": False,
+                },
             },
         },
         "url_prefix": {

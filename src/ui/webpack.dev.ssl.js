@@ -11,6 +11,7 @@ module.exports = merge(common, {
   devtool: 'eval-source-map',
 
   devServer: {
+    port: 8443,
     // Uncomment this to allow external (non-localhost) connections
     // host: '0.0.0.0',
 

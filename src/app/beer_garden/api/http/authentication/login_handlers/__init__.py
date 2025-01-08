@@ -19,10 +19,10 @@ def enabled_login_handlers() -> List[Type[BaseLoginHandler]]:
     """
     config_root = "auth.authentication_handlers"
     handler_config_map = {
-        "basic": BasicLoginHandler,
         "trusted_header": TrustedHeaderLoginHandler,
         "ldap": LdapLoginHandler,
         "certificate": CertificateLoginHandler,
+        "basic": BasicLoginHandler,
     }
     enabled_handlers = []
 

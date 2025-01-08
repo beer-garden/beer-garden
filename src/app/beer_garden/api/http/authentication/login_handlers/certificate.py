@@ -39,16 +39,10 @@ class CertificateLoginHandler(BaseLoginHandler):
                 for sub in subject:
                     for k, v in sub:
                         if k == "commonName":
-                            username = k
+                            username = v
+                            logger.info(f"Certificate username: {username}")
             else:
-                logger.info(f"No certificate was found: {cert}")
-
-        if request.body:
-            schema = TokenInputSchema()
-            logger.info(request.body)
-
-            request_data = schema.loads(request.body.decode("utf-8")).data
-            username = request_data.get("username")
+                logger.error(f"No certificate was found: {cert}")
 
             if username:
                 try:
@@ -56,7 +50,7 @@ class CertificateLoginHandler(BaseLoginHandler):
 
                     authenticated_user = user
                     authenticated_user.metadata["last_authentication"] = (
-                        datetime.utcnow().timestamp()
+                        datetime.now(timezone.utc).timestamp()
                     )
                     authenticated_user = update_user(user=authenticated_user)
 
