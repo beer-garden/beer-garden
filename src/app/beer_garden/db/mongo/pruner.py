@@ -66,7 +66,6 @@ def prune_by_name(ttl_name):
     match_keys = [ttl_name, "batch_size"]
     new_ttl_config = {k: ttl_config[k] for k in match_keys if k in ttl_config}
     tasks = determine_tasks(**new_ttl_config)
-    logger.error(f"Pruning {ttl_name}")
     run_pruner(tasks, ttl_name)
 
 
