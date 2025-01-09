@@ -202,6 +202,9 @@ def extract_custom_context(result) -> None:
         elasticapm.set_custom_context(custom_context)
 
 
+logger = logging.getLogger(__name__)
+
+
 def collect_metrics(transaction_type: str = None, group: str = None):
     """Decorator that will result in the function being audited for metrics
 
@@ -221,22 +224,17 @@ def collect_metrics(transaction_type: str = None, group: str = None):
         client = None
 
         if config.get("metrics.elastic.enabled"):
-            if args and isinstance(args[0], Operation):
+            if hasattr(class_obj, "_transaction_type"):
+                transaction_label = class_obj._transaction_type
+            elif args and isinstance(args[0], Operation):
                 transaction_label = args[0].operation_type
             elif group:
                 transaction_label = f"{group} - {wrapped.__name__}"
             else:
                 transaction_label = f"{wrapped.__name__}"
 
-            client = elasticapm.get_client()
+            client = get_apm_client(transaction_type, transaction_label)
             if client:
-                trace_id = elasticapm.get_trace_id()
-                client.begin_transaction(
-                    transaction_type=transaction_type,
-                    trace_parent=trace_id if trace_id else elasticapm.get_span_id(),
-                )
-                elasticapm.set_transaction_name(transaction_label)
-
                 if hasattr(class_obj, "get_current_user"):
                     current_user = class_obj.get_current_user()
                     if current_user:
@@ -260,3 +258,32 @@ def collect_metrics(transaction_type: str = None, group: str = None):
             raise
 
     return wrapper
+
+
+def get_apm_client(transaction_type, transaction_name, trace_parent=None):
+    """Get the Elastic APM client
+
+    Args:
+        transaction_type: Type of transaction that is being recorded
+        transaction_name: Name of the transaction
+
+    Returns:
+        Client: Elastic APM client
+    """
+    if config.get("metrics.elastic.enabled"):
+        client = elasticapm.get_client()
+        if client:
+
+            if not trace_parent:
+                trace_id = elasticapm.get_trace_parent_header()
+                if trace_id:
+                    trace_parent = elasticapm.trace_parent_from_string(trace_id)
+
+            logger.error(f"{transaction_type} -- {transaction_name} -- has_parent = {'true' if trace_parent else 'false'}")
+            client.begin_transaction(
+                transaction_type=transaction_type,
+                trace_parent=trace_parent,
+            )
+            elasticapm.set_transaction_name(transaction_name)
+            return client
+    return None

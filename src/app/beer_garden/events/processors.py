@@ -11,6 +11,7 @@ from brewtils.models import Event, Events
 from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden.config as config
+from beer_garden.metrics import get_apm_client
 from beer_garden.queue.rabbit import put_event
 
 logger = logging.getLogger(__name__)
@@ -80,17 +81,27 @@ class InternalQueueListener(QueueListener):
         self._handler_tag = handler_tag
         self._local_only = local_only
 
+        self._transaction_type = handler_tag
+
+    # @collect_metrics
     def handle_event(self, event):
         try:
-            if config.get("metrics.elastic.enabled") and elasticapm.get_client():
-                with elasticapm.capture_span(name=event.name, span_type="Event"):
-                    if hasattr(event, "payload") and hasattr(event.payload, "id"):
-                        elasticapm.set_custom_context({"id": event.payload.id})
-                    self._handler(deepcopy(event))
+            trace_parent = None
+            if hasattr(event, "metadata") and "_trace_parent" in event.metadata:
+                trace_parent = elasticapm.trace_parent_from_string(event.metadata["_trace_parent"])
+            client = get_apm_client("Queue_Event", f"QUEUE:: {self._handler_tag}", trace_parent=trace_parent)
 
-            else:
-                self._handler(deepcopy(event))
+            if client:
+                if hasattr(event, "payload") and hasattr(event.payload, "id"):
+                    elasticapm.set_custom_context({"id": event.payload.id})
+
+            self._handler(deepcopy(event))
+            if client:
+                client.end_transaction(result="success")
         except Exception as ex:
+            if client:
+                client.capture_exception()
+                client.end_transaction(result="failure")
             logger.error(
                 "'%s' handler received an error executing callback for event %s: %s: %s"
                 % (

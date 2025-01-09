@@ -99,7 +99,7 @@ log:
   fallback_level: INFO
 metrics:
   elastic:
-    enabled: false
+    enabled: true
     url: http://localhost:8200
   prometheus:
     enabled: false
