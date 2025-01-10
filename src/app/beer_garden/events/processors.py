@@ -11,7 +11,7 @@ from brewtils.models import Event, Events
 from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden.config as config
-from beer_garden.metrics import get_apm_client
+from beer_garden.metrics import extract_custom_context, get_apm_client
 from beer_garden.queue.rabbit import put_event
 
 logger = logging.getLogger(__name__)
@@ -83,17 +83,19 @@ class InternalQueueListener(QueueListener):
 
         self._transaction_type = handler_tag
 
-    # @collect_metrics
     def handle_event(self, event):
         try:
             trace_parent = None
             if hasattr(event, "metadata") and "_trace_parent" in event.metadata:
-                trace_parent = elasticapm.trace_parent_from_string(event.metadata["_trace_parent"])
-            client = get_apm_client("Queue_Event", f"QUEUE:: {self._handler_tag}", trace_parent=trace_parent)
+                trace_parent = elasticapm.trace_parent_from_string(
+                    event.metadata["_trace_parent"]
+                )
+            client = get_apm_client(
+                "Queue_Event", f"QUEUE:: {self._handler_tag}", trace_parent=trace_parent
+            )
 
             if client:
-                if hasattr(event, "payload") and hasattr(event.payload, "id"):
-                    elasticapm.set_custom_context({"id": event.payload.id})
+                extract_custom_context(event)
 
             self._handler(deepcopy(event))
             if client:

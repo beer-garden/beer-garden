@@ -14,7 +14,7 @@ from http.server import ThreadingHTTPServer
 
 import elasticapm
 import wrapt
-from brewtils.models import Operation, Request
+from brewtils.models import Event, Operation, Request
 from brewtils.stoppable_thread import StoppableThread
 from elasticapm import Client
 from prometheus_client import Counter, Gauge, Summary
@@ -188,7 +188,7 @@ def extract_custom_context(result) -> None:
     """
     custom_context = {}
 
-    if isinstance(result, Operation):
+    if isinstance(result, Event):
         if hasattr(result, "payload"):
             return extract_custom_context(result.payload)
     elif isinstance(result, Request):
@@ -200,9 +200,6 @@ def extract_custom_context(result) -> None:
 
     if custom_context:
         elasticapm.set_custom_context(custom_context)
-
-
-logger = logging.getLogger(__name__)
 
 
 def collect_metrics(transaction_type: str = None, group: str = None):
@@ -279,7 +276,6 @@ def get_apm_client(transaction_type, transaction_name, trace_parent=None):
                 if trace_id:
                     trace_parent = elasticapm.trace_parent_from_string(trace_id)
 
-            logger.error(f"{transaction_type} -- {transaction_name} -- has_parent = {'true' if trace_parent else 'false'}")
             client.begin_transaction(
                 transaction_type=transaction_type,
                 trace_parent=trace_parent,

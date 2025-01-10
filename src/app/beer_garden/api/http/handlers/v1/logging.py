@@ -10,7 +10,7 @@ from beer_garden.metrics import collect_metrics
 
 class LoggingAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="LoggingAPI")
+    @collect_metrics(transaction_type="API", group="API:: Logging")
     async def get(self):
         """
         ---
@@ -52,7 +52,7 @@ class LoggingAPI(AuthorizationHandler):
 
 class LoggingConfigAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="LoggingConfigAPI")
+    @collect_metrics(transaction_type="API", group="API:: LoggingConfig")
     async def get(self):
         """
         ---
@@ -84,7 +84,7 @@ class LoggingConfigAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="LoggingConfigAPI")
+    @collect_metrics(transaction_type="API", group="API:: LoggingConfig")
     async def patch(self):
         """
         ---

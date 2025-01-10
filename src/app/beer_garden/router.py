@@ -23,6 +23,7 @@ from functools import partial
 from typing import Dict, Union
 
 import brewtils.models
+import elasticapm
 from brewtils import EasyClient
 from brewtils.models import Connection as BrewtilsConnection
 from brewtils.models import Event, Events, Garden, Operation, Request, System
@@ -54,7 +55,7 @@ from beer_garden.errors import (
 )
 from beer_garden.events import publish
 from beer_garden.garden import get_garden, get_gardens, load_garden_file, update_garden
-from beer_garden.metrics import collect_metrics
+from beer_garden.metrics import extract_custom_context, get_apm_client
 from beer_garden.requests import complete_request, create_request
 
 logger = logging.getLogger(__name__)
@@ -196,7 +197,6 @@ router_filter = {
 }
 
 
-@collect_metrics(transaction_type="router")
 def route(operation: Operation):
     """Entry point into the routing subsystem
 
@@ -206,12 +206,15 @@ def route(operation: Operation):
     Returns:
 
     """
-    operation = _pre_route(operation)
 
     logger.debug(f"Routing {operation!r}")
 
     if not operation.operation_type:
         raise RoutingRequestException("Missing operation type")
+
+    client = get_apm_client("Router", f"ROUTER:: {operation.operation_type}")
+
+    operation = _pre_route(operation)
 
     if operation.operation_type not in route_functions.keys():
         raise RoutingRequestException(
@@ -233,6 +236,10 @@ def route(operation: Operation):
         result = execute_local(operation)
     else:
         result = initiate_forward(operation)
+
+    if client:
+        extract_custom_context(result)
+        client.end_transaction(result="success")
 
     return filter_result(result)
 

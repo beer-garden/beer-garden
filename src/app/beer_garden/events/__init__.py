@@ -10,7 +10,7 @@ import wrapt
 from brewtils.models import Event, Events
 
 from beer_garden import config as config
-from beer_garden.metrics import get_apm_client
+from beer_garden.metrics import extract_custom_context, get_apm_client
 
 # In this master process this should be an instance of EventManager, and in entry points
 # it should be an instance of EntryPointManager
@@ -71,8 +71,10 @@ def publish_event(event_type: Events):
         _publish_error = kwargs.pop("_publish_error", True)
 
         event = Event(name=event_type.name)
-        client = get_apm_client("Publish_Event", f"PUBLISHER:: {event_type.name}")
-        
+        client = get_apm_client(
+            "Publish_Event", f"PUBLISHER:: {event_type.name} :: {wrapped.__name__}()"
+        )
+
         try:
 
             result = wrapped(*args, **kwargs)
@@ -83,8 +85,7 @@ def publish_event(event_type: Events):
             if client:
                 trace_parent_string = elasticapm.get_trace_parent_header()
                 event.metadata["_trace_parent"] = trace_parent_string
-                if hasattr(result, "id"):
-                    elasticapm.set_custom_context({"id": result.id})
+                extract_custom_context(result)
                 client.end_transaction(result="success")
             return result
         except Exception as ex:

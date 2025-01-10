@@ -14,7 +14,7 @@ from beer_garden.metrics import collect_metrics
 class UserAPI(AuthorizationHandler):
     parser = SchemaParser()
 
-    @collect_metrics(transaction_type="API", group="UserAPI")
+    @collect_metrics(transaction_type="API", group="API:: User")
     async def get(self, username):
         """
         ---
@@ -47,7 +47,7 @@ class UserAPI(AuthorizationHandler):
 
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="UserAPI")
+    @collect_metrics(transaction_type="API", group="API:: User")
     async def delete(self, username):
         """
         ---
@@ -80,7 +80,7 @@ class UserAPI(AuthorizationHandler):
 
         self.set_status(204)
 
-    @collect_metrics(transaction_type="API", group="UserAPI")
+    @collect_metrics(transaction_type="API", group="API:: User")
     async def patch(self, username):
         """
         ---
@@ -169,7 +169,7 @@ class UserAPI(AuthorizationHandler):
 class UserListAPI(AuthorizationHandler):
     parser = SchemaParser()
 
-    @collect_metrics(transaction_type="API", group="UserListAPI")
+    @collect_metrics(transaction_type="API", group="API:: UserList")
     async def get(self):
         """
         ---
@@ -193,7 +193,7 @@ class UserListAPI(AuthorizationHandler):
 
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="UserListAPI")
+    @collect_metrics(transaction_type="API", group="API:: UserList")
     async def post(self):
         """
         ---
@@ -231,7 +231,7 @@ class UserListAPI(AuthorizationHandler):
         self.write(response)
         self.set_status(201)
 
-    @collect_metrics(transaction_type="API", group="UserListAPI")
+    @collect_metrics(transaction_type="API", group="API:: UserList")
     async def patch(self):
         """
         ---
@@ -285,7 +285,7 @@ class UserListAPI(AuthorizationHandler):
 
 class UserPasswordChangeAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="UserPasswordChangeAPI")
+    @collect_metrics(transaction_type="API", group="API:: UserPasswordChange")
     async def post(self):
         """
         ---
@@ -336,7 +336,7 @@ class UserPasswordChangeAPI(AuthorizationHandler):
 
 class WhoAmIAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="WhoAmIAPI")
+    @collect_metrics(transaction_type="API", group="API:: WhoAmI")
     def get(self):
         """
         ---

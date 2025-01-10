@@ -10,7 +10,7 @@ from beer_garden.metrics import collect_metrics
 class RoleAPI(AuthorizationHandler):
     parser = SchemaParser()
 
-    @collect_metrics(transaction_type="API", group="RoleAPI")
+    @collect_metrics(transaction_type="API", group="API:: Role")
     async def get(self, role_id):
         """
         ---
@@ -49,7 +49,7 @@ class RoleAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="RoleAPI")
+    @collect_metrics(transaction_type="API", group="API:: Role")
     async def delete(self, role_id):
         """
         ---
@@ -84,7 +84,7 @@ class RoleAPI(AuthorizationHandler):
 
         self.set_status(204)
 
-    @collect_metrics(transaction_type="API", group="RoleAPI")
+    @collect_metrics(transaction_type="API", group="API:: Role")
     async def patch(self, role_id):
         """
         ---
@@ -142,7 +142,7 @@ class RoleAPI(AuthorizationHandler):
 class RoleListAPI(AuthorizationHandler):
     parser = SchemaParser()
 
-    @collect_metrics(transaction_type="API", group="RoleListAPI")
+    @collect_metrics(transaction_type="API", group="API:: RoleList")
     async def get(self):
         """
         ---
@@ -167,7 +167,7 @@ class RoleListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="RoleListAPI")
+    @collect_metrics(transaction_type="API", group="API:: RoleList")
     async def post(self):
         """
         ---
@@ -205,7 +205,7 @@ class RoleListAPI(AuthorizationHandler):
         self.write(response)
         self.set_status(201)
 
-    @collect_metrics(transaction_type="API", group="RoleListAPI")
+    @collect_metrics(transaction_type="API", group="API:: RoleList")
     async def patch(self):
         """
         ---
