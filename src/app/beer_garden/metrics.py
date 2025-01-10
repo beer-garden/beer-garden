@@ -186,20 +186,16 @@ def extract_custom_context(result) -> None:
     Args:
         result: Any object to be tracked
     """
-    custom_context = {}
 
     if isinstance(result, Event):
         if hasattr(result, "payload"):
             return extract_custom_context(result.payload)
     elif isinstance(result, Request):
         if result.metadata:
-            for key, value in result.metadata.items():
-                custom_context[key] = value
-    if hasattr(result, "id"):
-        custom_context["id"] = result.id
+            elasticapm.label(**result.metadata)
 
-    if custom_context:
-        elasticapm.set_custom_context(custom_context)
+    if hasattr(result, "id") and result.id:
+        elasticapm.label(mongo_id=result.id)
 
 
 def collect_metrics(transaction_type: str = None, group: str = None):
