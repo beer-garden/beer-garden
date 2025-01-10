@@ -17,7 +17,7 @@ from beer_garden.metrics import collect_metrics
 
 class TokenAPI(BaseHandler):
 
-    @collect_metrics(transaction_type="API", group="API:: Token")
+    @collect_metrics(transaction_type="API", group="API::Token")
     def post(self):
         """
         ---
@@ -58,7 +58,7 @@ class TokenAPI(BaseHandler):
 
 class TokenListAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="API:: TokenList")
+    @collect_metrics(transaction_type="API", group="API::TokenList")
     async def delete(self, username):
         """
         ---
@@ -97,7 +97,7 @@ class TokenListAPI(AuthorizationHandler):
 
 class TokenRefreshAPI(BaseHandler):
 
-    @collect_metrics(transaction_type="API", group="API:: TokenRefresh")
+    @collect_metrics(transaction_type="API", group="API::TokenRefresh")
     def post(self):
         """
         ---
@@ -139,7 +139,7 @@ class TokenRefreshAPI(BaseHandler):
 
 class TokenRevokeAPI(BaseHandler):
 
-    @collect_metrics(transaction_type="API", group="API:: TokenRevoke")
+    @collect_metrics(transaction_type="API", group="API::TokenRevoke")
     def post(self):
         """
         ---

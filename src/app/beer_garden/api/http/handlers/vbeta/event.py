@@ -9,7 +9,7 @@ from beer_garden.metrics import collect_metrics
 class EventPublisherAPI(AuthorizationHandler):
     parser = SchemaParser()
 
-    @collect_metrics(transaction_type="API", group="API:: EventPublisher")
+    @collect_metrics(transaction_type="API", group="API::EventPublisher")
     def post(self):
         """
         ---

@@ -27,7 +27,7 @@ def _remove_heartbeat_history(response: str, many: bool = False) -> str:
 
 class GardenAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="API:: Garden")
+    @collect_metrics(transaction_type="API", group="API::Garden")
     async def get(self, garden_name):
         """
         ---
@@ -57,7 +57,7 @@ class GardenAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(_remove_heartbeat_history(response))
 
-    @collect_metrics(transaction_type="API", group="API:: Garden")
+    @collect_metrics(transaction_type="API", group="API::Garden")
     async def delete(self, garden_name):
         """
         ---
@@ -87,7 +87,7 @@ class GardenAPI(AuthorizationHandler):
 
         self.set_status(204)
 
-    @collect_metrics(transaction_type="API", group="API:: Garden")
+    @collect_metrics(transaction_type="API", group="API::Garden")
     async def patch(self, garden_name):
         """
         ---
@@ -202,7 +202,7 @@ class GardenAPI(AuthorizationHandler):
 
 class GardenListAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="API:: GardenList")
+    @collect_metrics(transaction_type="API", group="API::GardenList")
     async def get(self):
         """
         ---
@@ -227,7 +227,7 @@ class GardenListAPI(AuthorizationHandler):
         )
         self.write(_remove_heartbeat_history(permitted_gardens_list, many=True))
 
-    @collect_metrics(transaction_type="API", group="API:: GardenList")
+    @collect_metrics(transaction_type="API", group="API::GardenList")
     async def post(self):
         """
         ---
@@ -266,7 +266,7 @@ class GardenListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(_remove_heartbeat_history(response))
 
-    @collect_metrics(transaction_type="API", group="API:: GardenList")
+    @collect_metrics(transaction_type="API", group="API::GardenList")
     async def patch(self):
         """
         ---

@@ -21,7 +21,7 @@ from beer_garden.requests import remove_bytes_parameter_base64
 
 
 class RequestAPI(AuthorizationHandler):
-    @collect_metrics(transaction_type="API", group="API:: Request")
+    @collect_metrics(transaction_type="API", group="API::Request")
     async def get(self, request_id):
         """
         ---
@@ -54,7 +54,7 @@ class RequestAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="API:: Request")
+    @collect_metrics(transaction_type="API", group="API::Request")
     async def patch(self, request_id):
         """
         ---
@@ -138,7 +138,7 @@ class RequestAPI(AuthorizationHandler):
 
 
 class RequestOutputAPI(AuthorizationHandler):
-    @collect_metrics(transaction_type="API", group="API:: RequestOutput")
+    @collect_metrics(transaction_type="API", group="API::RequestOutput")
     async def get(self, request_id):
         """
         ---
@@ -186,7 +186,7 @@ class RequestOutputAPI(AuthorizationHandler):
 class RequestListAPI(AuthorizationHandler):
     parser = SchemaParser()
 
-    @collect_metrics(transaction_type="API", group="API:: RequestList")
+    @collect_metrics(transaction_type="API", group="API::RequestList")
     async def get(self):
         """
         ---
@@ -409,7 +409,7 @@ class RequestListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(json.dumps(requests))
 
-    @collect_metrics(transaction_type="API", group="API:: RequestList")
+    @collect_metrics(transaction_type="API", group="API::RequestList")
     async def post(self):
         """
         ---
@@ -543,7 +543,7 @@ class RequestListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="API:: RequestList")
+    @collect_metrics(transaction_type="API", group="API::RequestList")
     async def put(self):
         """
         ---
@@ -618,7 +618,7 @@ class RequestListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="API:: RequestList")
+    @collect_metrics(transaction_type="API", group="API::RequestList")
     async def delete(self):
         """
         ---

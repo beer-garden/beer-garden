@@ -187,15 +187,16 @@ def extract_custom_context(result) -> None:
         result: Any object to be tracked
     """
 
-    if isinstance(result, Event):
-        if hasattr(result, "payload"):
-            return extract_custom_context(result.payload)
-    elif isinstance(result, Request):
-        if result.metadata:
-            elasticapm.label(**result.metadata)
+    if elasticapm.get_trace_parent_header():
+        if isinstance(result, Event):
+            if hasattr(result, "payload"):
+                return extract_custom_context(result.payload)
+        elif isinstance(result, Request):
+            if result.metadata:
+                elasticapm.label(**result.metadata)
 
-    if hasattr(result, "id") and result.id:
-        elasticapm.label(mongo_id=result.id)
+        if hasattr(result, "id") and result.id:
+            elasticapm.label(mongo_id=result.id)
 
 
 def collect_metrics(transaction_type: str = None, group: str = None):
@@ -222,7 +223,7 @@ def collect_metrics(transaction_type: str = None, group: str = None):
             elif args and isinstance(args[0], Operation):
                 transaction_label = args[0].operation_type
             elif group:
-                transaction_label = f"{group} - {wrapped.__name__}"
+                transaction_label = f"{group}::{wrapped.__name__}"
             else:
                 transaction_label = f"{wrapped.__name__}"
 

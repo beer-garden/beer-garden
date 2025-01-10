@@ -11,7 +11,7 @@ from beer_garden.metrics import collect_metrics
 
 class FileChunkAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="API:: FileChunk")
+    @collect_metrics(transaction_type="API", group="API::FileChunk")
     async def get(self):
         """
         ---
@@ -64,7 +64,7 @@ class FileChunkAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="API:: FileChunk")
+    @collect_metrics(transaction_type="API", group="API::FileChunk")
     async def post(self):
         """
         ---
@@ -132,7 +132,7 @@ class FileChunkAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="API:: FileChunk")
+    @collect_metrics(transaction_type="API", group="API::FileChunk")
     async def delete(self):
         """
         ---
@@ -170,7 +170,7 @@ class FileChunkAPI(AuthorizationHandler):
 
 class ChunkNameAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="API:: ChunkName")
+    @collect_metrics(transaction_type="API", group="API::ChunkName")
     async def get(self):
         """
         ---

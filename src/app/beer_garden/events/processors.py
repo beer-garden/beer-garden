@@ -91,7 +91,7 @@ class InternalQueueListener(QueueListener):
                     event.metadata["_trace_parent"]
                 )
             client = get_apm_client(
-                "Queue_Event", f"QUEUE:: {self._handler_tag}", trace_parent=trace_parent
+                "Queue_Event", f"QUEUE::{self._handler_tag}", trace_parent=trace_parent
             )
 
             if client:

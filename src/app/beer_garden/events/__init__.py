@@ -72,7 +72,7 @@ def publish_event(event_type: Events):
 
         event = Event(name=event_type.name)
         client = get_apm_client(
-            "Publish_Event", f"PUBLISHER:: {event_type.name} :: {wrapped.__name__}()"
+            "Publish_Event", f"PUBLISHER::{event_type.name}::{wrapped.__name__}()"
         )
 
         try:

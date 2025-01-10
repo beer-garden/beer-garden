@@ -8,7 +8,7 @@ from beer_garden.metrics import collect_metrics
 
 class NamespaceListAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="API:: NamespaceList")
+    @collect_metrics(transaction_type="API", group="API::NamespaceList")
     async def get(self):
         """
         ---

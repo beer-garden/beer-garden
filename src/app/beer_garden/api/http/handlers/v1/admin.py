@@ -10,7 +10,7 @@ from beer_garden.metrics import collect_metrics
 
 class AdminAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="API:: Admin")
+    @collect_metrics(transaction_type="API", group="API::Admin")
     async def patch(self):
         """
         ---

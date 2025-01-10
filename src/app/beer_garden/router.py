@@ -212,7 +212,7 @@ def route(operation: Operation):
     if not operation.operation_type:
         raise RoutingRequestException("Missing operation type")
 
-    client = get_apm_client("Router", f"ROUTER:: {operation.operation_type}")
+    client = get_apm_client("Router", f"ROUTER::{operation.operation_type}")
 
     operation = _pre_route(operation)
 

@@ -8,7 +8,7 @@ from beer_garden.metrics import collect_metrics
 
 class QueueAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="API:: Queue")
+    @collect_metrics(transaction_type="API", group="API::Queue")
     async def delete(self, queue_name):
         """
         ---
@@ -41,7 +41,7 @@ class QueueAPI(AuthorizationHandler):
 
 class QueueListAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="API:: QueueList")
+    @collect_metrics(transaction_type="API", group="API::QueueList")
     async def get(self):
         """
         ---
@@ -73,7 +73,7 @@ class QueueListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="API:: QueueList")
+    @collect_metrics(transaction_type="API", group="API::QueueList")
     async def delete(self):
         """
         ---

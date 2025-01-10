@@ -11,7 +11,7 @@ from beer_garden.metrics import collect_metrics
 
 class ForwardAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="API:: Forward")
+    @collect_metrics(transaction_type="API", group="API::Forward")
     async def post(self):
         """
         ---
