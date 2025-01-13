@@ -215,46 +215,50 @@ def collect_metrics(transaction_type: str = None, group: str = None):
 
     @wrapt.decorator
     def wrapper(wrapped, class_obj, args, kwargs):
-        client = None
 
-        if config.get("metrics.elastic.enabled"):
-            if hasattr(class_obj, "_transaction_type"):
-                transaction_label = class_obj._transaction_type
-            elif args and isinstance(args[0], Operation):
-                transaction_label = args[0].operation_type
-            elif group:
-                transaction_label = f"{group}::{wrapped.__name__}"
-            else:
-                transaction_label = f"{wrapped.__name__}"
+        return wrapped(*args, **kwargs)
+        # client = None
 
-            client = get_apm_client(transaction_type, transaction_label)
-            if client:
-                if hasattr(class_obj, "get_current_user"):
-                    current_user = class_obj.get_current_user()
-                    if current_user:
-                        elasticapm.set_user_context(
-                            username=current_user.username, user_id=current_user.id
-                        )
+        # if config.get("metrics.elastic.enabled"):
+        #     if hasattr(class_obj, "_transaction_type"):
+        #         transaction_label = class_obj._transaction_type
+        #     elif args and isinstance(args[0], Operation):
+        #         transaction_label = args[0].operation_type
+        #     elif group:
+        #         transaction_label = f"{group}::{wrapped.__name__}"
+        #     else:
+        #         transaction_label = f"{wrapped.__name__}"
 
-        try:
-            result = wrapped(*args, **kwargs)
+        #     client = get_apm_client(transaction_type, transaction_label)
+        #     if client:
+        #         if hasattr(class_obj, "get_current_user"):
+        #             current_user = class_obj.get_current_user()
+        #             if current_user:
+        #                 elasticapm.set_user_context(
+        #                     username=current_user.username, user_id=current_user.id
+        #                 )
 
-            if client:
-                extract_custom_context(result)
-                client.end_transaction(result="success")
+        # try:
+        #     result = wrapped(*args, **kwargs)
 
-            return result
-        except Exception:
+        #     if client:
+        #         extract_custom_context(result)
+        #         client.end_transaction(result="success")
 
-            if client:
-                client.capture_exception()
-                client.end_transaction(transaction_label, "failure")
-            raise
+        #     return result
+        # except Exception:
+
+        #     if client:
+        #         client.capture_exception()
+        #         client.end_transaction(transaction_label, "failure")
+        #     raise
 
     return wrapper
 
 
-def get_apm_client(transaction_type, transaction_name, trace_parent=None):
+def get_apm_client(
+    transaction_type, transaction_name, trace_parent=None, trace_id=None
+):
     """Get the Elastic APM client
 
     Args:
@@ -269,7 +273,8 @@ def get_apm_client(transaction_type, transaction_name, trace_parent=None):
         if client:
 
             if not trace_parent:
-                trace_id = elasticapm.get_trace_parent_header()
+                if not trace_id:
+                    trace_id = elasticapm.get_trace_parent_header()
                 if trace_id:
                     trace_parent = elasticapm.trace_parent_from_string(trace_id)
 

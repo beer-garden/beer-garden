@@ -2,10 +2,12 @@
 import base64
 import gzip
 import json
+import logging
 from asyncio import Future
 from hashlib import md5
 from typing import Sequence
 
+import elasticapm
 from brewtils.errors import ModelValidationError
 from brewtils.models import Operation, Permissions, Request, System
 from brewtils.schema_parser import SchemaParser
@@ -18,6 +20,8 @@ from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.errors import UnknownGardenException
 from beer_garden.metrics import collect_metrics
 from beer_garden.requests import remove_bytes_parameter_base64
+
+logger = logging.getLogger(__name__)
 
 
 class RequestAPI(AuthorizationHandler):
@@ -502,6 +506,7 @@ class RequestListAPI(AuthorizationHandler):
             self.request.ignore_latency = True
 
         try:
+
             created_request = await self.process_operation(
                 Operation(
                     operation_type="REQUEST_CREATE",

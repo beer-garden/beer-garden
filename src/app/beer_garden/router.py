@@ -196,7 +196,7 @@ router_filter = {
     brewtils.models.Garden: beer_garden.garden.filter_router_result,
 }
 
-
+@elasticapm.capture_span(name="ROUTER", span_type="ROUTER")
 def route(operation: Operation):
     """Entry point into the routing subsystem
 
@@ -211,8 +211,6 @@ def route(operation: Operation):
 
     if not operation.operation_type:
         raise RoutingRequestException("Missing operation type")
-
-    client = get_apm_client("Router", f"ROUTER::{operation.operation_type}")
 
     operation = _pre_route(operation)
 
@@ -236,10 +234,6 @@ def route(operation: Operation):
         result = execute_local(operation)
     else:
         result = initiate_forward(operation)
-
-    if client:
-        extract_custom_context(result)
-        client.end_transaction(result="success")
 
     return filter_result(result)
 

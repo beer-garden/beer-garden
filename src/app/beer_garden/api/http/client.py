@@ -3,6 +3,7 @@ import json
 from inspect import isawaitable
 from typing import Any, Optional
 
+import elasticapm
 import six
 from brewtils.models import BaseModel, Operation, User
 from brewtils.schema_parser import SchemaParser
@@ -10,6 +11,7 @@ from brewtils.schema_parser import SchemaParser
 import beer_garden.api
 import beer_garden.router
 from beer_garden.authorization import ModelFilter
+from beer_garden.metrics import extract_custom_context, get_apm_client
 
 
 class SerializeHelper(object):
@@ -23,8 +25,20 @@ class SerializeHelper(object):
         current_user: User = None,
         minimum_permission: str = None,
         filter_results: bool = True,
-        **kwargs
+        **kwargs,
     ):
+
+        client = get_apm_client("API", f"API::{operation.operation_type}")
+
+        if client:
+            # extract_custom_context(operation)
+            
+            operation.metadata = {"_trace_parent": elasticapm.get_trace_parent_header()}
+            if current_user:
+                elasticapm.set_user_context(
+                    username=current_user.username, user_id=current_user.id
+                )
+
         operation.source_api = "HTTP"
         result = beer_garden.router.route(operation)
 
@@ -36,6 +50,10 @@ class SerializeHelper(object):
             result = self.model_filter.filter_object(
                 user=current_user, permission=minimum_permission, obj=result
             )
+
+        if client:
+            extract_custom_context(result)
+            client.end_transaction(result="success")
 
         # Handlers overwhelmingly just write the response so default to serializing
         serialize_kwargs = serialize_kwargs or {}
