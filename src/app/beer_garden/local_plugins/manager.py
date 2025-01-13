@@ -795,7 +795,6 @@ class PluginManager(StoppableThread):
                 "BG_URL_PREFIX": self._connection_info.url_prefix,
                 "BG_SSL_ENABLED": self._connection_info.ssl.enabled,
                 "BG_CA_CERT": self._connection_info.ssl.ca_cert,
-                "BG_CLIENT_CERT": self._connection_info.ssl.client_cert,
                 "BG_CA_VERIFY": False,  # TODO - Fix this
                 # The rest
                 "BG_INSTANCE_NAME": instance_name,
@@ -809,6 +808,13 @@ class PluginManager(StoppableThread):
                 {
                     "BG_USERNAME": self._username,
                     "BG_PASSWORD": self._password,
+                }
+            )
+
+        if self._connection_info.ssl.client_cert:
+            env.update(
+                {
+                    "BG_CLIENT_CERT": self._connection_info.ssl.client_cert,
                 }
             )
 
