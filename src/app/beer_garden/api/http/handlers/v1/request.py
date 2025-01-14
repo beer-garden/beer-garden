@@ -7,7 +7,6 @@ from asyncio import Future
 from hashlib import md5
 from typing import Sequence
 
-import elasticapm
 from brewtils.errors import ModelValidationError
 from brewtils.models import Operation, Permissions, Request, System
 from brewtils.schema_parser import SchemaParser
@@ -19,8 +18,6 @@ from beer_garden.api.http.exceptions import BadRequest, RequestForbidden
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.errors import UnknownGardenException
 from beer_garden.requests import remove_bytes_parameter_base64
-
-logger = logging.getLogger(__name__)
 
 
 class RequestAPI(AuthorizationHandler):

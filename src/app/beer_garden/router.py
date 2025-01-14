@@ -23,7 +23,6 @@ from functools import partial
 from typing import Dict, Union
 
 import brewtils.models
-import elasticapm
 from brewtils import EasyClient
 from brewtils.models import Connection as BrewtilsConnection
 from brewtils.models import Event, Events, Garden, Operation, Request, System
