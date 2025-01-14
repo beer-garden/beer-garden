@@ -6,6 +6,7 @@ TBD
 
 - Updated orphan pruner to delete orphaned files
 - Fixed bug where Paused Jobs being imported were Running in the background
+- Fixed bugs with ELK APM integration and improved labeling
 
 # 3.29.1
 

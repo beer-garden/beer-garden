@@ -8,9 +8,11 @@ import stomp
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 
+import beer_garden.config as config
 import beer_garden.events
 import beer_garden.router
 from beer_garden.garden import get_gardens, update_garden
+from beer_garden.metrics import CollectMetrics, extract_custom_context
 
 logger = logging.getLogger(__name__)
 
@@ -132,21 +134,26 @@ class OperationListener(stomp.ConnectionListener):
 
         try:
             if headers.get("model_class") == "Operation":
+
                 operation = SchemaParser.parse_operation(message, from_string=True)
-                operation.source_api = "STOMP"
+                with CollectMetrics("STOMP", f"STOMP::{operation.operation_type}"):
+                    operation.source_api = "STOMP"
 
-                if hasattr(operation, "kwargs"):
-                    operation.kwargs.pop("wait_timeout", None)
+                    if hasattr(operation, "kwargs"):
+                        operation.kwargs.pop("wait_timeout", None)
 
-                result = beer_garden.router.route(operation)
+                    result = beer_garden.router.route(operation)
 
-                if result:
-                    send(
-                        result,
-                        request_headers=headers,
-                        conn=self.conn,
-                        send_destination=self.send_destination,
-                    )
+                    if result:
+                        if config.get("metrics.elastic.enabled"):
+                            extract_custom_context(result)
+
+                        send(
+                            result,
+                            request_headers=headers,
+                            conn=self.conn,
+                            send_destination=self.send_destination,
+                        )
         except Exception as e:
             logger.warning(f"Error parsing and routing message: {e}")
             send(
