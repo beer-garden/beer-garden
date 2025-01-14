@@ -2,7 +2,6 @@
 import base64
 import gzip
 import json
-import logging
 from asyncio import Future
 from hashlib import md5
 from typing import Sequence
