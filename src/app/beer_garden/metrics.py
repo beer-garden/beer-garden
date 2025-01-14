@@ -199,61 +199,56 @@ def extract_custom_context(result) -> None:
             elasticapm.label(mongo_id=result.id)
 
 
-def collect_metrics(transaction_type: str = None, group: str = None):
-    """Decorator that will result in the function being audited for metrics
+class CollectMetrics(elasticapm.capture_span):
+    def __init__(self, span_type=None, name=None):
+        if not config.get("metrics.elastic.enabled"):
+            return
 
-    Args:
-        transaction_type: Type of transaction that is being recorded
-        group: Grouping label to prepend function name
+        if elasticapm.get_trace_parent_header() is not None:
+            super().__init__(
+                name=name,
+                span_type=span_type,
+                links=[
+                    elasticapm.trace_parent_from_string(
+                        elasticapm.get_trace_parent_header()
+                    )
+                ],
+            )
+            self.use_capture_span = True
+            return
 
-    Raises:
-        Any: If the underlying function raised an exception it will be re-raised
+        self.use_capture_span = False
+        self.name = name
+        self.type = span_type
+        self.client = None
 
-    Returns:
-        Any: The wrapped function result
-    """
+    def __enter__(self):
 
-    @wrapt.decorator
-    def wrapper(wrapped, class_obj, args, kwargs):
+        if not config.get("metrics.elastic.enabled"):
+            return self
 
-        return wrapped(*args, **kwargs)
-        # client = None
+        if self.use_capture_span:
+            return super().__enter__()
 
-        # if config.get("metrics.elastic.enabled"):
-        #     if hasattr(class_obj, "_transaction_type"):
-        #         transaction_label = class_obj._transaction_type
-        #     elif args and isinstance(args[0], Operation):
-        #         transaction_label = args[0].operation_type
-        #     elif group:
-        #         transaction_label = f"{group}::{wrapped.__name__}"
-        #     else:
-        #         transaction_label = f"{wrapped.__name__}"
+        self.client = get_apm_client(self.type, self.name)
 
-        #     client = get_apm_client(transaction_type, transaction_label)
-        #     if client:
-        #         if hasattr(class_obj, "get_current_user"):
-        #             current_user = class_obj.get_current_user()
-        #             if current_user:
-        #                 elasticapm.set_user_context(
-        #                     username=current_user.username, user_id=current_user.id
-        #                 )
+        return self
 
-        # try:
-        #     result = wrapped(*args, **kwargs)
+    def __exit__(self, exception_type, exception_value, exception_traceback):
 
-        #     if client:
-        #         extract_custom_context(result)
-        #         client.end_transaction(result="success")
+        if not config.get("metrics.elastic.enabled"):
+            return
 
-        #     return result
-        # except Exception:
+        if self.use_capture_span:
+            return super().__exit__(
+                exception_type, exception_value, exception_traceback
+            )
 
-        #     if client:
-        #         client.capture_exception()
-        #         client.end_transaction(transaction_label, "failure")
-        #     raise
-
-    return wrapper
+        # ADD LABELS
+        if exception_type:
+            self.client.end_transaction(result="failure")
+        if self.client:
+            self.client.end_transaction(result="success")
 
 
 def get_apm_client(

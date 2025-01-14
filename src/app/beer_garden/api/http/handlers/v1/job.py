@@ -7,13 +7,11 @@ from mongoengine.errors import ValidationError
 
 from beer_garden.api.http.exceptions import BadRequest
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.metrics import collect_metrics
 from beer_garden.scheduler import create_jobs
 
 
 class JobAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="API::Job")
     async def get(self, job_id):
         """
         ---
@@ -46,7 +44,6 @@ class JobAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="API::Job")
     async def patch(self, job_id):
         """
         ---
@@ -127,7 +124,6 @@ class JobAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="API::Job")
     async def delete(self, job_id):
         """
         ---
@@ -161,7 +157,6 @@ class JobAPI(AuthorizationHandler):
 
 class JobListAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="API::JobList")
     async def get(self):
         """
         ---
@@ -199,7 +194,6 @@ class JobListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="API::JobList")
     async def post(self):
         """
         ---
@@ -246,7 +240,6 @@ class JobListAPI(AuthorizationHandler):
 
 class JobImportAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="API::JobImport")
     async def post(self):
         """
         ---
@@ -292,7 +285,6 @@ class JobImportAPI(AuthorizationHandler):
 
 class JobExportAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="API::JobExport")
     async def post(self):
         """
         ---
@@ -355,7 +347,6 @@ class JobExportAPI(AuthorizationHandler):
 
 class JobExecutionAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="API::JobExecution")
     async def post(self, job_id):
         """
         ---

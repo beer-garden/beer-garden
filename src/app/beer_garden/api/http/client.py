@@ -9,9 +9,10 @@ from brewtils.models import BaseModel, Operation, User
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden.api
+import beer_garden.config as config
 import beer_garden.router
 from beer_garden.authorization import ModelFilter
-from beer_garden.metrics import extract_custom_context, get_apm_client
+from beer_garden.metrics import CollectMetrics, extract_custom_context
 
 
 class SerializeHelper(object):
@@ -28,46 +29,53 @@ class SerializeHelper(object):
         **kwargs,
     ):
 
-        client = get_apm_client("API", f"API::{operation.operation_type}")
+        with CollectMetrics("API", f"API::{operation.operation_type}"):
 
-        if client:
-            # extract_custom_context(operation)
-            
-            operation.metadata = {"_trace_parent": elasticapm.get_trace_parent_header()}
-            if current_user:
+            if config.get("metrics.elastic.enabled") and current_user:
                 elasticapm.set_user_context(
                     username=current_user.username, user_id=current_user.id
                 )
 
-        operation.source_api = "HTTP"
-        result = beer_garden.router.route(operation)
+                if "REQUEST" in operation.operation_type:
+                    if (
+                        hasattr(operation, "model")
+                        and hasattr(operation.model, "metadata")
+                        and "_trace_parent" not in operation.model.metadata
+                    ):
+                        operation.model.metadata["_trace_parent"] = (
+                            elasticapm.get_trace_parent_header()
+                        )
 
-        # Await any coroutines
-        if isawaitable(result):
-            result = await result
+            operation.source_api = "HTTP"
+            result = beer_garden.router.route(operation)
 
-        if filter_results and minimum_permission and current_user:
-            result = self.model_filter.filter_object(
-                user=current_user, permission=minimum_permission, obj=result
-            )
+            # Await any coroutines
+            if isawaitable(result):
+                result = await result
 
-        if client:
-            extract_custom_context(result)
-            client.end_transaction(result="success")
+            if filter_results and minimum_permission and current_user:
+                result = self.model_filter.filter_object(
+                    user=current_user, permission=minimum_permission, obj=result
+                )
 
-        # Handlers overwhelmingly just write the response so default to serializing
-        serialize_kwargs = serialize_kwargs or {}
-        if "to_string" not in serialize_kwargs:
-            serialize_kwargs["to_string"] = True
+            if config.get("metrics.elastic.enabled"):
+                extract_custom_context(result)
 
-        # Don't serialize if that's not desired
-        if serialize_kwargs.get("return_raw") or isinstance(result, six.string_types):
-            return result
+            # Handlers overwhelmingly just write the response so default to serializing
+            serialize_kwargs = serialize_kwargs or {}
+            if "to_string" not in serialize_kwargs:
+                serialize_kwargs["to_string"] = True
 
-        if self.json_dump(result):
-            return json.dumps(result) if serialize_kwargs["to_string"] else result
+            # Don't serialize if that's not desired
+            if serialize_kwargs.get("return_raw") or isinstance(
+                result, six.string_types
+            ):
+                return result
 
-        return SchemaParser.serialize(result, **(serialize_kwargs or {}))
+            if self.json_dump(result):
+                return json.dumps(result) if serialize_kwargs["to_string"] else result
+
+            return SchemaParser.serialize(result, **(serialize_kwargs or {}))
 
     @staticmethod
     def json_dump(result: Optional[Any]) -> bool:

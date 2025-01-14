@@ -12,12 +12,10 @@ from beer_garden.api.http.exceptions import AuthenticationFailed, BadRequest
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.api.http.schemas.v1.token import TokenRefreshInputSchema
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
-from beer_garden.metrics import collect_metrics
 
 
 class TokenAPI(BaseHandler):
 
-    @collect_metrics(transaction_type="API", group="API::Token")
     def post(self):
         """
         ---
@@ -58,7 +56,6 @@ class TokenAPI(BaseHandler):
 
 class TokenListAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="API::TokenList")
     async def delete(self, username):
         """
         ---
@@ -97,7 +94,6 @@ class TokenListAPI(AuthorizationHandler):
 
 class TokenRefreshAPI(BaseHandler):
 
-    @collect_metrics(transaction_type="API", group="API::TokenRefresh")
     def post(self):
         """
         ---
@@ -139,7 +135,6 @@ class TokenRefreshAPI(BaseHandler):
 
 class TokenRevokeAPI(BaseHandler):
 
-    @collect_metrics(transaction_type="API", group="API::TokenRevoke")
     def post(self):
         """
         ---

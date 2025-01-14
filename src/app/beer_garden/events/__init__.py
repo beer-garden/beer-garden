@@ -10,7 +10,7 @@ import wrapt
 from brewtils.models import Event, Events
 
 from beer_garden import config as config
-from beer_garden.metrics import extract_custom_context, get_apm_client
+from beer_garden.metrics import CollectMetrics, extract_custom_context
 
 # In this master process this should be an instance of EventManager, and in entry points
 # it should be an instance of EntryPointManager
@@ -66,59 +66,56 @@ def publish_event(event_type: Events):
 
     @wrapt.decorator
     def wrapper(wrapped, _, args, kwargs):
-        # Allows for conditionally disabling publishing
-        _publish_success = kwargs.pop("_publish_success", True)
-        _publish_error = kwargs.pop("_publish_error", True)
-
-        event = Event(name=event_type.name)
-        client = get_apm_client(
+        with CollectMetrics(
             "Publish_Event", f"PUBLISHER::{event_type.name}::{wrapped.__name__}()"
-        )
+        ):
+            # Allows for conditionally disabling publishing
+            _publish_success = kwargs.pop("_publish_success", True)
+            _publish_error = kwargs.pop("_publish_error", True)
 
-        try:
+            event = Event(name=event_type.name)
 
-            result = wrapped(*args, **kwargs)
+            try:
 
-            event.payload_type = result.__class__.__name__
-            event.payload = result
+                result = wrapped(*args, **kwargs)
 
-            if client:
-                trace_parent_string = elasticapm.get_trace_parent_header()
-                event.metadata["_trace_parent"] = trace_parent_string
-                extract_custom_context(result)
-                client.end_transaction(result="success")
-            return result
-        except Exception as ex:
+                event.payload_type = result.__class__.__name__
+                event.payload = result
+                if config.get("metrics.elastic.enabled"):
+                    extract_custom_context(result)
+                    trace_parent_string = elasticapm.get_trace_parent_header()
+                    if trace_parent_string:
+                        event.metadata["_trace_parent"] = trace_parent_string
 
-            event.error = True
+                return result
+            except Exception as ex:
 
-            # Generate Traceback information
-            tbe = traceback.TracebackException.from_exception(ex)
-            stack_frames = traceback.extract_stack()
-            tbe.stack.extend(stack_frames)
-            formatted_traceback = "".join(tbe.format())
+                event.error = True
 
-            # Replicate function call
-            args_str = ", ".join(str(arg) for arg in args)
-            kwargs_str = ", ".join(f"{key}={kwargs[key]!r}" for key in kwargs)
+                # Generate Traceback information
+                tbe = traceback.TracebackException.from_exception(ex)
+                stack_frames = traceback.extract_stack()
+                tbe.stack.extend(stack_frames)
+                formatted_traceback = "".join(tbe.format())
 
-            function_called = (
-                f"{wrapped.__name__}({args_str}{', ' if args else ''}{kwargs_str})"
-            )
+                # Replicate function call
+                args_str = ", ".join(str(arg) for arg in args)
+                kwargs_str = ", ".join(f"{key}={kwargs[key]!r}" for key in kwargs)
 
-            event.error_message = (
-                f"{function_called}\nGenerated Error:\n{str(formatted_traceback)}"
-            )
+                function_called = (
+                    f"{wrapped.__name__}({args_str}{', ' if args else ''}{kwargs_str})"
+                )
 
-            if client:
-                client.capture_exception()
-                client.end_transaction(result="failure")
-            raise
-        finally:
-            if (not event.error and _publish_success) or (
-                event.error and _publish_error
-            ):
-                publish(event)
+                event.error_message = (
+                    f"{function_called}\nGenerated Error:\n{str(formatted_traceback)}"
+                )
+
+                raise
+            finally:
+                if (not event.error and _publish_success) or (
+                    event.error and _publish_error
+                ):
+                    publish(event)
 
     return wrapper
 

@@ -6,12 +6,10 @@ from brewtils.models import Permissions
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.metrics import collect_metrics
 
 
 class ForwardAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="API::Forward")
     async def post(self):
         """
         ---

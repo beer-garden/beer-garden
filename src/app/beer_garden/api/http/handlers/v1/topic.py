@@ -5,13 +5,11 @@ from brewtils.models import Subscriber as BrewtilsSubscriber
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.metrics import collect_metrics
 
 
 class TopicAPI(BaseHandler):
     parser = SchemaParser()
 
-    @collect_metrics(transaction_type="API", group="API::Topic")
     async def get(self, topic_id):
         """
         ---
@@ -42,7 +40,6 @@ class TopicAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="API::Topic")
     async def delete(self, topic_id):
         """
         ---
@@ -72,7 +69,6 @@ class TopicAPI(BaseHandler):
 
         self.set_status(204)
 
-    @collect_metrics(transaction_type="API", group="API::Topic")
     async def patch(self, topic_id):
         """
         ---
@@ -282,7 +278,6 @@ class TopicNameAPI(BaseHandler):
 class TopicListAPI(BaseHandler):
     parser = SchemaParser()
 
-    @collect_metrics(transaction_type="API", group="API::TopicList")
     async def get(self):
         """
         ---
@@ -305,7 +300,6 @@ class TopicListAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="API::TopicList")
     async def post(self):
         """
         ---
