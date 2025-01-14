@@ -5,6 +5,7 @@
 TBD
 
 - Fixed bug where Paused Jobs being imported were Running in the background
+- Added certificate based login handler
 
 # 3.29.1
 

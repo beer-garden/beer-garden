@@ -1,11 +1,11 @@
 auth:
-  enabled: true
+  enabled: false
 
   authentication_handlers:
     basic:
       enabled: true
     certificate:
-      enabled: true
+      enabled: false
     trusted_header:
       create_users: true
       enabled: false
@@ -73,7 +73,7 @@ entry:
     ssl:
       ca_cert: null
       ca_path: null
-      client_cert_verify: OPTIONAL
+      client_cert_verify: NONE
       client_cert: null
       enabled: false
       private_key: null
@@ -176,6 +176,7 @@ plugin:
     auth:
       password: password
       username: plugin_admin
+      client_cert: null
     directory: ./plugins
     host_env_vars: []
     capture_streams: false

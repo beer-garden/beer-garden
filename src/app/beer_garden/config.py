@@ -1491,6 +1491,12 @@ _PLUGIN_SPEC = {
                             ),
                             "required": False,
                         },
+                        "client_cert": {
+                            "type": "str",
+                            "description": "Path to client combined key / certificate",
+                            "required": False,
+                            "alt_env_names": ["CLIENT_CERT"],
+                        },
                     },
                 },
                 "directory": {

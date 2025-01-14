@@ -19,14 +19,13 @@
             "request": "launch",
             "module": "beer_garden",
             "justMyCode": true,
-            "args": ["-c", "${workspaceFolder}/src/app/example_configs/config.yaml", "--entry-http-ssl-enabled"],
+            "args": ["-c", "${workspaceFolder}/src/app/example_configs/config.yaml", "--entry-http-ssl-enabled", "--entry-http-ssl-client-cert-verify", "OPTIONAL"],
             "cwd":"${workspaceFolder}/src/app",
             "env":{
                 "BG_ENTRY_HTTP_SSL_CA_CERT": "${workspaceFolder}/docker/docker-compose/data/certs/ca_certificate.pem",
-                "BG_ENTRY_HTTP_SSL_CLIENT_CERT_VERIFY": "NONE",
                 "BG_ENTRY_HTTP_SSL_PRIVATE_KEY": "${workspaceFolder}/docker/docker-compose/data/certs/combined_server.pem",
                 "BG_ENTRY_HTTP_SSL_PUBLIC_KEY": "${workspaceFolder}/docker/docker-compose/data/certs/combined_server.pem",
-                "BG_ENTRY_HTTP_SSL_CLIENT_CERT": "${workspaceFolder}/docker/docker-compose/data/certs/combined_client.pem",
+                "BG_PLUGIN_LOCAL_AUTH_CLIENT_CERT": "${workspaceFolder}/docker/docker-compose/data/certs/combined_client.pem",
             }
         }
     ]
