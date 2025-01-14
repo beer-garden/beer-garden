@@ -30,8 +30,10 @@ class CertificateLoginHandler(BaseLoginHandler):
         """
         authenticated_user = None
         username = None
-        create_users = config.get("auth.authentication_handlers.certificate.create_users")
-        
+        create_users = config.get(
+            "auth.authentication_handlers.certificate.create_users"
+        )
+
         if request:
             cert = request.get_ssl_certificate()
             if cert:
