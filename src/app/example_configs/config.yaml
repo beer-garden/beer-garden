@@ -5,6 +5,7 @@ auth:
     basic:
       enabled: true
     certificate:
+      create_users: true
       enabled: false
     trusted_header:
       create_users: true

@@ -655,7 +655,13 @@ _AUTHENTICATION_HANDLERS_SPEC = {
                     "type": "bool",
                     "default": True,
                     "description": "Enable authentication via certificate",
-                }
+                },
+                "create_users": {
+                    "type": "bool",
+                    "default": True,
+                    "description": "Create an account for the user specified by"
+                    "certificate subject commonName if one does not already exist",
+                },
             },
         },
         "trusted_header": {

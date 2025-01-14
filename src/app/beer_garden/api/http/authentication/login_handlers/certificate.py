@@ -1,13 +1,15 @@
 import logging
 from datetime import datetime, timezone
 from typing import Optional
+from uuid import uuid4
 
 from brewtils.models import User
 from mongoengine import DoesNotExist
 from tornado.httputil import HTTPServerRequest
 
+from beer_garden import config
 from beer_garden.api.http.authentication.login_handlers.base import BaseLoginHandler
-from beer_garden.user import get_user, update_user
+from beer_garden.user import create_user, get_user, set_password, update_user
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +30,8 @@ class CertificateLoginHandler(BaseLoginHandler):
         """
         authenticated_user = None
         username = None
+        create_users = config.get("auth.authentication_handlers.certificate.create_users")
+        
         if request:
             cert = request.get_ssl_certificate()
             if cert:
@@ -51,6 +55,13 @@ class CertificateLoginHandler(BaseLoginHandler):
                     authenticated_user = update_user(user=authenticated_user)
 
                 except DoesNotExist:
-                    pass
+                    if create_users:
+                        authenticated_user = User(username=username)
+
+                        # TODO: Really we should just have an option on User to disable
+                        # password logins. For now, just set a random-ish value.
+                        set_password(authenticated_user, str(uuid4()))
+
+                        authenticated_user = create_user(authenticated_user)
 
         return authenticated_user
