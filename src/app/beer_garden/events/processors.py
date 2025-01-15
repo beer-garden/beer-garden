@@ -64,6 +64,9 @@ class QueueListener(BaseProcessor):
             except Empty:
                 pass
 
+    def queue_depth(self):
+        return self._queue.qsize()
+
 
 class InternalQueueListener(QueueListener):
     """Listener for internal events only"""

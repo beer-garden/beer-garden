@@ -16,12 +16,14 @@ import elasticapm
 from brewtils.models import Event, Request
 from brewtils.stoppable_thread import StoppableThread
 from elasticapm import Client
+from elasticapm.metrics.base_metrics import MetricSet
 from prometheus_client import Counter, Gauge, Summary
 from prometheus_client.exposition import MetricsHandler
 from prometheus_client.registry import REGISTRY
 
 import beer_garden.config as config
 import beer_garden.db.api as db
+import beer_garden.events
 
 
 class PrometheusServer(StoppableThread):
@@ -168,7 +170,7 @@ def initialize_elastic_client(label: str):
         label (str): Name of services being tracked
     """
     if config.get("metrics.elastic.enabled"):
-        Client(
+        client = Client(
             {
                 "SERVICE_NAME": (
                     f"{re.sub(r'[^a-zA-Z0-9 _-]', '', config.get('garden.name'))}"
@@ -177,6 +179,8 @@ def initialize_elastic_client(label: str):
                 "SERVER_URL": config.get("metrics.elastic.url"),
             }
         )
+
+        client.metrics.register(ProcessorMetricsSet)
 
 
 def extract_custom_context(result) -> None:
@@ -279,3 +283,28 @@ def get_apm_client(
             elasticapm.set_transaction_name(transaction_name)
             return client
     return None
+
+
+class ProcessorMetricsSet(MetricSet):
+
+    def __init__(self, registry) -> None:
+        self.logger = logging.getLogger(__name__)
+        super(ProcessorMetricsSet, self).__init__(registry)
+
+    def before_collect(self):
+        if hasattr(beer_garden.events.manager, "_processors"):
+            for processor in beer_garden.events.manager._processors:
+                if hasattr(processor, "queue_depth"):
+                    depth = processor.queue_depth()
+                    if depth > 0:
+                        self.logger.debug(
+                            f"processor_metrics.{processor._handler_tag.replace(' ', '_').lower()} == {depth}"
+                        )
+                    self.gauge(
+                        f"processor_metrics.{processor._handler_tag.replace(' ', '_').lower()}",
+                    ).val = depth
+            if hasattr(beer_garden.events.manager, "queue_depth"):
+                depth = beer_garden.events.manager.queue_depth()
+                if depth > 0:
+                    self.logger.debug(f"processor_metrics.events_manager == {depth}")
+                self.gauge("processor_metrics.events_manager").val = depth
