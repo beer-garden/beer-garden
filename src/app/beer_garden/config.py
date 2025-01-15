@@ -653,12 +653,12 @@ _AUTHENTICATION_HANDLERS_SPEC = {
             "items": {
                 "enabled": {
                     "type": "bool",
-                    "default": True,
+                    "default": False,
                     "description": "Enable authentication via certificate",
                 },
                 "create_users": {
                     "type": "bool",
-                    "default": True,
+                    "default": False,
                     "description": "Create an account for the user specified by"
                     "certificate subject commonName if one does not already exist",
                 },
