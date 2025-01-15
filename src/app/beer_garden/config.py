@@ -648,6 +648,22 @@ _AUTHENTICATION_HANDLERS_SPEC = {
                 }
             },
         },
+        "certificate": {
+            "type": "dict",
+            "items": {
+                "enabled": {
+                    "type": "bool",
+                    "default": False,
+                    "description": "Enable authentication via certificate",
+                },
+                "create_users": {
+                    "type": "bool",
+                    "default": False,
+                    "description": "Create an account for the user specified by"
+                    "certificate subject commonName if one does not already exist",
+                },
+            },
+        },
         "trusted_header": {
             "type": "dict",
             "items": {
@@ -1055,6 +1071,11 @@ _HTTP_SPEC = {
                     "default": "NONE",
                     "previous_names": ["client_cert_verify"],
                     "alt_env_names": ["CLIENT_CERT_VERIFY"],
+                },
+                "client_cert": {
+                    "type": "str",
+                    "description": "Client certificate to use",
+                    "required": False,
                 },
             },
         },
@@ -1475,6 +1496,12 @@ _PLUGIN_SPEC = {
                                 "authentication (needs bg-plugin role)"
                             ),
                             "required": False,
+                        },
+                        "client_cert": {
+                            "type": "str",
+                            "description": "Path to client combined key / certificate",
+                            "required": False,
+                            "alt_env_names": ["CLIENT_CERT"],
                         },
                     },
                 },
