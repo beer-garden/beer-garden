@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+import threading
 import traceback
 import uuid
 from copy import deepcopy
@@ -68,7 +69,84 @@ class QueueListener(BaseProcessor):
         return self._queue.qsize()
 
 
-class InternalQueueListener(QueueListener):
+class QueueSetListener(QueueListener):
+    """Listens for items on a multiprocessing.Queue"""
+
+    def __init__(self, queue=None, unique_data=False, **kwargs):
+        super().__init__(**kwargs)
+
+        self._lock = threading.RLock()
+        self._data = {}
+        self._unique_data = unique_data
+
+    def put(self, event: Event):
+        """Put a new item on the queue to be processed
+
+        Args:
+            item: New item
+        """
+
+        if not self._unique_data:
+            super().put(event)
+        else:
+            if (
+                self._unique_data
+                and hasattr(event, "payload")
+                and hasattr(event.payload, "id")
+            ):
+                with self._lock:
+                    if event.payload.id in self._data:
+                        ref = self._data[event.payload.id]
+                        if hasattr(event.payload, "is_newer") and type(
+                            event.payload
+                        ) == type(ref.payload):
+                            if event.payload.is_newer(ref.payload):
+                                self._data[str(event.payload.id)] = deepcopy(event)
+                        else:
+                            self._data[str(event.payload.id)] = deepcopy(event)
+                    else:
+                        self._data[str(event.payload.id)] = deepcopy(event)
+
+                    self._queue.put(str(event.payload.id))
+
+    def clear(self):
+        """Empty the underlying queue without processing items"""
+        if not self._unique_data:
+            super().clear()
+        else:
+            self._data = {}
+
+            while not self._queue.empty():
+                self._queue.get()
+
+    def run(self):
+        """Process events as they are received"""
+        if not self._unique_data:
+            super().run()
+        else:
+            while not self.stopped():
+                try:
+                    ref = self._queue.get(timeout=0.1)
+                    if isinstance(ref, str):
+                        with self._lock:
+                            ref = self._data.pop(ref, None)
+                    if ref:
+                        self.process(ref)
+                except Empty:
+                    if self._unique_data and self._data:
+                        ref = None
+                        with self._lock:
+                            ref = self._data.pop(next(iter(self._data)))
+                        if ref:
+                            self.process(ref)
+
+    def queue_depth(self):
+        if not self._unique_data:
+            return super().queue_depth()
+        return len(self._data)
+
+
+class InternalQueueListener(QueueSetListener):
     """Listener for internal events only"""
 
     def __init__(self, handler, handler_tag, local_only=False, filters=None, **kwargs):
@@ -137,7 +215,7 @@ class InternalQueueListener(QueueListener):
             return
 
         if event.name in self._filters:
-            self._queue.put(event)
+            super().put(event)
 
 
 class DelayListener(QueueListener):
