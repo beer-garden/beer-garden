@@ -35,8 +35,11 @@ class BaseProcessor(StoppableThread):
     def put(self, item):
         self.process(item)
 
-from collections import deque
+
 import time
+from collections import deque
+
+
 class DequeueListener(BaseProcessor):
     """Listens for items on a collections.deque"""
 
@@ -67,7 +70,8 @@ class DequeueListener(BaseProcessor):
 
     def queue_depth(self):
         return len(self._queue)
-    
+
+
 class DequeueSetListener(DequeueListener):
     """Listens for items on a multiprocessing.Queue"""
 
@@ -110,7 +114,7 @@ class DequeueSetListener(DequeueListener):
 
     def clear(self):
         """Empty the underlying queue without processing items"""
-        
+
         super().clear()
         if self._unique_data:
             self._data = {}
@@ -142,6 +146,7 @@ class DequeueSetListener(DequeueListener):
         if not self._unique_data:
             return super().queue_depth()
         return len(self._data)
+
 
 class QueueListener(BaseProcessor):
     """Listens for items on a multiprocessing.Queue"""
@@ -251,34 +256,6 @@ class QueueSetListener(QueueListener):
         if not self._unique_data:
             return super().queue_depth()
         return len(self._data)
-
-from brewtils.schema_parser import SchemaParser
-
-class QueueSerializerListener(QueueListener):
-    """Listens for items on a multiprocessing.Queue"""
-
-    def __init__(self, queue=None, unique_data=False, **kwargs):
-        super().__init__(**kwargs)
-        self._parser = SchemaParser()
-
-    def put(self, event: Event):
-        """Put a new item on the queue to be processed
-
-        Args:
-            item: New item
-        """
-
-        self._queue.put(self._parser.serialize_event(event))
-
-
-    def run(self):
-        """Process events as they are received"""
-        while not self.stopped():
-            try:
-                self.process(self._parser.parse_event(self._queue.get(timeout=0.1), from_string=True))
-            except Empty:
-                pass
-
 
 
 class InternalQueueListener(DequeueSetListener):
@@ -447,15 +424,15 @@ class EventProcessor(FanoutProcessor):
             try:
                 event.metadata["_source_uuid"] = self.uuid
                 put_event(event)
-                self._queue.put(event)
+                super().put(event)
             except Exception:
                 self.logger.error(f"Failed to publish Event: {event} to PIKA")
-                self._queue.put(event)
+                super().put(event)
         elif (
             "_source_uuid" not in event.metadata
             or event.metadata["_source_uuid"] != self.uuid
         ):
-            self._queue.put(event)
+            super().put(event)
 
     def put_queue(self, event: Event):
-        self._queue.put(event)
+        super().put(event)
