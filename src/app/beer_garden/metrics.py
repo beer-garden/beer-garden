@@ -203,7 +203,7 @@ def extract_custom_context(result) -> None:
 
 
 class CollectMetrics(elasticapm.capture_span):
-    def __init__(self, span_type=None, name=None):
+    def __init__(self, span_type=None, name=None, trace_parent_header=None):
         if not config.get("metrics.elastic.enabled"):
             return
 
@@ -224,21 +224,22 @@ class CollectMetrics(elasticapm.capture_span):
         self.name = name
         self.type = span_type
         self.client = None
+        self.trace_parent_header = trace_parent_header
 
     def __enter__(self):
-
         if not config.get("metrics.elastic.enabled"):
             return self
 
         if self.use_capture_span:
             return super().__enter__()
 
-        self.client = get_apm_client(self.type, self.name)
+        self.client = get_apm_client(
+            self.type, self.name, trace_id=self.trace_parent_header
+        )
 
         return self
 
     def __exit__(self, exception_type, exception_value, exception_traceback):
-
         if not config.get("metrics.elastic.enabled"):
             return
 
@@ -269,7 +270,6 @@ def get_apm_client(
     if config.get("metrics.elastic.enabled"):
         client = elasticapm.get_client()
         if client:
-
             if not trace_parent:
                 if not trace_id:
                     trace_id = elasticapm.get_trace_parent_header()
@@ -286,7 +286,6 @@ def get_apm_client(
 
 
 class ProcessorMetricsSet(MetricSet):
-
     def __init__(self, registry) -> None:
         self.logger = logging.getLogger(__name__)
         super(ProcessorMetricsSet, self).__init__(registry)

@@ -7,12 +7,11 @@ from copy import deepcopy
 from multiprocessing import Queue
 from queue import Empty
 
-import elasticapm
 from brewtils.models import Event, Events
 from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden.config as config
-from beer_garden.metrics import extract_custom_context, get_apm_client
+from beer_garden.metrics import CollectMetrics, extract_custom_context
 from beer_garden.queue.rabbit import put_event
 
 logger = logging.getLogger(__name__)
@@ -277,35 +276,34 @@ class InternalQueueListener(DequeueSetListener):
         self._transaction_type = handler_tag
 
     def handle_event(self, event):
-        try:
-            trace_parent = None
-            if hasattr(event, "metadata") and "_trace_parent" in event.metadata:
-                trace_parent = elasticapm.trace_parent_from_string(
-                    event.metadata["_trace_parent"]
-                )
-            client = get_apm_client(
-                "Queue_Event", f"QUEUE::{self._handler_tag}", trace_parent=trace_parent
-            )
+        trace_parent_header = None
+        if (
+            config.get("metrics.elastic.enabled")
+            and hasattr(event, "metadata")
+            and "_trace_parent" in event.metadata
+        ):
+            trace_parent_header = event.metadata["_trace_parent"]
 
-            if client:
-                extract_custom_context(event)
+        with CollectMetrics(
+            "Queue_Event",
+            f"QUEUE_POP::{self._handler_tag}",
+            trace_parent_header=trace_parent_header,
+        ):
+            try:
+                if config.get("metrics.elastic.enabled"):
+                    extract_custom_context(event)
 
-            self._handler(deepcopy(event))
-            if client:
-                client.end_transaction(result="success")
-        except Exception as ex:
-            if client:
-                client.capture_exception()
-                client.end_transaction(result="failure")
-            logger.error(
-                "'%s' handler received an error executing callback for event %s: %s: %s"
-                % (
-                    self._handler_tag,
-                    repr(event),
-                    str(ex),
-                    traceback.TracebackException.from_exception(ex),
+                self._handler(deepcopy(event))
+            except Exception as ex:
+                logger.error(
+                    "'%s' handler received an error executing callback for event %s: %s: %s"
+                    % (
+                        self._handler_tag,
+                        repr(event),
+                        str(ex),
+                        traceback.TracebackException.from_exception(ex),
+                    )
                 )
-            )
 
     def put(self, event: Event):
         """Put a new item on the queue to be processed
@@ -327,7 +325,20 @@ class InternalQueueListener(DequeueSetListener):
             return
 
         if event.name in self._filters:
-            super().put(event)
+            trace_parent_header = None
+            if (
+                config.get("metrics.elastic.enabled")
+                and hasattr(event, "metadata")
+                and "_trace_parent" in event.metadata
+            ):
+                trace_parent_header = event.metadata["_trace_parent"]
+
+            with CollectMetrics(
+                "Queue_Event",
+                f"QUEUE_PUT::{self._handler_tag}",
+                trace_parent_header=trace_parent_header,
+            ):
+                super().put(event)
 
 
 class DelayListener(QueueListener):
