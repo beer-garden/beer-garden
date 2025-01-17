@@ -35,6 +35,113 @@ class BaseProcessor(StoppableThread):
     def put(self, item):
         self.process(item)
 
+from collections import deque
+import time
+class DequeueListener(BaseProcessor):
+    """Listens for items on a collections.deque"""
+
+    def __init__(self, queue=None, **kwargs):
+        super().__init__(**kwargs)
+
+        self._queue = queue or deque()
+
+    def put(self, item):
+        """Put a new item on the queue to be processed
+
+        Args:
+            item: New item
+        """
+        self._queue.append(item)
+
+    def clear(self):
+        """Empty the underlying queue without processing items"""
+        self._queue.clear()
+
+    def run(self):
+        """Process events as they are received"""
+        while not self.stopped():
+            try:
+                self.process(self._queue.popleft())
+            except IndexError:
+                time.sleep(0.1)
+
+    def queue_depth(self):
+        return len(self._queue)
+    
+class DequeueSetListener(DequeueListener):
+    """Listens for items on a multiprocessing.Queue"""
+
+    def __init__(self, queue=None, unique_data=False, **kwargs):
+        super().__init__(**kwargs)
+
+        self._lock = threading.RLock()
+        self._data = {}
+        self._unique_data = unique_data
+
+    def put(self, event: Event):
+        """Put a new item on the queue to be processed
+
+        Args:
+            item: New item
+        """
+
+        if not self._unique_data:
+            super().put(event)
+        else:
+            if (
+                self._unique_data
+                and hasattr(event, "payload")
+                and hasattr(event.payload, "id")
+            ):
+                with self._lock:
+                    if event.payload.id in self._data:
+                        ref = self._data[event.payload.id]
+                        if hasattr(event.payload, "is_newer") and type(
+                            event.payload
+                        ) == type(ref.payload):
+                            if event.payload.is_newer(ref.payload):
+                                self._data[str(event.payload.id)] = deepcopy(event)
+                        else:
+                            self._data[str(event.payload.id)] = deepcopy(event)
+                    else:
+                        self._data[str(event.payload.id)] = deepcopy(event)
+
+                    self._queue.append(str(event.payload.id))
+
+    def clear(self):
+        """Empty the underlying queue without processing items"""
+        
+        super().clear()
+        if self._unique_data:
+            self._data = {}
+
+    def run(self):
+        """Process events as they are received"""
+        if not self._unique_data:
+            super().run()
+        else:
+            while not self.stopped():
+                try:
+                    ref = self._queue.popleft()
+                    if isinstance(ref, str):
+                        with self._lock:
+                            ref = self._data.pop(ref, None)
+                    if ref:
+                        self.process(ref)
+                except IndexError:
+                    if self._unique_data and self._data:
+                        ref = None
+                        with self._lock:
+                            ref = self._data.pop(next(iter(self._data)))
+                        if ref:
+                            self.process(ref)
+                    else:
+                        time.sleep(0.1)
+
+    def queue_depth(self):
+        if not self._unique_data:
+            return super().queue_depth()
+        return len(self._data)
 
 class QueueListener(BaseProcessor):
     """Listens for items on a multiprocessing.Queue"""
@@ -145,8 +252,36 @@ class QueueSetListener(QueueListener):
             return super().queue_depth()
         return len(self._data)
 
+from brewtils.schema_parser import SchemaParser
 
-class InternalQueueListener(QueueSetListener):
+class QueueSerializerListener(QueueListener):
+    """Listens for items on a multiprocessing.Queue"""
+
+    def __init__(self, queue=None, unique_data=False, **kwargs):
+        super().__init__(**kwargs)
+        self._parser = SchemaParser()
+
+    def put(self, event: Event):
+        """Put a new item on the queue to be processed
+
+        Args:
+            item: New item
+        """
+
+        self._queue.put(self._parser.serialize_event(event))
+
+
+    def run(self):
+        """Process events as they are received"""
+        while not self.stopped():
+            try:
+                self.process(self._parser.parse_event(self._queue.get(timeout=0.1), from_string=True))
+            except Empty:
+                pass
+
+
+
+class InternalQueueListener(DequeueSetListener):
     """Listener for internal events only"""
 
     def __init__(self, handler, handler_tag, local_only=False, filters=None, **kwargs):
@@ -246,7 +381,7 @@ class PipeListener(BaseProcessor):
                 self.process(self._conn.recv())
 
 
-class FanoutProcessor(QueueListener):
+class FanoutProcessor(DequeueListener):
     """Distributes items to multiple queues"""
 
     def __init__(self, **kwargs):
