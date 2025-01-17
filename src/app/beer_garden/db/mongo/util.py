@@ -128,13 +128,21 @@ def ensure_v2_to_v3_model_migration():
 
 
 def contains_field(collection_name, fields):
+    """Checks if any record in the collection contains one of the matching fields"""
     db = get_db()
     collection = db.get_collection(collection_name)
 
-    for record in collection.find():
-        for field in fields:
-            if field in record:
-                return True
+    query_set = {}
+    query_fields = []
+    for field in fields:
+        query_fields.append({field: {"$exists": True}})
+    if len(query_fields) > 1:
+        query_set = {"$or": query_fields}
+    elif len(query_fields) == 1:
+        query_set = query_fields[0]
+
+    if collection.find(query_set).count() > 0:
+        return True
     return False
 
 
@@ -259,14 +267,16 @@ def ensure_v3_27_model_migration():
 
 def ensure_v3_29_model_migration():
     db = get_db()
-    if db.request.find({"command_display_name": {"$exists": True}}).count() == 0:
+    if db.request.find({"command_display_name": {"$exists": False}}).count() > 0:
         logger.warning(
             "Command display name was not found in Requests and will be added. This is most"
             " likely because the database is using the old (v3.29) style of storing in"
             " the database."
         )
         request_collection = db.get_collection("request")
-        for legacy_request in request_collection.find():
+        for legacy_request in request_collection.find(
+            {"command_display_name": {"$exists": False}}
+        ):
             if legacy_request:
                 legacy_request["command_display_name"] = legacy_request["command"]
                 request_collection.update_one(
