@@ -37,7 +37,7 @@ class BaseProcessor(StoppableThread):
         self.process(item)
 
 
-class DequeueListener(BaseProcessor):
+class DequeListener(BaseProcessor):
     """Listens for items on a collections.deque"""
 
     def __init__(self, queue=None, **kwargs):
@@ -69,7 +69,7 @@ class DequeueListener(BaseProcessor):
         return len(self._queue)
 
 
-class DequeueSetListener(DequeueListener):
+class DequeSetListener(DequeListener):
     """Listens for items on a multiprocessing.Queue"""
 
     def __init__(self, queue=None, unique_data=False, **kwargs):
@@ -178,7 +178,7 @@ class QueueListener(BaseProcessor):
         return self._queue.qsize()
 
 
-class InternalQueueListener(DequeueSetListener):
+class InternalQueueListener(DequeSetListener):
     """Listener for internal events only"""
 
     def __init__(self, handler, handler_tag, local_only=False, filters=None, **kwargs):
@@ -290,7 +290,7 @@ class PipeListener(BaseProcessor):
                 self.process(self._conn.recv())
 
 
-class FanoutProcessor(DequeueListener):
+class FanoutProcessor(DequeListener):
     """Distributes items to multiple queues"""
 
     def __init__(self, **kwargs):
