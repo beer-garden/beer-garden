@@ -88,16 +88,18 @@ class TestHandlers:
 
         assert len(event_manager._managed_processors) == 16
 
-        put_mock = Mock()
+        queue_mock = Mock()
+        append_mock = Mock()
+        queue_mock.append = append_mock
 
         for processor in event_manager._managed_processors:
 
             if hasattr(processor, "_queue"):
-                monkeypatch.setattr(processor._queue, "put", put_mock)
+                monkeypatch.setattr(processor, "_queue", queue_mock)
 
             processor.put(bg_event)
 
-        assert put_mock.call_count == expected_calls
+        assert append_mock.call_count == expected_calls
 
     @pytest.mark.parametrize(
         "event_name,expected_calls",
@@ -178,12 +180,14 @@ class TestHandlers:
 
         assert len(event_manager._managed_processors) == 16
 
-        put_mock = Mock()
+        queue_mock = Mock()
+        append_mock = Mock()
+        queue_mock.append = append_mock
 
         for processor in event_manager._managed_processors:
 
             if hasattr(processor, "_queue"):
-                monkeypatch.setattr(processor._queue, "put", put_mock)
+                monkeypatch.setattr(processor, "_queue", queue_mock)
             processor.put(bg_event)
 
-        assert put_mock.call_count == expected_calls
+        assert append_mock.call_count == expected_calls
