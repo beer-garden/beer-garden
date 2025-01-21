@@ -297,7 +297,8 @@ class ProcessorMetricsSet(MetricSet):
                     depth = processor.queue_depth()
                     if depth > 0:
                         self.logger.debug(
-                            f"processor_metrics.{processor._handler_tag.replace(' ', '_').lower()}"
+                            "processor_metrics."
+                            f"{processor._handler_tag.replace(' ', '_').lower()}"
                             f" == {depth}"
                         )
                     self.gauge(
