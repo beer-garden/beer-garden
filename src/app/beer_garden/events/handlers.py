@@ -118,7 +118,7 @@ def add_internal_events_handler(event_manager):
             beer_garden.topic.handle_event,
             "Topic",
             True,
-            [Events.GARDEN_SYNC, Events.SYSTEM_REMOVED],
+            [],
         ),
         (beer_garden.log.handle_event, "Log", True, [Events.PLUGIN_LOGGER_FILE_CHANGE]),
         (

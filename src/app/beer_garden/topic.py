@@ -7,6 +7,7 @@ from mongoengine import DoesNotExist
 
 import beer_garden.config as config
 import beer_garden.db.api as db
+from beer_garden.garden import get_garden
 
 logger = logging.getLogger(__name__)
 
@@ -261,7 +262,10 @@ def subscriber_systems_validate(subscriber, systems, topic_name: str):
                                 return True
 
 
-def create_garden_topics(garden: Garden):
+def create_garden_topics(garden: Garden = None):
+    if garden is None:
+        garden = get_garden(config.get("garden.name"))
+
     for system in garden.systems:
         default_topic = system.prefix_topic
         for command in system.commands:
@@ -344,9 +348,10 @@ def handle_event(event: Event) -> None:
         event: The event to handle
     """
 
-    if event.garden == config.get("garden.name"):
-        if event.name == Events.GARDEN_SYNC.name:
-            create_garden_topics(event.payload)
-            prune_topics(garden=event.payload)
-        elif event.name == Events.SYSTEM_REMOVED.name:
-            prune_topics(system=event.payload)
+    pass
+    # if event.garden == config.get("garden.name"):
+    #     if event.name == Events.GARDEN_SYNC.name:
+    #         create_garden_topics(event.payload)
+    #         prune_topics(garden=event.payload)
+    #     elif event.name == Events.SYSTEM_REMOVED.name:
+    #         prune_topics(system=event.payload)
