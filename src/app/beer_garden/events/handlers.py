@@ -82,8 +82,8 @@ def add_internal_events_handler(event_manager):
             "Publish Requests",
             False,
             [Events.REQUEST_TOPIC_PUBLISH, Events.REQUEST_CREATED],
-            False,  
-            # Can not unique due to each Event potentially 
+            False,
+            # Can not unique due to each Event potentially
             # spawning child Request operations
         ),
         (
