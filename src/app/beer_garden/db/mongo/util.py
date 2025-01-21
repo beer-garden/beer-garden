@@ -127,21 +127,22 @@ def ensure_v2_to_v3_model_migration():
         db.drop_collection("system")
 
 
-def contains_field(collection_name, fields):
-    """Checks if any record in the collection contains one of the matching fields"""
+def contains_field(collection_name, field):
+    """Checks if any record in the collection contains the specified field"""
     db = get_db()
     collection = db.get_collection(collection_name)
 
-    query_set = {}
-    query_fields = []
-    for field in fields:
-        query_fields.append({field: {"$exists": True}})
-    if len(query_fields) > 1:
-        query_set = {"$or": query_fields}
-    elif len(query_fields) == 1:
-        query_set = query_fields[0]
+    if collection.find({field: {"$exists": True}}).count() > 0:
+        return True
+    return False
 
-    if collection.find(query_set).count() > 0:
+
+def missing_field(collection_name, field):
+    """Checks if any record in the collection is missing the specified field"""
+    db = get_db()
+    collection = db.get_collection(collection_name)
+
+    if collection.find({field: {"$exists": False}}).count() > 0:
         return True
     return False
 
@@ -150,7 +151,7 @@ def ensure_v3_24_model_migration():
     """Ensures that the Garden model migration to yaml configs"""
 
     # Look for 3.23 fields
-    if contains_field("garden", ["connection_params"]):
+    if contains_field("garden", "connection_params"):
         import os
         from pathlib import Path
 
@@ -244,9 +245,9 @@ def ensure_v3_27_model_migration():
 
     # Look for 3.26 fields
     if (
-        contains_field("role", ["permissions"])
-        or contains_field("user", ["role_assignments"])
-        or contains_field("user_token", ["user"])
+        contains_field("role", "permissions")
+        or contains_field("user", "role_assignments")
+        or contains_field("user_token", "user")
     ):
         logger.warning(
             "Encountered an error loading Roles or Users or User Tokens. This is most"
@@ -267,7 +268,7 @@ def ensure_v3_27_model_migration():
 
 def ensure_v3_29_model_migration():
     db = get_db()
-    if db.request.find({"command_display_name": {"$exists": False}}).count() > 0:
+    if missing_field("request", "command_display_name"):
         logger.warning(
             "Command display name was not found in Requests and will be added. This is most"
             " likely because the database is using the old (v3.29) style of storing in"
