@@ -1151,7 +1151,7 @@ class TestHandleEvent:
 
         updated_request = Request.objects.get(id=child_garden_request.id)
 
-        # Test that updated_request contains all metadata from child_garden_request and event.payload
+        # Updated_request contains all metadata from child_garden_request and event.payload
         assert all(
             updated_request.metadata.get(key) == val
             for key, val in {
