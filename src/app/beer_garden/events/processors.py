@@ -90,13 +90,13 @@ class DequeSetListener(DequeListener):
             self._unique_data
             and hasattr(event, "payload")
             and hasattr(event.payload, "id")
-            and hasattr(event.payload, "__gt__")
+            and hasattr(event.payload, "is_newer")
         ):
             with self._lock:
                 if event.payload.id in self._data:
                     ref = self._data[event.payload.id]
                     if isinstance(event.payload, type(ref.payload)):
-                        if event.payload > ref.payload:
+                        if event.payload.is_newer(ref.payload):
                             self._data[str(event.payload.id)] = deepcopy(event)
                     else:
                         # Type Mis-match, just process the event
