@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import copy
 from datetime import datetime, timedelta
 
 import pytest
@@ -1129,6 +1130,36 @@ class TestHandleEvent:
 
         assert updated_request.status_updated_at == status_updated_at
 
+    def test_metadata_merged_on_child_garden_requests(self, child_garden_request):
+        child_garden_request.metadata = {
+            "CREATED_child": 1737558145883,
+        }
+        request_event = Event(
+            payload=copy.deepcopy(child_garden_request),
+            name=Events.REQUEST_UPDATED.name,
+            garden="child",
+        )
+        request_event.payload.status = "IN_PROGRESS"
+        request_event.payload.metadata = {
+            "CREATED_child": 1737558145883,
+            "IN_PROGRESS_child": 1737558153258,
+        }
+
+        beer_garden.config._CONFIG = {"garden": {"name": "parent"}}
+
+        beer_garden.requests.handle_event(request_event)
+
+        updated_request = Request.objects.get(id=child_garden_request.id)
+
+        # Test that updated_request contains all metadata from child_garden_request and event.payload
+        assert all(
+            updated_request.metadata.get(key) == val
+            for key, val in {
+                **child_garden_request.metadata,
+                **request_event.payload.metadata,
+            }.items()
+        )
+
 
 class TestLatestRequest(object):
     @pytest.fixture
@@ -1203,7 +1234,6 @@ class TestLatestRequest(object):
 
 
 class TestCancelRequest(object):
-
     @pytest.fixture(autouse=True)
     def drop(self):
         yield

@@ -8,6 +8,7 @@ TBD
 - Fixed bug where Paused Jobs being imported were Running in the background
 - Added certificate based login handler
 - Fixed bugs with ELK APM integration and improved labeling
+- Merge event metadata on Request Update
 
 # 3.29.1
 
