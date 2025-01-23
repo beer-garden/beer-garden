@@ -783,7 +783,11 @@ class System(MongoModel, Document):
 
         is_updated = super().modify(query, **update)
 
-        if is_updated and self.local and ("commands" in update or "push_all__instances" in update):
+        if (
+            is_updated
+            and self.local
+            and ("commands" in update or "push_all__instances" in update)
+        ):
             self.save_topics(config.get("garden.name"))
 
         return is_updated
