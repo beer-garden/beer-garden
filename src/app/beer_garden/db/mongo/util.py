@@ -416,13 +416,13 @@ def _update_request_has_parent_model():
 
 def prune_topics():
     """
-    Prune topics by removing invalid subscribers and deleting topics with no valid 
+    Prune topics by removing invalid subscribers and deleting topics with no valid
     subscribers.
 
-    This function iterates over all topics and checks each subscriber's validity based 
-    on their type and existence in the 'system' and 'garden' collections in the database. 
-    Subscribers of type 'GENERATED' or 'ANNOTATED' are validated against the 'garden' 
-    and 'system' collections. If a topic has no valid subscribers, it is deleted. 
+    This function iterates over all topics and checks each subscriber's validity based
+    on their type and existence in the 'system' and 'garden' collections in the database.
+    Subscribers of type 'GENERATED' or 'ANNOTATED' are validated against the 'garden'
+    and 'system' collections. If a topic has no valid subscribers, it is deleted.
     Otherwise, the topic's subscribers are updated to include only valid subscribers.
 
     Returns:

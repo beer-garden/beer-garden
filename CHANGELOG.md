@@ -12,6 +12,9 @@ TBD
 - Updated internal events to utilize deque to improve performance
 - Updated internal events to allow for unique and sorting events based on timestamps, only
   latest instance of the transaction event is handled within the event handlers
+- Updated Topics generation and removal to Mongo Model instead of through Events
+- Optimized Topic pruning and generation
+- Expanded topics API to support manual execution of Topic Generation
 
 # 3.29.1
 
