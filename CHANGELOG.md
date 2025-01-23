@@ -8,6 +8,10 @@ TBD
 - Fixed bug where Paused Jobs being imported were Running in the background
 - Added certificate based login handler
 - Fixed bugs with ELK APM integration and improved labeling
+- Expanded APM Metrics to collect Event Processing Queue Depths
+- Updated internal events to utilize deque to improve performance
+- Updated internal events to allow for unique and sorting events based on timestamps, only
+  latest instance of the transaction event is handled within the event handlers
 
 # 3.29.1
 
