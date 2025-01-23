@@ -256,6 +256,25 @@ def prune_topics():
 
 
 def sync_garden_topics_loop(garden: Garden):
+    """
+    Synchronizes topics for a given garden and its systems, commands, and instances.
+
+    This function iterates through all systems in the provided garden, and for each system,
+    it iterates through its commands and instances to create topics. If a command has predefined
+    topics, it creates topics for each one. If not, it generates a default topic based on the
+    system's namespace, name, version, instance name, and command name. It then creates a topic
+    with the generated name.
+
+    Additionally, if the garden has child gardens, the function recursively synchronizes topics
+    for each child garden.
+
+    Args:
+        garden (Garden): The garden object containing systems, commands, and instances to
+                         synchronize topics for.
+
+    Returns:
+        None
+    """
 
     for system in garden.systems:
         default_topic = system.prefix_topic
@@ -330,20 +349,10 @@ def increase_consumer_count(topic: Topic, subscriber: Subscriber):
 def handle_event(event: Event) -> None:
     """Handle TOPIC events
 
-    When creating or updating a system, make sure to mark as non-local first.
-
-    It's possible that we see SYSTEM_UPDATED events for systems that we don't currently
-    know about. This will happen if a new system is created on the child while the child
-    is operating in standalone mode. To handle that, just create the system.
+    All topic handling is done at the Mongo level or scheduled jobs
 
     Args:
         event: The event to handle
     """
 
     pass
-    # if event.garden == config.get("garden.name"):
-    #     if event.name == Events.GARDEN_SYNC.name:
-    #         sync_garden_topics(event.payload)
-    #         prune_topics(garden=event.payload)
-    #     elif event.name == Events.SYSTEM_REMOVED.name:
-    #         prune_topics(system=event.payload)
