@@ -412,3 +412,41 @@ def _update_request_has_parent_model():
     raw_collection.update_many(
         {"parent": {"$not": {"$eq": None}}}, {"$set": {"has_parent": True}}
     )
+
+
+def prune_topics():
+
+    from .models import Topic
+
+    for topic in Topic.objects():
+
+        db = get_db()
+        system = db.get_collection("system")
+        garden = db.get_collection("garden")
+
+        valid_subscribers = []
+        for subscriber in topic.subscribers:
+            if subscriber.subscriber_type in ["GENERATED", "ANNOTATED"]:
+                if garden.find({"name": subscriber.garden}).count() == 1:
+                    if (
+                        system.find(
+                            {
+                                "namespace": subscriber.namespace,
+                                "name": subscriber.system,
+                                "version": subscriber.version,
+                                "instances.name": subscriber.instance,
+                                "commands.name": subscriber.command,
+                            }
+                        ).count()
+                        == 1
+                    ):
+                        valid_subscribers.append(subscriber)
+
+            else:
+                valid_subscribers.append(subscriber)
+
+        if len(topic.subscribers) > 0 and len(valid_subscribers) == 0:
+            topic.delete()
+        elif len(valid_subscribers) != len(topic.subscribers):
+            topic.subscribers = valid_subscribers
+            topic.save()
