@@ -770,21 +770,23 @@ class System(MongoModel, Document):
         if self.local:
             self.save_topics(config.get("garden.name"))
 
-        super().save(**kwargs)
+        return super().save(**kwargs)
 
     def update(self, **kwargs):
 
         if self.local:
             self.save_topics(config.get("garden.name"))
 
-        super().update(**kwargs)
+        return super().update(**kwargs)
 
     def modify(self, query=None, **update):
 
-        super().modify(query, **update)
+        is_updated = super().modify(query, **update)
 
-        if self.local and ("commands" in update or "push_all__instances" in update):
+        if is_updated and self.local and ("commands" in update or "push_all__instances" in update):
             self.save_topics(config.get("garden.name"))
+
+        return is_updated
 
     def save_topics(self, garden_name: str):
 
