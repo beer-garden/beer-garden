@@ -1118,8 +1118,12 @@ def handle_event(event):
                     "target_garden",
                     "updated_at",
                     "command_type",
+                    "metadata",
                 ):
                     new_value = getattr(event.payload, field)
+                    # Merge metadata
+                    if field == "metadata":
+                        new_value = {**getattr(existing_request, field), **new_value}
 
                     if getattr(existing_request, field) != new_value:
                         request_changed[field] = new_value
