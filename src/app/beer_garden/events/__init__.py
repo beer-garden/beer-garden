@@ -39,6 +39,12 @@ def publish(event: Event) -> None:
             if not event.timestamp:
                 event.timestamp = datetime.now(timezone.utc)
 
+            if config.get("metrics.elastic.enabled"):
+                extract_custom_context(event.payload)
+                trace_parent_string = elasticapm.get_trace_parent_header()
+                if trace_parent_string:
+                    event.metadata["_trace_parent"] = trace_parent_string
+
             return manager.put(event)
         except Exception as ex:
             logger.exception(f"Error publishing event: {ex}")
