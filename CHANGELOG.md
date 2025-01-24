@@ -4,11 +4,19 @@
 
 TBD
 
+- Added support for deprecate kwarg for parameter or command
 - Updated orphan pruner to delete orphaned files
 - Fixed bug where Paused Jobs being imported were Running in the background
 - Added certificate based login handler
 - Fixed bugs with ELK APM integration and improved labeling
 - Merge event metadata on Request Update
+- Expanded APM Metrics to collect Event Processing Queue Depths
+- Updated internal events to utilize deque to improve performance
+- Updated internal events to allow for unique and sorting events based on timestamps, only
+  latest instance of the transaction event is handled within the event handlers
+- Updated Topics generation and removal to Mongo Model instead of through Events
+- Optimized Topic pruning and generation
+- Expanded topics API to support manual execution of Topic Generation
 
 # 3.29.1
 

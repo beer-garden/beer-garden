@@ -431,6 +431,13 @@ class MixedScheduler(object):
             max_running_jobs=1,
         )
 
+        # Add scheduled job for validating Generated and Annotated topics
+        self.add_schedule(
+            beer_garden.topic.sync_garden_topics,
+            interval=15,
+            max_running_jobs=1,
+        )
+
         # Add Garden Sync Scheduler
         if config.get("parent.sync_interval") > 0 and (
             config.get("parent.stomp.enabled") or config.get("parent.http.enabled")

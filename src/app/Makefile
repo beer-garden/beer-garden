@@ -98,6 +98,7 @@ clean: clean-all ## alias of clean-all
 format: ## Run black formatter in-line
 	black $(MODULE_NAME) $(TEST_DIR)
 	isort --thirdparty brewtils $(MODULE_NAME) $(TEST_DIR)
+	$(MAKE) lint
 
 
 # Linting
