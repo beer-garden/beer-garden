@@ -5,6 +5,7 @@ from mongoengine.connection import get_db
 from mongoengine.errors import DoesNotExist, FieldDoesNotExist, InvalidDocumentError
 from pymongo.errors import OperationFailure
 
+import beer_garden
 from beer_garden import config
 from beer_garden.errors import IndexOperationError
 
@@ -37,6 +38,22 @@ def ensure_local_garden():
 
     garden.publishing_connections = []
 
+    publish_apis = []
+    for connection in garden.publishing_connections:
+        publish_apis.append(connection.api)
+        connection.status = "NOT_CONFIGURED"
+        connection.config = {}
+
+    if "HTTP" not in publish_apis:
+        garden.publishing_connections.append(
+            Connection(api="HTTP", status="NOT_CONFIGURED")
+        )
+
+    if "STOMP" not in publish_apis:
+        garden.publishing_connections.append(
+            Connection(api="STOMP", status="NOT_CONFIGURED")
+        )
+
     if config.get("parent.http.enabled"):
         config_map = {
             "parent.http.host": "host",
@@ -53,11 +70,11 @@ def ensure_local_garden():
             "parent.http.refresh_token": "refresh_token",
         }
 
-        http_connection = Connection(api="HTTP", status="PUBLISHING")
-
-        for key in config_map:
-            http_connection.config.setdefault(config_map[key], config.get(key))
-        garden.publishing_connections.append(http_connection)
+        for connection in garden.publishing_connections:
+            if connection.api == "HTTP":
+                connection = "PUBLISHING"
+                for key in config_map:
+                    connection.config.setdefault(config_map[key], config.get(key))
 
     if config.get("parent.stomp.enabled") and config.get(
         "parent.stomp.send_destination"
@@ -73,11 +90,13 @@ def ensure_local_garden():
             "parent.stomp.headers": "headers",
         }
 
-        stomp_connection = Connection(api="STOMP", status="PUBLISHING")
+        for connection in garden.publishing_connections:
+            if connection.api == "HTTP":
+                connection = "PUBLISHING"
+                for key in config_map:
+                    connection.config.setdefault(config_map[key], config.get(key))
 
-        for key in config_map:
-            stomp_connection.config.setdefault(config_map[key], config.get(key))
-        garden.publishing_connections.append(stomp_connection)
+    garden.version = beer_garden.__version__
 
     garden.save()
 
@@ -444,7 +463,6 @@ def prune_topics():
     from .models import Topic
 
     for topic in Topic.objects():
-
         db = get_db()
         system = db.get_collection("system")
         garden = db.get_collection("garden")
