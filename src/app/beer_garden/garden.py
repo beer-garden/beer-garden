@@ -790,7 +790,7 @@ def rescan():
         for garden_name in loaded_gardens:
             # Need to give the router a second to load the events
             time.sleep(0.5)
-            garden_sync(garden.name)
+            garden_sync(garden_name)
 
 
 def garden_sync(sync_target: str = None):
