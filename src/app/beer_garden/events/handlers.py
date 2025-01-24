@@ -133,7 +133,7 @@ def add_internal_events_handler(event_manager):
             beer_garden.topic.handle_event,
             "Topic",
             True,
-            [Events.GARDEN_SYNC, Events.SYSTEM_REMOVED],
+            [],
             True,  # Can unique so the latest event is provided
         ),
         (
