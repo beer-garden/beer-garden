@@ -17,6 +17,8 @@ TBD
 - Updated Topics generation and removal to Mongo Model instead of through Events
 - Optimized Topic pruning and generation
 - Expanded topics API to support manual execution of Topic Generation
+- Optimizing how Garden configurations are loaded
+- Fixed bug where Garden historical status info is maintained after rescan
 
 # 3.29.1
 

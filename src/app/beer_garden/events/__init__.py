@@ -31,16 +31,17 @@ def publish(event: Event) -> None:
     Returns:
         None
     """
-    try:
-        # Do some formatting / tweaking
-        if not event.garden:
-            event.garden = config.get("garden.name")
-        if not event.timestamp:
-            event.timestamp = datetime.now(timezone.utc)
+    with CollectMetrics("Publish_Event", f"PUBLISHER::{event.name}::publish()"):
+        try:
+            # Do some formatting / tweaking
+            if not event.garden:
+                event.garden = config.get("garden.name")
+            if not event.timestamp:
+                event.timestamp = datetime.now(timezone.utc)
 
-        return manager.put(event)
-    except Exception as ex:
-        logger.exception(f"Error publishing event: {ex}")
+            return manager.put(event)
+        except Exception as ex:
+            logger.exception(f"Error publishing event: {ex}")
 
 
 def publish_event(event_type: Events):
@@ -76,7 +77,6 @@ def publish_event(event_type: Events):
             event = Event(name=event_type.name)
 
             try:
-
                 result = wrapped(*args, **kwargs)
 
                 event.payload_type = result.__class__.__name__
@@ -89,7 +89,6 @@ def publish_event(event_type: Events):
 
                 return result
             except Exception as ex:
-
                 event.error = True
 
                 # Generate Traceback information

@@ -12,6 +12,7 @@ The garden service is responsible for:
 import copy
 import json
 import logging
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List
@@ -517,11 +518,57 @@ def update_garden_receiving(
     return db.update(garden)
 
 
+def load_garden_new_configuration(
+    garden: Garden,
+    receiving_connection: Connection = None,
+    publishing_connection: Connection = None,
+):
+    if receiving_connection:
+        connection_set = False
+
+        if garden.receiving_connections:
+            for connection in garden.receiving_connections:
+                if connection.api == receiving_connection.api:
+                    connection.status = receiving_connection.status
+                    connection.config = receiving_connection.config
+                    connection.status_info.set_status_heartbeat(
+                        connection.status,
+                        max_history=config.get("garden.status_history"),
+                    )
+                    connection_set = True
+
+        if not connection_set:
+            garden.receiving_connections.append(receiving_connection)
+
+    if publishing_connection:
+        connection_set = False
+
+        if garden.publishing_connections:
+            for connection in garden.publishing_connections:
+                if connection.api == publishing_connection.api:
+                    connection.status = publishing_connection.status
+                    connection.config = publishing_connection.config
+                    connection.status_info.set_status_heartbeat(
+                        connection.status,
+                        max_history=config.get("garden.status_history"),
+                    )
+                    connection_set = True
+
+        if not connection_set:
+            garden.publishing_connections.append(publishing_connection)
+
+
 def load_garden_file(garden: Garden):
     path = Path(f"{config.get('children.directory')}/{garden.name}.yaml")
 
-    garden.publishing_connections.clear()
-    garden.receiving_connections.clear()
+    # Clearing connection configs and status
+    for connection in garden.publishing_connections:
+        connection.status = "NOT_CONFIGURED"
+        connection.config = None
+
+    for connection in garden.receiving_connections:
+        connection.status = "NOT_CONFIGURED"
+        connection.config = None
 
     if not path.exists():
         garden.status = "NOT_CONFIGURED"
@@ -536,12 +583,20 @@ def load_garden_file(garden: Garden):
         YapconfSpecError,
     ):
         garden.status = "CONFIGURATION_ERROR"
-        garden.publishing_connections.append(
-            Connection(api="HTTP", status="CONFIGURATION_ERROR")
+
+        load_garden_new_configuration(
+            garden,
+            publishing_connection=Connection(api="HTTP", status="CONFIGURATION_ERROR"),
         )
-        garden.publishing_connections.append(
-            Connection(api="STOMP", status="CONFIGURATION_ERROR")
+        load_garden_new_configuration(
+            garden,
+            publishing_connection=Connection(api="STOMP", status="CONFIGURATION_ERROR"),
         )
+        load_garden_new_configuration(
+            garden,
+            receiving_connection=Connection(api="STOMP", status="CONFIGURATION_ERROR"),
+        )
+
         return garden
 
     garden.default_user = config.get("default_user", garden_config)
@@ -576,10 +631,11 @@ def load_garden_file(garden: Garden):
             http_connection.config.setdefault(
                 config_map[key], config.get(key, garden_config)
             )
-        garden.publishing_connections.append(http_connection)
+        load_garden_new_configuration(garden, publishing_connection=http_connection)
     else:
-        garden.publishing_connections.append(
-            Connection(api="HTTP", status="NOT_CONFIGURED")
+        load_garden_new_configuration(
+            garden,
+            publishing_connection=Connection(api="HTTP", status="NOT_CONFIGURED"),
         )
 
     if config.get("stomp.enabled", garden_config):
@@ -621,15 +677,20 @@ def load_garden_file(garden: Garden):
         stomp_connection.config.setdefault("headers", headers)
 
         if config.get("stomp.send_destination", garden_config):
-            garden.publishing_connections.append(stomp_connection)
+            load_garden_new_configuration(
+                garden, publishing_connection=stomp_connection
+            )
 
         if config.get("stomp.subscribe_destination", garden_config):
             subscribe_connection = copy.deepcopy(stomp_connection)
             subscribe_connection.status = "RECEIVING"
-            garden.receiving_connections.append(subscribe_connection)
+            load_garden_new_configuration(
+                garden, receiving_connection=subscribe_connection
+            )
     else:
-        garden.publishing_connections.append(
-            Connection(api="STOMP", status="NOT_CONFIGURED")
+        load_garden_new_configuration(
+            garden,
+            publishing_connection=Connection(api="STOMP", status="NOT_CONFIGURED"),
         )
 
     for connection in garden.receiving_connections:
@@ -648,11 +709,24 @@ def load_garden_config(garden: Garden = None, garden_name: str = None):
 
     garden = load_garden_file(garden)
 
-    return db.update(garden)
+    updates = {}
+
+    updates["push_all__publishing_connections"] = []
+    for connection in garden.publishing_connections:
+        updates["push_all__publishing_connections"].append(db.from_brewtils(connection))
+
+    updates["push_all__receiving_connections"] = []
+    for connection in garden.receiving_connections:
+        updates["push_all__receiving_connections"].append(db.from_brewtils(connection))
+
+    updates["status"] = garden.status
+
+    return db.modify(garden, **updates)
 
 
 def rescan():
     if config.get("children.directory"):
+        loaded_gardens = []
         children_directory = Path(config.get("children.directory"))
         if children_directory.exists():
             for path in children_directory.iterdir():
@@ -696,13 +770,27 @@ def rescan():
                     )
 
                 load_garden_config(garden=garden)
-                garden = update_garden(garden)
 
-                garden_sync(garden.name)
+                # Just need to publish the event for routing logic
+                publish(
+                    Event(
+                        name=Events.GARDEN_UPDATED.name,
+                        garden=config.get("garden.name"),
+                        payload_type="Garden",
+                        payload=garden,
+                    )
+                )
+
+                loaded_gardens.append(garden.name)
         else:
             logger.error(
                 f"Unable to find Children directory: {str(children_directory.resolve())}"
             )
+
+        for garden_name in loaded_gardens:
+            # Need to give the router a second to load the events
+            time.sleep(0.5)
+            garden_sync(garden.name)
 
 
 def garden_sync(sync_target: str = None):
@@ -895,9 +983,10 @@ def handle_event(event):
         Events.GARDEN_CONFIGURED.name,
         Events.GARDEN_REMOVED.name,
         Events.GARDEN_CREATED.name,
-        Events.GARDEN_UPDATED.name,
     ]:
-        publish_garden()
+        # This publish garden event is to keep parent gardens in sync
+        if config.get("parent.stomp.enabled") or config.get("parent.http.enabled"):
+            publish_garden()
 
     if "SYSTEM" in event.name or "INSTANCE" in event.name:
         # If a System or Instance is updated, publish updated Local Garden Model for UI
