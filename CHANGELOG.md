@@ -4,6 +4,7 @@
 
 TBD
 
+- Added support for deprecate kwarg for parameter or command
 - Updated orphan pruner to delete orphaned files
 - Fixed bug where Paused Jobs being imported were Running in the background
 - Added certificate based login handler
