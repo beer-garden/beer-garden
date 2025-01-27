@@ -18,7 +18,15 @@ from pathlib import Path
 from typing import List
 
 from brewtils.errors import PluginError
-from brewtils.models import Connection, Event, Events, Garden, Operation, System
+from brewtils.models import (
+    Connection,
+    Event,
+    Events,
+    Garden,
+    Operation,
+    StatusInfo,
+    System,
+)
 from mongoengine import DoesNotExist
 from yapconf.exceptions import (
     YapconfItemNotFound,
@@ -521,10 +529,16 @@ def update_garden_receiving(
 def load_garden_file(garden: Garden):
     path = Path(f"{config.get('children.directory')}/{garden.name}.yaml")
 
-    http_publishing_connection = Connection(api="HTTP", status="CONFIGURATION_ERROR")
+    http_publishing_connection = Connection(
+        api="HTTP", status="CONFIGURATION_ERROR", status_info=StatusInfo()
+    )
     http_receiving_connection = None
-    stomp_publishing_connection = Connection(api="STOMP", status="CONFIGURATION_ERROR")
-    stomp_receiving_connection = Connection(api="STOMP", status="CONFIGURATION_ERROR")
+    stomp_publishing_connection = Connection(
+        api="STOMP", status="CONFIGURATION_ERROR", status_info=StatusInfo()
+    )
+    stomp_receiving_connection = Connection(
+        api="STOMP", status="CONFIGURATION_ERROR", status_info=StatusInfo()
+    )
 
     for connection in garden.publishing_connections:
         if connection.api == "HTTP":
