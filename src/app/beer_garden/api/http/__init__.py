@@ -291,7 +291,11 @@ def _setup_application():
 
     server_ssl, client_ssl = _setup_ssl_context()
 
-    server = HTTPServer(tornado_app, ssl_options=server_ssl)
+    server = HTTPServer(
+        tornado_app,
+        ssl_options=server_ssl,
+        max_body_size=config.get("entry.http.max_body_size"),
+    )
 
 
 def _setup_tornado_app() -> Application:
