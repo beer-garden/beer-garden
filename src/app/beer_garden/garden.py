@@ -626,7 +626,7 @@ def load_garden_file(garden: Garden):
                 stomp_publishing_connection.status = "DISABLED"
 
             if config.get("stomp.subscribe_destination", garden_config):
-                stomp_receiving_connection = "RECEIVING"
+                stomp_receiving_connection.status = "RECEIVING"
                 stomp_receiving_connection.config = copy.deepcopy(
                     stomp_publishing_connection.config
                 )
