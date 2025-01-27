@@ -634,8 +634,12 @@ def load_garden_file(garden: Garden):
                 )
 
         else:
-            stomp_publishing_connection.status = "NOT_CONFIGURED"
-            stomp_receiving_connection.status = "NOT_CONFIGURED"
+            stomp_publishing_connection.status = (
+                "NOT_CONFIGURED" if garden_config.get("publishing") else "DISABLED"
+            )
+            stomp_receiving_connection.status = (
+                "NOT_CONFIGURED" if garden_config.get("receiving") else "DISABLED"
+            )
 
         if http_receiving_connection:
             http_receiving_connection.status = (
@@ -691,13 +695,13 @@ def load_garden_config(garden: Garden = None, garden_name: str = None):
 
     updates = {}
 
-    updates["push_all__publishing_connections"] = []
+    updates["publishing_connections"] = []
     for connection in garden.publishing_connections:
-        updates["push_all__publishing_connections"].append(db.from_brewtils(connection))
+        updates["publishing_connections"].append(db.from_brewtils(connection))
 
-    updates["push_all__receiving_connections"] = []
+    updates["receiving_connections"] = []
     for connection in garden.receiving_connections:
-        updates["push_all__receiving_connections"].append(db.from_brewtils(connection))
+        updates["receiving_connections"].append(db.from_brewtils(connection))
 
     updates["status"] = garden.status
 
