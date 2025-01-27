@@ -121,7 +121,7 @@ class TestGardenSetup(object):
 
                 # Older gardens will not have receiving connections present
                 if len(garden.receiving_connections) > 0:
-                    for connection in garden.publishing_connections:
+                    for connection in garden.receiving_connections:
                         if connection.api == "HTTP":
                             assert connection.status == "RECEIVING"
                         else:
