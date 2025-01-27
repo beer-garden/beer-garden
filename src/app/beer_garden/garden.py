@@ -518,57 +518,11 @@ def update_garden_receiving(
     return db.update(garden)
 
 
-def load_garden_new_configuration(
-    garden: Garden,
-    receiving_connection: Connection = None,
-    publishing_connection: Connection = None,
-):
-    if receiving_connection:
-        connection_set = False
-
-        if garden.receiving_connections:
-            for connection in garden.receiving_connections:
-                if connection.api == receiving_connection.api:
-                    connection.status = receiving_connection.status
-                    connection.config = receiving_connection.config
-                    connection.status_info.set_status_heartbeat(
-                        connection.status,
-                        max_history=config.get("garden.status_history"),
-                    )
-                    connection_set = True
-
-        if not connection_set:
-            garden.receiving_connections.append(receiving_connection)
-
-    if publishing_connection:
-        connection_set = False
-
-        if garden.publishing_connections:
-            for connection in garden.publishing_connections:
-                if connection.api == publishing_connection.api:
-                    connection.status = publishing_connection.status
-                    connection.config = publishing_connection.config
-                    connection.status_info.set_status_heartbeat(
-                        connection.status,
-                        max_history=config.get("garden.status_history"),
-                    )
-                    connection_set = True
-
-        if not connection_set:
-            garden.publishing_connections.append(publishing_connection)
-
-
 def load_garden_file(garden: Garden):
     path = Path(f"{config.get('children.directory')}/{garden.name}.yaml")
 
-    # Clearing connection configs and status
-    for connection in garden.publishing_connections:
-        connection.status = "NOT_CONFIGURED"
-        connection.config = None
-
-    for connection in garden.receiving_connections:
-        connection.status = "NOT_CONFIGURED"
-        connection.config = None
+    garden.publishing_connections.clear()
+    garden.receiving_connections.clear()
 
     if not path.exists():
         garden.status = "NOT_CONFIGURED"
@@ -583,20 +537,12 @@ def load_garden_file(garden: Garden):
         YapconfSpecError,
     ):
         garden.status = "CONFIGURATION_ERROR"
-
-        load_garden_new_configuration(
-            garden,
-            publishing_connection=Connection(api="HTTP", status="CONFIGURATION_ERROR"),
+        garden.publishing_connections.append(
+            Connection(api="HTTP", status="CONFIGURATION_ERROR")
         )
-        load_garden_new_configuration(
-            garden,
-            publishing_connection=Connection(api="STOMP", status="CONFIGURATION_ERROR"),
+        garden.publishing_connections.append(
+            Connection(api="STOMP", status="CONFIGURATION_ERROR")
         )
-        load_garden_new_configuration(
-            garden,
-            receiving_connection=Connection(api="STOMP", status="CONFIGURATION_ERROR"),
-        )
-
         return garden
 
     garden.default_user = config.get("default_user", garden_config)
@@ -631,11 +577,10 @@ def load_garden_file(garden: Garden):
             http_connection.config.setdefault(
                 config_map[key], config.get(key, garden_config)
             )
-        load_garden_new_configuration(garden, publishing_connection=http_connection)
+        garden.publishing_connections.append(http_connection)
     else:
-        load_garden_new_configuration(
-            garden,
-            publishing_connection=Connection(api="HTTP", status="NOT_CONFIGURED"),
+        garden.publishing_connections.append(
+            Connection(api="HTTP", status="NOT_CONFIGURED")
         )
 
     if config.get("stomp.enabled", garden_config):
@@ -677,20 +622,15 @@ def load_garden_file(garden: Garden):
         stomp_connection.config.setdefault("headers", headers)
 
         if config.get("stomp.send_destination", garden_config):
-            load_garden_new_configuration(
-                garden, publishing_connection=stomp_connection
-            )
+            garden.publishing_connections.append(stomp_connection)
 
         if config.get("stomp.subscribe_destination", garden_config):
             subscribe_connection = copy.deepcopy(stomp_connection)
             subscribe_connection.status = "RECEIVING"
-            load_garden_new_configuration(
-                garden, receiving_connection=subscribe_connection
-            )
+            garden.receiving_connections.append(subscribe_connection)
     else:
-        load_garden_new_configuration(
-            garden,
-            publishing_connection=Connection(api="STOMP", status="NOT_CONFIGURED"),
+        garden.publishing_connections.append(
+            Connection(api="STOMP", status="NOT_CONFIGURED")
         )
 
     for connection in garden.receiving_connections:
