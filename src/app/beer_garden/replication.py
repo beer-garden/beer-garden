@@ -23,6 +23,13 @@ def get_replication_id() -> str:
     return replication_id
 
 
+def is_primary_replication(replication_id) -> bool:
+
+    if not config.get("replication.enabled"):
+        return True
+    return replication_id == get_replication_id()
+
+
 @publish_event(Events.REPLICATION_CREATED)
 def create_replication(replication: Replication):
     return db.create(replication)

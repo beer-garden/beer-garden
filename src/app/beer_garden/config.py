@@ -1766,12 +1766,43 @@ _REPLICATION_SPEC = {
     },
 }
 
+_EVENT_HANDLER_SPEC = {
+    "type": "dict",
+    "items": {
+        "enabled": {
+            "type": "bool",
+            "default": True,
+            "description": ("If event handler should process the event"),
+        },
+        "unique_data": {
+            "type": "bool",
+            "default": False,
+            "description": (
+                "if events should be deduped in the queue to reduce the total"
+                "number of events in memory"
+            ),
+        },
+    },
+}
+
+_EVENTS_SPEC = {
+    "type": "dict",
+    "items": {
+        "garden": _EVENT_HANDLER_SPEC,
+        "plugin": _EVENT_HANDLER_SPEC,
+        "requests": _EVENT_HANDLER_SPEC,
+        "system": _EVENT_HANDLER_SPEC,
+        "file": _EVENT_HANDLER_SPEC,
+    },
+}
+
 _SPECIFICATION = {
     "auth": _AUTH_SPEC,
     "children": _CHILDREN_GARDEN_SPEC,
     "configuration": _META_SPEC,
     "db": _DB_SPEC,
     "entry": _ENTRY_SPEC,
+    "events_handler": _EVENTS_SPEC,
     "garden": _GARDEN_SPEC,
     "log": _LOG_SPEC,
     "metrics": _METRICS_SPEC,

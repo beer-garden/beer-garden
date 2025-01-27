@@ -188,10 +188,13 @@ def handle_event(event: Event) -> None:
     """Processes the provided event by calling the correct handler function(s) for the
     given event type.
 
+    This is not implemented in the handlers logic. Once implemented, this function will
+    need to be included in the list.
+
     Args:
         event: The Event to process
 
     Returns:
         None
     """
-    return
+    pass
