@@ -295,8 +295,9 @@ class Application(StoppableThread):
         for helper_thread in self.helper_threads:
             helper_thread.start()
 
-        self.logger.debug("Publishing to Parent that we are online")
-        beer_garden.garden.publish_garden()
+        if config.get("parent.stomp.enabled") or config.get("parent.http.enabled"):
+            self.logger.debug("Publishing to Parent that we are online")
+            beer_garden.garden.publish_garden()
 
         self.logger.info("All set! Let me know if you need anything else!")
 
