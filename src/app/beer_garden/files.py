@@ -23,7 +23,6 @@ import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.errors import NotUniqueException
 
-MAX_CHUNK_SIZE = 1024 * 1024 * 15  # 15MB
 OWNERSHIP_PRIORITY = {
     "JOB": 1,
     "REQUEST": 2,
@@ -200,12 +199,12 @@ def create_chunk(
     Raises:
         NotFoundError: File with the requested ID doesn't exist and is expected to
     """
-    if len(data) > MAX_CHUNK_SIZE:
+    if len(data) > File.MAX_CHUNK_SIZE:
         return FileStatus(
             operation_complete=False,
             message=(
                 "Chunk data length exceeds the maximum "
-                f"allowable length of {MAX_CHUNK_SIZE}."
+                f"allowable length of {File.MAX_CHUNK_SIZE}."
             ),
             file_id=file_id,
             offset=offset,
@@ -354,9 +353,9 @@ def create_file(
         ModelValidationError: File id (if provided) is not a valid ObjectId string
         NotUniqueException: File with the requested ID already exists
     """
-    if chunk_size > MAX_CHUNK_SIZE:
+    if chunk_size > File.MAX_CHUNK_SIZE:
         raise ValueError(
-            f"Cannot create a file with chunk size greater than {MAX_CHUNK_SIZE}."
+            f"Cannot create a file with chunk size greater than {File.MAX_CHUNK_SIZE}."
         )
 
     max_body_size = config.get("entry.http.max_body_size")
