@@ -17,7 +17,7 @@ TBD
 - Updated Topics generation and removal to Mongo Model instead of through Events
 - Optimized Topic pruning and generation
 - Expanded topics API to support manual execution of Topic Generation
-- Added config to increase Tornado max body size for file uploads
+- Added config for Tornado web server to increase max body size for file uploads
 
 # 3.29.1
 
