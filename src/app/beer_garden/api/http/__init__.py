@@ -7,7 +7,7 @@ from copy import deepcopy
 from typing import List, Optional, Tuple
 
 from apispec import APISpec
-from brewtils.models import Event, Events, User
+from brewtils.models import Event, Events, File, User
 from brewtils.schemas import (
     CommandSchema,
     CronTriggerSchema,
@@ -290,6 +290,12 @@ def _setup_application():
     initialize_elastic_client("http")
 
     server_ssl, client_ssl = _setup_ssl_context()
+
+    if config.get("entry.http.max_body_size") < File.MAX_CHUNK_SIZE:
+        logger.warning(
+            "Configuration value for max body size is set lower than the max chunk size. "
+            "It will not be possible to post file chunks."
+        )
 
     server = HTTPServer(
         tornado_app,
