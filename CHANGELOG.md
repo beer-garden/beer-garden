@@ -18,6 +18,7 @@ TBD
 - Optimized Topic pruning and generation
 - Expanded topics API to support manual execution of Topic Generation
 - Updated 3.24 migration script to skip children config creation if only one garden
+- Added config for Tornado web server to increase max body size for file uploads
 
 # 3.29.1
 
