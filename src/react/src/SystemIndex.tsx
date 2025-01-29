@@ -91,7 +91,7 @@ function SystemIndex() {
             <Button variant="warning" >Clear All Queues</Button>
           </ButtonGroup>
         </ButtonToolbar>
-        <Row xs={1} md={3} lg={4} className="g-4 mb-4">
+        <Row xs={1} md={2} lg={4} className="g-4 mb-4">
           {filteredData &&
             filteredData.map((system) => {
               

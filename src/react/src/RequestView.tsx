@@ -338,11 +338,17 @@ function RequestView() {
             <RequestHeader {...request} />
             <Accordion defaultActiveKey={['1']} alwaysOpen>
                 <Accordion.Item eventKey="1">
-                    <Accordion.Header>Request Info</Accordion.Header>
+                    <Accordion.Header>Scheduler</Accordion.Header>
                     <Accordion.Body>
-                        {/* <RequestTimeline {...request} /> */}
-                        {/* <RequestGantt /> */}
-                        <RequestTimeline />
+                        
+                    </Accordion.Body>
+                </Accordion.Item>
+            </Accordion>
+            <Accordion defaultActiveKey={['1']} alwaysOpen>
+                <Accordion.Item eventKey="1">
+                    <Accordion.Header>Select Commmand</Accordion.Header>
+                    <Accordion.Body>
+                        
                     </Accordion.Body>
                 </Accordion.Item>
             </Accordion>
@@ -351,6 +357,16 @@ function RequestView() {
                     <Accordion.Header>Input</Accordion.Header>
                     <Accordion.Body>
                         <RequestInput {...request} />
+                    </Accordion.Body>
+                </Accordion.Item>
+            </Accordion>
+            <Accordion defaultActiveKey={['1']} alwaysOpen>
+                <Accordion.Item eventKey="1">
+                    <Accordion.Header>Request Info</Accordion.Header>
+                    <Accordion.Body>
+                        {/* <RequestTimeline {...request} /> */}
+                        {/* <RequestGantt /> */}
+                        <RequestTimeline {...request} />
                     </Accordion.Body>
                 </Accordion.Item>
             </Accordion>

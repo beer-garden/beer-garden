@@ -40,3 +40,28 @@ deps: ## install javascript dependencies
 
 build-models:
 	pip install py
+
+start:
+	PORT=3002 npm start
+
+chromium_test:
+	docker run \
+		--name=chromium \
+		--security-opt seccomp=unconfined `#optional` \
+		-e PUID=1000 \
+		-e PGID=1000 \
+		-e TZ=Etc/UTC \
+		-e CHROME_CLI=http://localhost:3002/ `#optional` \
+		-p 3000:3000 \
+		-p 3001:3001 \
+		--shm-size="1gb" \
+		--restart unless-stopped \
+		--network="host" \
+		lscr.io/linuxserver/chromium:latest
+
+chromium_clean:
+	docker container prune
+	docker image prune
+	docker volume prune
+	docker image rm -f lscr.io/linuxserver/chromium
+
