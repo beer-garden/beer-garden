@@ -1,8 +1,9 @@
 import Timeline from 'react-calendar-timeline';
 // make sure you include the timeline stylesheet or the timeline will not be styled
-import 'react-calendar-timeline/lib/Timeline.css';
+// import 'react-calendar-timeline/lib/Timeline.css';
 import dayjs from 'dayjs';
 
+// https://github.com/namespace-ee/react-calendar-timeline/tree/master
 const groups = [{ id: 1, title: 'group 1' }, { id: 2, title: 'group 2' }];
 
 const items = [

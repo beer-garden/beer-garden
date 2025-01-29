@@ -5,7 +5,7 @@ import './App.css';
 import SystemIndex from './SystemIndex';
 import SystemIndexGroups from './SystemIndexGroups';
 import RequestView from './RequestView';
-import RequestGantt from './RequestGantt';
+// import RequestGantt from './RequestGantt';
 
 function App() {
   return (
@@ -20,9 +20,9 @@ function App() {
         <Route path="/request">
           <RequestView />
         </Route>
-        <Route path="/gantt">
+        {/* <Route path="/gantt">
           <RequestGantt />
-        </Route>
+        </Route> */}
         <Route path="/page2">
           <Page2 />
         </Route>

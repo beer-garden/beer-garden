@@ -12,7 +12,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 // import { Gantt, WillowDark, task, link } from "wx-react-gantt";
 
 // import { RequestGantt } from './RequestGantt';
-import { RequestTimeline } from './RequestTimeline';
+import RequestTimeline from "./RequestTimeline"
 
 function ExampleRequest() {
     const request: Request = {
