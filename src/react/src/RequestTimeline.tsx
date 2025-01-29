@@ -5,7 +5,8 @@ import dayjs from 'dayjs';
 import { Request } from './brewtils-types';
 
 // https://github.com/namespace-ee/react-calendar-timeline/tree/master
-const groups = [{ id: 1, title: 'group 1' }, { id: 2, title: 'group 2' }];
+//const groups = [{ id: 1, title: 'group 1' }, { id: 2, title: 'group 2' }];
+const groups : Array<any>= [];
 
 // const items = [
 //   {
@@ -32,21 +33,22 @@ const groups = [{ id: 1, title: 'group 1' }, { id: 2, title: 'group 2' }];
 // ];
 
 function requestItems(request: Request, items: Array<any>) {
-
+  groups.push({ id: items.length + 1, title: 'group '+ (items.length + 1) });
   items.push({
     id: request.id,
-    group: 1,
+    group: (items.length + 1),
     title: request.command,
     start_time: request.created_at,
     end_time: request.status_updated_at
   });
 
-  // if (request.children.length > 0){
-    // request.children.forEach((childRequest: Request) => {
-    //   items = requestItems(childRequest, items);
-    // });
+  if (typeof request.children !== 'undefined' && request.children !== null && request.children.length > 0) {
+
+    request.children.forEach((childRequest: Request) => {
+      items = requestItems(childRequest, items);
+    });
     
-  // }
+  }
 
   return items;
 }
