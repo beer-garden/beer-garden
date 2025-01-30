@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" Metrics Service
+"""Metrics Service
 
 The metrics service manages:
 * Connectivity to the Prometheus Server
