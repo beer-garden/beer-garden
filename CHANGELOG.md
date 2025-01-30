@@ -17,6 +17,8 @@ TBD
 - Updated Topics generation and removal to Mongo Model instead of through Events
 - Optimized Topic pruning and generation
 - Expanded topics API to support manual execution of Topic Generation
+- Optimizing how Garden configurations are loaded
+- Fixed bug where Garden historical status info is maintained after rescan
 - Updated 3.24 migration script to skip children config creation if only one garden
 - Added config for Tornado web server to increase max body size for file uploads
 

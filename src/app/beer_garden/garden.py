@@ -12,12 +12,21 @@ The garden service is responsible for:
 import copy
 import json
 import logging
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List
 
 from brewtils.errors import PluginError
-from brewtils.models import Connection, Event, Events, Garden, Operation, System
+from brewtils.models import (
+    Connection,
+    Event,
+    Events,
+    Garden,
+    Operation,
+    StatusInfo,
+    System,
+)
 from mongoengine import DoesNotExist
 from yapconf.exceptions import (
     YapconfItemNotFound,
@@ -520,8 +529,28 @@ def update_garden_receiving(
 def load_garden_file(garden: Garden):
     path = Path(f"{config.get('children.directory')}/{garden.name}.yaml")
 
-    garden.publishing_connections.clear()
-    garden.receiving_connections.clear()
+    http_publishing_connection = Connection(
+        api="HTTP", status="CONFIGURATION_ERROR", status_info=StatusInfo()
+    )
+    http_receiving_connection = None
+    stomp_publishing_connection = Connection(
+        api="STOMP", status="CONFIGURATION_ERROR", status_info=StatusInfo()
+    )
+    stomp_receiving_connection = Connection(
+        api="STOMP", status="CONFIGURATION_ERROR", status_info=StatusInfo()
+    )
+
+    for connection in garden.publishing_connections:
+        if connection.api == "HTTP":
+            http_publishing_connection.status_info = connection.status_info
+        elif connection.api == "STOMP":
+            stomp_publishing_connection.status_info = connection.status_info
+
+    for connection in garden.receiving_connections:
+        if connection.api == "HTTP":
+            http_receiving_connection = connection
+        elif connection.api == "STOMP":
+            stomp_receiving_connection.status_info = connection.status_info
 
     if not path.exists():
         garden.status = "NOT_CONFIGURED"
@@ -529,6 +558,94 @@ def load_garden_file(garden: Garden):
 
     try:
         garden_config = config.load_child(path)
+        garden.default_user = config.get("default_user", garden_config)
+        garden.shared_users = config.get("shared_users", garden_config)
+
+        if config.get("http.enabled", garden_config):
+            config_map = {
+                "http.host": "host",
+                "http.port": "port",
+                "http.ssl.enabled": "ssl",
+                "http.url_prefix": "url_prefix",
+                "http.ssl.ca_cert": "ca_cert",
+                "http.ssl.ca_verify": "ca_verify",
+                "http.ssl.client_cert": "client_cert",
+                "http.client_timeout": "client_timeout",
+                "http.username": "username",
+                "http.password": "password",
+                "http.access_token": "access_token",
+                "http.refresh_token": "refresh_token",
+            }
+
+            http_publishing_connection.status = (
+                "PUBLISHING" if garden_config.get("publishing") else "DISABLED"
+            )
+
+            for key in config_map:
+                http_publishing_connection.config.setdefault(
+                    config_map[key], config.get(key, garden_config)
+                )
+
+        else:
+            http_publishing_connection.status = "NOT_CONFIGURED"
+
+        if config.get("stomp.enabled", garden_config):
+            config_map = {
+                "stomp.host": "host",
+                "stomp.port": "port",
+                "stomp.send_destination": "send_destination",
+                "stomp.subscribe_destination": "subscribe_destination",
+                "stomp.username": "username",
+                "stomp.password": "password",
+                "stomp.ssl": "ssl",
+            }
+
+            stomp_publishing_connection.status = (
+                "PUBLISHING" if garden_config.get("publishing") else "DISABLED"
+            )
+
+            for key in config_map:
+                stomp_publishing_connection.config.setdefault(
+                    config_map[key], config.get(key, garden_config)
+                )
+
+            headers = []
+            for header in config.get("stomp.headers", garden_config):
+                stomp_header = {}
+
+                header_dict = json.loads(header.replace("'", '"'))
+
+                stomp_header["key"] = header_dict["stomp.headers.key"]
+                stomp_header["value"] = header_dict["stomp.headers.value"]
+
+                headers.append(stomp_header)
+
+            stomp_publishing_connection.config.setdefault("headers", headers)
+
+            if not config.get("stomp.send_destination", garden_config):
+                stomp_publishing_connection.status = "DISABLED"
+
+            if config.get("stomp.subscribe_destination", garden_config):
+                stomp_receiving_connection.status = (
+                    "RECEIVING" if garden_config.get("receiving") else "DISABLED"
+                )
+                stomp_receiving_connection.config = copy.deepcopy(
+                    stomp_publishing_connection.config
+                )
+
+        else:
+            stomp_publishing_connection.status = (
+                "NOT_CONFIGURED" if garden_config.get("publishing") else "DISABLED"
+            )
+            stomp_receiving_connection.status = (
+                "NOT_CONFIGURED" if garden_config.get("receiving") else "DISABLED"
+            )
+
+        if http_receiving_connection:
+            http_receiving_connection.status = (
+                "RECEIVING" if garden_config.get("receiving") else "DISABLED"
+            )
+
     except (
         YapconfItemNotFound,
         YapconfLoadError,
@@ -536,107 +653,35 @@ def load_garden_file(garden: Garden):
         YapconfSpecError,
     ):
         garden.status = "CONFIGURATION_ERROR"
-        garden.publishing_connections.append(
-            Connection(api="HTTP", status="CONFIGURATION_ERROR")
-        )
-        garden.publishing_connections.append(
-            Connection(api="STOMP", status="CONFIGURATION_ERROR")
-        )
-        return garden
+    finally:
 
-    garden.default_user = config.get("default_user", garden_config)
-    garden.shared_users = config.get("shared_users", garden_config)
-
-    if config.get("http.enabled", garden_config):
-        config_map = {
-            "http.host": "host",
-            "http.port": "port",
-            "http.ssl.enabled": "ssl",
-            "http.url_prefix": "url_prefix",
-            "http.ssl.ca_cert": "ca_cert",
-            "http.ssl.ca_verify": "ca_verify",
-            "http.ssl.client_cert": "client_cert",
-            "http.client_timeout": "client_timeout",
-            "http.username": "username",
-            "http.password": "password",
-            "http.access_token": "access_token",
-            "http.refresh_token": "refresh_token",
-        }
-
-        http_connection = Connection(
-            api="HTTP",
-            status="PUBLISHING" if garden_config.get("publishing") else "DISABLED",
+        http_publishing_connection.status_info.set_status_heartbeat(
+            http_publishing_connection.status,
+            max_history=config.get("garden.status_history"),
         )
 
-        http_connection.status_info.set_status_heartbeat(
-            http_connection.status, max_history=config.get("garden.status_history")
+        stomp_publishing_connection.status_info.set_status_heartbeat(
+            stomp_publishing_connection.status,
+            max_history=config.get("garden.status_history"),
         )
 
-        for key in config_map:
-            http_connection.config.setdefault(
-                config_map[key], config.get(key, garden_config)
+        stomp_receiving_connection.status_info.set_status_heartbeat(
+            stomp_receiving_connection.status,
+            max_history=config.get("garden.status_history"),
+        )
+
+        garden.publishing_connections = [
+            http_publishing_connection,
+            stomp_publishing_connection,
+        ]
+        garden.receiving_connections = [stomp_receiving_connection]
+
+        if http_receiving_connection:
+            http_receiving_connection.status_info.set_status_heartbeat(
+                http_receiving_connection.status,
+                max_history=config.get("garden.status_history"),
             )
-        garden.publishing_connections.append(http_connection)
-    else:
-        garden.publishing_connections.append(
-            Connection(api="HTTP", status="NOT_CONFIGURED")
-        )
-
-    if config.get("stomp.enabled", garden_config):
-        config_map = {
-            "stomp.host": "host",
-            "stomp.port": "port",
-            "stomp.send_destination": "send_destination",
-            "stomp.subscribe_destination": "subscribe_destination",
-            "stomp.username": "username",
-            "stomp.password": "password",
-            "stomp.ssl": "ssl",
-        }
-
-        stomp_connection = Connection(
-            api="STOMP",
-            status="PUBLISHING" if garden_config.get("publishing") else "DISABLED",
-        )
-
-        stomp_connection.status_info.set_status_heartbeat(
-            stomp_connection.status, max_history=config.get("garden.status_history")
-        )
-
-        for key in config_map:
-            stomp_connection.config.setdefault(
-                config_map[key], config.get(key, garden_config)
-            )
-
-        headers = []
-        for header in config.get("stomp.headers", garden_config):
-            stomp_header = {}
-
-            header_dict = json.loads(header.replace("'", '"'))
-
-            stomp_header["key"] = header_dict["stomp.headers.key"]
-            stomp_header["value"] = header_dict["stomp.headers.value"]
-
-            headers.append(stomp_header)
-
-        stomp_connection.config.setdefault("headers", headers)
-
-        if config.get("stomp.send_destination", garden_config):
-            garden.publishing_connections.append(stomp_connection)
-
-        if config.get("stomp.subscribe_destination", garden_config):
-            subscribe_connection = copy.deepcopy(stomp_connection)
-            subscribe_connection.status = "RECEIVING"
-            garden.receiving_connections.append(subscribe_connection)
-    else:
-        garden.publishing_connections.append(
-            Connection(api="STOMP", status="NOT_CONFIGURED")
-        )
-
-    for connection in garden.receiving_connections:
-        if config.get("receiving", config=garden_config):
-            connection.status = "RECEIVING"
-        else:
-            connection.status = "DISABLED"
+            garden.receiving_connections.append(http_receiving_connection)
 
     return garden
 
@@ -648,11 +693,24 @@ def load_garden_config(garden: Garden = None, garden_name: str = None):
 
     garden = load_garden_file(garden)
 
-    return db.update(garden)
+    updates = {}
+
+    updates["publishing_connections"] = []
+    for connection in garden.publishing_connections:
+        updates["publishing_connections"].append(db.from_brewtils(connection))
+
+    updates["receiving_connections"] = []
+    for connection in garden.receiving_connections:
+        updates["receiving_connections"].append(db.from_brewtils(connection))
+
+    updates["status"] = garden.status
+
+    return db.modify(garden, **updates)
 
 
 def rescan():
     if config.get("children.directory"):
+        loaded_gardens = []
         children_directory = Path(config.get("children.directory"))
         if children_directory.exists():
             for path in children_directory.iterdir():
@@ -696,13 +754,27 @@ def rescan():
                     )
 
                 load_garden_config(garden=garden)
-                garden = update_garden(garden)
 
-                garden_sync(garden.name)
+                # Just need to publish the event for routing logic
+                publish(
+                    Event(
+                        name=Events.GARDEN_UPDATED.name,
+                        garden=config.get("garden.name"),
+                        payload_type="Garden",
+                        payload=garden,
+                    )
+                )
+
+                loaded_gardens.append(garden.name)
         else:
             logger.error(
                 f"Unable to find Children directory: {str(children_directory.resolve())}"
             )
+
+        for garden_name in loaded_gardens:
+            # Need to give the router a second to load the events
+            time.sleep(0.5)
+            garden_sync(garden_name)
 
 
 def garden_sync(sync_target: str = None):
@@ -895,9 +967,10 @@ def handle_event(event):
         Events.GARDEN_CONFIGURED.name,
         Events.GARDEN_REMOVED.name,
         Events.GARDEN_CREATED.name,
-        Events.GARDEN_UPDATED.name,
     ]:
-        publish_garden()
+        # This publish garden event is to keep parent gardens in sync
+        if config.get("parent.stomp.enabled") or config.get("parent.http.enabled"):
+            publish_garden()
 
     if "SYSTEM" in event.name or "INSTANCE" in event.name:
         # If a System or Instance is updated, publish updated Local Garden Model for UI
