@@ -4,6 +4,8 @@ import { Form } from 'react-bootstrap';
 import Breadcrumb from 'react-bootstrap/Breadcrumb';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
+// import RequestGantt from "./RequestGantt";
+
 // import { Gantt } from "wx-react-gantt";
 
 // import * as MyPackage from 'wx-react-gantt';
@@ -12,7 +14,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 // import { Gantt, WillowDark, task, link } from "wx-react-gantt";
 
 // import { RequestGantt } from './RequestGantt';
-import RequestTimeline from "./RequestTimeline"
+// import RequestTimeline from "./RequestTimeline"
+// import ApexTimeline from "./ApexTimeline";
+import RequestHistory from "./RequestHistory";
 
 function ExampleRequest() {
     const request: Request = {
@@ -132,144 +136,6 @@ function RequestHeader(request: Request) {
     </div>)
 }
 
-// function ExtractRequestTimeline(request: Request, requestTasks: Array<task>, requestLinks: Array<link>) {
-
-//     requestTasks.push({
-//         id: request.id,
-//         open: true,
-//         start: new Date(request.created_at),
-//         end: new Date(request.status_updated_at),
-//         text: request.command,
-//         progress: 100,
-//         type: "summary"
-//     });
-
-//     if (request.children && request.children.length > 0) {
-//         for(let i = 0; i < request.children.length; i++) {
-//             requestLinks.push({ id: i, source: request.id, target: request.children[i].id, type: "e2s" });
-//             [requestTasks, requestLinks] = ExtractRequestTimeline(request.children[i], requestTasks, requestLinks);
-//         }
-//     }
-//     return [requestTasks, requestLinks];
-// }
-// function RequestTimeline(request: Request) {
-
-//     // const requestTasks: Array<task> = [];
-//     // const requestLinks: Array<link> = [];
-
-//     let [requestTasks, requestLinks] = ExtractRequestTimeline(request, [], []);
-
-
-
-//     // const tasks = [
-//     //     {
-//     //       id: 1,
-//     //       open: true,
-//     //       start: new Date(2023, 11, 6),
-//     //       duration: 8,
-//     //       text: "React Gantt Widget",
-//     //       progress: 60,
-//     //       type: "summary"
-//     //     },
-//     //     {
-//     //       id: 2,
-//     //       parent: 1,
-//     //       start: new Date(2023, 11, 6),
-//     //       duration: 4,
-//     //       text: "Lib-Gantt",
-//     //       progress: 80
-//     //     },
-//     //     {
-//     //       id: 3,
-//     //       parent: 1,
-//     //       start: new Date(2023, 11, 11),
-//     //       duration: 4,
-//     //       text: "UI Layer",
-//     //       progress: 30
-//     //     },
-//     //     {
-//     //       id: 4,
-//     //       start: new Date(2023, 11, 12),
-//     //       duration: 8,
-//     //       text: "Documentation",
-//     //       progress: 10,
-//     //       type: "summary"
-//     //     },
-//     //     {
-//     //       id: 5,
-//     //       parent: 4,
-//     //       start: new Date(2023, 11, 10),
-//     //       duration: 1,
-//     //       text: "Overview",
-//     //       progress: 30
-//     //     },
-//     //     {
-//     //       id: 6,
-//     //       parent: 4,
-//     //       start: new Date(2023, 12, 11),
-//     //       duration: 8,
-//     //       text: "API reference",
-//     //       progress: 0
-//     //     }
-//     //   ];
-
-//       const CustomColumn = (id: any) => {
-//         return id;
-//       };
-
-//       const columns = [
-//         { id: "text", header: "Command", flexGrow: 2 },
-//         {
-//           id: "start",
-//           header: "The Start date",
-//           flexGrow: 1,
-//           align: "center",
-//         },
-//         {
-//             id: "id",
-//             header: "Description",
-//             flexGrow: 1,
-//             align: "center",
-//             template: (id: any) => CustomColumn(id),
-//           },
-//         // {
-//         //     id: "id",
-//         //     header: "Comment",
-//         //     flexGrow: 1,
-//         //     align: "center",
-//         //     template: (id: any) => CustomColumn(id),
-//         //   },
-//       ];
-    
-//     //   const links = [
-//     //     { id: 1, source: 3, target: 4, type: "e2s" },
-//     //     { id: 2, source: 1, target: 2, type: "e2s" },
-//     //     { id: 21, source: 8, target: 1, type: "s2s" },
-//     //     { id: 22, source: 1, target: 6, type: "s2s" },
-//     // ];
-    
-//       const scales = [
-//         { unit: "month", step: 1, format: "MMMM yyy" },
-//         { unit: "day", step: 1, format: "d" },
-//       ];
-
-//       const dayStyle = a => {
-//         const day = a.getDay() === 5 || a.getDay() === 6;
-//         return day ? "sday" : "";
-//       };
-
-//       const complexScales = [
-//         { unit: "year", step: 1, format: "yyyy" },
-//         { unit: "month", step: 2, format: "MMMM yyy" },
-//         { unit: "week", step: 1, format: "w" },
-//         { unit: "day", step: 1, format: "d", css: dayStyle },
-//       ];
-    
-//       return (<WillowDark><Gantt tasks={requestTasks} links={requestLinks} scales={complexScales} columns={columns}/></WillowDark>);
-
-//     // return null;
-
-// }
 
 function RequestOutput(request: Request) {
     return (
@@ -292,11 +158,7 @@ function RequestOutput(request: Request) {
 function RequestInput(request: Request) {
     return (
         <div>
-            <ButtonToolbar className="mb-3" aria-label="Toolbar with Button groups">
-                <ButtonGroup aria-label="Basic example" style={{ marginLeft: "auto" }}>
-                    <Button variant="warning" >Pour It Again</Button>
-                </ButtonGroup>
-            </ButtonToolbar>
+            
             <Breadcrumb>
                 <Breadcrumb.Item active>{request.namespace}</Breadcrumb.Item>
                 <Breadcrumb.Item active>{request.system}</Breadcrumb.Item>
@@ -325,6 +187,11 @@ function RequestInput(request: Request) {
                     <Form.Text muted>How long to sleep</Form.Text>
                 </Form.Group>
             </Form>
+            <ButtonToolbar className="mb-3" aria-label="Toolbar with Button groups">
+                <ButtonGroup aria-label="Basic example" style={{ marginLeft: "auto" }}>
+                    <Button variant="warning" >Pour It Again</Button>
+                </ButtonGroup>
+            </ButtonToolbar>
         </div>
     )
 }
@@ -362,11 +229,11 @@ function RequestView() {
             </Accordion>
             <Accordion defaultActiveKey={['1']} alwaysOpen>
                 <Accordion.Item eventKey="1">
-                    <Accordion.Header>Request Info</Accordion.Header>
+                    <Accordion.Header>Request History</Accordion.Header>
                     <Accordion.Body>
                         {/* <RequestTimeline {...request} /> */}
-                        {/* <RequestGantt /> */}
-                        <RequestTimeline {...request} />
+                         <RequestHistory {...request} /> 
+                        {/* <ApexTimeline {...request} />*/}
                     </Accordion.Body>
                 </Accordion.Item>
             </Accordion>

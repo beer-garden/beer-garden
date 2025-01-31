@@ -308,6 +308,7 @@ export interface Request {
     requester?: string;
     source_garden?: string;
     target_garden?: string;
+    parent_id?: string;
 }
     
 export interface RequestTemplate {
