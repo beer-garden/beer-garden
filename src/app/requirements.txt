@@ -93,8 +93,6 @@ stomp-py==6.0.0
     # via beer_garden (setup.py)
 tornado==6.2
     # via beer_garden (setup.py)
-typing-extensions==4.12.2
-    # via brewtils
 tzlocal==5.0.1
     # via apscheduler
 urllib3==1.26.16
