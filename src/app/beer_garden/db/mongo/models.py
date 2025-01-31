@@ -1014,10 +1014,10 @@ class Garden(MongoModel, Document):
 
     systems = ListField(ReferenceField(System, reverse_delete_rule=PULL))
 
-    parent = StringField(required=False)
+    upstream = StringField(required=False)
 
-    children = DummyField(required=False)
-    has_parent = BooleanField(required=False, default=False)
+    downstream = DummyField(required=False)
+    has_upstream = BooleanField(required=False, default=False)
 
     default_user = StringField(required=False)
     shared_users = BooleanField(required=False, default=False)
@@ -1045,7 +1045,7 @@ class Garden(MongoModel, Document):
             self._update_associated_systems()
 
             # Ensure no configurations are stored locally, if sent
-            if self.has_parent:
+            if self.has_upstream:
                 for connection in self.receiving_connections:
                     connection.config = {}
 

@@ -285,6 +285,48 @@ def ensure_v3_29_model_migration():
                 )
 
 
+def ensure_v3_30_model_migration():
+    db = get_db()
+    if (
+        contains_field("garden", "has_parent")
+        or contains_field("garden", "parent")
+        or contains_field("garden", "children")
+    ):
+        logger.warning(
+            "Parent/children garden naming convention was found and will be updated to"
+            " upstream/downstream. Database is likely using the old (v3.29) style"
+            " of storing in the database."
+        )
+        garden_collection = db.get_collection("garden")
+        garden_collection.update({
+            "has_parent": {
+                "$exists": True
+            }
+        }, {
+            "$rename": {
+                "has_parent": "has_upstream"
+            }
+        }, False, True)
+        garden_collection.update({
+            "parent": {
+                "$exists": True
+            }
+        }, {
+            "$rename": {
+                "parent": "upstream"
+            }
+        }, False, True)
+        garden_collection.update({
+            "has_parent": {
+                "$exists": True
+            }
+        }, {
+            "$rename": {
+                "children": "downstream"
+            }
+        }, False, True)
+
+
 def ensure_model_migration():
     """Ensures that the database is properly migrated. All migrations ran from this
     single function for easy management"""
@@ -293,6 +335,7 @@ def ensure_model_migration():
     ensure_v3_24_model_migration()
     ensure_v3_27_model_migration()
     ensure_v3_29_model_migration()
+    ensure_v3_30_model_migration()
 
 
 def check_indexes(document_class):

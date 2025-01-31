@@ -537,7 +537,7 @@ class TestUserForwarding:
         )
         garden_2 = Garden(
             name="B",
-            children=[garden_1],
+            downstream=[garden_1],
             systems=[
                 System(
                     name="bar",
@@ -599,15 +599,15 @@ class TestUserForwarding:
             AliasUserMap(target_garden="c", username="test"),
         ]
 
-        one_match_garden = Garden(name="target", children=[Garden(name="a")])
+        one_match_garden = Garden(name="target", downstream=[Garden(name="a")])
         two_match_garden = Garden(
-            name="target", children=[Garden(name="b", children=[Garden(name="c")])]
+            name="target", downstream=[Garden(name="b", downstream=[Garden(name="c")])]
         )
         three_match_garden = Garden(
             name="target",
-            children=[
+            downstream=[
                 Garden(
-                    name="c", children=[Garden(name="b", children=[Garden(name="a")])]
+                    name="c", downstream=[Garden(name="b", downstream=[Garden(name="a")])]
                 )
             ],
         )

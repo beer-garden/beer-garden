@@ -6,7 +6,7 @@ The garden service is responsible for:
 * Generating local `Garden` record
 * Getting `Garden` objects from the database
 * Updating `Garden` objects in the database
-* Responding to `Garden` sync requests and forwarding request to children
+* Responding to `Garden` sync requests and forwarding request to downstream gardens
 * Handling `Garden` events
 """
 import copy
@@ -72,29 +72,29 @@ def filter_router_result(garden: Garden) -> Garden:
             for key in drop_keys:
                 connection.config.pop(key)
 
-    if filtered_garden.children:
-        for child in filtered_garden.children:
-            filter_router_result(child)
+    if filtered_garden.downstream:
+        for downstream_garden in filtered_garden.downstream:
+            filter_router_result(downstream_garden)
     return filtered_garden
 
 
-def get_children_garden(garden: Garden) -> Garden:
+def get_downstream_garden(garden: Garden) -> Garden:
     if garden.connection_type == "LOCAL":
-        garden.children = db.query(
-            Garden, filter_params={"connection_type__ne": "LOCAL", "has_parent": False}
+        garden.downstream = db.query(
+            Garden, filter_params={"connection_type__ne": "LOCAL", "has_upstream": False}
         )
-        if garden.children:
-            for child in garden.children:
-                child.has_parent = True
-                child.parent = garden.name
+        if garden.downstream:
+            for downstream_garden in garden.downstream:
+                downstream_garden.has_upstream = True
+                downstream_garden.upstream = garden.name
     else:
-        garden.children = db.query(Garden, filter_params={"parent": garden.name})
+        garden.downstream = db.query(Garden, filter_params={"upstream": garden.name})
 
-    if garden.children:
-        for child in garden.children:
-            get_children_garden(child)
+    if garden.downstream:
+        for downstream_garden in garden.downstream:
+            get_downstream_garden(downstream_garden)
     else:
-        garden.children = []
+        garden.downstream = []
 
     return garden
 
@@ -113,7 +113,7 @@ def get_garden(garden_name: str) -> Garden:
         garden = local_garden()
     else:
         garden = db.query_unique(Garden, name=garden_name, raise_missing=True)
-    get_children_garden(garden)
+    get_downstream_garden(garden)
     return garden
 
 
@@ -130,14 +130,14 @@ def get_gardens(include_local: bool = True) -> List[Garden]:
     # This is necessary for as long as local_garden is still needed. See the notes
     # there for more detail.
     gardens = db.query(
-        Garden, filter_params={"connection_type__ne": "LOCAL", "has_parent": False}
+        Garden, filter_params={"connection_type__ne": "LOCAL", "has_upstream": False}
     )
 
     if include_local:
         gardens += [local_garden()]
 
     for garden in gardens:
-        get_children_garden(garden)
+        get_downstream_garden(garden)
 
     return gardens
 
@@ -181,7 +181,7 @@ def publish_garden(status: str = "RUNNING") -> Garden:
         The local garden, all systems
     """
     garden = local_garden()
-    get_children_garden(garden)
+    get_downstream_garden(garden)
     garden.connection_type = None
     garden.status = status
 
@@ -337,9 +337,9 @@ def remove_remote_systems(garden: Garden):
     for system in garden.systems:
         remove_system(system.id)
 
-    if garden.children:
-        for children in garden.children:
-            remove_remote_systems(children)
+    if garden.downstream:
+        for downstream_garden in garden.downstream:
+            remove_remote_systems(downstream_garden)
 
 
 @publish_event(Events.GARDEN_REMOVED)
@@ -357,8 +357,8 @@ def remove_garden(garden_name: str = None, garden: Garden = None) -> None:
 
     remove_remote_systems(garden)
 
-    for child in garden.children:
-        remove_garden(child.name)
+    for downstream_garden in garden.downstream:
+        remove_garden(downstream_garden.name)
 
     db.delete(garden)
 
@@ -433,9 +433,9 @@ def update_garden(garden: Garden) -> Garden:
 def upsert_garden(garden: Garden, skip_connections: bool = True) -> Garden:
     """Updates or inserts Garden"""
 
-    if garden.children:
-        for child in garden.children:
-            upsert_garden(child, skip_connections=False)
+    if garden.downstream:
+        for downstream_garden in garden.downstream:
+            upsert_garden(downstream_garden, skip_connections=False)
 
     try:
         existing_garden = get_garden(garden.name)
@@ -443,7 +443,7 @@ def upsert_garden(garden: Garden, skip_connections: bool = True) -> Garden:
     except DoesNotExist:
         existing_garden = None
 
-    del garden.children
+    del garden.downstream
 
     if existing_garden is None:
         return create_garden(garden)
@@ -653,9 +653,9 @@ def load_garden_config(garden: Garden = None, garden_name: str = None):
 
 def rescan():
     if config.get("children.directory"):
-        children_directory = Path(config.get("children.directory"))
-        if children_directory.exists():
-            for path in children_directory.iterdir():
+        downstream_directory = Path(config.get("children.directory"))
+        if downstream_directory.exists():
+            for path in downstream_directory.iterdir():
                 path_parts = path.parts
 
                 if len(path_parts) == 0:
@@ -701,7 +701,7 @@ def rescan():
                 garden_sync(garden.name)
         else:
             logger.error(
-                f"Unable to find Children directory: {str(children_directory.resolve())}"
+                f"Unable to find downstream directory: {str(downstream_directory.resolve())}"
             )
 
 
@@ -802,7 +802,7 @@ def handle_event(event):
     """Handle garden-related events
 
     For GARDEN events we only care about events originating from downstream. We also
-    only care about immediate children, not grandchildren.
+    only care about immediate downstream gardens.
 
     Whenever a garden event is detected we should update that garden's database
     representation.
@@ -843,20 +843,20 @@ def handle_event(event):
             if event.name == Events.GARDEN_SYNC.name:
                 logger.info(f"Garden sync event for {event.payload.name}")
                 try:
-                    # Check if child garden as deleted
+                    # Check if downstream garden is deleted
                     db_garden = get_garden(event.payload.name)
-                    for db_child in db_garden.children:
-                        child_deleted = True
-                        if event.payload.children:
-                            for event_child in event.payload.children:
-                                if db_child.name == event_child.name:
-                                    child_deleted = False
+                    for db_downstream_garden in db_garden.downstream:
+                        downstream_garden_deleted = True
+                        if event.payload.downstream:
+                            for event_downstream_garden in event.payload.downstream:
+                                if db_downstream_garden.name == event_downstream_garden.name:
+                                    downstream_garden_deleted = False
                                     break
-                        if child_deleted:
+                        if downstream_garden_deleted:
                             logger.error(
-                                f"Unable to find {db_child.name} in Garden sync"
+                                f"Unable to find {db_downstream_garden.name} in Garden sync"
                             )
-                            remove_garden(garden=db_child)
+                            remove_garden(garden=db_downstream_garden)
                 except DoesNotExist:
                     pass
 

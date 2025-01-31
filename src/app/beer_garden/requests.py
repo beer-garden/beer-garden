@@ -1178,9 +1178,9 @@ def clean_command_type_temp(request: Request, is_remote: bool):
     # Delete any children that are TEMP once the current request is completed
     request.children = db.query(Request, filter_params={"parent": request})
 
-    for child in request.children:
-        if child.command_type == "TEMP":
-            db.delete(child)
+    for downstream_garden in request.children:
+        if downstream_garden.command_type == "TEMP":
+            db.delete(downstream_garden)
 
     return request
 
@@ -1193,10 +1193,10 @@ def cancel_request_children(request: Request):
     """
     request.children = db.query(Request, filter_params={"parent": request})
 
-    for child in request.children:
-        if child.status in [
+    for downstream_garden in request.children:
+        if downstream_garden.status in [
             "IN_PROGRESS",
             "CREATED",
             "RECEIVED",
         ]:
-            cancel_request(request=child)
+            cancel_request(request=downstream_garden)

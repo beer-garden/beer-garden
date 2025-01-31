@@ -512,13 +512,13 @@ stomp:
     def test_upsert_garden_add_children(self, bg_garden):
         bg_garden.systems = []
 
-        bg_garden.children = [
+        bg_garden.downstream = [
             BrewtilsGarden(
                 name="child",
                 status="RUNNING",
                 connection_type="REMOTE",
-                has_parent=True,
-                parent="garden",
+                has_upstream=True,
+                upstream="garden",
             )
         ]
 
@@ -528,18 +528,18 @@ stomp:
         parent = get_garden("garden")
 
         assert child.name == "child"
-        assert len(parent.children) == 1
+        assert len(parent.downstream) == 1
 
     def test_upsert_garden_update_values(self, bg_garden):
         bg_garden.systems = []
-        bg_garden.has_parent = False
+        bg_garden.has_upstream = False
         bg_garden.status = "RUNNING"
         bg_garden.metadata = {"test": "test"}
         bg_garden.connection_type = "REMOTE"
 
         garden = create_garden(bg_garden)
 
-        garden.has_parent = True
+        garden.has_upstream = True
         garden.status = "STOPPED"
         garden.metadata = {"alt": "alt"}
         garden.connection_type = "LOCAL"
@@ -547,7 +547,7 @@ stomp:
         updated_garden = upsert_garden(garden)
 
         # Not changed
-        assert not updated_garden.has_parent
+        assert not updated_garden.has_upstream
         assert updated_garden.connection_type == "REMOTE"
 
         # Changed
@@ -633,8 +633,8 @@ stomp:
             BrewtilsGarden(
                 name="parent",
                 connection_type="REMOTE",
-                has_parent=True,
-                parent=grand_parent.name,
+                has_upstream=True,
+                upstream=grand_parent.name,
             )
         )
 
@@ -642,8 +642,8 @@ stomp:
             BrewtilsGarden(
                 name="child",
                 connection_type="REMOTE",
-                has_parent=True,
-                parent=parent.name,
+                has_upstream=True,
+                upstream=parent.name,
             )
         )
 
