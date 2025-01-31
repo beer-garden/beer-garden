@@ -68,7 +68,7 @@ jobs:
         run: make package
 
       - name: Verify local package
-        run: twine check src/app/dist/*
+        run: twine check dist/*
 
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
