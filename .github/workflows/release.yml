@@ -62,15 +62,19 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install setuptools wheel twine
+          pip install --upgrade setuptools wheel twine
 
       - name: Make Package
         run: make package
+
+      - name: Verify local package
+        run: twine check src/app/dist/*
 
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: src/app/dist
+          verify-metadata: false
 
   pypi-verify:
     name: Verify PyPI Publish
