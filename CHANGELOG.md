@@ -2,7 +2,7 @@
 
 # 3.29.2
 
-TBD
+1/31/2025
 
 - Added support for deprecate kwarg for parameter or command
 - Updated orphan pruner to delete orphaned files
