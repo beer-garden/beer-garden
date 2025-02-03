@@ -13,19 +13,19 @@
             </li>
         </ul>
     </div>
-    <div ng-if="selectedGarden.has_parent">
+    <div ng-if="selectedgarden.has_upstream">
         <h4>Upstream</h4>
         <ul>
             <li>
-                <span>{{selectedGarden.parent}}</span>
+                <span>{{selectedGarden.upstream}}</span>
             </li>
         </ul>
     </div>
 
-    <div ng-if="selectedGarden.children.length > 0">
+    <div ng-if="selectedGarden.downstream.length > 0">
         <h4>Downstream</h4>
         <ul>
-            <li ng-repeat="child in selectedGarden.children">{{child.name}}</li>
+            <li ng-repeat="child in selectedGarden.downstream">{{child.name}}</li>
         </ul>
     </div>
     <div ng-if="selectedGarden.default_user.length > 0">

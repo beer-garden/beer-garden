@@ -405,9 +405,9 @@ export default function appRun(
       
       systems = garden.systems;
     }
-    if (garden.children !== undefined) {
-      for (let i = 0; i < garden.children.length; i++){
-        systems = systems.concat($rootScope.extractSystems(garden.children[i], true));
+    if (garden.downstream !== undefined) {
+      for (let i = 0; i < garden.downstream.length; i++){
+        systems = systems.concat($rootScope.extractSystems(garden.downstream[i], true));
       }
     }
     return systems;
@@ -420,9 +420,9 @@ export default function appRun(
         return true;
       }
     }
-    // Check children
-    for (let i = 0; i < $rootScope.garden.children.length; i++){
-      if ($rootScope.isRemoteSystemRoutable(system, $rootScope.garden.children[i])){
+    // Check downstream gardens
+    for (let i = 0; i < $rootScope.garden.downstream.length; i++){
+      if ($rootScope.isRemoteSystemRoutable(system, $rootScope.garden.downstream[i])){
         return true;
       }
     }
@@ -446,8 +446,8 @@ export default function appRun(
       }
     }
 
-    for (let i = 0; i < garden.children.length; i++){
-      if ($rootScope.isRemoteSystemRoutable(system, garden.children[i])){
+    for (let i = 0; i < garden.downstream.length; i++){
+      if ($rootScope.isRemoteSystemRoutable(system, garden.downstream[i])){
         return true;
       }
     }
@@ -455,21 +455,21 @@ export default function appRun(
     return false;
   }
 
-  $rootScope.extractGardenChildren = function(gardens) {
+  $rootScope.extractGardenDownstream = function(gardens) {
     let results = []
     for (let i = 0; i < gardens.length; i++){
       if (gardens[i]["connection_type"] == "LOCAL"){
         results.push(gardens[i]);
-        $rootScope.extractGardenChildrenLoop(results, gardens[i], true);
+        $rootScope.extractGardenDownstreamLoop(results, gardens[i], true);
       }
     }
     return results;
   }
 
-  $rootScope.extractGardenChildrenLoop = function(gardens, garden, include_systems) {
-    for (let i = 0; i < garden.children.length; i++){
-      gardens.push(garden.children[i]);
-      $rootScope.extractGardenChildrenLoop(gardens, garden.children[i], true);
+  $rootScope.extractGardenDownstreamLoop = function(gardens, garden, include_systems) {
+    for (let i = 0; i < garden.downstream.length; i++){
+      gardens.push(garden.downstream[i]);
+      $rootScope.extractGardenDownstreamLoop(gardens, garden.downstream[i], true);
     }
     return gardens;
   }
@@ -487,8 +487,8 @@ export default function appRun(
           seenIndexes.push(upsertSystem(garden.systems[i], hideRunners));
         }
       }
-      for (let i = 0; i < garden.children.length; i++){
-        upsertGardenSystems(garden.children[i], seenIndexes, true);
+      for (let i = 0; i < garden.downstream.length; i++){
+        upsertGardenSystems(garden.downstream[i], seenIndexes, true);
       }
     }
   }
@@ -531,19 +531,19 @@ export default function appRun(
     }
   }
 
-  function updateGardenChildren(srcGarden, newGarden) {
+  function updateGardenDownstream(srcGarden, newGarden) {
 
     let matched = false;
-    for (let i = 0; i < srcGarden.children.length; i++){
-      if (srcGarden.children[i].name== newGarden.name){
-        srcGarden.children[i] = newGarden;
+    for (let i = 0; i < srcGarden.downstream.length; i++){
+      if (srcGarden.downstream[i].name== newGarden.name){
+        srcGarden.downstream[i] = newGarden;
         matched = true;
         break
       }
     }
     if (!matched){
-      for (let i = 0; i < srcGarden.children.length; i++){
-        srcGarden.children[i] = updateGardenChildren(srcGarden.children[i], newGarden);
+      for (let i = 0; i < srcGarden.downstream.length; i++){
+        srcGarden.downstream[i] = updateGardenDownstream(srcGarden.downstream[i], newGarden);
       }
     }
     
@@ -555,7 +555,7 @@ export default function appRun(
       if ($rootScope.garden.name== event.payload.name){
         $rootScope.garden = event.payload;
       } else {
-        $rootScope.garden = updateGardenChildren($rootScope.garden, event.payload);
+        $rootScope.garden = updateGardenDownstream($rootScope.garden, event.payload);
       }
       updateGardenSystems();
     }

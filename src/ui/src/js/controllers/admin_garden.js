@@ -29,7 +29,7 @@ export default function adminGardenController(
   $scope.successCallback = function(response) {
     for (let i = 0; i < response.data.length; i++){
       if (!response.data.has_parent){
-        $scope.data = $scope.extractGardenChildren([response.data[i]]);
+        $scope.data = $scope.extractGardenDownstream([response.data[i]]);
       }
     }
     $scope.response = response;
@@ -80,10 +80,10 @@ export default function adminGardenController(
   }
 
   $scope.findGardenLabel = function(garden, gardenLabel) {
-    if (garden.parent != null) {
-      gardenLabel = garden.parent + "/" + gardenLabel;
+    if (garden.upstream != null) {
+      gardenLabel = garden.upstream + "/" + gardenLabel;
       for (let i = 0; i < $scope.data.length; i++){
-        if ($scope.data[i].name == garden.parent){
+        if ($scope.data[i].name == garden.upstream){
           gardenLabel = $scope.findGardenLabel($scope.data[i], gardenLabel)
         }
       }
@@ -197,8 +197,8 @@ export default function adminGardenController(
   };
 
   $scope.isChild = function(garden) {
-    if (garden.has_parent){
-      return garden.parent == $scope.config.gardenName;
+    if (garden.has_upstream){
+      return garden.upstream == $scope.config.gardenName;
     }
     return false;
   };
@@ -268,7 +268,7 @@ export default function adminGardenController(
       return false;
     }
 
-    if (garden.parent != $scope.config.gardenName){
+    if (garden.upstream != $scope.config.gardenName){
       return false;
     }
 
@@ -291,19 +291,19 @@ export default function adminGardenController(
     loadGardens();
   };
 
-  $scope.removeGardenEventChildren = function(garden) {
+  $scope.removeGardenEventDownstream = function(garden) {
 
-    // Remove children
-    for (let i = 0; i < garden.children.length; i++) {
-      $scope.removeGardenEventChildren(garden.children[i])
+    // Remove downstream gardens
+    for (let i = 0; i < garden.downstream.length; i++) {
+      $scope.removeGardenEventDownstream(garden.downstream[i])
     }
 
     // Remove source garden
     for (let i = 0; i < $scope.data.length; i++) {
       if ($scope.data[i].id == garden.id) {
         $scope.data.splice(i, 1);
-      } else if ($scope.data[i].parent == garden.name){
-        // Clean up any missing children
+      } else if ($scope.data[i].upstream == garden.name){
+        // Clean up any missing downstream
         $scope.data.splice(i, 1);
       }
     }
@@ -312,14 +312,14 @@ export default function adminGardenController(
   }
 
   $scope.eventUpsetGarden = function (garden) {
-    if (garden.connection_type != "LOCAL" && !garden.has_parent) {
+    if (garden.connection_type != "LOCAL" && !garden.has_upstream) {
       for (let i = 0; i < $scope.data.length; i++) {
         if ($scope.data[i].connection_type == "LOCAL") {
-          garden.parent = $scope.data[i].name;
+          garden.upstream = $scope.data[i].name;
           break;
         }
       }
-      garden.has_parent = true;
+      garden.has_upstream = true;
     }
     let gardenNotFound = true;
     for (let i = 0; i < $scope.data.length; i++) {
@@ -331,18 +331,18 @@ export default function adminGardenController(
           $scope.data[i][updateValues[x]] = garden[updateValues[x]]
         }
 
-        // Not all events include children, only update when children are provided or added
+        // Not all events include downstream, only update when downstream are provided or added
         if (
-          garden.children !== undefined &&
-          garden.children != null &&
+          garden.downstream !== undefined &&
+          garden.downstream != null &&
           (
-            garden.children.length > 0 ||
-            $scope.data[i].children === undefined ||
-            $scope.data[i].children == null ||
-            $scope.data[i].children.length == 0
+            garden.downstream.length > 0 ||
+            $scope.data[i].downstream === undefined ||
+            $scope.data[i].downstream == null ||
+            $scope.data[i].downstream.length == 0
           )
         ) {
-          $scope.data[i].children = garden.children;
+          $scope.data[i].downstream = garden.downstream;
         }
         gardenNotFound = false;
         break;
@@ -352,9 +352,9 @@ export default function adminGardenController(
     if (gardenNotFound) {
       $scope.data.push(garden);
     }
-    if (garden.children !== undefined && garden.children != null){
-      for (let x = 0; x < garden.children.length; x++) {
-        $scope.eventUpsetGarden(garden.children[x]);
+    if (garden.downstream !== undefined && garden.downstream != null){
+      for (let x = 0; x < garden.downstream.length; x++) {
+        $scope.eventUpsetGarden(garden.downstream[x]);
       }
     }
 
@@ -363,7 +363,7 @@ export default function adminGardenController(
   EventService.addCallback('admin_garden', (event) => {
     switch (event.name) {
       case 'GARDEN_REMOVED':
-        $scope.removeGardenEventChildren(event.payload)
+        $scope.removeGardenEventDownstream(event.payload)
         $scope.$digest();
         break;
       case 'GARDEN_CREATED':

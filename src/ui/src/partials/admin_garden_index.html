@@ -46,7 +46,7 @@
           <div class="list-group-item clearfix" ng-repeat="connection in garden.receiving_connections | orderBy: 'api'">
             <bg-status target="connection.status"></bg-status>
             <span style="padding: 0 10px" title="{{getConnectionUrl(connection, true)}}">{{connection.api}}</span>
-            <span class="btn-toolbar pull-right" ng-if="!garden.has_parent && hasGardenPermission('GARDEN_ADMIN', garden)">
+            <span class="btn-toolbar pull-right" ng-if="!garden.has_upstream && hasGardenPermission('GARDEN_ADMIN', garden)">
               <span class="btn-group btn-group-xs">
                 <button type="button" class="btn btn-default fa fa-play"
                   ng-click="startReceivingConnection(garden, connection.api)"
