@@ -36,8 +36,8 @@ logger = logging.getLogger(__name__)
 """
 User Actions should never throw Events. These events get broadcasted to the UI. This
 could cause issues in scenarios where a downstream garden has authentication and the upstream
-garden does not. Where anyone monitoring the upstream garden events could see unfiltered user updates
-on the downstream garden.
+garden does not. Where anyone monitoring the upstream garden events could see unfiltered user
+updates on the downstream garden.
 """
 
 

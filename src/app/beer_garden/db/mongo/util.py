@@ -302,33 +302,24 @@ def ensure_v3_30_model_migration():
             " of storing in the database."
         )
         garden_collection = db.get_collection("garden")
-        garden_collection.update({
-            "has_parent": {
-                "$exists": True
-            }
-        }, {
-            "$rename": {
-                "has_parent": "has_upstream"
-            }
-        }, False, True)
-        garden_collection.update({
-            "parent": {
-                "$exists": True
-            }
-        }, {
-            "$rename": {
-                "parent": "upstream"
-            }
-        }, False, True)
-        garden_collection.update({
-            "has_parent": {
-                "$exists": True
-            }
-        }, {
-            "$rename": {
-                "children": "downstream"
-            }
-        }, False, True)
+        garden_collection.update(
+            {"has_parent": {"$exists": True}},
+            {"$rename": {"has_parent": "has_upstream"}},
+            False,
+            True,
+        )
+        garden_collection.update(
+            {"parent": {"$exists": True}},
+            {"$rename": {"parent": "upstream"}},
+            False,
+            True,
+        )
+        garden_collection.update(
+            {"has_parent": {"$exists": True}},
+            {"$rename": {"children": "downstream"}},
+            False,
+            True,
+        )
 
 
 def ensure_model_migration():

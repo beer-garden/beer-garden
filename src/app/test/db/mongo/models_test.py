@@ -638,7 +638,9 @@ class TestGarden:
     @pytest.fixture
     def downstream_garden(self, downstream_system_v1):
         garden = Garden(
-            name="downstream_garden", connection_type="http", systems=[downstream_system_v1]
+            name="downstream_garden",
+            connection_type="http",
+            systems=[downstream_system_v1],
         ).save()
 
         yield garden
@@ -657,7 +659,9 @@ class TestGarden:
         with pytest.raises(NotUniqueError):
             Garden(name=f"not{local_garden.name}", connection_type="LOCAL").save()
 
-    def test_downstream_garden_system_attrib_update(self, downstream_garden, downstream_system_v2):
+    def test_downstream_garden_system_attrib_update(
+        self, downstream_garden, downstream_system_v2
+    ):
         """If the systems of a downstream garden are updated such that their names,
         namespaces, or versions are changed, the original systems are removed and
         replaced with the new systems when the garden is saved."""
@@ -698,7 +702,9 @@ class TestGarden:
         )
         assert new_system_ids.intersection(orig_system_ids) == set()
 
-    def test_downstream_garden_system_id_update(self, downstream_garden, downstream_system_v1_diff_id):
+    def test_downstream_garden_system_id_update(
+        self, downstream_garden, downstream_system_v1_diff_id
+    ):
         """If the systems of a downstream garden are updated such that the names, namespaces
         and versions remain constant, but the IDs are different, the original systms
         are removed and replaced with the new systems when the garden is saved."""
@@ -731,7 +737,6 @@ class TestFileUpdates:
 
     @pytest.fixture()
     def request_model(self, raw_file, local_garden_name):
-
         req = Request(
             system="foo",
             command="bar",
@@ -780,7 +785,6 @@ class TestFileUpdates:
     def test_save_stores_in_gridfs_after_maxsize(
         self, request_model, request_local_system, max_size
     ):
-
         request_model.parameters = {"message": "a" * max_size}
         request_model.output = "a" * max_size
         request_model.save()

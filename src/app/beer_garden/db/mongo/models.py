@@ -716,7 +716,6 @@ class System(MongoModel, Document):
             )
 
     def delete(self, **kwargs):
-
         if len(self.instances) > 0:
             for command in self.commands:
                 for instance in self.instances:
@@ -768,21 +767,18 @@ class System(MongoModel, Document):
         super().delete(**kwargs)
 
     def save(self, **kwargs):
-
         if self.local:
             self.save_topics(config.get("garden.name"))
 
         return super().save(**kwargs)
 
     def update(self, **kwargs):
-
         if self.local:
             self.save_topics(config.get("garden.name"))
 
         return super().update(**kwargs)
 
     def modify(self, query=None, **update):
-
         is_updated = super().modify(query, **update)
 
         if (
@@ -795,7 +791,6 @@ class System(MongoModel, Document):
         return is_updated
 
     def save_topics(self, garden_name: str):
-
         if len(self.instances) > 0:
             for command in self.commands:
                 for instance in self.instances:
