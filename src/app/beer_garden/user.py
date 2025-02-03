@@ -256,7 +256,7 @@ def create_user(user: User) -> User:
     for role in user.roles:
         user.local_roles.append(get_role(role))
 
-    # Sync child gardens
+    # Sync downstream gardens
     initiate_user_sync()
 
     return user
@@ -278,7 +278,7 @@ def delete_user(username: str = None, user: User = None) -> User:
 
     db.delete(user)
 
-    # Sync child gardens
+    # Sync downstream gardens
     initiate_user_sync()
 
     return user
@@ -363,7 +363,7 @@ def update_user(
 
     user = db.update(user)
 
-    # Sync child gardens
+    # Sync downstream gardens
     initiate_user_sync()
 
     return user
@@ -735,7 +735,7 @@ def upstream_users_sync(upstream_users=None):
                 continue
             db.delete(user)
 
-    # Sync child gardens
+    # Sync downstream gardens
     initiate_user_sync()
 
 

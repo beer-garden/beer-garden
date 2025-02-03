@@ -481,7 +481,7 @@ class Request(MongoModel, Document):
                 self.parameters_gridfs = old_request.parameters_gridfs
                 self.output_gridfs = old_request.output_gridfs
             except self.DoesNotExist:
-                # Requests to child gardens have an id set from the parent, but no
+                # Requests to downstream gardens have an id set from the upstream, but no
                 # local Request yet
                 pass
 
@@ -1055,7 +1055,7 @@ class Garden(MongoModel, Document):
         self.save()
 
     def _update_associated_systems(self):
-        """If the call to the `deep_save` method is on a child garden object, we ensure
+        """If the call to the `deep_save` method is on a downstream garden object, we ensure
         that when saving the systems, unknowns are deleted."""
         # import moved here to avoid a circular import loop
         from beer_garden.systems import remove_system
@@ -1120,7 +1120,7 @@ class Garden(MongoModel, Document):
         for bad_system_id in child_systems_already_known.values():
             logger.error(
                 f"Removing System with ID={str(bad_system_id)} because it "
-                f"matches no known system in child garden ({self.name})"
+                f"matches no known system in downstream garden ({self.name})"
             )
             remove_system(system_id=bad_system_id)
 

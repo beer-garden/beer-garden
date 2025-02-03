@@ -265,8 +265,8 @@ def sync_garden_topics_loop(garden: Garden):
     system's namespace, name, version, instance name, and command name. It then creates a topic
     with the generated name.
 
-    Additionally, if the garden has child gardens, the function recursively synchronizes topics
-    for each child garden.
+    Additionally, if the garden has downstream gardens, the function recursively synchronizes
+    topics for each downstream garden.
 
     Args:
         garden (Garden): The garden object containing systems, commands, and instances to
