@@ -607,7 +607,8 @@ class TestUserForwarding:
             name="target",
             downstream=[
                 Garden(
-                    name="c", downstream=[Garden(name="b", downstream=[Garden(name="a")])]
+                    name="c",
+                    downstream=[Garden(name="b", downstream=[Garden(name="a")])],
                 )
             ],
         )

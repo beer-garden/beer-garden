@@ -666,12 +666,15 @@ class TestGarden:
         namespaces, or versions are changed, the original systems are removed and
         replaced with the new systems when the garden is saved."""
         orig_system_ids = set(
-            map(lambda x: str(getattr(x, "id")), downstream_garden.systems)  # noqa: B009
+            map(
+                lambda x: str(getattr(x, "id")), downstream_garden.systems  # noqa: B009
+            )
         )
 
         orig_system_versions = set(
             map(
-                lambda x: str(getattr(x, "version")), downstream_garden.systems  # noqa: B009
+                lambda x: str(getattr(x, "version")),  # noqa: B009
+                downstream_garden.systems,
             )
         )
 
@@ -709,7 +712,9 @@ class TestGarden:
         and versions remain constant, but the IDs are different, the original systms
         are removed and replaced with the new systems when the garden is saved."""
         orig_system_ids = set(
-            map(lambda x: str(getattr(x, "id")), downstream_garden.systems)  # noqa: B009
+            map(
+                lambda x: str(getattr(x, "id")), downstream_garden.systems  # noqa: B009
+            )
         )
         new_system_id = str(downstream_system_v1_diff_id.id)
 

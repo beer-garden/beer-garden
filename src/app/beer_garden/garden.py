@@ -90,7 +90,8 @@ def filter_router_result(garden: Garden) -> Garden:
 def get_downstream_garden(garden: Garden) -> Garden:
     if garden.connection_type == "LOCAL":
         garden.downstream = db.query(
-            Garden, filter_params={"connection_type__ne": "LOCAL", "has_upstream": False}
+            Garden,
+            filter_params={"connection_type__ne": "LOCAL", "has_upstream": False},
         )
         if garden.downstream:
             for downstream_garden in garden.downstream:
@@ -654,7 +655,6 @@ def load_garden_file(garden: Garden):
     ):
         garden.status = "CONFIGURATION_ERROR"
     finally:
-
         http_publishing_connection.status_info.set_status_heartbeat(
             http_publishing_connection.status,
             max_history=config.get("garden.status_history"),
@@ -921,7 +921,10 @@ def handle_event(event):
                         downstream_garden_deleted = True
                         if event.payload.downstream:
                             for event_downstream_garden in event.payload.downstream:
-                                if db_downstream_garden.name == event_downstream_garden.name:
+                                if (
+                                    db_downstream_garden.name
+                                    == event_downstream_garden.name
+                                ):
                                     downstream_garden_deleted = False
                                     break
                         if downstream_garden_deleted:
