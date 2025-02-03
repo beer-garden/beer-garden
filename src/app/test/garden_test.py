@@ -321,10 +321,7 @@ stomp:
 
         garden = load_garden_file(bg_garden)
         for connection in garden.publishing_connections:
-            if connection.api == "HTTP":
-                assert connection.status == "DISABLED"
-            else:
-                assert connection.status == "NOT_CONFIGURED"
+            assert connection.status == "DISABLED"
 
         os.remove(config_file)
 

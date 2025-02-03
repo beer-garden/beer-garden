@@ -206,14 +206,12 @@ class TestRequest(object):
         @pytest.mark.parametrize(
             "parent",
             [
-                (
-                    Request(
-                        system="system",
-                        instance_name="instance",
-                        system_version="1",
-                        namespace="namespace",
-                        command="say",
-                    )
+                Request(
+                    system="system",
+                    instance_name="instance",
+                    system_version="1",
+                    namespace="namespace",
+                    command="say",
                 )
             ],
         )

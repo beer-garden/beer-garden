@@ -351,6 +351,9 @@ def handle_event(event: Event) -> None:
 
     All topic handling is done at the Mongo level or scheduled jobs
 
+    This is not setup in the handlers logic. Once implemented then
+    add the logic to the list
+
     Args:
         event: The event to handle
     """

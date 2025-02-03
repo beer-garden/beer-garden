@@ -28,6 +28,7 @@ from beer_garden.errors import (
     RoutingRequestException,
 )
 from beer_garden.garden import get_garden, get_gardens
+from beer_garden.replication import is_primary_replication
 from beer_garden.role import get_role
 
 logger = logging.getLogger(__name__)
@@ -836,6 +837,13 @@ def update_local_role_assignments_for_role(role: Role) -> int:
 def handle_event(event: Event) -> None:
     # Only handle events from downstream gardens
     if event.garden == config.get("garden.name"):
+        # Only the primary replication should handle user events
+        if (
+            config.get("replication.enabled")
+            and hasattr(event.payload, "replication_id")
+            and not is_primary_replication(event.payload.replication_id)
+        ):
+            return
         if Events.ROLE_DELETED.name == event.name:
             remove_local_role_assignments_for_role(event.payload)
         elif Events.USER_UPDATED.name == event.name:

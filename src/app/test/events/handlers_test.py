@@ -11,6 +11,20 @@ from beer_garden.events.processors import FanoutProcessor
 
 
 class TestHandlers:
+
+    @pytest.fixture(autouse=True)
+    def load_config(self):
+        config._CONFIG = {
+            "events_handler": {
+                "file": {"enabled": True, "unique_data": False},
+                "garden": {"enabled": True, "unique_data": False},
+                "plugin": {"enabled": True, "unique_data": False},
+                "requests": {"enabled": True, "unique_data": False},
+                "system": {"enabled": True, "unique_data": False},
+            },
+            "plugin": {"local": {"directory": "/tmp"}},
+        }
+
     @pytest.mark.parametrize(
         "event_name,expected_calls",
         [
@@ -83,12 +97,12 @@ class TestHandlers:
         bg_event.name = event_name.name
         bg_event.garden = "localgarden"
 
-        config._CONFIG = {"garden": {"name": bg_event.garden}}
+        config._CONFIG["garden"] = {"name": bg_event.garden}
 
         event_manager = FanoutProcessor(name="event manager")
         add_internal_events_handler(event_manager)
 
-        assert len(event_manager._managed_processors) == 16
+        assert len(event_manager._managed_processors) == 14
 
         queue_mock = Mock()
         append_mock = Mock()
@@ -175,12 +189,12 @@ class TestHandlers:
         bg_event.name = event_name.name
         bg_event.garden = "remotegarden"
 
-        config._CONFIG = {"garden": {"name": "localgarden"}}
+        config._CONFIG["garden"] = {"name": "localgarden"}
 
         event_manager = FanoutProcessor(name="event manager")
         add_internal_events_handler(event_manager)
 
-        assert len(event_manager._managed_processors) == 16
+        assert len(event_manager._managed_processors) == 14
 
         queue_mock = Mock()
         append_mock = Mock()
@@ -197,6 +211,8 @@ class TestHandlers:
     def test_unique_events(self, bg_event):
         """Tests to ensure events are de-dupped"""
 
+        config._CONFIG["events_handler"]["requests"]["unique_data"] = True
+
         create_event = deepcopy(bg_event)
         create_event.payload.status = "CREATED"
 
@@ -206,12 +222,12 @@ class TestHandlers:
         complete_event = deepcopy(bg_event)
         complete_event.payload.status = "SUCCESS"
 
-        config._CONFIG = {"garden": {"name": bg_event.garden}}
+        config._CONFIG["garden"] = {"name": bg_event.garden}
 
         event_manager = FanoutProcessor(name="event manager")
         add_internal_events_handler(event_manager)
 
-        assert len(event_manager._managed_processors) == 16
+        assert len(event_manager._managed_processors) == 14
 
         evaluated = False
         for processor in event_manager._managed_processors:
@@ -254,3 +270,21 @@ class TestHandlers:
                 evaluated = True
 
         assert evaluated
+
+    @pytest.mark.parametrize(
+        "disabled_event_handler",
+        ["garden", "plugin", "requests", "system", "file"],
+    )
+    def test_disable_event_handlers(self, disabled_event_handler):
+        """Tests to ensure that handlers can be disabled via configuration"""
+
+        config._CONFIG["events_handler"][disabled_event_handler]["enabled"] = False
+
+        event_manager = FanoutProcessor(name="event manager")
+        add_internal_events_handler(event_manager)
+
+        assert len(event_manager._managed_processors) == 13
+
+        for processor in event_manager._managed_processors:
+            if hasattr(processor, "_handler_tag"):
+                assert processor._handler_tag != disabled_event_handler
