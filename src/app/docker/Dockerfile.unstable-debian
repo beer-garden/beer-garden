@@ -6,7 +6,7 @@ ENV BG_LOG_CONFIG_FILE=/src/conf/app-logging.yaml \
     BG_PLUGIN_LOCAL_LOGGING_CONFIG_FILE=/src/conf/local-plugin-logging.yaml \
     BG_PLUGIN_REMOTE_LOGGING_CONFIG_FILE=/src/conf/remote-plugin-logging.yaml \
     BG_PLUGIN_LOCAL_DIRECTORY=/plugins \
-    BG_CHILDREN_CONFIG_DIRECTORY=/conf/children
+    BG_DOWNSTREAM_CONFIG_DIRECTORY=/conf/children
 
 ADD ./example_configs/app-logging.yaml /conf/
 ADD ./example_configs/local-plugin-logging.yaml /conf/

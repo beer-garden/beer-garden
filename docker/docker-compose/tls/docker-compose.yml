@@ -22,12 +22,12 @@ x-definitions: &env
 
     # IMPORTANT!!
     # If you are connecting to a Parent BG instance, toggle true
-    BG_PARENT_HTTP_ENABLE: "false"
+    BG_UPSTREAM_HTTP_ENABLE: "false"
 
     # IMPORTANT !!
     # If you are connecting to a Parent BG instance set this to the resolvable name
     # or IP of the parent
-    BG_PARENT_HTTP_HOST: localhost
+    BG_UPSTREAM_HTTP_HOST: localhost
 
 services:
     ui:

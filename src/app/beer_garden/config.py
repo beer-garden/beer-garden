@@ -418,8 +418,7 @@ _DOWNSTREAM_GARDENS_SPEC = {
         "directory": {
             "type": "str",
             "required": False,
-            "previous_default": "./children",
-            "default": "./downstream",
+            "default": "./children",
             "description": "Directory where downstream garden configs are located",
             "alt_env_names": [
                 "DOWNSTREAM_CONFIG_DIRECTORY",

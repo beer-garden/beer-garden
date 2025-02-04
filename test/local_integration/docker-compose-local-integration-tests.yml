@@ -25,8 +25,8 @@ services:
             <<: *env
 
             BG_GARDEN_NAME: docker
-            BG_PARENT_HTTP_ENABLE: "false"
-            BG_PARENT_HTTP_HOST: localhost
+            BG_UPSTREAM_HTTP_ENABLE: "false"
+            BG_UPSTREAM_HTTP_HOST: localhost
 
             # Point at the correct database
             BG_DB_HOST: mongodb
@@ -110,8 +110,8 @@ services:
             <<: *env
 
             BG_GARDEN_NAME: childdocker
-            BG_PARENT_HTTP_ENABLED: "true"
-            BG_PARENT_HTTP_HOST: beer-garden
+            BG_UPSTREAM_HTTP_ENABLED: "true"
+            BG_UPSTREAM_HTTP_HOST: beer-garden
             BG_HOST: localhost
             BG_SSL_ENABLED: "false"
             BG_PORT: 2347

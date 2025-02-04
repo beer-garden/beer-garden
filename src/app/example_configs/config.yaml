@@ -65,7 +65,7 @@ db:
 
     batch_size: -1
 downstream:
-  directory: ./downstream
+  directory: ./children
 entry:
   http:
     enabled: true
