@@ -636,7 +636,7 @@ def add_routing_garden(garden: Garden, routing_garden: str):
         for system in garden.systems:
             add_routing_system(system=system, garden_name=routing_garden)
 
-    if garden.downstream_garden:
+    if garden.downstream:
         for downstream_garden in garden.downstream:
             add_routing_garden(downstream_garden, routing_garden)
 
