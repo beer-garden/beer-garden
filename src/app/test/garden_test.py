@@ -194,7 +194,7 @@ stomp:
         with open(config_file, "w") as f:
             f.write(contents)
 
-        config._CONFIG = {"children": {"directory": tmpdir}}
+        config._CONFIG = {"downstream": {"directory": tmpdir}}
 
         garden = load_garden_file(bg_garden)
         for connection in garden.publishing_connections:
@@ -250,7 +250,7 @@ stomp:
         with open(config_file, "w") as f:
             f.write(contents)
 
-        config._CONFIG = {"children": {"directory": tmpdir}}
+        config._CONFIG = {"downstream": {"directory": tmpdir}}
 
         garden = load_garden_file(bg_garden)
         for connection in garden.publishing_connections:
@@ -317,7 +317,7 @@ stomp:
         with open(config_file, "w") as f:
             f.write(contents)
 
-        config._CONFIG = {"children": {"directory": tmpdir}}
+        config._CONFIG = {"downstream": {"directory": tmpdir}}
 
         garden = load_garden_file(bg_garden)
         for connection in garden.publishing_connections:
@@ -370,7 +370,7 @@ stomp:
         with open(config_file, "w") as f:
             f.write(contents)
 
-        config._CONFIG = {"children": {"directory": tmpdir}}
+        config._CONFIG = {"downstream": {"directory": tmpdir}}
 
         bg_garden.receiving_connections = [
             BrewtilsConnection(api="http", status="RECEIVING")
@@ -451,7 +451,7 @@ stomp:
         with open(config_file, "w") as f:
             f.write(contents)
 
-        config._CONFIG = {"children": {"directory": tmpdir}}
+        config._CONFIG = {"downstream": {"directory": tmpdir}}
 
         garden = check_garden_receiving_heartbeat("STOMP", garden_name=garden.name)
 

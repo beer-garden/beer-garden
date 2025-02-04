@@ -28,7 +28,7 @@ __all__ = [
     "generate",
     "migrate",
     "get",
-    "load_child",
+    "load_downstream",
 ]
 
 _CONFIG = None
@@ -386,10 +386,10 @@ def _parse_args(args: Sequence[str]) -> Tuple[YapconfSpec, dict]:
     return spec, cli_vars
 
 
-def load_child(config_file):
-    child_spec = YapconfSpec(_CHILD_SPECIFICATION)
-    child_spec.add_source("child.yaml", "yaml", filename=config_file)
-    return child_spec.load_config("child.yaml")
+def load_downstream(config_file):
+    downstream_spec = YapconfSpec(_DOWNSTREAM_SPECIFICATION)
+    downstream_spec.add_source("child.yaml", "yaml", filename=config_file)
+    return downstream_spec.load_config("child.yaml")
 
 
 _GARDEN_SPEC = {
@@ -411,16 +411,20 @@ _GARDEN_SPEC = {
     },
 }
 
-_CHILDREN_GARDEN_SPEC = {
+_DOWNSTREAM_GARDENS_SPEC = {
     "type": "dict",
+    "previous_names": ["children"],
     "items": {
         "directory": {
             "type": "str",
             "required": False,
-            "default": "./children",
-            "description": "Directory where child garden configs are located",
+            "previous_default": "./children",
+            "default": "./downstream",
+            "description": "Directory where downstream garden configs are located",
             "alt_env_names": [
+                "DOWNSTREAM_CONFIG_DIRECTORY",
                 "CHILDREN_CONFIG_DIRECTORY",
+                "BG_DOWNSTREAM_CONFIG_DIRECTORY",
                 "BG_CHILDREN_CONFIG_DIRECTORY",
             ],
         },
@@ -1194,16 +1198,18 @@ _ENTRY_SPEC = {
     },
 }
 
-_PARENT_SPEC = {
+_UPSTREAM_SPEC = {
     "type": "dict",
+    "previous_names": ["parent"],
     "items": {
         "http": {
             "type": "dict",
+            "previous_names": ["parent_http"],
             "items": {
                 "enabled": {
                     "type": "bool",
                     "default": False,
-                    "description": "Publish events to parent garden over HTTP",
+                    "description": "Publish events to upstream garden over HTTP",
                 },
                 "host": {
                     "type": "str",
@@ -1305,7 +1311,7 @@ _PARENT_SPEC = {
             "default": 15,
             "description": (
                 "Number of minutes to wait before sending "
-                "Garden Sync event to parent"
+                "Garden Sync event to upstream garden"
             ),
         },
         "stomp": {
@@ -1314,7 +1320,7 @@ _PARENT_SPEC = {
                 "enabled": {
                     "type": "bool",
                     "default": False,
-                    "description": "Publish events to parent garden over STOMP",
+                    "description": "Publish events to upstream garden over STOMP",
                 },
                 "host": {
                     "type": "str",
@@ -1803,24 +1809,24 @@ _EVENTS_SPEC = {
 
 _SPECIFICATION = {
     "auth": _AUTH_SPEC,
-    "children": _CHILDREN_GARDEN_SPEC,
     "configuration": _META_SPEC,
     "db": _DB_SPEC,
+    "downstream": _DOWNSTREAM_GARDENS_SPEC,
     "entry": _ENTRY_SPEC,
     "events_handler": _EVENTS_SPEC,
     "garden": _GARDEN_SPEC,
     "log": _LOG_SPEC,
     "metrics": _METRICS_SPEC,
     "mq": _MQ_SPEC,
-    "parent": _PARENT_SPEC,
     "plugin": _PLUGIN_SPEC,
     "request_validation": _REQUEST_VALIDATION_SPEC,
     "scheduler": _SCHEDULER_SPEC,
     "replication": _REPLICATION_SPEC,
     "ui": _UI_SPEC,
+    "upstream": _UPSTREAM_SPEC,
 }
 
-_CHILD_SPECIFICATION = {
+_DOWNSTREAM_SPECIFICATION = {
     "publishing": {
         "type": "bool",
         "default": False,
@@ -1844,7 +1850,7 @@ _CHILD_SPECIFICATION = {
         "default": False,
         "description": (
             "If local users should be shared without filtering based on "
-            "the scope of the Child Garden"
+            "the scope of the downstream Garden"
         ),
     },
     "http": {
@@ -1853,7 +1859,7 @@ _CHILD_SPECIFICATION = {
             "enabled": {
                 "type": "bool",
                 "default": False,
-                "description": "Publish events to Child garden over HTTP",
+                "description": "Publish events to downstream garden over HTTP",
             },
             "host": {
                 "type": "str",
@@ -1949,7 +1955,7 @@ _CHILD_SPECIFICATION = {
             "enabled": {
                 "type": "bool",
                 "default": False,
-                "description": "Publish events to child garden over STOMP",
+                "description": "Publish events to downstream garden over STOMP",
             },
             "host": {
                 "type": "str",

@@ -247,9 +247,9 @@ def check_garden_receiving_heartbeat(
         connection = Connection(api=api, status="DISABLED")
 
         # Check if there is a config file
-        path = Path(f"{config.get('children.directory')}/{garden.name}.yaml")
+        path = Path(f"{config.get('downstream.directory')}/{garden.name}.yaml")
         if path.exists():
-            garden_config = config.load_child(path)
+            garden_config = config.load_downstream(path)
             if config.get("receiving", config=garden_config):
                 connection.status = "RECEIVING"
 
@@ -528,7 +528,7 @@ def update_garden_receiving(
 
 
 def load_garden_file(garden: Garden):
-    path = Path(f"{config.get('children.directory')}/{garden.name}.yaml")
+    path = Path(f"{config.get('downstream.directory')}/{garden.name}.yaml")
 
     http_publishing_connection = Connection(
         api="HTTP", status="CONFIGURATION_ERROR", status_info=StatusInfo()
@@ -558,7 +558,7 @@ def load_garden_file(garden: Garden):
         return garden
 
     try:
-        garden_config = config.load_child(path)
+        garden_config = config.load_downstream(path)
         garden.default_user = config.get("default_user", garden_config)
         garden.shared_users = config.get("shared_users", garden_config)
 
@@ -709,9 +709,9 @@ def load_garden_config(garden: Garden = None, garden_name: str = None):
 
 
 def rescan():
-    if config.get("children.directory"):
+    if config.get("downstream.directory"):
         loaded_gardens = []
-        downstream_directory = Path(config.get("children.directory"))
+        downstream_directory = Path(config.get("downstream.directory"))
         if downstream_directory.exists():
             for path in downstream_directory.iterdir():
                 path_parts = path.parts
@@ -971,8 +971,8 @@ def handle_event(event):
         Events.GARDEN_REMOVED.name,
         Events.GARDEN_CREATED.name,
     ]:
-        # This publish garden event is to keep parent gardens in sync
-        if config.get("parent.stomp.enabled") or config.get("parent.http.enabled"):
+        # This publish garden event is to keep upstream gardens in sync
+        if config.get("upstream.stomp.enabled") or config.get("upstream.http.enabled"):
             publish_garden()
 
     if "SYSTEM" in event.name or "INSTANCE" in event.name:

@@ -439,12 +439,12 @@ class MixedScheduler(object):
         )
 
         # Add Garden Sync Scheduler
-        if config.get("parent.sync_interval") > 0 and (
-            config.get("parent.stomp.enabled") or config.get("parent.http.enabled")
+        if config.get("upstream.sync_interval") > 0 and (
+            config.get("upstream.stomp.enabled") or config.get("upstream.http.enabled")
         ):
             self.add_schedule(
                 beer_garden.garden.publish_garden,
-                interval=config.get("parent.sync_interval"),
+                interval=config.get("upstream.sync_interval"),
                 max_running_jobs=1,
             )
 
