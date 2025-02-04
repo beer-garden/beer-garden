@@ -115,11 +115,11 @@
     </div>
 
     <div class="panel-body" style="padding-bottom: 0px">
-      <div class="list-group" ng-if="garden.receiving_connections.length > 0">
+      <div class="list-group" ng-if="{{hasConfiguredConnection(garden.receiving_connections)}}">
         <div class="panel-heading" style="font-size: 22px">
           <span>Receiving</span>
         </div>
-        <div class="list-group-item clearfix" ng-repeat="connection in garden.receiving_connections | orderBy: 'api'">
+        <div class="list-group-item clearfix" ng-repeat="connection in garden.receiving_connections | orderBy: 'api'" ng-if="connection.status != 'NOT_CONFIGURED'">
           <bg-status target="connection.status"></bg-status>
           <span style="padding: 0 10px" title="{{getConnectionUrl(connection, true)}}">{{connection.api}}</span>
           <span class="btn-toolbar pull-right" ng-if="isChild(garden) && hasGardenPermission('GARDEN_ADMIN', garden)">
@@ -134,7 +134,7 @@
           </span>
         </div>
       </div>
-      <div class="list-group"  ng-if="garden.publishing_connections.length > 0">
+      <div class="list-group"  ng-if="{{hasConfiguredConnection(garden.publishing_connections)}}">
         <div class="panel-heading" style="font-size: 22px">
           <span>Publishing</span>
         </div>
