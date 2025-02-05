@@ -1258,7 +1258,7 @@ _UPSTREAM_SPEC = {
                     "type": "str",
                     "description": "Access token for authentication",
                     "required": False,
-                    "alt_env_names": ["PARENT_HTTP_ACCESS_TOKEN"]
+                    "alt_env_names": ["PARENT_HTTP_ACCESS_TOKEN"],
                 },
                 "refresh_token": {
                     "type": "str",
