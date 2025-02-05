@@ -402,7 +402,7 @@ jobs:
         working-directory: ./docker/docker-compose
 
       - name: Wait for Beer Garden Grandparent to start
-        run: sleep 10s
+        run: sleep 30s
         shell: bash
 
       - name: Run Docker Beer Garden Parent
@@ -410,7 +410,7 @@ jobs:
         working-directory: ./docker/docker-compose
 
       - name: Wait for Beer Garden Parent to start
-        run: sleep 10s
+        run: sleep 30s
         shell: bash
 
       - name: Run Docker Beer Garden Grandparent
