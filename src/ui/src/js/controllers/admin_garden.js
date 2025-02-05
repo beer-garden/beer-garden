@@ -311,6 +311,15 @@ export default function adminGardenController(
 
   }
 
+  $scope.hasConfiguredConnection = function(connections) {
+    for (let i = 0; i < connections.length; i++) {
+      if (connections[i].status != "NOT_CONFIGURED") {
+        return true;
+      }
+    }
+    return false;
+  }
+
   $scope.eventUpsetGarden = function (garden) {
     if (garden.connection_type != "LOCAL" && !garden.has_parent) {
       for (let i = 0; i < $scope.data.length; i++) {
