@@ -145,6 +145,20 @@ class TestGardenSetup(object):
 
         for garden in gardens:
             assert garden.name in ["child"]
+            for connection in garden.publishing_connections:
+                if connection.api == "HTTP":
+                    assert connection.status == "PUBLISHING"
+                else:
+                    assert connection.status == "NOT_CONFIGURED"
+
+            # Older gardens will not have receiving connections present
+            if len(garden.receiving_connections) > 0:
+                for connection in garden.receiving_connections:
+                    if connection.api == "HTTP":
+                        assert connection.status == "RECEIVING"
+                    else:
+                        assert connection.status == "NOT_CONFIGURED"
+                assert len(garden.downstream) == 0
 
     def test_grandchildren(self):
         response = self.grand_parent_easy_client.client.session.get(
