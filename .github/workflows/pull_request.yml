@@ -401,17 +401,35 @@ jobs:
         run: docker compose up -d beer-garden-child
         working-directory: ./docker/docker-compose
 
-      - name: Wait for Beer Garden Grandparent to start
-        run: sleep 30s
-        shell: bash
+      - name: Check If Beer Garden Child is Operational
+        uses: nick-invision/retry@v2
+        with:
+          timeout_seconds: 30
+          max_attempts: 20
+          retry_on: error
+          retry_wait_seconds: 5
+          command: curl http://localhost:2357/config
+
+      # - name: Wait for Beer Garden Grandparent to start
+      #   run: sleep 30s
+      #   shell: bash
 
       - name: Run Docker Beer Garden Parent
         run: docker compose up -d beer-garden-parent
         working-directory: ./docker/docker-compose
 
-      - name: Wait for Beer Garden Parent to start
-        run: sleep 30s
-        shell: bash
+      - name: Check If Beer Garden Parent is Operational
+        uses: nick-invision/retry@v2
+        with:
+          timeout_seconds: 30
+          max_attempts: 20
+          retry_on: error
+          retry_wait_seconds: 5
+          command: curl http://localhost:2347/config
+
+      # - name: Wait for Beer Garden Parent to start
+      #   run: sleep 30s
+      #   shell: bash
 
       - name: Run Docker Beer Garden Grandparent
         run: docker compose up -d beer-garden-grandparent
@@ -420,9 +438,18 @@ jobs:
       - name: Check Docker
         run: docker ps
 
-      - name: Wait for Beer Garden to start
-        run: sleep 60s
-        shell: bash
+      - name: Check If Beer Garden Grandparent is Operational
+        uses: nick-invision/retry@v2
+        with:
+          timeout_seconds: 30
+          max_attempts: 20
+          retry_on: error
+          retry_wait_seconds: 5
+          command: curl http://localhost:2337/config
+
+      # - name: Wait for Beer Garden to start
+      #   run: sleep 60s
+      #   shell: bash
 
       - name: Install Develop Version of Brewtils
         run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@${{env.brewtils}}#egg=brewtils
