@@ -71,6 +71,7 @@ entry:
     enabled: true
     host: 0.0.0.0
     port: 2337
+    max_body_size: 104857600
     ssl:
       ca_cert: null
       ca_path: null
@@ -94,6 +95,22 @@ entry:
       use_ssl: false
     subscribe_destination: Beer_Garden_Operations
     username: beer_garden
+events_handler:
+  file:
+    enabled: true
+    unique_data: false
+  garden:
+    enabled: true
+    unique_data: false
+  plugin:
+    enabled: true
+    unique_data: false
+  requests:
+    enabled: true
+    unique_data: false
+  system:
+    enabled: true
+    unique_data: false
 garden:
   name: default
   status_history: 50

@@ -1,8 +1,14 @@
 # Beer Garden Changelog
 
-# 3.29.2
+# 3.29.3
 
 TBD
+
+- Fixed bug where `NOT_CONFIGURED` status for Receiving connection was not filtered out
+
+# 3.29.2
+
+1/31/2025
 
 - Added support for deprecate kwarg for parameter or command
 - Updated orphan pruner to delete orphaned files
@@ -14,11 +20,14 @@ TBD
 - Updated internal events to utilize deque to improve performance
 - Updated internal events to allow for unique and sorting events based on timestamps, only
   latest instance of the transaction event is handled within the event handlers
+- Updated config.yaml to support toggling on and off unique event filtering
 - Updated Topics generation and removal to Mongo Model instead of through Events
 - Optimized Topic pruning and generation
 - Expanded topics API to support manual execution of Topic Generation
 - Optimizing how Garden configurations are loaded
 - Fixed bug where Garden historical status info is maintained after rescan
+- Updated 3.24 migration script to skip children config creation if only one garden
+- Added config for Tornado web server to increase max body size for file uploads
 
 # 3.29.1
 

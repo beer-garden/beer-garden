@@ -173,36 +173,37 @@ def ensure_v3_24_model_migration():
 
         garden_collection = db.get_collection("garden")
 
-        if not os.path.exists(config.get("children.directory")):
-            os.makedirs(config.get("children.directory"))
+        if garden_collection.find().count() > 1:
+            if not os.path.exists(config.get("children.directory")):
+                os.makedirs(config.get("children.directory"))
 
-        for legacy_garden in garden_collection.find():
-            if legacy_garden["connection_type"] != "LOCAL":
-                if not Path(
-                    f"{config.get('children.directory')}/{legacy_garden['name']}.yaml"
-                ).exists():
-                    garden_file_data = {"receiving": False, "publishing": False}
+            for legacy_garden in garden_collection.find():
+                if legacy_garden["connection_type"] != "LOCAL":
+                    if not Path(
+                        f"{config.get('children.directory')}/{legacy_garden['name']}.yaml"
+                    ).exists():
+                        garden_file_data = {"receiving": False, "publishing": False}
 
-                    if legacy_garden["connection_type"] == "HTTP":
-                        garden_file_data["http"] = legacy_garden["connection_params"][
-                            "http"
-                        ]
-                    if legacy_garden["connection_type"] == "STOMP":
-                        garden_file_data["stomp"] = legacy_garden["connection_params"][
-                            "stomp"
-                        ]
+                        if legacy_garden["connection_type"] == "HTTP":
+                            garden_file_data["http"] = legacy_garden[
+                                "connection_params"
+                            ]["http"]
+                        if legacy_garden["connection_type"] == "STOMP":
+                            garden_file_data["stomp"] = legacy_garden[
+                                "connection_params"
+                            ]["stomp"]
 
-                    logger.warning(
-                        (
-                            "Mapping Child Config: "
-                            f"{config.get('children.directory')}/{legacy_garden['name']}.yaml"
+                        logger.warning(
+                            (
+                                "Mapping Child Config: "
+                                f"{config.get('children.directory')}/{legacy_garden['name']}.yaml"
+                            )
                         )
-                    )
-                    with open(
-                        f"{config.get('children.directory')}/{legacy_garden['name']}.yaml",
-                        "w+",
-                    ) as ff:
-                        yaml.dump(garden_file_data, ff, allow_unicode=True)
+                        with open(
+                            f"{config.get('children.directory')}/{legacy_garden['name']}.yaml",
+                            "w+",
+                        ) as ff:
+                            yaml.dump(garden_file_data, ff, allow_unicode=True)
 
         db.drop_collection("garden")
 

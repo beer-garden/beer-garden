@@ -30,7 +30,11 @@ import beer_garden.queue.api as queue
 import beer_garden.router
 import beer_garden.scheduler
 from beer_garden.events.parent_processors import HttpParentUpdater
-from beer_garden.events.processors import EventProcessor, FanoutProcessor, QueueListener
+from beer_garden.events.processors import (
+    FanoutProcessor,
+    QueueListener,
+    ReplicationProcessor,
+)
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer, initialize_elastic_client
@@ -421,7 +425,7 @@ class Application(StoppableThread):
         """Set up the event manager for the Main Processor"""
 
         if config.get("replication.enabled"):
-            event_manager = EventProcessor(name="event manager")
+            event_manager = ReplicationProcessor(name="event manager")
         else:
             event_manager = FanoutProcessor(name="event manager")
 
