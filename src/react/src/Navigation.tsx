@@ -1,31 +1,27 @@
 import Container from 'react-bootstrap/Container';
-import Nav from 'react-bootstrap/Nav';
-import Navbar from 'react-bootstrap/Navbar';
-import NavDropdown from 'react-bootstrap/NavDropdown';
+// import Nav from 'react-bootstrap/Nav';
+// import Navbar from 'react-bootstrap/Navbar';
+// import NavDropdown from 'react-bootstrap/NavDropdown';
+import { Navbar, Nav } from 'rsuite';
 
 function NavigationMenu() {
   return (
-    <Navbar expand="lg" className="bg-body-tertiary">
-      <Container>
-        <Navbar.Brand href="#home" as="h1">Beer Garden</Navbar.Brand>
-        <Navbar.Toggle aria-controls="basic-navbar-nav" />
-        <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="ms-auto">
-            <Nav.Link href="#system">Systems</Nav.Link>
-            <Nav.Link href="#link">Requests</Nav.Link>
-            <Nav.Link href="#link">Scheduler</Nav.Link>
-            <Nav.Link href="#link">Create Request</Nav.Link>
-            <NavDropdown title="Admin" id="basic-nav-dropdown">
-              <NavDropdown.Item href="#action/3.1">About</NavDropdown.Item>
-              <NavDropdown.Item href="#action/3.1">Garden</NavDropdown.Item>
-              <NavDropdown.Item href="#action/3.1">Topics</NavDropdown.Item>
-              <NavDropdown.Item href="#action/3.1">Users</NavDropdown.Item>
-              <NavDropdown.Item href="#action/3.1">Roles</NavDropdown.Item>
-            </NavDropdown>
-          </Nav>
-        </Navbar.Collapse>
-      </Container>
-    </Navbar>
+    <Navbar>
+    <Navbar.Brand href="#home">Beer Garden</Navbar.Brand>
+    <Nav pullRight>
+      <Nav.Item>Systems</Nav.Item>
+      <Nav.Item>Requests</Nav.Item>
+      <Nav.Item>Scheduler</Nav.Item>
+      <Nav.Item>Create Request</Nav.Item>
+      <Nav.Menu title="Admin">
+        <Nav.Item>About</Nav.Item>
+        <Nav.Item>Garden</Nav.Item>
+        <Nav.Item>Topics</Nav.Item>
+        <Nav.Item>Users</Nav.Item>
+        <Nav.Item>Roles</Nav.Item>
+      </Nav.Menu>
+    </Nav>
+  </Navbar>
   );
 }
 
