@@ -18,12 +18,29 @@ logger = logging.getLogger(__name__)
 
 display_name = "Mongo Pruner"
 
+def delete_requests(requests):
+
+    counter = 0
+    if requests:
+        for request in requests:
+            request.delete()
+            counter = counter + 1
+
+    return counter
 
 def run_pruner(tasks, ttl_name):
     current_time = datetime.utcnow()
 
     if tasks:
         for task in tasks:
+
+            keep_fields = ["id","output_gridfs","parameters_gridfs"]
+
+            exclude_fields = []
+            for field in task["collection"]._fields_ordered:
+                if field not in keep_fields:
+                    exclude_fields.append(field)
+
             delete_older_than = current_time - task["delete_after"]
 
             query = Q(**{task["field"] + "__lt": delete_older_than})
@@ -34,6 +51,7 @@ def run_pruner(tasks, ttl_name):
                 "Removing %s %ss older than %s"
                 % (ttl_name, task["collection"].__name__, str(delete_older_than))
             )
+            num = 0
 
             if task["batch_size"] > 0:
                 while (
@@ -49,12 +67,16 @@ def run_pruner(tasks, ttl_name):
                             str(task["batch_size"]),
                         )
                     )
-                    task["collection"].objects(query).only("id").limit(
+                    removed = task["collection"].objects(query).exclude(*exclude_fields).limit(
                         task["batch_size"]
                     ).no_cache().delete()
+                    if removed:
+                        num = num + removed
 
-            num = task["collection"].objects(query).only("id").no_cache().delete()
-            if num:
+            removed =  task["collection"].objects(query).exclude(*exclude_fields).no_cache().delete()
+            if removed:
+                num = num + removed
+            if num > 0:
                 logger.debug(
                     "Deleted %s %s from %ss"
                     % (num, ttl_name, task["collection"].__name__)
