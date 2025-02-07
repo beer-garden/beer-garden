@@ -62,9 +62,10 @@ def run_pruner(tasks, ttl_name):
 
 
 def prune_by_name(ttl_name):
-    ttl_config = config.get("db.ttl")
-    match_keys = [ttl_name, "batch_size"]
+    ttl_config = config.get("db.prune.ttl")
+    match_keys = [ttl_name]
     new_ttl_config = {k: ttl_config[k] for k in match_keys if k in ttl_config}
+    new_ttl_config["batch_size"] = config.get("db.prune.batch_size")
     tasks = determine_tasks(**new_ttl_config)
     run_pruner(tasks, ttl_name)
 
@@ -204,7 +205,7 @@ def determine_tasks(**kwargs) -> Tuple[List[dict], int]:
 
 
 def prune_orphans():
-    orphan_ttl = config.get("db.ttl.orphan")
+    orphan_ttl = config.get("db.prune.ttl.orphan")
 
     if orphan_ttl > 0:
         prune_orphan_command_type(orphan_ttl, "INFO")
@@ -255,8 +256,8 @@ def prune_outstanding():
     Helper function for run to mark requests still outstanding after a certain
     amount of time as canceled.
     """
-    ttl_config = config.get("db.ttl")
-    cancel_threshold = ttl_config.get("in_progress", -1)
+    prune_config = config.get("db.prune")
+    cancel_threshold = prune_config.get("in_progress_request_expiration", -1)
     if cancel_threshold > 0:
         timeout = datetime.utcnow() - timedelta(minutes=cancel_threshold)
         outstanding_requests = Request.objects.filter(

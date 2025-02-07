@@ -880,11 +880,6 @@ _DB_SPEC = {
             "description": "Name of the database to use",
             "previous_names": ["db_name"],
         },
-        "prune_interval": {
-            "type": "int",
-            "default": 15,
-            "description": ("Number of minutes to wait before running db pruner"),
-        },
         "connection": {
             "type": "dict",
             "items": {
@@ -920,75 +915,9 @@ _DB_SPEC = {
                 },
             },
         },
-        "ttl": {
+        "prune": {
             "type": "dict",
             "items": {
-                "action": {
-                    "type": "int",
-                    "default": -1,
-                    "description": (
-                        "Number of minutes to wait before deleting "
-                        "ACTION requests (negative number for never)"
-                    ),
-                    "previous_names": ["action_request_ttl"],
-                    "alt_env_names": ["ACTION_REQUEST_TTL"],
-                },
-                "admin": {
-                    "type": "int",
-                    "default": -1,
-                    "description": (
-                        "Number of minutes to wait before deleting "
-                        "Admin requests (negative number for never)"
-                    ),
-                    "previous_names": [],
-                    "alt_env_names": [],
-                },
-                "info": {
-                    "type": "int",
-                    "default": 15,
-                    "description": (
-                        "Number of minutes to wait before deleting "
-                        "INFO requests (negative number for never)"
-                    ),
-                    "previous_names": ["info_request_ttl"],
-                    "alt_env_names": ["INFO_REQUEST_TTL"],
-                },
-                "temp": {
-                    "type": "int",
-                    "default": 15,
-                    "description": (
-                        "Number of minutes to wait before deleting "
-                        "TEMP requests (negative number for never)"
-                    ),
-                    "previous_names": [],
-                    "alt_env_names": [],
-                },
-                "in_progress": {
-                    "type": "int",
-                    "default": -1,
-                    "description": (
-                        "Number of minutes to wait for a request in CREATED or IN_PROGRESS"
-                        "to complete before considering timed out and marking as CANCELLED"
-                        "(negative number for never)"
-                    ),
-                },
-                "orphan": {
-                    "type": "int",
-                    "default": -1,
-                    "description": (
-                        "Number of minutes to wait before deleting "
-                        "orphaned requests (negative number for never)"
-                    ),
-                },
-                "file": {
-                    "type": "int",
-                    "default": 15,
-                    "description": (
-                        "Number of minutes to wait before deleting "
-                        "FILE documents (negative number for never)"
-                    ),
-                    "alt_env_names": ["FILE_REQUEST_TTL"],
-                },
                 "batch_size": {
                     "type": "int",
                     "default": -1,
@@ -997,6 +926,84 @@ _DB_SPEC = {
                         "(negative number for never)"
                     ),
                     "alt_env_names": [],
+                },
+                "in_progress_request_expiration": {
+                    "type": "int",
+                    "default": 180,
+                    "description": (
+                        "Number of minutes to wait for a request in CREATED or IN_PROGRESS"
+                        "to complete before considering timed out and marking as CANCELLED"
+                        "(negative number for never)"
+                    ),
+                },
+                "prune_interval": {
+                    "type": "int",
+                    "default": 15,
+                    "description": (
+                        "Number of minutes to wait before running db pruner"
+                    ),
+                },
+                "ttl": {
+                    "type": "dict",
+                    "items": {
+                        "action": {
+                            "type": "int",
+                            "default": -1,
+                            "description": (
+                                "Number of minutes to wait before deleting "
+                                "ACTION requests (negative number for never)"
+                            ),
+                            "previous_names": ["action_request_ttl"],
+                            "alt_env_names": ["ACTION_REQUEST_TTL"],
+                        },
+                        "admin": {
+                            "type": "int",
+                            "default": -1,
+                            "description": (
+                                "Number of minutes to wait before deleting "
+                                "Admin requests (negative number for never)"
+                            ),
+                            "previous_names": [],
+                            "alt_env_names": [],
+                        },
+                        "info": {
+                            "type": "int",
+                            "default": 15,
+                            "description": (
+                                "Number of minutes to wait before deleting "
+                                "INFO requests (negative number for never)"
+                            ),
+                            "previous_names": ["info_request_ttl"],
+                            "alt_env_names": ["INFO_REQUEST_TTL"],
+                        },
+                        "temp": {
+                            "type": "int",
+                            "default": 15,
+                            "description": (
+                                "Number of minutes to wait before deleting "
+                                "TEMP requests (negative number for never)"
+                            ),
+                            "previous_names": [],
+                            "alt_env_names": [],
+                        },
+                        "orphan": {
+                            "type": "int",
+                            "default": -1,
+                            "description": (
+                                "Number of minutes to wait before deleting "
+                                "orphaned requests (negative number for never)"
+                            ),
+                        },
+                        "file": {
+                            "type": "int",
+                            "default": 15,
+                            "description": (
+                                "Number of minutes to wait before deleting "
+                                "FILE documents (negative number for never)"
+                            ),
+                            "alt_env_names": ["FILE_REQUEST_TTL"],
+                        },
+                    },
                 },
             },
         },

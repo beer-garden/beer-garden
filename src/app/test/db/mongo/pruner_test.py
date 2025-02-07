@@ -185,38 +185,38 @@ def canceled():
 
 class TestMongoPruner(object):
     def test_prune_info_requests(self, info_request):
-        config._CONFIG = {"db": {"ttl": {"info": 1, "batch_size": -1}}}
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"info": 1}}}}
         prune_info_requests()
         assert len(Request.objects.filter(command_type="INFO")) == 0
 
     def test_prune_action_requests(self, action_request):
-        config._CONFIG = {"db": {"ttl": {"action": 1, "batch_size": -1}}}
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"action": 1}}}}
         prune_action_requests()
         assert len(Request.objects.filter(command_type="ACTION")) == 0
 
     def test_prune_action_request_no_command_type(self, in_progress, created, canceled):
-        config._CONFIG = {"db": {"ttl": {"action": 1, "batch_size": -1}}}
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"action": 1}}}}
         prune_action_requests()
         assert len(Request.objects.filter(command_type="ACTION")) == 0
         assert len(Request.objects.filter(command_type=None)) == 2
 
     def test_prune_admin_requests(self, admin_request):
-        config._CONFIG = {"db": {"ttl": {"admin": 1, "batch_size": -1}}}
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"admin": 1}}}}
         prune_admin_requests()
         assert len(Request.objects.filter(command_type="ADMIN")) == 0
 
     def test_prune_temp_requests(self, temp_request):
-        config._CONFIG = {"db": {"ttl": {"temp": 1, "batch_size": -1}}}
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"temp": 1}}}}
         prune_temp_requests()
         assert len(Request.objects.filter(command_type="TEMP")) == 0
 
     def test_prune_files(self, file, raw_file):
-        config._CONFIG = {"db": {"ttl": {"file": 1, "batch_size": -1}}}
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"file": 1}}}}
         prune_files()
         assert len(File.objects.all()) == 0
 
     def test_run_cancels_outstanding_requests(self, task, in_progress, created):
-        config._CONFIG = {"db": {"ttl": {"in_progress": 15}}}
+        config._CONFIG = {"db": {"prune": {"in_progress_request_expiration": 15}}}
         prune_outstanding()
         new_in_progress = Request.objects.get(id=in_progress.id)
         new_created = Request.objects.get(id=created.id)
@@ -224,7 +224,7 @@ class TestMongoPruner(object):
         assert new_created.status == "CANCELED"
 
     def test_negative_cancel_threshold(self, task, in_progress, created):
-        config._CONFIG = {"db": {"ttl": {"in_progress": -1}}}
+        config._CONFIG = {"db": {"prune": {"in_progress_request_expiration": -1}}}
         prune_outstanding()
         new_in_progress = Request.objects.get(id=in_progress.id)
         new_created = Request.objects.get(id=created.id)
@@ -232,7 +232,7 @@ class TestMongoPruner(object):
         assert new_created.status == "CREATED"
 
     def test_none_cancel_threshold(self, task, in_progress, created):
-        config._CONFIG = {"db": {"ttl": {}}}
+        config._CONFIG = {"db": {"prune": {"ttl": {}}}}
         prune_outstanding()
         new_in_progress = Request.objects.get(id=in_progress.id)
         new_created = Request.objects.get(id=created.id)
@@ -298,10 +298,8 @@ class TestDetermineTasks(object):
 
 
 class TestOrphanPruner(object):
-
     @pytest.fixture
     def child_request(self):
-
         parent = Request(
             system="T",
             system_version="T",
@@ -342,10 +340,8 @@ class TestOrphanPruner(object):
 
 
 class TestOrphanFile(object):
-
     @pytest.fixture
     def orphan_request_file(self):
-
         owner = Request(
             system="T",
             system_version="T",
@@ -377,7 +373,6 @@ class TestOrphanFile(object):
 
     @pytest.fixture
     def orphan_job_file(self, ts_dt, request_template_dict):
-
         owner = Job(
             name="T",
             trigger_type="date",
@@ -406,7 +401,6 @@ class TestOrphanFile(object):
 
     @pytest.fixture
     def deleted_request_file(self):
-
         owner = Request(
             system="T",
             system_version="T",
@@ -438,7 +432,6 @@ class TestOrphanFile(object):
 
     @pytest.fixture
     def deleted_job_file(self, ts_dt, request_template_dict):
-
         owner = Job(
             name="T",
             trigger_type="date",

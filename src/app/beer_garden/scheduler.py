@@ -373,9 +373,9 @@ class MixedScheduler(object):
 
     def internal_scheduled_jobs(self):
         # Add scheduled jobs for Mongo Pruner
-        prune_interval = config.get("db.prune_interval")
+        prune_interval = config.get("db.prune.prune_interval")
         if prune_interval > 0:
-            ttl_config = config.get("db.ttl")
+            ttl_config = config.get("db.prune.ttl")
             if ttl_config.get("info") > 0:
                 self.add_schedule(
                     beer_garden.db.mongo.pruner.prune_info_requests,
@@ -386,20 +386,6 @@ class MixedScheduler(object):
             if ttl_config.get("action") > 0:
                 self.add_schedule(
                     beer_garden.db.mongo.pruner.prune_action_requests,
-                    interval=prune_interval,
-                    max_running_jobs=1,
-                )
-
-            if ttl_config.get("admin") > 0:
-                self.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_admin_requests,
-                    interval=prune_interval,
-                    max_running_jobs=1,
-                )
-
-            if ttl_config.get("temp") > 0:
-                self.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_temp_requests,
                     interval=prune_interval,
                     max_running_jobs=1,
                 )
@@ -417,6 +403,18 @@ class MixedScheduler(object):
                     interval=prune_interval,
                     max_running_jobs=1,
                 )
+
+            self.add_schedule(
+                beer_garden.db.mongo.pruner.prune_admin_requests,
+                interval=prune_interval,
+                max_running_jobs=1,
+            )
+
+            self.add_schedule(
+                beer_garden.db.mongo.pruner.prune_temp_requests,
+                interval=prune_interval,
+                max_running_jobs=1,
+            )
 
             self.add_schedule(
                 beer_garden.db.mongo.pruner.prune_orphans,
