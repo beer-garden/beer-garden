@@ -6,7 +6,7 @@ from typing import List, Tuple
 from brewtils.errors import ModelValidationError
 from brewtils.models import Event, Events
 from brewtils.schema_parser import SchemaParser
-from mongoengine import Q
+from mongoengine import FileField, ObjectIdField, Q
 from mongoengine.errors import DoesNotExist
 
 import beer_garden.config as config
@@ -24,11 +24,12 @@ def run_pruner(tasks, ttl_name):
 
     if tasks:
         for task in tasks:
-            keep_fields = ["id", "output_gridfs", "parameters_gridfs"]
-
             exclude_fields = []
-            for field in task["collection"]._fields_ordered:
-                if field not in keep_fields:
+
+            for field in task["collection"]._fields:
+                if not isinstance(
+                    task["collection"]._fields[field], FileField
+                ) and not isinstance(task["collection"]._fields[field], ObjectIdField):
                     exclude_fields.append(field)
 
             delete_older_than = current_time - task["delete_after"]
