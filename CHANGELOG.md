@@ -5,6 +5,8 @@
 TBD
 
 - Fixed bug where `NOT_CONFIGURED` status for Receiving connection was not filtered out
+- Fixed Update Event Handler to support Garden event triggering for UI updates based 
+  on System and Instance updates
 
 # 3.29.2
 

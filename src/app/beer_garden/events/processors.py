@@ -72,7 +72,7 @@ class DequeListener(BaseProcessor):
 class DequeSetListener(DequeListener):
     """Listens for items on a multiprocessing.Queue"""
 
-    def __init__(self, queue=None, unique_data=False, **kwargs):
+    def __init__(self, unique_data=False, **kwargs):
         super().__init__(**kwargs)
 
         self._lock = threading.RLock()
@@ -176,6 +176,99 @@ class QueueListener(BaseProcessor):
 
     def queue_depth(self):
         return self._queue.qsize()
+
+
+class TriggerListener(BaseProcessor):
+    """Listener ignore data sent, and
+    triggers the action with no input
+    """
+
+    def __init__(self, handler, handler_tag, filters=None, **kwargs):
+        super().__init__(action=handler, **kwargs)
+
+        self._filters = []
+
+        if filters:
+            for filter in filters:
+                self._filters.append(filter.name)
+
+        self._handler_tag = handler_tag
+
+        self._transaction_type = handler_tag
+        self._trigger_event = None
+        self._lock = threading.RLock()
+
+    def put(self, event):
+
+        if self._trigger_event:
+            return
+
+        if not self._filters:
+            return
+
+        if event.error:
+            return
+
+        if event.name in self._filters:
+            trace_parent_header = None
+            if (
+                config.get("metrics.elastic.enabled")
+                and hasattr(event, "metadata")
+                and "_trace_parent" in event.metadata
+            ):
+                trace_parent_header = event.metadata["_trace_parent"]
+
+            with self._lock:
+                if self._trigger_event is None:
+                    with CollectMetrics(
+                        "Queue_Event",
+                        f"QUEUE_PUT::{self._handler_tag}",
+                        trace_parent_header=trace_parent_header,
+                    ):
+                        self._trigger_event = event
+
+    def clear(self):
+        self._trigger_event = None
+
+    def run(self):
+        """Process events as they are received"""
+        while not self.stopped():
+            if self._trigger_event:
+                trace_parent_header = None
+                if (
+                    config.get("metrics.elastic.enabled")
+                    and hasattr(self._trigger_event, "metadata")
+                    and "_trace_parent" in self._trigger_event.metadata
+                ):
+                    trace_parent_header = self._trigger_event.metadata["_trace_parent"]
+
+                with CollectMetrics(
+                    "Queue_Event",
+                    f"QUEUE_POP::{self._handler_tag}",
+                    trace_parent_header=trace_parent_header,
+                ):
+                    try:
+                        if config.get("metrics.elastic.enabled"):
+                            extract_custom_context(self._trigger_event)
+
+                        self._action(deepcopy(self._trigger_event))
+                    except Exception as ex:
+                        logger.error(
+                            "'%s' handler received an error executing callback for event %s: %s: %s"
+                            % (
+                                self._handler_tag,
+                                repr(self._trigger_event),
+                                str(ex),
+                                traceback.TracebackException.from_exception(ex),
+                            )
+                        )
+                    finally:
+                        self._trigger_event = None
+            else:
+                time.sleep(0.1)
+
+    def queue_depth(self):
+        return 1 if self._trigger_event is not None else 0
 
 
 class InternalQueueListener(DequeSetListener):

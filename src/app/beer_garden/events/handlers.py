@@ -18,7 +18,11 @@ import beer_garden.scheduler
 import beer_garden.systems
 import beer_garden.topic
 import beer_garden.user
-from beer_garden.events.processors import BaseProcessor, InternalQueueListener
+from beer_garden.events.processors import (
+    BaseProcessor,
+    InternalQueueListener,
+    TriggerListener,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -47,13 +51,6 @@ def add_internal_events_handler(event_manager):
                 Events.GARDEN_CONFIGURED,
                 Events.GARDEN_REMOVED,
                 Events.GARDEN_CREATED,
-                Events.SYSTEM_CREATED,
-                Events.SYSTEM_UPDATED,
-                Events.SYSTEM_REMOVED,
-                Events.INSTANCE_INITIALIZED,
-                Events.INSTANCE_STARTED,
-                Events.INSTANCE_UPDATED,
-                Events.INSTANCE_STOPPED,
             ],
             config.get("events_handler.garden.unique_data"),
             config.get("events_handler.garden.enabled"),
@@ -190,7 +187,6 @@ def add_internal_events_handler(event_manager):
                     handler_tag=handler_tag,
                     filters=filters,
                     local_only=local_only,
-                    name=handler_tag,
                     unique_data=unique_data,
                 )
             )
@@ -198,5 +194,21 @@ def add_internal_events_handler(event_manager):
     event_manager.register(
         BaseProcessor(
             action=error_event_handler,
+        )
+    )
+
+    event_manager.register(
+        TriggerListener(
+            handler=beer_garden.garden.handle_event_for_api_only,
+            handler_tag="Garden API Update Trigger",
+            filters=[
+                Events.SYSTEM_CREATED,
+                Events.SYSTEM_UPDATED,
+                Events.SYSTEM_REMOVED,
+                Events.INSTANCE_INITIALIZED,
+                Events.INSTANCE_STARTED,
+                Events.INSTANCE_UPDATED,
+                Events.INSTANCE_STOPPED,
+            ],
         )
     )

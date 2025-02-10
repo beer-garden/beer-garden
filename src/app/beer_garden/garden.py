@@ -973,6 +973,9 @@ def handle_event(event):
         if config.get("parent.stomp.enabled") or config.get("parent.http.enabled"):
             publish_garden()
 
+
+def handle_event_for_api_only(event):
+    # These events trigger to keep the Garden model presented on the UI in sync
     if "SYSTEM" in event.name or "INSTANCE" in event.name:
         # If a System or Instance is updated, publish updated Local Garden Model for UI
         publish_local_garden_to_api()
