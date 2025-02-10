@@ -61,12 +61,7 @@ db:
     ttl:
       action: -1
       file: 15
-      info: 15   
-      temp: 15
-      admin: 15
-      
-      orphan: -1
-
+      info: 15
 entry:
   http:
     enabled: true

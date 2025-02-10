@@ -1,16 +1,11 @@
 # Beer Garden Changelog
 
-# 3.31.0
-
-TBD
-
-- Updated pruner configuration to consolidate options under `db.prune`
-
 # 3.29.3
 
 TBD
 
 - Fixed bug where `NOT_CONFIGURED` status for Receiving connection was not filtered out
+- Updated pruner configuration to consolidate options under `db.prune`
 
 # 3.29.2
 

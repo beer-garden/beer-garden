@@ -201,12 +201,12 @@ class TestMongoPruner(object):
         assert len(Request.objects.filter(command_type=None)) == 2
 
     def test_prune_admin_requests(self, admin_request):
-        config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"admin": 1}}}}
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "prune_interval": 15}}}
         prune_admin_requests()
         assert len(Request.objects.filter(command_type="ADMIN")) == 0
 
     def test_prune_temp_requests(self, temp_request):
-        config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"temp": 1}}}}
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "prune_interval": 15}}}
         prune_temp_requests()
         assert len(Request.objects.filter(command_type="TEMP")) == 0
 
@@ -242,17 +242,21 @@ class TestMongoPruner(object):
 
 class TestDetermineTasks(object):
     def test_determine_tasks(self):
-        config = {"info": 5, "action": 10, "file": 15, "admin": 20}
+        info_tasks = determine_tasks("info", 5)
+        action_tasks = determine_tasks("action", 10)
+        admin_tasks = determine_tasks("admin", 20)
+        file_tasks = determine_tasks("file", 15)
 
-        prune_tasks = determine_tasks(**config)
+        assert len(info_tasks) == 1
+        assert len(action_tasks) == 1
+        assert len(admin_tasks) == 1
+        assert len(file_tasks) == 2
 
-        assert len(prune_tasks) == 5
-
-        info_task = prune_tasks[0]
-        action_task = prune_tasks[1]
-        admin_task = prune_tasks[2]
-        file_task = prune_tasks[3]
-        raw_file_task = prune_tasks[4]
+        info_task = info_tasks[0]
+        action_task = action_tasks[0]
+        admin_task = admin_tasks[0]
+        file_task = file_tasks[0]
+        raw_file_task = file_tasks[1]
 
         assert info_task["collection"] == Request
         assert action_task["collection"] == Request
@@ -272,20 +276,16 @@ class TestDetermineTasks(object):
         assert raw_file_task["delete_after"] == timedelta(minutes=15)
         assert admin_task["delete_after"] == timedelta(minutes=20)
 
-    def test_setup_pruning_tasks_empty(self):
-        prune_tasks = determine_tasks()
-        assert prune_tasks == []
-
     def test_setup_pruning_tasks_one(self):
-        config = {"info": -1, "action": 1}
-
-        prune_tasks = determine_tasks(**config)
+        prune_tasks = determine_tasks("info", -1)
+        assert len(prune_tasks) == 0
+        prune_tasks = determine_tasks("action", 1)
         assert len(prune_tasks) == 1
 
     def test_setup_pruning_tasks_mixed(self):
-        config = {"info": 5, "action": -1}
-
-        prune_tasks = determine_tasks(**config)
+        prune_tasks = determine_tasks("action", -1)
+        assert len(prune_tasks) == 0
+        prune_tasks = determine_tasks("info", 5)
         assert len(prune_tasks) == 1
 
         info_task = prune_tasks[0]
