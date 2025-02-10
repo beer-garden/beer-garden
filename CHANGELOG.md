@@ -5,6 +5,7 @@
 TBD
 
 - Fixed bug where `NOT_CONFIGURED` status for Receiving connection was not filtered out
+- Added logging for jobs created or updated from import
 
 # 3.29.2
 
