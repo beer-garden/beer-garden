@@ -311,10 +311,15 @@ export default function adminGardenController(
 
   }
 
-  $scope.hasConfiguredConnection = function(connections) {
-    for (let i = 0; i < connections.length; i++) {
-      if (connections[i].status != "NOT_CONFIGURED") {
-        return true;
+  $scope.hasConfiguredConnection = function(garden, connection_type) {
+    if (connection_type == "publishing_connections"){
+      if (garden.publishing_connections !== undefined && garden.publishing_connections != null){
+        return garden.publishing_connections.some(connection => connection.status != 'NOT_CONFIGURED');
+      }
+    }
+    if (connection_type == "receiving_connections"){
+      if (garden.receiving_connections !== undefined && garden.receiving_connections != null){
+        return garden.receiving_connections.some(connection => connection.status != 'NOT_CONFIGURED');
       }
     }
     return false;
