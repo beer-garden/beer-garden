@@ -254,13 +254,9 @@ class TriggerListener(BaseProcessor):
                         self._action(deepcopy(self._trigger_event))
                     except Exception as ex:
                         logger.error(
-                            "'%s' handler received an error executing callback for event %s: %s: %s"
-                            % (
-                                self._handler_tag,
-                                repr(self._trigger_event),
-                                str(ex),
-                                traceback.TracebackException.from_exception(ex),
-                            )
+                            f"{self._handler_tag}' handler received an error executing "
+                            f"callback for event {repr(self._trigger_event)}: {str(ex)}: "
+                            f"{traceback.TracebackException.from_exception(ex)}"
                         )
                     finally:
                         self._trigger_event = None
