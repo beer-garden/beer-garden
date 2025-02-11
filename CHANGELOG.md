@@ -5,6 +5,7 @@
 TBD
 
 - Fixed bug where `NOT_CONFIGURED` status for Receiving connection was not filtered out
+- Fixed bug where pour again invalid property caused broken UI
 
 # 3.29.2
 
