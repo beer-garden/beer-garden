@@ -644,10 +644,8 @@ def load_garden_file(garden: Garden):
                 "NOT_CONFIGURED" if garden_config.get("receiving") else "DISABLED"
             )
 
-        if http_receiving_connection:
-            http_receiving_connection.status = (
-                "RECEIVING" if garden_config.get("receiving") else "DISABLED"
-            )
+        if not garden_config.get("receiving"):
+            http_receiving_connection.status =  "DISABLED"
 
     except (
         YapconfItemNotFound,
@@ -676,14 +674,14 @@ def load_garden_file(garden: Garden):
         garden.publishing_connections = [
             http_publishing_connection,
             stomp_publishing_connection,
-        ]
-        garden.receiving_connections = [stomp_receiving_connection]
+        ]     
 
         http_receiving_connection.status_info.set_status_heartbeat(
             http_receiving_connection.status,
             max_history=config.get("garden.status_history"),
         )
-        garden.receiving_connections.append(http_receiving_connection)
+
+        garden.receiving_connections = [stomp_receiving_connection, http_receiving_connection]
 
     return garden
 
