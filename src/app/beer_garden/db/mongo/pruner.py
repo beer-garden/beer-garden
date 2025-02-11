@@ -63,7 +63,7 @@ def run_pruner(tasks, ttl_name):
 
 def prune_by_name(ttl_name):
     if ttl_name in ["admin", "temp"]:
-        ttl_length = config.get("db.prune.prune_interval")
+        ttl_length = config.get("db.prune.interval")
     else:
         ttl_length = config.get(f"db.prune.ttl.{ttl_name}")
 
@@ -106,7 +106,9 @@ def determine_tasks(ttl_name, ttl_length) -> Tuple[List[dict], int]:
     """
     prune_tasks = []
     batch_size = config.get("db.prune.batch_size")
-    if ttl_name == "info" and ttl_length > 0:
+    if ttl_length <= 0:
+        return []
+    if ttl_name == "info":
         prune_tasks.append(
             {
                 "collection": Request,
@@ -121,7 +123,7 @@ def determine_tasks(ttl_name, ttl_length) -> Tuple[List[dict], int]:
             }
         )
 
-    if ttl_name == "action" and ttl_length > 0:
+    if ttl_name == "action":
         prune_tasks.append(
             {
                 "collection": Request,
@@ -140,7 +142,7 @@ def determine_tasks(ttl_name, ttl_length) -> Tuple[List[dict], int]:
             }
         )
 
-    if ttl_name == "admin" and ttl_length > 0:
+    if ttl_name == "admin":
         prune_tasks.append(
             {
                 "collection": Request,
@@ -155,7 +157,7 @@ def determine_tasks(ttl_name, ttl_length) -> Tuple[List[dict], int]:
             }
         )
 
-    if ttl_name == "temp" and ttl_length > 0:
+    if ttl_name == "temp":
         prune_tasks.append(
             {
                 "collection": Request,
@@ -170,7 +172,7 @@ def determine_tasks(ttl_name, ttl_length) -> Tuple[List[dict], int]:
             }
         )
 
-    if ttl_name == "file" and ttl_length > 0:
+    if ttl_name == "file":
         prune_tasks.append(
             {
                 "collection": File,
@@ -199,7 +201,7 @@ def determine_tasks(ttl_name, ttl_length) -> Tuple[List[dict], int]:
 
 
 def prune_orphans():
-    orphan_ttl = config.get(config.get("db.prune.prune_interval"))
+    orphan_ttl = config.get(config.get("db.prune.interval"))
 
     if orphan_ttl > 0:
         prune_orphan_command_type(orphan_ttl, "INFO")

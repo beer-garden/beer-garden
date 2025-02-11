@@ -373,7 +373,7 @@ class MixedScheduler(object):
 
     def internal_scheduled_jobs(self):
         # Add scheduled jobs for Mongo Pruner
-        prune_interval = config.get("db.prune.prune_interval")
+        prune_interval = config.get("db.prune.interval")
         if prune_interval > 0:
             ttl_config = config.get("db.prune.ttl")
             if ttl_config.get("info") > 0:

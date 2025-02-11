@@ -925,6 +925,7 @@ _DB_SPEC = {
                         "Batch size for deleting documents "
                         "(negative number for never)"
                     ),
+                    "previous_names": ["db.ttl.batch_size"],
                     "alt_env_names": [],
                 },
                 "in_progress_request_expiration": {
@@ -935,13 +936,15 @@ _DB_SPEC = {
                         "to complete before considering timed out and marking as CANCELLED"
                         "(negative number for never)"
                     ),
+                    "previous_names": ["db.ttl.in_progress"],
                 },
-                "prune_interval": {
+                "interval": {
                     "type": "int",
                     "default": 15,
                     "description": (
                         "Number of minutes to wait before running db pruner"
                     ),
+                    "previous_names": ["db.prune_interval"],
                 },
                 "ttl": {
                     "type": "dict",
@@ -953,7 +956,7 @@ _DB_SPEC = {
                                 "Number of minutes to wait before deleting "
                                 "ACTION requests (negative number for never)"
                             ),
-                            "previous_names": ["action_request_ttl"],
+                            "previous_names": ["action_request_ttl", "db.ttl.action"],
                             "alt_env_names": ["ACTION_REQUEST_TTL"],
                         },
                         "info": {
@@ -963,7 +966,7 @@ _DB_SPEC = {
                                 "Number of minutes to wait before deleting "
                                 "INFO requests (negative number for never)"
                             ),
-                            "previous_names": ["info_request_ttl"],
+                            "previous_names": ["info_request_ttl", "db.ttl.info"],
                             "alt_env_names": ["INFO_REQUEST_TTL"],
                         },
                         "file": {
@@ -973,6 +976,7 @@ _DB_SPEC = {
                                 "Number of minutes to wait before deleting "
                                 "FILE documents (negative number for never)"
                             ),
+                            "previous_names": ["db.ttl.file"],
                             "alt_env_names": ["FILE_REQUEST_TTL"],
                         },
                     },

@@ -56,7 +56,7 @@ db:
   name: beer_garden
   prune:
     batch_size: -1
-    prune_interval: 15
+    interval: 15
     in_progress_request_expiration: 180
     ttl:
       action: -1

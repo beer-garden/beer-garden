@@ -201,12 +201,12 @@ class TestMongoPruner(object):
         assert len(Request.objects.filter(command_type=None)) == 2
 
     def test_prune_admin_requests(self, admin_request):
-        config._CONFIG = {"db": {"prune": {"batch_size": -1, "prune_interval": 15}}}
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 15}}}
         prune_admin_requests()
         assert len(Request.objects.filter(command_type="ADMIN")) == 0
 
     def test_prune_temp_requests(self, temp_request):
-        config._CONFIG = {"db": {"prune": {"batch_size": -1, "prune_interval": 15}}}
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 15}}}
         prune_temp_requests()
         assert len(Request.objects.filter(command_type="TEMP")) == 0
 
@@ -275,6 +275,12 @@ class TestDetermineTasks(object):
         assert file_task["delete_after"] == timedelta(minutes=15)
         assert raw_file_task["delete_after"] == timedelta(minutes=15)
         assert admin_task["delete_after"] == timedelta(minutes=20)
+
+    def test_setup_pruning_tasks_empty(self):
+        prune_tasks = determine_tasks("info", -1)
+        assert prune_tasks == []
+        prune_tasks = determine_tasks("action", 0)
+        assert prune_tasks == []
 
     def test_setup_pruning_tasks_one(self):
         prune_tasks = determine_tasks("info", -1)
