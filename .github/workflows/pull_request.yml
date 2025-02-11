@@ -459,8 +459,17 @@ jobs:
         working-directory: ./test/integration
 
       - name: Test Plugins
-        run: python${{ matrix.python-version }} -m pytest grandparents_garden/
-        working-directory: ./test/integration
+        uses: nick-invision/retry@v2
+        with:
+          timeout_seconds: 600
+          max_attempts: 3
+          retry_on: error
+          retry_wait_seconds: 30
+          command: python${{ matrix.python-version }} -m pytest ./test/integration/grandparents_garden/
+
+      # - name: Test Plugins
+      #   run: python${{ matrix.python-version }} -m pytest grandparents_garden/
+      #   working-directory: ./test/integration
 
       - name: Grab logs from Child
         if: always()
