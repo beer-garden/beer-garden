@@ -5,6 +5,7 @@
 TBD
 
 - Fixed bug where `NOT_CONFIGURED` status for Receiving connection was not filtered out
+- Optimized Garden Sync Topic Loop
 
 # 3.29.2
 
