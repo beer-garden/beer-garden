@@ -234,6 +234,7 @@ def check_garden_receiving_heartbeat(
 
                 if connection.status not in ["DISABLED", "RECEIVING"]:
                     connection.status = "RECEIVING"
+                    logger.error(f"Setting {api} for {garden.name} to RECEIVING")
 
                 connection.status_info.set_status_heartbeat(
                     connection.status, max_history=config.get("garden.status_history")
