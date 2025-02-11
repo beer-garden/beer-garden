@@ -89,10 +89,20 @@ class TestGardenSetup(object):
                 for connection in garden.publishing_connections:
                     if connection.api == "STOMP":
                         assert connection.status == "PUBLISHING"
-                    else:
+                    elif connection.api == "HTTP":
                         assert connection.status == "NOT_CONFIGURED"
-                assert len(garden.receiving_connections) == 1
-                assert garden.receiving_connections[0].status == "RECEIVING"
+                    else:
+                        assert False
+                assert len(garden.receiving_connections) == 2
+
+                for connection in garden.receiving_connections:
+                    if connection.api == "STOMP":
+                        assert connection.status == "RECEIVING"
+                    elif connection.api == "HTTP":
+                        assert connection.status == "NOT_CONFIGURED"
+                    else:
+                        assert False
+
                 assert len(garden.children) == 1
                 assert garden.children[0].name == "child"
 
@@ -116,16 +126,20 @@ class TestGardenSetup(object):
                 for connection in garden.publishing_connections:
                     if connection.api == "HTTP":
                         assert connection.status == "PUBLISHING"
-                    else:
+                    elif connection.api == "STOMP":
                         assert connection.status == "NOT_CONFIGURED"
+                    else:
+                        assert False
 
                 # Older gardens will not have receiving connections present
                 if len(garden.receiving_connections) > 0:
                     for connection in garden.receiving_connections:
                         if connection.api == "HTTP":
                             assert connection.status == "RECEIVING"
-                        else:
+                        elif connection.api == "STOMP":
                             assert connection.status == "NOT_CONFIGURED"
+                        else:
+                            assert False
                     assert len(garden.children) == 0
 
             elif garden.name == "parent":
