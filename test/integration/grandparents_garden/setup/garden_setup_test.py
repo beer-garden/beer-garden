@@ -92,7 +92,7 @@ class TestGardenSetup(object):
                     elif connection.api == "HTTP":
                         assert connection.status == "NOT_CONFIGURED"
                     else:
-                        assert False
+                        raise AssertionError()
                 assert len(garden.receiving_connections) == 2
 
                 for connection in garden.receiving_connections:
@@ -101,7 +101,7 @@ class TestGardenSetup(object):
                     elif connection.api == "HTTP":
                         assert connection.status == "NOT_CONFIGURED"
                     else:
-                        assert False
+                        raise AssertionError()
 
                 assert len(garden.children) == 1
                 assert garden.children[0].name == "child"
@@ -129,7 +129,7 @@ class TestGardenSetup(object):
                     elif connection.api == "STOMP":
                         assert connection.status == "NOT_CONFIGURED"
                     else:
-                        assert False
+                        raise AssertionError()
 
                 # Older gardens will not have receiving connections present
                 if len(garden.receiving_connections) > 0:
@@ -139,7 +139,8 @@ class TestGardenSetup(object):
                         elif connection.api == "STOMP":
                             assert connection.status == "NOT_CONFIGURED"
                         else:
-                            assert False
+                            raise AssertionError()
+                        
                     assert len(garden.children) == 0
 
             elif garden.name == "parent":

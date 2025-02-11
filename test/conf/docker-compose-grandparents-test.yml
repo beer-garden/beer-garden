@@ -164,7 +164,9 @@ services:
             BG_METRICS_PROMETHEUS_ENABLED: "false"
 
         depends_on:
-            - beer-garden-grandparent
+            - mongodb
+            - rabbitmq
+            - activemq
 
     beer-garden-child:
         image: bgio/beer-garden:child
@@ -210,7 +212,8 @@ services:
             BG_METRICS_PROMETHEUS_ENABLED: "false"
 
         depends_on:
-            - beer-garden-parent
+            - mongodb
+            - rabbitmq
 
 networks:
     bg-network:
