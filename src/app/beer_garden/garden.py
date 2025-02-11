@@ -232,6 +232,7 @@ def check_garden_receiving_heartbeat(
             if connection.api == api:
                 connection_set = True
 
+                logger.error(f"{api} for {garden.name} is currently {connection.status}")
                 if connection.status not in ["DISABLED", "RECEIVING"]:
                     connection.status = "RECEIVING"
                     logger.error(f"Setting {api} for {garden.name} to RECEIVING")
@@ -245,6 +246,7 @@ def check_garden_receiving_heartbeat(
     # If the receiving type is unknown, enable it by default and set heartbeat
     if not connection_set:
         connection = Connection(api=api, status="DISABLED")
+        logger.error(f"{api} for {garden.name} seen for the first time")
 
         # Check if there is a config file
         path = Path(f"{config.get('children.directory')}/{garden.name}.yaml")
