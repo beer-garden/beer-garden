@@ -30,7 +30,7 @@ jobs:
 
       # Need to update if we support other OS's
       - name: Cache PIP Install
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-${{ matrix.python-version }}-pip-lint-${{ hashFiles('**/setup.py') }}-${{ hashFiles('**/requirements.txt') }}
@@ -89,7 +89,7 @@ jobs:
 
       # Need to update if we support other OS's
       - name: Cache PIP Install
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         if: env.brewtils == 'develop'
         with:
           path: ~/.cache/pip
@@ -144,7 +144,7 @@ jobs:
 
       # Need to update if we support other OS's
       - name: Cache PIP Install
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-${{ matrix.python-version }}-pip-coverage-${{ hashFiles('**/setup.py') }}-${{ hashFiles('**/requirements.txt') }}
