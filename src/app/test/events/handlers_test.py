@@ -26,71 +26,71 @@ class TestHandlers:
         }
 
     @pytest.mark.parametrize(
-        "event_name,expected_calls",
+        "event_name,expected_calls,trigger_event",
         [
-            (Events.BREWVIEW_STARTED, 0),
-            (Events.BREWVIEW_STOPPED, 0),
-            (Events.BARTENDER_STARTED, 0),
-            (Events.BARTENDER_STOPPED, 0),
-            (Events.REQUEST_CREATED, 3),
-            (Events.REQUEST_STARTED, 1),
-            (Events.REQUEST_UPDATED, 1),
-            (Events.REQUEST_COMPLETED, 2),
-            (Events.REQUEST_CANCELED, 2),
-            (Events.REQUEST_TOPIC_PUBLISH, 1),
-            (Events.REQUEST_DELETED, 0),
-            (Events.INSTANCE_INITIALIZED, 2),
-            (Events.INSTANCE_STARTED, 1),
-            (Events.INSTANCE_UPDATED, 2),
-            (Events.INSTANCE_STOPPED, 2),
-            (Events.SYSTEM_CREATED, 3),
-            (Events.SYSTEM_UPDATED, 3),
-            (Events.SYSTEM_REMOVED, 2),
-            (Events.QUEUE_CLEARED, 0),
-            (Events.ALL_QUEUES_CLEARED, 0),
-            (Events.DB_CREATE, 0),
-            (Events.DB_UPDATE, 0),
-            (Events.DB_DELETE, 0),
-            (Events.GARDEN_CREATED, 1),
-            (Events.GARDEN_CONFIGURED, 2),
-            (Events.GARDEN_UPDATED, 2),
-            (Events.GARDEN_REMOVED, 2),
-            (Events.FILE_CREATED, 0),
-            (Events.GARDEN_STARTED, 1),
-            (Events.GARDEN_STOPPED, 2),
-            (Events.GARDEN_UNREACHABLE, 1),
-            (Events.GARDEN_ERROR, 1),
-            (Events.GARDEN_NOT_CONFIGURED, 1),
-            (Events.GARDEN_SYNC, 2),
-            (Events.ENTRY_STARTED, 1),
-            (Events.ENTRY_STOPPED, 0),
-            (Events.JOB_CREATED, 2),
-            (Events.JOB_DELETED, 1),
-            (Events.JOB_PAUSED, 1),
-            (Events.JOB_RESUMED, 1),
-            (Events.PLUGIN_LOGGER_FILE_CHANGE, 1),
-            (Events.RUNNER_STARTED, 0),
-            (Events.RUNNER_STOPPED, 0),
-            (Events.RUNNER_REMOVED, 0),
-            (Events.JOB_UPDATED, 1),
-            (Events.JOB_EXECUTED, 1),
-            (Events.USER_UPDATED, 1),
-            (Events.USERS_IMPORTED, 0),
-            (Events.ROLE_UPDATED, 0),
-            (Events.ROLE_DELETED, 1),
-            (Events.COMMAND_PUBLISHING_BLOCKLIST_SYNC, 0),
-            (Events.COMMAND_PUBLISHING_BLOCKLIST_REMOVE, 0),
-            (Events.COMMAND_PUBLISHING_BLOCKLIST_UPDATE, 0),
-            (Events.TOPIC_CREATED, 0),
-            (Events.TOPIC_UPDATED, 0),
-            (Events.TOPIC_REMOVED, 0),
-            (Events.REPLICATION_CREATED, 1),
-            (Events.REPLICATION_UPDATED, 1),
-            (Events.DIRECTORY_FILE_CHANGE, 1),
+            (Events.BREWVIEW_STARTED, 0, False),
+            (Events.BREWVIEW_STOPPED, 0, False),
+            (Events.BARTENDER_STARTED, 0, False),
+            (Events.BARTENDER_STOPPED, 0, False),
+            (Events.REQUEST_CREATED, 3, False),
+            (Events.REQUEST_STARTED, 1, False),
+            (Events.REQUEST_UPDATED, 1, False),
+            (Events.REQUEST_COMPLETED, 2, False),
+            (Events.REQUEST_CANCELED, 2, False),
+            (Events.REQUEST_TOPIC_PUBLISH, 1, False),
+            (Events.REQUEST_DELETED, 0, False),
+            (Events.INSTANCE_INITIALIZED, 1, True),
+            (Events.INSTANCE_STARTED, 0, True),
+            (Events.INSTANCE_UPDATED, 1, True),
+            (Events.INSTANCE_STOPPED, 1, True),
+            (Events.SYSTEM_CREATED, 2, True),
+            (Events.SYSTEM_UPDATED, 2, True),
+            (Events.SYSTEM_REMOVED, 1, True),
+            (Events.QUEUE_CLEARED, 0, False),
+            (Events.ALL_QUEUES_CLEARED, 0, False),
+            (Events.DB_CREATE, 0, False),
+            (Events.DB_UPDATE, 0, False),
+            (Events.DB_DELETE, 0, False),
+            (Events.GARDEN_CREATED, 1, False),
+            (Events.GARDEN_CONFIGURED, 2, False),
+            (Events.GARDEN_UPDATED, 2, False),
+            (Events.GARDEN_REMOVED, 2, False),
+            (Events.FILE_CREATED, 0, False),
+            (Events.GARDEN_STARTED, 1, False),
+            (Events.GARDEN_STOPPED, 2, False),
+            (Events.GARDEN_UNREACHABLE, 1, False),
+            (Events.GARDEN_ERROR, 1, False),
+            (Events.GARDEN_NOT_CONFIGURED, 1, False),
+            (Events.GARDEN_SYNC, 2, False),
+            (Events.ENTRY_STARTED, 1, False),
+            (Events.ENTRY_STOPPED, 0, False),
+            (Events.JOB_CREATED, 2, False),
+            (Events.JOB_DELETED, 1, False),
+            (Events.JOB_PAUSED, 1, False),
+            (Events.JOB_RESUMED, 1, False),
+            (Events.PLUGIN_LOGGER_FILE_CHANGE, 1, False),
+            (Events.RUNNER_STARTED, 0, False),
+            (Events.RUNNER_STOPPED, 0, False),
+            (Events.RUNNER_REMOVED, 0, False),
+            (Events.JOB_UPDATED, 1, False),
+            (Events.JOB_EXECUTED, 1, False),
+            (Events.USER_UPDATED, 1, False),
+            (Events.USERS_IMPORTED, 0, False),
+            (Events.ROLE_UPDATED, 0, False),
+            (Events.ROLE_DELETED, 1, False),
+            (Events.COMMAND_PUBLISHING_BLOCKLIST_SYNC, 0, False),
+            (Events.COMMAND_PUBLISHING_BLOCKLIST_REMOVE, 0, False),
+            (Events.COMMAND_PUBLISHING_BLOCKLIST_UPDATE, 0, False),
+            (Events.TOPIC_CREATED, 0, False),
+            (Events.TOPIC_UPDATED, 0, False),
+            (Events.TOPIC_REMOVED, 0, False),
+            (Events.REPLICATION_CREATED, 1, False),
+            (Events.REPLICATION_UPDATED, 1, False),
+            (Events.DIRECTORY_FILE_CHANGE, 1, False),
         ],
     )
     def test_garden_local_callbacks(
-        self, monkeypatch, bg_event, event_name, expected_calls
+        self, monkeypatch, bg_event, event_name, expected_calls, trigger_event
     ):
         """Tests to ensure the expected number of Handlers are called for local events"""
 
@@ -102,11 +102,15 @@ class TestHandlers:
         event_manager = FanoutProcessor(name="event manager")
         add_internal_events_handler(event_manager)
 
-        assert len(event_manager._managed_processors) == 14
+        assert len(event_manager._managed_processors) == 15
 
         queue_mock = Mock()
         append_mock = Mock()
         queue_mock.append = append_mock
+
+        for processor in event_manager._managed_processors:
+            if hasattr(processor, "_trigger_event"):
+                assert processor._trigger_event is None
 
         for processor in event_manager._managed_processors:
 
@@ -115,74 +119,81 @@ class TestHandlers:
 
             processor.put(bg_event)
 
+        for processor in event_manager._managed_processors:
+            if hasattr(processor, "_trigger_event"):
+                if trigger_event:
+                    assert processor._trigger_event is not None
+                else:
+                    assert processor._trigger_event is None
+
         assert append_mock.call_count == expected_calls
 
     @pytest.mark.parametrize(
-        "event_name,expected_calls",
+        "event_name,expected_calls,trigger_event",
         [
-            (Events.BREWVIEW_STARTED, 0),
-            (Events.BREWVIEW_STOPPED, 0),
-            (Events.BARTENDER_STARTED, 0),
-            (Events.BARTENDER_STOPPED, 0),
-            (Events.REQUEST_CREATED, 2),
-            (Events.REQUEST_STARTED, 1),
-            (Events.REQUEST_UPDATED, 1),
-            (Events.REQUEST_COMPLETED, 2),
-            (Events.REQUEST_CANCELED, 2),
-            (Events.REQUEST_TOPIC_PUBLISH, 1),
-            (Events.REQUEST_DELETED, 0),
-            (Events.INSTANCE_INITIALIZED, 1),
-            (Events.INSTANCE_STARTED, 1),
-            (Events.INSTANCE_UPDATED, 2),
-            (Events.INSTANCE_STOPPED, 1),
-            (Events.SYSTEM_CREATED, 2),
-            (Events.SYSTEM_UPDATED, 2),
-            (Events.SYSTEM_REMOVED, 1),
-            (Events.QUEUE_CLEARED, 0),
-            (Events.ALL_QUEUES_CLEARED, 0),
-            (Events.DB_CREATE, 0),
-            (Events.DB_UPDATE, 0),
-            (Events.DB_DELETE, 0),
-            (Events.GARDEN_CREATED, 1),
-            (Events.GARDEN_CONFIGURED, 2),
-            (Events.GARDEN_UPDATED, 2),
-            (Events.GARDEN_REMOVED, 2),
-            (Events.FILE_CREATED, 0),
-            (Events.GARDEN_STARTED, 1),
-            (Events.GARDEN_STOPPED, 2),
-            (Events.GARDEN_UNREACHABLE, 1),
-            (Events.GARDEN_ERROR, 1),
-            (Events.GARDEN_NOT_CONFIGURED, 1),
-            (Events.GARDEN_SYNC, 2),
-            (Events.ENTRY_STARTED, 0),
-            (Events.ENTRY_STOPPED, 0),
-            (Events.JOB_CREATED, 0),
-            (Events.JOB_DELETED, 0),
-            (Events.JOB_PAUSED, 0),
-            (Events.JOB_RESUMED, 0),
-            (Events.PLUGIN_LOGGER_FILE_CHANGE, 0),
-            (Events.RUNNER_STARTED, 0),
-            (Events.RUNNER_STOPPED, 0),
-            (Events.RUNNER_REMOVED, 0),
-            (Events.JOB_UPDATED, 0),
-            (Events.JOB_EXECUTED, 0),
-            (Events.USER_UPDATED, 0),
-            (Events.USERS_IMPORTED, 0),
-            (Events.ROLE_UPDATED, 0),
-            (Events.ROLE_DELETED, 0),
-            (Events.COMMAND_PUBLISHING_BLOCKLIST_SYNC, 0),
-            (Events.COMMAND_PUBLISHING_BLOCKLIST_REMOVE, 0),
-            (Events.COMMAND_PUBLISHING_BLOCKLIST_UPDATE, 0),
-            (Events.TOPIC_CREATED, 0),
-            (Events.TOPIC_UPDATED, 0),
-            (Events.TOPIC_REMOVED, 0),
-            (Events.REPLICATION_CREATED, 0),
-            (Events.REPLICATION_UPDATED, 0),
-            (Events.DIRECTORY_FILE_CHANGE, 0),
+            (Events.BREWVIEW_STARTED, 0, False),
+            (Events.BREWVIEW_STOPPED, 0, False),
+            (Events.BARTENDER_STARTED, 0, False),
+            (Events.BARTENDER_STOPPED, 0, False),
+            (Events.REQUEST_CREATED, 2, False),
+            (Events.REQUEST_STARTED, 1, False),
+            (Events.REQUEST_UPDATED, 1, False),
+            (Events.REQUEST_COMPLETED, 2, False),
+            (Events.REQUEST_CANCELED, 2, False),
+            (Events.REQUEST_TOPIC_PUBLISH, 1, False),
+            (Events.REQUEST_DELETED, 0, False),
+            (Events.INSTANCE_INITIALIZED, 0, True),
+            (Events.INSTANCE_STARTED, 0, True),
+            (Events.INSTANCE_UPDATED, 1, True),
+            (Events.INSTANCE_STOPPED, 0, True),
+            (Events.SYSTEM_CREATED, 1, True),
+            (Events.SYSTEM_UPDATED, 1, True),
+            (Events.SYSTEM_REMOVED, 0, True),
+            (Events.QUEUE_CLEARED, 0, False),
+            (Events.ALL_QUEUES_CLEARED, 0, False),
+            (Events.DB_CREATE, 0, False),
+            (Events.DB_UPDATE, 0, False),
+            (Events.DB_DELETE, 0, False),
+            (Events.GARDEN_CREATED, 1, False),
+            (Events.GARDEN_CONFIGURED, 2, False),
+            (Events.GARDEN_UPDATED, 2, False),
+            (Events.GARDEN_REMOVED, 2, False),
+            (Events.FILE_CREATED, 0, False),
+            (Events.GARDEN_STARTED, 1, False),
+            (Events.GARDEN_STOPPED, 2, False),
+            (Events.GARDEN_UNREACHABLE, 1, False),
+            (Events.GARDEN_ERROR, 1, False),
+            (Events.GARDEN_NOT_CONFIGURED, 1, False),
+            (Events.GARDEN_SYNC, 2, False),
+            (Events.ENTRY_STARTED, 0, False),
+            (Events.ENTRY_STOPPED, 0, False),
+            (Events.JOB_CREATED, 0, False),
+            (Events.JOB_DELETED, 0, False),
+            (Events.JOB_PAUSED, 0, False),
+            (Events.JOB_RESUMED, 0, False),
+            (Events.PLUGIN_LOGGER_FILE_CHANGE, 0, False),
+            (Events.RUNNER_STARTED, 0, False),
+            (Events.RUNNER_STOPPED, 0, False),
+            (Events.RUNNER_REMOVED, 0, False),
+            (Events.JOB_UPDATED, 0, False),
+            (Events.JOB_EXECUTED, 0, False),
+            (Events.USER_UPDATED, 0, False),
+            (Events.USERS_IMPORTED, 0, False),
+            (Events.ROLE_UPDATED, 0, False),
+            (Events.ROLE_DELETED, 0, False),
+            (Events.COMMAND_PUBLISHING_BLOCKLIST_SYNC, 0, False),
+            (Events.COMMAND_PUBLISHING_BLOCKLIST_REMOVE, 0, False),
+            (Events.COMMAND_PUBLISHING_BLOCKLIST_UPDATE, 0, False),
+            (Events.TOPIC_CREATED, 0, False),
+            (Events.TOPIC_UPDATED, 0, False),
+            (Events.TOPIC_REMOVED, 0, False),
+            (Events.REPLICATION_CREATED, 0, False),
+            (Events.REPLICATION_UPDATED, 0, False),
+            (Events.DIRECTORY_FILE_CHANGE, 0, False),
         ],
     )
     def test_garden_remote_callbacks(
-        self, monkeypatch, bg_event, event_name, expected_calls
+        self, monkeypatch, bg_event, event_name, expected_calls, trigger_event
     ):
         """Tests to ensure the expected number of Handlers are called for remote events"""
 
@@ -194,17 +205,28 @@ class TestHandlers:
         event_manager = FanoutProcessor(name="event manager")
         add_internal_events_handler(event_manager)
 
-        assert len(event_manager._managed_processors) == 14
+        assert len(event_manager._managed_processors) == 15
 
         queue_mock = Mock()
         append_mock = Mock()
         queue_mock.append = append_mock
 
         for processor in event_manager._managed_processors:
+            if hasattr(processor, "_trigger_event"):
+                assert processor._trigger_event is None
+
+        for processor in event_manager._managed_processors:
 
             if hasattr(processor, "_queue"):
                 monkeypatch.setattr(processor, "_queue", queue_mock)
             processor.put(bg_event)
+
+        for processor in event_manager._managed_processors:
+            if hasattr(processor, "_trigger_event"):
+                if trigger_event:
+                    assert processor._trigger_event is not None
+                else:
+                    assert processor._trigger_event is None
 
         assert append_mock.call_count == expected_calls
 
@@ -227,7 +249,7 @@ class TestHandlers:
         event_manager = FanoutProcessor(name="event manager")
         add_internal_events_handler(event_manager)
 
-        assert len(event_manager._managed_processors) == 14
+        assert len(event_manager._managed_processors) == 15
 
         evaluated = False
         for processor in event_manager._managed_processors:
@@ -283,7 +305,7 @@ class TestHandlers:
         event_manager = FanoutProcessor(name="event manager")
         add_internal_events_handler(event_manager)
 
-        assert len(event_manager._managed_processors) == 13
+        assert len(event_manager._managed_processors) == 14
 
         for processor in event_manager._managed_processors:
             if hasattr(processor, "_handler_tag"):
