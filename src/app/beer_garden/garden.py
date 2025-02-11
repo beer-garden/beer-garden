@@ -533,7 +533,7 @@ def load_garden_file(garden: Garden):
         api="HTTP", status="CONFIGURATION_ERROR", status_info=StatusInfo()
     )
     http_receiving_connection = Connection(
-        api="STOMP", status="CONFIGURATION_ERROR", status_info=StatusInfo()
+        api="HTTP", status="CONFIGURATION_ERROR", status_info=StatusInfo()
     )
 
     stomp_publishing_connection = Connection(
