@@ -454,8 +454,10 @@ def prune_topics():
             for instance in system.instances:
                 for command in system.commands:
                     command_hash.append(
-                        (f"{garden.name}.{system.namespace}.{system.name}."
-                         f"{system.version}.{instance.name}.{command.name}")
+                        (
+                            f"{garden.name}.{system.namespace}.{system.name}."
+                            f"{system.version}.{instance.name}.{command.name}"
+                        )
                     )
 
     for topic in Topic.objects():
@@ -464,10 +466,9 @@ def prune_topics():
         for subscriber in topic.subscribers:
             if subscriber.subscriber_type in ["GENERATED", "ANNOTATED"]:
                 if (
-                    (f"{subscriber.garden}.{subscriber.namespace}.{subscriber.system}."
-                    f"{subscriber.version}.{subscriber.instance}.{subscriber.command}")
-                    in command_hash
-                ):
+                    f"{subscriber.garden}.{subscriber.namespace}.{subscriber.system}."
+                    f"{subscriber.version}.{subscriber.instance}.{subscriber.command}"
+                ) in command_hash:
                     valid_subscribers.append(subscriber)
 
             else:
