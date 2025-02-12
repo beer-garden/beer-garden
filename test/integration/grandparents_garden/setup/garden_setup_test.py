@@ -119,14 +119,17 @@ class TestGardenSetup(object):
                     else:
                         assert connection.status == "NOT_CONFIGURED"
 
-                # Older gardens will not have receiving connections present
-                if len(garden.receiving_connections) > 0:
-                    for connection in garden.receiving_connections:
-                        if connection.api == "HTTP":
-                            assert connection.status == "RECEIVING"
-                        else:
-                            assert connection.status == "NOT_CONFIGURED"
-                    assert len(garden.downstream) == 0
+                assert (
+                    len(garden.receiving_connections) > 0
+                ), "Expected Receiving Connections"
+
+                for connection in garden.receiving_connections:
+                    if connection.api == "HTTP":
+                        assert connection.status == "RECEIVING"
+                    else:
+                        assert connection.status == "NOT_CONFIGURED"
+
+                assert len(garden.downstream) == 0
 
             elif garden.name == "parent":
                 assert len(garden.downstream) == 1
