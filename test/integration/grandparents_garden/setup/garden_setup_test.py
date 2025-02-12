@@ -193,10 +193,14 @@ class TestGardenSetup(object):
 
         gardens = self.parser.parse_garden(response.json(), many=True)
 
-        assert len(gardens) == 3
+        assert len(gardens) == 2
 
         for garden in gardens:
             assert len(garden.systems) > 0
+
+            if garden.downstream:
+                for downstream_garden in garden.downstream:
+                    assert len(downstream_garden.systems) > 0
 
     def test_child_systems_register_successful(self):
 
