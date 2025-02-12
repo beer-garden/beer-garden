@@ -445,7 +445,7 @@ def prune_topics():
         None
     """
 
-    from .models import Topic, Garden
+    from .models import Garden, Topic
 
     command_hash = []
 
