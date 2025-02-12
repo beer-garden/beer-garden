@@ -113,15 +113,20 @@ class TestGardenSetup(object):
 
         for garden in gardens:
             if garden.name == "child":
+
+                assert (
+                    len(garden.receiving_connections) > 0
+                ), "Expected Receiving Connections"
+
+                assert (
+                    len(garden.publishing_connections) > 0
+                ), "Expected Publishing Connections"
+
                 for connection in garden.publishing_connections:
                     if connection.api == "HTTP":
                         assert connection.status == "PUBLISHING"
                     else:
                         assert connection.status == "NOT_CONFIGURED"
-
-                assert (
-                    len(garden.receiving_connections) > 0
-                ), "Expected Receiving Connections"
 
                 for connection in garden.receiving_connections:
                     if connection.api == "HTTP":
