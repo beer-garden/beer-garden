@@ -196,7 +196,7 @@ class TestGardenSetup(object):
         assert len(gardens) == 3
 
         for garden in gardens:
-            assert garden.systems > 0
+            assert len(garden.systems) > 0
 
     def test_child_systems_register_successful(self):
 
@@ -209,7 +209,7 @@ class TestGardenSetup(object):
         assert len(gardens) == 2
 
         for garden in gardens:
-            assert garden.systems > 0
+            assert len(garden.systems) > 0
 
     # def test_update_garden_connection_info(self):
     #     response = self.easy_client.client.session.get(
