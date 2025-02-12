@@ -187,35 +187,29 @@ class TestGardenSetup(object):
         assert len(gardens) == 2
 
     def test_parent_systems_register_successful(self):
-        systems = self.grand_parent_easy_client.find_systems()
+        response = self.grand_parent_easy_client.client.session.get(
+            self.grand_parent_easy_client.client.base_url + "api/v1/gardens/"
+        )
 
-        namespaces = dict()
+        gardens = self.parser.parse_garden(response.json(), many=True)
 
-        for system in systems:
-            if system.namespace not in namespaces.keys():
-                namespaces[system.namespace] = 1
-            else:
-                namespaces[system.namespace] += 1
+        assert len(gardens) == 3
 
-        assert len(namespaces) == 3
-        assert namespaces["grandparent"] > 0
-        assert namespaces["parent"] > 0
-        assert namespaces["child"] > 0
+        for garden in gardens:
+            assert garden.systems > 0
 
     def test_child_systems_register_successful(self):
-        systems = self.parent_easy_client.find_systems()
 
-        namespaces = dict()
+        response = self.parent_easy_client.client.session.get(
+            self.parent_easy_client.client.base_url + "api/v1/gardens/"
+        )
 
-        for system in systems:
-            if system.namespace not in namespaces.keys():
-                namespaces[system.namespace] = 1
-            else:
-                namespaces[system.namespace] += 1
+        gardens = self.parser.parse_garden(response.json(), many=True)
 
-        assert len(namespaces) == 2
-        assert namespaces["parent"] > 0
-        assert namespaces["child"] > 0
+        assert len(gardens) == 2
+
+        for garden in gardens:
+            assert garden.systems > 0
 
     # def test_update_garden_connection_info(self):
     #     response = self.easy_client.client.session.get(
