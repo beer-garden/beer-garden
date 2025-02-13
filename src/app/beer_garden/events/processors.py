@@ -179,8 +179,10 @@ class QueueListener(BaseProcessor):
 
 
 class TriggerListener(BaseProcessor):
-    """Listener ignore data sent, and
-    triggers the action with no input
+    """
+    A processor that listens for specific events and triggers a handler when an event
+    matches the specified filters. Only one event will be stored and any additional 
+    event passed will be dropped.
     """
 
     def __init__(self, handler, handler_tag, filters=None, **kwargs):
