@@ -1073,9 +1073,9 @@ class Garden(MongoModel, Document):
 
         # we leverage the fact that systems must be unique up to the triple of their
         # namespaces, names and versions
-        child_systems_already_known = {}
+        downstream_systems_already_known = {}
         if old_garden:
-            child_systems_already_known = {
+            downstream_systems_already_known = {
                 _get_system_triple(system): str(system.id)
                 for system in old_garden.systems
             }
@@ -1090,8 +1090,8 @@ class Garden(MongoModel, Document):
                 ).count()
                 < 1
             ):
-                if triple in child_systems_already_known:
-                    system_id_to_remove = child_systems_already_known.pop(triple)
+                if triple in downstream_systems_already_known:
+                    system_id_to_remove = downstream_systems_already_known.pop(triple)
 
                     if system_id_to_remove != str(system.id):
                         # remove the system from before this update with the same triple
@@ -1110,9 +1110,9 @@ class Garden(MongoModel, Document):
                 system.delete()
 
         # if there's anything left over, delete those too; this could occur, e.g.,
-        # if a child system deleted a particular version of a plugin and installed
+        # if a downstream system deleted a particular version of a plugin and installed
         # another version of the same plugin
-        for bad_system_id in child_systems_already_known.values():
+        for bad_system_id in downstream_systems_already_known.values():
             logger.error(
                 f"Removing System with ID={str(bad_system_id)} because it "
                 f"matches no known system in downstream garden ({self.name})"
