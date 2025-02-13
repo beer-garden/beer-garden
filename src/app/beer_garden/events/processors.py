@@ -181,7 +181,7 @@ class QueueListener(BaseProcessor):
 class TriggerListener(BaseProcessor):
     """
     A processor that listens for specific events and triggers a handler when an event
-    matches the specified filters. Only one event will be stored and any additional 
+    matches the specified filters. Only one event will be stored and any additional
     event passed will be dropped.
     """
 
