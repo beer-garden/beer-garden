@@ -9,7 +9,9 @@ TBD
 - Optimized Garden Sync Topic Loop
 - Fixed Update Event Handler to support Garden event triggering for UI updates based 
   on System and Instance updates
-  
+- Fixed how Garden files are loaded, added HTTP Receiving defaults to prevent missed events prior
+  to `GARDEN_SYNC`
+
 # 3.29.2
 
 1/31/2025
