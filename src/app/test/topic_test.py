@@ -207,7 +207,7 @@ class TestTopic:
         topics_generated = Topic.objects().count()
         assert topics_generated == 0
 
-        sync_garden_topics_loop(local_garden)
+        sync_garden_topics_loop(local_garden, {})
         topics_generated = Topic.objects().count()
         assert topics_generated == 1
 

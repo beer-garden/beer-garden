@@ -246,7 +246,13 @@ def sync_garden_topics(garden_name: str = None):
     else:
         garden = get_garden(garden_name)
 
-    sync_garden_topics_loop(garden)
+    topics = get_all_topics()
+
+    topics_dict = {}
+    for topic in topics:
+        topics_dict[topic.name] = topic
+
+    sync_garden_topics_loop(garden, topics_dict)
 
     prune_topics()
 
@@ -255,7 +261,33 @@ def prune_topics():
     db.prune_topics()
 
 
-def sync_garden_topics_loop(garden: Garden):
+def sync_garden_topic_add(subscriber: Subscriber, topic_name: str, topics_dict: dict):
+    """
+    Add a subscriber to a topic in the topics dictionary. If the topic already exists,
+    the subscriber is added to the list of subscribers for that topic if they are not
+    already present. If the topic does not exist, a new topic is created with the
+    subscriber as the initial subscriber.
+
+    Args:
+        subscriber (Subscriber): The subscriber to add to the topic.
+        topic_name (str): The name of the topic to which the subscriber should be added.
+        topics_dict (dict): A dictionary where the keys are topic names and the values
+                            are Topic objects.
+
+    Returns:
+        None
+    """
+    if topic_name in topics_dict:
+        if subscriber not in topics_dict[topic_name].subscribers:
+            topics_dict[topic_name].subscribers.append(subscriber)
+            update_topic(topics_dict[topic_name])
+    else:
+        topics_dict[topic_name] = create_topic(
+            Topic(name=topic_name, subscribers=[subscriber])
+        )
+
+
+def sync_garden_topics_loop(garden: Garden, topics_dict: dict):
     """
     Synchronizes topics for a given garden and its systems, commands, and instances.
 
@@ -275,29 +307,22 @@ def sync_garden_topics_loop(garden: Garden):
     Returns:
         None
     """
-
     for system in garden.systems:
         default_topic = system.prefix_topic
         for command in system.commands:
             for instance in system.instances:
                 if len(command.topics) > 0:
                     for topic in command.topics:
-                        create_topic(
-                            Topic(
-                                name=topic,
-                                subscribers=[
-                                    Subscriber(
-                                        garden=garden.name,
-                                        namespace=system.namespace,
-                                        system=system.name,
-                                        version=system.version,
-                                        instance=instance.name,
-                                        command=command.name,
-                                        subscriber_type="ANNOTATED",
-                                    )
-                                ],
-                            )
+                        subscriber = Subscriber(
+                            garden=garden.name,
+                            namespace=system.namespace,
+                            system=system.name,
+                            version=system.version,
+                            instance=instance.name,
+                            command=command.name,
+                            subscriber_type="ANNOTATED",
                         )
+                        sync_garden_topic_add(subscriber, topic, topics_dict)
 
                 if not default_topic:
                     topic_generated = (
@@ -308,26 +333,20 @@ def sync_garden_topics_loop(garden: Garden):
                 else:
                     topic_generated = f"{default_topic}.{command.name}"
 
-                create_topic(
-                    Topic(
-                        name=topic_generated,
-                        subscribers=[
-                            Subscriber(
-                                garden=garden.name,
-                                namespace=system.namespace,
-                                system=system.name,
-                                version=system.version,
-                                instance=instance.name,
-                                command=command.name,
-                                subscriber_type="GENERATED",
-                            )
-                        ],
-                    )
+                subscriber = Subscriber(
+                    garden=garden.name,
+                    namespace=system.namespace,
+                    system=system.name,
+                    version=system.version,
+                    instance=instance.name,
+                    command=command.name,
+                    subscriber_type="GENERATED",
                 )
+                sync_garden_topic_add(subscriber, topic_generated, topics_dict)
 
     if garden.children:
         for child in garden.children:
-            sync_garden_topics_loop(child)
+            sync_garden_topics_loop(child, topics_dict)
 
 
 def increase_publish_count(topic: Topic):
