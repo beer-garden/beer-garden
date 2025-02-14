@@ -53,7 +53,7 @@ from beer_garden.errors import (
     UnknownGardenException,
 )
 from beer_garden.events import publish
-from beer_garden.garden import get_garden, get_gardens, load_garden_file, update_garden
+from beer_garden.garden import get_garden, get_gardens, update_garden
 from beer_garden.metrics import CollectMetrics
 from beer_garden.requests import complete_request, create_request
 
@@ -562,7 +562,7 @@ def setup_routing():
                 and garden.connection_type.casefold() != "local"
             ):
                 with garden_lock:
-                    gardens[garden.name] = load_garden_file(garden)
+                    gardens[garden.name] = garden
                     for connection in gardens[garden.name].publishing_connections:
                         if (
                             connection.api.upper() == "STOMP"
