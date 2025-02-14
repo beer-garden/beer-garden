@@ -7,7 +7,9 @@ TBD
 - Fixed bug where `NOT_CONFIGURED` status for Receiving connection was not filtered out
 - Optimized how Topics are pruned to use hash lookups instead of DB calls
 - Optimized Garden Sync Topic Loop
-
+- Fixed Update Event Handler to support Garden event triggering for UI updates based 
+  on System and Instance updates
+  
 # 3.29.2
 
 1/31/2025
