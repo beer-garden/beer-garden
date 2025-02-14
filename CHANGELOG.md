@@ -5,6 +5,7 @@
 TBD
 
 - Fixed bug where `NOT_CONFIGURED` status for Receiving connection was not filtered out
+- Optimized how Topics are pruned to use hash lookups instead of DB calls
 
 # 3.29.2
 

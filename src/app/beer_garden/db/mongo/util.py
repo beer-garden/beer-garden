@@ -445,30 +445,31 @@ def prune_topics():
         None
     """
 
-    from .models import Topic
+    from .models import Garden, Topic
+
+    command_hash = []
+
+    for garden in Garden.objects():
+        for system in garden.systems:
+            for instance in system.instances:
+                for command in system.commands:
+                    command_hash.append(
+                        (
+                            f"{garden.name}.{system.namespace}.{system.name}."
+                            f"{system.version}.{instance.name}.{command.name}"
+                        )
+                    )
 
     for topic in Topic.objects():
-        db = get_db()
-        system = db.get_collection("system")
-        garden = db.get_collection("garden")
 
         valid_subscribers = []
         for subscriber in topic.subscribers:
             if subscriber.subscriber_type in ["GENERATED", "ANNOTATED"]:
-                if garden.find({"name": subscriber.garden}).count() == 1:
-                    if (
-                        system.find(
-                            {
-                                "namespace": subscriber.namespace,
-                                "name": subscriber.system,
-                                "version": subscriber.version,
-                                "instances.name": subscriber.instance,
-                                "commands.name": subscriber.command,
-                            }
-                        ).count()
-                        == 1
-                    ):
-                        valid_subscribers.append(subscriber)
+                if (
+                    f"{subscriber.garden}.{subscriber.namespace}.{subscriber.system}."
+                    f"{subscriber.version}.{subscriber.instance}.{subscriber.command}"
+                ) in command_hash:
+                    valid_subscribers.append(subscriber)
 
             else:
                 valid_subscribers.append(subscriber)
