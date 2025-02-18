@@ -420,6 +420,7 @@ _DOWNSTREAM_GARDENS_SPEC = {
             "required": False,
             "default": "./children",
             "description": "Directory where downstream garden configs are located",
+            "previous_names": ["children.directory"],
             "alt_env_names": [
                 "DOWNSTREAM_CONFIG_DIRECTORY",
                 "CHILDREN_CONFIG_DIRECTORY",
@@ -1208,18 +1209,21 @@ _UPSTREAM_SPEC = {
                     "type": "bool",
                     "default": False,
                     "description": "Publish events to upstream garden over HTTP",
+                    "previous_names": ["parent.http.enabled"],
                     "alt_env_names": ["PARENT_HTTP_ENABLED"],
                 },
                 "host": {
                     "type": "str",
                     "description": "Host for the HTTP Server to bind to",
                     "required": False,
+                    "previous_names": ["parent.http.host"],
                     "alt_env_names": ["PARENT_HTTP_HOST"],
                 },
                 "port": {
                     "type": "int",
                     "default": 2337,
                     "description": "Serve content on this port",
+                    "previous_names": ["parent.http.port"],
                     "alt_env_names": ["PARENT_HTTP_PORT"],
                 },
                 "api_version": {
@@ -1227,6 +1231,7 @@ _UPSTREAM_SPEC = {
                     "description": "Beergarden API version",
                     "default": 1,
                     "choices": [1],
+                    "previous_names": ["parent.http.api_version"],
                     "alt_env_names": ["PARENT_HTTP_API_VERSION"],
                 },
                 "client_timeout": {
@@ -1240,30 +1245,35 @@ _UPSTREAM_SPEC = {
                         " bad idea in production code, see the Requests documentation)."
                     ),
                     "default": -1,
+                    "previous_names": ["parent.http.client_timeout"],
                     "alt_env_names": ["PARENT_HTTP_CLIENT_TIMEOUT"],
                 },
                 "username": {
                     "type": "str",
                     "description": "Username for authentication",
                     "required": False,
+                    "previous_names": ["parent.http.username"],
                     "alt_env_names": ["PARENT_HTTP_USERNAME"],
                 },
                 "password": {
                     "type": "str",
                     "description": "Password for authentication",
                     "required": False,
+                    "previous_names": ["parent.http.password"],
                     "alt_env_names": ["PARENT_HTTP_PASSWORD"],
                 },
                 "access_token": {
                     "type": "str",
                     "description": "Access token for authentication",
                     "required": False,
+                    "previous_names": ["parent.http.access_token"],
                     "alt_env_names": ["PARENT_HTTP_ACCESS_TOKEN"],
                 },
                 "refresh_token": {
                     "type": "str",
                     "description": "Refresh token for authentication",
                     "required": False,
+                    "previous_names": ["parent.http.refresh_token"],
                     "alt_env_names": ["PARENT_HTTP_REFRESH_TOKEN"],
                 },
                 "ssl": {
@@ -1273,6 +1283,7 @@ _UPSTREAM_SPEC = {
                             "type": "bool",
                             "default": False,
                             "description": "Use SSL when connecting",
+                            "previous_names": ["parent.http.ssl.enabled"],
                             "alt_env_names": ["PARENT_HTTP_SSL_ENABLED"],
                         },
                         "ca_cert": {
@@ -1281,24 +1292,28 @@ _UPSTREAM_SPEC = {
                                 "Path to CA certificate file to use for SSLContext"
                             ),
                             "required": False,
+                            "previous_names": ["parent.http.ssl.ca_cert"],
                             "alt_env_names": ["PARENT_HTTP_SSL_CA_CERT"],
                         },
                         "ca_verify": {
                             "type": "bool",
                             "description": "Verify server certificate when using SSL",
                             "default": True,
+                            "previous_names": ["parent.http.ssl.ca_verify"],
                             "alt_env_names": ["PARENT_HTTP_SSL_CA_VERIFY"],
                         },
                         "client_cert": {
                             "type": "str",
                             "description": "Client certificate to use",
                             "required": False,
+                            "previous_names": ["parent.http.ssl.client_cert"],
                             "alt_env_names": ["PARENT_HTTP_SSL_CLIENT_CERT"],
                         },
                         "client_key": {
                             "type": "str",
                             "description": "Client key to use",
                             "required": False,
+                            "previous_names": ["parent.http.ssl.client_key"],
                             "alt_env_names": ["PARENT_HTTP_SSL_CLIENT_KEY"],
                         },
                     },
@@ -1308,6 +1323,7 @@ _UPSTREAM_SPEC = {
                     "default": "/",
                     "description": "URL path prefix",
                     "required": False,
+                    "previous_names": ["parent.http.url_prefix"],
                     "alt_env_names": ["PARENT_HTTP_URL_PREFIX"],
                 },
             },
@@ -1318,6 +1334,7 @@ _UPSTREAM_SPEC = {
             "default": [],
             "required": False,
             "description": "Events to be skipped",
+            "previous_names": ["parent.skip_events"],
         },
         "sync_interval": {
             "type": "int",
@@ -1326,6 +1343,7 @@ _UPSTREAM_SPEC = {
                 "Number of minutes to wait before sending "
                 "Garden Sync event to upstream garden"
             ),
+            "previous_names": ["parent.sync_interval"],
             "alt_env_names": ["PARENT_SYNC_INTERVAL"],
         },
         "stomp": {
@@ -1335,42 +1353,49 @@ _UPSTREAM_SPEC = {
                     "type": "bool",
                     "default": False,
                     "description": "Publish events to upstream garden over STOMP",
+                    "previous_names": ["parent.stomp.enabled"],
                     "alt_env_names": ["PARENT_STOMP_ENABLED"],
                 },
                 "host": {
                     "type": "str",
                     "default": "localhost",
                     "description": "Broker hostname",
+                    "previous_names": ["parent.stomp.host"],
                     "alt_env_names": ["PARENT_STOMP_HOST"],
                 },
                 "port": {
                     "type": "int",
                     "default": 61613,
                     "description": "Broker port",
+                    "previous_names": ["parent.stomp.port"],
                     "alt_env_names": ["PARENT_STOMP_PORT"],
                 },
                 "username": {
                     "type": "str",
                     "description": "Username to use for authentication",
                     "required": False,
+                    "previous_names": ["parent.stomp.username"],
                     "alt_env_names": ["PARENT_STOMP_USERNAME"],
                 },
                 "password": {
                     "type": "str",
                     "description": "Password to use for authentication",
                     "required": False,
+                    "previous_names": ["parent.stomp.password"],
                     "alt_env_names": ["PARENT_STOMP_PASSWORD"],
                 },
                 "send_destination": {
                     "type": "str",
                     "description": "Topic where events are published",
                     "required": False,
+                    "previous_names": ["parent.stomp.send_destination"],
                     "alt_env_names": ["PARENT_STOMP_SEND_DESTINATION"],
                 },
                 "subscribe_destination": {
                     "type": "str",
                     "description": "Topic to listen for operations",
                     "required": False,
+                    "previous_names": ["parent.stomp.subscribe_destination"],
                     "alt_env_names": ["PARENT_STOMP_SUBSCRIBE_DESTINATION"],
                 },
                 "headers": {
@@ -1386,6 +1411,7 @@ _UPSTREAM_SPEC = {
                         "value": {"type": "str"},
                     },
                     "default": [],
+                    "previous_names": ["parent.stomp.headers"],
                 },
                 "ssl": {
                     "type": "dict",
@@ -1394,6 +1420,7 @@ _UPSTREAM_SPEC = {
                             "type": "bool",
                             "description": "Use SSL when connecting to message broker",
                             "default": False,
+                            "previous_names": ["parent.stomp.ssl.use_ssl"],
                             "alt_env_names": ["PARENT_STOMP_SSL_USE_SSL"],
                         },
                         "client_key": {
@@ -1403,7 +1430,7 @@ _UPSTREAM_SPEC = {
                                 "communicating with the message broker"
                             ),
                             "required": False,
-                            "previous_names": ["private_key"],
+                            "previous_names": ["private_key", "parent.stomp.ssl.client_key"],
                             "alt_env_names": ["PARENT_STOMP_SSL_CLIENT_KEY"],
                         },
                         "client_cert": {
@@ -1413,7 +1440,7 @@ _UPSTREAM_SPEC = {
                                 "when communicating with the message broker"
                             ),
                             "required": False,
-                            "previous_names": ["cert_file"],
+                            "previous_names": ["cert_file", "parent.stomp.ssl.client_cert"],
                             "alt_env_names": ["PARENT_STOMP_SSL_CLIENT_CERT"],
                         },
                         "ca_cert": {
@@ -1424,6 +1451,7 @@ _UPSTREAM_SPEC = {
                                 "broker certificate"
                             ),
                             "required": False,
+                            "previous_names": ["parent.stomp.ssl.ca_cert"],
                             "alt_env_names": ["PARENT_STOMP_SSL_CA_CERT"],
                         },
                     },

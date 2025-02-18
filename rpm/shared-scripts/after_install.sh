@@ -61,7 +61,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
         --plugin-local-directory "$PLUGIN_HOME" \
         --plugin-local-logging-config-file "$LOCAL_PLUGIN_LOG_CONFIG" \
         --plugin-remote-logging-config-file "$REMOTE_PLUGIN_LOG_CONFIG" \
-        --children-directory "$DOWNSTREAM_CONFIG_HOME" \
+        --downstream-directory "$DOWNSTREAM_CONFIG_HOME" \
         --scheduler-job-startup-file "$JOB_STARTUP_FILE"
 fi
 

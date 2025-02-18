@@ -37,8 +37,8 @@ services:
             <<: *env
 
             BG_GARDEN_NAME: docker
-            BG_UPSTREAM_HTTP_ENABLE: "false"
-            BG_UPSTREAM_HTTP_HOST: localhost
+            BG_PARENT_HTTP_ENABLED: "false"
+            BG_PARENT_HTTP_HOST: localhost
 
             # Point at the correct database
             BG_DB_HOST: mongodb
