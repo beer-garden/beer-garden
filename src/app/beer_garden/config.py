@@ -1430,7 +1430,10 @@ _UPSTREAM_SPEC = {
                                 "communicating with the message broker"
                             ),
                             "required": False,
-                            "previous_names": ["private_key", "parent.stomp.ssl.client_key"],
+                            "previous_names": [
+                                "private_key",
+                                "parent.stomp.ssl.client_key",
+                            ],
                             "alt_env_names": ["PARENT_STOMP_SSL_CLIENT_KEY"],
                         },
                         "client_cert": {
@@ -1440,7 +1443,10 @@ _UPSTREAM_SPEC = {
                                 "when communicating with the message broker"
                             ),
                             "required": False,
-                            "previous_names": ["cert_file", "parent.stomp.ssl.client_cert"],
+                            "previous_names": [
+                                "cert_file",
+                                "parent.stomp.ssl.client_cert",
+                            ],
                             "alt_env_names": ["PARENT_STOMP_SSL_CLIENT_CERT"],
                         },
                         "ca_cert": {
