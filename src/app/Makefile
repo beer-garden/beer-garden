@@ -190,12 +190,6 @@ publish-docker-unstable-latest: docker-tag-latest-unstable publish-docker-unstab
 	docker push $(DOCKER_NAME):unstable-python$(PYTHON_VERSION)
 	docker push $(DOCKER_NAME):unstable-python$(PYTHON_VERSION)-debian
 
-publish-branch-docker-unstable: package clean-python
-	docker build -t $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION) -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-alpine .
-	docker build -t $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION)-debian -f docker/Dockerfile.unstable-debian --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-slim .
-	docker push $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION)
-	docker push $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION)-debian
-
 # Publishing
 publish-package-test: package ## upload a package to the testpypi
 	twine upload --repository testpypi dist/*
