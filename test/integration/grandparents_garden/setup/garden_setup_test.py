@@ -45,7 +45,7 @@ class TestGardenSetup(object):
             ]
         )
         self.grand_parent_easy_client.client.patch_garden("parent", patches)
-        time.sleep(5)
+        time.sleep(30)
 
     def sync_child(self):
         patches = json.dumps(
@@ -58,7 +58,7 @@ class TestGardenSetup(object):
             ]
         )
         self.parent_easy_client.client.patch_garden("child", patches)
-        time.sleep(5)
+        time.sleep(30)
 
     # def test_garden_auto_register_successful(self):
     #     response = self.grand_parent_easy_client.client.session.get(
