@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+# 3.31.0
+
+TBD
+
+- Fixed bug where Paused Jobs being imported were Running in the background
+
+
 # 3.29.1
 
 12/31/2024
