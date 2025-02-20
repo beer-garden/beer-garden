@@ -68,6 +68,7 @@ entry:
     enabled: true
     host: 0.0.0.0
     port: 2337
+    max_body_size: 104857600
     ssl:
       ca_cert: null
       ca_path: null

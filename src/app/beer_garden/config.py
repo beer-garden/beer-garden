@@ -1007,6 +1007,11 @@ _HTTP_SPEC = {
             "description": "Serve content on this port",
             "previous_names": ["web_port"],
         },
+        "max_body_size": {
+            "type": "int",
+            "default": 104857600,
+            "description": "Default max body size for web server (in bytes)",
+        },
         "ssl": {
             "type": "dict",
             "items": {

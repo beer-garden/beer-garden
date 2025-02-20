@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.31.0
+
+TBD
+
+- Added config for Tornado web server to increase max body size for file uploads
+
 # 3.29.1
 
 12/31/2024
