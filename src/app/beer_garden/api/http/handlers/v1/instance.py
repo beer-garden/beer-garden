@@ -12,7 +12,6 @@ from beer_garden.metrics import collect_metrics
 
 class InstanceAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="InstanceAPI")
     async def get(self, instance_id):
         """
         ---
@@ -45,7 +44,6 @@ class InstanceAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="InstanceAPI")
     async def delete(self, instance_id):
         """
         ---
@@ -75,7 +73,6 @@ class InstanceAPI(AuthorizationHandler):
 
         self.set_status(204)
 
-    @collect_metrics(transaction_type="API", group="InstanceAPI")
     async def patch(self, instance_id):
         """
         ---
@@ -195,7 +192,6 @@ class InstanceAPI(AuthorizationHandler):
 
 class InstanceLogAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="InstanceLogAPI")
     async def get(self, instance_id):
         """
         ---
@@ -289,7 +285,6 @@ class InstanceLogAPI(AuthorizationHandler):
 
 class InstanceQueuesAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="InstanceQueuesAPI")
     async def get(self, instance_id):
         """
         ---

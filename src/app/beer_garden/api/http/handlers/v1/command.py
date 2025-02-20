@@ -8,7 +8,6 @@ from beer_garden.metrics import collect_metrics
 
 class CommandAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="CommandAPI")
     async def get(self, system_id, command_name):
         """
         ---
@@ -48,7 +47,6 @@ class CommandAPI(AuthorizationHandler):
 
 class CommandAPIOld(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="CommandAPIOld")
     async def get(self, command_id):
         """
         ---
@@ -82,7 +80,6 @@ class CommandAPIOld(AuthorizationHandler):
 
 class CommandListAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="CommandListAPI")
     async def get(self):
         """
         ---

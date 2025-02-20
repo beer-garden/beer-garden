@@ -12,7 +12,6 @@ from beer_garden.metrics import collect_metrics
 
 class RawFileAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="RawFileAPI")
     async def get(self, file_id):
         """
         ---
@@ -43,7 +42,6 @@ class RawFileAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/octet-stream")
         self.write(file)
 
-    @collect_metrics(transaction_type="API", group="RawFileAPI")
     async def delete(self, file_id):
         """
         ---
@@ -78,7 +76,6 @@ class RawFileAPI(AuthorizationHandler):
 
 class RawFileListAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="RawFileListAPI")
     async def post(self):
         """
         ---
