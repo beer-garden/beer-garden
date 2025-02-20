@@ -13,8 +13,7 @@ import re
 from http.server import ThreadingHTTPServer
 
 import elasticapm
-import wrapt
-from brewtils.models import Operation, Request
+from brewtils.models import Event, Request
 from brewtils.stoppable_thread import StoppableThread
 from elasticapm import Client
 from prometheus_client import Counter, Gauge, Summary

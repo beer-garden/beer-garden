@@ -10,6 +10,7 @@ import wrapt
 from brewtils.models import Event, Events
 
 from beer_garden import config as config
+from beer_garden.metrics import CollectMetrics, extract_custom_context
 
 # In this master process this should be an instance of EventManager, and in entry points
 # it should be an instance of EntryPointManager
