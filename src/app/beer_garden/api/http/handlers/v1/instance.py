@@ -7,7 +7,6 @@ from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.base_handler import future_wait
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.metrics import collect_metrics
 
 
 class InstanceAPI(AuthorizationHandler):

@@ -5,7 +5,6 @@ from brewtils.models import Subscriber as BrewtilsSubscriber
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.metrics import collect_metrics
 
 
 class TopicAPI(BaseHandler):

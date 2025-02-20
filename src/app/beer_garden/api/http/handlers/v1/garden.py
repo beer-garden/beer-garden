@@ -8,7 +8,6 @@ from brewtils.schema_parser import SchemaParser
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.api.http.schemas.v1.garden import GardenRemoveStatusInfoSchema
 from beer_garden.garden import local_garden
-from beer_garden.metrics import collect_metrics
 
 logger = logging.getLogger(__name__)
 

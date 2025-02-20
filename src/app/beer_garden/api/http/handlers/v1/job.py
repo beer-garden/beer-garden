@@ -7,7 +7,6 @@ from mongoengine.errors import ValidationError
 
 from beer_garden.api.http.exceptions import BadRequest
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.metrics import collect_metrics
 from beer_garden.scheduler import create_jobs
 
 

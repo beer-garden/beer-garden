@@ -3,7 +3,6 @@ from brewtils.models import Operation, System
 
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.errors import EndpointRemovedException
-from beer_garden.metrics import collect_metrics
 
 
 class CommandAPI(AuthorizationHandler):

@@ -7,7 +7,6 @@ from brewtils.schema_parser import SchemaParser
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.db.mongo.models import RawFile
 from beer_garden.garden import local_garden
-from beer_garden.metrics import collect_metrics
 
 
 class RawFileAPI(AuthorizationHandler):
