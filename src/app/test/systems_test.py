@@ -2,7 +2,8 @@
 import pytest
 from brewtils.errors import ModelValidationError
 from brewtils.models import Command as BrewtilsCommand
-from brewtils.models import System as BrewtilsSystem, Instance as BrewtilsInstance
+from brewtils.models import Instance as BrewtilsInstance
+from brewtils.models import System as BrewtilsSystem
 from mongoengine import connect
 
 from beer_garden import config
