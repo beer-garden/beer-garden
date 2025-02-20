@@ -83,7 +83,7 @@ def from_brewtils(obj: ModelItem) -> MongoModel:
 
 
 def to_brewtils(
-    obj: Union[MongoModel, List[MongoModel], QuerySet]
+    obj: Union[MongoModel, List[MongoModel], QuerySet],
 ) -> Union[ModelItem, List[ModelItem], None]:
     """Convert an item from its Mongo model to its Brewtils one
 
