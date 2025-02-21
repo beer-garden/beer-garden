@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+# 3.31.0
+
+- Fixed bug where Request pruning did not remove GridFS stored objects. 
+
+# TODO
+- Fix prune orphaned GridFS objects.
+
 # 3.29.1
 
 12/31/2024

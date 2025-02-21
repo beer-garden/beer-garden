@@ -6,7 +6,7 @@ from typing import List, Tuple
 from brewtils.errors import ModelValidationError
 from brewtils.models import Event, Events
 from brewtils.schema_parser import SchemaParser
-from mongoengine import Q
+from mongoengine import FileField, ObjectIdField, Q
 from mongoengine.errors import DoesNotExist
 
 import beer_garden.config as config
@@ -24,6 +24,14 @@ def run_pruner(tasks, ttl_name):
 
     if tasks:
         for task in tasks:
+            exclude_fields = []
+
+            for field in task["collection"]._fields:
+                if not isinstance(
+                    task["collection"]._fields[field], FileField
+                ) and not isinstance(task["collection"]._fields[field], ObjectIdField):
+                    exclude_fields.append(field)
+
             delete_older_than = current_time - task["delete_after"]
 
             query = Q(**{task["field"] + "__lt": delete_older_than})
@@ -34,30 +42,41 @@ def run_pruner(tasks, ttl_name):
                 "Removing %s %ss older than %s"
                 % (ttl_name, task["collection"].__name__, str(delete_older_than))
             )
+            projected_delete = (
+                task["collection"].objects(query).only("id").no_cache().count()
+            )
 
-            if task["batch_size"] > 0:
-                while (
-                    task["batch_size"]
-                    < task["collection"].objects(query).only("id").no_cache().count()
-                ):
-                    logger.debug(
-                        "Removing %s from %ss older than %s, batched by %s"
-                        % (
-                            ttl_name,
-                            task["collection"].__name__,
-                            str(delete_older_than),
-                            str(task["batch_size"]),
-                        )
-                    )
-                    task["collection"].objects(query).only("id").limit(
+            if projected_delete > 0:
+                if task["batch_size"] > 0:
+                    while (
                         task["batch_size"]
-                    ).no_cache().delete()
+                        < task["collection"]
+                        .objects(query)
+                        .only("id")
+                        .no_cache()
+                        .count()
+                    ):
+                        logger.debug(
+                            "Removing %s from %ss older than %s, batched by %s"
+                            % (
+                                ttl_name,
+                                task["collection"].__name__,
+                                str(delete_older_than),
+                                str(task["batch_size"]),
+                            )
+                        )
 
-            num = task["collection"].objects(query).only("id").no_cache().delete()
-            if num:
+                        task["collection"].objects(query).exclude(
+                            *exclude_fields
+                        ).limit(task["batch_size"]).no_cache().delete()
+
+                task["collection"].objects(query).exclude(
+                    *exclude_fields
+                ).no_cache().delete()
+
                 logger.debug(
                     "Deleted %s %s from %ss"
-                    % (num, ttl_name, task["collection"].__name__)
+                    % (projected_delete, ttl_name, task["collection"].__name__)
                 )
 
 
