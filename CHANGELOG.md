@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.30.0
+
+TBD
+
+- Removed Garden load file from setup_routing because it was unnessary
+
 # 3.29.1
 
 12/31/2024
