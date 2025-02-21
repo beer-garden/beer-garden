@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.31.0
+
+TBD
+
+- Added filter to check if value exists for field in 3.29 db model migration
+
 # 3.29.1
 
 12/31/2024

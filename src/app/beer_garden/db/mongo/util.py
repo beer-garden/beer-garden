@@ -127,14 +127,23 @@ def ensure_v2_to_v3_model_migration():
         db.drop_collection("system")
 
 
-def contains_field(collection_name, fields):
+def contains_field(collection_name, field):
+    """Checks if any record in the collection contains the specified field"""
     db = get_db()
     collection = db.get_collection(collection_name)
 
-    for record in collection.find():
-        for field in fields:
-            if field in record:
-                return True
+    if collection.find({field: {"$exists": True}}).count() > 0:
+        return True
+    return False
+
+
+def missing_field(collection_name, field):
+    """Checks if any record in the collection is missing the specified field"""
+    db = get_db()
+    collection = db.get_collection(collection_name)
+
+    if collection.find({field: {"$exists": False}}).count() > 0:
+        return True
     return False
 
 
@@ -142,7 +151,7 @@ def ensure_v3_24_model_migration():
     """Ensures that the Garden model migration to yaml configs"""
 
     # Look for 3.23 fields
-    if contains_field("garden", ["connection_params"]):
+    if contains_field("garden", "connection_params"):
         import os
         from pathlib import Path
 
@@ -236,9 +245,9 @@ def ensure_v3_27_model_migration():
 
     # Look for 3.26 fields
     if (
-        contains_field("role", ["permissions"])
-        or contains_field("user", ["role_assignments"])
-        or contains_field("user_token", ["user"])
+        contains_field("role", "permissions")
+        or contains_field("user", "role_assignments")
+        or contains_field("user_token", "user")
     ):
         logger.warning(
             "Encountered an error loading Roles or Users or User Tokens. This is most"
@@ -259,18 +268,21 @@ def ensure_v3_27_model_migration():
 
 def ensure_v3_29_model_migration():
     db = get_db()
-    if not contains_field("request", ["command_display_name"]):
+    if missing_field("request", "command_display_name"):
         logger.warning(
             "Command display name was not found in Requests and will be added. This is most"
             " likely because the database is using the old (v3.29) style of storing in"
             " the database."
         )
         request_collection = db.get_collection("request")
-        for legacy_request in request_collection.find():
-            legacy_request["command_display_name"] = legacy_request["command"]
-            request_collection.update_one(
-                {"_id": legacy_request["_id"]}, {"$set": legacy_request}
-            )
+        for legacy_request in request_collection.find(
+            {"command_display_name": {"$exists": False}}
+        ):
+            if legacy_request:
+                legacy_request["command_display_name"] = legacy_request["command"]
+                request_collection.update_one(
+                    {"_id": legacy_request["_id"]}, {"$set": legacy_request}
+                )
 
 
 def ensure_model_migration():
