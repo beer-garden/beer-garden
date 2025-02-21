@@ -126,7 +126,7 @@ class TestGardenSetup(object):
                             assert connection.status == "RECEIVING"
                         else:
                             assert connection.status == "NOT_CONFIGURED"
-                            
+
                 assert len(garden.children) == 0
 
             elif garden.name == "parent":
