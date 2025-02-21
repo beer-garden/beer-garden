@@ -532,7 +532,9 @@ def load_garden_file(garden: Garden):
     http_publishing_connection = Connection(
         api="HTTP", status="CONFIGURATION_ERROR", status_info=StatusInfo()
     )
-    http_receiving_connection = None
+    http_receiving_connection = Connection(
+        api="HTTP", status="CONFIGURATION_ERROR", status_info=StatusInfo()
+    )
     stomp_publishing_connection = Connection(
         api="STOMP", status="CONFIGURATION_ERROR", status_info=StatusInfo()
     )
@@ -548,7 +550,7 @@ def load_garden_file(garden: Garden):
 
     for connection in garden.receiving_connections:
         if connection.api == "HTTP":
-            http_receiving_connection = connection
+            http_receiving_connection.status_info = connection.status_info
         elif connection.api == "STOMP":
             stomp_receiving_connection.status_info = connection.status_info
 
@@ -641,10 +643,9 @@ def load_garden_file(garden: Garden):
                 "NOT_CONFIGURED" if garden_config.get("receiving") else "DISABLED"
             )
 
-        if http_receiving_connection:
-            http_receiving_connection.status = (
-                "RECEIVING" if garden_config.get("receiving") else "DISABLED"
-            )
+        http_receiving_connection.status = (
+            "NOT_CONFIGURED" if garden_config.get("receiving") else "DISABLED"
+        )
 
     except (
         YapconfItemNotFound,
@@ -674,14 +675,16 @@ def load_garden_file(garden: Garden):
             http_publishing_connection,
             stomp_publishing_connection,
         ]
-        garden.receiving_connections = [stomp_receiving_connection]
 
-        if http_receiving_connection:
-            http_receiving_connection.status_info.set_status_heartbeat(
-                http_receiving_connection.status,
-                max_history=config.get("garden.status_history"),
-            )
-            garden.receiving_connections.append(http_receiving_connection)
+        http_receiving_connection.status_info.set_status_heartbeat(
+            http_receiving_connection.status,
+            max_history=config.get("garden.status_history"),
+        )
+
+        garden.receiving_connections = [
+            stomp_receiving_connection,
+            http_receiving_connection,
+        ]
 
     return garden
 

@@ -7,6 +7,8 @@ TBD
 - Fixed bugs with ELK APM integration and improved labeling
 - Optimizing how Garden configurations are loaded
 - Fixed bug where Garden historical status info is maintained after rescan
+- Fixed how Garden files are loaded, added HTTP Receiving defaults to prevent missed events prior
+  to `GARDEN_SYNC`
 
 # 3.29.1
 

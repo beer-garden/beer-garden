@@ -306,7 +306,7 @@ def update_api_heartbeat(operation: Operation):
                 local_garden = get_garden(config.get("garden.name"))
 
                 # Will only support mapping 1 hop away legacy Garden Syncs
-                child_garden = False
+                multi_hop_garden = True
                 for child in local_garden.children:
                     if child.name == operation.model.payload.name:
                         logger.warning(
@@ -316,9 +316,9 @@ def update_api_heartbeat(operation: Operation):
                             )
                         )
                         operation.source_garden_name = operation.model.payload.name
-                        child_garden = True
+                        multi_hop_garden = False
                         break
-                if child_garden:
+                if multi_hop_garden:
                     return
             else:
                 return
@@ -380,10 +380,6 @@ def invalid_source_check(operation: Operation):
 
     with garden_lock:
         gardens[operation.source_garden_name] = loaded_garden
-
-    # Receiving Connections have not been configured yet
-    if not loaded_garden.receiving_connections:
-        return False
 
     for connection in loaded_garden.receiving_connections:
         if connection.api == operation.source_api and connection.status != "DISABLED":
