@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.30.0
+
+TBD
+
+- Fixed bug where `NOT_CONFIGURED` status for Receiving connection was not filtered out
+
 # 3.29.1
 
 12/31/2024
