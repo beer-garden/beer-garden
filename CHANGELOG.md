@@ -1,5 +1,9 @@
 # Beer Garden Changelog
 
+# 3.31.0
+
+- Updated 3.24 migration script to skip children config creation if only one garden
+
 # 3.29.1
 
 12/31/2024
