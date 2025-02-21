@@ -312,10 +312,8 @@ export default function adminGardenController(
   }
 
   $scope.hasConfiguredConnection = function(connections) {
-    for (let i = 0; i < connections.length; i++) {
-      if (connections[i].status != "NOT_CONFIGURED") {
-        return true;
-      }
+    if (connections !== undefined && connections != null){
+      return connections.some(connection => connection.status != 'NOT_CONFIGURED');
     }
     return false;
   }
