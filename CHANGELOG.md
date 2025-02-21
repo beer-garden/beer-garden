@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.31.0
+
+TBD
+
+- Added certificate based login handler
+
 # 3.29.1
 
 12/31/2024

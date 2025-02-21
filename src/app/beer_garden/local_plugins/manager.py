@@ -187,6 +187,7 @@ class PluginManager(StoppableThread):
         connection_info=None,
         username=None,
         password=None,
+        client_cert=None,
     ):
         super().__init__(logger=logging.getLogger(__name__), name="PluginManager")
 
@@ -198,6 +199,7 @@ class PluginManager(StoppableThread):
         self._connection_info = connection_info
         self._username: Optional[str] = username
         self._password: Optional[str] = password
+        self._client_cert: Optional[str] = client_cert
 
         self._runner_id_generator = None
 
@@ -808,6 +810,13 @@ class PluginManager(StoppableThread):
                 {
                     "BG_USERNAME": self._username,
                     "BG_PASSWORD": self._password,
+                }
+            )
+
+        if self._client_cert:
+            env.update(
+                {
+                    "BG_CLIENT_CERT": self._client_cert,
                 }
             )
 

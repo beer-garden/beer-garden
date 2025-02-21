@@ -482,6 +482,11 @@ class Application(StoppableThread):
                     if config.get("auth.enabled")
                     else None
                 ),
+                client_cert=(
+                    config.get("plugin.local.auth.client_cert")
+                    if config.get("auth.enabled")
+                    else None
+                ),
             ),
         )
 
