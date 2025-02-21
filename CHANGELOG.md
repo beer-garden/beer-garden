@@ -1,5 +1,9 @@
 # Beer Garden Changelog
 
+# 3.31.0
+
+- Updated internal class from EventProcessor to ReplicationProcessor for improved clarity
+
 # 3.29.1
 
 12/31/2024

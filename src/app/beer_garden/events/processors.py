@@ -188,7 +188,7 @@ class FanoutProcessor(QueueListener):
             self._managed_processors.append(processor)
 
 
-class EventProcessor(FanoutProcessor):
+class ReplicationProcessor(FanoutProcessor):
     """Class responsible for coordinating Event processing"""
 
     def __init__(self, **kwargs):
