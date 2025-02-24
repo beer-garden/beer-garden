@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.30.0
+
+TBD
+
+- Fixed multi-hop check for legacy Gardens in Router
+
 # 3.29.1
 
 12/31/2024
