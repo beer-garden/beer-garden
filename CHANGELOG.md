@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.30.0
+
+TBD
+
+- Fixed issue where local Garden version was not persisted to database, or setup upstream
+
 # 3.29.1
 
 12/31/2024
