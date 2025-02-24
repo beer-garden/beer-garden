@@ -80,8 +80,6 @@ def ensure_local_garden():
             stomp_connection.config.setdefault(config_map[key], config.get(key))
         garden.publishing_connections.append(stomp_connection)
 
-    garden.version = beer_garden.__version__
-
     garden.save()
 
 
