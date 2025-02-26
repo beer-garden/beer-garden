@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.31.0
+
+TBD
+
+- Fixed bug where pour again invalid property caused broken UI
+
 # 3.29.1
 
 12/31/2024
