@@ -55,16 +55,16 @@ def add_internal_events_handler(event_manager):
                 Events.INSTANCE_UPDATED,
                 Events.INSTANCE_STOPPED,
             ],
-            config.get("events_handler.garden.unique_data"),
-            config.get("events_handler.garden.enabled"),
+            False, # config.get("events_handler.garden.unique_data"),
+            True, # config.get("events_handler.garden.enabled"),
         ),
         (
             beer_garden.plugin.handle_event,
             "Plugin",
             False,
             [Events.INSTANCE_UPDATED],
-            config.get("events_handler.plugin.unique_data"),
-            config.get("events_handler.plugin.enabled"),
+            False, #config.get("events_handler.plugin.unique_data"),
+            True, # config.get("events_handler.plugin.enabled"),
         ),
         (
             beer_garden.requests.handle_event,
@@ -77,8 +77,8 @@ def add_internal_events_handler(event_manager):
                 Events.REQUEST_UPDATED,
                 Events.REQUEST_CANCELED,
             ],
-            config.get("events_handler.requests.unique_data"),
-            config.get("events_handler.requests.enabled"),
+            False, # config.get("events_handler.requests.unique_data"),
+            True, # config.get("events_handler.requests.enabled"),
         ),
         (
             beer_garden.publish_request.handle_event,
@@ -118,8 +118,8 @@ def add_internal_events_handler(event_manager):
             "System",
             True,
             [Events.SYSTEM_CREATED, Events.SYSTEM_UPDATED, Events.SYSTEM_REMOVED],
-            config.get("events_handler.system.unique_data"),
-            config.get("events_handler.system.enabled"),
+            False, # config.get("events_handler.system.unique_data"),
+            True, # config.get("events_handler.system.enabled"),
         ),
         (
             beer_garden.scheduler.handle_event,
@@ -150,8 +150,8 @@ def add_internal_events_handler(event_manager):
             "File",
             True,
             [Events.JOB_CREATED, Events.REQUEST_CREATED],
-            config.get("events_handler.file.unique_data"),
-            config.get("events_handler.file.enabled"),
+            False, # config.get("events_handler.file.unique_data"),
+            True, # config.get("events_handler.file.enabled"),
         ),
         (
             beer_garden.local_plugins.manager.handle_event,
@@ -164,7 +164,7 @@ def add_internal_events_handler(event_manager):
             ],
             False,  # Can not unique due to usage of metadata for rescans
             # Disable lpm events if no local plugins
-            (config.get("plugin.local.directory") is not None),
+            True, # (config.get("plugin.local.directory") is not None),
         ),
         (
             beer_garden.user.handle_event,

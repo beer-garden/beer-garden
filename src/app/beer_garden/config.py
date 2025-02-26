@@ -1775,7 +1775,7 @@ _SPECIFICATION = {
     "configuration": _META_SPEC,
     "db": _DB_SPEC,
     "entry": _ENTRY_SPEC,
-    "events_handler": _EVENTS_SPEC,
+    #"events_handler": _EVENTS_SPEC,
     "garden": _GARDEN_SPEC,
     "log": _LOG_SPEC,
     "metrics": _METRICS_SPEC,
