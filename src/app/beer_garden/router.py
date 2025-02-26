@@ -381,10 +381,6 @@ def invalid_source_check(operation: Operation):
     with garden_lock:
         gardens[operation.source_garden_name] = loaded_garden
 
-    # Receiving Connections have not been configured yet
-    if not loaded_garden.receiving_connections:
-        return False
-
     for connection in loaded_garden.receiving_connections:
         if connection.api == operation.source_api and connection.status != "DISABLED":
             return False

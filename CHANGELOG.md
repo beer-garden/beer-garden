@@ -12,6 +12,10 @@ TBD
 - Updated config.yaml to support toggling on and off unique event filtering
 - Removed Garden load file from setup_routing because it was unnessary
 - Fixed bug where `NOT_CONFIGURED` status for Receiving connection was not filtered out
+- Optimizing how Garden configurations are loaded
+- Fixed bug where Garden historical status info is maintained after rescan
+- Fixed how Garden files are loaded, added HTTP Receiving defaults to prevent missed events prior
+  to `GARDEN_SYNC`
 
 # 3.29.1
 
