@@ -308,7 +308,7 @@ class Application(StoppableThread):
 
         try:
             self.logger.debug("Publishing shutdown sync")
-            beer_garden.garden.publish_garden(status="STOPPED")
+            beer_garden.garden.publish_garden()
         except Exception as ex:
             self.logger.info("Failed: Publishing shutdown sync")
             self.logger.error(ex)
@@ -435,7 +435,7 @@ class Application(StoppableThread):
         if cfg.enabled:
 
             def reconnect_action():
-                beer_garden.garden.publish_garden(status="RUNNING")
+                beer_garden.garden.publish_garden()
 
             easy_client = EasyClient(
                 bg_host=cfg.host,
