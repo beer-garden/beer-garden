@@ -515,7 +515,6 @@ stomp:
         bg_garden.children = [
             BrewtilsGarden(
                 name="child",
-                status="RUNNING",
                 connection_type="REMOTE",
                 has_parent=True,
                 parent="garden",
@@ -533,14 +532,12 @@ stomp:
     def test_upsert_garden_update_values(self, bg_garden):
         bg_garden.systems = []
         bg_garden.has_parent = False
-        bg_garden.status = "RUNNING"
         bg_garden.metadata = {"test": "test"}
         bg_garden.connection_type = "REMOTE"
 
         garden = create_garden(bg_garden)
 
         garden.has_parent = True
-        garden.status = "STOPPED"
         garden.metadata = {"alt": "alt"}
         garden.connection_type = "LOCAL"
 
@@ -552,7 +549,6 @@ stomp:
 
         # Changed
         assert updated_garden.metadata == {"alt": "alt"}
-        assert updated_garden.status == "STOPPED"
 
     def test_garden_unresponsive_trigger(self, bg_garden):
         bg_garden.systems = []

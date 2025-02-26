@@ -171,11 +171,8 @@ def local_garden(all_systems: bool = False) -> Garden:
 
 
 @publish_event(Events.GARDEN_SYNC)
-def publish_garden(status: str = "RUNNING") -> Garden:
+def publish_garden() -> Garden:
     """Get the local garden, publishing a GARDEN_SYNC event
-
-    Args:
-        status: The garden status
 
     Returns:
         The local garden, all systems
@@ -183,7 +180,6 @@ def publish_garden(status: str = "RUNNING") -> Garden:
     garden = local_garden()
     get_children_garden(garden)
     garden.connection_type = None
-    garden.status = status
 
     return garden
 
@@ -222,13 +218,6 @@ def check_garden_receiving_heartbeat(
         for connection in garden.receiving_connections:
             if connection.api == api:
                 connection_set = True
-
-                if connection.status not in ["DISABLED", "RECEIVING"]:
-                    connection.status = "RECEIVING"
-
-                connection.status_info.set_status_heartbeat(
-                    connection.status, max_history=config.get("garden.status_history")
-                )
     else:
         garden.receiving_connections = []
 
@@ -325,11 +314,6 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
                     "DISABLED", api=connection.api, garden=garden, override_status=False
                 )
 
-    garden.status = new_status
-    garden.status_info.set_status_heartbeat(
-        garden.status, max_history=config.get("garden.status_history")
-    )
-
     return update_garden(garden)
 
 
@@ -381,10 +365,6 @@ def create_garden(garden: Garden) -> Garden:
             Connection(api="HTTP", status="MISSING_CONFIGURATION"),
             Connection(api="STOMP", status="MISSING_CONFIGURATION"),
         ]
-
-    garden.status_info.set_status_heartbeat(
-        garden.status, max_history=config.get("garden.status_history")
-    )
 
     return db.create(garden)
 
@@ -448,7 +428,7 @@ def upsert_garden(garden: Garden, skip_connections: bool = True) -> Garden:
     if existing_garden is None:
         return create_garden(garden)
     else:
-        for attr in ("status", "status_info", "namespaces", "systems", "metadata"):
+        for attr in ("namespaces", "systems", "metadata"):
             setattr(existing_garden, attr, getattr(garden, attr))
         if not skip_connections:
             for attr in ("receiving_connections", "publishing_connections"):
