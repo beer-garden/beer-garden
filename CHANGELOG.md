@@ -11,6 +11,7 @@ TBD
   latest instance of the transaction event is handled within the event handlers
 - Updated config.yaml to support toggling on and off unique event filtering
 - Removed Garden load file from setup_routing because it was unnessary
+- Fixed bug where `NOT_CONFIGURED` status for Receiving connection was not filtered out
 
 # 3.29.1
 
