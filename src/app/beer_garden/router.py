@@ -165,6 +165,7 @@ route_functions = {
     "TOPIC_ADD_SUBSCRIBER": beer_garden.topic.topic_add_subscriber,
     "TOPIC_REMOVE_SUBSCRIBER": beer_garden.topic.topic_remove_subscriber,
     "TOKEN_USER_DELETE": beer_garden.user.revoke_tokens,
+    "TOPIC_SYNC_GARDEN": beer_garden.topic.sync_garden_topics,
     "ROLE_CREATE": beer_garden.role.create_role,
     "ROLE_UPDATE": beer_garden.role.update_role,
     "ROLE_DELETE": beer_garden.role.delete_role,

@@ -16,6 +16,9 @@ TBD
 - Fixed bug where Garden historical status info is maintained after rescan
 - Fixed how Garden files are loaded, added HTTP Receiving defaults to prevent missed events prior
   to `GARDEN_SYNC`
+- Updated Topics generation and removal to Mongo Model instead of through Events
+- Optimized Topic pruning and generation
+- Expanded topics API to support manual execution of Topic Generation
 
 # 3.29.1
 
