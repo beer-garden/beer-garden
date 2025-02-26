@@ -90,6 +90,22 @@ entry:
       use_ssl: false
     subscribe_destination: Beer_Garden_Operations
     username: beer_garden
+events_handler:
+  file:
+    enabled: true
+    unique_data: false
+  garden:
+    enabled: true
+    unique_data: false
+  plugin:
+    enabled: true
+    unique_data: false
+  requests:
+    enabled: true
+    unique_data: false
+  system:
+    enabled: true
+    unique_data: false
 garden:
   name: default
   status_history: 50

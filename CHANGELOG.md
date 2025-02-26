@@ -5,6 +5,11 @@
 TBD
 
 - Fixed bugs with ELK APM integration and improved labeling
+- Expanded APM Metrics to collect Event Processing Queue Depths
+- Updated internal events to utilize deque to improve performance
+- Updated internal events to allow for unique and sorting events based on timestamps, only
+  latest instance of the transaction event is handled within the event handlers
+- Updated config.yaml to support toggling on and off unique event filtering
 
 # 3.29.1
 
