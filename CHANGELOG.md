@@ -10,6 +10,7 @@ TBD
 - Updated internal events to allow for unique and sorting events based on timestamps, only
   latest instance of the transaction event is handled within the event handlers
 - Updated config.yaml to support toggling on and off unique event filtering
+- Removed Garden load file from setup_routing because it was unnessary
 
 # 3.29.1
 
