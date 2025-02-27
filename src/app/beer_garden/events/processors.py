@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import datetime
 import logging
 import threading
 import time
@@ -9,7 +10,7 @@ from copy import deepcopy
 from multiprocessing import Queue
 from queue import Empty
 
-from brewtils.models import Event, Events
+from brewtils.models import Event, Events, Request
 from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden.config as config
@@ -97,6 +98,22 @@ class DequeSetListener(DequeListener):
                     ref = self._data[event.payload.id]
                     if isinstance(event.payload, type(ref.payload)):
                         if event.payload.is_newer(ref.payload):
+                            # Collect Request Metadata
+                            # If this expands past Requests, we'll need to refactor
+                            if isinstance(event.payload, Request):
+                                if ref.payload.status is not event.payload.status:
+                                    status_key = f"{ref.payload.status}_{config.get('garden.name')}"
+                                    if status_key not in event.payload.metadata:
+                                        event.payload.metadata[status_key] = int(
+                                            datetime.datetime.utcnow().timestamp()
+                                            * 1000
+                                        )
+                                for metadata_key in ref.payload.metadata:
+                                    if metadata_key not in event.payload.metadata:
+                                        event.payload.metadata[metadata_key] = (
+                                            ref.payload.metadata[metadata_key]
+                                        )
+
                             self._data[str(event.payload.id)] = deepcopy(event)
                     else:
                         # Type Mis-match, just process the event

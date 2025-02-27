@@ -10,6 +10,7 @@ TBD
 - Updated internal events to allow for unique and sorting events based on timestamps, only
   latest instance of the transaction event is handled within the event handlers
 - Updated config.yaml to support toggling on and off unique event filtering
+- Merge Request metadata if uniqued in event handler
 
 # 3.29.1
 
