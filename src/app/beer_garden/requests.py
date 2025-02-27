@@ -1172,11 +1172,10 @@ def clean_command_type_temp(request: Request, is_remote: bool):
         return None
 
     # Delete any children that are TEMP once the current request is completed
-    request.children = db.query(Request, filter_params={"parent": request})
+    request.children = db.query(Request, filter_params={"parent": request, "command_type": "TEMP"})
 
     for child in request.children:
-        if child.command_type == "TEMP":
-            db.delete(child)
+        db.delete(child)
 
     return request
 
