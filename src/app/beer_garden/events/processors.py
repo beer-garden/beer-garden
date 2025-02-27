@@ -102,7 +102,10 @@ class DequeSetListener(DequeListener):
                             # If this expands past Requests, we'll need to refactor
                             if isinstance(event.payload, Request):
                                 if ref.payload.status is not event.payload.status:
-                                    status_key = f"{ref.payload.status}_{config.get('garden.name')}"
+                                    status_key = (
+                                        f"{ref.payload.status}_"
+                                        f"{config.get('garden.name')}"
+                                    )
                                     if status_key not in event.payload.metadata:
                                         event.payload.metadata[status_key] = int(
                                             datetime.datetime.utcnow().timestamp()
