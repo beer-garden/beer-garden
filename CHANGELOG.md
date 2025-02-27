@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.30.0
+
+TBD
+
+- Updated pruner configuration to consolidate options under `db.prune`
+
 # 3.29.1
 
 12/31/2024
