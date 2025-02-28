@@ -1175,7 +1175,7 @@ def clean_command_type_temp(request: Request, is_remote: bool):
                 "ERROR",
                 "SUCCESS",
             ],
-        )
+        ) > 0
     ):
         if is_remote:
             # Give Threading based requests a chance to pull the Request before deleting it
