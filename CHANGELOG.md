@@ -5,6 +5,7 @@
 TBD
 
 - Optimized the query to clean TEMP child requests
+- Fixed bug where upon completion of Parent Request, running TEMP child requests got deleted prematurly
 
 # 3.29.1
 
