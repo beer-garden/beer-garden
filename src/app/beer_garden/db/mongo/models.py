@@ -732,7 +732,7 @@ class System(MongoModel, Document):
 
                                     for subscriber in db_topic.subscribers:
                                         if (
-                                            subscriber.garden_name == garden_name
+                                            subscriber.garden == garden_name
                                             and subscriber.system == self.name
                                             and subscriber.namespace == self.namespace
                                             and subscriber.version == self.version
@@ -760,7 +760,7 @@ class System(MongoModel, Document):
 
                             for subscriber in db_topic.subscribers:
                                 if (
-                                    subscriber.garden_name == garden_name
+                                    subscriber.garden == garden_name
                                     and subscriber.system == self.name
                                     and subscriber.namespace == self.namespace
                                     and subscriber.version == self.version
