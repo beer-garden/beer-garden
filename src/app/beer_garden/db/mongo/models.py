@@ -451,12 +451,12 @@ class Request(MongoModel, Document):
         encoding = "utf-8"
 
         if self.output_gridfs:
-            self.logger.debug("Retrieving output from GridFS")
+            logger.debug("Retrieving output from GridFS")
             self.output = self.output_gridfs.read().decode(encoding)
             self.output_gridfs = None
 
         if self.parameters_gridfs:
-            self.logger.debug("Retrieving parameters from GridFS")
+            logger.debug("Retrieving parameters from GridFS")
             self.parameters = json.loads(self.parameters_gridfs.read().decode(encoding))
             self.parameters_gridfs = None
 
@@ -486,7 +486,7 @@ class Request(MongoModel, Document):
         if self.parameters and self.parameters_gridfs.grid_id is None:
             params_json = json.dumps(self.parameters)
             if len(params_json) > REQUEST_MAX_PARAM_SIZE:
-                self.logger.debug("Parameters too big, storing in GridFS")
+                logger.debug("Parameters too big, storing in GridFS")
                 self.parameters_gridfs.put(params_json, encoding=encoding)
 
         if self.parameters_gridfs.grid_id:
@@ -495,7 +495,7 @@ class Request(MongoModel, Document):
         if self.output and self.output_gridfs.grid_id is None:
             output_json = json.dumps(self.output)
             if len(output_json) > REQUEST_MAX_PARAM_SIZE:
-                self.logger.debug("Output size too big, storing in gridfs")
+                logger.debug("Output size too big, storing in gridfs")
                 self.output_gridfs.put(self.output, encoding=encoding)
 
         if self.output_gridfs.grid_id:
@@ -543,7 +543,7 @@ class Request(MongoModel, Document):
                     raw_file.request = self
                     raw_file.save()
                 except RawFile.DoesNotExist:
-                    self.logger.debug(
+                    logger.debug(
                         f"Error locating RawFile with id {param_value['id']} "
                         "while saving Request {self.id}"
                     )
