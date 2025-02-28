@@ -1163,8 +1163,20 @@ def handle_event(event):
 
 
 def clean_command_type_temp(request: Request, is_remote: bool):
-    # Only delete TEMP requests if it is the root request
-    if not request.has_parent and request.command_type == "TEMP":
+    # Only delete TEMP requests if it is the root request or if it's parent as already completed
+    if request.command_type == "TEMP" and (
+        not request.has_parent
+        or db.count(
+            Request,
+            id=request.parent.id,
+            status__in=[
+                "INVALID",
+                "CANCELED",
+                "ERROR",
+                "SUCCESS",
+            ],
+        )
+    ):
         if is_remote:
             # Give Threading based requests a chance to pull the Request before deleting it
             time.sleep(0.5)
@@ -1173,7 +1185,17 @@ def clean_command_type_temp(request: Request, is_remote: bool):
 
     # Delete any children that are TEMP once the current request is completed
     request.children = db.query(
-        Request, filter_params={"parent": request, "command_type": "TEMP"}
+        Request,
+        filter_params={
+            "parent": request,
+            "command_type": "TEMP",
+            "status__in": [
+                "INVALID",
+                "CANCELED",
+                "ERROR",
+                "SUCCESS",
+            ],
+        },
     )
 
     for child in request.children:
