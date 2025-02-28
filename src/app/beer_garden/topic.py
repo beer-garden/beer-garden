@@ -326,9 +326,9 @@ def sync_garden_topics_loop(garden: Garden, topics_dict: dict):
 
                 if not default_topic:
                     topic_generated = (
-                        f"{system.namespace}.{system.name}."
-                        f"{system.version}.{instance.name}."
-                        f"{command.name}"
+                        f"{garden.name}.{system.namespace}."
+                        f"{system.name}.{system.version}."
+                        f"{instance.name}.{command.name}"
                     )
                 else:
                     topic_generated = f"{default_topic}.{command.name}"

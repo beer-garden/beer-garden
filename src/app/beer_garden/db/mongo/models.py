@@ -83,6 +83,8 @@ __all__ = [
 
 REQUEST_MAX_PARAM_SIZE = 5 * 1_000_000
 
+logger = logging.getLogger(__name__)
+
 
 class MongoModel:
     brewtils_model = None
@@ -444,8 +446,6 @@ class Request(MongoModel, Document):
         ],
     }
 
-    logger = logging.getLogger(__name__)
-
     def pre_serialize(self):
         """Pull any fields out of GridFS"""
         encoding = "utf-8"
@@ -715,53 +715,72 @@ class System(MongoModel, Document):
 
     def delete(self, **kwargs):
 
-        if len(self.instances) > 0:
-            for command in self.commands:
-                for instance in self.instances:
-                    if len(command.topics) > 0:
-                        for topic in command.topics:
-                            if Topic.objects(name=topic).count() > 0:
-                                db_topic = Topic.objects.get(name=topic)
+        try:
+            if len(self.instances) > 0:
+                if self.local:
+                    garden_name = config.get("garden.name")
+                else:
+                    garden_name = Garden.objects.get(
+                        systems__in=System.objects.filter(id=self.id)
+                    ).name
+                for command in self.commands:
+                    for instance in self.instances:
+                        if len(command.topics) > 0:
+                            for topic in command.topics:
+                                if Topic.objects(name=topic).count() > 0:
+                                    db_topic = Topic.objects.get(name=topic)
 
-                                for subscriber in db_topic.subscribers:
-                                    if (
-                                        subscriber.system == self.name
-                                        and subscriber.namespace == self.namespace
-                                        and subscriber.version == self.version
-                                        and subscriber.instance == instance.name
-                                        and subscriber.command == command.name
-                                        and subscriber.subscriber_type == "ANNOTATED"
-                                    ):
-                                        db_topic.remove_subscriber(subscriber)
+                                    for subscriber in db_topic.subscribers:
+                                        if (
+                                            subscriber.garden_name == garden_name
+                                            and subscriber.system == self.name
+                                            and subscriber.namespace == self.namespace
+                                            and subscriber.version == self.version
+                                            and subscriber.instance == instance.name
+                                            and subscriber.command == command.name
+                                            and subscriber.subscriber_type
+                                            == "ANNOTATED"
+                                        ):
+                                            db_topic.remove_subscriber(subscriber)
 
-                                if len(db_topic.subscribers) == 0:
-                                    db_topic.delete()
+                                    if len(db_topic.subscribers) == 0:
+                                        db_topic.delete()
 
-                    if not self.prefix_topic:
-                        topic_generated = (
-                            f"{self.namespace}.{self.name}."
-                            f"{self.version}.{instance.name}."
-                            f"{command.name}"
-                        )
-                    else:
-                        topic_generated = f"{self.prefix_topic}.{command.name}"
+                        if not self.prefix_topic:
+                            topic_generated = (
+                                f"{garden_name}.{self.namespace}."
+                                f"{self.name}.{self.version}."
+                                f"{instance.name}.{command.name}"
+                            )
+                        else:
+                            topic_generated = f"{self.prefix_topic}.{command.name}"
 
-                    if Topic.objects(name=topic_generated).count() > 0:
-                        db_topic = Topic.objects.get(name=topic_generated)
+                        if Topic.objects(name=topic_generated).count() > 0:
+                            db_topic = Topic.objects.get(name=topic_generated)
 
-                        for subscriber in db_topic.subscribers:
-                            if (
-                                subscriber.system == self.name
-                                and subscriber.namespace == self.namespace
-                                and subscriber.version == self.version
-                                and subscriber.instance == instance.name
-                                and subscriber.command == command.name
-                                and subscriber.subscriber_type == "GENERATED"
-                            ):
-                                db_topic.remove_subscriber(subscriber)
+                            for subscriber in db_topic.subscribers:
+                                if (
+                                    subscriber.garden_name == garden_name
+                                    and subscriber.system == self.name
+                                    and subscriber.namespace == self.namespace
+                                    and subscriber.version == self.version
+                                    and subscriber.instance == instance.name
+                                    and subscriber.command == command.name
+                                    and subscriber.subscriber_type == "GENERATED"
+                                ):
+                                    db_topic.remove_subscriber(subscriber)
 
-                        if len(db_topic.subscribers) == 0:
-                            db_topic.delete()
+                            if len(db_topic.subscribers) == 0:
+                                db_topic.delete()
+        except DoesNotExist:
+            logger.error(
+                (
+                    "Error finding garden for system deletion "
+                    f"Namespace = {self.namespace} "
+                    f"System {self.name} "
+                    f"Version {self.version}"
+                )
+            )
 
         super().delete(**kwargs)
 
@@ -818,9 +837,9 @@ class System(MongoModel, Document):
 
                     if not self.prefix_topic:
                         topic_generated = (
-                            f"{self.namespace}.{self.name}."
-                            f"{self.version}.{instance.name}."
-                            f"{command.name}"
+                            f"{garden_name}.{self.namespace}."
+                            f"{self.name}.{self.version}."
+                            f"{instance.name}.{command.name}"
                         )
                     else:
                         topic_generated = f"{self.prefix_topic}.{command.name}"
@@ -1057,8 +1076,6 @@ class Garden(MongoModel, Document):
         that when saving the systems, unknowns are deleted."""
         # import moved here to avoid a circular import loop
         from beer_garden.systems import remove_system
-
-        logger = logging.getLogger(self.__class__.__name__)
 
         def _get_system_triple(system: System) -> Tuple[str, str, str]:
             namespace = getattr(system, "namespace", None)
