@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.30.0
+
+TBD
+
+- Fixed Request view bug where `REQUEST_TOPIC_PUBLISH` was causing blank line in children list
+
 # 3.29.1
 
 12/31/2024
