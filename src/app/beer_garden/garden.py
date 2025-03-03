@@ -240,7 +240,7 @@ def check_garden_receiving_heartbeat(
         # Check if there is a config file
         path = Path(f"{config.get('children.directory')}/{garden.name}.yaml")
         if path.exists():
-            garden_config = config.load_child(path)
+            garden_config = config.load_downstream(path)
             if config.get("receiving", config=garden_config):
                 connection.status = "RECEIVING"
 
@@ -529,7 +529,7 @@ def load_garden_file(garden: Garden):
         return garden
 
     try:
-        garden_config = config.load_child(path)
+        garden_config = config.load_downstream(path)
     except (
         YapconfItemNotFound,
         YapconfLoadError,
