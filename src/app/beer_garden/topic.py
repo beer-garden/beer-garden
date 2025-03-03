@@ -228,9 +228,9 @@ def subscriber_validate(
         if subscriber_systems_validate(subscriber, garden.systems, topic_name):
             return True
 
-    if garden.children:
-        for child in garden.children:
-            if subscriber_validate(subscriber, child, topic_name):
+    if garden.downstream:
+        for downstream_garden in garden.downstream:
+            if subscriber_validate(subscriber, downstream_garden, topic_name):
                 return True
     return False
 
@@ -311,8 +311,8 @@ def create_garden_topics(garden: Garden):
                     )
                 )
 
-    for child in garden.children:
-        create_garden_topics(child)
+    for downstream_garden in garden.downstream:
+        create_garden_topics(downstream_garden)
 
 
 def increase_publish_count(topic: Topic):
@@ -337,7 +337,7 @@ def handle_event(event: Event) -> None:
     When creating or updating a system, make sure to mark as non-local first.
 
     It's possible that we see SYSTEM_UPDATED events for systems that we don't currently
-    know about. This will happen if a new system is created on the child while the child
+    know about. This will happen if a new system is created on the downstream while it
     is operating in standalone mode. To handle that, just create the system.
 
     Args:

@@ -602,12 +602,12 @@ class TestGarden:
         garden.delete()
 
     @pytest.fixture
-    def child_system(self):
-        return System(name="echoer", namespace="child_garden", local=False)
+    def downstream_system(self):
+        return System(name="echoer", namespace="downstream_garden", local=False)
 
     @pytest.fixture
-    def child_system_v1(self, child_system):
-        system: System = copy.deepcopy(child_system)
+    def downstream_system_v1(self, downstream_system):
+        system: System = copy.deepcopy(downstream_system)
         system.version = self.v1_str
         system.save()
 
@@ -616,8 +616,8 @@ class TestGarden:
         system.delete()
 
     @pytest.fixture
-    def child_system_v2(self, child_system):
-        system: System = copy.deepcopy(child_system)
+    def downstream_system_v2(self, downstream_system):
+        system: System = copy.deepcopy(downstream_system)
         system.version = self.v2_str
         system.save()
 
@@ -626,8 +626,8 @@ class TestGarden:
         system.delete()
 
     @pytest.fixture
-    def child_system_v1_diff_id(self, child_system):
-        system: System = copy.deepcopy(child_system)
+    def downstream_system_v1_diff_id(self, downstream_system):
+        system: System = copy.deepcopy(downstream_system)
         system.version = self.v1_str
         system.save()
 
@@ -636,9 +636,11 @@ class TestGarden:
         system.delete()
 
     @pytest.fixture
-    def child_garden(self, child_system_v1):
+    def downstream_garden(self, downstream_system_v1):
         garden = Garden(
-            name="child_garden", connection_type="http", systems=[child_system_v1]
+            name="downstream_garden",
+            connection_type="http",
+            systems=[downstream_system_v1],
         ).save()
 
         yield garden
@@ -657,17 +659,22 @@ class TestGarden:
         with pytest.raises(NotUniqueError):
             Garden(name=f"not{local_garden.name}", connection_type="LOCAL").save()
 
-    def test_child_garden_system_attrib_update(self, child_garden, child_system_v2):
-        """If the systems of a child garden are updated such that their names,
+    def test_downstream_garden_system_attrib_update(
+        self, downstream_garden, downstream_system_v2
+    ):
+        """If the systems of a downstream garden are updated such that their names,
         namespaces, or versions are changed, the original systems are removed and
         replaced with the new systems when the garden is saved."""
         orig_system_ids = set(
-            map(lambda x: str(getattr(x, "id")), child_garden.systems)  # noqa: B009
+            map(
+                lambda x: str(getattr(x, "id")), downstream_garden.systems  # noqa: B009
+            )
         )
 
         orig_system_versions = set(
             map(
-                lambda x: str(getattr(x, "version")), child_garden.systems  # noqa: B009
+                lambda x: str(getattr(x, "version")),  # noqa: B009
+                downstream_garden.systems,
             )
         )
 
@@ -676,8 +683,8 @@ class TestGarden:
             and self.v2_str not in orig_system_versions
         )
 
-        child_garden.systems = [child_system_v2]
-        child_garden.deep_save()
+        downstream_garden.systems = [downstream_system_v2]
+        downstream_garden.deep_save()
 
         # we check that the garden written to the DB has the correct systems
         db_garden = Garden.objects().first()
@@ -698,19 +705,23 @@ class TestGarden:
         )
         assert new_system_ids.intersection(orig_system_ids) == set()
 
-    def test_child_garden_system_id_update(self, child_garden, child_system_v1_diff_id):
-        """If the systems of a child garden are updated such that the names, namespaces
+    def test_downstream_garden_system_id_update(
+        self, downstream_garden, downstream_system_v1_diff_id
+    ):
+        """If the systems of a downstream garden are updated such that the names, namespaces
         and versions remain constant, but the IDs are different, the original systms
         are removed and replaced with the new systems when the garden is saved."""
         orig_system_ids = set(
-            map(lambda x: str(getattr(x, "id")), child_garden.systems)  # noqa: B009
+            map(
+                lambda x: str(getattr(x, "id")), downstream_garden.systems  # noqa: B009
+            )
         )
-        new_system_id = str(child_system_v1_diff_id.id)
+        new_system_id = str(downstream_system_v1_diff_id.id)
 
         assert new_system_id not in orig_system_ids
 
-        child_garden.systems = [child_system_v1_diff_id]
-        child_garden.deep_save()
+        downstream_garden.systems = [downstream_system_v1_diff_id]
+        downstream_garden.deep_save()
         db_garden = Garden.objects().first()
 
         new_system_ids = set(
@@ -840,14 +851,14 @@ class TestFileUpdates:
 
         assert first_time != request_model.status_updated_at
 
-    def test_save_preserves_status_updated_at_for_child_garden_requests(
+    def test_save_preserves_status_updated_at_for_downstream_garden_requests(
         self,
         request_model,
     ):
-        beer_garden.config._CONFIG = {"garden": {"name": "parent"}}
+        beer_garden.config._CONFIG = {"garden": {"name": "upstream"}}
 
-        request_model.namespace = "child_garden"
-        request_model.target_garden = "child_garden"
+        request_model.namespace = "downstream_garden"
+        request_model.target_garden = "downstream_garden"
 
         System(
             namespace=request_model.namespace,

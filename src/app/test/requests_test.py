@@ -65,9 +65,9 @@ def validator(monkeypatch, mongo_conn):
 
 
 @pytest.fixture
-def child_garden_request():
+def downstream_garden_request():
     request = Request(
-        namespace="child_garden",
+        namespace="downstream_garden",
         system="testsystem",
         system_version="1.0.0",
         instance_name="instance1",
@@ -1108,15 +1108,15 @@ class TestValidateChoices(object):
 
 
 class TestHandleEvent:
-    def test_status_updated_at_preserved_on_child_garden_requests(
-        self, child_garden_request
+    def test_status_updated_at_preserved_on_downstream_garden_requests(
+        self, downstream_garden_request
     ):
         status_updated_at = datetime.utcnow() - timedelta(days=1)
         status_updated_at = status_updated_at.replace(microsecond=0)
-        child_garden_request.status = "SUCCESS"
-        child_garden_request.status_updated_at = status_updated_at
+        downstream_garden_request.status = "SUCCESS"
+        downstream_garden_request.status_updated_at = status_updated_at
         request_event = Event(
-            payload=child_garden_request,
+            payload=downstream_garden_request,
             name=Events.REQUEST_UPDATED.name,
             garden="child",
         )
@@ -1125,7 +1125,7 @@ class TestHandleEvent:
 
         beer_garden.requests.handle_event(request_event)
 
-        updated_request = Request.objects.get(id=child_garden_request.id)
+        updated_request = Request.objects.get(id=downstream_garden_request.id)
 
         assert updated_request.status_updated_at == status_updated_at
 

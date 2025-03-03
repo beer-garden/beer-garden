@@ -142,7 +142,7 @@ class TestTopic:
     def test_prune_topics(self, monkeypatch):
         garden = Garden(
             name="garden",
-            children=[],
+            downstream=[],
             systems=[
                 System(
                     name="local_system",
@@ -187,7 +187,7 @@ class TestTopic:
     def test_prune_topics_remove_one(self, monkeypatch):
         garden = Garden(
             name="garden",
-            children=[],
+            downstream=[],
             systems=[
                 System(
                     name="system",
@@ -241,7 +241,7 @@ class TestTopic:
     def test_prune_topics_remove_none(self, monkeypatch):
         garden = Garden(
             name="garden",
-            children=[],
+            downstream=[],
             systems=[
                 System(
                     name="system",

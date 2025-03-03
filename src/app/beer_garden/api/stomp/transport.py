@@ -113,7 +113,7 @@ class OperationListener(stomp.ConnectionListener):
         """Handle an incoming message
 
         Will first verify that the model type (according to the message headers) is an
-        Operation. When creating requests on a child garden the initial response will be
+        Operation. When creating requests on a downstream garden the initial response will be
         the created Request object, which we want to ignore.
 
         Will parse the message as an Operation and attempt to route it. If the result of

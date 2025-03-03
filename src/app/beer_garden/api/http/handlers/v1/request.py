@@ -976,7 +976,7 @@ class RequestListAPI(AuthorizationHandler):
         constructed.
 
         The files are base64 encoded and embedded into a parameter under the "base64"
-        field. This allows for transport down to a child garden if necessary. The target
+        field. This allows for transport down to a downstream garden if necessary. The target
         garden, whether it be local or remote, will then convert this file data into a
         RawFile and replace "base64" with the an "id" reference field for final storage.
         """

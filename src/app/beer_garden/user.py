@@ -34,9 +34,9 @@ logger = logging.getLogger(__name__)
 
 """
 User Actions should never throw Events. These events get broadcasted to the UI. This
-could cause issues in scenarios where a child garden has authentication and the parent
-does not. Where anyone monitoring the parent events could see unfiltered user updates
-on child.
+could cause issues in scenarios where a downstream garden has authentication and the upstream
+does not. Where anyone monitoring the upstream events could see unfiltered user updates
+on the downstream garden.
 """
 
 
@@ -256,7 +256,7 @@ def create_user(user: User) -> User:
     for role in user.roles:
         user.local_roles.append(get_role(role))
 
-    # Sync child gardens
+    # Sync downstream gardens
     initiate_user_sync()
 
     return user
@@ -278,7 +278,7 @@ def delete_user(username: str = None, user: User = None) -> User:
 
     db.delete(user)
 
-    # Sync child gardens
+    # Sync downstream gardens
     initiate_user_sync()
 
     return user
@@ -363,7 +363,7 @@ def update_user(
 
     user = db.update(user)
 
-    # Sync child gardens
+    # Sync downstream gardens
     initiate_user_sync()
 
     return user
@@ -449,16 +449,16 @@ def generate_user_alias_mappings(
         target_garden (Garden): Target garden to compare against
         user_alias_mapping (list): Valid alias mappings for Target Garden
     """
-    if target_garden.children:
-        for child in target_garden.children:
+    if target_garden.downstream:
+        for downstream_garden in target_garden.downstream:
             for alias_user_map in user_alias_mapping:
-                if alias_user_map.target_garden == child.name:
+                if alias_user_map.target_garden == downstream_garden.name:
                     user.user_alias_mapping.append(alias_user_map)
-            generate_user_alias_mappings(user, child, user_alias_mapping)
+            generate_user_alias_mappings(user, downstream_garden, user_alias_mapping)
 
 
 def upstream_role_match(role: Role, target_garden: Garden) -> bool:
-    """Determine if role can be forwarded to Target Garden and children
+    """Determine if role can be forwarded to Target Garden and downstream gardens
 
     Args:
         role (Role): Role to evaluate
@@ -470,9 +470,9 @@ def upstream_role_match(role: Role, target_garden: Garden) -> bool:
     if upstream_role_match_garden(role, target_garden):
         return True
 
-    if target_garden.children:
-        for child in target_garden.children:
-            if upstream_role_match(role, child):
+    if target_garden.downstream:
+        for downstream_garden in target_garden.downstream:
+            if upstream_role_match(role, downstream_garden):
                 return True
 
     return False
@@ -646,19 +646,19 @@ def initiate_user_sync() -> None:
     """
     from beer_garden.router import route
 
-    for child in get_gardens(include_local=False):
-        child_users = []
+    for downstream_garden in get_gardens(include_local=False):
+        downstream_users = []
         for user in get_users():
-            downstream_user = generate_downstream_user(child, user)
+            downstream_user = generate_downstream_user(downstream_garden, user)
             if downstream_user:
-                child_users.append(downstream_user)
+                downstream_users.append(downstream_user)
 
         operation = Operation(
             operation_type="USER_UPSTREAM_SYNC",
-            target_garden_name=child.name,
+            target_garden_name=downstream_garden.name,
             kwargs={
                 "upstream_users": SchemaParser.serialize_user(
-                    child_users, to_string=False, many=True
+                    downstream_users, to_string=False, many=True
                 ),
             },
         )
@@ -666,7 +666,7 @@ def initiate_user_sync() -> None:
         try:
             route(operation)
         except (ForwardException, RoutingRequestException):
-            logger.error(f"Failed to sync users to {child.name}")
+            logger.error(f"Failed to sync users to {downstream_garden.name}")
 
 
 def upstream_user_sync(upstream_user: User) -> User:
@@ -735,7 +735,7 @@ def upstream_users_sync(upstream_users=None):
                 continue
             db.delete(user)
 
-    # Sync child gardens
+    # Sync downstream gardens
     initiate_user_sync()
 
 

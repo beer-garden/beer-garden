@@ -46,8 +46,8 @@ def determine_target_garden(request: Request, garden: Garden = None) -> str:
                     if command.name == request.command:
                         return garden.name
 
-    for child in garden.children:
-        garden_name = determine_target_garden(request, garden=child)
+    for downstream_garden in garden.downstream:
+        garden_name = determine_target_garden(request, garden=downstream_garden)
         if garden_name:
             return garden_name
 
@@ -209,6 +209,6 @@ def process_publish_event(garden: Garden, event: Event, topics: List[Topic]):
                 # If an error occurs while trying to process request, log it and keep running
                 logger.exception(ex)
 
-    if garden.children:
-        for child in garden.children:
-            process_publish_event(child, event, topics)
+    if garden.downstream:
+        for downstream_garden in garden.downstream:
+            process_publish_event(downstream_garden, event, topics)

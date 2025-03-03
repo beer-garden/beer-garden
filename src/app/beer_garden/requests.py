@@ -1109,9 +1109,9 @@ def handle_event(event):
                     pass
             elif event.name != Events.REQUEST_CREATED.name:
                 request_changed = {}
-                # When we send child requests to child gardens where the parent was on
-                # the local garden we remove the parent before sending them. Only setting
-                # the subset of fields that change "corrects" the parent
+                # When we send child requests to downstream gardens where the upstream was on
+                # the local garden we remove the upstream before sending them. Only setting
+                # the subset of fields that change "corrects" the upstream
                 for field in (
                     "status",
                     "status_updated_at",
