@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+# 3.30.0
+
+TBD
+
+- Optimized how Request Topic Publisher matches systems
+- Fixed bug where Topic Publish did not match on Gardens and Namespaces
+
 # 3.29.1
 
 12/31/2024
