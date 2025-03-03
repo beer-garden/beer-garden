@@ -196,7 +196,7 @@ export default function adminGardenController(
     return true;
   };
 
-  $scope.isChild = function(garden) {
+  $scope.isDownstream = function(garden) {
     if (garden.has_upstream){
       return garden.upstream == $scope.config.gardenName;
     }
