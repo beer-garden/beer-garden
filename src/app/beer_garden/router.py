@@ -232,7 +232,21 @@ def route(operation: Operation):
     if operation.target_garden_name == config.get("garden.name"):
         result = execute_local(operation)
     else:
-        result = initiate_forward(operation)
+        loop = None
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            pass
+        if loop:
+            result = asyncio.get_event_loop().run_in_executor(
+                t_pool,
+                partial(
+                    initiate_forward,
+                    operation,
+                ),
+            )
+        else:
+            result = initiate_forward(operation)
 
     return filter_result(result)
 
