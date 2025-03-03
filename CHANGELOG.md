@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.30.0
+
+TBD
+
+- Fixed forwarding operations to downstream causing blocking to the router. Mostly seen during File Forwarding.
+
 # 3.29.1
 
 12/31/2024
