@@ -1806,20 +1806,20 @@ _REPLICATION_SPEC = {
 
 _SPECIFICATION = {
     "auth": _AUTH_SPEC,
-    "children": _DOWNSTREAM_GARDENS_SPEC,
     "configuration": _META_SPEC,
     "db": _DB_SPEC,
+    "downstream": _DOWNSTREAM_GARDENS_SPEC,
     "entry": _ENTRY_SPEC,
     "garden": _GARDEN_SPEC,
     "log": _LOG_SPEC,
     "metrics": _METRICS_SPEC,
     "mq": _MQ_SPEC,
-    "parent": _UPSTREAM_SPEC,
     "plugin": _PLUGIN_SPEC,
     "request_validation": _REQUEST_VALIDATION_SPEC,
     "scheduler": _SCHEDULER_SPEC,
     "replication": _REPLICATION_SPEC,
     "ui": _UI_SPEC,
+    "upstream": _UPSTREAM_SPEC,
 }
 
 _DOWNSTREAM_SPECIFICATION = {

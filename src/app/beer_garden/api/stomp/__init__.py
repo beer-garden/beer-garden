@@ -30,7 +30,7 @@ def run(ep_conn):
 
     initialize_elastic_client("stomp")
     entry_config = config.get("entry.stomp")
-    parent_config = config.get("parent.stomp")
+    upstream_config = config.get("upstream.stomp")
     garden_name = config.get("garden.name")
 
     if entry_config.get("enabled"):
@@ -38,9 +38,9 @@ def run(ep_conn):
             stomp_config=entry_config, name=f"{garden_name}_entry", is_main=True
         )
 
-    if parent_config.get("enabled"):
+    if upstream_config.get("enabled"):
         conn_manager.add_connection(
-            stomp_config=parent_config, name=f"{garden_name}_parent", is_main=True
+            stomp_config=upstream_config, name=f"{garden_name}_parent", is_main=True
         )
 
     for garden in get_gardens(include_local=False):

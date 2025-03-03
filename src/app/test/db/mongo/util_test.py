@@ -216,7 +216,10 @@ class TestEnsureLocalGarden:
         name derived from the "garden.name" config setting and a connection type of
         LOCAL"""
 
-        config._CONFIG = {"garden": {"name": "parent"}, "parent": {"sync_interval": 1}}
+        config._CONFIG = {
+            "garden": {"name": "parent"},
+            "upstream": {"sync_interval": 1},
+        }
 
         ensure_local_garden()
         garden = Garden.objects.get(connection_type="LOCAL")
@@ -226,7 +229,10 @@ class TestEnsureLocalGarden:
     def test_ensure_local_garden_updates_garden_from_config(self, monkeypatch):
         """ensure_local_garden should update the name of an existing Garden entry in the
         database with a connection type of LOCAL"""
-        config._CONFIG = {"garden": {"name": "parent"}, "parent": {"sync_interval": 1}}
+        config._CONFIG = {
+            "garden": {"name": "parent"},
+            "upstream": {"sync_interval": 1},
+        }
 
         Garden(name="thisshouldchange", connection_type="LOCAL").save()
         ensure_local_garden()

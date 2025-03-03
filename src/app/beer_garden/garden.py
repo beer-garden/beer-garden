@@ -238,7 +238,7 @@ def check_garden_receiving_heartbeat(
         connection = Connection(api=api, status="DISABLED")
 
         # Check if there is a config file
-        path = Path(f"{config.get('children.directory')}/{garden.name}.yaml")
+        path = Path(f"{config.get('downstream.directory')}/{garden.name}.yaml")
         if path.exists():
             garden_config = config.load_downstream(path)
             if config.get("receiving", config=garden_config):
@@ -519,7 +519,7 @@ def update_garden_receiving(
 
 
 def load_garden_file(garden: Garden):
-    path = Path(f"{config.get('children.directory')}/{garden.name}.yaml")
+    path = Path(f"{config.get('downstream.directory')}/{garden.name}.yaml")
 
     garden.publishing_connections.clear()
     garden.receiving_connections.clear()
@@ -653,8 +653,8 @@ def load_garden_config(garden: Garden = None, garden_name: str = None):
 
 
 def rescan():
-    if config.get("children.directory"):
-        downstream_directory = Path(config.get("children.directory"))
+    if config.get("downstream.directory"):
+        downstream_directory = Path(config.get("downstream.directory"))
         if downstream_directory.exists():
             for path in downstream_directory.iterdir():
                 path_parts = path.parts

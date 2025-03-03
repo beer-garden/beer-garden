@@ -28,29 +28,29 @@ def ensure_local_garden():
 
     garden.name = config.get("garden.name")
 
-    if config.get("parent.sync_interval") > 0:
+    if config.get("upstream.sync_interval") > 0:
         garden.metadata["_unresponsive_timeout"] = (
-            config.get("parent.sync_interval") * 3
+            config.get("upstream.sync_interval") * 3
         )
     elif garden.metadata:
         garden.metadata.pop("_unresponsive_timeout", None)
 
     garden.publishing_connections = []
 
-    if config.get("parent.http.enabled"):
+    if config.get("upstream.http.enabled"):
         config_map = {
-            "parent.http.host": "host",
-            "parent.http.port": "port",
-            "parent.http.ssl.enabled": "ssl",
-            "parent.http.url_prefix": "url_prefix",
-            "parent.http.ssl.ca_cert": "ca_cert",
-            "parent.http.ssl.ca_verify": "ca_verify",
-            "parent.http.ssl.client_cert": "client_cert",
-            "parent.http.client_timeout": "client_timeout",
-            "parent.http.username": "username",
-            "parent.http.password": "password",
-            "parent.http.access_token": "access_token",
-            "parent.http.refresh_token": "refresh_token",
+            "upstream.http.host": "host",
+            "upstream.http.port": "port",
+            "upstream.http.ssl.enabled": "ssl",
+            "upstream.http.url_prefix": "url_prefix",
+            "upstream.http.ssl.ca_cert": "ca_cert",
+            "upstream.http.ssl.ca_verify": "ca_verify",
+            "upstream.http.ssl.client_cert": "client_cert",
+            "upstream.http.client_timeout": "client_timeout",
+            "upstream.http.username": "username",
+            "upstream.http.password": "password",
+            "upstream.http.access_token": "access_token",
+            "upstream.http.refresh_token": "refresh_token",
         }
 
         http_connection = Connection(api="HTTP", status="PUBLISHING")

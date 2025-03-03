@@ -42,8 +42,6 @@ auth:
     operator: 720
     plugin_admin: 720
     read_only: 720
-children:
-  directory: ./children
 db:
   connection:
     host: localhost
@@ -63,6 +61,8 @@ db:
     orphan: -1
 
     batch_size: -1
+downstream:
+  directory: ./children
 entry:
   http:
     enabled: true
@@ -133,40 +133,6 @@ mq:
   heartbeat_interval: 3600
   host: localhost
   virtual_host: /
-parent:
-  http:
-    access_token: null
-    api_version: 1
-    client_timeout: -1
-    enabled: false
-    host: null
-    password: null
-    port: 2337
-    refresh_token: null
-    ssl:
-      ca_cert: null
-      ca_verify: true
-      client_cert: null
-      client_key: null
-      enabled: false
-    url_prefix: /
-    username: null
-  skip_events: []
-  sync_interval: 15
-  stomp:
-    enabled: false
-    headers: []
-    host: localhost
-    password: password
-    port: 61613
-    send_destination: Beer_Garden_Operations_Parent
-    ssl:
-      ca_cert: null
-      client_cert: null
-      client_key: null
-      use_ssl: false
-    subscribe_destination: Beer_Garden_Forward_Parent
-    username: beer_garden
 plugin:
   allow_command_updates: false
   local:
@@ -214,3 +180,37 @@ ui:
   icon_default: fa-beer
   name: Beer Garden
   auto_refresh: false
+upstream:
+  http:
+    access_token: null
+    api_version: 1
+    client_timeout: -1
+    enabled: false
+    host: null
+    password: null
+    port: 2337
+    refresh_token: null
+    ssl:
+      ca_cert: null
+      ca_verify: true
+      client_cert: null
+      client_key: null
+      enabled: false
+    url_prefix: /
+    username: null
+  skip_events: []
+  sync_interval: 15
+  stomp:
+    enabled: false
+    headers: []
+    host: localhost
+    password: password
+    port: 61613
+    send_destination: Beer_Garden_Operations_Parent
+    ssl:
+      ca_cert: null
+      client_cert: null
+      client_key: null
+      use_ssl: false
+    subscribe_destination: Beer_Garden_Forward_Parent
+    username: beer_garden
