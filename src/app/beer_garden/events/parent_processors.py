@@ -93,13 +93,13 @@ class HttpParentUpdater(QueueListener):
 
         wait_time = 0.1
         while not self.stopped() and not self._connected:
-            self.logger.warning("Attempting to reconnect to parent garden")
+            self.logger.warning("Attempting to reconnect to upstream garden")
 
             try:
                 if self._ez_client.can_connect():
                     self._connected = True
 
-                    self.logger.warning("Successfully reconnected to parent garden")
+                    self.logger.warning("Successfully reconnected to upstream garden")
                     self._update_garden_connection("PUBLISHING")
 
                     if self._reconnect_action:

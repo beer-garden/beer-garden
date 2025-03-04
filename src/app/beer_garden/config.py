@@ -1846,7 +1846,7 @@ _DOWNSTREAM_SPECIFICATION = {
         "default": False,
         "description": (
             "If local users should be shared without filtering based on "
-            "the scope of the Child Garden"
+            "the scope of the downstream Garden"
         ),
     },
     "http": {
@@ -1855,7 +1855,7 @@ _DOWNSTREAM_SPECIFICATION = {
             "enabled": {
                 "type": "bool",
                 "default": False,
-                "description": "Publish events to Child garden over HTTP",
+                "description": "Publish events to downstream garden over HTTP",
             },
             "host": {
                 "type": "str",
@@ -1951,7 +1951,7 @@ _DOWNSTREAM_SPECIFICATION = {
             "enabled": {
                 "type": "bool",
                 "default": False,
-                "description": "Publish events to child garden over STOMP",
+                "description": "Publish events to downstream garden over STOMP",
             },
             "host": {
                 "type": "str",

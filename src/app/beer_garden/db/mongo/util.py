@@ -59,18 +59,18 @@ def ensure_local_garden():
             http_connection.config.setdefault(config_map[key], config.get(key))
         garden.publishing_connections.append(http_connection)
 
-    if config.get("parent.stomp.enabled") and config.get(
-        "parent.stomp.send_destination"
+    if config.get("upstream.stomp.enabled") and config.get(
+        "upstream.stomp.send_destination"
     ):
         config_map = {
-            "parent.stomp.host": "host",
-            "parent.stomp.port": "port",
-            "parent.stomp.send_destination": "send_destination",
-            "parent.stomp.subscribe_destination": "subscribe_destination",
-            "parent.stomp.username": "username",
-            "parent.stomp.password": "password",
-            "parent.stomp.ssl": "ssl",
-            "parent.stomp.headers": "headers",
+            "upstream.stomp.host": "host",
+            "upstream.stomp.port": "port",
+            "upstream.stomp.send_destination": "send_destination",
+            "upstream.stomp.subscribe_destination": "subscribe_destination",
+            "upstream.stomp.username": "username",
+            "upstream.stomp.password": "password",
+            "upstream.stomp.ssl": "ssl",
+            "upstream.stomp.headers": "headers",
         }
 
         stomp_connection = Connection(api="STOMP", status="PUBLISHING")
@@ -161,13 +161,13 @@ def ensure_v3_24_model_migration():
 
         garden_collection = db.get_collection("garden")
 
-        if not os.path.exists(config.get("children.directory")):
-            os.makedirs(config.get("children.directory"))
+        if not os.path.exists(config.get("downstream.directory")):
+            os.makedirs(config.get("downstream.directory"))
 
         for legacy_garden in garden_collection.find():
             if legacy_garden["connection_type"] != "LOCAL":
                 if not Path(
-                    f"{config.get('children.directory')}/{legacy_garden['name']}.yaml"
+                    f"{config.get('downstream.directory')}/{legacy_garden['name']}.yaml"
                 ).exists():
                     garden_file_data = {"receiving": False, "publishing": False}
 
@@ -182,12 +182,12 @@ def ensure_v3_24_model_migration():
 
                     logger.warning(
                         (
-                            "Mapping Child Config: "
-                            f"{config.get('children.directory')}/{legacy_garden['name']}.yaml"
+                            "Mapping Downstream Config: "
+                            f"{config.get('downstream.directory')}/{legacy_garden['name']}.yaml"
                         )
                     )
                     with open(
-                        f"{config.get('children.directory')}/{legacy_garden['name']}.yaml",
+                        f"{config.get('downstream.directory')}/{legacy_garden['name']}.yaml",
                         "w+",
                     ) as ff:
                         yaml.dump(garden_file_data, ff, allow_unicode=True)
