@@ -214,7 +214,8 @@ export default function commandViewController(
         type: 'info',
         msg: 'Looks like the request is taking longer to submit, hang in there',
       });
-    }, 5);
+      $scope.$digest();
+    }, 5000);
 
     RequestService.createRequest(newRequest, false, isFormData).then(
         function(response) {
