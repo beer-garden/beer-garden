@@ -1,5 +1,9 @@
 # Beer Garden Changelog
 
+# 3.31.0
+
+- Changed from parent/child to upstream/downstream garden naming convention
+
 # 3.29.1
 
 12/31/2024
