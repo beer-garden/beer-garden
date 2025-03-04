@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+# 3.31.0
+
+TBD
+
+- Fixed Alerts on Command View page that were not showing up. 
+- On `Make Request` if request takes longer than 5 seconds, push alert to UI
+
 # 3.29.1
 
 12/31/2024
