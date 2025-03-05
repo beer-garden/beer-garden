@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Optional
 from brewtils.models import Events, Permissions
 from brewtils.schema_parser import SchemaParser
 from marshmallow import Schema, ValidationError, fields, validate
+from tornado.ioloop import IOLoop
 from tornado.websocket import WebSocketHandler
 
 from beer_garden import config
@@ -15,9 +16,7 @@ from beer_garden.authorization import ModelFilter
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
 
 if TYPE_CHECKING:
-
     from beer_garden.db.mongo.models import User
-
 
 logger = logging.getLogger(__name__)
 
@@ -51,31 +50,31 @@ class EventSocket(WebSocketHandler):
     def check_origin(self, origin):
         return True
 
-    def open(self):
+    async def open(self):
         if EventSocket.closing:
-            self.close(reason="Shutting down")
+            await self.close(reason="Shutting down")
             return
 
         EventSocket.listeners.add(self)
 
         if _auth_enabled():
-            self.request_authorization(reason="Access token required")
+            await self.request_authorization(reason="Access token required")
 
-    def on_close(self):
+    async def on_close(self):
         EventSocket.listeners.discard(self)
 
-    def on_message(self, message):
+    async def on_message(self, message):
         """Process incoming messages. Called by WebSocketHandler automatically when
         a message is received."""
         try:
             token = IncomingMessageSchema(strict=True).loads(message).data["payload"]
-            self._update_access_token(token)
+            await self._update_access_token(token)
         except (ValidationError, JSONDecodeError) as exc:
-            self._message_processing_error(
+            await self._message_processing_error(
                 f"Invalid message received. Error was: {exc}"
             )
 
-    def get_current_user(self) -> Optional["User"]:
+    async def get_current_user(self) -> Optional["User"]:
         """Retrieve the appropriate User object for the websocket connection.
 
         Returns:
@@ -86,38 +85,44 @@ class EventSocket(WebSocketHandler):
 
         if _auth_enabled() and self.access_token is not None:
             try:
-                user = get_user_from_token(self.access_token, revoke_expired=False)
+                user = await IOLoop.current().run_in_executor(
+                    None, get_user_from_token, self.access_token, False
+                )
             except (ExpiredTokenException, InvalidTokenException):
                 pass
 
         return user
 
-    def request_authorization(self, reason: str):
+    async def request_authorization(self, reason: str):
         """Publish a message requesting authorization"""
         message = {"name": "AUTHORIZATION_REQUIRED", "payload": reason}
-        self.write_message(message)
+        await self.write_message(message)
 
-    def _message_processing_error(self, reason: str):
+    async def _message_processing_error(self, reason: str):
         """Publish a message reporting an error while handling incoming messages"""
         message = {"name": "BAD_MESSAGE", "payload": reason}
-        self.write_message(message)
+        await self.write_message(message)
 
-    def _update_access_token(self, token):
+    async def _update_access_token(self, token):
         """Update the access token for the connection"""
         try:
-            decoded_token = decode_token(token, expected_type="access")
-            _ = get_user_from_token(decoded_token)
+            decoded_token = await IOLoop.current().run_in_executor(
+                None, decode_token, token, "access"
+            )
+            _ = await IOLoop.current().run_in_executor(
+                None, get_user_from_token, decoded_token
+            )
 
             self.access_token = decoded_token
-            self.write_message({"name": "TOKEN_UPDATED"})
+            await self.write_message({"name": "TOKEN_UPDATED"})
         except (ExpiredTokenException, InvalidTokenException):
             self.access_token = None
-            self.request_authorization(
+            await self.request_authorization(
                 "Access token update message contained an invalid token"
             )
 
     @classmethod
-    def publish(cls, event):
+    async def publish(cls, event):
         if event.name in WEBSOCKET_EVENT_TYPE_BLOCKLIST:
             return
 
@@ -126,20 +131,24 @@ class EventSocket(WebSocketHandler):
 
             for listener in cls.listeners:
                 if _auth_enabled():
-                    user = listener.get_current_user()
+                    user = await listener.get_current_user()
 
                     if user is None:
-                        listener.request_authorization("Valid access token required")
+                        await listener.request_authorization(
+                            "Valid access token required"
+                        )
                         continue
 
-                    filtered_event = cls.model_filter.filter_object(
-                        obj=copy.deepcopy(event),
-                        user=user,
-                        permission=Permissions.READ_ONLY.name,
+                    filtered_event = await IOLoop.current().run_in_executor(
+                        None,
+                        cls.model_filter.filter_object,
+                        copy.deepcopy(event),
+                        user,
+                        Permissions.READ_ONLY.name,
                     )
 
                     if filtered_event:
-                        listener.write_message(
+                        await listener.write_message(
                             SchemaParser.serialize(filtered_event, to_string=True)
                         )
                     else:
@@ -151,12 +160,12 @@ class EventSocket(WebSocketHandler):
                         )
                         continue
                 else:
-                    listener.write_message(message)
+                    await listener.write_message(message)
 
     @classmethod
-    def shutdown(cls):
+    async def shutdown(cls):
         logger.debug("Closing websocket connections")
         EventSocket.closing = True
 
         for listener in cls.listeners:
-            listener.close(reason="Shutting down")
+            await listener.close(reason="Shutting down")

@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.31.0
+
+TBD
+
+- Updated Events Websocket to support Async calls
+
 # 3.29.1
 
 12/31/2024
