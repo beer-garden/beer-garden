@@ -238,7 +238,7 @@ def route(operation: Operation):
         except RuntimeError:
             pass
         if loop:
-            result = asyncio.get_event_loop().run_in_executor(
+            result = loop.run_in_executor(
                 t_pool,
                 partial(
                     initiate_forward,
