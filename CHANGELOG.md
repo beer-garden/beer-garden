@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.31.0
+
+TBD
+
+- Merge event metadata on Request Update
+
 # 3.29.1
 
 12/31/2024
