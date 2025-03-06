@@ -6,12 +6,10 @@ from brewtils.schema_parser import SchemaParser
 from tornado.escape import json_decode
 
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.metrics import collect_metrics
 
 
 class FileChunkAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="FileChunkAPI")
     async def get(self):
         """
         ---
@@ -64,7 +62,6 @@ class FileChunkAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="FileChunkAPI")
     async def post(self):
         """
         ---
@@ -132,7 +129,6 @@ class FileChunkAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="FileChunkAPI")
     async def delete(self):
         """
         ---
@@ -170,7 +166,6 @@ class FileChunkAPI(AuthorizationHandler):
 
 class ChunkNameAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="ChunkNameAPI")
     async def get(self):
         """
         ---
