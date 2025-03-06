@@ -4,6 +4,9 @@ auth:
   authentication_handlers:
     basic:
       enabled: true
+    certificate:
+      create_users: false
+      enabled: false
     trusted_header:
       create_users: true
       enabled: false
@@ -173,6 +176,7 @@ plugin:
     auth:
       password: password
       username: plugin_admin
+      client_cert: null
     directory: ./plugins
     host_env_vars: []
     capture_streams: false
