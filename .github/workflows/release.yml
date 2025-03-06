@@ -28,7 +28,7 @@ jobs:
 
   pypi-publish:
     name: PyPI Publish
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     environment:
       name: release
       url: https://pypi.org/p/beer-garden
@@ -52,7 +52,7 @@ jobs:
           python-version: 3.7
 
       - name: Cache PIP Install
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-3.7-pip-build-${{ hashFiles('**/setup.py') }}-${{ hashFiles('**/requirements.txt') }}
@@ -74,7 +74,7 @@ jobs:
 
   pypi-verify:
     name: Verify PyPI Publish
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: pypi-publish
 
     steps:
@@ -116,13 +116,17 @@ jobs:
 
   docker-publish-src:
     name: Docker Publish Src - Python ${{ matrix.python-version }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     needs: pypi-verify
 
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.7","3.8","3.9","3.10","3.12","3.13"]
+        python-version: ["3.8","3.9","3.10","3.12","3.13"]
+        os: ["ubuntu-latest"]
+        include:
+          - python-version: "3.7"
+            os: "ubuntu-22.04"
 
 
     defaults:
@@ -179,14 +183,18 @@ jobs:
 
   docker-publish-rpm:
     name: Docker Publish - Python ${{ matrix.python-version }} - ${{ matrix.dist }} 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     needs: [docker-publish-src, docker-publish-src-latest]
 
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.7","3.8","3.9","3.10","3.11","3.12","3.13"]
+        python-version: ["3.8","3.9","3.10","3.11","3.12","3.13"]
+        os: ["ubuntu-latest"]
         dist: ["centos7", "rocky9"]
+        include:
+          - python-version: "3.7"
+            os: "ubuntu-22.04"
 
     steps:
       - uses: actions/checkout@v3
