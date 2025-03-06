@@ -412,7 +412,7 @@ def modify(obj: ModelItem, query=None, **kwargs) -> ModelItem:
     return to_brewtils(mongo_obj)
 
 
-def delete(obj: ModelItem) -> None:
+def delete(obj: ModelItem, force_delete: bool = False) -> None:
     """Delete an item from the database
 
     If the Mongo model corresponding to the Brewtils model has a "deep_delete" method
@@ -426,8 +426,9 @@ def delete(obj: ModelItem) -> None:
 
     """
     mongo_obj = from_brewtils(obj)
-
-    if hasattr(mongo_obj, "deep_delete"):
+    if force_delete and hasattr(mongo_obj, "force_delete"):
+        mongo_obj.force_delete()
+    elif hasattr(mongo_obj, "deep_delete"):
         mongo_obj.deep_delete()
     else:
         mongo_obj.delete()

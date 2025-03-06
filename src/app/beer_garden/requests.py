@@ -635,7 +635,7 @@ def delete_requests(**kwargs) -> dict:
     requests = db.query(Request, filter_params=kwargs)
 
     for request in requests:
-        db.delete(request)
+        db.delete(request, force_delete=True)
 
     logger.info(f"Deleted {len(requests)} requests")
     return kwargs

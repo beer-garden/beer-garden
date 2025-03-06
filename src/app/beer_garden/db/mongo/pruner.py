@@ -35,6 +35,8 @@ def run_pruner(tasks, ttl_name):
                 % (ttl_name, task["collection"].__name__, str(delete_older_than))
             )
 
+            removed_count = 0
+
             if task["batch_size"] > 0:
                 while (
                     task["batch_size"]
@@ -49,15 +51,23 @@ def run_pruner(tasks, ttl_name):
                             str(task["batch_size"]),
                         )
                     )
-                    task["collection"].objects(query).only("id").limit(
-                        task["batch_size"]
-                    ).no_cache().delete()
+                    for record in (
+                        task["collection"]
+                        .objects(query)
+                        .only("id")
+                        .limit(task["batch_size"])
+                    ):
+                        record.delete()
+                        removed_count = removed_count + 1
 
-            num = task["collection"].objects(query).only("id").no_cache().delete()
-            if num:
+            for record in task["collection"].objects(query).only("id"):
+                record.delete()
+                removed_count = removed_count + 1
+
+            if removed_count > 0:
                 logger.debug(
                     "Deleted %s %s from %ss"
-                    % (num, ttl_name, task["collection"].__name__)
+                    % (removed_count, ttl_name, task["collection"].__name__)
                 )
 
 
