@@ -229,9 +229,23 @@ def route(operation: Operation):
         # Determine which garden the operation is targeting
         operation.target_garden_name = _determine_target(operation)
 
-        # If it's targeted at THIS garden, execute
-        if operation.target_garden_name == config.get("garden.name"):
-            result = execute_local(operation)
+    # If it's targeted at THIS garden, execute
+    if operation.target_garden_name == config.get("garden.name"):
+        result = execute_local(operation)
+    else:
+        loop = None
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            pass
+        if loop:
+            result = loop.run_in_executor(
+                t_pool,
+                partial(
+                    initiate_forward,
+                    operation,
+                ),
+            )
         else:
             result = initiate_forward(operation)
 
