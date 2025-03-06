@@ -17,6 +17,7 @@ TBD
 - Fixed how Garden files are loaded, added HTTP Receiving defaults to prevent missed events prior
   to `GARDEN_SYNC`
 - Fixed bug where `NOT_CONFIGURED` status for Receiving connection was not filtered out
+- Removed Garden load file from setup_routing because it was unnessary
 
 # 3.29.1
 
