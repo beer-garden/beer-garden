@@ -24,6 +24,7 @@ TBD
 - Fixed bug where upon completion of Parent Request, running TEMP child requests got deleted prematurly
 - Standardized Topic Names for Generated topics to start with the prefix of garden name
   New format: <garden_name>.<namespace>.<system_name>.<system_version>.<instance_name>.<command>
+- Fixed Request view bug where `REQUEST_TOPIC_PUBLISH` was causing blank line in children list
 
 # 3.29.1
 
