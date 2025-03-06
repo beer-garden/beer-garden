@@ -31,16 +31,23 @@ def publish(event: Event) -> None:
     Returns:
         None
     """
-    try:
-        # Do some formatting / tweaking
-        if not event.garden:
-            event.garden = config.get("garden.name")
-        if not event.timestamp:
-            event.timestamp = datetime.now(timezone.utc)
+    with CollectMetrics("Publish_Event", f"PUBLISHER::{event.name}::publish()"):
+        try:
+            # Do some formatting / tweaking
+            if not event.garden:
+                event.garden = config.get("garden.name")
+            if not event.timestamp:
+                event.timestamp = datetime.now(timezone.utc)
 
-        return manager.put(event)
-    except Exception as ex:
-        logger.exception(f"Error publishing event: {ex}")
+            if config.get("metrics.elastic.enabled"):
+                extract_custom_context(event.payload)
+                trace_parent_string = elasticapm.get_trace_parent_header()
+                if trace_parent_string:
+                    event.metadata["_trace_parent"] = trace_parent_string
+
+            return manager.put(event)
+        except Exception as ex:
+            logger.exception(f"Error publishing event: {ex}")
 
 
 def publish_event(event_type: Events):
