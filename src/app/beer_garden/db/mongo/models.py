@@ -721,7 +721,7 @@ class System(MongoModel, Document):
                     garden_name = config.get("garden.name")
                 else:
                     garden_name = Garden.objects.get(
-                        systems__in=System.objects.filter(id=self.id)
+                        systems__in=[System.objects.get(id=self.id)]
                     ).name
                 for command in self.commands:
                     for instance in self.instances:
