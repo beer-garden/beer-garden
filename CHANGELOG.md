@@ -20,6 +20,8 @@ TBD
 - Removed Garden load file from setup_routing because it was unnessary
 - Fixed multi-hop check for legacy Gardens in Router
 - Fixed issue where local Garden version was not persisted to database, or setup upstream
+- Optimized the query to clean TEMP child requests
+- Fixed bug where upon completion of Parent Request, running TEMP child requests got deleted prematurly
 
 # 3.29.1
 
