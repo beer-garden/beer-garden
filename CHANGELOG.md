@@ -25,6 +25,8 @@ TBD
 - Standardized Topic Names for Generated topics to start with the prefix of garden name
   New format: <garden_name>.<namespace>.<system_name>.<system_version>.<instance_name>.<command>
 - Fixed Request view bug where `REQUEST_TOPIC_PUBLISH` was causing blank line in children list
+- Optimized how Request Topic Publisher matches systems
+- Fixed bug where Topic Publish did not match on Gardens and Namespaces
 
 # 3.29.1
 
