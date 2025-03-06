@@ -22,6 +22,8 @@ TBD
 - Fixed issue where local Garden version was not persisted to database, or setup upstream
 - Optimized the query to clean TEMP child requests
 - Fixed bug where upon completion of Parent Request, running TEMP child requests got deleted prematurly
+- Standardized Topic Names for Generated topics to start with the prefix of garden name
+  New format: <garden_name>.<namespace>.<system_name>.<system_version>.<instance_name>.<command>
 
 # 3.29.1
 
