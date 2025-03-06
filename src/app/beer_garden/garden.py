@@ -643,9 +643,12 @@ def load_garden_file(garden: Garden):
                 "NOT_CONFIGURED" if garden_config.get("receiving") else "DISABLED"
             )
 
-        http_receiving_connection.status = (
-            "NOT_CONFIGURED" if garden_config.get("receiving") else "DISABLED"
-        )
+        if not garden_config.get("receiving"):
+            http_receiving_connection.status = "DISABLED"
+        elif config.get("entry.http.enabled"):
+            http_receiving_connection.status = "RECEIVING"
+        else:
+            http_receiving_connection.status = "NOT_CONFIGURED"
 
     except (
         YapconfItemNotFound,
