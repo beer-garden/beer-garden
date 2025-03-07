@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Optional
 from brewtils.models import Events, Permissions
 from brewtils.schema_parser import SchemaParser
 from marshmallow import Schema, ValidationError, fields, validate
-from tornado.ioloop import IOLoop
 from tornado.websocket import WebSocketHandler
 
 from beer_garden import config
@@ -74,7 +73,7 @@ class EventSocket(WebSocketHandler):
                 f"Invalid message received. Error was: {exc}"
             )
 
-    async def get_current_user(self) -> Optional["User"]:
+    def get_current_user(self) -> Optional["User"]:
         """Retrieve the appropriate User object for the websocket connection.
 
         Returns:
@@ -85,9 +84,7 @@ class EventSocket(WebSocketHandler):
 
         if _auth_enabled() and self.access_token is not None:
             try:
-                user = await IOLoop.current().run_in_executor(
-                    None, get_user_from_token, self.access_token, False
-                )
+                user = get_user_from_token(self.access_token, False)
             except (ExpiredTokenException, InvalidTokenException):
                 pass
 
@@ -106,12 +103,8 @@ class EventSocket(WebSocketHandler):
     async def _update_access_token(self, token):
         """Update the access token for the connection"""
         try:
-            decoded_token = await IOLoop.current().run_in_executor(
-                None, decode_token, token, "access"
-            )
-            _ = await IOLoop.current().run_in_executor(
-                None, get_user_from_token, decoded_token
-            )
+            decoded_token = decode_token(token, "access")
+            _ = get_user_from_token(decoded_token)
 
             self.access_token = decoded_token
             await self.write_message({"name": "TOKEN_UPDATED"})
@@ -131,7 +124,7 @@ class EventSocket(WebSocketHandler):
 
             for listener in cls.listeners:
                 if _auth_enabled():
-                    user = await listener.get_current_user()
+                    user = listener.get_current_user()
 
                     if user is None:
                         await listener.request_authorization(
@@ -139,12 +132,11 @@ class EventSocket(WebSocketHandler):
                         )
                         continue
 
-                    filtered_event = await IOLoop.current().run_in_executor(
-                        None,
-                        cls.model_filter.filter_object,
-                        copy.deepcopy(event),
-                        user,
-                        Permissions.READ_ONLY.name,
+                    
+                    filtered_event = cls.model_filter.filter_object(
+                        obj=copy.deepcopy(event),
+                        user=user,
+                        permission=Permissions.READ_ONLY.name,
                     )
 
                     if filtered_event:

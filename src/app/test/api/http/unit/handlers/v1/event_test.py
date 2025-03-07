@@ -116,7 +116,7 @@ class TestEventSocket(AsyncHTTPTestCase):
     @pytest.mark.usefixtures("app_config_auth_disabled")
     def test_publish_auth_disabled(self):
         ws_client = yield self.ws_connect()
-        EventSocket.publish(self.event)
+        yield EventSocket.publish(self.event)
 
         response = yield ws_client.read_message()
         ws_client.close()
@@ -130,7 +130,7 @@ class TestEventSocket(AsyncHTTPTestCase):
         ws_client = yield self.ws_connect()
         yield ws_client.read_message()  # Read the AUTHORIZATION_REQUIRED message
 
-        EventSocket.publish(self.event)
+        yield EventSocket.publish(self.event)
 
         response = yield ws_client.read_message()
         ws_client.close()
@@ -144,7 +144,7 @@ class TestEventSocket(AsyncHTTPTestCase):
         ws_client = yield self.ws_connect()
         yield ws_client.read_message()  # Read the AUTHORIZATION_REQUIRED message
 
-        EventSocket.publish(self.event)
+        yield EventSocket.publish(self.event)
 
         response = yield ws_client.read_message()
         ws_client.close()
@@ -159,7 +159,7 @@ class TestEventSocket(AsyncHTTPTestCase):
         yield ws_client.read_message()  # Read the AUTHORIZATION_REQUIRED message
 
         event = Event(name="ENTRY_STARTED")
-        EventSocket.publish(event)
+        yield EventSocket.publish(event)
 
         response = yield ws_client.read_message()
         ws_client.close()
