@@ -132,7 +132,6 @@ class EventSocket(WebSocketHandler):
                         )
                         continue
 
-                    
                     filtered_event = cls.model_filter.filter_object(
                         obj=copy.deepcopy(event),
                         user=user,
