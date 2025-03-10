@@ -16,6 +16,7 @@ TBD
 - Optimized the query to clean TEMP child requests
 - Fixed bug where upon completion of Parent Request, running TEMP child requests got deleted prematurly
 - Fixed issue where local Garden version was not persisted to database, or setup upstream
+- Fixed multi-hop check for legacy Gardens in Router
 
 # 3.29.1
 
