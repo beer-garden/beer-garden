@@ -51,7 +51,7 @@ class EventSocket(WebSocketHandler):
 
     async def open(self):
         if EventSocket.closing:
-            await self.close(reason="Shutting down")
+            self.close(reason="Shutting down")
             return
 
         EventSocket.listeners.add(self)
@@ -59,7 +59,7 @@ class EventSocket(WebSocketHandler):
         if _auth_enabled():
             await self.request_authorization(reason="Access token required")
 
-    async def on_close(self):
+    def on_close(self):
         EventSocket.listeners.discard(self)
 
     async def on_message(self, message):
