@@ -5,6 +5,7 @@ from mongoengine.connection import get_db
 from mongoengine.errors import DoesNotExist, FieldDoesNotExist, InvalidDocumentError
 from pymongo.errors import OperationFailure
 
+import beer_garden
 from beer_garden import config
 from beer_garden.errors import IndexOperationError
 
@@ -78,6 +79,8 @@ def ensure_local_garden():
         for key in config_map:
             stomp_connection.config.setdefault(config_map[key], config.get(key))
         garden.publishing_connections.append(stomp_connection)
+
+    garden.version = beer_garden.__version__
 
     garden.save()
 

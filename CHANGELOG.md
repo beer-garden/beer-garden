@@ -15,6 +15,7 @@ TBD
   New format: <garden_name>.<namespace>.<system_name>.<system_version>.<instance_name>.<command>
 - Optimized the query to clean TEMP child requests
 - Fixed bug where upon completion of Parent Request, running TEMP child requests got deleted prematurly
+- Fixed issue where local Garden version was not persisted to database, or setup upstream
 
 # 3.29.1
 
