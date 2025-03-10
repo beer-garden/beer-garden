@@ -90,7 +90,7 @@ class TestGardenSetup(object):
                     if connection.api == "STOMP":
                         assert connection.status == "PUBLISHING"
                     elif connection.api == "HTTP":
-                        assert connection.status == "NOT_CONFIGURED"
+                        assert connection.status == "RECEIVING"
                     else:
                         raise AssertionError()
                 assert len(garden.receiving_connections) == 2
@@ -99,7 +99,7 @@ class TestGardenSetup(object):
                     if connection.api == "STOMP":
                         assert connection.status == "RECEIVING"
                     elif connection.api == "HTTP":
-                        assert connection.status == "NOT_CONFIGURED"
+                        assert connection.status == "RECEIVING"
                     else:
                         raise AssertionError()
                 assert len(garden.children) == 1
