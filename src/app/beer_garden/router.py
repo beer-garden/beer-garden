@@ -54,7 +54,7 @@ from beer_garden.errors import (
 )
 from beer_garden.events import publish
 from beer_garden.garden import get_garden, get_gardens, load_garden_file, update_garden
-from beer_garden.metrics import collect_metrics
+from beer_garden.metrics import CollectMetrics
 from beer_garden.requests import complete_request, create_request
 
 logger = logging.getLogger(__name__)
@@ -197,7 +197,6 @@ router_filter = {
 }
 
 
-@collect_metrics(transaction_type="router")
 def route(operation: Operation):
     """Entry point into the routing subsystem
 
@@ -207,27 +206,28 @@ def route(operation: Operation):
     Returns:
 
     """
-    operation = _pre_route(operation)
+    with CollectMetrics("ROUTER", f"ROUTER::{operation.operation_type}"):
+        logger.debug(f"Routing {operation!r}")
 
-    logger.debug(f"Routing {operation!r}")
+        if not operation.operation_type:
+            raise RoutingRequestException("Missing operation type")
 
-    if not operation.operation_type:
-        raise RoutingRequestException("Missing operation type")
+        operation = _pre_route(operation)
 
-    if operation.operation_type not in route_functions.keys():
-        raise RoutingRequestException(
-            f"Unknown operation type '{operation.operation_type}'"
-        )
+        if operation.operation_type not in route_functions.keys():
+            raise RoutingRequestException(
+                f"Unknown operation type '{operation.operation_type}'"
+            )
 
-    update_api_heartbeat(operation)
+        update_api_heartbeat(operation)
 
-    if invalid_source_check(operation):
-        raise RoutingRequestException(
-            f"Garden '{operation.source_garden_name}' {operation.source_api} is disabled"
-        )
+        if invalid_source_check(operation):
+            raise RoutingRequestException(
+                f"Garden '{operation.source_garden_name}' {operation.source_api} is disabled"
+            )
 
-    # Determine which garden the operation is targeting
-    operation.target_garden_name = _determine_target(operation)
+        # Determine which garden the operation is targeting
+        operation.target_garden_name = _determine_target(operation)
 
     # If it's targeted at THIS garden, execute
     if operation.target_garden_name == config.get("garden.name"):

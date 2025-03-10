@@ -19,6 +19,7 @@ TBD
 - Fixed multi-hop check for legacy Gardens in Router
 - Removed Garden load file from setup_routing because it was unnessary
 - Fixed bug where `NOT_CONFIGURED` status for Receiving connection was not filtered out
+- Fixed bugs with ELK APM integration and improved labeling
 
 # 3.29.1
 
