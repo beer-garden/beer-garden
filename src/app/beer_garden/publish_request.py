@@ -122,6 +122,28 @@ def handle_event(event: Event):
             process_publish_event(local_garden(), event, topics)
 
 
+def find_subscribers(subscribers, subscriber_field: str, compare_value):
+    if subscribers:
+        return [
+            subscriber
+            for subscriber in subscribers
+            if (
+                subscriber.subscriber_type in ["GENERATED", "ANNOTATED"]
+                and compare_value in getattr(subscriber, subscriber_field, [])
+            )
+            or (
+                subscriber.subscriber_type == "DYNAMIC"
+                and (
+                    getattr(subscriber, subscriber_field) is None
+                    or len(getattr(subscriber, subscriber_field)) == 0
+                    or compare_value
+                    in re.findall(getattr(subscriber, subscriber_field), compare_value)
+                )
+            )
+        ]
+    return subscribers
+
+
 def process_publish_event(garden: Garden, event: Event, topics: List[Topic]):
 
     requests = []
@@ -129,77 +151,73 @@ def process_publish_event(garden: Garden, event: Event, topics: List[Topic]):
 
     for topic in topics:
         # Iterate over commands on Garden to find matching topic
-        garden_subscribers = [
-            subscriber
-            for subscriber in topic.subscribers
-            if subscriber.garden is None
-            or len(subscriber.garden) == 0
-            or garden.name in re.findall(subscriber.garden, garden.name)
-        ]
-        if garden_subscribers:
-            for system in garden.systems:
-                system_subscribers = [
-                    subscriber
-                    for subscriber in garden_subscribers
-                    if (
-                        subscriber.system is None
-                        or len(subscriber.system) == 0
-                        or system.name in re.findall(subscriber.system, system.name)
-                    )
-                    and (
-                        subscriber.version is None
-                        or len(subscriber.version) == 0
-                        or system.version
-                        in re.findall(subscriber.version, system.version)
-                    )
-                ]
-                if system_subscribers:
-                    for command in system.commands:
-                        command_subscribers = [
-                            subscriber
-                            for subscriber in system_subscribers
-                            if subscriber.command is None
-                            or len(subscriber.command) == 0
-                            or command.name
-                            in re.findall(subscriber.command, command.name)
-                        ]
-                        if command_subscribers:
-                            for instance in system.instances:
-                                if instance.status == "RUNNING":
-                                    instance_subscribers = [
-                                        subscriber
-                                        for subscriber in system_subscribers
-                                        if subscriber.instance is None
-                                        or len(subscriber.instance) == 0
-                                        or instance.name
-                                        in re.findall(
-                                            subscriber.instance, instance.name
-                                        )
-                                    ]
-                                    if instance_subscribers:
-                                        event_request = copy.deepcopy(event.payload)
-                                        event_request.system = system.name
-                                        event_request.system_version = system.version
-                                        event_request.namespace = system.namespace
-                                        event_request.instance_name = instance.name
-                                        event_request.command = command.name
-                                        event_request.is_event = True
+        garden_subscribers = find_subscribers(topic.subscribers, "garden", garden.name)
 
-                                        request_hash = (
-                                            f"{garden.name}.{system.namespace}."
-                                            f"{system.name}.{system.version}."
-                                            f"{instance.name}.{command.name}"
-                                        )
-                                        if request_hash not in requests_hash:
-                                            requests_hash.append(request_hash)
-                                            requests.append(event_request)
-                                        else:
-                                            pass
+        if not garden_subscribers:
+            continue
 
-                                        for instance_subscriber in instance_subscribers:
-                                            increase_consumer_count(
-                                                topic, instance_subscriber
-                                            )
+        for system in garden.systems:
+
+            system_name_subscribers = find_subscribers(
+                garden_subscribers, "system", system.name
+            )
+
+            if not system_name_subscribers:
+                continue
+
+            system_namespace_subscribers = find_subscribers(
+                system_name_subscribers, "namespace", system.namespace
+            )
+
+            if not system_namespace_subscribers:
+                continue
+
+            system_version_subscribers = find_subscribers(
+                system_namespace_subscribers, "version", system.version
+            )
+
+            if not system_version_subscribers:
+                continue
+
+            for command in system.commands:
+                command_subscribers = find_subscribers(
+                    system_name_subscribers, "command", command.name
+                )
+
+                if not command_subscribers:
+                    continue
+
+                for instance in system.instances:
+                    if instance.status == "RUNNING":
+                        instance_subscribers = find_subscribers(
+                            command_subscribers,
+                            "instance",
+                            instance.name,
+                        )
+
+                        if not instance_subscribers:
+                            continue
+
+                        event_request = copy.deepcopy(event.payload)
+                        event_request.system = system.name
+                        event_request.system_version = system.version
+                        event_request.namespace = system.namespace
+                        event_request.instance_name = instance.name
+                        event_request.command = command.name
+                        event_request.is_event = True
+
+                        request_hash = (
+                            f"{garden.name}.{system.namespace}."
+                            f"{system.name}.{system.version}."
+                            f"{instance.name}.{command.name}"
+                        )
+
+                        if request_hash not in requests_hash:
+                            requests_hash.append(request_hash)
+                            requests.append(event_request)
+
+                        for instance_subscriber in instance_subscribers:
+                            increase_consumer_count(topic, instance_subscriber)
 
     if requests:
         for create_request in requests:
