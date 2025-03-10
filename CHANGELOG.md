@@ -7,6 +7,7 @@ TBD
 - Fixed forwarding operations to downstream causing blocking to the router. Mostly seen during File Forwarding.
 - Optimized how Request Topic Publisher matches systems
 - Fixed bug where Topic Publish did not match on Gardens and Namespaces
+- Fixed Request view bug where `REQUEST_TOPIC_PUBLISH` was causing blank line in children list
 
 # 3.29.1
 
