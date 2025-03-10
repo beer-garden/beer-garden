@@ -29,6 +29,8 @@ TBD
 - Fixed bug where Garden historical status info is maintained after rescan
 - Fixed how Garden files are loaded, added HTTP Receiving defaults to prevent missed events prior
   to `GARDEN_SYNC`
+- Fixed Alerts on Command View page that were not showing up. 
+- On `Make Request` if request takes longer than 5 seconds, push alert to UI
 
 # 3.29.1
 
