@@ -8,6 +8,9 @@ TBD
 - Optimized how Request Topic Publisher matches systems
 - Fixed bug where Topic Publish did not match on Gardens and Namespaces
 - Fixed Request view bug where `REQUEST_TOPIC_PUBLISH` was causing blank line in children list
+- Updated Topics generation and removal to Mongo Model instead of through Events
+- Optimized Topic pruning and generation
+- Expanded topics API to support manual execution of Topic Generation
 
 # 3.29.1
 

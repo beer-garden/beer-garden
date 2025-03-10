@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import beer_garden.db.mongo.api
+import beer_garden.db.mongo.util
 
 from_brewtils = beer_garden.db.mongo.api.from_brewtils
 to_brewtils = beer_garden.db.mongo.api.to_brewtils
@@ -20,3 +21,5 @@ create = beer_garden.db.mongo.api.create
 update = beer_garden.db.mongo.api.update
 modify = beer_garden.db.mongo.api.modify
 delete = beer_garden.db.mongo.api.delete
+
+prune_topics = beer_garden.db.mongo.util.prune_topics
