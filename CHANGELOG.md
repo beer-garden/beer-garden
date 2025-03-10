@@ -31,6 +31,7 @@ TBD
   to `GARDEN_SYNC`
 - Fixed Alerts on Command View page that were not showing up. 
 - On `Make Request` if request takes longer than 5 seconds, push alert to UI
+- Merge event metadata on Request Update
 
 # 3.29.1
 
