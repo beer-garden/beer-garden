@@ -18,6 +18,7 @@ TBD
 - Fixed issue where local Garden version was not persisted to database, or setup upstream
 - Fixed multi-hop check for legacy Gardens in Router
 - Removed Garden load file from setup_routing because it was unnessary
+- Fixed bug where `NOT_CONFIGURED` status for Receiving connection was not filtered out
 
 # 3.29.1
 
