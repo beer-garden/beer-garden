@@ -576,7 +576,7 @@ def setup_routing():
                 and garden.connection_type.casefold() != "local"
             ):
                 with garden_lock:
-                    gardens[garden.name] = load_garden_file(garden)
+                    gardens[garden.name] = garden
                     for connection in gardens[garden.name].publishing_connections:
                         if (
                             connection.api.upper() == "STOMP"
