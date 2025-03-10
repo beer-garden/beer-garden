@@ -73,7 +73,9 @@ class TestEventSocket(AsyncHTTPTestCase):
     @pytest.mark.usefixtures("app_config_auth_enabled", "user_from_token_mocks")
     def test_event_socket_accepts_valid_token_update(self):
         ws_client = yield self.ws_connect()
-        response_valid = yield ws_client.read_message()  # Read the AUTHORIZATION_REQUIRED message
+        response_valid = (
+            yield ws_client.read_message()
+        )  # Read the AUTHORIZATION_REQUIRED message
 
         ws_client.write_message(token_update_message("totallyvalidtoken"))
 
