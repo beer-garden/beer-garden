@@ -13,6 +13,8 @@ TBD
 - Expanded topics API to support manual execution of Topic Generation
 - Standardized Topic Names for Generated topics to start with the prefix of garden name
   New format: <garden_name>.<namespace>.<system_name>.<system_version>.<instance_name>.<command>
+- Optimized the query to clean TEMP child requests
+- Fixed bug where upon completion of Parent Request, running TEMP child requests got deleted prematurly
 
 # 3.29.1
 
