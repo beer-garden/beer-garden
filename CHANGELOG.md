@@ -11,6 +11,8 @@ TBD
 - Updated Topics generation and removal to Mongo Model instead of through Events
 - Optimized Topic pruning and generation
 - Expanded topics API to support manual execution of Topic Generation
+- Standardized Topic Names for Generated topics to start with the prefix of garden name
+  New format: <garden_name>.<namespace>.<system_name>.<system_version>.<instance_name>.<command>
 
 # 3.29.1
 
