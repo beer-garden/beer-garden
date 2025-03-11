@@ -122,36 +122,43 @@ class EventSocket(WebSocketHandler):
         if len(cls.listeners) > 0:
             message = SchemaParser.serialize(event, to_string=True)
 
-            for listener in cls.listeners:
-                if _auth_enabled():
-                    user = listener.get_current_user()
+            for listener in list(cls.listeners):
+                try:
+                    if listener.ws_connection is not None:
+                        if _auth_enabled():
+                            user = listener.get_current_user()
 
-                    if user is None:
-                        await listener.request_authorization(
-                            "Valid access token required"
-                        )
-                        continue
+                            if user is None:
+                                await listener.request_authorization(
+                                    "Valid access token required"
+                                )
+                                continue
 
-                    filtered_event = cls.model_filter.filter_object(
-                        obj=copy.deepcopy(event),
-                        user=user,
-                        permission=Permissions.READ_ONLY.name,
-                    )
+                            filtered_event = cls.model_filter.filter_object(
+                                obj=copy.deepcopy(event),
+                                user=user,
+                                permission=Permissions.READ_ONLY.name,
+                            )
 
-                    if filtered_event:
-                        await listener.write_message(
-                            SchemaParser.serialize(filtered_event, to_string=True)
-                        )
-                    else:
-                        logger.debug(
-                            "Skipping websocket publish of event %s to user %s due to "
-                            "lack of access",
-                            event.name,
-                            user.username,
-                        )
-                        continue
-                else:
-                    await listener.write_message(message)
+                            if filtered_event:
+                                await listener.write_message(
+                                    SchemaParser.serialize(
+                                        filtered_event, to_string=True
+                                    )
+                                )
+                            else:
+                                logger.debug(
+                                    "Skipping websocket publish of event %s to user %s due to "
+                                    "lack of access",
+                                    event.name,
+                                    user.username,
+                                )
+                                continue
+                        else:
+
+                            await listener.write_message(message)
+                except:
+                    continue
 
     @classmethod
     async def shutdown(cls):
