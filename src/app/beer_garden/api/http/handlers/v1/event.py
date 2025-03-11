@@ -122,8 +122,7 @@ class EventSocket(WebSocketHandler):
         if len(cls.listeners) > 0:
             message = SchemaParser.serialize(event, to_string=True)
 
-            listeners_copy = list(cls.listeners)
-            for listener in listeners_copy:
+            for listener in list(cls.listeners):
                 try:
                     if listener.ws_connection is not None:
                         if _auth_enabled():
