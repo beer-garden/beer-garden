@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.30.0
+
+TBD
+
+- Fixed bug where Publish Topic did not evalute downstream garden systems
+
 # 3.29.1
 
 12/31/2024

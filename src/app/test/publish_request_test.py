@@ -128,7 +128,7 @@ class TestSubscriptionEvent(object):
             publish_request, "get_all_topics", Mock(return_value=topics)
         )
         monkeypatch.setattr(
-            publish_request, "local_garden", Mock(return_value=localgarden)
+            publish_request, "get_garden", Mock(return_value=localgarden)
         )
 
         config._CONFIG = {"garden": {"name": localgarden.name}}
@@ -151,7 +151,7 @@ class TestSubscriptionEvent(object):
             publish_request, "get_all_topics", Mock(return_value=topics)
         )
         monkeypatch.setattr(
-            publish_request, "local_garden", Mock(return_value=localgarden)
+            publish_request, "get_garden", Mock(return_value=localgarden)
         )
         config._CONFIG = {"garden": {"name": localgarden.name}}
 
@@ -172,7 +172,7 @@ class TestSubscriptionEvent(object):
             publish_request, "get_all_topics", Mock(return_value=topics)
         )
         monkeypatch.setattr(
-            publish_request, "local_garden", Mock(return_value=localgarden)
+            publish_request, "get_garden", Mock(return_value=localgarden)
         )
         config._CONFIG = {"garden": {"name": localgarden.name}}
 
@@ -193,7 +193,7 @@ class TestSubscriptionEvent(object):
             publish_request, "get_all_topics", Mock(return_value=topics)
         )
         monkeypatch.setattr(
-            publish_request, "local_garden", Mock(return_value=localgarden)
+            publish_request, "get_garden", Mock(return_value=localgarden)
         )
         config._CONFIG = {"garden": {"name": localgarden.name}}
 
@@ -214,7 +214,7 @@ class TestSubscriptionEvent(object):
             publish_request, "get_all_topics", Mock(return_value=topics)
         )
         monkeypatch.setattr(
-            publish_request, "local_garden", Mock(return_value=localgarden)
+            publish_request, "get_garden", Mock(return_value=localgarden)
         )
         config._CONFIG = {"garden": {"name": localgarden.name}}
 
@@ -235,7 +235,7 @@ class TestSubscriptionEvent(object):
             publish_request, "get_all_topics", Mock(return_value=topics)
         )
         monkeypatch.setattr(
-            publish_request, "local_garden", Mock(return_value=localgarden)
+            publish_request, "get_garden", Mock(return_value=localgarden)
         )
         config._CONFIG = {"garden": {"name": localgarden.name}}
 
@@ -257,7 +257,7 @@ class TestSubscriptionEvent(object):
             publish_request, "get_all_topics", Mock(return_value=topics)
         )
         monkeypatch.setattr(
-            publish_request, "local_garden", Mock(return_value=localgarden)
+            publish_request, "get_garden", Mock(return_value=localgarden)
         )
         config._CONFIG = {"garden": {"name": localgarden.name}}
 
@@ -279,7 +279,7 @@ class TestSubscriptionEvent(object):
             publish_request, "get_all_topics", Mock(return_value=topics)
         )
         monkeypatch.setattr(
-            publish_request, "local_garden", Mock(return_value=localgarden)
+            publish_request, "get_garden", Mock(return_value=localgarden)
         )
         config._CONFIG = {"garden": {"name": localgarden.name}}
 
