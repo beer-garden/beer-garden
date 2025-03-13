@@ -432,11 +432,13 @@ def prune_topics():
         None
     """
 
-    from .models import Garden, Topic
+    from .models import Garden, Topic, System
 
     command_hash = []
 
     for garden in Garden.objects():
+        if garden.name == config.get("garden.name"):
+            garden.systems = System.objects(local=True)
         for system in garden.systems:
             for instance in system.instances:
                 for command in system.commands:
