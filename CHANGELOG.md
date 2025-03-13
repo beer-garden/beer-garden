@@ -33,6 +33,7 @@ TBD
 - On `Make Request` if request takes longer than 5 seconds, push alert to UI
 - Merge event metadata on Request Update
 - Updated Events Websocket to support Async calls
+- Fixed bug where Publish Topic did not evalute downstream garden systems
 
 # 3.29.1
 

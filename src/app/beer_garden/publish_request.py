@@ -3,10 +3,10 @@ import logging
 import re
 from typing import List
 
-from brewtils.models import Event, Events, Garden, Request, Topic
+from brewtils.models import Event, Events, Garden, Operation, Request, Topic
 
 import beer_garden.config as config
-from beer_garden.garden import local_garden
+from beer_garden.garden import get_garden
 from beer_garden.requests import process_request
 from beer_garden.topic import (
     get_all_topics,
@@ -28,7 +28,7 @@ def determine_target_garden(request: Request, garden: Garden = None) -> str:
         str: Garden Name
     """
     if garden is None:
-        garden = local_garden(all_systems=True)
+        garden = get_garden(config.get("garden.name"))
 
     for system in garden.systems:
         if (
@@ -119,7 +119,7 @@ def handle_event(event: Event):
                 topics.append(topic)
 
         if topics:
-            process_publish_event(local_garden(), event, topics)
+            process_publish_event(get_garden(config.get("garden.name")), event, topics)
 
 
 def find_subscribers(subscribers, subscriber_field: str, compare_value):
@@ -220,9 +220,20 @@ def process_publish_event(garden: Garden, event: Event, topics: List[Topic]):
                             increase_consumer_count(topic, instance_subscriber)
 
     if requests:
+        import beer_garden.router as router
+
         for create_request in requests:
             try:
-                process_request(create_request)
+                if garden.name == config.get("garden.name"):
+                    process_request(create_request)
+                else:
+                    router.route(
+                        Operation(
+                            operation_type="REQUEST_CREATE",
+                            model=create_request,
+                            model_type="Request",
+                        )
+                    )
             except Exception as ex:
                 # If an error occurs while trying to process request, log it and keep running
                 logger.exception(ex)
