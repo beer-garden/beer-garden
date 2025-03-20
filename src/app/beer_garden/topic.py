@@ -104,7 +104,10 @@ def get_topics_regex(topic) -> List[Topic]:
         list[Topic]: List of matching topics based on regex within the table
     """
 
-    regex = f"new RegExp(this.name).exec('{topic}') !== null && new RegExp(this.name).exec('{topic}')[0] == '{topic}'"
+    regex = (
+        f"new RegExp(this.name).exec('{topic}') !== null "
+        f"&& new RegExp(this.name).exec('{topic}')[0] == '{topic}'"
+    )
 
     return db.query(Topic, raw_query={"$where": regex})
 

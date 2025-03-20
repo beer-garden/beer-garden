@@ -13,14 +13,6 @@ from brewtils.models import (
 from mock import Mock
 
 from beer_garden import config, publish_request
-from beer_garden.db.mongo.models import Topic as DB_Topic
-from beer_garden.topic import create_topic
-
-
-@pytest.fixture(autouse=True)
-def drop():
-    yield
-    DB_Topic.drop_collection()
 
 
 @pytest.fixture

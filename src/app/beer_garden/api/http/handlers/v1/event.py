@@ -157,7 +157,7 @@ class EventSocket(WebSocketHandler):
                         else:
 
                             await listener.write_message(message)
-                except:
+                except BaseException:
                     continue
 
     @classmethod
