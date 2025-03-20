@@ -94,6 +94,21 @@ def remove_topic(
     return topic
 
 
+def get_topics_regex(topic) -> List[Topic]:
+    """Based off provided topic find matching regex contained within the Topics table
+
+    Args:
+        topic: Topic to match
+
+    Return:
+        list[Topic]: List of matching topics based on regex within the table
+    """
+
+    regex = f"new RegExp(this.name).exec('{topic}') !== null && new RegExp(this.name).exec('{topic}')[0] == '{topic}'"
+
+    return db.query(Topic, raw_query={"$where": regex})
+
+
 def get_all_topics(**kwargs) -> List[Topic]:
     """Retrieve list of all Topics
 

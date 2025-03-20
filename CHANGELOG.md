@@ -34,6 +34,7 @@ TBD
 - Merge event metadata on Request Update
 - Updated Events Websocket to support Async calls
 - Fixed bug where Publish Topic did not evalute downstream garden systems
+- Optimized how publish request handles topic matching
 
 # 3.29.1
 
