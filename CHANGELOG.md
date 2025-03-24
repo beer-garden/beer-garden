@@ -34,6 +34,8 @@ TBD
 - Merge event metadata on Request Update
 - Updated Events Websocket to support Async calls
 - Fixed bug where Publish Topic did not evalute downstream garden systems
+- Optimized how Gardens are stored in the Router table
+- Cleaned up Garden Event Handler logic
 
 # 3.29.1
 
