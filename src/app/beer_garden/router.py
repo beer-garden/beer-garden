@@ -53,7 +53,7 @@ from beer_garden.errors import (
     UnknownGardenException,
 )
 from beer_garden.events import publish
-from beer_garden.garden import get_garden, get_gardens, load_garden_file, update_garden
+from beer_garden.garden import get_garden, get_gardens, update_garden
 from beer_garden.metrics import CollectMetrics
 from beer_garden.requests import complete_request, create_request
 
@@ -165,6 +165,7 @@ route_functions = {
     "TOPIC_ADD_SUBSCRIBER": beer_garden.topic.topic_add_subscriber,
     "TOPIC_REMOVE_SUBSCRIBER": beer_garden.topic.topic_remove_subscriber,
     "TOKEN_USER_DELETE": beer_garden.user.revoke_tokens,
+    "TOPIC_SYNC_GARDEN": beer_garden.topic.sync_garden_topics,
     "ROLE_CREATE": beer_garden.role.create_role,
     "ROLE_UPDATE": beer_garden.role.update_role,
     "ROLE_DELETE": beer_garden.role.delete_role,
@@ -228,13 +229,27 @@ def route(operation: Operation):
         # Determine which garden the operation is targeting
         operation.target_garden_name = _determine_target(operation)
 
-        # If it's targeted at THIS garden, execute
-        if operation.target_garden_name == config.get("garden.name"):
-            result = execute_local(operation)
+    # If it's targeted at THIS garden, execute
+    if operation.target_garden_name == config.get("garden.name"):
+        result = execute_local(operation)
+    else:
+        loop = None
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            pass
+        if loop:
+            result = loop.run_in_executor(
+                t_pool,
+                partial(
+                    initiate_forward,
+                    operation,
+                ),
+            )
         else:
             result = initiate_forward(operation)
 
-        return filter_result(result)
+    return filter_result(result)
 
 
 def filter_result(result: [brewtils.models.BaseModel, list]):
@@ -306,7 +321,7 @@ def update_api_heartbeat(operation: Operation):
                 local_garden = get_garden(config.get("garden.name"))
 
                 # Will only support mapping 1 hop away legacy Garden Syncs
-                child_garden = False
+                multi_hop_garden = True
                 for child in local_garden.children:
                     if child.name == operation.model.payload.name:
                         logger.warning(
@@ -316,9 +331,9 @@ def update_api_heartbeat(operation: Operation):
                             )
                         )
                         operation.source_garden_name = operation.model.payload.name
-                        child_garden = True
+                        multi_hop_garden = False
                         break
-                if child_garden:
+                if multi_hop_garden:
                     return
             else:
                 return
@@ -380,10 +395,6 @@ def invalid_source_check(operation: Operation):
 
     with garden_lock:
         gardens[operation.source_garden_name] = loaded_garden
-
-    # Receiving Connections have not been configured yet
-    if not loaded_garden.receiving_connections:
-        return False
 
     for connection in loaded_garden.receiving_connections:
         if connection.api == operation.source_api and connection.status != "DISABLED":
@@ -561,7 +572,7 @@ def setup_routing():
                 and garden.connection_type.casefold() != "local"
             ):
                 with garden_lock:
-                    gardens[garden.name] = load_garden_file(garden)
+                    gardens[garden.name] = garden
                     for connection in gardens[garden.name].publishing_connections:
                         if (
                             connection.api.upper() == "STOMP"

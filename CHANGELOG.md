@@ -4,6 +4,21 @@
 
 TBD
 
+- Fixed forwarding operations to downstream causing blocking to the router. Mostly seen during File Forwarding.
+- Optimized how Request Topic Publisher matches systems
+- Fixed bug where Topic Publish did not match on Gardens and Namespaces
+- Fixed Request view bug where `REQUEST_TOPIC_PUBLISH` was causing blank line in children list
+- Updated Topics generation and removal to Mongo Model instead of through Events
+- Optimized Topic pruning and generation
+- Expanded topics API to support manual execution of Topic Generation
+- Standardized Topic Names for Generated topics to start with the prefix of garden name
+  New format: <garden_name>.<namespace>.<system_name>.<system_version>.<instance_name>.<command>
+- Optimized the query to clean TEMP child requests
+- Fixed bug where upon completion of Parent Request, running TEMP child requests got deleted prematurely
+- Fixed issue where local Garden version was not persisted to database, or setup upstream
+- Fixed multi-hop check for legacy Gardens in Router
+- Removed Garden load file from setup_routing because it was unnessary
+- Fixed bug where `NOT_CONFIGURED` status for Receiving connection was not filtered out
 - Fixed bugs with ELK APM integration and improved labeling
 - Expanded APM Metrics to collect Event Processing Queue Depths
 - Updated internal events to utilize deque to improve performance
@@ -11,6 +26,16 @@ TBD
   latest instance of the transaction event is handled within the event handlers
 - Updated config.yaml to support toggling on and off unique event filtering
 - Merge Request metadata if uniqued in event handler
+- Optimizing how Garden configurations are loaded
+- Fixed bug where Garden historical status info is maintained after rescan
+- Fixed how Garden files are loaded, added HTTP Receiving defaults to prevent missed events prior
+  to `GARDEN_SYNC`
+- Fixed Alerts on Command View page that were not showing up. 
+- On `Make Request` if request takes longer than 5 seconds, push alert to UI
+- Merge event metadata on Request Update
+- Updated Events Websocket to support Async calls
+- Fixed bug where Publish Topic did not evalute downstream garden systems
+- Optimized how publish request handles topic matching
 
 # 3.29.1
 

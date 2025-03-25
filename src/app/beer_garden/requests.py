@@ -27,7 +27,15 @@ from brewtils.errors import (
     RequestPublishException,
     RequestStatusTransitionError,
 )
-from brewtils.models import Choices, Events, Operation, Request, RequestTemplate, System
+from brewtils.models import (
+    Choices,
+    Event,
+    Events,
+    Operation,
+    Request,
+    RequestTemplate,
+    System,
+)
 from brewtils.pika import PERSISTENT_DELIVERY_MODE
 from mongoengine import DoesNotExist
 from packaging.version import InvalidVersion
@@ -39,7 +47,7 @@ import beer_garden.db.api as db
 import beer_garden.queue.api as queue
 from beer_garden.db.mongo.models import RawFile
 from beer_garden.errors import NotUniqueException, ShutdownError
-from beer_garden.events import publish_event
+from beer_garden.events import publish, publish_event
 from beer_garden.metrics import request_completed, request_created, request_started
 
 logger = logging.getLogger(__name__)
@@ -777,6 +785,24 @@ def create_request(request: Request) -> Request:
     if request.target_garden is None:
         request.target_garden = config.get("garden.name")
 
+    if hasattr(request.metadata, "_topic") and request.source_garden == config.get(
+        "garden.name"
+    ):
+        event_request = deepcopy(request)
+        topic = request.metadata.pop("_topic")
+        propagate = request.metadata.pop("_propagate", False)
+        publish(
+            Event(
+                name=Events.REQUEST_TOPIC_PUBLISH.name,
+                metadata={
+                    "topic": topic,
+                    "propagate": propagate,
+                },
+                payload=event_request,
+                payload_type="Request",
+            )
+        )
+
     return db.create(request)
 
 
@@ -1118,8 +1144,12 @@ def handle_event(event):
                     "target_garden",
                     "updated_at",
                     "command_type",
+                    "metadata",
                 ):
                     new_value = getattr(event.payload, field)
+                    # Merge metadata
+                    if field == "metadata":
+                        new_value = {**getattr(existing_request, field), **new_value}
 
                     if getattr(existing_request, field) != new_value:
                         request_changed[field] = new_value
@@ -1163,8 +1193,21 @@ def handle_event(event):
 
 
 def clean_command_type_temp(request: Request, is_remote: bool):
-    # Only delete TEMP requests if it is the root request
-    if not request.has_parent and request.command_type == "TEMP":
+    # Only delete TEMP requests if it is the root request or if its parent has already completed
+    if request.command_type == "TEMP" and (
+        not request.has_parent
+        or db.count(
+            Request,
+            id=request.parent.id,
+            status__in=[
+                "INVALID",
+                "CANCELED",
+                "ERROR",
+                "SUCCESS",
+            ],
+        )
+        > 0
+    ):
         if is_remote:
             # Give Threading based requests a chance to pull the Request before deleting it
             time.sleep(0.5)
@@ -1172,11 +1215,22 @@ def clean_command_type_temp(request: Request, is_remote: bool):
         return None
 
     # Delete any children that are TEMP once the current request is completed
-    request.children = db.query(Request, filter_params={"parent": request})
+    request.children = db.query(
+        Request,
+        filter_params={
+            "parent": request,
+            "command_type": "TEMP",
+            "status__in": [
+                "INVALID",
+                "CANCELED",
+                "ERROR",
+                "SUCCESS",
+            ],
+        },
+    )
 
     for child in request.children:
-        if child.command_type == "TEMP":
-            db.delete(child)
+        db.delete(child)
 
     return request
 

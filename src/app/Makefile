@@ -98,14 +98,14 @@ clean: clean-all ## alias of clean-all
 format: ## Run black formatter in-line
 	black $(MODULE_NAME) $(TEST_DIR)
 	isort --thirdparty brewtils $(MODULE_NAME) $(TEST_DIR)
+	$(MAKE) lint
 
 
 # Linting
 lint: ## check style with flake8, black and isort
 	flake8 $(MODULE_NAME) $(TEST_DIR)
 	black --check --diff $(MODULE_NAME) $(TEST_DIR)
-	isort --check-only --diff --thirdparty brewtils $(MODULE_NAME)
-	$(MAKE) lint
+	isort --check-only --diff --thirdparty brewtils $(MODULE_NAME)	
 
 
 # Complexity checks
@@ -189,6 +189,12 @@ publish-docker-unstable: docker-build-unstable ## push the unstable docker image
 publish-docker-unstable-latest: docker-tag-latest-unstable publish-docker-unstable ## push the unstable docker image
 	docker push $(DOCKER_NAME):unstable-python$(PYTHON_VERSION)
 	docker push $(DOCKER_NAME):unstable-python$(PYTHON_VERSION)-debian
+
+publish-branch-docker-unstable: package clean-python
+	docker build -t $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION) -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-alpine .
+	docker build -t $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION)-debian -f docker/Dockerfile.unstable-debian --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-slim .
+	docker push $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION)
+	docker push $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION)-debian
 
 # Publishing
 publish-package-test: package ## upload a package to the testpypi
