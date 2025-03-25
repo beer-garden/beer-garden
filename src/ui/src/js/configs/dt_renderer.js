@@ -71,6 +71,28 @@ export default function runDTRenderer(DTRendererService) {
         list.insertBefore(node, list.childNodes[0]);
       }
 
+      if (options && options.hiddenTopicContainer) {
+        const hiddenTopicContainer = $('<span>')
+            .attr('id', 'hiddenTopicContainer')
+            .css('margin-right', '20px')
+            .append(
+                $('<input>')
+                    .attr('id', 'hiddenTopicCheck')
+                    .attr('type', 'checkbox')
+                    .css('margin-top', '-4px')
+                    .change(() => {
+                      $('.dataTable').dataTable().fnUpdate();
+                    }),
+            )
+            .append(
+                $('<label>')
+                    .attr('for', 'hiddenTopicCheck')
+                    .css('padding-left', '4px')
+                    .text('Show Generated'),
+            );
+        $('.dataTables_filter').prepend(hiddenTopicContainer);
+      }
+
       if (options && options.refreshButton) {
         const refreshButton = $('<button>')
             .attr('id', 'refreshButton')

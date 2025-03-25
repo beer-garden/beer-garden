@@ -94,7 +94,8 @@ import errorService from './js/services/error_service.js';
 import eventService from './js/services/event_service.js';
 import namespaceService from './js/services/namespace_service.js';
 import gardenService from './js/services/garden_service.js';
-import runnerService from './js/services//runner_service.js';
+import runnerService from './js/services/runner_service.js';
+import topicService from './js/services/topic_service.js';
 
 import aboutController from './js/controllers/about.js';
 import adminQueueController from './js/controllers/admin_queue.js';
@@ -110,6 +111,8 @@ import {
 import addRemoveRolesController from './js/controllers/add_remove_roles.js';
 import userGardenAccountsController from './js/controllers/user_garden_accounts.js';
 import adminGardenController from './js/controllers/admin_garden.js';
+import adminTopicController from './js/controllers/admin_topic.js';
+import newTopicController from './js/controllers/new_topic.js';
 import commandIndexController from './js/controllers/command_index.js';
 import commandViewController from './js/controllers/command_view.js';
 import requestIndexController from './js/controllers/request_index.js';
@@ -144,6 +147,7 @@ import './partials/admin_system.html';
 import './partials/admin_user_index.html';
 import './partials/admin_role.html';
 import './partials/admin_garden_index.html';
+import './partials/admin_topic_index.html';
 import './partials/command_index.html';
 import './partials/command_view.html';
 import './partials/request_index.html';
@@ -209,6 +213,7 @@ angular
     .factory('NamespaceService', namespaceService)
     .factory('GardenService', gardenService)
     .factory('RunnerService', runnerService)
+    .factory('TopicService', topicService)
 
     .controller('AboutController', aboutController)
     .controller('AdminQueueController', adminQueueController)
@@ -224,6 +229,8 @@ angular
     .controller('AdminRoleController', adminRoleController)
     .controller('NewRoleController', newRoleController)
     .controller('AdminGardenController', adminGardenController)
+    .controller('AdminTopicController', adminTopicController)
+    .controller('NewTopicController', newTopicController)
     .controller('CommandIndexController', commandIndexController)
     .controller('CommandViewController', commandViewController)
     .controller('RequestIndexController', requestIndexController)

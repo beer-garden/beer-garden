@@ -212,6 +212,11 @@ export default function routeConfig(
         templateUrl: 'admin_garden_index.html',
         controller: 'AdminGardenController',
       })
+      .state('base.topic_admin', {
+        url: 'admin/topics/',
+        templateUrl: 'admin_topic_index.html',
+        controller: 'AdminTopicController',
+      })
       .state('base.user_admin', {
         url: 'admin/users/',
         templateUrl: 'admin_user_index.html',

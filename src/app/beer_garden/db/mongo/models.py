@@ -650,7 +650,19 @@ class Topic(MongoModel, Document):
     meta = {
         "auto_create_index": True,  # We need to manage this ourselves
         "index_background": True,
-        "indexes": [{"name": "unique_index", "fields": ["name"], "unique": True}],
+        "indexes": [
+            {
+                "name": "unique_index",
+                "fields": ["name"],
+                "unique": True,
+            },
+            {
+                "name": "text_index",
+                "fields": [
+                    "$name",
+                ],
+            },
+        ],
     }
 
     def add_subscriber(self, subscriber: Subscriber):

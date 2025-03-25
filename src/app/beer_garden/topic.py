@@ -161,6 +161,28 @@ def topic_remove_subscriber(
     return update_topic(topic)
 
 
+def reset_consumer_count(
+    subscriber: Subscriber, topic_id: str = None, topic_name: str = None
+) -> Topic:
+    """Reset Subscriber consumer count
+
+    Args:
+        subscriber: The subscriber to reset consumer count
+        topic_id: The Topic id to from it from
+
+    Returns:
+        The updated Topic
+    """
+    db_topic = get_topic(topic_id=topic_id, topic_name=topic_name)
+
+    for db_subscriber in db_topic.subscribers:
+        if db_subscriber == subscriber:
+            db_subscriber.consumer_count = 0
+            break
+
+    return update_topic(db_topic)
+
+
 def update_topic(topic: Topic) -> Topic:
     """Update a Topic
 
