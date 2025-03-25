@@ -100,7 +100,7 @@ class DequeSetListener(DequeListener):
                         if event.payload.is_newer(ref.payload):
                             # Collect Request Metadata
                             # If this expands past Requests, we'll need to refactor
-                            if isinstance(event.payload, Request):                               
+                            if isinstance(event.payload, Request):
                                 for metadata_key in ref.payload.metadata:
                                     if metadata_key not in event.payload.metadata:
                                         event.payload.metadata[metadata_key] = (
