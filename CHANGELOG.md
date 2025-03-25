@@ -14,7 +14,7 @@ TBD
 - Standardized Topic Names for Generated topics to start with the prefix of garden name
   New format: <garden_name>.<namespace>.<system_name>.<system_version>.<instance_name>.<command>
 - Optimized the query to clean TEMP child requests
-- Fixed bug where upon completion of Parent Request, running TEMP child requests got deleted prematurly
+- Fixed bug where upon completion of Parent Request, running TEMP child requests got deleted prematurely
 - Fixed issue where local Garden version was not persisted to database, or setup upstream
 - Fixed multi-hop check for legacy Gardens in Router
 - Removed Garden load file from setup_routing because it was unnessary
@@ -25,6 +25,7 @@ TBD
 - Updated internal events to allow for unique and sorting events based on timestamps, only
   latest instance of the transaction event is handled within the event handlers
 - Updated config.yaml to support toggling on and off unique event filtering
+- Merge Request metadata if uniqued in event handler
 - Optimizing how Garden configurations are loaded
 - Fixed bug where Garden historical status info is maintained after rescan
 - Fixed how Garden files are loaded, added HTTP Receiving defaults to prevent missed events prior
@@ -36,6 +37,7 @@ TBD
 - Fixed bug where Publish Topic did not evalute downstream garden systems
 - Optimized how Gardens are stored in the Router table
 - Cleaned up Garden Event Handler logic
+- Optimized how publish request handles topic matching
 
 # 3.29.1
 
