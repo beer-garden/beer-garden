@@ -470,57 +470,57 @@ class TopicListAPI(AuthorizationHandler):
             self.set_header("Content-Type", "application/json; charset=UTF-8")
             self.write(response)
         else:
-          # V1 API is a mess, it's basically written for datatables
-          query_args = self._parse_datatables_parameters()
+            # V1 API is a mess, it's basically written for datatables
+            query_args = self._parse_datatables_parameters()
 
-          # Add the filter for only topics the user is permitted to see
-          q_filter = self.permitted_objects_filter(Topic)
-          q_filtered = None
+            # Add the filter for only topics the user is permitted to see
+            q_filter = self.permitted_objects_filter(Topic)
+            q_filtered = None
 
-          if query_args.get("q_filter"):
-              query_args_q_filter = query_args["q_filter"]
-              q_filtered = q_filter & query_args_q_filter
-              query_args["q_filter"] = q_filtered
-          else:
-              query_args["q_filter"] = q_filter
+            if query_args.get("q_filter"):
+                query_args_q_filter = query_args["q_filter"]
+                q_filtered = q_filter & query_args_q_filter
+                query_args["q_filter"] = q_filtered
+            else:
+                query_args["q_filter"] = q_filter
 
-          # There are also some sane parameters
-          query_args["start"] = self.get_argument("start", default="0")
-          query_args["length"] = self.get_argument("length", default="100")
+            # There are also some sane parameters
+            query_args["start"] = self.get_argument("start", default="0")
+            query_args["length"] = self.get_argument("length", default="100")
 
-          # We want to get a list back from the DB so we can count the number of items
-          serialize_kwargs = {"to_string": False}
+            # We want to get a list back from the DB so we can count the number of items
+            serialize_kwargs = {"to_string": False}
 
-          # If a field specification is provided it must also be passed to the serializer
-          # Also, be aware that serialize_kwargs["only"] = [] means 'serialize nothing'
-          if query_args.get("include_fields"):
-              serialize_kwargs["only"] = query_args.get("include_fields")
+            # If a field specification is provided it must also be passed to the serializer
+            # Also, be aware that serialize_kwargs["only"] = [] means 'serialize nothing'
+            if query_args.get("include_fields"):
+                serialize_kwargs["only"] = query_args.get("include_fields")
 
-          topics = await self.process_operation(
-              Operation(operation_type="TOPIC_READ_ALL", kwargs=query_args),
-              serialize_kwargs=serialize_kwargs,
-          )
+            topics = await self.process_operation(
+                Operation(operation_type="TOPIC_READ_ALL", kwargs=query_args),
+                serialize_kwargs=serialize_kwargs,
+            )
 
-          response_headers = {
-              # These are for information
-              "start": query_args["start"],
-              "length": len(topics),
-              # And these are required by datatables
-              "recordsFiltered": db.count(
-                  Topic,
-                  q_filter=q_filtered if q_filtered else q_filter,
-                  **query_args["filter_params"],
-              ),
-              "recordsTotal": db.count(Topic, q_filter=q_filter),
-              "draw": self.get_argument("draw", ""),
-          }
+            response_headers = {
+                # These are for information
+                "start": query_args["start"],
+                "length": len(topics),
+                # And these are required by datatables
+                "recordsFiltered": db.count(
+                    Topic,
+                    q_filter=q_filtered if q_filtered else q_filter,
+                    **query_args["filter_params"],
+                ),
+                "recordsTotal": db.count(Topic, q_filter=q_filter),
+                "draw": self.get_argument("draw", ""),
+            }
 
-          for key, value in response_headers.items():
-              self.add_header(key, value)
-              self.add_header("Access-Control-Expose-Headers", key)
+            for key, value in response_headers.items():
+                self.add_header(key, value)
+                self.add_header("Access-Control-Expose-Headers", key)
 
-          self.set_header("Content-Type", "application/json; charset=UTF-8")
-          self.write(json.dumps(topics))
+            self.set_header("Content-Type", "application/json; charset=UTF-8")
+            self.write(json.dumps(topics))
 
     @collect_metrics(transaction_type="API", group="TopicListAPI")
     async def post(self):
