@@ -463,7 +463,7 @@ def upsert_garden(garden: Garden, skip_connections: bool = True) -> Garden:
             "namespaces",
             "systems",
             "metadata",
-            "version"
+            "version",
         ):
             setattr(existing_garden, attr, getattr(garden, attr))
         if not skip_connections:
