@@ -602,7 +602,7 @@ def determine_latest_system_version(request: Request):
     filter_criteria = {"name": request.system}
 
     if request.instance_name:
-        filter_criteria["instances_name"] = request.instance_name
+        filter_criteria["instances__name"] = request.instance_name
 
     if request.namespace:
         filter_criteria["namespace"] = request.namespace

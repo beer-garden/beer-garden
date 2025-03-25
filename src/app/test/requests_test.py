@@ -1218,7 +1218,7 @@ class TestLatestRequest(object):
                 system="original",
                 namespace="beer_garden",
                 instance_name="2",
-                system_version="latest"
+                system_version="latest",
             )
         )
 
@@ -1231,7 +1231,7 @@ class TestLatestRequest(object):
                 system="original",
                 namespace="beer_garden",
                 instance_name="1",
-                system_version="latest"
+                system_version="latest",
             )
         )
 
