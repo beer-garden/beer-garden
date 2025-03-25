@@ -1193,7 +1193,7 @@ def handle_event(event):
 
 
 def clean_command_type_temp(request: Request, is_remote: bool):
-    # Only delete TEMP requests if it is the root request or if it's parent as already completed
+    # Only delete TEMP requests if it is the root request or if its parent has already completed
     if request.command_type == "TEMP" and (
         not request.has_parent
         or db.count(

@@ -14,7 +14,7 @@ TBD
 - Standardized Topic Names for Generated topics to start with the prefix of garden name
   New format: <garden_name>.<namespace>.<system_name>.<system_version>.<instance_name>.<command>
 - Optimized the query to clean TEMP child requests
-- Fixed bug where upon completion of Parent Request, running TEMP child requests got deleted prematurly
+- Fixed bug where upon completion of Parent Request, running TEMP child requests got deleted prematurely
 - Fixed issue where local Garden version was not persisted to database, or setup upstream
 - Fixed multi-hop check for legacy Gardens in Router
 - Removed Garden load file from setup_routing because it was unnessary
