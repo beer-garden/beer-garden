@@ -536,7 +536,7 @@ stomp:
         bg_garden.version = "1.0.0"
 
         garden = create_garden(bg_garden)
-        assert garden.version = "1.0.0"
+        assert garden.version == "1.0.0"
 
         garden.has_parent = True
         garden.status = "STOPPED"
@@ -553,7 +553,7 @@ stomp:
         # Changed
         assert updated_garden.metadata == {"alt": "alt"}
         assert updated_garden.status == "STOPPED"
-        assert updated_garden.version = "2.0.0"
+        assert updated_garden.version == "2.0.0"
 
     def test_garden_unresponsive_trigger(self, bg_garden):
         bg_garden.systems = []
