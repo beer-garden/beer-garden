@@ -98,14 +98,14 @@ clean: clean-all ## alias of clean-all
 format: ## Run black formatter in-line
 	black $(MODULE_NAME) $(TEST_DIR)
 	isort --thirdparty brewtils $(MODULE_NAME) $(TEST_DIR)
+	$(MAKE) lint
 
 
 # Linting
 lint: ## check style with flake8, black and isort
 	flake8 $(MODULE_NAME) $(TEST_DIR)
 	black --check --diff $(MODULE_NAME) $(TEST_DIR)
-	isort --check-only --diff --thirdparty brewtils $(MODULE_NAME)
-	$(MAKE) lint
+	isort --check-only --diff --thirdparty brewtils $(MODULE_NAME)	
 
 
 # Complexity checks

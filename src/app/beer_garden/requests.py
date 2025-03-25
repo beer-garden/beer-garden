@@ -27,7 +27,15 @@ from brewtils.errors import (
     RequestPublishException,
     RequestStatusTransitionError,
 )
-from brewtils.models import Choices, Events, Operation, Request, RequestTemplate, System
+from brewtils.models import (
+    Choices,
+    Event,
+    Events,
+    Operation,
+    Request,
+    RequestTemplate,
+    System,
+)
 from brewtils.pika import PERSISTENT_DELIVERY_MODE
 from mongoengine import DoesNotExist
 from packaging.version import InvalidVersion
@@ -39,7 +47,7 @@ import beer_garden.db.api as db
 import beer_garden.queue.api as queue
 from beer_garden.db.mongo.models import RawFile
 from beer_garden.errors import NotUniqueException, ShutdownError
-from beer_garden.events import publish_event
+from beer_garden.events import publish, publish_event
 from beer_garden.metrics import request_completed, request_created, request_started
 
 logger = logging.getLogger(__name__)
@@ -776,6 +784,24 @@ def create_request(request: Request) -> Request:
 
     if request.target_garden is None:
         request.target_garden = config.get("garden.name")
+
+    if hasattr(request.metadata, "_topic") and request.source_garden == config.get(
+        "garden.name"
+    ):
+        event_request = deepcopy(request)
+        topic = request.metadata.pop("_topic")
+        propagate = request.metadata.pop("_propagate", False)
+        publish(
+            Event(
+                name=Events.REQUEST_TOPIC_PUBLISH.name,
+                metadata={
+                    "topic": topic,
+                    "propagate": propagate,
+                },
+                payload=event_request,
+                payload_type="Request",
+            )
+        )
 
     return db.create(request)
 
