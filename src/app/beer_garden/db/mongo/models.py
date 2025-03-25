@@ -653,6 +653,16 @@ class Topic(MongoModel, Document):
         "indexes": [{"name": "unique_index", "fields": ["name"], "unique": True}],
     }
 
+    def add_subscriber(self, subscriber: Subscriber):
+        if subscriber not in self.subscribers:
+            self.subscribers.append(subscriber)
+            self.save()
+
+    def remove_subscriber(self, subscriber: Subscriber):
+        if subscriber in self.subscribers:
+            self.subscribers.remove(subscriber)
+            self.save()
+
 
 class System(MongoModel, Document):
     brewtils_model = brewtils.models.System
@@ -702,6 +712,135 @@ class System(MongoModel, Document):
             raise ModelValidationError(
                 "Can not save System %s: Duplicate instance names" % str(self)
             )
+
+    def delete(self, **kwargs):
+
+        if len(self.instances) > 0:
+            for command in self.commands:
+                for instance in self.instances:
+                    if len(command.topics) > 0:
+                        for topic in command.topics:
+                            if Topic.objects(name=topic).count() > 0:
+                                db_topic = Topic.objects.get(name=topic)
+
+                                for subscriber in db_topic.subscribers:
+                                    if (
+                                        subscriber.system == self.name
+                                        and subscriber.namespace == self.namespace
+                                        and subscriber.version == self.version
+                                        and subscriber.instance == instance.name
+                                        and subscriber.command == command.name
+                                        and subscriber.subscriber_type == "ANNOTATED"
+                                    ):
+                                        db_topic.remove_subscriber(subscriber)
+
+                                if len(db_topic.subscribers) == 0:
+                                    db_topic.delete()
+
+                    if not self.prefix_topic:
+                        topic_generated = (
+                            f"{self.namespace}.{self.name}."
+                            f"{self.version}.{instance.name}."
+                            f"{command.name}"
+                        )
+                    else:
+                        topic_generated = f"{self.prefix_topic}.{command.name}"
+
+                    if Topic.objects(name=topic_generated).count() > 0:
+                        db_topic = Topic.objects.get(name=topic_generated)
+
+                        for subscriber in db_topic.subscribers:
+                            if (
+                                subscriber.system == self.name
+                                and subscriber.namespace == self.namespace
+                                and subscriber.version == self.version
+                                and subscriber.instance == instance.name
+                                and subscriber.command == command.name
+                                and subscriber.subscriber_type == "GENERATED"
+                            ):
+                                db_topic.remove_subscriber(subscriber)
+
+                        if len(db_topic.subscribers) == 0:
+                            db_topic.delete()
+
+        super().delete(**kwargs)
+
+    def save(self, **kwargs):
+
+        if self.local:
+            self.save_topics(config.get("garden.name"))
+
+        return super().save(**kwargs)
+
+    def update(self, **kwargs):
+
+        if self.local:
+            self.save_topics(config.get("garden.name"))
+
+        return super().update(**kwargs)
+
+    def modify(self, query=None, **update):
+
+        is_updated = super().modify(query, **update)
+
+        if (
+            is_updated
+            and self.local
+            and ("commands" in update or "push_all__instances" in update)
+        ):
+            self.save_topics(config.get("garden.name"))
+
+        return is_updated
+
+    def save_topics(self, garden_name: str):
+
+        if len(self.instances) > 0:
+            for command in self.commands:
+                for instance in self.instances:
+                    if len(command.topics) > 0:
+                        for topic in command.topics:
+                            if Topic.objects(name=topic).count() > 0:
+                                db_topic = Topic.objects.get(name=topic)
+                            else:
+                                db_topic = Topic(name=topic)
+
+                            db_topic.add_subscriber(
+                                Subscriber(
+                                    garden=garden_name,
+                                    namespace=self.namespace,
+                                    system=self.name,
+                                    version=self.version,
+                                    instance=instance.name,
+                                    command=command.name,
+                                    subscriber_type="ANNOTATED",
+                                )
+                            )
+
+                    if not self.prefix_topic:
+                        topic_generated = (
+                            f"{self.namespace}.{self.name}."
+                            f"{self.version}.{instance.name}."
+                            f"{command.name}"
+                        )
+                    else:
+                        topic_generated = f"{self.prefix_topic}.{command.name}"
+
+                    if Topic.objects(name=topic_generated).count() > 0:
+                        db_topic = Topic.objects.get(name=topic_generated)
+                    else:
+                        db_topic = Topic(name=topic_generated)
+
+                        db_topic.add_subscriber(
+                            Subscriber(
+                                garden=garden_name,
+                                namespace=self.namespace,
+                                system=self.name,
+                                version=self.version,
+                                instance=instance.name,
+                                command=command.name,
+                                subscriber_type="GENERATED",
+                            )
+                        )
 
 
 class Event(MongoModel, Document):
@@ -969,6 +1108,7 @@ class Garden(MongoModel, Document):
                         remove_system(system_id=system_id_to_remove)
 
                 system.save()
+                system.save_topics(self.name)
             else:
                 system.delete()
 

@@ -340,3 +340,64 @@ class TopicListAPI(BaseHandler):
         self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
+
+    async def patch(self):
+        """
+        ---
+        summary: Request Topic Sync Updates
+        description: |
+          The body of the request needs to contain a set of instructions detailing the
+          updates to apply. Currently the only operations are:
+          * sync_garden_topics
+          * sync_all_topics
+          ```JSON
+          [
+            { "operation": "sync_garden_topics", "value": {garden} }
+            { "operation": "sync_all_topics"}
+          ]
+          ```
+        parameters:
+          - name: patch
+            in: body
+            required: true
+            description: Instructions for how to update the Topic
+            schema:
+              $ref: '#/definitions/Patch'
+        responses:
+          200:
+            description: Successfully synced the topics
+            schema:
+              $ref: '#/definitions/Topic'
+          400:
+            $ref: '#/definitions/400Error'
+          404:
+            $ref: '#/definitions/404Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Topics
+        """
+        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
+
+        for op in patch:
+            operation = op.operation.lower()
+
+            if operation == "sync_garden_topics":
+                await self.client(
+                    Operation(
+                        operation_type="TOPIC_SYNC_GARDEN",
+                        kwargs={"garden_name": op.value},
+                    )
+                )
+
+            elif operation == "sync_all_topics":
+                await self.client(
+                    Operation(
+                        operation_type="TOPIC_SYNC_GARDEN",
+                    )
+                )
+
+            else:
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+
+        self.set_status(200)
