@@ -902,8 +902,8 @@ def handle_event(event):
 
         logger.error(
             (
-                f"HANDLER:: {event.name}:: garden {event.garden}"
-                f" does not match payload name {event.payload.name}"
+                f"{event.name} source garden {event.garden} does "
+                f"not match payload garden {event.payload.name}"
             )
         )
         return
