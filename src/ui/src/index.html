@@ -120,12 +120,12 @@
                 <span>Systems</span>
               </a>
             </li>
-            <li>
+            <li ng-show="authEnabled()">
               <a ui-sref="base.user_admin" ui-sref-active="active">
                 <span>Users</span>
               </a>
             </li>
-            <li>
+            <li ng-show="authEnabled()">
               <a ui-sref="base.role_admin" ui-sref-active="active">
                 <span>Roles</span>
               </a>
