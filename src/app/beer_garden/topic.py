@@ -265,7 +265,7 @@ def sync_garden_topics(garden_name: str = None):
         garden = get_garden(garden_name)
 
     logger.info(f"Running Garden Topic Sync for {garden.name}")
-    
+
     topics = get_all_topics()
 
     topics_dict = {}
