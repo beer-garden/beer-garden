@@ -659,8 +659,10 @@ class TopicListAPI(AuthorizationHandler):
             text_search = '"' + search["value"] + '"'
 
         if not include_generated:
-            filter_params["subscribers__subscriber_type__in"] = ["ANNOTATED", "DYNAMIC"]
-            # filter_params["subscribers__subscriber_type__ne"] = "GENERATED"
+            q_filter = q_filter & (
+                Q(**{"subscribers__subscriber_type__in": ["ANNOTATED", "DYNAMIC"]})
+                | Q(**{"subscribers__size": 0})
+            )
 
         for column in columns:
             query_columns.append(column)
@@ -678,16 +680,9 @@ class TopicListAPI(AuthorizationHandler):
             ):
                 if "__" in column["data"]:
                     filter_params[column["data"]] = column["search"]["value"]
-                # elif column["data"] not in ["created_at", "updated_at"]:
-                #     search_dates = column["search"]["value"].split("~")
-
-                #     if search_dates[0]:
-                #         filter_params[column["data"] + "__gte"] = search_dates[0]
-                #     if search_dates[1]:
-                #         filter_params[column["data"] + "__lte"] = search_dates[1]
 
                 elif column["data"] == "subscribers":
-                    q_filter = (
+                    q_filter = q_filter & (
                         Q(
                             **{
                                 column["data"]
@@ -734,23 +729,8 @@ class TopicListAPI(AuthorizationHandler):
                         )
                     )
 
-                elif column["data"] == "status":
-                    filter_params[column["data"] + "__exact"] = column["search"][
-                        "value"
-                    ]
-
                 elif column["search"]["value"].upper() in ["NOT", "NOT "]:
                     filter_params[column["data"] + "__exact"] = ""
-                elif column["data"] == "comment":
-                    if column["search"]["value"].upper().startswith("NOT "):
-                        filter_params[column["data"] + "__not__contains"] = column[
-                            "search"
-                        ]["value"][4:]
-                    else:
-                        filter_params[column["data"] + "__contains"] = column["search"][
-                            "value"
-                        ]
-
                 else:
                     if column["search"]["value"].upper().startswith("NOT "):
                         filter_params[column["data"] + "__not__startswith"] = column[

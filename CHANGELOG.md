@@ -1,12 +1,10 @@
 # Beer Garden Changelog
 
-# 3.30.0
+# 3.31.0
 
 TBD
 
-- Updated Topics generation and removal to Mongo Model instead of through Events
-- Optimized Topic pruning and generation
-- Expanded topics API to support manual execution of Topic Generation
+- Added Topics Management user interface to Admin menu.
 
 # 3.29.1
 
