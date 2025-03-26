@@ -54,6 +54,7 @@ def add_internal_events_handler(event_manager):
                 Events.INSTANCE_STARTED,
                 Events.INSTANCE_UPDATED,
                 Events.INSTANCE_STOPPED,
+                Events.ENTRY_STARTED,
             ],
             config.get("events_handler.garden.unique_data"),
             config.get("events_handler.garden.enabled"),

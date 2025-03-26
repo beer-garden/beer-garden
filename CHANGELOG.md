@@ -36,6 +36,7 @@ TBD
 - Updated Events Websocket to support Async calls
 - Fixed bug where Publish Topic did not evalute downstream garden systems
 - Optimized how publish request handles topic matching
+- Downstream Garden Sync events execute at startup after Entry Points start
 
 # 3.29.1
 

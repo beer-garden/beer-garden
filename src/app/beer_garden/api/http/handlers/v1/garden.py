@@ -314,6 +314,7 @@ class GardenListAPI(AuthorizationHandler):
                 await self.process_operation(
                     Operation(
                         operation_type="GARDEN_SYNC",
+                        kwargs={"sync_gardens": True},
                     )
                 )
 
