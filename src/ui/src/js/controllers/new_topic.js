@@ -7,16 +7,6 @@ newTopicController.$inject = ['$rootScope', '$scope', '$uibModalInstance', 'isNe
  */
 export default function newTopicController($rootScope, $scope, $uibModalInstance, isNew, editTopic = {}) {
   
-//   $scope.convertTopicToModal = function(convertTopic){
-//     let topic = angular.copy(convertTopic);
-//     return topic;
-//   };
-
-//   $scope.convertTopicFromModal = function(convertTopic){
-//     let topic = angular.copy(convertTopic);
-//     return topic;
-//   }
-
   $scope.modalTitle = (isNew) ? "Create Topic" : "Add Subscribers";
   $scope.editTopic = editTopic
 
@@ -49,24 +39,6 @@ export default function newTopicController($rootScope, $scope, $uibModalInstance
     return false;
   }
 
-//   $scope.roleContainsGarden = function (gardenName) {
-
-//     if ($scope.editRole.scope_gardens === undefined || $scope.editRole.scope_gardens == null || $scope.editRole.scope_gardens.length == 0) {
-//       return true;
-//     }
-
-//     let matched = true;
-//     for (const scope_garden of $scope.editRole.scope_gardens) {
-//       if (scope_garden.scope !== undefined && scope_garden.scope != null && scope_garden.scope.length > 0) {
-//         matched = false;
-//         if (scope_garden.scope == gardenName) {
-//           return true;
-//         }
-//       }
-//     }
-//     return matched;
-//   }
-
   $scope.namespaceValidation = function (value, garden = null) {
     if (value === undefined || value == null || value.length == 0) {
       return true;
@@ -75,13 +47,11 @@ export default function newTopicController($rootScope, $scope, $uibModalInstance
       garden = $scope.garden;
     }
 
-    // if ($scope.roleContainsGarden(garden.name)) {
-    //   for (const system of garden.systems) {
-    //     if (system.namespace == value) {
-    //       return true;
-    //     }
-    //   }
-    // }
+    for (const system of garden.systems) {
+      if (system.namespace == value) {
+        return true;
+      }
+    }
 
     if (garden.children !== undefined && garden.children != null && garden.children.length > 0) {
       for (const child of garden.children) {
@@ -94,24 +64,6 @@ export default function newTopicController($rootScope, $scope, $uibModalInstance
     return false;
   }
 
-//   $scope.roleContainsNamespace = function (namespace) {
-
-//     if ($scope.editRole.scope_namespaces === undefined || $scope.editRole.scope_namespaces == null || $scope.editRole.scope_namespaces.length == 0) {
-//       return true;
-//     }
-
-//     let matched = true;
-//     for (const scope_namespace of $scope.editRole.scope_namespaces) {
-//       if (scope_namespace.scope !== undefined && scope_namespace.scope != null && scope_namespace.scope.length > 0) {
-//         matched = false;
-//         if (scope_namespace.scope == namespace) {
-//           return true;
-//         }
-//       }
-//     }
-//     return matched;
-//   }
-
   $scope.systemValidation = function (value, garden = null) {
     if (value === undefined || value == null || value.length == 0) {
       return true;
@@ -120,15 +72,11 @@ export default function newTopicController($rootScope, $scope, $uibModalInstance
       garden = $scope.garden;
     }
 
-    // if ($scope.roleContainsGarden(garden.name)) {
-    //   for (const system of garden.systems) {
-    //     if ($scope.roleContainsNamespace(system.namespace)) {
-    //       if (system.name == value) {
-    //         return true;
-    //       }
-    //     }
-    //   }
-    // }
+    for (const system of garden.systems) {
+      if (system.name == value) {
+        return true;
+      }
+    }
 
     if (garden.children !== undefined && garden.children != null && garden.children.length > 0) {
       for (const child of garden.children) {
@@ -141,24 +89,6 @@ export default function newTopicController($rootScope, $scope, $uibModalInstance
     return false;
   }
 
-//   $scope.roleContainsSystem = function (systemName) {
-
-//     if ($scope.editRole.scope_systems === undefined || $scope.editRole.scope_systems == null || $scope.editRole.scope_systems.length == 0) {
-//       return true;
-//     }
-
-//     let matched = true;
-//     for (const scope_system of $scope.editRole.scope_systems) {
-//       if (scope_system.scope !== undefined && scope_system.scope != null && scope_system.scope.length > 0) {
-//         matched = false;
-//         if (scope_system.scope == systemName) {
-//           return true;
-//         }
-//       }
-//     }
-//     return matched;
-//   }
-
   $scope.versionValidation = function (value, garden = null) {
     if (value === undefined || value == null || value.length == 0) {
       return true;
@@ -167,15 +97,11 @@ export default function newTopicController($rootScope, $scope, $uibModalInstance
       garden = $scope.garden;
     }
 
-    // if ($scope.roleContainsGarden(garden.name)) {
-    //   for (const system of garden.systems) {
-    //     if ($scope.roleContainsNamespace(system.namespace) && $scope.roleContainsSystem(system.name)) {
-    //       if (system.version == value) {
-    //         return true;
-    //       }
-    //     }
-    //   }
-    // }
+    for (const system of garden.systems) {
+      if (system.version == value) {
+        return true;
+      }
+    }
 
     if (garden.children !== undefined && garden.children != null && garden.children.length > 0) {
       for (const child of garden.children) {
@@ -188,24 +114,6 @@ export default function newTopicController($rootScope, $scope, $uibModalInstance
     return false;
   }
 
-//   $scope.roleContainsVersion = function (version) {
-
-//     if ($scope.editRole.scope_versions === undefined || $scope.editRole.scope_versions == null || $scope.editRole.scope_versions.length == 0) {
-//       return true;
-//     }
-
-//     let matched = true;
-//     for (const scope_version of $scope.editRole.scope_versions) {
-//       if (scope_version.scope !== undefined && scope_version.scope != null && scope_version.scope.length > 0) {
-//         matched = false;
-//         if (scope_version.scope == version) {
-//           return true;
-//         }
-//       }
-//     }
-//     return matched;
-//   }
-
   $scope.instanceValidation = function (value, garden = null) {
     if (value === undefined || value == null || value.length == 0) {
       return true;
@@ -214,17 +122,13 @@ export default function newTopicController($rootScope, $scope, $uibModalInstance
       garden = $scope.garden;
     }
 
-    // if ($scope.roleContainsGarden(garden.name)) {
-    //   for (const system of garden.systems) {
-    //     if ($scope.roleContainsNamespace(system.namespace) && $scope.roleContainsSystem(system.name) && $scope.roleContainsVersion(system.version)) {
-    //       for (const instance of system.instances) {
-    //         if (instance.name == value) {
-    //           return true;
-    //         }
-    //       }
-    //     }
-    //   }
-    // }
+    for (const system of garden.systems) {
+      for (const instance of system.instances) {
+        if (instance.name == value) {
+          return true;
+        }
+      }
+    }
 
     if (garden.children !== undefined && garden.children != null && garden.children.length > 0) {
       for (const child of garden.children) {
@@ -237,26 +141,6 @@ export default function newTopicController($rootScope, $scope, $uibModalInstance
     return false;
   }
 
-//   $scope.roleContainsInstance = function (instances) {
-
-//     if ($scope.editRole.scope_instances === undefined || $scope.editRole.scope_instances == null || $scope.editRole.scope_instances.length == 0) {
-//       return true;
-//     }
-
-//     let matched = true;
-//     for (const scope_instance of $scope.editRole.scope_instances) {
-//       if (scope_instance.scope !== undefined && scope_instance.scope != null && scope_instance.scope.length > 0) {
-//         matched = false;
-//         for (const instance of instances) {
-//           if (scope_instance.scope == instance) {
-//             return true;
-//           }
-//         }
-//       }
-//     }
-//     return matched;
-//   }
-
   $scope.commandsValidation = function (value) {
     return true;
   }
@@ -268,17 +152,13 @@ export default function newTopicController($rootScope, $scope, $uibModalInstance
       garden = $scope.garden;
     }
 
-//     if ($scope.roleContainsGarden(garden.name)) {
-//       for (const system of garden.systems) {
-//         if ($scope.roleContainsNamespace(system.namespace) && $scope.roleContainsSystem(system.name) && $scope.roleContainsVersion(system.version) && $scope.roleContainsInstance(system.instances)) {
-//           for (const command of system.commands) {
-//             if (command.display_name || command.name == value) {
-//               return true;
-//             }
-//           }
-//         }
-//       }
-//     }
+    for (const system of garden.systems) {
+      for (const command of system.commands) {
+        if (command.display_name || command.name == value) {
+          return true;
+        }
+      }
+    }
 
     if (garden.children !== undefined && garden.children != null && garden.children.length > 0) {
       for (const child of garden.children) {
@@ -434,11 +314,6 @@ export default function newTopicController($rootScope, $scope, $uibModalInstance
     $scope.topicForm = topicForm;
     $scope.$broadcast('schemaFormRedraw');
   };
-
-  // $scope.forceValidation = function() {
-  //   $scope.$broadcast('schemaFormValidate');
-  //   $scope.$broadcast('schemaForm.error.scope_commands.scope','commandValidator',false);
-  // }
 
   generateTopicForm();
 

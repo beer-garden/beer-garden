@@ -111,7 +111,7 @@ export default function adminTopicController(
               var tr = document.createElement('tr');
               items.forEach((item) => {
                 var td = document.createElement('td');
-                var itemText = document.createTextNode((item != null) ? item : '*');
+                var itemText = document.createTextNode((item) ? item : '*');
                 td.append(itemText);
                 tr.append(td);
               });
