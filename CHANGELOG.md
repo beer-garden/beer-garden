@@ -36,6 +36,7 @@ TBD
 - Updated Events Websocket to support Async calls
 - Fixed bug where Publish Topic did not evalute downstream garden systems
 - Optimized how publish request handles topic matching
+- Updated Topic Sync logging to track update/delete counts
 
 # 3.29.1
 

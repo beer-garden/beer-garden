@@ -449,6 +449,8 @@ def prune_topics():
                         )
                     )
 
+    deleted_topic_count = 0
+    deleted_subscriber_count = 0
     for topic in Topic.objects():
 
         valid_subscribers = []
@@ -465,6 +467,10 @@ def prune_topics():
 
         if len(topic.subscribers) > 0 and len(valid_subscribers) == 0:
             topic.delete()
+            deleted_topic_count = deleted_topic_count + 1
         elif len(valid_subscribers) != len(topic.subscribers):
             topic.subscribers = valid_subscribers
             topic.save()
+            deleted_subscriber_count = deleted_subscriber_count + 1
+
+    return deleted_topic_count, deleted_subscriber_count
