@@ -2,8 +2,9 @@
 import json
 
 from brewtils.errors import ModelValidationError
-from brewtils.models import Operation, Topic
+from brewtils.models import Operation
 from brewtils.models import Subscriber as BrewtilsSubscriber
+from brewtils.models import Topic
 from brewtils.schema_parser import SchemaParser
 from mongoengine.queryset.visitor import Q
 
