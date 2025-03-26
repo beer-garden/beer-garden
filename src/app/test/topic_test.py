@@ -23,7 +23,6 @@ from beer_garden.topic import (
     sync_garden_topics_loop,
     topic_add_subscriber,
     topic_remove_subscriber,
-    increase_consumer_count,
     reset_consumer_count,
 )
 
