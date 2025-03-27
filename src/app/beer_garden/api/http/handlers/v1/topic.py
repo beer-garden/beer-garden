@@ -10,7 +10,6 @@ from mongoengine.queryset.visitor import Q
 
 import beer_garden.db.api as db
 from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.metrics import collect_metrics
 
 
@@ -295,7 +294,7 @@ class TopicNameAPI(BaseHandler):
         self.write(response)
 
 
-class TopicListAPI(AuthorizationHandler):
+class TopicListAPI(BaseHandler):
     parser = SchemaParser()
 
     @collect_metrics(transaction_type="API", group="TopicListAPI")
@@ -312,9 +311,6 @@ class TopicListAPI(AuthorizationHandler):
             topics. This can be controlled by passing the `start` and `length` query
             parameters.
 
-          * This endpoint does NOT return child request definitions. If you want to see
-            child requests you must use the /api/v1/requests/{request_id} endpoint.
-
           To filter, search, and order you need to conform to how Datatables structures
           its query parameters.
 
@@ -322,14 +318,14 @@ class TopicListAPI(AuthorizationHandler):
           `columns` query parameters:
           ```JSON
           {
-            "data": "command",
+            "data": "name",
             "name": "",
             "searchable": true,
             "orderable": true,
             "search": {"value":"","regex":false}
           }
           {
-            "data": "system",
+            "data": "subscribers",
             "name": "",
             "searchable": true,
             "orderable": true,
@@ -340,11 +336,11 @@ class TopicListAPI(AuthorizationHandler):
             `column` definition:
           ```JSON
           {
-            "data": "status",
+            "data": "name",
             "name": "",
             "searchable": true,
             "orderable": true,
-            "search": {"value": "SUCCESS", "regex":false}
+            "search": {"value": "topic1", "regex":false}
           }
           ```
 
@@ -353,7 +349,7 @@ class TopicListAPI(AuthorizationHandler):
           `columns` query parameters:
           ```JSON
           {
-            "data": "command",
+            "data": "name",
             "name": "",
             "searchable": true,
             "orderable": true,
@@ -366,11 +362,11 @@ class TopicListAPI(AuthorizationHandler):
           `columns` query parameters:
           ```JSON
           {
-            "data": "command",
+            "data": "name",
             "name": "",
             "searchable": true,
             "orderable": true,
-            "search": {"value":"NOT command","regex":false}
+            "search": {"value":"NOT topic1","regex":false}
           }
           ```
 
@@ -394,7 +390,7 @@ class TopicListAPI(AuthorizationHandler):
           - name: length
             in: query
             required: false
-            description: The maximum number of Requests to include in the page
+            description: The maximum number of Topics to include in the page
             type: integer
             default: 100
           - name: draw
@@ -474,8 +470,7 @@ class TopicListAPI(AuthorizationHandler):
             # V1 API is a mess, it's basically written for datatables
             query_args = self._parse_datatables_parameters()
 
-            # Add the filter for only topics the user is permitted to see
-            q_filter = self.permitted_objects_filter(Topic)
+            q_filter = Q()
             q_filtered = None
 
             if query_args.get("q_filter"):
@@ -497,7 +492,7 @@ class TopicListAPI(AuthorizationHandler):
             if query_args.get("include_fields"):
                 serialize_kwargs["only"] = query_args.get("include_fields")
 
-            topics = await self.process_operation(
+            topics = await self.client(
                 Operation(operation_type="TOPIC_READ_ALL", kwargs=query_args),
                 serialize_kwargs=serialize_kwargs,
             )
@@ -621,7 +616,7 @@ class TopicListAPI(AuthorizationHandler):
         self.set_status(200)
 
     def _parse_datatables_parameters(self) -> dict:
-        """Parse the HTTP request's datatables query parameters
+        """Parse the HTTP datatables query parameters
 
         Returns:
             Dict of things to pass to the DB query:
