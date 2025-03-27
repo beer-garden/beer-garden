@@ -150,9 +150,11 @@ export default function commandViewController(
     if (valid) {
       $scope.createRequest(model);
     } else {
-      $scope.alerts.push(
-          'Looks like there was an error validating the request.',
-      );
+      
+      $scope.alerts.push({
+        type: 'danger',
+        msg: 'Looks like there was an error validating the request.',
+      });
     }
   };
 
@@ -161,7 +163,10 @@ export default function commandViewController(
       try {
         request = JSON.parse(request);
       } catch (err) {
-        $scope.alerts.push(err);
+        $scope.alerts.push({
+          type: 'danger',
+          msg: err,
+        });
         return;
       }
     }
@@ -203,6 +208,14 @@ export default function commandViewController(
     if (isFormData) {
       newRequest = fd;
     }
+
+    setTimeout(function create_timeout() {   
+      $scope.alerts.push({
+        type: 'info',
+        msg: 'Looks like the request is taking longer to submit, hang in there',
+      });
+      $scope.$digest();
+    }, 5000);
 
     RequestService.createRequest(newRequest, false, isFormData).then(
         function(response) {

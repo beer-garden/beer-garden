@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from copy import deepcopy
+
 import pytest
 from brewtils.models import Events
 from mock import Mock
@@ -9,6 +11,7 @@ from beer_garden.events.processors import FanoutProcessor
 
 
 class TestHandlers:
+
     @pytest.mark.parametrize(
         "event_name,expected_calls",
         [
@@ -29,7 +32,7 @@ class TestHandlers:
             (Events.INSTANCE_STOPPED, 2),
             (Events.SYSTEM_CREATED, 3),
             (Events.SYSTEM_UPDATED, 3),
-            (Events.SYSTEM_REMOVED, 3),
+            (Events.SYSTEM_REMOVED, 2),
             (Events.QUEUE_CLEARED, 0),
             (Events.ALL_QUEUES_CLEARED, 0),
             (Events.DB_CREATE, 0),
@@ -45,7 +48,7 @@ class TestHandlers:
             (Events.GARDEN_UNREACHABLE, 1),
             (Events.GARDEN_ERROR, 1),
             (Events.GARDEN_NOT_CONFIGURED, 1),
-            (Events.GARDEN_SYNC, 3),
+            (Events.GARDEN_SYNC, 2),
             (Events.ENTRY_STARTED, 1),
             (Events.ENTRY_STOPPED, 0),
             (Events.JOB_CREATED, 2),
@@ -81,23 +84,25 @@ class TestHandlers:
         bg_event.name = event_name.name
         bg_event.garden = "localgarden"
 
-        config._CONFIG = {"garden": {"name": bg_event.garden}}
+        config._CONFIG["garden"] = {"name": bg_event.garden}
 
         event_manager = FanoutProcessor(name="event manager")
         add_internal_events_handler(event_manager)
 
-        assert len(event_manager._managed_processors) == 16
+        assert len(event_manager._managed_processors) == 14
 
-        put_mock = Mock()
+        queue_mock = Mock()
+        append_mock = Mock()
+        queue_mock.append = append_mock
 
         for processor in event_manager._managed_processors:
 
             if hasattr(processor, "_queue"):
-                monkeypatch.setattr(processor._queue, "put", put_mock)
+                monkeypatch.setattr(processor, "_queue", queue_mock)
 
             processor.put(bg_event)
 
-        assert put_mock.call_count == expected_calls
+        assert append_mock.call_count == expected_calls
 
     @pytest.mark.parametrize(
         "event_name,expected_calls",
@@ -171,19 +176,82 @@ class TestHandlers:
         bg_event.name = event_name.name
         bg_event.garden = "remotegarden"
 
-        config._CONFIG = {"garden": {"name": "localgarden"}}
+        config._CONFIG["garden"] = {"name": "localgarden"}
 
         event_manager = FanoutProcessor(name="event manager")
         add_internal_events_handler(event_manager)
 
-        assert len(event_manager._managed_processors) == 16
+        assert len(event_manager._managed_processors) == 14
 
-        put_mock = Mock()
+        queue_mock = Mock()
+        append_mock = Mock()
+        queue_mock.append = append_mock
 
         for processor in event_manager._managed_processors:
 
             if hasattr(processor, "_queue"):
-                monkeypatch.setattr(processor._queue, "put", put_mock)
+                monkeypatch.setattr(processor, "_queue", queue_mock)
             processor.put(bg_event)
 
-        assert put_mock.call_count == expected_calls
+        assert append_mock.call_count == expected_calls
+
+    def test_unique_events(self, bg_event):
+        """Tests to ensure events are de-dupped"""
+
+        create_event = deepcopy(bg_event)
+        create_event.payload.status = "CREATED"
+
+        update_event = deepcopy(bg_event)
+        update_event.payload.status = "IN_PROGRESS"
+
+        complete_event = deepcopy(bg_event)
+        complete_event.payload.status = "SUCCESS"
+
+        config._CONFIG["garden"] = {"name": bg_event.garden}
+
+        event_manager = FanoutProcessor(name="event manager")
+        add_internal_events_handler(event_manager)
+
+        assert len(event_manager._managed_processors) == 14
+
+        evaluated = False
+        for processor in event_manager._managed_processors:
+
+            if (
+                hasattr(processor, "_handler_tag")
+                and processor._handler_tag == "Requests"
+            ):
+                processor.put(create_event)
+                processor.put(create_event)
+                processor.put(create_event)
+                assert len(processor._queue) == 1
+                assert (
+                    processor._data[next(iter(processor._data))].payload.status
+                    == "CREATED"
+                )
+
+                processor.put(update_event)
+                assert len(processor._queue) == 1
+                assert (
+                    processor._data[next(iter(processor._data))].payload.status
+                    == "IN_PROGRESS"
+                )
+
+                processor.put(complete_event)
+                assert len(processor._queue) == 1
+                assert (
+                    processor._data[next(iter(processor._data))].payload.status
+                    == "SUCCESS"
+                )
+
+                processor.put(create_event)
+                processor.put(update_event)
+                assert len(processor._queue) == 1
+                assert (
+                    processor._data[next(iter(processor._data))].payload.status
+                    == "SUCCESS"
+                )
+
+                evaluated = True
+
+        assert evaluated
