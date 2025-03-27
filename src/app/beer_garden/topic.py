@@ -264,19 +264,37 @@ def sync_garden_topics(garden_name: str = None):
     else:
         garden = get_garden(garden_name)
 
+    logger.info(f"Running Garden Topic Sync for {garden.name}")
+
     topics = get_all_topics()
 
     topics_dict = {}
     for topic in topics:
         topics_dict[topic.name] = topic
 
-    sync_garden_topics_loop(garden, topics_dict)
+    updated_subscribers, created_topics = sync_garden_topics_loop(garden, topics_dict)
 
-    prune_topics()
+    deleted_topic_count, deleted_subscriber_count = prune_topics()
+
+    if (
+        updated_subscribers > 0
+        or created_topics > 0
+        or deleted_topic_count > 0
+        or deleted_subscriber_count > 0
+    ):
+        logger.info(
+            (
+                "Topic Sync: "
+                f"Updated Subscribers {updated_subscribers}, "
+                f"Deleted Subscribers {deleted_subscriber_count}, "
+                f"Created Topics {created_topics}, "
+                f"Deleted Topics {deleted_topic_count}"
+            )
+        )
 
 
 def prune_topics():
-    db.prune_topics()
+    return db.prune_topics()
 
 
 def sync_garden_topic_add(subscriber: Subscriber, topic_name: str, topics_dict: dict):
@@ -295,14 +313,21 @@ def sync_garden_topic_add(subscriber: Subscriber, topic_name: str, topics_dict: 
     Returns:
         None
     """
+    updated_subscribers = 0
+    created_topics = 0
     if topic_name in topics_dict:
         if subscriber not in topics_dict[topic_name].subscribers:
             topics_dict[topic_name].subscribers.append(subscriber)
             update_topic(topics_dict[topic_name])
+            updated_subscribers = updated_subscribers + 1
+
     else:
         topics_dict[topic_name] = create_topic(
             Topic(name=topic_name, subscribers=[subscriber])
         )
+        created_topics = created_topics + 1
+
+    return updated_subscribers, created_topics
 
 
 def sync_garden_topics_loop(garden: Garden, topics_dict: dict):
@@ -325,6 +350,9 @@ def sync_garden_topics_loop(garden: Garden, topics_dict: dict):
     Returns:
         None
     """
+
+    updated_subscribers = 0
+    created_topics = 0
     for system in garden.systems:
         default_topic = system.prefix_topic
         for command in system.commands:
@@ -340,7 +368,11 @@ def sync_garden_topics_loop(garden: Garden, topics_dict: dict):
                             command=command.name,
                             subscriber_type="ANNOTATED",
                         )
-                        sync_garden_topic_add(subscriber, topic, topics_dict)
+                        updated, created = sync_garden_topic_add(
+                            subscriber, topic, topics_dict
+                        )
+                        updated_subscribers = updated_subscribers + updated
+                        created_topics = created_topics + created
 
                 if not default_topic:
                     topic_generated = (
@@ -360,11 +392,19 @@ def sync_garden_topics_loop(garden: Garden, topics_dict: dict):
                     command=command.name,
                     subscriber_type="GENERATED",
                 )
-                sync_garden_topic_add(subscriber, topic_generated, topics_dict)
+                updated, created = sync_garden_topic_add(
+                    subscriber, topic_generated, topics_dict
+                )
+                updated_subscribers = updated_subscribers + updated
+                created_topics = created_topics + created
 
     if garden.children:
         for child in garden.children:
-            sync_garden_topics_loop(child, topics_dict)
+            updated, created = sync_garden_topics_loop(child, topics_dict)
+            updated_subscribers = updated_subscribers + updated
+            created_topics = created_topics + created
+
+    return updated_subscribers, created_topics
 
 
 def increase_publish_count(topic: Topic):
