@@ -3,7 +3,6 @@ import logging
 
 from brewtils.models import Events
 
-import beer_garden.config as config
 import beer_garden.files
 import beer_garden.garden
 import beer_garden.local_plugins.manager
@@ -31,7 +30,7 @@ def error_event_handler(event):
 
 
 def add_internal_events_handler(event_manager):
-    for handler, handler_tag, local_only, filters, unique_data, enabled in [
+    for handler, handler_tag, local_only, filters, unique_data in [
         (
             beer_garden.garden.handle_event,
             "Garden",
@@ -55,16 +54,14 @@ def add_internal_events_handler(event_manager):
                 Events.INSTANCE_UPDATED,
                 Events.INSTANCE_STOPPED,
             ],
-            config.get("events_handler.garden.unique_data"),
-            config.get("events_handler.garden.enabled"),
+            True,
         ),
         (
             beer_garden.plugin.handle_event,
             "Plugin",
             False,
             [Events.INSTANCE_UPDATED],
-            config.get("events_handler.plugin.unique_data"),
-            config.get("events_handler.plugin.enabled"),
+            True,
         ),
         (
             beer_garden.requests.handle_event,
@@ -77,8 +74,7 @@ def add_internal_events_handler(event_manager):
                 Events.REQUEST_UPDATED,
                 Events.REQUEST_CANCELED,
             ],
-            config.get("events_handler.requests.unique_data"),
-            config.get("events_handler.requests.enabled"),
+            True,
         ),
         (
             beer_garden.publish_request.handle_event,
@@ -86,7 +82,6 @@ def add_internal_events_handler(event_manager):
             False,
             [Events.REQUEST_TOPIC_PUBLISH, Events.REQUEST_CREATED],
             False,
-            True,
             # Can not unique due to each Event potentially
             # spawning child Request operations
         ),
@@ -95,7 +90,6 @@ def add_internal_events_handler(event_manager):
             "Requests wait events",
             False,
             [Events.REQUEST_COMPLETED, Events.REQUEST_CANCELED, Events.GARDEN_STOPPED],
-            False,
             True,
         ),
         (
@@ -111,15 +105,13 @@ def add_internal_events_handler(event_manager):
                 Events.GARDEN_UPDATED,
             ],
             False,  # Can not unique due to API configurations
-            True,
         ),
         (
             beer_garden.systems.handle_event,
             "System",
             True,
             [Events.SYSTEM_CREATED, Events.SYSTEM_UPDATED, Events.SYSTEM_REMOVED],
-            config.get("events_handler.system.unique_data"),
-            config.get("events_handler.system.enabled"),
+            True,
         ),
         (
             beer_garden.scheduler.handle_event,
@@ -135,7 +127,6 @@ def add_internal_events_handler(event_manager):
                 Events.DIRECTORY_FILE_CHANGE,
             ],
             False,  # Can not unique due to Job Execute Events
-            True,
         ),
         (
             beer_garden.log.handle_event,
@@ -143,15 +134,13 @@ def add_internal_events_handler(event_manager):
             True,
             [Events.PLUGIN_LOGGER_FILE_CHANGE],
             False,
-            True,
         ),
         (
             beer_garden.files.handle_event,
             "File",
             True,
             [Events.JOB_CREATED, Events.REQUEST_CREATED],
-            config.get("events_handler.file.unique_data"),
-            config.get("events_handler.file.enabled"),
+            True,
         ),
         (
             beer_garden.local_plugins.manager.handle_event,
@@ -163,8 +152,6 @@ def add_internal_events_handler(event_manager):
                 Events.ENTRY_STARTED,
             ],
             False,  # Can not unique due to usage of metadata for rescans
-            # Disable lpm events if no local plugins
-            (config.get("plugin.local.directory") is not None),
         ),
         (
             beer_garden.user.handle_event,
@@ -172,7 +159,6 @@ def add_internal_events_handler(event_manager):
             True,
             [Events.ROLE_DELETED, Events.USER_UPDATED],
             False,  # Can not unique due to ensure all user updates are handled correctly
-            True,
         ),
         (
             beer_garden.replication.handle_event,
@@ -180,20 +166,18 @@ def add_internal_events_handler(event_manager):
             True,
             [Events.REPLICATION_CREATED, Events.REPLICATION_UPDATED],
             False,  # Can not unique due to ensure all replication updates are handled correctly
-            True,
         ),
     ]:
-        if enabled:
-            event_manager.register(
-                InternalQueueListener(
-                    handler=handler,
-                    handler_tag=handler_tag,
-                    filters=filters,
-                    local_only=local_only,
-                    name=handler_tag,
-                    unique_data=unique_data,
-                )
+        event_manager.register(
+            InternalQueueListener(
+                handler=handler,
+                handler_tag=handler_tag,
+                filters=filters,
+                local_only=local_only,
+                name=handler_tag,
+                unique_data=unique_data,
             )
+        )
 
     event_manager.register(
         BaseProcessor(
