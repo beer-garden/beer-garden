@@ -47,7 +47,10 @@ class Monitor(object):
             delete=bg_trigger.delete,
             job=self.job,
         )
-        self.start()
+        if self.job.status == "RUNNING":
+            self.start()
+        else:
+            self.stop()
 
     def start(self):
         """Start monitoring a directory"""
@@ -721,6 +724,10 @@ def handle_event(event: Event) -> None:
     ):
         if event.name in [Events.JOB_CREATED.name, Events.JOB_UPDATED.name]:
             try:
+                paused_kwargs = {}
+
+                if event.payload.status == "PAUSED":
+                    paused_kwargs["next_run_time"] = None
                 beer_garden.application.scheduler.add_job(
                     run_job,
                     trigger=event.payload.trigger,
@@ -736,6 +743,7 @@ def handle_event(event: Event) -> None:
                     jobstore="beer_garden",
                     replace_existing=True,
                     id=event.payload.id,
+                    **paused_kwargs,
                 )
             except Exception:
                 db.delete(event.payload)

@@ -42,6 +42,7 @@ TBD
 - Updated Topic Sync logging to track update/delete counts
 - Fixed bug where pour again invalid property caused broken UI
 - Updated pruner configuration to consolidate options under `db.prune`
+- Fixed bug where Paused Jobs being imported were Running in the background
 
 # 3.29.1
 
