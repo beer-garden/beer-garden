@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
+import datetime
 import logging
+import threading
+import time
 import traceback
 import uuid
+from collections import deque
 from copy import deepcopy
 from multiprocessing import Queue
 from queue import Empty
 
-import elasticapm
-from brewtils.models import Event, Events
+from brewtils.models import Event, Events, Request
 from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden.config as config
+from beer_garden.metrics import CollectMetrics, extract_custom_context
 from beer_garden.queue.rabbit import put_event
 
 logger = logging.getLogger(__name__)
@@ -32,6 +36,133 @@ class BaseProcessor(StoppableThread):
 
     def put(self, item):
         self.process(item)
+
+
+class DequeListener(BaseProcessor):
+    """Listens for items on a collections.deque"""
+
+    def __init__(self, queue=None, **kwargs):
+        super().__init__(**kwargs)
+
+        self._queue = queue or deque()
+
+    def put(self, item):
+        """Put a new item on the queue to be processed
+
+        Args:
+            item: New item
+        """
+        self._queue.append(item)
+
+    def clear(self):
+        """Empty the underlying queue without processing items"""
+        self._queue.clear()
+
+    def run(self):
+        """Process events as they are received"""
+        while not self.stopped():
+            try:
+                self.process(self._queue.popleft())
+            except IndexError:
+                time.sleep(0.1)
+
+    def queue_depth(self):
+        return len(self._queue)
+
+
+class DequeSetListener(DequeListener):
+    """Listens for items on a multiprocessing.Queue"""
+
+    def __init__(self, queue=None, unique_data=False, **kwargs):
+        super().__init__(**kwargs)
+
+        self._lock = threading.RLock()
+        self._data = {}
+        self._unique_data = unique_data
+
+    def put(self, event: Event):
+        """Put a new item on the queue to be processed
+
+        Args:
+            item: New item
+        """
+
+        if (
+            self._unique_data
+            and hasattr(event, "payload")
+            and hasattr(event.payload, "id")
+            and hasattr(event.payload, "is_newer")
+        ):
+            with self._lock:
+                if event.payload.id in self._data:
+                    ref = self._data[event.payload.id]
+                    if isinstance(event.payload, type(ref.payload)):
+                        if event.payload.is_newer(ref.payload):
+                            # Collect Request Metadata
+                            # If this expands past Requests, we'll need to refactor
+                            if isinstance(event.payload, Request):
+                                for metadata_key in ref.payload.metadata:
+                                    if metadata_key not in event.payload.metadata:
+                                        event.payload.metadata[metadata_key] = (
+                                            ref.payload.metadata[metadata_key]
+                                        )
+                                if ref.payload.status is not event.payload.status:
+                                    status_key = (
+                                        f"{ref.payload.status}_"
+                                        f"{config.get('garden.name')}"
+                                    )
+                                    if status_key not in event.payload.metadata:
+                                        event.payload.metadata[status_key] = int(
+                                            datetime.datetime.utcnow().timestamp()
+                                            * 1000
+                                        )
+
+                            self._data[str(event.payload.id)] = deepcopy(event)
+                    else:
+                        # Type Mis-match, just process the event
+                        super().put(event)
+                        return
+                else:
+                    self._data[str(event.payload.id)] = deepcopy(event)
+                    self._queue.append(str(event.payload.id))
+
+        else:
+            super().put(event)
+
+    def clear(self):
+        """Empty the underlying queue without processing items"""
+
+        super().clear()
+        if self._unique_data:
+            self._data = {}
+
+    def run(self):
+        """Process events as they are received"""
+        if not self._unique_data:
+            super().run()
+        else:
+            while not self.stopped():
+                try:
+                    ref = self._queue.popleft()
+                    if isinstance(ref, str):
+                        with self._lock:
+                            ref = self._data.pop(ref, None)
+                    if ref:
+                        self.process(ref)
+                except IndexError:
+                    if self._unique_data and self._data:
+                        ref = None
+                        with self._lock:
+                            ref = self._data.pop(next(iter(self._data)))
+                        if ref:
+                            self.process(ref)
+                    else:
+                        time.sleep(0.1)
+
+    def queue_depth(self):
+        if not self._unique_data:
+            return super().queue_depth()
+        return len(self._data)
 
 
 class QueueListener(BaseProcessor):
@@ -63,8 +194,11 @@ class QueueListener(BaseProcessor):
             except Empty:
                 pass
 
+    def queue_depth(self):
+        return self._queue.qsize()
 
-class InternalQueueListener(QueueListener):
+
+class InternalQueueListener(DequeSetListener):
     """Listener for internal events only"""
 
     def __init__(self, handler, handler_tag, local_only=False, filters=None, **kwargs):
@@ -80,26 +214,37 @@ class InternalQueueListener(QueueListener):
         self._handler_tag = handler_tag
         self._local_only = local_only
 
-    def handle_event(self, event):
-        try:
-            if config.get("apm.enabled") and elasticapm.get_client():
-                with elasticapm.capture_span(name=event.name, span_type="Event"):
-                    if hasattr(event, "payload") and hasattr(event.payload, "id"):
-                        elasticapm.set_custom_context({"id": event.payload.id})
-                    self._handler(deepcopy(event))
+        self._transaction_type = handler_tag
 
-            else:
+    def handle_event(self, event):
+        trace_parent_header = None
+        if (
+            config.get("metrics.elastic.enabled")
+            and hasattr(event, "metadata")
+            and "_trace_parent" in event.metadata
+        ):
+            trace_parent_header = event.metadata["_trace_parent"]
+
+        with CollectMetrics(
+            "Queue_Event",
+            f"QUEUE_POP::{self._handler_tag}",
+            trace_parent_header=trace_parent_header,
+        ):
+            try:
+                if config.get("metrics.elastic.enabled"):
+                    extract_custom_context(event)
+
                 self._handler(deepcopy(event))
-        except Exception as ex:
-            logger.error(
-                "'%s' handler received an error executing callback for event %s: %s: %s"
-                % (
-                    self._handler_tag,
-                    repr(event),
-                    str(ex),
-                    traceback.TracebackException.from_exception(ex),
+            except Exception as ex:
+                logger.error(
+                    "'%s' handler received an error executing callback for event %s: %s: %s"
+                    % (
+                        self._handler_tag,
+                        repr(event),
+                        str(ex),
+                        traceback.TracebackException.from_exception(ex),
+                    )
                 )
-            )
 
     def put(self, event: Event):
         """Put a new item on the queue to be processed
@@ -121,7 +266,20 @@ class InternalQueueListener(QueueListener):
             return
 
         if event.name in self._filters:
-            self._queue.put(event)
+            trace_parent_header = None
+            if (
+                config.get("metrics.elastic.enabled")
+                and hasattr(event, "metadata")
+                and "_trace_parent" in event.metadata
+            ):
+                trace_parent_header = event.metadata["_trace_parent"]
+
+            with CollectMetrics(
+                "Queue_Event",
+                f"QUEUE_PUT::{self._handler_tag}",
+                trace_parent_header=trace_parent_header,
+            ):
+                super().put(event)
 
 
 class DelayListener(QueueListener):
@@ -152,7 +310,7 @@ class PipeListener(BaseProcessor):
                 self.process(self._conn.recv())
 
 
-class FanoutProcessor(QueueListener):
+class FanoutProcessor(DequeListener):
     """Distributes items to multiple queues"""
 
     def __init__(self, **kwargs):
@@ -218,15 +376,15 @@ class EventProcessor(FanoutProcessor):
             try:
                 event.metadata["_source_uuid"] = self.uuid
                 put_event(event)
-                self._queue.put(event)
+                super().put(event)
             except Exception:
                 self.logger.error(f"Failed to publish Event: {event} to PIKA")
-                self._queue.put(event)
+                super().put(event)
         elif (
             "_source_uuid" not in event.metadata
             or event.metadata["_source_uuid"] != self.uuid
         ):
-            self._queue.put(event)
+            super().put(event)
 
     def put_queue(self, event: Event):
-        self._queue.put(event)
+        super().put(event)

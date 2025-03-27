@@ -16,12 +16,10 @@ from beer_garden.api.http.base_handler import future_wait
 from beer_garden.api.http.exceptions import BadRequest, RequestForbidden
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.errors import UnknownGardenException
-from beer_garden.metrics import collect_metrics
 from beer_garden.requests import remove_bytes_parameter_base64
 
 
 class RequestAPI(AuthorizationHandler):
-    @collect_metrics(transaction_type="API", group="RequestAPI")
     async def get(self, request_id):
         """
         ---
@@ -54,7 +52,6 @@ class RequestAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="RequestAPI")
     async def patch(self, request_id):
         """
         ---
@@ -138,7 +135,6 @@ class RequestAPI(AuthorizationHandler):
 
 
 class RequestOutputAPI(AuthorizationHandler):
-    @collect_metrics(transaction_type="API", group="RequestOutputAPI")
     async def get(self, request_id):
         """
         ---
@@ -186,7 +182,6 @@ class RequestOutputAPI(AuthorizationHandler):
 class RequestListAPI(AuthorizationHandler):
     parser = SchemaParser()
 
-    @collect_metrics(transaction_type="API", group="RequestListAPI")
     async def get(self):
         """
         ---
@@ -409,7 +404,6 @@ class RequestListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(json.dumps(requests))
 
-    @collect_metrics(transaction_type="API", group="RequestListAPI")
     async def post(self):
         """
         ---
@@ -543,7 +537,6 @@ class RequestListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="RequestListAPI")
     async def put(self):
         """
         ---
@@ -618,7 +611,6 @@ class RequestListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="RequestListAPI")
     async def delete(self):
         """
         ---
