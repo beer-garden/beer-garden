@@ -370,7 +370,7 @@ export default function requestViewController(
   };
 
   function eventCallback(event) {
-    if (event.name.startsWith('REQUEST')) {
+    if (event.name.startsWith('REQUEST') && event.payload.id !== undefined && event.payload.id !== null) {
       if (event.payload.id == $stateParams.requestId) {
         $scope.successCallback(event.payload);
       } else if (_.get(event, 'payload.parent.id') == $stateParams.requestId) {

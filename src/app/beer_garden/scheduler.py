@@ -47,7 +47,10 @@ class Monitor(object):
             delete=bg_trigger.delete,
             job=self.job,
         )
-        self.start()
+        if self.job.status == "RUNNING":
+            self.start()
+        else:
+            self.stop()
 
     def start(self):
         """Start monitoring a directory"""
@@ -370,9 +373,9 @@ class MixedScheduler(object):
 
     def internal_scheduled_jobs(self):
         # Add scheduled jobs for Mongo Pruner
-        prune_interval = config.get("db.prune_interval")
+        prune_interval = config.get("db.prune.interval")
         if prune_interval > 0:
-            ttl_config = config.get("db.ttl")
+            ttl_config = config.get("db.prune.ttl")
             if ttl_config.get("info") > 0:
                 self.add_schedule(
                     beer_garden.db.mongo.pruner.prune_info_requests,
@@ -383,20 +386,6 @@ class MixedScheduler(object):
             if ttl_config.get("action") > 0:
                 self.add_schedule(
                     beer_garden.db.mongo.pruner.prune_action_requests,
-                    interval=prune_interval,
-                    max_running_jobs=1,
-                )
-
-            if ttl_config.get("admin") > 0:
-                self.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_admin_requests,
-                    interval=prune_interval,
-                    max_running_jobs=1,
-                )
-
-            if ttl_config.get("temp") > 0:
-                self.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_temp_requests,
                     interval=prune_interval,
                     max_running_jobs=1,
                 )
@@ -416,6 +405,18 @@ class MixedScheduler(object):
                 )
 
             self.add_schedule(
+                beer_garden.db.mongo.pruner.prune_admin_requests,
+                interval=prune_interval,
+                max_running_jobs=1,
+            )
+
+            self.add_schedule(
+                beer_garden.db.mongo.pruner.prune_temp_requests,
+                interval=prune_interval,
+                max_running_jobs=1,
+            )
+
+            self.add_schedule(
                 beer_garden.db.mongo.pruner.prune_orphans,
                 interval=prune_interval,
                 max_running_jobs=1,
@@ -424,6 +425,13 @@ class MixedScheduler(object):
         # Add scheduled job for checking unresponsive gardens
         self.add_schedule(
             beer_garden.garden.garden_unresponsive_trigger,
+            interval=15,
+            max_running_jobs=1,
+        )
+
+        # Add scheduled job for validating Generated and Annotated topics
+        self.add_schedule(
+            beer_garden.topic.sync_garden_topics,
             interval=15,
             max_running_jobs=1,
         )
@@ -716,6 +724,10 @@ def handle_event(event: Event) -> None:
     ):
         if event.name in [Events.JOB_CREATED.name, Events.JOB_UPDATED.name]:
             try:
+                paused_kwargs = {}
+
+                if event.payload.status == "PAUSED":
+                    paused_kwargs["next_run_time"] = None
                 beer_garden.application.scheduler.add_job(
                     run_job,
                     trigger=event.payload.trigger,
@@ -731,6 +743,7 @@ def handle_event(event: Event) -> None:
                     jobstore="beer_garden",
                     replace_existing=True,
                     id=event.payload.id,
+                    **paused_kwargs,
                 )
             except Exception:
                 db.delete(event.payload)
