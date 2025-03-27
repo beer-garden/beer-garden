@@ -5,6 +5,7 @@ from mongoengine.connection import get_db
 from mongoengine.errors import DoesNotExist, FieldDoesNotExist, InvalidDocumentError
 from pymongo.errors import OperationFailure
 
+import beer_garden
 from beer_garden import config
 from beer_garden.errors import IndexOperationError
 
@@ -78,6 +79,8 @@ def ensure_local_garden():
         for key in config_map:
             stomp_connection.config.setdefault(config_map[key], config.get(key))
         garden.publishing_connections.append(stomp_connection)
+
+    garden.version = beer_garden.__version__
 
     garden.save()
 
@@ -412,3 +415,62 @@ def _update_request_has_parent_model():
     raw_collection.update_many(
         {"parent": {"$not": {"$eq": None}}}, {"$set": {"has_parent": True}}
     )
+
+
+def prune_topics():
+    """
+    Prune topics by removing invalid subscribers and deleting topics with no valid
+    subscribers.
+
+    This function iterates over all topics and checks each subscriber's validity based
+    on their type and existence in the 'system' and 'garden' collections in the database.
+    Subscribers of type 'GENERATED' or 'ANNOTATED' are validated against the 'garden'
+    and 'system' collections. If a topic has no valid subscribers, it is deleted.
+    Otherwise, the topic's subscribers are updated to include only valid subscribers.
+
+    Returns:
+        None
+    """
+
+    from .models import Garden, System, Topic
+
+    command_hash = []
+
+    for garden in Garden.objects():
+        if garden.name == config.get("garden.name"):
+            garden.systems = System.objects(local=True)
+        for system in garden.systems:
+            for instance in system.instances:
+                for command in system.commands:
+                    command_hash.append(
+                        (
+                            f"{garden.name}.{system.namespace}.{system.name}."
+                            f"{system.version}.{instance.name}.{command.name}"
+                        )
+                    )
+
+    deleted_topic_count = 0
+    deleted_subscriber_count = 0
+    for topic in Topic.objects():
+
+        valid_subscribers = []
+        for subscriber in topic.subscribers:
+            if subscriber.subscriber_type in ["GENERATED", "ANNOTATED"]:
+                if (
+                    f"{subscriber.garden}.{subscriber.namespace}.{subscriber.system}."
+                    f"{subscriber.version}.{subscriber.instance}.{subscriber.command}"
+                ) in command_hash:
+                    valid_subscribers.append(subscriber)
+
+            else:
+                valid_subscribers.append(subscriber)
+
+        if len(topic.subscribers) > 0 and len(valid_subscribers) == 0:
+            topic.delete()
+            deleted_topic_count = deleted_topic_count + 1
+        elif len(valid_subscribers) != len(topic.subscribers):
+            topic.subscribers = valid_subscribers
+            topic.save()
+            deleted_subscriber_count = deleted_subscriber_count + 1
+
+    return deleted_topic_count, deleted_subscriber_count
