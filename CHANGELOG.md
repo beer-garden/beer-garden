@@ -41,6 +41,7 @@ TBD
   the instance name is included in the filter criteria
 - Updated Topic Sync logging to track update/delete counts
 - Fixed bug where pour again invalid property caused broken UI
+- Updated pruner configuration to consolidate options under `db.prune`
 
 # 3.29.1
 
