@@ -457,7 +457,14 @@ def upsert_garden(garden: Garden, skip_connections: bool = True) -> Garden:
     if existing_garden is None:
         return create_garden(garden)
     else:
-        for attr in ("status", "status_info", "namespaces", "systems", "metadata"):
+        for attr in (
+            "status",
+            "status_info",
+            "namespaces",
+            "systems",
+            "metadata",
+            "version",
+        ):
             setattr(existing_garden, attr, getattr(garden, attr))
         if not skip_connections:
             for attr in ("receiving_connections", "publishing_connections"):
