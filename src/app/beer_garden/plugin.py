@@ -271,43 +271,47 @@ def update(
 
     system = db.modify(system, query={"instances__name": instance.name}, **updates)
 
-    return system.get_instance_by_name(instance.name)
+    instance = system.get_instance_by_name(instance.name)
+
+    if new_status and system.local:
+        publish_status_update(system, instance)
+
+    return instance
 
 
-def publish_status_update(instance: Instance):
+def publish_status_update(system: System, instance: Instance):
     """Publish event of Instance status.
 
     Args:
+        system: The System
         instance: The Instance
 
     """
-    system, instance = _from_kwargs(instance_id=instance.id)
 
-    if system.local:
-        # Publish event for plugins to monitor the status of other plugins
-        publish(
-            Event(
-                name=Events.REQUEST_TOPIC_PUBLISH.name,
-                metadata={
-                    "topic": config.get("garden.name"),
-                    "propagate": True,
+    # Publish event for plugins to monitor the status of other plugins
+    publish(
+        Event(
+            name=Events.REQUEST_TOPIC_PUBLISH.name,
+            metadata={
+                "topic": config.get("garden.name"),
+                "propagate": True,
+            },
+            payload=Request(
+                parameters={
+                    "message": {
+                        "status": instance.status,
+                        "namespace": system.namespace,
+                        "system": system.name,
+                        "version": system.version,
+                        "instance": instance.name,
+                        "garden": config.get("garden.name"),
+                        "event": Events.INSTANCE_UPDATED.name,
+                    }
                 },
-                payload=Request(
-                    parameters={
-                        "message": {
-                            "status": instance.status,
-                            "namespace": system.namespace,
-                            "system": system.name,
-                            "version": system.version,
-                            "instance": instance.name,
-                            "garden": config.get("garden.name"),
-                            "event": Events.INSTANCE_UPDATED.name,
-                        }
-                    },
-                ),
-                payload_type="Request",
-            )
+            ),
+            payload_type="Request",
         )
+    )
 
 
 def heartbeat(
@@ -601,8 +605,6 @@ def handle_event(event: Event) -> None:
                 )
             except Exception as ex:
                 logger.error(f"{event.name} error: {ex} ({event!r})")
-        else:
-            publish_status_update(event.payload)
 
 
 class StatusMonitor(StoppableThread):
