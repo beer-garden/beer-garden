@@ -571,6 +571,9 @@ def setup_routing():
                 garden.connection_type is not None
                 and garden.connection_type.casefold() != "local"
             ):
+                del garden.children
+                del garden.systems
+
                 with garden_lock:
                     gardens[garden.name] = garden
                     for connection in gardens[garden.name].publishing_connections:
@@ -673,50 +676,68 @@ def handle_event(event):
             # Then add routes to the new systems
             add_routing_garden(event.payload, event.payload.name)
 
+    # To save memory, we need to remove children
+    if event.payload_type == "Garden":
+        del event.payload.children
+        del event.payload.systems
+
     # This is a little unintuitive. We want to let the garden module deal with handling
     # any downstream garden changes since handling those changes is nontrivial.
     # It's *those* events we want to act on here, not the "raw" downstream ones.
     # This is also why we only handle GARDEN_UPDATED and not STARTED or STOPPED
-    if event.garden == config.get("garden.name") and not event.error:
-        if event.name == Events.GARDEN_CONFIGURED.name:
-            if event.payload.name != config.get("garden.name") and (
-                (
-                    event.payload.has_parent
-                    and event.payload.parent == config.get("garden.name")
-                )
-                or not event.payload.has_parent
-            ):
-                gardens[event.payload.name] = event.payload
+    if (
+        event.garden == config.get("garden.name")
+        and not event.error
+        and "GARDEN" in event.name
+    ):
+        # Only store the garden if it's 1 hop of the local garden
+        if not event.payload.has_parent or event.payload.parent == config.get(
+            "garden.name"
+        ):
+            if event.name == Events.GARDEN_CONFIGURED.name:
+                if event.payload.name != config.get("garden.name") and (
+                    (
+                        event.payload.has_parent
+                        and event.payload.parent == config.get("garden.name")
+                    )
+                    or not event.payload.has_parent
+                ):
+                    gardens[event.payload.name] = event.payload
 
-                stomp_found = False
-                for connection in event.payload.publishing_connections:
-                    if connection.api.upper() == "STOMP":
-                        stomp_found = True
-                        if (
-                            event.payload.name not in stomp_garden_connections
-                            and connection.status == "PUBLISHING"
-                        ):
-                            stomp_garden_connections[event.payload.name] = (
-                                create_stomp_connection(connection)
-                            )
+                    stomp_found = False
+                    for connection in event.payload.publishing_connections:
+                        if connection.api.upper() == "STOMP":
+                            stomp_found = True
+                            if (
+                                event.payload.name not in stomp_garden_connections
+                                and connection.status == "PUBLISHING"
+                            ):
+                                stomp_garden_connections[event.payload.name] = (
+                                    create_stomp_connection(connection)
+                                )
 
-                        elif connection.status == "DISABLED":
-                            stomp_garden_connections[event.payload.name].disconnect()
+                            elif connection.status == "DISABLED":
+                                stomp_garden_connections[
+                                    event.payload.name
+                                ].disconnect()
 
-            if not stomp_found and event.payload.name not in stomp_garden_connections:
-                stomp_garden_connections[event.payload.name].disconnect()
-                del stomp_garden_connections[event.payload.name]
-
-        elif event.name == Events.GARDEN_REMOVED.name:
-            try:
-                del gardens[event.payload.name]
-                if event.payload.name in stomp_garden_connections:
+                if (
+                    not stomp_found
+                    and event.payload.name not in stomp_garden_connections
+                ):
                     stomp_garden_connections[event.payload.name].disconnect()
                     del stomp_garden_connections[event.payload.name]
-            except KeyError:
-                pass
-        elif event.name == Events.GARDEN_UPDATED.name:
-            gardens[event.payload.name] = event.payload
+
+            elif event.name == Events.GARDEN_REMOVED.name:
+                try:
+                    del gardens[event.payload.name]
+                    if event.payload.name in stomp_garden_connections:
+                        stomp_garden_connections[event.payload.name].disconnect()
+                        del stomp_garden_connections[event.payload.name]
+                except KeyError:
+                    pass
+            elif event.name == Events.GARDEN_UPDATED.name:
+                gardens[event.payload.name] = event.payload
 
 
 def _operation_conversion(operation: Operation) -> Operation:

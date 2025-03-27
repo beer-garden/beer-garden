@@ -35,6 +35,8 @@ TBD
 - Merge event metadata on Request Update
 - Updated Events Websocket to support Async calls
 - Fixed bug where Publish Topic did not evalute downstream garden systems
+- Optimized how Gardens are stored in the Router table
+- Cleaned up Garden Event Handler logic
 - Optimized how publish request handles topic matching
 - Fixed logic when `instance_name` is included on Request object with the system version of `latest` that
   the instance name is included in the filter criteria
