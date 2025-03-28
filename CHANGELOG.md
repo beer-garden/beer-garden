@@ -44,8 +44,6 @@ TBD
 - Updated pruner configuration to consolidate options under `db.prune`
 - Fixed bug where Paused Jobs being imported were Running in the background
 - Fixed bug where Request pruning did not remove GridFS stored objects. 
-
-# TODO
 - Fix prune orphaned GridFS objects.
 
 # 3.29.1

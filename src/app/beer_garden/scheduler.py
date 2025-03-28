@@ -397,6 +397,12 @@ class MixedScheduler(object):
                     max_running_jobs=1,
                 )
 
+                self.add_schedule(
+                    beer_garden.db.mongo.pruner.prune_grid_fs,
+                    interval=prune_interval,
+                    max_running_jobs=1,
+                )
+
             if ttl_config.get("in_progress") > 0:
                 self.add_schedule(
                     beer_garden.db.mongo.pruner.prune_outstanding,

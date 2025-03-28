@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import datetime
-from datetime import timedelta
+from datetime import timedelta, timezone
 
 import pytest
 from mock import MagicMock, Mock
+from mongoengine.connection import get_db
 from mongomock.gridfs import enable_gridfs_integration
 
+import beer_garden
 from beer_garden import config
 from beer_garden.db.mongo.models import File, RawFile, Request
 from beer_garden.db.mongo.pruner import (
@@ -13,6 +15,7 @@ from beer_garden.db.mongo.pruner import (
     prune_action_requests,
     prune_admin_requests,
     prune_files,
+    prune_grid_fs,
     prune_info_requests,
     prune_orphan_command_type,
     prune_outstanding,
@@ -122,7 +125,9 @@ def file():
 
 @pytest.fixture()
 def raw_file():
-    rawfile = RawFile().save()
+    rawfile = RawFile()
+    rawfile.file.put(b"test", filename="test.txt")
+    rawfile.save()
     yield rawfile
     rawfile.delete()
 
@@ -206,6 +211,37 @@ class TestMongoPruner(object):
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"file": 1}}}}
         prune_files()
         assert len(File.objects.all()) == 0
+
+    def test_prune_gridfs_files(self, monkeypatch):
+        db = get_db()
+
+        db["raw_file"].delete_many({})
+        db["fs.files"].delete_many({})
+        db["fs.chunks"].delete_many({})
+
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"file": 1}}}}
+
+        FAKE_TIME = datetime.datetime.now(timezone.utc) + timedelta(minutes=60)
+
+        class mydatetime(datetime.datetime):
+            @classmethod
+            def now(cls, *arg, **kwargs):
+                return FAKE_TIME
+
+        monkeypatch.setattr(beer_garden.db.mongo.pruner, "datetime", mydatetime)
+
+        rawfile = RawFile()
+        rawfile.file.put(b"test", filename="test.txt")
+        rawfile.save()
+
+        db["raw_file"].delete_one({})
+        # Orphaned Gridfs files
+        assert db["fs.files"].count() == 1
+        assert db["fs.chunks"].count() == 1
+
+        prune_grid_fs()
+        assert db["fs.files"].count() == 0
+        assert db["fs.chunks"].count() == 0
 
     def test_run_cancels_outstanding_requests(self, task, in_progress, created):
         config._CONFIG = {"db": {"prune": {"in_progress_request_expiration": 15}}}

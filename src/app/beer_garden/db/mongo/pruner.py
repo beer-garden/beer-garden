@@ -7,6 +7,7 @@ from brewtils.errors import ModelValidationError
 from brewtils.models import Event, Events
 from brewtils.schema_parser import SchemaParser
 from mongoengine import FileField, ObjectIdField, Q
+from mongoengine.connection import get_db
 from mongoengine.errors import DoesNotExist
 
 import beer_garden.config as config
@@ -289,3 +290,33 @@ def prune_outstanding():
                             f"Parent is missing, killing orphan request {request.id}"
                         )
                         request.delete()
+
+
+def prune_grid_fs():
+    """
+    Helper function to remove files from GridFS that are no longer
+    referenced by the database.
+    """
+
+    prune_config_ttl = config.get("db.prune.ttl")
+    file_threshold = prune_config_ttl.get("file", -1)
+    timeout = datetime.now(timezone.utc) - timedelta(minutes=file_threshold)
+
+    db = get_db()
+    files = db["fs.files"]
+    outstanding_files = files.find({"uploadDate": {"$lte": timeout}})
+
+    for outstanding_file in outstanding_files:
+
+        if (
+            Request.objects.filter(
+                Q(output_gridfs=outstanding_file["_id"])
+                | Q(parameters_gridfs=outstanding_file["_id"])
+            ).count()
+            == 0
+            and RawFile.objects.filter(file=outstanding_file["_id"]).count() == 0
+        ):
+
+            db["fs.chunks"].delete_many({"files_id": outstanding_file["_id"]})
+            files.delete_one({"_id": outstanding_file["_id"]})
+            logger.error(f"Deleted orphaned file {outstanding_file["_id"]}")
