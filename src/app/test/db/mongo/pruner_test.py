@@ -7,7 +7,14 @@ from mock import MagicMock, Mock
 from mongomock.gridfs import enable_gridfs_integration
 
 from beer_garden import config
-from beer_garden.db.mongo.models import File, RawFile, Request
+from beer_garden.db.mongo.models import (
+    DateTrigger,
+    File,
+    Job,
+    RawFile,
+    Request,
+    RequestTemplate,
+)
 from beer_garden.db.mongo.pruner import (
     determine_tasks,
     prune_action_requests,
@@ -15,6 +22,7 @@ from beer_garden.db.mongo.pruner import (
     prune_files,
     prune_info_requests,
     prune_orphan_command_type,
+    prune_orphan_files,
     prune_outstanding,
     prune_temp_requests,
 )
@@ -335,3 +343,140 @@ class TestOrphanPruner(object):
 
         prune_orphan_command_type(1, "ACTION")
         assert len(Request.objects.filter(command_type="ACTION")) == 0
+
+
+class TestOrphanFile(object):
+
+    @pytest.fixture
+    def orphan_request_file(self):
+
+        owner = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="T",
+            created_at=datetime.datetime(2024, 1, 17),
+            status="SUCCESS",
+            command_type="ACTION",
+        )
+        owner.save()
+
+        file = File(
+            owner_id=str(owner.id),
+            file_name="T",
+            file_size=1,
+            chunk_size=1,
+            updated_at=datetime.datetime(2024, 1, 17),
+            owner_type="REQUEST",
+            request=owner,
+        )
+
+        owner.delete()
+        file.save()
+
+        yield file
+
+        file.delete()
+
+    @pytest.fixture
+    def orphan_job_file(self, ts_dt, request_template_dict):
+
+        owner = Job(
+            name="T",
+            trigger_type="date",
+            trigger=DateTrigger(run_date=ts_dt),
+            request_template=RequestTemplate(**request_template_dict),
+        )
+
+        owner.save()
+
+        file = File(
+            owner_id=str(owner.id),
+            file_name="T",
+            file_size=1,
+            chunk_size=1,
+            updated_at=datetime.datetime(2024, 1, 17),
+            owner_type="JOB",
+            job=owner,
+        )
+
+        owner.delete()
+        file.save()
+
+        yield file
+
+        file.delete()
+
+    @pytest.fixture
+    def deleted_request_file(self):
+
+        owner = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="T",
+            created_at=datetime.datetime(2024, 1, 17),
+            status="SUCCESS",
+            command_type="ACTION",
+        )
+        owner.save()
+
+        file = File(
+            owner_id=str(owner.id),
+            file_name="T",
+            file_size=1,
+            chunk_size=1,
+            updated_at=datetime.datetime(2024, 1, 17),
+            owner_type="REQUEST",
+            request=owner,
+        )
+
+        file.save()
+        owner.delete()
+
+        yield file
+
+        file.delete()
+
+    @pytest.fixture
+    def deleted_job_file(self, ts_dt, request_template_dict):
+
+        owner = Job(
+            name="T",
+            trigger_type="date",
+            trigger=DateTrigger(run_date=ts_dt),
+            request_template=RequestTemplate(**request_template_dict),
+        )
+
+        owner.save()
+
+        file = File(
+            owner_id=str(owner.id),
+            file_name="T",
+            file_size=1,
+            chunk_size=1,
+            updated_at=datetime.datetime(2024, 1, 17),
+            owner_type="JOB",
+            job=owner,
+        )
+
+        file.save()
+        owner.delete()
+
+        yield file
+
+        file.delete()
+
+    def test_orphan_file(self, orphan_request_file, deleted_request_file):
+        assert len(File.objects.all()) == 2
+
+        prune_orphan_files(1)
+        assert len(File.objects.all()) == 1
+
+    def test_orphan_job(self, orphan_job_file, deleted_job_file):
+        assert len(File.objects.all()) == 2
+
+        prune_orphan_files(1)
+        assert len(File.objects.all()) == 1

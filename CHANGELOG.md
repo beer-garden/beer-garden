@@ -40,6 +40,7 @@ TBD
 - Optimized how publish request handles topic matching
 - Fixed logic when `instance_name` is included on Request object with the system version of `latest` that
   the instance name is included in the filter criteria
+- Updated orphan pruner to delete orphaned files
 - Updated Topic Sync logging to track update/delete counts
 - Fixed bug where pour again invalid property caused broken UI
 - Updated pruner configuration to consolidate options under `db.prune`

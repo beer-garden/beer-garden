@@ -10,7 +10,7 @@ from mongoengine import Q
 from mongoengine.errors import DoesNotExist
 
 import beer_garden.config as config
-from beer_garden.db.mongo.models import File, RawFile, Request
+from beer_garden.db.mongo.models import File, Job, RawFile, Request
 from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.events import publish
 
@@ -208,6 +208,25 @@ def prune_orphans():
         prune_orphan_command_type(orphan_ttl, "ACTION")
         prune_orphan_command_type(orphan_ttl, "ADMIN")
         prune_orphan_command_type(orphan_ttl, "TEMP")
+        prune_orphan_files(orphan_ttl)
+
+
+def prune_orphan_files(ttl):
+    timeout = datetime.now(timezone.utc) - timedelta(minutes=ttl)
+
+    orphaned_files = File.objects.only("request", "job", "id", "owner_type").filter(
+        updated_at__lte=timeout,
+    )
+
+    for file in orphaned_files:
+        try:
+            if file.owner_type == "JOB" and file.job is not None:
+                Job.objects.get(id=file.job.id)
+            elif file.owner_type == "REQUEST" and file.request is not None:
+                Request.objects.get(id=file.request.id)
+        except DoesNotExist:
+            logger.error(f"File missing owner, killing orphan file {file.id}")
+            file.delete()
 
 
 def prune_orphan_command_type(ttl, command_type):
