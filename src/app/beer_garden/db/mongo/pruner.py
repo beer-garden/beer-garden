@@ -338,4 +338,4 @@ def prune_grid_fs():
 
             db["fs.chunks"].delete_many({"files_id": outstanding_file["_id"]})
             files.delete_one({"_id": outstanding_file["_id"]})
-            logger.error(f"Deleted orphaned file {outstanding_file["_id"]}")
+            logger.error(f"Deleted orphaned file {outstanding_file['_id']}")
