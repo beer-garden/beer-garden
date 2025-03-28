@@ -275,9 +275,9 @@ def ensure_v3_29_model_migration():
 
 def ensure_v3_31_model_migration():
     db = get_db()
-    if contains_field("garden", ["status", "status_info"]):
+    if contains_field("garden", ["status", "status_info", "namespaces"]):
         logger.warning(
-            "Status and/or status_info was found in Garden and will be removed. This is most"
+            "Status or namespaces was found in Garden and will be removed. This is most"
             " likely because the database is using the old (v3.30) style of storing in"
             " the database."
         )
@@ -285,7 +285,7 @@ def ensure_v3_31_model_migration():
         for legacy_garden in garden_collection.find():
             garden_collection.update_one(
                 {"_id": legacy_garden["_id"]},
-                {"$unset": {"status": "", "status_info": ""}},
+                {"$unset": {"status": "", "status_info": "", "namespaces": ""}},
             )
 
 
