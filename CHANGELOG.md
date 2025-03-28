@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.31.0
+
+TBD
+
+- Removed status, status_info, and namespaces from Garden.
+
 # 3.29.1
 
 12/31/2024
