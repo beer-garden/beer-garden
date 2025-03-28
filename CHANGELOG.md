@@ -19,6 +19,7 @@ TBD
 - Fixed multi-hop check for legacy Gardens in Router
 - Removed Garden load file from setup_routing because it was unnessary
 - Fixed bug where `NOT_CONFIGURED` status for Receiving connection was not filtered out
+- Added logging for jobs created or updated from import
 - Fixed bugs with ELK APM integration and improved labeling
 - Expanded APM Metrics to collect Event Processing Queue Depths
 - Updated internal events to utilize deque to improve performance
