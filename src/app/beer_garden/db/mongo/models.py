@@ -863,7 +863,6 @@ class Garden(MongoModel, Document):
     brewtils_model = brewtils.models.Garden
 
     name = StringField(required=True, default="default")
-    namespaces = ListField()
 
     connection_type = StringField(required=False)
     receiving_connections = EmbeddedDocumentListField("Connection")

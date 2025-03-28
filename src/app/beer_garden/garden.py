@@ -36,7 +36,6 @@ from beer_garden.errors import (
     RoutingRequestException,
 )
 from beer_garden.events import publish, publish_event
-from beer_garden.namespace import get_namespaces
 from beer_garden.systems import get_systems, remove_system
 
 logger = logging.getLogger(__name__)
@@ -155,7 +154,7 @@ def local_garden(all_systems: bool = False) -> Garden:
     # the system information to be embedded in the garden document itself (as opposed
     # Systems just having a reference to their garden). There is nothing that would
     # keep a LOCAL garden's embedded list of systems up to date currently, so we instead
-    # build the list of systems (and namespaces) at call time. Once the System
+    # build the list of systems at call time. Once the System
     # relationship has been refactored, the need for this function should go away.
     garden: Garden = db.query_unique(Garden, connection_type="LOCAL")
 
@@ -164,7 +163,6 @@ def local_garden(all_systems: bool = False) -> Garden:
         filter_params["local"] = True
 
     garden.systems = get_systems(filter_params=filter_params)
-    garden.namespaces = get_namespaces()
     garden.version = beer_garden.__version__
 
     return garden
@@ -387,9 +385,6 @@ def garden_add_system(system: System, garden_name: str) -> Garden:
             f"Garden '{garden_name}' does not exist, unable to map '{str(system)}"
         )
 
-    if system.namespace not in garden.namespaces:
-        garden.namespaces.append(system.namespace)
-
     if str(system) not in garden.systems:
         garden.systems.append(str(system))
 
@@ -428,7 +423,7 @@ def upsert_garden(garden: Garden, skip_connections: bool = True) -> Garden:
     if existing_garden is None:
         return create_garden(garden)
     else:
-        for attr in ("namespaces", "systems", "metadata"):
+        for attr in ("systems", "metadata"):
             setattr(existing_garden, attr, getattr(garden, attr))
         if not skip_connections:
             for attr in ("receiving_connections", "publishing_connections"):

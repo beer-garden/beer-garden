@@ -25,7 +25,6 @@ import beer_garden.events
 import beer_garden.events.handlers
 import beer_garden.garden
 import beer_garden.local_plugins.manager
-import beer_garden.namespace
 import beer_garden.queue.api as queue
 import beer_garden.router
 import beer_garden.scheduler

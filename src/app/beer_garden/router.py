@@ -37,7 +37,6 @@ import beer_garden.files
 import beer_garden.garden
 import beer_garden.local_plugins.manager
 import beer_garden.log
-import beer_garden.namespace
 import beer_garden.plugin
 import beer_garden.queues
 import beer_garden.requests
@@ -152,7 +151,6 @@ route_functions = {
     "QUEUE_DELETE": beer_garden.queues.clear_queue,
     "QUEUE_DELETE_ALL": beer_garden.queues.clear_all_queues,
     "QUEUE_READ_INSTANCE": beer_garden.queues.get_instance_queues,
-    "NAMESPACE_READ_ALL": beer_garden.namespace.get_namespaces,
     "FILE_CREATE": beer_garden.files.create_file,
     "FILE_CHUNK": beer_garden.files.create_chunk,
     "FILE_FETCH": beer_garden.files.fetch_file,
