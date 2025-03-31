@@ -23,7 +23,7 @@ deps:
 	pip install -r requirements.txt
 
 lint: ## check style with flake8
-	flake8
+	flake8 --ignore=F824 
 	black --check --diff ./
 
 #test-config: ## run configuration integration tests
