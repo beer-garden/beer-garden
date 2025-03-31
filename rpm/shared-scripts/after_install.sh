@@ -101,9 +101,6 @@ fi
 # Ensure correct owner and group
 chown -hR ${USER}:${GROUP} $APP_HOME
 
-# Create beerctl alias
-alias beerctl="sudo systemctl $1 beer-garden"
-
 # Reload units
 systemctl daemon-reload
 

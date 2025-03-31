@@ -1,4 +1,6 @@
 APP_NAME="beer-garden"
+GROUP=$APP_NAME
+USER=$APP_NAME
 APP_HOME="/opt/${APP_NAME}"
 
 CONFIG_HOME="$APP_HOME/conf"
@@ -33,12 +35,11 @@ case "$1" in
         # See https://github.com/beer-garden/beer-garden/issues/215
         if [ -f "$CONFIG_FILE" ]; then
             "$APP_HOME/bin/migrate_config" -c "$CONFIG_FILE"
+            # Set owner and group of new config
+            chown ${USER}:${GROUP} $CONFIG_FILE
         fi
     ;;
 esac
-
-# Unalias beerctl
-unalias beerctl
 
 # Reload units
 systemctl daemon-reload
