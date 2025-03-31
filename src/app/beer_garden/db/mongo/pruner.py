@@ -6,7 +6,8 @@ from typing import List, Tuple
 from brewtils.errors import ModelValidationError
 from brewtils.models import Event, Events
 from brewtils.schema_parser import SchemaParser
-from mongoengine import Q
+from mongoengine import FileField, ObjectIdField, Q
+from mongoengine.connection import get_db
 from mongoengine.errors import DoesNotExist
 
 import beer_garden.config as config
@@ -24,6 +25,14 @@ def run_pruner(tasks, ttl_name):
 
     if tasks:
         for task in tasks:
+            exclude_fields = []
+
+            for field in task["collection"]._fields:
+                if not isinstance(
+                    task["collection"]._fields[field], FileField
+                ) and not isinstance(task["collection"]._fields[field], ObjectIdField):
+                    exclude_fields.append(field)
+
             delete_older_than = current_time - task["delete_after"]
 
             query = Q(**{task["field"] + "__lt": delete_older_than})
@@ -34,30 +43,41 @@ def run_pruner(tasks, ttl_name):
                 "Removing %s %ss older than %s"
                 % (ttl_name, task["collection"].__name__, str(delete_older_than))
             )
+            projected_delete = (
+                task["collection"].objects(query).only("id").no_cache().count()
+            )
 
-            if task["batch_size"] > 0:
-                while (
-                    task["batch_size"]
-                    < task["collection"].objects(query).only("id").no_cache().count()
-                ):
-                    logger.debug(
-                        "Removing %s from %ss older than %s, batched by %s"
-                        % (
-                            ttl_name,
-                            task["collection"].__name__,
-                            str(delete_older_than),
-                            str(task["batch_size"]),
-                        )
-                    )
-                    task["collection"].objects(query).only("id").limit(
+            if projected_delete > 0:
+                if task["batch_size"] > 0:
+                    while (
                         task["batch_size"]
-                    ).no_cache().delete()
+                        < task["collection"]
+                        .objects(query)
+                        .only("id")
+                        .no_cache()
+                        .count()
+                    ):
+                        logger.debug(
+                            "Removing %s from %ss older than %s, batched by %s"
+                            % (
+                                ttl_name,
+                                task["collection"].__name__,
+                                str(delete_older_than),
+                                str(task["batch_size"]),
+                            )
+                        )
 
-            num = task["collection"].objects(query).only("id").no_cache().delete()
-            if num:
+                        task["collection"].objects(query).exclude(
+                            *exclude_fields
+                        ).limit(task["batch_size"]).no_cache().delete()
+
+                task["collection"].objects(query).exclude(
+                    *exclude_fields
+                ).no_cache().delete()
+
                 logger.debug(
                     "Deleted %s %s from %ss"
-                    % (num, ttl_name, task["collection"].__name__)
+                    % (projected_delete, ttl_name, task["collection"].__name__)
                 )
 
 
@@ -289,3 +309,32 @@ def prune_outstanding():
                             f"Parent is missing, killing orphan request {request.id}"
                         )
                         request.delete()
+
+
+def prune_grid_fs():
+    """
+    Helper function to remove files from GridFS that are no longer
+    referenced by the database.
+    """
+
+    prune_config_ttl = config.get("db.prune.ttl")
+    file_threshold = prune_config_ttl.get("file", -1)
+    timeout = datetime.now(timezone.utc) - timedelta(minutes=file_threshold)
+
+    db = get_db()
+    files = db["fs.files"]
+    outstanding_files = files.find({"uploadDate": {"$lte": timeout}})
+
+    for outstanding_file in outstanding_files:
+        if (
+            Request.objects.filter(
+                Q(output_gridfs=outstanding_file["_id"])
+                | Q(parameters_gridfs=outstanding_file["_id"])
+            ).count()
+            == 0
+            and RawFile.objects.filter(file=outstanding_file["_id"]).count() == 0
+        ):
+
+            db["fs.chunks"].delete_many({"files_id": outstanding_file["_id"]})
+            files.delete_one({"_id": outstanding_file["_id"]})
+            logger.error(f"Deleted orphaned file {outstanding_file['_id']}")

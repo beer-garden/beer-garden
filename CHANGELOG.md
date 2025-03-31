@@ -46,6 +46,8 @@ TBD
 - Fixed bug where pour again invalid property caused broken UI
 - Updated pruner configuration to consolidate options under `db.prune`
 - Fixed bug where Paused Jobs being imported were Running in the background
+- Fixed bug where Request pruning did not remove GridFS stored objects. 
+- Fix prune orphaned GridFS objects.
 - Updated 3.24 migration script to skip children config creation if only one garden
 
 # 3.29.1
