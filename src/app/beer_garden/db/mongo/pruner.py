@@ -326,7 +326,6 @@ def prune_grid_fs():
     outstanding_files = files.find({"uploadDate": {"$lte": timeout}})
 
     for outstanding_file in outstanding_files:
-
         if (
             Request.objects.filter(
                 Q(output_gridfs=outstanding_file["_id"])
