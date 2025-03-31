@@ -47,6 +47,7 @@ TBD
 - Updated pruner configuration to consolidate options under `db.prune`
 - Fixed bug where Paused Jobs being imported were Running in the background
 - Updated 3.24 migration script to skip children config creation if only one garden
+- Reduced mongodb calls required to update instance heartbeat
 
 # 3.29.1
 
