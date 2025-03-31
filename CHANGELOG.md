@@ -49,6 +49,7 @@ TBD
 - Fixed bug where Request pruning did not remove GridFS stored objects. 
 - Fix prune orphaned GridFS objects.
 - Updated 3.24 migration script to skip children config creation if only one garden
+- Reduced mongodb calls required to update instance heartbeat
 
 # 3.29.1
 

@@ -483,17 +483,43 @@ async def heartbeat_async(
 ) -> dict:
     query = {"instances._id": ObjectIdField().to_mongo(instance_id)}
     projection = {"instances.$": 1, "_id": 0}
-    update = {
-        "$set": {"instances.$.status_info.heartbeat": datetime.utcnow()},
-        "$push": {
-            "instances.$.status_info.history": {
-                "status": "RUNNING",
-                "heartbeat": datetime.utcnow(),
-            }
-        },
-    }
 
-    return await _update_instance_async(query, projection, update)
+    result = await moto.query(collection="system", filter=query, projection=projection)
+
+    instance = result["instances"][0]
+    if "_id" in instance:
+        instance["id"] = str(instance["_id"])
+        del instance["_id"]
+
+    update_time = datetime.utcnow()
+    history = {
+        "status": "RUNNING",
+        "heartbeat": update_time,
+    }
+    instance["status_info"]["heartbeat"] = update_time
+
+    instance["status_info"]["history"].append(history)
+
+    if config.get("plugin.status_history") > 0 and len(
+        instance["status_info"]["history"]
+    ) + 1 > config.get("plugin.status_history"):
+        instance["status_info"]["history"].pop(0)
+
+        update = {
+            "$set": {
+                "instances.$.status_info.heartbeat": update_time,
+                "instances.$.status_info.history": instance["status_info"]["history"],
+            },
+        }
+    else:
+        update = {
+            "$set": {"instances.$.status_info.heartbeat": update_time},
+            "$push": {"instances.$.status_info.history": history},
+        }
+
+    await moto.update_one(collection="system", filter=query, update=update)
+
+    return SchemaParser.parse_instance(instance)
 
 
 async def _get_instance_async(filter, projection) -> dict:
