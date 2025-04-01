@@ -41,5 +41,8 @@ case "$1" in
     ;;
 esac
 
+# Unalias beerctl
+unalias beerctl
+
 # Reload units
 systemctl daemon-reload
