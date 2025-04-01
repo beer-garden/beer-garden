@@ -779,6 +779,7 @@ def _pre_forward(operation: Operation) -> Operation:
 
     if operation.operation_type == "REQUEST_CREATE":
         # Save the request so it'll have an ID and we'll have something to update
+        operation.model.target_garden = operation.target_garden_name
         local_request = create_request(operation.model)
 
         operation.model.id = local_request.id

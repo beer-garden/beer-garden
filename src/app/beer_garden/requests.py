@@ -675,8 +675,10 @@ def _validate_request(request: Request):
 
 def _is_local_request(request: Request) -> bool:
 
-    if request.target_garden and request.target_garden == config.get("garden.name"):
-        return True
+    if request.target_garden:
+        if request.target_garden == config.get("garden.name"):
+            return True
+        return False
 
     system = db.query_unique(
         System,
