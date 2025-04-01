@@ -915,7 +915,7 @@ def handle_event(event):
                     ] and receiving.status not in ["NOT_CONFIGURED", "DISABLED"]:
                         garden_sync(child.name)
                         break
-                    
+
     if "SYSTEM" in event.name or "INSTANCE" in event.name:
         # If a System or Instance is updated, publish updated Local Garden Model for UI
         publish_local_garden_to_api()
