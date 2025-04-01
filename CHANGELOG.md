@@ -19,12 +19,12 @@ TBD
 - Fixed multi-hop check for legacy Gardens in Router
 - Removed Garden load file from setup_routing because it was unnessary
 - Fixed bug where `NOT_CONFIGURED` status for Receiving connection was not filtered out
+- Added logging for jobs created or updated from import
 - Fixed bugs with ELK APM integration and improved labeling
 - Expanded APM Metrics to collect Event Processing Queue Depths
 - Updated internal events to utilize deque to improve performance
 - Updated internal events to allow for unique and sorting events based on timestamps, only
   latest instance of the transaction event is handled within the event handlers
-- Updated config.yaml to support toggling on and off unique event filtering
 - Merge Request metadata if uniqued in event handler
 - Optimizing how Garden configurations are loaded
 - Fixed bug where Garden historical status info is maintained after rescan
@@ -35,8 +35,23 @@ TBD
 - Merge event metadata on Request Update
 - Updated Events Websocket to support Async calls
 - Fixed bug where Publish Topic did not evalute downstream garden systems
+- Optimized how Gardens are stored in the Router table
+- Cleaned up Garden Event Handler logic
 - Optimized how publish request handles topic matching
 - Downstream Garden Sync events execute at startup after Entry Points start
+- Added filter to check if value exists for field in 3.29 db model migration
+- Fixed logic when `instance_name` is included on Request object with the system version of `latest` that
+  the instance name is included in the filter criteria
+- Updated orphan pruner to delete orphaned files
+- Updated Topic Sync logging to track update/delete counts
+- Fixed bug where pour again invalid property caused broken UI
+- Updated pruner configuration to consolidate options under `db.prune`
+- Fixed bug where Paused Jobs being imported were Running in the background
+- Fixed bug where Request pruning did not remove GridFS stored objects. 
+- Fix prune orphaned GridFS objects.
+- Updated 3.24 migration script to skip children config creation if only one garden
+- Reduced mongodb calls required to update instance heartbeat
+- Updated logic for forwarding Requests to remove DB call
 
 # 3.29.1
 

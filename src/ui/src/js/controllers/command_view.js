@@ -273,8 +273,10 @@ export default function commandViewController(
           for (const el of $scope.form) {
             if (el.key && Array.isArray(el.key)) {
               if (el.key.indexOf(p) >= 0) {
-                el['placeholder'] = params[p].details.file_name;
-                break;
+                if (params[p].details && params[p].details.file_name) {
+                  el['placeholder'] = params[p].details.file_name;
+                  break;
+                }
               }
             }
           }

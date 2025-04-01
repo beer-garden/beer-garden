@@ -13,7 +13,7 @@ import re
 from http.server import ThreadingHTTPServer
 
 import elasticapm
-from brewtils.models import Event, Request
+from brewtils.models import Event, Operation, Request
 from brewtils.stoppable_thread import StoppableThread
 from elasticapm import Client
 from elasticapm.metrics.base_metrics import MetricSet
@@ -191,7 +191,12 @@ def extract_custom_context(result) -> None:
     """
 
     if elasticapm.get_trace_parent_header():
+        if isinstance(result, Operation):
+            return extract_custom_context(result.model)
         if isinstance(result, Event):
+            elasticapm.label(event_name=result.name)
+            elasticapm.label(event_garden=result.garden)
+
             if hasattr(result, "payload"):
                 return extract_custom_context(result.payload)
         elif isinstance(result, Request):

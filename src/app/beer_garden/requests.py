@@ -599,12 +599,19 @@ def determine_latest_system_version(request: Request):
     if request.system_version and request.system_version.lower() != "latest":
         return request
 
+    filter_criteria = {"name": request.system}
+
+    if request.instance_name:
+        filter_criteria["instances__name"] = request.instance_name
+
+    if request.namespace:
+        filter_criteria["namespace"] = request.namespace
+    else:
+        filter_criteria["namespace"] = config.get("garden.name")
+
     systems = db.query(
         System,
-        filter_params={
-            "namespace": request.namespace,
-            "name": request.system,
-        },
+        filter_params=filter_criteria,
     )
 
     versions = []
@@ -668,8 +675,10 @@ def _validate_request(request: Request):
 
 def _is_local_request(request: Request) -> bool:
 
-    if request.target_garden and request.target_garden == config.get("garden.name"):
-        return True
+    if request.target_garden:
+        if request.target_garden == config.get("garden.name"):
+            return True
+        return False
 
     system = db.query_unique(
         System,
