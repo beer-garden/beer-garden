@@ -403,7 +403,7 @@ class MixedScheduler(object):
                     max_running_jobs=1,
                 )
 
-            if ttl_config.get("in_progress") > 0:
+            if config.get("db.prune.in_progress_request_expiration") > 0:
                 self.add_schedule(
                     beer_garden.db.mongo.pruner.prune_outstanding,
                     interval=prune_interval,
