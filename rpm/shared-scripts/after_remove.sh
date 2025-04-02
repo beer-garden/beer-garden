@@ -7,6 +7,7 @@ CONFIG_FILE="${CONFIG_HOME}/config.yaml"
 APP_LOG_CONFIG="${CONFIG_HOME}/app-logging.yaml"
 LOCAL_PLUGIN_LOG_CONFIG="${CONFIG_HOME}/local-plugin-logging.yaml"
 REMOTE_PLUGIN_LOG_CONFIG="${CONFIG_HOME}/remote-plugin-logging.yaml"
+JOB_STARTUP_FILE="${CONFIG_HOME}/scheduled_jobs.json"
 
 LOG_HOME="$APP_HOME/log"
 PLUGIN_LOG_HOME="$LOG_HOME/plugins"
@@ -34,7 +35,13 @@ case "$1" in
         # Migrate application config if it exists
         # See https://github.com/beer-garden/beer-garden/issues/215
         if [ -f "$CONFIG_FILE" ]; then
-            "$APP_HOME/bin/migrate_config" -c "$CONFIG_FILE"
+            "$APP_HOME/bin/migrate_config" \
+            -c "$CONFIG_FILE" -l "$APP_LOG_CONFIG" \
+            --plugin-local-directory "$PLUGIN_HOME" \
+            --plugin-local-logging-config-file "$LOCAL_PLUGIN_LOG_CONFIG" \
+            --plugin-remote-logging-config-file "$REMOTE_PLUGIN_LOG_CONFIG" \
+            --children-directory "$CHILDREN_CONFIG_HOME" \
+            --scheduler-job-startup-file "$JOB_STARTUP_FILE"
         fi
     ;;
 esac

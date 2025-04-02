@@ -87,7 +87,14 @@ def generate(args: Sequence[str]):
     Raises:
         YapconfLoadError: Missing 'config' configuration option (file location)
     """
+    print("ARGS")
+    print(args)
     spec, cli_vars = _parse_args(args)
+    print(cli_vars.get("scheduler"))
+    print("SPEC")
+    children = spec.get_item("scheduler").children
+    print(children["job_startup_file"])
+    print(children["job_startup_file"].default)
 
     bootstrap = spec.load_filtered_config(cli_vars, "ENVIRONMENT", bootstrap=True)
     config = spec.load_filtered_config(cli_vars, "ENVIRONMENT", exclude_bootstrap=True)
@@ -107,9 +114,20 @@ def migrate(args: Sequence[str]):
     Raises:
         YapconfLoadError: Missing 'config' configuration option (file location)
     """
+    print("ARGS")
+    print(args)
     spec, cli_vars = _parse_args(args)
+    print(cli_vars.get("scheduler"))
+    print("SPEC")
+    children = spec.get_item("scheduler").children
+    print(children["job_startup_file"])
+    print(children["job_startup_file"].default)
 
     config = spec.load_config(cli_vars, "ENVIRONMENT")
+    print("CONFIG")
+    print(config.scheduler)
+    print("CONFIG_FILE")
+    print(config.configuration.file)
 
     if not config.configuration.file:
         raise SystemExit(
@@ -131,6 +149,7 @@ def migrate(args: Sequence[str]):
     else:
         new_file = f"{config.configuration.file}.tmp"
 
+    # TODO
     spec.migrate_config_file(
         config.configuration.file,
         current_file_type=current_type,
