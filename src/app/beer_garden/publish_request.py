@@ -67,20 +67,22 @@ def get_systems_regex(topics: List[Topic]) -> List[System]:
             if subscriber.version:
                 where_statements.append({"version": {"$regex": subscriber.version}})
 
-            if subscriber.instance:
-                where_statements.append(
-                    {"instances.name": {"$regex": subscriber.instance}}
-                )
+            if subscriber.subscriber_type == "DYNAMIC":
+                if subscriber.instance:
+                    where_statements.append(
+                        {"instances.name": {"$regex": subscriber.instance}}
+                    )
 
-            if subscriber.command:
-                where_statements.append(
-                    {"commands.name": {"$regex": subscriber.command}}
-                )
+                if subscriber.command:
+                    where_statements.append(
+                        {"commands.name": {"$regex": subscriber.command}}
+                    )
 
             if where_statements:
-                or_statements.append({"$and": where_statements})
-            else:
-                return db.query(System, exclude_fields=["instances.status_info"])
+                and_statement = {"$and": where_statements}
+
+                if and_statement not in or_statements:
+                    or_statements.append(and_statement)
 
     if or_statements:
         raw_query = {"$or": or_statements}
