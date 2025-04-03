@@ -104,7 +104,9 @@ def get_topics_regex(topic) -> List[Topic]:
         list[Topic]: List of matching topics based on regex within the table
     """
 
-    return db.query(Topic, raw_query={"$expr": {"$regexMatch": {"input": topic, "regex": "$name"}}})
+    return db.query(
+        Topic, raw_query={"$expr": {"$regexMatch": {"input": topic, "regex": "$name"}}}
+    )
 
 
 def get_all_topics(**kwargs) -> List[Topic]:

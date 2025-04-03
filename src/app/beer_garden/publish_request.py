@@ -58,16 +58,19 @@ def get_systems_regex(topics: List[Topic]) -> List[System]:
         for subscriber in topic.subscribers:
             where_statements = []
 
-            if subscriber.namespace:
-                where_statements.append({"namespace": {"$regex": subscriber.namespace}})
-
-            if subscriber.system:
-                where_statements.append({"name": {"$regex": subscriber.system}})
-
-            if subscriber.version:
-                where_statements.append({"version": {"$regex": subscriber.version}})
-
             if subscriber.subscriber_type == "DYNAMIC":
+
+                if subscriber.system:
+                    where_statements.append({"name": {"$regex": subscriber.system}})
+
+                if subscriber.version:
+                    where_statements.append({"version": {"$regex": subscriber.version}})
+
+                if subscriber.namespace:
+                    where_statements.append(
+                        {"namespace": {"$regex": subscriber.namespace}}
+                    )
+
                 if subscriber.instance:
                     where_statements.append(
                         {"instances.name": {"$regex": subscriber.instance}}
@@ -77,6 +80,10 @@ def get_systems_regex(topics: List[Topic]) -> List[System]:
                     where_statements.append(
                         {"commands.name": {"$regex": subscriber.command}}
                     )
+            else:
+                where_statements.append({"name": {"$eq": subscriber.system}})
+                where_statements.append({"version": {"$eq": subscriber.version}})
+                where_statements.append({"namespace": {"$eq": subscriber.namespace}})
 
             if where_statements:
                 and_statement = {"$and": where_statements}
