@@ -53,6 +53,7 @@ def add_internal_events_handler(event_manager):
                 Events.INSTANCE_STARTED,
                 Events.INSTANCE_UPDATED,
                 Events.INSTANCE_STOPPED,
+                Events.ENTRY_STARTED,
             ],
             True,
         ),

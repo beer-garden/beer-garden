@@ -721,7 +721,7 @@ def load_garden_config(garden: Garden = None, garden_name: str = None):
     return db.modify(garden, **updates)
 
 
-def rescan():
+def rescan(sync_gardens: bool = False):
     if config.get("children.directory"):
         loaded_gardens = []
         children_directory = Path(config.get("children.directory"))
@@ -783,10 +783,11 @@ def rescan():
                 f"Unable to find Children directory: {str(children_directory.resolve())}"
             )
 
-        for garden_name in loaded_gardens:
-            # Need to give the router a second to load the events
-            time.sleep(0.5)
-            garden_sync(garden_name)
+        if sync_gardens:
+            for garden_name in loaded_gardens:
+                # Need to give the router a second to load the events
+                time.sleep(0.5)
+                garden_sync(garden_name)
 
 
 def garden_sync(sync_target: str = None):
@@ -893,6 +894,27 @@ def handle_event(event):
 
     This method should NOT update the routing module. Let its handler worry about that!
     """
+
+    if (
+        event.garden == config.get("garden.name")
+        and event.name == Events.ENTRY_STARTED.name
+    ):
+        children = db.query(
+            Garden, filter_params={"connection_type__ne": "LOCAL", "has_parent": False}
+        )
+
+        if "entry_point_type" in event.metadata:
+            for child in children:
+                for receiving in child.receiving_connections:
+                    # Due to HTTP being enabled by default, if STOMP is enabled
+                    # duplicate sync events will be published. Since we don't
+                    # know how to identify the correct entry point, we have
+                    # to just deque unique the event
+                    if receiving.api == event.metadata[
+                        "entry_point_type"
+                    ] and receiving.status not in ["NOT_CONFIGURED", "DISABLED"]:
+                        garden_sync(child.name)
+                        break
 
     if "SYSTEM" in event.name or "INSTANCE" in event.name:
         # If a System or Instance is updated, publish updated Local Garden Model for UI
