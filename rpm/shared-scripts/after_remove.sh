@@ -2,6 +2,7 @@ APP_NAME="beer-garden"
 APP_HOME="/opt/${APP_NAME}"
 
 CONFIG_HOME="$APP_HOME/conf"
+PLUGIN_HOME="$APP_HOME/plugins"
 CHILDREN_CONFIG_HOME="$CONFIG_HOME/children"
 CONFIG_FILE="${CONFIG_HOME}/config.yaml"
 APP_LOG_CONFIG="${CONFIG_HOME}/app-logging.yaml"

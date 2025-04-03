@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+# 3.30.0
+
+TBD
+
+- Updated rpm script to supply cli values to config migration. Beer-garden `migrate` will apply cli
+  values prior to yapconf `migrate_config_file`.
+
 # 3.29.1
 
 12/31/2024
