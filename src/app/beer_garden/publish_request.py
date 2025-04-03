@@ -1,7 +1,7 @@
+import asyncio
 import copy
 import logging
 import re
-from concurrent.futures import ThreadPoolExecutor
 from typing import List
 
 from brewtils.models import Event, Events, Garden, Operation, Request, System, Topic
@@ -174,11 +174,21 @@ def handle_event(event: Event):
 
             if requests:
 
-                with ThreadPoolExecutor() as executor:
-                    executor.map(route_request, requests)
+                try:
+                    asyncio.get_event_loop()
+                except RuntimeError:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+
+                asyncio.run(process_requests(requests))
 
 
-def route_request(create_request):
+async def process_requests(requests):
+    tasks = [route_request(request) for request in requests]
+    await asyncio.gather(*tasks)
+
+
+async def route_request(create_request):
     import beer_garden.router as router
 
     try:
