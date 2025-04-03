@@ -157,8 +157,10 @@ class TestUpdateConfig(object):
 
         with open(config_file, "w") as f:
             f.write('{"scheduler":{"max_workers":11}}')
-        
-        beer_garden.config.migrate(["-c", config_file, "--scheduler-job-startup-file", "new_default"])
+
+        beer_garden.config.migrate(
+            ["-c", config_file, "--scheduler-job-startup-file", "new_default"]
+        )
         assert os.path.exists(config_file)
 
         beer_garden.config.load(["-c", config_file], force=True)

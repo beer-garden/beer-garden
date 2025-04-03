@@ -94,6 +94,7 @@ def generate(args: Sequence[str]):
 
     dump_data(config, filename=bootstrap.configuration.file, file_type="yaml")
 
+
 def migrate_dict(d1: dict, d2: dict):
     """Merges d2 into d1 but will not replace existing key values in d1"""
     for k, v in d2.items():
@@ -143,7 +144,7 @@ def migrate(args: Sequence[str]):
 
     if _is_new_config(config.configuration.file, apply_config_file):
         _backup_previous_config(config.configuration.file, apply_config_file)
-    
+
     # Determine if a type conversion is needed
     type_conversion = False
     new_type = "yaml"
