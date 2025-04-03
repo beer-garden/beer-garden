@@ -58,29 +58,38 @@ def get_systems_regex(topics: List[Topic]) -> List[System]:
         for subscriber in topic.subscribers:
             where_statements = []
 
-            if subscriber.namespace:
-                where_statements.append({"namespace": {"$regex": subscriber.namespace}})
+            if subscriber.subscriber_type == "DYNAMIC":
 
-            if subscriber.system:
-                where_statements.append({"name": {"$regex": subscriber.system}})
+                if subscriber.system:
+                    where_statements.append({"name": {"$regex": subscriber.system}})
 
-            if subscriber.version:
-                where_statements.append({"version": {"$regex": subscriber.version}})
+                if subscriber.version:
+                    where_statements.append({"version": {"$regex": subscriber.version}})
 
-            if subscriber.instance:
-                where_statements.append(
-                    {"instances.name": {"$regex": subscriber.instance}}
-                )
+                if subscriber.namespace:
+                    where_statements.append(
+                        {"namespace": {"$regex": subscriber.namespace}}
+                    )
 
-            if subscriber.command:
-                where_statements.append(
-                    {"commands.name": {"$regex": subscriber.command}}
-                )
+                if subscriber.instance:
+                    where_statements.append(
+                        {"instances.name": {"$regex": subscriber.instance}}
+                    )
+
+                if subscriber.command:
+                    where_statements.append(
+                        {"commands.name": {"$regex": subscriber.command}}
+                    )
+            else:
+                where_statements.append({"name": {"$eq": subscriber.system}})
+                where_statements.append({"version": {"$eq": subscriber.version}})
+                where_statements.append({"namespace": {"$eq": subscriber.namespace}})
 
             if where_statements:
-                or_statements.append({"$and": where_statements})
-            else:
-                return db.query(System, exclude_fields=["instances.status_info"])
+                and_statement = {"$and": where_statements}
+
+                if and_statement not in or_statements:
+                    or_statements.append(and_statement)
 
     if or_statements:
         raw_query = {"$or": or_statements}
@@ -164,7 +173,8 @@ def handle_event(event: Event):
             db.bulk_update(topics)
 
             if requests:
-
+                # This could be done by generating an asyncio loop to handle
+                # the requests, but it is an extreme memory hog
                 with ThreadPoolExecutor() as executor:
                     executor.map(route_request, requests)
 
