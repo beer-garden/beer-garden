@@ -19,8 +19,7 @@ JOB_STARTUP_FILE="${CONFIG_HOME}/scheduled_jobs.json"
 APP_LOG_FILE="$LOG_HOME/beer-garden.log"
 PLUGIN_LOG_FILE="${PLUGIN_LOG_HOME}/%%(namespace)s/%%(system_name)s/%%(system_version)s/%%(instance_name)s.log"
 
-BEER_SCRIPT="/etc/profile.d/beer.sh"
-
+BEERCTL="/usr/bin/beerctl"
 
 # Do this regardless of new install vs upgrade
 # Create the beer-garden group/user if they do not exist
@@ -103,9 +102,22 @@ fi
 # Ensure correct owner and group
 chown -hR ${USER}:${GROUP} $APP_HOME
 
-# Create beerctl function
-echo 'function beerctl { sudo systemctl "$1" beer-garden; }' > "$BEER_SCRIPT"
-chmod 644 $BEER_SCRIPT
+# Create beerctl
+echo -e '#!/bin/bash
+
+case $1 in
+start | stop | restart | status)
+    sudo systemctl $1 beer-garden
+    ;;
+*)
+    echo "Usage: beerctl <command>
+    start - start beer-garden.service
+    stop - stop beer-garden.service
+    restart - restart beer-garden.service
+    status - show beer-garden.service status"
+    ;;
+esac' > "$BEERCTL"
+chmod 755 $BEERCTL
 
 # Reload units
 systemctl daemon-reload

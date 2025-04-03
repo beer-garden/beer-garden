@@ -13,7 +13,7 @@ PLUGIN_LOG_HOME="$LOG_HOME/plugins"
 APP_LOG_FILE="$LOG_HOME/beer-garden.log"
 PLUGIN_LOG_FILE="${PLUGIN_LOG_HOME}/%%(namespace)s/%%(system_name)s-%%(system_version)s/%%(instance_name)s.log"
 
-BEER_SCRIPT="/etc/profile.d/beer.sh"
+BEERCTL="/usr/bin/beerctl"
 
 case "$1" in
     0)
@@ -40,10 +40,9 @@ case "$1" in
 esac
 
 # Remove beerctl
-if [ -f "$BEER_SCRIPT" ]; then
-    rm "$BEER_SCRIPT"
+if [ -f "$BEERCTL" ]; then
+    rm "$BEERCTL"
 fi
-unset -f beerctl
 
 # Reload units
 systemctl daemon-reload
