@@ -221,7 +221,7 @@ def determine_tasks(ttl_name, ttl_length) -> Tuple[List[dict], int]:
 
 
 def prune_orphans():
-    orphan_ttl = config.get(config.get("db.prune.interval"))
+    orphan_ttl = config.get("db.prune.interval")
 
     if orphan_ttl > 0:
         prune_orphan_command_type(orphan_ttl, "INFO")
