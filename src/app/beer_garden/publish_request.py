@@ -1,7 +1,7 @@
-import asyncio
 import copy
 import logging
 import re
+from concurrent.futures import ThreadPoolExecutor
 from typing import List
 
 from brewtils.models import Event, Events, Garden, Operation, Request, System, Topic
@@ -173,22 +173,13 @@ def handle_event(event: Event):
             db.bulk_update(topics)
 
             if requests:
-
-                try:
-                    asyncio.get_event_loop()
-                except RuntimeError:
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-
-                asyncio.run(process_requests(requests))
+                # This could be done by generating an asyncio loop to handle
+                # the requests, but it is an extreme memory hog
+                with ThreadPoolExecutor() as executor:
+                    executor.map(route_request, requests)
 
 
-async def process_requests(requests):
-    tasks = [route_request(request) for request in requests]
-    await asyncio.gather(*tasks)
-
-
-async def route_request(create_request):
+def route_request(create_request):
     import beer_garden.router as router
 
     try:
