@@ -314,7 +314,7 @@ class GardenListAPI(AuthorizationHandler):
             elif operation == "sync":
                 await self.process_operation(
                     Operation(
-                        operation_type="GARDEN_SYNC",                  
+                        operation_type="GARDEN_SYNC",
                     )
                 )
 
