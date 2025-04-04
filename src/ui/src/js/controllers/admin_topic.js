@@ -99,6 +99,8 @@ export default function adminTopicController(
             var tr = document.createElement('tr');
               columns.forEach((column) => {
                 var th = document.createElement('th');
+                if (column == "Consumer Count"){ th.style.cssText = "min-width: 100px;"}
+                if (column == "Type"){ th.style.cssText = "min-width: 125px;"}
                 var columnText = document.createTextNode(column);
                 th.append(columnText);
                 tr.append(th);
@@ -125,6 +127,7 @@ export default function adminTopicController(
                 button.setAttribute("class", "fa fa-0 pull-right");
                 button.style.fontSize="20px";
                 button.setAttribute("ng-click", "doResetConsumerCount(" + JSON.stringify(full.id) + "," + JSON.stringify(subscriber) + ")");
+                button.setAttribute("ng-if", "hasPermission('GARDEN_ADMIN', true)");
                 button.setAttribute("confirm","Are you sure you want to reset the consumer count?");
                 button.setAttribute("title","Reset Count");
                 td.append(button);
@@ -140,6 +143,7 @@ export default function adminTopicController(
                 button.setAttribute("class", "fa fa-square-xmark pull-right");
                 button.style.fontSize="20px";
                 button.setAttribute("ng-click", "doRemoveSubscriber(" + JSON.stringify(full.id) + "," + JSON.stringify(subscriber) + ")");
+                button.setAttribute("ng-if", "hasPermission('GARDEN_ADMIN', true)");
                 button.setAttribute("confirm","Are you sure you want to delete Subscriber? " + JSON.stringify(subscriber, null, '\n'));
                 button.setAttribute("title","Delete Subscriber");
                 td.append(button);
@@ -148,12 +152,12 @@ export default function adminTopicController(
               tbdy.append(tr);
             });
             tbl.appendChild(tbdy);
-            return tbl.outerHTML;
+            return '<div style="overflow: auto;">' + tbl.outerHTML + '</div>';
           } else {
             return "";
           }
         }),
-    DTColumnBuilder.newColumn('name').withTitle('').withOption('width', '50px')
+    DTColumnBuilder.newColumn(null).withTitle('').withOption('sortable', false).withOption('width', '70px')
         .renderWith(function(data, type, full) {
           let subscribers = full.subscribers;
           const has_only_dynamic_subscribers = subscribers.every((subscriber) => subscriber.subscriber_type == "DYNAMIC");
@@ -164,6 +168,7 @@ export default function adminTopicController(
             deleteTopicButton.setAttribute("class", "fa fa-trash pull-right");
             deleteTopicButton.style.fontSize="20px";
             deleteTopicButton.setAttribute("ng-click", "doDelete(" + JSON.stringify(full.id) + ")");
+            deleteTopicButton.setAttribute("ng-if", "hasPermission('GARDEN_ADMIN', true)");
             deleteTopicButton.setAttribute("confirm","Are you sure you want to delete Topic \"" + full.name + "\"?");
             deleteTopicButton.setAttribute("title","Delete Topic");
           }
@@ -171,6 +176,7 @@ export default function adminTopicController(
           addSubscriberButton.setAttribute("class", "fa fa-square-plus pull-right");
           addSubscriberButton.style.fontSize="20px";
           addSubscriberButton.setAttribute("ng-click", "doAddSubscriber(" + JSON.stringify(full, ["id", "name"]) + ")");
+          addSubscriberButton.setAttribute("ng-if", "hasPermission('GARDEN_ADMIN', true)");
           addSubscriberButton.setAttribute("title","Add Subscriber(s)");
           if (deleteTopicButton){
             return deleteTopicButton.outerHTML + addSubscriberButton.outerHTML;
@@ -204,6 +210,7 @@ export default function adminTopicController(
       type: 'text',
       attr: {class: 'form-inline form-control', title: 'Subscribers Filter'},
     },
+    null: {}
   };
 
   $scope.dtColumns.forEach((column, i) => {
