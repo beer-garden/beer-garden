@@ -307,14 +307,14 @@ class GardenListAPI(AuthorizationHandler):
                 await self.process_operation(
                     Operation(
                         operation_type="GARDEN_RESCAN",
+                        kwargs={"sync_gardens": True},
                     )
                 )
 
             elif operation == "sync":
                 await self.process_operation(
                     Operation(
-                        operation_type="GARDEN_SYNC",
-                        kwargs={"sync_gardens": True},
+                        operation_type="GARDEN_SYNC",                  
                     )
                 )
 
