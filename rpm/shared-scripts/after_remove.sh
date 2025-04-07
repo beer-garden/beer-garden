@@ -1,4 +1,6 @@
 APP_NAME="beer-garden"
+GROUP=$APP_NAME
+USER=$APP_NAME
 APP_HOME="/opt/${APP_NAME}"
 
 CONFIG_HOME="$APP_HOME/conf"
@@ -41,6 +43,9 @@ case "$1" in
             --plugin-remote-logging-config-file "$REMOTE_PLUGIN_LOG_CONFIG" \
             --children-directory "$CHILDREN_CONFIG_HOME" \
             --scheduler-job-startup-file "$JOB_STARTUP_FILE"
+
+            # Set owner and group of new config
+            chown ${USER}:${GROUP} $CONFIG_FILE
         fi
     ;;
 esac
