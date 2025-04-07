@@ -717,6 +717,12 @@ class TopicListAPI(BaseHandler):
                         | Q(
                             **{
                                 column["data"]
+                                + "__consumer_count": column["search"]["value"]
+                            }
+                        )
+                        | Q(
+                            **{
+                                column["data"]
                                 + "__subscriber_type__contains": column["search"][
                                     "value"
                                 ]
