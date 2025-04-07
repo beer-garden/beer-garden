@@ -9,11 +9,11 @@ from brewtils.schema_parser import SchemaParser
 from mongoengine.queryset.visitor import Q
 
 import beer_garden.db.api as db
-from beer_garden.api.http.base_handler import BaseHandler
+from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.metrics import collect_metrics
 
 
-class TopicAPI(BaseHandler):
+class TopicAPI(AuthorizationHandler):
     parser = SchemaParser()
 
     @collect_metrics(transaction_type="API", group="TopicAPI")
@@ -40,7 +40,7 @@ class TopicAPI(BaseHandler):
           - Topics
         """
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(operation_type="TOPIC_READ", kwargs={"topic_id": topic_id})
         )
 
@@ -71,7 +71,7 @@ class TopicAPI(BaseHandler):
           - Topics
         """
 
-        await self.client(
+        await self.process_operation(
             Operation(operation_type="TOPIC_DELETE", kwargs={"topic_id": topic_id})
         )
 
@@ -130,7 +130,7 @@ class TopicAPI(BaseHandler):
             subscriber = BrewtilsSubscriber(**op.value) if op.value else None
 
             if operation == "add":
-                response = await self.client(
+                response = await self.process_operation(
                     Operation(
                         operation_type="TOPIC_ADD_SUBSCRIBER",
                         kwargs={"topic_id": topic_id, "subscriber": subscriber},
@@ -138,7 +138,7 @@ class TopicAPI(BaseHandler):
                 )
 
             elif operation == "remove":
-                response = await self.client(
+                response = await self.process_operation(
                     Operation(
                         operation_type="TOPIC_REMOVE_SUBSCRIBER",
                         kwargs={"topic_id": topic_id, "subscriber": subscriber},
@@ -146,7 +146,7 @@ class TopicAPI(BaseHandler):
                 )
 
             elif operation == "reset_count":
-                response = await self.client(
+                response = await self.process_operation(
                     Operation(
                         operation_type="TOPIC_RESET_COUNT",
                         kwargs={"topic_id": topic_id, "subscriber": subscriber},
@@ -160,7 +160,7 @@ class TopicAPI(BaseHandler):
         self.write(response)
 
 
-class TopicNameAPI(BaseHandler):
+class TopicNameAPI(AuthorizationHandler):
     parser = SchemaParser()
 
     async def get(self, topic_name):
@@ -186,7 +186,7 @@ class TopicNameAPI(BaseHandler):
           - Topics
         """
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(operation_type="TOPIC_READ", kwargs={"topic_name": topic_name})
         )
 
@@ -216,7 +216,7 @@ class TopicNameAPI(BaseHandler):
           - Topics
         """
 
-        await self.client(
+        await self.process_operation(
             Operation(operation_type="TOPIC_DELETE", kwargs={"topic_name": topic_name})
         )
 
@@ -272,7 +272,7 @@ class TopicNameAPI(BaseHandler):
             subscriber = BrewtilsSubscriber(**op.value)
 
             if operation == "add":
-                response = await self.client(
+                response = await self.process_operation(
                     Operation(
                         operation_type="TOPIC_ADD_SUBSCRIBER",
                         kwargs={"topic_name": topic_name, "subscriber": subscriber},
@@ -280,7 +280,7 @@ class TopicNameAPI(BaseHandler):
                 )
 
             elif operation == "remove":
-                response = await self.client(
+                response = await self.process_operation(
                     Operation(
                         operation_type="TOPIC_REMOVE_SUBSCRIBER",
                         kwargs={"topic_name": topic_name, "subscriber": subscriber},
@@ -294,7 +294,7 @@ class TopicNameAPI(BaseHandler):
         self.write(response)
 
 
-class TopicListAPI(BaseHandler):
+class TopicListAPI(AuthorizationHandler):
     parser = SchemaParser()
 
     @collect_metrics(transaction_type="API", group="TopicListAPI")
@@ -463,7 +463,7 @@ class TopicListAPI(BaseHandler):
         """
 
         if not self.get_query_arguments("columns"):
-            response = await self.client(Operation(operation_type="TOPIC_READ_ALL"))
+            response = await self.process_operation(Operation(operation_type="TOPIC_READ_ALL"))
             self.set_header("Content-Type", "application/json; charset=UTF-8")
             self.write(response)
         else:
@@ -492,7 +492,7 @@ class TopicListAPI(BaseHandler):
             if query_args.get("include_fields"):
                 serialize_kwargs["only"] = query_args.get("include_fields")
 
-            topics = await self.client(
+            topics = await self.process_operation(
                 Operation(operation_type="TOPIC_READ_ALL", kwargs=query_args),
                 serialize_kwargs=serialize_kwargs,
             )
@@ -543,7 +543,7 @@ class TopicListAPI(BaseHandler):
         """
         topic = SchemaParser.parse_topic(self.request.decoded_body, from_string=True)
 
-        response = await self.client(
+        response = await self.process_operation(
             Operation(
                 operation_type="TOPIC_CREATE",
                 args=[topic],
@@ -596,7 +596,7 @@ class TopicListAPI(BaseHandler):
             operation = op.operation.lower()
 
             if operation == "sync_garden_topics":
-                await self.client(
+                await self.process_operation(
                     Operation(
                         operation_type="TOPIC_SYNC_GARDEN",
                         kwargs={"garden_name": op.value},
@@ -604,7 +604,7 @@ class TopicListAPI(BaseHandler):
                 )
 
             elif operation == "sync_all_topics":
-                await self.client(
+                await self.process_operation(
                     Operation(
                         operation_type="TOPIC_SYNC_GARDEN",
                     )
