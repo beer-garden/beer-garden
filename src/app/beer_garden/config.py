@@ -139,11 +139,13 @@ def migrate(args: Sequence[str]):
     )
     current_config = migrate_dict(current_config, config.to_dict())
     # Backup and replace file
-    apply_config_file = f"{config.configuration.file}-1.tmp"
+    apply_config_file = f"{config.configuration.file}.tmp"
     dump_data(current_config, apply_config_file, current_type)
 
     if _is_new_config(config.configuration.file, apply_config_file):
         _backup_previous_config(config.configuration.file, apply_config_file)
+    else:
+        os.remove(apply_config_file)
 
     # Determine if a type conversion is needed
     type_conversion = False
