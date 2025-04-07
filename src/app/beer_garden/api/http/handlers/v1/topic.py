@@ -88,13 +88,13 @@ class TopicAPI(BaseHandler):
 
           * add
           * remove
-          * reset_consumer_count
+          * reset_count
 
           ```JSON
           [
             { "operation": "add", "value": {subscriber} }
             { "operation": "remove", "value": {subscriber} }
-            { "operation": "reset_consumer_count", "value": {subscriber} }
+            { "operation": "reset_count", "value": {subscriber} }
           ]
           ```
         parameters:
@@ -127,7 +127,7 @@ class TopicAPI(BaseHandler):
 
         for op in patch:
             operation = op.operation.lower()
-            subscriber = BrewtilsSubscriber(**op.value)
+            subscriber = BrewtilsSubscriber(**op.value) if op.value else None
 
             if operation == "add":
                 response = await self.client(
@@ -145,10 +145,10 @@ class TopicAPI(BaseHandler):
                     )
                 )
 
-            elif operation == "reset_consumer_count":
+            elif operation == "reset_count":
                 response = await self.client(
                     Operation(
-                        operation_type="TOPIC_RESET_CONSUMER_COUNT",
+                        operation_type="TOPIC_RESET_COUNT",
                         kwargs={"topic_id": topic_id, "subscriber": subscriber},
                     )
                 )

@@ -46,9 +46,9 @@ export default function topicService($q, $http, $interval) {
         operation: 'sync_all_topics',
       });
     },
-    resetConsumerCount: (topicId, subscriber) => {
+    resetCount: (topicId, subscriber) => {
       return $http.patch('api/v1/topics/' + topicId, {
-        operation: 'reset_consumer_count',
+        operation: 'reset_count',
         path: '',
         value: subscriber,
       });

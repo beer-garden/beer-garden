@@ -85,7 +85,25 @@ export default function adminTopicController(
 
   $scope.dtColumns = [
     DTColumnBuilder.newColumn('name').withTitle('Topic').withOption('width', '20%'),
-    DTColumnBuilder.newColumn('publisher_count').withTitle('Publisher Count').withOption('width', '7%'),
+    DTColumnBuilder.newColumn('publisher_count').withTitle('Publisher Count').withOption('width', '7%')
+        .renderWith(function(data, type, full) {
+          let publisher_count = data;
+          console.log(publisher_count);
+          var div = document.createElement('div');
+          var itemText = document.createTextNode(publisher_count);
+          div.append(itemText);
+          if (publisher_count > 0) {
+            var button = document.createElement('button')
+            button.setAttribute("class", "fa fa-0 pull-right");
+            button.style.fontSize="20px";
+            button.setAttribute("ng-click", "doResetCount(" + JSON.stringify(full.id) + ")");
+            button.setAttribute("ng-if", "hasPermission('GARDEN_ADMIN', true)");
+            button.setAttribute("confirm","Are you sure you want to reset the publisher count?");
+            button.setAttribute("title","Reset Count");
+            div.append(button);
+          }
+          return div.outerHTML;
+        }),
     DTColumnBuilder.newColumn('subscribers')
         .withTitle('Subscribers')
         .renderWith(function(data, type, full) {
@@ -126,7 +144,7 @@ export default function adminTopicController(
                 var button = document.createElement('button')
                 button.setAttribute("class", "fa fa-0 pull-right");
                 button.style.fontSize="20px";
-                button.setAttribute("ng-click", "doResetConsumerCount(" + JSON.stringify(full.id) + "," + JSON.stringify(subscriber) + ")");
+                button.setAttribute("ng-click", "doResetCount(" + JSON.stringify(full.id) + "," + JSON.stringify(subscriber) + ")");
                 button.setAttribute("ng-if", "hasPermission('GARDEN_ADMIN', true)");
                 button.setAttribute("confirm","Are you sure you want to reset the consumer count?");
                 button.setAttribute("title","Reset Count");
@@ -241,8 +259,8 @@ export default function adminTopicController(
     });
   };
 
-  $scope.doResetConsumerCount = function(topic_id, subscriber) {
-    TopicService.resetConsumerCount(topic_id, subscriber).then(() => {
+  $scope.doResetCount = function(topic_id, subscriber = null) {
+    TopicService.resetCount(topic_id, subscriber).then(() => {
       if ($scope.dtInstance) {
         $scope.dtInstance.reloadData();
       }
