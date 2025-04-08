@@ -52,6 +52,7 @@ TBD
 - Updated 3.24 migration script to skip children config creation if only one garden
 - Reduced mongodb calls required to update instance heartbeat
 - Updated logic for forwarding Requests to remove DB call
+- Updated pour it again requests to respect command type override
 
 # 3.29.1
 
