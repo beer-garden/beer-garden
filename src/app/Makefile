@@ -133,6 +133,7 @@ coverage-view: coverage ## view coverage report in a browser
 # Packaging
 package-source: ## builds source package
 	$(PYTHON) setup.py sdist
+	ls -l dist
 
 package-wheel: ## builds wheel package
 	$(PYTHON) setup.py bdist_wheel
