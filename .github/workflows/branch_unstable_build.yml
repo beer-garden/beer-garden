@@ -81,5 +81,13 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }} 
 
+      - name: Install Dependencies 
+        run: make deps    
+        working-directory: ./src/app
+
+      - name: Copy Brewtils
+        run: cp -r ./app/src/brewtils brewtils
+        working-directory: ./src
+
       - name: Build and Publish Unstable Images
         run: make publish-docker-unstable-branch-rpm PYTHON_VERSION=${{ matrix.python-version }}
