@@ -87,7 +87,7 @@ publish-docker-rpm: rpm-build
 	docker push bgio/beer-garden:$(VERSION)-RPM-$(PYTHON_VERSION)-${DIST}
 
 parse_local_version:
-	$(eval VERSION := $(shell python -c "import os; import sys; sys.path.insert(1, './src/app/beer_garden/'); from __version__ import __version__; print(__version__+'-rc');"))
+	$(eval VERSION := $(shell python -c "import os; import sys; sys.path.insert(1, './src/app/beer_garden/'); from __version__ import __version__; print(__version__);"))
 
 # Requires the docker image already built and UI packaged
 publish-docker-unstable-rpm: parse_local_version rpm-build
