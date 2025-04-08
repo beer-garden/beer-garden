@@ -346,10 +346,6 @@ def remove_remote_systems(garden: Garden):
     for system in garden.systems:
         remove_system(system.id)
 
-    if garden.children:
-        for children in garden.children:
-            remove_remote_systems(children)
-
 
 @publish_event(Events.GARDEN_REMOVED)
 def remove_garden(garden_name: str = None, garden: Garden = None) -> None:
@@ -364,10 +360,10 @@ def remove_garden(garden_name: str = None, garden: Garden = None) -> None:
 
     garden = garden or get_garden(garden_name)
 
-    remove_remote_systems(garden)
-
     for child in garden.children:
-        remove_garden(child.name)
+        remove_garden(garden=child)
+
+    remove_remote_systems(garden)
 
     db.delete(garden)
 

@@ -49,6 +49,7 @@ TBD
 - Fixed bug where Paused Jobs being imported were Running in the background
 - Fixed bug where Request pruning did not remove GridFS stored objects. 
 - Fix prune orphaned GridFS objects.
+- Fixed extra database calls for Garden deletes
 - Updated 3.24 migration script to skip children config creation if only one garden
 - Reduced mongodb calls required to update instance heartbeat
 - Updated logic for forwarding Requests to remove DB call
