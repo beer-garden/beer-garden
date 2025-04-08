@@ -57,7 +57,7 @@ jobs:
         run: make deps publish-branch-docker-unstable
 
   docker-branch-publish-src-unstable-rpm:
-    name: Docker Publish Python ${{ matrix.python-version }} Unstable Branch
+    name: Docker Publish Python ${{ matrix.python-version }}-${{ matrix.dist }} Unstable Branch
     runs-on: ubuntu-latest
     needs: [docker-branch-publish-src-unstable, docker-publish-ui-unstable]
 
