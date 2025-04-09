@@ -7,7 +7,7 @@ from copy import deepcopy
 from typing import List, Optional, Tuple
 
 from apispec import APISpec
-from brewtils.models import Event, Events, User
+from brewtils.models import Event, Events
 from brewtils.schemas import (
     CommandSchema,
     CronTriggerSchema,
@@ -65,7 +65,6 @@ tornado_app: Application
 logger: logging.Logger = None
 event_publishers = None
 api_spec: APISpec
-anonymous_principal: User
 client_ssl: ssl.SSLContext
 
 
@@ -210,7 +209,6 @@ async def startup():
 
     This is the first thing called from within the ioloop context.
     """
-    global anonymous_principal
 
     http_config = config.get("entry.http")
     logger.debug(f"Starting HTTP server on {http_config.host}:{http_config.port}")
