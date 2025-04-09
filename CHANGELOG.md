@@ -4,6 +4,8 @@
 
 TBD
 
+- Updated rpm script to supply cli values to config migration. Beer-garden `migrate` will apply cli
+  values prior to yapconf `migrate_config_file`.
 - Fixed forwarding operations to downstream causing blocking to the router. Mostly seen during File Forwarding.
 - Optimized how Request Topic Publisher matches systems
 - Fixed bug where Topic Publish did not match on Gardens and Namespaces

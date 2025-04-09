@@ -152,6 +152,20 @@ class TestUpdateConfig(object):
         with pytest.raises(SystemExit):
             beer_garden.config.migrate([])
 
+    def test_migrate_update_defaults(self, tmpdir):
+        config_file = os.path.join(str(tmpdir), "config.yaml")
+
+        with open(config_file, "w") as f:
+            f.write('{"scheduler":{"max_workers":11}}')
+
+        beer_garden.config.migrate(
+            ["-c", config_file, "--scheduler-job-startup-file", "new_default"]
+        )
+        assert os.path.exists(config_file)
+
+        beer_garden.config.load(["-c", config_file], force=True)
+        assert beer_garden.config.get("scheduler.job_startup_file") == "new_default"
+
 
 class TestGenerateAppLogging(object):
     def test_no_file(self, capsys):
