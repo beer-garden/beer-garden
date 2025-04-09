@@ -2,11 +2,12 @@ import logging
 from typing import List
 
 from brewtils.errors import PluginError
-from brewtils.models import Event, Events, Garden, Subscriber, System, Topic
+from brewtils.models import Event, Garden, Subscriber, System, Topic
 from mongoengine import DoesNotExist
 
 import beer_garden.config as config
 import beer_garden.db.api as db
+from beer_garden.garden import get_garden
 
 logger = logging.getLogger(__name__)
 
@@ -23,11 +24,15 @@ def create_topic(new_topic: Topic) -> Topic:
     try:
         topic = db.query_unique(Topic, name=new_topic.name, raise_missing=True)
         # If there are new subscribers, combine them
+        do_update = False
         if new_topic.subscribers:
             for subscriber in new_topic.subscribers:
                 if subscriber not in topic.subscribers:
                     topic.subscribers.append(subscriber)
-        return update_topic(topic)
+                    do_update = True
+        if do_update:
+            return update_topic(topic)
+        return topic
     except DoesNotExist:
         return db.create(new_topic)
 
@@ -87,6 +92,21 @@ def remove_topic(
     db.delete(topic)
 
     return topic
+
+
+def get_topics_regex(topic) -> List[Topic]:
+    """Based off provided topic find matching regex contained within the Topics table
+
+    Args:
+        topic: Topic to match
+
+    Return:
+        list[Topic]: List of matching topics based on regex within the table
+    """
+
+    return db.query(
+        Topic, raw_query={"$expr": {"$regexMatch": {"input": topic, "regex": "$name"}}}
+    )
 
 
 def get_all_topics(**kwargs) -> List[Topic]:
@@ -195,32 +215,6 @@ def topic_has_system_subscribers(topic: Topic, system: System):
     return False
 
 
-def prune_topics(garden: Garden = None, system: System = None):
-    for topic in get_all_topics():
-        if topic.subscribers or system and topic_has_system_subscribers(topic, system):
-            valid_subscribers = []
-            update_subscribers = False
-            for subscriber in topic.subscribers:
-                if subscriber.subscriber_type == "DYNAMIC" or (
-                    garden and subscriber_validate(subscriber, garden, topic.name)
-                ):
-                    valid_subscribers.append(subscriber)
-                elif subscriber.subscriber_type == "DYNAMIC" or (
-                    system and subscriber_system_validate(subscriber, system)
-                ):
-                    valid_subscribers.append(subscriber)
-                else:
-                    update_subscribers = True
-                    logger.debug(f"Removing Subscriber {subscriber}")
-            if update_subscribers:
-                if len(valid_subscribers) == 0:
-                    logger.debug(f"Removing Topic {topic.name}")
-                    remove_topic(topic_name=topic.name)
-                else:
-                    topic.subscribers = valid_subscribers
-                    update_topic(topic)
-
-
 def subscriber_validate(
     subscriber: Subscriber, garden: Garden, topic_name: str
 ) -> bool:
@@ -261,58 +255,153 @@ def subscriber_systems_validate(subscriber, systems, topic_name: str):
                                 return True
 
 
-def create_garden_topics(garden: Garden):
+def sync_garden_topics(garden_name: str = None):
+    if garden_name is None:
+        garden = get_garden(config.get("garden.name"))
+    else:
+        garden = get_garden(garden_name)
+
+    logger.info(f"Running Garden Topic Sync for {garden.name}")
+
+    topics = get_all_topics()
+
+    topics_dict = {}
+    for topic in topics:
+        topics_dict[topic.name] = topic
+
+    updated_subscribers, created_topics = sync_garden_topics_loop(garden, topics_dict)
+
+    deleted_topic_count, deleted_subscriber_count = prune_topics()
+
+    if (
+        updated_subscribers > 0
+        or created_topics > 0
+        or deleted_topic_count > 0
+        or deleted_subscriber_count > 0
+    ):
+        logger.info(
+            (
+                "Topic Sync: "
+                f"Updated Subscribers {updated_subscribers}, "
+                f"Deleted Subscribers {deleted_subscriber_count}, "
+                f"Created Topics {created_topics}, "
+                f"Deleted Topics {deleted_topic_count}"
+            )
+        )
+
+
+def prune_topics():
+    return db.prune_topics()
+
+
+def sync_garden_topic_add(subscriber: Subscriber, topic_name: str, topics_dict: dict):
+    """
+    Add a subscriber to a topic in the topics dictionary. If the topic already exists,
+    the subscriber is added to the list of subscribers for that topic if they are not
+    already present. If the topic does not exist, a new topic is created with the
+    subscriber as the initial subscriber.
+
+    Args:
+        subscriber (Subscriber): The subscriber to add to the topic.
+        topic_name (str): The name of the topic to which the subscriber should be added.
+        topics_dict (dict): A dictionary where the keys are topic names and the values
+                            are Topic objects.
+
+    Returns:
+        None
+    """
+    updated_subscribers = 0
+    created_topics = 0
+    if topic_name in topics_dict:
+        if subscriber not in topics_dict[topic_name].subscribers:
+            topics_dict[topic_name].subscribers.append(subscriber)
+            update_topic(topics_dict[topic_name])
+            updated_subscribers = updated_subscribers + 1
+
+    else:
+        topics_dict[topic_name] = create_topic(
+            Topic(name=topic_name, subscribers=[subscriber])
+        )
+        created_topics = created_topics + 1
+
+    return updated_subscribers, created_topics
+
+
+def sync_garden_topics_loop(garden: Garden, topics_dict: dict):
+    """
+    Synchronizes topics for a given garden and its systems, commands, and instances.
+
+    This function iterates through all systems in the provided garden, and for each system,
+    it iterates through its commands and instances to create topics. If a command has predefined
+    topics, it creates topics for each one. If not, it generates a default topic based on the
+    system's namespace, name, version, instance name, and command name. It then creates a topic
+    with the generated name.
+
+    Additionally, if the garden has child gardens, the function recursively synchronizes topics
+    for each child garden.
+
+    Args:
+        garden (Garden): The garden object containing systems, commands, and instances to
+                         synchronize topics for.
+
+    Returns:
+        None
+    """
+
+    updated_subscribers = 0
+    created_topics = 0
     for system in garden.systems:
         default_topic = system.prefix_topic
         for command in system.commands:
             for instance in system.instances:
                 if len(command.topics) > 0:
                     for topic in command.topics:
-                        create_topic(
-                            Topic(
-                                name=topic,
-                                subscribers=[
-                                    Subscriber(
-                                        garden=garden.name,
-                                        namespace=system.namespace,
-                                        system=system.name,
-                                        version=system.version,
-                                        instance=instance.name,
-                                        command=command.name,
-                                        subscriber_type="ANNOTATED",
-                                    )
-                                ],
-                            )
+                        subscriber = Subscriber(
+                            garden=garden.name,
+                            namespace=system.namespace,
+                            system=system.name,
+                            version=system.version,
+                            instance=instance.name,
+                            command=command.name,
+                            subscriber_type="ANNOTATED",
                         )
+                        updated, created = sync_garden_topic_add(
+                            subscriber, topic, topics_dict
+                        )
+                        updated_subscribers = updated_subscribers + updated
+                        created_topics = created_topics + created
 
                 if not default_topic:
                     topic_generated = (
-                        f"{system.namespace}.{system.name}."
-                        f"{system.version}.{instance.name}."
-                        f"{command.name}"
+                        f"{garden.name}.{system.namespace}."
+                        f"{system.name}.{system.version}."
+                        f"{instance.name}.{command.name}"
                     )
                 else:
                     topic_generated = f"{default_topic}.{command.name}"
 
-                create_topic(
-                    Topic(
-                        name=topic_generated,
-                        subscribers=[
-                            Subscriber(
-                                garden=garden.name,
-                                namespace=system.namespace,
-                                system=system.name,
-                                version=system.version,
-                                instance=instance.name,
-                                command=command.name,
-                                subscriber_type="GENERATED",
-                            )
-                        ],
-                    )
+                subscriber = Subscriber(
+                    garden=garden.name,
+                    namespace=system.namespace,
+                    system=system.name,
+                    version=system.version,
+                    instance=instance.name,
+                    command=command.name,
+                    subscriber_type="GENERATED",
                 )
+                updated, created = sync_garden_topic_add(
+                    subscriber, topic_generated, topics_dict
+                )
+                updated_subscribers = updated_subscribers + updated
+                created_topics = created_topics + created
 
-    for child in garden.children:
-        create_garden_topics(child)
+    if garden.children:
+        for child in garden.children:
+            updated, created = sync_garden_topics_loop(child, topics_dict)
+            updated_subscribers = updated_subscribers + updated
+            created_topics = created_topics + created
+
+    return updated_subscribers, created_topics
 
 
 def increase_publish_count(topic: Topic):
@@ -334,19 +423,10 @@ def increase_consumer_count(topic: Topic, subscriber: Subscriber):
 def handle_event(event: Event) -> None:
     """Handle TOPIC events
 
-    When creating or updating a system, make sure to mark as non-local first.
-
-    It's possible that we see SYSTEM_UPDATED events for systems that we don't currently
-    know about. This will happen if a new system is created on the child while the child
-    is operating in standalone mode. To handle that, just create the system.
+    All topic handling is done at the Mongo level or scheduled jobs
 
     Args:
         event: The event to handle
     """
 
-    if event.garden == config.get("garden.name"):
-        if event.name == Events.GARDEN_SYNC.name:
-            create_garden_topics(event.payload)
-            prune_topics(garden=event.payload)
-        elif event.name == Events.SYSTEM_REMOVED.name:
-            prune_topics(system=event.payload)
+    pass

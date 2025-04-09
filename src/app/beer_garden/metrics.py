@@ -13,16 +13,17 @@ import re
 from http.server import ThreadingHTTPServer
 
 import elasticapm
-import wrapt
-from brewtils.models import Operation, Request
+from brewtils.models import Event, Operation, Request
 from brewtils.stoppable_thread import StoppableThread
 from elasticapm import Client
+from elasticapm.metrics.base_metrics import MetricSet
 from prometheus_client import Counter, Gauge, Summary
 from prometheus_client.exposition import MetricsHandler
 from prometheus_client.registry import REGISTRY
 
 import beer_garden.config as config
 import beer_garden.db.api as db
+import beer_garden.events
 
 
 class PrometheusServer(StoppableThread):
@@ -169,15 +170,17 @@ def initialize_elastic_client(label: str):
         label (str): Name of services being tracked
     """
     if config.get("metrics.elastic.enabled"):
-        Client(
+        client = Client(
             {
                 "SERVICE_NAME": (
                     f"{re.sub(r'[^a-zA-Z0-9 _-]', '', config.get('garden.name'))}"
                     f"-{label}"
                 ),
-                "ELASTIC_APM_SERVER_URL": config.get("metrics.elastic.url"),
+                "SERVER_URL": config.get("metrics.elastic.url"),
             }
         )
+
+        client.metrics.register(ProcessorMetricsSet)
 
 
 def extract_custom_context(result) -> None:
@@ -186,77 +189,131 @@ def extract_custom_context(result) -> None:
     Args:
         result: Any object to be tracked
     """
-    custom_context = {}
 
-    if isinstance(result, Operation):
-        if hasattr(result, "payload"):
-            return extract_custom_context(result.payload)
-    elif isinstance(result, Request):
-        if result.metadata:
-            for key, value in result.metadata.items():
-                custom_context[key] = value
-    if hasattr(result, "id"):
-        custom_context["id"] = result.id
+    if elasticapm.get_trace_parent_header():
+        if isinstance(result, Operation):
+            return extract_custom_context(result.model)
+        if isinstance(result, Event):
+            elasticapm.label(event_name=result.name)
+            elasticapm.label(event_garden=result.garden)
 
-    if custom_context:
-        elasticapm.set_custom_context(custom_context)
+            if hasattr(result, "payload"):
+                return extract_custom_context(result.payload)
+        elif isinstance(result, Request):
+            if result.metadata:
+                elasticapm.label(**result.metadata)
+
+        if hasattr(result, "id") and result.id:
+            elasticapm.label(mongo_id=result.id)
 
 
-def collect_metrics(transaction_type: str = None, group: str = None):
-    """Decorator that will result in the function being audited for metrics
+class CollectMetrics(elasticapm.capture_span):
+    def __init__(self, span_type=None, name=None, trace_parent_header=None):
+        if not config.get("metrics.elastic.enabled"):
+            return
+
+        if elasticapm.get_trace_parent_header() is not None:
+            super().__init__(
+                name=name,
+                span_type=span_type,
+                links=[
+                    elasticapm.trace_parent_from_string(
+                        elasticapm.get_trace_parent_header()
+                    )
+                ],
+            )
+            self.use_capture_span = True
+            return
+
+        self.use_capture_span = False
+        self.name = name
+        self.type = span_type
+        self.client = None
+        self.trace_parent_header = trace_parent_header
+
+    def __enter__(self):
+
+        if not config.get("metrics.elastic.enabled"):
+            return self
+
+        if self.use_capture_span:
+            return super().__enter__()
+
+        self.client = get_apm_client(
+            self.type, self.name, trace_id=self.trace_parent_header
+        )
+
+        return self
+
+    def __exit__(self, exception_type, exception_value, exception_traceback):
+
+        if not config.get("metrics.elastic.enabled"):
+            return
+
+        if self.use_capture_span:
+            return super().__exit__(
+                exception_type, exception_value, exception_traceback
+            )
+
+        # ADD LABELS
+        if exception_type:
+            self.client.end_transaction(result="failure")
+        if self.client:
+            self.client.end_transaction(result="success")
+
+
+def get_apm_client(
+    transaction_type, transaction_name, trace_parent=None, trace_id=None
+):
+    """Get the Elastic APM client
 
     Args:
         transaction_type: Type of transaction that is being recorded
-        group: Grouping label to prepend function name
-
-    Raises:
-        Any: If the underlying function raised an exception it will be re-raised
+        transaction_name: Name of the transaction
 
     Returns:
-        Any: The wrapped function result
+        Client: Elastic APM client
     """
+    if config.get("metrics.elastic.enabled"):
+        client = elasticapm.get_client()
+        if client:
 
-    @wrapt.decorator
-    def wrapper(wrapped, class_obj, args, kwargs):
-        client = None
+            if not trace_parent:
+                if not trace_id:
+                    trace_id = elasticapm.get_trace_parent_header()
+                if trace_id:
+                    trace_parent = elasticapm.trace_parent_from_string(trace_id)
 
-        if config.get("metrics.elastic.enabled"):
-            if args and isinstance(args[0], Operation):
-                transaction_label = args[0].operation_type
-            elif group:
-                transaction_label = f"{group} - {wrapped.__name__}"
-            else:
-                transaction_label = f"{wrapped.__name__}"
+            client.begin_transaction(
+                transaction_type=transaction_type,
+                trace_parent=trace_parent,
+            )
+            elasticapm.set_transaction_name(transaction_name)
+            return client
+    return None
 
-            client = elasticapm.get_client()
-            if client:
-                trace_id = elasticapm.get_trace_id()
-                client.begin_transaction(
-                    transaction_type=transaction_type,
-                    trace_parent=trace_id if trace_id else elasticapm.get_span_id(),
-                )
-                elasticapm.set_transaction_name(transaction_label)
 
-                if hasattr(class_obj, "get_current_user"):
-                    current_user = class_obj.get_current_user()
-                    if current_user:
-                        elasticapm.set_user_context(
-                            username=current_user.username, user_id=current_user.id
+class ProcessorMetricsSet(MetricSet):
+    def __init__(self, registry) -> None:
+        self.logger = logging.getLogger(__name__)
+        super(ProcessorMetricsSet, self).__init__(registry)
+
+    def before_collect(self):
+        if hasattr(beer_garden.events.manager, "_processors"):
+            for processor in beer_garden.events.manager._processors:
+                if hasattr(processor, "queue_depth"):
+                    depth = processor.queue_depth()
+                    if depth > 0:
+                        self.logger.debug(
+                            "processor_metrics."
+                            f"{processor._handler_tag.replace(' ', '_').lower()}"
+                            f" == {depth}"
                         )
-
-        try:
-            result = wrapped(*args, **kwargs)
-
-            if client:
-                extract_custom_context(result)
-                client.end_transaction(result="success")
-
-            return result
-        except Exception:
-
-            if client:
-                client.capture_exception()
-                client.end_transaction(transaction_label, "failure")
-            raise
-
-    return wrapper
+                    self.gauge(
+                        f"processor_metrics.{processor._handler_tag.replace(' ', '_').lower()}",
+                    ).val = depth
+            if hasattr(beer_garden.events.manager, "queue_depth"):
+                depth = beer_garden.events.manager.queue_depth()
+                if depth > 0:
+                    self.logger.debug(f"processor_metrics.events_manager == {depth}")
+                self.gauge("processor_metrics.events_manager").val = depth

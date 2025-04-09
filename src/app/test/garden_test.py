@@ -321,10 +321,7 @@ stomp:
 
         garden = load_garden_file(bg_garden)
         for connection in garden.publishing_connections:
-            if connection.api == "HTTP":
-                assert connection.status == "DISABLED"
-            else:
-                assert connection.status == "NOT_CONFIGURED"
+            assert connection.status == "DISABLED"
 
         os.remove(config_file)
 
@@ -534,12 +531,15 @@ stomp:
         bg_garden.has_parent = False
         bg_garden.metadata = {"test": "test"}
         bg_garden.connection_type = "REMOTE"
+        bg_garden.version = "1.0.0"
 
         garden = create_garden(bg_garden)
+        assert garden.version == "1.0.0"
 
         garden.has_parent = True
         garden.metadata = {"alt": "alt"}
         garden.connection_type = "LOCAL"
+        garden.version = "2.0.0"
 
         updated_garden = upsert_garden(garden)
 
@@ -549,6 +549,7 @@ stomp:
 
         # Changed
         assert updated_garden.metadata == {"alt": "alt"}
+        assert updated_garden.version == "2.0.0"
 
     def test_garden_unresponsive_trigger(self, bg_garden):
         bg_garden.systems = []
