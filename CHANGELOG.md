@@ -45,6 +45,7 @@ TBD
 - Updated orphan pruner to delete orphaned files
 - Updated Topic Sync logging to track update/delete counts
 - Fixed bug where pour again invalid property caused broken UI
+- Fixed metric collection on queue depth of HTTP Parent Updater
 - Updated pruner configuration to consolidate options under `db.prune`
 - Fixed bug where Paused Jobs being imported were Running in the background
 - Fixed bug where Request pruning did not remove GridFS stored objects. 

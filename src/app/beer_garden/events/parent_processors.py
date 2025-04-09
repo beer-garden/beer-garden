@@ -21,6 +21,7 @@ class HttpParentUpdater(QueueListener):
         self._ez_client = easy_client
         self._reconnect_action = reconnect_action
         self._connected = True
+        self._handler_tag = "HTTP Parent Updater"
 
         super().__init__(
             logger_name=self.__module__ + "." + self.__class__.__name__, **kwargs
