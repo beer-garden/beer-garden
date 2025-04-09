@@ -299,7 +299,7 @@ def prune_outstanding():
                 )
             except ModelValidationError as ex:
                 logger.error(
-                    f"ModelValidationError: Failed to prune Request {request.id}"
+                    f"ModelValidationError: Failed to update outstanding Request {request.id}"
                 )
                 logger.debug(ex)
                 logger.debug("Will attempt to check for parents")
@@ -315,7 +315,7 @@ def prune_outstanding():
             except DoesNotExist:
                 logger.error(
                     (
-                        f"DoesNotExist: Attempted to prune outstanding request {request.id} "
+                        f"DoesNotExist: Attempted to update outstanding request {request.id} "
                         "but does not exist in database"
                     )
                 )
