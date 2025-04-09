@@ -10,7 +10,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.11.11"]
 
     defaults:
       run:
@@ -64,7 +64,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.11.11"]
         dist: ["centos7", "rocky9"]
 
     steps:
