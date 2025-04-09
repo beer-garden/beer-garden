@@ -256,33 +256,39 @@ class TestRequest(object):
     class TestDelete:
 
         def test_delete(self):
-            request = Request(system="system",
+            request = Request(
+                system="system",
                 instance_name="instance",
                 system_version="1",
                 namespace="namespace",
-                command="bar")
+                command="bar",
+            )
             request.save()
             request.delete()
 
             assert len(Request.objects.filter(id=request.id)) == 0
 
         def test_delete_with_child(self):
-            
-            parent = Request(system="system",
+
+            parent = Request(
+                system="system",
                 instance_name="instance",
                 system_version="1",
                 namespace="namespace",
-                command="bar")
+                command="bar",
+            )
             parent.save()
 
-            child = Request(system="system",
+            child = Request(
+                system="system",
                 instance_name="instance",
                 system_version="1",
                 namespace="namespace",
                 command="bar",
                 has_parent=True,
                 parent=parent,
-                status="SUCCESS")
+                status="SUCCESS",
+            )
 
             child.save()
 
@@ -290,24 +296,27 @@ class TestRequest(object):
             assert len(Request.objects.filter(id=parent.id)) == 0
             assert len(Request.objects.filter(id=child.id)) == 0
 
-        
         def test_delete_with_running_child(self):
-            
-            parent = Request(system="system",
+
+            parent = Request(
+                system="system",
                 instance_name="instance",
                 system_version="1",
                 namespace="namespace",
-                command="bar")
+                command="bar",
+            )
             parent.save()
 
-            child = Request(system="system",
+            child = Request(
+                system="system",
                 instance_name="instance",
                 system_version="1",
                 namespace="namespace",
                 command="bar",
                 has_parent=True,
                 parent=parent,
-                status="CREATED")
+                status="CREATED",
+            )
 
             child.save()
 
@@ -317,7 +326,6 @@ class TestRequest(object):
 
             assert Request.objects.get(id=child.id).parent is None
             assert not Request.objects.get(id=child.id).has_parent
-
 
     # TODO - Make these integration tests
     # @patch("bg_utils.mongo.models.Request.objects")
