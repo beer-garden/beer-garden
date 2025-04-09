@@ -302,6 +302,7 @@ export default function requestViewController(
       system: request.system,
       system_version: request.system_version,
       command: request.command_display_name || request.command,
+      command_type: request.command_type,
       instance_name: request.instance_name,
       comment: request.comment || '',
       parameters: request.parameters,
