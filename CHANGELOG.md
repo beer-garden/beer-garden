@@ -29,6 +29,8 @@ TBD
   latest instance of the transaction event is handled within the event handlers
 - Merge Request metadata if uniqued in event handler
 - Optimizing how Garden configurations are loaded
+- Reduced default Status History from 50 to 10
+- Updated logging for Prune Outstanding Requests
 - Fixed bug where Garden historical status info is maintained after rescan
 - Fixed how Garden files are loaded, added HTTP Receiving defaults to prevent missed events prior
   to `GARDEN_SYNC`

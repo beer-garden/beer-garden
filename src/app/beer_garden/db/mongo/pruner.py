@@ -298,17 +298,27 @@ def prune_outstanding():
                     )
                 )
             except ModelValidationError as ex:
-                logger.error(ex)
-                logger.error("Will attempt to check for parents")
+                logger.error(
+                    f"ModelValidationError: Failed to update outstanding Request {request.id}"
+                )
+                logger.debug(ex)
+                logger.debug("Will attempt to check for parents")
 
                 if request.has_parent:
                     try:
                         Request.objects.get(id=request.parent.id)
                     except DoesNotExist:
-                        logger.error(
+                        logger.debug(
                             f"Parent is missing, killing orphan request {request.id}"
                         )
                         request.delete()
+            except DoesNotExist:
+                logger.error(
+                    (
+                        f"DoesNotExist: Attempted to update outstanding request {request.id} "
+                        "but does not exist in database"
+                    )
+                )
 
 
 def prune_grid_fs():
