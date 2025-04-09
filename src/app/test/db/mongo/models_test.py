@@ -253,6 +253,28 @@ class TestRequest(object):
                 bg_request.status = end
                 db.update(bg_request)
 
+    class TestDelete:
+
+        def test_delete(self, bg_request):
+            bg_request.save()
+            bg_request.delete()
+
+            assert len(Request.objects.filter(id=bg_request.id)) == 0
+        def test_delete_with_parent(self, bg_request):
+            
+            parent = Request(command="say")
+            parent.save()
+            bg_request.parent = parent  
+            bg_request.status = "CREATED"
+            bg_request.save()
+
+            parent.delete()
+            assert len(Request.objects.filter(id=parent.id)) == 0
+            assert len(Request.objects.filter(id=bg_request.id)) == 1
+
+            assert Request.objects.get(id=bg_request.id).parent is None
+
+
     # TODO - Make these integration tests
     # @patch("bg_utils.mongo.models.Request.objects")
     # def test_find_one_or_none_found(self, objects_mock):
