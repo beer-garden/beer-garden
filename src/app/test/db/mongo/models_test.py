@@ -255,24 +255,68 @@ class TestRequest(object):
 
     class TestDelete:
 
-        def test_delete(self, bg_request):
-            bg_request.save()
-            bg_request.delete()
+        def test_delete(self):
+            request = Request(system="system",
+                instance_name="instance",
+                system_version="1",
+                namespace="namespace",
+                command="bar")
+            request.save()
+            request.delete()
 
-            assert len(Request.objects.filter(id=bg_request.id)) == 0
-        def test_delete_with_parent(self, bg_request):
+            assert len(Request.objects.filter(id=request.id)) == 0
+
+        def test_delete_with_child(self):
             
-            parent = Request(command="say")
+            parent = Request(system="system",
+                instance_name="instance",
+                system_version="1",
+                namespace="namespace",
+                command="bar")
             parent.save()
-            bg_request.parent = parent  
-            bg_request.status = "CREATED"
-            bg_request.save()
+
+            child = Request(system="system",
+                instance_name="instance",
+                system_version="1",
+                namespace="namespace",
+                command="bar",
+                has_parent=True,
+                parent=parent,
+                status="SUCCESS")
+
+            child.save()
 
             parent.delete()
             assert len(Request.objects.filter(id=parent.id)) == 0
-            assert len(Request.objects.filter(id=bg_request.id)) == 1
+            assert len(Request.objects.filter(id=child.id)) == 0
 
-            assert Request.objects.get(id=bg_request.id).parent is None
+        
+        def test_delete_with_running_child(self):
+            
+            parent = Request(system="system",
+                instance_name="instance",
+                system_version="1",
+                namespace="namespace",
+                command="bar")
+            parent.save()
+
+            child = Request(system="system",
+                instance_name="instance",
+                system_version="1",
+                namespace="namespace",
+                command="bar",
+                has_parent=True,
+                parent=parent,
+                status="CREATED")
+
+            child.save()
+
+            parent.delete()
+            assert len(Request.objects.filter(id=parent.id)) == 0
+            assert len(Request.objects.filter(id=child.id)) == 1
+
+            assert Request.objects.get(id=child.id).parent is None
+            assert not Request.objects.get(id=child.id).has_parent
 
 
     # TODO - Make these integration tests
