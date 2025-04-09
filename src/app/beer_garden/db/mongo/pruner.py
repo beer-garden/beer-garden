@@ -312,7 +312,7 @@ def prune_outstanding():
                             f"Parent is missing, killing orphan request {request.id}"
                         )
                         request.delete()
-            except DoesNotExist as ex:
+            except DoesNotExist:
                 logger.error(
                     (
                         f"DoesNotExist: Attempted to prune outstanding request {request.id} "
