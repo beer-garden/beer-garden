@@ -289,7 +289,11 @@ def ensure_v3_29_model_migration():
 
 def ensure_v3_31_model_migration():
     db = get_db()
-    if contains_field("garden", ["status", "status_info", "namespaces"]):
+    if (
+        contains_field("garden", "status")
+        or contains_field("garden", "status_info")
+        or contains_field("garden", "namespaces")
+    ):
         logger.warning(
             "Status or namespaces was found in Garden and will be removed. This is most"
             " likely because the database is using the old (v3.30) style of storing in"
