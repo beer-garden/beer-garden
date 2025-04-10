@@ -139,6 +139,20 @@ def contains_field(collection_name, field):
         return True
     return False
 
+def contains_fields(collection_name, fields):
+    """Checks if any record in the collection contains one or more of the specified fields"""
+    db = get_db()
+    collection = db.get_collection(collection_name)
+
+    fields_exist = []
+    for field in fields:
+        fields_exist.append({field: {"$exists": True}})
+
+    raw_query = {"$or": fields_exist}
+    if collection.find(raw_query=raw_query).count() > 0:
+        return True
+    return False
+
 
 def missing_field(collection_name, field):
     """Checks if any record in the collection is missing the specified field"""
@@ -289,11 +303,7 @@ def ensure_v3_29_model_migration():
 
 def ensure_v3_31_model_migration():
     db = get_db()
-    if (
-        contains_field("garden", "status")
-        or contains_field("garden", "status_info")
-        or contains_field("garden", "namespaces")
-    ):
+    if contains_fields("garden", ["status", "status_info", "namespaces"]):
         logger.warning(
             "Status or namespaces was found in Garden and will be removed. This is most"
             " likely because the database is using the old (v3.30) style of storing in"
