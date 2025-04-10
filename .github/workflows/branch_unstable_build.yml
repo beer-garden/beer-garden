@@ -8,10 +8,6 @@ jobs:
     name: Docker Publish Python ${{ matrix.python-version }} Latest
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        python-version: ["3.11.11"]
-
     defaults:
       run:
         working-directory: ./src/app
@@ -22,7 +18,7 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: 3.11.11
 
       - name: Login to DockerHub
         uses: docker/login-action@v2
@@ -34,7 +30,7 @@ jobs:
         run: make deps    
 
       - name: Build and Publish Unstable Images
-        run: make publish-branch-docker-unstable PYTHON_VERSION=${{ matrix.python-version }}
+        run: make publish-branch-docker-unstable PYTHON_VERSION=3.11
 
   docker-publish-ui-unstable:
     name: Docker Publish UI
@@ -57,14 +53,13 @@ jobs:
         run: make deps publish-branch-docker-unstable
 
   docker-branch-publish-src-unstable-rpm:
-    name: Docker Publish Python ${{ matrix.python-version }}-${{ matrix.dist }} Unstable Branch
+    name: Docker Publish Python 3.11-${{ matrix.dist }} Unstable Branch
     runs-on: ubuntu-latest
-    needs: [docker-branch-publish-src-unstable, docker-publish-ui-unstable]
+    needs: [docker-branch-publish-src-unstable]
 
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11"]
         dist: ["centos7", "rocky9"]
 
     steps:
@@ -90,4 +85,4 @@ jobs:
         working-directory: ./src
 
       - name: Build and Publish Unstable Images
-        run: make publish-docker-unstable-branch-rpm PYTHON_VERSION=${{ matrix.python-version }}
+        run: make publish-docker-unstable-branch-rpm PYTHON_VERSION=3.11
