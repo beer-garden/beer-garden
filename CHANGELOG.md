@@ -59,6 +59,7 @@ TBD
 - Reduced mongodb calls required to update instance heartbeat
 - Updated logic for forwarding Requests to remove DB call
 - Updated pour it again requests to respect command type override
+- Updated Routing Logic to accept Target Garden provided
 
 # 3.29.1
 
