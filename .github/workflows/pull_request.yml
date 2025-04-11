@@ -309,10 +309,9 @@ jobs:
 
       - name: Install Develop Version of Brewtils
         run: pip3 install -e git+https://github.com/beer-garden/brewtils@${{env.brewtils}}#egg=brewtils
-        # run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@${{env.brewtils}}#egg=brewtils
 
       - name: Install Testing Dependencies
-        run: pip${{ matrix.python-version }} install -r requirements.txt
+        run: pip3 install -r requirements.txt
         working-directory: ./test/integration
 
       - name: Test Plugins
