@@ -59,6 +59,8 @@ TBD
 - Reduced mongodb calls required to update instance heartbeat
 - Updated logic for forwarding Requests to remove DB call
 - Updated pour it again requests to respect command type override
+- Fixed bug where internal jobs that utilized APscheduler did not have max concurrency set to 1
+- Fixed bug, only Request based scheduled jobs will attempt to update missed counter in the database
 - Updated Routing Logic to accept Target Garden provided
 
 # 3.29.1
