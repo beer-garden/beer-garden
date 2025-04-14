@@ -4,7 +4,7 @@
 
 TBD
 
-- Fixed Event filtering
+- Fixed model filtering
 - Updated model filtering, if query filters are generated pre-query then skip filtering records when returning API models
 
 # 3.30.0

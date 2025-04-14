@@ -145,6 +145,8 @@ class QueryFilterBuilder:
                         filter["instance_name__in"] = role.scope_instances
                     if len(role.scope_versions) > 0:
                         filter["system_version__in"] = role.scope_versions
+                    if len(role.scope_namespaces) > 0:
+                        filter["namespace__in"] = role.scope_namespaces
                     if len(role.scope_commands) > 0:
                         or_filter["command__in"] = role.scope_commands
                         or_filter["command_display_name__in"] = role.scope_commands
@@ -187,6 +189,8 @@ class QueryFilterBuilder:
                         filter["request_template__system_version__in"] = (
                             role.scope_versions
                         )
+                    if len(role.scope_namespaces) > 0:
+                        filter["request_template__namespace__in"] = role.scope_namespaces
                     if len(role.scope_commands) > 0:
                         filter["request_template__command__in"] = role.scope_commands
 
@@ -226,6 +230,8 @@ class QueryFilterBuilder:
                     if len(role.scope_commands) > 0:
                         or_filter["commands__name__in"] = role.scope_commands
                         or_filter["commands__display_name__in"] = role.scope_commands
+                    if len(role.scope_namespaces) > 0:
+                        filter["namespace__in"] = role.scope_namespaces
 
                     q_filter = combine_filters(filter, or_filter)
                     if q_filter:
