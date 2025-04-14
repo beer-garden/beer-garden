@@ -980,6 +980,7 @@ class ModelFilter:
                     obj.payload = payload_filtered
                 else:
                     return None
+            return obj
         if isinstance(obj, BrewtilsRunner):
             return self._get_runner_filter(
                 obj, user, permission_levels, skip_global=True, **kwargs

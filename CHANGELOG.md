@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+# 3.31.0
+
+TBD
+
+- Fixed Event filtering
+- Updated model filtering, if query filters are generated pre-query then skip filtering records when returning API models
+
 # 3.30.0
 
 TBD
