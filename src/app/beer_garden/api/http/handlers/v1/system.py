@@ -372,7 +372,6 @@ class SystemListAPI(AuthorizationHandler):
                     "filter_latest": filter_latest,
                     "filter_running": filter_running,
                 },
-                
             ),
             filter_results=False,
         )

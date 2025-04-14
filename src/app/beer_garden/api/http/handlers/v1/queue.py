@@ -64,7 +64,6 @@ class QueueListAPI(AuthorizationHandler):
                 kwargs={
                     "q_filter": permitted_objects_filter,
                 },
-                
             ),
             filter_results=False,
         )

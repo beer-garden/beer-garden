@@ -188,7 +188,6 @@ class JobListAPI(AuthorizationHandler):
                     "q_filter": permitted_objects_filter,
                     "filter_params": filter_params,
                 },
-                
             ),
             filter_results=False,
         )
@@ -336,7 +335,6 @@ class JobExportAPI(AuthorizationHandler):
                     "q_filter": permitted_objects_filter,
                     "filter_params": filter_params_dict,
                 },
-                
             ),
             serialize_kwargs={"return_raw": True},
             filter_results=False,
