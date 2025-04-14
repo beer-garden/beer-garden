@@ -190,7 +190,9 @@ class QueryFilterBuilder:
                             role.scope_versions
                         )
                     if len(role.scope_namespaces) > 0:
-                        filter["request_template__namespace__in"] = role.scope_namespaces
+                        filter["request_template__namespace__in"] = (
+                            role.scope_namespaces
+                        )
                     if len(role.scope_commands) > 0:
                         filter["request_template__command__in"] = role.scope_commands
 
