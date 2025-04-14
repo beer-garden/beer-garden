@@ -23,7 +23,7 @@ from beer_garden.topic import (
     sync_garden_topics_loop,
     topic_add_subscriber,
     topic_remove_subscriber,
-    reset_consumer_count,
+    reset_count,
 )
 
 
@@ -269,5 +269,5 @@ class TestTopic:
         db_topic = get_topic(topic_id=topic1.id)
         assert db_topic.subscribers[0].consumer_count == 10
 
-        db_topic = reset_consumer_count(subscriber, topic1.id)
+        db_topic = reset_count(subscriber, topic1.id)
         assert db_topic.subscribers[0].consumer_count == 0
