@@ -204,7 +204,6 @@ def update_garden_config(garden: Garden) -> Garden:
     db_garden = db.query_unique(Garden, id=garden.id)
     db_garden.connection_params = garden.connection_params
     db_garden.connection_type = garden.connection_type
-    db_garden.status = "INITIALIZING"
 
     return update_garden(db_garden)
 
@@ -526,7 +525,6 @@ def load_garden_file(garden: Garden):
             stomp_receiving_connection.status_info = connection.status_info
 
     if not path.exists():
-        garden.status = "NOT_CONFIGURED"
         return garden
 
     try:
@@ -627,7 +625,7 @@ def load_garden_file(garden: Garden):
         YapconfSourceError,
         YapconfSpecError,
     ):
-        garden.status = "CONFIGURATION_ERROR"
+        pass
     finally:
 
         http_publishing_connection.status_info.set_status_heartbeat(
@@ -679,8 +677,6 @@ def load_garden_config(garden: Garden = None, garden_name: str = None):
     updates["receiving_connections"] = []
     for connection in garden.receiving_connections:
         updates["receiving_connections"].append(db.from_brewtils(connection))
-
-    updates["status"] = garden.status
 
     return db.modify(garden, **updates)
 

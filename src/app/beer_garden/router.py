@@ -378,13 +378,6 @@ def invalid_source_check(operation: Operation):
             Garden(name=operation.source_garden_name)
         )
 
-        if loaded_garden.status == "NOT_CONFIGURED":
-            logger.error(
-                f"There is no configuration file for {operation.source_garden_name}, "
-                "please validate your children directory for the correct file name"
-            )
-            return True
-
         logger.warning(
             f"Loaded {operation.source_garden_name} from config file into in memory"
             " routing table, please manually kick off rescan of directories if this"
