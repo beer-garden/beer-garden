@@ -378,6 +378,17 @@ def invalid_source_check(operation: Operation):
             Garden(name=operation.source_garden_name)
         )
 
+        for connection in loaded_garden.receiving_connections:
+            if (
+                connection.api == operation.source_api
+                and connection.status == "CONFIGURATION_ERROR"
+            ):
+                logger.error(
+                    f"There is no configuration file for {operation.source_garden_name}, "
+                    "please validate your children directory for the correct file name"
+                )
+                return True
+
         logger.warning(
             f"Loaded {operation.source_garden_name} from config file into in memory"
             " routing table, please manually kick off rescan of directories if this"
