@@ -416,36 +416,88 @@ def prune_grid_fs():
 
         batch_size = config.get("db.prune.batch_size")
 
+        pipeline = [
+            {"$match": {"uploadDate": {"$lte": timeout}}},
+            {
+                "$lookup": {
+                    "from": "request",
+                    "localField": "_id",
+                    "foreignField": "output_gridfs",
+                    "as": "output_gridfs_match",
+                }
+            },
+            {
+                "$unwind": {
+                    "path": "$output_gridfs_match",
+                    "preserveNullAndEmptyArrays": True,
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "request",
+                    "localField": "_id",
+                    "foreignField": "parameters_gridfs",
+                    "as": "parameters_gridfs_match",
+                }
+            },
+            {
+                "$unwind": {
+                    "path": "$parameters_gridfs_match",
+                    "preserveNullAndEmptyArrays": True,
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "raw_file",
+                    "localField": "_id",
+                    "foreignField": "file",
+                    "as": "file_match",
+                }
+            },
+            {
+                "$unwind": {
+                    "path": "$file_match",
+                    "preserveNullAndEmptyArrays": True,
+                }
+            },
+            {
+                "$match": {
+                    "$and": [
+                        {"output_gridfs_match": None},
+                        {"parameters_gridfs_match": None},
+                        {"file_match": None},
+                    ]
+                }
+            },
+        ]
+
+        batch_size = config.get("db.prune.batch_size")
         if batch_size > 0:
-            total_files = files.count_documents({"uploadDate": {"$lte": timeout}})
+            pipeline.append(
+                {
+                    "$limit": batch_size,
+                }
+            )
 
-            batches = round(total_files / batch_size) + 1
-
-            for i in range(batches, 0, -1):
-                outstanding_files = files.find(
-                    filter={"uploadDate": {"$lte": timeout}},
-                    limit=batch_size,
-                    skip=(batch_size * (i - 1)),
-                )
-                prune_grid_fs_files(db, files, outstanding_files)
-
+            loop_batch_results = True
+            while loop_batch_results:
+                outstanding_files = files.aggregate(pipeline)
+                loop_batch_results = prune_grid_fs_files(db, files, outstanding_files)
         else:
-
-            outstanding_files = files.find({"uploadDate": {"$lte": timeout}})
-            prune_grid_fs_files(db, files, outstanding_files)
+            outstanding_files = files.aggregate(pipeline)
+            loop_batch_results = prune_grid_fs_files(db, files, outstanding_files)
 
 
 def prune_grid_fs_files(db, files, outstanding_files):
+    counter = 0
     for outstanding_file in outstanding_files:
-        if (
-            Request.objects.filter(
-                Q(output_gridfs=outstanding_file["_id"])
-                | Q(parameters_gridfs=outstanding_file["_id"])
-            ).count()
-            == 0
-            and RawFile.objects.filter(file=outstanding_file["_id"]).count() == 0
-        ):
+        db["fs.chunks"].delete_many({"files_id": outstanding_file["_id"]})
+        files.delete_one({"_id": outstanding_file["_id"]})
+        counter = counter + 1
 
-            db["fs.chunks"].delete_many({"files_id": outstanding_file["_id"]})
-            files.delete_one({"_id": outstanding_file["_id"]})
-            logger.error(f"Deleted orphaned file {outstanding_file['_id']}")
+    if counter > 0:
+        logger.error(f"Deleted {counter} orphaned files from GridFS")
+        return True
+
+    logger.debug("No orphaned files found in GridFS")
+    return False
