@@ -151,22 +151,22 @@ def migrate(args: Sequence[str]):
         include_bootstrap=False,
     )
 
+    final_file = config.configuration.file
     if type_conversion:
         os.remove(config.configuration.file)
+        final_file = new_file
     elif _is_new_config(config.configuration.file, new_file):
         _backup_previous_config(config.configuration.file, new_file)
     else:
         os.remove(new_file)
 
     # Apply any cli_vars overrides
-    current_config = spec._get_config_if_exists(
-        config.configuration.file, True, current_type
-    )
+    current_config = spec._get_config_if_exists(final_file, True, new_type)
     for k, v in cli_vars.items():
         if v is not None:
             if current_config.get(k):
                 migrate_dict(current_config[k], v)
-    dump_data(current_config, config.configuration.file, current_type)
+    dump_data(current_config, final_file, new_type)
 
 
 def generate_app_logging(args: Sequence[str]):
