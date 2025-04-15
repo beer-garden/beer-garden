@@ -29,6 +29,8 @@ TBD
   latest instance of the transaction event is handled within the event handlers
 - Merge Request metadata if uniqued in event handler
 - Optimizing how Garden configurations are loaded
+- Reduced default Status History from 50 to 10
+- Updated logging for Prune Outstanding Requests
 - Fixed bug where Garden historical status info is maintained after rescan
 - Fixed how Garden files are loaded, added HTTP Receiving defaults to prevent missed events prior
   to `GARDEN_SYNC`
@@ -47,13 +49,19 @@ TBD
 - Updated orphan pruner to delete orphaned files
 - Updated Topic Sync logging to track update/delete counts
 - Fixed bug where pour again invalid property caused broken UI
+- Fixed metric collection on queue depth of HTTP Parent Updater
 - Updated pruner configuration to consolidate options under `db.prune`
 - Fixed bug where Paused Jobs being imported were Running in the background
 - Fixed bug where Request pruning did not remove GridFS stored objects. 
 - Fix prune orphaned GridFS objects.
+- Fixed extra database calls for Garden deletes
 - Updated 3.24 migration script to skip children config creation if only one garden
 - Reduced mongodb calls required to update instance heartbeat
 - Updated logic for forwarding Requests to remove DB call
+- Updated pour it again requests to respect command type override
+- Fixed bug where internal jobs that utilized APscheduler did not have max concurrency set to 1
+- Fixed bug, only Request based scheduled jobs will attempt to update missed counter in the database
+- Updated Routing Logic to accept Target Garden provided
 
 # 3.29.1
 
