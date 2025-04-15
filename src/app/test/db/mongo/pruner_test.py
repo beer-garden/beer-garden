@@ -293,7 +293,9 @@ class TestMongoPruner(object):
         assert db["fs.chunks"].count() == 0
 
     def test_run_cancels_outstanding_requests(self, task, in_progress, created):
-        config._CONFIG = {"db": {"prune": {"in_progress_request_expiration": 1, "batch_size": -1}}}
+        config._CONFIG = {
+            "db": {"prune": {"in_progress_request_expiration": 1, "batch_size": -1}}
+        }
         prune_outstanding()
         new_in_progress = Request.objects.get(id=in_progress.id)
         new_created = Request.objects.get(id=created.id)
