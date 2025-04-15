@@ -234,10 +234,39 @@ def prune_orphans():
 def prune_orphan_files(ttl):
     timeout = datetime.now(timezone.utc) - timedelta(minutes=ttl)
 
-    orphaned_files = File.objects.only("request", "job", "id", "owner_type").filter(
-        updated_at__lte=timeout,
-    )
+    batch_size = config.get("db.prune.batch_size")
+    if batch_size > 0:
 
+        total_files = (
+            File.objects.only("request", "job", "id", "owner_type")
+            .filter(
+                updated_at__lte=timeout,
+            )
+            .count()
+            + 1
+        )
+
+        batches = round(total_files / batch_size) + 1
+
+        for i in range(batches, 0, -1):
+            orphaned_files = (
+                File.objects.only("request", "job", "id", "owner_type")
+                .filter(
+                    updated_at__lte=timeout,
+                )
+                .limit(batch_size)
+                .skip(batch_size * (i - 1))
+            )
+            prune_orphan_file_records(orphaned_files)
+    else:
+
+        orphaned_files = File.objects.only("request", "job", "id", "owner_type").filter(
+            updated_at__lte=timeout,
+        )
+        prune_orphan_file_records(orphaned_files)
+
+
+def prune_orphan_file_records(orphaned_files):
     for file in orphaned_files:
         try:
             if file.owner_type == "JOB" and file.job is not None:
@@ -251,14 +280,37 @@ def prune_orphan_files(ttl):
 
 def prune_orphan_command_type(ttl, command_type):
     timeout = datetime.now(timezone.utc) - timedelta(minutes=ttl)
+    filter = {
+        "command_type": command_type,
+        "status__in": ["CANCELED", "SUCCESS", "ERROR", "INVALID"],
+        "created_at__lte": timeout,
+        "has_parent": True,
+    }
 
-    orphaned_requests = Request.objects.only("parent", "id").filter(
-        command_type=command_type,
-        status__in=["CANCELED", "SUCCESS", "ERROR", "INVALID"],
-        created_at__lte=timeout,
-        has_parent=True,
-    )
+    batch_size = config.get("db.prune.batch_size")
 
+    if batch_size > 0:
+        total_requests = (
+            Request.objects.only("parent", "id").filter(**filter).count() + 1
+        )
+
+        batches = round(total_requests / batch_size) + 1
+
+        for i in range(batches, 0, -1):
+            orphaned_requests = (
+                Request.objects.only("parent", "id")
+                .filter(**filter)
+                .limit(batch_size)
+                .skip(batch_size * (i - 1))
+            )
+            prune_orphan_requests(orphaned_requests)
+
+    else:
+        orphaned_requests = Request.objects.only("parent", "id").filter(**filter)
+        prune_orphan_requests(orphaned_requests)
+
+
+def prune_orphan_requests(orphaned_requests):
     for request in orphaned_requests:
         try:
             Request.objects.get(id=request.parent.id)
@@ -276,49 +328,68 @@ def prune_outstanding():
     cancel_threshold = prune_config.get("in_progress_request_expiration", -1)
     if cancel_threshold > 0:
         timeout = datetime.utcnow() - timedelta(minutes=cancel_threshold)
+        batch_size = config.get("db.prune.batch_size")
+
+        if batch_size > 0:
+            while (
+                batch_size
+                < Request.objects.filter(
+                    status__in=["IN_PROGRESS", "CREATED"], created_at__lte=timeout
+                )
+                .no_cache()
+                .count()
+            ):
+                outstanding_requests = Request.objects.filter(
+                    status__in=["IN_PROGRESS", "CREATED"], created_at__lte=timeout
+                ).limit(batch_size)
+                prune_outstanding_requests(outstanding_requests)
+
         outstanding_requests = Request.objects.filter(
             status__in=["IN_PROGRESS", "CREATED"], created_at__lte=timeout
         )
         # TODO: Sorting in reverse order, so newest first
+        prune_outstanding_requests(outstanding_requests)
 
-        for request in outstanding_requests:
-            try:
-                request.status = "CANCELED"
-                request.save()
-                serialized = MongoParser.serialize(request, to_string=True)
-                parsed = SchemaParser.parse_request(
-                    serialized, from_string=True, many=False
+
+def prune_outstanding_requests(outstanding_requests):
+    for request in outstanding_requests:
+        try:
+            request.status = "CANCELED"
+            request.save()
+            serialized = MongoParser.serialize(request, to_string=True)
+            parsed = SchemaParser.parse_request(
+                serialized, from_string=True, many=False
+            )
+
+            publish(
+                Event(
+                    name=Events.REQUEST_CANCELED.name,
+                    payload_type="Request",
+                    payload=parsed,
                 )
+            )
+        except ModelValidationError as ex:
+            logger.error(
+                f"ModelValidationError: Failed to update outstanding Request {request.id}"
+            )
+            logger.debug(ex)
+            logger.debug("Will attempt to check for parents")
 
-                publish(
-                    Event(
-                        name=Events.REQUEST_CANCELED.name,
-                        payload_type="Request",
-                        payload=parsed,
+            if request.has_parent:
+                try:
+                    Request.objects.get(id=request.parent.id)
+                except DoesNotExist:
+                    logger.debug(
+                        f"Parent is missing, killing orphan request {request.id}"
                     )
+                    request.delete()
+        except DoesNotExist:
+            logger.error(
+                (
+                    f"DoesNotExist: Attempted to update outstanding request {request.id} "
+                    "but does not exist in database"
                 )
-            except ModelValidationError as ex:
-                logger.error(
-                    f"ModelValidationError: Failed to update outstanding Request {request.id}"
-                )
-                logger.debug(ex)
-                logger.debug("Will attempt to check for parents")
-
-                if request.has_parent:
-                    try:
-                        Request.objects.get(id=request.parent.id)
-                    except DoesNotExist:
-                        logger.debug(
-                            f"Parent is missing, killing orphan request {request.id}"
-                        )
-                        request.delete()
-            except DoesNotExist:
-                logger.error(
-                    (
-                        f"DoesNotExist: Attempted to update outstanding request {request.id} "
-                        "but does not exist in database"
-                    )
-                )
+            )
 
 
 def prune_grid_fs():
@@ -333,8 +404,29 @@ def prune_grid_fs():
 
     db = get_db()
     files = db["fs.files"]
-    outstanding_files = files.find({"uploadDate": {"$lte": timeout}})
 
+    batch_size = config.get("db.prune.batch_size")
+
+    if batch_size > 0:
+        total_files = files.count_documents({"uploadDate": {"$lte": timeout}})
+
+        batches = round(total_files / batch_size) + 1
+
+        for i in range(batches, 0, -1):
+            outstanding_files = files.find(
+                filter={"uploadDate": {"$lte": timeout}},
+                limit=batch_size,
+                skip=(batch_size * (i - 1)),
+            )
+            prune_grid_fs_files(db, files, outstanding_files)
+
+    else:
+
+        outstanding_files = files.find({"uploadDate": {"$lte": timeout}})
+        prune_grid_fs_files(db, files, outstanding_files)
+
+
+def prune_grid_fs_files(db, files, outstanding_files):
     for outstanding_file in outstanding_files:
         if (
             Request.objects.filter(

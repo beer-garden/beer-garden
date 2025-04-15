@@ -293,7 +293,7 @@ class TestMongoPruner(object):
         assert db["fs.chunks"].count() == 0
 
     def test_run_cancels_outstanding_requests(self, task, in_progress, created):
-        config._CONFIG = {"db": {"prune": {"in_progress_request_expiration": 15}}}
+        config._CONFIG = {"db": {"prune": {"in_progress_request_expiration": 1, "batch_size": -1}}}
         prune_outstanding()
         new_in_progress = Request.objects.get(id=in_progress.id)
         new_created = Request.objects.get(id=created.id)
@@ -416,6 +416,7 @@ class TestOrphanPruner(object):
         child.delete()
 
     def test_orphan_pruner(self, child_request):
+        config._CONFIG = {"db": {"prune": {"batch_size": -1}}}
         assert len(Request.objects.filter(command_type="ACTION")) == 1
 
         prune_orphan_command_type(1, "ACTION")
@@ -547,12 +548,14 @@ class TestOrphanFile(object):
         file.delete()
 
     def test_orphan_file(self, orphan_request_file, deleted_request_file):
+        config._CONFIG = {"db": {"prune": {"batch_size": -1}}}
         assert len(File.objects.all()) == 2
 
         prune_orphan_files(1)
         assert len(File.objects.all()) == 1
 
     def test_orphan_job(self, orphan_job_file, deleted_job_file):
+        config._CONFIG = {"db": {"prune": {"batch_size": -1}}}
         assert len(File.objects.all()) == 2
 
         prune_orphan_files(1)

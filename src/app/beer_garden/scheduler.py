@@ -167,8 +167,20 @@ class MixedScheduler(object):
     def max_concurrence_listener(scheduler, event):
 
         if event.jobstore == "beer_garden":
-            db_job = db.query_unique(Job, id=event.job_id)
-            db.modify(db_job, inc__skip_count=1)
+            try:
+                db_job = db.query_unique(Job, id=event.job_id)
+                db.modify(db_job, inc__skip_count=1)
+            except Exception:
+                job, _ = scheduler._sync_scheduler._lookup_job(
+                    jobstore_alias=event.jobstore, job_id=event.job_id
+                )
+                if job:
+                    logger.error(
+                        (
+                            f"Job {job.name} in {event.jobstore} has reached its max "
+                            "instances. Skipping this job but not in mongo database."
+                        )
+                    )
 
     def start(self):
         """Starts the scheduler"""
