@@ -96,9 +96,9 @@ def generate(args: Sequence[str]):
 
 
 def migrate_dict(d1: dict, d2: dict):
-    """Merges d2 into d1 but will not replace existing key values in d1"""
+    """Merges d2 into d1 and will replace existing key values in d1"""
     for k, v in d2.items():
-        if k in d1:
+        if k not in d1:
             if isinstance(v, dict):
                 migrate_dict(d1[k], v)
         else:
@@ -133,20 +133,6 @@ def migrate(args: Sequence[str]):
     if current_type == "yml":
         current_type = "yaml"
 
-    # First pass to apply config values. Keep current type.
-    current_config = spec._get_config_if_exists(
-        config.configuration.file, True, current_type
-    )
-    current_config = migrate_dict(current_config, config.to_dict())
-    # Backup and replace file
-    apply_config_file = f"{config.configuration.file}.tmp"
-    dump_data(current_config, apply_config_file, current_type)
-
-    if _is_new_config(config.configuration.file, apply_config_file):
-        _backup_previous_config(config.configuration.file, apply_config_file)
-    else:
-        os.remove(apply_config_file)
-
     # Determine if a type conversion is needed
     type_conversion = False
     new_type = "yaml"
@@ -171,6 +157,16 @@ def migrate(args: Sequence[str]):
         _backup_previous_config(config.configuration.file, new_file)
     else:
         os.remove(new_file)
+
+    # Apply any cli_vars overrides
+    current_config = spec._get_config_if_exists(
+        config.configuration.file, True, current_type
+    )
+    for k, v in cli_vars.items():
+        if v is not None:
+            if current_config.get(k):
+                migrate_dict(current_config[k], v)
+    dump_data(current_config, config.configuration.file, current_type)
 
 
 def generate_app_logging(args: Sequence[str]):

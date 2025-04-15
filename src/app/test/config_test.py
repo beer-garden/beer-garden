@@ -156,7 +156,9 @@ class TestUpdateConfig(object):
         config_file = os.path.join(str(tmpdir), "config.yaml")
 
         with open(config_file, "w") as f:
-            f.write('{"scheduler":{"max_workers":11}}')
+            f.write(
+                '{"scheduler":{"max_workers":11}, "db": {"ttl": {"in_progress":600}}}'
+            )
 
         beer_garden.config.migrate(
             ["-c", config_file, "--scheduler-job-startup-file", "new_default"]
