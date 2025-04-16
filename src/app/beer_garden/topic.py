@@ -167,7 +167,8 @@ def reset_count(
     """Reset Subscriber consumer count or Topic publisher count
 
     Args:
-        subscriber: The subscriber to reset consumer count or None to reset Topic publisher count
+        subscriber: The subscriber to reset consumer count or None to reset Topic
+            publisher count
         topic_id: The Topic id
 
     Returns:

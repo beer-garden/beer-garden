@@ -463,7 +463,9 @@ class TopicListAPI(AuthorizationHandler):
         """
 
         if not self.get_query_arguments("columns"):
-            response = await self.process_operation(Operation(operation_type="TOPIC_READ_ALL"))
+            response = await self.process_operation(
+                Operation(operation_type="TOPIC_READ_ALL")
+            )
             self.set_header("Content-Type", "application/json; charset=UTF-8")
             self.write(response)
         else:
