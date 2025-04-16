@@ -230,7 +230,7 @@ def prune_orphans():
             prune_orphan_command_type(orphan_ttl, "INFO")
             prune_orphan_command_type(orphan_ttl, "ACTION")
             prune_orphan_command_type(orphan_ttl, "ADMIN")
-            prune_orphan_command_type(orphan_ttl, "TEMP")
+            prune_missed_temp_command(orphan_ttl)
             prune_orphan_files(orphan_ttl)
 
 
@@ -282,6 +282,57 @@ def prune_orphan_file_records(orphaned_files):
         except DoesNotExist:
             logger.error(f"File missing owner, killing orphan file {file.id}")
             file.delete()
+
+
+def prune_missed_temp_command(ttl):
+    with CollectMetrics("PRUNER", "Pruner::orphan_missed_temp"):
+        timeout = datetime.now(timezone.utc) - timedelta(minutes=ttl)
+        filter = {
+            "command_type": "TEMP",
+            "status__in": ["CANCELED", "SUCCESS", "ERROR", "INVALID"],
+            "created_at__lte": timeout,
+            "has_parent": True,
+        }
+
+        batch_size = config.get("db.prune.batch_size")
+
+        if batch_size > 0:
+            total_requests = (
+                Request.objects.only("parent", "id").filter(**filter).count() + 1
+            )
+
+            batches = round(total_requests / batch_size) + 1
+
+            for i in range(batches, 0, -1):
+                temp_requests = (
+                    Request.objects.only("parent", "id")
+                    .filter(**filter)
+                    .limit(batch_size)
+                    .skip(batch_size * (i - 1))
+                )
+                prune_missed_temp_requests(temp_requests)
+
+        else:
+            temp_requests = Request.objects.only("parent", "id").filter(**filter)
+            prune_missed_temp_requests(temp_requests)
+
+
+def prune_missed_temp_requests(temp_requests):
+    for request in temp_requests:
+        try:
+            Request.objects.get(
+                id=request.parent.id,
+                status__in=[
+                    "CREATED",
+                    "RECEIVED",
+                    "IN_PROGRESS",
+                ],
+            )
+        except DoesNotExist:
+            logger.error(
+                f"Parent is completed or missing, killing missed TEMP request {request.id}"
+            )
+            request.delete()
 
 
 def prune_orphan_command_type(ttl, command_type):

@@ -24,6 +24,7 @@ from beer_garden.db.mongo.pruner import (
     prune_files,
     prune_grid_fs,
     prune_info_requests,
+    prune_missed_temp_command,
     prune_orphan_command_type,
     prune_orphan_files,
     prune_outstanding,
@@ -384,7 +385,7 @@ class TestDetermineTasks(object):
 
 class TestOrphanPruner(object):
     @pytest.fixture
-    def child_request(self):
+    def orphan_child_request(self):
         parent = Request(
             system="T",
             system_version="T",
@@ -417,12 +418,136 @@ class TestOrphanPruner(object):
 
         child.delete()
 
-    def test_orphan_pruner(self, child_request):
+    @pytest.fixture
+    def valid_child_request(self):
+        parent = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="T",
+            created_at=datetime.datetime(2024, 1, 17),
+            status="SUCCESS",
+            command_type="ACTION",
+        )
+        parent.save()
+
+        child = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="T",
+            created_at=datetime.datetime(2024, 1, 17),
+            status="SUCCESS",
+            command_type="ACTION",
+            has_parent=True,
+            parent=parent,
+        )
+
+        child.save()
+
+        yield child
+        parent.delete()
+        child.delete()
+
+    def test_orphan_pruner(self, orphan_child_request):
         config._CONFIG = {"db": {"prune": {"batch_size": -1}}}
         assert len(Request.objects.filter(command_type="ACTION")) == 1
 
         prune_orphan_command_type(1, "ACTION")
         assert len(Request.objects.filter(command_type="ACTION")) == 0
+
+    def test_skip_orphan_pruner(self, valid_child_request):
+        config._CONFIG = {"db": {"prune": {"batch_size": -1}}}
+        assert len(Request.objects.filter(command_type="ACTION")) == 2
+
+        prune_orphan_command_type(1, "ACTION")
+        assert len(Request.objects.filter(command_type="ACTION")) == 2
+
+
+class TestMissedTempPruner(object):
+    @pytest.fixture
+    def missed_child_request(self):
+        parent = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="T",
+            created_at=datetime.datetime(2024, 1, 17),
+            status="SUCCESS",
+            command_type="ACTION",
+        )
+        parent.save()
+
+        child = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="T",
+            created_at=datetime.datetime(2024, 1, 17),
+            status="SUCCESS",
+            command_type="TEMP",
+            has_parent=True,
+            parent=parent,
+        )
+
+        # parent.delete()
+        child.save()
+
+        yield child
+        parent.delete()
+        child.delete()
+
+    @pytest.fixture
+    def valid_child_request(self):
+        parent = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="T",
+            created_at=datetime.datetime(2024, 1, 17),
+            status="IN_PROGRESS",
+            command_type="ACTION",
+        )
+        parent.save()
+
+        child = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="T",
+            created_at=datetime.datetime(2024, 1, 17),
+            status="SUCCESS",
+            command_type="TEMP",
+            has_parent=True,
+            parent=parent,
+        )
+
+        # parent.delete()
+        child.save()
+
+        yield child
+        parent.delete()
+        child.delete()
+
+    def test_missed_temp_pruner(self, missed_child_request):
+        config._CONFIG = {"db": {"prune": {"batch_size": -1}}}
+        assert len(Request.objects.filter(command_type="TEMP")) == 1
+
+        prune_missed_temp_command(1)
+        assert len(Request.objects.filter(command_type="TEMP")) == 0
+
+    def test_valid_temp_pruner(self, valid_child_request):
+        config._CONFIG = {"db": {"prune": {"batch_size": -1}}}
+        assert len(Request.objects.filter(command_type="TEMP")) == 1
+
+        prune_missed_temp_command(1)
+        assert len(Request.objects.filter(command_type="TEMP")) == 1
 
 
 class TestOrphanFile(object):
