@@ -375,7 +375,7 @@ def prune_orphan_command_type(ttl, command_type):
                     .limit(batch_size)
                     .skip(batch_size * (i - 1))
                 )
-                prune_orphan_requests(orphaned_requests)
+                prune_orphan_requests(orphaned_requests, command_type)
 
         else:
             orphaned_requests = Request.objects.only("parent", "id").filter(**filter)
