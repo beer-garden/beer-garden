@@ -536,4 +536,4 @@ def prune_grid_fs_files(db, files, outstanding_files):
         logger.error(f"Deleted {counter} orphaned files from GridFS")
 
     else:
-        logger.error("No orphaned files found in GridFS")
+        logger.debug("No orphaned files found in GridFS")
