@@ -16,7 +16,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.11.11"]
         os: ["ubuntu-latest"]
 
     name: Linting OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
@@ -59,7 +59,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8","3.9","3.10","3.11","3.12","3.13"]
+        python-version: ["3.8","3.9","3.10","3.11.11","3.12","3.13"]
         os: ["ubuntu-latest"]
         include:
           - python-version: "3.7"
@@ -221,7 +221,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.8","3.9","3.10","3.11","3.12","3.13"]
+        python-version: ["3.8","3.9","3.10","3.11.11","3.12","3.13"]
         os: ["ubuntu-latest"]
         include:
           - python-version: "3.7"
@@ -308,14 +308,14 @@ jobs:
         working-directory: ./docker/docker-compose
 
       - name: Install Develop Version of Brewtils
-        run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@${{env.brewtils}}#egg=brewtils
+        run: pip3 install -e git+https://github.com/beer-garden/brewtils@${{env.brewtils}}#egg=brewtils
 
       - name: Install Testing Dependencies
-        run: pip${{ matrix.python-version }} install -r requirements.txt
+        run: pip3 install -r requirements.txt
         working-directory: ./test/integration
 
       - name: Test Plugins
-        run: python${{ matrix.python-version }} -m pytest local_plugins/
+        run: python3 -m pytest local_plugins/
         working-directory: ./test/integration
 
       - name: Grab logs from Beer-Garden

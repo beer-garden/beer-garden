@@ -44,41 +44,40 @@ def run_pruner(tasks, ttl_name):
                 "Removing %s %ss older than %s"
                 % (ttl_name, task["collection"].__name__, str(delete_older_than))
             )
-            projected_delete = (
-                task["collection"].objects(query).only("id").no_cache().count()
-            )
 
-            if projected_delete > 0:
-                if task["batch_size"] > 0:
-                    while (
-                        task["batch_size"]
-                        < task["collection"]
+            removed_count = 0
+
+            if task["batch_size"] > 0:
+                while (
+                    task["batch_size"]
+                    < task["collection"].objects(query).only("id").no_cache().count()
+                ):
+                    logger.debug(
+                        "Removing %s from %ss older than %s, batched by %s"
+                        % (
+                            ttl_name,
+                            task["collection"].__name__,
+                            str(delete_older_than),
+                            str(task["batch_size"]),
+                        )
+                    )
+                    for record in (
+                        task["collection"]
                         .objects(query)
                         .only("id")
-                        .no_cache()
-                        .count()
+                        .limit(task["batch_size"])
                     ):
-                        logger.debug(
-                            "Removing %s from %ss older than %s, batched by %s"
-                            % (
-                                ttl_name,
-                                task["collection"].__name__,
-                                str(delete_older_than),
-                                str(task["batch_size"]),
-                            )
-                        )
+                        record.delete()
+                        removed_count = removed_count + 1
 
-                        task["collection"].objects(query).exclude(
-                            *exclude_fields
-                        ).limit(task["batch_size"]).no_cache().delete()
+            for record in task["collection"].objects(query).only("id"):
+                record.delete()
+                removed_count = removed_count + 1
 
-                task["collection"].objects(query).exclude(
-                    *exclude_fields
-                ).no_cache().delete()
-
+            if removed_count > 0:
                 logger.debug(
                     "Deleted %s %s from %ss"
-                    % (projected_delete, ttl_name, task["collection"].__name__)
+                    % (removed_count, ttl_name, task["collection"].__name__)
                 )
 
 
