@@ -221,6 +221,49 @@ class TestMongoPruner(object):
         prune_files()
         assert len(File.objects.all()) == 0
 
+    def test_skip_prune_request_gridfs_files(self, monkeypatch):
+        db = get_db()
+
+        db["request"].delete_many({})
+        db["fs.files"].delete_many({})
+        db["fs.chunks"].delete_many({})
+
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"file": 1}}}}
+
+        FAKE_TIME = datetime.datetime.now(timezone.utc) + timedelta(minutes=60)
+
+        class mydatetime(datetime.datetime):
+            @classmethod
+            def now(cls, *arg, **kwargs):
+                return FAKE_TIME
+
+        monkeypatch.setattr(beer_garden.db.mongo.pruner, "datetime", mydatetime)
+
+        request = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="T",
+            created_at=datetime.datetime(2024, 1, 17),
+            status="SUCCESS",
+            command_type="ACTION",
+        )
+        request.output_gridfs.put(b"test", filename="test.txt")
+        request.parameters_gridfs.put(b"test", filename="test.txt")
+        request.save()
+
+        # Orphaned Gridfs files
+        assert db["fs.files"].count() == 2
+        assert db["fs.chunks"].count() == 2
+
+        prune_grid_fs()
+        assert db["fs.files"].count() == 2
+        assert db["fs.chunks"].count() == 2
+        db["request"].delete_many({})
+        db["fs.files"].delete_many({})
+        db["fs.chunks"].delete_many({})
+
     def test_prune_request_gridfs_files(self, monkeypatch):
         db = get_db()
 

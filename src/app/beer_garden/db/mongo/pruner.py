@@ -273,6 +273,7 @@ def prune_orphan_files(ttl):
 
 
 def prune_orphan_file_records(orphaned_files):
+    counter = 0
     for file in orphaned_files:
         try:
             if file.owner_type == "JOB" and file.job is not None:
@@ -280,8 +281,14 @@ def prune_orphan_file_records(orphaned_files):
             elif file.owner_type == "REQUEST" and file.request is not None:
                 Request.objects.get(id=file.request.id)
         except DoesNotExist:
-            logger.error(f"File missing owner, killing orphan file {file.id}")
             file.delete()
+            counter = counter + 1
+
+    if counter > 0:
+        logger.error(f"{counter} Files missing owner, deleted orphans")
+
+    else:
+        logger.debug("No missed owners for Files")
 
 
 def prune_missed_temp_command(ttl):
@@ -318,6 +325,7 @@ def prune_missed_temp_command(ttl):
 
 
 def prune_missed_temp_requests(temp_requests):
+    counter = 0
     for request in temp_requests:
         try:
             Request.objects.get(
@@ -329,10 +337,16 @@ def prune_missed_temp_requests(temp_requests):
                 ],
             )
         except DoesNotExist:
-            logger.error(
-                f"Parent is completed or missing, killing missed TEMP request {request.id}"
-            )
             request.delete()
+            counter = counter + 1
+
+    if counter > 0:
+        logger.error(
+            f"{counter} TEMP Requests deleted due to Parent Request is completed or missing"
+        )
+
+    else:
+        logger.debug("No missed TEMP Requests")
 
 
 def prune_orphan_command_type(ttl, command_type):
@@ -365,16 +379,23 @@ def prune_orphan_command_type(ttl, command_type):
 
         else:
             orphaned_requests = Request.objects.only("parent", "id").filter(**filter)
-            prune_orphan_requests(orphaned_requests)
+            prune_orphan_requests(orphaned_requests, command_type)
 
 
-def prune_orphan_requests(orphaned_requests):
+def prune_orphan_requests(orphaned_requests, command_type):
+    counter = 0
     for request in orphaned_requests:
         try:
             Request.objects.get(id=request.parent.id)
         except DoesNotExist:
-            logger.error(f"Parent is missing, killing orphan request {request.id}")
             request.delete()
+            counter = counter + 1
+
+    if counter > 0:
+        logger.error(f"{counter} orphaned {command_type} Requests deleted")
+
+    else:
+        logger.debug(f"No orphaned {command_type} Requests")
 
 
 def prune_outstanding():
@@ -411,6 +432,7 @@ def prune_outstanding():
 
 
 def prune_outstanding_requests(outstanding_requests):
+    counter = 0
     for request in outstanding_requests:
         try:
             request.status = "CANCELED"
@@ -427,6 +449,7 @@ def prune_outstanding_requests(outstanding_requests):
                     payload=parsed,
                 )
             )
+            counter = counter + 1
         except ModelValidationError as ex:
             logger.error(
                 f"ModelValidationError: Failed to update outstanding Request {request.id}"
@@ -450,6 +473,12 @@ def prune_outstanding_requests(outstanding_requests):
                 )
             )
 
+    if counter > 0:
+        logger.error(f"{counter} outstanding Requests cancelled")
+
+    else:
+        logger.debug("No outstanding Requests cancelled")
+
 
 def prune_grid_fs():
     """
@@ -465,90 +494,46 @@ def prune_grid_fs():
         db = get_db()
         files = db["fs.files"]
 
-        batch_size = config.get("db.prune.batch_size")
-
-        pipeline = [
-            {"$match": {"uploadDate": {"$lte": timeout}}},
-            {
-                "$lookup": {
-                    "from": "request",
-                    "localField": "_id",
-                    "foreignField": "output_gridfs",
-                    "as": "output_gridfs_match",
-                }
-            },
-            {
-                "$unwind": {
-                    "path": "$output_gridfs_match",
-                    "preserveNullAndEmptyArrays": True,
-                }
-            },
-            {
-                "$lookup": {
-                    "from": "request",
-                    "localField": "_id",
-                    "foreignField": "parameters_gridfs",
-                    "as": "parameters_gridfs_match",
-                }
-            },
-            {
-                "$unwind": {
-                    "path": "$parameters_gridfs_match",
-                    "preserveNullAndEmptyArrays": True,
-                }
-            },
-            {
-                "$lookup": {
-                    "from": "raw_file",
-                    "localField": "_id",
-                    "foreignField": "file",
-                    "as": "file_match",
-                }
-            },
-            {
-                "$unwind": {
-                    "path": "$file_match",
-                    "preserveNullAndEmptyArrays": True,
-                }
-            },
-            {
-                "$match": {
-                    "$and": [
-                        {"output_gridfs_match": None},
-                        {"parameters_gridfs_match": None},
-                        {"file_match": None},
-                    ]
-                }
-            },
-        ]
+        filter = {"uploadDate": {"$lte": timeout}}
 
         batch_size = config.get("db.prune.batch_size")
+
         if batch_size > 0:
-            pipeline.append(
-                {
-                    "$limit": batch_size,
-                }
-            )
+            total_files = files.count_documents(filter) + 1
 
-            loop_batch_results = True
-            while loop_batch_results:
-                outstanding_files = files.aggregate(pipeline)
-                loop_batch_results = prune_grid_fs_files(db, files, outstanding_files)
+            batches = round(total_files / batch_size) + 1
+
+            for i in range(batches, 0, -1):
+                outstanding_files = (
+                    files.find(filter).limit(batch_size).skip(batch_size * (i - 1))
+                )
+                prune_grid_fs_files(db, files, outstanding_files)
+
         else:
-            outstanding_files = files.aggregate(pipeline)
-            loop_batch_results = prune_grid_fs_files(db, files, outstanding_files)
+            outstanding_files = files.find(filter)
+            prune_grid_fs_files(db, files, outstanding_files)
 
 
 def prune_grid_fs_files(db, files, outstanding_files):
-    counter = 0
+
+    outstanding_ids = []
     for outstanding_file in outstanding_files:
-        db["fs.chunks"].delete_many({"files_id": outstanding_file["_id"]})
-        files.delete_one({"_id": outstanding_file["_id"]})
-        counter = counter + 1
+        if (
+            Request.objects.filter(
+                Q(output_gridfs=outstanding_file["_id"])
+                | Q(parameters_gridfs=outstanding_file["_id"])
+            ).count()
+            == 0
+            and RawFile.objects.filter(Q(file=outstanding_file["_id"])).count() == 0
+        ):
+            outstanding_ids.append(outstanding_file["_id"])
+
+    counter = len(outstanding_ids)
 
     if counter > 0:
+        db["fs.chunks"].delete_many({"files_id": {"$in": outstanding_ids}})
+        files.delete_many({"_id": {"$in": outstanding_ids}})
         logger.error(f"Deleted {counter} orphaned files from GridFS")
-        return True
 
-    logger.debug("No orphaned files found in GridFS")
-    return False
+    else:
+        logger.error("No orphaned files found in GridFS")
