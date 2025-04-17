@@ -551,9 +551,31 @@ class Request(MongoModel, Document):
                         "while saving Request {self.id}"
                     )
 
+    def _delete_gridfs_files(self):
+        db_request = Request.objects.get(id=self.id)
+        if db_request.output_gridfs:
+            db_request.output_gridfs.delete()
+        if db_request.parameters_gridfs:
+            db_request.parameters_gridfs.delete()
+
+        parameters = db_request.parameters or {}
+
+        for param_value in parameters.values():
+            if (
+                isinstance(param_value, dict)
+                and param_value.get("type") == "bytes"
+                and param_value.get("id") is not None
+            ):
+                try:
+                    raw_file = RawFile.objects.get(id=param_value["id"])
+                    raw_file.delete()
+                except RawFile.DoesNotExist:
+                    pass
+
     def force_delete(self, *args, **kwargs):
         """Force Delete the request and all associated requests"""
         Request.objects.filter(parent=self).delete()
+        self._delete_gridfs_files()
         super(Request, self).delete(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
@@ -563,6 +585,9 @@ class Request(MongoModel, Document):
         ).only("id"):
             request.delete()
         Request.objects(parent=self).update(set__parent=None, set__has_parent=False)
+
+        self._delete_gridfs_files()
+
         super(Request, self).delete(*args, **kwargs)
 
     def save(self, *args, **kwargs):

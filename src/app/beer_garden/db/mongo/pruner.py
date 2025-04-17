@@ -520,30 +520,16 @@ def prune_grid_fs_files(db, files, outstanding_files):
 
     outstanding_ids = []
     for outstanding_file in outstanding_files:
-        if db["request"].find_one(
-            {
-                "$or": [
-                    {"output_gridfs": outstanding_file["_id"]},
-                    {"parameters_gridfs": outstanding_file["_id"]},
-                ]
-            },
-            {"_id": 1},
-        ) is None and (
-            "raw_file" not in db
-            or db["raw_file"].find_one(
-                {"file": outstanding_file["_id"]},
-                {"_id": 1},
-            )
-            is None
+        if (
+            Request.objects(
+                Q(output_gridfs=outstanding_file["_id"])
+                | Q(parameters_gridfs=outstanding_file["_id"])
+            ).count()
+            == 0
+            and RawFile.objects(Q(file=outstanding_file["_id"])).count() == 0
         ):
             outstanding_ids.append(outstanding_file["_id"])
 
-            # Request.objects(
-            #     Q(output_gridfs=outstanding_file["_id"])
-            #     | Q(parameters_gridfs=outstanding_file["_id"])
-            # ).count()
-            # == 0
-            # and RawFile.objects(Q(file=outstanding_file["_id"])).count() == 0
     counter = len(outstanding_ids)
 
     if counter > 0:
