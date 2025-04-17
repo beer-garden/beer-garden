@@ -552,25 +552,30 @@ class Request(MongoModel, Document):
                     )
 
     def _delete_gridfs_files(self):
-        db_request = Request.objects.get(id=self.id)
-        if db_request.output_gridfs:
-            db_request.output_gridfs.delete()
-        if db_request.parameters_gridfs:
-            db_request.parameters_gridfs.delete()
+        try:
+            db_request = Request.objects.get(id=self.id)
 
-        parameters = db_request.parameters or {}
+            if db_request.output_gridfs:
+                db_request.output_gridfs.delete()
+            if db_request.parameters_gridfs:
+                db_request.parameters_gridfs.delete()
 
-        for param_value in parameters.values():
-            if (
-                isinstance(param_value, dict)
-                and param_value.get("type") == "bytes"
-                and param_value.get("id") is not None
-            ):
-                try:
-                    raw_file = RawFile.objects.get(id=param_value["id"])
-                    raw_file.delete()
-                except RawFile.DoesNotExist:
-                    pass
+            parameters = db_request.parameters or {}
+
+            for param_value in parameters.values():
+                if (
+                    isinstance(param_value, dict)
+                    and param_value.get("type") == "bytes"
+                    and param_value.get("id") is not None
+                ):
+                    try:
+                        raw_file = RawFile.objects.get(id=param_value["id"])
+                        raw_file.delete()
+                    except RawFile.DoesNotExist:
+                        pass
+        except Request.DoesNotExist:
+            # Request is already deleted
+            pass
 
     def force_delete(self, *args, **kwargs):
         """Force Delete the request and all associated requests"""
