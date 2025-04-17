@@ -504,13 +504,16 @@ def prune_grid_fs():
             batches = round(total_files / batch_size) + 1
 
             for i in range(batches, 0, -1):
-                outstanding_files = (
-                    files.find(filter).limit(batch_size).skip(batch_size * (i - 1))
-                )
-                prune_grid_fs_files(db, files, outstanding_files)
+                with CollectMetrics("PRUNER", "Pruner::grid_fs::batch"):
+                    outstanding_files = (
+                        files.find(filter, {"_id": 1})
+                        .limit(batch_size)
+                        .skip(batch_size * (i - 1))
+                    )
+                    prune_grid_fs_files(db, files, outstanding_files)
 
         else:
-            outstanding_files = files.find(filter)
+            outstanding_files = files.find(filter, {"_id": 1})
             prune_grid_fs_files(db, files, outstanding_files)
 
 
@@ -518,16 +521,30 @@ def prune_grid_fs_files(db, files, outstanding_files):
 
     outstanding_ids = []
     for outstanding_file in outstanding_files:
-        if (
-            Request.objects.filter(
-                Q(output_gridfs=outstanding_file["_id"])
-                | Q(parameters_gridfs=outstanding_file["_id"])
-            ).count()
-            == 0
-            and RawFile.objects.filter(Q(file=outstanding_file["_id"])).count() == 0
+        if db["request"].find_one(
+            {
+                "$or": [
+                    {"output_gridfs": outstanding_file["_id"]},
+                    {"parameters_gridfs": outstanding_file["_id"]},
+                ]
+            },
+            {"_id": 1},
+        ) is None and (
+            "raw_file" not in db
+            or db["raw_file"].find_one(
+                {"file": outstanding_file["_id"]},
+                {"_id": 1},
+            )
+            is None
         ):
             outstanding_ids.append(outstanding_file["_id"])
 
+            # Request.objects(
+            #     Q(output_gridfs=outstanding_file["_id"])
+            #     | Q(parameters_gridfs=outstanding_file["_id"])
+            # ).count()
+            # == 0
+            # and RawFile.objects(Q(file=outstanding_file["_id"])).count() == 0
     counter = len(outstanding_ids)
 
     if counter > 0:
@@ -536,4 +553,4 @@ def prune_grid_fs_files(db, files, outstanding_files):
         logger.error(f"Deleted {counter} orphaned files from GridFS")
 
     else:
-        logger.debug("No orphaned files found in GridFS")
+        logger.error("No orphaned files found in GridFS")

@@ -377,6 +377,8 @@ class Request(MongoModel, Document):
             {"name": "comment_index", "fields": ["comment"]},
             {"name": "parent_ref_index", "fields": ["parent"]},
             {"name": "parent_index", "fields": ["has_parent"]},
+            # Used for Gridfs File Pruning
+            {"name": "gridfs_index", "fields": ["output_gridfs", "parameters_gridfs"]},
             # These are for sorting parent requests
             {"name": "parent_command_index", "fields": ["has_parent", "command"]},
             {"name": "parent_system_index", "fields": ["has_parent", "system"]},
