@@ -406,7 +406,7 @@ def prune_outstanding():
     Helper function for run to mark requests still outstanding after a certain
     amount of time as canceled.
 
-    Update the newest requests first to give the oldest a chance to finish before 
+    Update the newest requests first to give the oldest a chance to finish before
     being canceled.
     """
     with CollectMetrics("PRUNER", "Pruner::outstanding"):
