@@ -422,15 +422,20 @@ def prune_outstanding():
                     .no_cache()
                     .count()
                 ):
-                    outstanding_requests = Request.objects.filter(
-                        status__in=["IN_PROGRESS", "CREATED"], created_at__lte=timeout
-                    ).order_by('-created_at').limit(batch_size)
+                    outstanding_requests = (
+                        Request.objects.filter(
+                            status__in=["IN_PROGRESS", "CREATED"],
+                            created_at__lte=timeout,
+                        )
+                        .order_by("-created_at")
+                        .limit(batch_size)
+                    )
                     prune_outstanding_requests(outstanding_requests)
 
             outstanding_requests = Request.objects.filter(
                 status__in=["IN_PROGRESS", "CREATED"], created_at__lte=timeout
-            ).order_by('-created_at')
-            
+            ).order_by("-created_at")
+
             prune_outstanding_requests(outstanding_requests)
 
 
