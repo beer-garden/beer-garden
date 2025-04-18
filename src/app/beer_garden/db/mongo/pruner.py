@@ -291,6 +291,10 @@ def prune_orphan_file_records(orphaned_files):
 
 
 def prune_missed_temp_command(ttl):
+    """
+    If the completion event is missed for a TEMP event, clean up the
+    Request from the database
+    """
     with CollectMetrics("PRUNER", "Pruner::orphan_missed_temp"):
         timeout = datetime.now(timezone.utc) - timedelta(minutes=ttl)
         filter = {
@@ -488,32 +492,43 @@ def prune_grid_fs():
     with CollectMetrics("PRUNER", "Pruner::grid_fs"):
         prune_config_ttl = config.get("db.prune.ttl")
         file_threshold = prune_config_ttl.get("file", -1)
-        timeout = datetime.now(timezone.utc) - timedelta(minutes=file_threshold)
 
-        db = get_db()
-        files = db["fs.files"]
+        max_request_size = max(
+            [prune_config_ttl.get("info", -1), prune_config_ttl.get("action", -1)]
+        )
+        if max_request_size > 0:
+            if file_threshold > 0:
+                file_threshold = file_threshold + max_request_size
+            else:
+                file_threshold = max_request_size
 
-        filter = {"uploadDate": {"$lte": timeout}}
+        if file_threshold > 0:
+            timeout = datetime.now(timezone.utc) - timedelta(minutes=file_threshold)
 
-        batch_size = config.get("db.prune.batch_size")
+            db = get_db()
+            files = db["fs.files"]
 
-        if batch_size > 0:
-            total_files = files.count_documents(filter) + 1
+            filter = {"uploadDate": {"$lte": timeout}}
 
-            batches = round(total_files / batch_size) + 1
+            batch_size = config.get("db.prune.batch_size")
 
-            for i in range(batches, 0, -1):
-                with CollectMetrics("PRUNER", "Pruner::grid_fs::batch"):
-                    outstanding_files = (
-                        files.find(filter, {"_id": 1})
-                        .limit(batch_size)
-                        .skip(batch_size * (i - 1))
-                    )
-                    prune_grid_fs_files(db, files, outstanding_files)
+            if batch_size > 0:
+                total_files = files.count_documents(filter) + 1
 
-        else:
-            outstanding_files = files.find(filter, {"_id": 1})
-            prune_grid_fs_files(db, files, outstanding_files)
+                batches = round(total_files / batch_size) + 1
+
+                for i in range(batches, 0, -1):
+                    with CollectMetrics("PRUNER", "Pruner::grid_fs::batch"):
+                        outstanding_files = (
+                            files.find(filter, {"_id": 1})
+                            .limit(batch_size)
+                            .skip(batch_size * (i - 1))
+                        )
+                        prune_grid_fs_files(db, files, outstanding_files)
+
+            else:
+                outstanding_files = files.find(filter, {"_id": 1})
+                prune_grid_fs_files(db, files, outstanding_files)
 
 
 def prune_grid_fs_files(db, files, outstanding_files):
@@ -538,4 +553,4 @@ def prune_grid_fs_files(db, files, outstanding_files):
         logger.error(f"Deleted {counter} orphaned files from GridFS")
 
     else:
-        logger.error("No orphaned files found in GridFS")
+        logger.debug("No orphaned files found in GridFS")
