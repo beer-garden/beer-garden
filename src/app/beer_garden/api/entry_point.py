@@ -3,6 +3,7 @@ import logging
 import multiprocessing
 import os
 import signal
+from datetime import datetime, timedelta
 from importlib import import_module
 from multiprocessing.connection import Connection, Pipe
 from multiprocessing.context import SpawnContext
@@ -11,7 +12,7 @@ from types import FrameType
 from typing import Any, Callable
 
 from box import Box
-from brewtils.models import Event
+from brewtils.models import Event, Events
 
 import beer_garden
 import beer_garden.config
@@ -79,6 +80,7 @@ class EntryPoint:
             action=event_callback,
             name=f"{name} listener",
         )
+        self._heartbeat = None
 
     def getName(self) -> str:
         if self._name:
@@ -115,6 +117,11 @@ class EntryPoint:
 
     def is_alive(self) -> bool:
         if self._process:
+            if self._heartbeat:
+                # Check if the heartbeat is older than 5 seconds
+                if datetime.now() - timedelta(minutes=5) > self._heartbeat:
+                    logger.warning(f"Heartbeat for {self._name} is stale")
+                    return False
             return self._process.is_alive()
         return False
 
@@ -168,6 +175,14 @@ class EntryPoint:
         Returns:
             None
         """
+        if (
+            event.name == Events.ENTRY_HEARTBEAT.name
+            and "entry_point_type" in event.metadata
+            and event.metadata["entry_point_type"].lower() == self._name
+        ):
+            self._heartbeat = datetime.now()
+            logger.debug(f"Heartbeat received from {self._name} at {self._heartbeat}")
+            return
         self._mp_conn.send(event)
 
     @staticmethod
