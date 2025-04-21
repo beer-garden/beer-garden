@@ -444,10 +444,38 @@ class MixedScheduler(object):
             )
 
             self.add_schedule(
-                beer_garden.db.mongo.pruner.prune_orphans,
+                beer_garden.db.mongo.pruner.prune_missed_temp_command,
                 interval=prune_interval,
                 max_instances=1,
-                name="prune_orphans",
+                name="prune_missed_temp_command",
+            )
+
+            self.add_schedule(
+                beer_garden.db.mongo.pruner.prune_orphan_files,
+                interval=prune_interval,
+                max_instances=1,
+                name="prune_orphan_files",
+            )
+
+            self.add_schedule(
+                beer_garden.db.mongo.pruner.prune_orphan_command_type_info,
+                interval=prune_interval,
+                max_instances=1,
+                name="prune_orphan_command_type_info",
+            )
+
+            self.add_schedule(
+                beer_garden.db.mongo.pruner.prune_orphan_command_type_action,
+                interval=prune_interval,
+                max_instances=1,
+                name="prune_orphan_command_type_action",
+            )
+
+            self.add_schedule(
+                beer_garden.db.mongo.pruner.prune_orphan_command_type_admin,
+                interval=prune_interval,
+                max_instances=1,
+                name="prune_orphan_command_type_admin",
             )
 
         # Add scheduled job for checking unresponsive gardens
