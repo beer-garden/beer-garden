@@ -414,13 +414,6 @@ class MixedScheduler(object):
                     name="prune_files",
                 )
 
-                self.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_grid_fs,
-                    interval=prune_interval,
-                    max_instances=1,
-                    name="prune_grid_fs",
-                )
-
             if config.get("db.prune.in_progress_request_expiration") > 0:
                 self.add_schedule(
                     beer_garden.db.mongo.pruner.prune_outstanding,
@@ -429,54 +422,62 @@ class MixedScheduler(object):
                     name="prune_outstanding",
                 )
 
-            self.add_schedule(
-                beer_garden.db.mongo.pruner.prune_admin_requests,
-                interval=prune_interval,
-                max_instances=1,
-                name="prune_admin_requests",
-            )
+        # Cleanup actions that should run, but honor the provided scheduler if configured
+        self.add_schedule(
+            beer_garden.db.mongo.pruner.prune_admin_requests,
+            interval=config.get("db.prune.interval", 15),
+            max_instances=1,
+            name="prune_admin_requests",
+        )
 
-            self.add_schedule(
-                beer_garden.db.mongo.pruner.prune_temp_requests,
-                interval=prune_interval,
-                max_instances=1,
-                name="prune_temp_requests",
-            )
+        self.add_schedule(
+            beer_garden.db.mongo.pruner.prune_temp_requests,
+            interval=config.get("db.prune.interval", 15),
+            max_instances=1,
+            name="prune_temp_requests",
+        )
 
-            self.add_schedule(
-                beer_garden.db.mongo.pruner.prune_missed_temp_command,
-                interval=prune_interval,
-                max_instances=1,
-                name="prune_missed_temp_command",
-            )
+        self.add_schedule(
+            beer_garden.db.mongo.pruner.prune_missed_temp_command,
+            interval=config.get("db.prune.interval", 15),
+            max_instances=1,
+            name="prune_missed_temp_command",
+        )
 
-            self.add_schedule(
-                beer_garden.db.mongo.pruner.prune_orphan_files,
-                interval=prune_interval,
-                max_instances=1,
-                name="prune_orphan_files",
-            )
+        self.add_schedule(
+            beer_garden.db.mongo.pruner.prune_orphan_files,
+            interval=config.get("db.prune.interval", 15),
+            max_instances=1,
+            name="prune_orphan_files",
+        )
 
-            self.add_schedule(
-                beer_garden.db.mongo.pruner.prune_orphan_command_type_info,
-                interval=prune_interval,
-                max_instances=1,
-                name="prune_orphan_command_type_info",
-            )
+        self.add_schedule(
+            beer_garden.db.mongo.pruner.prune_grid_fs,
+            interval=config.get("db.prune.interval", 15),
+            max_instances=1,
+            name="prune_grid_fs",
+        )
 
-            self.add_schedule(
-                beer_garden.db.mongo.pruner.prune_orphan_command_type_action,
-                interval=prune_interval,
-                max_instances=1,
-                name="prune_orphan_command_type_action",
-            )
+        self.add_schedule(
+            beer_garden.db.mongo.pruner.prune_orphan_command_type_info,
+            interval=config.get("db.prune.interval", 15),
+            max_instances=1,
+            name="prune_orphan_command_type_info",
+        )
 
-            self.add_schedule(
-                beer_garden.db.mongo.pruner.prune_orphan_command_type_admin,
-                interval=prune_interval,
-                max_instances=1,
-                name="prune_orphan_command_type_admin",
-            )
+        self.add_schedule(
+            beer_garden.db.mongo.pruner.prune_orphan_command_type_action,
+            interval=config.get("db.prune.interval", 15),
+            max_instances=1,
+            name="prune_orphan_command_type_action",
+        )
+
+        self.add_schedule(
+            beer_garden.db.mongo.pruner.prune_orphan_command_type_admin,
+            interval=config.get("db.prune.interval", 15),
+            max_instances=1,
+            name="prune_orphan_command_type_admin",
+        )
 
         # Add scheduled job for checking unresponsive gardens
         self.add_schedule(
