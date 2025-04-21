@@ -63,6 +63,7 @@ TBD
 - Fixed bug, only Request based scheduled jobs will attempt to update missed counter in the database
 - Updated Routing Logic to accept Target Garden provided
 - Updated all pruners to support batching
+- Fixed bug in Job Scheduler where dynamic choices parameter did not load
 
 # 3.29.1
 
