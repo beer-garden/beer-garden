@@ -485,7 +485,7 @@ def prune_grid_fs():
     """
 
     with CollectMetrics("PRUNER", "Pruner::grid_fs"):
-        prune_config_ttl = config.get("db.prune.ttl")
+        prune_config_ttl = config.get("db.prune.ttl", default=15)
         file_threshold = prune_config_ttl.get("file")
 
         max_request_size = max(
@@ -508,11 +508,18 @@ def prune_grid_fs():
             batch_size = config.get("db.prune.batch_size")
 
             if batch_size > 0:
+                total_files = files.count_documents(filter) + 1
 
-                outstanding_files = files.find(filter, {"_id": 1}).batch_size(
-                    batch_size
-                )
-                prune_grid_fs_files(db, files, list(outstanding_files))
+                batches = round(total_files / batch_size) + 1
+
+                for i in range(batches, 0, -1):
+                    with CollectMetrics("PRUNER", "Pruner::grid_fs::batch"):
+                        outstanding_files = (
+                            files.find(filter, {"_id": 1})
+                            .limit(batch_size)
+                            .skip(batch_size * (i - 1))
+                        )
+                        prune_grid_fs_files(db, files, list(outstanding_files))
 
             else:
                 outstanding_files = files.find(filter, {"_id": 1})
