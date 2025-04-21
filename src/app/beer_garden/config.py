@@ -241,7 +241,7 @@ def generate_plugin_logging(args: Sequence[str]) -> dict:
 
 
 def get(
-    key: Optional[str] = None, config: Box = None
+    key: Optional[str] = None, config: Box = None, default: Optional[Box] = None
 ) -> Union[str, int, float, bool, complex, Box, None]:
     """Get specified key from the config.
 
@@ -265,7 +265,7 @@ def get(
     value = config if config else _CONFIG
     for key_part in key.split("."):
         if key_part not in value:
-            return None
+            return default
         value = value[key_part]
     return value
 

@@ -76,7 +76,7 @@ def run_pruner(tasks, ttl_name):
 def prune_by_name(ttl_name):
     with CollectMetrics("PRUNER", f"Pruner::{ttl_name}"):
         if ttl_name in ["admin", "temp"]:
-            ttl_length = config.get("db.prune.interval", 15)
+            ttl_length = config.get("db.prune.interval", default=15)
         else:
             ttl_length = config.get(f"db.prune.ttl.{ttl_name}")
 
@@ -215,7 +215,7 @@ def determine_tasks(ttl_name, ttl_length) -> Tuple[List[dict], int]:
 
 def prune_orphan_files():
     with CollectMetrics("PRUNER", "Pruner::orphan_files"):
-        ttl = config.get("db.prune.interval", 15)
+        ttl = config.get("db.prune.interval", default=15)
         if ttl < 0:
             return
         timeout = datetime.now(timezone.utc) - timedelta(minutes=ttl)
@@ -265,7 +265,7 @@ def prune_missed_temp_command():
     Request from the database
     """
     with CollectMetrics("PRUNER", "Pruner::orphan_missed_temp"):
-        ttl = config.get("db.prune.interval", 15)
+        ttl = config.get("db.prune.interval", default=15)
         if ttl < 0:
             return
         timeout = datetime.now(timezone.utc) - timedelta(minutes=ttl)
@@ -331,7 +331,7 @@ def prune_orphan_command_type_admin():
 
 def prune_orphan_command_type(command_type):
     with CollectMetrics("PRUNER", f"Pruner::orphan_{command_type}"):
-        ttl = config.get("db.prune.interval", 15)
+        ttl = config.get("db.prune.interval", default=15)
 
         if command_type == "ACTION":
             cmd_ttl_length = config.get("db.prune.ttl.action")
