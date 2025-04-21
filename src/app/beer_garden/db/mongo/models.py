@@ -25,6 +25,7 @@ from brewtils.models import Parameter as BrewtilsParameter
 from brewtils.models import Request as BrewtilsRequest
 from mongoengine import (
     CASCADE,
+    DO_NOTHING,
     NULLIFY,
     PULL,
     BooleanField,
@@ -339,7 +340,7 @@ class Request(MongoModel, Document):
     namespace = StringField(required=True)
 
     parent = ReferenceField(
-        "Request", dbref=True, required=False, reverse_delete_rule=CASCADE
+        "Request", dbref=True, required=False, reverse_delete_rule=DO_NOTHING
     )
     children = DummyField(required=False)
     output = StringField()
@@ -547,6 +548,20 @@ class Request(MongoModel, Document):
                         f"Error locating RawFile with id {param_value['id']} "
                         "while saving Request {self.id}"
                     )
+
+    def force_delete(self, *args, **kwargs):
+        """Force Delete the request and all associated requests"""
+        Request.objects.filter(parent=self).delete()
+        super(Request, self).delete(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        """Delete the request and all associated completed requests"""
+        for request in Request.objects(
+            parent=self, status__in=["SUCCESS", "CANCELED", "ERROR"]
+        ).only("id"):
+            request.delete()
+        Request.objects(parent=self).update(set__parent=None, set__has_parent=False)
+        super(Request, self).delete(*args, **kwargs)
 
     def save(self, *args, **kwargs):
         self._pre_save()
