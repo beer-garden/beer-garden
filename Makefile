@@ -98,7 +98,7 @@ publish-docker-unstable-rpm: parse_unstable_version rpm-build-local
 	docker push bgio/beer-garden:unstable-RPM-$(PYTHON_VERSION)-${DIST}
 
 publish-docker-unstable-branch-rpm: parse_unstable_version rpm-build-local
-	docker build -t bgio/beer-garden:branch-unstable-RPM-$(PYTHON_VERSION)-${DIST}-${DATE} -f docker/dockerfiles/bundle_rpm/Dockerfile --build-arg VERSION=$(UNSTABLE_VERSION) --build-arg PYTHON_VERSION=$(PYTHON_VERSION) DATE=-${DATE} .
+	docker build -t bgio/beer-garden:branch-unstable-RPM-$(PYTHON_VERSION)-${DIST}-${DATE} -f docker/dockerfiles/bundle_rpm/Dockerfile --build-arg VERSION=$(UNSTABLE_VERSION) --build-arg PYTHON_VERSION=$(PYTHON_VERSION) --build-arg DATE=-${DATE} .
 	docker push bgio/beer-garden:branch-unstable-RPM-$(PYTHON_VERSION)-${DIST}-${DATE}
 
 # Setup Environment
