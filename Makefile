@@ -6,7 +6,6 @@ APP_DIR        = src/app
 UI_DIR         = src/ui
 
 VERSION          ?= 0.0.0
-# UNSTABLE_VERSION ?= 0.0.0
 PYTHON_VERSION   ?=3.7
 DIST             ?=centos7
 DATE 			 ?= $(shell date +%Y-%m-%d)
@@ -90,7 +89,6 @@ publish-docker-rpm: rpm-build
 
 parse_unstable_version:
 	$(eval VERSION := $(shell python -c "import os; import sys; sys.path.insert(1, './src/app/beer_garden/'); from __version__ import __version__; print(__version__+'_rc');"))
-	# $(eval UNSTABLE_VERSION := $(shell python -c "import os; import sys; sys.path.insert(1, './src/app/beer_garden/'); from __version__ import __version__; print(__version__);"))
 
 # Requires the docker image already built and UI packaged
 publish-docker-unstable-rpm: parse_unstable_version rpm-build-local
