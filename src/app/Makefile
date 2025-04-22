@@ -12,6 +12,8 @@ SHORT_VERSION  = $(shell echo $(VERSION) | head -c 1)
 
 PYTHON_VERSION        ?= 3.12
 
+DATE 		?= $(shell date +%Y-%m-%d)
+
 .PHONY: clean clean-build clean-test clean-pyc help test
 
 .DEFAULT_GOAL := help
@@ -191,10 +193,10 @@ publish-docker-unstable-latest: docker-tag-latest-unstable publish-docker-unstab
 	docker push $(DOCKER_NAME):unstable-python$(PYTHON_VERSION)-debian
 
 publish-branch-docker-unstable: package clean-python
-	docker build -t $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION)-${date "+%D"} -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-alpine .
-	docker build -t $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION)-debian-${date "+%D"} -f docker/Dockerfile.unstable-debian --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-slim .
-	docker push $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION)-${date "+%D"}
-	docker push $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION)-debian-${date "+%D"}
+	docker build -t $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION)-${DATE} -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-alpine .
+	docker build -t $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION)-debian-${DATE} -f docker/Dockerfile.unstable-debian --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-slim .
+	docker push $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION)-${DATE}
+	docker push $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION)-debian-${DATE}
 
 # Publishing
 publish-package-test: package ## upload a package to the testpypi
@@ -202,3 +204,4 @@ publish-package-test: package ## upload a package to the testpypi
 
 publish-package: package ## upload a package
 	twine upload dist/*
+
