@@ -92,5 +92,5 @@ publish-docker-unstable: docker-build-unstable ## push the unstable docker image
 	docker push $(DOCKER_NAME):unstable
 
 publish-branch-docker-unstable: package
-	docker build -t $(DOCKER_NAME):branch-unstable .
-	docker push $(DOCKER_NAME):branch-unstable
+	docker build -t $(DOCKER_NAME):branch-unstable-${date "+%D"} .
+	docker push $(DOCKER_NAME):branch-unstable-${date "+%D"}
