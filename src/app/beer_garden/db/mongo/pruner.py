@@ -47,30 +47,33 @@ def run_pruner(tasks, ttl_name):
 
             removed_count = 0
 
-            if task["batch_size"] > 0:
-                for record in (
-                    task["collection"]
-                    .objects(query)
-                    .only("id")
-                    .batch_size(task["batch_size"])
-                ):
-                    record.delete()
-                    removed_count = removed_count + 1
-            else:
-                for record in task["collection"].objects(query).only("id"):
-                    record.delete()
-                    removed_count = removed_count + 1
+            try:
 
-            if removed_count > 0:
-                logger.info(
-                    "Deleted %s of %s from %ss older than %s"
-                    % (
-                        removed_count,
-                        ttl_name,
-                        task["collection"].__name__,
-                        str(delete_older_than),
+                if task["batch_size"] > 0:
+                    for record in (
+                        task["collection"]
+                        .objects(query)
+                        .only("id")
+                        .batch_size(task["batch_size"])
+                    ):
+                        record.delete()
+                        removed_count = removed_count + 1
+                else:
+                    for record in task["collection"].objects(query).only("id"):
+                        record.delete()
+                        removed_count = removed_count + 1
+
+            finally:
+                if removed_count > 0:
+                    logger.info(
+                        "Deleted %s of %s from %ss older than %s"
+                        % (
+                            removed_count,
+                            ttl_name,
+                            task["collection"].__name__,
+                            str(delete_older_than),
+                        )
                     )
-                )
 
 
 def prune_by_name(ttl_name):
@@ -242,21 +245,24 @@ def prune_orphan_files():
 
 def prune_orphan_file_records(orphaned_files):
     counter = 0
-    for file in orphaned_files:
-        try:
-            if file.owner_type == "JOB" and file.job is not None:
-                Job.objects.get(id=file.job.id)
-            elif file.owner_type == "REQUEST" and file.request is not None:
-                Request.objects.get(id=file.request.id)
-        except DoesNotExist:
-            file.delete()
-            counter = counter + 1
 
-    if counter > 0:
-        logger.error(f"{counter} Files missing owner, deleted orphans")
+    try:
+        for file in orphaned_files:
+            try:
+                if file.owner_type == "JOB" and file.job is not None:
+                    Job.objects.get(id=file.job.id)
+                elif file.owner_type == "REQUEST" and file.request is not None:
+                    Request.objects.get(id=file.request.id)
+            except DoesNotExist:
+                file.delete()
+                counter = counter + 1
+    finally:
 
-    else:
-        logger.debug("No missed owners for Files")
+        if counter > 0:
+            logger.error(f"{counter} Files missing owner, deleted orphans")
+
+        else:
+            logger.debug("No missed owners for Files")
 
 
 def prune_missed_temp_command():
@@ -294,27 +300,30 @@ def prune_missed_temp_command():
 
 def prune_missed_temp_requests(temp_requests):
     counter = 0
-    for request in temp_requests:
-        try:
-            Request.objects.get(
-                id=request.parent.id,
-                status__in=[
-                    "CREATED",
-                    "RECEIVED",
-                    "IN_PROGRESS",
-                ],
+
+    try:
+        for request in temp_requests:
+            try:
+                Request.objects.get(
+                    id=request.parent.id,
+                    status__in=[
+                        "CREATED",
+                        "RECEIVED",
+                        "IN_PROGRESS",
+                    ],
+                )
+            except DoesNotExist:
+                request.delete()
+                counter = counter + 1
+    finally:
+
+        if counter > 0:
+            logger.error(
+                f"{counter} TEMP Requests deleted due to Parent Request is completed or missing"
             )
-        except DoesNotExist:
-            request.delete()
-            counter = counter + 1
 
-    if counter > 0:
-        logger.error(
-            f"{counter} TEMP Requests deleted due to Parent Request is completed or missing"
-        )
-
-    else:
-        logger.debug("No missed TEMP Requests")
+        else:
+            logger.debug("No missed TEMP Requests")
 
 
 def prune_orphan_command_type_info():
@@ -370,28 +379,31 @@ def prune_orphan_command_type(command_type):
 
 def prune_orphan_requests(orphaned_requests, command_type, batch_size=None):
     counter = 0
-    for request in orphaned_requests:
-        try:
-            Request.objects.get(id=request.parent.id)
-        except DoesNotExist:
-            request.delete()
-            counter = counter + 1
+    try:
+        for request in orphaned_requests:
+            try:
+                Request.objects.get(id=request.parent.id)
+            except DoesNotExist:
+                request.delete()
+                counter = counter + 1
 
-    if counter > 0:
-        logger.error(
-            (
-                f"{counter} orphaned {command_type} Requests deleted "
-                f"{', batch size: ' + str(batch_size) if batch_size else ''}"
-            )
-        )
+    finally:
 
-    else:
-        logger.debug(
-            (
-                f"No orphaned {command_type} Requests "
-                f"{', batch size: ' + str(batch_size) if batch_size else ''}"
+        if counter > 0:
+            logger.error(
+                (
+                    f"{counter} orphaned {command_type} Requests deleted "
+                    f"{', batch size: ' + str(batch_size) if batch_size else ''}"
+                )
             )
-        )
+
+        else:
+            logger.debug(
+                (
+                    f"No orphaned {command_type} Requests "
+                    f"{', batch size: ' + str(batch_size) if batch_size else ''}"
+                )
+            )
 
 
 def prune_outstanding():
@@ -431,51 +443,54 @@ def prune_outstanding():
 
 def prune_outstanding_requests(outstanding_requests):
     counter = 0
-    for request in outstanding_requests:
-        try:
-            request.status = "CANCELED"
-            request.save()
-            serialized = MongoParser.serialize(request, to_string=True)
-            parsed = SchemaParser.parse_request(
-                serialized, from_string=True, many=False
-            )
-
-            publish(
-                Event(
-                    name=Events.REQUEST_CANCELED.name,
-                    payload_type="Request",
-                    payload=parsed,
+    try:
+        for request in outstanding_requests:
+            try:
+                request.status = "CANCELED"
+                request.save()
+                serialized = MongoParser.serialize(request, to_string=True)
+                parsed = SchemaParser.parse_request(
+                    serialized, from_string=True, many=False
                 )
-            )
-            counter = counter + 1
-        except ModelValidationError as ex:
-            logger.error(
-                f"ModelValidationError: Failed to update outstanding Request {request.id}"
-            )
-            logger.debug(ex)
-            logger.debug("Will attempt to check for parents")
 
-            if request.has_parent:
-                try:
-                    Request.objects.get(id=request.parent.id)
-                except DoesNotExist:
-                    logger.debug(
-                        f"Parent is missing, killing orphan request {request.id}"
+                publish(
+                    Event(
+                        name=Events.REQUEST_CANCELED.name,
+                        payload_type="Request",
+                        payload=parsed,
                     )
-                    request.delete()
-        except DoesNotExist:
-            logger.error(
-                (
-                    f"DoesNotExist: Attempted to update outstanding request {request.id} "
-                    "but does not exist in database"
                 )
-            )
+                counter = counter + 1
+            except ModelValidationError as ex:
+                logger.error(
+                    f"ModelValidationError: Failed to update outstanding Request {request.id}"
+                )
+                logger.debug(ex)
+                logger.debug("Will attempt to check for parents")
 
-    if counter > 0:
-        logger.error(f"{counter} outstanding Requests cancelled")
+                if request.has_parent:
+                    try:
+                        Request.objects.get(id=request.parent.id)
+                    except DoesNotExist:
+                        logger.debug(
+                            f"Parent is missing, killing orphan request {request.id}"
+                        )
+                        request.delete()
+            except DoesNotExist:
+                logger.error(
+                    (
+                        f"DoesNotExist: Attempted to update outstanding request {request.id} "
+                        "but does not exist in database"
+                    )
+                )
 
-    else:
-        logger.debug("No outstanding Requests cancelled")
+    finally:
+
+        if counter > 0:
+            logger.error(f"{counter} outstanding Requests cancelled")
+
+        else:
+            logger.debug("No outstanding Requests cancelled")
 
 
 def prune_grid_fs():
@@ -550,26 +565,30 @@ def prune_grid_fs_files(db, files, outstanding_files):
         # If there are any files that are still referenced, we need to check
         # each file individually to see if it is orphaned
         outstanding_ids = []
-        for outstanding_file in outstanding_files:
-            if (
-                Request.objects(
-                    Q(output_gridfs=outstanding_file["_id"])
-                    | Q(parameters_gridfs=outstanding_file["_id"])
-                )
-                .only("id")
-                .count()
-                == 0
-                and RawFile.objects(Q(file=outstanding_file["_id"])).only("id").count()
-                == 0
-            ):
-                outstanding_ids.append(outstanding_file["_id"])
+        try:
+            for outstanding_file in outstanding_files:
+                if (
+                    Request.objects(
+                        Q(output_gridfs=outstanding_file["_id"])
+                        | Q(parameters_gridfs=outstanding_file["_id"])
+                    )
+                    .only("id")
+                    .count()
+                    == 0
+                    and RawFile.objects(Q(file=outstanding_file["_id"]))
+                    .only("id")
+                    .count()
+                    == 0
+                ):
+                    outstanding_ids.append(outstanding_file["_id"])
+        finally:
 
-    counter = len(outstanding_ids)
+            counter = len(outstanding_ids)
 
-    if counter > 0:
-        db["fs.chunks"].delete_many({"files_id": {"$in": outstanding_ids}})
-        files.delete_many({"_id": {"$in": outstanding_ids}})
-        logger.error(f"Deleted {counter} orphaned files from GridFS")
+            if counter > 0:
+                db["fs.chunks"].delete_many({"files_id": {"$in": outstanding_ids}})
+                files.delete_many({"_id": {"$in": outstanding_ids}})
+                logger.error(f"Deleted {counter} orphaned files from GridFS")
 
-    else:
-        logger.debug("No orphaned files found in GridFS")
+            else:
+                logger.debug("No orphaned files found in GridFS")
