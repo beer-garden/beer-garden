@@ -243,12 +243,21 @@ def _verify_chunks(file_id: str) -> FileStatus:
     num_chunks = ceil(file.file_size / file.chunk_size)
     computed_size = file.chunk_size * num_chunks
 
-    size_ok = file.file_size <= computed_size
     length_ok = num_chunks == len(file.chunks)
 
-    missing = [
-        x for x in range(len(file.chunks)) if file.chunks.get(str(x), None) is None
-    ]
+    chunk_size = 0
+    missing = []
+    for x in range(len(file.chunks)):
+        if file.chunks.get(str(x), None) is None:
+            missing.append(x)
+        else:
+            chunk = db.query_unique(FileChunk, id=file.chunks[str(x)])
+            if chunk is None or chunk.offset != x:
+                missing.append(x)
+            else:
+                chunk_size = chunk_size + len(chunk.data)
+
+    size_ok = file.file_size == chunk_size
 
     return _safe_build_object(
         FileStatus,
