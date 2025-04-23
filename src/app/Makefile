@@ -12,7 +12,7 @@ SHORT_VERSION   = $(shell echo $(VERSION) | head -c 1)
 
 PYTHON_VERSION ?= 3.12
 
-DATE 		   ?= $(shell date +%Y-%m-%d)
+DATE           ?= $(shell date +%Y-%m-%d)
 
 .PHONY: clean clean-build clean-test clean-pyc help test
 

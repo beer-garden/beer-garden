@@ -8,7 +8,7 @@ UI_DIR         = src/ui
 VERSION          ?= 0.0.0
 PYTHON_VERSION   ?=3.7
 DIST             ?=centos7
-DATE 			 ?= $(shell date +%Y-%m-%d)
+DATE             ?= $(shell date +%Y-%m-%d)
 
 .PHONY: clean clean-build clean-test clean-pyc help test
 

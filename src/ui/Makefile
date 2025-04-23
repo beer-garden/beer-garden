@@ -3,7 +3,7 @@
 DOCKER_NAME    = bgio/ui
 VERSION       ?= latest
 SHORT_VERSION  = $(shell echo $(VERSION) | head -c 1)
-DATE 		  ?= $(shell date +%Y-%m-%d)
+DATE          ?= $(shell date +%Y-%m-%d)
 
 .PHONY: clean clean-build clean-test help test deps
 .DEFAULT_GOAL := help
