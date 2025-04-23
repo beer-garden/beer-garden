@@ -119,7 +119,7 @@ class EntryPoint:
         if self._process:
             if self._heartbeat:
                 # Check if the heartbeat is older than 5 seconds
-                if datetime.now() - timedelta(minutes=5) > self._heartbeat:
+                if datetime.now() - timedelta(seconds=30) > self._heartbeat:
                     logger.warning(f"Heartbeat for {self._name} is stale")
                     return False
             return self._process.is_alive()
