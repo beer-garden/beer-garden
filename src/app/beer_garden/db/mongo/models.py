@@ -697,7 +697,7 @@ class Topic(MongoModel, Document):
             ):
                 continue
             subscribers.append(existing_subscriber)
-            
+
         if len(self.subscribers) != len(subscribers):
             self.subscribers = subscribers
             self.save()
