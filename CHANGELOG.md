@@ -63,6 +63,7 @@ TBD
 - Fixed bug, only Request based scheduled jobs will attempt to update missed counter in the database
 - Updated Routing Logic to accept Target Garden provided
 - Fixed bug in Job Scheduler where dynamic choices parameter did not load
+- Fixed duplicate subscriber issue when restarting instances
 
 # 3.29.1
 

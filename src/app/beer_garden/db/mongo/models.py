@@ -669,13 +669,37 @@ class Topic(MongoModel, Document):
     }
 
     def add_subscriber(self, subscriber: Subscriber):
-        if subscriber not in self.subscribers:
-            self.subscribers.append(subscriber)
-            self.save()
+        for existing_subscriber in self.subscribers:
+            if (
+                existing_subscriber.subscriber_type == subscriber.subscriber_type
+                and existing_subscriber.garden == subscriber.garden
+                and existing_subscriber.system == subscriber.system
+                and existing_subscriber.version == subscriber.version
+                and existing_subscriber.instance == subscriber.instance
+                and existing_subscriber.command == subscriber.command
+            ):
+                return
+
+        self.subscribers.append(subscriber)
+        self.save()
 
     def remove_subscriber(self, subscriber: Subscriber):
-        if subscriber in self.subscribers:
-            self.subscribers.remove(subscriber)
+
+        subscribers = []
+        for existing_subscriber in self.subscribers:
+            if (
+                existing_subscriber.subscriber_type == subscriber.subscriber_type
+                and existing_subscriber.garden == subscriber.garden
+                and existing_subscriber.system == subscriber.system
+                and existing_subscriber.version == subscriber.version
+                and existing_subscriber.instance == subscriber.instance
+                and existing_subscriber.command == subscriber.command
+            ):
+                continue
+            subscribers.append(existing_subscriber)
+            
+        if len(self.subscribers) != len(subscribers):
+            self.subscribers = subscribers
             self.save()
 
 
