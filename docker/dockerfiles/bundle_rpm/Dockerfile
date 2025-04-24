@@ -1,7 +1,8 @@
 ARG PYTHON_VERSION=3.7
 ARG VERSION=unstable
+ARG DATE
 
-FROM bgio/beer-garden:$VERSION-python$PYTHON_VERSION
+FROM bgio/beer-garden:$VERSION-python$PYTHON_VERSION$DATE
 
 RUN mkdir -p /source/rpm/dist 
 ADD rpm/dist /source/rpm/dist
