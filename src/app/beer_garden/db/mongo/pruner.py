@@ -561,11 +561,12 @@ def prune_grid_fs_files(db, files, outstanding_files):
 
     total_matching = requests_matching + raw_files_matching
 
-    if total_matching > 0:
-        # If there are any files that are still referenced, we need to check
-        # each file individually to see if it is orphaned
-        outstanding_ids = []
-        try:
+    try:
+        if total_matching > 0:
+            # If there are any files that are still referenced, we need to check
+            # each file individually to see if it is orphaned
+            outstanding_ids = []
+
             for outstanding_file in outstanding_files:
                 if (
                     Request.objects(
@@ -581,14 +582,14 @@ def prune_grid_fs_files(db, files, outstanding_files):
                     == 0
                 ):
                     outstanding_ids.append(outstanding_file["_id"])
-        finally:
+    finally:
 
-            counter = len(outstanding_ids)
+        counter = len(outstanding_ids)
 
-            if counter > 0:
-                db["fs.chunks"].delete_many({"files_id": {"$in": outstanding_ids}})
-                files.delete_many({"_id": {"$in": outstanding_ids}})
-                logger.error(f"Deleted {counter} orphaned files from GridFS")
+        if counter > 0:
+            db["fs.chunks"].delete_many({"files_id": {"$in": outstanding_ids}})
+            files.delete_many({"_id": {"$in": outstanding_ids}})
+            logger.error(f"Deleted {counter} orphaned files from GridFS")
 
-            else:
-                logger.debug("No orphaned files found in GridFS")
+        else:
+            logger.debug("No orphaned files found in GridFS")
