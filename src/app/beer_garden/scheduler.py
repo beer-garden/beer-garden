@@ -18,7 +18,7 @@ from apscheduler.triggers.interval import IntervalTrigger as APInterval
 from brewtils.errors import ModelValidationError
 from brewtils.models import DateTrigger, Event, Events, Job, Operation, Request
 from brewtils.schema_parser import SchemaParser
-from mongoengine import ValidationError
+from mongoengine import DoesNotExist, ValidationError
 from pytz import utc
 
 import beer_garden
@@ -170,7 +170,7 @@ class MixedScheduler(object):
             try:
                 db_job = db.query_unique(Job, id=event.job_id)
                 db.modify(db_job, inc__skip_count=1)
-            except Exception:
+            except DoesNotExist:
                 job, _ = scheduler._sync_scheduler._lookup_job(
                     jobstore_alias=event.jobstore, job_id=event.job_id
                 )
