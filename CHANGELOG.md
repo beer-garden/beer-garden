@@ -64,6 +64,7 @@ TBD
 - Updated Routing Logic to accept Target Garden provided
 - Fixed bug in Job Scheduler where dynamic choices parameter did not load
 - Updated Admin Garden Page to load Garden models from preloaded Garden models
+- Fixed File validate to query for chunks and ensure accurate size
 
 # 3.29.1
 
