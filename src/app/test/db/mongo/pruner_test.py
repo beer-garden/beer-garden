@@ -299,6 +299,10 @@ class TestMongoPruner(object):
         new_created = Request.objects.get(id=created.id)
         assert new_in_progress.status == "CANCELED"
         assert new_created.status == "CANCELED"
+        assert (
+            new_created.status_updated_at.date()
+            == datetime.datetime.now(timezone.utc).date()
+        )
 
     def test_negative_cancel_threshold(self, task, in_progress, created):
         config._CONFIG = {"db": {"prune": {"in_progress_request_expiration": -1}}}
