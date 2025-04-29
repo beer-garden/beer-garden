@@ -24,6 +24,7 @@ from beer_garden.db.mongo.pruner import (
     prune_files,
     prune_grid_fs,
     prune_info_requests,
+    prune_missed_temp_command,
     prune_orphan_command_type,
     prune_orphan_files,
     prune_outstanding,
@@ -220,14 +221,21 @@ class TestMongoPruner(object):
         prune_files()
         assert len(File.objects.all()) == 0
 
-    def test_prune_request_gridfs_files(self, monkeypatch):
+    def test_skip_prune_request_gridfs_files(self, monkeypatch):
         db = get_db()
 
         db["request"].delete_many({})
         db["fs.files"].delete_many({})
         db["fs.chunks"].delete_many({})
 
-        config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"file": 1}}}}
+        config._CONFIG = {
+            "db": {
+                "prune": {
+                    "batch_size": -1,
+                    "ttl": {"file": 1, "info": -1, "action": -1},
+                }
+            }
+        }
 
         FAKE_TIME = datetime.datetime.now(timezone.utc) + timedelta(minutes=60)
 
@@ -244,7 +252,57 @@ class TestMongoPruner(object):
             instance_name="T",
             namespace="T",
             command="T",
-            created_at=datetime.datetime(2024, 1, 17),
+            # created_at=datetime.datetime(2024, 1, 17),
+            status="SUCCESS",
+            command_type="ACTION",
+        )
+        request.output_gridfs.put(b"test", filename="test.txt")
+        request.parameters_gridfs.put(b"test", filename="test.txt")
+        request.save()
+
+        # Orphaned Gridfs files
+        assert db["fs.files"].count() == 2
+        assert db["fs.chunks"].count() == 2
+
+        prune_grid_fs()
+        assert db["fs.files"].count() == 2
+        assert db["fs.chunks"].count() == 2
+        db["request"].delete_many({})
+        db["fs.files"].delete_many({})
+        db["fs.chunks"].delete_many({})
+
+    def test_prune_request_gridfs_files(self, monkeypatch):
+        db = get_db()
+
+        db["request"].delete_many({})
+        db["fs.files"].delete_many({})
+        db["fs.chunks"].delete_many({})
+
+        config._CONFIG = {
+            "db": {
+                "prune": {
+                    "batch_size": -1,
+                    "ttl": {"file": 1, "info": -1, "action": -1},
+                }
+            }
+        }
+
+        FAKE_TIME = datetime.datetime.now(timezone.utc) + timedelta(minutes=60)
+
+        class mydatetime(datetime.datetime):
+            @classmethod
+            def now(cls, *arg, **kwargs):
+                return FAKE_TIME
+
+        monkeypatch.setattr(beer_garden.db.mongo.pruner, "datetime", mydatetime)
+
+        request = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="T",
+            # created_at=datetime.datetime(2024, 1, 17),
             status="SUCCESS",
             command_type="ACTION",
         )
@@ -268,7 +326,14 @@ class TestMongoPruner(object):
         db["fs.files"].delete_many({})
         db["fs.chunks"].delete_many({})
 
-        config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"file": 1}}}}
+        config._CONFIG = {
+            "db": {
+                "prune": {
+                    "batch_size": -1,
+                    "ttl": {"file": 1, "info": -1, "action": -1},
+                }
+            }
+        }
 
         FAKE_TIME = datetime.datetime.now(timezone.utc) + timedelta(minutes=60)
 
@@ -293,7 +358,9 @@ class TestMongoPruner(object):
         assert db["fs.chunks"].count() == 0
 
     def test_run_cancels_outstanding_requests(self, task, in_progress, created):
-        config._CONFIG = {"db": {"prune": {"in_progress_request_expiration": 15}}}
+        config._CONFIG = {
+            "db": {"prune": {"in_progress_request_expiration": 1, "batch_size": -1}}
+        }
         prune_outstanding()
         new_in_progress = Request.objects.get(id=in_progress.id)
         new_created = Request.objects.get(id=created.id)
@@ -313,7 +380,7 @@ class TestMongoPruner(object):
         assert new_created.status == "CREATED"
 
     def test_none_cancel_threshold(self, task, in_progress, created):
-        config._CONFIG = {"db": {"prune": {"ttl": {}}}}
+        config._CONFIG = {"db": {"prune": {"in_progress_request_expiration": -1}}}
         prune_outstanding()
         new_in_progress = Request.objects.get(id=in_progress.id)
         new_created = Request.objects.get(id=created.id)
@@ -386,7 +453,7 @@ class TestDetermineTasks(object):
 
 class TestOrphanPruner(object):
     @pytest.fixture
-    def child_request(self):
+    def orphan_child_request(self):
         parent = Request(
             system="T",
             system_version="T",
@@ -419,11 +486,140 @@ class TestOrphanPruner(object):
 
         child.delete()
 
-    def test_orphan_pruner(self, child_request):
+    @pytest.fixture
+    def valid_child_request(self):
+        parent = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="T",
+            created_at=datetime.datetime(2024, 1, 17),
+            status="SUCCESS",
+            command_type="ACTION",
+        )
+        parent.save()
+
+        child = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="T",
+            created_at=datetime.datetime(2024, 1, 17),
+            status="SUCCESS",
+            command_type="ACTION",
+            has_parent=True,
+            parent=parent,
+        )
+
+        child.save()
+
+        yield child
+        parent.delete()
+        child.delete()
+
+    def test_orphan_pruner(self, orphan_child_request):
+        config._CONFIG = {
+            "db": {"prune": {"batch_size": -1, "interval": 1, "ttl": {"action": 1}}}
+        }
         assert len(Request.objects.filter(command_type="ACTION")) == 1
 
-        prune_orphan_command_type(1, "ACTION")
+        prune_orphan_command_type("ACTION")
         assert len(Request.objects.filter(command_type="ACTION")) == 0
+
+    def test_skip_orphan_pruner(self, valid_child_request):
+        config._CONFIG = {
+            "db": {"prune": {"batch_size": -1, "interval": 1, "ttl": {"action": 1}}}
+        }
+        assert len(Request.objects.filter(command_type="ACTION")) == 2
+
+        prune_orphan_command_type("ACTION")
+        assert len(Request.objects.filter(command_type="ACTION")) == 2
+
+
+class TestMissedTempPruner(object):
+    @pytest.fixture
+    def missed_child_request(self):
+        parent = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="T",
+            created_at=datetime.datetime(2024, 1, 17),
+            status="SUCCESS",
+            command_type="ACTION",
+        )
+        parent.save()
+
+        child = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="T",
+            created_at=datetime.datetime(2024, 1, 17),
+            status="SUCCESS",
+            command_type="TEMP",
+            has_parent=True,
+            parent=parent,
+        )
+
+        # parent.delete()
+        child.save()
+
+        yield child
+        parent.delete()
+        child.delete()
+
+    @pytest.fixture
+    def valid_child_request(self):
+        parent = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="T",
+            created_at=datetime.datetime(2024, 1, 17),
+            status="IN_PROGRESS",
+            command_type="ACTION",
+        )
+        parent.save()
+
+        child = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="T",
+            created_at=datetime.datetime(2024, 1, 17),
+            status="SUCCESS",
+            command_type="TEMP",
+            has_parent=True,
+            parent=parent,
+        )
+
+        # parent.delete()
+        child.save()
+
+        yield child
+        parent.delete()
+        child.delete()
+
+    def test_missed_temp_pruner(self, missed_child_request):
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 1}}}
+        assert len(Request.objects.filter(command_type="TEMP")) == 1
+
+        prune_missed_temp_command()
+        assert len(Request.objects.filter(command_type="TEMP")) == 0
+
+    def test_valid_temp_pruner(self, valid_child_request):
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 1}}}
+        assert len(Request.objects.filter(command_type="TEMP")) == 1
+
+        prune_missed_temp_command()
+        assert len(Request.objects.filter(command_type="TEMP")) == 1
 
 
 class TestOrphanFile(object):
@@ -551,13 +747,15 @@ class TestOrphanFile(object):
         file.delete()
 
     def test_orphan_file(self, orphan_request_file, deleted_request_file):
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 1}}}
         assert len(File.objects.all()) == 2
 
-        prune_orphan_files(1)
+        prune_orphan_files()
         assert len(File.objects.all()) == 1
 
     def test_orphan_job(self, orphan_job_file, deleted_job_file):
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 1}}}
         assert len(File.objects.all()) == 2
 
-        prune_orphan_files(1)
+        prune_orphan_files()
         assert len(File.objects.all()) == 1
