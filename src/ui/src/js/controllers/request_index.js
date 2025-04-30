@@ -94,6 +94,7 @@ export default function requestIndexController(
       .withOption('newData', true)
       .withPaginationType('full_numbers')
       .withBootstrap()
+      .withOption('searchDelay', 1200)
       .withOption('createdRow', function(row, data, dataIndex) {
         $compile(angular.element(row).contents())($scope);
       });
@@ -182,31 +183,37 @@ export default function requestIndexController(
     command_display_name: {
       html: 'input',
       type: 'text',
+      time: 600,
       attr: {class: 'form-inline form-control', title: 'Command Filter'},
     },
     namespace: {
       html: 'input',
       type: 'text',
+      time: 600,
       attr: {class: 'form-inline form-control', title: 'Namespace Filter'},
     },
     system: {
       html: 'input',
       type: 'text',
+      time: 600,
       attr: {class: 'form-inline form-control', title: 'System Filter'},
     },
     system_version: {
       html: 'input',
       type: 'text',
+      time: 600,
       attr: {class: 'form-inline form-control', title: 'Version Filter'},
     },
     instance_name: {
       html: 'input',
       type: 'text',
+      time: 600,
       attr: {class: 'form-inline form-control', title: 'Instance Filter'},
     },
     requester: {
       html: 'input',
       type: 'text',
+      time: 600,
       attr: {class: 'form-inline form-control', title: 'Requester Filter'},
     },
     status: {
@@ -248,6 +255,7 @@ export default function requestIndexController(
     comment: {
       html: 'input',
       type: 'text',
+      time: 600,
       attr: {class: 'form-inline form-control', title: 'Comment Filter'},
     },
     metadata: {},

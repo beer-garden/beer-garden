@@ -23,7 +23,9 @@ from beer_garden.db.mongo.models import (
     RawFile,
     Request,
     Role,
+    Subscriber,
     System,
+    Topic,
     User,
     UserToken,
 )
@@ -958,3 +960,89 @@ class TestFileUpdates:
         request_model.delete()
 
         assert len(RawFile.objects.filter(request=request_model)) == 0
+
+
+class TestTopic:
+    @pytest.fixture(autouse=True)
+    def drop(self, mongo_conn):
+        Topic.drop_collection()
+
+    def test_add_subscriber(self):
+        topic = Topic(name="foo")
+
+        subscriber1 = Subscriber(
+            subscriber_type="type1",
+            garden="garden",
+            namespace="namespace",
+            system="system",
+            version="version",
+            instance="instance",
+            command="command",
+            consumer_count=1,
+        )
+        topic.add_subscriber(subscriber1)
+        assert len(topic.subscribers) == 1
+        subscriber2 = Subscriber(
+            subscriber_type="type2",
+            garden="garden",
+            namespace="namespace",
+            system="system",
+            version="version",
+            instance="instance",
+            command="command",
+            consumer_count=1,
+        )
+        topic.add_subscriber(subscriber2)
+        assert len(topic.subscribers) == 2
+        subscriber3 = Subscriber(
+            subscriber_type="type1",
+            garden="garden",
+            namespace="namespace",
+            system="system",
+            version="version",
+            instance="instance",
+            command="command",
+            consumer_count=5,
+        )
+        topic.add_subscriber(subscriber3)
+        assert len(topic.subscribers) == 2
+
+    def test_remove_subscriber(self):
+        topic = Topic(name="foo")
+
+        subscriber1 = Subscriber(
+            subscriber_type="type1",
+            garden="garden",
+            namespace="namespace",
+            system="system",
+            version="version",
+            instance="instance",
+            command="command",
+            consumer_count=1,
+        )
+        subscriber2 = Subscriber(
+            subscriber_type="type2",
+            garden="garden",
+            namespace="namespace",
+            system="system",
+            version="version",
+            instance="instance",
+            command="command",
+            consumer_count=1,
+        )
+        topic.subscribers.append(subscriber1)
+        topic.subscribers.append(subscriber2)
+        assert len(topic.subscribers) == 2
+
+        subscriber3 = Subscriber(
+            subscriber_type="type1",
+            garden="garden",
+            namespace="namespace",
+            system="system",
+            version="version",
+            instance="instance",
+            command="command",
+            consumer_count=5,
+        )
+        topic.remove_subscriber(subscriber3)
+        assert len(topic.subscribers) == 1
