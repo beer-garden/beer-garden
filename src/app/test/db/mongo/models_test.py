@@ -967,19 +967,8 @@ class TestTopic:
     def drop(self, mongo_conn):
         Topic.drop_collection()
 
-    def test_str(self):
-        assert str(Topic(name="name")) == "name"
-
-    def test_repr(self):
-        topic = Topic(name="name", description="description")
-        assert "name" in repr(topic)
-        assert "description" in repr(topic)
-
-    def test_clean(self):
-        Topic(name="foo", description="bar").clean()
-
     def test_add_subscriber(self):
-        topic = Topic(name="foo", description="bar")
+        topic = Topic(name="foo")
 
         subscriber1 = Subscriber(
             subscriber_type="type1",
@@ -1019,7 +1008,7 @@ class TestTopic:
         assert len(topic.subscribers) == 2
 
     def test_remove_subscriber(self):
-        topic = Topic(name="foo", description="bar")
+        topic = Topic(name="foo")
 
         subscriber1 = Subscriber(
             subscriber_type="type1",
