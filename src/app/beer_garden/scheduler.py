@@ -18,7 +18,7 @@ from apscheduler.triggers.interval import IntervalTrigger as APInterval
 from brewtils.errors import ModelValidationError
 from brewtils.models import DateTrigger, Event, Events, Job, Operation, Request
 from brewtils.schema_parser import SchemaParser
-from mongoengine import ValidationError
+from mongoengine import DoesNotExist, ValidationError
 from pytz import utc
 
 import beer_garden
@@ -47,7 +47,10 @@ class Monitor(object):
             delete=bg_trigger.delete,
             job=self.job,
         )
-        self.start()
+        if self.job.status == "RUNNING":
+            self.start()
+        else:
+            self.stop()
 
     def start(self):
         """Start monitoring a directory"""
@@ -162,8 +165,22 @@ class MixedScheduler(object):
     running = False
 
     def max_concurrence_listener(scheduler, event):
-        db_job = db.query_unique(Job, id=event.job_id)
-        db.modify(db_job, inc__skip_count=1)
+
+        if event.jobstore == "beer_garden":
+            try:
+                db_job = db.query_unique(Job, id=event.job_id)
+                db.modify(db_job, inc__skip_count=1)
+            except DoesNotExist:
+                job, _ = scheduler._sync_scheduler._lookup_job(
+                    jobstore_alias=event.jobstore, job_id=event.job_id
+                )
+                if job:
+                    logger.error(
+                        (
+                            f"Job {job.name} in {event.jobstore} has reached its max "
+                            "instances. Skipping this job but not in mongo database."
+                        )
+                    )
 
     def start(self):
         """Starts the scheduler"""
@@ -370,69 +387,112 @@ class MixedScheduler(object):
 
     def internal_scheduled_jobs(self):
         # Add scheduled jobs for Mongo Pruner
-        prune_interval = config.get("db.prune_interval")
+        prune_interval = config.get("db.prune.interval")
         if prune_interval > 0:
-            ttl_config = config.get("db.ttl")
+            ttl_config = config.get("db.prune.ttl")
             if ttl_config.get("info") > 0:
                 self.add_schedule(
                     beer_garden.db.mongo.pruner.prune_info_requests,
                     interval=prune_interval,
-                    max_running_jobs=1,
+                    max_instances=1,
+                    name="prune_info_requests",
                 )
 
             if ttl_config.get("action") > 0:
                 self.add_schedule(
                     beer_garden.db.mongo.pruner.prune_action_requests,
                     interval=prune_interval,
-                    max_running_jobs=1,
-                )
-
-            if ttl_config.get("admin") > 0:
-                self.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_admin_requests,
-                    interval=prune_interval,
-                    max_running_jobs=1,
-                )
-
-            if ttl_config.get("temp") > 0:
-                self.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_temp_requests,
-                    interval=prune_interval,
-                    max_running_jobs=1,
+                    max_instances=1,
+                    name="prune_action_requests",
                 )
 
             if ttl_config.get("file") > 0:
                 self.add_schedule(
                     beer_garden.db.mongo.pruner.prune_files,
                     interval=prune_interval,
-                    max_running_jobs=1,
+                    max_instances=1,
+                    name="prune_files",
                 )
 
-            if ttl_config.get("in_progress") > 0:
+            if config.get("db.prune.in_progress_request_expiration") > 0:
                 self.add_schedule(
                     beer_garden.db.mongo.pruner.prune_outstanding,
                     interval=prune_interval,
-                    max_running_jobs=1,
+                    max_instances=1,
+                    name="prune_outstanding",
                 )
 
-            self.add_schedule(
-                beer_garden.db.mongo.pruner.prune_orphans,
-                interval=prune_interval,
-                max_running_jobs=1,
-            )
+        # Cleanup actions that should run, but honor the provided scheduler if configured
+        self.add_schedule(
+            beer_garden.db.mongo.pruner.prune_admin_requests,
+            interval=config.get("db.prune.interval", default=15),
+            max_instances=1,
+            name="prune_admin_requests",
+        )
+
+        self.add_schedule(
+            beer_garden.db.mongo.pruner.prune_temp_requests,
+            interval=config.get("db.prune.interval", default=15),
+            max_instances=1,
+            name="prune_temp_requests",
+        )
+
+        self.add_schedule(
+            beer_garden.db.mongo.pruner.prune_missed_temp_command,
+            interval=config.get("db.prune.interval", default=15),
+            max_instances=1,
+            name="prune_missed_temp_command",
+        )
+
+        self.add_schedule(
+            beer_garden.db.mongo.pruner.prune_orphan_files,
+            interval=config.get("db.prune.interval", default=15),
+            max_instances=1,
+            name="prune_orphan_files",
+        )
+
+        self.add_schedule(
+            beer_garden.db.mongo.pruner.prune_grid_fs,
+            interval=config.get("db.prune.interval", default=15),
+            max_instances=1,
+            name="prune_grid_fs",
+        )
+
+        self.add_schedule(
+            beer_garden.db.mongo.pruner.prune_orphan_command_type_info,
+            interval=config.get("db.prune.interval", default=15),
+            max_instances=1,
+            name="prune_orphan_command_type_info",
+        )
+
+        self.add_schedule(
+            beer_garden.db.mongo.pruner.prune_orphan_command_type_action,
+            interval=config.get("db.prune.interval", default=15),
+            max_instances=1,
+            name="prune_orphan_command_type_action",
+        )
+
+        self.add_schedule(
+            beer_garden.db.mongo.pruner.prune_orphan_command_type_admin,
+            interval=config.get("db.prune.interval", default=15),
+            max_instances=1,
+            name="prune_orphan_command_type_admin",
+        )
 
         # Add scheduled job for checking unresponsive gardens
         self.add_schedule(
             beer_garden.garden.garden_unresponsive_trigger,
             interval=15,
-            max_running_jobs=1,
+            max_instances=1,
+            name="garden_unresponsive_trigger",
         )
 
         # Add scheduled job for validating Generated and Annotated topics
         self.add_schedule(
             beer_garden.topic.sync_garden_topics,
             interval=15,
-            max_running_jobs=1,
+            max_instances=1,
+            name="sync_garden_topics",
         )
 
         # Add Garden Sync Scheduler
@@ -442,7 +502,8 @@ class MixedScheduler(object):
             self.add_schedule(
                 beer_garden.garden.publish_garden,
                 interval=config.get("parent.sync_interval"),
-                max_running_jobs=1,
+                max_instances=1,
+                name="publish_garden",
             )
 
 
@@ -590,8 +651,10 @@ def create_jobs(jobs: List[Job]) -> dict:
         try:
             if job.id and db.query(Job, filter_params={"id": job.id}):
                 updated.append(update_job(job))
+                logger.info(f"Scheduler job updated: {job}")
             else:
                 created.append(create_job(job))
+                logger.info(f"Scheduler job created: {job}")
         except (ModelValidationError, ValidationError) as exc:
             rejected.append((job, str(exc)))
 
@@ -723,6 +786,10 @@ def handle_event(event: Event) -> None:
     ):
         if event.name in [Events.JOB_CREATED.name, Events.JOB_UPDATED.name]:
             try:
+                paused_kwargs = {}
+
+                if event.payload.status == "PAUSED":
+                    paused_kwargs["next_run_time"] = None
                 beer_garden.application.scheduler.add_job(
                     run_job,
                     trigger=event.payload.trigger,
@@ -738,6 +805,7 @@ def handle_event(event: Event) -> None:
                     jobstore="beer_garden",
                     replace_existing=True,
                     id=event.payload.id,
+                    **paused_kwargs,
                 )
             except Exception:
                 db.delete(event.payload)

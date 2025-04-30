@@ -25,6 +25,7 @@ from brewtils.models import Parameter as BrewtilsParameter
 from brewtils.models import Request as BrewtilsRequest
 from mongoengine import (
     CASCADE,
+    DO_NOTHING,
     NULLIFY,
     PULL,
     BooleanField,
@@ -82,6 +83,8 @@ __all__ = [
 ]
 
 REQUEST_MAX_PARAM_SIZE = 5 * 1_000_000
+
+logger = logging.getLogger(__name__)
 
 
 class MongoModel:
@@ -337,7 +340,7 @@ class Request(MongoModel, Document):
     namespace = StringField(required=True)
 
     parent = ReferenceField(
-        "Request", dbref=True, required=False, reverse_delete_rule=CASCADE
+        "Request", dbref=True, required=False, reverse_delete_rule=DO_NOTHING
     )
     children = DummyField(required=False)
     output = StringField()
@@ -375,6 +378,8 @@ class Request(MongoModel, Document):
             {"name": "comment_index", "fields": ["comment"]},
             {"name": "parent_ref_index", "fields": ["parent"]},
             {"name": "parent_index", "fields": ["has_parent"]},
+            # Used for Gridfs File Pruning
+            {"name": "gridfs_index", "fields": ["output_gridfs", "parameters_gridfs"]},
             # These are for sorting parent requests
             {"name": "parent_command_index", "fields": ["has_parent", "command"]},
             {"name": "parent_system_index", "fields": ["has_parent", "system"]},
@@ -444,19 +449,17 @@ class Request(MongoModel, Document):
         ],
     }
 
-    logger = logging.getLogger(__name__)
-
     def pre_serialize(self):
         """Pull any fields out of GridFS"""
         encoding = "utf-8"
 
         if self.output_gridfs:
-            self.logger.debug("Retrieving output from GridFS")
+            logger.debug("Retrieving output from GridFS")
             self.output = self.output_gridfs.read().decode(encoding)
             self.output_gridfs = None
 
         if self.parameters_gridfs:
-            self.logger.debug("Retrieving parameters from GridFS")
+            logger.debug("Retrieving parameters from GridFS")
             self.parameters = json.loads(self.parameters_gridfs.read().decode(encoding))
             self.parameters_gridfs = None
 
@@ -486,7 +489,7 @@ class Request(MongoModel, Document):
         if self.parameters and self.parameters_gridfs.grid_id is None:
             params_json = json.dumps(self.parameters)
             if len(params_json) > REQUEST_MAX_PARAM_SIZE:
-                self.logger.debug("Parameters too big, storing in GridFS")
+                logger.debug("Parameters too big, storing in GridFS")
                 self.parameters_gridfs.put(params_json, encoding=encoding)
 
         if self.parameters_gridfs.grid_id:
@@ -495,7 +498,7 @@ class Request(MongoModel, Document):
         if self.output and self.output_gridfs.grid_id is None:
             output_json = json.dumps(self.output)
             if len(output_json) > REQUEST_MAX_PARAM_SIZE:
-                self.logger.debug("Output size too big, storing in gridfs")
+                logger.debug("Output size too big, storing in gridfs")
                 self.output_gridfs.put(self.output, encoding=encoding)
 
         if self.output_gridfs.grid_id:
@@ -543,10 +546,54 @@ class Request(MongoModel, Document):
                     raw_file.request = self
                     raw_file.save()
                 except RawFile.DoesNotExist:
-                    self.logger.debug(
+                    logger.debug(
                         f"Error locating RawFile with id {param_value['id']} "
                         "while saving Request {self.id}"
                     )
+
+    def _delete_gridfs_files(self):
+        try:
+            db_request = Request.objects.get(id=self.id)
+
+            if db_request.output_gridfs:
+                db_request.output_gridfs.delete()
+            if db_request.parameters_gridfs:
+                db_request.parameters_gridfs.delete()
+
+            parameters = db_request.parameters or {}
+
+            for param_value in parameters.values():
+                if (
+                    isinstance(param_value, dict)
+                    and param_value.get("type") == "bytes"
+                    and param_value.get("id") is not None
+                ):
+                    try:
+                        raw_file = RawFile.objects.get(id=param_value["id"])
+                        raw_file.delete()
+                    except RawFile.DoesNotExist:
+                        pass
+        except Request.DoesNotExist:
+            # Request is already deleted
+            pass
+
+    def force_delete(self, *args, **kwargs):
+        """Force Delete the request and all associated requests"""
+        Request.objects.filter(parent=self).delete()
+        self._delete_gridfs_files()
+        super(Request, self).delete(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        """Delete the request and all associated completed requests"""
+        for request in Request.objects(
+            parent=self, status__in=["SUCCESS", "CANCELED", "ERROR"]
+        ).only("id"):
+            request.delete()
+        Request.objects(parent=self).update(set__parent=None, set__has_parent=False)
+
+        self._delete_gridfs_files()
+
+        super(Request, self).delete(*args, **kwargs)
 
     def save(self, *args, **kwargs):
         self._pre_save()
@@ -727,53 +774,72 @@ class System(MongoModel, Document):
 
     def delete(self, **kwargs):
 
-        if len(self.instances) > 0:
-            for command in self.commands:
-                for instance in self.instances:
-                    if len(command.topics) > 0:
-                        for topic in command.topics:
-                            if Topic.objects(name=topic).count() > 0:
-                                db_topic = Topic.objects.get(name=topic)
+        try:
+            if len(self.instances) > 0:
+                if self.local:
+                    garden_name = config.get("garden.name")
+                else:
+                    garden_name = Garden.objects.get(
+                        systems__in=[System.objects.get(id=self.id)]
+                    ).name
+                for command in self.commands:
+                    for instance in self.instances:
+                        if len(command.topics) > 0:
+                            for topic in command.topics:
+                                if Topic.objects(name=topic).count() > 0:
+                                    db_topic = Topic.objects.get(name=topic)
 
-                                for subscriber in db_topic.subscribers:
-                                    if (
-                                        subscriber.system == self.name
-                                        and subscriber.namespace == self.namespace
-                                        and subscriber.version == self.version
-                                        and subscriber.instance == instance.name
-                                        and subscriber.command == command.name
-                                        and subscriber.subscriber_type == "ANNOTATED"
-                                    ):
-                                        db_topic.remove_subscriber(subscriber)
+                                    for subscriber in db_topic.subscribers:
+                                        if (
+                                            subscriber.garden == garden_name
+                                            and subscriber.system == self.name
+                                            and subscriber.namespace == self.namespace
+                                            and subscriber.version == self.version
+                                            and subscriber.instance == instance.name
+                                            and subscriber.command == command.name
+                                            and subscriber.subscriber_type
+                                            == "ANNOTATED"
+                                        ):
+                                            db_topic.remove_subscriber(subscriber)
 
-                                if len(db_topic.subscribers) == 0:
-                                    db_topic.delete()
+                                    if len(db_topic.subscribers) == 0:
+                                        db_topic.delete()
 
-                    if not self.prefix_topic:
-                        topic_generated = (
-                            f"{self.namespace}.{self.name}."
-                            f"{self.version}.{instance.name}."
-                            f"{command.name}"
-                        )
-                    else:
-                        topic_generated = f"{self.prefix_topic}.{command.name}"
+                        if not self.prefix_topic:
+                            topic_generated = (
+                                f"{garden_name}.{self.namespace}."
+                                f"{self.name}.{self.version}."
+                                f"{instance.name}.{command.name}"
+                            )
+                        else:
+                            topic_generated = f"{self.prefix_topic}.{command.name}"
 
-                    if Topic.objects(name=topic_generated).count() > 0:
-                        db_topic = Topic.objects.get(name=topic_generated)
+                        if Topic.objects(name=topic_generated).count() > 0:
+                            db_topic = Topic.objects.get(name=topic_generated)
 
-                        for subscriber in db_topic.subscribers:
-                            if (
-                                subscriber.system == self.name
-                                and subscriber.namespace == self.namespace
-                                and subscriber.version == self.version
-                                and subscriber.instance == instance.name
-                                and subscriber.command == command.name
-                                and subscriber.subscriber_type == "GENERATED"
-                            ):
-                                db_topic.remove_subscriber(subscriber)
+                            for subscriber in db_topic.subscribers:
+                                if (
+                                    subscriber.garden == garden_name
+                                    and subscriber.system == self.name
+                                    and subscriber.namespace == self.namespace
+                                    and subscriber.version == self.version
+                                    and subscriber.instance == instance.name
+                                    and subscriber.command == command.name
+                                    and subscriber.subscriber_type == "GENERATED"
+                                ):
+                                    db_topic.remove_subscriber(subscriber)
 
-                        if len(db_topic.subscribers) == 0:
-                            db_topic.delete()
+                            if len(db_topic.subscribers) == 0:
+                                db_topic.delete()
+        except DoesNotExist:
+            logger.error(
+                (
+                    "Error finding garden for system deletion "
+                    f"Namespace = {self.namespace} "
+                    f"System {self.name} "
+                    f"Version {self.version}"
+                )
+            )
 
         super().delete(**kwargs)
 
@@ -830,9 +896,9 @@ class System(MongoModel, Document):
 
                     if not self.prefix_topic:
                         topic_generated = (
-                            f"{self.namespace}.{self.name}."
-                            f"{self.version}.{instance.name}."
-                            f"{command.name}"
+                            f"{garden_name}.{self.namespace}."
+                            f"{self.name}.{self.version}."
+                            f"{instance.name}.{command.name}"
                         )
                     else:
                         topic_generated = f"{self.prefix_topic}.{command.name}"
@@ -1069,8 +1135,6 @@ class Garden(MongoModel, Document):
         that when saving the systems, unknowns are deleted."""
         # import moved here to avoid a circular import loop
         from beer_garden.systems import remove_system
-
-        logger = logging.getLogger(self.__class__.__name__)
 
         def _get_system_triple(system: System) -> Tuple[str, str, str]:
             namespace = getattr(system, "namespace", None)

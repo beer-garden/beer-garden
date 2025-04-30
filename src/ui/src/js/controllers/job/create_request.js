@@ -4,6 +4,8 @@ jobCreateRequestController.$inject = [
   '$scope',
   '$state',
   '$stateParams',
+  '$q',
+  'RequestService',
   'SFBuilderService',
   'SystemService',
 ];
@@ -13,6 +15,8 @@ jobCreateRequestController.$inject = [
  * @param  {Object} $scope            Angular's $scope object.
  * @param  {Object} $state            Angular's $state object.
  * @param  {Object} $stateParams      Angular's $stateParams object.
+ * @param  {Object} $q                Angular's $q object.
+ * @param  {Object} RequestService    Beer-Garden's request service object.
  * @param  {Object} SFBuilderService  Beer-Garden's schema-form service.
  * @param  {Object} SystemService   Beer-Garden's system service object.
  */
@@ -20,6 +24,8 @@ export default function jobCreateRequestController(
     $scope,
     $state,
     $stateParams,
+    $q,
+    RequestService,
     SFBuilderService,
     SystemService,
 ) {
@@ -58,6 +64,41 @@ export default function jobCreateRequestController(
     $scope.model = _.cloneDeep($scope.job.request_template);
     $scope.modelJson = angular.toJson($scope.model, 2);
   }
+
+  $scope.createRequestWrapper = function(requestPrototype, ...args) {
+    const request = {
+      command: requestPrototype['command'],
+      command_display_name: requestPrototype['command_display_name'] || requestPrototype['command'],
+      command_type: requestPrototype['command_type'] || 'TEMP',
+      namespace: requestPrototype['namespace'] || $scope.system.namespace,
+      system: requestPrototype['system'] || $scope.system.name,
+      system_version:
+        requestPrototype['system_version'] || $scope.system.version,
+      instance_name:
+        requestPrototype['instance_name'] || $scope.model['instance_name'],
+    };
+
+    // If a system has more than one instance this will be undefined on initial page
+    // load. We could just let this continue as normal, but the backend would return
+    // an error like "Could not find instance with name 'None' in system". That's not
+    // the best, so this special handling makes the error message a little nicer.
+    if (!request.instance_name) {
+      const deferred = $q.defer();
+      deferred.reject('Please select an instance');
+      return deferred.promise;
+    }
+
+    // If parameters are specified we need to use the model value
+    if (angular.isDefined(requestPrototype['parameterNames'])) {
+      request['parameters'] = {};
+      const nameList = requestPrototype['parameterNames'];
+      for (let i = 0; i < nameList.length; i++) {
+        request['parameters'][nameList[i]] = args[i];
+      }
+    }
+
+    return RequestService.createRequest(request, true);
+  };
 
   const generateRequestSF = function() {
     const sf = SFBuilderService.build($scope.system, $scope.command);

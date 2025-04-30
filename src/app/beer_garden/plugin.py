@@ -41,6 +41,7 @@ import beer_garden.db.mongo.motor as moto
 import beer_garden.local_plugins.manager as lpm
 import beer_garden.queue.api as queue
 import beer_garden.requests as requests
+from beer_garden.db.mongo.models import DoesNotExist as ModelDoesNotExist
 from beer_garden.errors import NotFoundException
 from beer_garden.events import publish, publish_event, publish_event_async
 
@@ -271,43 +272,47 @@ def update(
 
     system = db.modify(system, query={"instances__name": instance.name}, **updates)
 
-    return system.get_instance_by_name(instance.name)
+    instance = system.get_instance_by_name(instance.name)
+
+    if new_status and system.local:
+        publish_status_update(system, instance)
+
+    return instance
 
 
-def publish_status_update(instance: Instance):
+def publish_status_update(system: System, instance: Instance):
     """Publish event of Instance status.
 
     Args:
+        system: The System
         instance: The Instance
 
     """
-    system, instance = _from_kwargs(instance_id=instance.id)
 
-    if system.local:
-        # Publish event for plugins to monitor the status of other plugins
-        publish(
-            Event(
-                name=Events.REQUEST_TOPIC_PUBLISH.name,
-                metadata={
-                    "topic": config.get("garden.name"),
-                    "propagate": True,
+    # Publish event for plugins to monitor the status of other plugins
+    publish(
+        Event(
+            name=Events.REQUEST_TOPIC_PUBLISH.name,
+            metadata={
+                "topic": config.get("garden.name"),
+                "propagate": True,
+            },
+            payload=Request(
+                parameters={
+                    "message": {
+                        "status": instance.status,
+                        "namespace": system.namespace,
+                        "system": system.name,
+                        "version": system.version,
+                        "instance": instance.name,
+                        "garden": config.get("garden.name"),
+                        "event": Events.INSTANCE_UPDATED.name,
+                    }
                 },
-                payload=Request(
-                    parameters={
-                        "message": {
-                            "status": instance.status,
-                            "namespace": system.namespace,
-                            "system": system.name,
-                            "version": system.version,
-                            "instance": instance.name,
-                            "garden": config.get("garden.name"),
-                            "event": Events.INSTANCE_UPDATED.name,
-                        }
-                    },
-                ),
-                payload_type="Request",
-            )
+            ),
+            payload_type="Request",
         )
+    )
 
 
 def heartbeat(
@@ -479,17 +484,43 @@ async def heartbeat_async(
 ) -> dict:
     query = {"instances._id": ObjectIdField().to_mongo(instance_id)}
     projection = {"instances.$": 1, "_id": 0}
-    update = {
-        "$set": {"instances.$.status_info.heartbeat": datetime.utcnow()},
-        "$push": {
-            "instances.$.status_info.history": {
-                "status": "RUNNING",
-                "heartbeat": datetime.utcnow(),
-            }
-        },
-    }
 
-    return await _update_instance_async(query, projection, update)
+    result = await moto.query(collection="system", filter=query, projection=projection)
+
+    instance = result["instances"][0]
+    if "_id" in instance:
+        instance["id"] = str(instance["_id"])
+        del instance["_id"]
+
+    update_time = datetime.utcnow()
+    history = {
+        "status": "RUNNING",
+        "heartbeat": update_time,
+    }
+    instance["status_info"]["heartbeat"] = update_time
+
+    instance["status_info"]["history"].append(history)
+
+    if config.get("plugin.status_history") > 0 and len(
+        instance["status_info"]["history"]
+    ) + 1 > config.get("plugin.status_history"):
+        instance["status_info"]["history"].pop(0)
+
+        update = {
+            "$set": {
+                "instances.$.status_info.heartbeat": update_time,
+                "instances.$.status_info.history": instance["status_info"]["history"],
+            },
+        }
+    else:
+        update = {
+            "$set": {"instances.$.status_info.heartbeat": update_time},
+            "$push": {"instances.$.status_info.history": history},
+        }
+
+    await moto.update_one(collection="system", filter=query, update=update)
+
+    return SchemaParser.parse_instance(instance)
 
 
 async def _get_instance_async(filter, projection) -> dict:
@@ -582,12 +613,13 @@ def handle_event(event: Event) -> None:
                     new_status=event.payload.status,
                     metadata=event.payload.metadata,
                 )
-            except DoesNotExist:
+            except (DoesNotExist, ModelDoesNotExist):
                 logger.error(
                     (
                         "Unable to find system matching instance "
                         f"{event.payload.id}:{event.payload.name} "
-                        f"for garden {event.garden}"
+                        f"for garden {event.garden} invoking a "
+                        "GARDEN_SYNC event"
                     )
                 )
                 from beer_garden.router import route
@@ -601,8 +633,6 @@ def handle_event(event: Event) -> None:
                 )
             except Exception as ex:
                 logger.error(f"{event.name} error: {ex} ({event!r})")
-        else:
-            publish_status_update(event.payload)
 
 
 class StatusMonitor(StoppableThread):

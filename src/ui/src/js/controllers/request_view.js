@@ -302,6 +302,7 @@ export default function requestViewController(
       system: request.system,
       system_version: request.system_version,
       command: request.command_display_name || request.command,
+      command_type: request.command_type,
       instance_name: request.instance_name,
       comment: request.comment || '',
       parameters: request.parameters,
@@ -370,7 +371,7 @@ export default function requestViewController(
   };
 
   function eventCallback(event) {
-    if (event.name.startsWith('REQUEST')) {
+    if (event.name.startsWith('REQUEST') && event.payload.id !== undefined && event.payload.id !== null) {
       if (event.payload.id == $stateParams.requestId) {
         $scope.successCallback(event.payload);
       } else if (_.get(event, 'payload.parent.id') == $stateParams.requestId) {

@@ -10,13 +10,11 @@ from mongoengine.queryset.visitor import Q
 
 import beer_garden.db.api as db
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.metrics import collect_metrics
 
 
 class TopicAPI(AuthorizationHandler):
     parser = SchemaParser()
 
-    @collect_metrics(transaction_type="API", group="TopicAPI")
     async def get(self, topic_id):
         """
         ---
@@ -47,7 +45,6 @@ class TopicAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="TopicAPI")
     async def delete(self, topic_id):
         """
         ---
@@ -77,7 +74,6 @@ class TopicAPI(AuthorizationHandler):
 
         self.set_status(204)
 
-    @collect_metrics(transaction_type="API", group="TopicAPI")
     async def patch(self, topic_id):
         """
         ---
@@ -297,7 +293,6 @@ class TopicNameAPI(AuthorizationHandler):
 class TopicListAPI(AuthorizationHandler):
     parser = SchemaParser()
 
-    @collect_metrics(transaction_type="API", group="TopicListAPI")
     async def get(self):
         """
         ---
@@ -520,7 +515,6 @@ class TopicListAPI(AuthorizationHandler):
             self.set_header("Content-Type", "application/json; charset=UTF-8")
             self.write(json.dumps(topics))
 
-    @collect_metrics(transaction_type="API", group="TopicListAPI")
     async def post(self):
         """
         ---

@@ -1,16 +1,18 @@
 # Makefile for Beer Garden application
 
-PYTHON         = python
-MODULE_NAME    = beer_garden
-TEST_DIR       = test
-DOCKER_NAME    = bgio/beer-garden
+PYTHON          = python
+MODULE_NAME     = beer_garden
+TEST_DIR        = test
+DOCKER_NAME     = bgio/beer-garden
 
 MAX_CYCLOMATIC_COMPLEXITY = 10
 
-VERSION       ?= 0.0.0
-SHORT_VERSION  = $(shell echo $(VERSION) | head -c 1)
+VERSION        ?= 0.0.0
+SHORT_VERSION   = $(shell echo $(VERSION) | head -c 1)
 
-PYTHON_VERSION        ?= 3.12
+PYTHON_VERSION ?= 3.12
+
+DATE           ?= $(shell date +%Y-%m-%d)
 
 .PHONY: clean clean-build clean-test clean-pyc help test
 
@@ -98,13 +100,14 @@ clean: clean-all ## alias of clean-all
 format: ## Run black formatter in-line
 	black $(MODULE_NAME) $(TEST_DIR)
 	isort --thirdparty brewtils $(MODULE_NAME) $(TEST_DIR)
+	$(MAKE) lint
 
 
 # Linting
 lint: ## check style with flake8, black and isort
-	flake8 $(MODULE_NAME) $(TEST_DIR)
+	flake8 --ignore=F824 $(MODULE_NAME) $(TEST_DIR)
 	black --check --diff $(MODULE_NAME) $(TEST_DIR)
-	isort --check-only --diff --thirdparty brewtils $(MODULE_NAME)
+	isort --check-only --diff --thirdparty brewtils $(MODULE_NAME)	
 
 
 # Complexity checks
@@ -190,10 +193,10 @@ publish-docker-unstable-latest: docker-tag-latest-unstable publish-docker-unstab
 	docker push $(DOCKER_NAME):unstable-python$(PYTHON_VERSION)-debian
 
 publish-branch-docker-unstable: package clean-python
-	docker build -t $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION) -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-alpine .
-	docker build -t $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION)-debian -f docker/Dockerfile.unstable-debian --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-slim .
-	docker push $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION)
-	docker push $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION)-debian
+	docker build -t $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION)-${DATE} -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-alpine .
+	docker build -t $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION)-debian-${DATE} -f docker/Dockerfile.unstable-debian --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-slim .
+	docker push $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION)-${DATE}
+	docker push $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION)-debian-${DATE}
 
 # Publishing
 publish-package-test: package ## upload a package to the testpypi
@@ -201,3 +204,4 @@ publish-package-test: package ## upload a package to the testpypi
 
 publish-package: package ## upload a package
 	twine upload dist/*
+

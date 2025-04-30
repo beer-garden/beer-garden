@@ -16,7 +16,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.11.11"]
         os: ["ubuntu-latest"]
 
     name: Linting OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
@@ -59,7 +59,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8","3.9","3.10","3.11","3.12","3.13"]
+        python-version: ["3.8","3.9","3.10","3.11.11","3.12","3.13"]
         os: ["ubuntu-latest"]
         include:
           - python-version: "3.7"
@@ -169,7 +169,7 @@ jobs:
           files: ./coverage.xml
           fail_ci_if_error: false
           verbose: true
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   SecurityCheck:
     runs-on: ${{ matrix.os }}
@@ -221,7 +221,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.8","3.9","3.10","3.11","3.12","3.13"]
+        python-version: ["3.8","3.9","3.10","3.11.11","3.12","3.13"]
         os: ["ubuntu-latest"]
         include:
           - python-version: "3.7"
@@ -308,14 +308,14 @@ jobs:
         working-directory: ./docker/docker-compose
 
       - name: Install Develop Version of Brewtils
-        run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@${{env.brewtils}}#egg=brewtils
+        run: pip3 install -e git+https://github.com/beer-garden/brewtils@${{env.brewtils}}#egg=brewtils
 
       - name: Install Testing Dependencies
-        run: pip${{ matrix.python-version }} install -r requirements.txt
+        run: pip3 install -r requirements.txt
         working-directory: ./test/integration
 
       - name: Test Plugins
-        run: python${{ matrix.python-version }} -m pytest local_plugins/
+        run: python3 -m pytest local_plugins/
         working-directory: ./test/integration
 
       - name: Grab logs from Beer-Garden
@@ -335,7 +335,7 @@ jobs:
       matrix:
         python-version: ["3.12"]
         os: ["ubuntu-latest"]
-        child: ["unstable", "3.19.1","3.20.0","3.21.0","3.22.0","3.23.0","3.24.0","3.25.0","3.26.0"]
+        child: ["unstable", "3.19.1","3.20.0","3.21.0","3.22.0","3.23.0","3.24.0","3.25.0","3.26.0", "3.27.2-python3.11","3.28.2-python3.11","3.29.0-python3.11"]
         parent: ["unstable"]
       fail-fast: false
 
@@ -397,21 +397,39 @@ jobs:
       - name: Verify Local Plugins
         run: ls ./docker/docker-compose/data/localplugins
 
+      - name: Run Docker Services
+        run: docker compose up -d activemq mongodb rabbitmq
+        working-directory: ./docker/docker-compose
+
+      - name: Wait for required services
+        run: sleep 30s
+        shell: bash
+
       - name: Run Docker Beer Garden Child
         run: docker compose up -d beer-garden-child
         working-directory: ./docker/docker-compose
 
-      - name: Wait for Beer Garden Grandparent to start
-        run: sleep 10s
-        shell: bash
+      - name: Check If Beer Garden Child is Operational
+        uses: nick-invision/retry@v2
+        with:
+          timeout_seconds: 30
+          max_attempts: 20
+          retry_on: error
+          retry_wait_seconds: 5
+          command: curl http://localhost:2357/config
 
       - name: Run Docker Beer Garden Parent
         run: docker compose up -d beer-garden-parent
         working-directory: ./docker/docker-compose
 
-      - name: Wait for Beer Garden Parent to start
-        run: sleep 10s
-        shell: bash
+      - name: Check If Beer Garden Parent is Operational
+        uses: nick-invision/retry@v2
+        with:
+          timeout_seconds: 30
+          max_attempts: 20
+          retry_on: error
+          retry_wait_seconds: 5
+          command: curl http://localhost:2347/config
 
       - name: Run Docker Beer Garden Grandparent
         run: docker compose up -d beer-garden-grandparent
@@ -420,8 +438,17 @@ jobs:
       - name: Check Docker
         run: docker ps
 
-      - name: Wait for Beer Garden to start
-        run: sleep 60s
+      - name: Check If Beer Garden Grandparent is Operational
+        uses: nick-invision/retry@v2
+        with:
+          timeout_seconds: 30
+          max_attempts: 20
+          retry_on: error
+          retry_wait_seconds: 5
+          command: curl http://localhost:2337/config
+
+      - name: Wait for Beer Garden plugins to initialize
+        run: sleep 15s
         shell: bash
 
       - name: Install Develop Version of Brewtils

@@ -53,8 +53,8 @@ from beer_garden.errors import (
     UnknownGardenException,
 )
 from beer_garden.events import publish
-from beer_garden.garden import get_garden, get_gardens, load_garden_file, update_garden
-from beer_garden.metrics import collect_metrics
+from beer_garden.garden import get_garden, get_gardens, update_garden
+from beer_garden.metrics import CollectMetrics
 from beer_garden.requests import complete_request, create_request
 
 logger = logging.getLogger(__name__)
@@ -198,7 +198,6 @@ router_filter = {
 }
 
 
-@collect_metrics(transaction_type="router")
 def route(operation: Operation):
     """Entry point into the routing subsystem
 
@@ -208,35 +207,50 @@ def route(operation: Operation):
     Returns:
 
     """
-    operation = _pre_route(operation)
+    with CollectMetrics("ROUTER", f"ROUTER::{operation.operation_type}"):
+        logger.debug(f"Routing {operation!r}")
 
-    logger.debug(f"Routing {operation!r}")
+        if not operation.operation_type:
+            raise RoutingRequestException("Missing operation type")
 
-    if not operation.operation_type:
-        raise RoutingRequestException("Missing operation type")
+        operation = _pre_route(operation)
 
-    if operation.operation_type not in route_functions.keys():
-        raise RoutingRequestException(
-            f"Unknown operation type '{operation.operation_type}'"
-        )
+        if operation.operation_type not in route_functions.keys():
+            raise RoutingRequestException(
+                f"Unknown operation type '{operation.operation_type}'"
+            )
 
-    update_api_heartbeat(operation)
+        update_api_heartbeat(operation)
 
-    if invalid_source_check(operation):
-        raise RoutingRequestException(
-            f"Garden '{operation.source_garden_name}' {operation.source_api} is disabled"
-        )
+        if invalid_source_check(operation):
+            raise RoutingRequestException(
+                f"Garden '{operation.source_garden_name}' {operation.source_api} is disabled"
+            )
 
-    # Determine which garden the operation is targeting
-    operation.target_garden_name = _determine_target(operation)
+        # Determine which garden the operation is targeting
+        operation.target_garden_name = _determine_target(operation)
 
-    # If it's targeted at THIS garden, execute
-    if operation.target_garden_name == config.get("garden.name"):
-        result = execute_local(operation)
-    else:
-        result = initiate_forward(operation)
+        # If it's targeted at THIS garden, execute
+        if operation.target_garden_name == config.get("garden.name"):
+            result = execute_local(operation)
+        else:
+            loop = None
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                pass
+            if loop:
+                result = loop.run_in_executor(
+                    t_pool,
+                    partial(
+                        initiate_forward,
+                        operation,
+                    ),
+                )
+            else:
+                result = initiate_forward(operation)
 
-    return filter_result(result)
+        return filter_result(result)
 
 
 def filter_result(result: [brewtils.models.BaseModel, list]):
@@ -308,7 +322,7 @@ def update_api_heartbeat(operation: Operation):
                 local_garden = get_garden(config.get("garden.name"))
 
                 # Will only support mapping 1 hop away legacy Garden Syncs
-                child_garden = False
+                multi_hop_garden = True
                 for child in local_garden.children:
                     if child.name == operation.model.payload.name:
                         logger.warning(
@@ -318,9 +332,9 @@ def update_api_heartbeat(operation: Operation):
                             )
                         )
                         operation.source_garden_name = operation.model.payload.name
-                        child_garden = True
+                        multi_hop_garden = False
                         break
-                if child_garden:
+                if multi_hop_garden:
                     return
             else:
                 return
@@ -382,10 +396,6 @@ def invalid_source_check(operation: Operation):
 
     with garden_lock:
         gardens[operation.source_garden_name] = loaded_garden
-
-    # Receiving Connections have not been configured yet
-    if not loaded_garden.receiving_connections:
-        return False
 
     for connection in loaded_garden.receiving_connections:
         if connection.api == operation.source_api and connection.status != "DISABLED":
@@ -562,8 +572,11 @@ def setup_routing():
                 garden.connection_type is not None
                 and garden.connection_type.casefold() != "local"
             ):
+                del garden.children
+                del garden.systems
+
                 with garden_lock:
-                    gardens[garden.name] = load_garden_file(garden)
+                    gardens[garden.name] = garden
                     for connection in gardens[garden.name].publishing_connections:
                         if (
                             connection.api.upper() == "STOMP"
@@ -664,50 +677,68 @@ def handle_event(event):
             # Then add routes to the new systems
             add_routing_garden(event.payload, event.payload.name)
 
+    # To save memory, we need to remove children
+    if event.payload_type == "Garden":
+        del event.payload.children
+        del event.payload.systems
+
     # This is a little unintuitive. We want to let the garden module deal with handling
     # any downstream garden changes since handling those changes is nontrivial.
     # It's *those* events we want to act on here, not the "raw" downstream ones.
     # This is also why we only handle GARDEN_UPDATED and not STARTED or STOPPED
-    if event.garden == config.get("garden.name") and not event.error:
-        if event.name == Events.GARDEN_CONFIGURED.name:
-            if event.payload.name != config.get("garden.name") and (
-                (
-                    event.payload.has_parent
-                    and event.payload.parent == config.get("garden.name")
-                )
-                or not event.payload.has_parent
-            ):
-                gardens[event.payload.name] = event.payload
+    if (
+        event.garden == config.get("garden.name")
+        and not event.error
+        and "GARDEN" in event.name
+    ):
+        # Only store the garden if it's 1 hop of the local garden
+        if not event.payload.has_parent or event.payload.parent == config.get(
+            "garden.name"
+        ):
+            if event.name == Events.GARDEN_CONFIGURED.name:
+                if event.payload.name != config.get("garden.name") and (
+                    (
+                        event.payload.has_parent
+                        and event.payload.parent == config.get("garden.name")
+                    )
+                    or not event.payload.has_parent
+                ):
+                    gardens[event.payload.name] = event.payload
 
-                stomp_found = False
-                for connection in event.payload.publishing_connections:
-                    if connection.api.upper() == "STOMP":
-                        stomp_found = True
-                        if (
-                            event.payload.name not in stomp_garden_connections
-                            and connection.status == "PUBLISHING"
-                        ):
-                            stomp_garden_connections[event.payload.name] = (
-                                create_stomp_connection(connection)
-                            )
+                    stomp_found = False
+                    for connection in event.payload.publishing_connections:
+                        if connection.api.upper() == "STOMP":
+                            stomp_found = True
+                            if (
+                                event.payload.name not in stomp_garden_connections
+                                and connection.status == "PUBLISHING"
+                            ):
+                                stomp_garden_connections[event.payload.name] = (
+                                    create_stomp_connection(connection)
+                                )
 
-                        elif connection.status == "DISABLED":
-                            stomp_garden_connections[event.payload.name].disconnect()
+                            elif connection.status == "DISABLED":
+                                stomp_garden_connections[
+                                    event.payload.name
+                                ].disconnect()
 
-            if not stomp_found and event.payload.name not in stomp_garden_connections:
-                stomp_garden_connections[event.payload.name].disconnect()
-                del stomp_garden_connections[event.payload.name]
-
-        elif event.name == Events.GARDEN_REMOVED.name:
-            try:
-                del gardens[event.payload.name]
-                if event.payload.name in stomp_garden_connections:
+                if (
+                    not stomp_found
+                    and event.payload.name not in stomp_garden_connections
+                ):
                     stomp_garden_connections[event.payload.name].disconnect()
                     del stomp_garden_connections[event.payload.name]
-            except KeyError:
-                pass
-        elif event.name == Events.GARDEN_UPDATED.name:
-            gardens[event.payload.name] = event.payload
+
+            elif event.name == Events.GARDEN_REMOVED.name:
+                try:
+                    del gardens[event.payload.name]
+                    if event.payload.name in stomp_garden_connections:
+                        stomp_garden_connections[event.payload.name].disconnect()
+                        del stomp_garden_connections[event.payload.name]
+                except KeyError:
+                    pass
+            elif event.name == Events.GARDEN_UPDATED.name:
+                gardens[event.payload.name] = event.payload
 
 
 def _operation_conversion(operation: Operation) -> Operation:
@@ -749,6 +780,7 @@ def _pre_forward(operation: Operation) -> Operation:
 
     if operation.operation_type == "REQUEST_CREATE":
         # Save the request so it'll have an ID and we'll have something to update
+        operation.model.target_garden = operation.target_garden_name
         local_request = create_request(operation.model)
 
         operation.model.id = local_request.id
@@ -796,13 +828,10 @@ def _pre_execute(operation: Operation) -> Operation:
 
 
 def _determine_target(operation: Operation) -> str:
-    """Determine the garden the operation is targeting
+    """Determine the garden the operation is targeting"""
 
-    Note that while the operation can already have a target garden field this will only
-    be used as a fallback if a better target can't be calculated.
-
-    See https://github.com/beer-garden/beer-garden/issues/1076
-    """
+    if operation.target_garden_name:
+        return operation.target_garden_name
 
     target_garden = _target_from_type(operation)
 
