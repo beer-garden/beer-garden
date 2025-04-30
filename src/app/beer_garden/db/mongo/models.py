@@ -686,6 +686,19 @@ class Subscriber(MongoModel, EmbeddedDocument):
     subscriber_type = StringField()
     consumer_count = IntField(default=0)
 
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return (
+                self.subscriber_type == other.subscriber_type
+                and self.garden == other.garden
+                and self.namespace == other.namespace
+                and self.system == other.system
+                and self.version == other.version
+                and self.instance == other.instance
+                and self.command == other.command
+            )
+        return False
+
 
 class Topic(MongoModel, Document):
     brewtils_model = brewtils.models.Topic
@@ -701,37 +714,14 @@ class Topic(MongoModel, Document):
     }
 
     def add_subscriber(self, subscriber: Subscriber):
-        for existing_subscriber in self.subscribers:
-            if (
-                existing_subscriber.subscriber_type == subscriber.subscriber_type
-                and existing_subscriber.garden == subscriber.garden
-                and existing_subscriber.system == subscriber.system
-                and existing_subscriber.version == subscriber.version
-                and existing_subscriber.instance == subscriber.instance
-                and existing_subscriber.command == subscriber.command
-            ):
-                return
-
-        self.subscribers.append(subscriber)
-        self.save()
+        if subscriber not in self.subscribers:
+            self.subscribers.append(subscriber)
+            self.save()
 
     def remove_subscriber(self, subscriber: Subscriber):
 
-        subscribers = []
-        for existing_subscriber in self.subscribers:
-            if (
-                existing_subscriber.subscriber_type == subscriber.subscriber_type
-                and existing_subscriber.garden == subscriber.garden
-                and existing_subscriber.system == subscriber.system
-                and existing_subscriber.version == subscriber.version
-                and existing_subscriber.instance == subscriber.instance
-                and existing_subscriber.command == subscriber.command
-            ):
-                continue
-            subscribers.append(existing_subscriber)
-
-        if len(self.subscribers) != len(subscribers):
-            self.subscribers = subscribers
+        if subscriber in self.subscribers:
+            self.subscribers.remove(subscriber)
             self.save()
 
 
