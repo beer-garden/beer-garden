@@ -64,6 +64,7 @@ TBD
 - Updated Routing Logic to accept Target Garden provided
 - Updated all pruners to support batching
 - Fixed bug in Job Scheduler where dynamic choices parameter did not load
+- Fixed duplicate subscriber issue when restarting instances
 - Updated Admin Garden Page to load Garden models from preloaded Garden models
 - Fixed File validate to query for chunks and ensure accurate size
 

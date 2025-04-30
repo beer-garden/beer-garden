@@ -686,6 +686,19 @@ class Subscriber(MongoModel, EmbeddedDocument):
     subscriber_type = StringField()
     consumer_count = IntField(default=0)
 
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return (
+                self.subscriber_type == other.subscriber_type
+                and self.garden == other.garden
+                and self.namespace == other.namespace
+                and self.system == other.system
+                and self.version == other.version
+                and self.instance == other.instance
+                and self.command == other.command
+            )
+        return False
+
 
 class Topic(MongoModel, Document):
     brewtils_model = brewtils.models.Topic
@@ -706,6 +719,7 @@ class Topic(MongoModel, Document):
             self.save()
 
     def remove_subscriber(self, subscriber: Subscriber):
+
         if subscriber in self.subscribers:
             self.subscribers.remove(subscriber)
             self.save()
