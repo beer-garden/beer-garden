@@ -79,6 +79,7 @@ export default function adminTopicController(
       .withOption('hiddenTopicContainer', true)
       .withPaginationType('full_numbers')
       .withBootstrap()
+      .withOption('searchDelay', 1200)
       .withOption('createdRow', function(row, data, dataIndex) {
         $compile(angular.element(row).contents())($scope);
       });
@@ -216,16 +217,19 @@ export default function adminTopicController(
     name: {
       html: 'input',
       type: 'text',
+      time: 600,
       attr: {class: 'form-inline form-control', title: 'Topic Filter'},
     },
     publisher_count: {
       html: 'input',
       type: 'text',
+      time: 600,
       attr: {class: 'form-inline form-control', title: 'Publisher Count Filter'},
     },
     subscribers: {
       html: 'input',
       type: 'text',
+      time: 600,
       attr: {class: 'form-inline form-control', title: 'Subscribers Filter'},
     },
     null: {}
