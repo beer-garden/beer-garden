@@ -2,6 +2,7 @@ import gardenMetricsTemplate from '../../templates/admin_garden_metrics.html';
 
 adminGardenController.$inject = [
   '$scope',
+  '$rootScope',
   '$uibModal',
   'GardenService',
   'EventService',
@@ -10,6 +11,7 @@ adminGardenController.$inject = [
 /**
  * adminGardenController - Garden management controller.
  * @param  {Object} $scope          Angular's $scope object.
+ * @param  {Object} $rootScope      Angular's $rootScope object.
  * @param  {Object} $uibModal
  * @param  {Object} GardenService    Beer-Garden's garden service object.
  * @param  {Object} EventService    Beer-Garden's event service object.
@@ -17,6 +19,7 @@ adminGardenController.$inject = [
 
 export default function adminGardenController(
     $scope,
+    $rootScope,
     $uibModal,
     GardenService,
     EventService,
@@ -27,13 +30,10 @@ export default function adminGardenController(
   $scope.gardenCreateForm = GardenService.CreateFORM;
 
   $scope.successCallback = function(response) {
-    for (let i = 0; i < response.data.length; i++){
-      if (!response.data.has_parent){
-        $scope.data = $scope.extractGardenChildren([response.data[i]]);
-      }
-    }
+    $scope.data = $scope.extractGardenChildren([response.data]);
     $scope.response = response;
   };
+  
   $scope.garden_name = null;
   $scope.createGardenFormHide = true;
   $scope.create_garden_name = null;
@@ -93,11 +93,21 @@ export default function adminGardenController(
   }
 
   const loadGardens = function() {
-    GardenService.getGardens().then(
-        $scope.successCallback,
-        $scope.failureCallback,
-    );
-  };
+    if ($rootScope.gardensResponse !== undefined){
+      $scope.successCallback($rootScope.gardensResponse);
+    } 
+    else {
+      setTimeout(function delaySystemLoad() {
+        if ($rootScope.gardensResponse !== undefined){
+          $scope.successCallback($rootScope.gardensResponse);
+          $scope.$digest();
+        } else {
+          setTimeout(delaySystemLoad, 10);
+        }
+      }, 10);
+    }
+    
+  }
 
   $scope.closeAlert = function(index) {
     $scope.alerts.splice(index, 1);
@@ -287,7 +297,7 @@ export default function adminGardenController(
   const loadAll = function() {
     $scope.response = undefined;
     $scope.data = [];
-
+    
     loadGardens();
   };
 
