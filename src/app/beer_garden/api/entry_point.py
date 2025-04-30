@@ -118,9 +118,11 @@ class EntryPoint:
     def is_alive(self) -> bool:
         if self._process:
             if self._heartbeat:
-                # Check if the heartbeat is older than 5 seconds
+                # Check if the heartbeat is older than 30 seconds
+                # Heartbeats should come in every 5 seconds
                 if datetime.now() - timedelta(seconds=30) > self._heartbeat:
                     logger.warning(f"Heartbeat for {self._name} is stale")
+                    self._heartbeat = None
                     return False
             return self._process.is_alive()
         return False
