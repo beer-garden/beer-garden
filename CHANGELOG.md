@@ -62,8 +62,14 @@ TBD
 - Fixed bug where internal jobs that utilized APscheduler did not have max concurrency set to 1
 - Fixed bug, only Request based scheduled jobs will attempt to update missed counter in the database
 - Updated Routing Logic to accept Target Garden provided
-- Removed status, status_info, and namespaces from Garden
+- Updated all pruners to support batching
 - Fixed bug in Job Scheduler where dynamic choices parameter did not load
+- Updated monitoring of Entry Points to allow for HTTP to support tracking a heartbeat to ensure the
+  process is alive and IO Loop is not locked.
+- Fixed duplicate subscriber issue when restarting instances
+- Updated Admin Garden Page to load Garden models from preloaded Garden models
+- Fixed File validate to query for chunks and ensure accurate size
+- Removed status, status_info, and namespaces from Garden
 
 # 3.29.1
 

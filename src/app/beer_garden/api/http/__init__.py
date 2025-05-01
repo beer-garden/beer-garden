@@ -35,7 +35,7 @@ from brewtils.schemas import (
     UserTokenSchema,
 )
 from tornado.httpserver import HTTPServer
-from tornado.ioloop import IOLoop
+from tornado.ioloop import IOLoop, PeriodicCallback
 from tornado.web import Application, RedirectHandler, RequestHandler
 
 import beer_garden
@@ -50,11 +50,6 @@ import beer_garden.requests
 import beer_garden.router
 from beer_garden.api.http.client import SerializeHelper
 from beer_garden.api.http.processors import EventManager, websocket_publish
-from beer_garden.api.http.schemas.v1.command_publishing_blocklist import (
-    CommandPublishingBlocklistListInputSchema,
-    CommandPublishingBlocklistListSchema,
-    CommandPublishingBlocklistSchema,
-)
 from beer_garden.api.http.schemas.v1.user import UserPasswordChangeSchema
 from beer_garden.events import publish
 from beer_garden.metrics import initialize_elastic_client
@@ -66,6 +61,7 @@ logger: logging.Logger = None
 event_publishers = None
 api_spec: APISpec
 client_ssl: ssl.SSLContext
+heartbeat_task: PeriodicCallback = None
 
 
 def _get_published_url_specs(
@@ -130,14 +126,6 @@ def _get_published_url_specs(
         (rf"{prefix}api/v2/users/?", v1.user.UserListAPI),
         (rf"{prefix}api/v2/users/(\w+)/?", v1.user.UserAPI),
         # Deprecated
-        (
-            rf"{prefix}api/v1/commandpublishingblocklist/(\w+)/?",
-            v1.command_publishing_blocklist.CommandPublishingBlocklistPathAPI,
-        ),
-        (
-            rf"{prefix}api/v1/commandpublishingblocklist/?",
-            v1.command_publishing_blocklist.CommandPublishingBlocklistAPI,
-        ),
         (rf"{prefix}api/v1/commands/?", v1.command.CommandListAPI),
         (rf"{prefix}api/v1/commands/(\w+)/?", v1.command.CommandAPIOld),
         (rf"{prefix}api/v1/config/logging/?", v1.logging.LoggingConfigAPI),
@@ -193,6 +181,10 @@ def run(ep_conn):
     # Schedule things to happen after the ioloop comes up
     io_loop.add_callback(startup)
 
+    heartbeat_task = PeriodicCallback(publish_heartbeat, 5000)
+
+    heartbeat_task.start()
+
     logger.debug("Starting IO loop")
     io_loop.start()
 
@@ -201,6 +193,12 @@ def run(ep_conn):
 
 def signal_handler(_: int, __: types.FrameType):
     io_loop.add_callback_from_signal(shutdown)
+
+
+async def publish_heartbeat():
+    publish(
+        Event(name=Events.ENTRY_HEARTBEAT.name, metadata={"entry_point_type": "HTTP"})
+    )
 
 
 async def startup():
@@ -231,6 +229,10 @@ async def shutdown():
 
     This execution is normally scheduled by the signal handler.
     """
+
+    if heartbeat_task:
+        logger.debug("Stopping heartbeat task")
+        heartbeat_task.stop()
 
     logger.debug("Stopping server for new HTTP connections")
     server.stop()
@@ -359,17 +361,6 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition("LoggingConfig", schema=LoggingConfigSchema)
     api_spec.definition("Event", schema=EventSchema)
     api_spec.definition("User", schema=UserSchema)
-    api_spec.definition(
-        "CommandPublishingBlocklist", schema=CommandPublishingBlocklistSchema
-    )
-    api_spec.definition(
-        "CommandPublishingBlocklistListSchema",
-        schema=CommandPublishingBlocklistListSchema,
-    )
-    api_spec.definition(
-        "CommandPublishingBlocklistListInputSchema",
-        schema=CommandPublishingBlocklistListInputSchema,
-    )
     api_spec.definition("UserPasswordChange", schema=UserPasswordChangeSchema)
     api_spec.definition("Role", schema=RoleSchema)
 
