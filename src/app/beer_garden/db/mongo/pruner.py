@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import List, Tuple
 
 from brewtils.errors import ModelValidationError
 from brewtils.models import Event, Events
 from brewtils.schema_parser import SchemaParser
-from mongoengine import FileField, ObjectIdField, Q
+from mongoengine import Q
 from mongoengine.connection import get_db
 from mongoengine.errors import DoesNotExist
 
@@ -21,199 +20,247 @@ logger = logging.getLogger(__name__)
 display_name = "Mongo Pruner"
 
 
-def run_pruner(tasks, ttl_name):
-    current_time = datetime.utcnow()
+def prune_requests(ttl_length, command_type):
 
-    if tasks:
-        for task in tasks:
-            exclude_fields = []
+    if ttl_length <= 0:
+        return
 
-            for field in task["collection"]._fields:
-                if not isinstance(
-                    task["collection"]._fields[field], FileField
-                ) and not isinstance(task["collection"]._fields[field], ObjectIdField):
-                    exclude_fields.append(field)
+    batch_size = config.get("db.prune.batch_size")
+    delete_older_than = datetime.utcnow() - timedelta(minutes=ttl_length)
 
-            delete_older_than = current_time - task["delete_after"]
+    query = (
+        Q(**{"created_at__lt": delete_older_than})
+        & (Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR"))
+        & Q(has_parent=False)
+    )
 
-            query = Q(**{task["field"] + "__lt": delete_older_than})
-            if task.get("additional_query", None):
-                query = query & task["additional_query"]
+    if command_type == "ACTION":
+        # If the command type is ACTION, we need to check for requests that
+        # have no command type or have a command type of None
+        query = query & (
+            Q(command_type="ACTION")
+            | Q(command_type=None)
+            | Q(command_type__exists=False)
+        )
+    else:
+        query = query & Q(command_type=command_type)
 
-            logger.debug(
-                "Removing %s %ss older than %s"
-                % (ttl_name, task["collection"].__name__, str(delete_older_than))
+    if batch_size > 0:
+        request_cursor = (
+            Request.objects(query)
+            .only("id", "output_gridfs", "parameters_gridfs", "parameters")
+            .batch_size(batch_size)
+        )
+    else:
+        request_cursor = Request.objects(query).only(
+            "id", "output_gridfs", "parameters_gridfs", "parameters"
+        )
+
+    request_ids = []
+    request_raw_files = []
+    request_grids_fs_files = []
+
+    try:
+        prune_request_cursor(
+            request_cursor,
+            batch_size,
+            request_ids,
+            request_raw_files,
+            request_grids_fs_files,
+        )
+
+        for raw_file in RawFile.objects(Q(id__in=request_raw_files)).batch_size(
+            batch_size
+        ):
+            request_grids_fs_files.append(raw_file.file.id)
+    finally:
+        if len(request_ids) > 0:
+            db = get_db()
+
+            db["raw_files"].delete_many({"_id": {"$in": request_raw_files}})
+            db["fs.chunks"].delete_many({"files_id": {"$in": request_grids_fs_files}})
+            db["fs.files"].delete_many({"_id": {"$in": request_grids_fs_files}})
+            db["request"].delete_many({"_id": {"$in": request_ids}})
+
+            db["file"].update_many(
+                {"requests": {"$in": request_ids}},
+                {"$set": {"request": None}},
             )
 
-            removed_count = 0
+            logger.error(f"{len(request_ids)} {command_type} Requests deleted")
 
-            try:
-
-                if task["batch_size"] > 0:
-                    for record in (
-                        task["collection"]
-                        .objects(query)
-                        .only("id")
-                        .batch_size(task["batch_size"])
-                    ):
-                        record.delete()
-                        removed_count = removed_count + 1
-                else:
-                    for record in task["collection"].objects(query).only("id"):
-                        record.delete()
-                        removed_count = removed_count + 1
-
-            finally:
-                if removed_count > 0:
-                    logger.info(
-                        "Deleted %s of %s from %ss older than %s"
-                        % (
-                            removed_count,
-                            ttl_name,
-                            task["collection"].__name__,
-                            str(delete_older_than),
-                        )
-                    )
-
-
-def prune_by_name(ttl_name):
-    with CollectMetrics("PRUNER", f"Pruner::{ttl_name}"):
-        if ttl_name in ["admin", "temp"]:
-            ttl_length = config.get("db.prune.interval", default=15)
         else:
-            ttl_length = config.get(f"db.prune.ttl.{ttl_name}")
+            logger.debug(f"No {command_type} Requests deleted")
 
-        tasks = determine_tasks(ttl_name, ttl_length)
-        run_pruner(tasks, ttl_name)
+
+def prune_request_cursor(
+    request_cursor,
+    batch_size,
+    request_ids,
+    request_raw_files,
+    request_grids_fs_files,
+):
+    """
+    Helper function to prune a cursor of requests
+    """
+
+    batch_ids = []
+    for request in request_cursor:
+        try:
+            request_ids.append(request.id)
+            batch_ids.append(request.id)
+            if request.output_gridfs:
+                request_grids_fs_files.append(request.output_gridfs.id)
+            if request.parameters_gridfs:
+                request_grids_fs_files.append(request.parameters_gridfs.id)
+
+            parameters = request.parameters or {}
+
+            for param_value in parameters.values():
+                if (
+                    isinstance(param_value, dict)
+                    and param_value.get("type") == "bytes"
+                    and param_value.get("id") is not None
+                ):
+                    request_raw_files.append(param_value["id"])
+
+        except DoesNotExist:
+            logger.error(
+                f"DoesNotExist: Attempted to delete request {request.id} "
+                "but does not exist in database"
+            )
+
+    if len(batch_ids) > 0:
+        if batch_size is not None and batch_size > 0:
+            prune_request_cursor(
+                Request.objects.filter(parent__in=batch_ids)
+                .only("id", "output_gridfs", "parameters_gridfs", "parameters")
+                .batch_size(batch_size),
+                batch_size,
+                request_ids,
+                request_raw_files,
+                request_grids_fs_files,
+            )
+        else:
+            prune_request_cursor(
+                Request.objects.filter(parent__in=batch_ids).only(
+                    "id", "output_gridfs", "parameters_gridfs", "parameters"
+                ),
+                batch_size,
+                request_ids,
+                request_raw_files,
+                request_grids_fs_files,
+            )
 
 
 def prune_info_requests():
-    prune_by_name("info")
+
+    ttl_length = config.get("db.prune.ttl.info")
+
+    prune_requests(
+        ttl_length,
+        "INFO",
+    )
 
 
 def prune_action_requests():
-    prune_by_name("action")
+    ttl_length = config.get("db.prune.ttl.action")
+
+    prune_requests(
+        ttl_length,
+        "ACTION",
+    )
 
 
 def prune_admin_requests():
-    prune_by_name("admin")
+
+    ttl_length = config.get("db.prune.interval", default=15)
+
+    prune_requests(
+        ttl_length,
+        "ADMIN",
+    )
 
 
 def prune_temp_requests():
-    prune_by_name("temp")
+    ttl_length = config.get("db.prune.interval", default=15)
+
+    prune_requests(
+        ttl_length,
+        "TEMP",
+    )
 
 
 def prune_files():
-    prune_by_name("file")
+    ttl_length = config.get("db.prune.ttl.file")
 
+    if ttl_length > 0:
 
-def determine_tasks(ttl_name, ttl_length) -> Tuple[List[dict], int]:
-    """Determine tasks and run interval from TTL values
+        file_ids = []
+        raw_file_ids = []
+        gridfs_ids = []
 
-    Args:
-        ttl_name: Name of ttl type
-        ttl_length: Length of time to wait before running pruner
+        delete_older_than = datetime.utcnow() - timedelta(minutes=ttl_length)
 
-    Returns:
-        A tuple that contains:
-            - A list of task configurations
-            - The suggested interval between runs
+        try:
+            batch_size = config.get("db.prune.batch_size")
 
-    """
-    prune_tasks = []
-    batch_size = config.get("db.prune.batch_size")
-    if ttl_length <= 0:
-        return []
-    if ttl_name == "info":
-        prune_tasks.append(
-            {
-                "collection": Request,
-                "batch_size": batch_size,
-                "field": "created_at",
-                "delete_after": timedelta(minutes=ttl_length),
-                "additional_query": (
-                    Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
-                )
-                & Q(has_parent=False)
-                & Q(command_type="INFO"),
-            }
-        )
+            if batch_size > 0:
+                for file in (
+                    File.objects(
+                        Q(updated_at__lt=delete_older_than)
+                        & (
+                            (
+                                Q(owner_type=None)
+                                | (
+                                    (Q(owner_type__iexact="JOB") & Q(job=None))
+                                    | (
+                                        Q(owner_type__iexact="REQUEST")
+                                        & Q(request=None)
+                                    )
+                                )
+                            )
+                        )
+                    )
+                    .only("id")
+                    .batch_size(batch_size)
+                ):
+                    file_ids.append(file.id)
 
-    if ttl_name == "action":
-        prune_tasks.append(
-            {
-                "collection": Request,
-                "batch_size": batch_size,
-                "field": "created_at",
-                "delete_after": timedelta(minutes=ttl_length),
-                "additional_query": (
-                    Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
-                )
-                & Q(has_parent=False)
-                & (
-                    Q(command_type="ACTION")
-                    | Q(command_type=None)
-                    | Q(command_type__exists=False)
-                ),
-            }
-        )
+                for raw_file in RawFile.objects(
+                    Q(created_at__lt=delete_older_than)
+                ).batch_size(batch_size):
+                    raw_file_ids.append(raw_file.id)
+                    gridfs_ids.append(raw_file.file.id)
 
-    if ttl_name == "admin":
-        prune_tasks.append(
-            {
-                "collection": Request,
-                "batch_size": batch_size,
-                "field": "created_at",
-                "delete_after": timedelta(minutes=ttl_length),
-                "additional_query": (
-                    Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
-                )
-                & Q(has_parent=False)
-                & Q(command_type="ADMIN"),
-            }
-        )
+            else:
+                for file in File.objects(
+                    Q(updated_at__lt=delete_older_than)
+                    & (
+                        (
+                            Q(owner_type=None)
+                            | (
+                                (Q(owner_type__iexact="JOB") & Q(job=None))
+                                | (Q(owner_type__iexact="REQUEST") & Q(request=None))
+                            )
+                        )
+                    )
+                ).only("id"):
+                    file_ids.append(file.id)
 
-    if ttl_name == "temp":
-        prune_tasks.append(
-            {
-                "collection": Request,
-                "batch_size": batch_size,
-                "field": "created_at",
-                "delete_after": timedelta(minutes=ttl_length),
-                "additional_query": (
-                    Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
-                )
-                & Q(has_parent=False)
-                & Q(command_type="TEMP"),
-            }
-        )
+                for raw_file in RawFile.objects(Q(created_at__lt=delete_older_than)):
+                    raw_file_ids.append(raw_file.id)
+                    gridfs_ids.append(raw_file.file.id)
 
-    if ttl_name == "file":
-        prune_tasks.append(
-            {
-                "collection": File,
-                "batch_size": batch_size,
-                "field": "updated_at",
-                "delete_after": timedelta(minutes=ttl_length),
-                "additional_query": Q(owner_type=None)  # No one has claimed me
-                | (
-                    (Q(owner_type__iexact="JOB") & Q(job=None))
-                    | (  # A Job claimed me, but it's gone now
-                        Q(owner_type__iexact="REQUEST") & Q(request=None)
-                    )  # A request claimed me, but it's gone
-                ),
-            }
-        )
-        prune_tasks.append(
-            {
-                "collection": RawFile,
-                "batch_size": batch_size,
-                "field": "created_at",
-                "delete_after": timedelta(minutes=ttl_length),
-            }
-        )
+        finally:
+            db = get_db()
 
-    return prune_tasks
+            db["file_chunks"].delete_many({"files_id": {"$in": file_ids}})
+            db["file"].delete_many({"_id": {"$in": file_ids}})
+
+            db["raw_files"].delete_many({"_id": {"$in": raw_file_ids}})
+            db["fs.chunks"].delete_many({"files_id": {"$in": gridfs_ids}})
+            db["fs.files"].delete_many({"_id": {"$in": gridfs_ids}})
 
 
 def prune_orphan_files():
@@ -250,9 +297,11 @@ def prune_orphan_file_records(orphaned_files):
         for file in orphaned_files:
             try:
                 if file.owner_type == "JOB" and file.job is not None:
-                    Job.objects.get(id=file.job.id)
+                    if not Job.objects.with_id(file.job.id):
+                        raise DoesNotExist
                 elif file.owner_type == "REQUEST" and file.request is not None:
-                    Request.objects.get(id=file.request.id)
+                    if not Request.objects.with_id(file.request.id):
+                        raise DoesNotExist
             except DoesNotExist:
                 file.delete()
                 counter = counter + 1
@@ -382,7 +431,8 @@ def prune_orphan_requests(orphaned_requests, command_type, batch_size=None):
     try:
         for request in orphaned_requests:
             try:
-                Request.objects.get(id=request.parent.id)
+                if not Request.objects.with_id(request.parent.id):
+                    raise DoesNotExist
             except DoesNotExist:
                 request.delete()
                 counter = counter + 1
@@ -471,7 +521,8 @@ def prune_outstanding_requests(outstanding_requests):
 
                 if request.has_parent:
                     try:
-                        Request.objects.get(id=request.parent.id)
+                        if not request.objects.with_id(request.parent.id):
+                            raise DoesNotExist
                     except DoesNotExist:
                         logger.debug(
                             f"Parent is missing, killing orphan request {request.id}"
