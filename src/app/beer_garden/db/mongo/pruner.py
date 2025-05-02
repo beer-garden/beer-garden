@@ -69,10 +69,14 @@ def prune_requests(ttl_length, command_type):
             request_grids_fs_files,
         )
 
-        for raw_file in RawFile.objects(Q(id__in=request_raw_files)).batch_size(
-            batch_size
-        ):
-            request_grids_fs_files.append(raw_file.file.id)
+        if batch_size > 0:
+            for raw_file in RawFile.objects(Q(id__in=request_raw_files)).batch_size(
+                batch_size
+            ):
+                request_grids_fs_files.append(raw_file.file._id)
+        else:
+            for raw_file in RawFile.objects(Q(id__in=request_raw_files)):
+                request_grids_fs_files.append(raw_file.file._id)
     finally:
         if len(request_ids) > 0:
             db = get_db()
@@ -110,9 +114,9 @@ def prune_request_cursor(
             request_ids.append(request.id)
             batch_ids.append(request.id)
             if request.output_gridfs:
-                request_grids_fs_files.append(request.output_gridfs.id)
+                request_grids_fs_files.append(request.output_gridfs._id)
             if request.parameters_gridfs:
-                request_grids_fs_files.append(request.parameters_gridfs.id)
+                request_grids_fs_files.append(request.parameters_gridfs._id)
 
             parameters = request.parameters or {}
 
@@ -231,7 +235,7 @@ def prune_files():
                     Q(created_at__lt=delete_older_than)
                 ).batch_size(batch_size):
                     raw_file_ids.append(raw_file.id)
-                    gridfs_ids.append(raw_file.file.id)
+                    gridfs_ids.append(raw_file.file.grid_id)
 
             else:
                 for file in File.objects(
@@ -250,7 +254,7 @@ def prune_files():
 
                 for raw_file in RawFile.objects(Q(created_at__lt=delete_older_than)):
                     raw_file_ids.append(raw_file.id)
-                    gridfs_ids.append(raw_file.file.id)
+                    gridfs_ids.append(raw_file.file.grid_id)
 
         finally:
             db = get_db()
