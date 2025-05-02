@@ -35,7 +35,7 @@ from brewtils.schemas import (
     UserTokenSchema,
 )
 from tornado.httpserver import HTTPServer
-from tornado.ioloop import IOLoop, PeriodicCallback
+from tornado.ioloop import IOLoop
 from tornado.web import Application, RedirectHandler, RequestHandler
 
 import beer_garden
@@ -61,7 +61,6 @@ logger: logging.Logger = None
 event_publishers = None
 api_spec: APISpec
 client_ssl: ssl.SSLContext
-heartbeat_task: PeriodicCallback = None
 
 
 def _get_published_url_specs(
@@ -182,10 +181,6 @@ def run(ep_conn):
     # Schedule things to happen after the ioloop comes up
     io_loop.add_callback(startup)
 
-    heartbeat_task = PeriodicCallback(publish_heartbeat, 5000)
-
-    heartbeat_task.start()
-
     logger.debug("Starting IO loop")
     io_loop.start()
 
@@ -194,12 +189,6 @@ def run(ep_conn):
 
 def signal_handler(_: int, __: types.FrameType):
     io_loop.add_callback_from_signal(shutdown)
-
-
-async def publish_heartbeat():
-    publish(
-        Event(name=Events.ENTRY_HEARTBEAT.name, metadata={"entry_point_type": "HTTP"})
-    )
 
 
 async def startup():
@@ -230,10 +219,6 @@ async def shutdown():
 
     This execution is normally scheduled by the signal handler.
     """
-
-    if heartbeat_task:
-        logger.debug("Stopping heartbeat task")
-        heartbeat_task.stop()
 
     logger.debug("Stopping server for new HTTP connections")
     server.stop()
