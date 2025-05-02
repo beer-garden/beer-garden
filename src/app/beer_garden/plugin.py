@@ -474,9 +474,22 @@ async def update_async(
         for k, v in metadata.items():
             update[f"instances.$.metadata.{k}"] = v
 
-    return await _update_instance_async(
+    instance = await _update_instance_async(
         query, projection, {"$set": update, "$push": push}
     )
+
+    if new_status:
+        system = await moto.query(
+            collection="system",
+            filter={
+                "instances._id": ObjectIdField().to_mongo(instance.id),
+                "local": True,
+            },
+        )
+        if system:
+            publish_status_update(SchemaParser.parse_system(system), instance)
+
+    return instance
 
 
 async def heartbeat_async(

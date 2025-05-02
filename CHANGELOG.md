@@ -69,6 +69,7 @@ TBD
 - Fixed duplicate subscriber issue when restarting instances
 - Updated Admin Garden Page to load Garden models from preloaded Garden models
 - Fixed File validate to query for chunks and ensure accurate size
+- Fixed bug where API updates to Instance Status did not publish topic request
 
 # 3.29.1
 
