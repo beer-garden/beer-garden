@@ -525,7 +525,7 @@ def prune_outstanding_requests(outstanding_requests):
 
                 if request.has_parent:
                     try:
-                        if not request.objects.with_id(request.parent.id):
+                        if not Request.objects.with_id(request.parent.id):
                             raise DoesNotExist
                     except DoesNotExist:
                         logger.debug(
