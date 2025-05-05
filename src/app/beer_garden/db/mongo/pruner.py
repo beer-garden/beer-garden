@@ -56,17 +56,23 @@ def prune_requests(ttl_length, command_type):
             "id", "output_gridfs", "parameters_gridfs", "parameters"
         )
 
+    prune_request_cursor(request_cursor, batch_size, command_type)
+
+
+def prune_request_cursor(request_cursor, batch_size, label, orphan_check=False):
+
     request_ids = []
     request_raw_files = []
     request_grids_fs_files = []
 
     try:
-        prune_request_cursor(
+        prune_request_cursor_loop(
             request_cursor,
             batch_size,
             request_ids,
             request_raw_files,
             request_grids_fs_files,
+            orphan_check,
         )
 
         if batch_size > 0:
@@ -81,28 +87,64 @@ def prune_requests(ttl_length, command_type):
         if len(request_ids) > 0:
             db = get_db()
 
-            db["raw_files"].delete_many({"_id": {"$in": request_raw_files}})
-            db["fs.chunks"].delete_many({"files_id": {"$in": request_grids_fs_files}})
-            db["fs.files"].delete_many({"_id": {"$in": request_grids_fs_files}})
-            db["request"].delete_many({"_id": {"$in": request_ids}})
+            if batch_size > 0:
+                for batch in [
+                    request_raw_files[i : i + batch_size]
+                    for i in range(0, len(request_raw_files), batch_size)
+                ]:
+                    db["raw_files"].delete_many({"_id": {"$in": batch}})
+
+                for batch in [
+                    request_grids_fs_files[i : i + batch_size]
+                    for i in range(0, len(request_grids_fs_files), batch_size)
+                ]:
+                    db["fs.chunks"].delete_many({"files_id": {"$in": batch}})
+                    db["fs.files"].delete_many({"_id": {"$in": batch}})
+
+                for batch in [
+                    request_ids[i : i + batch_size]
+                    for i in range(0, len(request_ids), batch_size)
+                ]:
+                    db["request"].delete_many({"_id": {"$in": batch}})
+
+            else:
+                db["raw_files"].delete_many({"_id": {"$in": request_raw_files}})
+                db["fs.chunks"].delete_many(
+                    {"files_id": {"$in": request_grids_fs_files}}
+                )
+                db["fs.files"].delete_many({"_id": {"$in": request_grids_fs_files}})
+                db["request"].delete_many({"_id": {"$in": request_ids}})
 
             db["file"].update_many(
                 {"requests": {"$in": request_ids}},
                 {"$set": {"request": None}},
             )
 
-            logger.error(f"{len(request_ids)} {command_type} Requests deleted")
+            logger.error(f"{len(request_ids)} {label} Requests deleted")
+
+            if len(request_grids_fs_files) > 0:
+                logger.error(
+                    f"{len(request_grids_fs_files)} GridFS files deleted "
+                    f"for {label} Requests"
+                )
+
+            if len(request_raw_files) > 0:
+                logger.error(
+                    f"{len(request_raw_files)} Raw files deleted "
+                    f"for {label} Requests"
+                )
 
         else:
-            logger.debug(f"No {command_type} Requests deleted")
+            logger.debug(f"No {label} Requests deleted")
 
 
-def prune_request_cursor(
+def prune_request_cursor_loop(
     request_cursor,
     batch_size,
     request_ids,
     request_raw_files,
     request_grids_fs_files,
+    orphan_check=False,
 ):
     """
     Helper function to prune a cursor of requests
@@ -111,6 +153,16 @@ def prune_request_cursor(
     batch_ids = []
     for request in request_cursor:
         try:
+            if orphan_check:
+                if not request.has_parent:
+                    continue
+
+                try:
+                    if Request.objects.with_id(request.parent.id):
+                        continue
+                except DoesNotExist:
+                    pass
+
             request_ids.append(request.id)
             batch_ids.append(request.id)
             if request.output_gridfs:
@@ -136,7 +188,7 @@ def prune_request_cursor(
 
     if len(batch_ids) > 0:
         if batch_size is not None and batch_size > 0:
-            prune_request_cursor(
+            prune_request_cursor_loop(
                 Request.objects.filter(parent__in=batch_ids)
                 .only("id", "output_gridfs", "parameters_gridfs", "parameters")
                 .batch_size(batch_size),
@@ -146,7 +198,7 @@ def prune_request_cursor(
                 request_grids_fs_files,
             )
         else:
-            prune_request_cursor(
+            prune_request_cursor_loop(
                 Request.objects.filter(parent__in=batch_ids).only(
                     "id", "output_gridfs", "parameters_gridfs", "parameters"
                 ),
@@ -417,47 +469,31 @@ def prune_orphan_command_type(command_type):
         if batch_size > 0:
 
             orphaned_requests = (
-                Request.objects.only("parent", "id")
+                Request.objects.only(
+                    "has_parent",
+                    "parent",
+                    "id",
+                    "output_gridfs",
+                    "parameters_gridfs",
+                    "parameters",
+                )
                 .filter(**filter)
                 .batch_size(batch_size)
             )
-            prune_orphan_requests(
-                orphaned_requests, command_type, batch_size=batch_size
-            )
 
         else:
-            orphaned_requests = Request.objects.only("parent", "id").filter(**filter)
-            prune_orphan_requests(orphaned_requests, command_type)
+            orphaned_requests = Request.objects.only(
+                "has_parent",
+                "parent",
+                "id",
+                "output_gridfs",
+                "parameters_gridfs",
+                "parameters",
+            ).filter(**filter)
 
-
-def prune_orphan_requests(orphaned_requests, command_type, batch_size=None):
-    counter = 0
-    try:
-        for request in orphaned_requests:
-            try:
-                if not Request.objects.with_id(request.parent.id):
-                    raise DoesNotExist
-            except DoesNotExist:
-                request.delete()
-                counter = counter + 1
-
-    finally:
-
-        if counter > 0:
-            logger.error(
-                (
-                    f"{counter} orphaned {command_type} Requests deleted "
-                    f"{', batch size: ' + str(batch_size) if batch_size else ''}"
-                )
-            )
-
-        else:
-            logger.debug(
-                (
-                    f"No orphaned {command_type} Requests "
-                    f"{', batch size: ' + str(batch_size) if batch_size else ''}"
-                )
-            )
+        prune_request_cursor(
+            orphaned_requests, batch_size, f"Orphaned {command_type}", orphan_check=True
+        )
 
 
 def prune_outstanding():
