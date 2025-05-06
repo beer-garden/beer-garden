@@ -72,6 +72,7 @@ def prune_request_cursor(request_cursor, batch_size, label, orphan_check=False):
             request_ids,
             request_raw_files,
             request_grids_fs_files,
+            label,
             orphan_check,
         )
 
@@ -85,54 +86,13 @@ def prune_request_cursor(request_cursor, batch_size, label, orphan_check=False):
                 request_grids_fs_files.append(raw_file.file._id)
     finally:
         if len(request_ids) > 0:
-            db = get_db()
-
-            if batch_size > 0:
-                for batch in [
-                    request_raw_files[i : i + batch_size]
-                    for i in range(0, len(request_raw_files), batch_size)
-                ]:
-                    db["raw_files"].delete_many({"_id": {"$in": batch}})
-
-                for batch in [
-                    request_grids_fs_files[i : i + batch_size]
-                    for i in range(0, len(request_grids_fs_files), batch_size)
-                ]:
-                    db["fs.chunks"].delete_many({"files_id": {"$in": batch}})
-                    db["fs.files"].delete_many({"_id": {"$in": batch}})
-
-                for batch in [
-                    request_ids[i : i + batch_size]
-                    for i in range(0, len(request_ids), batch_size)
-                ]:
-                    db["request"].delete_many({"_id": {"$in": batch}})
-
-            else:
-                db["raw_files"].delete_many({"_id": {"$in": request_raw_files}})
-                db["fs.chunks"].delete_many(
-                    {"files_id": {"$in": request_grids_fs_files}}
-                )
-                db["fs.files"].delete_many({"_id": {"$in": request_grids_fs_files}})
-                db["request"].delete_many({"_id": {"$in": request_ids}})
-
-            db["file"].update_many(
-                {"requests": {"$in": request_ids}},
-                {"$set": {"request": None}},
+            delete_requests(
+                batch_size,
+                request_ids,
+                request_raw_files,
+                request_grids_fs_files,
+                label,
             )
-
-            logger.error(f"{len(request_ids)} {label} Requests deleted")
-
-            if len(request_grids_fs_files) > 0:
-                logger.error(
-                    f"{len(request_grids_fs_files)} GridFS files deleted "
-                    f"for {label} Requests"
-                )
-
-            if len(request_raw_files) > 0:
-                logger.error(
-                    f"{len(request_raw_files)} Raw files deleted "
-                    f"for {label} Requests"
-                )
 
         else:
             logger.debug(f"No {label} Requests deleted")
@@ -144,6 +104,7 @@ def prune_request_cursor_loop(
     request_ids,
     request_raw_files,
     request_grids_fs_files,
+    label,
     orphan_check=False,
 ):
     """
@@ -153,6 +114,10 @@ def prune_request_cursor_loop(
     batch_ids = []
     for request in request_cursor:
         try:
+            if request.id in request_ids:
+                # Already Processed
+                continue
+
             if orphan_check:
                 if not request.has_parent:
                     continue
@@ -180,6 +145,19 @@ def prune_request_cursor_loop(
                 ):
                     request_raw_files.append(param_value["id"])
 
+            if len(request_ids) > batch_size:
+                # Delete the batch of requests to keep in memory usage down
+                delete_requests(
+                    batch_size,
+                    request_ids,
+                    request_raw_files,
+                    request_grids_fs_files,
+                    label,
+                )
+                request_ids = []
+                request_raw_files = []
+                request_grids_fs_files = []
+
         except DoesNotExist:
             logger.error(
                 f"DoesNotExist: Attempted to delete request {request.id} "
@@ -196,6 +174,7 @@ def prune_request_cursor_loop(
                 request_ids,
                 request_raw_files,
                 request_grids_fs_files,
+                label,
             )
         else:
             prune_request_cursor_loop(
@@ -206,6 +185,58 @@ def prune_request_cursor_loop(
                 request_ids,
                 request_raw_files,
                 request_grids_fs_files,
+                label,
+            )
+
+
+def delete_requests(
+    batch_size, request_ids, request_raw_files, request_grids_fs_files, label
+):
+    if len(request_ids) > 0:
+        db = get_db()
+
+        if batch_size > 0:
+            for batch in [
+                request_raw_files[i : i + batch_size]
+                for i in range(0, len(request_raw_files), batch_size)
+            ]:
+                db["raw_files"].delete_many({"_id": {"$in": batch}})
+
+            for batch in [
+                request_grids_fs_files[i : i + batch_size]
+                for i in range(0, len(request_grids_fs_files), batch_size)
+            ]:
+                db["fs.chunks"].delete_many({"files_id": {"$in": batch}})
+                db["fs.files"].delete_many({"_id": {"$in": batch}})
+
+            for batch in [
+                request_ids[i : i + batch_size]
+                for i in range(0, len(request_ids), batch_size)
+            ]:
+                db["request"].delete_many({"_id": {"$in": batch}})
+
+        else:
+            db["raw_files"].delete_many({"_id": {"$in": request_raw_files}})
+            db["fs.chunks"].delete_many({"files_id": {"$in": request_grids_fs_files}})
+            db["fs.files"].delete_many({"_id": {"$in": request_grids_fs_files}})
+            db["request"].delete_many({"_id": {"$in": request_ids}})
+
+        db["file"].update_many(
+            {"requests": {"$in": request_ids}},
+            {"$set": {"request": None}},
+        )
+
+        logger.error(f"{len(request_ids)} {label} Requests deleted")
+
+        if len(request_grids_fs_files) > 0:
+            logger.debug(
+                f"{len(request_grids_fs_files)} GridFS files deleted "
+                f"for {label} Requests"
+            )
+
+        if len(request_raw_files) > 0:
+            logger.debug(
+                f"{len(request_raw_files)} Raw files deleted " f"for {label} Requests"
             )
 
 
@@ -450,11 +481,11 @@ def prune_orphan_command_type(command_type):
         if command_type == "ACTION":
             cmd_ttl_length = config.get("db.prune.ttl.action")
             if cmd_ttl_length > 0:
-                ttl = ttl + cmd_ttl_length
+                ttl = (2 * ttl) + cmd_ttl_length
         elif command_type == "INFO":
             cmd_ttl_length = config.get("db.prune.ttl.info")
             if cmd_ttl_length > 0:
-                ttl = ttl + cmd_ttl_length
+                ttl = (2 * ttl) + cmd_ttl_length
 
         timeout = datetime.now(timezone.utc) - timedelta(minutes=ttl)
         filter = {
