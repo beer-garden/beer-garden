@@ -213,18 +213,21 @@ def delete_requests(
                 request_ids[i : i + batch_size]
                 for i in range(0, len(request_ids), batch_size)
             ]:
+                db["file"].update_many(
+                    {"requests": {"$in": batch}},
+                    {"$set": {"request": None}},
+                )
                 db["request"].delete_many({"_id": {"$in": batch}})
 
         else:
             db["raw_files"].delete_many({"_id": {"$in": request_raw_files}})
             db["fs.chunks"].delete_many({"files_id": {"$in": request_grids_fs_files}})
             db["fs.files"].delete_many({"_id": {"$in": request_grids_fs_files}})
+            db["file"].update_many(
+                {"requests": {"$in": request_ids}},
+                {"$set": {"request": None}},
+            )
             db["request"].delete_many({"_id": {"$in": request_ids}})
-
-        db["file"].update_many(
-            {"requests": {"$in": request_ids}},
-            {"$set": {"request": None}},
-        )
 
         logger.error(f"{len(request_ids)} {label} Requests deleted")
 
