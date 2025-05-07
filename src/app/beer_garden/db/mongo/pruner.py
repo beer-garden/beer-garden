@@ -45,16 +45,9 @@ def prune_requests(ttl_length, command_type):
     else:
         query = query & Q(command_type=command_type)
 
-    if batch_size > 0:
-        request_cursor = (
-            Request.objects(query)
-            .only("id", "output_gridfs", "parameters_gridfs", "parameters")
-            .batch_size(batch_size)
-        )
-    else:
-        request_cursor = Request.objects(query).only(
-            "id", "output_gridfs", "parameters_gridfs", "parameters"
-        )
+    request_cursor = Request.objects(query).only(
+        "id", "output_gridfs", "parameters_gridfs", "parameters"
+    )
 
     prune_request_cursor(request_cursor, batch_size, command_type)
 
@@ -76,14 +69,8 @@ def prune_request_cursor(request_cursor, batch_size, label, orphan_check=False):
             orphan_check,
         )
 
-        if batch_size > 0:
-            for raw_file in RawFile.objects(Q(id__in=request_raw_files)).batch_size(
-                batch_size
-            ):
-                request_grids_fs_files.append(raw_file.file._id)
-        else:
-            for raw_file in RawFile.objects(Q(id__in=request_raw_files)):
-                request_grids_fs_files.append(raw_file.file._id)
+        for raw_file in RawFile.objects(Q(id__in=request_raw_files)):
+            request_grids_fs_files.append(raw_file.file._id)
     finally:
         if len(request_ids) > 0:
             delete_requests(
@@ -165,28 +152,17 @@ def prune_request_cursor_loop(
             )
 
     if len(batch_ids) > 0:
-        if batch_size is not None and batch_size > 0:
-            prune_request_cursor_loop(
-                Request.objects.filter(parent__in=batch_ids)
-                .only("id", "output_gridfs", "parameters_gridfs", "parameters")
-                .batch_size(batch_size),
-                batch_size,
-                request_ids,
-                request_raw_files,
-                request_grids_fs_files,
-                label,
-            )
-        else:
-            prune_request_cursor_loop(
-                Request.objects.filter(parent__in=batch_ids).only(
-                    "id", "output_gridfs", "parameters_gridfs", "parameters"
-                ),
-                batch_size,
-                request_ids,
-                request_raw_files,
-                request_grids_fs_files,
-                label,
-            )
+
+        prune_request_cursor_loop(
+            Request.objects.filter(parent__in=batch_ids).only(
+                "id", "output_gridfs", "parameters_gridfs", "parameters"
+            ),
+            batch_size,
+            request_ids,
+            request_raw_files,
+            request_grids_fs_files,
+            label,
+        )
 
 
 def delete_requests(
@@ -500,30 +476,14 @@ def prune_orphan_command_type(command_type):
 
         batch_size = config.get("db.prune.batch_size")
 
-        if batch_size > 0:
-
-            orphaned_requests = (
-                Request.objects.only(
-                    "has_parent",
-                    "parent",
-                    "id",
-                    "output_gridfs",
-                    "parameters_gridfs",
-                    "parameters",
-                )
-                .filter(**filter)
-                .batch_size(batch_size)
-            )
-
-        else:
-            orphaned_requests = Request.objects.only(
-                "has_parent",
-                "parent",
-                "id",
-                "output_gridfs",
-                "parameters_gridfs",
-                "parameters",
-            ).filter(**filter)
+        orphaned_requests = Request.objects.only(
+            "has_parent",
+            "parent",
+            "id",
+            "output_gridfs",
+            "parameters_gridfs",
+            "parameters",
+        ).filter(**filter)
 
         prune_request_cursor(
             orphaned_requests, batch_size, f"Orphaned {command_type}", orphan_check=True
