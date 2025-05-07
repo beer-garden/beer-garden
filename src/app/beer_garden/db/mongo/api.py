@@ -12,6 +12,7 @@ from mongoengine import (
     NotUniqueError,
     QuerySet,
     connect,
+    disconnect,
     register_connection,
 )
 from mongoengine.queryset.visitor import Q, QCombination
@@ -170,6 +171,18 @@ def create_connection(connection_alias: str = "default", db_config: Box = None) 
     register_connection(
         connection_alias, name=db_config["name"], **db_config["connection"]
     )
+
+
+def close_connection(connection_alias: str = "default") -> None:
+    """Close a database connection
+
+    Args:
+        connection_alias: Alias for this connection
+
+    Returns:
+        None
+    """
+    disconnect(alias=connection_alias)
 
 
 def initial_setup():
