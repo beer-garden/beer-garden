@@ -381,7 +381,7 @@ class Request(MongoModel, Document):
             # Used for Gridfs File Pruning
             {"name": "gridfs_index", "fields": ["output_gridfs", "parameters_gridfs"]},
             # These are for sorting parent requests
-            {"name": "parent_command_index", "fields": ["has_parent", "command"]},
+            {"name": "parent_command_index", "fields": ["has_parent", "command_display_name"]},
             {"name": "parent_system_index", "fields": ["has_parent", "system"]},
             {
                 "name": "parent_instance_name_index",
@@ -391,7 +391,7 @@ class Request(MongoModel, Document):
             {"name": "parent_created_at_index", "fields": ["has_parent", "created_at"]},
             {"name": "parent_comment_index", "fields": ["has_parent", "comment"]},
             # These are used for filtering all requests while sorting on created time
-            {"name": "created_at_command_index", "fields": ["-created_at", "command"]},
+            {"name": "created_at_command_index", "fields": ["-created_at", "command_display_name"]},
             {"name": "created_at_system_index", "fields": ["-created_at", "system"]},
             {
                 "name": "created_at_instance_name_index",
@@ -401,7 +401,7 @@ class Request(MongoModel, Document):
             # These are used for filtering parent while sorting on created time
             {
                 "name": "parent_created_at_command_index",
-                "fields": ["has_parent", "-created_at", "command"],
+                "fields": ["has_parent", "-created_at", "command_display_name"],
             },
             {
                 "name": "parent_created_at_system_index",
@@ -420,7 +420,7 @@ class Request(MongoModel, Document):
             # both as a safety measure
             {
                 "name": "hidden_parent_created_at_command_index",
-                "fields": ["hidden", "has_parent", "-created_at", "command"],
+                "fields": ["hidden", "has_parent", "-created_at", "command_display_name"],
             },
             {
                 "name": "hidden_parent_created_at_system_index",
@@ -439,7 +439,7 @@ class Request(MongoModel, Document):
                 "name": "text_index",
                 "fields": [
                     "$system",
-                    "$command",
+                    "$command_display_name",
                     "$command_type",
                     "$comment",
                     "$status",
