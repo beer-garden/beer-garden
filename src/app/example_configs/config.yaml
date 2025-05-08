@@ -210,3 +210,4 @@ ui:
   icon_default: fa-beer
   name: Beer Garden
   auto_refresh: false
+  search_delay: 400

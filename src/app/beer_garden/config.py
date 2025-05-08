@@ -653,6 +653,11 @@ _UI_SPEC = {
             "default": False,
             "description": "Auto refresh user interface",
         },
+        "search_delay": {
+            "type": "int",
+            "default": 400,
+            "description": "Search delay for filtering user interface",
+        },
     },
 }
 

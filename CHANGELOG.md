@@ -68,6 +68,7 @@ TBD
 - Updated Admin Garden Page to load Garden models from preloaded Garden models
 - Fixed File validate to query for chunks and ensure accurate size
 - Fixed bug where API updates to Instance Status did not publish topic request
+- Request search delay configurable through `ui.search_delay` config option.
 
 # 3.29.1
 
