@@ -1132,9 +1132,6 @@ class Garden(MongoModel, Document):
     brewtils_model = brewtils.models.Garden
 
     name = StringField(required=True, default="default")
-    status = StringField(default="INITIALIZING")
-    status_info = EmbeddedDocumentField("StatusInfo")
-    namespaces = ListField()
 
     connection_type = StringField(required=False)
     receiving_connections = EmbeddedDocumentListField("Connection")

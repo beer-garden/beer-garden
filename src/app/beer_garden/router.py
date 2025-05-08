@@ -37,7 +37,6 @@ import beer_garden.files
 import beer_garden.garden
 import beer_garden.local_plugins.manager
 import beer_garden.log
-import beer_garden.namespace
 import beer_garden.plugin
 import beer_garden.queues
 import beer_garden.requests
@@ -152,7 +151,6 @@ route_functions = {
     "QUEUE_DELETE": beer_garden.queues.clear_queue,
     "QUEUE_DELETE_ALL": beer_garden.queues.clear_all_queues,
     "QUEUE_READ_INSTANCE": beer_garden.queues.get_instance_queues,
-    "NAMESPACE_READ_ALL": beer_garden.namespace.get_namespaces,
     "FILE_CREATE": beer_garden.files.create_file,
     "FILE_CHUNK": beer_garden.files.create_chunk,
     "FILE_FETCH": beer_garden.files.fetch_file,
@@ -380,12 +378,16 @@ def invalid_source_check(operation: Operation):
             Garden(name=operation.source_garden_name)
         )
 
-        if loaded_garden.status == "NOT_CONFIGURED":
-            logger.error(
-                f"There is no configuration file for {operation.source_garden_name}, "
-                "please validate your children directory for the correct file name"
-            )
-            return True
+        for connection in loaded_garden.receiving_connections:
+            if (
+                connection.api == operation.source_api
+                and connection.status == "CONFIGURATION_ERROR"
+            ):
+                logger.error(
+                    f"There is no configuration file for {operation.source_garden_name}, "
+                    "please validate your children directory for the correct file name"
+                )
+                return True
 
         logger.warning(
             f"Loaded {operation.source_garden_name} from config file into in memory"

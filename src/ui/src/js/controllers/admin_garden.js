@@ -194,9 +194,6 @@ export default function adminGardenController(
     if (garden.connection_type == "LOCAL"){
       return false;
     }
-    if (garden.status == "MISSING_CONFIGURATION"){
-      return false;
-    }
 
     for (let i = 0; i < garden.publishing_connections.length; i++) {
       if (garden.publishing_connections[i].status == "MISSING_CONFIGURATION"){
@@ -280,10 +277,6 @@ export default function adminGardenController(
 
     if (garden.parent != $scope.config.gardenName){
       return false;
-    }
-
-    if (garden.status == "MISSING_CONFIGURATION"){
-      return true;
     }
 
     for (let i = 0; i < garden.publishing_connections.length; i++) {

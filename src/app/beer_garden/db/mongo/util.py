@@ -26,7 +26,7 @@ def ensure_local_garden():
     try:
         garden = Garden.objects.get(connection_type="LOCAL")
     except DoesNotExist:
-        garden = Garden(connection_type="LOCAL", status="RUNNING")
+        garden = Garden(connection_type="LOCAL")
 
     garden.name = config.get("garden.name")
 
@@ -290,6 +290,24 @@ def ensure_v3_29_model_migration():
 
 def ensure_v3_30_model_migration():
     db = get_db()
+
+    if (
+        contains_field("garden", "status")
+        or contains_field("garden", "status_info")
+        or contains_field("garden", "namespaces")
+    ):
+        logger.warning(
+            "Status or namespaces was found in Garden and will be removed. This is most"
+            " likely because the database is using the old (v3.29) style of storing in"
+            " the database."
+        )
+        garden_collection = db.get_collection("garden")
+        for legacy_garden in garden_collection.find():
+            garden_collection.update_one(
+                {"_id": legacy_garden["_id"]},
+                {"$unset": {"status": "", "status_info": "", "namespaces": ""}},
+            )
+
     if missing_field("root_command_type", "expiration_at"):
         logger.warning(
             "Root Command Type or Expiration At was not found in Requests and will be added."
