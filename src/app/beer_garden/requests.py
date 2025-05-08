@@ -1077,6 +1077,7 @@ def handle_event(event):
             existing_request = requests[0]
         else:
             existing_request = None
+            event.payload.expiration_at = None
 
         if (
             event.garden == config.get("garden.name")

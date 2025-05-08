@@ -350,6 +350,7 @@ class Request(MongoModel, Document):
     command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES)
     created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
     updated_at = DateTimeField(default=None, required=True)
+    expiration_at = DateTimeField(default=None, required=False)
     status_updated_at = DateTimeField()
     error_class = StringField(required=False)
     has_parent = BooleanField(required=False)
@@ -359,6 +360,7 @@ class Request(MongoModel, Document):
     is_event = BooleanField(required=False)
     source_garden = StringField(required=False)
     target_garden = StringField(required=False)
+    root_command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES)
 
     meta = {
         "queryset_class": FileFieldHandlingQuerySet,
@@ -378,6 +380,8 @@ class Request(MongoModel, Document):
             {"name": "comment_index", "fields": ["comment"]},
             {"name": "parent_ref_index", "fields": ["parent"]},
             {"name": "parent_index", "fields": ["has_parent"]},
+            # Request Pruning
+            {"name": "expiration_at_index", "fields": ["expiration_at"]},
             # Used for Gridfs File Pruning
             {"name": "gridfs_index", "fields": ["output_gridfs", "parameters_gridfs"]},
             # These are for sorting parent requests
@@ -515,6 +519,52 @@ class Request(MongoModel, Document):
             self.metadata[status_key] = int(
                 datetime.datetime.utcnow().timestamp() * 1000
             )
+
+        if (
+            not self.expiration_at
+            and not self.has_parent
+            and self.status in BrewtilsRequest.COMPLETED_STATUSES
+        ):
+            if self.command_type == "INFO":
+                ttl = config.get("db.pruner.ttl.info", default=-1)
+                if ttl > 0:
+                    self.expiration_at = self.created_at + datetime.timedelta(
+                        seconds=ttl
+                    )
+            elif self.command_type == "ACTION":
+                ttl = config.get("db.pruner.ttl.action", default=-1)
+                if ttl > 0:
+                    self.expiration_at = self.created_at + datetime.timedelta(
+                        seconds=ttl
+                    )
+            else:
+                # TEMP or ADMIN
+                self.expiration_at = datetime.datetime.utcnow()
+
+            self._set_child_expiration()
+
+        if not self.has_parent:
+            self.root_command_type = self.command_type
+        elif not self.root_command_type:
+            # If this is a child request, we need to set the root_command_type
+            # to the same as the parent request
+            try:
+                parent_request = Request.objects.get(id=self.parent.id).only(
+                    "root_command_type"
+                )
+                self.root_command_type = parent_request.root_command_type
+            except DoesNotExist:
+                # Parent request was deleted, so we need to set the root_command_type
+                # to the same as this request
+                self.root_command_type = self.command_type
+
+    def _set_child_expiration(self):
+
+        for child_request in Request.objects(parent=self):
+            if not child_request.expiration_at:
+                child_request.expiration_at = self.expiration_at
+                child_request.save()
+                child_request._set_child_expiration()
 
     def _post_save(self):
         if self.status == "CREATED":
@@ -1372,3 +1422,7 @@ class UserToken(MongoModel, Document):
             {"fields": ["expires_at"], "expireAfterSeconds": 0},
         ]
     }
+
+
+class Configuration(Document):
+    config = DictField()

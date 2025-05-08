@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+from datetime import datetime
 
 from mongoengine.connection import get_db
 from mongoengine.errors import DoesNotExist, FieldDoesNotExist, InvalidDocumentError
@@ -287,6 +288,62 @@ def ensure_v3_29_model_migration():
                 )
 
 
+def ensure_v3_30_model_migration():
+    db = get_db()
+    if missing_field("root_command_type", "expiration_at"):
+        logger.warning(
+            "Root Command Type or Expiration At was not found in Requests and will be added."
+            " This is most likely because the database is using the old (v3.30) style of"
+            " storing in the database."
+        )
+        request_collection = db.get_collection("request")
+        for legacy_request in request_collection.find(
+            {"root_command_type": {"$exists": False}}
+        ):
+            if legacy_request:
+                legacy_request["root_command_type"] = legacy_request["command_type"]
+                legacy_request["experiation_at"] = None
+                request_collection.update_one(
+                    {"_id": legacy_request["_id"]}, {"$set": legacy_request}
+                )
+
+        action_ttl = config.get("db.pruner.ttl.action", default=-1)
+        info_ttl = config.get("db.pruner.ttl.info", default=-1)
+        if action_ttl > 0:
+            update_request_ttl("ACTION", action_ttl)
+
+        if info_ttl > 0:
+            update_request_ttl("INFO", info_ttl)
+
+
+def ensure_request_ttl():
+    db = get_db()
+
+    action_ttl = config.get("db.pruner.ttl.action", default=-1)
+    info_ttl = config.get("db.pruner.ttl.info", default=-1)
+
+    previous_config = db.get_collection("configuration").find_one()
+
+    # No previous configuration found, must be prior to 3.30.0 release
+    if not previous_config:
+        update_request_ttl("ACTION", action_ttl)
+        update_request_ttl("INFO", info_ttl)
+
+    else:
+        # If we can't find the ttl key, just do the recompile
+        try:
+            if action_ttl != previous_config["db"]["pruner"]["ttl"]["action"]:
+                update_request_ttl("ACTION", action_ttl)
+        except (KeyError, IndexError):
+            update_request_ttl("ACTION", action_ttl)
+
+        try:
+            if info_ttl != previous_config["db"]["pruner"]["ttl"]["info"]:
+                update_request_ttl("INFO", info_ttl)
+        except (KeyError, IndexError):
+            update_request_ttl("INFO", info_ttl)
+
+
 def ensure_model_migration():
     """Ensures that the database is properly migrated. All migrations ran from this
     single function for easy management"""
@@ -295,6 +352,45 @@ def ensure_model_migration():
     ensure_v3_24_model_migration()
     ensure_v3_27_model_migration()
     ensure_v3_29_model_migration()
+    ensure_v3_30_model_migration()
+
+    # This should always be the last migration
+    ensure_request_ttl()
+
+    # This sets the last configuration for future migrations to reference
+    reset_last_configuration()
+
+
+def update_request_ttl(command_type, ttl):
+
+    from .models import Request
+
+    logger.warning(f"Recompiling TTL for {command_type} for all completed requests")
+    raw_collection = Request._get_collection()
+    update_counter = 0
+    for request in raw_collection.find(
+        {"root_command_type": {"$eq": command_type}, "expiration_at": {"$ne": None}}
+    ):
+        if ttl > 0:
+            expiration_at = request["created_at"] + datetime.timedelta(seconds=ttl)
+        else:
+            expiration_at = None
+        raw_collection.update_one(
+            {"_id": request["_id"]},
+            {"$set": {"expiration_at": expiration_at}},
+        )
+        update_counter = update_counter + 1
+
+    logger.warning(f"Recompiled {update_counter} {command_type} Request TTLs")
+
+
+def reset_last_configuration():
+    from .models import Configuration
+
+    Configuration.objects().delete()
+
+    configuration = Configuration(config=config.get().to_dict())
+    configuration.save()
 
 
 def check_indexes(document_class):

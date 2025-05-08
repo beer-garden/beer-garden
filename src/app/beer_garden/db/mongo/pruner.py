@@ -20,57 +20,99 @@ logger = logging.getLogger(__name__)
 display_name = "Mongo Pruner"
 
 
-def prune_requests(ttl_length, command_type):
-
-    if ttl_length <= 0:
-        return
+def prune_requests():
 
     batch_size = config.get("db.prune.batch_size")
-    delete_older_than = datetime.utcnow() - timedelta(minutes=ttl_length)
+    action_ttl = config.get("db.pruner.ttl.action", -1)
+    info_ttl = config.get("db.pruner.ttl.info", -1)
 
-    query = (
-        Q(**{"created_at__lt": delete_older_than})
-        & (Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR"))
-        & Q(has_parent=False)
+    orphan_filter = None
+    if action_ttl > 0:
+        orphan_filter = Q(
+            **{"created_at__lt": (datetime.utcnow() - timedelta(minutes=action_ttl))}
+        ) & Q(root_command_type="ACTION")
+
+    if info_ttl > 0:
+        if not orphan_filter:
+            orphan_filter = Q(
+                **{"created_at__lt": (datetime.utcnow() - timedelta(minutes=info_ttl))}
+            ) & Q(root_command_type="INFO")
+        else:
+            orphan_filter = orphan_filter | Q(
+                **{"created_at__lt": (datetime.utcnow() - timedelta(minutes=info_ttl))}
+            ) & Q(root_command_type="INFO")
+
+    query = Q(**{"expiration_at__lt": datetime.utcnow()}) | (
+        (Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR"))
+        & (Q(command_type="ADMIN") | Q(command_type="TEMP"))
     )
-
-    if command_type == "ACTION":
-        # If the command type is ACTION, we need to check for requests that
-        # have no command type or have a command type of None
-        query = query & (
-            Q(command_type="ACTION")
-            | Q(command_type=None)
-            | Q(command_type__exists=False)
+    if not orphan_filter:
+        query = query | (
+            Q(**{"expiration_at": None})
+            & (Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR"))
+            & orphan_filter
         )
-    else:
-        query = query & Q(command_type=command_type)
 
     request_cursor = Request.objects(query).only(
         "id", "output_gridfs", "parameters_gridfs", "parameters"
     )
 
-    prune_request_cursor(request_cursor, batch_size, command_type)
+    prune_request_cursor(request_cursor, batch_size, "Expired Requests")
 
 
-def prune_request_cursor(request_cursor, batch_size, label, orphan_check=False):
+def prune_request_cursor(
+    request_cursor,
+    batch_size,
+    label,
+):
+    """
+    Helper function to prune a cursor of requests
+    """
 
     request_ids = []
     request_raw_files = []
     request_grids_fs_files = []
+    requests_deleted = False
 
     try:
-        prune_request_cursor_loop(
-            request_cursor,
-            batch_size,
-            request_ids,
-            request_raw_files,
-            request_grids_fs_files,
-            label,
-            orphan_check,
-        )
+        for request in request_cursor:
+            try:
 
-        for raw_file in RawFile.objects(Q(id__in=request_raw_files)):
-            request_grids_fs_files.append(raw_file.file._id)
+                request_ids.append(request.id)
+                if request.output_gridfs:
+                    request_grids_fs_files.append(request.output_gridfs._id)
+                if request.parameters_gridfs:
+                    request_grids_fs_files.append(request.parameters_gridfs._id)
+
+                parameters = request.parameters or {}
+
+                for param_value in parameters.values():
+                    if (
+                        isinstance(param_value, dict)
+                        and param_value.get("type") == "bytes"
+                        and param_value.get("id") is not None
+                    ):
+                        request_raw_files.append(param_value["id"])
+
+                if len(request_ids) > batch_size:
+                    # Delete the batch of requests to keep in memory usage down
+                    delete_requests(
+                        batch_size,
+                        request_ids,
+                        request_raw_files,
+                        request_grids_fs_files,
+                        label,
+                    )
+                    request_ids = []
+                    request_raw_files = []
+                    request_grids_fs_files = []
+                    requests_deleted = True
+
+            except DoesNotExist:
+                logger.error(
+                    f"DoesNotExist: Attempted to delete request {request.id} "
+                    "but does not exist in database"
+                )
     finally:
         if len(request_ids) > 0:
             delete_requests(
@@ -80,89 +122,8 @@ def prune_request_cursor(request_cursor, batch_size, label, orphan_check=False):
                 request_grids_fs_files,
                 label,
             )
-
-        else:
+        elif not requests_deleted:
             logger.debug(f"No {label} Requests deleted")
-
-
-def prune_request_cursor_loop(
-    request_cursor,
-    batch_size,
-    request_ids,
-    request_raw_files,
-    request_grids_fs_files,
-    label,
-    orphan_check=False,
-):
-    """
-    Helper function to prune a cursor of requests
-    """
-
-    batch_ids = []
-    for request in request_cursor:
-        try:
-            if request.id in request_ids:
-                # Already Processed
-                continue
-
-            if orphan_check:
-                if not request.has_parent:
-                    continue
-
-                try:
-                    if Request.objects.with_id(request.parent.id):
-                        continue
-                except DoesNotExist:
-                    pass
-
-            request_ids.append(request.id)
-            batch_ids.append(request.id)
-            if request.output_gridfs:
-                request_grids_fs_files.append(request.output_gridfs._id)
-            if request.parameters_gridfs:
-                request_grids_fs_files.append(request.parameters_gridfs._id)
-
-            parameters = request.parameters or {}
-
-            for param_value in parameters.values():
-                if (
-                    isinstance(param_value, dict)
-                    and param_value.get("type") == "bytes"
-                    and param_value.get("id") is not None
-                ):
-                    request_raw_files.append(param_value["id"])
-
-            if len(request_ids) > batch_size:
-                # Delete the batch of requests to keep in memory usage down
-                delete_requests(
-                    batch_size,
-                    request_ids,
-                    request_raw_files,
-                    request_grids_fs_files,
-                    label,
-                )
-                request_ids = []
-                request_raw_files = []
-                request_grids_fs_files = []
-
-        except DoesNotExist:
-            logger.error(
-                f"DoesNotExist: Attempted to delete request {request.id} "
-                "but does not exist in database"
-            )
-
-    if len(batch_ids) > 0:
-
-        prune_request_cursor_loop(
-            Request.objects.filter(parent__in=batch_ids).only(
-                "id", "output_gridfs", "parameters_gridfs", "parameters"
-            ),
-            batch_size,
-            request_ids,
-            request_raw_files,
-            request_grids_fs_files,
-            label,
-        )
 
 
 def delete_requests(
@@ -170,6 +131,10 @@ def delete_requests(
 ):
     if len(request_ids) > 0:
         db = get_db()
+
+        if len(request_raw_files) > 0:
+            for raw_file in RawFile.objects(Q(id__in=request_raw_files)):
+                request_grids_fs_files.append(raw_file.file._id)
 
         if batch_size > 0:
             for batch in [
@@ -217,44 +182,6 @@ def delete_requests(
             logger.debug(
                 f"{len(request_raw_files)} Raw files deleted " f"for {label} Requests"
             )
-
-
-def prune_info_requests():
-
-    ttl_length = config.get("db.prune.ttl.info")
-
-    prune_requests(
-        ttl_length,
-        "INFO",
-    )
-
-
-def prune_action_requests():
-    ttl_length = config.get("db.prune.ttl.action")
-
-    prune_requests(
-        ttl_length,
-        "ACTION",
-    )
-
-
-def prune_admin_requests():
-
-    ttl_length = config.get("db.prune.interval", default=15)
-
-    prune_requests(
-        ttl_length,
-        "ADMIN",
-    )
-
-
-def prune_temp_requests():
-    ttl_length = config.get("db.prune.interval", default=15)
-
-    prune_requests(
-        ttl_length,
-        "TEMP",
-    )
 
 
 def prune_files():
@@ -439,55 +366,6 @@ def prune_missed_temp_requests(temp_requests):
 
         else:
             logger.debug("No missed TEMP Requests")
-
-
-def prune_orphan_command_type_info():
-    prune_orphan_command_type("INFO")
-
-
-def prune_orphan_command_type_action():
-    prune_orphan_command_type("ACTION")
-
-
-def prune_orphan_command_type_admin():
-    prune_orphan_command_type("ADMIN")
-
-
-def prune_orphan_command_type(command_type):
-    with CollectMetrics("PRUNER", f"Pruner::orphan_{command_type}"):
-        ttl = config.get("db.prune.interval", default=15)
-
-        if command_type == "ACTION":
-            cmd_ttl_length = config.get("db.prune.ttl.action")
-            if cmd_ttl_length > 0:
-                ttl = (2 * ttl) + cmd_ttl_length
-        elif command_type == "INFO":
-            cmd_ttl_length = config.get("db.prune.ttl.info")
-            if cmd_ttl_length > 0:
-                ttl = (2 * ttl) + cmd_ttl_length
-
-        timeout = datetime.now(timezone.utc) - timedelta(minutes=ttl)
-        filter = {
-            "command_type": command_type,
-            "status__in": ["CANCELED", "SUCCESS", "ERROR", "INVALID"],
-            "created_at__lte": timeout,
-            "has_parent": True,
-        }
-
-        batch_size = config.get("db.prune.batch_size")
-
-        orphaned_requests = Request.objects.only(
-            "has_parent",
-            "parent",
-            "id",
-            "output_gridfs",
-            "parameters_gridfs",
-            "parameters",
-        ).filter(**filter)
-
-        prune_request_cursor(
-            orphaned_requests, batch_size, f"Orphaned {command_type}", orphan_check=True
-        )
 
 
 def prune_outstanding():
