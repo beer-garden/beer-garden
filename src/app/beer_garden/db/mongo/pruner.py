@@ -203,8 +203,7 @@ def prune_requests():
     current_time = datetime.now(timezone.utc)
 
     query = Q(expiration_at__lt=current_time) | (
-        (completed_status_query())
-        & (Q(command_type="ADMIN") | Q(command_type="TEMP"))
+        (completed_status_query()) & (Q(command_type="ADMIN") | Q(command_type="TEMP"))
     )
 
     request_cursor = Request.objects(query).only(

@@ -276,9 +276,13 @@ class TestMongoPruner(object):
 
         assert len(Request.objects.filter(command_type=None)) == 3
 
-        assert len(Request.objects.filter(status="CREATED")) == 1
-        assert len(Request.objects.filter(status="IN_PROGRESS")) == 1
-        assert len(Request.objects.filter(status="CANCELED")) == 1
+        assert len(Request.objects.filter(status="CREATED", expiration_at=None)) == 1
+        assert (
+            len(Request.objects.filter(status="IN_PROGRESS", expiration_at=None)) == 1
+        )
+        assert (
+            len(Request.objects.filter(status="CANCELED", expiration_at__ne=None)) == 1
+        )
 
         assert len(Request.objects.filter(command_type="ACTION")) == 0
 
@@ -613,12 +617,20 @@ class TestOrphanPruner(object):
         )
 
         child.save()
+        # Resave parent so the child gets set
+        parent.save()
 
-        assert len(Request.objects.filter(command_type="ACTION")) == 2
+        assert (
+            len(Request.objects.filter(command_type="ACTION", expiration_at__ne=None))
+            == 2
+        )
 
         find_orphans_requests()
         prune_requests()
-        assert len(Request.objects.filter(command_type="ACTION")) == 2
+        assert (
+            len(Request.objects.filter(command_type="ACTION", expiration_at__ne=None))
+            == 2
+        )
 
 
 class TestMissedTempPruner(object):

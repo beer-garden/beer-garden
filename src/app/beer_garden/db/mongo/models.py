@@ -539,8 +539,6 @@ class Request(MongoModel, Document):
                     # TEMP or ADMIN
                     self.expiration_at = datetime.datetime.utcnow()
 
-                self._set_child_expiration()
-
         if not self.has_parent:
             self.root_command_type = self.command_type
         elif not self.root_command_type:
@@ -556,7 +554,7 @@ class Request(MongoModel, Document):
 
     def _set_child_expiration(self):
 
-        for child_request in Request.objects(parent=self.id):
+        for child_request in Request.objects(parent=self, expiration_at=None):
             if not child_request.expiration_at:
                 child_request.expiration_at = self.expiration_at
                 child_request.save()
@@ -577,6 +575,14 @@ class Request(MongoModel, Document):
                         self._update_raw_file_references()
                 except DoesNotExist:
                     pass
+
+        if (
+            not self.has_parent
+            and self.expiration_at
+            and self.status in BrewtilsRequest.COMPLETED_STATUSES
+        ):
+
+            self._set_child_expiration()
 
     def _update_raw_file_references(self):
         parameters = self.parameters or {}
