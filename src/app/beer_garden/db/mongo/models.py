@@ -520,28 +520,26 @@ class Request(MongoModel, Document):
                 datetime.datetime.utcnow().timestamp() * 1000
             )
 
-        if (
-            not self.expiration_at
-            and not self.has_parent
-            and self.status in BrewtilsRequest.COMPLETED_STATUSES
-        ):
-            if self.command_type == "INFO":
-                ttl = config.get("db.pruner.ttl.info", default=-1)
-                if ttl > 0:
-                    self.expiration_at = self.created_at + datetime.timedelta(
-                        seconds=ttl
-                    )
-            elif self.command_type == "ACTION":
-                ttl = config.get("db.pruner.ttl.action", default=-1)
-                if ttl > 0:
-                    self.expiration_at = self.created_at + datetime.timedelta(
-                        seconds=ttl
-                    )
-            else:
-                # TEMP or ADMIN
-                self.expiration_at = datetime.datetime.utcnow()
+        if not self.expiration_at and self.status in BrewtilsRequest.COMPLETED_STATUSES:
+            # If parent or orphaned
+            if not self.has_parent or Request.objects(id=self.parent.id).count() == 0:
+                if self.command_type == "INFO":
+                    ttl = config.get("db.prune.ttl.info", default=-1)
+                    if ttl > 0:
+                        self.expiration_at = self.created_at + datetime.timedelta(
+                            minutes=ttl
+                        )
+                elif self.command_type == "ACTION":
+                    ttl = config.get("db.prune.ttl.action", default=-1)
+                    if ttl > 0:
+                        self.expiration_at = self.created_at + datetime.timedelta(
+                            minutes=ttl
+                        )
+                else:
+                    # TEMP or ADMIN
+                    self.expiration_at = datetime.datetime.utcnow()
 
-            self._set_child_expiration()
+                self._set_child_expiration()
 
         if not self.has_parent:
             self.root_command_type = self.command_type
@@ -549,9 +547,7 @@ class Request(MongoModel, Document):
             # If this is a child request, we need to set the root_command_type
             # to the same as the parent request
             try:
-                parent_request = Request.objects.get(id=self.parent.id).only(
-                    "root_command_type"
-                )
+                parent_request = Request.objects.get(id=self.parent.id)
                 self.root_command_type = parent_request.root_command_type
             except DoesNotExist:
                 # Parent request was deleted, so we need to set the root_command_type
@@ -560,7 +556,7 @@ class Request(MongoModel, Document):
 
     def _set_child_expiration(self):
 
-        for child_request in Request.objects(parent=self):
+        for child_request in Request.objects(parent=self.id):
             if not child_request.expiration_at:
                 child_request.expiration_at = self.expiration_at
                 child_request.save()
@@ -1422,4 +1418,7 @@ class UserToken(MongoModel, Document):
 
 
 class Configuration(Document):
-    config = DictField()
+    # This is a snapshot of the configuration file last loaded
+    # and is reset after migrations are completed. It should not
+    # be used for optional configuration.
+    previous_config = DictField()

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
-from datetime import datetime
+from datetime import timedelta
 
 from mongoengine.connection import get_db
 from mongoengine.errors import DoesNotExist, FieldDoesNotExist, InvalidDocumentError
@@ -325,8 +325,8 @@ def ensure_v3_30_model_migration():
                     {"_id": legacy_request["_id"]}, {"$set": legacy_request}
                 )
 
-        action_ttl = config.get("db.pruner.ttl.action", default=-1)
-        info_ttl = config.get("db.pruner.ttl.info", default=-1)
+        action_ttl = config.get("db.prune.ttl.action", default=-1)
+        info_ttl = config.get("db.prune.ttl.info", default=-1)
         if action_ttl > 0:
             update_request_ttl("ACTION", action_ttl)
 
@@ -337,8 +337,8 @@ def ensure_v3_30_model_migration():
 def ensure_request_ttl():
     db = get_db()
 
-    action_ttl = config.get("db.pruner.ttl.action", default=-1)
-    info_ttl = config.get("db.pruner.ttl.info", default=-1)
+    action_ttl = config.get("db.prune.ttl.action", default=-1)
+    info_ttl = config.get("db.prune.ttl.info", default=-1)
 
     previous_config = db.get_collection("configuration").find_one()
 
@@ -350,13 +350,19 @@ def ensure_request_ttl():
     else:
         # If we can't find the ttl key, just do the recompile
         try:
-            if action_ttl != previous_config["db"]["pruner"]["ttl"]["action"]:
+            if (
+                action_ttl
+                != previous_config["previous_config"]["db"]["prune"]["ttl"]["action"]
+            ):
                 update_request_ttl("ACTION", action_ttl)
         except (KeyError, IndexError):
             update_request_ttl("ACTION", action_ttl)
 
         try:
-            if info_ttl != previous_config["db"]["pruner"]["ttl"]["info"]:
+            if (
+                info_ttl
+                != previous_config["previous_config"]["db"]["prune"]["ttl"]["info"]
+            ):
                 update_request_ttl("INFO", info_ttl)
         except (KeyError, IndexError):
             update_request_ttl("INFO", info_ttl)
@@ -390,7 +396,7 @@ def update_request_ttl(command_type, ttl):
         {"root_command_type": {"$eq": command_type}, "expiration_at": {"$ne": None}}
     ):
         if ttl > 0:
-            expiration_at = request["created_at"] + datetime.timedelta(seconds=ttl)
+            expiration_at = request["created_at"] + timedelta(minutes=ttl)
         else:
             expiration_at = None
         raw_collection.update_one(
@@ -407,7 +413,7 @@ def reset_last_configuration():
 
     Configuration.objects().delete()
 
-    configuration = Configuration(config=config.get().to_dict())
+    configuration = Configuration(previous_config=config.get().to_dict())
     configuration.save()
 
 

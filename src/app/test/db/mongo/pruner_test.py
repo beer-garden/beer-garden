@@ -18,16 +18,19 @@ from beer_garden.db.mongo.models import (
     RequestTemplate,
 )
 from beer_garden.db.mongo.pruner import (
-    prune_action_requests,
-    prune_admin_requests,
+    # prune_action_requests,
+    # prune_admin_requests,
     prune_files,
     prune_grid_fs,
-    prune_info_requests,
+    # prune_info_requests,
     prune_missed_temp_command,
-    prune_orphan_command_type,
+    # prune_orphan_command_type,
     prune_orphan_files,
     prune_outstanding,
-    prune_temp_requests,
+    # prune_temp_requests,
+    ##
+    prune_requests,
+    find_orphans_requests,
 )
 
 enable_gridfs_integration()
@@ -187,32 +190,33 @@ def canceled():
     yield canceled
     canceled.delete()
 
-
+from box import Box
 class TestMongoPruner(object):
-    def test_prune_info_requests(self, info_request):
-        config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"info": 1}}}}
-        prune_info_requests()
+    def test_prune_info_requests(self, monkeypatch, info_request):
+        config._CONFIG = Box({"db": {"prune": {"batch_size": -1, "ttl": {"info": 1}}}})
+        monkeypatch.setattr(config, "_CONFIG", app_config)
+        prune_requests()
         assert len(Request.objects.filter(command_type="INFO")) == 0
 
     def test_prune_action_requests(self, action_request):
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"action": 1}}}}
-        prune_action_requests()
+        prune_requests()
         assert len(Request.objects.filter(command_type="ACTION")) == 0
 
     def test_prune_action_request_no_command_type(self, in_progress, created, canceled):
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"action": 1}}}}
-        prune_action_requests()
+        prune_requests()
         assert len(Request.objects.filter(command_type="ACTION")) == 0
         assert len(Request.objects.filter(command_type=None)) == 2
 
     def test_prune_admin_requests(self, admin_request):
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 15}}}
-        prune_admin_requests()
+        prune_requests()
         assert len(Request.objects.filter(command_type="ADMIN")) == 0
 
     def test_prune_temp_requests(self, temp_request):
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 15}}}
-        prune_temp_requests()
+        prune_requests()
         assert len(Request.objects.filter(command_type="TEMP")) == 0
 
     def test_prune_files(self, file, raw_file):
@@ -452,8 +456,8 @@ class TestOrphanPruner(object):
             "db": {"prune": {"batch_size": -1, "interval": 1, "ttl": {"action": 1}}}
         }
         assert len(Request.objects.filter(command_type="ACTION")) == 1
-
-        prune_orphan_command_type("ACTION")
+        find_orphans_requests()
+        prune_requests()
         assert len(Request.objects.filter(command_type="ACTION")) == 0
 
     def test_skip_orphan_pruner(self, valid_child_request):
@@ -462,7 +466,8 @@ class TestOrphanPruner(object):
         }
         assert len(Request.objects.filter(command_type="ACTION")) == 2
 
-        prune_orphan_command_type("ACTION")
+        find_orphans_requests()
+        prune_requests()
         assert len(Request.objects.filter(command_type="ACTION")) == 2
 
 

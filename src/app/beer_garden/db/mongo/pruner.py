@@ -8,50 +8,206 @@ from brewtils.schema_parser import SchemaParser
 from mongoengine import Q
 from mongoengine.connection import get_db
 from mongoengine.errors import DoesNotExist
+from pymongo import UpdateOne
 
 import beer_garden.config as config
 from beer_garden.db.mongo.models import File, Job, RawFile, Request
 from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.events import publish
 from beer_garden.metrics import CollectMetrics
+from brewtils.models import Request as BrewtilsRequest
 
 logger = logging.getLogger(__name__)
 
 display_name = "Mongo Pruner"
 
+def completed_status_query():
+    query = None
+    for status in BrewtilsRequest.COMPLETED_STATUSES:
+        if query:
+            query = query | Q(status=status)
+        else:
+            query = Q(status=status)
+    return query
 
-def prune_requests():
+def find_orphans_requests():
+    """
+    Find Requests that do not have expiration_at dates set but should have. Then set
+    them to the most accurate value we can calculate base on what is in the database
+    """
 
     batch_size = config.get("db.prune.batch_size")
-    action_ttl = config.get("db.pruner.ttl.action", -1)
-    info_ttl = config.get("db.pruner.ttl.info", -1)
+    action_ttl = config.get("db.prune.ttl.action", default=-1)
+    info_ttl = config.get("db.prune.ttl.info", default=-1)
+    interval = config.get("db.prune.interval", default=0)
+
+    current_time = datetime.now(timezone.utc)
 
     orphan_filter = None
     if action_ttl > 0:
         orphan_filter = Q(
-            **{"created_at__lt": (datetime.utcnow() - timedelta(minutes=action_ttl))}
+            created_at__lt=current_time - timedelta(minutes=action_ttl + interval)
         ) & Q(root_command_type="ACTION")
 
     if info_ttl > 0:
         if not orphan_filter:
             orphan_filter = Q(
-                **{"created_at__lt": (datetime.utcnow() - timedelta(minutes=info_ttl))}
+                created_at__lt=current_time - timedelta(minutes=info_ttl + interval)
             ) & Q(root_command_type="INFO")
         else:
-            orphan_filter = orphan_filter | Q(
-                **{"created_at__lt": (datetime.utcnow() - timedelta(minutes=info_ttl))}
-            ) & Q(root_command_type="INFO")
+            orphan_filter = (orphan_filter) | (
+                Q(created_at__lt=current_time - timedelta(minutes=info_ttl + interval))
+                & Q(root_command_type="INFO")
+            )
 
-    query = Q(**{"expiration_at__lt": datetime.utcnow()}) | (
-        (Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR"))
+    if not orphan_filter:
+        return
+
+    query = (
+        Q(expiration_at=None)
+        & (completed_status_query())
+        & (orphan_filter)
+    )
+
+    orphan_updates = []
+    for orphaned_request in Request.objects(query).only(
+        "id", "parent", "has_parent", "created_at", "expiration_at", "root_command_type"
+    ):
+
+        try:
+            if not orphaned_request.has_parent:
+                # Expiration never got set, so lets set it
+                raise DoesNotExist()
+            parent = Request.objects.get(id=orphaned_request.parent.id)
+            # Check if parent has an expiration date set
+            if parent.expiration_at:
+                orphan_updates.append(
+                    UpdateOne(
+                        {"_id": orphaned_request.id},
+                        {"$set": {"expiration_at": parent.expiration_at}},
+                    )
+                )
+            elif parent.status in BrewtilsRequest.COMPLETED_STATUSES:
+                # Parent finished by doesn't have it set, so it got orphaned as well
+                if parent.has_parent:
+                    # It is also a child request so don't do anything. With
+                    # the assumption is that it's parent is still running
+                    continue
+                else:
+                    # Expiration never got set, so lets set it for both
+                    if orphaned_request.root_command_type == "ACTION":
+                        orphan_updates.append(
+                            UpdateOne(
+                                {"_id": parent.id},
+                                {
+                                    "$set": {
+                                        "expiration_at": parent.created_at
+                                        + timedelta(minutes=action_ttl)
+                                    }
+                                },
+                            )
+                        )
+                        orphan_updates.append(
+                            UpdateOne(
+                                {"_id": orphaned_request.id},
+                                {
+                                    "$set": {
+                                        "expiration_at": parent.created_at
+                                        + timedelta(minutes=action_ttl)
+                                    }
+                                },
+                            )
+                        )
+                    elif orphaned_request.root_command_type == "INFO":
+                        orphan_updates.append(
+                            UpdateOne(
+                                {"_id": parent.id},
+                                {
+                                    "$set": {
+                                        "expiration_at": parent.created_at
+                                        + timedelta(minutes=info_ttl)
+                                    }
+                                },
+                            )
+                        )
+                        orphan_updates.append(
+                            UpdateOne(
+                                {"_id": orphaned_request.id},
+                                {
+                                    "$set": {
+                                        "expiration_at": parent.created_at
+                                        + timedelta(minutes=info_ttl)
+                                    }
+                                },
+                            )
+                        )
+                    else:
+                        orphan_updates.append(
+                            UpdateOne(
+                                {"_id": parent.id},
+                                {"$set": {"expiration_at": parent.created_at}},
+                            )
+                        )
+                        orphan_updates.append(
+                            UpdateOne(
+                                {"_id": orphaned_request.id},
+                                {"$set": {"expiration_at": parent.created_at}},
+                            )
+                        )
+        except DoesNotExist:
+            # This is an orphaned request
+            if orphaned_request.root_command_type == "ACTION":
+                orphan_updates.append(
+                    UpdateOne(
+                        {"_id": orphaned_request.id},
+                        {
+                            "$set": {
+                                "expiration_at": orphaned_request.created_at
+                                + timedelta(minutes=action_ttl)
+                            }
+                        },
+                    )
+                )
+            elif orphaned_request.root_command_type == "INFO":
+                orphan_updates.append(
+                    UpdateOne(
+                        {"_id": orphaned_request.id},
+                        {
+                            "$set": {
+                                "expiration_at": orphaned_request.created_at
+                                + timedelta(minutes=info_ttl)
+                            }
+                        },
+                    )
+                )
+            else:
+                # TEMP and ADMIN Requests can get pruned right away
+                orphan_updates.append(
+                    UpdateOne(
+                        {"_id": orphaned_request.id},
+                        {"$set": {"expiration_at": orphaned_request.created_at}},
+                    )
+                )
+
+        # Bulk update early if the list gets over batch size
+        if len(orphaned_request) > batch_size:
+            Request._get_collection().bulk_write(orphan_updates, ordered=False)
+            orphaned_request = []
+
+    # Bulk update any updates needed to corret expiration dates
+    if len(orphan_updates) > 0:
+        Request._get_collection().bulk_write(orphan_updates, ordered=False)
+
+
+def prune_requests():
+
+    batch_size = config.get("db.prune.batch_size")
+    current_time = datetime.now(timezone.utc)
+
+    query = Q(**{"expiration_at__lt": current_time, "expiration_at__ne": None}) | (
+        (completed_status_query())
         & (Q(command_type="ADMIN") | Q(command_type="TEMP"))
     )
-    if not orphan_filter:
-        query = query | (
-            Q(**{"expiration_at": None})
-            & (Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR"))
-            & orphan_filter
-        )
 
     request_cursor = Request.objects(query).only(
         "id", "output_gridfs", "parameters_gridfs", "parameters"
@@ -319,7 +475,7 @@ def prune_missed_temp_command():
         timeout = datetime.now(timezone.utc) - timedelta(minutes=ttl)
         filter = {
             "command_type": "TEMP",
-            "status__in": ["CANCELED", "SUCCESS", "ERROR", "INVALID"],
+            "status__in": BrewtilsRequest.COMPLETED_STATUSES,
             "created_at__lte": timeout,
             "has_parent": True,
         }
@@ -491,7 +647,7 @@ def prune_grid_fs():
 
                 batches = round(total_files / batch_size) + 1
 
-                for i in range(batches, 0, -1):
+                for i in range(batches, 0, default=-1):
                     with CollectMetrics("PRUNER", "Pruner::grid_fs::batch"):
                         outstanding_files = (
                             files.find(filter, {"_id": 1})
