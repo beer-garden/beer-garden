@@ -55,40 +55,6 @@ def clean_request():
 
 
 @pytest.fixture
-def action_request():
-    action_req = Request(
-        system="T",
-        system_version="T",
-        instance_name="T",
-        namespace="T",
-        command="T",
-        created_at=datetime.datetime(2024, 1, 17),
-        status="SUCCESS",
-        command_type="ACTION",
-    )
-    action_req.save()
-    yield action_request
-    action_req.delete()
-
-
-@pytest.fixture
-def info_request():
-    info_req = Request(
-        system="T",
-        system_version="T",
-        instance_name="T",
-        namespace="T",
-        command="T",
-        created_at=datetime.datetime(2024, 1, 17),
-        status="SUCCESS",
-        command_type="INFO",
-    )
-    info_req.save()
-    yield info_request
-    info_req.delete()
-
-
-@pytest.fixture
 def admin_request():
     admin_req = Request(
         system="T",
@@ -296,11 +262,13 @@ class TestMongoPruner(object):
 
     def test_prune_admin_requests(self, admin_request):
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 15}}}
+        assert len(Request.objects.filter(command_type="ADMIN")) == 1
         prune_requests()
         assert len(Request.objects.filter(command_type="ADMIN")) == 0
 
     def test_prune_temp_requests(self, temp_request):
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 15}}}
+        assert len(Request.objects.filter(command_type="TEMP")) == 1
         prune_requests()
         assert len(Request.objects.filter(command_type="TEMP")) == 0
 
