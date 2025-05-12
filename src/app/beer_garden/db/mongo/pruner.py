@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 from brewtils.errors import ModelValidationError
 from brewtils.models import Event, Events
+from brewtils.models import Request as BrewtilsRequest
 from brewtils.schema_parser import SchemaParser
 from mongoengine import Q
 from mongoengine.connection import get_db
@@ -15,11 +16,11 @@ from beer_garden.db.mongo.models import File, Job, RawFile, Request
 from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.events import publish
 from beer_garden.metrics import CollectMetrics
-from brewtils.models import Request as BrewtilsRequest
 
 logger = logging.getLogger(__name__)
 
 display_name = "Mongo Pruner"
+
 
 def completed_status_query():
     query = None
@@ -29,6 +30,7 @@ def completed_status_query():
         else:
             query = Q(status=status)
     return query
+
 
 def find_orphans_requests():
     """
@@ -63,11 +65,7 @@ def find_orphans_requests():
     if not orphan_filter:
         return
 
-    query = (
-        Q(expiration_at=None)
-        & (completed_status_query())
-        & (orphan_filter)
-    )
+    query = Q(expiration_at=None) & (completed_status_query()) & (orphan_filter)
 
     orphan_updates = []
     for orphaned_request in Request.objects(query).only(
@@ -204,7 +202,7 @@ def prune_requests():
     batch_size = config.get("db.prune.batch_size")
     current_time = datetime.now(timezone.utc)
 
-    query = Q(**{"expiration_at__lt": current_time, "expiration_at__ne": None}) | (
+    query = Q(expiration_at__lt=current_time) | (
         (completed_status_query())
         & (Q(command_type="ADMIN") | Q(command_type="TEMP"))
     )
