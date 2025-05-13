@@ -81,7 +81,6 @@ def _get_published_url_specs(
         (rf"{prefix}api/v1/admin/?", v1.admin.AdminAPI),
         (rf"{prefix}api/v1/jobs/?", v1.job.JobListAPI),
         (rf"{prefix}api/v1/gardens/?", v1.garden.GardenListAPI),
-        (rf"{prefix}api/v1/namespaces/?", v1.namespace.NamespaceListAPI),
         (rf"{prefix}api/v1/instances/(\w+)/?", v1.instance.InstanceAPI),
         (rf"{prefix}api/v1/instances/(\w+)/logs/?", v1.instance.InstanceLogAPI),
         (rf"{prefix}api/v1/instances/(\w+)/queues/?", v1.instance.InstanceQueuesAPI),

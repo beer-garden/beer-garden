@@ -39,15 +39,6 @@ export default function routeConfig(
               });
             },
           ],
-          namespaces: [
-            '$rootScope',
-            'UtilityService',
-            ($rootScope, UtilityService) => {
-              return UtilityService.getNamespaces().then((response) => {
-                $rootScope.namespaces = response.data;
-              });
-            },
-          ],
           systems: [
             '$rootScope',
             ($rootScope) => {
