@@ -255,7 +255,7 @@ def _verify_chunks(file_id: str) -> FileStatus:
             if chunk is None or chunk.offset != x:
                 missing.append(x)
             else:
-                chunk_size = chunk_size + len(chunk.data)
+                chunk_size = chunk_size + len(b64decode(chunk.data))
 
     size_ok = file.file_size == chunk_size
 
