@@ -366,7 +366,7 @@ class Request(MongoModel, Document):
         "index_background": True,
         "indexes": [
             # These are used for sorting all requests
-            {"name": "command_index", "fields": ["command_display_name"]},
+            {"name": "command_display_name_index", "fields": ["command_display_name"]},
             {"name": "command_type_index", "fields": ["command_type"]},
             {"name": "system_index", "fields": ["system"]},
             {"name": "instance_name_index", "fields": ["instance_name"]},
@@ -382,7 +382,7 @@ class Request(MongoModel, Document):
             {"name": "gridfs_index", "fields": ["output_gridfs", "parameters_gridfs"]},
             # These are for sorting parent requests
             {
-                "name": "parent_command_index",
+                "name": "parent_command_display_name_index",
                 "fields": ["has_parent", "command_display_name"],
             },
             {"name": "parent_system_index", "fields": ["has_parent", "system"]},
@@ -395,7 +395,7 @@ class Request(MongoModel, Document):
             {"name": "parent_comment_index", "fields": ["has_parent", "comment"]},
             # These are used for filtering all requests while sorting on created time
             {
-                "name": "created_at_command_index",
+                "name": "created_at_command_display_name_index",
                 "fields": ["-created_at", "command_display_name"],
             },
             {"name": "created_at_system_index", "fields": ["-created_at", "system"]},
@@ -406,7 +406,7 @@ class Request(MongoModel, Document):
             {"name": "created_at_status_index", "fields": ["-created_at", "status"]},
             # These are used for filtering parent while sorting on created time
             {
-                "name": "parent_created_at_command_index",
+                "name": "parent_created_at_command_display_name_index",
                 "fields": ["has_parent", "-created_at", "command_display_name"],
             },
             {
@@ -425,7 +425,7 @@ class Request(MongoModel, Document):
             # I THINK this makes the set of indexes above superfluous, but I'm keeping
             # both as a safety measure
             {
-                "name": "hidden_parent_created_at_command_index",
+                "name": "hidden_parent_created_at_command_display_name_index",
                 "fields": [
                     "hidden",
                     "has_parent",
