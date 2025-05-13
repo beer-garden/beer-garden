@@ -687,10 +687,16 @@ def handle_event(event):
     # any downstream garden changes since handling those changes is nontrivial.
     # It's *those* events we want to act on here, not the "raw" downstream ones.
     # This is also why we only handle GARDEN_UPDATED and not STARTED or STOPPED
+    # Also skip over error messages and let the Garden handler update based off them
     if (
         event.garden == config.get("garden.name")
         and not event.error
-        and "GARDEN" in event.name
+        and event.name
+        in [
+            Events.GARDEN_CONFIGURED.name,
+            Events.GARDEN_REMOVED.name,
+            Events.GARDEN_UPDATED.name,
+        ]
     ):
         # Only store the garden if it's 1 hop of the local garden
         if not event.payload.has_parent or event.payload.parent == config.get(
