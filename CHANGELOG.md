@@ -69,6 +69,7 @@ TBD
 - Fixed File validate to query for chunks and ensure accurate size
 - Fixed bug where API updates to Instance Status did not publish topic request
 - Removed status, status_info, and namespaces from Garden
+- Update Request Pruning to utilize new field Expiration At instead of each command type independently 
 
 # 3.29.1
 
