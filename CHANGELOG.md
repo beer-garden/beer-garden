@@ -70,6 +70,7 @@ TBD
 - Request search delay configurable through `ui.search_delay` config option.
 - Removed status, status_info, and namespaces from Garden
 - Update Requests index search box from text_search to or filter on UI columns
+- Updated Routing Logic to accept Target Garden provided and cache multi-hop gardens in routing tables
 
 # 3.29.1
 
