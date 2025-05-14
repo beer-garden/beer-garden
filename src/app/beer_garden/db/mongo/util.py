@@ -9,6 +9,7 @@ from pymongo.errors import OperationFailure
 import beer_garden
 from beer_garden import config
 from beer_garden.errors import IndexOperationError
+from brewtils.models import Request
 
 logger = logging.getLogger(__name__)
 
@@ -288,6 +289,37 @@ def ensure_v3_29_model_migration():
                 )
 
 
+def find_root_command_type_and_expiration(request):
+    expiration_at = None
+    if request["has_parent"]:
+        try:
+            return find_root_command_type_and_expiration(
+                get_db()
+                .get_collection("request")
+                .findOne({"_id": request["parent"]["_id"]})
+            )
+        except Exception:
+            # if any exception is thrown, just return what we currently have
+            pass
+    if request["status"] in Request.COMPLETED_STATUSES:
+        if (
+            request["command_type"] == "ACTION"
+            and config.get("db.prune.ttl.action", default=-1) > 0
+        ):
+            expiration_at = request["created_at"] + timedelta(
+                minutes=config.get("db.prune.ttl.action", default=-1)
+            )
+        elif (
+            request["command_type"] == "INFO"
+            and config.get("db.prune.ttl.action", default=-1) > 0
+        ):
+            expiration_at = request["created_at"] + timedelta(
+                minutes=config.get("db.prune.ttl.info", default=-1)
+            )
+
+    return request["command_type"], expiration_at
+
+
 def ensure_v3_30_model_migration():
     db = get_db()
 
@@ -319,19 +351,14 @@ def ensure_v3_30_model_migration():
             {"root_command_type": {"$exists": False}}
         ):
             if legacy_request:
-                legacy_request["root_command_type"] = legacy_request["command_type"]
-                legacy_request["experiation_at"] = None
+                root_command_type, expiration_at = (
+                    find_root_command_type_and_expiration(legacy_request)
+                )
+                legacy_request["root_command_type"] = root_command_type
+                legacy_request["expiration_at"] = expiration_at
                 request_collection.update_one(
                     {"_id": legacy_request["_id"]}, {"$set": legacy_request}
                 )
-
-        action_ttl = config.get("db.prune.ttl.action", default=-1)
-        info_ttl = config.get("db.prune.ttl.info", default=-1)
-        if action_ttl > 0:
-            update_request_ttl("ACTION", action_ttl)
-
-        if info_ttl > 0:
-            update_request_ttl("INFO", info_ttl)
 
 
 def ensure_request_ttl():
