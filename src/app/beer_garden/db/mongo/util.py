@@ -311,7 +311,7 @@ def ensure_v3_30_model_migration():
     if missing_field("root_command_type", "expiration_at"):
         logger.warning(
             "Root Command Type or Expiration At was not found in Requests and will be added."
-            " This is most likely because the database is using the old (v3.30) style of"
+            " This is most likely because the database is using the old (v3.29) style of"
             " storing in the database."
         )
         request_collection = db.get_collection("request")

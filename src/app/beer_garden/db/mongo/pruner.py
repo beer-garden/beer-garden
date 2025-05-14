@@ -74,7 +74,7 @@ def find_orphans_requests():
 
         try:
             if not orphaned_request.has_parent:
-                # Expiration never got set, so lets set it
+                # Expiration never got set, raise exception so it get set in except
                 raise DoesNotExist()
             parent = Request.objects.get(id=orphaned_request.parent.id)
             # Check if parent has an expiration date set
@@ -192,7 +192,7 @@ def find_orphans_requests():
             Request._get_collection().bulk_write(orphan_updates, ordered=False)
             orphaned_request = []
 
-    # Bulk update any updates needed to corret expiration dates
+    # Bulk update any updates needed to correct expiration dates
     if len(orphan_updates) > 0:
         Request._get_collection().bulk_write(orphan_updates, ordered=False)
 
@@ -333,7 +333,7 @@ def delete_requests(
 
         if len(request_raw_files) > 0:
             logger.debug(
-                f"{len(request_raw_files)} Raw files deleted " f"for {label} Requests"
+                f"{len(request_raw_files)} Raw files deleted for {label} Requests"
             )
 
 
@@ -346,7 +346,7 @@ def prune_files():
         raw_file_ids = []
         gridfs_ids = []
 
-        delete_older_than = datetime.utcnow() - timedelta(minutes=ttl_length)
+        delete_older_than = datetime.now(timezone.utc) - timedelta(minutes=ttl_length)
 
         try:
             batch_size = config.get("db.prune.batch_size")
