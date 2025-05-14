@@ -465,25 +465,20 @@ def update_request_ttl(command_type, ttl):
                     "root_command_type": {"$eq": command_type},
                 },
                 {
-                    "$or": [
-                        {
-                            "expiration_at": {"$ne": None},
-                        },
-                        {
-                            "$and": [
-                                {
-                                    "status": {
-                                        "$in": [
-                                            "CANCELED",
-                                            "SUCCESS",
-                                            "ERROR",
-                                            "INVALID",
-                                        ]
-                                    },
+                    {
+                        "$and": [
+                            {
+                                "status": {
+                                    "$in": [
+                                        "CANCELED",
+                                        "SUCCESS",
+                                        "ERROR",
+                                        "INVALID",
+                                    ]
                                 },
-                            ],
-                        },
-                    ],
+                            },
+                        ],
+                    },
                 },
             ]
         }
