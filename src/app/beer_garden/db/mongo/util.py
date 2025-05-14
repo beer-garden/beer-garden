@@ -2,14 +2,15 @@
 import logging
 from datetime import timedelta
 
+from brewtils.models import Request
 from mongoengine.connection import get_db
 from mongoengine.errors import DoesNotExist, FieldDoesNotExist, InvalidDocumentError
+from pymongo import UpdateOne
 from pymongo.errors import OperationFailure
 
 import beer_garden
 from beer_garden import config
 from beer_garden.errors import IndexOperationError
-from brewtils.models import Request
 
 logger = logging.getLogger(__name__)
 
@@ -296,7 +297,7 @@ def find_root_command_type_and_expiration(request):
             return find_root_command_type_and_expiration(
                 get_db()
                 .get_collection("request")
-                .findOne({"_id": request["parent"]["_id"]})
+                .find_one({"_id": request["parent"].id})
             )
         except Exception:
             # if any exception is thrown, just return what we currently have
@@ -340,25 +341,43 @@ def ensure_v3_30_model_migration():
                 {"$unset": {"status": "", "status_info": "", "namespaces": ""}},
             )
 
-    if missing_field("request", "root_command_type") or missing_field("request", "expiration_at"):
+    if missing_field("request", "root_command_type") or missing_field(
+        "request", "expiration_at"
+    ):
         logger.warning(
             "Root Command Type or Expiration At was not found in Requests and will be added."
             " This is most likely because the database is using the old (v3.29) style of"
             " storing in the database."
         )
         request_collection = db.get_collection("request")
+        batch_size = config.get("db.prune.batch_size")
+        updates = []
         for legacy_request in request_collection.find(
             {"root_command_type": {"$exists": False}}
         ):
             if legacy_request:
+
                 root_command_type, expiration_at = (
                     find_root_command_type_and_expiration(legacy_request)
                 )
-                legacy_request["root_command_type"] = root_command_type
-                legacy_request["expiration_at"] = expiration_at
-                request_collection.update_one(
-                    {"_id": legacy_request["_id"]}, {"$set": legacy_request}
+
+                updates.append(
+                    UpdateOne(
+                        {"_id": legacy_request["_id"]},
+                        {
+                            "$set": {
+                                "expiration_at": expiration_at,
+                                "root_command_type": root_command_type,
+                            }
+                        },
+                    )
                 )
+
+            if len(updates) > batch_size:
+                request_collection.bulk_write(updates, ordered=False)
+                updates = []
+        if len(updates) > 0:
+            request_collection.bulk_write(updates, ordered=False)
 
 
 def ensure_request_ttl():
@@ -412,25 +431,49 @@ def ensure_model_migration():
     reset_last_configuration()
 
 
+def find_root_created_at(request):
+    if request["has_parent"]:
+        try:
+            return find_root_created_at(
+                get_db()
+                .get_collection("request")
+                .find_one({"_id": request["parent"].id})
+            )
+        except Exception:
+            # if any exception is thrown, just return what we currently have
+            pass
+    return request["created_at"]
+
+
 def update_request_ttl(command_type, ttl):
 
     from .models import Request
 
     logger.warning(f"Recompiling TTL for {command_type} for all completed requests")
+    batch_size = config.get("db.prune.batch_size")
+
     raw_collection = Request._get_collection()
     update_counter = 0
+    updates = []
     for request in raw_collection.find(
         {"root_command_type": {"$eq": command_type}, "expiration_at": {"$ne": None}}
     ):
         if ttl > 0:
-            expiration_at = request["created_at"] + timedelta(minutes=ttl)
+            expiration_at = find_root_created_at(request) + timedelta(minutes=ttl)
         else:
             expiration_at = None
-        raw_collection.update_one(
-            {"_id": request["_id"]},
-            {"$set": {"expiration_at": expiration_at}},
+        updates.append(
+            UpdateOne(
+                {"_id": request["_id"]},
+                {"$set": {"expiration_at": expiration_at}},
+            )
         )
+        if len(updates) > batch_size:
+            raw_collection.bulk_write(updates, ordered=False)
+            updates = []
         update_counter = update_counter + 1
+    if len(updates) > 0:
+        raw_collection.bulk_write(updates, ordered=False)
 
     logger.warning(f"Recompiled {update_counter} {command_type} Request TTLs")
 
