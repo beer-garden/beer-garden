@@ -340,7 +340,7 @@ def ensure_v3_30_model_migration():
                 {"$unset": {"status": "", "status_info": "", "namespaces": ""}},
             )
 
-    if missing_field("root_command_type", "expiration_at"):
+    if missing_field("request", "root_command_type") or missing_field("request", "expiration_at"):
         logger.warning(
             "Root Command Type or Expiration At was not found in Requests and will be added."
             " This is most likely because the database is using the old (v3.29) style of"
