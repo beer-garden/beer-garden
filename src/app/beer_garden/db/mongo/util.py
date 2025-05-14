@@ -460,27 +460,15 @@ def update_request_ttl(command_type, ttl):
     updates = []
     for request in raw_collection.find(
         {
-            "$and": [
-                {
-                    "root_command_type": {"$eq": command_type},
-                },
-                {
-                    {
-                        "$and": [
-                            {
-                                "status": {
-                                    "$in": [
-                                        "CANCELED",
-                                        "SUCCESS",
-                                        "ERROR",
-                                        "INVALID",
-                                    ]
-                                },
-                            },
-                        ],
-                    },
-                },
-            ]
+            "root_command_type": {"$eq": command_type},
+            "status": {
+                "$in": [
+                    "CANCELED",
+                    "SUCCESS",
+                    "ERROR",
+                    "INVALID",
+                ]
+            },
         }
     ):
         if ttl > 0:
