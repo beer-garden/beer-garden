@@ -312,7 +312,7 @@ def find_root_command_type_and_expiration(request):
             )
         elif (
             request["command_type"] == "INFO"
-            and config.get("db.prune.ttl.action", default=-1) > 0
+            and config.get("db.prune.ttl.info", default=-1) > 0
         ):
             expiration_at = request["created_at"] + timedelta(
                 minutes=config.get("db.prune.ttl.info", default=-1)
@@ -431,18 +431,21 @@ def ensure_model_migration():
     reset_last_configuration()
 
 
-def find_root_created_at(request):
+def find_root_expiration_at(request, ttl):
     if request["has_parent"]:
         try:
-            return find_root_created_at(
+            return find_root_expiration_at(
                 get_db()
                 .get_collection("request")
-                .find_one({"_id": request["parent"].id})
+                .find_one({"_id": request["parent"].id}),
+                ttl,
             )
         except Exception:
             # if any exception is thrown, just return what we currently have
             pass
-    return request["created_at"]
+    if request["status"] in ["CANCELED", "SUCCESS", "ERROR", "INVALID"]:
+        return request["created_at"] + timedelta(minutes=ttl)
+    return None
 
 
 def update_request_ttl(command_type, ttl):
@@ -456,18 +459,46 @@ def update_request_ttl(command_type, ttl):
     update_counter = 0
     updates = []
     for request in raw_collection.find(
-        {"root_command_type": {"$eq": command_type}, "expiration_at": {"$ne": None}}
+        {
+            "$and": [
+                {
+                    "root_command_type": {"$eq": command_type},
+                },
+                {
+                    "$or": [
+                        {
+                            "expiration_at": {"$ne": None},
+                        },
+                        {
+                            "$and": [
+                                {
+                                    "status": {
+                                        "$in": [
+                                            "CANCELED",
+                                            "SUCCESS",
+                                            "ERROR",
+                                            "INVALID",
+                                        ]
+                                    },
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ]
+        }
     ):
         if ttl > 0:
-            expiration_at = find_root_created_at(request) + timedelta(minutes=ttl)
+            expiration_at = find_root_expiration_at(request, ttl)
         else:
             expiration_at = None
-        updates.append(
-            UpdateOne(
-                {"_id": request["_id"]},
-                {"$set": {"expiration_at": expiration_at}},
+        if expiration_at != request["expiration_at"]:
+            updates.append(
+                UpdateOne(
+                    {"_id": request["_id"]},
+                    {"$set": {"expiration_at": expiration_at}},
+                )
             )
-        )
         if len(updates) > batch_size:
             raw_collection.bulk_write(updates, ordered=False)
             updates = []
