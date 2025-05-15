@@ -644,7 +644,7 @@ def prune_grid_fs():
 
                 batches = round(total_files / batch_size) + 1
 
-                for i in range(batches, 0, default=-1):
+                for i in range(batches, 0, -1):
                     with CollectMetrics("PRUNER", "Pruner::grid_fs::batch"):
                         outstanding_files = (
                             files.find(filter, {"_id": 1})
