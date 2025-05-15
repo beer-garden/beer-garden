@@ -144,54 +144,53 @@ def prune_request_cursor(
     request_raw_files = []
     request_grids_fs_files = []
 
-    try:
-        for request in request_cursor:
-            try:
+    for request in request_cursor:
+        try:
 
-                request_ids.append(request.id)
+            request_ids.append(request.id)
 
-                if request.output_gridfs:
-                    request_grids_fs_files.append(request.output_gridfs._id)
-                if request.parameters_gridfs:
-                    request_grids_fs_files.append(request.parameters_gridfs._id)
+            if request.output_gridfs:
+                request_grids_fs_files.append(request.output_gridfs._id)
+            if request.parameters_gridfs:
+                request_grids_fs_files.append(request.parameters_gridfs._id)
 
-                parameters = request.parameters or {}
+            parameters = request.parameters or {}
 
-                for param_value in parameters.values():
-                    if (
-                        isinstance(param_value, dict)
-                        and param_value.get("type") == "bytes"
-                        and param_value.get("id") is not None
-                    ):
-                        request_raw_files.append(param_value["id"])
+            for param_value in parameters.values():
+                if (
+                    isinstance(param_value, dict)
+                    and param_value.get("type") == "bytes"
+                    and param_value.get("id") is not None
+                ):
+                    request_raw_files.append(param_value["id"])
 
-                if batch_size > 0 and len(request_ids) > batch_size:
-                    # Delete the batch of requests to keep in memory usage down
-                    delete_requests(
-                        batch_size,
-                        request_ids,
-                        request_raw_files,
-                        request_grids_fs_files,
-                        label,
-                    )
-                    request_ids = []
-                    request_raw_files = []
-                    request_grids_fs_files = []
-
-            except DoesNotExist:
-                logger.error(
-                    f"DoesNotExist: Attempted to delete request {request.id} "
-                    "but does not exist in database"
+            if batch_size > 0 and len(request_ids) > batch_size:
+                # Delete the batch of requests to keep in memory usage down
+                delete_requests(
+                    batch_size,
+                    request_ids,
+                    request_raw_files,
+                    request_grids_fs_files,
+                    label,
                 )
-    finally:
-        if len(request_ids) > 0:
-            delete_requests(
-                batch_size,
-                request_ids,
-                request_raw_files,
-                request_grids_fs_files,
-                label,
+                request_ids = []
+                request_raw_files = []
+                request_grids_fs_files = []
+
+        except DoesNotExist:
+            logger.error(
+                f"DoesNotExist: Attempted to delete request {request.id} "
+                "but does not exist in database"
             )
+
+    if len(request_ids) > 0:
+        delete_requests(
+            batch_size,
+            request_ids,
+            request_raw_files,
+            request_grids_fs_files,
+            label,
+        )
 
 
 def delete_requests(

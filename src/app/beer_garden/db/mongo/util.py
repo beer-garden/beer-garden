@@ -487,7 +487,7 @@ def update_request_ttl(command_type, ttl):
         if batch_size > 0 and len(updates) > batch_size:
             raw_collection.bulk_write(updates, ordered=False)
             updates = []
-        
+
     if len(updates) > 0:
         raw_collection.bulk_write(updates, ordered=False)
 
