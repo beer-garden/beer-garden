@@ -415,6 +415,13 @@ class MixedScheduler(object):
         )
 
         self.add_schedule(
+            beer_garden.db.mongo.pruner.find_orphans_requests,
+            interval=config.get("db.prune.interval", default=15),
+            max_instances=1,
+            name="find_orphans_requests",
+        )
+
+        self.add_schedule(
             beer_garden.db.mongo.pruner.prune_orphan_files,
             interval=config.get("db.prune.interval", default=15),
             max_instances=1,

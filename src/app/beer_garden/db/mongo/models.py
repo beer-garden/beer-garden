@@ -382,6 +382,10 @@ class Request(MongoModel, Document):
             {"name": "parent_index", "fields": ["has_parent"]},
             # Request Pruning
             {"name": "expiration_at_index", "fields": ["expiration_at"]},
+            {
+                "name": "status_comment_type_expiration_at_index",
+                "fields": ["status", "expiration_at", "command_type"],
+            },
             # Used for Gridfs File Pruning
             {"name": "gridfs_index", "fields": ["output_gridfs", "parameters_gridfs"]},
             # These are for sorting parent requests
@@ -478,6 +482,13 @@ class Request(MongoModel, Document):
             self.parameters = json.loads(self.parameters_gridfs.read().decode(encoding))
             self.parameters_gridfs = None
 
+        if self.parent:
+            try:
+                self.parent
+            except DoesNotExist:
+                # Unable to find parent, remove object to allow brewtils serializing
+                self.parent = None
+
     def _pre_save(self):
         """Move request attributes to GridFS if too big"""
         self.updated_at = datetime.datetime.utcnow()
@@ -530,6 +541,14 @@ class Request(MongoModel, Document):
             self.metadata[status_key] = int(
                 datetime.datetime.utcnow().timestamp() * 1000
             )
+
+        if self.has_parent:
+            try:
+                self.parent
+            except DoesNotExist:
+                # Request is an Orphan, removing parent
+                self.has_parent = False
+                self.parent = None
 
         if not self.expiration_at and self.status in BrewtilsRequest.COMPLETED_STATUSES:
             # If parent or orphaned

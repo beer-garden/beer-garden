@@ -5,15 +5,14 @@ from datetime import datetime, timedelta, timezone
 from brewtils.errors import ModelValidationError
 from brewtils.models import Event, Events
 from brewtils.models import Request as BrewtilsRequest
-from brewtils.schema_parser import SchemaParser
 from mongoengine import Q
 from mongoengine.connection import get_db
 from mongoengine.errors import DoesNotExist
 from pymongo import UpdateOne
 
 import beer_garden.config as config
+from beer_garden.db.mongo.api import to_brewtils
 from beer_garden.db.mongo.models import File, Job, RawFile, Request
-from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.events import publish
 from beer_garden.metrics import CollectMetrics
 
@@ -32,6 +31,31 @@ def completed_status_query():
     return query
 
 
+def determine_expiration_at(request, action_ttl, info_ttl):
+    if request.has_parent:
+        try:
+            parent = Request.objects.get(id=request.parent.id)
+
+            if parent.expiration_at:
+                # Parent has an expiration, so we will just use that
+                return request.expiration_at
+            if parent.status not in BrewtilsRequest.COMPLETED_STATUSES:
+                # Parent is still running
+                return None
+            return determine_expiration_at(parent, action_ttl, info_ttl)
+        except DoesNotExist:
+            pass
+
+    if action_ttl > 0 and request.root_command_type == "ACTION":
+        return request.created_at + timedelta(minutes=action_ttl)
+
+    if info_ttl > 0 and request.root_command_type == "INFO":
+        return request.created_at + timedelta(minutes=info_ttl)
+
+    # Must be Admin or Temp
+    return request.created_at
+
+
 def find_orphans_requests():
     """
     Find Requests that do not have expiration_at dates set but should have. Then set
@@ -41,24 +65,23 @@ def find_orphans_requests():
     batch_size = config.get("db.prune.batch_size")
     action_ttl = config.get("db.prune.ttl.action", default=-1)
     info_ttl = config.get("db.prune.ttl.info", default=-1)
-    interval = config.get("db.prune.interval", default=0)
 
     current_time = datetime.now(timezone.utc)
 
     orphan_filter = None
     if action_ttl > 0:
         orphan_filter = Q(
-            created_at__lt=current_time - timedelta(minutes=action_ttl + interval)
+            created_at__lt=current_time - timedelta(minutes=action_ttl)
         ) & Q(root_command_type="ACTION")
 
     if info_ttl > 0:
         if not orphan_filter:
             orphan_filter = Q(
-                created_at__lt=current_time - timedelta(minutes=info_ttl + interval)
+                created_at__lt=current_time - timedelta(minutes=info_ttl)
             ) & Q(root_command_type="INFO")
         else:
             orphan_filter = (orphan_filter) | (
-                Q(created_at__lt=current_time - timedelta(minutes=info_ttl + interval))
+                Q(created_at__lt=current_time - timedelta(minutes=info_ttl))
                 & Q(root_command_type="INFO")
             )
 
@@ -71,126 +94,20 @@ def find_orphans_requests():
     for orphaned_request in Request.objects(query).only(
         "id", "parent", "has_parent", "created_at", "expiration_at", "root_command_type"
     ):
+        expiration_at = determine_expiration_at(orphaned_request, action_ttl, info_ttl)
 
-        try:
-            if not orphaned_request.has_parent:
-                # Expiration never got set, raise exception so it get set in except
-                raise DoesNotExist()
-            parent = Request.objects.get(id=orphaned_request.parent.id)
-            # Check if parent has an expiration date set
-            if parent.expiration_at:
-                orphan_updates.append(
-                    UpdateOne(
-                        {"_id": orphaned_request.id},
-                        {"$set": {"expiration_at": parent.expiration_at}},
-                    )
+        if expiration_at:
+            orphan_updates.append(
+                UpdateOne(
+                    {"_id": orphaned_request.id},
+                    {"$set": {"expiration_at": expiration_at}},
                 )
-            elif parent.status in BrewtilsRequest.COMPLETED_STATUSES:
-                # Parent finished by doesn't have it set, so it got orphaned as well
-                if parent.has_parent:
-                    # It is also a child request so don't do anything. With
-                    # the assumption is that it's parent is still running
-                    continue
-                else:
-                    # Expiration never got set, so lets set it for both
-                    if orphaned_request.root_command_type == "ACTION":
-                        orphan_updates.append(
-                            UpdateOne(
-                                {"_id": parent.id},
-                                {
-                                    "$set": {
-                                        "expiration_at": parent.created_at
-                                        + timedelta(minutes=action_ttl)
-                                    }
-                                },
-                            )
-                        )
-                        orphan_updates.append(
-                            UpdateOne(
-                                {"_id": orphaned_request.id},
-                                {
-                                    "$set": {
-                                        "expiration_at": parent.created_at
-                                        + timedelta(minutes=action_ttl)
-                                    }
-                                },
-                            )
-                        )
-                    elif orphaned_request.root_command_type == "INFO":
-                        orphan_updates.append(
-                            UpdateOne(
-                                {"_id": parent.id},
-                                {
-                                    "$set": {
-                                        "expiration_at": parent.created_at
-                                        + timedelta(minutes=info_ttl)
-                                    }
-                                },
-                            )
-                        )
-                        orphan_updates.append(
-                            UpdateOne(
-                                {"_id": orphaned_request.id},
-                                {
-                                    "$set": {
-                                        "expiration_at": parent.created_at
-                                        + timedelta(minutes=info_ttl)
-                                    }
-                                },
-                            )
-                        )
-                    else:
-                        orphan_updates.append(
-                            UpdateOne(
-                                {"_id": parent.id},
-                                {"$set": {"expiration_at": parent.created_at}},
-                            )
-                        )
-                        orphan_updates.append(
-                            UpdateOne(
-                                {"_id": orphaned_request.id},
-                                {"$set": {"expiration_at": parent.created_at}},
-                            )
-                        )
-        except DoesNotExist:
-            # This is an orphaned request
-            if orphaned_request.root_command_type == "ACTION":
-                orphan_updates.append(
-                    UpdateOne(
-                        {"_id": orphaned_request.id},
-                        {
-                            "$set": {
-                                "expiration_at": orphaned_request.created_at
-                                + timedelta(minutes=action_ttl)
-                            }
-                        },
-                    )
-                )
-            elif orphaned_request.root_command_type == "INFO":
-                orphan_updates.append(
-                    UpdateOne(
-                        {"_id": orphaned_request.id},
-                        {
-                            "$set": {
-                                "expiration_at": orphaned_request.created_at
-                                + timedelta(minutes=info_ttl)
-                            }
-                        },
-                    )
-                )
-            else:
-                # TEMP and ADMIN Requests can get pruned right away
-                orphan_updates.append(
-                    UpdateOne(
-                        {"_id": orphaned_request.id},
-                        {"$set": {"expiration_at": orphaned_request.created_at}},
-                    )
-                )
+            )
 
         # Bulk update early if the list gets over batch size
-        if batch_size > 0 and len(orphaned_request) > batch_size:
+        if batch_size > 0 and len(orphan_updates) > batch_size:
             Request._get_collection().bulk_write(orphan_updates, ordered=False)
-            orphaned_request = []
+            orphan_updates = []
 
     # Bulk update any updates needed to correct expiration dates
     if len(orphan_updates) > 0:
@@ -202,8 +119,9 @@ def prune_requests():
     batch_size = config.get("db.prune.batch_size")
     current_time = datetime.now(timezone.utc)
 
-    query = Q(expiration_at__lt=current_time) | (
-        (completed_status_query()) & (Q(command_type="ADMIN") | Q(command_type="TEMP"))
+    query = completed_status_query() & (
+        Q(expiration_at__lt=current_time)
+        | ((Q(command_type="ADMIN") | Q(command_type="TEMP")))
     )
 
     request_cursor = Request.objects(query).only(
@@ -225,13 +143,13 @@ def prune_request_cursor(
     request_ids = []
     request_raw_files = []
     request_grids_fs_files = []
-    requests_deleted = False
 
     try:
         for request in request_cursor:
             try:
 
                 request_ids.append(request.id)
+
                 if request.output_gridfs:
                     request_grids_fs_files.append(request.output_gridfs._id)
                 if request.parameters_gridfs:
@@ -259,7 +177,6 @@ def prune_request_cursor(
                     request_ids = []
                     request_raw_files = []
                     request_grids_fs_files = []
-                    requests_deleted = True
 
             except DoesNotExist:
                 logger.error(
@@ -275,66 +192,62 @@ def prune_request_cursor(
                 request_grids_fs_files,
                 label,
             )
-        elif not requests_deleted:
-            logger.debug(f"No {label} Requests deleted")
 
 
 def delete_requests(
     batch_size, request_ids, request_raw_files, request_grids_fs_files, label
 ):
-    if len(request_ids) > 0:
-        db = get_db()
 
-        if len(request_raw_files) > 0:
-            for raw_file in RawFile.objects(Q(id__in=request_raw_files)):
-                request_grids_fs_files.append(raw_file.file.grid_id)
+    db = get_db()
 
-        if batch_size > 0:
-            for batch in [
-                request_raw_files[i : i + batch_size]
-                for i in range(0, len(request_raw_files), batch_size)
-            ]:
-                db["raw_files"].delete_many({"_id": {"$in": batch}})
+    if len(request_raw_files) > 0:
+        for raw_file in RawFile.objects(Q(id__in=request_raw_files)):
+            request_grids_fs_files.append(raw_file.file.grid_id)
 
-            for batch in [
-                request_grids_fs_files[i : i + batch_size]
-                for i in range(0, len(request_grids_fs_files), batch_size)
-            ]:
-                db["fs.chunks"].delete_many({"files_id": {"$in": batch}})
-                db["fs.files"].delete_many({"_id": {"$in": batch}})
+    if batch_size > 0:
+        for batch in [
+            request_raw_files[i : i + batch_size]
+            for i in range(0, len(request_raw_files), batch_size)
+        ]:
+            db["raw_files"].delete_many({"_id": {"$in": batch}})
 
-            for batch in [
-                request_ids[i : i + batch_size]
-                for i in range(0, len(request_ids), batch_size)
-            ]:
-                db["file"].update_many(
-                    {"requests": {"$in": batch}},
-                    {"$set": {"request": None}},
-                )
-                db["request"].delete_many({"_id": {"$in": batch}})
+        for batch in [
+            request_grids_fs_files[i : i + batch_size]
+            for i in range(0, len(request_grids_fs_files), batch_size)
+        ]:
+            db["fs.chunks"].delete_many({"files_id": {"$in": batch}})
+            db["fs.files"].delete_many({"_id": {"$in": batch}})
 
-        else:
-            db["raw_files"].delete_many({"_id": {"$in": request_raw_files}})
-            db["fs.chunks"].delete_many({"files_id": {"$in": request_grids_fs_files}})
-            db["fs.files"].delete_many({"_id": {"$in": request_grids_fs_files}})
+        for batch in [
+            request_ids[i : i + batch_size]
+            for i in range(0, len(request_ids), batch_size)
+        ]:
             db["file"].update_many(
-                {"requests": {"$in": request_ids}},
+                {"requests": {"$in": batch}},
                 {"$set": {"request": None}},
             )
-            db["request"].delete_many({"_id": {"$in": request_ids}})
+            db["request"].delete_many({"_id": {"$in": batch}})
 
-        logger.error(f"{len(request_ids)} {label} Requests deleted")
+    else:
+        db["raw_files"].delete_many({"_id": {"$in": request_raw_files}})
+        db["fs.chunks"].delete_many({"files_id": {"$in": request_grids_fs_files}})
+        db["fs.files"].delete_many({"_id": {"$in": request_grids_fs_files}})
+        db["file"].update_many(
+            {"requests": {"$in": request_ids}},
+            {"$set": {"request": None}},
+        )
+        db["request"].delete_many({"_id": {"$in": request_ids}})
 
-        if len(request_grids_fs_files) > 0:
-            logger.debug(
-                f"{len(request_grids_fs_files)} GridFS files deleted "
-                f"for {label} Requests"
-            )
+    logger.error(f"{len(request_ids)} {label} Requests deleted")
 
-        if len(request_raw_files) > 0:
-            logger.debug(
-                f"{len(request_raw_files)} Raw files deleted for {label} Requests"
-            )
+    if len(request_grids_fs_files) > 0:
+        logger.debug(
+            f"{len(request_grids_fs_files)} GridFS files deleted "
+            f"for {label} Requests"
+        )
+
+    if len(request_raw_files) > 0:
+        logger.debug(f"{len(request_raw_files)} Raw files deleted for {label} Requests")
 
 
 def prune_files():
@@ -564,10 +477,12 @@ def prune_outstanding_requests(outstanding_requests):
                 request.status = "CANCELED"
                 request.status_updated_at = datetime.now(timezone.utc)
                 request.save()
-                serialized = MongoParser.serialize(request, to_string=True)
-                parsed = SchemaParser.parse_request(
-                    serialized, from_string=True, many=False
-                )
+                # serialized = MongoParser.serialize(request, to_string=True)
+                # parsed = SchemaParser.parse_request(
+                #     serialized, from_string=True, many=False
+                # )
+
+                parsed = to_brewtils(request)
 
                 publish(
                     Event(

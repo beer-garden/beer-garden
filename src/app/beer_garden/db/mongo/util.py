@@ -350,7 +350,7 @@ def ensure_v3_30_model_migration():
             " storing in the database."
         )
         request_collection = db.get_collection("request")
-        batch_size = config.get("db.prune.batch_size")
+        batch_size = config.get("db.prune.batch_size", default=-1)
         updates = []
         for legacy_request in request_collection.find(
             {"root_command_type": {"$exists": False}}
@@ -394,7 +394,7 @@ def ensure_request_ttl():
         update_request_ttl("INFO", info_ttl)
 
     else:
-        # If we can't find the ttl key, just do the recompile
+        # If we can't find the ttl key, just do the recompute
         try:
             if (
                 action_ttl
@@ -452,8 +452,8 @@ def update_request_ttl(command_type, ttl):
 
     from .models import Request
 
-    logger.warning(f"Recompiling TTL for {command_type} for all completed requests")
-    batch_size = config.get("db.prune.batch_size")
+    logger.warning(f"Recomputing TTL for {command_type} for all completed requests")
+    batch_size = config.get("db.prune.batch_size", default=-1)
 
     raw_collection = Request._get_collection()
     update_counter = 0
@@ -475,22 +475,23 @@ def update_request_ttl(command_type, ttl):
             expiration_at = find_root_expiration_at(request, ttl)
         else:
             expiration_at = None
-        if expiration_at != request["expiration_at"]:
+        if "expiration_at" not in request or expiration_at != request["expiration_at"]:
             updates.append(
                 UpdateOne(
                     {"_id": request["_id"]},
                     {"$set": {"expiration_at": expiration_at}},
                 )
             )
+            update_counter = update_counter + 1
 
         if batch_size > 0 and len(updates) > batch_size:
             raw_collection.bulk_write(updates, ordered=False)
             updates = []
-        update_counter = update_counter + 1
+        
     if len(updates) > 0:
         raw_collection.bulk_write(updates, ordered=False)
 
-    logger.warning(f"Recompiled {update_counter} {command_type} Request TTLs")
+    logger.warning(f"Recomputed {update_counter} {command_type} Request TTLs")
 
 
 def reset_last_configuration():
