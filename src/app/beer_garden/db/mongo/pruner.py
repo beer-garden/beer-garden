@@ -287,7 +287,7 @@ def delete_requests(
 
         if len(request_raw_files) > 0:
             for raw_file in RawFile.objects(Q(id__in=request_raw_files)):
-                request_grids_fs_files.append(raw_file.file._id)
+                request_grids_fs_files.append(raw_file.file.grid_id)
 
         if batch_size > 0:
             for batch in [
