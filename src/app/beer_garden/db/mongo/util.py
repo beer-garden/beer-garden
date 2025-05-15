@@ -373,7 +373,7 @@ def ensure_v3_30_model_migration():
                     )
                 )
 
-            if len(updates) > batch_size:
+            if batch_size > 0 and len(updates) > batch_size:
                 request_collection.bulk_write(updates, ordered=False)
                 updates = []
         if len(updates) > 0:
@@ -482,7 +482,8 @@ def update_request_ttl(command_type, ttl):
                     {"$set": {"expiration_at": expiration_at}},
                 )
             )
-        if len(updates) > batch_size:
+
+        if batch_size > 0 and len(updates) > batch_size:
             raw_collection.bulk_write(updates, ordered=False)
             updates = []
         update_counter = update_counter + 1
