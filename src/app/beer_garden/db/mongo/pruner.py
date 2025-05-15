@@ -188,7 +188,7 @@ def find_orphans_requests():
                 )
 
         # Bulk update early if the list gets over batch size
-        if len(orphaned_request) > batch_size:
+        if batch_size > 0 and len(orphaned_request) > batch_size:
             Request._get_collection().bulk_write(orphan_updates, ordered=False)
             orphaned_request = []
 
@@ -247,7 +247,7 @@ def prune_request_cursor(
                     ):
                         request_raw_files.append(param_value["id"])
 
-                if len(request_ids) > batch_size:
+                if batch_size > 0 and len(request_ids) > batch_size:
                     # Delete the batch of requests to keep in memory usage down
                     delete_requests(
                         batch_size,
