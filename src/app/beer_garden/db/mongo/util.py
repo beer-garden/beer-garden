@@ -6,7 +6,7 @@ from brewtils.models import Request
 from mongoengine.connection import get_db
 from mongoengine.errors import DoesNotExist, FieldDoesNotExist, InvalidDocumentError
 from pymongo import UpdateOne
-from pymongo.errors import OperationFailure
+from pymongo.errors import OperationFailure, PyMongoError
 
 import beer_garden
 from beer_garden import config
@@ -299,7 +299,7 @@ def find_root_command_type_and_expiration(request):
                 .get_collection("request")
                 .find_one({"_id": request["parent"].id})
             )
-        except Exception:
+        except PyMongoError:
             # if any exception is thrown, just return what we currently have
             pass
     if request["status"] in Request.COMPLETED_STATUSES:
