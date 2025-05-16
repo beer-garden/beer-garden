@@ -19,7 +19,7 @@ from beer_garden.db.mongo.models import (
     RequestTemplate,
 )
 from beer_garden.db.mongo.pruner import (
-    find_orphans_requests,
+    find_missing_expiration_requests,
     prune_files,
     prune_grid_fs,
     prune_missed_temp_command,
@@ -436,75 +436,9 @@ class TestMongoPruner(object):
         assert new_created.status == "CREATED"
 
 
-class TestOrphanPruner(object):
-    @pytest.fixture
-    def orphan_child_request(self):
-        parent = Request(
-            system="T",
-            system_version="T",
-            instance_name="T",
-            namespace="T",
-            command="T",
-            created_at=datetime.datetime(2024, 1, 17),
-            status="SUCCESS",
-            command_type="ACTION",
-        )
-        parent.save()
+class TestExpirationUpdater(object):
 
-        child = Request(
-            system="T",
-            system_version="T",
-            instance_name="T",
-            namespace="T",
-            command="T",
-            created_at=datetime.datetime(2024, 1, 17),
-            status="SUCCESS",
-            command_type="ACTION",
-            has_parent=True,
-            parent=parent,
-        )
-
-        parent.delete()
-        child.save()
-
-        yield child
-
-        child.delete()
-
-    @pytest.fixture
-    def valid_child_request(self):
-        parent = Request(
-            system="T",
-            system_version="T",
-            instance_name="T",
-            namespace="T",
-            command="T",
-            created_at=datetime.datetime(2024, 1, 17),
-            status="SUCCESS",
-            command_type="ACTION",
-        )
-        parent.save()
-
-        child = Request(
-            system="T",
-            system_version="T",
-            instance_name="T",
-            namespace="T",
-            command="T",
-            created_at=datetime.datetime(2024, 1, 17),
-            status="SUCCESS",
-            command_type="ACTION",
-            has_parent=True,
-            parent=parent,
-        )
-
-        child.save()
-
-        yield child
-        parent.delete()
-        child.delete()
-
-    def test_orphan_pruner(self, clean_request):
+    def test_expiration_updater(self, clean_request):
         config._CONFIG = {
             "db": {"prune": {"batch_size": -1, "interval": 1, "ttl": {"action": 1}}}
         }
@@ -549,12 +483,12 @@ class TestOrphanPruner(object):
         assert len(Request.objects.filter(command_type="ACTION")) == 1
         assert len(Request.objects.filter(expiration_at=None)) == 1
 
-        find_orphans_requests()
+        find_missing_expiration_requests()
         prune_requests()
 
         assert len(Request.objects.filter(command_type="ACTION")) == 0
 
-    def test_skip_orphan_pruner(self, clean_request):
+    def test_skip_expiration_updater(self, clean_request):
         config._CONFIG = {
             "db": {"prune": {"batch_size": -1, "interval": 1, "ttl": {"action": 1}}}
         }
@@ -593,7 +527,7 @@ class TestOrphanPruner(object):
             == 2
         )
 
-        find_orphans_requests()
+        find_missing_expiration_requests()
         prune_requests()
         assert (
             len(Request.objects.filter(command_type="ACTION", expiration_at__ne=None))

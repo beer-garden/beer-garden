@@ -56,7 +56,7 @@ def determine_expiration_at(request, action_ttl, info_ttl):
     return request.created_at
 
 
-def find_orphans_requests():
+def find_missing_expiration_requests():
     """
     Find Requests that do not have expiration_at dates set but should have. Then set
     them to the most accurate value we can calculate base on what is in the database
@@ -68,50 +68,52 @@ def find_orphans_requests():
 
     current_time = datetime.now(timezone.utc)
 
-    orphan_filter = None
+    missing_expiration_filter = None
     if action_ttl > 0:
-        orphan_filter = Q(
+        missing_expiration_filter = Q(
             created_at__lt=current_time - timedelta(minutes=action_ttl)
         ) & Q(root_command_type="ACTION")
 
     if info_ttl > 0:
-        if not orphan_filter:
-            orphan_filter = Q(
+        if not missing_expiration_filter:
+            missing_expiration_filter = Q(
                 created_at__lt=current_time - timedelta(minutes=info_ttl)
             ) & Q(root_command_type="INFO")
         else:
-            orphan_filter = (orphan_filter) | (
+            missing_expiration_filter = (missing_expiration_filter) | (
                 Q(created_at__lt=current_time - timedelta(minutes=info_ttl))
                 & Q(root_command_type="INFO")
             )
 
-    if not orphan_filter:
+    if not missing_expiration_filter:
         return
 
-    query = Q(expiration_at=None) & (completed_status_query()) & (orphan_filter)
+    query = (
+        Q(expiration_at=None) & (completed_status_query()) & (missing_expiration_filter)
+    )
 
-    orphan_updates = []
-    for orphaned_request in Request.objects(query).only(
+    updates = []
+    for request in Request.objects(query).only(
         "id", "parent", "has_parent", "created_at", "expiration_at", "root_command_type"
     ):
-        expiration_at = determine_expiration_at(orphaned_request, action_ttl, info_ttl)
+        expiration_at = determine_expiration_at(request, action_ttl, info_ttl)
 
         if expiration_at:
-            orphan_updates.append(
+            updates.append(
                 UpdateOne(
-                    {"_id": orphaned_request.id},
+                    {"_id": request.id},
                     {"$set": {"expiration_at": expiration_at}},
                 )
             )
 
-        # Bulk update early if the list gets over batch size
-        if batch_size > 0 and len(orphan_updates) > batch_size:
-            Request._get_collection().bulk_write(orphan_updates, ordered=False)
-            orphan_updates = []
+            # Bulk update early if the list gets over batch size
+            if batch_size > 0 and len(updates) > batch_size:
+                Request._get_collection().bulk_write(updates, ordered=False)
+                updates = []
 
     # Bulk update any updates needed to correct expiration dates
-    if len(orphan_updates) > 0:
-        Request._get_collection().bulk_write(orphan_updates, ordered=False)
+    if len(updates) > 0:
+        Request._get_collection().bulk_write(updates, ordered=False)
 
 
 def prune_requests():
