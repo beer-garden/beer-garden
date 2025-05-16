@@ -199,15 +199,17 @@ def delete_requests(
 
     db = get_db()
 
-    if len(request_raw_files) > 0:
-        for raw_file in RawFile.objects(Q(id__in=request_raw_files)):
-            request_grids_fs_files.append(raw_file.file.grid_id)
-
     if batch_size > 0:
         for batch in [
             request_raw_files[i : i + batch_size]
             for i in range(0, len(request_raw_files), batch_size)
         ]:
+            raw_file_grid_fs = []
+            for raw_file in RawFile.objects(Q(id__in=request_raw_files)):
+                raw_file_grid_fs.append(raw_file.file.grid_id)
+            if len(raw_file_grid_fs) > 0:
+                db["fs.chunks"].delete_many({"files_id": {"$in": raw_file_grid_fs}})
+                db["fs.files"].delete_many({"_id": {"$in": raw_file_grid_fs}})
             db["raw_files"].delete_many({"_id": {"$in": batch}})
 
         for batch in [
@@ -228,9 +230,14 @@ def delete_requests(
             db["request"].delete_many({"_id": {"$in": batch}})
 
     else:
-        db["raw_files"].delete_many({"_id": {"$in": request_raw_files}})
+        if len(request_raw_files) > 0:
+            for raw_file in RawFile.objects(Q(id__in=request_raw_files)):
+                request_grids_fs_files.append(raw_file.file.grid_id)
+
         db["fs.chunks"].delete_many({"files_id": {"$in": request_grids_fs_files}})
         db["fs.files"].delete_many({"_id": {"$in": request_grids_fs_files}})
+
+        db["raw_files"].delete_many({"_id": {"$in": request_raw_files}})
         db["file"].update_many(
             {"requests": {"$in": request_ids}},
             {"$set": {"request": None}},
