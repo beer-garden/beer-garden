@@ -25,7 +25,7 @@ from typing import Dict, Union
 import brewtils.models
 from brewtils import EasyClient
 from brewtils.models import Connection as BrewtilsConnection
-from brewtils.models import Event, Events, Garden, Operation, Request, System
+from brewtils.models import Events, Garden, Operation, Request, System
 from mongoengine import DoesNotExist
 from stomp.exception import ConnectFailedException
 
@@ -51,7 +51,6 @@ from beer_garden.errors import (
     RoutingRequestException,
     UnknownGardenException,
 )
-from beer_garden.events import publish
 from beer_garden.garden import get_garden, get_gardens, update_garden
 from beer_garden.metrics import CollectMetrics
 from beer_garden.requests import complete_request, create_request
