@@ -440,7 +440,7 @@ def find_root_expiration_at(request, ttl):
                 .find_one({"_id": request["parent"].id}),
                 ttl,
             )
-        except Exception:
+        except PyMongoError:
             # if any exception is thrown, just return what we currently have
             pass
     if request["status"] in ["CANCELED", "SUCCESS", "ERROR", "INVALID"]:
