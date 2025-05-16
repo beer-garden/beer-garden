@@ -453,45 +453,56 @@ def update_request_ttl(command_type, ttl):
     from .models import Request
 
     logger.warning(f"Recomputing TTL for {command_type} for all completed requests")
-    batch_size = config.get("db.prune.batch_size", default=-1)
-
     raw_collection = Request._get_collection()
-    update_counter = 0
-    updates = []
-    for request in raw_collection.find(
-        {
-            "root_command_type": {"$eq": command_type},
-            "status": {
-                "$in": [
-                    "CANCELED",
-                    "SUCCESS",
-                    "ERROR",
-                    "INVALID",
-                ]
-            },
-        }
-    ):
-        if ttl > 0:
+    filter_query = {
+        "root_command_type": {"$eq": command_type},
+        "expiration_at": {"$ne": None},
+        "status": {
+            "$in": [
+                "CANCELED",
+                "SUCCESS",
+                "ERROR",
+                "INVALID",
+            ]
+        },
+    }
+
+    if ttl < 1:
+        # Requests should not expire, so remove any set Expiration At records
+        raw_collection.update_many(
+            filter_query,
+            {"$set": {"expiration_at": None}},
+        )
+        logger.warning(f"Recomputed {command_type} Request TTLs")
+    else:
+        batch_size = config.get("db.prune.batch_size", default=-1)
+
+        update_counter = 0
+        updates = []
+        for request in raw_collection.find(filter_query):
+
             expiration_at = find_root_expiration_at(request, ttl)
-        else:
-            expiration_at = None
-        if "expiration_at" not in request or expiration_at != request["expiration_at"]:
-            updates.append(
-                UpdateOne(
-                    {"_id": request["_id"]},
-                    {"$set": {"expiration_at": expiration_at}},
+
+            if (
+                "expiration_at" not in request
+                or expiration_at != request["expiration_at"]
+            ):
+                updates.append(
+                    UpdateOne(
+                        {"_id": request["_id"]},
+                        {"$set": {"expiration_at": expiration_at}},
+                    )
                 )
-            )
-            update_counter = update_counter + 1
+                update_counter = update_counter + 1
 
-        if batch_size > 0 and len(updates) > batch_size:
+            if batch_size > 0 and len(updates) > batch_size:
+                raw_collection.bulk_write(updates, ordered=False)
+                updates = []
+
+        if len(updates) > 0:
             raw_collection.bulk_write(updates, ordered=False)
-            updates = []
 
-    if len(updates) > 0:
-        raw_collection.bulk_write(updates, ordered=False)
-
-    logger.warning(f"Recomputed {update_counter} {command_type} Request TTLs")
+        logger.warning(f"Recomputed {update_counter} {command_type} Request TTLs")
 
 
 def reset_last_configuration():
