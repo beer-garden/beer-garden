@@ -1,12 +1,5 @@
 # Beer Garden Changelog
 
-# 3.31.0
-
-TBD
-
-- Fixed model filtering
-- Updated model filtering, if query filters are generated pre-query then skip filtering records when returning API models
-
 # 3.30.0
 
 TBD
@@ -77,6 +70,8 @@ TBD
 - Request search delay configurable through `ui.search_delay` config option.
 - Removed status, status_info, and namespaces from Garden
 - Update Requests index search box from text_search to or filter on UI columns
+- Fixed model filtering
+- Updated model filtering, if query filters are generated pre-query then skip filtering records when returning API models
 
 # 3.29.1
 
