@@ -66,7 +66,17 @@ TBD
 - Reduced mongodb calls required to update instance heartbeat
 - Updated logic for forwarding Requests to remove DB call
 - Updated pour it again requests to respect command type override
-- Updated Routing Logic to accept Target Garden provided
+- Fixed bug where internal jobs that utilized APscheduler did not have max concurrency set to 1
+- Fixed bug, only Request based scheduled jobs will attempt to update missed counter in the database
+- Updated all pruners to support batching
+- Fixed bug in Job Scheduler where dynamic choices parameter did not load
+- Fixed duplicate subscriber issue when restarting instances
+- Updated Admin Garden Page to load Garden models from preloaded Garden models
+- Fixed File validate to query for chunks and ensure accurate size
+- Fixed bug where API updates to Instance Status did not publish topic request
+- Request search delay configurable through `ui.search_delay` config option.
+- Removed status, status_info, and namespaces from Garden
+- Update Requests index search box from text_search to or filter on UI columns
 
 # 3.29.1
 

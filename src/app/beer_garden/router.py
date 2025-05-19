@@ -25,7 +25,7 @@ from typing import Dict, Union
 import brewtils.models
 from brewtils import EasyClient
 from brewtils.models import Connection as BrewtilsConnection
-from brewtils.models import Event, Events, Garden, Operation, Request, System
+from brewtils.models import Events, Garden, Operation, Request, System
 from mongoengine import DoesNotExist
 from stomp.exception import ConnectFailedException
 
@@ -37,7 +37,6 @@ import beer_garden.files
 import beer_garden.garden
 import beer_garden.local_plugins.manager
 import beer_garden.log
-import beer_garden.namespace
 import beer_garden.plugin
 import beer_garden.queues
 import beer_garden.requests
@@ -52,7 +51,6 @@ from beer_garden.errors import (
     RoutingRequestException,
     UnknownGardenException,
 )
-from beer_garden.events import publish
 from beer_garden.garden import get_garden, get_gardens, update_garden
 from beer_garden.metrics import CollectMetrics
 from beer_garden.requests import complete_request, create_request
@@ -152,7 +150,6 @@ route_functions = {
     "QUEUE_DELETE": beer_garden.queues.clear_queue,
     "QUEUE_DELETE_ALL": beer_garden.queues.clear_all_queues,
     "QUEUE_READ_INSTANCE": beer_garden.queues.get_instance_queues,
-    "NAMESPACE_READ_ALL": beer_garden.namespace.get_namespaces,
     "FILE_CREATE": beer_garden.files.create_file,
     "FILE_CHUNK": beer_garden.files.create_chunk,
     "FILE_FETCH": beer_garden.files.fetch_file,
@@ -380,12 +377,16 @@ def invalid_source_check(operation: Operation):
             Garden(name=operation.source_garden_name)
         )
 
-        if loaded_garden.status == "NOT_CONFIGURED":
-            logger.error(
-                f"There is no configuration file for {operation.source_garden_name}, "
-                "please validate your children directory for the correct file name"
-            )
-            return True
+        for connection in loaded_garden.receiving_connections:
+            if (
+                connection.api == operation.source_api
+                and connection.status == "CONFIGURATION_ERROR"
+            ):
+                logger.error(
+                    f"There is no configuration file for {operation.source_garden_name}, "
+                    "please validate your children directory for the correct file name"
+                )
+                return True
 
         logger.warning(
             f"Loaded {operation.source_garden_name} from config file into in memory"
@@ -533,16 +534,6 @@ def forward(operation: Operation):
                 error_class=ex.event_name,
             )
 
-        # Publish an event
-        publish(
-            Event(
-                name=ex.event_name,
-                payload_type="Operation",
-                payload=operation,
-                error_message=error_message,
-            )
-        )
-
         raise
 
 
@@ -685,10 +676,16 @@ def handle_event(event):
     # any downstream garden changes since handling those changes is nontrivial.
     # It's *those* events we want to act on here, not the "raw" downstream ones.
     # This is also why we only handle GARDEN_UPDATED and not STARTED or STOPPED
+    # Also skip over error messages and let the Garden handler update based off them
     if (
         event.garden == config.get("garden.name")
         and not event.error
-        and "GARDEN" in event.name
+        and event.name
+        in [
+            Events.GARDEN_CONFIGURED.name,
+            Events.GARDEN_REMOVED.name,
+            Events.GARDEN_UPDATED.name,
+        ]
     ):
         # Only store the garden if it's 1 hop of the local garden
         if not event.payload.has_parent or event.payload.parent == config.get(
@@ -827,10 +824,12 @@ def _pre_execute(operation: Operation) -> Operation:
 
 
 def _determine_target(operation: Operation) -> str:
-    """Determine the garden the operation is targeting"""
+    """Determine the garden the operation is targeting
 
-    if operation.target_garden_name:
-        return operation.target_garden_name
+    Note that while the operation can already have a target garden field this will only
+    be used as a fallback if a better target can't be calculated.
+    See https://github.com/beer-garden/beer-garden/issues/1076
+    """
 
     target_garden = _target_from_type(operation)
 
@@ -1028,7 +1027,7 @@ def _forward_stomp(operation: Operation, target_garden: Garden) -> None:
 
                 conn.send(body=body, headers=headers)
             except Exception as ex:
-                connection.status = "ERROR"
+                connection.status = "UNREACHABLE"
                 update_garden(target_garden)
                 raise ForwardException(
                     message=(
@@ -1073,7 +1072,7 @@ def _forward_http(operation: Operation, target_garden: Garden) -> None:
                 raise ForwardException(
                     message=f"Error forwarding to garden '{operation.target_garden_name}': {e}",
                     operation=operation,
-                    event_name=Events.GARDEN_ERROR.name,
+                    event_name=Events.GARDEN_UNREACHABLE.name,
                 ) from e
 
             if connection.status != "PUBLISHING":

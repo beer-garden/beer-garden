@@ -24,6 +24,7 @@ class ConfigHandler(BaseHandler):
             "debug_mode": ui_config.debug_mode,
             "execute_javascript": ui_config.execute_javascript,
             "auto_refresh": ui_config.auto_refresh,
+            "search_delay": ui_config.search_delay,
             "garden_name": config.get("garden.name"),
             "metrics_url": config.get("metrics.prometheus.url"),
             "url_prefix": config.get("entry.http.url_prefix"),

@@ -14,6 +14,7 @@ import beer_garden.config as config
 from beer_garden.db.mongo.models import File, Job, RawFile, Request
 from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.events import publish
+from beer_garden.metrics import CollectMetrics
 
 logger = logging.getLogger(__name__)
 
@@ -43,52 +44,47 @@ def run_pruner(tasks, ttl_name):
                 "Removing %s %ss older than %s"
                 % (ttl_name, task["collection"].__name__, str(delete_older_than))
             )
-            projected_delete = (
-                task["collection"].objects(query).only("id").no_cache().count()
-            )
 
-            if projected_delete > 0:
+            removed_count = 0
+
+            try:
+
                 if task["batch_size"] > 0:
-                    while (
-                        task["batch_size"]
-                        < task["collection"]
+                    for record in (
+                        task["collection"]
                         .objects(query)
                         .only("id")
-                        .no_cache()
-                        .count()
+                        .batch_size(task["batch_size"])
                     ):
-                        logger.debug(
-                            "Removing %s from %ss older than %s, batched by %s"
-                            % (
-                                ttl_name,
-                                task["collection"].__name__,
-                                str(delete_older_than),
-                                str(task["batch_size"]),
-                            )
+                        record.delete()
+                        removed_count = removed_count + 1
+                else:
+                    for record in task["collection"].objects(query).only("id"):
+                        record.delete()
+                        removed_count = removed_count + 1
+
+            finally:
+                if removed_count > 0:
+                    logger.info(
+                        "Deleted %s of %s from %ss older than %s"
+                        % (
+                            removed_count,
+                            ttl_name,
+                            task["collection"].__name__,
+                            str(delete_older_than),
                         )
-
-                        task["collection"].objects(query).exclude(
-                            *exclude_fields
-                        ).limit(task["batch_size"]).no_cache().delete()
-
-                task["collection"].objects(query).exclude(
-                    *exclude_fields
-                ).no_cache().delete()
-
-                logger.debug(
-                    "Deleted %s %s from %ss"
-                    % (projected_delete, ttl_name, task["collection"].__name__)
-                )
+                    )
 
 
 def prune_by_name(ttl_name):
-    if ttl_name in ["admin", "temp"]:
-        ttl_length = config.get("db.prune.interval")
-    else:
-        ttl_length = config.get(f"db.prune.ttl.{ttl_name}")
+    with CollectMetrics("PRUNER", f"Pruner::{ttl_name}"):
+        if ttl_name in ["admin", "temp"]:
+            ttl_length = config.get("db.prune.interval", default=15)
+        else:
+            ttl_length = config.get(f"db.prune.ttl.{ttl_name}")
 
-    tasks = determine_tasks(ttl_name, ttl_length)
-    run_pruner(tasks, ttl_name)
+        tasks = determine_tasks(ttl_name, ttl_length)
+        run_pruner(tasks, ttl_name)
 
 
 def prune_info_requests():
@@ -220,70 +216,238 @@ def determine_tasks(ttl_name, ttl_length) -> Tuple[List[dict], int]:
     return prune_tasks
 
 
-def prune_orphans():
-    orphan_ttl = config.get("db.prune.interval")
+def prune_orphan_files():
+    with CollectMetrics("PRUNER", "Pruner::orphan_files"):
+        ttl = config.get("db.prune.interval", default=15)
+        if ttl < 0:
+            return
+        timeout = datetime.now(timezone.utc) - timedelta(minutes=ttl)
 
-    if orphan_ttl > 0:
-        prune_orphan_command_type(orphan_ttl, "INFO")
-        prune_orphan_command_type(orphan_ttl, "ACTION")
-        prune_orphan_command_type(orphan_ttl, "ADMIN")
-        prune_orphan_command_type(orphan_ttl, "TEMP")
-        prune_orphan_files(orphan_ttl)
+        batch_size = config.get("db.prune.batch_size")
+        if batch_size > 0:
+            orphaned_files = (
+                File.objects.only("request", "job", "id", "owner_type")
+                .filter(
+                    updated_at__lte=timeout,
+                )
+                .batch_size(batch_size)
+            )
+            prune_orphan_file_records(orphaned_files)
+        else:
 
-
-def prune_orphan_files(ttl):
-    timeout = datetime.now(timezone.utc) - timedelta(minutes=ttl)
-
-    orphaned_files = File.objects.only("request", "job", "id", "owner_type").filter(
-        updated_at__lte=timeout,
-    )
-
-    for file in orphaned_files:
-        try:
-            if file.owner_type == "JOB" and file.job is not None:
-                Job.objects.get(id=file.job.id)
-            elif file.owner_type == "REQUEST" and file.request is not None:
-                Request.objects.get(id=file.request.id)
-        except DoesNotExist:
-            logger.error(f"File missing owner, killing orphan file {file.id}")
-            file.delete()
+            orphaned_files = File.objects.only(
+                "request", "job", "id", "owner_type"
+            ).filter(
+                updated_at__lte=timeout,
+            )
+            prune_orphan_file_records(orphaned_files)
 
 
-def prune_orphan_command_type(ttl, command_type):
-    timeout = datetime.now(timezone.utc) - timedelta(minutes=ttl)
+def prune_orphan_file_records(orphaned_files):
+    counter = 0
 
-    orphaned_requests = Request.objects.only("parent", "id").filter(
-        command_type=command_type,
-        status__in=["CANCELED", "SUCCESS", "ERROR", "INVALID"],
-        created_at__lte=timeout,
-        has_parent=True,
-    )
+    try:
+        for file in orphaned_files:
+            try:
+                if file.owner_type == "JOB" and file.job is not None:
+                    Job.objects.get(id=file.job.id)
+                elif file.owner_type == "REQUEST" and file.request is not None:
+                    Request.objects.get(id=file.request.id)
+            except DoesNotExist:
+                file.delete()
+                counter = counter + 1
+    finally:
 
-    for request in orphaned_requests:
-        try:
-            Request.objects.get(id=request.parent.id)
-        except DoesNotExist:
-            logger.error(f"Parent is missing, killing orphan request {request.id}")
-            request.delete()
+        if counter > 0:
+            logger.error(f"{counter} Files missing owner, deleted orphans")
+
+        else:
+            logger.debug("No missed owners for Files")
+
+
+def prune_missed_temp_command():
+    """
+    If the completion event is missed for a TEMP event, clean up the
+    Request from the database
+    """
+    with CollectMetrics("PRUNER", "Pruner::orphan_missed_temp"):
+        ttl = config.get("db.prune.interval", default=15)
+        if ttl < 0:
+            return
+        timeout = datetime.now(timezone.utc) - timedelta(minutes=ttl)
+        filter = {
+            "command_type": "TEMP",
+            "status__in": ["CANCELED", "SUCCESS", "ERROR", "INVALID"],
+            "created_at__lte": timeout,
+            "has_parent": True,
+        }
+
+        batch_size = config.get("db.prune.batch_size")
+
+        if batch_size > 0:
+
+            temp_requests = (
+                Request.objects.only("parent", "id")
+                .filter(**filter)
+                .batch_size(batch_size)
+            )
+            prune_missed_temp_requests(temp_requests)
+
+        else:
+            temp_requests = Request.objects.only("parent", "id").filter(**filter)
+            prune_missed_temp_requests(temp_requests)
+
+
+def prune_missed_temp_requests(temp_requests):
+    counter = 0
+
+    try:
+        for request in temp_requests:
+            try:
+                Request.objects.get(
+                    id=request.parent.id,
+                    status__in=[
+                        "CREATED",
+                        "RECEIVED",
+                        "IN_PROGRESS",
+                    ],
+                )
+            except DoesNotExist:
+                request.delete()
+                counter = counter + 1
+    finally:
+
+        if counter > 0:
+            logger.error(
+                f"{counter} TEMP Requests deleted due to Parent Request is completed or missing"
+            )
+
+        else:
+            logger.debug("No missed TEMP Requests")
+
+
+def prune_orphan_command_type_info():
+    prune_orphan_command_type("INFO")
+
+
+def prune_orphan_command_type_action():
+    prune_orphan_command_type("ACTION")
+
+
+def prune_orphan_command_type_admin():
+    prune_orphan_command_type("ADMIN")
+
+
+def prune_orphan_command_type(command_type):
+    with CollectMetrics("PRUNER", f"Pruner::orphan_{command_type}"):
+        ttl = config.get("db.prune.interval", default=15)
+
+        if command_type == "ACTION":
+            cmd_ttl_length = config.get("db.prune.ttl.action")
+            if cmd_ttl_length > 0:
+                ttl = ttl + cmd_ttl_length
+        elif command_type == "INFO":
+            cmd_ttl_length = config.get("db.prune.ttl.info")
+            if cmd_ttl_length > 0:
+                ttl = ttl + cmd_ttl_length
+
+        timeout = datetime.now(timezone.utc) - timedelta(minutes=ttl)
+        filter = {
+            "command_type": command_type,
+            "status__in": ["CANCELED", "SUCCESS", "ERROR", "INVALID"],
+            "created_at__lte": timeout,
+            "has_parent": True,
+        }
+
+        batch_size = config.get("db.prune.batch_size")
+
+        if batch_size > 0:
+
+            orphaned_requests = (
+                Request.objects.only("parent", "id")
+                .filter(**filter)
+                .batch_size(batch_size)
+            )
+            prune_orphan_requests(
+                orphaned_requests, command_type, batch_size=batch_size
+            )
+
+        else:
+            orphaned_requests = Request.objects.only("parent", "id").filter(**filter)
+            prune_orphan_requests(orphaned_requests, command_type)
+
+
+def prune_orphan_requests(orphaned_requests, command_type, batch_size=None):
+    counter = 0
+    try:
+        for request in orphaned_requests:
+            try:
+                Request.objects.get(id=request.parent.id)
+            except DoesNotExist:
+                request.delete()
+                counter = counter + 1
+
+    finally:
+
+        if counter > 0:
+            logger.error(
+                (
+                    f"{counter} orphaned {command_type} Requests deleted "
+                    f"{', batch size: ' + str(batch_size) if batch_size else ''}"
+                )
+            )
+
+        else:
+            logger.debug(
+                (
+                    f"No orphaned {command_type} Requests "
+                    f"{', batch size: ' + str(batch_size) if batch_size else ''}"
+                )
+            )
 
 
 def prune_outstanding():
     """
     Helper function for run to mark requests still outstanding after a certain
     amount of time as canceled.
-    """
-    prune_config = config.get("db.prune")
-    cancel_threshold = prune_config.get("in_progress_request_expiration", -1)
-    if cancel_threshold > 0:
-        timeout = datetime.utcnow() - timedelta(minutes=cancel_threshold)
-        outstanding_requests = Request.objects.filter(
-            status__in=["IN_PROGRESS", "CREATED"], created_at__lte=timeout
-        )
-        # TODO: Sorting in reverse order, so newest first
 
+    Update the newest requests first to give the oldest a chance to finish before
+    being canceled.
+    """
+    with CollectMetrics("PRUNER", "Pruner::outstanding"):
+        prune_config = config.get("db.prune")
+        cancel_threshold = prune_config.get("in_progress_request_expiration")
+        if cancel_threshold > 0:
+            timeout = datetime.utcnow() - timedelta(minutes=cancel_threshold)
+            batch_size = config.get("db.prune.batch_size")
+
+            if batch_size > 0:
+
+                outstanding_requests = (
+                    Request.objects.filter(
+                        status__in=["IN_PROGRESS", "CREATED"],
+                        created_at__lte=timeout,
+                    )
+                    .order_by("-created_at")
+                    .batch_size(batch_size)
+                )
+                prune_outstanding_requests(outstanding_requests)
+
+            else:
+                outstanding_requests = Request.objects.filter(
+                    status__in=["IN_PROGRESS", "CREATED"], created_at__lte=timeout
+                ).order_by("-created_at")
+
+                prune_outstanding_requests(outstanding_requests)
+
+
+def prune_outstanding_requests(outstanding_requests):
+    counter = 0
+    try:
         for request in outstanding_requests:
             try:
                 request.status = "CANCELED"
+                request.status_updated_at = datetime.now(timezone.utc)
                 request.save()
                 serialized = MongoParser.serialize(request, to_string=True)
                 parsed = SchemaParser.parse_request(
@@ -297,6 +461,7 @@ def prune_outstanding():
                         payload=parsed,
                     )
                 )
+                counter = counter + 1
             except ModelValidationError as ex:
                 logger.error(
                     f"ModelValidationError: Failed to update outstanding Request {request.id}"
@@ -320,6 +485,14 @@ def prune_outstanding():
                     )
                 )
 
+    finally:
+
+        if counter > 0:
+            logger.error(f"{counter} outstanding Requests cancelled")
+
+        else:
+            logger.debug("No outstanding Requests cancelled")
+
 
 def prune_grid_fs():
     """
@@ -327,24 +500,97 @@ def prune_grid_fs():
     referenced by the database.
     """
 
-    prune_config_ttl = config.get("db.prune.ttl")
-    file_threshold = prune_config_ttl.get("file", -1)
-    timeout = datetime.now(timezone.utc) - timedelta(minutes=file_threshold)
+    with CollectMetrics("PRUNER", "Pruner::grid_fs"):
+        prune_config_ttl = config.get("db.prune.ttl", default=15)
+        file_threshold = prune_config_ttl.get("file")
 
-    db = get_db()
-    files = db["fs.files"]
-    outstanding_files = files.find({"uploadDate": {"$lte": timeout}})
+        max_request_size = max(
+            [prune_config_ttl.get("info"), prune_config_ttl.get("action")]
+        )
+        if max_request_size > 0:
+            if file_threshold > 0:
+                file_threshold = file_threshold + max_request_size
+            else:
+                file_threshold = max_request_size
 
+        if file_threshold > 0:
+            timeout = datetime.now(timezone.utc) - timedelta(minutes=file_threshold)
+
+            db = get_db()
+            files = db["fs.files"]
+
+            filter = {"uploadDate": {"$lte": timeout}}
+
+            batch_size = config.get("db.prune.batch_size")
+
+            if batch_size > 0:
+                total_files = files.count_documents(filter) + 1
+
+                batches = round(total_files / batch_size) + 1
+
+                for i in range(batches, 0, -1):
+                    with CollectMetrics("PRUNER", "Pruner::grid_fs::batch"):
+                        outstanding_files = (
+                            files.find(filter, {"_id": 1})
+                            .limit(batch_size)
+                            .skip(batch_size * (i - 1))
+                        )
+                        prune_grid_fs_files(db, files, list(outstanding_files))
+
+            else:
+                outstanding_files = files.find(filter, {"_id": 1})
+                prune_grid_fs_files(db, files, list(outstanding_files))
+
+
+def prune_grid_fs_files(db, files, outstanding_files):
+
+    # Bulk Check for orphaned files
+    outstanding_ids = []
     for outstanding_file in outstanding_files:
-        if (
-            Request.objects.filter(
-                Q(output_gridfs=outstanding_file["_id"])
-                | Q(parameters_gridfs=outstanding_file["_id"])
-            ).count()
-            == 0
-            and RawFile.objects.filter(file=outstanding_file["_id"]).count() == 0
-        ):
+        outstanding_ids.append(outstanding_file["_id"])
 
-            db["fs.chunks"].delete_many({"files_id": outstanding_file["_id"]})
-            files.delete_one({"_id": outstanding_file["_id"]})
-            logger.error(f"Deleted orphaned file {outstanding_file['_id']}")
+    requests_matching = (
+        Request.objects(
+            Q(output_gridfs__in=outstanding_ids)
+            | Q(parameters_gridfs__in=outstanding_ids)
+        )
+        .only("id")
+        .count()
+    )
+
+    raw_files_matching = RawFile.objects(Q(file__in=outstanding_ids)).only("id").count()
+
+    total_matching = requests_matching + raw_files_matching
+
+    try:
+        if total_matching > 0:
+            # If there are any files that are still referenced, we need to check
+            # each file individually to see if it is orphaned
+            outstanding_ids = []
+
+            for outstanding_file in outstanding_files:
+                if (
+                    Request.objects(
+                        Q(output_gridfs=outstanding_file["_id"])
+                        | Q(parameters_gridfs=outstanding_file["_id"])
+                    )
+                    .only("id")
+                    .count()
+                    == 0
+                    and RawFile.objects(Q(file=outstanding_file["_id"]))
+                    .only("id")
+                    .count()
+                    == 0
+                ):
+                    outstanding_ids.append(outstanding_file["_id"])
+    finally:
+
+        counter = len(outstanding_ids)
+
+        if counter > 0:
+            db["fs.chunks"].delete_many({"files_id": {"$in": outstanding_ids}})
+            files.delete_many({"_id": {"$in": outstanding_ids}})
+            logger.error(f"Deleted {counter} orphaned files from GridFS")
+
+        else:
+            logger.debug("No orphaned files found in GridFS")

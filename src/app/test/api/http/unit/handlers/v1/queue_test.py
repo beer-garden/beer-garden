@@ -17,7 +17,6 @@ def garden_permitted(system_permitted, system_not_permitted):
     garden = Garden(
         name="somegarden",
         connection_type="LOCAL",
-        namespaces=["somegarden"],
         systems=[system_permitted, system_not_permitted],
     ).save()
 

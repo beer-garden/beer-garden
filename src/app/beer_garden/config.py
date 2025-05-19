@@ -96,9 +96,9 @@ def generate(args: Sequence[str]):
 
 
 def migrate_dict(d1: dict, d2: dict):
-    """Merges d2 into d1 but will not replace existing key values in d1"""
+    """Merges d2 into d1 and will replace existing key values in d1"""
     for k, v in d2.items():
-        if k in d1:
+        if k not in d1:
             if isinstance(v, dict):
                 migrate_dict(d1[k], v)
         else:
@@ -133,20 +133,6 @@ def migrate(args: Sequence[str]):
     if current_type == "yml":
         current_type = "yaml"
 
-    # First pass to apply config values. Keep current type.
-    current_config = spec._get_config_if_exists(
-        config.configuration.file, True, current_type
-    )
-    current_config = migrate_dict(current_config, config.to_dict())
-    # Backup and replace file
-    apply_config_file = f"{config.configuration.file}.tmp"
-    dump_data(current_config, apply_config_file, current_type)
-
-    if _is_new_config(config.configuration.file, apply_config_file):
-        _backup_previous_config(config.configuration.file, apply_config_file)
-    else:
-        os.remove(apply_config_file)
-
     # Determine if a type conversion is needed
     type_conversion = False
     new_type = "yaml"
@@ -165,12 +151,22 @@ def migrate(args: Sequence[str]):
         include_bootstrap=False,
     )
 
+    final_file = config.configuration.file
     if type_conversion:
         os.remove(config.configuration.file)
+        final_file = new_file
     elif _is_new_config(config.configuration.file, new_file):
         _backup_previous_config(config.configuration.file, new_file)
     else:
         os.remove(new_file)
+
+    # Apply any cli_vars overrides
+    current_config = spec._get_config_if_exists(final_file, True, new_type)
+    for k, v in cli_vars.items():
+        if v is not None:
+            if current_config.get(k):
+                migrate_dict(current_config[k], v)
+    dump_data(current_config, final_file, new_type)
 
 
 def generate_app_logging(args: Sequence[str]):
@@ -245,7 +241,7 @@ def generate_plugin_logging(args: Sequence[str]) -> dict:
 
 
 def get(
-    key: Optional[str] = None, config: Box = None
+    key: Optional[str] = None, config: Box = None, default: Optional[Box] = None
 ) -> Union[str, int, float, bool, complex, Box, None]:
     """Get specified key from the config.
 
@@ -269,7 +265,7 @@ def get(
     value = config if config else _CONFIG
     for key_part in key.split("."):
         if key_part not in value:
-            return None
+            return default
         value = value[key_part]
     return value
 
@@ -656,6 +652,11 @@ _UI_SPEC = {
             "type": "bool",
             "default": False,
             "description": "Auto refresh user interface",
+        },
+        "search_delay": {
+            "type": "int",
+            "default": 400,
+            "description": "Search delay for filtering user interface",
         },
     },
 }

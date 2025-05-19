@@ -25,6 +25,7 @@ from brewtils.models import Parameter as BrewtilsParameter
 from brewtils.models import Request as BrewtilsRequest
 from mongoengine import (
     CASCADE,
+    DO_NOTHING,
     NULLIFY,
     PULL,
     BooleanField,
@@ -339,7 +340,7 @@ class Request(MongoModel, Document):
     namespace = StringField(required=True)
 
     parent = ReferenceField(
-        "Request", dbref=True, required=False, reverse_delete_rule=CASCADE
+        "Request", dbref=True, required=False, reverse_delete_rule=DO_NOTHING
     )
     children = DummyField(required=False)
     output = StringField()
@@ -365,7 +366,7 @@ class Request(MongoModel, Document):
         "index_background": True,
         "indexes": [
             # These are used for sorting all requests
-            {"name": "command_index", "fields": ["command_display_name"]},
+            {"name": "command_display_name_index", "fields": ["command_display_name"]},
             {"name": "command_type_index", "fields": ["command_type"]},
             {"name": "system_index", "fields": ["system"]},
             {"name": "instance_name_index", "fields": ["instance_name"]},
@@ -377,8 +378,13 @@ class Request(MongoModel, Document):
             {"name": "comment_index", "fields": ["comment"]},
             {"name": "parent_ref_index", "fields": ["parent"]},
             {"name": "parent_index", "fields": ["has_parent"]},
+            # Used for Gridfs File Pruning
+            {"name": "gridfs_index", "fields": ["output_gridfs", "parameters_gridfs"]},
             # These are for sorting parent requests
-            {"name": "parent_command_index", "fields": ["has_parent", "command"]},
+            {
+                "name": "parent_command_display_name_index",
+                "fields": ["has_parent", "command_display_name"],
+            },
             {"name": "parent_system_index", "fields": ["has_parent", "system"]},
             {
                 "name": "parent_instance_name_index",
@@ -388,7 +394,10 @@ class Request(MongoModel, Document):
             {"name": "parent_created_at_index", "fields": ["has_parent", "created_at"]},
             {"name": "parent_comment_index", "fields": ["has_parent", "comment"]},
             # These are used for filtering all requests while sorting on created time
-            {"name": "created_at_command_index", "fields": ["-created_at", "command"]},
+            {
+                "name": "created_at_command_display_name_index",
+                "fields": ["-created_at", "command_display_name"],
+            },
             {"name": "created_at_system_index", "fields": ["-created_at", "system"]},
             {
                 "name": "created_at_instance_name_index",
@@ -397,8 +406,8 @@ class Request(MongoModel, Document):
             {"name": "created_at_status_index", "fields": ["-created_at", "status"]},
             # These are used for filtering parent while sorting on created time
             {
-                "name": "parent_created_at_command_index",
-                "fields": ["has_parent", "-created_at", "command"],
+                "name": "parent_created_at_command_display_name_index",
+                "fields": ["has_parent", "-created_at", "command_display_name"],
             },
             {
                 "name": "parent_created_at_system_index",
@@ -416,8 +425,13 @@ class Request(MongoModel, Document):
             # I THINK this makes the set of indexes above superfluous, but I'm keeping
             # both as a safety measure
             {
-                "name": "hidden_parent_created_at_command_index",
-                "fields": ["hidden", "has_parent", "-created_at", "command"],
+                "name": "hidden_parent_created_at_command_display_name_index",
+                "fields": [
+                    "hidden",
+                    "has_parent",
+                    "-created_at",
+                    "command_display_name",
+                ],
             },
             {
                 "name": "hidden_parent_created_at_system_index",
@@ -436,7 +450,7 @@ class Request(MongoModel, Document):
                 "name": "text_index",
                 "fields": [
                     "$system",
-                    "$command",
+                    "$command_display_name",
                     "$command_type",
                     "$comment",
                     "$status",
@@ -548,6 +562,50 @@ class Request(MongoModel, Document):
                         "while saving Request {self.id}"
                     )
 
+    def _delete_gridfs_files(self):
+        try:
+            db_request = Request.objects.get(id=self.id)
+
+            if db_request.output_gridfs:
+                db_request.output_gridfs.delete()
+            if db_request.parameters_gridfs:
+                db_request.parameters_gridfs.delete()
+
+            parameters = db_request.parameters or {}
+
+            for param_value in parameters.values():
+                if (
+                    isinstance(param_value, dict)
+                    and param_value.get("type") == "bytes"
+                    and param_value.get("id") is not None
+                ):
+                    try:
+                        raw_file = RawFile.objects.get(id=param_value["id"])
+                        raw_file.delete()
+                    except RawFile.DoesNotExist:
+                        pass
+        except Request.DoesNotExist:
+            # Request is already deleted
+            pass
+
+    def force_delete(self, *args, **kwargs):
+        """Force Delete the request and all associated requests"""
+        Request.objects.filter(parent=self).delete()
+        self._delete_gridfs_files()
+        super(Request, self).delete(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        """Delete the request and all associated completed requests"""
+        for request in Request.objects(
+            parent=self, status__in=["SUCCESS", "CANCELED", "ERROR"]
+        ).only("id"):
+            request.delete()
+        Request.objects(parent=self).update(set__parent=None, set__has_parent=False)
+
+        self._delete_gridfs_files()
+
+        super(Request, self).delete(*args, **kwargs)
+
     def save(self, *args, **kwargs):
         self._pre_save()
         super(Request, self).save(*args, **kwargs)
@@ -639,6 +697,19 @@ class Subscriber(MongoModel, EmbeddedDocument):
     subscriber_type = StringField()
     consumer_count = IntField(default=0)
 
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return (
+                self.subscriber_type == other.subscriber_type
+                and self.garden == other.garden
+                and self.namespace == other.namespace
+                and self.system == other.system
+                and self.version == other.version
+                and self.instance == other.instance
+                and self.command == other.command
+            )
+        return False
+
 
 class Topic(MongoModel, Document):
     brewtils_model = brewtils.models.Topic
@@ -659,6 +730,7 @@ class Topic(MongoModel, Document):
             self.save()
 
     def remove_subscriber(self, subscriber: Subscriber):
+
         if subscriber in self.subscribers:
             self.subscribers.remove(subscriber)
             self.save()
@@ -1021,9 +1093,6 @@ class Garden(MongoModel, Document):
     brewtils_model = brewtils.models.Garden
 
     name = StringField(required=True, default="default")
-    status = StringField(default="INITIALIZING")
-    status_info = EmbeddedDocumentField("StatusInfo")
-    namespaces = ListField()
 
     connection_type = StringField(required=False)
     receiving_connections = EmbeddedDocumentListField("Connection")

@@ -23,7 +23,9 @@ from beer_garden.db.mongo.models import (
     RawFile,
     Request,
     Role,
+    Subscriber,
     System,
+    Topic,
     User,
     UserToken,
 )
@@ -252,6 +254,80 @@ class TestRequest(object):
             with pytest.raises(RequestStatusTransitionError):
                 bg_request.status = end
                 db.update(bg_request)
+
+    class TestDelete:
+
+        def test_delete(self):
+            request = Request(
+                system="system",
+                instance_name="instance",
+                system_version="1",
+                namespace="namespace",
+                command="bar",
+            )
+            request.save()
+            request.delete()
+
+            assert len(Request.objects.filter(id=request.id)) == 0
+
+        def test_delete_with_child(self):
+
+            parent = Request(
+                system="system",
+                instance_name="instance",
+                system_version="1",
+                namespace="namespace",
+                command="bar",
+            )
+            parent.save()
+
+            child = Request(
+                system="system",
+                instance_name="instance",
+                system_version="1",
+                namespace="namespace",
+                command="bar",
+                has_parent=True,
+                parent=parent,
+                status="SUCCESS",
+            )
+
+            child.save()
+
+            parent.delete()
+            assert len(Request.objects.filter(id=parent.id)) == 0
+            assert len(Request.objects.filter(id=child.id)) == 0
+
+        def test_delete_with_running_child(self):
+
+            parent = Request(
+                system="system",
+                instance_name="instance",
+                system_version="1",
+                namespace="namespace",
+                command="bar",
+            )
+            parent.save()
+
+            child = Request(
+                system="system",
+                instance_name="instance",
+                system_version="1",
+                namespace="namespace",
+                command="bar",
+                has_parent=True,
+                parent=parent,
+                status="CREATED",
+            )
+
+            child.save()
+
+            parent.delete()
+            assert len(Request.objects.filter(id=parent.id)) == 0
+            assert len(Request.objects.filter(id=child.id)) == 1
+
+            assert Request.objects.get(id=child.id).parent is None
+            assert not Request.objects.get(id=child.id).has_parent
 
     # TODO - Make these integration tests
     # @patch("bg_utils.mongo.models.Request.objects")
@@ -884,3 +960,89 @@ class TestFileUpdates:
         request_model.delete()
 
         assert len(RawFile.objects.filter(request=request_model)) == 0
+
+
+class TestTopic:
+    @pytest.fixture(autouse=True)
+    def drop(self, mongo_conn):
+        Topic.drop_collection()
+
+    def test_add_subscriber(self):
+        topic = Topic(name="foo")
+
+        subscriber1 = Subscriber(
+            subscriber_type="type1",
+            garden="garden",
+            namespace="namespace",
+            system="system",
+            version="version",
+            instance="instance",
+            command="command",
+            consumer_count=1,
+        )
+        topic.add_subscriber(subscriber1)
+        assert len(topic.subscribers) == 1
+        subscriber2 = Subscriber(
+            subscriber_type="type2",
+            garden="garden",
+            namespace="namespace",
+            system="system",
+            version="version",
+            instance="instance",
+            command="command",
+            consumer_count=1,
+        )
+        topic.add_subscriber(subscriber2)
+        assert len(topic.subscribers) == 2
+        subscriber3 = Subscriber(
+            subscriber_type="type1",
+            garden="garden",
+            namespace="namespace",
+            system="system",
+            version="version",
+            instance="instance",
+            command="command",
+            consumer_count=5,
+        )
+        topic.add_subscriber(subscriber3)
+        assert len(topic.subscribers) == 2
+
+    def test_remove_subscriber(self):
+        topic = Topic(name="foo")
+
+        subscriber1 = Subscriber(
+            subscriber_type="type1",
+            garden="garden",
+            namespace="namespace",
+            system="system",
+            version="version",
+            instance="instance",
+            command="command",
+            consumer_count=1,
+        )
+        subscriber2 = Subscriber(
+            subscriber_type="type2",
+            garden="garden",
+            namespace="namespace",
+            system="system",
+            version="version",
+            instance="instance",
+            command="command",
+            consumer_count=1,
+        )
+        topic.subscribers.append(subscriber1)
+        topic.subscribers.append(subscriber2)
+        assert len(topic.subscribers) == 2
+
+        subscriber3 = Subscriber(
+            subscriber_type="type1",
+            garden="garden",
+            namespace="namespace",
+            system="system",
+            version="version",
+            instance="instance",
+            command="command",
+            consumer_count=5,
+        )
+        topic.remove_subscriber(subscriber3)
+        assert len(topic.subscribers) == 1

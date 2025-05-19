@@ -301,6 +301,7 @@ def process_publish_event(
                         event_request.namespace = system.namespace
                         event_request.instance_name = instance.name
                         event_request.command = command.name
+                        event_request.command_type = command.command_type
                         event_request.is_event = True
 
                         request_hash = (

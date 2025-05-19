@@ -41,6 +41,7 @@ import beer_garden.db.mongo.motor as moto
 import beer_garden.local_plugins.manager as lpm
 import beer_garden.queue.api as queue
 import beer_garden.requests as requests
+from beer_garden.db.mongo.models import DoesNotExist as ModelDoesNotExist
 from beer_garden.errors import NotFoundException
 from beer_garden.events import publish, publish_event, publish_event_async
 
@@ -473,9 +474,22 @@ async def update_async(
         for k, v in metadata.items():
             update[f"instances.$.metadata.{k}"] = v
 
-    return await _update_instance_async(
+    instance = await _update_instance_async(
         query, projection, {"$set": update, "$push": push}
     )
+
+    if new_status:
+        system = await moto.query(
+            collection="system",
+            filter={
+                "instances._id": ObjectIdField().to_mongo(instance.id),
+                "local": True,
+            },
+        )
+        if system:
+            publish_status_update(SchemaParser.parse_system(system), instance)
+
+    return instance
 
 
 async def heartbeat_async(
@@ -612,12 +626,13 @@ def handle_event(event: Event) -> None:
                     new_status=event.payload.status,
                     metadata=event.payload.metadata,
                 )
-            except DoesNotExist:
+            except (DoesNotExist, ModelDoesNotExist):
                 logger.error(
                     (
                         "Unable to find system matching instance "
                         f"{event.payload.id}:{event.payload.name} "
-                        f"for garden {event.garden}"
+                        f"for garden {event.garden} invoking a "
+                        "GARDEN_SYNC event"
                     )
                 )
                 from beer_garden.router import route
