@@ -169,7 +169,7 @@ class MixedScheduler(object):
         if event.jobstore == "beer_garden":
             try:
                 db_job = db.query_unique(Job, id=event.job_id)
-                db.modify(db_job, inc__skip_count=1)
+                update_job_counters(db_job, inc__skip_count=1)
             except DoesNotExist:
                 job, _ = scheduler._sync_scheduler._lookup_job(
                     jobstore_alias=event.jobstore, job_id=event.job_id
@@ -589,10 +589,10 @@ def run_job(job_id, request_template, **kwargs):
             updates["inc__success_count"] = 1
 
         if updates != {}:
-            db.modify(db_job, **updates)
+            update_job_counters(db_job, **updates)
     except Exception as ex:
         logger.error(f"Error executing {db_job}: {ex}")
-        db.modify(db_job, inc__error_count=1)
+        update_job_counters(db_job, inc__error_count=1)
 
     # Be a little careful here as the job could have been removed or paused
     job = beer_garden.application.scheduler.get_job(job_id)
@@ -671,6 +671,18 @@ def import_jobs(jobs_file: str) -> None:
         except json.JSONDecodeError:
             logger.debug(f"Failed to import jobs from {jobs_file}")
 
+@publish_event(Events.JOB_COUNTER_UPDATED)
+def update_job_counters(job: Job, **kwargs) -> Job:
+    """Modify a Job with counter increases
+
+    Args:
+        job: The Job to be updated
+
+    Returns:
+        The updated Job
+    """
+
+    return db.modify(job, **kwargs)
 
 @publish_event(Events.JOB_UPDATED)
 def update_job(job: Job) -> Job:
