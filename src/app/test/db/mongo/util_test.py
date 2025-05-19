@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import copy
+from datetime import datetime
+
 import pytest
 from mock import MagicMock, Mock, patch
 from mongoengine import connect
@@ -86,6 +89,49 @@ class TestMigrationScript(object):
 
         assert request["root_command_type"] == request["command_type"]
         assert request["expiration_at"] is not None
+
+    @patch("mongoengine.connect", Mock())
+    @patch("mongoengine.register_connection", Mock())
+    def test_3_30_request_migration_parent_migration(self, request_dict, ts_dt):
+
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"action": 0}}}}
+
+        del request_dict["id"]
+        del request_dict["root_command_type"]
+        del request_dict["expiration_at"]
+
+        parent_dict = copy.deepcopy(request_dict)
+
+        parent_dict["status"] = "SUCCESS"
+        parent_dict["has_parent"] = False
+        parent_dict["parent"] = None
+        parent_dict["created_at"] = datetime(2016, 1, 1)
+
+        db = get_db()
+        request_collection = db["request"]
+        request_collection.insert_one(parent_dict)
+
+        parent = request_collection.find_one({"has_parent": False})
+
+        request_dict["parent"] = parent
+        request_dict["status"] = "SUCCESS"
+        request_dict["has_parent"] = True
+        request_dict["created_at"] = datetime(2017, 1, 1)
+        request_dict["command_type"] = "INFO"
+
+        request_collection.insert_one(request_dict)
+
+        ensure_v3_30_model_migration()
+
+        db_parent = request_collection.find_one({"has_parent": False})
+
+        assert db_parent["root_command_type"] == "ACTION"
+        assert db_parent["expiration_at"] == datetime(2016, 1, 1)
+
+        db_child = request_collection.find_one({"has_parent": True})
+
+        assert db_child["root_command_type"] == "ACTION"
+        assert db_child["expiration_at"] == datetime(2016, 1, 1)
 
 
 class TestCheckIndexes(object):

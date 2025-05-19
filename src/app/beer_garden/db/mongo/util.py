@@ -297,21 +297,24 @@ def find_root_command_type_and_expiration(request):
         or ("parent" in request and request["parent"])
     ) and ("expiration_at" not in request or not request["expiration_at"]):
         try:
-            parents = (
+            parent = (
                 get_db()
                 .get_collection("request")
-                .find({"_id": request["parent"].id})
-                .only(
-                    "_id",
-                    "has_parent",
-                    "parent",
-                    "created_at",
-                    "command_type",
-                    "expiration_at",
+                .find_one(
+                    {"_id": request["parent"]["_id"]},
+                    {
+                        "has_parent": 1,
+                        "parent": 1,
+                        "created_at": 1,
+                        "command_type": 1,
+                        "expiration_at": 1,
+                        "status": 1,
+                        "_id": 0,
+                    },
                 )
             )
-            if len(parents) == 0:
-                return find_root_command_type_and_expiration(parents[0])
+            if parent:
+                return find_root_command_type_and_expiration(parent)
         except PyMongoError:
             # if any exception is thrown, just return what we currently have
             pass
@@ -366,7 +369,16 @@ def ensure_v3_30_model_migration():
         batch_size = config.get("db.prune.batch_size", default=-1)
         updates = []
         for legacy_request in request_collection.find(
-            {"root_command_type": {"$exists": False}}
+            {"root_command_type": {"$exists": False}},
+            {
+                "has_parent": 1,
+                "parent": 1,
+                "created_at": 1,
+                "command_type": 1,
+                "expiration_at": 1,
+                "status": 1,
+                "_id": 0,
+            },
         ):
             if legacy_request:
 
@@ -456,12 +468,18 @@ def find_root_expiration_at(request, ttl):
             return find_root_expiration_at(
                 get_db()
                 .get_collection("request")
-                .find_one({"_id": request["parent"].id}),
+                .find_one(
+                    {"_id": request["parent"]["_id"]},
+                    {"has_parent": 1, "parent": 1, "created_at": 1, "expiration_at": 1},
+                ),
                 ttl,
             )
         except PyMongoError:
             # if any exception is thrown, just return what we currently have
             pass
+
+    if "expiration_at" in request and request["expiration_at"]:
+        return request["expiration_at"]
     if request["status"] in ["CANCELED", "SUCCESS", "ERROR", "INVALID"]:
         return request["created_at"] + timedelta(minutes=ttl)
     return None
@@ -498,7 +516,16 @@ def update_request_ttl(command_type, ttl):
 
         update_counter = 0
         updates = []
-        for request in raw_collection.find(filter_query):
+        for request in raw_collection.find(
+            filter_query,
+            {
+                "has_parent": 1,
+                "parent": 1,
+                "created_at": 1,
+                "expiration_at": 1,
+                "_id": 0,
+            },
+        ):
 
             expiration_at = find_root_expiration_at(request, ttl)
 
