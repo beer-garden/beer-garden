@@ -671,6 +671,7 @@ def import_jobs(jobs_file: str) -> None:
         except json.JSONDecodeError:
             logger.debug(f"Failed to import jobs from {jobs_file}")
 
+
 @publish_event(Events.JOB_COUNTER_UPDATED)
 def update_job_counters(job: Job, **kwargs) -> Job:
     """Modify a Job with counter increases
@@ -683,6 +684,7 @@ def update_job_counters(job: Job, **kwargs) -> Job:
     """
 
     return db.modify(job, **kwargs)
+
 
 @publish_event(Events.JOB_UPDATED)
 def update_job(job: Job) -> Job:
