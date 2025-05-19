@@ -22,7 +22,6 @@ from beer_garden.db.mongo.pruner import (
     find_missing_expiration_requests,
     prune_files,
     prune_grid_fs,
-    prune_missed_temp_command,
     prune_orphan_files,
     prune_outstanding,
     prune_requests,
@@ -533,90 +532,6 @@ class TestExpirationUpdater(object):
             len(Request.objects.filter(command_type="ACTION", expiration_at__ne=None))
             == 2
         )
-
-
-class TestMissedTempPruner(object):
-    @pytest.fixture
-    def missed_child_request(self):
-        parent = Request(
-            system="T",
-            system_version="T",
-            instance_name="T",
-            namespace="T",
-            command="T",
-            created_at=datetime.datetime(2024, 1, 17),
-            status="SUCCESS",
-            command_type="ACTION",
-        )
-        parent.save()
-
-        child = Request(
-            system="T",
-            system_version="T",
-            instance_name="T",
-            namespace="T",
-            command="T",
-            created_at=datetime.datetime(2024, 1, 17),
-            status="SUCCESS",
-            command_type="TEMP",
-            has_parent=True,
-            parent=parent,
-        )
-
-        # parent.delete()
-        child.save()
-
-        yield child
-        parent.delete()
-        child.delete()
-
-    @pytest.fixture
-    def valid_child_request(self):
-        parent = Request(
-            system="T",
-            system_version="T",
-            instance_name="T",
-            namespace="T",
-            command="T",
-            created_at=datetime.datetime(2024, 1, 17),
-            status="IN_PROGRESS",
-            command_type="ACTION",
-        )
-        parent.save()
-
-        child = Request(
-            system="T",
-            system_version="T",
-            instance_name="T",
-            namespace="T",
-            command="T",
-            created_at=datetime.datetime(2024, 1, 17),
-            status="SUCCESS",
-            command_type="TEMP",
-            has_parent=True,
-            parent=parent,
-        )
-
-        # parent.delete()
-        child.save()
-
-        yield child
-        parent.delete()
-        child.delete()
-
-    def test_missed_temp_pruner(self, missed_child_request):
-        config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 1}}}
-        assert len(Request.objects.filter(command_type="TEMP")) == 1
-
-        prune_missed_temp_command()
-        assert len(Request.objects.filter(command_type="TEMP")) == 0
-
-    def test_valid_temp_pruner(self, valid_child_request):
-        config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 1}}}
-        assert len(Request.objects.filter(command_type="TEMP")) == 1
-
-        prune_missed_temp_command()
-        assert len(Request.objects.filter(command_type="TEMP")) == 1
 
 
 class TestOrphanFile(object):

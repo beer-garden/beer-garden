@@ -2,6 +2,7 @@
 import pytest
 from mock import MagicMock, Mock, patch
 from mongoengine import connect
+from mongoengine.connection import get_db
 from mongoengine.errors import FieldDoesNotExist
 
 import beer_garden.db.mongo.models
@@ -10,8 +11,11 @@ from beer_garden import config
 from beer_garden.db.mongo.models import Garden
 from beer_garden.db.mongo.util import (  # ensure_roles,; ensure_users,
     ensure_local_garden,
+    ensure_v3_30_model_migration,
 )
 from beer_garden.errors import IndexOperationError
+
+# from brewtils.test.fixtures import request_dict
 
 
 @pytest.fixture
@@ -55,6 +59,35 @@ def config_mock_none(monkeypatch):
         return None
 
     monkeypatch.setattr(config, "get", config_get_value)
+
+
+class TestMigrationScript(object):
+
+    @patch("mongoengine.connect", Mock())
+    @patch("mongoengine.register_connection", Mock())
+    def test_3_30_request_migration(self, request_dict, ts_dt):
+
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"action": 1}}}}
+
+        del request_dict["id"]
+        del request_dict["root_command_type"]
+        del request_dict["expiration_at"]
+
+        request_dict["status"] = "SUCCESS"
+        request_dict["has_parent"] = False
+        request_dict["parent"] = None
+        request_dict["created_at"] = ts_dt
+
+        db = get_db()
+        request_collection = db["request"]
+        request_collection.insert_one(request_dict)
+
+        ensure_v3_30_model_migration()
+
+        request = request_collection.find_one()
+
+        assert request["root_command_type"] == request["command_type"]
+        assert request["expiration_at"] is not None
 
 
 class TestCheckIndexes(object):

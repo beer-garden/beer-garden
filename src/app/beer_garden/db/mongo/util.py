@@ -292,18 +292,33 @@ def ensure_v3_29_model_migration():
 
 def find_root_command_type_and_expiration(request):
     expiration_at = None
-    if request["has_parent"]:
+    if (
+        ("has_parent" in request and request["has_parent"])
+        or ("parent" in request and request["parent"])
+    ) and ("expiration_at" not in request or not request["expiration_at"]):
         try:
-            return find_root_command_type_and_expiration(
+            parents = (
                 get_db()
                 .get_collection("request")
-                .find_one({"_id": request["parent"].id})
+                .find({"_id": request["parent"].id})
+                .only(
+                    "_id",
+                    "has_parent",
+                    "parent",
+                    "created_at",
+                    "command_type",
+                    "expiration_at",
+                )
             )
+            if len(parents) == 0:
+                return find_root_command_type_and_expiration(parents[0])
         except PyMongoError:
             # if any exception is thrown, just return what we currently have
             pass
     if request["status"] in Request.COMPLETED_STATUSES:
-        if (
+        if "expiration_at" in request and request["expiration_at"]:
+            expiration_at = request["expiration_at"]
+        elif (
             request["command_type"] == "ACTION"
             and config.get("db.prune.ttl.action", default=-1) > 0
         ):
@@ -341,11 +356,9 @@ def ensure_v3_30_model_migration():
                 {"$unset": {"status": "", "status_info": "", "namespaces": ""}},
             )
 
-    if missing_field("request", "root_command_type") or missing_field(
-        "request", "expiration_at"
-    ):
+    if missing_field("request", "root_command_type"):
         logger.warning(
-            "Root Command Type or Expiration At was not found in Requests and will be added."
+            "Root Command Type was not found in Requests and will be added."
             " This is most likely because the database is using the old (v3.29) style of"
             " storing in the database."
         )
@@ -375,9 +388,15 @@ def ensure_v3_30_model_migration():
 
             if batch_size > 0 and len(updates) > batch_size:
                 request_collection.bulk_write(updates, ordered=False)
+                logger.warning(
+                    f"Migrating expiration_at and root_command_type for {len(updates)} Requests"
+                )
                 updates = []
         if len(updates) > 0:
             request_collection.bulk_write(updates, ordered=False)
+            logger.warning(
+                f"Migrating expiration_at and root_command_type for {len(updates)} Requests"
+            )
 
 
 def ensure_request_ttl():
@@ -497,12 +516,14 @@ def update_request_ttl(command_type, ttl):
 
             if batch_size > 0 and len(updates) > batch_size:
                 raw_collection.bulk_write(updates, ordered=False)
+                logger.warning(f"Recomputed {len(updates)} {command_type} Request TTLs")
                 updates = []
 
         if len(updates) > 0:
             raw_collection.bulk_write(updates, ordered=False)
+            logger.warning(f"Recomputed {len(updates)} {command_type} Request TTLs")
 
-        logger.warning(f"Recomputed {update_counter} {command_type} Request TTLs")
+        logger.warning(f"Recomputed {command_type} Request TTLs")
 
 
 def reset_last_configuration():

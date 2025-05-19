@@ -32,6 +32,9 @@ def completed_status_query():
 
 
 def determine_expiration_at(request, action_ttl, info_ttl):
+    if request.expiration_at:
+        return request.expiration_at
+
     if request.has_parent:
         try:
             parent = Request.objects.get(id=request.parent.id)
@@ -109,11 +112,13 @@ def find_missing_expiration_requests():
             # Bulk update early if the list gets over batch size
             if batch_size > 0 and len(updates) > batch_size:
                 Request._get_collection().bulk_write(updates, ordered=False)
+                logger.warning(f"Recomputed {len(updates)} missing Request TTLs")
                 updates = []
 
     # Bulk update any updates needed to correct expiration dates
     if len(updates) > 0:
         Request._get_collection().bulk_write(updates, ordered=False)
+        logger.warning(f"Recomputed {len(updates)} missing Request TTLs")
 
 
 def prune_requests():
@@ -379,67 +384,6 @@ def prune_orphan_file_records(orphaned_files):
 
         else:
             logger.debug("No missed owners for Files")
-
-
-def prune_missed_temp_command():
-    """
-    If the completion event is missed for a TEMP event, clean up the
-    Request from the database
-    """
-    with CollectMetrics("PRUNER", "Pruner::orphan_missed_temp"):
-        ttl = config.get("db.prune.interval", default=15)
-        if ttl < 0:
-            return
-        timeout = datetime.now(timezone.utc) - timedelta(minutes=ttl)
-        filter = {
-            "command_type": "TEMP",
-            "status__in": BrewtilsRequest.COMPLETED_STATUSES,
-            "created_at__lte": timeout,
-            "has_parent": True,
-        }
-
-        batch_size = config.get("db.prune.batch_size")
-
-        if batch_size > 0:
-
-            temp_requests = (
-                Request.objects.only("parent", "id")
-                .filter(**filter)
-                .batch_size(batch_size)
-            )
-            prune_missed_temp_requests(temp_requests)
-
-        else:
-            temp_requests = Request.objects.only("parent", "id").filter(**filter)
-            prune_missed_temp_requests(temp_requests)
-
-
-def prune_missed_temp_requests(temp_requests):
-    counter = 0
-
-    try:
-        for request in temp_requests:
-            try:
-                Request.objects.get(
-                    id=request.parent.id,
-                    status__in=[
-                        "CREATED",
-                        "RECEIVED",
-                        "IN_PROGRESS",
-                    ],
-                )
-            except DoesNotExist:
-                request.delete()
-                counter = counter + 1
-    finally:
-
-        if counter > 0:
-            logger.error(
-                f"{counter} TEMP Requests deleted due to Parent Request is completed or missing"
-            )
-
-        else:
-            logger.debug("No missed TEMP Requests")
 
 
 def prune_outstanding():
