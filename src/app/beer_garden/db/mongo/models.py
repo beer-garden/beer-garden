@@ -555,13 +555,13 @@ class Request(MongoModel, Document):
             if not self.has_parent or Request.objects(id=self.parent.id).count() == 0:
                 if self.command_type == "INFO":
                     ttl = config.get("db.prune.ttl.info", default=-1)
-                    if ttl > 0:
+                    if ttl > -1:
                         self.expiration_at = self.created_at + datetime.timedelta(
                             minutes=ttl
                         )
                 elif self.command_type == "ACTION":
                     ttl = config.get("db.prune.ttl.action", default=-1)
-                    if ttl > 0:
+                    if ttl > -1:
                         self.expiration_at = self.created_at + datetime.timedelta(
                             minutes=ttl
                         )

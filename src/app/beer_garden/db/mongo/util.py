@@ -320,14 +320,14 @@ def find_root_command_type_and_expiration(request):
             expiration_at = request["expiration_at"]
         elif (
             request["command_type"] == "ACTION"
-            and config.get("db.prune.ttl.action", default=-1) > 0
+            and config.get("db.prune.ttl.action", default=-1) > -1
         ):
             expiration_at = request["created_at"] + timedelta(
                 minutes=config.get("db.prune.ttl.action", default=-1)
             )
         elif (
             request["command_type"] == "INFO"
-            and config.get("db.prune.ttl.info", default=-1) > 0
+            and config.get("db.prune.ttl.info", default=-1) > -1
         ):
             expiration_at = request["created_at"] + timedelta(
                 minutes=config.get("db.prune.ttl.info", default=-1)

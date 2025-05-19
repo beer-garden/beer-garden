@@ -49,10 +49,10 @@ def determine_expiration_at(request, action_ttl, info_ttl):
         except DoesNotExist:
             pass
 
-    if action_ttl > 0 and request.root_command_type == "ACTION":
+    if action_ttl > -1 and request.root_command_type == "ACTION":
         return request.created_at + timedelta(minutes=action_ttl)
 
-    if info_ttl > 0 and request.root_command_type == "INFO":
+    if info_ttl > -1 and request.root_command_type == "INFO":
         return request.created_at + timedelta(minutes=info_ttl)
 
     # Must be Admin or Temp
@@ -72,12 +72,12 @@ def find_missing_expiration_requests():
     current_time = datetime.now(timezone.utc)
 
     missing_expiration_filter = None
-    if action_ttl > 0:
+    if action_ttl > -1:
         missing_expiration_filter = Q(
             created_at__lt=current_time - timedelta(minutes=action_ttl)
         ) & Q(root_command_type="ACTION")
 
-    if info_ttl > 0:
+    if info_ttl > -1:
         if not missing_expiration_filter:
             missing_expiration_filter = Q(
                 created_at__lt=current_time - timedelta(minutes=info_ttl)
@@ -266,7 +266,7 @@ def delete_requests(
 def prune_files():
     ttl_length = config.get("db.prune.ttl.file")
 
-    if ttl_length > 0:
+    if ttl_length > -1:
 
         file_ids = []
         raw_file_ids = []
@@ -490,8 +490,8 @@ def prune_grid_fs():
         max_request_size = max(
             [prune_config_ttl.get("info"), prune_config_ttl.get("action")]
         )
-        if max_request_size > 0:
-            if file_threshold > 0:
+        if max_request_size > -1:
+            if file_threshold > -1:
                 file_threshold = file_threshold + max_request_size
             else:
                 file_threshold = max_request_size

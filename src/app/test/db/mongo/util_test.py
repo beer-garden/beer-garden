@@ -65,7 +65,7 @@ class TestMigrationScript(object):
     @patch("mongoengine.register_connection", Mock())
     def test_3_30_request_migration(self, request_dict, ts_dt):
 
-        config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"action": 1}}}}
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"action": 0}}}}
 
         del request_dict["id"]
         del request_dict["root_command_type"]
