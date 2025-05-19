@@ -15,8 +15,6 @@ from beer_garden.db.mongo.util import (  # ensure_roles,; ensure_users,
 )
 from beer_garden.errors import IndexOperationError
 
-# from brewtils.test.fixtures import request_dict
-
 
 @pytest.fixture
 def model_mocks(monkeypatch):
