@@ -275,8 +275,6 @@ class InternalQueueListener(DequeSetListener):
         if event.metadata.get("API_ONLY", False):
             return
 
-        
-
         if event.name in self._filters:
             if self._filter_func and self._filter_func(event):
                 # If the filter function returns True, we don't want to process the event
