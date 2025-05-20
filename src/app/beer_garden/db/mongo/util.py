@@ -309,7 +309,7 @@ def find_root_command_type_and_expiration(request):
                         "command_type": 1,
                         "expiration_at": 1,
                         "status": 1,
-                        "_id": 0,
+                        "_id": 1,
                     },
                 )
             )
@@ -377,7 +377,7 @@ def ensure_v3_30_model_migration():
                 "command_type": 1,
                 "expiration_at": 1,
                 "status": 1,
-                "_id": 0,
+                "_id": 1,
             },
         ):
             if legacy_request:
@@ -523,7 +523,7 @@ def update_request_ttl(command_type, ttl):
                 "parent": 1,
                 "created_at": 1,
                 "expiration_at": 1,
-                "_id": 0,
+                "_id": 1,
             },
         ):
 
