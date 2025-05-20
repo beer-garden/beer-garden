@@ -25,7 +25,7 @@ from typing import Dict, Union
 import brewtils.models
 from brewtils import EasyClient
 from brewtils.models import Connection as BrewtilsConnection
-from brewtils.models import Event, Events, Garden, Operation, Request, System
+from brewtils.models import Events, Garden, Operation, Request, System
 from mongoengine import DoesNotExist
 from stomp.exception import ConnectFailedException
 
@@ -51,7 +51,6 @@ from beer_garden.errors import (
     RoutingRequestException,
     UnknownGardenException,
 )
-from beer_garden.events import publish
 from beer_garden.garden import get_garden, get_gardens, update_garden
 from beer_garden.metrics import CollectMetrics
 from beer_garden.requests import complete_request, create_request
@@ -534,16 +533,6 @@ def forward(operation: Operation):
                 output=error_message,
                 error_class=ex.event_name,
             )
-
-        # Publish an event
-        publish(
-            Event(
-                name=ex.event_name,
-                payload_type="Operation",
-                payload=operation,
-                error_message=error_message,
-            )
-        )
 
         raise
 
@@ -1038,7 +1027,7 @@ def _forward_stomp(operation: Operation, target_garden: Garden) -> None:
 
                 conn.send(body=body, headers=headers)
             except Exception as ex:
-                connection.status = "ERROR"
+                connection.status = "UNREACHABLE"
                 update_garden(target_garden)
                 raise ForwardException(
                     message=(
@@ -1083,7 +1072,7 @@ def _forward_http(operation: Operation, target_garden: Garden) -> None:
                 raise ForwardException(
                     message=f"Error forwarding to garden '{operation.target_garden_name}': {e}",
                     operation=operation,
-                    event_name=Events.GARDEN_ERROR.name,
+                    event_name=Events.GARDEN_UNREACHABLE.name,
                 ) from e
 
             if connection.status != "PUBLISHING":

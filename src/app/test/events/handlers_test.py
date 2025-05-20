@@ -21,7 +21,7 @@ class TestHandlers:
             (Events.BARTENDER_STOPPED, 0),
             (Events.REQUEST_CREATED, 3),
             (Events.REQUEST_STARTED, 1),
-            (Events.REQUEST_UPDATED, 1),
+            (Events.REQUEST_UPDATED, 0),
             (Events.REQUEST_COMPLETED, 2),
             (Events.REQUEST_CANCELED, 2),
             (Events.REQUEST_TOPIC_PUBLISH, 1),

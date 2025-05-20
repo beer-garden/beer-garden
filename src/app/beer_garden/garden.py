@@ -937,32 +937,6 @@ def handle_event(event):
             # Publish update events for UI to dynamically load changes for Systems
             publish_local_garden_to_api()
 
-    elif event.name == Events.GARDEN_UNREACHABLE.name:
-        target_garden = get_garden(event.payload.target_garden_name)
-
-        if target_garden.status not in [
-            "UNREACHABLE",
-            "STOPPED",
-            "BLOCKED",
-            "ERROR",
-        ]:
-            update_garden_status(event.payload.target_garden_name, "UNREACHABLE")
-    elif event.name == Events.GARDEN_ERROR.name:
-        target_garden = get_garden(event.payload.target_garden_name)
-
-        if target_garden.status not in [
-            "UNREACHABLE",
-            "STOPPED",
-            "BLOCKED",
-            "ERROR",
-        ]:
-            update_garden_status(event.payload.target_garden_name, "ERROR")
-    elif event.name == Events.GARDEN_NOT_CONFIGURED.name:
-        target_garden = get_garden(event.payload.target_garden_name)
-
-        if target_garden.status == "NOT_CONFIGURED":
-            update_garden_status(event.payload.target_garden_name, "NOT_CONFIGURED")
-
     elif event.name in [
         Events.GARDEN_CONFIGURED.name,
         Events.GARDEN_REMOVED.name,

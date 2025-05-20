@@ -10,6 +10,7 @@ The metrics service manages:
 import datetime
 import logging
 import re
+import sys
 from http.server import ThreadingHTTPServer
 
 import elasticapm
@@ -191,6 +192,7 @@ def extract_custom_context(result) -> None:
     """
 
     if elasticapm.get_trace_parent_header():
+
         if isinstance(result, Operation):
             return extract_custom_context(result.model)
         if isinstance(result, Event):
@@ -205,6 +207,9 @@ def extract_custom_context(result) -> None:
 
         if hasattr(result, "id") and result.id:
             elasticapm.label(mongo_id=result.id)
+
+        elasticapm.label(result_size=sys.getsizeof(result))
+        elasticapm.label(result_type=str(type(result)))
 
 
 class CollectMetrics(elasticapm.capture_span):
