@@ -380,12 +380,6 @@ class Request(MongoModel, Document):
             {"name": "comment_index", "fields": ["comment"]},
             {"name": "parent_ref_index", "fields": ["parent"]},
             {"name": "parent_index", "fields": ["has_parent"]},
-            # Request Pruning
-            {"name": "expiration_at_index", "fields": ["expiration_at"]},
-            {
-                "name": "status_comment_type_expiration_at_index",
-                "fields": ["status", "expiration_at", "command_type"],
-            },
             # Used for Gridfs File Pruning
             {"name": "gridfs_index", "fields": ["output_gridfs", "parameters_gridfs"]},
             # These are for sorting parent requests
