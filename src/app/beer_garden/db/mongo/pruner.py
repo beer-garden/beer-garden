@@ -429,10 +429,6 @@ def prune_outstanding_requests(outstanding_requests):
                 request.status = "CANCELED"
                 request.status_updated_at = datetime.now(timezone.utc)
                 request.save()
-                # serialized = MongoParser.serialize(request, to_string=True)
-                # parsed = SchemaParser.parse_request(
-                #     serialized, from_string=True, many=False
-                # )
 
                 parsed = to_brewtils(request)
 
