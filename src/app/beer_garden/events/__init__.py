@@ -40,7 +40,7 @@ def publish(event: Event) -> None:
                 event.timestamp = datetime.now(timezone.utc)
 
             if config.get("metrics.elastic.enabled"):
-                extract_custom_context(event.payload)
+                extract_custom_context(event)
                 trace_parent_string = elasticapm.get_trace_parent_header()
                 if trace_parent_string:
                     event.metadata["_trace_parent"] = trace_parent_string
