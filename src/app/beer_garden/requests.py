@@ -1116,6 +1116,7 @@ def handle_event(event):
             existing_request = requests[0]
         else:
             existing_request = None
+            event.payload.expiration_at = None
 
         if existing_request and existing_request.status != event.payload.status:
             # Skip status that revert
