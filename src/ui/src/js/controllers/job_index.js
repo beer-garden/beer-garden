@@ -25,9 +25,6 @@ export default function jobIndexController($scope, $rootScope, JobService, Event
   $scope.formatDate = formatDate;
 
   function loadJobs() {
-    // $scope.response = undefined;
-    // $scope.data = {};
-
     JobService.getJobs().then($scope.successCallback, $scope.failureCallback);
   }
 
