@@ -3,6 +3,7 @@ import copy
 from datetime import datetime
 
 import pytest
+from bson.dbref import DBRef
 from mock import MagicMock, Mock, patch
 from mongoengine import connect
 from mongoengine.connection import get_db
@@ -113,7 +114,7 @@ class TestMigrationScript(object):
 
         parent = request_collection.find_one({"has_parent": False})
 
-        request_dict["parent"] = parent
+        request_dict["parent"] = DBRef("request", parent["_id"])
         request_dict["status"] = "SUCCESS"
         request_dict["has_parent"] = True
         request_dict["created_at"] = datetime(2017, 1, 1)

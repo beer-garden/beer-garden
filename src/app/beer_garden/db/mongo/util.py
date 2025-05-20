@@ -301,7 +301,7 @@ def find_root_command_type_and_expiration(request):
                 get_db()
                 .get_collection("request")
                 .find_one(
-                    {"_id": request["parent"]["_id"]},
+                    {"_id": request["parent"].id},
                     {
                         "has_parent": 1,
                         "parent": 1,
@@ -469,7 +469,7 @@ def find_root_expiration_at(request, ttl):
                 get_db()
                 .get_collection("request")
                 .find_one(
-                    {"_id": request["parent"]["_id"]},
+                    {"_id": request["parent"].id},
                     {"has_parent": 1, "parent": 1, "created_at": 1, "expiration_at": 1},
                 ),
                 ttl,
