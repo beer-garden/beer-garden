@@ -201,7 +201,15 @@ class QueueListener(BaseProcessor):
 class InternalQueueListener(DequeSetListener):
     """Listener for internal events only"""
 
-    def __init__(self, handler, handler_tag, local_only=False, filters=None, **kwargs):
+    def __init__(
+        self,
+        handler,
+        handler_tag,
+        local_only=False,
+        filters=None,
+        filter_func=None,
+        **kwargs,
+    ):
         super().__init__(action=self.handle_event, **kwargs)
 
         self._filters = []
@@ -209,6 +217,8 @@ class InternalQueueListener(DequeSetListener):
         if filters:
             for filter in filters:
                 self._filters.append(filter.name)
+
+        self._filter_func = filter_func
 
         self._handler = handler
         self._handler_tag = handler_tag
@@ -265,7 +275,12 @@ class InternalQueueListener(DequeSetListener):
         if event.metadata.get("API_ONLY", False):
             return
 
+        
+
         if event.name in self._filters:
+            if self._filter_func and self._filter_func(event):
+                # If the filter function returns True, we don't want to process the event
+                return
             trace_parent_header = None
             if (
                 config.get("metrics.elastic.enabled")

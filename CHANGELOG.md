@@ -70,6 +70,7 @@ TBD
 - Request search delay configurable through `ui.search_delay` config option.
 - Removed status, status_info, and namespaces from Garden
 - Update Requests index search box from text_search to or filter on UI columns
+- Updated Events handler to support internal filtering before placing into queue for processing
 
 # 3.29.1
 
