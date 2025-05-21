@@ -427,19 +427,13 @@ def ensure_request_ttl():
     else:
         # If we can't find the ttl key, just do the recompute
         try:
-            if (
-                action_ttl
-                != previous_config["previous_config"]["db"]["prune"]["ttl"]["action"]
-            ):
+            if action_ttl != previous_config.get("action_ttl"):
                 update_request_ttl("ACTION", action_ttl)
         except (KeyError, IndexError):
             update_request_ttl("ACTION", action_ttl)
 
         try:
-            if (
-                info_ttl
-                != previous_config["previous_config"]["db"]["prune"]["ttl"]["info"]
-            ):
+            if info_ttl != previous_config.get("info_ttl"):
                 update_request_ttl("INFO", info_ttl)
         except (KeyError, IndexError):
             update_request_ttl("INFO", info_ttl)
@@ -449,11 +443,22 @@ def ensure_model_migration():
     """Ensures that the database is properly migrated. All migrations ran from this
     single function for easy management"""
 
-    ensure_v2_to_v3_model_migration()
-    ensure_v3_24_model_migration()
-    ensure_v3_27_model_migration()
-    ensure_v3_29_model_migration()
-    ensure_v3_30_model_migration()
+    db = get_db()
+    previous_config = db.get_collection("configuration").find_one()
+
+    if not previous_config or previous_config.get("version") != str(beer_garden.__version__):
+        # If the version is not set, or the version is not the same as the current
+        # version, run all migrations
+        logger.warning(
+            "Running database migrations. This may take a while depending on the size of"
+            " your database."
+        )
+
+        ensure_v2_to_v3_model_migration()
+        ensure_v3_24_model_migration()
+        ensure_v3_27_model_migration()
+        ensure_v3_29_model_migration()
+        ensure_v3_30_model_migration()
 
     # This should always be the last migration
     ensure_request_ttl()
@@ -558,7 +563,13 @@ def reset_last_configuration():
 
     Configuration.objects().delete()
 
-    configuration = Configuration(previous_config=config.get().to_dict())
+    # We only want to save certain fields from the config
+
+    configuration = Configuration(
+        action_ttl=config.get("db.prune.ttl.action", default=-1),
+        info_ttl=config.get("db.prune.ttl.info", default=-1),
+        version=str(beer_garden.__version__),
+    )
     configuration.save()
 
 
