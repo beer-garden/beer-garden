@@ -181,15 +181,36 @@ class StompManager(BaseProcessor):
                 )
 
         if not event.error and event.garden == config.get("garden.name"):
-            for value in self.conn_dict.values():
-                conn = value["conn"]
-                if conn:
-                    if conn.is_connected():
-                        if value["headers_list"]:
-                            for headers in value["headers_list"]:
-                                conn.send(event, headers=headers)
-                        else:
-                            conn.send(event)
+            # Keep filter list in sync with HTTP Parent Updater
+            if event.name in (
+                Events.GARDEN_STARTED.name,
+                Events.GARDEN_STOPPED.name,
+                Events.GARDEN_SYNC.name,
+                Events.GARDEN_UPDATED.name,
+                Events.INSTANCE_INITIALIZED.name,
+                Events.INSTANCE_STARTED.name,
+                Events.INSTANCE_STOPPED.name,
+                Events.INSTANCE_UPDATED.name,
+                Events.REQUEST_CANCELED.name,
+                Events.REQUEST_COMPLETED.name,
+                Events.REQUEST_CREATED.name,
+                Events.REQUEST_DELETED.name,
+                Events.REQUEST_STARTED.name,
+                Events.REQUEST_TOPIC_PUBLISH.name,
+                Events.REQUEST_UPDATED.name,
+                Events.SYSTEM_CREATED.name,
+                Events.SYSTEM_REMOVED.name,
+                Events.SYSTEM_UPDATED.name,
+            ):
+                for value in self.conn_dict.values():
+                    conn = value["conn"]
+                    if conn:
+                        if conn.is_connected():
+                            if value["headers_list"]:
+                                for headers in value["headers_list"]:
+                                    conn.send(event, headers=headers)
+                            else:
+                                conn.send(event)
 
     def handle_event(self, event):
         """Main event entry point
