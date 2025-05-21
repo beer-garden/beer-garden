@@ -470,17 +470,26 @@ def ensure_model_migration():
 
 
 def find_root_expiration_at(request, ttl):
+
+    if request is None:
+        return None
+
     if request["has_parent"]:
         try:
-            return find_root_expiration_at(
+
+            parent = (
                 get_db()
                 .get_collection("request")
                 .find_one(
                     {"_id": request["parent"].id},
                     {"has_parent": 1, "parent": 1, "created_at": 1, "expiration_at": 1},
-                ),
-                ttl,
+                )
             )
+            if parent:
+                return find_root_expiration_at(
+                    parent,
+                    ttl,
+                )
         except PyMongoError:
             # if any exception is thrown, just return what we currently have
             pass
@@ -513,11 +522,13 @@ def update_request_ttl(command_type, ttl):
 
     if ttl < 1:
         # Requests should not expire, so remove any set Expiration At records
-        raw_collection.update_many(
+        updated_results = raw_collection.update_many(
             filter_query,
             {"$set": {"expiration_at": None}},
         )
-        logger.warning(f"Recomputed {command_type} Request TTLs")
+        logger.warning(
+            f"Recomputed {updated_results.modified_count} {command_type} Request TTLs"
+        )
     else:
         batch_size = config.get("db.prune.batch_size", default=-1)
 
