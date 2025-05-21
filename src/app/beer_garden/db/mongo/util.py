@@ -461,6 +461,8 @@ def ensure_model_migration():
         ensure_v3_27_model_migration()
         ensure_v3_29_model_migration()
         ensure_v3_30_model_migration()
+        # After the 3.30.0 migration, we can start parsing the version to determine 
+        # which migrations to run
 
     # This should always be the last migration
     ensure_request_ttl()
@@ -506,24 +508,12 @@ def update_request_ttl(command_type, ttl):
     from .models import Request
 
     logger.warning(f"Recomputing TTL for {command_type} for all completed requests")
-    raw_collection = Request._get_collection()
-    filter_query = {
-        "root_command_type": {"$eq": command_type},
-        "expiration_at": {"$ne": None},
-        "status": {
-            "$in": [
-                "CANCELED",
-                "SUCCESS",
-                "ERROR",
-                "INVALID",
-            ]
-        },
-    }
+    raw_collection = Request._get_collection()  
 
-    if ttl < 1:
-        # Requests should not expire, so remove any set Expiration At records
+    if ttl < 0:
         updated_results = raw_collection.update_many(
-            filter_query,
+            {"root_command_type": {"$eq": command_type},
+            "expiration_at": {"$ne": None},},
             {"$set": {"expiration_at": None}},
         )
         logger.warning(
@@ -535,7 +525,18 @@ def update_request_ttl(command_type, ttl):
         update_counter = 0
         updates = []
         for request in raw_collection.find(
-            filter_query,
+            {
+                "root_command_type": {"$eq": command_type},
+                "expiration_at": {"$ne": None},
+                "status": {
+                    "$in": [
+                        "CANCELED",
+                        "SUCCESS",
+                        "ERROR",
+                        "INVALID",
+                    ],
+                },
+            },
             {
                 "has_parent": 1,
                 "parent": 1,
