@@ -446,7 +446,9 @@ def ensure_model_migration():
     db = get_db()
     previous_config = db.get_collection("configuration").find_one()
 
-    if not previous_config or previous_config.get("version") != str(beer_garden.__version__):
+    if not previous_config or previous_config.get("version") != str(
+        beer_garden.__version__
+    ):
         # If the version is not set, or the version is not the same as the current
         # version, run all migrations
         logger.warning(
