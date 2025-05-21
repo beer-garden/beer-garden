@@ -73,6 +73,7 @@ TBD
 - Update Requests index search box from text_search to or filter on UI columns
 - Updated Jobs pages to trigger off internal Job events for status changes
 - Updated Events handler to support internal filtering before placing into queue for processing
+- Filtered events forwarded to upstream Garden
 
 # 3.29.1
 
