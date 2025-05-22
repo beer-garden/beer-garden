@@ -71,6 +71,7 @@ TBD
 - Removed status, status_info, and namespaces from Garden
 - Update Request Pruning to utilize new field Expiration At instead of each command type independently 
 - Update Requests index search box from text_search to or filter on UI columns
+- Updated Routing Logic to accept Target Garden provided and cache multi-hop gardens in routing tables
 - Updated Jobs pages to trigger off internal Job events for status changes
 - Updated Events handler to support internal filtering before placing into queue for processing
 
