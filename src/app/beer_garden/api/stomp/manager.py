@@ -210,31 +210,25 @@ class StompManager(BaseProcessor):
             logger.exception(f"Error executing callback for {event!r}: {ex}")
 
         if not event.error:
-            if event.name in [
-                Events.SYSTEM_CREATED.name,
-                Events.SYSTEM_UPDATED.name,
-                Events.GARDEN_SYNC.name,
-                Events.GARDEN_CONFIGURED.name,
-                Events.GARDEN_REMOVED.name,
-                Events.GARDEN_UPDATED.name,
-            ]:
-                try:
+            try:
+                if event.name in [
+                    Events.SYSTEM_CREATED.name,
+                    Events.SYSTEM_UPDATED.name,
+                    Events.GARDEN_SYNC.name,
+                    Events.GARDEN_CONFIGURED.name,
+                    Events.GARDEN_REMOVED.name,
+                    Events.GARDEN_UPDATED.name,
+                ]:
                     beer_garden.router.handle_event(deepcopy(event))
-                except Exception as ex:
-                    logger.exception(f"Error executing callback for {event!r}: {ex}")
 
-            elif event.name == Events.PLUGIN_LOGGER_FILE_CHANGE.name:
-                try:
+                elif event.name == Events.PLUGIN_LOGGER_FILE_CHANGE.name:
                     beer_garden.log.handle_event(deepcopy(event))
-                except Exception as ex:
-                    logger.exception(f"Error executing callback for {event!r}: {ex}")
 
-            elif event.name in [
-                Events.REQUEST_COMPLETED.name,
-                Events.REQUEST_CANCELED.name,
-                Events.GARDEN_STOPPED.name,
-            ]:
-                try:
+                elif event.name in [
+                    Events.REQUEST_COMPLETED.name,
+                    Events.REQUEST_CANCELED.name,
+                    Events.GARDEN_STOPPED.name,
+                ]:
                     beer_garden.requests.handle_wait_events(deepcopy(event))
-                except Exception as ex:
-                    logger.exception(f"Error executing callback for {event!r}: {ex}")
+            except Exception as ex:
+                logger.exception(f"Error executing callback for {event!r}: {ex}")
