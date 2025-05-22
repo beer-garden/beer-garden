@@ -1099,10 +1099,7 @@ def handle_event(event):
             return
 
         # Only care about downstream garden
-        requests = db.query(
-            Request,
-            filter_params={"id": event.payload.id}
-        )
+        requests = db.query(Request, filter_params={"id": event.payload.id})
 
         if requests:
             existing_request = requests[0]
