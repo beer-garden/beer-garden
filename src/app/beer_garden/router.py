@@ -649,8 +649,10 @@ def handle_event(event):
     """Handle events"""
     if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
         add_routing_system(system=event.payload, garden_name=event.garden)
+        return
     elif event.name == Events.SYSTEM_REMOVED.name:
         remove_routing_system(system=event.payload)
+        return
 
     # Here we want to handle sync events from immediate children only
     if (
@@ -665,11 +667,7 @@ def handle_event(event):
 
             # Then add routes to the new systems
             add_routing_garden(event.payload)
-
-    # To save memory, we need to remove children
-    if event.payload_type == "Garden":
-        del event.payload.children
-        del event.payload.systems
+        return
 
     # This is a little unintuitive. We want to let the garden module deal with handling
     # any downstream garden changes since handling those changes is nontrivial.
@@ -686,10 +684,16 @@ def handle_event(event):
             Events.GARDEN_UPDATED.name,
         ]
     ):
+
         # Only store the garden if it's 1 hop of the local garden
         if not event.payload.has_parent or event.payload.parent == config.get(
             "garden.name"
         ):
+            # To save memory, we need to remove children
+            if event.payload_type == "Garden":
+                del event.payload.children
+                del event.payload.systems
+
             if event.name == Events.GARDEN_CONFIGURED.name:
                 if event.payload.name != config.get("garden.name") and (
                     (
@@ -713,9 +717,10 @@ def handle_event(event):
                                 )
 
                             elif connection.status == "DISABLED":
-                                stomp_garden_connections[
-                                    event.payload.name
-                                ].disconnect()
+                                if event.payload.name in stomp_garden_connections:
+                                    stomp_garden_connections[
+                                        event.payload.name
+                                    ].disconnect()
 
                 if (
                     not stomp_found

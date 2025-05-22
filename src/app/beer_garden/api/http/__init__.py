@@ -419,13 +419,33 @@ def _event_callback(event):
     # Everything needs to be published to the websocket
     websocket_publish(event)
 
-    # And also register handlers that the entry point needs to care about
-    for handler in [
-        beer_garden.router.handle_event,
-        beer_garden.log.handle_event,
-        beer_garden.requests.handle_wait_events,
-    ]:
-        try:
-            handler(deepcopy(event))
-        except Exception as ex:
-            logger.exception(f"Error executing callback for {event!r}: {ex}")
+    if not event.error:
+        # And also register handlers that the entry point needs to care about
+        if event.name in [
+            Events.SYSTEM_CREATED.name,
+            Events.SYSTEM_UPDATED.name,
+            Events.GARDEN_SYNC.name,
+            Events.GARDEN_CONFIGURED.name,
+            Events.GARDEN_REMOVED.name,
+            Events.GARDEN_UPDATED.name,
+        ]:
+            try:
+                beer_garden.router.handle_event(deepcopy(event))
+            except Exception as ex:
+                logger.exception(f"Error executing callback for {event!r}: {ex}")
+
+        elif event.name == Events.PLUGIN_LOGGER_FILE_CHANGE.name:
+            try:
+                beer_garden.log.handle_event(deepcopy(event))
+            except Exception as ex:
+                logger.exception(f"Error executing callback for {event!r}: {ex}")
+
+        elif event.name in [
+            Events.REQUEST_COMPLETED.name,
+            Events.REQUEST_CANCELED.name,
+            Events.GARDEN_STOPPED.name,
+        ]:
+            try:
+                beer_garden.requests.handle_wait_events(deepcopy(event))
+            except Exception as ex:
+                logger.exception(f"Error executing callback for {event!r}: {ex}")
