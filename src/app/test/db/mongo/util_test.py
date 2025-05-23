@@ -72,8 +72,9 @@ class TestMigrationScript(object):
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"action": 0}}}}
 
         del request_dict["id"]
-        del request_dict["root_command_type"]
-        del request_dict["expiration_at"]
+
+        assert "root_command_type" not in request_dict
+        assert "expiration_at" not in request_dict
 
         request_dict["status"] = "SUCCESS"
         request_dict["has_parent"] = False
@@ -98,8 +99,8 @@ class TestMigrationScript(object):
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"action": 0}}}}
 
         del request_dict["id"]
-        del request_dict["root_command_type"]
-        del request_dict["expiration_at"]
+        assert "root_command_type" not in request_dict
+        assert "expiration_at" not in request_dict
 
         parent_dict = copy.deepcopy(request_dict)
 
