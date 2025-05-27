@@ -74,6 +74,7 @@ TBD
 - Updated Routing Logic to accept Target Garden provided and cache multi-hop gardens in routing tables
 - Updated Jobs pages to trigger off internal Job events for status changes
 - Updated Events handler to support internal filtering before placing into queue for processing
+- Reduced total events processed by Entry Point event handlers
 
 # 3.29.1
 
