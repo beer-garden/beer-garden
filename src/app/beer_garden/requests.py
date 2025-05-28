@@ -1189,6 +1189,7 @@ def handle_event(event):
                     db.modify(
                         existing_request,
                         status=event.payload.status,
+                        metadata=metadata,
                     )
 
             else:
