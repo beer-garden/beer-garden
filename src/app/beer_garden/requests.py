@@ -1099,18 +1099,7 @@ def handle_event(event):
             return
 
         # Only care about downstream garden
-        requests = db.query(
-            Request,
-            filter_params={"id": event.payload.id},
-            include_fields=[
-                "status",
-                "status_updated_at",
-                "target_garden",
-                "updated_at",
-                "command_type",
-                "metadata",
-            ],
-        )
+        requests = db.query(Request, filter_params={"id": event.payload.id})
 
         if requests:
             existing_request = requests[0]
@@ -1189,6 +1178,7 @@ def handle_event(event):
 
                 if getattr(existing_request, field) != new_value:
                     request_changed[field] = new_value
+                    setattr(existing_request, field, new_value)
 
             # Add output fields only if the status changes to a compelted state
             if "status" in request_changed:
@@ -1200,11 +1190,13 @@ def handle_event(event):
                 ):
                     if event.payload.output:
                         request_changed["output"] = event.payload.output
+                        existing_request.output = event.payload.output
                     if event.payload.error_class:
                         request_changed["error_class"] = event.payload.error_class
+                        existing_request.error_class = event.payload.error_class
 
             if request_changed:
-                existing_request = modify_request(existing_request, request_changed)
+                db.update(existing_request)
 
         if event.name in (
             Events.REQUEST_COMPLETED.name,
