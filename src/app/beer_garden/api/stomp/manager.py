@@ -155,7 +155,7 @@ class StompManager(BaseProcessor):
                     event.payload.parent = config.get("garden.name")
                     event.payload.has_parent = True
 
-            if event.name == Events.GARDEN_REMOVED.name:
+            elif event.name == Events.GARDEN_REMOVED.name:
                 self.remove_garden_from_list(garden_name=event.payload.name)
 
             elif event.name == Events.GARDEN_CONFIGURED.name:
@@ -205,7 +205,8 @@ class StompManager(BaseProcessor):
         """
 
         try:
-            self._event_handler(deepcopy(event))
+            if "GARDEN" in event.name:
+                self._event_handler(deepcopy(event))
         except Exception as ex:
             logger.exception(f"Error executing callback for {event!r}: {ex}")
 
