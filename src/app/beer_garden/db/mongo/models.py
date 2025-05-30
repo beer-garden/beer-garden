@@ -354,7 +354,7 @@ class Request(MongoModel, Document):
     status_updated_at = DateTimeField()
     error_class = StringField(required=False)
     has_parent = BooleanField(required=False)
-    hidden = BooleanField(required=False)
+    hidden = BooleanField(required=False, default=False)
     requester = StringField(required=False)
     parameters_gridfs = FileField()
     is_event = BooleanField(required=False)
@@ -380,6 +380,7 @@ class Request(MongoModel, Document):
             {"name": "comment_index", "fields": ["comment"]},
             {"name": "parent_ref_index", "fields": ["parent"]},
             {"name": "parent_index", "fields": ["has_parent"]},
+            {"name": "hidden_index", "fields": ["hidden"]},
             # Used for Gridfs File Pruning
             {"name": "gridfs_index", "fields": ["output_gridfs", "parameters_gridfs"]},
             # These are for sorting parent requests
