@@ -75,6 +75,7 @@ TBD
 - Updated Jobs pages to trigger off internal Job events for status changes
 - Updated Events handler to support internal filtering before placing into queue for processing
 - Reduced total events processed by Entry Point event handlers
+- Removed double save for Garden API Status Update calls
 
 # 3.29.1
 
