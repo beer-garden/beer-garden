@@ -204,7 +204,7 @@ def extract_custom_context(result) -> None:
         elif isinstance(result, Request):
             if result.metadata:
                 elasticapm.label(**result.metadata)
-                
+
             elasticapm.label(request_size=sys.getsizeof(result))
             if hasattr(result, "parameter", None):
                 elasticapm.label(request_parameter_size=sys.getsizeof(result.parameter))
