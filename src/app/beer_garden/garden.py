@@ -493,7 +493,7 @@ def update_garden_receiving(
     if not connection_set and api:
         garden.receiving_connections.append(Connection(api=api, status=status))
 
-    return db.update(garden)
+    return garden
 
 
 def load_garden_file(garden: Garden):
@@ -832,6 +832,7 @@ def garden_unresponsive_trigger():
         if interval_value > 0:
             timeout = datetime.utcnow() - timedelta(minutes=interval_value)
 
+            update_connection = False
             for connection in garden.receiving_connections:
                 if connection.status in ["RECEIVING"]:
                     if connection.status_info.heartbeat < timeout:
@@ -841,6 +842,10 @@ def garden_unresponsive_trigger():
                         logger.error(
                             f"{garden.name} Timed out {interval_value} minutes"
                         )
+                        update_connection = True
+
+            if update_connection:
+                update_garden(garden)
 
 
 def handle_event(event):
