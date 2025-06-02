@@ -1217,7 +1217,7 @@ class Garden(MongoModel, Document):
             version = getattr(system, "version", None)
             if not name or not version:
                 # dbref doesn't exist
-                return str(system)
+                return (str(system), None, None)
             return (
                 namespace or self.name,
                 name,
