@@ -33,7 +33,6 @@ export default function routeConfig(
           config: [
             '$rootScope',
             ($rootScope) => {
-              console.log($rootScope.config);
               return $rootScope.config;
             },
           ],
