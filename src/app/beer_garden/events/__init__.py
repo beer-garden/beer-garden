@@ -41,9 +41,10 @@ def publish(event: Event) -> None:
 
             if config.get("metrics.elastic.enabled"):
                 extract_custom_context(event)
-                trace_parent_string = elasticapm.get_trace_parent_header()
-                if trace_parent_string:
-                    event.metadata["_trace_parent"] = trace_parent_string
+                if hasattr(event, "metadata") and "_trace_parent" not in event.metadata:
+                    trace_parent_string = elasticapm.get_trace_parent_header()
+                    if trace_parent_string:
+                        event.metadata["_trace_parent"] = trace_parent_string
 
             return manager.put(event)
         except Exception as ex:

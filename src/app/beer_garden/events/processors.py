@@ -10,6 +10,7 @@ from copy import deepcopy
 from multiprocessing import Queue
 from queue import Empty
 
+import elasticapm
 from brewtils.models import Event, Events, Request
 from brewtils.stoppable_thread import StoppableThread
 
@@ -228,12 +229,11 @@ class InternalQueueListener(DequeSetListener):
 
     def handle_event(self, event):
         trace_parent_header = None
-        if (
-            config.get("metrics.elastic.enabled")
-            and hasattr(event, "metadata")
-            and "_trace_parent" in event.metadata
-        ):
-            trace_parent_header = event.metadata["_trace_parent"]
+        if config.get("metrics.elastic.enabled"):
+            if hasattr(event, "metadata") and "_trace_parent" in event.metadata:
+                trace_parent_header = event.metadata["_trace_parent"]
+            elif elasticapm.get_trace_parent_header() is not None:
+                trace_parent_header = elasticapm.get_trace_parent_header()
 
         with CollectMetrics(
             "Queue_Event",
@@ -280,12 +280,14 @@ class InternalQueueListener(DequeSetListener):
                 # If the filter function returns True, we don't want to process the event
                 return
             trace_parent_header = None
-            if (
-                config.get("metrics.elastic.enabled")
-                and hasattr(event, "metadata")
-                and "_trace_parent" in event.metadata
-            ):
-                trace_parent_header = event.metadata["_trace_parent"]
+            if config.get("metrics.elastic.enabled"):
+                if hasattr(event, "metadata") and "_trace_parent" in event.metadata:
+                    trace_parent_header = event.metadata["_trace_parent"]
+                elif elasticapm.get_trace_parent_header() is not None:
+                    trace_parent_header = elasticapm.get_trace_parent_header()
+
+                if hasattr(event, "metadata") and "_trace_parent" not in event.metadata:
+                    event.metadata["_trace_parent"] = trace_parent_header
 
             with CollectMetrics(
                 "Queue_Event",
