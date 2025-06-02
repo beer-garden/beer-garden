@@ -204,6 +204,12 @@ def extract_custom_context(result) -> None:
         elif isinstance(result, Request):
             if result.metadata:
                 elasticapm.label(**result.metadata)
+                
+            elasticapm.label(request_size=sys.getsizeof(result))
+            if hasattr(result, "parameter", None):
+                elasticapm.label(request_parameter_size=sys.getsizeof(result.parameter))
+            if hasattr(result, "output", None):
+                elasticapm.label(request_output_size=sys.getsizeof(result.output))
 
         if hasattr(result, "id") and result.id:
             elasticapm.label(mongo_id=result.id)
