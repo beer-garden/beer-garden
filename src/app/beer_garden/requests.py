@@ -1084,13 +1084,12 @@ def handle_event_create(event):
 
             # First try to grab requester from Parent Request
             if event.payload.has_parent:
-                parent_requests = db.query(
-                    Request,
-                    filter_params={"id": event.payload.parent.id},
+                parent_request = db.query_unique(
+                    Request, id=event.payload.parent.id, include_fields=["requester"]
                 )
 
-                if parent_requests and parent_requests[0].requester:
-                    event.payload.requester = parent_requests[0].requester
+                if parent_request and parent_request.requester:
+                    event.payload.requester = parent_request.requester
                     foundUser = True
 
             # If no parent request is found or request on it,
@@ -1167,9 +1166,17 @@ def handle_event(event):
 
                     metadata = {**existing_request.metadata, **event.payload.metadata}
 
-                    metadata[f"{event.payload.status}_{config.get('garden.name')}"] = (
-                        int(datetime.datetime.utcnow().timestamp() * 1000)
-                    )
+                    if (
+                        f"{event.payload.status}_{config.get('garden.name')}"
+                        not in metadata
+                    ):
+                        metadata[
+                            f"{event.payload.status}_{config.get('garden.name')}"
+                        ] = int(
+                            datetime.datetime.now(datetime.timezone.utc).timestamp()
+                            * 1000
+                        )
+
                     db.modify(
                         existing_request,
                         status=event.payload.status,
