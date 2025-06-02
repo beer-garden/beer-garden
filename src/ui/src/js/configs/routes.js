@@ -32,11 +32,9 @@ export default function routeConfig(
         resolve: {
           config: [
             '$rootScope',
-            'UtilityService',
-            ($rootScope, UtilityService) => {
-              return UtilityService.getConfig().then((response) => {
-                angular.extend($rootScope.config, camelCaseKeys(response.data));
-              });
+            ($rootScope) => {
+              console.log($rootScope.config);
+              return $rootScope.config;
             },
           ],
           systems: [
