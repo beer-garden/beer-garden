@@ -292,6 +292,8 @@ class InternalQueueListener(DequeSetListener):
                 f"QUEUE_PUT::{self._handler_tag}",
                 trace_parent_header=trace_parent_header,
             ):
+                if config.get("metrics.elastic.enabled"):
+                    extract_custom_context(event)
                 super().put(event)
 
 
