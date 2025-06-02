@@ -1130,22 +1130,6 @@ def handle_event(event):
         ):
             cancel_request_children(event.payload)
 
-    # if event.name in (
-    #     Events.REQUEST_COMPLETED.name,
-    #     Events.REQUEST_UPDATED.name,
-    #     Events.REQUEST_CANCELED.name,
-    # ):
-    #     if event.payload.status in (
-    #         "INVALID",
-    #         "CANCELED",
-    #         "ERROR",
-    #         "SUCCESS",
-    #     ):
-    #         if clean_command_type_temp(
-    #             event.payload, event.garden != config.get("garden.name")
-    #         ):
-    #             return
-
     # These are all of the downstream events that we care about
     if event.garden != config.get("garden.name") and event.name in (
         Events.REQUEST_CREATED.name,
