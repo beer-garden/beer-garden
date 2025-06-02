@@ -1213,10 +1213,15 @@ class Garden(MongoModel, Document):
 
         def _get_system_triple(system: System) -> Tuple[str, str, str]:
             namespace = getattr(system, "namespace", None)
+            name = getattr(system, "name", None)
+            version = getattr(system, "version", None)
+            if not name or not version:
+                # dbref doesn't exist
+                return (str(system), None, None)
             return (
                 namespace or self.name,
-                system.name,
-                system.version,
+                name,
+                version,
             )
 
         # Check previous save for System records
@@ -1234,16 +1239,18 @@ class Garden(MongoModel, Document):
                 for system in old_garden.systems
             }
 
+        local_systems = [
+            _get_system_triple(system)
+            for system in System.objects(local=True).only(
+                "namespace", "name", "version"
+            )
+        ]
+
         for system in self.systems:
             triple = _get_system_triple(system)
 
             # Check is System is a Local System
-            if (
-                System.objects(
-                    namespace=triple[0], name=triple[1], version=triple[2], local=True
-                ).count()
-                < 1
-            ):
+            if triple not in local_systems:
                 if triple in child_systems_already_known:
                     system_id_to_remove = child_systems_already_known.pop(triple)
 
