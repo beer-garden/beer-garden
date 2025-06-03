@@ -7,12 +7,12 @@ DOCKER_NAME     = bgio/beer-garden
 
 MAX_CYCLOMATIC_COMPLEXITY = 10
 
-VERSION        ?= 0.0.0
+VERSION        ?= $(shell python -c "import os; import sys; sys.path.insert(1, './beer_garden/'); from __version__ import __version__; print(__version__);")
 SHORT_VERSION   = $(shell echo $(VERSION) | head -c 1)
 
 PYTHON_VERSION ?= 3.12
 
-DATE           ?= $(shell date +%Y-%m-%dT%H-%M)
+DATE           ?= $(shell date +%Y-%m-%dT%H)
 
 .PHONY: clean clean-build clean-test clean-pyc help test
 
