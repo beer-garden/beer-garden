@@ -26,7 +26,6 @@ from beer_garden.db.mongo.util import (
     ensure_model_migration,
 )
 from beer_garden.errors import NotUniqueException
-from beer_garden.metrics import CollectMetrics
 
 logger = logging.getLogger(__name__)
 
@@ -214,6 +213,8 @@ def count(
         The number of items
 
     """
+    from beer_garden.metrics import CollectMetrics
+
     with CollectMetrics(
         "MongoDB",
         "MongoDB::count",
@@ -258,6 +259,8 @@ def query_unique(
         mongoengine.MultipleObjectsReturned: More than one matching item exists
 
     """
+    from beer_garden.metrics import CollectMetrics
+
     with CollectMetrics(
         "MongoDB",
         "MongoDB::query_unique",
@@ -311,6 +314,8 @@ def query(
         A list of Brewtils models
 
     """
+    from beer_garden.metrics import CollectMetrics
+
     with CollectMetrics(
         "MongoDB",
         "MongoDB::query",
@@ -375,6 +380,8 @@ def create(obj: ModelItem) -> ModelItem:
         The saved Brewtils model
 
     """
+    from beer_garden.metrics import CollectMetrics
+
     with CollectMetrics(
         "MongoDB",
         "MongoDB::create",
@@ -405,6 +412,8 @@ def update(obj: ModelItem) -> ModelItem:
         The saved Brewtils model
 
     """
+    from beer_garden.metrics import CollectMetrics
+
     with CollectMetrics(
         "MongoDB",
         "MongoDB::update",
@@ -428,6 +437,8 @@ def bulk_update(objs: List[ModelItem]) -> None:
     Args:
         objs (list[ModelItem]): List of objects to bulk update
     """
+    from beer_garden.metrics import CollectMetrics
+
     with CollectMetrics(
         "MongoDB",
         "MongoDB::bulk_update",
@@ -467,6 +478,8 @@ def modify(obj: ModelItem, query=None, **kwargs) -> ModelItem:
         The modified Brewtils model
 
     """
+    from beer_garden.metrics import CollectMetrics
+
     with CollectMetrics(
         "MongoDB",
         "MongoDB::modify",
@@ -496,6 +509,8 @@ def delete(obj: ModelItem, force_delete: bool = False) -> None:
         None
 
     """
+    from beer_garden.metrics import CollectMetrics
+
     with CollectMetrics(
         "MongoDB",
         "MongoDB::delete",

@@ -206,9 +206,9 @@ def extract_custom_context(result) -> None:
                 elasticapm.label(**result.metadata)
 
             elasticapm.label(request_size=sys.getsizeof(result))
-            if hasattr(result, "parameter", None):
+            if hasattr(result, "parameter"):
                 elasticapm.label(request_parameter_size=sys.getsizeof(result.parameter))
-            if hasattr(result, "output", None):
+            if hasattr(result, "output"):
                 elasticapm.label(request_output_size=sys.getsizeof(result.output))
 
         if hasattr(result, "id") and result.id:
