@@ -4,6 +4,12 @@
 
 TBD
 
+## 3.30.0rc1
+
+- Improved docker naming conventions
+
+## 3.30.0rc0
+
 - Updated rpm script to supply cli values to config migration. Beer-garden `migrate` will apply cli
   values prior to yapconf `migrate_config_file`.
 - Fixed forwarding operations to downstream causing blocking to the router. Mostly seen during File Forwarding.
