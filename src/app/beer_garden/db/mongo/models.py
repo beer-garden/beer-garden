@@ -730,24 +730,35 @@ class Request(MongoModel, Document):
     def clean_update(self):
         """Ensure that the update would not result in an illegal status transition"""
         # Get the original status
-        old_status = Request.objects.get(id=self.id).status
+        try:
+            old_request = Request.objects.only(
+                "parameters_gridfs", "output_gridfs", "status"
+            ).get(id=self.id)
+            if old_request:
+                self.parameters_gridfs = old_request.parameters_gridfs
+                self.output_gridfs = old_request.output_gridfs
 
-        if self.status != old_status:
-            if old_status in BrewtilsRequest.COMPLETED_STATUSES:
-                raise RequestStatusTransitionError(
-                    "Status for a request cannot be updated once it has been "
-                    f"completed. Current: {old_status}, Requested: {self.status}"
-                )
+                if self.status != old_request.status:
+                    if old_request.status in BrewtilsRequest.COMPLETED_STATUSES:
+                        raise RequestStatusTransitionError(
+                            "Status for a request cannot be updated once it has been "
+                            f"completed. Current: {old_request.status}, "
+                            f"Requested: {self.status}"
+                        )
 
-            if (
-                old_status == "IN_PROGRESS"
-                and self.status not in BrewtilsRequest.COMPLETED_STATUSES
-            ):
-                raise RequestStatusTransitionError(
-                    "Request status can only transition from IN_PROGRESS to a "
-                    f"completed status. Requested: {self.status}, completed statuses "
-                    f"are {BrewtilsRequest.COMPLETED_STATUSES}."
-                )
+                    if (
+                        old_request.status == "IN_PROGRESS"
+                        and self.status not in BrewtilsRequest.COMPLETED_STATUSES
+                    ):
+                        raise RequestStatusTransitionError(
+                            "Request status can only transition from IN_PROGRESS to a "
+                            f"completed status. Requested: {self.status}, completed statuses "
+                            f"are {BrewtilsRequest.COMPLETED_STATUSES}."
+                        )
+        except self.DoesNotExist:
+            # Requests to child gardens have an id set from the parent, but no
+            # local Request yet
+            pass
 
 
 class Subscriber(MongoModel, EmbeddedDocument):
