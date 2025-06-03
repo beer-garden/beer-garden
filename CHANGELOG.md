@@ -7,6 +7,8 @@ TBD
 ## 3.30.0rc1
 
 - Improved docker naming conventions
+- Removed double save for Garden API Status Update calls (#1892)
+- Request create skips Gridfs existing data checks and only checks for Request Update (#1892)
 
 ## 3.30.0rc0
 
@@ -81,7 +83,6 @@ TBD
 - Updated Jobs pages to trigger off internal Job events for status changes
 - Updated Events handler to support internal filtering before placing into queue for processing
 - Reduced total events processed by Entry Point event handlers
-- Removed double save for Garden API Status Update calls
 
 # 3.29.1
 
