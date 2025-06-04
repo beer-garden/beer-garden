@@ -81,6 +81,7 @@ TBD
 - Updated Jobs pages to trigger off internal Job events for status changes
 - Updated Events handler to support internal filtering before placing into queue for processing
 - Reduced total events processed by Entry Point event handlers
+- Fixed bug in `SystemsList` API using `filter_running` causing SchemaParser to fail
 
 # 3.29.1
 

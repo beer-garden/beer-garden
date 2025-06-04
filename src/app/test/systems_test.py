@@ -79,6 +79,26 @@ def system4():
     System.drop_collection()
 
 
+@pytest.fixture
+def system5():
+    yield create_system(
+        BrewtilsSystem(
+            name="default",
+            version="v0.0.1",
+            namespace="beer_garden",
+            commands=[BrewtilsCommand(name="default")],
+            instances=[
+                BrewtilsInstance(
+                    name="instance1",
+                    status="STOPPED",
+                )
+            ],
+        )
+    )
+
+    System.drop_collection()
+
+
 class TestSystem:
     @classmethod
     def setup_class(cls):
@@ -162,7 +182,9 @@ class TestSystem:
         assert system_3_found
         assert system_4_found
 
-    def test_get_systems_running_and_filtered(self, system, system2, system3, system4):
+    def test_get_systems_running_and_filtered(
+        self, system, system2, system3, system4, system5
+    ):
         systems = get_systems(filter_latest=True, filter_running=True)
 
         assert len(systems) == 1
