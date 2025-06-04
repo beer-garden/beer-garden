@@ -893,25 +893,6 @@ def handle_event(event):
             for system in event.payload.systems:
                 system.local = False
 
-            # Remove systems that are tracking locally
-            remote_systems = []
-            for system in event.payload.systems:
-                if (
-                    len(
-                        get_systems(
-                            filter_params={
-                                "local": True,
-                                "namespace": system.namespace,
-                                "name": system.name,
-                                "version": system.version,
-                            }
-                        )
-                    )
-                    < 1
-                ):
-                    remote_systems.append(system)
-            event.payload.systems = remote_systems
-
             if event.name == Events.GARDEN_SYNC.name:
                 logger.info(f"Garden sync event for {event.payload.name}")
                 try:
