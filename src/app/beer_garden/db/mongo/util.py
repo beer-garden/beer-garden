@@ -461,7 +461,7 @@ def ensure_model_migration():
         ensure_v3_27_model_migration()
         ensure_v3_29_model_migration()
         ensure_v3_30_model_migration()
-        # After the 3.30.0 migration, we can start parsing the version to determine 
+        # After the 3.30.0 migration, we can start parsing the version to determine
         # which migrations to run
 
     # This should always be the last migration
@@ -508,12 +508,14 @@ def update_request_ttl(command_type, ttl):
     from .models import Request
 
     logger.warning(f"Recomputing TTL for {command_type} for all completed requests")
-    raw_collection = Request._get_collection()  
+    raw_collection = Request._get_collection()
 
     if ttl < 0:
         updated_results = raw_collection.update_many(
-            {"root_command_type": {"$eq": command_type},
-            "expiration_at": {"$ne": None},},
+            {
+                "root_command_type": {"$eq": command_type},
+                "expiration_at": {"$ne": None},
+            },
             {"$set": {"expiration_at": None}},
         )
         logger.warning(
