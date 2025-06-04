@@ -82,6 +82,7 @@ TBD
 - Updated Events handler to support internal filtering before placing into queue for processing
 - Reduced total events processed by Entry Point event handlers
 - Fixed bug in `SystemsList` API using `filter_running` causing SchemaParser to fail
+- Removed redundant call to get UtilityService getConfig
 
 # 3.29.1
 
