@@ -7,6 +7,7 @@ TBD
 ## 3.30.0rc1
 
 - Improved docker naming conventions
+- Corrected 3.30 migration script to handle missing Command Types (#1894)
 
 ## 3.30.0rc0
 
