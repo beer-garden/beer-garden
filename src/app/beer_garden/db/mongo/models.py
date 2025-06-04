@@ -101,8 +101,11 @@ class MongoModel:
         return [index["name"] for index in cls._meta["indexes"]]
 
     def save(self, *args, **kwargs):
-        kwargs.setdefault("write_concern", {"w": "majority"})
-        return super().save(*args, **kwargs)
+        from beer_garden.metrics import CollectMetrics
+
+        with CollectMetrics("MongoModel", f"{str(self.brewtils_model)}.save"):
+            kwargs.setdefault("write_concern", {"w": "majority"})
+            return super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         # Sigh. In delete (but not save!) write_concern things ARE the kwargs!
@@ -464,149 +467,151 @@ class Request(MongoModel, Document):
 
     def pre_serialize(self):
         """Pull any fields out of GridFS"""
-        encoding = "utf-8"
+        from beer_garden.metrics import CollectMetrics
 
-        if self.output_gridfs:
-            logger.debug("Retrieving output from GridFS")
-            self.output = self.output_gridfs.read().decode(encoding)
-            self.output_gridfs = None
+        with CollectMetrics("Model_Request", "pre_serialize"):
+            encoding = "utf-8"
 
-        if self.parameters_gridfs:
-            logger.debug("Retrieving parameters from GridFS")
-            self.parameters = json.loads(self.parameters_gridfs.read().decode(encoding))
-            self.parameters_gridfs = None
+            if self.output_gridfs:
+                logger.debug("Retrieving output from GridFS")
+                self.output = self.output_gridfs.read().decode(encoding)
+                self.output_gridfs = None
 
-        if self.parent:
-            try:
-                self.parent
-            except DoesNotExist:
-                # Unable to find parent, remove object to allow brewtils serializing
-                self.parent = None
+            if self.parameters_gridfs:
+                logger.debug("Retrieving parameters from GridFS")
+                self.parameters = json.loads(
+                    self.parameters_gridfs.read().decode(encoding)
+                )
+                self.parameters_gridfs = None
+
+            if self.parent:
+                try:
+                    self.parent
+                except DoesNotExist:
+                    # Unable to find parent, remove object to allow brewtils serializing
+                    self.parent = None
 
     def _pre_save(self):
         """Move request attributes to GridFS if too big"""
-        self.updated_at = datetime.datetime.utcnow()
-        encoding = "utf-8"
+        from beer_garden.metrics import CollectMetrics
 
-        # NOTE: The following was added for #1216, which aims to resolve the duplication
-        # and orphaning of files in gridfs. It is less than ideal to do an additional
-        # database lookup, but the various conversions to and from brewtils mean that
-        # we get here having lost the parameters_gridfs and output_gridfs values,
-        # preventing us from checking if they've already been populated. Rather than
-        # perform a potentially dangerous rework of the entire Request update flow,
-        # we opt to just pull the Request as it exists in the database so that we can
-        # check those gridfs field.
-        if self.id:
-            try:
-                old_request = Request.objects.get(id=self.id)
-                self.parameters_gridfs = old_request.parameters_gridfs
-                self.output_gridfs = old_request.output_gridfs
-            except self.DoesNotExist:
-                # Requests to child gardens have an id set from the parent, but no
-                # local Request yet
-                pass
+        with CollectMetrics("Model_Request", "_pre_save"):
+            self.updated_at = datetime.datetime.utcnow()
+            encoding = "utf-8"
 
-        if self.parameters and self.parameters_gridfs.grid_id is None:
-            params_json = json.dumps(self.parameters)
-            if len(params_json) > REQUEST_MAX_PARAM_SIZE:
-                logger.debug("Parameters too big, storing in GridFS")
-                self.parameters_gridfs.put(params_json, encoding=encoding)
+            # NOTE: The following was added for #1216, which aims to resolve the duplication
+            # and orphaning of files in gridfs. It is less than ideal to do an additional
+            # database lookup, but the various conversions to and from brewtils mean that
+            # we get here having lost the parameters_gridfs and output_gridfs values,
+            # preventing us from checking if they've already been populated. Rather than
+            # perform a potentially dangerous rework of the entire Request update flow,
+            # we opt to just pull the Request as it exists in the database so that we can
+            # check those gridfs field.
 
-        if self.parameters_gridfs.grid_id:
-            self.parameters = None
+            if self.parameters and self.parameters_gridfs.grid_id is None:
+                params_json = json.dumps(self.parameters)
+                if len(params_json) > REQUEST_MAX_PARAM_SIZE:
+                    logger.debug("Parameters too big, storing in GridFS")
+                    self.parameters_gridfs.put(params_json, encoding=encoding)
 
-        if self.output and self.output_gridfs.grid_id is None:
-            output_json = json.dumps(self.output)
-            if len(output_json) > REQUEST_MAX_PARAM_SIZE:
-                logger.debug("Output size too big, storing in gridfs")
-                self.output_gridfs.put(self.output, encoding=encoding)
+            if self.parameters_gridfs.grid_id:
+                self.parameters = None
 
-        if self.output_gridfs.grid_id:
-            self.output = None
+            if self.output and self.output_gridfs.grid_id is None:
+                output_json = json.dumps(self.output)
+                if len(output_json) > REQUEST_MAX_PARAM_SIZE:
+                    logger.debug("Output size too big, storing in gridfs")
+                    self.output_gridfs.put(self.output, encoding=encoding)
 
-        if not self.metadata:
-            self.metadata = {}
+            if self.output_gridfs.grid_id:
+                self.output = None
 
-        if not self.command_display_name:
-            self.command_display_name = self.command
+            if not self.metadata:
+                self.metadata = {}
 
-        status_key = f"{self.status}_{config.get('garden.name')}"
-        if status_key not in self.metadata:
-            self.metadata[status_key] = int(
-                datetime.datetime.utcnow().timestamp() * 1000
-            )
+            if not self.command_display_name:
+                self.command_display_name = self.command
 
-        if self.has_parent:
-            try:
-                self.parent
-            except DoesNotExist:
-                # Request is an Orphan, removing parent
-                self.has_parent = False
-                self.parent = None
+            status_key = f"{self.status}_{config.get('garden.name')}"
+            if status_key not in self.metadata:
+                self.metadata[status_key] = int(
+                    datetime.datetime.utcnow().timestamp() * 1000
+                )
 
-        if not self.expiration_at and self.status in BrewtilsRequest.COMPLETED_STATUSES:
-            # If parent or orphaned
-            if not self.has_parent or Request.objects(id=self.parent.id).count() == 0:
-                if self.command_type == "INFO":
-                    ttl = config.get("db.prune.ttl.info", default=-1)
-                    if ttl > -1:
-                        self.expiration_at = self.created_at + datetime.timedelta(
-                            minutes=ttl
-                        )
-                elif self.command_type == "ACTION":
-                    ttl = config.get("db.prune.ttl.action", default=-1)
-                    if ttl > -1:
-                        self.expiration_at = self.created_at + datetime.timedelta(
-                            minutes=ttl
-                        )
-                else:
-                    # TEMP or ADMIN
-                    self.expiration_at = datetime.datetime.utcnow()
+            if self.has_parent:
+                try:
+                    self.parent
+                except DoesNotExist:
+                    # Request is an Orphan, removing parent
+                    self.has_parent = False
+                    self.parent = None
 
-        if not self.has_parent:
-            self.root_command_type = self.command_type
-        elif not self.root_command_type:
-            # If this is a child request, we need to set the root_command_type
-            # to the same as the parent request
-            try:
-                parent_request = Request.objects.get(id=self.parent.id)
-                self.root_command_type = parent_request.root_command_type
-            except DoesNotExist:
-                # Parent request was deleted, so we need to set the root_command_type
-                # to the same as this request
+            if (
+                not self.expiration_at
+                and self.status in BrewtilsRequest.COMPLETED_STATUSES
+            ):
+                # If parent or orphaned
+                if (
+                    not self.has_parent
+                    or Request.objects(id=self.parent.id).count() == 0
+                ):
+                    if self.command_type == "INFO":
+                        ttl = config.get("db.prune.ttl.info", default=-1)
+                        if ttl > -1:
+                            self.expiration_at = self.created_at + datetime.timedelta(
+                                minutes=ttl
+                            )
+                    elif self.command_type == "ACTION":
+                        ttl = config.get("db.prune.ttl.action", default=-1)
+                        if ttl > -1:
+                            self.expiration_at = self.created_at + datetime.timedelta(
+                                minutes=ttl
+                            )
+                    else:
+                        # TEMP or ADMIN
+                        self.expiration_at = datetime.datetime.utcnow()
+
+            if not self.has_parent:
                 self.root_command_type = self.command_type
+            elif not self.root_command_type:
+                # If this is a child request, we need to set the root_command_type
+                # to the same as the parent request
+                try:
+                    parent_request = Request.objects.get(id=self.parent.id)
+                    self.root_command_type = parent_request.root_command_type
+                except DoesNotExist:
+                    # Parent request was deleted, so we need to set the root_command_type
+                    # to the same as this request
+                    self.root_command_type = self.command_type
 
     def _set_child_expiration(self):
+        from beer_garden.metrics import CollectMetrics
 
-        for child_request in Request.objects(parent=self, expiration_at=None):
-            if not child_request.expiration_at:
-                child_request.expiration_at = self.expiration_at
-                child_request.save()
-                child_request._set_child_expiration()
+        with CollectMetrics("Model_Request", "_set_child_expiration"):
+
+            updates = Request.objects(parent=self, expiration_at=None).update(
+                set__expiration_at=self.expiration_at
+            )
+            if updates > 0:
+                for child_request in Request.objects(parent=self).limit(
+                    "expiration_at"
+                ):
+                    child_request._set_child_expiration()
 
     def _post_save(self):
-        if self.status == "CREATED":
-            if self.target_garden and self.target_garden == config.get("garden.name"):
+        from beer_garden.metrics import CollectMetrics
+
+        with CollectMetrics("Model_Request", "_post_save"):
+            if self.status == "CREATED":
                 self._update_raw_file_references()
-            else:
-                try:
-                    ref_system = System.objects.get(
-                        namespace=self.namespace,
-                        name=self.system,
-                        version=self.system_version,
-                    )
-                    if ref_system.local:
-                        self._update_raw_file_references()
-                except DoesNotExist:
-                    pass
 
-        if (
-            not self.has_parent
-            and self.expiration_at
-            and self.status in BrewtilsRequest.COMPLETED_STATUSES
-        ):
+            if (
+                not self.has_parent
+                and self.expiration_at
+                and self.status in BrewtilsRequest.COMPLETED_STATUSES
+            ):
 
-            self._set_child_expiration()
+                self._set_child_expiration()
 
     def _update_raw_file_references(self):
         parameters = self.parameters or {}
@@ -617,6 +622,21 @@ class Request(MongoModel, Document):
                 and param_value.get("type") == "bytes"
                 and param_value.get("id") is not None
             ):
+                if self.target_garden and self.target_garden != config.get(
+                    "garden.name"
+                ):
+                    return
+                elif (
+                    System.objects(
+                        namespace=self.namespace,
+                        name=self.system,
+                        version=self.system_version,
+                        local=True,
+                    ).count()
+                    == 0
+                ):
+                    return
+
                 try:
                     raw_file = RawFile.objects.get(id=param_value["id"])
                     raw_file.request = self
@@ -672,93 +692,103 @@ class Request(MongoModel, Document):
         super(Request, self).delete(*args, **kwargs)
 
     def save(self, *args, **kwargs):
-        self._pre_save()
-        super(Request, self).save(*args, **kwargs)
-        self._post_save()
+        from beer_garden.metrics import CollectMetrics
 
-        return self
+        with CollectMetrics("Model_Request", "save"):
+            self._pre_save()
+            super(Request, self).save(*args, **kwargs)
+            self._post_save()
+
+            return self
 
     def clean(self):
         """Validate before saving to the database"""
+        from beer_garden.metrics import CollectMetrics
 
-        if self.status not in BrewtilsRequest.STATUS_LIST:
-            raise ModelValidationError(
-                f"Can not save Request {self}: Invalid status '{self.status}'"
-            )
+        with CollectMetrics("Model_Request", "clean"):
 
-        if (
-            self.command_type is not None
-            and self.command_type not in BrewtilsRequest.COMMAND_TYPES
-        ):
-            raise ModelValidationError(
-                f"Can not save Request {self}: Invalid command type"
-                f" '{self.command_type}'"
-            )
-
-        if (
-            self.output_type is not None
-            and self.output_type not in BrewtilsRequest.OUTPUT_TYPES
-        ):
-            raise ModelValidationError(
-                f"Can not save Request {self}: Invalid output type '{self.output_type}'"
-            )
-
-        # Deal with has_parent
-        if self.has_parent is None:
-            self.has_parent = bool(self.parent)
-
-        if self.has_parent:
-            try:
-                self.parent
-            except DoesNotExist:
+            if self.status not in BrewtilsRequest.STATUS_LIST:
                 raise ModelValidationError(
-                    f"Cannot save Request {self}: parent value is not "
-                    f"present in database"
+                    f"Can not save Request {self}: Invalid status '{self.status}'"
                 )
 
-        if self.has_parent != bool(self.parent):
-            raise ModelValidationError(
-                f"Cannot save Request {self}: parent value of {self.parent!r} is not "
-                f"consistent with has_parent value of {self.has_parent}"
-            )
+            if (
+                self.command_type is not None
+                and self.command_type not in BrewtilsRequest.COMMAND_TYPES
+            ):
+                raise ModelValidationError(
+                    f"Can not save Request {self}: Invalid command type"
+                    f" '{self.command_type}'"
+                )
 
-        if (
-            not self.target_garden or self.target_garden == config.get("garden.name")
-        ) and ("status" in self.changed_fields or self.created):
-            self.status_updated_at = datetime.datetime.utcnow()
+            if (
+                self.output_type is not None
+                and self.output_type not in BrewtilsRequest.OUTPUT_TYPES
+            ):
+                raise ModelValidationError(
+                    f"Can not save Request {self}: Invalid output type '{self.output_type}'"
+                )
+
+            # Deal with has_parent
+            if self.has_parent is None:
+                self.has_parent = bool(self.parent)
+
+            if self.has_parent:
+                try:
+                    self.parent
+                except DoesNotExist:
+                    raise ModelValidationError(
+                        f"Cannot save Request {self}: parent value is not "
+                        f"present in database"
+                    )
+
+            if self.has_parent != bool(self.parent):
+                raise ModelValidationError(
+                    f"Cannot save Request {self}: parent value of {self.parent!r} is not "
+                    f"consistent with has_parent value of {self.has_parent}"
+                )
+
+            if (
+                not self.target_garden
+                or self.target_garden == config.get("garden.name")
+            ) and ("status" in self.changed_fields or self.created):
+                self.status_updated_at = datetime.datetime.utcnow()
 
     def clean_update(self):
         """Ensure that the update would not result in an illegal status transition"""
         # Get the original status
-        try:
-            old_request = Request.objects.only(
-                "parameters_gridfs", "output_gridfs", "status"
-            ).get(id=self.id)
-            if old_request:
-                self.parameters_gridfs = old_request.parameters_gridfs
-                self.output_gridfs = old_request.output_gridfs
+        from beer_garden.metrics import CollectMetrics
 
-                if self.status != old_request.status:
-                    if old_request.status in BrewtilsRequest.COMPLETED_STATUSES:
-                        raise RequestStatusTransitionError(
-                            "Status for a request cannot be updated once it has been "
-                            f"completed. Current: {old_request.status}, "
-                            f"Requested: {self.status}"
-                        )
+        with CollectMetrics("Model_Request", "clean_update"):
+            try:
+                old_request = Request.objects.only(
+                    "parameters_gridfs", "output_gridfs", "status"
+                ).get(id=self.id)
+                if old_request:
+                    self.parameters_gridfs = old_request.parameters_gridfs
+                    self.output_gridfs = old_request.output_gridfs
 
-                    if (
-                        old_request.status == "IN_PROGRESS"
-                        and self.status not in BrewtilsRequest.COMPLETED_STATUSES
-                    ):
-                        raise RequestStatusTransitionError(
-                            "Request status can only transition from IN_PROGRESS to a "
-                            f"completed status. Requested: {self.status}, completed statuses "
-                            f"are {BrewtilsRequest.COMPLETED_STATUSES}."
-                        )
-        except self.DoesNotExist:
-            # Requests to child gardens have an id set from the parent, but no
-            # local Request yet
-            pass
+                    if self.status != old_request.status:
+                        if old_request.status in BrewtilsRequest.COMPLETED_STATUSES:
+                            raise RequestStatusTransitionError(
+                                "Status for a request cannot be updated once it has been "
+                                f"completed. Current: {old_request.status}, "
+                                f"Requested: {self.status}"
+                            )
+
+                        if (
+                            old_request.status == "IN_PROGRESS"
+                            and self.status not in BrewtilsRequest.COMPLETED_STATUSES
+                        ):
+                            raise RequestStatusTransitionError(
+                                "Request status can only transition from IN_PROGRESS to a "
+                                f"completed status. Requested: {self.status}, completed statuses "
+                                f"are {BrewtilsRequest.COMPLETED_STATUSES}."
+                            )
+            except self.DoesNotExist:
+                # Requests to child gardens have an id set from the parent, but no
+                # local Request yet
+                pass
 
 
 class Subscriber(MongoModel, EmbeddedDocument):

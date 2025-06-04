@@ -253,25 +253,28 @@ def query_unique(
         mongoengine.MultipleObjectsReturned: More than one matching item exists
 
     """
-    try:
-        for k, v in kwargs.items():
-            if isinstance(v, BaseModel):
-                kwargs[k] = from_brewtils(v)
+    from beer_garden.metrics import CollectMetrics
 
-        include_fields = kwargs.pop("include_fields", None)
+    with CollectMetrics("Mongo_API", "query_unque"):
+        try:
+            for k, v in kwargs.items():
+                if isinstance(v, BaseModel):
+                    kwargs[k] = from_brewtils(v)
 
-        if include_fields:
-            query_set = (
-                _model_map[model_class].objects.only(*include_fields).get(**kwargs)
-            )
-        else:
-            query_set = _model_map[model_class].objects.get(**kwargs)
+            include_fields = kwargs.pop("include_fields", None)
 
-        return to_brewtils(query_set)
-    except DoesNotExist:
-        if raise_missing:
-            raise
-        return None
+            if include_fields:
+                query_set = (
+                    _model_map[model_class].objects.only(*include_fields).get(**kwargs)
+                )
+            else:
+                query_set = _model_map[model_class].objects.get(**kwargs)
+
+            return to_brewtils(query_set)
+        except DoesNotExist:
+            if raise_missing:
+                raise
+            return None
 
 
 def query(
@@ -302,51 +305,54 @@ def query(
         A list of Brewtils models
 
     """
-    if kwargs.get("raw_query"):
-        query_set = _model_map[model_class].objects(__raw__=kwargs.get("raw_query"))
-    else:
-        query_set = _model_map[model_class].objects
+    from beer_garden.metrics import CollectMetrics
 
-    if q_filter:
-        query_set = query_set.filter(q_filter)
+    with CollectMetrics("Mongo_API", "query"):
+        if kwargs.get("raw_query"):
+            query_set = _model_map[model_class].objects(__raw__=kwargs.get("raw_query"))
+        else:
+            query_set = _model_map[model_class].objects
 
-    if kwargs.get("filter_params"):
-        filter_params = kwargs["filter_params"]
+        if q_filter:
+            query_set = query_set.filter(q_filter)
 
-        # If any values are brewtils models those need to be converted
-        for key in filter_params:
-            if isinstance(filter_params[key], BaseModel):
-                filter_params[key] = from_brewtils(filter_params[key])
+        if kwargs.get("filter_params"):
+            filter_params = kwargs["filter_params"]
 
-        query_set = query_set.filter(**(kwargs.get("filter_params", {})))
+            # If any values are brewtils models those need to be converted
+            for key in filter_params:
+                if isinstance(filter_params[key], BaseModel):
+                    filter_params[key] = from_brewtils(filter_params[key])
 
-    # Bad things happen if you try to use a hint with a text search.
-    if kwargs.get("text_search"):
-        query_set = query_set.search_text(kwargs.get("text_search"))
-    elif kwargs.get("hint"):
-        # Sanity check - if index is 'bad' just let mongo deal with it
-        if kwargs.get("hint") in _model_map[model_class].index_names():
-            query_set = query_set.hint(kwargs.get("hint"))
+            query_set = query_set.filter(**(kwargs.get("filter_params", {})))
 
-    if kwargs.get("order_by"):
-        query_set = query_set.order_by(kwargs.get("order_by"))
+        # Bad things happen if you try to use a hint with a text search.
+        if kwargs.get("text_search"):
+            query_set = query_set.search_text(kwargs.get("text_search"))
+        elif kwargs.get("hint"):
+            # Sanity check - if index is 'bad' just let mongo deal with it
+            if kwargs.get("hint") in _model_map[model_class].index_names():
+                query_set = query_set.hint(kwargs.get("hint"))
 
-    if kwargs.get("include_fields"):
-        query_set = query_set.only(*kwargs.get("include_fields"))
+        if kwargs.get("order_by"):
+            query_set = query_set.order_by(kwargs.get("order_by"))
 
-    if kwargs.get("exclude_fields"):
-        query_set = query_set.exclude(*kwargs.get("exclude_fields"))
+        if kwargs.get("include_fields"):
+            query_set = query_set.only(*kwargs.get("include_fields"))
 
-    if not kwargs.get("dereference_nested", True):
-        query_set = query_set.no_dereference()
+        if kwargs.get("exclude_fields"):
+            query_set = query_set.exclude(*kwargs.get("exclude_fields"))
 
-    if kwargs.get("start"):
-        query_set = query_set.skip(int(kwargs.get("start")))
+        if not kwargs.get("dereference_nested", True):
+            query_set = query_set.no_dereference()
 
-    if kwargs.get("length"):
-        query_set = query_set.limit(int(kwargs.get("length")))
+        if kwargs.get("start"):
+            query_set = query_set.skip(int(kwargs.get("start")))
 
-    return [] if len(query_set) == 0 else to_brewtils(query_set)
+        if kwargs.get("length"):
+            query_set = query_set.limit(int(kwargs.get("length")))
+
+        return [] if len(query_set) == 0 else to_brewtils(query_set)
 
 
 def create(obj: ModelItem) -> ModelItem:
@@ -362,17 +368,20 @@ def create(obj: ModelItem) -> ModelItem:
         The saved Brewtils model
 
     """
-    mongo_obj: MongoModel = from_brewtils(obj)
+    from beer_garden.metrics import CollectMetrics
 
-    try:
-        if hasattr(mongo_obj, "deep_save"):
-            mongo_obj.deep_save()
-        else:
-            mongo_obj.save(force_insert=True)
-    except NotUniqueError as ex:
-        raise NotUniqueException from ex
+    with CollectMetrics("Mongo_API", "create"):
+        mongo_obj: MongoModel = from_brewtils(obj)
 
-    return to_brewtils(mongo_obj)
+        try:
+            if hasattr(mongo_obj, "deep_save"):
+                mongo_obj.deep_save()
+            else:
+                mongo_obj.save(force_insert=True)
+        except NotUniqueError as ex:
+            raise NotUniqueException from ex
+
+        return to_brewtils(mongo_obj)
 
 
 def update(obj: ModelItem) -> ModelItem:
@@ -388,16 +397,19 @@ def update(obj: ModelItem) -> ModelItem:
         The saved Brewtils model
 
     """
-    mongo_obj = from_brewtils(obj)
+    from beer_garden.metrics import CollectMetrics
 
-    mongo_obj.clean_update()
+    with CollectMetrics("Mongo_API", "update"):
+        mongo_obj = from_brewtils(obj)
 
-    if hasattr(mongo_obj, "deep_save"):
-        mongo_obj.deep_save()
-    else:
-        mongo_obj.save()
+        mongo_obj.clean_update()
 
-    return to_brewtils(mongo_obj)
+        if hasattr(mongo_obj, "deep_save"):
+            mongo_obj.deep_save()
+        else:
+            mongo_obj.save()
+
+        return to_brewtils(mongo_obj)
 
 
 def bulk_update(objs: List[ModelItem]) -> None:
@@ -440,16 +452,19 @@ def modify(obj: ModelItem, query=None, **kwargs) -> ModelItem:
         The modified Brewtils model
 
     """
-    mongo_obj = from_brewtils(obj)
+    from beer_garden.metrics import CollectMetrics
 
-    # If any values are brewtils models those need to be converted
-    for key in kwargs:
-        if isinstance(kwargs[key], BaseModel):
-            kwargs[key] = from_brewtils(kwargs[key])
+    with CollectMetrics("Mongo_API", "modify"):
+        mongo_obj = from_brewtils(obj)
 
-    mongo_obj.modify(query=query, **kwargs)
+        # If any values are brewtils models those need to be converted
+        for key in kwargs:
+            if isinstance(kwargs[key], BaseModel):
+                kwargs[key] = from_brewtils(kwargs[key])
 
-    return to_brewtils(mongo_obj)
+        mongo_obj.modify(query=query, **kwargs)
+
+        return to_brewtils(mongo_obj)
 
 
 def delete(obj: ModelItem, force_delete: bool = False) -> None:

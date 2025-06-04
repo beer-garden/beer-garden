@@ -207,7 +207,9 @@ def extract_custom_context(result) -> None:
 
             elasticapm.label(request_size=sys.getsizeof(result))
             if hasattr(result, "parameters"):
-                elasticapm.label(request_parameter_size=sys.getsizeof(result.parameters))
+                elasticapm.label(
+                    request_parameter_size=sys.getsizeof(result.parameters)
+                )
             if hasattr(result, "output"):
                 elasticapm.label(request_output_size=sys.getsizeof(result.output))
 
