@@ -4,6 +4,12 @@
 
 TBD
 
+## 3.30.0rc1
+
+- Improved docker naming conventions
+
+## 3.30.0rc0
+
 - Updated rpm script to supply cli values to config migration. Beer-garden `migrate` will apply cli
   values prior to yapconf `migrate_config_file`.
 - Fixed forwarding operations to downstream causing blocking to the router. Mostly seen during File Forwarding.
@@ -71,8 +77,10 @@ TBD
 - Removed status, status_info, and namespaces from Garden
 - Update Request Pruning to utilize new field Expiration At instead of each command type independently 
 - Update Requests index search box from text_search to or filter on UI columns
+- Updated Routing Logic to accept Target Garden provided and cache multi-hop gardens in routing tables
 - Updated Jobs pages to trigger off internal Job events for status changes
 - Updated Events handler to support internal filtering before placing into queue for processing
+- Reduced total events processed by Entry Point event handlers
 
 # 3.29.1
 

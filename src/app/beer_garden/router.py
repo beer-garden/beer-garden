@@ -555,8 +555,7 @@ def setup_routing():
             (garden.has_parent and garden.parent == config.get("garden.name"))
             or not garden.has_parent
         ):
-            for system in garden.systems:
-                add_routing_system(system=system, garden_name=garden.name)
+            add_routing_garden(garden)
 
             if (
                 garden.connection_type is not None
@@ -636,22 +635,24 @@ def remove_routing_garden(garden_name=None):
         }
 
 
-def add_routing_garden(garden: Garden, routing_garden: str):
+def add_routing_garden(garden: Garden):
     if garden.systems:
         for system in garden.systems:
-            add_routing_system(system=system, garden_name=routing_garden)
+            add_routing_system(system=system, garden_name=garden.name)
 
     if garden.children:
         for child in garden.children:
-            add_routing_garden(child, routing_garden)
+            add_routing_garden(child)
 
 
 def handle_event(event):
     """Handle events"""
     if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
         add_routing_system(system=event.payload, garden_name=event.garden)
+        return
     elif event.name == Events.SYSTEM_REMOVED.name:
         remove_routing_system(system=event.payload)
+        return
 
     # Here we want to handle sync events from immediate children only
     if (
@@ -665,12 +666,8 @@ def handle_event(event):
             remove_routing_garden(garden_name=event.garden)
 
             # Then add routes to the new systems
-            add_routing_garden(event.payload, event.payload.name)
-
-    # To save memory, we need to remove children
-    if event.payload_type == "Garden":
-        del event.payload.children
-        del event.payload.systems
+            add_routing_garden(event.payload)
+        return
 
     # This is a little unintuitive. We want to let the garden module deal with handling
     # any downstream garden changes since handling those changes is nontrivial.
@@ -687,10 +684,16 @@ def handle_event(event):
             Events.GARDEN_UPDATED.name,
         ]
     ):
+
         # Only store the garden if it's 1 hop of the local garden
         if not event.payload.has_parent or event.payload.parent == config.get(
             "garden.name"
         ):
+            # To save memory, we need to remove children
+            if event.payload_type == "Garden":
+                del event.payload.children
+                del event.payload.systems
+
             if event.name == Events.GARDEN_CONFIGURED.name:
                 if event.payload.name != config.get("garden.name") and (
                     (
@@ -714,9 +717,10 @@ def handle_event(event):
                                 )
 
                             elif connection.status == "DISABLED":
-                                stomp_garden_connections[
-                                    event.payload.name
-                                ].disconnect()
+                                if event.payload.name in stomp_garden_connections:
+                                    stomp_garden_connections[
+                                        event.payload.name
+                                    ].disconnect()
 
                 if (
                     not stomp_found
@@ -824,26 +828,17 @@ def _pre_execute(operation: Operation) -> Operation:
 
 
 def _determine_target(operation: Operation) -> str:
-    """Determine the garden the operation is targeting
+    """Determine the garden the operation is targeting"""
 
-    Note that while the operation can already have a target garden field this will only
-    be used as a fallback if a better target can't be calculated.
-    See https://github.com/beer-garden/beer-garden/issues/1076
-    """
+    if operation.target_garden_name:
+        return operation.target_garden_name
 
     target_garden = _target_from_type(operation)
 
     if not target_garden:
-        if not operation.target_garden_name:
-            raise UnknownGardenException(
-                f"Could not determine the target garden for routing {operation!r}"
-            )
-
-        logger.warning(
-            "Couldn't determine a target garden but the operation had one, using "
-            f"{operation.target_garden_name}"
+        raise UnknownGardenException(
+            f"Could not determine the target garden for routing {operation!r}"
         )
-        return operation.target_garden_name
 
     return target_garden
 
