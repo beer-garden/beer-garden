@@ -1,5 +1,3 @@
-import {camelCaseKeys} from '../services/utility_service.js';
-
 routeConfig.$inject = [
   '$stateProvider',
   '$urlRouterProvider',
