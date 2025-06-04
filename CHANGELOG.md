@@ -7,6 +7,7 @@ TBD
 ## 3.30.0rc1
 
 - Improved docker naming conventions
+- Implemented previous Beer Garden installed version check to determine database migrations required (#1880)
 
 ## 3.30.0rc0
 
