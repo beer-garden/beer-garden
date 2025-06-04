@@ -4,6 +4,15 @@
 
 TBD
 
+## 3.30.0rc1
+
+- Improved docker naming conventions
+- Updated request list api from `hidden__ne=True` to `hidden=False` for more efficient use of index.
+- Fixed bug in `SystemsList` API using `filter_running` causing SchemaParser to fail
+- Removed redundant call to get UtilityService getConfig
+
+## 3.30.0rc0
+
 - Updated rpm script to supply cli values to config migration. Beer-garden `migrate` will apply cli
   values prior to yapconf `migrate_config_file`.
 - Fixed forwarding operations to downstream causing blocking to the router. Mostly seen during File Forwarding.
@@ -75,7 +84,6 @@ TBD
 - Updated Jobs pages to trigger off internal Job events for status changes
 - Updated Events handler to support internal filtering before placing into queue for processing
 - Reduced total events processed by Entry Point event handlers
-- Updated request list api from `hidden__ne=True` to `hidden=False` for more efficient use of index.
 
 # 3.29.1
 
