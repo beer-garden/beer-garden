@@ -262,7 +262,6 @@ class InternalQueueListener(DequeSetListener):
             elif elasticapm.get_trace_parent_header() is not None:
                 trace_parent_header = elasticapm.get_trace_parent_header()
 
-        
             try:
                 with CollectMetrics(
                     "Queue_Event",

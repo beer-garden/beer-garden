@@ -2,6 +2,7 @@
 import datetime
 import json
 import logging
+import sys
 
 import pytz
 import six
@@ -491,6 +492,25 @@ class Request(MongoModel, Document):
                     # Unable to find parent, remove object to allow brewtils serializing
                     self.parent = None
 
+    def _calculate_size(self, field: [dict, str], total_size: int = 0) -> bool:
+        """Determine if the field is a large dataset that should be stored in GridFS"""
+        if isinstance(field, dict):
+            for _, value in field.items():
+                self._is_large_dataset(value, total_size)
+                if total_size > REQUEST_MAX_PARAM_SIZE:
+                    return total_size
+
+        elif isinstance(field, list):
+            for item in field:
+                self._calculate_size(item, total_size)
+                if total_size > REQUEST_MAX_PARAM_SIZE:
+                    return total_size
+
+        else:
+            return total_size + sys.getsizeof(field)
+
+        return total_size
+
     def _pre_save(self):
         """Move request attributes to GridFS if too big"""
         from beer_garden.metrics import CollectMetrics
@@ -508,23 +528,25 @@ class Request(MongoModel, Document):
             # we opt to just pull the Request as it exists in the database so that we can
             # check those gridfs field.
 
-            if self.parameters and self.parameters_gridfs.grid_id is None:
-                params_json = json.dumps(self.parameters)
-                if len(params_json) > REQUEST_MAX_PARAM_SIZE:
-                    logger.debug("Parameters too big, storing in GridFS")
-                    self.parameters_gridfs.put(params_json, encoding=encoding)
+            with CollectMetrics("Model_Request", "_pre_save::parameters_gridfs"):
+                if self.parameters and self.parameters_gridfs.grid_id is None:
+                    if self._calculate_size(self.parameters) > REQUEST_MAX_PARAM_SIZE:
+                        logger.debug("Parameters too big, storing in GridFS")
+                        self.parameters_gridfs.put(
+                            json.dumps(self.parameters), encoding=encoding
+                        )
 
-            if self.parameters_gridfs.grid_id:
-                self.parameters = None
+                if self.parameters_gridfs.grid_id:
+                    self.parameters = None
 
-            if self.output and self.output_gridfs.grid_id is None:
-                output_json = json.dumps(self.output)
-                if len(output_json) > REQUEST_MAX_PARAM_SIZE:
-                    logger.debug("Output size too big, storing in gridfs")
-                    self.output_gridfs.put(self.output, encoding=encoding)
+            with CollectMetrics("Model_Request", "_pre_save::output_gridfs"):
+                if self.output and self.output_gridfs.grid_id is None:
+                    if self._calculate_size(self.output) > REQUEST_MAX_PARAM_SIZE:
+                        logger.debug("Output size too big, storing in gridfs")
+                        self.output_gridfs.put(self.output, encoding=encoding)
 
-            if self.output_gridfs.grid_id:
-                self.output = None
+                if self.output_gridfs.grid_id:
+                    self.output = None
 
             if not self.metadata:
                 self.metadata = {}
