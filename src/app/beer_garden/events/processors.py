@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import datetime
 import logging
+import sys
 import threading
 import time
 import traceback
@@ -12,6 +13,7 @@ from queue import Empty
 
 import elasticapm
 from brewtils.models import Event, Events, Request
+from brewtils.schema_parser import SchemaParser
 from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden.config as config
@@ -28,15 +30,37 @@ class BaseProcessor(StoppableThread):
         super().__init__(**kwargs)
 
         self._action = action
+        self._schema_parser = SchemaParser()
 
     def process(self, item):
         try:
             self._action(item)
+            del item
         except Exception as ex:
             logger.exception(f"Error processing: {ex}")
 
     def put(self, item):
         self.process(item)
+
+    def clone(self, item):
+
+        if (
+            isinstance(item, Event)
+            and hasattr(item, "payload")
+            and item.payload_type == "Request"
+        ):
+            # If payload is a Request, we need to check if the output is large
+            # and if so, we will serialize it to avoid memory issues
+            if (
+                hasattr(item.payload, "output")
+                and sys.getsizeof(item.payload.output) > 1000000
+            ):
+                return self._schema_parser.parse_event(
+                    self._schema_parser.serialize_event(item, to_string=False),
+                    from_string=False,
+                )
+
+        return deepcopy(item)
 
 
 class DequeListener(BaseProcessor):
@@ -118,13 +142,16 @@ class DequeSetListener(DequeListener):
                                             * 1000
                                         )
 
-                            self._data[str(event.payload.id)] = deepcopy(event)
+                            self._data[str(event.payload.id)] = event
+                            del ref
+                        else:
+                            del event
                     else:
                         # Type Mis-match, just process the event
                         super().put(event)
                         return
                 else:
-                    self._data[str(event.payload.id)] = deepcopy(event)
+                    self._data[str(event.payload.id)] = self.clone(event)
                     self._queue.append(str(event.payload.id))
 
         else:
@@ -244,7 +271,7 @@ class InternalQueueListener(DequeSetListener):
                 if config.get("metrics.elastic.enabled"):
                     extract_custom_context(event)
 
-                self._handler(deepcopy(event))
+                self._handler(self.clone(event))
             except Exception as ex:
                 logger.error(
                     "'%s' handler received an error executing callback for event %s: %s: %s"
