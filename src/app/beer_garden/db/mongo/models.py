@@ -496,7 +496,7 @@ class Request(MongoModel, Document):
         """Determine if the field is a large dataset that should be stored in GridFS"""
         if isinstance(field, dict):
             for _, value in field.items():
-                self._is_large_dataset(value, total_size)
+                self._calculate_size(value, total_size)
                 if total_size > REQUEST_MAX_PARAM_SIZE:
                     return total_size
 
