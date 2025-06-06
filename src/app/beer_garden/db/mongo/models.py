@@ -603,7 +603,7 @@ class Request(MongoModel, Document):
                     # If this is a child request, we need to set the root_command_type
                     # to the same as the parent request
                     try:
-                        parent_request = Request.objects.get(id=self.parent.id)
+                        parent_request = Request.objects.only("root_command_type").get(id=self.parent.id)
                         self.root_command_type = parent_request.root_command_type
                     except DoesNotExist:
                         # Parent request was deleted, so we need to set the root_command_type
