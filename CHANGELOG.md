@@ -9,6 +9,8 @@ TBD
 - Improved docker naming conventions
 - Removed double save for Garden API Status Update calls (#1892)
 - Request create skips Gridfs existing data checks and only checks for Request Update (#1892)
+- Implemented previous Beer Garden installed version check to determine database migrations required (#1880)
+
 
 ## 3.30.0rc0
 
@@ -83,6 +85,8 @@ TBD
 - Updated Jobs pages to trigger off internal Job events for status changes
 - Updated Events handler to support internal filtering before placing into queue for processing
 - Reduced total events processed by Entry Point event handlers
+- Fixed bug in `SystemsList` API using `filter_running` causing SchemaParser to fail
+- Removed redundant call to get UtilityService getConfig
 
 # 3.29.1
 
