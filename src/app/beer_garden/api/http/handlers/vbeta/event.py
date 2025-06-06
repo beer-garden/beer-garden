@@ -1,3 +1,5 @@
+import asyncio
+
 from brewtils.models import Operation, Permissions
 from brewtils.schema_parser import SchemaParser
 
@@ -36,8 +38,13 @@ class EventPublisherAPI(AuthorizationHandler):
         event = SchemaParser.parse_event(self.request.decoded_body, from_string=True)
         self.verify_user_permission_for_object(event)
 
-        self.process_operation(
-            Operation(operation_type="PUBLISH_EVENT", model=event, model_type="Event")
+        asyncio.create_task(
+            self.process_operation(
+                Operation(
+                    operation_type="PUBLISH_EVENT", model=event, model_type="Event"
+                ),
+                filter_results=False,
+            )
         )
 
         self.set_status(204)
