@@ -270,6 +270,9 @@ class CollectMetrics(elasticapm.capture_span):
 
         # ADD LABELS
         if exception_type:
+            self.client.capture_exception(
+                exec_info=(exception_type, exception_value, exception_traceback)
+            )
             self.client.end_transaction(result="failure")
         if self.client:
             self.client.end_transaction(result="success")

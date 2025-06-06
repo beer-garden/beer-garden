@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import datetime
 import logging
+import os
 import sys
 import threading
 import time
@@ -9,7 +10,6 @@ from collections import deque
 from copy import deepcopy
 from multiprocessing import Queue
 from queue import Empty
-import os
 
 import elasticapm
 from brewtils.models import Event, Events, Request
@@ -53,6 +53,7 @@ class BaseProcessor(StoppableThread):
             # and if so, we will serialize it to avoid memory issues
             if (
                 hasattr(item.payload, "output")
+                and item.payload.output is not None
                 and sys.getsizeof(item.payload.output) > 1000000
             ):
                 return self._schema_parser.parse_event(
@@ -273,7 +274,7 @@ class InternalQueueListener(DequeSetListener):
 
                     self._handler(self.clone(event))
             except Exception as ex:
-                _,_, exc_tb = sys.exc_info()
+                _, _, exc_tb = sys.exc_info()
                 fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                 logger.error(
                     "'%s' handler received an error executing callback for event %s: %s: %s Line %s"
