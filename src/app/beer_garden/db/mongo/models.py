@@ -583,14 +583,14 @@ class Request(MongoModel, Document):
                         if self.command_type == "INFO":
                             ttl = config.get("db.prune.ttl.info", default=-1)
                             if ttl > -1:
-                                self.expiration_at = self.created_at + datetime.timedelta(
-                                    minutes=ttl
+                                self.expiration_at = (
+                                    self.created_at + datetime.timedelta(minutes=ttl)
                                 )
                         elif self.command_type == "ACTION":
                             ttl = config.get("db.prune.ttl.action", default=-1)
                             if ttl > -1:
-                                self.expiration_at = self.created_at + datetime.timedelta(
-                                    minutes=ttl
+                                self.expiration_at = (
+                                    self.created_at + datetime.timedelta(minutes=ttl)
                                 )
                         else:
                             # TEMP or ADMIN
@@ -619,9 +619,7 @@ class Request(MongoModel, Document):
                 set__expiration_at=self.expiration_at
             )
             if updates > 0:
-                for child_request in Request.objects(parent=self).limit(
-                    "expiration_at"
-                ):
+                for child_request in Request.objects(parent=self).only("expiration_at"):
                     child_request._set_child_expiration()
 
     def _post_save(self):
