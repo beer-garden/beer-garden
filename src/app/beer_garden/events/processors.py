@@ -262,16 +262,17 @@ class InternalQueueListener(DequeSetListener):
             elif elasticapm.get_trace_parent_header() is not None:
                 trace_parent_header = elasticapm.get_trace_parent_header()
 
-        with CollectMetrics(
-            "Queue_Event",
-            f"QUEUE_POP::{self._handler_tag}",
-            trace_parent_header=trace_parent_header,
-        ):
+        
             try:
-                if config.get("metrics.elastic.enabled"):
-                    extract_custom_context(event)
+                with CollectMetrics(
+                    "Queue_Event",
+                    f"QUEUE_POP::{self._handler_tag}",
+                    trace_parent_header=trace_parent_header,
+                ):
+                    if config.get("metrics.elastic.enabled"):
+                        extract_custom_context(event)
 
-                self._handler(self.clone(event))
+                    self._handler(self.clone(event))
             except Exception as ex:
                 logger.error(
                     "'%s' handler received an error executing callback for event %s: %s: %s"
