@@ -4,12 +4,12 @@ import logging
 import sys
 import threading
 import time
-import traceback
 import uuid
 from collections import deque
 from copy import deepcopy
 from multiprocessing import Queue
 from queue import Empty
+import os
 
 import elasticapm
 from brewtils.models import Event, Events, Request
@@ -273,13 +273,16 @@ class InternalQueueListener(DequeSetListener):
 
                     self._handler(self.clone(event))
             except Exception as ex:
+                _,_, exc_tb = sys.exc_info()
+                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                 logger.error(
-                    "'%s' handler received an error executing callback for event %s: %s: %s"
+                    "'%s' handler received an error executing callback for event %s: %s: %s Line %s"
                     % (
                         self._handler_tag,
                         repr(event),
                         str(ex),
-                        traceback.TracebackException.from_exception(ex),
+                        fname,
+                        exc_tb.tb_lineno,
                     )
                 )
 
