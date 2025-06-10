@@ -24,6 +24,7 @@ from brewtils.models import Instance as BrewtilsInstance
 from brewtils.models import Job as BrewtilsJob
 from brewtils.models import Parameter as BrewtilsParameter
 from brewtils.models import Request as BrewtilsRequest
+from bson.errors import BSONObjectTooLarge
 from mongoengine import (
     CASCADE,
     DO_NOTHING,
@@ -509,6 +510,13 @@ class Request(MongoModel, Document):
 
         return total_size
 
+    def _spill_parameters_to_gridfs(self):
+        from beer_garden.metrics import CollectMetrics
+
+        with CollectMetrics("Model_Request", "_spill_parameters_to_gridfs"):
+            self.parameters_gridfs.put(json.dumps(self.parameters), encoding="utf-8")
+            self.parameters = None
+
     def _pre_save(self):
         """Move request attributes to GridFS if too big"""
         from beer_garden.metrics import CollectMetrics
@@ -526,19 +534,19 @@ class Request(MongoModel, Document):
             # we opt to just pull the Request as it exists in the database so that we can
             # check those gridfs field.
 
-            with CollectMetrics("Model_Request", "_pre_save::parameters_gridfs"):
-                if self.parameters and self.parameters_gridfs.grid_id is None:
-                    if self._calculate_size(self.parameters) > REQUEST_MAX_PARAM_SIZE:
-                        logger.debug("Parameters too big, storing in GridFS")
-                        with CollectMetrics(
-                            "Model_Request", "_pre_save::parameters_gridfs::put"
-                        ):
-                            self.parameters_gridfs.put(
-                                json.dumps(self.parameters), encoding=encoding
-                            )
+            # with CollectMetrics("Model_Request", "_pre_save::parameters_gridfs"):
+            #     if self.parameters and self.parameters_gridfs.grid_id is None:
+            #         if self._calculate_size(self.parameters) > REQUEST_MAX_PARAM_SIZE:
+            #             logger.debug("Parameters too big, storing in GridFS")
+            #             with CollectMetrics(
+            #                 "Model_Request", "_pre_save::parameters_gridfs::put"
+            #             ):
+            #                 self.parameters_gridfs.put(
+            #                     json.dumps(self.parameters), encoding=encoding
+            #                 )
 
-                if self.parameters_gridfs.grid_id:
-                    self.parameters = None
+            if self.parameters_gridfs.grid_id:
+                self.parameters = None
 
             with CollectMetrics("Model_Request", "_pre_save::output_gridfs"):
                 if self.output and self.output_gridfs.grid_id is None:
@@ -719,7 +727,13 @@ class Request(MongoModel, Document):
 
         with CollectMetrics("Model_Request", "save"):
             self._pre_save()
-            super(Request, self).save(*args, **kwargs)
+            try:
+                super(Request, self).save(*args, **kwargs)
+            except BSONObjectTooLarge:
+                # Output values are capped at 5MB, so the parameters must be too large
+                # spilling them to gridfs
+                self._spill_parameters_to_gridfs()
+                super(Request, self).save(*args, **kwargs)
             self._post_save()
 
             return self
