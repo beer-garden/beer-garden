@@ -24,7 +24,7 @@ from brewtils.models import Instance as BrewtilsInstance
 from brewtils.models import Job as BrewtilsJob
 from brewtils.models import Parameter as BrewtilsParameter
 from brewtils.models import Request as BrewtilsRequest
-from bson.errors import BSONObjectTooLarge
+from pymongo.errors import DocumentTooLarge
 from mongoengine import (
     CASCADE,
     DO_NOTHING,
@@ -729,7 +729,7 @@ class Request(MongoModel, Document):
             self._pre_save()
             try:
                 super(Request, self).save(*args, **kwargs)
-            except BSONObjectTooLarge:
+            except DocumentTooLarge:
                 # Output values are capped at 5MB, so the parameters must be too large
                 # spilling them to gridfs
                 self._spill_parameters_to_gridfs()
