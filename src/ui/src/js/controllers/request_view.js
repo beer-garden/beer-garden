@@ -60,8 +60,8 @@ export default function requestViewController(
   $scope.formatErrorTitle = undefined;
   $scope.formatErrorMsg = undefined;
   $scope.showFormatted = false;
-  $scope.disabledPourItAgain = false;
-  $scope.msgPourItAgain = null;
+  $scope.disabledPourItAgain = true;
+  $scope.msgPourItAgain = 'Loading System Info';
 
   $scope.isMaximized = localStorageService.get('isMaximized');
   if ($scope.isMaximized === null) {
@@ -268,7 +268,7 @@ export default function requestViewController(
 
       const commands = system.commands;
       for (let i = 0; i < commands.length; i++) {
-        if (commands[i].name == request.command) {
+        if (commands[i].name == $scope.request.command) {
           $scope.disabledPourItAgain = false;
           $scope.msgPourItAgain = null;
           break;
