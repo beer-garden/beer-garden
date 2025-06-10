@@ -187,6 +187,9 @@ def initialize_elastic_client(label: str):
 
 def _calculate_size(field) -> int:
     """Determine if the field is a large dataset that should be stored in GridFS"""
+
+    total_size = sys.getsizeof(field)
+
     if isinstance(field, dict):
         total_size += sys.getsizeof(json.dumps(field))
 
@@ -197,8 +200,6 @@ def _calculate_size(field) -> int:
         for attribute in dir(field):
             if not callable(attribute) and not attribute.startswith("_"):
                 total_size += _calculate_size(getattr(field, attribute))
-
-    total_size += sys.getsizeof(field)
 
     return total_size
 
