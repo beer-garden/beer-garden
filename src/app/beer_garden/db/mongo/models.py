@@ -492,22 +492,28 @@ class Request(MongoModel, Document):
                     # Unable to find parent, remove object to allow brewtils serializing
                     self.parent = None
 
-    def _calculate_size(self, field: [dict, str], total_size: int = 0) -> bool:
+    def _calculate_size(
+        self,
+        field: [dict, str],
+        total_size: int = 0,
+        max_size: int = 5 * 1_000_000,
+    ) -> bool:
         """Determine if the field is a large dataset that should be stored in GridFS"""
+        total_size = total_size + sys.getsizeof(field)
+        if total_size > max_size:
+            return total_size
+
         if isinstance(field, dict):
             for _, value in field.items():
-                self._calculate_size(value, total_size)
-                if total_size > REQUEST_MAX_PARAM_SIZE:
+                total_size = self._calculate_size(value, total_size, max_size=max_size)
+                if total_size > max_size:
                     return total_size
 
         elif isinstance(field, list):
             for item in field:
-                self._calculate_size(item, total_size)
-                if total_size > REQUEST_MAX_PARAM_SIZE:
+                total_size = self._calculate_size(item, total_size, max_size=max_size)
+                if total_size > max_size:
                     return total_size
-
-        else:
-            return total_size + sys.getsizeof(field)
 
         return total_size
 
@@ -530,97 +536,108 @@ class Request(MongoModel, Document):
 
             with CollectMetrics("Model_Request", "_pre_save::parameters_gridfs"):
                 if self.parameters and self.parameters_gridfs.grid_id is None:
-                    if self._calculate_size(self.parameters) > REQUEST_MAX_PARAM_SIZE:
-                        logger.debug("Parameters too big, storing in GridFS")
-                        self.parameters_gridfs.put(
-                            json.dumps(self.parameters), encoding=encoding
+                    if (
+                        self._calculate_size(
+                            self.parameters, max_size=REQUEST_MAX_PARAM_SIZE
                         )
+                        > REQUEST_MAX_PARAM_SIZE
+                    ):
+                        logger.debug("Parameters too big, storing in GridFS")
+                        with CollectMetrics(
+                            "Model_Request", "_pre_save::parameters_gridfs::put"
+                        ):
+                            self.parameters_gridfs.put(
+                                json.dumps(self.parameters), encoding=encoding
+                            )
 
                 if self.parameters_gridfs.grid_id:
                     self.parameters = None
 
             with CollectMetrics("Model_Request", "_pre_save::output_gridfs"):
                 if self.output and self.output_gridfs.grid_id is None:
-                    if self._calculate_size(self.output) > REQUEST_MAX_PARAM_SIZE:
+                    if (
+                        self._calculate_size(
+                            self.output, max_size=REQUEST_MAX_PARAM_SIZE
+                        )
+                        > REQUEST_MAX_PARAM_SIZE
+                    ):
                         logger.debug("Output size too big, storing in gridfs")
-                        self.output_gridfs.put(self.output, encoding=encoding)
+                        with CollectMetrics(
+                            "Model_Request", "_pre_save::output_gridfs:put"
+                        ):
+                            self.output_gridfs.put(self.output, encoding=encoding)
 
                 if self.output_gridfs.grid_id:
                     self.output = None
 
-            with CollectMetrics("Model_Request", "_pre_save::properties"):
-                if not self.metadata:
-                    self.metadata = {}
+            if not self.metadata:
+                self.metadata = {}
 
-                if not self.command_display_name:
-                    self.command_display_name = self.command
+            if not self.command_display_name:
+                self.command_display_name = self.command
 
-                status_key = f"{self.status}_{config.get('garden.name')}"
-                if status_key not in self.metadata:
-                    self.metadata[status_key] = int(
-                        datetime.datetime.utcnow().timestamp() * 1000
-                    )
+            status_key = f"{self.status}_{config.get('garden.name')}"
+            if status_key not in self.metadata:
+                self.metadata[status_key] = int(
+                    datetime.datetime.utcnow().timestamp() * 1000
+                )
 
-            with CollectMetrics("Model_Request", "_pre_save::parent_check"):
-                if self.has_parent:
-                    try:
-                        self.parent
-                    except DoesNotExist:
-                        # Request is an Orphan, removing parent
-                        self.has_parent = False
-                        self.parent = None
+            if self.has_parent:
+                try:
+                    self.parent
+                except DoesNotExist:
+                    # Request is an Orphan, removing parent
+                    self.has_parent = False
+                    self.parent = None
 
-            with CollectMetrics("Model_Request", "_pre_save::expiration_check"):
+            if (
+                not self.expiration_at
+                and self.status in BrewtilsRequest.COMPLETED_STATUSES
+            ):
+                # If parent or orphaned
                 if (
-                    not self.expiration_at
-                    and self.status in BrewtilsRequest.COMPLETED_STATUSES
+                    not self.has_parent
+                    or Request.objects(id=self.parent.id).count() == 0
                 ):
-                    # If parent or orphaned
-                    if (
-                        not self.has_parent
-                        or Request.objects(id=self.parent.id).count() == 0
-                    ):
-                        if self.command_type == "INFO":
-                            ttl = config.get("db.prune.ttl.info", default=-1)
-                            if ttl > -1:
-                                self.expiration_at = (
-                                    self.created_at + datetime.timedelta(minutes=ttl)
-                                )
-                        elif self.command_type == "ACTION":
-                            ttl = config.get("db.prune.ttl.action", default=-1)
-                            if ttl > -1:
-                                self.expiration_at = (
-                                    self.created_at + datetime.timedelta(minutes=ttl)
-                                )
-                        else:
-                            # TEMP or ADMIN
-                            self.expiration_at = datetime.datetime.utcnow()
+                    if self.command_type == "INFO":
+                        ttl = config.get("db.prune.ttl.info", default=-1)
+                        if ttl > -1:
+                            self.expiration_at = self.created_at + datetime.timedelta(
+                                minutes=ttl
+                            )
+                    elif self.command_type == "ACTION":
+                        ttl = config.get("db.prune.ttl.action", default=-1)
+                        if ttl > -1:
+                            self.expiration_at = self.created_at + datetime.timedelta(
+                                minutes=ttl
+                            )
+                    else:
+                        # TEMP or ADMIN
+                        self.expiration_at = datetime.datetime.utcnow()
 
-            with CollectMetrics("Model_Request", "_pre_save::root_command_type"):
-                if not self.has_parent:
+            if not self.has_parent:
+                self.root_command_type = self.command_type
+            elif not self.root_command_type:
+                # If this is a child request, we need to set the root_command_type
+                # to the same as the parent request
+                try:
+                    parent_request = Request.objects.only("root_command_type").get(
+                        id=self.parent.id
+                    )
+                    self.root_command_type = parent_request.root_command_type
+                except DoesNotExist:
+                    # Parent request was deleted, so we need to set the root_command_type
+                    # to the same as this request
                     self.root_command_type = self.command_type
-                elif not self.root_command_type:
-                    # If this is a child request, we need to set the root_command_type
-                    # to the same as the parent request
-                    try:
-                        parent_request = Request.objects.only("root_command_type").get(id=self.parent.id)
-                        self.root_command_type = parent_request.root_command_type
-                    except DoesNotExist:
-                        # Parent request was deleted, so we need to set the root_command_type
-                        # to the same as this request
-                        self.root_command_type = self.command_type
 
     def _set_child_expiration(self):
-        from beer_garden.metrics import CollectMetrics
 
-        with CollectMetrics("Model_Request", "_set_child_expiration"):
-
-            updates = Request.objects(parent=self, expiration_at=None).update(
-                set__expiration_at=self.expiration_at
-            )
-            if updates > 0:
-                for child_request in Request.objects(parent=self).only("expiration_at"):
-                    child_request._set_child_expiration()
+        updates = Request.objects(parent=self, expiration_at=None).update(
+            set__expiration_at=self.expiration_at
+        )
+        if updates > 0:
+            for child_request in Request.objects(parent=self).only("expiration_at"):
+                child_request._set_child_expiration()
 
     def _post_save(self):
         from beer_garden.metrics import CollectMetrics

@@ -14,7 +14,7 @@ import sys
 from http.server import ThreadingHTTPServer
 
 import elasticapm
-from brewtils.models import Event, Operation, Request
+from brewtils.models import BaseModel, Event, Operation, Request
 from brewtils.stoppable_thread import StoppableThread
 from elasticapm import Client
 from elasticapm.metrics.base_metrics import MetricSet
@@ -184,6 +184,25 @@ def initialize_elastic_client(label: str):
         client.metrics.register(ProcessorMetricsSet)
 
 
+def _calculate_size(field: [dict, str], total_size: int = 0) -> bool:
+    """Determine if the field is a large dataset that should be stored in GridFS"""
+    if isinstance(field, dict):
+        for _, value in field.items():
+            _calculate_size(value, total_size)
+
+    elif isinstance(field, list):
+        for item in field:
+            _calculate_size(item, total_size)
+    elif isinstance(field, BaseModel):
+        for attribute in dir(field):
+            if not callable(attribute) and not attribute.startswith("_"):
+                _calculate_size(getattr(field, attribute), total_size)
+
+    total_size = total_size + sys.getsizeof(field)
+
+    return total_size
+
+
 def extract_custom_context(result) -> None:
     """Extracts values from models to be tracked in the custom context fields
 
@@ -205,13 +224,13 @@ def extract_custom_context(result) -> None:
             if result.metadata:
                 elasticapm.label(**result.metadata)
 
-            elasticapm.label(request_size=sys.getsizeof(result))
+            elasticapm.label(request_size=_calculate_size(result))
             if hasattr(result, "parameters"):
                 elasticapm.label(
-                    request_parameter_size=sys.getsizeof(result.parameters)
+                    request_parameter_size=_calculate_size(result.parameters)
                 )
             if hasattr(result, "output"):
-                elasticapm.label(request_output_size=sys.getsizeof(result.output))
+                elasticapm.label(request_output_size=_calculate_size(result.output))
 
         if hasattr(result, "id") and result.id:
             elasticapm.label(mongo_id=result.id)
