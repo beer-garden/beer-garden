@@ -8,6 +8,7 @@ The metrics service manages:
 """
 
 import datetime
+import json
 import logging
 import re
 import sys
@@ -184,21 +185,20 @@ def initialize_elastic_client(label: str):
         client.metrics.register(ProcessorMetricsSet)
 
 
-def _calculate_size(field: [dict, str], total_size: int = 0) -> bool:
+def _calculate_size(field) -> int:
     """Determine if the field is a large dataset that should be stored in GridFS"""
     if isinstance(field, dict):
-        for _, value in field.items():
-            _calculate_size(value, total_size)
+        total_size += sys.getsizeof(json.dumps(field))
 
     elif isinstance(field, list):
         for item in field:
-            _calculate_size(item, total_size)
+            total_size += _calculate_size(item)
     elif isinstance(field, BaseModel):
         for attribute in dir(field):
             if not callable(attribute) and not attribute.startswith("_"):
-                _calculate_size(getattr(field, attribute), total_size)
+                total_size += _calculate_size(getattr(field, attribute))
 
-    total_size = total_size + sys.getsizeof(field)
+    total_size += sys.getsizeof(field)
 
     return total_size
 

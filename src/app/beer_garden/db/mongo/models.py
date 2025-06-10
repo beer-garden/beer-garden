@@ -495,25 +495,17 @@ class Request(MongoModel, Document):
     def _calculate_size(
         self,
         field: [dict, str],
-        total_size: int = 0,
-        max_size: int = 5 * 1_000_000,
-    ) -> bool:
+    ) -> int:
         """Determine if the field is a large dataset that should be stored in GridFS"""
-        total_size = total_size + sys.getsizeof(field)
-        if total_size > max_size:
-            return total_size
+        total_size = sys.getsizeof(field)
 
         if isinstance(field, dict):
-            for _, value in field.items():
-                total_size = self._calculate_size(value, total_size, max_size=max_size)
-                if total_size > max_size:
-                    return total_size
+            total_size += self._calculate_size(json.dumps(field))
 
-        elif isinstance(field, list):
-            for item in field:
-                total_size = self._calculate_size(item, total_size, max_size=max_size)
-                if total_size > max_size:
-                    return total_size
+        elif hasattr(field, "__iter__") and not isinstance(
+            field, (str, bytes, bytearray)
+        ):
+            total_size += sum(self._calculate_size(item) for item in field)
 
         return total_size
 
@@ -536,12 +528,7 @@ class Request(MongoModel, Document):
 
             with CollectMetrics("Model_Request", "_pre_save::parameters_gridfs"):
                 if self.parameters and self.parameters_gridfs.grid_id is None:
-                    if (
-                        self._calculate_size(
-                            self.parameters, max_size=REQUEST_MAX_PARAM_SIZE
-                        )
-                        > REQUEST_MAX_PARAM_SIZE
-                    ):
+                    if self._calculate_size(self.parameters) > REQUEST_MAX_PARAM_SIZE:
                         logger.debug("Parameters too big, storing in GridFS")
                         with CollectMetrics(
                             "Model_Request", "_pre_save::parameters_gridfs::put"
@@ -555,12 +542,7 @@ class Request(MongoModel, Document):
 
             with CollectMetrics("Model_Request", "_pre_save::output_gridfs"):
                 if self.output and self.output_gridfs.grid_id is None:
-                    if (
-                        self._calculate_size(
-                            self.output, max_size=REQUEST_MAX_PARAM_SIZE
-                        )
-                        > REQUEST_MAX_PARAM_SIZE
-                    ):
+                    if self._calculate_size(self.output) > REQUEST_MAX_PARAM_SIZE:
                         logger.debug("Output size too big, storing in gridfs")
                         with CollectMetrics(
                             "Model_Request", "_pre_save::output_gridfs:put"
