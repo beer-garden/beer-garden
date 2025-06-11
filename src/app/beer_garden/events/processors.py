@@ -313,24 +313,25 @@ class InternalQueueListener(DequeSetListener):
             item: New item
         """
 
-        trace_parent_header = None
-        if config.get("metrics.elastic.enabled"):
-            if hasattr(event, "metadata") and "_trace_parent" in event.metadata:
-                trace_parent_header = event.metadata["_trace_parent"]
-            elif elasticapm.get_trace_parent_header() is not None:
-                trace_parent_header = elasticapm.get_trace_parent_header()
-
-            if hasattr(event, "metadata") and "_trace_parent" not in event.metadata:
-                event.metadata["_trace_parent"] = trace_parent_header
-
-        with CollectMetrics(
-            "Queue_Event",
-            f"QUEUE_PUT::{self._handler_tag}",
-            trace_parent_header=trace_parent_header,
-        ):
+        if not self.filter_event(event):
+            trace_parent_header = None
             if config.get("metrics.elastic.enabled"):
-                extract_custom_context(event)
-            super().put(event)
+                if hasattr(event, "metadata") and "_trace_parent" in event.metadata:
+                    trace_parent_header = event.metadata["_trace_parent"]
+                elif elasticapm.get_trace_parent_header() is not None:
+                    trace_parent_header = elasticapm.get_trace_parent_header()
+
+                if hasattr(event, "metadata") and "_trace_parent" not in event.metadata:
+                    event.metadata["_trace_parent"] = trace_parent_header
+
+            with CollectMetrics(
+                "Queue_Event",
+                f"QUEUE_PUT::{self._handler_tag}",
+                trace_parent_header=trace_parent_header,
+            ):
+                if config.get("metrics.elastic.enabled"):
+                    extract_custom_context(event)
+                super().put(self.clone(event))
 
 
 class DelayListener(QueueListener):
@@ -383,11 +384,7 @@ class FanoutProcessor(DequeListener):
     def process(self, event):
 
         for processor in self._processors:
-            if hasattr(processor, "filter_event"):
-                if not processor.filter_event(event):
-                    processor.put(self.clone(event))
-            else:
-                processor.put(self.clone(event))
+            processor.put(event)
 
     def register(self, processor, manage: bool = True):
         """Register and start a downstream Processor
