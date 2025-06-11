@@ -143,7 +143,7 @@ class DequeSetListener(DequeListener):
                                             * 1000
                                         )
 
-                            self._data[str(event.payload.id)] = event
+                            self._data[str(event.payload.id)] = self.clone(event)
                             del ref
                         else:
                             del event
@@ -152,7 +152,7 @@ class DequeSetListener(DequeListener):
                         super().put(event)
                         return
                 else:
-                    self._data[str(event.payload.id)] = self.clone(event)
+                    self._data[str(event.payload.id)] = event
                     self._queue.append(str(event.payload.id))
 
         else:
@@ -263,29 +263,48 @@ class InternalQueueListener(DequeSetListener):
             elif elasticapm.get_trace_parent_header() is not None:
                 trace_parent_header = elasticapm.get_trace_parent_header()
 
-            try:
-                with CollectMetrics(
-                    "Queue_Event",
-                    f"QUEUE_POP::{self._handler_tag}",
-                    trace_parent_header=trace_parent_header,
-                ):
-                    if config.get("metrics.elastic.enabled"):
-                        extract_custom_context(event)
+        try:
+            with CollectMetrics(
+                "Queue_Event",
+                f"QUEUE_POP::{self._handler_tag}",
+                trace_parent_header=trace_parent_header,
+            ):
+                if config.get("metrics.elastic.enabled"):
+                    extract_custom_context(event)
 
-                    self._handler(self.clone(event))
-            except Exception as ex:
-                _, _, exc_tb = sys.exc_info()
-                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                logger.error(
-                    "'%s' handler received an error executing callback for event %s: %s: %s Line %s"
-                    % (
-                        self._handler_tag,
-                        repr(event),
-                        str(ex),
-                        fname,
-                        exc_tb.tb_lineno,
-                    )
+                self._handler(event)
+        except Exception as ex:
+            _, _, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            logger.error(
+                "'%s' handler received an error executing callback for event %s: %s: %s Line %s"
+                % (
+                    self._handler_tag,
+                    repr(event),
+                    str(ex),
+                    fname,
+                    exc_tb.tb_lineno,
                 )
+            )
+
+    def filter_event(self, event):
+
+        if not self._filters or event.name not in self._filters:
+            return True
+
+        if event.error:
+            return True
+
+        if self._local_only and event.garden != config.get("garden.name"):
+            return True
+
+        if event.metadata.get("API_ONLY", False):
+            return True
+
+        if self._filter_func and self._filter_func(event):
+            return True
+
+        return False
 
     def put(self, event: Event):
         """Put a new item on the queue to be processed
@@ -294,40 +313,24 @@ class InternalQueueListener(DequeSetListener):
             item: New item
         """
 
-        if not self._filters:
-            return
+        trace_parent_header = None
+        if config.get("metrics.elastic.enabled"):
+            if hasattr(event, "metadata") and "_trace_parent" in event.metadata:
+                trace_parent_header = event.metadata["_trace_parent"]
+            elif elasticapm.get_trace_parent_header() is not None:
+                trace_parent_header = elasticapm.get_trace_parent_header()
 
-        if event.error:
-            return
+            if hasattr(event, "metadata") and "_trace_parent" not in event.metadata:
+                event.metadata["_trace_parent"] = trace_parent_header
 
-        if self._local_only and event.garden != config.get("garden.name"):
-            return
-
-        if event.metadata.get("API_ONLY", False):
-            return
-
-        if event.name in self._filters:
-            if self._filter_func and self._filter_func(event):
-                # If the filter function returns True, we don't want to process the event
-                return
-            trace_parent_header = None
+        with CollectMetrics(
+            "Queue_Event",
+            f"QUEUE_PUT::{self._handler_tag}",
+            trace_parent_header=trace_parent_header,
+        ):
             if config.get("metrics.elastic.enabled"):
-                if hasattr(event, "metadata") and "_trace_parent" in event.metadata:
-                    trace_parent_header = event.metadata["_trace_parent"]
-                elif elasticapm.get_trace_parent_header() is not None:
-                    trace_parent_header = elasticapm.get_trace_parent_header()
-
-                if hasattr(event, "metadata") and "_trace_parent" not in event.metadata:
-                    event.metadata["_trace_parent"] = trace_parent_header
-
-            with CollectMetrics(
-                "Queue_Event",
-                f"QUEUE_PUT::{self._handler_tag}",
-                trace_parent_header=trace_parent_header,
-            ):
-                if config.get("metrics.elastic.enabled"):
-                    extract_custom_context(event)
-                super().put(event)
+                extract_custom_context(event)
+            super().put(event)
 
 
 class DelayListener(QueueListener):
@@ -378,8 +381,13 @@ class FanoutProcessor(DequeListener):
                 processor.stop()
 
     def process(self, event):
+
         for processor in self._processors:
-            processor.put(event)
+            if hasattr(processor, "filter_event"):
+                if not processor.filter_event(event):
+                    processor.put(self.clone(event))
+            else:
+                processor.put(self.clone(event))
 
     def register(self, processor, manage: bool = True):
         """Register and start a downstream Processor

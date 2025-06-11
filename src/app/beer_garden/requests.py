@@ -1023,6 +1023,20 @@ def process_wait(request: Request, timeout: float) -> Request:
     return db.query_unique(Request, id=created_request.id)
 
 
+def handle_wait_event_filter(event):
+    if event.name == Events.GARDEN_STOPPED.name and event.garden != config.get(
+        "garden.name"
+    ):
+        return True
+    if (
+        event.name.startswith("REQUEST_")
+        and event.garden == config.get("garden.name")
+        and event.payload.status in Request.COMPLETED_STATUSES
+    ):
+        return False
+    return True
+
+
 def handle_wait_events(event):
     # Whenever a request is completed check to see if this process is waiting for it
     if not event.error and event.name in [
