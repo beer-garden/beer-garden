@@ -91,7 +91,8 @@ def add_internal_events_handler(event_manager):
             beer_garden.publish_request.handle_event,
             "Publish Requests",
             False,
-            [Events.REQUEST_TOPIC_PUBLISH, Events.REQUEST_CREATED],
+            # TODO: Determine if we need Events.REQUEST_CREATED
+            [Events.REQUEST_TOPIC_PUBLISH],
             False,
             beer_garden.publish_request.handle_event_filter,
             # Can not unique due to each Event potentially
@@ -108,7 +109,7 @@ def add_internal_events_handler(event_manager):
                 Events.GARDEN_STOPPED,
             ],
             True,
-            beer_garden.publish_request.handle_event_filter,
+            beer_garden.request.handle_wait_event_filter,
         ),
         (
             beer_garden.router.handle_event,
