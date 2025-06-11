@@ -226,7 +226,7 @@ def extract_custom_context(result) -> None:
                 elasticapm.label(**result.metadata)
 
             # Helpful for trending sizes, but can be expensive to calculate
-            elasticapm.label(request_size=_calculate_size(result))
+            # elasticapm.label(request_size=_calculate_size(result))
             # if hasattr(result, "parameters"):
             #     elasticapm.label(
             #         request_parameter_size=_calculate_size(result.parameters)
