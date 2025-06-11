@@ -31,7 +31,7 @@ def publish(event: Event) -> None:
     Returns:
         None
     """
-    if event.garden != config.get("garden.name") and (
+    if event.garden and event.garden != config.get("garden.name") and (
         event.name == Events.REQUEST_COMPLETED.name
         or (
             event.name == Events.REQUEST_UPDATED.name
