@@ -109,7 +109,7 @@ def add_internal_events_handler(event_manager):
                 Events.GARDEN_STOPPED,
             ],
             True,
-            beer_garden.request.handle_wait_event_filter,
+            beer_garden.requests.handle_wait_event_filter,
         ),
         (
             beer_garden.router.handle_event,
