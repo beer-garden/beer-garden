@@ -3,7 +3,6 @@ import logging
 
 from brewtils.models import Events
 
-import beer_garden.config as config
 import beer_garden.files
 import beer_garden.garden
 import beer_garden.local_plugins.manager
@@ -23,12 +22,6 @@ from beer_garden.events.processors import BaseProcessor, InternalQueueListener
 logger = logging.getLogger(__name__)
 
 
-def local_only_filter(event):
-    if event.garden != config.get("garden.name"):
-        return True
-    return False
-
-
 def error_event_handler(event):
     if event.error:
         logger.debug(
@@ -37,12 +30,12 @@ def error_event_handler(event):
 
 
 def add_internal_events_handler(event_manager):
-    for handler, handler_tag, local_only, filters, unique_data, filter_func in [
-        (
-            beer_garden.garden.handle_event,
-            "Garden",
-            False,
-            [
+    for event_config in [
+        {
+            "name": "Garden",
+            "handler": beer_garden.garden.handle_event,
+            "filter_func": None,
+            "filters": [
                 Events.GARDEN_STARTED,
                 Events.GARDEN_UPDATED,
                 Events.GARDEN_STOPPED,
@@ -62,60 +55,66 @@ def add_internal_events_handler(event_manager):
                 Events.INSTANCE_STOPPED,
                 Events.ENTRY_STARTED,
             ],
-            True,
-            None,
-        ),
-        (
-            beer_garden.plugin.handle_event,
-            "Plugin",
-            False,
-            [Events.INSTANCE_UPDATED],
-            True,
-            None,
-        ),
-        (
-            beer_garden.requests.handle_event,
-            "Requests",
-            False,
-            [
+            "local_only": False,
+            "unique_data": True,
+            "allow_api_only": False,
+        },
+        {
+            "name": "Plugin",
+            "handler": beer_garden.plugin.handle_event,
+            "filter_func": None,
+            "filters": [Events.INSTANCE_UPDATED],
+            "local_only": False,
+            "unique_data": True,
+            "allow_api_only": False,
+        },
+        {
+            "name": "Requests",
+            "handler": beer_garden.requests.handle_event,
+            "filter_func": beer_garden.requests.handle_event_filter,
+            "filters": [
                 Events.REQUEST_CREATED,
                 Events.REQUEST_STARTED,
                 Events.REQUEST_COMPLETED,
                 Events.REQUEST_UPDATED,
                 Events.REQUEST_CANCELED,
             ],
-            True,
-            beer_garden.requests.handle_event_filter,
-        ),
-        (
-            beer_garden.publish_request.handle_event,
-            "Publish Requests",
-            False,
-            # TODO: Determine if we need Events.REQUEST_CREATED
-            [Events.REQUEST_TOPIC_PUBLISH],
-            False,
-            beer_garden.publish_request.handle_event_filter,
+            "local_only": False,
+            "unique_data": True,
+            "allow_api_only": False,
+        },
+        {
+            "name": "Publish Requests",
+            "handler": beer_garden.publish_request.handle_event,
+            "filter_func": beer_garden.publish_request.handle_event_filter,
+            "filters": [
+                Events.REQUEST_TOPIC_PUBLISH
+            ],  # TODO: Determine if we need Events.REQUEST_CREATED
+            "local_only": False,
+            "unique_data": False,
             # Can not unique due to each Event potentially
             # spawning child Request operations
-        ),
-        (
-            beer_garden.requests.handle_wait_events,
-            "Requests wait events",
-            True,
-            [
+            "allow_api_only": False,
+        },
+        {
+            "name": "Requests wait events",
+            "handler": beer_garden.requests.handle_wait_events,
+            "filter_func": beer_garden.requests.handle_wait_event_filter,
+            "filters": [
                 Events.REQUEST_COMPLETED,
                 Events.REQUEST_CANCELED,
                 Events.REQUEST_UPDATED,
                 Events.GARDEN_STOPPED,
             ],
-            True,
-            beer_garden.requests.handle_wait_event_filter,
-        ),
-        (
-            beer_garden.router.handle_event,
-            "Router",
-            False,
-            [
+            "local_only": True,
+            "unique_data": True,
+            "allow_api_only": True,
+        },
+        {
+            "name": "Router",
+            "handler": beer_garden.router.handle_event,
+            "filter_func": None,
+            "filters": [
                 Events.SYSTEM_CREATED,
                 Events.SYSTEM_UPDATED,
                 Events.GARDEN_SYNC,
@@ -123,22 +122,28 @@ def add_internal_events_handler(event_manager):
                 Events.GARDEN_REMOVED,
                 Events.GARDEN_UPDATED,
             ],
-            False,  # Can not unique due to API configurations
-            None,
-        ),
-        (
-            beer_garden.systems.handle_event,
-            "System",
-            True,
-            [Events.SYSTEM_CREATED, Events.SYSTEM_UPDATED, Events.SYSTEM_REMOVED],
-            True,
-            None,
-        ),
-        (
-            beer_garden.scheduler.handle_event,
-            "Scheduler",
-            True,
-            [
+            "local_only": False,
+            "unique_data": False,  # Can not unique due to API configurations
+            "allow_api_only": False,
+        },
+        {
+            "name": "System",
+            "handler": beer_garden.systems.handle_event,
+            "filter_func": None,
+            "filters": [
+                Events.SYSTEM_CREATED,
+                Events.SYSTEM_UPDATED,
+                Events.SYSTEM_REMOVED,
+            ],
+            "local_only": True,
+            "unique_data": True,
+            "allow_api_only": False,
+        },
+        {
+            "name": "Scheduler",
+            "handler": beer_garden.scheduler.handle_event,
+            "filter_func": None,
+            "filters": [
                 Events.JOB_CREATED,
                 Events.JOB_UPDATED,
                 Events.JOB_PAUSED,
@@ -147,65 +152,63 @@ def add_internal_events_handler(event_manager):
                 Events.JOB_EXECUTED,
                 Events.DIRECTORY_FILE_CHANGE,
             ],
-            False,  # Can not unique due to Job Execute Events
-            None,
-        ),
-        (
-            beer_garden.log.handle_event,
-            "Log",
-            True,
-            [Events.PLUGIN_LOGGER_FILE_CHANGE],
-            False,
-            None,
-        ),
-        (
-            beer_garden.files.handle_event,
-            "File",
-            True,
-            [Events.JOB_CREATED, Events.REQUEST_CREATED],
-            True,
-            beer_garden.files.handle_event_filter,
-        ),
-        (
-            beer_garden.local_plugins.manager.handle_event,
-            "Local plugins manager",
-            True,
-            [
+            "local_only": True,
+            "unique_data": False,  # Can not unique due to Job Execute Events
+            "allow_api_only": False,
+        },
+        {
+            "name": "Log",
+            "handler": beer_garden.log.handle_event,
+            "filter_func": None,
+            "filters": [Events.PLUGIN_LOGGER_FILE_CHANGE],
+            "local_only": True,
+            "unique_data": False,
+            "allow_api_only": False,
+        },
+        {
+            "name": "File",
+            "handler": beer_garden.files.handle_event,
+            "filter_func": beer_garden.files.handle_event_filter,
+            "filters": [Events.JOB_CREATED, Events.REQUEST_CREATED],
+            "local_only": True,
+            "unique_data": True,
+            "allow_api_only": False,
+        },
+        {
+            "name": "Local plugins manager",
+            "handler": beer_garden.local_plugins.manager.handle_event,
+            "filter_func": None,
+            "filters": [
                 Events.INSTANCE_INITIALIZED,
                 Events.INSTANCE_STOPPED,
                 Events.ENTRY_STARTED,
             ],
-            False,  # Can not unique due to usage of metadata for rescans
-            None,
-        ),
-        (
-            beer_garden.user.handle_event,
-            "User event handler",
-            True,
-            [Events.ROLE_DELETED, Events.USER_UPDATED],
-            False,  # Can not unique due to ensure all user updates are handled correctly
-            None,
-        ),
-        (
-            beer_garden.replication.handle_event,
-            "Replication event handler",
-            True,
-            [Events.REPLICATION_CREATED, Events.REPLICATION_UPDATED],
-            False,  # Can not unique due to ensure all replication updates are handled correctly
-            None,
-        ),
+            "local_only": True,
+            "unique_data": False,  # Can not unique due to usage of metadata for rescans
+            "allow_api_only": False,
+        },
+        {
+            "name": "User event handler",
+            "handler": beer_garden.user.handle_event,
+            "filter_func": None,
+            "filters": [Events.ROLE_DELETED, Events.USER_UPDATED],
+            "local_only": True,
+            # Can not unique due to ensure all user updates are handled correctly
+            "unique_data": False,
+            "allow_api_only": False,
+        },
+        {
+            "name": "Replication event handler",
+            "handler": beer_garden.replication.handle_event,
+            "filter_func": None,
+            "filters": [Events.REPLICATION_CREATED, Events.REPLICATION_UPDATED],
+            "local_only": True,
+            # Can not unique due to ensure all replication updates are handled correctly
+            "unique_data": False,
+            "allow_api_only": False,
+        },
     ]:
-        event_manager.register(
-            InternalQueueListener(
-                handler=handler,
-                handler_tag=handler_tag,
-                filters=filters,
-                local_only=local_only,
-                name=handler_tag,
-                unique_data=unique_data,
-                filter_func=filter_func,
-            )
-        )
+        event_manager.register(InternalQueueListener(**event_config))
 
     event_manager.register(
         BaseProcessor(

@@ -233,10 +233,10 @@ class InternalQueueListener(DequeSetListener):
     def __init__(
         self,
         handler,
-        handler_tag,
         local_only=False,
         filters=None,
         filter_func=None,
+        allow_api_only=False,
         **kwargs,
     ):
         super().__init__(action=self.handle_event, **kwargs)
@@ -250,10 +250,11 @@ class InternalQueueListener(DequeSetListener):
         self._filter_func = filter_func
 
         self._handler = handler
-        self._handler_tag = handler_tag
+        self._handler_tag = self._name
         self._local_only = local_only
 
-        self._transaction_type = handler_tag
+        self._transaction_type = self._name
+        self.allow_api_only = allow_api_only
 
     def handle_event(self, event):
         trace_parent_header = None
@@ -298,7 +299,7 @@ class InternalQueueListener(DequeSetListener):
         if self._local_only and event.garden != config.get("garden.name"):
             return True
 
-        if event.metadata.get("API_ONLY", False):
+        if event.metadata.get("API_ONLY", False) and not self.allow_api_only:
             return True
 
         if self._filter_func and self._filter_func(event):
@@ -326,7 +327,7 @@ class InternalQueueListener(DequeSetListener):
 
             with CollectMetrics(
                 "Queue_Event",
-                f"QUEUE_PUT::{self._handler_tag}",
+                f"QUEUE_PUT::{self._name}",
                 trace_parent_header=trace_parent_header,
             ):
                 if config.get("metrics.elastic.enabled"):
