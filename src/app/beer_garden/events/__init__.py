@@ -7,7 +7,7 @@ from functools import partial
 
 import elasticapm
 import wrapt
-from brewtils.models import Event, Events, Request
+from brewtils.models import Event, Events
 
 from beer_garden import config as config
 from beer_garden.metrics import CollectMetrics, extract_custom_context
@@ -31,46 +31,27 @@ def publish(event: Event) -> None:
     Returns:
         None
     """
-    if event.garden and event.garden != config.get("garden.name") and (
-        event.name == Events.REQUEST_COMPLETED.name
-        or (
-            event.name == Events.REQUEST_UPDATED.name
-            and event.payload.status in Request.COMPLETED_STATUSES
-        )
+
+    with CollectMetrics(
+        "Publish_Event", f"PUBLISHER::{event.garden}::{event.name}::publish()"
     ):
-        with CollectMetrics("Publish_Event", f"BYPASS::{event.name}::publish()"):
-            extract_custom_context(event)
-            if hasattr(event, "metadata") and "_trace_parent" not in event.metadata:
-                trace_parent_string = elasticapm.get_trace_parent_header()
-                if trace_parent_string:
-                    event.metadata["_trace_parent"] = trace_parent_string
-            # TODO: This is dumb, but gonna try it
+        try:
+            # Do some formatting / tweaking
+            if not event.garden:
+                event.garden = config.get("garden.name")
+            if not event.timestamp:
+                event.timestamp = datetime.now(timezone.utc)
 
-            from beer_garden.requests import handle_event
-            handle_event(event)
-    else:
+            if config.get("metrics.elastic.enabled"):
+                extract_custom_context(event)
+                if hasattr(event, "metadata") and "_trace_parent" not in event.metadata:
+                    trace_parent_string = elasticapm.get_trace_parent_header()
+                    if trace_parent_string:
+                        event.metadata["_trace_parent"] = trace_parent_string
 
-        with CollectMetrics("Publish_Event", f"PUBLISHER::{event.name}::publish()"):
-            try:
-                # Do some formatting / tweaking
-                if not event.garden:
-                    event.garden = config.get("garden.name")
-                if not event.timestamp:
-                    event.timestamp = datetime.now(timezone.utc)
-
-                if config.get("metrics.elastic.enabled"):
-                    extract_custom_context(event)
-                    if (
-                        hasattr(event, "metadata")
-                        and "_trace_parent" not in event.metadata
-                    ):
-                        trace_parent_string = elasticapm.get_trace_parent_header()
-                        if trace_parent_string:
-                            event.metadata["_trace_parent"] = trace_parent_string
-
-                return manager.put(event)
-            except Exception as ex:
-                logger.exception(f"Error publishing event: {ex}")
+            return manager.put(event)
+        except Exception as ex:
+            logger.exception(f"Error publishing event: {ex}")
 
 
 def publish_event(event_type: Events):
