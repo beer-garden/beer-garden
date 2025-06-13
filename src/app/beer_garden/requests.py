@@ -1103,9 +1103,9 @@ def handle_event_rebroadcast(event_name, request):
 def handle_event_create(event):
     # Attempt to create the request, if it already exists then continue on
 
-    if event.payload.command_type == "TEMP" and event.payload.status in Request.COMPLETED_STATUSES:
-        # New Request that would be prune, don't create it. Nothing could be waiting for it in the
-        # handle_wait_event queue
+    if event.payload.command_type == "TEMP":
+        # Nothing could be waiting for it in the handle_wait_event queue and originated from
+        # downstream, so we can skip the request
         return None
     try:
         event.payload.expiration_at = None
