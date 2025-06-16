@@ -479,7 +479,7 @@ class Request(MongoModel, Document):
             self.parameters = json.loads(self.parameters_gridfs.read().decode(encoding))
             self.parameters_gridfs = None
 
-        if self.parent:
+        if self.has_parent:
             try:
                 self.parent
             except DoesNotExist:
