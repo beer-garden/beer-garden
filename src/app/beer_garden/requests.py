@@ -1024,10 +1024,10 @@ def process_wait(request: Request, timeout: float) -> Request:
 
 
 def handle_wait_event_filter(event):
-    if event.name == Events.GARDEN_STOPPED.name and event.garden != config.get(
+    if event.name == Events.GARDEN_STOPPED.name and event.garden == config.get(
         "garden.name"
     ):
-        return True
+        return False
     if (
         event.name.startswith("REQUEST_")
         and event.garden == config.get("garden.name")
