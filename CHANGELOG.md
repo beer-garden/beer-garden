@@ -7,9 +7,10 @@ TBD
 ## 3.30.0rc1
 
 - Improved docker naming conventions
-- Updated request list api from `hidden__ne=True` to `hidden=False` for more efficient use of index.
-- Fixed bug in `SystemsList` API using `filter_running` causing SchemaParser to fail
-- Removed redundant call to get UtilityService getConfig
+- Corrected 3.30 migration script to handle missing Command Types (#1894)
+- Updated request list api from `hidden__ne=True` to `hidden=False` for more efficient use of index. (#1889)
+- Fixed bug in `SystemsList` API using `filter_running` causing SchemaParser to fail(#1889)
+- Removed redundant call to get UtilityService getConfig (#1891)
 - Implemented previous Beer Garden installed version check to determine database migrations required (#1880)
 
 ## 3.30.0rc0
