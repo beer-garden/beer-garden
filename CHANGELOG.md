@@ -7,6 +7,9 @@ TBD
 ## 3.30.0rc1
 
 - Improved docker naming conventions
+- Updated request list api from `hidden__ne=True` to `hidden=False` for more efficient use of index.
+- Fixed bug in `SystemsList` API using `filter_running` causing SchemaParser to fail
+- Removed redundant call to get UtilityService getConfig
 - Implemented previous Beer Garden installed version check to determine database migrations required (#1880)
 - Implemented Lazy Loading of the root Garden for UI pages that do not require the Garden/System models to be loaded (#1896)
 - Loaded all Gardens in single DB call when returning Local Garden instead of individual calls per downstream garden (#1896)
@@ -84,8 +87,6 @@ TBD
 - Updated Jobs pages to trigger off internal Job events for status changes
 - Updated Events handler to support internal filtering before placing into queue for processing
 - Reduced total events processed by Entry Point event handlers
-- Fixed bug in `SystemsList` API using `filter_running` causing SchemaParser to fail
-- Removed redundant call to get UtilityService getConfig
 
 # 3.29.1
 
