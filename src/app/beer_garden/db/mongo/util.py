@@ -429,19 +429,13 @@ def ensure_request_ttl():
     else:
         # If we can't find the ttl key, just do the recompute
         try:
-            if (
-                action_ttl
-                != previous_config["previous_config"]["db"]["prune"]["ttl"]["action"]
-            ):
+            if action_ttl != previous_config.get("action_ttl"):
                 update_request_ttl("ACTION", action_ttl)
         except (KeyError, IndexError):
             update_request_ttl("ACTION", action_ttl)
 
         try:
-            if (
-                info_ttl
-                != previous_config["previous_config"]["db"]["prune"]["ttl"]["info"]
-            ):
+            if info_ttl != previous_config.get("info_ttl"):
                 update_request_ttl("INFO", info_ttl)
         except (KeyError, IndexError):
             update_request_ttl("INFO", info_ttl)
@@ -451,11 +445,26 @@ def ensure_model_migration():
     """Ensures that the database is properly migrated. All migrations ran from this
     single function for easy management"""
 
-    ensure_v2_to_v3_model_migration()
-    ensure_v3_24_model_migration()
-    ensure_v3_27_model_migration()
-    ensure_v3_29_model_migration()
-    ensure_v3_30_model_migration()
+    db = get_db()
+    previous_config = db.get_collection("configuration").find_one()
+
+    if not previous_config or previous_config.get("version") != str(
+        beer_garden.__version__
+    ):
+        # If the version is not set, or the version is not the same as the current
+        # version, run all migrations
+        logger.warning(
+            "Running database migrations. This may take a while depending on the size of"
+            " your database."
+        )
+
+        ensure_v2_to_v3_model_migration()
+        ensure_v3_24_model_migration()
+        ensure_v3_27_model_migration()
+        ensure_v3_29_model_migration()
+        ensure_v3_30_model_migration()
+        # After the 3.30.0 migration, we can start parsing the version to determine
+        # which migrations to run
 
     # This should always be the last migration
     ensure_request_ttl()
@@ -465,17 +474,26 @@ def ensure_model_migration():
 
 
 def find_root_expiration_at(request, ttl):
+
+    if request is None:
+        return None
+
     if request["has_parent"]:
         try:
-            return find_root_expiration_at(
+
+            parent = (
                 get_db()
                 .get_collection("request")
                 .find_one(
                     {"_id": request["parent"].id},
                     {"has_parent": 1, "parent": 1, "created_at": 1, "expiration_at": 1},
-                ),
-                ttl,
+                )
             )
+            if parent:
+                return find_root_expiration_at(
+                    parent,
+                    ttl,
+                )
         except PyMongoError:
             # if any exception is thrown, just return what we currently have
             pass
@@ -493,33 +511,36 @@ def update_request_ttl(command_type, ttl):
 
     logger.warning(f"Recomputing TTL for {command_type} for all completed requests")
     raw_collection = Request._get_collection()
-    filter_query = {
-        "root_command_type": {"$eq": command_type},
-        "expiration_at": {"$ne": None},
-        "status": {
-            "$in": [
-                "CANCELED",
-                "SUCCESS",
-                "ERROR",
-                "INVALID",
-            ]
-        },
-    }
 
-    if ttl < 1:
-        # Requests should not expire, so remove any set Expiration At records
-        raw_collection.update_many(
-            filter_query,
+    if ttl < 0:
+        updated_results = raw_collection.update_many(
+            {
+                "root_command_type": {"$eq": command_type},
+                "expiration_at": {"$ne": None},
+            },
             {"$set": {"expiration_at": None}},
         )
-        logger.warning(f"Recomputed {command_type} Request TTLs")
+        logger.warning(
+            f"Recomputed {updated_results.modified_count} {command_type} Request TTLs"
+        )
     else:
         batch_size = config.get("db.prune.batch_size", default=-1)
 
         update_counter = 0
         updates = []
         for request in raw_collection.find(
-            filter_query,
+            {
+                "root_command_type": {"$eq": command_type},
+                "expiration_at": {"$ne": None},
+                "status": {
+                    "$in": [
+                        "CANCELED",
+                        "SUCCESS",
+                        "ERROR",
+                        "INVALID",
+                    ],
+                },
+            },
             {
                 "has_parent": 1,
                 "parent": 1,
@@ -560,7 +581,13 @@ def reset_last_configuration():
 
     Configuration.objects().delete()
 
-    configuration = Configuration(previous_config=config.get().to_dict())
+    # We only want to save certain fields from the config
+
+    configuration = Configuration(
+        action_ttl=config.get("db.prune.ttl.action", default=-1),
+        info_ttl=config.get("db.prune.ttl.info", default=-1),
+        version=str(beer_garden.__version__),
+    )
     configuration.save()
 
 
