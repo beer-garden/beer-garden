@@ -99,7 +99,6 @@ class TestMigrationScript(object):
 
         del request_dict["id"]
         del request_dict["root_command_type"]
-        # del request_dict["command_type"]
         del request_dict["expiration_at"]
 
         request_dict["status"] = "SUCCESS"
