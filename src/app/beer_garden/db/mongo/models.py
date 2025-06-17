@@ -1459,4 +1459,6 @@ class Configuration(Document):
     # This is a snapshot of the configuration file last loaded
     # and is reset after migrations are completed. It should not
     # be used for optional configuration.
-    previous_config = DictField()
+    action_ttl = IntField(default=-1)
+    info_ttl = IntField(default=-1)
+    version = StringField(default="0.0.0")
