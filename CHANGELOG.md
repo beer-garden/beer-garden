@@ -8,6 +8,9 @@ TBD
 
 - Improved docker naming conventions
 - Corrected 3.30 migration script to handle missing Command Types (#1894)
+- Updated request list api from `hidden__ne=True` to `hidden=False` for more efficient use of index. (#1889)
+- Fixed bug in `SystemsList` API using `filter_running` causing SchemaParser to fail(#1889)
+- Removed redundant call to get UtilityService getConfig (#1891)
 - Implemented previous Beer Garden installed version check to determine database migrations required (#1880)
 
 ## 3.30.0rc0
@@ -83,8 +86,6 @@ TBD
 - Updated Jobs pages to trigger off internal Job events for status changes
 - Updated Events handler to support internal filtering before placing into queue for processing
 - Reduced total events processed by Entry Point event handlers
-- Fixed bug in `SystemsList` API using `filter_running` causing SchemaParser to fail
-- Removed redundant call to get UtilityService getConfig
 
 # 3.29.1
 
