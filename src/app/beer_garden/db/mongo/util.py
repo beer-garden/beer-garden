@@ -285,6 +285,7 @@ def ensure_v3_27_model_migration():
 
 def ensure_v3_29_model_migration():
     db = get_db()
+    batch_size = config.get("db.prune.batch_size", default=-1)
     if missing_field("request", "command_display_name"):
         logger.warning(
             "Command display name was not found in Requests and will be added. This is most"
@@ -301,6 +302,9 @@ def ensure_v3_29_model_migration():
                 request_updates.append(
                     UpdateOne({"_id": legacy_request["_id"]}, {"$set": legacy_request})
                 )
+            if batch_size > 0 and len(request_updates) > batch_size:
+                request_collection.bulk_write(request_updates, ordered=False)
+                request_updates = []
         if len(request_updates) > 0:
             request_collection.bulk_write(request_updates, ordered=False)
 
@@ -356,6 +360,7 @@ def find_root_command_type_and_expiration(request):
 
 def ensure_v3_30_model_migration():
     db = get_db()
+    batch_size = config.get("db.prune.batch_size", default=-1)
 
     if contains_fields("garden", ["status", "status_info", "namespaces"]):
         logger.warning(
@@ -372,6 +377,9 @@ def ensure_v3_30_model_migration():
                     {"$unset": {"status": "", "status_info": "", "namespaces": ""}},
                 )
             )
+            if batch_size > 0 and len(garden_updates) > batch_size:
+                garden_collection.bulk_write(garden_updates, ordered=False)
+                garden_updates = []
         if len(garden_updates) > 0:
             garden_collection.bulk_write(garden_updates, ordered=False)
 
@@ -382,7 +390,6 @@ def ensure_v3_30_model_migration():
             " storing in the database."
         )
         request_collection = db.get_collection("request")
-        batch_size = config.get("db.prune.batch_size", default=-1)
         updates = []
         for legacy_request in request_collection.find(
             {"root_command_type": {"$exists": False}},
@@ -719,6 +726,7 @@ def _update_request_parent_field_type():
     """Change GenericReferenceField to ReferenceField"""
     from .models import Request
 
+    batch_size = config.get("db.prune.batch_size", default=-1)
     updates = []
     raw_collection = Request._get_collection()
     for request in raw_collection.find({"parent._ref": {"$type": "object"}}):
@@ -727,6 +735,9 @@ def _update_request_parent_field_type():
                 {"_id": request["_id"]}, {"$set": {"parent": request["parent"]["_ref"]}}
             )
         )
+        if batch_size > 0 and len(updates) > batch_size:
+            raw_collection.bulk_write(updates, ordered=False)
+            updates = []
     if len(updates) > 0:
         raw_collection.bulk_write(updates, ordered=False)
 
