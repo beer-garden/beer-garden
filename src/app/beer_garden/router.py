@@ -421,7 +421,7 @@ def initiate_forward(operation: Operation):
 
     if operation.operation_type == "GARDEN_SYNC":
         logger.info(
-            f"About to forward sync operation for garden {operation.kwargs["sync_target"]}"
+            f"About to forward sync operation for garden {operation.kwargs['sync_target']}"
         )
 
     try:
