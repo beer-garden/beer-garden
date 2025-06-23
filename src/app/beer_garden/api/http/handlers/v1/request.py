@@ -862,7 +862,7 @@ class RequestListAPI(AuthorizationHandler):
             filter_params["has_parent"] = False
 
         if not include_hidden:
-            filter_params["hidden__ne"] = True
+            filter_params["hidden"] = False
 
         for column in columns:
             query_columns.append(column)

@@ -356,7 +356,7 @@ class Request(MongoModel, Document):
     status_updated_at = DateTimeField()
     error_class = StringField(required=False)
     has_parent = BooleanField(required=False)
-    hidden = BooleanField(required=False)
+    hidden = BooleanField(required=False, default=False)
     requester = StringField(required=False)
     parameters_gridfs = FileField()
     is_event = BooleanField(required=False)
@@ -382,6 +382,7 @@ class Request(MongoModel, Document):
             {"name": "comment_index", "fields": ["comment"]},
             {"name": "parent_ref_index", "fields": ["parent"]},
             {"name": "parent_index", "fields": ["has_parent"]},
+            {"name": "hidden_index", "fields": ["hidden"]},
             # Used for Gridfs File Pruning
             {"name": "gridfs_index", "fields": ["output_gridfs", "parameters_gridfs"]},
             # These are for sorting parent requests
@@ -1478,5 +1479,5 @@ class Configuration(Document):
     # and is reset after migrations are completed. It should not
     # be used for optional configuration.
     action_ttl = IntField(default=-1)
-    info_ttl = IntField(default=-1)
+    info_ttl = IntField(default=15)
     version = StringField(default="0.0.0")

@@ -292,6 +292,7 @@ def ensure_v3_29_model_migration():
 
 def find_root_command_type_and_expiration(request):
     expiration_at = None
+    command_type = getattr(request, "command_type", "ACTION")
     if (
         ("has_parent" in request and request["has_parent"])
         or ("parent" in request and request["parent"])
@@ -322,21 +323,22 @@ def find_root_command_type_and_expiration(request):
         if "expiration_at" in request and request["expiration_at"]:
             expiration_at = request["expiration_at"]
         elif (
-            request["command_type"] == "ACTION"
+            command_type == "ACTION"
             and config.get("db.prune.ttl.action", default=-1) > -1
         ):
             expiration_at = request["created_at"] + timedelta(
                 minutes=config.get("db.prune.ttl.action", default=-1)
             )
         elif (
-            request["command_type"] == "INFO"
-            and config.get("db.prune.ttl.info", default=-1) > -1
+            command_type == "INFO" and config.get("db.prune.ttl.info", default=15) > -1
         ):
             expiration_at = request["created_at"] + timedelta(
                 minutes=config.get("db.prune.ttl.info", default=-1)
             )
+        elif command_type == "TEMP":
+            expiration_at = request["created_at"]
 
-    return request["command_type"], expiration_at
+    return command_type, expiration_at
 
 
 def ensure_v3_30_model_migration():
