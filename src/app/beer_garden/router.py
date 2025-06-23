@@ -419,6 +419,11 @@ def initiate_forward(operation: Operation):
 
     # TODO - Check to ensure garden conn_info is not 'local' before forwarding?
 
+    if operation.operation_type == "GARDEN_SYNC":
+        logger.info(
+            f"About to forward sync operation for garden {operation.kwargs["sync_target"]}"
+        )
+
     try:
         response = forward(operation)
     except RoutingRequestException:
@@ -647,12 +652,13 @@ def add_routing_garden(garden: Garden):
 
 def handle_event(event):
     """Handle events"""
-    if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
-        add_routing_system(system=event.payload, garden_name=event.garden)
-        return
-    elif event.name == Events.SYSTEM_REMOVED.name:
-        remove_routing_system(system=event.payload)
-        return
+    if not event.error:
+        if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
+            add_routing_system(system=event.payload, garden_name=event.garden)
+            return
+        elif event.name == Events.SYSTEM_REMOVED.name:
+            remove_routing_system(system=event.payload)
+            return
 
     # Here we want to handle sync events from immediate children only
     if (

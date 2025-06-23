@@ -12,6 +12,8 @@ TBD
 - Fixed bug in `SystemsList` API using `filter_running` causing SchemaParser to fail(#1889)
 - Removed redundant call to get UtilityService getConfig (#1891)
 - Implemented previous Beer Garden installed version check to determine database migrations required (#1880)
+- Updated Router Logic for handling Error Events for System Deletes
+- Moved Info message for downstream garden syncs to prior to forwarding
 
 ## 3.30.0rc0
 
