@@ -821,6 +821,7 @@ class System(MongoModel, Document):
     prefix_topic = StringField()
     requires = ListField(field=StringField())
     requires_timeout = IntField(default=300)
+    garden_name = StringField()
 
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves
@@ -925,6 +926,7 @@ class System(MongoModel, Document):
     def save(self, **kwargs):
 
         if self.local:
+            self.garden_name = config.get("garden.name")
             self.save_topics(config.get("garden.name"))
 
         return super().save(**kwargs)
@@ -1266,6 +1268,7 @@ class Garden(MongoModel, Document):
                         )
                         remove_system(system_id=system_id_to_remove)
 
+                system.garden_name = self.name
                 system.save()
                 system.save_topics(self.name)
             else:

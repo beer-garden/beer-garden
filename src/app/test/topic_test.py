@@ -120,6 +120,7 @@ def remote_garden_system():
             name="remote_system",
             version="1.2.3",
             namespace="remote_garden",
+            garden_name="remote_garden",
             local=False,
             instances=[BrewtilsInstance(name="1")],
             commands=[BrewtilsCommand(name="command")],
@@ -207,7 +208,7 @@ class TestTopic:
         topics_generated = Topic.objects().count()
         assert topics_generated == 0
 
-        sync_garden_topics_loop(local_garden, {})
+        sync_garden_topics_loop(local_garden.name, {})
         topics_generated = Topic.objects().count()
         assert topics_generated == 1
 

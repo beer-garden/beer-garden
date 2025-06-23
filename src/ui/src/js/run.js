@@ -181,13 +181,23 @@ export default function appRun(
 
   $rootScope.hasSystemPermission = function(permission, system, global = false) {
     if (!$rootScope.config.authEnabled) return true;
-    var garden_name = PermissionService.findGardenScope(null, system.namespace, system.name, null, system.version);
+    var garden_name = null;
+    if (system.garden_name !== undefined) {
+      garden_name = system.garden_name;
+    } else {
+      garden_name = PermissionService.findGardenScope(null, system.namespace, system.name, null, system.version);
+    }
     return $rootScope.hasPermission(permission, global, garden_name, system.namespace, system.name,  system.version);
   };
 
   $rootScope.hasInstancePermission = function(permission, system, instance, global = false) {
     if (!$rootScope.config.authEnabled) return true;
-    var garden_name = PermissionService.findGardenScope(null, system.namespace, system.name, instance.name, system.version);
+    var garden_name = null;
+    if (system.garden_name !== undefined) {
+      garden_name = system.garden_name;
+    } else {
+      garden_name = PermissionService.findGardenScope(null, system.namespace, system.name, instance.name, system.version);
+    }
     return $rootScope.hasPermission(permission, global, garden_name, system.namespace, system.name, system.version, null, instance.name);
   };
 
