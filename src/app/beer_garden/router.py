@@ -549,9 +549,9 @@ def setup_routing():
     for system in db.query(
         System,
         filter_params={"local": True},
-        include_fields=["instances", "name", "namespace", "version", "garden_name"],
+        include_fields=["instances", "name", "namespace", "version"],
     ):
-        add_routing_system(system, garden_name=config.get("garden.name"))
+        add_routing_system(system)
 
     # Don't add the local garden
     for garden in get_gardens(include_local=False):
@@ -593,18 +593,18 @@ def add_routing_system(system=None, garden_name=None):
     sure this can handle that without breaking.
 
     """
-    if not garden_name:
-        if not getattr(system, "garden_name", None):
-            for garden in get_gardens():
-                for garden_system in garden.systems:
-                    if garden_system.id == system.id:
-                        garden_name = garden.name
-                        break
-                if garden_name:
+
+    if getattr(system, "garden_name", None):
+        garden_name = system.garden_name
+    elif not garden_name:
+        for garden in get_gardens():
+            for garden_system in garden.systems:
+                if garden_system.id == system.id:
+                    garden_name = garden.name
                     break
-        else:
-            garden_name = system.garden_name
-    # Default to local garden name
+            if garden_name:
+                break
+
     with routing_lock:
         logger.debug(f"{garden_name}: Adding system {system} ({system.id})")
 
@@ -661,7 +661,7 @@ def add_routing_garden(garden: Garden):
 def handle_event(event):
     """Handle events"""
     if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
-        add_routing_system(system=event.payload)
+        add_routing_system(system=event.payload, garden_name=event.garden)
         return
     elif event.name == Events.SYSTEM_REMOVED.name:
         remove_routing_system(system=event.payload)
