@@ -14,7 +14,9 @@ import beer_garden.db.mongo.util
 from beer_garden import config
 from beer_garden.db.mongo.models import Garden
 from beer_garden.db.mongo.util import (  # ensure_roles,; ensure_users,
+    contains_fields,
     ensure_local_garden,
+    ensure_v3_29_model_migration,
     ensure_v3_30_model_migration,
 )
 from beer_garden.errors import IndexOperationError
@@ -64,6 +66,42 @@ def config_mock_none(monkeypatch):
 
 
 class TestMigrationScript(object):
+
+    @patch("mongoengine.connect", Mock())
+    @patch("mongoengine.register_connection", Mock())
+    def test_3_29_request_migration(self, request_dict):
+
+        del request_dict["id"]
+        del request_dict["command_display_name"]
+
+        db = get_db()
+        request_collection = db["request"]
+        request_collection.insert_one(request_dict)
+
+        ensure_v3_29_model_migration()
+
+        request = request_collection.find_one()
+        assert request["command_display_name"] == request["command"]
+        request_collection.delete_one({})
+
+    @patch("mongoengine.connect", Mock())
+    @patch("mongoengine.register_connection", Mock())
+    def test_3_30_garden_migration(self, garden_dict):
+
+        del garden_dict["id"]
+        garden_dict["status"] = []
+        garden_dict["status_info"] = None
+        garden_dict["namespaces"] = []
+
+        db = get_db()
+        garden_collection = db["garden"]
+        garden_collection.insert_one(garden_dict)
+
+        ensure_v3_30_model_migration()
+
+        removed_fields = ["status", "status_info", "namespaces"]
+        assert contains_fields("garden", removed_fields) is False
+        garden_collection.delete_one({})
 
     @patch("mongoengine.connect", Mock())
     @patch("mongoengine.register_connection", Mock())
