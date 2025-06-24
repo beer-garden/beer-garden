@@ -142,9 +142,6 @@ class Application(StoppableThread):
             modify_event=file_event,
         )
 
-        if not config.get("replication.enabled"):
-            self.scheduler.start()
-
     def run(self):
         """Before setting up Beer-Garden, ensures that required services are running"""
         if not self._verify_db_connection():
@@ -297,6 +294,9 @@ class Application(StoppableThread):
         self.logger.debug("Starting helper threads...")
         for helper_thread in self.helper_threads:
             helper_thread.start()
+
+        if not config.get("replication.enabled"):
+            self.scheduler.start()
 
         if config.get("parent.stomp.enabled") or config.get("parent.http.enabled"):
             self.logger.debug("Publishing to Parent that we are online")
