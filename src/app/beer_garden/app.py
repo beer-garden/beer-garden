@@ -109,13 +109,14 @@ class Application(StoppableThread):
                 )
             )
 
-        self.helper_threads.append(
-            HelperThread(
-                beer_garden.replication.PrimaryReplicationMonitor,
-                10,
-                30,
+        if config.get("replication.enabled"):
+            self.helper_threads.append(
+                HelperThread(
+                    beer_garden.replication.PrimaryReplicationMonitor,
+                    10,
+                    30,
+                )
             )
-        )
 
         beer_garden.router.forward_processor = QueueListener(
             action=beer_garden.router.forward, name="forwarder"
@@ -140,6 +141,9 @@ class Application(StoppableThread):
             create_event=file_event,
             modify_event=file_event,
         )
+
+        if not config.get("replication.enabled"):
+            self.scheduler.start()
 
     def run(self):
         """Before setting up Beer-Garden, ensures that required services are running"""
