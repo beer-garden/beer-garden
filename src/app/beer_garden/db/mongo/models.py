@@ -1282,7 +1282,7 @@ class Garden(MongoModel, Document):
                     logger.error(
                         f"Error saving system {str(system)} in garden {self.name}: {ex}"
                     )
-                    raise ex
+                    # raise ex
             else:
                 system.delete()
 
