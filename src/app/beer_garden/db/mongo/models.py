@@ -1285,7 +1285,14 @@ class Garden(MongoModel, Document):
                 f"Removing System with ID={str(bad_system_id)} because it "
                 f"matches no known system in child garden ({self.name})"
             )
-            remove_system(system_id=bad_system_id)
+            try:
+                remove_system(system_id=bad_system_id)
+            except:
+                logger.exception(
+                    f"Error removing System with ID={str(bad_system_id)} "
+                    f"from child garden ({self.name})"
+                )
+                System.objects(id=bad_system_id).delete()
 
 
 class SystemGardenMapping(MongoModel, Document):
