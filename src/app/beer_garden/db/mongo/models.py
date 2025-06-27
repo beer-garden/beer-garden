@@ -1232,14 +1232,14 @@ class Garden(MongoModel, Document):
         from beer_garden.systems import remove_system
 
         def _get_system_triple(system: System) -> Tuple[str, str, str]:
-            namespace = getattr(system, "namespace", None)
+            namespace = getattr(system, "namespace", self.name)
             name = getattr(system, "name", None)
             version = getattr(system, "version", None)
             if not name or not version:
-                # dbref doesn't exist
-                return (str(system), "unknown", "unknown")
+                name = str(system)
+                version = ""
             return (
-                namespace or self.name,
+                namespace,
                 name,
                 version,
             )
