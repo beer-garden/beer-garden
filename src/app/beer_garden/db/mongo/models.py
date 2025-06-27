@@ -1237,7 +1237,7 @@ class Garden(MongoModel, Document):
         if old_garden:
             for system in old_garden.systems:
                 try:
-                    if system:
+                    if hasattr(system,"name"):
                         child_systems_already_known[_get_system_triple(system)] = str(system.id)
                 except DoesNotExist:
                     # If the system doesn't exist, we don't need to track it
