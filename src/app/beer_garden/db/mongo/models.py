@@ -1235,10 +1235,19 @@ class Garden(MongoModel, Document):
         # namespaces, names and versions
         child_systems_already_known = {}
         if old_garden:
-            child_systems_already_known = {
-                _get_system_triple(system): str(system.id)
-                for system in old_garden.systems
-            }
+            for system in old_garden.systems:
+                try:
+                    if system:
+                        child_systems_already_known[_get_system_triple(system)] = str(system.id)
+                except DoesNotExist:
+                    # If the system doesn't exist, we don't need to track it
+                    logger.error(
+                        f"System with ID {system.id} no longer exists in garden {self.name}"
+                    )
+            # child_systems_already_known = {
+            #     _get_system_triple(system): str(system.id)
+            #     for system in old_garden.systems
+            # }
 
         local_systems = [
             _get_system_triple(system)
