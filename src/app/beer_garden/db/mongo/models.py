@@ -1249,6 +1249,7 @@ class Garden(MongoModel, Document):
 
         for system in self.systems:
             triple = _get_system_triple(system)
+            logger.error(f"Processing System <{triple[0]}, {triple[1]}, {triple[2]}> for garden {self.name} and System {system}")
 
             # Check is System is a Local System
             if triple not in local_systems:
