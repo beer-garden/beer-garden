@@ -1267,8 +1267,13 @@ class Garden(MongoModel, Document):
                         )
                         remove_system(system_id=system_id_to_remove)
 
-                system.save()
-                system.save_topics(self.name)
+                try:
+                    system.save()
+                    system.save_topics(self.name)
+                except Exception as ex:
+                    logger.error(
+                        f"Error saving system {str(system)} in garden {self.name}: {ex}"
+                    )
 
             else:
                 system.delete()
@@ -1284,10 +1289,6 @@ class Garden(MongoModel, Document):
             try:
                 remove_system(system_id=bad_system_id)
             except Exception:
-                logger.error(
-                    f"Error removing System with ID={str(bad_system_id)} "
-                    f"from child garden ({self.name}), removing by ID only"
-                )
                 remove_system(system=BrewtilsSystem(id=str(bad_system_id)))
 
 
