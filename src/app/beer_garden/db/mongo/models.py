@@ -1266,8 +1266,14 @@ class Garden(MongoModel, Document):
                         )
                         remove_system(system_id=system_id_to_remove)
 
-                system.save()
-                system.save_topics(self.name)
+                try:
+                    system.save()
+                    system.save_topics(self.name)
+                except Exception as ex:
+                    logger.error(
+                        f"Error saving system {str(system)} in garden {self.name}: {ex}"
+                    )
+                    raise ex
             else:
                 system.delete()
 
