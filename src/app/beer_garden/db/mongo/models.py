@@ -1288,13 +1288,12 @@ class Garden(MongoModel, Document):
             )
             try:
                 remove_system(system_id=bad_system_id)
-            except:
-                logger.exception(
+            except Exception:
+                logger.error(
                     f"Error removing System with ID={str(bad_system_id)} "
-                    f"from child garden ({self.name})"
+                    f"from child garden ({self.name}), removing by ID only"
                 )
                 remove_system(system=BrewtilsSystem(id=str(bad_system_id)))
-                # System.objects(id=bad_system_id).delete()
 
 
 class SystemGardenMapping(MongoModel, Document):
