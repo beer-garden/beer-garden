@@ -1235,15 +1235,6 @@ class Garden(MongoModel, Document):
         # namespaces, names and versions
         child_systems_already_known = {}
         if old_garden:
-            # for system in old_garden.systems:
-            #     try:
-            #         if hasattr(system,"name"):
-            #             child_systems_already_known[_get_system_triple(system)] = str(system.id)
-            #     except DoesNotExist:
-            #         # If the system doesn't exist, we don't need to track it
-            #         logger.error(
-            #             f"System with ID {system.id} no longer exists in garden {self.name}"
-            #         )
             child_systems_already_known = {
                 _get_system_triple(system): str(system.id)
                 for system in old_garden.systems
@@ -1289,19 +1280,25 @@ class Garden(MongoModel, Document):
         # if there's anything left over, delete those too; this could occur, e.g.,
         # if a child system deleted a particular version of a plugin and installed
         # another version of the same plugin
-        for key, bad_system_id in child_systems_already_known.items():
+        for bad_system_id in child_systems_already_known.values():
             logger.error(
                 f"Removing System with ID={str(bad_system_id)} because it "
-                f"matches no known system in child garden ({self.name}) or key {key}"
+                f"matches no known system in child garden ({self.name})"
             )
-            try:
-                remove_system(system_id=bad_system_id)
-            except:
-                logger.exception(
-                    f"Error removing System with ID={str(bad_system_id)} "
-                    f"from child garden ({self.name})"
-                )
-                System.objects(id=bad_system_id).delete()
+            remove_system(system_id=bad_system_id)
+        # for key, bad_system_id in child_systems_already_known.items():
+        #     logger.error(
+        #         f"Removing System with ID={str(bad_system_id)} because it "
+        #         f"matches no known system in child garden ({self.name}) or key {key}"
+        #     )
+        #     try:
+        #         remove_system(system_id=bad_system_id)
+        #     except:
+        #         logger.exception(
+        #             f"Error removing System with ID={str(bad_system_id)} "
+        #             f"from child garden ({self.name})"
+        #         )
+        #         System.objects(id=bad_system_id).delete()
 
 
 class SystemGardenMapping(MongoModel, Document):
