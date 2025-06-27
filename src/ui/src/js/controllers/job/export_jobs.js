@@ -3,18 +3,14 @@ jobExportController.$inject = ['$scope', '$rootScope', '$filter', 'JobService'];
 /**
  * jobExportController - Controller for the job export page.
  * @param  {Object} $scope            Angular's $scope object.
- * @param  {Object} $rootScope        Angular's $rootScope object.
  * @param  {Object} $filter
  * @param  {Object} JobService        Beer-Garden's job service.
  */
 export default function jobExportController(
     $scope,
-    $rootScope,
     $filter,
     JobService,
 ) {
-  $scope.response = $rootScope.gardensResponse;
-  $scope.data = $rootScope.systems;
 
   $scope.exportAllJobs = function() {
     JobService.exportJobs().then(
