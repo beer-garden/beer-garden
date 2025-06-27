@@ -48,6 +48,7 @@ jobs:
 
   PyTest:
     runs-on: ${{ matrix.os }}
+    needs: Grandchild-Testing
 
     env:
       brewtils: "develop"
