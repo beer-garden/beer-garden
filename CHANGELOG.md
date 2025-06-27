@@ -12,6 +12,8 @@ TBD
 - Fixed bug in `SystemsList` API using `filter_running` causing SchemaParser to fail(#1889)
 - Removed redundant call to get UtilityService getConfig (#1891)
 - Implemented previous Beer Garden installed version check to determine database migrations required (#1880)
+- Implemented Lazy Loading of the root Garden for UI pages that do not require the Garden/System models to be loaded (#1896)
+- Loaded all Gardens in single DB call when returning Local Garden instead of individual calls per downstream garden (#1896)
 - Fixed bug where Replication Events published when Replication was disabled (#1990)
 
 ## 3.30.0rc0
