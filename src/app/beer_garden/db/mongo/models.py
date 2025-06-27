@@ -1281,7 +1281,7 @@ class Garden(MongoModel, Document):
         # if there's anything left over, delete those too; this could occur, e.g.,
         # if a child system deleted a particular version of a plugin and installed
         # another version of the same plugin
-        for bad_system_id in child_systems_already_known:
+        for bad_system_id in child_systems_already_known.values():
             logger.error(
                 f"Removing System with ID={str(bad_system_id)} because it "
                 f"matches no known system in child garden ({self.name})"
@@ -1293,7 +1293,7 @@ class Garden(MongoModel, Document):
                     f"Error removing System with ID={str(bad_system_id)} "
                     f"from child garden ({self.name})"
                 )
-                remove_system(system=BrewtilsSystem(id=bad_system_id))
+                remove_system(system=BrewtilsSystem(id=str(bad_system_id)))
                 # System.objects(id=bad_system_id).delete()
 
 
