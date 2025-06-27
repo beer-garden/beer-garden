@@ -1460,5 +1460,5 @@ class Configuration(Document):
     # and is reset after migrations are completed. It should not
     # be used for optional configuration.
     action_ttl = IntField(default=-1)
-    info_ttl = IntField(default=-1)
+    info_ttl = IntField(default=15)
     version = StringField(default="0.0.0")
