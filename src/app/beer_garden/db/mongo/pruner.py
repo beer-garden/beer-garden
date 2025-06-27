@@ -135,7 +135,7 @@ def prune_requests():
         "id", "output_gridfs", "parameters_gridfs", "parameters"
     )
 
-    prune_request_cursor(request_cursor, batch_size, "Expired Requests")
+    prune_request_cursor(request_cursor, batch_size, "Expired")
 
 
 def prune_request_cursor(
