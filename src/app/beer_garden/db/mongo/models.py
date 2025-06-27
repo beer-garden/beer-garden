@@ -1236,8 +1236,7 @@ class Garden(MongoModel, Document):
             name = getattr(system, "name", None)
             version = getattr(system, "version", None)
             if not name or not version:
-                name = str(system)
-                version = ""
+                return (str(system), "", "")
             return (
                 namespace,
                 name,
