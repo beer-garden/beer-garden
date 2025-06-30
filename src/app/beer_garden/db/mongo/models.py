@@ -23,6 +23,7 @@ from brewtils.models import Instance as BrewtilsInstance
 from brewtils.models import Job as BrewtilsJob
 from brewtils.models import Parameter as BrewtilsParameter
 from brewtils.models import Request as BrewtilsRequest
+from brewtils.models import System as BrewtilsSystem
 from mongoengine import (
     CASCADE,
     DO_NOTHING,
@@ -1266,8 +1267,14 @@ class Garden(MongoModel, Document):
                         )
                         remove_system(system_id=system_id_to_remove)
 
-                system.save()
-                system.save_topics(self.name)
+                try:
+                    system.save()
+                    system.save_topics(self.name)
+                except Exception as ex:
+                    logger.error(
+                        f"Error saving system {str(system)} in garden {self.name}: {ex}"
+                    )
+
             else:
                 system.delete()
 
@@ -1279,7 +1286,10 @@ class Garden(MongoModel, Document):
                 f"Removing System with ID={str(bad_system_id)} because it "
                 f"matches no known system in child garden ({self.name})"
             )
-            remove_system(system_id=bad_system_id)
+            try:
+                remove_system(system_id=bad_system_id)
+            except Exception:
+                remove_system(system=BrewtilsSystem(id=str(bad_system_id)))
 
 
 class SystemGardenMapping(MongoModel, Document):
