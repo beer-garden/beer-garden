@@ -8,13 +8,14 @@ The metrics service manages:
 """
 
 import datetime
+import json
 import logging
 import re
 import sys
 from http.server import ThreadingHTTPServer
 
 import elasticapm
-from brewtils.models import Event, Operation, Request
+from brewtils.models import BaseModel, Event, Operation, Request
 from brewtils.stoppable_thread import StoppableThread
 from elasticapm import Client
 from elasticapm.metrics.base_metrics import MetricSet
@@ -25,6 +26,8 @@ from prometheus_client.registry import REGISTRY
 import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.events
+
+logger = logging.getLogger(__name__)
 
 
 class PrometheusServer(StoppableThread):
@@ -184,6 +187,25 @@ def initialize_elastic_client(label: str):
         client.metrics.register(ProcessorMetricsSet)
 
 
+def _calculate_size(field) -> int:
+    """Determine if the field is a large dataset that should be stored in GridFS"""
+
+    total_size = sys.getsizeof(field)
+
+    if isinstance(field, dict):
+        total_size += sys.getsizeof(json.dumps(field))
+
+    elif isinstance(field, list):
+        for item in field:
+            total_size += _calculate_size(item)
+    elif isinstance(field, BaseModel):
+        for attribute in dir(field):
+            if not callable(attribute) and not attribute.startswith("_"):
+                total_size += _calculate_size(getattr(field, attribute))
+
+    return total_size
+
+
 def extract_custom_context(result) -> None:
     """Extracts values from models to be tracked in the custom context fields
 
@@ -205,10 +227,23 @@ def extract_custom_context(result) -> None:
             if result.metadata:
                 elasticapm.label(**result.metadata)
 
+            # Helpful for trending sizes, but can be expensive to calculate
+            if logger.level == logging.DEBUG:
+                elasticapm.label(request_size=_calculate_size(result))
+                if hasattr(result, "parameters"):
+                    elasticapm.label(
+                        request_parameter_size=_calculate_size(result.parameters)
+                    )
+                if hasattr(result, "output"):
+                    elasticapm.label(request_output_size=_calculate_size(result.output))
+
         if hasattr(result, "id") and result.id:
             elasticapm.label(mongo_id=result.id)
 
-        elasticapm.label(result_size=sys.getsizeof(result))
+        # Helpful for trending sizes, but can be expensive to calculate
+        if logger.level == logging.DEBUG:
+            elasticapm.label(result_size=_calculate_size(result))
+
         elasticapm.label(result_type=str(type(result)))
 
 
@@ -262,6 +297,9 @@ class CollectMetrics(elasticapm.capture_span):
 
         # ADD LABELS
         if exception_type:
+            self.client.capture_exception(
+                exec_info=(exception_type, exception_value, exception_traceback)
+            )
             self.client.end_transaction(result="failure")
         if self.client:
             self.client.end_transaction(result="success")

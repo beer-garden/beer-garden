@@ -196,8 +196,6 @@ publish-docker-unstable-latest: docker-tag-latest-unstable publish-docker-unstab
 
 publish-branch-docker-unstable: parse_branch_name package clean-python
 	docker build -t $(DOCKER_NAME):$(BRANCH_NAME)-$(VERSION)-python$(PYTHON_VERSION) -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-alpine .
-	docker tag $(DOCKER_NAME):$(BRANCH_NAME)-$(VERSION)-python$(PYTHON_VERSION) $(DOCKER_NAME):$(BRANCH_NAME)-$(VERSION)-python$(PYTHON_VERSION)-${DATE}
-	docker push $(DOCKER_NAME):$(BRANCH_NAME)-$(VERSION)-python$(PYTHON_VERSION)-${DATE}
 	docker push $(DOCKER_NAME):$(BRANCH_NAME)-$(VERSION)-python$(PYTHON_VERSION)
 
 # Publishing
