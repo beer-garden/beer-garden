@@ -288,7 +288,9 @@ export default function commandViewController(
     $scope.jsonValues.form = JSON.stringify($scope.form, undefined, 2);
   };
 
-  $scope.successCallback = function(systems) {
+  $scope.successCallback = function() {
+
+    let systems = $rootScope.systems;
 
     for (let i = 0; i < systems.length; i++) {
       let system = systems[i];
@@ -396,17 +398,6 @@ export default function commandViewController(
   // Model instantiate button will emit this so need to listen for it
   $scope.$on('generateSF', generateSF);
 
-  if ($rootScope.gardensResponse !== undefined){
-    $scope.successCallback($rootScope.systems);
-  } 
-  else {
-    setTimeout(function delaySystemLoad() {
-      if ($rootScope.gardensResponse !== undefined){
-        $scope.successCallback($rootScope.systems);
-        $scope.$digest();
-      } else {
-        setTimeout(delaySystemLoad, 10);
-      }
-    }, 10);
-  }
+  $rootScope.getLocalGarden($scope.successCallback)
+
 }

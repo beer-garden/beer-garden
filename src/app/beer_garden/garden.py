@@ -118,10 +118,34 @@ def get_garden(garden_name: str) -> Garden:
 
     """
     if garden_name == config.get("garden.name"):
-        garden = local_garden()
+        gardens = db.query(Garden)
+        garden = None
+        for db_garden in gardens:
+            if db_garden.name == config.get("garden.name"):
+                garden = db_garden
+            db_garden.children = [
+                child_garden
+                for child_garden in gardens
+                if child_garden.name != db_garden.name
+                and (
+                    (child_garden.has_parent and child_garden.parent == db_garden.name)
+                    or (
+                        not db_garden.has_parent
+                        and db_garden.name == config.get("garden.name")
+                    )
+                )
+            ]
+
+        if garden:
+            filter_params = {}
+            filter_params["local"] = True
+
+            garden.systems = get_systems(filter_params=filter_params)
+
     else:
         garden = db.query_unique(Garden, name=garden_name, raise_missing=True)
-    get_children_garden(garden)
+        get_children_garden(garden)
+
     return garden
 
 
@@ -777,7 +801,6 @@ def garden_sync(sync_target: str = None):
             publish_garden()
         else:
             try:
-                logger.info(f"About to create sync operation for garden {sync_target}")
 
                 route(
                     Operation(

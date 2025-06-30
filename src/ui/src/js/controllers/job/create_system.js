@@ -8,6 +8,9 @@ jobCreateSystemController.$inject = ['$scope', '$rootScope'];
 export default function jobCreateSystemController($scope, $rootScope) {
   $scope.setWindowTitle('scheduler');
 
-  $scope.response = $rootScope.gardensResponse;
-  $scope.data = $rootScope.systems;
+  $rootScope.getLocalGarden(function(){
+    $scope.response = $rootScope.gardensResponse;
+    $scope.data = $rootScope.systems;
+  });
+  
 }

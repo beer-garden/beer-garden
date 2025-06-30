@@ -33,13 +33,7 @@ export default function routeConfig(
             ($rootScope) => {
               return $rootScope.config;
             },
-          ],
-          systems: [
-            '$rootScope',
-            ($rootScope) => {
-              return $rootScope.getSystems();
-            },
-          ],
+          ]
         },
       })
       .state('base.about', {
