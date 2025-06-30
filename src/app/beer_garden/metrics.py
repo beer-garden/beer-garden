@@ -183,6 +183,9 @@ def initialize_elastic_client(label: str):
 
         client.metrics.register(ProcessorMetricsSet)
 
+def track_custom_context(values:dict) -> None:
+    if elasticapm.get_trace_parent_header():
+        elasticapm.label(**values)
 
 def extract_custom_context(result) -> None:
     """Extracts values from models to be tracked in the custom context fields
@@ -204,6 +207,9 @@ def extract_custom_context(result) -> None:
         elif isinstance(result, Request):
             if result.metadata:
                 elasticapm.label(**result.metadata)
+
+        if hasattr(result, "__len__"):
+            elasticapm.label(result_size=len(result))
 
         if hasattr(result, "id") and result.id:
             elasticapm.label(mongo_id=result.id)

@@ -14,7 +14,7 @@ import beer_garden.config as config
 from beer_garden.db.mongo.api import to_brewtils
 from beer_garden.db.mongo.models import File, Job, RawFile, Request
 from beer_garden.events import publish
-from beer_garden.metrics import CollectMetrics
+from beer_garden.metrics import CollectMetrics, track_custom_context
 
 logger = logging.getLogger(__name__)
 
@@ -540,18 +540,29 @@ def prune_grid_fs_files(db, files, outstanding_files):
     for outstanding_file in outstanding_files:
         outstanding_ids.append(outstanding_file["_id"])
 
-    requests_matching = (
-        Request.objects(
-            Q(output_gridfs__in=outstanding_ids)
-            | Q(parameters_gridfs__in=outstanding_ids)
+    with CollectMetrics("PRUNER", "Pruner::grid_fs::batch::requests_matching"):
+        requests_matching = (
+            Request.objects(
+                Q(output_gridfs__in=outstanding_ids)
+                | Q(parameters_gridfs__in=outstanding_ids)
+            )
+            .only("id")
+            .count()
         )
-        .only("id")
-        .count()
-    )
 
-    raw_files_matching = RawFile.objects(Q(file__in=outstanding_ids)).only("id").count()
+    with CollectMetrics("PRUNER", "Pruner::grid_fs::batch::raw_files_matching"):
+        raw_files_matching = RawFile.objects(Q(file__in=outstanding_ids)).only("id").count()
 
     total_matching = requests_matching + raw_files_matching
+
+    track_custom_context(
+        {
+            "requests_matching": requests_matching,
+            "raw_files_matching": raw_files_matching,
+            "total_matching": total_matching,
+            "outstanding_ids": len(outstanding_ids),
+        }
+    )
 
     try:
         if total_matching > 0:
@@ -559,29 +570,32 @@ def prune_grid_fs_files(db, files, outstanding_files):
             # each file individually to see if it is orphaned
             outstanding_ids = []
 
-            for outstanding_file in outstanding_files:
-                if (
-                    Request.objects(
-                        Q(output_gridfs=outstanding_file["_id"])
-                        | Q(parameters_gridfs=outstanding_file["_id"])
-                    )
-                    .only("id")
-                    .count()
-                    == 0
-                    and RawFile.objects(Q(file=outstanding_file["_id"]))
-                    .only("id")
-                    .count()
-                    == 0
-                ):
-                    outstanding_ids.append(outstanding_file["_id"])
+            with CollectMetrics("PRUNER", "Pruner::grid_fs::batch::raw_files_matching::outstanding_find"):
+                for outstanding_file in outstanding_files:
+                    if (
+                        Request.objects(
+                            Q(output_gridfs=outstanding_file["_id"])
+                            | Q(parameters_gridfs=outstanding_file["_id"])
+                        )
+                        .only("id")
+                        .count()
+                        == 0
+                        and RawFile.objects(Q(file=outstanding_file["_id"]))
+                        .only("id")
+                        .count()
+                        == 0
+                    ):
+                        outstanding_ids.append(outstanding_file["_id"])
     finally:
 
         counter = len(outstanding_ids)
+        track_custom_context({"pruned_gridfs_records": counter})
 
-        if counter > 0:
-            db["fs.chunks"].delete_many({"files_id": {"$in": outstanding_ids}})
-            files.delete_many({"_id": {"$in": outstanding_ids}})
-            logger.error(f"Deleted {counter} orphaned files from GridFS")
+        with CollectMetrics("PRUNER", "Pruner::grid_fs::batch::raw_files_matching::delete_many"):
+            if counter > 0:
+                db["fs.chunks"].delete_many({"files_id": {"$in": outstanding_ids}})
+                files.delete_many({"_id": {"$in": outstanding_ids}})
+                logger.error(f"Deleted {counter} orphaned files from GridFS")
 
-        else:
-            logger.debug("No orphaned files found in GridFS")
+            else:
+                logger.debug("No orphaned files found in GridFS")
