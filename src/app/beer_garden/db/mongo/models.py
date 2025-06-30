@@ -1267,13 +1267,13 @@ class Garden(MongoModel, Document):
                         )
                         remove_system(system_id=system_id_to_remove)
 
-                # try:
-                system.save()
-                system.save_topics(self.name)
-                # except Exception as ex:
-                #     logger.error(
-                #         f"Error saving system {str(system)} in garden {self.name}: {ex}"
-                #     )
+                try:
+                    system.save()
+                    system.save_topics(self.name)
+                except Exception as ex:
+                    logger.error(
+                        f"Error saving system {str(system)} in garden {self.name}: {ex}"
+                    )
 
             else:
                 system.delete()
@@ -1286,10 +1286,10 @@ class Garden(MongoModel, Document):
                 f"Removing System with ID={str(bad_system_id)} because it "
                 f"matches no known system in child garden ({self.name})"
             )
-            # try:
-            remove_system(system_id=bad_system_id)
-            # except Exception:
-            #     remove_system(system=BrewtilsSystem(id=str(bad_system_id)))
+            try:
+                remove_system(system_id=bad_system_id)
+            except Exception:
+                remove_system(system=BrewtilsSystem(id=str(bad_system_id)))
 
 
 class SystemGardenMapping(MongoModel, Document):

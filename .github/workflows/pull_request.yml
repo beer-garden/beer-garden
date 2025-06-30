@@ -48,7 +48,6 @@ jobs:
 
   PyTest:
     runs-on: ${{ matrix.os }}
-    needs: Grandchild-Testing
 
     env:
       brewtils: "develop"
@@ -330,7 +329,7 @@ jobs:
 
   Grandchild-Testing:
     runs-on: ${{ matrix.os }}
-    # needs: Local-Plugin-Testing
+    needs: Local-Plugin-Testing
 
     strategy:
       matrix:
@@ -449,7 +448,7 @@ jobs:
           command: curl http://localhost:2337/config
 
       - name: Wait for Beer Garden plugins to initialize
-        run: sleep 30s
+        run: sleep 15s
         shell: bash
 
       - name: Install Develop Version of Brewtils
