@@ -99,7 +99,7 @@ def handle_event(event: Event) -> None:
         event: The event to handle
     """
 
-    if event.garden == config.get("garden.name"):
+    if event.garden == config.get("garden.name") and config.get("replication.enabled"):
         if event.name in [
             Events.REPLICATION_CREATED.name,
             Events.REPLICATION_UPDATED.name,

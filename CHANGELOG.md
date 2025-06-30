@@ -14,6 +14,9 @@ TBD
 - Implemented previous Beer Garden installed version check to determine database migrations required (#1880)
 - Updated Router Logic for handling Error Events for System Deletes
 - Moved Info message for downstream garden syncs to prior to forwarding
+- Implemented Lazy Loading of the root Garden for UI pages that do not require the Garden/System models to be loaded (#1896)
+- Loaded all Gardens in single DB call when returning Local Garden instead of individual calls per downstream garden (#1896)
+- Fixed bug where Replication Events published when Replication was disabled (#1990)
 
 ## 3.30.0rc0
 

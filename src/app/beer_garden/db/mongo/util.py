@@ -5,7 +5,7 @@ from datetime import timedelta
 from brewtils.models import Request
 from mongoengine.connection import get_db
 from mongoengine.errors import DoesNotExist, FieldDoesNotExist, InvalidDocumentError
-from pymongo import UpdateOne
+from pymongo import UpdateMany, UpdateOne
 from pymongo.errors import OperationFailure, PyMongoError
 
 import beer_garden
@@ -143,6 +143,18 @@ def contains_field(collection_name, field):
     return False
 
 
+def contains_fields(collection_name, fields):
+    """Checks if any record in the collection contains one of the specified fields"""
+    db = get_db()
+    collection = db.get_collection(collection_name)
+
+    filter_criteria = {"$or": [{field: {"$exists": True}}] for field in fields}
+
+    if collection.find(filter_criteria).count() > 0:
+        return True
+    return False
+
+
 def missing_field(collection_name, field):
     """Checks if any record in the collection is missing the specified field"""
     db = get_db()
@@ -273,21 +285,28 @@ def ensure_v3_27_model_migration():
 
 def ensure_v3_29_model_migration():
     db = get_db()
+    batch_size = config.get("db.prune.batch_size", default=-1)
     if missing_field("request", "command_display_name"):
         logger.warning(
             "Command display name was not found in Requests and will be added. This is most"
             " likely because the database is using the old (v3.29) style of storing in"
             " the database."
         )
+        request_updates = []
         request_collection = db.get_collection("request")
         for legacy_request in request_collection.find(
             {"command_display_name": {"$exists": False}}
         ):
             if legacy_request:
                 legacy_request["command_display_name"] = legacy_request["command"]
-                request_collection.update_one(
-                    {"_id": legacy_request["_id"]}, {"$set": legacy_request}
+                request_updates.append(
+                    UpdateOne({"_id": legacy_request["_id"]}, {"$set": legacy_request})
                 )
+            if batch_size > 0 and len(request_updates) > batch_size:
+                request_collection.bulk_write(request_updates, ordered=False)
+                request_updates = []
+        if len(request_updates) > 0:
+            request_collection.bulk_write(request_updates, ordered=False)
 
 
 def find_root_command_type_and_expiration(request):
@@ -343,23 +362,28 @@ def find_root_command_type_and_expiration(request):
 
 def ensure_v3_30_model_migration():
     db = get_db()
+    batch_size = config.get("db.prune.batch_size", default=-1)
 
-    if (
-        contains_field("garden", "status")
-        or contains_field("garden", "status_info")
-        or contains_field("garden", "namespaces")
-    ):
+    if contains_fields("garden", ["status", "status_info", "namespaces"]):
         logger.warning(
             "Status or namespaces was found in Garden and will be removed. This is most"
             " likely because the database is using the old (v3.29) style of storing in"
             " the database."
         )
+        garden_updates = []
         garden_collection = db.get_collection("garden")
         for legacy_garden in garden_collection.find():
-            garden_collection.update_one(
-                {"_id": legacy_garden["_id"]},
-                {"$unset": {"status": "", "status_info": "", "namespaces": ""}},
+            garden_updates.append(
+                UpdateOne(
+                    {"_id": legacy_garden["_id"]},
+                    {"$unset": {"status": "", "status_info": "", "namespaces": ""}},
+                )
             )
+            if batch_size > 0 and len(garden_updates) > batch_size:
+                garden_collection.bulk_write(garden_updates, ordered=False)
+                garden_updates = []
+        if len(garden_updates) > 0:
+            garden_collection.bulk_write(garden_updates, ordered=False)
 
     if missing_field("request", "root_command_type"):
         logger.warning(
@@ -368,7 +392,6 @@ def ensure_v3_30_model_migration():
             " storing in the database."
         )
         request_collection = db.get_collection("request")
-        batch_size = config.get("db.prune.batch_size", default=-1)
         updates = []
         for legacy_request in request_collection.find(
             {"root_command_type": {"$exists": False}},
@@ -705,21 +728,32 @@ def _update_request_parent_field_type():
     """Change GenericReferenceField to ReferenceField"""
     from .models import Request
 
+    batch_size = config.get("db.prune.batch_size", default=-1)
+    updates = []
     raw_collection = Request._get_collection()
     for request in raw_collection.find({"parent._ref": {"$type": "object"}}):
-        raw_collection.update_one(
-            {"_id": request["_id"]}, {"$set": {"parent": request["parent"]["_ref"]}}
+        updates.append(
+            UpdateOne(
+                {"_id": request["_id"]}, {"$set": {"parent": request["parent"]["_ref"]}}
+            )
         )
+        if batch_size > 0 and len(updates) > batch_size:
+            raw_collection.bulk_write(updates, ordered=False)
+            updates = []
+    if len(updates) > 0:
+        raw_collection.bulk_write(updates, ordered=False)
 
 
 def _update_request_has_parent_model():
     from .models import Request
 
+    updates = []
     raw_collection = Request._get_collection()
-    raw_collection.update_many({"parent": None}, {"$set": {"has_parent": False}})
-    raw_collection.update_many(
-        {"parent": {"$not": {"$eq": None}}}, {"$set": {"has_parent": True}}
+    updates.append(UpdateMany({"parent": None}, {"$set": {"has_parent": False}}))
+    updates.append(
+        UpdateMany({"parent": {"$not": {"$eq": None}}}, {"$set": {"has_parent": True}})
     )
+    raw_collection.bulk_write(updates, ordered=False)
 
 
 def prune_topics():

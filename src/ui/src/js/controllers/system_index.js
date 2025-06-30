@@ -128,5 +128,5 @@ export default function systemIndexController(
 
   // Systems to load async, have to monitor the systems for changes
   $rootScope.$watchCollection('systems', filterSystems);
-
+  $rootScope.getLocalGarden(filterSystems)
 }
