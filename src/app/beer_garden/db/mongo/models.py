@@ -49,7 +49,7 @@ from mongoengine import (
 )
 from mongoengine.errors import DoesNotExist
 from pymongo.errors import DocumentTooLarge
-from beer_garden.metrics import CollectMetrics
+
 from beer_garden import config
 from beer_garden.db.mongo.querysets import FileFieldHandlingQuerySet
 
@@ -1214,6 +1214,7 @@ class Garden(MongoModel, Document):
 
     def deep_save(self):
         if self.connection_type != "LOCAL":
+            from beer_garden.metrics import CollectMetrics
             with CollectMetrics("GARDEN", "_update_associated_systems"):
                 self._update_associated_systems()
 
@@ -1232,6 +1233,7 @@ class Garden(MongoModel, Document):
         that when saving the systems, unknowns are deleted."""
         # import moved here to avoid a circular import loop
         from beer_garden.systems import remove_system
+        from beer_garden.metrics import CollectMetrics
 
         def _get_system_triple(system: System) -> Tuple[str, str, str]:
             namespace = getattr(system, "namespace", self.name)
