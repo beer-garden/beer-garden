@@ -801,7 +801,6 @@ def garden_sync(sync_target: str = None):
             publish_garden()
         else:
             try:
-                logger.info(f"About to create sync operation for garden {sync_target}")
 
                 route(
                     Operation(
