@@ -1,14 +1,15 @@
-from brewtils.models import Permissions
+import asyncio
+
+from brewtils.models import Operation, Permissions
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.events import publish
 
 
 class EventPublisherAPI(AuthorizationHandler):
     parser = SchemaParser()
 
-    def post(self):
+    async def post(self):
         """
         ---
         summary: Publish a new event
@@ -36,6 +37,14 @@ class EventPublisherAPI(AuthorizationHandler):
         self.minimum_permission = Permissions.OPERATOR.name
         event = SchemaParser.parse_event(self.request.decoded_body, from_string=True)
         self.verify_user_permission_for_object(event)
-        publish(event)
+
+        asyncio.create_task(
+            self.process_operation(
+                Operation(
+                    operation_type="PUBLISH_EVENT", model=event, model_type="Event"
+                ),
+                filter_results=False,
+            )
+        )
 
         self.set_status(204)

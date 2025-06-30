@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
+from collections import deque
 from copy import deepcopy
 
 import pytest
-from brewtils.models import Events
-from mock import Mock
+from brewtils.models import Events, Request
 
 from beer_garden import config
 from beer_garden.events.handlers import add_internal_events_handler
@@ -12,169 +12,7 @@ from beer_garden.events.processors import FanoutProcessor
 
 class TestHandlers:
 
-    @pytest.mark.parametrize(
-        "event_name,expected_calls",
-        [
-            (Events.BREWVIEW_STARTED, 0),
-            (Events.BREWVIEW_STOPPED, 0),
-            (Events.BARTENDER_STARTED, 0),
-            (Events.BARTENDER_STOPPED, 0),
-            (Events.REQUEST_CREATED, 3),
-            (Events.REQUEST_STARTED, 1),
-            (Events.REQUEST_UPDATED, 0),
-            (Events.REQUEST_COMPLETED, 2),
-            (Events.REQUEST_CANCELED, 2),
-            (Events.REQUEST_TOPIC_PUBLISH, 1),
-            (Events.REQUEST_DELETED, 0),
-            (Events.INSTANCE_INITIALIZED, 2),
-            (Events.INSTANCE_STARTED, 1),
-            (Events.INSTANCE_UPDATED, 2),
-            (Events.INSTANCE_STOPPED, 2),
-            (Events.SYSTEM_CREATED, 3),
-            (Events.SYSTEM_UPDATED, 3),
-            (Events.SYSTEM_REMOVED, 2),
-            (Events.QUEUE_CLEARED, 0),
-            (Events.ALL_QUEUES_CLEARED, 0),
-            (Events.DB_CREATE, 0),
-            (Events.DB_UPDATE, 0),
-            (Events.DB_DELETE, 0),
-            (Events.GARDEN_CREATED, 1),
-            (Events.GARDEN_CONFIGURED, 2),
-            (Events.GARDEN_UPDATED, 2),
-            (Events.GARDEN_REMOVED, 2),
-            (Events.FILE_CREATED, 0),
-            (Events.GARDEN_STARTED, 1),
-            (Events.GARDEN_STOPPED, 2),
-            (Events.GARDEN_UNREACHABLE, 1),
-            (Events.GARDEN_ERROR, 1),
-            (Events.GARDEN_NOT_CONFIGURED, 1),
-            (Events.GARDEN_SYNC, 2),
-            (Events.ENTRY_STARTED, 2),
-            (Events.ENTRY_STOPPED, 0),
-            (Events.JOB_CREATED, 2),
-            (Events.JOB_DELETED, 1),
-            (Events.JOB_PAUSED, 1),
-            (Events.JOB_RESUMED, 1),
-            (Events.PLUGIN_LOGGER_FILE_CHANGE, 1),
-            (Events.RUNNER_STARTED, 0),
-            (Events.RUNNER_STOPPED, 0),
-            (Events.RUNNER_REMOVED, 0),
-            (Events.JOB_UPDATED, 1),
-            (Events.JOB_EXECUTED, 1),
-            (Events.USER_UPDATED, 1),
-            (Events.USERS_IMPORTED, 0),
-            (Events.ROLE_UPDATED, 0),
-            (Events.ROLE_DELETED, 1),
-            (Events.COMMAND_PUBLISHING_BLOCKLIST_SYNC, 0),
-            (Events.COMMAND_PUBLISHING_BLOCKLIST_REMOVE, 0),
-            (Events.COMMAND_PUBLISHING_BLOCKLIST_UPDATE, 0),
-            (Events.TOPIC_CREATED, 0),
-            (Events.TOPIC_UPDATED, 0),
-            (Events.TOPIC_REMOVED, 0),
-            (Events.REPLICATION_CREATED, 1),
-            (Events.REPLICATION_UPDATED, 1),
-            (Events.DIRECTORY_FILE_CHANGE, 1),
-        ],
-    )
-    def test_garden_local_callbacks(
-        self, monkeypatch, bg_event, event_name, expected_calls
-    ):
-        """Tests to ensure the expected number of Handlers are called for local events"""
-
-        bg_event.name = event_name.name
-        bg_event.garden = "localgarden"
-
-        config._CONFIG["garden"] = {"name": bg_event.garden}
-
-        event_manager = FanoutProcessor(name="event manager")
-        add_internal_events_handler(event_manager)
-
-        assert len(event_manager._managed_processors) == 14
-
-        queue_mock = Mock()
-        append_mock = Mock()
-        queue_mock.append = append_mock
-
-        for processor in event_manager._managed_processors:
-
-            if hasattr(processor, "_queue"):
-                monkeypatch.setattr(processor, "_queue", queue_mock)
-
-            processor.put(bg_event)
-
-        assert append_mock.call_count == expected_calls
-
-    @pytest.mark.parametrize(
-        "event_name,expected_calls",
-        [
-            (Events.BREWVIEW_STARTED, 0),
-            (Events.BREWVIEW_STOPPED, 0),
-            (Events.BARTENDER_STARTED, 0),
-            (Events.BARTENDER_STOPPED, 0),
-            (Events.REQUEST_CREATED, 2),
-            (Events.REQUEST_STARTED, 1),
-            (Events.REQUEST_UPDATED, 1),
-            (Events.REQUEST_COMPLETED, 2),
-            (Events.REQUEST_CANCELED, 2),
-            (Events.REQUEST_TOPIC_PUBLISH, 1),
-            (Events.REQUEST_DELETED, 0),
-            (Events.INSTANCE_INITIALIZED, 1),
-            (Events.INSTANCE_STARTED, 1),
-            (Events.INSTANCE_UPDATED, 2),
-            (Events.INSTANCE_STOPPED, 1),
-            (Events.SYSTEM_CREATED, 2),
-            (Events.SYSTEM_UPDATED, 2),
-            (Events.SYSTEM_REMOVED, 1),
-            (Events.QUEUE_CLEARED, 0),
-            (Events.ALL_QUEUES_CLEARED, 0),
-            (Events.DB_CREATE, 0),
-            (Events.DB_UPDATE, 0),
-            (Events.DB_DELETE, 0),
-            (Events.GARDEN_CREATED, 1),
-            (Events.GARDEN_CONFIGURED, 2),
-            (Events.GARDEN_UPDATED, 2),
-            (Events.GARDEN_REMOVED, 2),
-            (Events.FILE_CREATED, 0),
-            (Events.GARDEN_STARTED, 1),
-            (Events.GARDEN_STOPPED, 2),
-            (Events.GARDEN_UNREACHABLE, 1),
-            (Events.GARDEN_ERROR, 1),
-            (Events.GARDEN_NOT_CONFIGURED, 1),
-            (Events.GARDEN_SYNC, 2),
-            (Events.ENTRY_STARTED, 1),
-            (Events.ENTRY_STOPPED, 0),
-            (Events.JOB_CREATED, 0),
-            (Events.JOB_DELETED, 0),
-            (Events.JOB_PAUSED, 0),
-            (Events.JOB_RESUMED, 0),
-            (Events.PLUGIN_LOGGER_FILE_CHANGE, 0),
-            (Events.RUNNER_STARTED, 0),
-            (Events.RUNNER_STOPPED, 0),
-            (Events.RUNNER_REMOVED, 0),
-            (Events.JOB_UPDATED, 0),
-            (Events.JOB_EXECUTED, 0),
-            (Events.USER_UPDATED, 0),
-            (Events.USERS_IMPORTED, 0),
-            (Events.ROLE_UPDATED, 0),
-            (Events.ROLE_DELETED, 0),
-            (Events.COMMAND_PUBLISHING_BLOCKLIST_SYNC, 0),
-            (Events.COMMAND_PUBLISHING_BLOCKLIST_REMOVE, 0),
-            (Events.COMMAND_PUBLISHING_BLOCKLIST_UPDATE, 0),
-            (Events.TOPIC_CREATED, 0),
-            (Events.TOPIC_UPDATED, 0),
-            (Events.TOPIC_REMOVED, 0),
-            (Events.REPLICATION_CREATED, 0),
-            (Events.REPLICATION_UPDATED, 0),
-            (Events.DIRECTORY_FILE_CHANGE, 0),
-        ],
-    )
-    def test_garden_remote_callbacks(
-        self, monkeypatch, bg_event, event_name, expected_calls
-    ):
-        """Tests to ensure the expected number of Handlers are called for remote events"""
-
-        bg_event.name = event_name.name
-        bg_event.garden = "remotegarden"
+    def run_event_handler_test(self, event, target_handlers, monkeypatch):
 
         config._CONFIG["garden"] = {"name": "localgarden"}
 
@@ -183,17 +21,436 @@ class TestHandlers:
 
         assert len(event_manager._managed_processors) == 14
 
-        queue_mock = Mock()
-        append_mock = Mock()
-        queue_mock.append = append_mock
-
         for processor in event_manager._managed_processors:
 
             if hasattr(processor, "_queue"):
-                monkeypatch.setattr(processor, "_queue", queue_mock)
-            processor.put(bg_event)
+                if processor._name in target_handlers:
 
-        assert append_mock.call_count == expected_calls
+                    processor.clear()
+                    processor.put(event)
+                    queue_depth = (
+                        len(processor._queue)
+                        if isinstance(processor._queue, deque)
+                        else processor._queue.qsize()
+                    )
+                    if processor._name in target_handlers:
+                        assert queue_depth == 1
+                    else:
+                        assert queue_depth == 0
+
+    @pytest.mark.parametrize(
+        "event_name",
+        [
+            Events.BREWVIEW_STARTED,
+            Events.BREWVIEW_STOPPED,
+            Events.BARTENDER_STARTED,
+            Events.BARTENDER_STOPPED,
+            Events.REQUEST_DELETED,
+            Events.QUEUE_CLEARED,
+            Events.ALL_QUEUES_CLEARED,
+            Events.DB_CREATE,
+            Events.DB_UPDATE,
+            Events.DB_DELETE,
+            Events.FILE_CREATED,
+            Events.ENTRY_STOPPED,
+            Events.RUNNER_STARTED,
+            Events.RUNNER_STOPPED,
+            Events.RUNNER_REMOVED,
+            Events.USERS_IMPORTED,
+            Events.ROLE_UPDATED,
+            Events.COMMAND_PUBLISHING_BLOCKLIST_SYNC,
+            Events.COMMAND_PUBLISHING_BLOCKLIST_REMOVE,
+            Events.COMMAND_PUBLISHING_BLOCKLIST_UPDATE,
+            Events.TOPIC_CREATED,
+            Events.TOPIC_UPDATED,
+            Events.TOPIC_REMOVED,
+        ],
+    )
+    def test_noop_events(self, bg_event, event_name, monkeypatch):
+        bg_event.name = event_name.name
+        bg_event.garden = "localgarden"
+
+        self.run_event_handler_test(bg_event, [], monkeypatch)
+
+        bg_event.garden = "remotegaren"
+
+        self.run_event_handler_test(bg_event, [], monkeypatch)
+
+    def test_request_create_event(self, bg_event, bg_request, monkeypatch):
+        bg_event.name = Events.REQUEST_CREATED.name
+        bg_event.payload = bg_request
+        bg_event.payload_type = "Request"
+        bg_event.garden = "localgarden"
+        bg_request.status = "CREATED"
+        bg_event.payload.parameters["file_based"] = {
+            "type": "chunk",
+            "details": {"file_id": "123"},
+        }
+
+        self.run_event_handler_test(bg_event, ["File"], monkeypatch)
+        bg_event.garden = "remotegaren"
+
+        self.run_event_handler_test(bg_event, ["Requests"], monkeypatch)
+
+    def test_request_in_progress_event(self, bg_event, bg_request, monkeypatch):
+        bg_event.name = Events.REQUEST_STARTED.name
+        bg_event.payload = bg_request
+        bg_event.payload_type = "Request"
+        bg_event.garden = "localgarden"
+        bg_request.status = "IN_PROGRESS"
+
+        self.run_event_handler_test(bg_event, [], monkeypatch)
+        bg_event.garden = "remotegaren"
+
+        self.run_event_handler_test(bg_event, ["Requests"], monkeypatch)
+
+    def test_request_completed_event(self, bg_event, bg_request, monkeypatch):
+        bg_event.name = Events.REQUEST_COMPLETED.name
+        bg_event.payload = bg_request
+        bg_event.payload_type = "Request"
+        for success_status in Request.COMPLETED_STATUSES:
+            bg_event.garden = "localgarden"
+            bg_request.status = success_status
+
+            self.run_event_handler_test(
+                bg_event, ["Requests wait events", "Requests"], monkeypatch
+            )
+            bg_event.garden = "remotegaren"
+
+            self.run_event_handler_test(bg_event, ["Requests"], monkeypatch)
+
+    def test_request_canceled_event(self, bg_event, bg_request, monkeypatch):
+        bg_event.name = Events.REQUEST_CANCELED.name
+        bg_event.payload = bg_request
+        bg_event.payload_type = "Request"
+
+        bg_event.garden = "localgarden"
+        bg_request.status = "CANCELED"
+
+        self.run_event_handler_test(
+            bg_event, ["Requests wait events", "Requests"], monkeypatch
+        )
+        bg_event.garden = "remotegaren"
+
+        self.run_event_handler_test(bg_event, ["Requests"], monkeypatch)
+
+    def test_request_updated_event(self, bg_event, bg_request, monkeypatch):
+        bg_event.name = Events.REQUEST_UPDATED.name
+        bg_event.payload = bg_request
+        bg_event.payload_type = "Request"
+
+        bg_event.garden = "localgarden"
+        for success_status in Request.COMPLETED_STATUSES:
+            bg_request.status = success_status
+            self.run_event_handler_test(bg_event, [], monkeypatch)
+            bg_event.garden = "remotegaren"
+            self.run_event_handler_test(bg_event, ["Requests"], monkeypatch)
+
+        bg_event.garden = "localgarden"
+        bg_request.status = "IN_PROGRESS"
+        self.run_event_handler_test(bg_event, [], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, ["Requests"], monkeypatch)
+
+        bg_event.garden = "localgarden"
+        bg_request.status = "CREATED"
+        self.run_event_handler_test(bg_event, [], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, ["Requests"], monkeypatch)
+
+    def test_request_topic_publish_event(self, bg_event, bg_request, monkeypatch):
+        bg_event.name = Events.REQUEST_TOPIC_PUBLISH.name
+        bg_event.payload = bg_request
+        bg_event.payload_type = "Request"
+        bg_event.metadata = {
+            "topic": "topic",
+            "_propagate": False,
+        }
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(bg_event, ["Publish Requests"], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, [], monkeypatch)
+
+        bg_event.metadata["_propagate"] = True
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(bg_event, ["Publish Requests"], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, ["Publish Requests"], monkeypatch)
+
+    def test_instance_initialized_event(self, bg_event, monkeypatch):
+        bg_event.name = Events.INSTANCE_INITIALIZED.name
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(
+            bg_event, ["Local plugins manager", "Garden"], monkeypatch
+        )
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
+
+    def test_instance_started_event(self, bg_event, monkeypatch):
+        bg_event.name = Events.INSTANCE_STARTED.name
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
+
+    def test_instance_updated_event(self, bg_event, monkeypatch):
+        bg_event.name = Events.INSTANCE_UPDATED.name
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(bg_event, ["Plugin", "Garden"], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
+
+    def test_instance_stopped_event(self, bg_event, monkeypatch):
+        bg_event.name = Events.INSTANCE_STOPPED.name
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(
+            bg_event, ["Local plugins manager", "Garden"], monkeypatch
+        )
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
+
+    def test_system_created_event(self, bg_event, monkeypatch):
+        bg_event.name = Events.SYSTEM_CREATED.name
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(
+            bg_event, ["Router", "Garden", "System"], monkeypatch
+        )
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, ["Router", "Garden"], monkeypatch)
+
+    def test_system_updated_event(self, bg_event, monkeypatch):
+        bg_event.name = Events.SYSTEM_UPDATED.name
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(
+            bg_event, ["Router", "Garden", "System"], monkeypatch
+        )
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, ["Router", "Garden"], monkeypatch)
+
+    def test_system_removed_event(self, bg_event, monkeypatch):
+        bg_event.name = Events.SYSTEM_REMOVED.name
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(bg_event, ["Garden", "System"], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
+
+    def test_garden_created_event(self, bg_event, monkeypatch):
+        bg_event.name = Events.GARDEN_CREATED.name
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
+
+    def test_garden_configured_event(self, bg_event, monkeypatch):
+        bg_event.name = Events.GARDEN_CONFIGURED.name
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(bg_event, ["Router", "Garden"], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, ["Router", "Garden"], monkeypatch)
+
+    def test_garden_updated_event(self, bg_event, monkeypatch):
+        bg_event.name = Events.GARDEN_UPDATED.name
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(bg_event, ["Router", "Garden"], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, ["Router", "Garden"], monkeypatch)
+
+    def test_garden_removed_event(self, bg_event, monkeypatch):
+        bg_event.name = Events.GARDEN_REMOVED.name
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(bg_event, ["Router", "Garden"], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, ["Router", "Garden"], monkeypatch)
+
+    def test_garden_started_event(self, bg_event, monkeypatch):
+        bg_event.name = Events.GARDEN_STARTED.name
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
+
+    def test_garden_stopped_event(self, bg_event, monkeypatch):
+        bg_event.name = Events.GARDEN_STOPPED.name
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(
+            bg_event, ["Requests wait events", "Garden"], monkeypatch
+        )
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
+
+    def test_garden_unreachable_event(self, bg_event, monkeypatch):
+        bg_event.name = Events.GARDEN_UNREACHABLE.name
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
+
+    def test_garden_error_event(self, bg_event, monkeypatch):
+        bg_event.name = Events.GARDEN_ERROR.name
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
+
+    def test_garden_not_configured_event(self, bg_event, monkeypatch):
+        bg_event.name = Events.GARDEN_NOT_CONFIGURED.name
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
+
+    def test_garden_sync_event(self, bg_event, monkeypatch):
+        bg_event.name = Events.GARDEN_SYNC.name
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(bg_event, ["Router", "Garden"], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, ["Router", "Garden"], monkeypatch)
+
+    def test_entry_started_event(self, bg_event, monkeypatch):
+        bg_event.name = Events.ENTRY_STARTED.name
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(
+            bg_event, ["Local plugins manager", "Garden"], monkeypatch
+        )
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
+
+    def test_job_created_event(self, bg_event, bg_job, monkeypatch):
+        bg_event.name = Events.JOB_CREATED.name
+        bg_event.payload = bg_job
+        bg_event.payload_type = "Job"
+
+        bg_event.payload.request_template.parameters["file_based"] = {
+            "type": "chunk",
+            "details": {"file_id": "123"},
+        }
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(bg_event, ["Scheduler", "File"], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, [], monkeypatch)
+
+    def test_job_deleted_event(self, bg_event, bg_job, monkeypatch):
+        bg_event.name = Events.JOB_DELETED.name
+        bg_event.payload = bg_job
+        bg_event.payload_type = "Job"
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(bg_event, ["Scheduler"], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, [], monkeypatch)
+
+    def test_job_pause_event(self, bg_event, bg_job, monkeypatch):
+        bg_event.name = Events.JOB_PAUSED.name
+        bg_event.payload = bg_job
+        bg_event.payload_type = "Job"
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(bg_event, ["Scheduler"], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, [], monkeypatch)
+
+    def test_job_resume_event(self, bg_event, bg_job, monkeypatch):
+        bg_event.name = Events.JOB_RESUMED.name
+        bg_event.payload = bg_job
+        bg_event.payload_type = "Job"
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(bg_event, ["Scheduler"], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, [], monkeypatch)
+
+    def test_job_updated_event(self, bg_event, bg_job, monkeypatch):
+        bg_event.name = Events.JOB_UPDATED.name
+        bg_event.payload = bg_job
+        bg_event.payload_type = "Job"
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(bg_event, ["Scheduler"], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, [], monkeypatch)
+
+    def test_job_executed_event(self, bg_event, bg_job, monkeypatch):
+        bg_event.name = Events.JOB_EXECUTED.name
+        bg_event.payload = bg_job
+        bg_event.payload_type = "Job"
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(bg_event, ["Scheduler"], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, [], monkeypatch)
+
+    def test_plugin_logger_file_change_event(self, bg_event, monkeypatch):
+        bg_event.name = Events.PLUGIN_LOGGER_FILE_CHANGE.name
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(bg_event, ["Log"], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, [], monkeypatch)
+
+    def test_user_updated_event(self, bg_event, monkeypatch):
+        bg_event.name = Events.USER_UPDATED.name
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(bg_event, ["User event handler"], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, [], monkeypatch)
+
+    def test_role_deleted_event(self, bg_event, monkeypatch):
+        bg_event.name = Events.ROLE_DELETED.name
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(bg_event, ["User event handler"], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, [], monkeypatch)
+
+    def test_replication_created_event(self, bg_event, monkeypatch):
+        bg_event.name = Events.REPLICATION_CREATED.name
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(
+            bg_event, ["Replication event handler"], monkeypatch
+        )
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, [], monkeypatch)
+
+    def test_replication_updated_event(self, bg_event, monkeypatch):
+        bg_event.name = Events.REPLICATION_UPDATED.name
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(
+            bg_event, ["Replication event handler"], monkeypatch
+        )
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, [], monkeypatch)
+
+    def test_directory_file_event(self, bg_event, monkeypatch):
+        bg_event.name = Events.DIRECTORY_FILE_CHANGE.name
+
+        bg_event.garden = "localgarden"
+        self.run_event_handler_test(bg_event, ["Scheduler"], monkeypatch)
+        bg_event.garden = "remotegaren"
+        self.run_event_handler_test(bg_event, [], monkeypatch)
 
     def test_unique_events(self, bg_event):
         """Tests to ensure events are de-dupped"""

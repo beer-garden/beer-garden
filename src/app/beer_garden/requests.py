@@ -1023,6 +1023,20 @@ def process_wait(request: Request, timeout: float) -> Request:
     return db.query_unique(Request, id=created_request.id)
 
 
+def handle_wait_event_filter(event):
+    if event.name == Events.GARDEN_STOPPED.name and event.garden == config.get(
+        "garden.name"
+    ):
+        return False
+    if (
+        event.name.startswith("REQUEST_")
+        and event.garden == config.get("garden.name")
+        and event.payload.status in Request.COMPLETED_STATUSES
+    ):
+        return False
+    return True
+
+
 def handle_wait_events(event):
     # Whenever a request is completed check to see if this process is waiting for it
     if not event.error and event.name in [
@@ -1073,8 +1087,26 @@ def handle_event_filter(event):
     return False
 
 
+def handle_event_rebroadcast(event_name, request):
+
+    metadata = {}
+    # If no parent are set, we only want to publish to the UI events handler
+    if not config.get("parent.stomp.enabled") and not config.get("parent.http.enabled"):
+        metadata["API_ONLY"] = True
+    publish(
+        Event(
+            name=event_name, payload=request, payload_type="Request", metadata=metadata
+        )
+    )
+
+
 def handle_event_create(event):
     # Attempt to create the request, if it already exists then continue on
+
+    if event.payload.command_type == "TEMP":
+        # Nothing could be waiting for it in the handle_wait_event queue and originated from
+        # downstream, so we can skip the request
+        return None
     try:
         event.payload.expiration_at = None
 
@@ -1146,7 +1178,9 @@ def handle_event(event):
             event.name == Events.REQUEST_CREATED.name
             or event.payload.status == "CREATED"
         ):
-            handle_event_create(event)
+            created_request = handle_event_create(event)
+            if created_request:
+                handle_event_rebroadcast(event.name, created_request)
         elif event.name == Events.REQUEST_STARTED.name or event.payload.status in (
             "RECEIVED",
             "IN_PROGRESS",
@@ -1177,15 +1211,17 @@ def handle_event(event):
                             * 1000
                         )
 
-                    db.modify(
+                    modified_request = db.modify(
                         existing_request,
                         status=event.payload.status,
                         metadata=metadata,
                     )
+                    handle_event_rebroadcast(event.name, modified_request)
 
             else:
-                handle_event_create(event)
-
+                created_request = handle_event_create(event)
+                if created_request:
+                    handle_event_rebroadcast(event.name, created_request)
             return
         else:
             existing_request = db.query_unique(Request, id=event.payload.id)
@@ -1210,7 +1246,9 @@ def handle_event(event):
                     return
 
             if existing_request is None:
-                handle_event_create(event)
+                created_request = handle_event_create(event)
+                if created_request:
+                    handle_event_rebroadcast(event.name, event.payload)
             else:
                 request_changed = {}
                 # When we send child requests to child gardens where the parent was on
@@ -1251,6 +1289,7 @@ def handle_event(event):
 
                 if request_changed:
                     db.update(existing_request)
+                    handle_event_rebroadcast(event.name, existing_request)
 
 
 def clean_command_type_temp(request: Request, is_remote: bool):
