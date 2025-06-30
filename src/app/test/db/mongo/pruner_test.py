@@ -533,6 +533,77 @@ class TestExpirationUpdater(object):
             == 2
         )
 
+    def test_temp_children_expiration_updated(self):
+        grandparent = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="G",
+            created_at=datetime.datetime.now(timezone.utc) + timedelta(minutes=60),
+            status="IN_PROGRESS",
+            command_type="ACTION",
+        )
+        grandparent.save()
+
+        parent = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="P",
+            created_at=datetime.datetime.now(timezone.utc) + timedelta(minutes=60),
+            status="SUCCESS",
+            command_type="TEMP",
+            has_parent=True,
+            parent=grandparent,
+        )
+        parent.save()
+        
+        child = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="C",
+            created_at=datetime.datetime.now(timezone.utc) + timedelta(minutes=60),
+            status="SUCCESS",
+            command_type="ACTION",
+            has_parent=True,
+            parent=parent,
+        )
+
+        child.save()
+        parent.save()
+
+        # Parent and child should have expiration since parent is TEMP and completed
+        assert (
+            len(Request.objects.filter(expiration_at__ne=None))
+            == 3
+        )
+
+        # No missing expiration requests should be recomputed
+        find_missing_expiration_requests()
+        assert (
+            len(Request.objects.filter(expiration_at__ne=None))
+            == 2
+        )
+
+        # Parent and child should be pruned
+        prune_requests()
+        assert (
+            len(Request.objects.filter(expiration_at__ne=None))
+            == 0
+        )
+
+        # Grandparent on completion should have expiration set
+        grandparent.status = "SUCCESS"
+        grandparent.save()
+        assert (
+            len(Request.objects.filter(expiration_at__ne=None))
+            == 1
+        )
+
 
 class TestOrphanFile(object):
 
