@@ -4,6 +4,8 @@
 
 TBD
 
+## 3.30.0rc2
+
 ## 3.30.0rc1
 
 - Improved docker naming conventions
