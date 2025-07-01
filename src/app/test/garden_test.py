@@ -650,3 +650,53 @@ stomp:
 
         with pytest.raises(DoesNotExist):
             get_garden(child.name)
+
+    def test_get_garden(self, localgarden):
+        """get_garden should return the correct garden when multiple gardens exist"""
+
+        two_hop_1 = BrewtilsGarden(name="two_hop_1", connection_type="REMOTE", has_parent=True, parent="one_hop_1", systems=[BrewtilsSystem(
+            name="remotesystem", version="1.2.3", namespace="two_hop_1", local=False
+            )])
+        
+        one_hop_1 = BrewtilsGarden(name="one_hop_1", connection_type="REMOTE", systems=[BrewtilsSystem(
+            name="remotesystem", version="1.2.3", namespace="one_hop_1", local=False
+            )], children=[two_hop_1])
+        
+
+        two_hop_2 = BrewtilsGarden(name="two_hop_2", connection_type="REMOTE", has_parent=True, parent="one_hop_2", systems=[BrewtilsSystem(
+            name="remotesystem", version="1.2.3", namespace="two_hop_2", local=False
+            )])
+        
+
+        one_hop_2 = BrewtilsGarden(name="one_hop_2", connection_type="REMOTE", systems=[BrewtilsSystem(
+            name="remotesystem", version="1.2.3", namespace="one_hop_2", local=False
+            )], children=[two_hop_2])
+        
+
+        two_hop_3 = BrewtilsGarden(name="two_hop_3", connection_type="REMOTE", has_parent=True, parent="one_hop_3", systems=[BrewtilsSystem(
+            name="remotesystem", version="1.2.3", namespace="two_hop_3", local=False
+            )])
+        
+
+        one_hop_3 = BrewtilsGarden(name="one_hop_3", connection_type="REMOTE", systems=[BrewtilsSystem(
+            name="remotesystem", version="1.2.3", namespace="one_hop_3", local=False
+            )], children=[two_hop_3])
+        
+        upsert_garden(one_hop_1)
+        upsert_garden(one_hop_2)
+        upsert_garden(one_hop_3)
+
+        local_garden_model = get_garden(localgarden.name)
+
+        assert len(local_garden_model.children) == 3
+
+        for child in local_garden_model.children:
+            if child.name == "one_hop_1":
+                assert len(child.children) == 1
+                assert child.children[0].name == "two_hop_1"
+            elif child.name == "one_hop_2":
+                assert len(child.children) == 1
+                assert child.children[0].name == "two_hop_2"
+            elif child.name == "one_hop_3":
+                assert len(child.children) == 1
+                assert child.children[0].name == "two_hop_3"

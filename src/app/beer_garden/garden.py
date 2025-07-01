@@ -130,7 +130,7 @@ def get_garden(garden_name: str) -> Garden:
                 and (
                     (child_garden.has_parent and child_garden.parent == db_garden.name)
                     or (
-                        not db_garden.has_parent
+                        not child_garden.has_parent
                         and db_garden.name == config.get("garden.name")
                     )
                 )
