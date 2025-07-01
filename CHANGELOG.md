@@ -6,6 +6,9 @@ TBD
 
 ## 3.30.0rc2
 
+- Updated Instance Status icon for Downstream Instances to reflect error states (#1907)
+- Updated UI Lazy Loading (#1907)
+
 ## 3.30.0rc1
 
 - Improved docker naming conventions
