@@ -266,12 +266,20 @@ def query_unique(
         mongoengine.MultipleObjectsReturned: More than one matching item exists
 
     """
+
     try:
         for k, v in kwargs.items():
             if isinstance(v, BaseModel):
                 kwargs[k] = from_brewtils(v)
 
-        query_set = _model_map[model_class].objects.get(**kwargs)
+        include_fields = kwargs.pop("include_fields", None)
+
+        if include_fields:
+            query_set = (
+                _model_map[model_class].objects.only(*include_fields).get(**kwargs)
+            )
+        else:
+            query_set = _model_map[model_class].objects.get(**kwargs)
 
         return to_brewtils(query_set)
     except DoesNotExist:
@@ -308,6 +316,7 @@ def query(
         A list of Brewtils models
 
     """
+
     if kwargs.get("raw_query"):
         query_set = _model_map[model_class].objects(__raw__=kwargs.get("raw_query"))
     else:
@@ -368,6 +377,7 @@ def create(obj: ModelItem) -> ModelItem:
         The saved Brewtils model
 
     """
+
     mongo_obj: MongoModel = from_brewtils(obj)
 
     try:
@@ -394,6 +404,7 @@ def update(obj: ModelItem) -> ModelItem:
         The saved Brewtils model
 
     """
+
     mongo_obj = from_brewtils(obj)
 
     mongo_obj.clean_update()
@@ -446,6 +457,7 @@ def modify(obj: ModelItem, query=None, **kwargs) -> ModelItem:
         The modified Brewtils model
 
     """
+
     mongo_obj = from_brewtils(obj)
 
     # If any values are brewtils models those need to be converted

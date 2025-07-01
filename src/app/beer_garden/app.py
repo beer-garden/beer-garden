@@ -25,7 +25,6 @@ import beer_garden.events
 import beer_garden.events.handlers
 import beer_garden.garden
 import beer_garden.local_plugins.manager
-import beer_garden.namespace
 import beer_garden.queue.api as queue
 import beer_garden.router
 import beer_garden.scheduler
@@ -110,13 +109,14 @@ class Application(StoppableThread):
                 )
             )
 
-        self.helper_threads.append(
-            HelperThread(
-                beer_garden.replication.PrimaryReplicationMonitor,
-                10,
-                30,
+        if config.get("replication.enabled"):
+            self.helper_threads.append(
+                HelperThread(
+                    beer_garden.replication.PrimaryReplicationMonitor,
+                    10,
+                    30,
+                )
             )
-        )
 
         beer_garden.router.forward_processor = QueueListener(
             action=beer_garden.router.forward, name="forwarder"
@@ -295,6 +295,9 @@ class Application(StoppableThread):
         for helper_thread in self.helper_threads:
             helper_thread.start()
 
+        if not config.get("replication.enabled"):
+            self.scheduler.start()
+
         if config.get("parent.stomp.enabled") or config.get("parent.http.enabled"):
             self.logger.debug("Publishing to Parent that we are online")
             beer_garden.garden.publish_garden()
@@ -309,7 +312,7 @@ class Application(StoppableThread):
 
         try:
             self.logger.debug("Publishing shutdown sync")
-            beer_garden.garden.publish_garden(status="STOPPED")
+            beer_garden.garden.publish_garden()
         except Exception as ex:
             self.logger.info("Failed: Publishing shutdown sync")
             self.logger.error(ex)
@@ -436,7 +439,7 @@ class Application(StoppableThread):
         if cfg.enabled:
 
             def reconnect_action():
-                beer_garden.garden.publish_garden(status="RUNNING")
+                beer_garden.garden.publish_garden()
 
             easy_client = EasyClient(
                 bg_host=cfg.host,

@@ -25,7 +25,7 @@ from typing import Dict, Union
 import brewtils.models
 from brewtils import EasyClient
 from brewtils.models import Connection as BrewtilsConnection
-from brewtils.models import Event, Events, Garden, Operation, Request, System
+from brewtils.models import Events, Garden, Operation, Request, System
 from mongoengine import DoesNotExist
 from stomp.exception import ConnectFailedException
 
@@ -37,7 +37,6 @@ import beer_garden.files
 import beer_garden.garden
 import beer_garden.local_plugins.manager
 import beer_garden.log
-import beer_garden.namespace
 import beer_garden.plugin
 import beer_garden.queues
 import beer_garden.requests
@@ -52,7 +51,6 @@ from beer_garden.errors import (
     RoutingRequestException,
     UnknownGardenException,
 )
-from beer_garden.events import publish
 from beer_garden.garden import get_garden, get_gardens, update_garden
 from beer_garden.metrics import CollectMetrics
 from beer_garden.requests import complete_request, create_request
@@ -152,7 +150,6 @@ route_functions = {
     "QUEUE_DELETE": beer_garden.queues.clear_queue,
     "QUEUE_DELETE_ALL": beer_garden.queues.clear_all_queues,
     "QUEUE_READ_INSTANCE": beer_garden.queues.get_instance_queues,
-    "NAMESPACE_READ_ALL": beer_garden.namespace.get_namespaces,
     "FILE_CREATE": beer_garden.files.create_file,
     "FILE_CHUNK": beer_garden.files.create_chunk,
     "FILE_FETCH": beer_garden.files.fetch_file,
@@ -380,12 +377,16 @@ def invalid_source_check(operation: Operation):
             Garden(name=operation.source_garden_name)
         )
 
-        if loaded_garden.status == "NOT_CONFIGURED":
-            logger.error(
-                f"There is no configuration file for {operation.source_garden_name}, "
-                "please validate your children directory for the correct file name"
-            )
-            return True
+        for connection in loaded_garden.receiving_connections:
+            if (
+                connection.api == operation.source_api
+                and connection.status == "CONFIGURATION_ERROR"
+            ):
+                logger.error(
+                    f"There is no configuration file for {operation.source_garden_name}, "
+                    "please validate your children directory for the correct file name"
+                )
+                return True
 
         logger.warning(
             f"Loaded {operation.source_garden_name} from config file into in memory"
@@ -417,6 +418,11 @@ def initiate_forward(operation: Operation):
     operation = _pre_forward(operation)
 
     # TODO - Check to ensure garden conn_info is not 'local' before forwarding?
+
+    if operation.operation_type == "GARDEN_SYNC":
+        logger.info(
+            f"About to forward sync operation for garden {operation.kwargs['sync_target']}"
+        )
 
     try:
         response = forward(operation)
@@ -533,16 +539,6 @@ def forward(operation: Operation):
                 error_class=ex.event_name,
             )
 
-        # Publish an event
-        publish(
-            Event(
-                name=ex.event_name,
-                payload_type="Operation",
-                payload=operation,
-                error_message=error_message,
-            )
-        )
-
         raise
 
 
@@ -564,8 +560,7 @@ def setup_routing():
             (garden.has_parent and garden.parent == config.get("garden.name"))
             or not garden.has_parent
         ):
-            for system in garden.systems:
-                add_routing_system(system=system, garden_name=garden.name)
+            add_routing_garden(garden)
 
             if (
                 garden.connection_type is not None
@@ -645,22 +640,25 @@ def remove_routing_garden(garden_name=None):
         }
 
 
-def add_routing_garden(garden: Garden, routing_garden: str):
+def add_routing_garden(garden: Garden):
     if garden.systems:
         for system in garden.systems:
-            add_routing_system(system=system, garden_name=routing_garden)
+            add_routing_system(system=system, garden_name=garden.name)
 
     if garden.children:
         for child in garden.children:
-            add_routing_garden(child, routing_garden)
+            add_routing_garden(child)
 
 
 def handle_event(event):
     """Handle events"""
-    if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
-        add_routing_system(system=event.payload, garden_name=event.garden)
-    elif event.name == Events.SYSTEM_REMOVED.name:
-        remove_routing_system(system=event.payload)
+    if not event.error:
+        if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
+            add_routing_system(system=event.payload, garden_name=event.garden)
+            return
+        elif event.name == Events.SYSTEM_REMOVED.name:
+            remove_routing_system(system=event.payload)
+            return
 
     # Here we want to handle sync events from immediate children only
     if (
@@ -674,26 +672,34 @@ def handle_event(event):
             remove_routing_garden(garden_name=event.garden)
 
             # Then add routes to the new systems
-            add_routing_garden(event.payload, event.payload.name)
-
-    # To save memory, we need to remove children
-    if event.payload_type == "Garden":
-        del event.payload.children
-        del event.payload.systems
+            add_routing_garden(event.payload)
+        return
 
     # This is a little unintuitive. We want to let the garden module deal with handling
     # any downstream garden changes since handling those changes is nontrivial.
     # It's *those* events we want to act on here, not the "raw" downstream ones.
     # This is also why we only handle GARDEN_UPDATED and not STARTED or STOPPED
+    # Also skip over error messages and let the Garden handler update based off them
     if (
         event.garden == config.get("garden.name")
         and not event.error
-        and "GARDEN" in event.name
+        and event.name
+        in [
+            Events.GARDEN_CONFIGURED.name,
+            Events.GARDEN_REMOVED.name,
+            Events.GARDEN_UPDATED.name,
+        ]
     ):
+
         # Only store the garden if it's 1 hop of the local garden
         if not event.payload.has_parent or event.payload.parent == config.get(
             "garden.name"
         ):
+            # To save memory, we need to remove children
+            if event.payload_type == "Garden":
+                del event.payload.children
+                del event.payload.systems
+
             if event.name == Events.GARDEN_CONFIGURED.name:
                 if event.payload.name != config.get("garden.name") and (
                     (
@@ -717,9 +723,10 @@ def handle_event(event):
                                 )
 
                             elif connection.status == "DISABLED":
-                                stomp_garden_connections[
-                                    event.payload.name
-                                ].disconnect()
+                                if event.payload.name in stomp_garden_connections:
+                                    stomp_garden_connections[
+                                        event.payload.name
+                                    ].disconnect()
 
                 if (
                     not stomp_found
@@ -835,16 +842,9 @@ def _determine_target(operation: Operation) -> str:
     target_garden = _target_from_type(operation)
 
     if not target_garden:
-        if not operation.target_garden_name:
-            raise UnknownGardenException(
-                f"Could not determine the target garden for routing {operation!r}"
-            )
-
-        logger.warning(
-            "Couldn't determine a target garden but the operation had one, using "
-            f"{operation.target_garden_name}"
+        raise UnknownGardenException(
+            f"Could not determine the target garden for routing {operation!r}"
         )
-        return operation.target_garden_name
 
     return target_garden
 
@@ -1028,7 +1028,7 @@ def _forward_stomp(operation: Operation, target_garden: Garden) -> None:
 
                 conn.send(body=body, headers=headers)
             except Exception as ex:
-                connection.status = "ERROR"
+                connection.status = "UNREACHABLE"
                 update_garden(target_garden)
                 raise ForwardException(
                     message=(
@@ -1073,7 +1073,7 @@ def _forward_http(operation: Operation, target_garden: Garden) -> None:
                 raise ForwardException(
                     message=f"Error forwarding to garden '{operation.target_garden_name}': {e}",
                     operation=operation,
-                    event_name=Events.GARDEN_ERROR.name,
+                    event_name=Events.GARDEN_UNREACHABLE.name,
                 ) from e
 
             if connection.status != "PUBLISHING":

@@ -4,6 +4,27 @@
 
 TBD
 
+## 3.30.0rc2
+
+## 3.30.0rc1
+
+- Improved docker naming conventions
+- Removed double save for Garden API Status Update calls (#1892)
+- Request create skips Gridfs existing data checks and only checks for Request Update (#1892)
+- Corrected 3.30 migration script to handle missing Command Types (#1894)
+- Updated request list api from `hidden__ne=True` to `hidden=False` for more efficient use of index. (#1889)
+- Fixed bug in `SystemsList` API using `filter_running` causing SchemaParser to fail(#1889)
+- Removed redundant call to get UtilityService getConfig (#1891)
+- Implemented previous Beer Garden installed version check to determine database migrations required (#1880)
+- Updated Router Logic for handling Error Events for System Deletes
+- Moved Info message for downstream garden syncs to prior to forwarding
+- Implemented Lazy Loading of the root Garden for UI pages that do not require the Garden/System models to be loaded (#1896)
+- Loaded all Gardens in single DB call when returning Local Garden instead of individual calls per downstream garden (#1896)
+- Fixed bug where Replication Events published when Replication was disabled (#1990)
+
+
+## 3.30.0rc0
+
 - Updated rpm script to supply cli values to config migration. Beer-garden `migrate` will apply cli
   values prior to yapconf `migrate_config_file`.
 - Fixed forwarding operations to downstream causing blocking to the router. Mostly seen during File Forwarding.
@@ -61,7 +82,6 @@ TBD
 - Updated pour it again requests to respect command type override
 - Fixed bug where internal jobs that utilized APscheduler did not have max concurrency set to 1
 - Fixed bug, only Request based scheduled jobs will attempt to update missed counter in the database
-- Updated Routing Logic to accept Target Garden provided
 - Updated all pruners to support batching
 - Updated internal pruners to run in sub-processes
 - Fixed bug in Job Scheduler where dynamic choices parameter did not load
@@ -69,6 +89,14 @@ TBD
 - Updated Admin Garden Page to load Garden models from preloaded Garden models
 - Fixed File validate to query for chunks and ensure accurate size
 - Fixed bug where API updates to Instance Status did not publish topic request
+- Request search delay configurable through `ui.search_delay` config option.
+- Removed status, status_info, and namespaces from Garden
+- Update Request Pruning to utilize new field Expiration At instead of each command type independently 
+- Update Requests index search box from text_search to or filter on UI columns
+- Updated Routing Logic to accept Target Garden provided and cache multi-hop gardens in routing tables
+- Updated Jobs pages to trigger off internal Job events for status changes
+- Updated Events handler to support internal filtering before placing into queue for processing
+- Reduced total events processed by Entry Point event handlers
 
 # 3.29.1
 

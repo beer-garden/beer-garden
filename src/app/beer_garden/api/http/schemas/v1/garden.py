@@ -15,7 +15,6 @@ class GardenRemoveStatusInfoSchema(GardenSchema):
 
     class Meta:
         exclude = [
-            "status_info.history",
             "systems.instances.status_info.history",
             "receiving_connections.status_info.history",
             "publishing_connections.status_info.history",

@@ -45,7 +45,6 @@ from beer_garden.errors import (
     RoutingRequestException,
 )
 from beer_garden.events import publish, publish_event
-from beer_garden.namespace import get_namespaces
 from beer_garden.systems import get_systems, remove_system
 
 logger = logging.getLogger(__name__)
@@ -119,10 +118,34 @@ def get_garden(garden_name: str) -> Garden:
 
     """
     if garden_name == config.get("garden.name"):
-        garden = local_garden()
+        gardens = db.query(Garden)
+        garden = None
+        for db_garden in gardens:
+            if db_garden.name == config.get("garden.name"):
+                garden = db_garden
+            db_garden.children = [
+                child_garden
+                for child_garden in gardens
+                if child_garden.name != db_garden.name
+                and (
+                    (child_garden.has_parent and child_garden.parent == db_garden.name)
+                    or (
+                        not db_garden.has_parent
+                        and db_garden.name == config.get("garden.name")
+                    )
+                )
+            ]
+
+        if garden:
+            filter_params = {}
+            filter_params["local"] = True
+
+            garden.systems = get_systems(filter_params=filter_params)
+
     else:
         garden = db.query_unique(Garden, name=garden_name, raise_missing=True)
-    get_children_garden(garden)
+        get_children_garden(garden)
+
     return garden
 
 
@@ -164,7 +187,7 @@ def local_garden(all_systems: bool = False) -> Garden:
     # the system information to be embedded in the garden document itself (as opposed
     # Systems just having a reference to their garden). There is nothing that would
     # keep a LOCAL garden's embedded list of systems up to date currently, so we instead
-    # build the list of systems (and namespaces) at call time. Once the System
+    # build the list of systems at call time. Once the System
     # relationship has been refactored, the need for this function should go away.
     garden: Garden = db.query_unique(Garden, connection_type="LOCAL")
 
@@ -173,18 +196,14 @@ def local_garden(all_systems: bool = False) -> Garden:
         filter_params["local"] = True
 
     garden.systems = get_systems(filter_params=filter_params)
-    garden.namespaces = get_namespaces()
     garden.version = beer_garden.__version__
 
     return garden
 
 
 @publish_event(Events.GARDEN_SYNC)
-def publish_garden(status: str = "RUNNING") -> Garden:
+def publish_garden() -> Garden:
     """Get the local garden, publishing a GARDEN_SYNC event
-
-    Args:
-        status: The garden status
 
     Returns:
         The local garden, all systems
@@ -192,7 +211,6 @@ def publish_garden(status: str = "RUNNING") -> Garden:
     garden = local_garden()
     get_children_garden(garden)
     garden.connection_type = None
-    garden.status = status
 
     return garden
 
@@ -210,7 +228,6 @@ def update_garden_config(garden: Garden) -> Garden:
     db_garden = db.query_unique(Garden, id=garden.id)
     db_garden.connection_params = garden.connection_params
     db_garden.connection_type = garden.connection_type
-    db_garden.status = "INITIALIZING"
 
     return update_garden(db_garden)
 
@@ -231,13 +248,6 @@ def check_garden_receiving_heartbeat(
         for connection in garden.receiving_connections:
             if connection.api == api:
                 connection_set = True
-
-                if connection.status not in ["DISABLED", "RECEIVING"]:
-                    connection.status = "RECEIVING"
-
-                connection.status_info.set_status_heartbeat(
-                    connection.status, max_history=config.get("garden.status_history")
-                )
     else:
         garden.receiving_connections = []
 
@@ -334,11 +344,6 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
                     "DISABLED", api=connection.api, garden=garden, override_status=False
                 )
 
-    garden.status = new_status
-    garden.status_info.set_status_heartbeat(
-        garden.status, max_history=config.get("garden.status_history")
-    )
-
     return update_garden(garden)
 
 
@@ -387,10 +392,6 @@ def create_garden(garden: Garden) -> Garden:
             Connection(api="STOMP", status="MISSING_CONFIGURATION"),
         ]
 
-    garden.status_info.set_status_heartbeat(
-        garden.status, max_history=config.get("garden.status_history")
-    )
-
     return db.create(garden)
 
 
@@ -411,9 +412,6 @@ def garden_add_system(system: System, garden_name: str) -> Garden:
         raise PluginError(
             f"Garden '{garden_name}' does not exist, unable to map '{str(system)}"
         )
-
-    if system.namespace not in garden.namespaces:
-        garden.namespaces.append(system.namespace)
 
     if str(system) not in garden.systems:
         garden.systems.append(str(system))
@@ -453,14 +451,7 @@ def upsert_garden(garden: Garden, skip_connections: bool = True) -> Garden:
     if existing_garden is None:
         return create_garden(garden)
     else:
-        for attr in (
-            "status",
-            "status_info",
-            "namespaces",
-            "systems",
-            "metadata",
-            "version",
-        ):
+        for attr in ("systems", "metadata", "version"):
             setattr(existing_garden, attr, getattr(garden, attr))
         if not skip_connections:
             for attr in ("receiving_connections", "publishing_connections"):
@@ -526,7 +517,7 @@ def update_garden_receiving(
     if not connection_set and api:
         garden.receiving_connections.append(Connection(api=api, status=status))
 
-    return db.update(garden)
+    return garden
 
 
 def load_garden_file(garden: Garden):
@@ -558,7 +549,6 @@ def load_garden_file(garden: Garden):
             stomp_receiving_connection.status_info = connection.status_info
 
     if not path.exists():
-        garden.status = "NOT_CONFIGURED"
         return garden
 
     try:
@@ -659,7 +649,7 @@ def load_garden_file(garden: Garden):
         YapconfSourceError,
         YapconfSpecError,
     ):
-        garden.status = "CONFIGURATION_ERROR"
+        pass
     finally:
 
         http_publishing_connection.status_info.set_status_heartbeat(
@@ -711,8 +701,6 @@ def load_garden_config(garden: Garden = None, garden_name: str = None):
     updates["receiving_connections"] = []
     for connection in garden.receiving_connections:
         updates["receiving_connections"].append(db.from_brewtils(connection))
-
-    updates["status"] = garden.status
 
     return db.modify(garden, **updates)
 
@@ -813,7 +801,6 @@ def garden_sync(sync_target: str = None):
             publish_garden()
         else:
             try:
-                logger.info(f"About to create sync operation for garden {sync_target}")
 
                 route(
                     Operation(
@@ -868,6 +855,7 @@ def garden_unresponsive_trigger():
         if interval_value > 0:
             timeout = datetime.utcnow() - timedelta(minutes=interval_value)
 
+            update_connection = False
             for connection in garden.receiving_connections:
                 if connection.status in ["RECEIVING"]:
                     if connection.status_info.heartbeat < timeout:
@@ -877,6 +865,10 @@ def garden_unresponsive_trigger():
                         logger.error(
                             f"{garden.name} Timed out {interval_value} minutes"
                         )
+                        update_connection = True
+
+            if update_connection:
+                update_garden(garden)
 
 
 def handle_event(event):
@@ -929,25 +921,6 @@ def handle_event(event):
             for system in event.payload.systems:
                 system.local = False
 
-            # Remove systems that are tracking locally
-            remote_systems = []
-            for system in event.payload.systems:
-                if (
-                    len(
-                        get_systems(
-                            filter_params={
-                                "local": True,
-                                "namespace": system.namespace,
-                                "name": system.name,
-                                "version": system.version,
-                            }
-                        )
-                    )
-                    < 1
-                ):
-                    remote_systems.append(system)
-            event.payload.systems = remote_systems
-
             if event.name == Events.GARDEN_SYNC.name:
                 logger.info(f"Garden sync event for {event.payload.name}")
                 try:
@@ -972,32 +945,6 @@ def handle_event(event):
 
             # Publish update events for UI to dynamically load changes for Systems
             publish_local_garden_to_api()
-
-    elif event.name == Events.GARDEN_UNREACHABLE.name:
-        target_garden = get_garden(event.payload.target_garden_name)
-
-        if target_garden.status not in [
-            "UNREACHABLE",
-            "STOPPED",
-            "BLOCKED",
-            "ERROR",
-        ]:
-            update_garden_status(event.payload.target_garden_name, "UNREACHABLE")
-    elif event.name == Events.GARDEN_ERROR.name:
-        target_garden = get_garden(event.payload.target_garden_name)
-
-        if target_garden.status not in [
-            "UNREACHABLE",
-            "STOPPED",
-            "BLOCKED",
-            "ERROR",
-        ]:
-            update_garden_status(event.payload.target_garden_name, "ERROR")
-    elif event.name == Events.GARDEN_NOT_CONFIGURED.name:
-        target_garden = get_garden(event.payload.target_garden_name)
-
-        if target_garden.status == "NOT_CONFIGURED":
-            update_garden_status(event.payload.target_garden_name, "NOT_CONFIGURED")
 
     elif event.name in [
         Events.GARDEN_CONFIGURED.name,

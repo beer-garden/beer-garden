@@ -29,19 +29,16 @@ export default function adminGardenController(
   $scope.gardenCreateSchema = GardenService.CreateSCHEMA;
   $scope.gardenCreateForm = GardenService.CreateFORM;
 
-  $scope.successCallback = function(response) {
-    $scope.data = $scope.extractGardenChildren([response.data]);
-    $scope.response = response;
+  $scope.successCallback = function() {
+    $scope.data = $scope.extractGardenChildren([$rootScope.gardensResponse.data]);
+    $scope.response = $rootScope.gardensResponse;
   };
   
   $scope.garden_name = null;
   $scope.createGardenFormHide = true;
   $scope.create_garden_name = null;
   $scope.createGardenFormHide = true;
-  $scope.failureCallback = function(response) {
-    $scope.response = response;
-    $scope.data = [];
-  };
+
   $scope.is_unique_garden_name = true;
   $scope.create_garden_popover_message = null;
   $scope.create_garden_name_focus = false;
@@ -90,23 +87,6 @@ export default function adminGardenController(
     }
     return gardenLabel;
 
-  }
-
-  const loadGardens = function() {
-    if ($rootScope.gardensResponse !== undefined){
-      $scope.successCallback($rootScope.gardensResponse);
-    } 
-    else {
-      setTimeout(function delaySystemLoad() {
-        if ($rootScope.gardensResponse !== undefined){
-          $scope.successCallback($rootScope.gardensResponse);
-          $scope.$digest();
-        } else {
-          setTimeout(delaySystemLoad, 10);
-        }
-      }, 10);
-    }
-    
   }
 
   $scope.closeAlert = function(index) {
@@ -194,9 +174,6 @@ export default function adminGardenController(
     if (garden.connection_type == "LOCAL"){
       return false;
     }
-    if (garden.status == "MISSING_CONFIGURATION"){
-      return false;
-    }
 
     for (let i = 0; i < garden.publishing_connections.length; i++) {
       if (garden.publishing_connections[i].status == "MISSING_CONFIGURATION"){
@@ -282,10 +259,6 @@ export default function adminGardenController(
       return false;
     }
 
-    if (garden.status == "MISSING_CONFIGURATION"){
-      return true;
-    }
-
     for (let i = 0; i < garden.publishing_connections.length; i++) {
       if (garden.publishing_connections[i].status == "MISSING_CONFIGURATION"){
         return true;
@@ -298,7 +271,7 @@ export default function adminGardenController(
     $scope.response = undefined;
     $scope.data = [];
     
-    loadGardens();
+    $rootScope.getLocalGarden($scope.successCallback);
   };
 
   $scope.removeGardenEventChildren = function(garden) {
