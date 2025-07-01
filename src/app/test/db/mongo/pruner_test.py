@@ -577,7 +577,7 @@ class TestExpirationUpdater(object):
         parent.save()
 
         # Parent and child should have expiration since parent is TEMP and completed
-        assert len(Request.objects.filter(expiration_at__ne=None)) == 3
+        assert len(Request.objects.filter(expiration_at__ne=None)) == 2
 
         # No missing expiration requests should be recomputed
         find_missing_expiration_requests()
