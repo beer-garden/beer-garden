@@ -6,6 +6,8 @@ TBD
 
 ## 3.30.0rc2
 
+- Fixed bug in local garden loading all gardens to one hop away
+
 ## 3.30.0rc1
 
 - Improved docker naming conventions
