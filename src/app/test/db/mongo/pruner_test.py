@@ -534,6 +534,10 @@ class TestExpirationUpdater(object):
         )
 
     def test_temp_children_expiration_updated(self):
+        config._CONFIG = {
+            "db": {"prune": {"batch_size": -1, "interval": 1, "ttl": {"action": 1}}}
+        }
+
         grandparent = Request(
             system="T",
             system_version="T",
