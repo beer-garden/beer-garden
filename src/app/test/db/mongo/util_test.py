@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import copy
-from datetime import datetime
+from datetime import date, datetime
 
 import pytest
 from bson.dbref import DBRef
@@ -192,12 +192,12 @@ class TestMigrationScript(object):
         db_parent = request_collection.find_one({"has_parent": False})
 
         assert db_parent["root_command_type"] == "ACTION"
-        assert db_parent["expiration_at"] == datetime(2016, 1, 1)
+        assert db_parent["expiration_at"].date() >= date.today()
 
         db_child = request_collection.find_one({"has_parent": True})
 
         assert db_child["root_command_type"] == "ACTION"
-        assert db_child["expiration_at"] == datetime(2016, 1, 1)
+        assert db_child["expiration_at"].date() >= date.today()
 
 
 class TestCheckIndexes(object):

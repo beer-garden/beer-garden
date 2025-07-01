@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 from brewtils.models import Request
 from mongoengine.connection import get_db
@@ -325,7 +325,6 @@ def find_root_command_type_and_expiration(request):
                     {
                         "has_parent": 1,
                         "parent": 1,
-                        "created_at": 1,
                         "command_type": 1,
                         "expiration_at": 1,
                         "status": 1,
@@ -345,17 +344,17 @@ def find_root_command_type_and_expiration(request):
             command_type == "ACTION"
             and config.get("db.prune.ttl.action", default=-1) > -1
         ):
-            expiration_at = request["created_at"] + timedelta(
+            expiration_at = datetime.now(timezone.utc) + timedelta(
                 minutes=config.get("db.prune.ttl.action", default=-1)
             )
         elif (
             command_type == "INFO" and config.get("db.prune.ttl.info", default=15) > -1
         ):
-            expiration_at = request["created_at"] + timedelta(
+            expiration_at = datetime.now(timezone.utc) + timedelta(
                 minutes=config.get("db.prune.ttl.info", default=-1)
             )
         elif command_type == "TEMP":
-            expiration_at = request["created_at"]
+            expiration_at = datetime.now(timezone.utc)
 
     return command_type, expiration_at
 
@@ -398,7 +397,6 @@ def ensure_v3_30_model_migration():
             {
                 "has_parent": 1,
                 "parent": 1,
-                "created_at": 1,
                 "command_type": 1,
                 "expiration_at": 1,
                 "status": 1,
@@ -509,7 +507,7 @@ def find_root_expiration_at(request, ttl):
                 .get_collection("request")
                 .find_one(
                     {"_id": request["parent"].id},
-                    {"has_parent": 1, "parent": 1, "created_at": 1, "expiration_at": 1},
+                    {"has_parent": 1, "parent": 1, "expiration_at": 1},
                 )
             )
             if parent:
@@ -524,7 +522,7 @@ def find_root_expiration_at(request, ttl):
     if "expiration_at" in request and request["expiration_at"]:
         return request["expiration_at"]
     if request["status"] in ["CANCELED", "SUCCESS", "ERROR", "INVALID"]:
-        return request["created_at"] + timedelta(minutes=ttl)
+        return datetime.now(timezone.utc) + timedelta(minutes=ttl)
     return None
 
 
@@ -567,7 +565,6 @@ def update_request_ttl(command_type, ttl):
             {
                 "has_parent": 1,
                 "parent": 1,
-                "created_at": 1,
                 "expiration_at": 1,
                 "_id": 1,
             },

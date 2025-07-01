@@ -169,6 +169,7 @@ class TestMongoPruner(object):
             namespace="T",
             command="T",
             created_at=datetime.datetime(2024, 1, 17),
+            expiration_at=datetime.datetime(2024, 1, 18),
             status="SUCCESS",
             command_type="INFO",
         )
@@ -186,6 +187,7 @@ class TestMongoPruner(object):
             namespace="T",
             command="T",
             created_at=datetime.datetime(2024, 1, 17),
+            expiration_at=datetime.datetime(2024, 1, 18),
             status="SUCCESS",
             command_type="ACTION",
         )
@@ -198,6 +200,7 @@ class TestMongoPruner(object):
             namespace="T",
             command="T",
             created_at=datetime.datetime.now() + timedelta(days=1),
+            expiration_at=datetime.datetime.now() + timedelta(days=1),
             status="SUCCESS",
             command_type="ACTION",
         )
