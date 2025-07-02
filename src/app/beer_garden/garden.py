@@ -236,7 +236,9 @@ def check_garden_receiving_heartbeat(
     api: str, garden_name: str = None, garden: Garden = None
 ):
     if garden is None:
-        garden = db.query_unique(Garden, name=garden_name, include_fields=["receiving_connections"])
+        garden = db.query_unique(
+            Garden, name=garden_name, include_fields=["receiving_connections"]
+        )
 
     # if garden doens't exist, create it
     if garden is None:
@@ -272,7 +274,7 @@ def check_garden_receiving_heartbeat(
 
 @publish_event(Events.GARDEN_UPDATED)
 def update_receiving_connections(garden: Garden):
-    
+
     if garden:
         updates = {}
 
