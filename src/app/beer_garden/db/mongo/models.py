@@ -547,7 +547,11 @@ class Request(MongoModel, Document):
 
         if not self.expiration_at and self.status in BrewtilsRequest.COMPLETED_STATUSES:
             # If parent or orphaned
-            if not self.has_parent or Request.objects(id=self.parent.id).count() == 0:
+            if (
+                not self.has_parent
+                or Request.objects(id=self.parent.id).count() == 0
+                or self.command_type == "TEMP"
+            ):
                 if self.command_type == "INFO":
                     ttl = config.get("db.prune.ttl.info", default=-1)
                     if ttl > -1:
@@ -578,8 +582,6 @@ class Request(MongoModel, Document):
                 self.root_command_type = self.command_type
 
     def _set_child_expiration(self):
-        if self.command_type == "TEMP":
-            self.expiration_at = datetime.datetime.now(datetime.timezone.utc)
 
         for child_request in Request.objects(parent=self, expiration_at=None):
             if not child_request.expiration_at:
@@ -603,13 +605,12 @@ class Request(MongoModel, Document):
                 except DoesNotExist:
                     pass
 
-        if self.status in BrewtilsRequest.COMPLETED_STATUSES:
-            if (
-                not self.has_parent
-                and self.expiration_at
-                or self.command_type == "TEMP"
-            ):
-                self._set_child_expiration()
+        if (
+            self.expiration_at
+            or not self.has_parent
+            and self.status in BrewtilsRequest.COMPLETED_STATUSES
+        ):
+            self._set_child_expiration()
 
     def _update_raw_file_references(self):
         parameters = self.parameters or {}
