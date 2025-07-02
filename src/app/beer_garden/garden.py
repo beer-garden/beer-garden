@@ -250,6 +250,12 @@ def check_garden_receiving_heartbeat(
         for connection in garden.receiving_connections:
             if connection.api == api:
                 connection_set = True
+                if connection.status != "DISABLED":
+                    connection.status = "RECEIVING"
+                    connection.status_info.set_status_heartbeat(
+                        connection.status,
+                        max_history=config.get("garden.status_history"),
+                    )
     else:
         garden.receiving_connections = []
 
