@@ -539,27 +539,10 @@ class Request(MongoModel, Document):
                 self.has_parent = False
                 self.parent = None
 
-        if not self.expiration_at and self.status in BrewtilsRequest.COMPLETED_STATUSES:
-            # If parent or orphaned
-            if not self.has_parent or Request.objects(id=self.parent.id).count() == 0:
-                if self.command_type == "INFO":
-                    ttl = config.get("db.prune.ttl.info", default=-1)
-                    if ttl > -1:
-                        self.expiration_at = self.created_at + datetime.timedelta(
-                            minutes=ttl
-                        )
-                elif self.command_type == "ACTION":
-                    ttl = config.get("db.prune.ttl.action", default=-1)
-                    if ttl > -1:
-                        self.expiration_at = self.created_at + datetime.timedelta(
-                            minutes=ttl
-                        )
-                else:
-                    # TEMP or ADMIN
-                    self.expiration_at = datetime.datetime.utcnow()
-
         if not self.has_parent:
-            self.root_command_type = self.command_type
+            self.root_command_type = (
+                self.command_type if self.command_type else "ACTION"
+            )
         elif not self.root_command_type:
             # If this is a child request, we need to set the root_command_type
             # to the same as the parent request
@@ -572,6 +555,50 @@ class Request(MongoModel, Document):
                 # Parent request was deleted, so we need to set the root_command_type
                 # to the same as this request
                 self.root_command_type = self.command_type
+
+        if not self.expiration_at and self.status in BrewtilsRequest.COMPLETED_STATUSES:
+            if self.command_type in ["TEMP", "ADMIN"] or self.root_command_type in [
+                "TEMP",
+                "ADMIN",
+            ]:
+                self.expiration_at = datetime.datetime.utcnow()
+            elif self.has_parent:
+                try:
+                    parent_request = Request.objects.only(
+                        "expiration_at", "status"
+                    ).get(id=self.parent.id)
+                    if (
+                        parent_request.expiration_at
+                        and parent_request.status in BrewtilsRequest.COMPLETED_STATUSES
+                    ):
+                        self.expiration_at = parent_request.expiration_at
+                except DoesNotExist:
+                    if self.root_command_type == "INFO":
+                        ttl = config.get("db.prune.ttl.info", default=-1)
+                        if ttl > -1:
+                            self.expiration_at = self.created_at + datetime.timedelta(
+                                minutes=ttl
+                            )
+                    elif self.root_command_type == "ACTION":
+                        ttl = config.get("db.prune.ttl.action", default=-1)
+                        if ttl > -1:
+                            self.expiration_at = self.created_at + datetime.timedelta(
+                                minutes=ttl
+                            )
+
+            if not self.has_parent:
+                if self.root_command_type == "INFO":
+                    ttl = config.get("db.prune.ttl.info", default=-1)
+                    if ttl > -1:
+                        self.expiration_at = self.created_at + datetime.timedelta(
+                            minutes=ttl
+                        )
+                elif self.root_command_type == "ACTION":
+                    ttl = config.get("db.prune.ttl.action", default=-1)
+                    if ttl > -1:
+                        self.expiration_at = self.created_at + datetime.timedelta(
+                            minutes=ttl
+                        )
 
     def _set_child_expiration(self):
 

@@ -10,8 +10,8 @@ from brewtils.models import Garden as BrewtilsGarden
 from brewtils.models import Instance, Parameter
 from brewtils.models import Request as BrewtilsRequest
 from brewtils.models import System
+from bson.objectid import ObjectId
 from mock import Mock, call, patch
-from mongomock.gridfs import enable_gridfs_integration
 
 import beer_garden.config
 import beer_garden.requests
@@ -23,6 +23,7 @@ from beer_garden.requests import (
     determine_latest_system_version,
 )
 from beer_garden.systems import create_system
+from mongomock.gridfs import enable_gridfs_integration
 
 enable_gridfs_integration()
 
@@ -1324,3 +1325,384 @@ class TestCancelRequest(object):
         cancel_request_children(request)
 
         cancel_mock.assert_called_once()
+
+
+class TestHandleEventExpirationAt(object):
+
+    def test_handle_event_created(self):
+
+        beer_garden.config._CONFIG = {"db": {"prune": {"ttl": {"action": 1}}}}
+
+        event = Event(
+            name=Events.REQUEST_UPDATED.name,
+            garden="remote",
+            payload=BrewtilsRequest(
+                id=str(ObjectId()),
+                namespace="generated",
+                system="test_system",
+                system_version="1.0.0",
+                instance_name="default",
+                command="command_name",
+                status="CREATED",
+                command_type="ACTION",
+                comment="Created request",
+                parameters={},
+                output="",
+                metadata={},
+            ),
+            payload_type="Request",
+        )
+
+        beer_garden.requests.handle_event(event)
+
+        updated_request = Request.objects.get(id=event.payload.id)
+
+        assert updated_request.expiration_at is None
+
+    def test_handle_event_received(self):
+
+        beer_garden.config._CONFIG = {"db": {"prune": {"ttl": {"action": 1}}}}
+
+        event = Event(
+            name=Events.REQUEST_UPDATED.name,
+            garden="remote",
+            payload=BrewtilsRequest(
+                id=str(ObjectId()),
+                namespace="generated",
+                system="test_system",
+                system_version="1.0.0",
+                instance_name="default",
+                command="command_name",
+                status="RECEIVED",
+                command_type="ACTION",
+                comment="Created request",
+                parameters={},
+                output="",
+                metadata={},
+            ),
+            payload_type="Request",
+        )
+
+        beer_garden.requests.handle_event(event)
+
+        updated_request = Request.objects.get(id=event.payload.id)
+
+        assert updated_request.expiration_at is None
+
+    def test_handle_event_in_progress(self):
+
+        beer_garden.config._CONFIG = {"db": {"prune": {"ttl": {"action": 1}}}}
+
+        event = Event(
+            name=Events.REQUEST_UPDATED.name,
+            garden="remote",
+            payload=BrewtilsRequest(
+                id=str(ObjectId()),
+                namespace="generated",
+                system="test_system",
+                system_version="1.0.0",
+                instance_name="default",
+                command="command_name",
+                status="IN_PROGRESS",
+                command_type="ACTION",
+                comment="Created request",
+                parameters={},
+                output="",
+                metadata={},
+            ),
+            payload_type="Request",
+        )
+
+        beer_garden.requests.handle_event(event)
+
+        updated_request = Request.objects.get(id=event.payload.id)
+
+        assert updated_request.expiration_at is None
+
+    def test_handle_event_canceled(self):
+
+        beer_garden.config._CONFIG = {"db": {"prune": {"ttl": {"action": 1}}}}
+
+        event = Event(
+            name=Events.REQUEST_UPDATED.name,
+            garden="remote",
+            payload=BrewtilsRequest(
+                id=str(ObjectId()),
+                namespace="generated",
+                system="test_system",
+                system_version="1.0.0",
+                instance_name="default",
+                command="command_name",
+                status="CANCELED",
+                command_type="ACTION",
+                comment="Created request",
+                parameters={},
+                output="",
+                metadata={},
+            ),
+            payload_type="Request",
+        )
+
+        beer_garden.requests.handle_event(event)
+
+        updated_request = Request.objects.get(id=event.payload.id)
+
+        assert updated_request.expiration_at is not None
+
+    def test_handle_event_success(self):
+
+        beer_garden.config._CONFIG = {"db": {"prune": {"ttl": {"action": 1}}}}
+
+        event = Event(
+            name=Events.REQUEST_UPDATED.name,
+            garden="remote",
+            payload=BrewtilsRequest(
+                id=str(ObjectId()),
+                namespace="generated",
+                system="test_system",
+                system_version="1.0.0",
+                instance_name="default",
+                command="command_name",
+                status="SUCCESS",
+                command_type="ACTION",
+                comment="Created request",
+                parameters={},
+                output="",
+                metadata={},
+            ),
+            payload_type="Request",
+        )
+
+        beer_garden.requests.handle_event(event)
+
+        updated_request = Request.objects.get(id=event.payload.id)
+
+        assert updated_request.expiration_at is not None
+
+    def test_handle_event_error(self):
+
+        beer_garden.config._CONFIG = {"db": {"prune": {"ttl": {"action": 1}}}}
+
+        event = Event(
+            name=Events.REQUEST_UPDATED.name,
+            garden="remote",
+            payload=BrewtilsRequest(
+                id=str(ObjectId()),
+                namespace="generated",
+                system="test_system",
+                system_version="1.0.0",
+                instance_name="default",
+                command="command_name",
+                status="ERROR",
+                command_type="ACTION",
+                comment="Created request",
+                parameters={},
+                output="",
+                metadata={},
+            ),
+            payload_type="Request",
+        )
+
+        beer_garden.requests.handle_event(event)
+
+        updated_request = Request.objects.get(id=event.payload.id)
+
+        assert updated_request.expiration_at is not None
+
+    def test_handle_event_invalid(self):
+
+        beer_garden.config._CONFIG = {"db": {"prune": {"ttl": {"action": 1}}}}
+
+        event = Event(
+            name=Events.REQUEST_UPDATED.name,
+            garden="remote",
+            payload=BrewtilsRequest(
+                id=str(ObjectId()),
+                namespace="generated",
+                system="test_system",
+                system_version="1.0.0",
+                instance_name="default",
+                command="command_name",
+                status="INVALID",
+                command_type="ACTION",
+                comment="Created request",
+                parameters={},
+                output="",
+                metadata={},
+            ),
+            payload_type="Request",
+        )
+
+        beer_garden.requests.handle_event(event)
+
+        updated_request = Request.objects.get(id=event.payload.id)
+
+        assert updated_request.expiration_at is not None
+
+    def test_handle_event_parent_child(self):
+
+        beer_garden.config._CONFIG = {"db": {"prune": {"ttl": {"action": 1}}}}
+
+        parent_event = Event(
+            name=Events.REQUEST_UPDATED.name,
+            garden="remote",
+            payload=BrewtilsRequest(
+                id=str(ObjectId()),
+                namespace="generated",
+                system="test_system",
+                system_version="1.0.0",
+                instance_name="default",
+                command="command_name",
+                status="IN_PROGRESS",
+                command_type="ACTION",
+                comment="Created request",
+                parameters={},
+                output="",
+                metadata={},
+            ),
+            payload_type="Request",
+        )
+
+        child_event = Event(
+            name=Events.REQUEST_UPDATED.name,
+            garden="remote",
+            payload=BrewtilsRequest(
+                id=str(ObjectId()),
+                namespace="generated",
+                system="test_system",
+                system_version="1.0.0",
+                instance_name="default",
+                command="command_name",
+                status="SUCCESS",
+                command_type="ACTION",
+                comment="Created request",
+                parameters={},
+                output="",
+                metadata={},
+                has_parent=True,
+                parent=parent_event.payload,
+            ),
+            payload_type="Request",
+        )
+
+        beer_garden.requests.handle_event(parent_event)
+        beer_garden.requests.handle_event(child_event)
+        parent_event.payload.status = "SUCCESS"
+        beer_garden.requests.handle_event(parent_event)
+
+        parent_request = Request.objects.get(id=parent_event.payload.id)
+        child_request = Request.objects.get(id=child_event.payload.id)
+
+        assert parent_request.expiration_at is not None
+        assert child_request.expiration_at is not None
+
+    def test_handle_event_child_post_success(self):
+
+        beer_garden.config._CONFIG = {"db": {"prune": {"ttl": {"action": 1}}}}
+
+        parent_event = Event(
+            name=Events.REQUEST_UPDATED.name,
+            garden="remote",
+            payload=BrewtilsRequest(
+                id=str(ObjectId()),
+                namespace="generated",
+                system="test_system",
+                system_version="1.0.0",
+                instance_name="default",
+                command="command_name",
+                status="SUCCESS",
+                command_type="ACTION",
+                comment="Created request",
+                parameters={},
+                output="",
+                metadata={},
+            ),
+            payload_type="Request",
+        )
+
+        child_event = Event(
+            name=Events.REQUEST_UPDATED.name,
+            garden="remote",
+            payload=BrewtilsRequest(
+                id=str(ObjectId()),
+                namespace="generated",
+                system="test_system",
+                system_version="1.0.0",
+                instance_name="default",
+                command="command_name",
+                status="SUCCESS",
+                command_type="ACTION",
+                comment="Created request",
+                parameters={},
+                output="",
+                metadata={},
+                has_parent=True,
+                parent=parent_event.payload,
+            ),
+            payload_type="Request",
+        )
+
+        beer_garden.requests.handle_event(parent_event)
+        beer_garden.requests.handle_event(child_event)
+
+        parent_request = Request.objects.get(id=parent_event.payload.id)
+        child_request = Request.objects.get(id=child_event.payload.id)
+
+        assert parent_request.expiration_at is not None
+        assert child_request.expiration_at is not None
+
+    def test_handle_event_temp_child(self):
+
+        beer_garden.config._CONFIG = {"db": {"prune": {"ttl": {"action": 1}}}}
+
+        parent_event = Event(
+            name=Events.REQUEST_UPDATED.name,
+            garden="remote",
+            payload=BrewtilsRequest(
+                id=str(ObjectId()),
+                namespace="generated",
+                system="test_system",
+                system_version="1.0.0",
+                instance_name="default",
+                command="command_name",
+                status="IN_PROGRESS",
+                command_type="ACTION",
+                comment="Created request",
+                parameters={},
+                output="",
+                metadata={},
+            ),
+            payload_type="Request",
+        )
+
+        child_event = Event(
+            name=Events.REQUEST_UPDATED.name,
+            garden="remote",
+            payload=BrewtilsRequest(
+                id=str(ObjectId()),
+                namespace="generated",
+                system="test_system",
+                system_version="1.0.0",
+                instance_name="default",
+                command="command_name",
+                status="SUCCESS",
+                command_type="TEMP",
+                comment="Created request",
+                parameters={},
+                output="",
+                metadata={},
+                has_parent=True,
+                parent=parent_event.payload,
+            ),
+            payload_type="Request",
+        )
+
+        beer_garden.requests.handle_event(parent_event)
+        beer_garden.requests.handle_event(child_event)
+
+        parent_request = Request.objects.get(id=parent_event.payload.id)
+
+        assert parent_request.expiration_at is None
+
+        with pytest.raises(Request.DoesNotExist):
+            Request.objects.get(id=child_event.payload.id)
