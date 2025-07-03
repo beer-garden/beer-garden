@@ -1249,7 +1249,7 @@ class Garden(MongoModel, Document):
         old_garden = None
 
         if Garden.objects(name=self.name).count() > 0:
-            old_garden = Garden.objects.get(name=self.name)
+            old_garden = Garden.objects.only("name","systems.name","systems.version","systems.namespace").get(name=self.name)
 
         # we leverage the fact that systems must be unique up to the triple of their
         # namespaces, names and versions
