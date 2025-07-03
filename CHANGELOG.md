@@ -4,18 +4,27 @@
 
 TBD
 
+## 3.30.0rc2
+
+- Fixed bug in local garden loading all gardens to one hop away
+- Added Support to track Garden Name on System Models (#1898)
+
 ## 3.30.0rc1
 
 - Improved docker naming conventions
+- Removed double save for Garden API Status Update calls (#1892)
+- Request create skips Gridfs existing data checks and only checks for Request Update (#1892)
 - Corrected 3.30 migration script to handle missing Command Types (#1894)
 - Updated request list api from `hidden__ne=True` to `hidden=False` for more efficient use of index. (#1889)
 - Fixed bug in `SystemsList` API using `filter_running` causing SchemaParser to fail(#1889)
 - Removed redundant call to get UtilityService getConfig (#1891)
 - Implemented previous Beer Garden installed version check to determine database migrations required (#1880)
-- Added Support to track Garden Name on System Models (#1898)
+- Updated Router Logic for handling Error Events for System Deletes
+- Moved Info message for downstream garden syncs to prior to forwarding
 - Implemented Lazy Loading of the root Garden for UI pages that do not require the Garden/System models to be loaded (#1896)
 - Loaded all Gardens in single DB call when returning Local Garden instead of individual calls per downstream garden (#1896)
 - Fixed bug where Replication Events published when Replication was disabled (#1990)
+
 
 ## 3.30.0rc0
 
