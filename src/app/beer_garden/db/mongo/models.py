@@ -550,7 +550,7 @@ class Request(MongoModel, Document):
             if (
                 not self.has_parent
                 or Request.objects(id=self.parent.id).count() == 0
-                or self.command_type in ["ACTION", "TEMP"]
+                or self.command_type in ["TEMP", "ADMIN"]
             ):
                 if self.command_type == "INFO":
                     ttl = config.get("db.prune.ttl.info", default=-1)
