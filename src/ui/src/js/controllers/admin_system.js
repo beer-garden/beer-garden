@@ -166,6 +166,12 @@ export default function adminSystemController(
         }
         return $rootScope.getIcon('fa-skull');
       }
+    }   
+    if (instance.status == "UNRESPONSIVE"){
+      return $rootScope.getIcon('fa-triangle-exclamation');
+    }
+    if (instance.status == "AWAITING_SYSTEM"){
+      return $rootScope.getIcon('fa-hourglass')
     }
     return $rootScope.getIcon('fa-rss');
   }
