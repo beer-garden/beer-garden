@@ -257,7 +257,7 @@ def subscriber_systems_validate(subscriber, systems, topic_name: str):
 
 def sync_garden_topics(garden_name: str = None):
     if garden_name is None:
-        garden_name = get_garden(config.get("garden.name"))
+        garden_name = config.get("garden.name")
 
     logger.info(f"Running Garden Topic Sync for {garden_name}")
 

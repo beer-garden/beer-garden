@@ -1233,6 +1233,7 @@ class Garden(MongoModel, Document):
         that when saving the systems, unknowns are deleted."""
         # import moved here to avoid a circular import loop
         from beer_garden.systems import remove_system
+        from beer_garden.metrics import CollectMetrics
 
         def _get_system_triple(system: System) -> Tuple[str, str, str]:
             namespace = getattr(system, "namespace", self.name)
@@ -1249,63 +1250,67 @@ class Garden(MongoModel, Document):
 
         # we leverage the fact that systems must be unique up to the triple of their
         # namespaces, names and versions
-        child_systems_already_known = {
-            _get_system_triple(system): str(system.id)
-            for system in System.objects(garden_name=self.name).only(
-                "namespace", "name", "version"
-            )
-        }
+        with CollectMetrics("GARDEN", "_update_associated_systems::known_systems"):
+            child_systems_already_known = {
+                _get_system_triple(system): str(system.id)
+                for system in System.objects(garden_name=self.name).only(
+                    "namespace", "name", "version"
+                )
+            }
 
-        local_systems = [
-            _get_system_triple(system)
-            for system in System.objects(local=True).only(
-                "namespace", "name", "version"
-            )
-        ]
+        with CollectMetrics("GARDEN", "_update_associated_systems::local_systems"):
+            local_systems = [
+                _get_system_triple(system)
+                for system in System.objects(local=True).only(
+                    "namespace", "name", "version"
+                )
+            ]
 
-        for system in self.systems:
-            triple = _get_system_triple(system)
+        with CollectMetrics("GARDEN", "_update_associated_systems::system_check"):
+            for system in self.systems:
+                triple = _get_system_triple(system)
 
-            # Check is System is a Local System
-            if triple not in local_systems:
-                if triple in child_systems_already_known:
-                    system_id_to_remove = child_systems_already_known.pop(triple)
+                # Check is System is a Local System
+                if triple not in local_systems:
+                    if triple in child_systems_already_known:
+                        system_id_to_remove = child_systems_already_known.pop(triple)
 
-                    if system_id_to_remove != str(system.id):
-                        # remove the system from before this update with the same triple
+                        if system_id_to_remove != str(system.id):
+                            # remove the system from before this update with the same triple
+                            logger.error(
+                                f"Removing System <{triple[0]}"
+                                f", {triple[1]}"
+                                f", {triple[2]}> with ID={system_id_to_remove}"
+                                f"; doesn't match ID={str(system.id)}"
+                                " for known system with same attributes"
+                            )
+                            remove_system(system_id=system_id_to_remove)
+
+                    try:
+                        system.garden_name = self.name
+                        system.save()
+                        system.save_topics(self.name)
+                    except Exception as ex:
                         logger.error(
-                            f"Removing System <{triple[0]}"
-                            f", {triple[1]}"
-                            f", {triple[2]}> with ID={system_id_to_remove}"
-                            f"; doesn't match ID={str(system.id)}"
-                            " for known system with same attributes"
+                            f"Error saving system {str(system)} in garden {self.name}: {ex}"
                         )
-                        remove_system(system_id=system_id_to_remove)
 
-                try:
-                    system.garden_name = self.name
-                    system.save()
-                    system.save_topics(self.name)
-                except Exception as ex:
-                    logger.error(
-                        f"Error saving system {str(system)} in garden {self.name}: {ex}"
-                    )
-
-            else:
-                system.delete()
+                else:
+                    system.delete()
 
         # if there's anything left over, delete those too; this could occur, e.g.,
         # if a child system deleted a particular version of a plugin and installed
         # another version of the same plugin
-        for bad_system_id in child_systems_already_known.values():
-            logger.error(
-                f"Removing System with ID={str(bad_system_id)} because it "
-                f"matches no known system in child garden ({self.name})"
-            )
-            try:
-                remove_system(system_id=bad_system_id)
-            except Exception:
-                remove_system(system=BrewtilsSystem(id=str(bad_system_id)))
+        with CollectMetrics("GARDEN", "_update_associated_systems::remove_systems"):
+            for bad_system_id in child_systems_already_known.values():
+                logger.error(
+                    f"Removing System with ID={str(bad_system_id)} because it "
+                    f"matches no known system in child garden ({self.name})"
+                )
+                try:
+                    remove_system(system_id=bad_system_id)
+                except Exception:
+                    remove_system(system=BrewtilsSystem(id=str(bad_system_id)))
 
 
 class SystemGardenMapping(MongoModel, Document):
