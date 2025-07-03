@@ -9,6 +9,7 @@ TBD
 - Updated Instance Status icon for Downstream Instances to reflect error states (#1907)
 - Updated UI Lazy Loading (#1907)
 - Fixed bug in local garden loading all gardens to one hop away (#1905)
+- Updated internal pruners to run in sub-processes (#1867)
 
 ## 3.30.0rc1
 
@@ -87,7 +88,6 @@ TBD
 - Fixed bug where internal jobs that utilized APscheduler did not have max concurrency set to 1
 - Fixed bug, only Request based scheduled jobs will attempt to update missed counter in the database
 - Updated all pruners to support batching
-- Updated internal pruners to run in sub-processes
 - Fixed bug in Job Scheduler where dynamic choices parameter did not load
 - Fixed duplicate subscriber issue when restarting instances
 - Updated Admin Garden Page to load Garden models from preloaded Garden models
