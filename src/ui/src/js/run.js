@@ -374,12 +374,14 @@ export default function appRun(
       GardenService.getGarden($rootScope.config.gardenName).then((response) => {
         $rootScope.garden = response.data;
         $rootScope.gardensResponse = response;
-        $rootScope.systems = $rootScope.garden.systems;
+        $rootScope.systems = [];
+        updateGardenSystems();
         return callback();
       },
         (response) => {
           $rootScope.gardenResponse = response;
           $rootScope.garden = {};
+          $rootScope.systems = [];
         });
     }
   }
