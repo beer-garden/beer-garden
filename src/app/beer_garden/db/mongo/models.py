@@ -1251,7 +1251,9 @@ class Garden(MongoModel, Document):
         # namespaces, names and versions
         child_systems_already_known = {
             _get_system_triple(system): str(system.id)
-            for system in system in System.objects(garden=self.name).only("namespace", "name", "version")
+            for system in System.objects(garden_name=self.name).only(
+                "namespace", "name", "version"
+            )
         }
 
         local_systems = [
