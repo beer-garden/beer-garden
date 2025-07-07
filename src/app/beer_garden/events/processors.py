@@ -271,6 +271,7 @@ class InternalQueueListener(DequeSetListener):
                 trace_parent_header=trace_parent_header,
             ):
                 if config.get("metrics.elastic.enabled"):
+                    elasticapm.label(queue_depth=self.queue_depth())
                     extract_custom_context(event)
 
                 self._handler(event)
@@ -383,9 +384,24 @@ class FanoutProcessor(DequeListener):
                 processor.stop()
 
     def process(self, event):
+        trace_parent_header = None
+        if config.get("metrics.elastic.enabled"):
+            if hasattr(event, "metadata") and "_trace_parent" in event.metadata:
+                trace_parent_header = event.metadata["_trace_parent"]
+            elif elasticapm.get_trace_parent_header() is not None:
+                trace_parent_header = elasticapm.get_trace_parent_header()
 
-        for processor in self._processors:
-            processor.put(event)
+        with CollectMetrics(
+            "Queue_Event",
+            "QUEUE_POP::Event Manager",
+            trace_parent_header=trace_parent_header,
+        ):
+            if config.get("metrics.elastic.enabled"):
+                elasticapm.label(queue_depth=self.queue_depth())
+                extract_custom_context(event)
+
+            for processor in self._processors:
+                processor.put(event)
 
     def register(self, processor, manage: bool = True):
         """Register and start a downstream Processor

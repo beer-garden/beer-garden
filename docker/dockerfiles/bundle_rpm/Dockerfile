@@ -7,4 +7,4 @@ RUN mkdir -p /source/rpm/dist
 ADD rpm/dist /source/rpm/dist
 
 RUN mkdir -p /source/ui/
-ADD src/ui /source/ui
+ADD src/ui/dist /source/ui/dist/

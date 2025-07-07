@@ -114,27 +114,22 @@ def local_garden(local_garden_system):
 
 
 @pytest.fixture
-def remote_garden_system():
-    yield create_system(
-        BrewtilsSystem(
-            name="remote_system",
-            version="1.2.3",
-            namespace="remote_garden",
-            garden_name="remote_garden",
-            local=False,
-            instances=[BrewtilsInstance(name="1")],
-            commands=[BrewtilsCommand(name="command")],
-        )
-    )
-
-
-@pytest.fixture
-def remote_garden(remote_garden_system):
+def remote_garden():
     yield create_garden(
         BrewtilsGarden(
             name="remote_garden",
             connection_type="REMOTE",
-            systems=[remote_garden_system],
+            systems=[
+                BrewtilsSystem(
+                    name="remote_system",
+                    version="1.2.3",
+                    namespace="remote_garden",
+                    garden_name="remote_garden",
+                    local=False,
+                    instances=[BrewtilsInstance(name="1")],
+                    commands=[BrewtilsCommand(name="command")],
+                )
+            ],
             version=beer_garden.__version__,
         )
     )

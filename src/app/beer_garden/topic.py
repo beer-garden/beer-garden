@@ -7,7 +7,6 @@ from mongoengine import DoesNotExist
 
 import beer_garden.config as config
 import beer_garden.db.api as db
-from beer_garden.garden import get_garden
 
 logger = logging.getLogger(__name__)
 

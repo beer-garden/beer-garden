@@ -11,7 +11,6 @@ from brewtils.models import Instance, Parameter
 from brewtils.models import Request as BrewtilsRequest
 from brewtils.models import System
 from mock import Mock, call, patch
-from mongomock.gridfs import enable_gridfs_integration
 
 import beer_garden.config
 import beer_garden.requests
@@ -23,6 +22,7 @@ from beer_garden.requests import (
     determine_latest_system_version,
 )
 from beer_garden.systems import create_system
+from mongomock.gridfs import enable_gridfs_integration
 
 enable_gridfs_integration()
 
