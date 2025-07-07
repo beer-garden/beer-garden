@@ -60,6 +60,9 @@ class BaseProcessor(StoppableThread):
                     self._schema_parser.serialize_event(item, to_string=False),
                     from_string=False,
                 )
+            
+        elif isinstance(item, dict):
+            return self._schema_parser.parse_event(item,from_string=False,)
 
         return deepcopy(item)
 
@@ -289,22 +292,22 @@ class InternalQueueListener(DequeSetListener):
                 )
             )
 
-    def filter_event(self, event):
+    def filter_event(self, event: dict):
 
-        if not self._filters or event.name not in self._filters:
+        if not self._filters or event.get("name") not in self._filters:
             return True
 
-        if event.error:
+        if event.get("error"):
             return True
 
-        if self._local_only and event.garden != config.get("garden.name"):
+        if self._local_only and event.get("garden") != config.get("garden.name"):
             return True
 
-        if event.metadata.get("API_ONLY", False) and not self.allow_api_only:
+        if event.get("metadata",{}).get("API_ONLY", False) and not self.allow_api_only:
             return True
 
-        if self._filter_func and self._filter_func(event):
-            return True
+        # if self._filter_func and self._filter_func(event):
+        #     return True
 
         return False
 
@@ -316,15 +319,19 @@ class InternalQueueListener(DequeSetListener):
         """
 
         if not self.filter_event(event):
+
+            clone_event = self.clone(event)
+            if self._filter_func and self._filter_func(clone_event):
+                return
             trace_parent_header = None
             if config.get("metrics.elastic.enabled"):
-                if hasattr(event, "metadata") and "_trace_parent" in event.metadata:
-                    trace_parent_header = event.metadata["_trace_parent"]
+                if hasattr(clone_event, "metadata") and "_trace_parent" in clone_event.metadata:
+                    trace_parent_header = clone_event.metadata["_trace_parent"]
                 elif elasticapm.get_trace_parent_header() is not None:
                     trace_parent_header = elasticapm.get_trace_parent_header()
 
-                if hasattr(event, "metadata") and "_trace_parent" not in event.metadata:
-                    event.metadata["_trace_parent"] = trace_parent_header
+                if hasattr(clone_event, "metadata") and "_trace_parent" not in clone_event.metadata:
+                    clone_event.metadata["_trace_parent"] = trace_parent_header
 
             with CollectMetrics(
                 "Queue_Event",
@@ -332,8 +339,8 @@ class InternalQueueListener(DequeSetListener):
                 trace_parent_header=trace_parent_header,
             ):
                 if config.get("metrics.elastic.enabled"):
-                    extract_custom_context(event)
-                super().put(self.clone(event))
+                    extract_custom_context(clone_event)
+                super().put(clone_event)
 
 
 class DelayListener(QueueListener):
@@ -383,6 +390,11 @@ class FanoutProcessor(DequeListener):
             if not processor.stopped():
                 processor.stop()
 
+    def put(self, item: Event):
+
+        super().put(self._schema_parser.serialize_event(item, to_string=False))
+        del item
+
     def process(self, event):
         trace_parent_header = None
         if config.get("metrics.elastic.enabled"):
@@ -398,15 +410,15 @@ class FanoutProcessor(DequeListener):
         ):
             if config.get("metrics.elastic.enabled"):
                 elasticapm.label(queue_depth=self.queue_depth())
-                # extract_custom_context(event)
 
             for processor in self._processors:
                 with CollectMetrics(
                     "Queue_Event",
-                    f"QUEUE_POP::Event Manager::put_{processor._name}",
-                    trace_parent_header=trace_parent_header,
+                    f"QUEUE_POP::Event Manager::put_{processor._name if hasattr(processor, '_name') else 'LOGGER'}",
                 ):
                     processor.put(event)
+
+            del event
 
     def register(self, processor, manage: bool = True):
         """Register and start a downstream Processor

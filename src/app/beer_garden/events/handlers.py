@@ -23,9 +23,9 @@ logger = logging.getLogger(__name__)
 
 
 def error_event_handler(event):
-    if event.error:
+    if event.get("error", False):
         logger.debug(
-            f"ERROR EVENT SEEN:: Type: {event.name} Error Message:\n{event.error_message}"
+            f"ERROR EVENT SEEN:: Type: {event.get('name')} Error Message:\n{event.get('error_message')}"
         )
 
 
