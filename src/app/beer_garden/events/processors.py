@@ -398,10 +398,15 @@ class FanoutProcessor(DequeListener):
         ):
             if config.get("metrics.elastic.enabled"):
                 elasticapm.label(queue_depth=self.queue_depth())
-                extract_custom_context(event)
+                # extract_custom_context(event)
 
             for processor in self._processors:
-                processor.put(event)
+                with CollectMetrics(
+                    "Queue_Event",
+                    f"QUEUE_POP::Event Manager::put_{processor._name}",
+                    trace_parent_header=trace_parent_header,
+                ):
+                    processor.put(event)
 
     def register(self, processor, manage: bool = True):
         """Register and start a downstream Processor
