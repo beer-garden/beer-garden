@@ -37,7 +37,7 @@ from brewtils.schemas import (
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 from tornado.web import Application, RedirectHandler, RequestHandler
-from brewtils.schema_parser import SchemaParser
+
 import beer_garden
 import beer_garden.api.http.handlers.misc as misc
 import beer_garden.api.http.handlers.v1 as v1
@@ -61,8 +61,6 @@ logger: logging.Logger = None
 event_publishers = None
 api_spec: APISpec
 client_ssl: ssl.SSLContext
-
-schema_parser = SchemaParser()
 
 
 def _get_published_url_specs(
@@ -417,13 +415,8 @@ def _setup_event_handling(ep_conn):
     io_loop.add_handler(ep_conn, lambda c, _: _event_callback(c.recv()), IOLoop.READ)
 
 
-def _event_callback(item):
+def _event_callback(event):
     # Everything needs to be published to the websocket
-
-    if item.get("error", False):
-        return
-    event = schema_parser.parse_event(item, from_string=False,) if isinstance(item, dict) else item
-
     websocket_publish(event)
 
     if not event.error:

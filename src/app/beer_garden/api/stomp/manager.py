@@ -12,7 +12,6 @@ import beer_garden.router
 from beer_garden.api.stomp.transport import Connection, parse_header_list
 from beer_garden.events import publish
 from beer_garden.events.processors import BaseProcessor
-from brewtils.schema_parser import SchemaParser
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +58,6 @@ class StompManager(BaseProcessor):
         self.conn_dict = {}
         self.ep_conn = ep_conn
         self.ep_lock = Lock()
-        self._schema_parser = SchemaParser()
 
     def pipe_send(self, event):
         """Send an event over the pipe to the main process"""
@@ -193,7 +191,7 @@ class StompManager(BaseProcessor):
                         else:
                             conn.send(event)
 
-    def handle_event(self, item):
+    def handle_event(self, event):
         """Main event entry point
 
         This registers handlers that this entry point needs to care about.
@@ -205,11 +203,6 @@ class StompManager(BaseProcessor):
         - And then the actually event handler logic for this entry point
 
         """
-
-        if not item.get("error", False):
-            return
-        
-        event = self._schema_parser.parse_event(item, from_string=False,) if isinstance(item, dict) else item
 
         try:
             if "GARDEN" in event.name:
