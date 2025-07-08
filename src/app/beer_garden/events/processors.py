@@ -8,15 +8,17 @@ import time
 import uuid
 from collections import deque
 from copy import deepcopy
-from multiprocessing import Queue, Process
+from multiprocessing import Process, Queue
 from queue import Empty
-import beer_garden.db.api as db
+
 import elasticapm
 from brewtils.models import Event, Events, Request
 from brewtils.schema_parser import SchemaParser
 from brewtils.stoppable_thread import StoppableThread
-import beer_garden.events
+
 import beer_garden.config as config
+import beer_garden.db.api as db
+import beer_garden.events
 from beer_garden.metrics import CollectMetrics, extract_custom_context
 from beer_garden.queue.rabbit import put_event
 
@@ -225,7 +227,7 @@ class QueueListener(BaseProcessor):
 
     def queue_depth(self):
         return self._queue.qsize()
-    
+
 
 class InternalWorkerProcessor(Process):
     """Worker Process for InternalQueueListener"""
@@ -236,7 +238,7 @@ class InternalWorkerProcessor(Process):
         self._action = action
         self._handler_name = name
 
-         # Set up a database connection
+        # Set up a database connection
         db.create_connection(db_config=config.get("db"))
 
         # Setup return Event Handler
@@ -246,9 +248,10 @@ class InternalWorkerProcessor(Process):
             """Handler for returning processed events"""
             if self._return_queue:
                 self._return_queue.put(event)
-     
-        beer_garden.events.manager = BaseProcessor(action=return_handler, name="ReturnHandler")
 
+        beer_garden.events.manager = BaseProcessor(
+            action=return_handler, name="ReturnHandler"
+        )
 
     def run(self):
         while True:
@@ -292,6 +295,7 @@ class InternalWorkerProcessor(Process):
                 )
             )
 
+
 class InternalMultiprocessingQueueListener(BaseProcessor):
     """Listener for internal events only"""
 
@@ -328,7 +332,9 @@ class InternalMultiprocessingQueueListener(BaseProcessor):
         self._workers = []
         self._num_workers = num_workers
         for _ in range(self._num_workers):
-            process = InternalWorkerProcessor(self._queue, self._return_queue, self._action, self._handler_tag)
+            process = InternalWorkerProcessor(
+                self._queue, self._return_queue, self._action, self._handler_tag
+            )
             self._workers.append(process)
             process.start()
 
@@ -353,8 +359,6 @@ class InternalMultiprocessingQueueListener(BaseProcessor):
         self._queue.close()
         self._queue.join_thread()
 
-    
-
     def filter_event(self, event):
 
         if not self._filters or event.name not in self._filters:
@@ -373,7 +377,7 @@ class InternalMultiprocessingQueueListener(BaseProcessor):
             return True
 
         return False
-    
+
     def run(self):
         """Process events as they are received"""
         while not self.stopped():
@@ -413,6 +417,7 @@ class InternalMultiprocessingQueueListener(BaseProcessor):
                 if config.get("metrics.elastic.enabled"):
                     extract_custom_context(event)
                 self._queue.put(event)
+
 
 class InternalQueueListener(DequeSetListener):
     """Listener for internal events only"""
@@ -520,6 +525,7 @@ class InternalQueueListener(DequeSetListener):
                 if config.get("metrics.elastic.enabled"):
                     extract_custom_context(event)
                 super().put(self.clone(event))
+
 
 class DelayListener(QueueListener):
     """Listener that waits for an Event before running"""

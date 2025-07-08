@@ -17,7 +17,11 @@ import beer_garden.scheduler
 import beer_garden.systems
 import beer_garden.topic
 import beer_garden.user
-from beer_garden.events.processors import BaseProcessor, InternalQueueListener, InternalMultiprocessingQueueListener
+from beer_garden.events.processors import (
+    BaseProcessor,
+    InternalMultiprocessingQueueListener,
+    InternalQueueListener,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +86,7 @@ def add_internal_events_handler(event_manager):
             "local_only": False,
             "unique_data": True,
             "allow_api_only": False,
-            "num_workers": 10
+            "num_workers": 10,
         },
         {
             "name": "Publish Requests",
@@ -211,7 +215,11 @@ def add_internal_events_handler(event_manager):
     ]:
         num_workers = event_config.pop("num_workers", 0)
         if num_workers > 0:
-            event_manager.register(InternalMultiprocessingQueueListener(num_workers=num_workers, **event_config))
+            event_manager.register(
+                InternalMultiprocessingQueueListener(
+                    num_workers=num_workers, **event_config
+                )
+            )
         else:
             event_manager.register(InternalQueueListener(**event_config))
 
