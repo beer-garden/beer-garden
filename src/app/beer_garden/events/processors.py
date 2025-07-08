@@ -8,14 +8,14 @@ import time
 import uuid
 from collections import deque
 from copy import deepcopy
-from multiprocessing import Queue
+from multiprocessing import Queue, Process
 from queue import Empty
-
+import beer_garden.db.api as db
 import elasticapm
 from brewtils.models import Event, Events, Request
 from brewtils.schema_parser import SchemaParser
 from brewtils.stoppable_thread import StoppableThread
-
+import beer_garden.events
 import beer_garden.config as config
 from beer_garden.metrics import CollectMetrics, extract_custom_context
 from beer_garden.queue.rabbit import put_event
@@ -225,7 +225,194 @@ class QueueListener(BaseProcessor):
 
     def queue_depth(self):
         return self._queue.qsize()
+    
 
+class InternalWorkerProcessor(Process):
+    """Worker Process for InternalQueueListener"""
+
+    def __init__(self, queue, return_queue, action, name):
+        super().__init__(name=name)
+        self._queue = queue
+        self._action = action
+        self._handler_name = name
+
+         # Set up a database connection
+        db.create_connection(db_config=config.get("db"))
+
+        # Setup return Event Handler
+        self._return_queue = return_queue
+
+        def return_handler(event):
+            """Handler for returning processed events"""
+            if self._return_queue:
+                self._return_queue.put(event)
+     
+        beer_garden.events.manager = BaseProcessor(action=return_handler, name="ReturnHandler")
+
+
+    def run(self):
+        while True:
+            try:
+                item = self._queue.get(timeout=0.1)
+                if item is None:
+                    break
+                self._handler(item)
+            except Empty:
+                pass
+
+    def _handler(self, event):
+        trace_parent_header = None
+        if config.get("metrics.elastic.enabled"):
+            if hasattr(event, "metadata") and "_trace_parent" in event.metadata:
+                trace_parent_header = event.metadata["_trace_parent"]
+            elif elasticapm.get_trace_parent_header() is not None:
+                trace_parent_header = elasticapm.get_trace_parent_header()
+
+        try:
+            with CollectMetrics(
+                "Queue_Event",
+                f"QUEUE_POP::{self._handler_name}",
+                trace_parent_header=trace_parent_header,
+            ):
+                if config.get("metrics.elastic.enabled"):
+                    extract_custom_context(event)
+
+                self._action(event)
+        except Exception as ex:
+            _, _, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            logger.error(
+                "'%s' handler received an error executing callback for event %s: %s: %s Line %s"
+                % (
+                    self._handler_name,
+                    repr(event),
+                    str(ex),
+                    fname,
+                    exc_tb.tb_lineno,
+                )
+            )
+
+class InternalMultiprocessingQueueListener(BaseProcessor):
+    """Listener for internal events only"""
+
+    def __init__(
+        self,
+        handler,
+        local_only=False,
+        filters=None,
+        filter_func=None,
+        allow_api_only=False,
+        unique_data=False,
+        num_workers=5,
+        **kwargs,
+    ):
+        super().__init__(action=handler, **kwargs)
+
+        self._filters = []
+
+        if filters:
+            for filter in filters:
+                self._filters.append(filter.name)
+
+        self._filter_func = filter_func
+
+        self._handler = handler
+        self._handler_tag = self._name
+        self._local_only = local_only
+
+        self._transaction_type = self._name
+        self.allow_api_only = allow_api_only
+
+        self._queue = Queue()
+        self._return_queue = Queue()
+        self._workers = []
+        self._num_workers = num_workers
+        for _ in range(self._num_workers):
+            process = InternalWorkerProcessor(self._queue, self._return_queue, self._action, self._handler_tag)
+            self._workers.append(process)
+            process.start()
+
+    def clear(self):
+        """Empty the underlying queue without processing items"""
+        while not self._queue.empty():
+            self._queue.get()
+
+    def stop(self):
+        """Stop the listener and all workers"""
+        super().stop()
+
+        for _ in range(self._num_workers):
+            self._queue.put(None)
+
+        for process in self._workers:
+            if process.is_alive():
+                process.terminate()
+                process.join()
+
+        self._workers = []
+        self._queue.close()
+        self._queue.join_thread()
+
+    
+
+    def filter_event(self, event):
+
+        if not self._filters or event.name not in self._filters:
+            return True
+
+        if event.error:
+            return True
+
+        if self._local_only and event.garden != config.get("garden.name"):
+            return True
+
+        if event.metadata.get("API_ONLY", False) and not self.allow_api_only:
+            return True
+
+        if self._filter_func and self._filter_func(event):
+            return True
+
+        return False
+    
+    def run(self):
+        """Process events as they are received"""
+        while not self.stopped():
+            try:
+                event = self._return_queue.get(timeout=0.1)
+                beer_garden.events.publish(event)
+
+            except Empty:
+                pass
+
+    def queue_depth(self):
+        return self._queue.qsize()
+
+    def put(self, event: Event):
+        """Put a new item on the queue to be processed
+
+        Args:
+            item: New item
+        """
+
+        if not self.filter_event(event):
+            trace_parent_header = None
+            if config.get("metrics.elastic.enabled"):
+                if hasattr(event, "metadata") and "_trace_parent" in event.metadata:
+                    trace_parent_header = event.metadata["_trace_parent"]
+                elif elasticapm.get_trace_parent_header() is not None:
+                    trace_parent_header = elasticapm.get_trace_parent_header()
+
+                if hasattr(event, "metadata") and "_trace_parent" not in event.metadata:
+                    event.metadata["_trace_parent"] = trace_parent_header
+
+            with CollectMetrics(
+                "Queue_Event",
+                f"QUEUE_PUT::{self._name}",
+                trace_parent_header=trace_parent_header,
+            ):
+                if config.get("metrics.elastic.enabled"):
+                    extract_custom_context(event)
+                self._queue.put(event)
 
 class InternalQueueListener(DequeSetListener):
     """Listener for internal events only"""
@@ -333,7 +520,6 @@ class InternalQueueListener(DequeSetListener):
                 if config.get("metrics.elastic.enabled"):
                     extract_custom_context(event)
                 super().put(self.clone(event))
-
 
 class DelayListener(QueueListener):
     """Listener that waits for an Event before running"""
