@@ -123,6 +123,11 @@ def get_garden(garden_name: str) -> Garden:
         for db_garden in gardens:
             if db_garden.name == config.get("garden.name"):
                 garden = db_garden
+            else:
+                if not db_garden.has_parent:
+                    db_garden.has_parent = True
+                    db_garden.parent = config.get("garden.name")
+                    
             db_garden.children = [
                 child_garden
                 for child_garden in gardens
