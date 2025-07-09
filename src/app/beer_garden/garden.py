@@ -127,7 +127,7 @@ def get_garden(garden_name: str) -> Garden:
                 if not db_garden.has_parent:
                     db_garden.has_parent = True
                     db_garden.parent = config.get("garden.name")
-                    
+
             db_garden.children = [
                 child_garden
                 for child_garden in gardens

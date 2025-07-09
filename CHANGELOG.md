@@ -9,6 +9,7 @@ TBD
 - Updated Instance Status icon for Downstream Instances to reflect error states (#1907)
 - Updated UI Lazy Loading (#1907)
 - Fixed bug in local garden loading all gardens to one hop away (#1905)
+- Fixed bug where Garden Entry Points went unresponsive (#1908)
 
 ## 3.30.0rc1
 
