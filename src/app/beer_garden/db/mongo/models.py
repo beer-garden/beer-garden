@@ -533,33 +533,40 @@ class Request(MongoModel, Document):
 
         if self.has_parent:
             try:
-                self.parent
-            except DoesNotExist:
+                if not self.parent or Request.objects(id=self.parent.id).count() == 0:
+                    # Request is an Orphan, removing parent
+                    self.has_parent = False
+                    self.parent = None
+            except (DoesNotExist, TypeError):
                 # Request is an Orphan, removing parent
                 self.has_parent = False
                 self.parent = None
 
-        if not self.expiration_at and self.status in BrewtilsRequest.COMPLETED_STATUSES:
-            # If parent or orphaned
-            if not self.has_parent or Request.objects(id=self.parent.id).count() == 0:
-                if self.command_type == "INFO":
-                    ttl = config.get("db.prune.ttl.info", default=-1)
-                    if ttl > -1:
-                        self.expiration_at = self.created_at + datetime.timedelta(
-                            minutes=ttl
-                        )
-                elif self.command_type == "ACTION":
-                    ttl = config.get("db.prune.ttl.action", default=-1)
-                    if ttl > -1:
-                        self.expiration_at = self.created_at + datetime.timedelta(
-                            minutes=ttl
-                        )
-                else:
-                    # TEMP or ADMIN
-                    self.expiration_at = datetime.datetime.utcnow()
-
         if not self.has_parent:
-            self.root_command_type = self.command_type
+            if (
+                not self.expiration_at
+                and self.status in BrewtilsRequest.COMPLETED_STATUSES
+            ):
+                # If parent or orphaned
+                if not self.has_parent:
+                    if self.command_type == "INFO":
+                        ttl = config.get("db.prune.ttl.info", default=-1)
+                        if ttl > -1:
+                            self.expiration_at = self.created_at + datetime.timedelta(
+                                minutes=ttl
+                            )
+                    elif self.command_type == "ACTION":
+                        ttl = config.get("db.prune.ttl.action", default=-1)
+                        if ttl > -1:
+                            self.expiration_at = self.created_at + datetime.timedelta(
+                                minutes=ttl
+                            )
+                    else:
+                        # TEMP or ADMIN
+                        self.expiration_at = datetime.datetime.utcnow()
+
+            if not self.root_command_type:
+                self.root_command_type = self.command_type
         elif not self.root_command_type:
             # If this is a child request, we need to set the root_command_type
             # to the same as the parent request
