@@ -173,18 +173,6 @@ def create_connection(connection_alias: str = "default", db_config: Box = None) 
     )
 
 
-def close_connection(connection_alias: str = "default") -> None:
-    """Close a database connection
-
-    Args:
-        connection_alias: Alias for this connection
-
-    Returns:
-        None
-    """
-    disconnect(alias=connection_alias)
-
-
 def initial_setup():
     """Do everything necessary to ensure the database is in a 'good' state"""
 
