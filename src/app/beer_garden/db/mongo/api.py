@@ -12,7 +12,6 @@ from mongoengine import (
     NotUniqueError,
     QuerySet,
     connect,
-    disconnect,
     register_connection,
 )
 from mongoengine.queryset.visitor import Q, QCombination
