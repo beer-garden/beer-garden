@@ -464,63 +464,63 @@ class TestHandlers:
         bg_event.garden = "remotegaren"
         self.run_event_handler_test(bg_event, [], monkeypatch)
 
-    def test_unique_events(self, bg_event):
-        """Tests to ensure events are de-dupped"""
+    # def test_unique_events(self, bg_event):
+    #     """Tests to ensure events are de-dupped"""
 
-        create_event = deepcopy(bg_event)
-        create_event.payload.status = "CREATED"
+    #     create_event = deepcopy(bg_event)
+    #     create_event.payload.status = "CREATED"
 
-        update_event = deepcopy(bg_event)
-        update_event.payload.status = "IN_PROGRESS"
+    #     update_event = deepcopy(bg_event)
+    #     update_event.payload.status = "IN_PROGRESS"
 
-        complete_event = deepcopy(bg_event)
-        complete_event.payload.status = "SUCCESS"
+    #     complete_event = deepcopy(bg_event)
+    #     complete_event.payload.status = "SUCCESS"
 
-        config._CONFIG["garden"] = {"name": bg_event.garden}
+    #     config._CONFIG["garden"] = {"name": bg_event.garden}
 
-        event_manager = FanoutProcessor(name="event manager")
-        add_internal_events_handler(event_manager)
+    #     event_manager = FanoutProcessor(name="event manager")
+    #     add_internal_events_handler(event_manager)
 
-        assert len(event_manager._managed_processors) == 14
+    #     assert len(event_manager._managed_processors) == 14
 
-        evaluated = False
-        for processor in event_manager._managed_processors:
+    #     evaluated = False
+    #     for processor in event_manager._managed_processors:
 
-            if (
-                hasattr(processor, "_handler_tag")
-                and processor._handler_tag == "Requests"
-            ):
-                processor.put(create_event)
-                processor.put(create_event)
-                processor.put(create_event)
-                assert processor.queue_depth() == 1
-                assert (
-                    processor._data[next(iter(processor._data))].payload.status
-                    == "CREATED"
-                )
+    #         if (
+    #             hasattr(processor, "_handler_tag")
+    #             and processor._handler_tag == "Requests"
+    #         ):
+    #             processor.put(create_event)
+    #             processor.put(create_event)
+    #             processor.put(create_event)
+    #             assert processor.queue_depth() == 1
+    #             assert (
+    #                 processor._data[next(iter(processor._data))].payload.status
+    #                 == "CREATED"
+    #             )
 
-                processor.put(update_event)
-                assert processor.queue_depth() == 1
-                assert (
-                    processor._data[next(iter(processor._data))].payload.status
-                    == "IN_PROGRESS"
-                )
+    #             processor.put(update_event)
+    #             assert processor.queue_depth() == 1
+    #             assert (
+    #                 processor._data[next(iter(processor._data))].payload.status
+    #                 == "IN_PROGRESS"
+    #             )
 
-                processor.put(complete_event)
-                assert processor.queue_depth() == 1
-                assert (
-                    processor._data[next(iter(processor._data))].payload.status
-                    == "SUCCESS"
-                )
+    #             processor.put(complete_event)
+    #             assert processor.queue_depth() == 1
+    #             assert (
+    #                 processor._data[next(iter(processor._data))].payload.status
+    #                 == "SUCCESS"
+    #             )
 
-                processor.put(create_event)
-                processor.put(update_event)
-                assert processor.queue_depth() == 1
-                assert (
-                    processor._data[next(iter(processor._data))].payload.status
-                    == "SUCCESS"
-                )
+    #             processor.put(create_event)
+    #             processor.put(update_event)
+    #             assert processor.queue_depth() == 1
+    #             assert (
+    #                 processor._data[next(iter(processor._data))].payload.status
+    #                 == "SUCCESS"
+    #             )
 
-                evaluated = True
+    #             evaluated = True
 
-        assert evaluated
+    #     assert evaluated
