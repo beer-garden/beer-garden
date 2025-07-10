@@ -574,6 +574,13 @@ class FanoutProcessor(DequeListener):
             if not processor.stopped():
                 processor.stop()
 
+    def stop(self):
+        """Stop the listener and all workers"""
+        super().stop()
+
+        for processor in self._managed_processors:
+            processor.stop()
+
     def process(self, event):
 
         for processor in self._processors:
