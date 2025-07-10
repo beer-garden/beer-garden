@@ -4,13 +4,23 @@ from copy import deepcopy
 
 import pytest
 from brewtils.models import Events, Request
+from mongoengine import connect
 
+import beer_garden.db.api
 from beer_garden import config
 from beer_garden.events.handlers import add_internal_events_handler
 from beer_garden.events.processors import FanoutProcessor
 
 
 class TestHandlers:
+
+    @pytest.fixture(autouse=True)
+    def setup_class(self):
+
+        def mock_connection(*args, **kwargs):
+            return
+
+        beer_garden.db.api.create_connection = mock_connection
 
     def run_event_handler_test(self, event, target_handlers, monkeypatch):
 
@@ -37,6 +47,8 @@ class TestHandlers:
                         assert queue_depth == 1
                     else:
                         assert queue_depth == 0
+
+        event_manager.stop()
 
     @pytest.mark.parametrize(
         "event_name",
