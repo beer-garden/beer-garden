@@ -2,11 +2,12 @@ from brewtils.models import Event, Events, Operation
 from requests import RequestException
 
 import beer_garden.config as conf
-from beer_garden.events.processors import InternalQueueListener
+from beer_garden.api import accepted_forwarding_events
+from beer_garden.events.processors import QueueListener
 from beer_garden.garden import local_garden, update_garden
 
 
-class HttpParentUpdater(InternalQueueListener):
+class HttpParentUpdater(QueueListener):
     """Publish events using an EasyClient
 
     This will use the provided EasyClient to push events.
@@ -36,7 +37,8 @@ class HttpParentUpdater(InternalQueueListener):
             event: The event to publish
         """
         if self._connected:
-            super().put(event)
+            if event.name in accepted_forwarding_events:
+                self._queue.put(event)
 
     def process(self, event: Event):
 

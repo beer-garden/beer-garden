@@ -28,7 +28,6 @@ import beer_garden.local_plugins.manager
 import beer_garden.queue.api as queue
 import beer_garden.router
 import beer_garden.scheduler
-from beer_garden.api import accepted_forwarding_events
 from beer_garden.events.parent_processors import HttpParentUpdater
 from beer_garden.events.processors import EventProcessor, FanoutProcessor, QueueListener
 from beer_garden.local_plugins.manager import PluginManager
@@ -464,7 +463,6 @@ class Application(StoppableThread):
                 HttpParentUpdater(
                     easy_client=easy_client,
                     reconnect_action=reconnect_action,
-                    filters=accepted_forwarding_events,
                 )
             )
 
