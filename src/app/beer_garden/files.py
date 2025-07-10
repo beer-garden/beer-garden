@@ -584,6 +584,19 @@ def forward_file(operation: Operation) -> None:
             router.forward(chunk_op)
 
 
+def handle_event_filter(event: Event) -> bool:
+    if event.garden != config.get("garden.name"):
+        return True
+    if event.name == Events.JOB_CREATED.name:
+        if len(_find_chunk_params(event.payload.request_template.parameters)) > 0:
+            return False
+
+    elif event.name == Events.REQUEST_CREATED.name:
+        if len(_find_chunk_params(event.payload.parameters)) > 0:
+            return False
+    return True
+
+
 def handle_event(event: Event) -> None:
     """Handle events"""
     if event.garden == config.get("garden.name"):

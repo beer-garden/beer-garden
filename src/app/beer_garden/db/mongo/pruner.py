@@ -135,7 +135,7 @@ def prune_requests():
         "id", "output_gridfs", "parameters_gridfs", "parameters"
     )
 
-    prune_request_cursor(request_cursor, batch_size, "Expired Requests")
+    prune_request_cursor(request_cursor, batch_size, "Expired")
 
 
 def prune_request_cursor(
@@ -157,9 +157,21 @@ def prune_request_cursor(
             request_ids.append(request.id)
 
             if request.output_gridfs:
-                request_grids_fs_files.append(request.output_gridfs._id)
+                try:
+                    request_grids_fs_files.append(request.output_gridfs._id)
+                except AttributeError:
+                    logger.error(
+                        f"AttributeError: Attempted to delete request {request.id} "
+                        "but does not have a output_gridfs file id"
+                    )
             if request.parameters_gridfs:
-                request_grids_fs_files.append(request.parameters_gridfs._id)
+                try:
+                    request_grids_fs_files.append(request.parameters_gridfs._id)
+                except AttributeError:
+                    logger.error(
+                        f"AttributeError: Attempted to delete request {request.id} "
+                        "but does not have a parameters_gridfs file id"
+                    )
 
             parameters = request.parameters or {}
 

@@ -118,10 +118,34 @@ def get_garden(garden_name: str) -> Garden:
 
     """
     if garden_name == config.get("garden.name"):
-        garden = local_garden()
+        gardens = db.query(Garden)
+        garden = None
+        for db_garden in gardens:
+            if db_garden.name == config.get("garden.name"):
+                garden = db_garden
+            db_garden.children = [
+                child_garden
+                for child_garden in gardens
+                if child_garden.name != db_garden.name
+                and (
+                    (child_garden.has_parent and child_garden.parent == db_garden.name)
+                    or (
+                        not child_garden.has_parent
+                        and db_garden.name == config.get("garden.name")
+                    )
+                )
+            ]
+
+        if garden:
+            filter_params = {}
+            filter_params["local"] = True
+
+            garden.systems = get_systems(filter_params=filter_params)
+
     else:
         garden = db.query_unique(Garden, name=garden_name, raise_missing=True)
-    get_children_garden(garden)
+        get_children_garden(garden)
+
     return garden
 
 
@@ -493,7 +517,7 @@ def update_garden_receiving(
     if not connection_set and api:
         garden.receiving_connections.append(Connection(api=api, status=status))
 
-    return db.update(garden)
+    return garden
 
 
 def load_garden_file(garden: Garden):
@@ -777,7 +801,6 @@ def garden_sync(sync_target: str = None):
             publish_garden()
         else:
             try:
-                logger.info(f"About to create sync operation for garden {sync_target}")
 
                 route(
                     Operation(
@@ -832,6 +855,7 @@ def garden_unresponsive_trigger():
         if interval_value > 0:
             timeout = datetime.utcnow() - timedelta(minutes=interval_value)
 
+            update_connection = False
             for connection in garden.receiving_connections:
                 if connection.status in ["RECEIVING"]:
                     if connection.status_info.heartbeat < timeout:
@@ -841,6 +865,10 @@ def garden_unresponsive_trigger():
                         logger.error(
                             f"{garden.name} Timed out {interval_value} minutes"
                         )
+                        update_connection = True
+
+            if update_connection:
+                update_garden(garden)
 
 
 def handle_event(event):
@@ -892,25 +920,6 @@ def handle_event(event):
 
             for system in event.payload.systems:
                 system.local = False
-
-            # Remove systems that are tracking locally
-            remote_systems = []
-            for system in event.payload.systems:
-                if (
-                    len(
-                        get_systems(
-                            filter_params={
-                                "local": True,
-                                "namespace": system.namespace,
-                                "name": system.name,
-                                "version": system.version,
-                            }
-                        )
-                    )
-                    < 1
-                ):
-                    remote_systems.append(system)
-            event.payload.systems = remote_systems
 
             if event.name == Events.GARDEN_SYNC.name:
                 logger.info(f"Garden sync event for {event.payload.name}")

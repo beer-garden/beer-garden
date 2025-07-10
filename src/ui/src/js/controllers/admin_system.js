@@ -166,6 +166,12 @@ export default function adminSystemController(
         }
         return $rootScope.getIcon('fa-skull');
       }
+    }   
+    if (instance.status == "UNRESPONSIVE"){
+      return $rootScope.getIcon('fa-triangle-exclamation');
+    }
+    if (instance.status == "AWAITING_SYSTEM"){
+      return $rootScope.getIcon('fa-hourglass')
     }
     return $rootScope.getIcon('fa-rss');
   }
@@ -330,13 +336,12 @@ export default function adminSystemController(
     return undefined;
   }
 
-  groupSystems();
-  groupRunners();
-
-  // Systems to load async, have to monitor the systems for changes
-  $rootScope.$watchCollection('systems', function systemUpdate(){
+  $scope.systemUpdate = function(){
     groupRunners();
     groupSystems();
-  });
-  
+  }
+
+  // Systems to load async, have to monitor the systems for changes
+  $rootScope.$watchCollection('systems', $scope.systemUpdate);
+  $rootScope.getLocalGarden($scope.systemUpdate)
 }

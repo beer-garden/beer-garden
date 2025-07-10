@@ -14,7 +14,9 @@ import beer_garden.db.mongo.util
 from beer_garden import config
 from beer_garden.db.mongo.models import Garden
 from beer_garden.db.mongo.util import (  # ensure_roles,; ensure_users,
+    contains_fields,
     ensure_local_garden,
+    ensure_v3_29_model_migration,
     ensure_v3_30_model_migration,
 )
 from beer_garden.errors import IndexOperationError
@@ -67,6 +69,42 @@ class TestMigrationScript(object):
 
     @patch("mongoengine.connect", Mock())
     @patch("mongoengine.register_connection", Mock())
+    def test_3_29_request_migration(self, request_dict):
+
+        del request_dict["id"]
+        del request_dict["command_display_name"]
+
+        db = get_db()
+        request_collection = db["request"]
+        request_collection.insert_one(request_dict)
+
+        ensure_v3_29_model_migration()
+
+        request = request_collection.find_one()
+        assert request["command_display_name"] == request["command"]
+        request_collection.delete_one({})
+
+    @patch("mongoengine.connect", Mock())
+    @patch("mongoengine.register_connection", Mock())
+    def test_3_30_garden_migration(self, garden_dict):
+
+        del garden_dict["id"]
+        garden_dict["status"] = []
+        garden_dict["status_info"] = None
+        garden_dict["namespaces"] = []
+
+        db = get_db()
+        garden_collection = db["garden"]
+        garden_collection.insert_one(garden_dict)
+
+        ensure_v3_30_model_migration()
+
+        removed_fields = ["status", "status_info", "namespaces"]
+        assert contains_fields("garden", removed_fields) is False
+        garden_collection.delete_one({})
+
+    @patch("mongoengine.connect", Mock())
+    @patch("mongoengine.register_connection", Mock())
     def test_3_30_request_migration(self, request_dict, ts_dt):
 
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"action": 0}}}}
@@ -89,6 +127,33 @@ class TestMigrationScript(object):
         request = request_collection.find_one()
 
         assert request["root_command_type"] == request["command_type"]
+        assert request["expiration_at"] is not None
+
+    @patch("mongoengine.connect", Mock())
+    @patch("mongoengine.register_connection", Mock())
+    def test_3_30_request_migration_no_command_type(self, request_dict, ts_dt):
+
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"action": 0}}}}
+
+        del request_dict["id"]
+        del request_dict["root_command_type"]
+        del request_dict["expiration_at"]
+
+        request_dict["status"] = "SUCCESS"
+        request_dict["has_parent"] = False
+        request_dict["parent"] = None
+        request_dict["created_at"] = ts_dt
+
+        db = get_db()
+        request_collection = db["request"]
+        request_collection.insert_one(request_dict)
+
+        ensure_v3_30_model_migration()
+
+        request = request_collection.find_one()
+
+        assert request["root_command_type"] == "ACTION"
+        assert getattr(request, "command_type", None) is None
         assert request["expiration_at"] is not None
 
     @patch("mongoengine.connect", Mock())
