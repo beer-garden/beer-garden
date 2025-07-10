@@ -13,7 +13,7 @@ from beer_garden.events.processors import FanoutProcessor
 class TestHandlers:
 
     @pytest.fixture(autouse=True)
-    def setup_class(self):
+    def mock_create_connection(self):
 
         def mock_connection(*args, **kwargs):
             return
