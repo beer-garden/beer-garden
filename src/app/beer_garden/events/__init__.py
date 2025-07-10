@@ -10,6 +10,7 @@ import wrapt
 from brewtils.models import Event, Events
 
 from beer_garden import config as config
+from beer_garden.api import accepted_forwarding_events
 from beer_garden.metrics import CollectMetrics, extract_custom_context
 
 # In this master process this should be an instance of EventManager, and in entry points
@@ -48,6 +49,13 @@ def publish(event: Event) -> None:
                     trace_parent_string = elasticapm.get_trace_parent_header()
                     if trace_parent_string:
                         event.metadata["_trace_parent"] = trace_parent_string
+
+            if (
+                event.garden
+                and event.garden != config.get("garden.name")
+                and event.name not in accepted_forwarding_events
+            ):
+                return
 
             return manager.put(event)
         except Exception as ex:

@@ -9,6 +9,7 @@ import beer_garden.config as config
 import beer_garden.log
 import beer_garden.requests
 import beer_garden.router
+from beer_garden.api import accepted_forwarding_events
 from beer_garden.api.stomp.transport import Connection, parse_header_list
 from beer_garden.events import publish
 from beer_garden.events.processors import BaseProcessor
@@ -182,26 +183,7 @@ class StompManager(BaseProcessor):
 
         if not event.error and event.garden == config.get("garden.name"):
             # Keep filter list in sync with HTTP Parent Updater
-            if event.name in (
-                Events.GARDEN_STARTED.name,
-                Events.GARDEN_STOPPED.name,
-                Events.GARDEN_SYNC.name,
-                Events.GARDEN_UPDATED.name,
-                Events.INSTANCE_INITIALIZED.name,
-                Events.INSTANCE_STARTED.name,
-                Events.INSTANCE_STOPPED.name,
-                Events.INSTANCE_UPDATED.name,
-                Events.REQUEST_CANCELED.name,
-                Events.REQUEST_COMPLETED.name,
-                Events.REQUEST_CREATED.name,
-                Events.REQUEST_DELETED.name,
-                Events.REQUEST_STARTED.name,
-                Events.REQUEST_TOPIC_PUBLISH.name,
-                Events.REQUEST_UPDATED.name,
-                Events.SYSTEM_CREATED.name,
-                Events.SYSTEM_REMOVED.name,
-                Events.SYSTEM_UPDATED.name,
-            ):
+            if event.name in accepted_forwarding_events:
                 for value in self.conn_dict.values():
                     conn = value["conn"]
                     if conn:

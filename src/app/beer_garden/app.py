@@ -28,6 +28,7 @@ import beer_garden.local_plugins.manager
 import beer_garden.queue.api as queue
 import beer_garden.router
 import beer_garden.scheduler
+from beer_garden.api import accepted_forwarding_events
 from beer_garden.events.parent_processors import HttpParentUpdater
 from beer_garden.events.processors import EventProcessor, FanoutProcessor, QueueListener
 from beer_garden.local_plugins.manager import PluginManager
@@ -463,26 +464,7 @@ class Application(StoppableThread):
                 HttpParentUpdater(
                     easy_client=easy_client,
                     reconnect_action=reconnect_action,
-                    filters=[
-                        Events.GARDEN_STARTED,
-                        Events.GARDEN_STOPPED,
-                        Events.GARDEN_SYNC,
-                        Events.GARDEN_UPDATED,
-                        Events.INSTANCE_INITIALIZED,
-                        Events.INSTANCE_STARTED,
-                        Events.INSTANCE_STOPPED,
-                        Events.INSTANCE_UPDATED,
-                        Events.REQUEST_CANCELED,
-                        Events.REQUEST_COMPLETED,
-                        Events.REQUEST_CREATED,
-                        Events.REQUEST_DELETED,
-                        Events.REQUEST_STARTED,
-                        Events.REQUEST_TOPIC_PUBLISH,
-                        Events.REQUEST_UPDATED,
-                        Events.SYSTEM_CREATED,
-                        Events.SYSTEM_REMOVED,
-                        Events.SYSTEM_UPDATED,
-                    ],
+                    filters=accepted_forwarding_events,
                 )
             )
 
