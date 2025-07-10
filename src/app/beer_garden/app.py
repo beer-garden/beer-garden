@@ -109,13 +109,14 @@ class Application(StoppableThread):
                 )
             )
 
-        self.helper_threads.append(
-            HelperThread(
-                beer_garden.replication.PrimaryReplicationMonitor,
-                10,
-                30,
+        if config.get("replication.enabled"):
+            self.helper_threads.append(
+                HelperThread(
+                    beer_garden.replication.PrimaryReplicationMonitor,
+                    10,
+                    30,
+                )
             )
-        )
 
         beer_garden.router.forward_processor = QueueListener(
             action=beer_garden.router.forward, name="forwarder"
@@ -293,6 +294,9 @@ class Application(StoppableThread):
         self.logger.debug("Starting helper threads...")
         for helper_thread in self.helper_threads:
             helper_thread.start()
+
+        if not config.get("replication.enabled"):
+            self.scheduler.start()
 
         if config.get("parent.stomp.enabled") or config.get("parent.http.enabled"):
             self.logger.debug("Publishing to Parent that we are online")

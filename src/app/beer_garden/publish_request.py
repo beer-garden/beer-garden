@@ -154,6 +154,17 @@ def determine_target_garden(request: Request, garden: Garden = None) -> str:
     return None
 
 
+def handle_event_filter(event):
+
+    if event.name == Events.REQUEST_TOPIC_PUBLISH.name and (
+        event.garden == config.get("garden.name")
+        or event.metadata.get("_propagate", False)
+    ):
+        return False
+
+    return True
+
+
 def handle_event(event: Event):
     if event.name == Events.REQUEST_TOPIC_PUBLISH.name and (
         event.garden == config.get("garden.name")

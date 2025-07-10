@@ -85,4 +85,4 @@ jobs:
         working-directory: ./src
 
       - name: Build and Publish Unstable Images
-        run: make publish-docker-unstable-branch-rpm PYTHON_VERSION=3.11
+        run: make publish-docker-unstable-branch-rpm PYTHON_VERSION=3.11 DIST=${{ matrix.dist }}

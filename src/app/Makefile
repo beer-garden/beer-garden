@@ -7,12 +7,12 @@ DOCKER_NAME     = bgio/beer-garden
 
 MAX_CYCLOMATIC_COMPLEXITY = 10
 
-VERSION        ?= 0.0.0
+VERSION        ?= $(shell python -c "import os; import sys; sys.path.insert(1, './beer_garden/'); from __version__ import __version__; print(__version__);")
 SHORT_VERSION   = $(shell echo $(VERSION) | head -c 1)
 
 PYTHON_VERSION ?= 3.12
 
-DATE           ?= $(shell date +%Y-%m-%d)
+DATE           ?= $(shell date +%Y-%m-%dT%H)
 
 .PHONY: clean clean-build clean-test clean-pyc help test
 
@@ -142,6 +142,8 @@ package-wheel: ## builds wheel package
 package: clean package-source package-wheel ## builds source and wheel package
 	ls -l dist
 
+parse_branch_name:
+	$(eval BRANCH_NAME := $(shell git rev-parse --abbrev-ref HEAD))
 
 # Docker
 docker-build:
@@ -192,11 +194,9 @@ publish-docker-unstable-latest: docker-tag-latest-unstable publish-docker-unstab
 	docker push $(DOCKER_NAME):unstable-python$(PYTHON_VERSION)
 	docker push $(DOCKER_NAME):unstable-python$(PYTHON_VERSION)-debian
 
-publish-branch-docker-unstable: package clean-python
-	docker build -t $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION)-${DATE} -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-alpine .
-	docker build -t $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION)-debian-${DATE} -f docker/Dockerfile.unstable-debian --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-slim .
-	docker push $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION)-${DATE}
-	docker push $(DOCKER_NAME):branch-unstable-python$(PYTHON_VERSION)-debian-${DATE}
+publish-branch-docker-unstable: parse_branch_name package clean-python
+	docker build -t $(DOCKER_NAME):$(BRANCH_NAME)-$(VERSION)-python$(PYTHON_VERSION) -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-alpine .
+	docker push $(DOCKER_NAME):$(BRANCH_NAME)-$(VERSION)-python$(PYTHON_VERSION)
 
 # Publishing
 publish-package-test: package ## upload a package to the testpypi
