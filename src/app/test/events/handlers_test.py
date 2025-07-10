@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 from collections import deque
-from copy import deepcopy
 
 import pytest
 from brewtils.models import Events, Request
-from mongoengine import connect
 
 import beer_garden.db.api
 from beer_garden import config
