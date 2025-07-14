@@ -163,7 +163,7 @@ def get_garden(garden_name: str, **kwargs) -> Garden:
             for filter, values in kwargs.items():
                 if (
                     values
-                    and isinstance(values, list)
+                    and isinstance(values, (list, set))
                     and filter not in get_system_kwargs
                 ):
                     query_values = []
