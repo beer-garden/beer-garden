@@ -901,7 +901,47 @@ def garden_sync(sync_target: str = None):
 
 
 def publish_local_garden_to_api():
-    local_garden = get_garden(config.get("garden.name"))
+    local_garden = get_garden(
+        config.get("garden.name"),
+        include_fields=[
+            "name",
+            "has_parent",
+            "parent",
+            "version",
+            "has_parent",
+            "shared_users",
+            "default_user",
+            "connection_type",
+            "metadata",
+            "systems__id",
+            "systems__name",
+            "systems__description",
+            "systems__version",
+            "systems__icon_name",
+            "systems__display_name",
+            "systems__metadata",
+            "systems__namespace",
+            "systems__local",
+            "systems__template",
+            "systems__groups",
+            "systems__prefix_topic",
+            "systems__requires",
+            "systems__requires_timeout",
+            "systems__commands",
+            "systems__instances__id",
+            "systems__instances__name",
+            "systems__instances__status",
+            "systems__instances__description",
+            "systems__instances__queue_type",
+            "systems__instances__queue_info",
+            "systems__instances__icon_name",
+            "systems__instances__metadata",
+            "receiving_connections__api",
+            "receiving_connections__status",
+            "publishing_connections__api",
+            "publishing_connections__status",
+        ],
+    )
     publish(
         Event(
             name=Events.GARDEN_UPDATED.name,
@@ -952,11 +992,14 @@ def handle_event(event):
         event.garden == config.get("garden.name")
         and event.name == Events.ENTRY_STARTED.name
     ):
-        children = db.query(
-            Garden, filter_params={"connection_type__ne": "LOCAL", "has_parent": False}
-        )
 
         if "entry_point_type" in event.metadata:
+            children = db.query(
+                Garden,
+                filter_params={"connection_type__ne": "LOCAL", "has_parent": False},
+                include_fields=["receiving_connections"],
+            )
+
             for child in children:
                 for receiving in child.receiving_connections:
                     # Due to HTTP being enabled by default, if STOMP is enabled
