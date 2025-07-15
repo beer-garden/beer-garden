@@ -160,19 +160,20 @@ def get_garden(garden_name: str, **kwargs) -> Garden:
             get_system_kwargs["filter_params"] = {"local": True}
 
             # Pass system filters to Systems query
-            for filter, values in kwargs.items():
-                if (
-                    values
-                    and isinstance(values, (list, set))
-                    and filter not in get_system_kwargs
-                ):
-                    query_values = []
-                    for value in values:
-                        if value.startswith("systems__"):
-                            query_values.append(value.replace("systems__", "", 1))
+            if kwargs:
+                for filter, values in kwargs.items():
+                    if (
+                        values
+                        and isinstance(values, (list, set))
+                        and filter not in get_system_kwargs
+                    ):
+                        query_values = []
+                        for value in values:
+                            if value.startswith("systems__"):
+                                query_values.append(value.replace("systems__", "", 1))
 
-                    if query_values:
-                        get_system_kwargs[filter] = query_values
+                        if query_values:
+                            get_system_kwargs[filter] = query_values
 
             garden.systems = get_systems(**get_system_kwargs)
 
@@ -248,15 +249,16 @@ def local_garden(all_systems: bool = False, **kwargs) -> Garden:
         get_system_kwargs["filter_params"]["local"] = True
 
     # Pass system filters to Systems query
-    for filter, values in kwargs.items():
-        if values and isinstance(values, list) and filter not in get_system_kwargs:
-            query_values = []
-            for value in values:
-                if value.startswith("systems__"):
-                    query_values.append(value.replace("systems__", "", 1))
+    if kwargs:
+        for filter, values in kwargs.items():
+            if values and isinstance(values, list) and filter not in get_system_kwargs:
+                query_values = []
+                for value in values:
+                    if value.startswith("systems__"):
+                        query_values.append(value.replace("systems__", "", 1))
 
-            if query_values:
-                get_system_kwargs[filter] = query_values
+                if query_values:
+                    get_system_kwargs[filter] = query_values
 
     garden.systems = get_systems(**get_system_kwargs)
     garden.version = beer_garden.__version__

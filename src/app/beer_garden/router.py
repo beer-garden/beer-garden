@@ -584,18 +584,6 @@ def setup_routing():
     # Don't add the local garden
     for garden in get_gardens(
         include_local=False,
-        include_fields=[
-            "name",
-            "systems__id",
-            "systems__name",
-            "systems__version",
-            "systems__namespace",
-            "systems__instances__id",
-            "receiving_connections__api",
-            "receiving_connections__status",
-            "publishing_connections__api",
-            "publishing_connections__status",
-        ],
     ):
         if garden.name != config.get("garden.name") and (
             (garden.has_parent and garden.parent == config.get("garden.name"))
