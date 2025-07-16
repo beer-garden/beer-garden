@@ -139,6 +139,11 @@ def get_garden(garden_name: str, **kwargs) -> Garden:
         for db_garden in gardens:
             if db_garden.name == config.get("garden.name"):
                 garden = db_garden
+            else:
+                if not db_garden.has_parent:
+                    db_garden.has_parent = True
+                    db_garden.parent = config.get("garden.name")
+
             db_garden.children = [
                 child_garden
                 for child_garden in gardens
@@ -301,7 +306,9 @@ def check_garden_receiving_heartbeat(
     api: str, garden_name: str = None, garden: Garden = None
 ):
     if garden is None:
-        garden = db.query_unique(Garden, name=garden_name)
+        garden = db.query_unique(
+            Garden, name=garden_name, include_fields=["receiving_connections"]
+        )
 
     # if garden doens't exist, create it
     if garden is None:
@@ -313,6 +320,17 @@ def check_garden_receiving_heartbeat(
         for connection in garden.receiving_connections:
             if connection.api == api:
                 connection_set = True
+                if connection.status not in [
+                    "DISABLED",
+                    "NOT_CONFIGURED",
+                    "MISSING_CONFIGURATION",
+                    "CONFIGURATION_ERROR",
+                ]:
+                    connection.status = "RECEIVING"
+                    connection.status_info.set_status_heartbeat(
+                        connection.status,
+                        max_history=config.get("garden.status_history"),
+                    )
     else:
         garden.receiving_connections = []
 
@@ -337,9 +355,10 @@ def check_garden_receiving_heartbeat(
 
 @publish_event(Events.GARDEN_UPDATED)
 def update_receiving_connections(garden: Garden):
-    updates = {}
 
-    if update_garden:
+    if garden:
+        updates = {}
+
         updates["receiving_connections"] = [
             db.from_brewtils(connection) for connection in garden.receiving_connections
         ]
