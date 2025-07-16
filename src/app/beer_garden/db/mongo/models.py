@@ -24,7 +24,6 @@ from brewtils.models import Instance as BrewtilsInstance
 from brewtils.models import Job as BrewtilsJob
 from brewtils.models import Parameter as BrewtilsParameter
 from brewtils.models import Request as BrewtilsRequest
-from brewtils.models import System as BrewtilsSystem
 from mongoengine import (
     CASCADE,
     DO_NOTHING,
@@ -48,6 +47,7 @@ from mongoengine import (
     StringField,
 )
 from mongoengine.errors import DoesNotExist
+from pymongo import DeleteOne, InsertOne, UpdateOne
 from pymongo.errors import DocumentTooLarge
 
 from beer_garden import config
@@ -886,72 +886,10 @@ class System(MongoModel, Document):
 
     def delete(self, **kwargs):
 
-        try:
-            if len(self.instances) > 0:
-                if self.local:
-                    garden_name = config.get("garden.name")
-                else:
-                    garden_name = Garden.objects.get(
-                        systems__in=[System.objects.get(id=self.id)]
-                    ).name
-                for command in self.commands:
-                    for instance in self.instances:
-                        if len(command.topics) > 0:
-                            for topic in command.topics:
-                                if Topic.objects(name=topic).count() > 0:
-                                    db_topic = Topic.objects.get(name=topic)
+        bulk_topic_ops = self.batch_delete_topics()
 
-                                    for subscriber in db_topic.subscribers:
-                                        if (
-                                            subscriber.garden == garden_name
-                                            and subscriber.system == self.name
-                                            and subscriber.namespace == self.namespace
-                                            and subscriber.version == self.version
-                                            and subscriber.instance == instance.name
-                                            and subscriber.command == command.name
-                                            and subscriber.subscriber_type
-                                            == "ANNOTATED"
-                                        ):
-                                            db_topic.remove_subscriber(subscriber)
-
-                                    if len(db_topic.subscribers) == 0:
-                                        db_topic.delete()
-
-                        if not self.prefix_topic:
-                            topic_generated = (
-                                f"{garden_name}.{self.namespace}."
-                                f"{self.name}.{self.version}."
-                                f"{instance.name}.{command.name}"
-                            )
-                        else:
-                            topic_generated = f"{self.prefix_topic}.{command.name}"
-
-                        if Topic.objects(name=topic_generated).count() > 0:
-                            db_topic = Topic.objects.get(name=topic_generated)
-
-                            for subscriber in db_topic.subscribers:
-                                if (
-                                    subscriber.garden == garden_name
-                                    and subscriber.system == self.name
-                                    and subscriber.namespace == self.namespace
-                                    and subscriber.version == self.version
-                                    and subscriber.instance == instance.name
-                                    and subscriber.command == command.name
-                                    and subscriber.subscriber_type == "GENERATED"
-                                ):
-                                    db_topic.remove_subscriber(subscriber)
-
-                            if len(db_topic.subscribers) == 0:
-                                db_topic.delete()
-        except DoesNotExist:
-            logger.error(
-                (
-                    "Error finding garden for system deletion "
-                    f"Namespace = {self.namespace} "
-                    f"System {self.name} "
-                    f"Version {self.version}"
-                )
-            )
+        if bulk_topic_ops:
+            Topic._get_collection().bulk_write(bulk_topic_ops, ordered=True)
 
         super().delete(**kwargs)
 
@@ -981,6 +919,117 @@ class System(MongoModel, Document):
             self.save_topics(config.get("garden.name"))
 
         return is_updated
+
+    def batch_delete_topics(self, garden_name=None):
+        bulk_ops = []
+        try:
+            if len(self.instances) > 0:
+                if garden_name:
+                    if self.local:
+                        garden_name = config.get("garden.name")
+                    else:
+                        garden_name = Garden.objects.get(
+                            systems__in=[System.objects.get(id=self.id)]
+                        ).name
+                for command in self.commands:
+                    for instance in self.instances:
+                        if len(command.topics) > 0:
+                            for topic in command.topics:
+                                if Topic.objects(name=topic).count() > 0:
+                                    db_topic = Topic.objects.get(name=topic)
+
+                                    remove_annotated_subscribers = []
+                                    for subscriber in db_topic.subscribers:
+                                        if (
+                                            subscriber.garden == garden_name
+                                            and subscriber.system == self.name
+                                            and subscriber.namespace == self.namespace
+                                            and subscriber.version == self.version
+                                            and subscriber.instance == instance.name
+                                            and subscriber.command == command.name
+                                            and subscriber.subscriber_type
+                                            == "ANNOTATED"
+                                        ):
+                                            db_topic.subscribers.remove(subscriber)
+                                            remove_annotated_subscribers.append(
+                                                UpdateOne(
+                                                    {"_id": db_topic.id},
+                                                    {
+                                                        "$pull": {
+                                                            "subscribers": (
+                                                                subscriber.to_mongo().to_dict()
+                                                            )
+                                                        }
+                                                    },
+                                                )
+                                            )
+
+                                    if len(db_topic.subscribers) == 0:
+                                        bulk_ops.append(DeleteOne({"_id": db_topic.id}))
+                                    elif remove_annotated_subscribers:
+                                        if bulk_ops:
+                                            bulk_ops.append(
+                                                remove_annotated_subscribers
+                                            )
+                                        else:
+                                            bulk_ops = remove_annotated_subscribers
+
+                        if not self.prefix_topic:
+                            topic_generated = (
+                                f"{garden_name}.{self.namespace}."
+                                f"{self.name}.{self.version}."
+                                f"{instance.name}.{command.name}"
+                            )
+                        else:
+                            topic_generated = f"{self.prefix_topic}.{command.name}"
+
+                        if Topic.objects(name=topic_generated).count() > 0:
+                            db_topic = Topic.objects.get(name=topic_generated)
+
+                            remove_generated_subscribers = []
+
+                            for subscriber in db_topic.subscribers:
+                                if (
+                                    subscriber.garden == garden_name
+                                    and subscriber.system == self.name
+                                    and subscriber.namespace == self.namespace
+                                    and subscriber.version == self.version
+                                    and subscriber.instance == instance.name
+                                    and subscriber.command == command.name
+                                    and subscriber.subscriber_type == "GENERATED"
+                                ):
+
+                                    db_topic.subscribers.remove(subscriber)
+                                    remove_generated_subscribers.append(
+                                        UpdateOne(
+                                            {"_id": db_topic.id},
+                                            {
+                                                "$pull": {
+                                                    "subscribers": (
+                                                        subscriber.to_mongo().to_dict()
+                                                    )
+                                                }
+                                            },
+                                        )
+                                    )
+
+                            if len(db_topic.subscribers) == 0:
+                                bulk_ops.append(DeleteOne({"_id": db_topic.id}))
+                            elif remove_generated_subscribers:
+                                if bulk_ops:
+                                    bulk_ops.append(remove_generated_subscribers)
+                                else:
+                                    bulk_ops = remove_generated_subscribers
+        except DoesNotExist:
+            logger.error(
+                (
+                    "Error finding garden for system deletion "
+                    f"Namespace = {self.namespace} "
+                    f"System {self.name} "
+                    f"Version {self.version}"
+                )
+            )
+        return bulk_ops
 
     def save_topics(self, garden_name: str):
 
@@ -1242,8 +1291,6 @@ class Garden(MongoModel, Document):
     def _update_associated_systems(self):
         """If the call to the `deep_save` method is on a child garden object, we ensure
         that when saving the systems, unknowns are deleted."""
-        # import moved here to avoid a circular import loop
-        from beer_garden.systems import remove_system
 
         def _get_system_triple(system: System) -> Tuple[str, str, str]:
             namespace = getattr(system, "namespace", self.name)
@@ -1280,6 +1327,9 @@ class Garden(MongoModel, Document):
             )
         ]
 
+        bulk_ops = []
+        bulk_topic_ops = []
+
         for system in self.systems:
             triple = _get_system_triple(system)
 
@@ -1297,18 +1347,24 @@ class Garden(MongoModel, Document):
                             f"; doesn't match ID={str(system.id)}"
                             " for known system with same attributes"
                         )
-                        remove_system(system_id=system_id_to_remove)
+                        bulk_ops.append(DeleteOne({"_id": system_id_to_remove}))
+                        bulk_ops.append(InsertOne(system.to_mongo().to_dict()))
+                    else:
+                        # Update existing System
+                        bulk_ops.append(
+                            UpdateOne(
+                                {"_id": system.id},
+                                {"$set": system.to_mongo().to_dict()},
+                            )
+                        )
 
-                try:
-                    system.save()
-                    system.save_topics(self.name)
-                except Exception as ex:
-                    logger.error(
-                        f"Error saving system {str(system)} in garden {self.name}: {ex}"
-                    )
+                else:
+                    # Create new System
+                    bulk_ops.append(InsertOne(system.to_mongo().to_dict()))
 
             else:
-                system.delete()
+                bulk_topic_ops.append(system.batch_delete_topics(garden_name=self.name))
+                bulk_ops.append(DeleteOne({"_id": system.id}))
 
         # if there's anything left over, delete those too; this could occur, e.g.,
         # if a child system deleted a particular version of a plugin and installed
@@ -1318,10 +1374,18 @@ class Garden(MongoModel, Document):
                 f"Removing System with ID={str(bad_system_id)} because it "
                 f"matches no known system in child garden ({self.name})"
             )
-            try:
-                remove_system(system_id=bad_system_id)
-            except Exception:
-                remove_system(system=BrewtilsSystem(id=str(bad_system_id)))
+            bulk_topic_ops.append(system.batch_delete_topics(garden_name=self.name))
+            bulk_ops.append(DeleteOne({"_id": bad_system_id}))
+
+        if bulk_ops:
+            System._get_collection().bulk_write(bulk_ops, ordered=True)
+
+        if bulk_topic_ops:
+            Topic._get_collection().bulk_write(bulk_topic_ops, ordered=True)
+
+        self.systems = System.objects(garden_name=self.name)
+        for system in self.systems:
+            system.save_topics(self.name)
 
 
 class SystemGardenMapping(MongoModel, Document):
