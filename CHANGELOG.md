@@ -11,6 +11,10 @@ TBD
 - Fixed bug in local garden loading all gardens to one hop away (#1905)
 - Fixed model filtering to include missing namespace properties (#1848)
 - Updated model filtering, if query filters are generated pre-query then skip filtering records when returning API models (#1848)
+- Fixed bug in UI handling garden with null children (#1917)
+- Updated Request Pre_Save function to check for Orphan by parent ID (#1913)
+- Updated request pre and post save methods to set expiration for TEMP and children (#1904)
+- Fixed bug where Garden Entry Points went unresponsive (#1908)
 
 ## 3.30.0rc1
 
