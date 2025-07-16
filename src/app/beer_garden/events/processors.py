@@ -400,14 +400,13 @@ class FanoutProcessor(DequeListener):
                 elasticapm.label(queue_depth=self.queue_depth())
 
             for processor in self._processors:
+                if hasattr(processor, "_name"):
+                    processor_name = processor._name
+                else:
+                    processor_name = "unknown"
                 with CollectMetrics(
                     "Queue_Event",
-                    (
-                        "QUEUE_POP::Event Manager::put_"
-                        f"{(processor._name
-                           if hasattr(processor, '_name')
-                           else 'unknown')}"
-                    ),
+                    f"QUEUE_POP::Event Manager::put_{processor_name}",
                     trace_parent_header=trace_parent_header,
                 ):
                     processor.put(event)
