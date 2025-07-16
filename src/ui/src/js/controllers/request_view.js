@@ -407,13 +407,13 @@ export default function requestViewController(
     }
   }
 
-  EventService.addCallback('request_view', (event) => {
+  EventService.addCallback('request_view-'+$stateParams.requestId, (event) => {
     $scope.$apply(() => {
       eventCallback(event);
     });
   });
   $scope.$on('$destroy', function() {
-    EventService.removeCallback('request_view');
+    EventService.removeCallback('request_view-'+$stateParams.requestId);
   });
 
   $scope.loadRequest = function() {

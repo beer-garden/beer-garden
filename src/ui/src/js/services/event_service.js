@@ -14,12 +14,18 @@ export default function eventService() {
     }
   };
 
-  return {
+  const service =  {
     addCallback: (name, callback) => {
       messageCallbacks[name] = callback;
+      service.reconnect();
     },
     removeCallback: (name) => {
       delete messageCallbacks[name];
+      service.reconnect();
+    },
+    reconnect: () => {
+      service.close();
+      service.connect();
     },
     connect: () => {
       // If socket is already open don't do anything
@@ -33,7 +39,7 @@ export default function eventService() {
           window.location.pathname +
           `api/v1/socket/events/`;
 
-        socketConnection = new WebSocket(eventUrl);
+        socketConnection = new WebSocket(eventUrl, Object.keys(messageCallbacks).join("-"));
         socketConnection.onmessage = onMessage;
       }
     },
@@ -56,4 +62,6 @@ export default function eventService() {
       }
     },
   };
+
+  return service;
 }

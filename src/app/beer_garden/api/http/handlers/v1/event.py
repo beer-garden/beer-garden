@@ -73,6 +73,11 @@ class EventSocket(WebSocketHandler):
                 f"Invalid message received. Error was: {exc}"
             )
 
+    def select_subprotocol(self, subprotocols):
+        if len(subprotocols) == 1:
+            return subprotocols[0]
+        return None
+
     def get_current_user(self) -> Optional["User"]:
         """Retrieve the appropriate User object for the websocket connection.
 
@@ -120,11 +125,80 @@ class EventSocket(WebSocketHandler):
             return
 
         if len(cls.listeners) > 0:
-            message = SchemaParser.serialize(event, to_string=True)
 
             for listener in list(cls.listeners):
                 try:
                     if listener.ws_connection is not None:
+                        drop_payload = False
+                        if listener.selected_subprotocol:
+                            valid = False
+                            # This events always get passed to websockets
+                            if event.name in [Events.GARDEN_UPDATED.name]:
+                                valid = True
+
+                            elif (
+                                "admin_garden" in listener.selected_subprotocol
+                                and event.name
+                                in [
+                                    Events.GARDEN_REMOVED.name,
+                                    Events.GARDEN_CREATED.name,
+                                    Events.GARDEN_CONFIGURED.name,
+                                    Events.GARDEN_UPDATED.name,
+                                    Events.GARDEN_SYNC.name,
+                                ]
+                            ):
+                                valid = True
+
+                            elif (
+                                "admin_system" in listener.selected_subprotocol
+                                and event.name.startswith("RUNNER")
+                                or event.name.startswith("INSTANCE")
+                            ):
+                                valid = True
+
+                            elif (
+                                "job_index" in listener.selected_subprotocol
+                                and event.name.startswith("JOB")
+                            ):
+                                valid = True
+
+                            elif (
+                                "job_view" in listener.selected_subprotocol
+                                and event.name.startswith("JOB")
+                            ):
+                                valid = True
+
+                            elif (
+                                "request_view" in listener.selected_subprotocol
+                                and event.name.startswith("REQUEST")
+                            ):
+                                if (
+                                    event.payload.id in listener.selected_subprotocol
+                                    or (
+                                        hasattr(event.payload, "parent")
+                                        and event.payload.parent.id
+                                        in listener.selected_subprotocol
+                                    )
+                                ):
+                                    valid = True
+
+                            elif (
+                                "request_index" in listener.selected_subprotocol
+                                and event.name.startswith("REQUEST")
+                            ):
+                                # Drop Payload because it isn't needed for this handler,
+                                # but do it after the validation
+                                valid = True
+                                drop_payload = True
+
+                            elif (
+                                "sync_users" in listener.selected_subprotocol
+                                and event.name == Events.USERS_IMPORTED.name
+                            ):
+                                valid = True
+
+                            if not valid:
+                                continue
                         if _auth_enabled():
                             user = listener.get_current_user()
 
@@ -141,6 +215,8 @@ class EventSocket(WebSocketHandler):
                             )
 
                             if filtered_event:
+                                if drop_payload:
+                                    del filtered_event.payload
                                 await listener.write_message(
                                     SchemaParser.serialize(
                                         filtered_event, to_string=True
@@ -155,8 +231,16 @@ class EventSocket(WebSocketHandler):
                                 )
                                 continue
                         else:
-
-                            await listener.write_message(message)
+                            if drop_payload:
+                                event_copy = copy.deepcopy(event)
+                                del event_copy.payload
+                                await listener.write_message(
+                                    SchemaParser.serialize(event_copy, to_string=True)
+                                )
+                            else:
+                                await listener.write_message(
+                                    SchemaParser.serialize(event, to_string=True)
+                                )
                 except BaseException:
                     continue
 
