@@ -402,7 +402,12 @@ class FanoutProcessor(DequeListener):
             for processor in self._processors:
                 with CollectMetrics(
                     "Queue_Event",
-                    f"QUEUE_POP::Event Manager::put_{processor._name if hasattr(processor, '_name') else 'unknown'}",
+                    (
+                        "QUEUE_POP::Event Manager::put_"
+                        f"{(processor._name
+                           if hasattr(processor, '_name')
+                           else 'unknown')}"
+                    ),
                     trace_parent_header=trace_parent_header,
                 ):
                     processor.put(event)
