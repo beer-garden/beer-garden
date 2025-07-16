@@ -500,8 +500,10 @@ export default function appRun(
           seenIndexes.push(upsertSystem(garden.systems[i], hideRunners));
         }
       }
-      for (let i = 0; i < garden.children.length; i++){
-        upsertGardenSystems(garden.children[i], seenIndexes, true);
+      if (garden.children !== undefined && garden.children !== null) {
+        for (let i = 0; i < garden.children.length; i++){
+          upsertGardenSystems(garden.children[i], seenIndexes, true);
+        }
       }
     }
   }

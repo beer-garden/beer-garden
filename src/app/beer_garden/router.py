@@ -335,12 +335,10 @@ def update_api_heartbeat(operation: Operation):
             else:
                 return
 
-        source_garden = getattr(gardens, operation.source_garden_name, None)
         if operation.model.payload.name == operation.source_garden_name:
             beer_garden.garden.check_garden_receiving_heartbeat(
                 operation.source_api,
                 garden_name=operation.source_garden_name,
-                garden=source_garden,
             )
 
 

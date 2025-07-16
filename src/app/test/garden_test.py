@@ -457,7 +457,10 @@ stomp:
         assert len(garden.receiving_connections) == 2
 
         for connection in garden.receiving_connections:
-            assert connection.status == "RECEIVING"
+            if connection.api == "STOMP":
+                assert connection.status == "DISABLED"
+            else:
+                assert connection.status == "RECEIVING"
 
         os.remove(config_file)
 
