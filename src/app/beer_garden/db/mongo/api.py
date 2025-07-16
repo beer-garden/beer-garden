@@ -260,10 +260,15 @@ def query_unique(
                 kwargs[k] = from_brewtils(v)
 
         include_fields = kwargs.pop("include_fields", None)
+        exclude_fields = kwargs.pop("exclude_fields", None)
 
         if include_fields:
             query_set = (
                 _model_map[model_class].objects.only(*include_fields).get(**kwargs)
+            )
+        elif exclude_fields:
+            query_set = (
+                _model_map[model_class].objects.exclude(*exclude_fields).get(**kwargs)
             )
         else:
             query_set = _model_map[model_class].objects.get(**kwargs)

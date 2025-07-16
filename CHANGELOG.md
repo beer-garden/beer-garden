@@ -9,6 +9,7 @@ TBD
 - Updated Instance Status icon for Downstream Instances to reflect error states (#1907)
 - Updated UI Lazy Loading (#1907)
 - Fixed bug in local garden loading all gardens to one hop away (#1905)
+- Expanded Garden query to support include and exclude field parameters (#1916)
 - Fixed bug in UI handling garden with null children (#1917)
 - Updated Request Pre_Save function to check for Orphan by parent ID (#1913)
 - Updated request pre and post save methods to set expiration for TEMP and children (#1904)
