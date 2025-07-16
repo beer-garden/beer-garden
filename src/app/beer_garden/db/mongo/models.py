@@ -533,7 +533,14 @@ class Request(MongoModel, Document):
 
         if self.has_parent:
             try:
-                self.parent
+                if (
+                    not self.parent
+                    or not self.parent
+                    or Request.objects(id=self.parent.id).count() == 0
+                ):
+                    # Request is an Orphan, removing parent
+                    self.has_parent = False
+                    self.parent = None
             except DoesNotExist:
                 # Request is an Orphan, removing parent
                 self.has_parent = False
@@ -541,11 +548,7 @@ class Request(MongoModel, Document):
 
         if not self.expiration_at and self.status in BrewtilsRequest.COMPLETED_STATUSES:
             # If parent or orphaned
-            if (
-                not self.has_parent
-                or Request.objects(id=self.parent.id).count() == 0
-                or self.command_type in ["TEMP", "ADMIN"]
-            ):
+            if not self.has_parent or self.command_type in ["TEMP", "ADMIN"]:
                 if self.command_type == "INFO":
                     ttl = config.get("db.prune.ttl.info", default=-1)
                     if ttl > -1:
@@ -570,7 +573,9 @@ class Request(MongoModel, Document):
                         self.expiration_at = expiration_at
 
         if not self.has_parent:
-            self.root_command_type = self.command_type
+            if not self.root_command_type:
+                self.root_command_type = self.command_type
+
         elif not self.root_command_type:
             # If this is a child request, we need to set the root_command_type
             # to the same as the parent request
