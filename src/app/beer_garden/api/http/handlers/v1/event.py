@@ -150,9 +150,9 @@ class EventSocket(WebSocketHandler):
                                 valid = True
 
                             elif (
-                                "admin_system" in listener.selected_subprotocol
-                                and event.name.startswith("RUNNER")
-                                or event.name.startswith("INSTANCE")
+                                "job_view" in listener.selected_subprotocol
+                                and event.name.startswith("JOB")
+                                and event.payload.id in listener.selected_subprotocol
                             ):
                                 valid = True
 
@@ -161,26 +161,26 @@ class EventSocket(WebSocketHandler):
                                 and event.name.startswith("JOB")
                             ):
                                 valid = True
-
-                            elif (
-                                "job_view" in listener.selected_subprotocol
-                                and event.name.startswith("JOB")
-                            ):
-                                valid = True
+                                if event.name not in [
+                                    Events.JOB_PAUSED.name,
+                                    Events.JOB_RESUMED.name,
+                                    Events.JOB_COUNTER_UPDATED.name,
+                                ]:
+                                    drop_payload = True
 
                             elif (
                                 "request_view" in listener.selected_subprotocol
                                 and event.name.startswith("REQUEST")
-                            ):
-                                if (
+                                and (
                                     event.payload.id in listener.selected_subprotocol
                                     or (
                                         hasattr(event.payload, "parent")
                                         and event.payload.parent.id
                                         in listener.selected_subprotocol
                                     )
-                                ):
-                                    valid = True
+                                )
+                            ):
+                                valid = True
 
                             elif (
                                 "request_index" in listener.selected_subprotocol
@@ -196,6 +196,14 @@ class EventSocket(WebSocketHandler):
                                 and event.name == Events.USERS_IMPORTED.name
                             ):
                                 valid = True
+
+                            elif (
+                                "admin_system" in listener.selected_subprotocol
+                                and event.name.startswith("RUNNER")
+                                or event.name.startswith("INSTANCE")
+                            ):
+                                valid = True
+                                drop_payload = True
 
                             if not valid:
                                 continue

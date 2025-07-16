@@ -103,10 +103,14 @@ export function jobViewController(
     }
   }
 
-  EventService.addCallback('job_view', (event) => {
+  EventService.addCallback('job_view-' + $stateParams.id, (event) => {
     $scope.$apply(() => {
       eventCallback(event);
     });
+  });
+
+  $scope.$on('$destroy', function() {
+    EventService.removeCallback('job_view-' + $stateParams.id);
   });
 
   $scope.$on('userChange', () => {
