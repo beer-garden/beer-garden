@@ -36,6 +36,23 @@ class GardenAPI(AuthorizationHandler):
             required: true
             description: Read specific Garden Information
             type: string
+          - name: include_fields
+            in: query
+            required: false
+            description: Specify fields to include in the response. All other
+              fields will be excluded.
+            type: array
+            collectionFormat: csv
+            items:
+              type: string
+          - name: exclude_fields
+            in: query
+            required: false
+            description: Specify fields to exclude from the response
+            type: array
+            collectionFormat: csv
+            items:
+              type: string
         responses:
           200:
             description: Garden with the given garden_name
@@ -48,8 +65,24 @@ class GardenAPI(AuthorizationHandler):
         tags:
           - Garden
         """
+
+        include_fields = self.get_query_argument("include_fields", None)
+        if include_fields:
+            include_fields = set(include_fields.split(","))
+
+        exclude_fields = self.get_query_argument("exclude_fields", None)
+        if exclude_fields:
+            exclude_fields = set(exclude_fields.split(","))
+
         response = await self.process_operation(
-            Operation(operation_type="GARDEN_READ", args=[garden_name])
+            Operation(
+                operation_type="GARDEN_READ",
+                args=[garden_name],
+                kwargs={
+                    "include_fields": include_fields,
+                    "exclude_fields": exclude_fields,
+                },
+            )
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -202,6 +235,24 @@ class GardenListAPI(AuthorizationHandler):
         """
         ---
         summary: Retrieve a list of Gardens
+        parameters:
+          - name: include_fields
+            in: query
+            required: false
+            description: Specify fields to include in the response. All other
+              fields will be excluded.
+            type: array
+            collectionFormat: csv
+            items:
+              type: string
+          - name: exclude_fields
+            in: query
+            required: false
+            description: Specify fields to exclude from the response
+            type: array
+            collectionFormat: csv
+            items:
+              type: string
         responses:
           200:
             description: A list of all gardens
@@ -217,8 +268,22 @@ class GardenListAPI(AuthorizationHandler):
           - Garden
         """
 
+        include_fields = self.get_query_argument("include_fields", None)
+        if include_fields:
+            include_fields = set(include_fields.split(","))
+
+        exclude_fields = self.get_query_argument("exclude_fields", None)
+        if exclude_fields:
+            exclude_fields = set(exclude_fields.split(","))
+
         permitted_gardens_list = await self.process_operation(
-            Operation(operation_type="GARDEN_READ_ALL")
+            Operation(
+                operation_type="GARDEN_READ_ALL",
+                kwargs={
+                    "include_fields": include_fields,
+                    "exclude_fields": exclude_fields,
+                },
+            )
         )
         self.write(_remove_heartbeat_history(permitted_gardens_list, many=True))
 
