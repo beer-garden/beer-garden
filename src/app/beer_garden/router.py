@@ -575,7 +575,14 @@ def setup_routing():
     for system in db.query(
         System,
         filter_params={"local": True},
-        include_fields=["id", "name", "garden_name", "version", "namespace", "instances__id"],
+        include_fields=[
+            "id",
+            "name",
+            "garden_name",
+            "version",
+            "namespace",
+            "instances__id",
+        ],
     ):
         add_routing_system(system)
 
@@ -995,23 +1002,22 @@ def _system_name_lookup(system: Union[str, System]) -> str:
             if not garden_name:
                 for garden in get_gardens(
                     include_fields=[
-                    "name",
-                    "systems__id",
-                    "systems__name",
-                    "systems__garden_name"
-                    "systems__version",
-                    "systems__namespace",
-                    "systems__instances__id",
-                ]
+                        "name",
+                        "systems__id",
+                        "systems__name",
+                        "systems__garden_name" "systems__version",
+                        "systems__namespace",
+                        "systems__instances__id",
+                    ]
                 ):
                     for system in garden.systems:
                         if systems[0].id == system.id:
                             garden_name = garden.name
-                            
+
                             break
                     if garden_name:
                         break
-                    
+
             if garden_name:
                 systems[0].garden_name = garden.name
                 with routing_lock:
