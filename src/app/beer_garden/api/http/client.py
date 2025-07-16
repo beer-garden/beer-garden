@@ -29,7 +29,21 @@ class SerializeHelper(object):
         **kwargs,
     ):
 
-        with CollectMetrics("API", f"API::{operation.operation_type}"):
+        trace_parent_header = None
+        if hasattr(operation, "metadata") and "_trace_parent" in operation.metadata:
+            trace_parent_header = operation.metadata["_trace_parent"]
+        elif (
+            hasattr(operation, "payload")
+            and hasattr(operation.payload, "metadata")
+            and "_trace_parent" in operation.payload.metadata
+        ):
+            trace_parent_header = operation.payload.metadata["_trace_parent"]
+
+        with CollectMetrics(
+            "API",
+            f"API::{operation.operation_type}",
+            trace_parent_header=trace_parent_header,
+        ):
 
             if config.get("metrics.elastic.enabled") and current_user:
                 elasticapm.set_user_context(
@@ -43,7 +57,9 @@ class SerializeHelper(object):
                         and "_trace_parent" not in operation.model.metadata
                     ):
                         operation.model.metadata["_trace_parent"] = (
-                            elasticapm.get_trace_parent_header()
+                            trace_parent_header
+                            if trace_parent_header
+                            else elasticapm.get_trace_parent_header()
                         )
 
             operation.source_api = "HTTP"

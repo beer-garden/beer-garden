@@ -2,6 +2,7 @@
 import datetime
 import json
 import logging
+import sys
 
 import pytz
 import six
@@ -23,6 +24,7 @@ from brewtils.models import Instance as BrewtilsInstance
 from brewtils.models import Job as BrewtilsJob
 from brewtils.models import Parameter as BrewtilsParameter
 from brewtils.models import Request as BrewtilsRequest
+from brewtils.models import System as BrewtilsSystem
 from mongoengine import (
     CASCADE,
     DO_NOTHING,
@@ -46,6 +48,7 @@ from mongoengine import (
     StringField,
 )
 from mongoengine.errors import DoesNotExist
+from pymongo.errors import DocumentTooLarge
 
 from beer_garden import config
 from beer_garden.db.mongo.querysets import FileFieldHandlingQuerySet
@@ -465,6 +468,7 @@ class Request(MongoModel, Document):
 
     def pre_serialize(self):
         """Pull any fields out of GridFS"""
+
         encoding = "utf-8"
 
         if self.output_gridfs:
@@ -477,15 +481,21 @@ class Request(MongoModel, Document):
             self.parameters = json.loads(self.parameters_gridfs.read().decode(encoding))
             self.parameters_gridfs = None
 
-        if self.parent:
+        if self.has_parent:
             try:
                 self.parent
             except DoesNotExist:
                 # Unable to find parent, remove object to allow brewtils serializing
                 self.parent = None
 
+    def _spill_parameters_to_gridfs(self):
+
+        self.parameters_gridfs.put(json.dumps(self.parameters), encoding="utf-8")
+        self.parameters = None
+
     def _pre_save(self):
         """Move request attributes to GridFS if too big"""
+
         self.updated_at = datetime.datetime.utcnow()
         encoding = "utf-8"
 
@@ -497,28 +507,12 @@ class Request(MongoModel, Document):
         # perform a potentially dangerous rework of the entire Request update flow,
         # we opt to just pull the Request as it exists in the database so that we can
         # check those gridfs field.
-        if self.id:
-            try:
-                old_request = Request.objects.get(id=self.id)
-                self.parameters_gridfs = old_request.parameters_gridfs
-                self.output_gridfs = old_request.output_gridfs
-            except self.DoesNotExist:
-                # Requests to child gardens have an id set from the parent, but no
-                # local Request yet
-                pass
-
-        if self.parameters and self.parameters_gridfs.grid_id is None:
-            params_json = json.dumps(self.parameters)
-            if len(params_json) > REQUEST_MAX_PARAM_SIZE:
-                logger.debug("Parameters too big, storing in GridFS")
-                self.parameters_gridfs.put(params_json, encoding=encoding)
 
         if self.parameters_gridfs.grid_id:
             self.parameters = None
 
         if self.output and self.output_gridfs.grid_id is None:
-            output_json = json.dumps(self.output)
-            if len(output_json) > REQUEST_MAX_PARAM_SIZE:
+            if sys.getsizeof(self.output) > REQUEST_MAX_PARAM_SIZE:
                 logger.debug("Output size too big, storing in gridfs")
                 self.output_gridfs.put(self.output, encoding=encoding)
 
@@ -581,7 +575,9 @@ class Request(MongoModel, Document):
             # If this is a child request, we need to set the root_command_type
             # to the same as the parent request
             try:
-                parent_request = Request.objects.get(id=self.parent.id)
+                parent_request = Request.objects.only("root_command_type").get(
+                    id=self.parent.id
+                )
                 self.root_command_type = parent_request.root_command_type
             except DoesNotExist:
                 # Parent request was deleted, so we need to set the root_command_type
@@ -590,27 +586,17 @@ class Request(MongoModel, Document):
 
     def _set_child_expiration(self):
 
-        for child_request in Request.objects(parent=self, expiration_at=None):
-            if not child_request.expiration_at:
-                child_request.expiration_at = self.expiration_at
-                child_request.save()
+        updates = Request.objects(parent=self, expiration_at=None).update(
+            set__expiration_at=self.expiration_at
+        )
+        if updates > 0:
+            for child_request in Request.objects(parent=self).only("expiration_at"):
                 child_request._set_child_expiration()
 
     def _post_save(self):
+
         if self.status == "CREATED":
-            if self.target_garden and self.target_garden == config.get("garden.name"):
-                self._update_raw_file_references()
-            else:
-                try:
-                    ref_system = System.objects.get(
-                        namespace=self.namespace,
-                        name=self.system,
-                        version=self.system_version,
-                    )
-                    if ref_system.local:
-                        self._update_raw_file_references()
-                except DoesNotExist:
-                    pass
+            self._update_raw_file_references()
 
         if (
             self.expiration_at or not self.has_parent
@@ -626,6 +612,21 @@ class Request(MongoModel, Document):
                 and param_value.get("type") == "bytes"
                 and param_value.get("id") is not None
             ):
+                if self.target_garden and self.target_garden != config.get(
+                    "garden.name"
+                ):
+                    return
+                elif (
+                    System.objects(
+                        namespace=self.namespace,
+                        name=self.system,
+                        version=self.system_version,
+                        local=True,
+                    ).count()
+                    == 0
+                ):
+                    return
+
                 try:
                     raw_file = RawFile.objects.get(id=param_value["id"])
                     raw_file.request = self
@@ -681,8 +682,15 @@ class Request(MongoModel, Document):
         super(Request, self).delete(*args, **kwargs)
 
     def save(self, *args, **kwargs):
+
         self._pre_save()
-        super(Request, self).save(*args, **kwargs)
+        try:
+            super(Request, self).save(*args, **kwargs)
+        except DocumentTooLarge:
+            # Output values are capped at 5MB, so the parameters must be too large
+            # spilling them to gridfs
+            self._spill_parameters_to_gridfs()
+            super(Request, self).save(*args, **kwargs)
         self._post_save()
 
         return self
@@ -739,24 +747,36 @@ class Request(MongoModel, Document):
     def clean_update(self):
         """Ensure that the update would not result in an illegal status transition"""
         # Get the original status
-        old_status = Request.objects.get(id=self.id).status
 
-        if self.status != old_status:
-            if old_status in BrewtilsRequest.COMPLETED_STATUSES:
-                raise RequestStatusTransitionError(
-                    "Status for a request cannot be updated once it has been "
-                    f"completed. Current: {old_status}, Requested: {self.status}"
-                )
+        try:
+            old_request = Request.objects.only(
+                "parameters_gridfs", "output_gridfs", "status"
+            ).get(id=self.id)
+            if old_request:
+                self.parameters_gridfs = old_request.parameters_gridfs
+                self.output_gridfs = old_request.output_gridfs
 
-            if (
-                old_status == "IN_PROGRESS"
-                and self.status not in BrewtilsRequest.COMPLETED_STATUSES
-            ):
-                raise RequestStatusTransitionError(
-                    "Request status can only transition from IN_PROGRESS to a "
-                    f"completed status. Requested: {self.status}, completed statuses "
-                    f"are {BrewtilsRequest.COMPLETED_STATUSES}."
-                )
+                if self.status != old_request.status:
+                    if old_request.status in BrewtilsRequest.COMPLETED_STATUSES:
+                        raise RequestStatusTransitionError(
+                            "Status for a request cannot be updated once it has been "
+                            f"completed. Current: {old_request.status}, "
+                            f"Requested: {self.status}"
+                        )
+
+                    if (
+                        old_request.status == "IN_PROGRESS"
+                        and self.status not in BrewtilsRequest.COMPLETED_STATUSES
+                    ):
+                        raise RequestStatusTransitionError(
+                            "Request status can only transition from IN_PROGRESS to a "
+                            f"completed status. Requested: {self.status}, completed statuses "
+                            f"are {BrewtilsRequest.COMPLETED_STATUSES}."
+                        )
+        except self.DoesNotExist:
+            # Requests to child gardens have an id set from the parent, but no
+            # local Request yet
+            pass
 
 
 class Subscriber(MongoModel, EmbeddedDocument):
@@ -1221,14 +1241,14 @@ class Garden(MongoModel, Document):
         from beer_garden.systems import remove_system
 
         def _get_system_triple(system: System) -> Tuple[str, str, str]:
-            namespace = getattr(system, "namespace", None)
+            namespace = getattr(system, "namespace", self.name)
             name = getattr(system, "name", None)
             version = getattr(system, "version", None)
             if not name or not version:
-                # dbref doesn't exist
-                return (str(system), None, None)
+                name = str(system)
+                version = ""
             return (
-                namespace or self.name,
+                namespace,
                 name,
                 version,
             )
@@ -1274,8 +1294,14 @@ class Garden(MongoModel, Document):
                         )
                         remove_system(system_id=system_id_to_remove)
 
-                system.save()
-                system.save_topics(self.name)
+                try:
+                    system.save()
+                    system.save_topics(self.name)
+                except Exception as ex:
+                    logger.error(
+                        f"Error saving system {str(system)} in garden {self.name}: {ex}"
+                    )
+
             else:
                 system.delete()
 
@@ -1287,7 +1313,10 @@ class Garden(MongoModel, Document):
                 f"Removing System with ID={str(bad_system_id)} because it "
                 f"matches no known system in child garden ({self.name})"
             )
-            remove_system(system_id=bad_system_id)
+            try:
+                remove_system(system_id=bad_system_id)
+            except Exception:
+                remove_system(system=BrewtilsSystem(id=str(bad_system_id)))
 
 
 class SystemGardenMapping(MongoModel, Document):

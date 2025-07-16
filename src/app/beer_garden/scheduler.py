@@ -386,6 +386,7 @@ class MixedScheduler(object):
         )
 
     def internal_scheduled_jobs(self):
+
         # Add scheduled jobs for Mongo Pruner
         prune_interval = config.get("db.prune.interval")
         if prune_interval > 0:
