@@ -1008,6 +1008,26 @@ def handle_event_filter(event):
         # Do not process 2 hop garden events
         return True
 
+    if event.name == Events.GARDEN_UPDATED.name and event.garden == config.get(
+        "garden.name"
+    ):
+        # Do not reprocess events
+        return True
+
+    if (
+        event.garden == config.get("garden.name")
+        and event.name
+        in [
+            Events.GARDEN_CONFIGURED.name,
+            Events.GARDEN_REMOVED.name,
+            Events.GARDEN_CREATED.name,
+        ]
+        and not config.get("parent.stomp.enabled")
+        and not config.get("parent.http.enabled")
+    ):
+        # No parent to publish to, so we can skip these events
+        return True
+
     return False
 
 
