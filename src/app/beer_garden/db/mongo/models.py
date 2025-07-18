@@ -924,7 +924,7 @@ class System(MongoModel, Document):
         bulk_ops = []
         try:
             if len(self.instances) > 0:
-                if garden_name:
+                if not garden_name:
                     if self.local:
                         garden_name = config.get("garden.name")
                     else:
@@ -1329,6 +1329,7 @@ class Garden(MongoModel, Document):
 
         bulk_ops = []
         bulk_topic_ops = []
+        valid_system_ids = []
 
         for system in self.systems:
             triple = _get_system_triple(system)
@@ -1362,8 +1363,11 @@ class Garden(MongoModel, Document):
                     # Create new System
                     bulk_ops.append(InsertOne(system.to_mongo().to_dict()))
 
+                valid_system_ids.append(system.id)
+
             else:
-                bulk_topic_ops.append(system.batch_delete_topics(garden_name=self.name))
+                for op in system.batch_delete_topics(garden_name=self.name):
+                    bulk_topic_ops.append(op)
                 bulk_ops.append(DeleteOne({"_id": system.id}))
 
         # if there's anything left over, delete those too; this could occur, e.g.,
@@ -1374,7 +1378,10 @@ class Garden(MongoModel, Document):
                 f"Removing System with ID={str(bad_system_id)} because it "
                 f"matches no known system in child garden ({self.name})"
             )
-            bulk_topic_ops.append(system.batch_delete_topics(garden_name=self.name))
+            for old_system in old_garden.systems:
+                if str(old_system.id) == bad_system_id:
+                    for op in old_system.batch_delete_topics(garden_name=self.name):
+                        bulk_topic_ops.append(op)
             bulk_ops.append(DeleteOne({"_id": bad_system_id}))
 
         if bulk_ops:
@@ -1383,7 +1390,7 @@ class Garden(MongoModel, Document):
         if bulk_topic_ops:
             Topic._get_collection().bulk_write(bulk_topic_ops, ordered=True)
 
-        self.systems = System.objects(garden_name=self.name)
+        self.systems = System.objects(id__in=valid_system_ids)
         for system in self.systems:
             system.save_topics(self.name)
 

@@ -7,7 +7,7 @@ from brewtils.models import Operation
 from brewtils.models import Request as BrewtilsRequest
 from brewtils.models import System as BrewtilsSystem
 from mock import Mock
-
+from bson.objectid import ObjectId
 import beer_garden.garden
 import beer_garden.router
 from beer_garden.db.mongo.models import Garden, Request, System
@@ -105,6 +105,7 @@ class TestRequestRouting:
                 publishing_connections=[Connection(api="HTTP", status="RECEIVING")],
                 systems=[
                     BrewtilsSystem(
+                        id=str(ObjectId()),
                         name="one_hop_system",
                         version="1.2.3",
                         namespace="one_hop_garden",
@@ -125,6 +126,7 @@ class TestRequestRouting:
                 has_parent=True,
                 systems=[
                     BrewtilsSystem(
+                        id=str(ObjectId()),
                         name="two_hop_system",
                         version="1.2.3",
                         namespace="two_hop_garden",

@@ -9,6 +9,7 @@ from brewtils.models import Event, Events
 from brewtils.models import Garden as BrewtilsGarden
 from brewtils.models import System as BrewtilsSystem
 from mongoengine import DoesNotExist, connect
+from bson.objectid import ObjectId
 
 import beer_garden
 from beer_garden import config
@@ -82,6 +83,7 @@ def remotegarden():
             connection_type="REMOTE",
             systems=[
                 BrewtilsSystem(
+                    id=str(ObjectId()),
                     name="remotesystem",
                     version="1.2.3",
                     namespace="remotegarden",
@@ -679,6 +681,7 @@ stomp:
             parent="one_hop_1",
             systems=[
                 BrewtilsSystem(
+                    id=str(ObjectId()),
                     name="remotesystem",
                     version="1.2.3",
                     namespace="two_hop_1",
@@ -692,6 +695,7 @@ stomp:
             connection_type="REMOTE",
             systems=[
                 BrewtilsSystem(
+                    id=str(ObjectId()),
                     name="remotesystem",
                     version="1.2.3",
                     namespace="one_hop_1",
@@ -708,6 +712,7 @@ stomp:
             parent="one_hop_2",
             systems=[
                 BrewtilsSystem(
+                    id=str(ObjectId()),
                     name="remotesystem",
                     version="1.2.3",
                     namespace="two_hop_2",
@@ -721,6 +726,7 @@ stomp:
             connection_type="REMOTE",
             systems=[
                 BrewtilsSystem(
+                    id=str(ObjectId()),
                     name="remotesystem",
                     version="1.2.3",
                     namespace="one_hop_2",
@@ -737,6 +743,7 @@ stomp:
             parent="one_hop_3",
             systems=[
                 BrewtilsSystem(
+                    id=str(ObjectId()),
                     name="remotesystem",
                     version="1.2.3",
                     namespace="two_hop_3",
@@ -750,6 +757,7 @@ stomp:
             connection_type="REMOTE",
             systems=[
                 BrewtilsSystem(
+                    id=str(ObjectId()),
                     name="remotesystem",
                     version="1.2.3",
                     namespace="one_hop_3",
