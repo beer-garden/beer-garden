@@ -195,7 +195,7 @@ publish-docker-unstable-latest: docker-tag-latest-unstable publish-docker-unstab
 	docker push $(DOCKER_NAME):unstable-python$(PYTHON_VERSION)-debian
 
 publish-branch-docker-unstable: parse_branch_name package clean-python
-	docker build -t $(DOCKER_NAME):$(BRANCH_NAME)-$(VERSION)-python$(PYTHON_VERSION) -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-slim .
+	docker build -t $(DOCKER_NAME):$(BRANCH_NAME)-$(VERSION)-python$(PYTHON_VERSION) -f docker/Dockerfile.unstable-debian --build-arg PYTHON_IMAGE=python:3.12-slim .
 	docker push $(DOCKER_NAME):$(BRANCH_NAME)-$(VERSION)-python$(PYTHON_VERSION)
 
 # Publishing
