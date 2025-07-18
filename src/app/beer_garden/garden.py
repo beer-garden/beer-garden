@@ -995,6 +995,22 @@ def garden_unresponsive_trigger():
                 update_garden(garden)
 
 
+def handle_event_filter(event):
+
+    if (
+        event.garden == config.get("garden.name")
+        and hasattr(event, "payload")
+        and hasattr(event.payload, "has_parent")
+        and event.payload.has_parent
+        and hasattr(event.payload, "parent")
+        and event.payload.parent != config.get("garden.name")
+    ):
+        # Do not process 2 hop garden events
+        return True
+
+    return False
+
+
 def handle_event(event):
     """Handle garden-related events
 
