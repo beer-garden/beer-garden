@@ -119,41 +119,44 @@ class DequeSetListener(DequeListener):
             and hasattr(event.payload, "id")
             and hasattr(event.payload, "is_newer")
         ):
-            with self._lock:
-                if event.payload.id in self._data:
-                    ref = self._data[event.payload.id]
-                    if isinstance(event.payload, type(ref.payload)):
-                        if event.payload.is_newer(ref.payload):
-                            # Collect Request Metadata
-                            # If this expands past Requests, we'll need to refactor
-                            if isinstance(event.payload, Request):
-                                for metadata_key in ref.payload.metadata:
-                                    if metadata_key not in event.payload.metadata:
-                                        event.payload.metadata[metadata_key] = (
-                                            ref.payload.metadata[metadata_key]
-                                        )
-                                if ref.payload.status is not event.payload.status:
-                                    status_key = (
-                                        f"{ref.payload.status}_"
-                                        f"{config.get('garden.name')}"
-                                    )
-                                    if status_key not in event.payload.metadata:
-                                        event.payload.metadata[status_key] = int(
-                                            datetime.datetime.utcnow().timestamp()
-                                            * 1000
-                                        )
 
-                            self._data[str(event.payload.id)] = self.clone(event)
-                            del ref
-                        else:
-                            del event
+            if str(event.payload.id) in self._data:
+                ref = self._data[event.payload.id]
+                if isinstance(event.payload, type(ref.payload)):
+                    if event.payload.is_newer(ref.payload):
+                        # Collect Request Metadata
+                        # If this expands past Requests, we'll need to refactor
+                        if isinstance(event.payload, Request):
+                            for metadata_key in ref.payload.metadata:
+                                if metadata_key not in event.payload.metadata:
+                                    event.payload.metadata[metadata_key] = (
+                                        ref.payload.metadata[metadata_key]
+                                    )
+                            if ref.payload.status is not event.payload.status:
+                                status_key = (
+                                    f"{ref.payload.status}_"
+                                    f"{config.get('garden.name')}"
+                                )
+                                if status_key not in event.payload.metadata:
+                                    event.payload.metadata[status_key] = int(
+                                        datetime.datetime.utcnow().timestamp() * 1000
+                                    )
+
+                        # This will cause some no-ops for pops, but avoids requirement for locks
+                        self._data[str(event.payload.id)] = self.clone(event)
+                        self._queue.append(str(event.payload.id))
+
+                        del ref
                     else:
-                        # Type Mis-match, just process the event
-                        super().put(event)
-                        return
+                        del event
                 else:
-                    self._data[str(event.payload.id)] = event
-                    self._queue.append(str(event.payload.id))
+                    # Type Mis-match, just process the event
+                    super().put(event)
+
+                return
+
+            self._data[str(event.payload.id)] = event
+            self._queue.append(str(event.payload.id))
 
         else:
             super().put(event)
@@ -174,15 +177,12 @@ class DequeSetListener(DequeListener):
                 try:
                     ref = self._queue.popleft()
                     if isinstance(ref, str):
-                        with self._lock:
-                            ref = self._data.pop(ref, None)
+                        ref = self._data.pop(ref, None)
                     if ref:
                         self.process(ref)
                 except IndexError:
                     if self._unique_data and self._data:
-                        ref = None
-                        with self._lock:
-                            ref = self._data.pop(next(iter(self._data)))
+                        ref = self._data.pop(next(iter(self._data)))
                         if ref:
                             self.process(ref)
                     else:
