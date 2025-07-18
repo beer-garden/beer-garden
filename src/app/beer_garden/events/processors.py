@@ -102,7 +102,6 @@ class DequeSetListener(DequeListener):
     def __init__(self, queue=None, unique_data=False, **kwargs):
         super().__init__(**kwargs)
 
-        self._lock = threading.RLock()
         self._data = {}
         self._unique_data = unique_data
 
