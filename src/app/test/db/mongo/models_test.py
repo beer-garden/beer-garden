@@ -6,9 +6,9 @@ from uuid import uuid4
 import pytest
 from brewtils.errors import ModelValidationError, RequestStatusTransitionError
 from brewtils.schemas import RequestTemplateSchema
+from bson.objectid import ObjectId
 from mock import Mock
 from mongoengine import NotUniqueError, connect
-from mongomock.gridfs import enable_gridfs_integration
 
 import beer_garden.db.api as db
 import beer_garden.db.mongo.models
@@ -29,6 +29,7 @@ from beer_garden.db.mongo.models import (
     User,
     UserToken,
 )
+from mongomock.gridfs import enable_gridfs_integration
 
 enable_gridfs_integration()
 
@@ -692,26 +693,6 @@ class TestGarden:
         system.delete()
 
     @pytest.fixture
-    def child_system_v2(self, child_system):
-        system: System = copy.deepcopy(child_system)
-        system.version = self.v2_str
-        system.save()
-
-        yield system
-
-        system.delete()
-
-    @pytest.fixture
-    def child_system_v1_diff_id(self, child_system):
-        system: System = copy.deepcopy(child_system)
-        system.version = self.v1_str
-        system.save()
-
-        yield system
-
-        system.delete()
-
-    @pytest.fixture
     def child_garden(self, child_system_v1):
         garden = Garden(
             name="child_garden", connection_type="http", systems=[child_system_v1]
@@ -733,10 +714,15 @@ class TestGarden:
         with pytest.raises(NotUniqueError):
             Garden(name=f"not{local_garden.name}", connection_type="LOCAL").save()
 
-    def test_child_garden_system_attrib_update(self, child_garden, child_system_v2):
+    def test_child_garden_system_attrib_update(self, child_garden, child_system):
         """If the systems of a child garden are updated such that their names,
         namespaces, or versions are changed, the original systems are removed and
         replaced with the new systems when the garden is saved."""
+
+        child_system_v2: System = copy.deepcopy(child_system)
+        child_system_v2.version = self.v2_str
+        child_system_v2.id = str(ObjectId())
+
         orig_system_ids = set(
             map(lambda x: str(getattr(x, "id")), child_garden.systems)  # noqa: B009
         )
@@ -774,10 +760,14 @@ class TestGarden:
         )
         assert new_system_ids.intersection(orig_system_ids) == set()
 
-    def test_child_garden_system_id_update(self, child_garden, child_system_v1_diff_id):
+    def test_child_garden_system_id_update(self, child_garden, child_system):
         """If the systems of a child garden are updated such that the names, namespaces
         and versions remain constant, but the IDs are different, the original systms
         are removed and replaced with the new systems when the garden is saved."""
+
+        child_system_v1_diff_id: System = copy.deepcopy(child_system)
+        child_system_v1_diff_id.id = str(ObjectId())
+
         orig_system_ids = set(
             map(lambda x: str(getattr(x, "id")), child_garden.systems)  # noqa: B009
         )

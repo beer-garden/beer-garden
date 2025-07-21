@@ -1327,7 +1327,8 @@ class Garden(MongoModel, Document):
             )
         ]
 
-        bulk_ops = []
+        bulk_modify_ops = []
+        bulk_delete_ops = []
         bulk_topic_ops = []
         valid_system_ids = []
 
@@ -1348,11 +1349,11 @@ class Garden(MongoModel, Document):
                             f"; doesn't match ID={str(system.id)}"
                             " for known system with same attributes"
                         )
-                        bulk_ops.append(DeleteOne({"_id": system_id_to_remove}))
-                        bulk_ops.append(InsertOne(system.to_mongo().to_dict()))
+                        bulk_delete_ops.append(DeleteOne({"_id": system_id_to_remove}))
+                        bulk_modify_ops.append(InsertOne(system.to_mongo().to_dict()))
                     else:
                         # Update existing System
-                        bulk_ops.append(
+                        bulk_modify_ops.append(
                             UpdateOne(
                                 {"_id": system.id},
                                 {"$set": system.to_mongo().to_dict()},
@@ -1361,14 +1362,14 @@ class Garden(MongoModel, Document):
 
                 else:
                     # Create new System
-                    bulk_ops.append(InsertOne(system.to_mongo().to_dict()))
+                    bulk_modify_ops.append(InsertOne(system.to_mongo().to_dict()))
 
                 valid_system_ids.append(system.id)
 
             else:
                 for op in system.batch_delete_topics(garden_name=self.name):
                     bulk_topic_ops.append(op)
-                bulk_ops.append(DeleteOne({"_id": system.id}))
+                bulk_delete_ops.append(DeleteOne({"_id": system.id}))
 
         # if there's anything left over, delete those too; this could occur, e.g.,
         # if a child system deleted a particular version of a plugin and installed
@@ -1382,10 +1383,12 @@ class Garden(MongoModel, Document):
                 if str(old_system.id) == bad_system_id:
                     for op in old_system.batch_delete_topics(garden_name=self.name):
                         bulk_topic_ops.append(op)
-            bulk_ops.append(DeleteOne({"_id": bad_system_id}))
+            bulk_delete_ops.append(DeleteOne({"_id": bad_system_id}))
 
-        if bulk_ops:
-            System._get_collection().bulk_write(bulk_ops, ordered=True)
+        if bulk_delete_ops:
+            System._get_collection().bulk_write(bulk_delete_ops, ordered=True)
+        if bulk_modify_ops:
+            System._get_collection().bulk_write(bulk_modify_ops, ordered=True)
 
         if bulk_topic_ops:
             Topic._get_collection().bulk_write(bulk_topic_ops, ordered=True)
