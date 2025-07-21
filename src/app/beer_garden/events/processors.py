@@ -3,7 +3,6 @@ import datetime
 import logging
 import os
 import sys
-import threading
 import time
 import uuid
 from collections import deque
