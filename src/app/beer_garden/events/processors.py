@@ -232,7 +232,7 @@ class QueueListener(BaseProcessor):
 class InternalWorkerProcessor(Process):
     """Worker Process for InternalQueueListener"""
 
-    def __init__(self, queue, return_queue, action, name):
+    def __init__(self, queue, action, name):
         super().__init__(name=name)
         self._queue = queue
         self._action = action
@@ -316,12 +316,11 @@ class InternalMultiprocessingQueueListener(BaseProcessor):
         self.allow_api_only = allow_api_only
 
         self._queue = Queue()
-        self._return_queue = Queue()
         self._workers = []
         self._num_workers = num_workers
         for _ in range(self._num_workers):
             process = InternalWorkerProcessor(
-                self._queue, self._return_queue, self._action, self._handler_tag
+                self._queue, self._action, self._handler_tag
             )
             self._workers.append(process)
             process.start()
