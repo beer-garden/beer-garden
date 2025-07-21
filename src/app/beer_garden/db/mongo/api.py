@@ -15,7 +15,7 @@ from mongoengine import (
     register_connection,
 )
 from mongoengine.queryset.visitor import Q, QCombination
-from pymongo import InsertOne, UpdateOne
+from pymongo import InsertOne, ReplaceOne, UpdateOne
 
 import beer_garden.db.mongo.models
 from beer_garden.db.mongo.models import MongoModel
@@ -410,11 +410,14 @@ def update_direct(obj: ModelItem) -> ModelItem:
     """
 
     mongo_obj: MongoModel = from_brewtils(obj)
+
+    mongo_obj.clean_update()
+
     if hasattr(mongo_obj, "_pre_save"):
         mongo_obj._pre_save()
 
     type(mongo_obj)._get_collection().bulk_write(
-        [UpdateOne({"_id": mongo_obj.id}, {"$set": mongo_obj.to_mongo().to_dict()})]
+        [ReplaceOne({"_id": mongo_obj.id}, mongo_obj.to_mongo().to_dict(), upsert=True)]
     )
 
     if hasattr(mongo_obj, "_post_save"):
