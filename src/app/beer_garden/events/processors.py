@@ -241,18 +241,6 @@ class InternalWorkerProcessor(Process):
         # Set up a database connection
         db.create_connection(db_config=config.get("db"))
 
-        # Setup return Event Handler
-        self._return_queue = return_queue
-
-        def return_handler(event):
-            """Handler for returning processed events"""
-            if self._return_queue:
-                self._return_queue.put(event)
-
-        beer_garden.events.manager = BaseProcessor(
-            action=return_handler, name="ReturnHandler"
-        )
-
     def run(self):
         while True:
             try:
