@@ -14,7 +14,7 @@ TBD
 - Updated Request Pre_Save function to check for Orphan by parent ID (#1913)
 - Updated request pre and post save methods to set expiration for TEMP and children (#1904)
 - Fixed bug where Garden Entry Points went unresponsive (#1908)
-- Removed duplicate Garden Sync Event sent to UI from downstream events
+- Removed duplicate Garden Sync Event sent to UI from downstream events (#1922)
 
 ## 3.30.0rc1
 
