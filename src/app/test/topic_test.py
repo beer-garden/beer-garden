@@ -5,8 +5,8 @@ from brewtils.models import Instance as BrewtilsInstance
 from brewtils.models import Subscriber as BrewtilsSubscriber
 from brewtils.models import System as BrewtilsSystem
 from brewtils.models import Topic as BrewtilsTopic
-from mongoengine import connect
 from bson.objectid import ObjectId
+from mongoengine import connect
 
 import beer_garden
 from beer_garden.db.mongo.models import Garden, System, Topic
@@ -114,8 +114,6 @@ def local_garden(local_garden_system):
     )
 
 
-
-
 @pytest.fixture
 def remote_garden():
     yield create_garden(
@@ -124,16 +122,16 @@ def remote_garden():
             connection_type="REMOTE",
             version=beer_garden.__version__,
             systems=[
-                    BrewtilsSystem(
-                        id=str(ObjectId()),
-                        name="remote_system",
-                        version="1.2.3",
-                        namespace="remote_garden",
-                        local=False,
-                        instances=[BrewtilsInstance(name="1")],
-                        commands=[BrewtilsCommand(name="command")],
-                    )
-                ],
+                BrewtilsSystem(
+                    id=str(ObjectId()),
+                    name="remote_system",
+                    version="1.2.3",
+                    namespace="remote_garden",
+                    local=False,
+                    instances=[BrewtilsInstance(name="1")],
+                    commands=[BrewtilsCommand(name="command")],
+                )
+            ],
         )
     )
 
