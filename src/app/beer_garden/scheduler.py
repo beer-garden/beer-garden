@@ -8,12 +8,11 @@ The schedule service is responsible for:
 import json
 import logging
 import threading
-import warnings
 from datetime import datetime
 from typing import Dict, List, Optional
 
 from apscheduler.events import EVENT_JOB_MAX_INSTANCES
-from apscheduler.executors.pool import ProcessPoolExecutor as APProcessPoolExecutor
+from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
 from brewtils.errors import ModelValidationError
@@ -155,19 +154,6 @@ def pass_through(class_objects=None):
     return wrapper
 
 
-def run_scheduled_job(target_function):
-
-    # Close forked connection
-    # This is necessary to avoid the forked process from using the same connection
-    # as the parent process. This is a known issue with MongoDB and multiprocessing.
-    db.close_connection()
-
-    # Establish Mongo Client
-    db.create_connection(db_config=beer_garden.config.get("db"))
-    target_function()
-    db.close_connection()
-
-
 @pass_through(class_objects=["_sync_scheduler"])
 class MixedScheduler(object):
     """
@@ -202,7 +188,7 @@ class MixedScheduler(object):
             self._sync_scheduler = BackgroundScheduler()
             job_stores = {"beer_garden": db.get_job_store()}
             scheduler_config = config.get("scheduler")
-            executors = {"default": APProcessPoolExecutor(scheduler_config.max_workers)}
+            executors = {"default": APThreadPoolExecutor(scheduler_config.max_workers)}
             job_defaults = scheduler_config.job_defaults.to_dict()
 
             ap_config = {
@@ -401,9 +387,6 @@ class MixedScheduler(object):
 
     def internal_scheduled_jobs(self):
 
-        # Hide Pymongo Fork Warning because we disconnect and reconnect
-        warnings.filterwarnings("ignore", message=".*is-pymongo-fork-safe")
-
         # Add scheduled jobs for Mongo Pruner
         prune_interval = config.get("db.prune.interval")
         if prune_interval > 0:
@@ -411,10 +394,7 @@ class MixedScheduler(object):
 
             if ttl_config.get("file") > 0:
                 self.add_schedule(
-                    run_scheduled_job,
-                    kwargs={
-                        "target_function": beer_garden.db.mongo.pruner.prune_files,
-                    },
+                    beer_garden.db.mongo.pruner.prune_files,
                     interval=prune_interval,
                     max_instances=1,
                     name="prune_files",
@@ -422,50 +402,35 @@ class MixedScheduler(object):
 
             if config.get("db.prune.in_progress_request_expiration") > 0:
                 self.add_schedule(
-                    run_scheduled_job,
-                    kwargs={
-                        "target_function": beer_garden.db.mongo.pruner.prune_outstanding,
-                    },
+                    beer_garden.db.mongo.pruner.prune_outstanding,
                     interval=prune_interval,
                     max_instances=1,
                     name="prune_outstanding",
                 )
 
         self.add_schedule(
-            run_scheduled_job,
-            kwargs={
-                "target_function": beer_garden.db.mongo.pruner.prune_requests,
-            },
+            beer_garden.db.mongo.pruner.prune_requests,
             interval=config.get("db.prune.interval", default=15),
             max_instances=1,
             name="prune_requests",
         )
 
         self.add_schedule(
-            run_scheduled_job,
-            kwargs={
-                "target_function": beer_garden.db.mongo.pruner.find_missing_expiration_requests,
-            },
+            beer_garden.db.mongo.pruner.find_missing_expiration_requests,
             interval=config.get("db.prune.interval", default=15),
             max_instances=1,
             name="find_missing_expiration_requests",
         )
 
         self.add_schedule(
-            run_scheduled_job,
-            kwargs={
-                "target_function": beer_garden.db.mongo.pruner.prune_orphan_files,
-            },
+            beer_garden.db.mongo.pruner.prune_orphan_files,
             interval=config.get("db.prune.interval", default=15),
             max_instances=1,
             name="prune_orphan_files",
         )
 
         self.add_schedule(
-            run_scheduled_job,
-            kwargs={
-                "target_function": beer_garden.db.mongo.pruner.prune_grid_fs,
-            },
+            beer_garden.db.mongo.pruner.prune_grid_fs,
             interval=config.get("db.prune.interval", default=15),
             max_instances=1,
             name="prune_grid_fs",
@@ -473,10 +438,7 @@ class MixedScheduler(object):
 
         # Add scheduled job for checking unresponsive gardens
         self.add_schedule(
-            run_scheduled_job,
-            kwargs={
-                "target_function": beer_garden.garden.garden_unresponsive_trigger,
-            },
+            beer_garden.garden.garden_unresponsive_trigger,
             interval=15,
             max_instances=1,
             name="garden_unresponsive_trigger",
@@ -484,10 +446,7 @@ class MixedScheduler(object):
 
         # Add scheduled job for validating Generated and Annotated topics
         self.add_schedule(
-            run_scheduled_job,
-            kwargs={
-                "target_function": beer_garden.topic.sync_garden_topics,
-            },
+            beer_garden.topic.sync_garden_topics,
             interval=15,
             max_instances=1,
             name="sync_garden_topics",
@@ -498,10 +457,7 @@ class MixedScheduler(object):
             config.get("parent.stomp.enabled") or config.get("parent.http.enabled")
         ):
             self.add_schedule(
-                run_scheduled_job,
-                kwargs={
-                    "target_function": beer_garden.garden.publish_garden,
-                },
+                beer_garden.garden.publish_garden,
                 interval=config.get("parent.sync_interval"),
                 max_instances=1,
                 name="publish_garden",

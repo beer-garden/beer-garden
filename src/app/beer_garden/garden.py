@@ -86,28 +86,38 @@ def filter_router_result(garden: Garden) -> Garden:
     return filtered_garden
 
 
-def get_children_garden(garden: Garden) -> Garden:
+def get_children_garden(garden: Garden, **kwargs) -> Garden:
+
+    if "include_fields" in kwargs and kwargs["include_fields"]:
+        for required_field in ["has_parent", "name", "parent"]:
+            if required_field not in kwargs["include_fields"]:
+                kwargs["include_fields"].append(required_field)
+
+    kwargs["filter_params"] = {}
+
     if garden.connection_type == "LOCAL":
-        garden.children = db.query(
-            Garden, filter_params={"connection_type__ne": "LOCAL", "has_parent": False}
-        )
+        kwargs["filter_params"]["connection_type__ne"] = "LOCAL"
+        kwargs["filter_params"]["has_parent"] = False
+
+        garden.children = db.query(Garden, **kwargs)
         if garden.children:
             for child in garden.children:
                 child.has_parent = True
                 child.parent = garden.name
     else:
-        garden.children = db.query(Garden, filter_params={"parent": garden.name})
+        kwargs["filter_params"]["parent"] = garden.name
+        garden.children = db.query(Garden, **kwargs)
 
     if garden.children:
         for child in garden.children:
-            get_children_garden(child)
+            get_children_garden(child, **kwargs)
     else:
         garden.children = []
 
     return garden
 
 
-def get_garden(garden_name: str) -> Garden:
+def get_garden(garden_name: str, **kwargs) -> Garden:
     """Retrieve an individual Garden
 
     Args:
@@ -117,12 +127,23 @@ def get_garden(garden_name: str) -> Garden:
         The Garden
 
     """
+
+    if "include_fields" in kwargs and kwargs["include_fields"]:
+        for required_field in ["has_parent", "name", "parent"]:
+            if required_field not in kwargs["include_fields"]:
+                kwargs["include_fields"].append(required_field)
+
     if garden_name == config.get("garden.name"):
-        gardens = db.query(Garden)
+        gardens = db.query(Garden, **kwargs)
         garden = None
         for db_garden in gardens:
             if db_garden.name == config.get("garden.name"):
                 garden = db_garden
+            else:
+                if not db_garden.has_parent:
+                    db_garden.has_parent = True
+                    db_garden.parent = config.get("garden.name")
+
             db_garden.children = [
                 child_garden
                 for child_garden in gardens
@@ -139,17 +160,36 @@ def get_garden(garden_name: str) -> Garden:
         if garden:
             filter_params = {}
             filter_params["local"] = True
+            get_system_kwargs = {}
 
-            garden.systems = get_systems(filter_params=filter_params)
+            get_system_kwargs["filter_params"] = {"local": True}
+
+            # Pass system filters to Systems query
+            if kwargs:
+                for filter, values in kwargs.items():
+                    if (
+                        values
+                        and isinstance(values, (list, set))
+                        and filter not in get_system_kwargs
+                    ):
+                        query_values = []
+                        for value in values:
+                            if value.startswith("systems__"):
+                                query_values.append(value.replace("systems__", "", 1))
+
+                        if query_values:
+                            get_system_kwargs[filter] = query_values
+
+            garden.systems = get_systems(**get_system_kwargs)
 
     else:
-        garden = db.query_unique(Garden, name=garden_name, raise_missing=True)
-        get_children_garden(garden)
+        garden = db.query_unique(Garden, name=garden_name, raise_missing=True, **kwargs)
+        get_children_garden(garden, **kwargs)
 
     return garden
 
 
-def get_gardens(include_local: bool = True) -> List[Garden]:
+def get_gardens(include_local: bool = True, **kwargs) -> List[Garden]:
     """Retrieve list of all Gardens
 
     Args:
@@ -161,20 +201,31 @@ def get_gardens(include_local: bool = True) -> List[Garden]:
     """
     # This is necessary for as long as local_garden is still needed. See the notes
     # there for more detail.
-    gardens = db.query(
-        Garden, filter_params={"connection_type__ne": "LOCAL", "has_parent": False}
-    )
+    gardens = []
+
+    if "include_fields" in kwargs and kwargs["include_fields"]:
+        for required_field in ["has_parent", "name", "parent"]:
+            if required_field not in kwargs["include_fields"]:
+                kwargs["include_fields"].append(required_field)
 
     if include_local:
-        gardens += [local_garden()]
+        gardens = [local_garden(**kwargs)]
+
+    if "filter_params" not in kwargs:
+        kwargs["filter_params"] = {}
+
+    kwargs["filter_params"]["connection_type__ne"] = "LOCAL"
+    kwargs["filter_params"]["has_parent"] = False
+
+    gardens += db.query(Garden, **kwargs)
 
     for garden in gardens:
-        get_children_garden(garden)
+        get_children_garden(garden, **kwargs)
 
     return gardens
 
 
-def local_garden(all_systems: bool = False) -> Garden:
+def local_garden(all_systems: bool = False, **kwargs) -> Garden:
     """Get the local garden definition
 
     Args:
@@ -189,13 +240,32 @@ def local_garden(all_systems: bool = False) -> Garden:
     # keep a LOCAL garden's embedded list of systems up to date currently, so we instead
     # build the list of systems at call time. Once the System
     # relationship has been refactored, the need for this function should go away.
-    garden: Garden = db.query_unique(Garden, connection_type="LOCAL")
 
-    filter_params = {}
+    if "include_fields" in kwargs and kwargs["include_fields"]:
+        if "name" not in kwargs["include_fields"]:
+            kwargs["include_fields"].append("name")
+
+    garden: Garden = db.query_unique(Garden, connection_type="LOCAL", **kwargs)
+
+    get_system_kwargs = {}
+
+    get_system_kwargs["filter_params"] = {}
     if not all_systems:
-        filter_params["local"] = True
+        get_system_kwargs["filter_params"]["local"] = True
 
-    garden.systems = get_systems(filter_params=filter_params)
+    # Pass system filters to Systems query
+    if kwargs:
+        for filter, values in kwargs.items():
+            if values and isinstance(values, list) and filter not in get_system_kwargs:
+                query_values = []
+                for value in values:
+                    if value.startswith("systems__"):
+                        query_values.append(value.replace("systems__", "", 1))
+
+                if query_values:
+                    get_system_kwargs[filter] = query_values
+
+    garden.systems = get_systems(**get_system_kwargs)
     garden.version = beer_garden.__version__
 
     return garden
@@ -236,7 +306,9 @@ def check_garden_receiving_heartbeat(
     api: str, garden_name: str = None, garden: Garden = None
 ):
     if garden is None:
-        garden = db.query_unique(Garden, name=garden_name)
+        garden = db.query_unique(
+            Garden, name=garden_name, include_fields=["receiving_connections"]
+        )
 
     # if garden doens't exist, create it
     if garden is None:
@@ -248,6 +320,17 @@ def check_garden_receiving_heartbeat(
         for connection in garden.receiving_connections:
             if connection.api == api:
                 connection_set = True
+                if connection.status not in [
+                    "DISABLED",
+                    "NOT_CONFIGURED",
+                    "MISSING_CONFIGURATION",
+                    "CONFIGURATION_ERROR",
+                ]:
+                    connection.status = "RECEIVING"
+                    connection.status_info.set_status_heartbeat(
+                        connection.status,
+                        max_history=config.get("garden.status_history"),
+                    )
     else:
         garden.receiving_connections = []
 
@@ -272,9 +355,10 @@ def check_garden_receiving_heartbeat(
 
 @publish_event(Events.GARDEN_UPDATED)
 def update_receiving_connections(garden: Garden):
-    updates = {}
 
-    if update_garden:
+    if garden:
+        updates = {}
+
         updates["receiving_connections"] = [
             db.from_brewtils(connection) for connection in garden.receiving_connections
         ]
@@ -836,7 +920,47 @@ def garden_sync(sync_target: str = None):
 
 
 def publish_local_garden_to_api():
-    local_garden = get_garden(config.get("garden.name"))
+    local_garden = get_garden(
+        config.get("garden.name"),
+        include_fields=[
+            "name",
+            "has_parent",
+            "parent",
+            "version",
+            "has_parent",
+            "shared_users",
+            "default_user",
+            "connection_type",
+            "metadata",
+            "systems__id",
+            "systems__name",
+            "systems__description",
+            "systems__version",
+            "systems__icon_name",
+            "systems__display_name",
+            "systems__metadata",
+            "systems__namespace",
+            "systems__local",
+            "systems__template",
+            "systems__groups",
+            "systems__prefix_topic",
+            "systems__requires",
+            "systems__requires_timeout",
+            "systems__commands",
+            "systems__instances__id",
+            "systems__instances__name",
+            "systems__instances__status",
+            "systems__instances__description",
+            "systems__instances__queue_type",
+            "systems__instances__queue_info",
+            "systems__instances__icon_name",
+            "systems__instances__metadata",
+            "receiving_connections__api",
+            "receiving_connections__status",
+            "publishing_connections__api",
+            "publishing_connections__status",
+        ],
+    )
     publish(
         Event(
             name=Events.GARDEN_UPDATED.name,
@@ -887,11 +1011,14 @@ def handle_event(event):
         event.garden == config.get("garden.name")
         and event.name == Events.ENTRY_STARTED.name
     ):
-        children = db.query(
-            Garden, filter_params={"connection_type__ne": "LOCAL", "has_parent": False}
-        )
 
         if "entry_point_type" in event.metadata:
+            children = db.query(
+                Garden,
+                filter_params={"connection_type__ne": "LOCAL", "has_parent": False},
+                include_fields=["receiving_connections"],
+            )
+
             for child in children:
                 for receiving in child.receiving_connections:
                     # Due to HTTP being enabled by default, if STOMP is enabled

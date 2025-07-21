@@ -12,7 +12,6 @@ from mongoengine import (
     NotUniqueError,
     QuerySet,
     connect,
-    disconnect,
     register_connection,
 )
 from mongoengine.queryset.visitor import Q, QCombination
@@ -173,18 +172,6 @@ def create_connection(connection_alias: str = "default", db_config: Box = None) 
     )
 
 
-def close_connection(connection_alias: str = "default") -> None:
-    """Close a database connection
-
-    Args:
-        connection_alias: Alias for this connection
-
-    Returns:
-        None
-    """
-    disconnect(alias=connection_alias)
-
-
 def initial_setup():
     """Do everything necessary to ensure the database is in a 'good' state"""
 
@@ -273,10 +260,15 @@ def query_unique(
                 kwargs[k] = from_brewtils(v)
 
         include_fields = kwargs.pop("include_fields", None)
+        exclude_fields = kwargs.pop("exclude_fields", None)
 
         if include_fields:
             query_set = (
                 _model_map[model_class].objects.only(*include_fields).get(**kwargs)
+            )
+        elif exclude_fields:
+            query_set = (
+                _model_map[model_class].objects.exclude(*exclude_fields).get(**kwargs)
             )
         else:
             query_set = _model_map[model_class].objects.get(**kwargs)
