@@ -368,13 +368,8 @@ class InternalMultiprocessingQueueListener(BaseProcessor):
     def run(self):
         """Process events as they are received"""
         while not self.stopped():
-            try:
-                event = self._return_queue.get(timeout=0.1)
-                beer_garden.events.publish(event)
-
-            except Empty:
-                pass
-
+            pass
+        
     def queue_depth(self):
         return self._queue.qsize()
 
