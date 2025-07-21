@@ -18,7 +18,6 @@ from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden.config as config
 import beer_garden.db.api as db
-import beer_garden.events
 from beer_garden.metrics import CollectMetrics, extract_custom_context
 from beer_garden.queue.rabbit import put_event
 
@@ -365,11 +364,6 @@ class InternalMultiprocessingQueueListener(BaseProcessor):
 
         return False
 
-    def run(self):
-        """Process events as they are received"""
-        while not self.stopped():
-            pass
-        
     def queue_depth(self):
         return self._queue.qsize()
 

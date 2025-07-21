@@ -36,22 +36,25 @@ def publish(event: Event) -> None:
     if manager is None:
         # Not connected to main process, so push back event
         # through API calls
-        cfg = config.get("entry.http")
-        auth = config.get("authentication_handlers")
-        if cfg.enabled:
-            easy_client = EasyClient(
-                bg_host=cfg.host,
-                bg_port=cfg.port,
-                bg_url_prefix=cfg.url_prefix,
-                access_token=cfg.access_token,
-                api_version=cfg.api_version,
-                password=auth.default_admin.password,
-                refresh_token=auth.default_admin.password,
-                username=auth.default_admin.username,
-                ssl_enabled=cfg.ssl.enabled,
-                ca_cert=cfg.ssl.ca_cert,
-                ca_verify=False,
-            )
+
+        if config.get("entry.http.enabled"):
+            configuration = {
+                "bg_host": config.get("entry.http.host"),
+                "bg_port": config.get("entry.http.port"),
+                "bg_url_prefix": config.get("entry.http.url_prefix"),
+                "ssl_enabled": config.get("entry.http.ssl.enabled"),
+                "ca_cert": config.get("entry.http.ssl.ca_cert"),
+                "ca_verify": False,
+            }
+            if config.get("auth.enabled") and config.get("auth.basic.enabled"):
+                configuration["username"] = config.get(
+                    "authentication_handlers.default_admin.username"
+                )
+                configuration["password"] = config.get(
+                    "authentication_handlers.default_admin.password"
+                )
+
+            easy_client = EasyClient(**configuration)
             easy_client.publish_event(event)
             return
 
