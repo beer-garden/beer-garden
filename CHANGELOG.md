@@ -14,6 +14,8 @@ TBD
 - Updated Request Pre_Save function to check for Orphan by parent ID (#1913)
 - Updated request pre and post save methods to set expiration for TEMP and children (#1904)
 - Fixed bug where Garden Entry Points went unresponsive (#1908)
+- Updated status history to use local config length for downstream gardens on save (#1923)
+- Updated `status_history` config defaults to 5 for garden and plugin (#1923)
 
 ## 3.30.0rc1
 
