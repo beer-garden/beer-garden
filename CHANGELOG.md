@@ -14,7 +14,7 @@ TBD
 - Updated Request Pre_Save function to check for Orphan by parent ID (#1913)
 - Updated request pre and post save methods to set expiration for TEMP and children (#1904)
 - Fixed bug where Garden Entry Points went unresponsive (#1908)
-- Fixed bug where Entry Point startup sent Garden sync to `default` instead of actual garden name (#)
+- Fixed bug where Entry Point startup sent Garden sync to `default` instead of actual garden name (#1926)
 
 ## 3.30.0rc1
 
