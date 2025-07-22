@@ -1016,7 +1016,7 @@ def handle_event(event):
             children = db.query(
                 Garden,
                 filter_params={"connection_type__ne": "LOCAL", "has_parent": False},
-                include_fields=["receiving_connections"],
+                include_fields=["receiving_connections", "name"],
             )
 
             for child in children:
