@@ -1031,11 +1031,6 @@ def handle_event(event):
                         garden_sync(child.name)
                         break
 
-    if "SYSTEM" in event.name or "INSTANCE" in event.name:
-        # If a System or Instance is updated, publish updated Local Garden Model for UI
-        publish_local_garden_to_api()
-        return
-
     if event.garden != config.get("garden.name"):
         if event.name in (
             Events.GARDEN_STARTED.name,
