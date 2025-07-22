@@ -9,45 +9,11 @@ gardenService.$inject = ['$rootScope', '$http'];
 export default function gardenService($rootScope, $http) {
   const GardenService = {};
 
-  const minimum_fields = [
-                "name",
-                "has_parent",
-                "parent",
-                "version",
-                "has_parent",
-                "shared_users",
-                "default_user",
-                "connection_type",
-                "metadata",
-                // Have to list all fields since instances is called out
-                "systems__id",
-                "systems__name",
-                "systems__description",
-                "systems__version",
-                "systems__icon_name",
-                "systems__display_name",
-                "systems__metadata",
-                "systems__namespace",
-                "systems__local",
-                "systems__template",
-                "systems__groups",
-                "systems__prefix_topic",
-                "systems__requires",
-                "systems__requires_timeout",
-                "systems__commands",
-                "systems__instances__id",
-                "systems__instances__name",
-                // Skipping instance status info
-                "systems__instances__status",
-                "systems__instances__description",
-                "systems__instances__queue_type",
-                "systems__instances__queue_info",
-                "systems__instances__icon_name",
-                "systems__instances__metadata",
-                "receiving_connections__api",
-                "receiving_connections__status",
-                "publishing_connections__api",
-                "publishing_connections__status",];
+  const exclude_fields = [
+    "systems__instances__status_info",
+    "receiving_connections__status_info",
+    "publishing_connections__status_info",
+  ]
 
   GardenService.getGardens = function() {
     return $http.get('api/v1/gardens/');
@@ -56,7 +22,7 @@ export default function gardenService($rootScope, $http) {
   GardenService.getGarden = function(name) {
     return $http.get('api/v1/gardens/' + encodeURIComponent(name), {
       params: {
-        include_fields: minimum_fields.join()
+        exclude_fields: exclude_fields.join()
       },
     });
   };
