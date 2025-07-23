@@ -208,7 +208,7 @@ def add_internal_events_handler(event_manager):
             "allow_api_only": False,
         },
     ]:
-        event_manager.register(InternalQueueListener(**event_config))
+        event_manager.register(InternalQueueListener(loop=event_manager._loop, **event_config))
 
     event_manager.register(
         BaseProcessor(

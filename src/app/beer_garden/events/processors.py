@@ -10,7 +10,8 @@ from collections import deque
 from copy import deepcopy
 from multiprocessing import Queue
 from queue import Empty
-
+import asyncio
+import inspect
 import elasticapm
 from brewtils.models import Event, Events, Request
 from brewtils.schema_parser import SchemaParser
@@ -99,27 +100,31 @@ class DequeListener(BaseProcessor):
 class DequeSetListener(DequeListener):
     """Listens for items on a multiprocessing.Queue"""
 
-    def __init__(self, queue=None, unique_data=False, **kwargs):
+    def __init__(self, queue=None, unique_data=False, loop=None, **kwargs):
         super().__init__(**kwargs)
 
-        self._lock = threading.RLock()
+        self._lock = asyncio.Lock()
         self._data = {}
         self._unique_data = unique_data
+        
+        if loop:
+            asyncio.set_event_loop(loop)
 
-    def put(self, event: Event):
+    async def put(self, event: Event):
         """Put a new item on the queue to be processed
 
         Args:
             item: New item
         """
-
-        if (
-            self._unique_data
-            and hasattr(event, "payload")
-            and hasattr(event.payload, "id")
-            and hasattr(event.payload, "is_newer")
-        ):
-            with self._lock:
+        await self._lock.acquire()
+        try:
+            if (
+                self._unique_data
+                and hasattr(event, "payload")
+                and hasattr(event.payload, "id")
+                and hasattr(event.payload, "is_newer")
+            ):
+                
                 if event.payload.id in self._data:
                     ref = self._data[event.payload.id]
                     if isinstance(event.payload, type(ref.payload)):
@@ -155,8 +160,11 @@ class DequeSetListener(DequeListener):
                     self._data[str(event.payload.id)] = event
                     self._queue.append(str(event.payload.id))
 
-        else:
-            super().put(event)
+            else:
+                super().put(event)
+
+        finally:
+            self._lock.release()
 
     def clear(self):
         """Empty the underlying queue without processing items"""
@@ -165,29 +173,36 @@ class DequeSetListener(DequeListener):
         if self._unique_data:
             self._data = {}
 
+    async def pop_async(self):
+        await self._lock.acquire()
+        try:
+            ref = self._queue.popleft()
+            if isinstance(ref, str):
+                ref = self._data.pop(ref, None)
+
+            self._lock.release()
+            if ref:
+                self.process(ref)
+
+        except IndexError:
+            if self._unique_data and self._data:
+                ref = None
+                ref = self._data.pop(next(iter(self._data)))
+                self._lock.release()
+                if ref:
+                    self.process(ref)
+            else:
+                self._lock.release()
+                await asyncio.sleep(0.1)
+
+            
     def run(self):
         """Process events as they are received"""
         if not self._unique_data:
             super().run()
         else:
             while not self.stopped():
-                try:
-                    ref = self._queue.popleft()
-                    if isinstance(ref, str):
-                        with self._lock:
-                            ref = self._data.pop(ref, None)
-                    if ref:
-                        self.process(ref)
-                except IndexError:
-                    if self._unique_data and self._data:
-                        ref = None
-                        with self._lock:
-                            ref = self._data.pop(next(iter(self._data)))
-                        if ref:
-                            self.process(ref)
-                    else:
-                        time.sleep(0.1)
-
+                asyncio.run(self.pop_async())
     def queue_depth(self):
         if not self._unique_data:
             return super().queue_depth()
@@ -307,7 +322,7 @@ class InternalQueueListener(DequeSetListener):
 
         return False
 
-    def put(self, event: Event):
+    async def put(self, event: Event):
         """Put a new item on the queue to be processed
 
         Args:
@@ -332,7 +347,7 @@ class InternalQueueListener(DequeSetListener):
             ):
                 if config.get("metrics.elastic.enabled"):
                     extract_custom_context(event)
-                super().put(self.clone(event))
+                await super().put(self.clone(event))
 
 
 class DelayListener(QueueListener):
@@ -366,11 +381,27 @@ class PipeListener(BaseProcessor):
 class FanoutProcessor(DequeListener):
     """Distributes items to multiple queues"""
 
-    def __init__(self, **kwargs):
+    def __init__(self, loop=None, **kwargs):
         super().__init__(**kwargs)
 
         self._processors = []
         self._managed_processors = []
+
+        if loop:
+            asyncio.set_event_loop(loop)
+
+        try:
+            # Try to get the current event loop
+            self._loop = asyncio.get_event_loop()
+        except RuntimeError:
+            # If no event loop is set for the current thread, create a new one
+            self._loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(self._loop)
+
+
+
+    
+        
 
     def run(self):
         for processor in self._managed_processors:
@@ -382,10 +413,25 @@ class FanoutProcessor(DequeListener):
             if not processor.stopped():
                 processor.stop()
 
-    def process(self, event):
+    async def process_async(self, event):
+        """Process an event asynchronously
+
+        Args:
+            event: Event to process
+        """
+        
 
         for processor in self._processors:
-            processor.put(event)
+            if inspect.iscoroutinefunction(processor.put):
+                await processor.put(event)
+            else:
+                processor.put(event)
+
+
+
+    def process(self, event):
+
+        asyncio.run(self.process_async(event))
 
     def register(self, processor, manage: bool = True):
         """Register and start a downstream Processor
