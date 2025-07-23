@@ -6,7 +6,6 @@ import pytest
 from mock import MagicMock, Mock
 from mongoengine.connection import get_db
 from mongomock.gridfs import enable_gridfs_integration
-from pymongo import UpdateOne
 
 import beer_garden
 from beer_garden import config
@@ -19,12 +18,17 @@ from beer_garden.db.mongo.models import (
     RequestTemplate,
 )
 from beer_garden.db.mongo.pruner import (
-    find_missing_expiration_requests,
+    determine_tasks,
+    prune_action_requests,
+    prune_admin_requests,
     prune_files,
     prune_grid_fs,
+    prune_info_requests,
+    prune_missed_temp_command,
+    prune_orphan_command_type,
     prune_orphan_files,
     prune_outstanding,
-    prune_requests,
+    prune_temp_requests,
 )
 
 enable_gridfs_integration()
@@ -47,10 +51,37 @@ def task(collection_mock):
 
 
 @pytest.fixture
-def clean_request():
+def action_request():
+    action_req = Request(
+        system="T",
+        system_version="T",
+        instance_name="T",
+        namespace="T",
+        command="T",
+        created_at=datetime.datetime(2024, 1, 17),
+        status="SUCCESS",
+        command_type="ACTION",
+    )
+    action_req.save()
+    yield action_request
+    action_req.delete()
 
-    yield
-    Request.drop_collection()
+
+@pytest.fixture
+def info_request():
+    info_req = Request(
+        system="T",
+        system_version="T",
+        instance_name="T",
+        namespace="T",
+        command="T",
+        created_at=datetime.datetime(2024, 1, 17),
+        status="SUCCESS",
+        command_type="INFO",
+    )
+    info_req.save()
+    yield info_request
+    info_req.delete()
 
 
 @pytest.fixture
@@ -159,116 +190,30 @@ def canceled():
 
 
 class TestMongoPruner(object):
-    def test_prune_info_requests(self, clean_request):
-
+    def test_prune_info_requests(self, info_request):
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"info": 1}}}}
-        info_req = Request(
-            system="T",
-            system_version="T",
-            instance_name="T",
-            namespace="T",
-            command="T",
-            created_at=datetime.datetime(2024, 1, 17),
-            status="SUCCESS",
-            command_type="INFO",
-        )
-        info_req.save()
-        assert len(Request.objects.filter(command_type="INFO")) == 1
-        prune_requests()
+        prune_info_requests()
         assert len(Request.objects.filter(command_type="INFO")) == 0
 
-    def test_prune_action_requests(self, clean_request):
+    def test_prune_action_requests(self, action_request):
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"action": 1}}}}
-        action_req = Request(
-            system="T",
-            system_version="T",
-            instance_name="T",
-            namespace="T",
-            command="T",
-            created_at=datetime.datetime(2024, 1, 17),
-            status="SUCCESS",
-            command_type="ACTION",
-        )
-        action_req.save()
-
-        action_req = Request(
-            system="T",
-            system_version="T",
-            instance_name="T",
-            namespace="T",
-            command="T",
-            created_at=datetime.datetime.now() + timedelta(days=1),
-            status="SUCCESS",
-            command_type="ACTION",
-        )
-        action_req.save()
-        assert len(Request.objects.filter(command_type="ACTION")) == 2
-        prune_requests()
-        assert len(Request.objects.filter(command_type="ACTION")) == 1
-
-    def test_prune_action_request_no_command_type(self, clean_request):
-        config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"action": 1}}}}
-
-        Request(
-            system="T",
-            system_version="T",
-            instance_name="T",
-            namespace="T",
-            command="T",
-            created_at=datetime.datetime.now(timezone.utc) - timedelta(days=1),
-            status="IN_PROGRESS",
-        ).save()
-
-        Request(
-            system="T1",
-            system_version="T",
-            instance_name="T",
-            namespace="T",
-            command="T",
-            created_at=datetime.datetime.now(timezone.utc) - timedelta(days=1),
-            status="CREATED",
-        ).save()
-
-        Request(
-            system="T1",
-            system_version="T",
-            instance_name="T",
-            namespace="T",
-            command="T",
-            created_at=datetime.datetime.now(timezone.utc) - timedelta(days=1),
-            status="CANCELED",
-        ).save()
-
-        assert len(Request.objects.filter(command_type=None)) == 3
-
-        assert len(Request.objects.filter(status="CREATED", expiration_at=None)) == 1
-        assert (
-            len(Request.objects.filter(status="IN_PROGRESS", expiration_at=None)) == 1
-        )
-        assert (
-            len(Request.objects.filter(status="CANCELED", expiration_at__ne=None)) == 1
-        )
-
+        prune_action_requests()
         assert len(Request.objects.filter(command_type="ACTION")) == 0
 
-        prune_requests()
-
+    def test_prune_action_request_no_command_type(self, in_progress, created, canceled):
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"action": 1}}}}
+        prune_action_requests()
+        assert len(Request.objects.filter(command_type="ACTION")) == 0
         assert len(Request.objects.filter(command_type=None)) == 2
-
-        assert len(Request.objects.filter(status="CREATED")) == 1
-        assert len(Request.objects.filter(status="IN_PROGRESS")) == 1
-        assert len(Request.objects.filter(status="CANCELED")) == 0
 
     def test_prune_admin_requests(self, admin_request):
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 15}}}
-        assert len(Request.objects.filter(command_type="ADMIN")) == 1
-        prune_requests()
+        prune_admin_requests()
         assert len(Request.objects.filter(command_type="ADMIN")) == 0
 
     def test_prune_temp_requests(self, temp_request):
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 15}}}
-        assert len(Request.objects.filter(command_type="TEMP")) == 1
-        prune_requests()
+        prune_temp_requests()
         assert len(Request.objects.filter(command_type="TEMP")) == 0
 
     def test_prune_files(self, file, raw_file):
@@ -434,14 +379,81 @@ class TestMongoPruner(object):
         assert new_in_progress.status == "IN_PROGRESS"
         assert new_created.status == "CREATED"
 
+    def test_none_cancel_threshold(self, task, in_progress, created):
+        config._CONFIG = {"db": {"prune": {"in_progress_request_expiration": -1}}}
+        prune_outstanding()
+        new_in_progress = Request.objects.get(id=in_progress.id)
+        new_created = Request.objects.get(id=created.id)
+        assert new_in_progress.status == "IN_PROGRESS"
+        assert new_created.status == "CREATED"
 
-class TestExpirationUpdater(object):
 
-    def test_expiration_updater(self, clean_request):
-        config._CONFIG = {
-            "db": {"prune": {"batch_size": -1, "interval": 1, "ttl": {"action": 1}}}
-        }
+class TestDetermineTasks(object):
+    def test_determine_tasks(self):
+        info_tasks = determine_tasks("info", 5)
+        action_tasks = determine_tasks("action", 10)
+        admin_tasks = determine_tasks("admin", 20)
+        file_tasks = determine_tasks("file", 15)
 
+        assert len(info_tasks) == 1
+        assert len(action_tasks) == 1
+        assert len(admin_tasks) == 1
+        assert len(file_tasks) == 2
+
+        info_task = info_tasks[0]
+        action_task = action_tasks[0]
+        admin_task = admin_tasks[0]
+        file_task = file_tasks[0]
+        raw_file_task = file_tasks[1]
+
+        assert info_task["collection"] == Request
+        assert action_task["collection"] == Request
+        assert file_task["collection"] == File
+        assert raw_file_task["collection"] == RawFile
+        assert admin_task["collection"] == Request
+
+        assert info_task["field"] == "created_at"
+        assert action_task["field"] == "created_at"
+        assert file_task["field"] == "updated_at"
+        assert raw_file_task["field"] == "created_at"
+        assert admin_task["field"] == "created_at"
+
+        assert info_task["delete_after"] == timedelta(minutes=5)
+        assert action_task["delete_after"] == timedelta(minutes=10)
+        assert file_task["delete_after"] == timedelta(minutes=15)
+        assert raw_file_task["delete_after"] == timedelta(minutes=15)
+        assert admin_task["delete_after"] == timedelta(minutes=20)
+
+    def test_setup_pruning_tasks_empty(self):
+        prune_tasks = determine_tasks("info", -1)
+        assert prune_tasks == []
+        prune_tasks = determine_tasks("action", 0)
+        assert prune_tasks == []
+
+    def test_setup_pruning_tasks_one(self):
+        prune_tasks = determine_tasks("info", -1)
+        assert len(prune_tasks) == 0
+        prune_tasks = determine_tasks("action", 1)
+        assert len(prune_tasks) == 1
+
+    def test_setup_pruning_tasks_mixed(self):
+        prune_tasks = determine_tasks("action", -1)
+        assert len(prune_tasks) == 0
+        prune_tasks = determine_tasks("info", 5)
+        assert len(prune_tasks) == 1
+
+        info_task = prune_tasks[0]
+
+        assert info_task["collection"] == Request
+
+        assert info_task["field"] == "created_at"
+
+        assert info_task["delete_after"] == timedelta(minutes=5)
+
+
+class TestOrphanPruner(object):
+    @pytest.fixture
+    def orphan_child_request(self):
         parent = Request(
             system="T",
             system_version="T",
@@ -469,36 +481,20 @@ class TestExpirationUpdater(object):
 
         parent.delete()
         child.save()
-        Request._get_collection().bulk_write(
-            [
-                UpdateOne(
-                    {"_id": child.id},
-                    {"$set": {"expiration_at": None}},
-                )
-            ],
-            ordered=False,
-        )
 
-        assert len(Request.objects.filter(command_type="ACTION")) == 1
-        assert len(Request.objects.filter(expiration_at=None)) == 1
+        yield child
 
-        find_missing_expiration_requests()
-        prune_requests()
+        child.delete()
 
-        assert len(Request.objects.filter(command_type="ACTION")) == 0
-
-    def test_skip_expiration_updater(self, clean_request):
-        config._CONFIG = {
-            "db": {"prune": {"batch_size": -1, "interval": 1, "ttl": {"action": 1}}}
-        }
-
+    @pytest.fixture
+    def valid_child_request(self):
         parent = Request(
             system="T",
             system_version="T",
             instance_name="T",
             namespace="T",
             command="T",
-            created_at=datetime.datetime.now(timezone.utc) + timedelta(minutes=60),
+            created_at=datetime.datetime(2024, 1, 17),
             status="SUCCESS",
             command_type="ACTION",
         )
@@ -510,7 +506,7 @@ class TestExpirationUpdater(object):
             instance_name="T",
             namespace="T",
             command="T",
-            created_at=datetime.datetime.now(timezone.utc) + timedelta(minutes=60),
+            created_at=datetime.datetime(2024, 1, 17),
             status="SUCCESS",
             command_type="ACTION",
             has_parent=True,
@@ -518,20 +514,112 @@ class TestExpirationUpdater(object):
         )
 
         child.save()
-        # Resave parent so the child gets set
+
+        yield child
+        parent.delete()
+        child.delete()
+
+    def test_orphan_pruner(self, orphan_child_request):
+        config._CONFIG = {
+            "db": {"prune": {"batch_size": -1, "interval": 1, "ttl": {"action": 1}}}
+        }
+        assert len(Request.objects.filter(command_type="ACTION")) == 1
+
+        prune_orphan_command_type("ACTION")
+        assert len(Request.objects.filter(command_type="ACTION")) == 0
+
+    def test_skip_orphan_pruner(self, valid_child_request):
+        config._CONFIG = {
+            "db": {"prune": {"batch_size": -1, "interval": 1, "ttl": {"action": 1}}}
+        }
+        assert len(Request.objects.filter(command_type="ACTION")) == 2
+
+        prune_orphan_command_type("ACTION")
+        assert len(Request.objects.filter(command_type="ACTION")) == 2
+
+
+class TestMissedTempPruner(object):
+    @pytest.fixture
+    def missed_child_request(self):
+        parent = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="T",
+            created_at=datetime.datetime(2024, 1, 17),
+            status="SUCCESS",
+            command_type="ACTION",
+        )
         parent.save()
 
-        assert (
-            len(Request.objects.filter(command_type="ACTION", expiration_at__ne=None))
-            == 2
+        child = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="T",
+            created_at=datetime.datetime(2024, 1, 17),
+            status="SUCCESS",
+            command_type="TEMP",
+            has_parent=True,
+            parent=parent,
         )
 
-        find_missing_expiration_requests()
-        prune_requests()
-        assert (
-            len(Request.objects.filter(command_type="ACTION", expiration_at__ne=None))
-            == 2
+        # parent.delete()
+        child.save()
+
+        yield child
+        parent.delete()
+        child.delete()
+
+    @pytest.fixture
+    def valid_child_request(self):
+        parent = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="T",
+            created_at=datetime.datetime(2024, 1, 17),
+            status="IN_PROGRESS",
+            command_type="ACTION",
         )
+        parent.save()
+
+        child = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="T",
+            created_at=datetime.datetime(2024, 1, 17),
+            status="SUCCESS",
+            command_type="TEMP",
+            has_parent=True,
+            parent=parent,
+        )
+
+        # parent.delete()
+        child.save()
+
+        yield child
+        parent.delete()
+        child.delete()
+
+    def test_missed_temp_pruner(self, missed_child_request):
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 1}}}
+        assert len(Request.objects.filter(command_type="TEMP")) == 1
+
+        prune_missed_temp_command()
+        assert len(Request.objects.filter(command_type="TEMP")) == 0
+
+    def test_valid_temp_pruner(self, valid_child_request):
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 1}}}
+        assert len(Request.objects.filter(command_type="TEMP")) == 1
+
+        prune_missed_temp_command()
+        assert len(Request.objects.filter(command_type="TEMP")) == 1
 
 
 class TestOrphanFile(object):

@@ -353,7 +353,6 @@ class Request(MongoModel, Document):
     command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES)
     created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
     updated_at = DateTimeField(default=None, required=True)
-    expiration_at = DateTimeField(default=None, required=False)
     status_updated_at = DateTimeField()
     error_class = StringField(required=False)
     has_parent = BooleanField(required=False)
@@ -363,7 +362,6 @@ class Request(MongoModel, Document):
     is_event = BooleanField(required=False)
     source_garden = StringField(required=False)
     target_garden = StringField(required=False)
-    root_command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES)
 
     meta = {
         "queryset_class": FileFieldHandlingQuerySet,
@@ -531,78 +529,10 @@ class Request(MongoModel, Document):
                 datetime.datetime.utcnow().timestamp() * 1000
             )
 
-        if self.has_parent:
-            try:
-                if (
-                    not self.parent
-                    or not self.parent
-                    or Request.objects(id=self.parent.id).count() == 0
-                ):
-                    # Request is an Orphan, removing parent
-                    self.has_parent = False
-                    self.parent = None
-            except DoesNotExist:
-                # Request is an Orphan, removing parent
-                self.has_parent = False
-                self.parent = None
-
-        if not self.expiration_at and self.status in BrewtilsRequest.COMPLETED_STATUSES:
-            # If parent or orphaned
-            if not self.has_parent or Request.objects(id=self.parent.id).count() == 0:
-                if self.command_type == "INFO":
-                    ttl = config.get("db.prune.ttl.info", default=-1)
-                    if ttl > -1:
-                        self.expiration_at = self.created_at + datetime.timedelta(
-                            minutes=ttl
-                        )
-                elif self.command_type == "ACTION":
-                    ttl = config.get("db.prune.ttl.action", default=-1)
-                    if ttl > -1:
-                        self.expiration_at = self.created_at + datetime.timedelta(
-                            minutes=ttl
-                        )
-                else:
-                    # TEMP or ADMIN
-                    self.expiration_at = datetime.datetime.utcnow()
-
-        if not self.has_parent:
-            if not self.root_command_type:
-                self.root_command_type = self.command_type
-
-        elif not self.root_command_type:
-            # If this is a child request, we need to set the root_command_type
-            # to the same as the parent request
-            try:
-                parent_request = Request.objects.only("root_command_type").get(
-                    id=self.parent.id
-                )
-                self.root_command_type = parent_request.root_command_type
-            except DoesNotExist:
-                # Parent request was deleted, so we need to set the root_command_type
-                # to the same as this request
-                self.root_command_type = self.command_type
-
-    def _set_child_expiration(self):
-
-        updates = Request.objects(parent=self, expiration_at=None).update(
-            set__expiration_at=self.expiration_at
-        )
-        if updates > 0:
-            for child_request in Request.objects(parent=self).only("expiration_at"):
-                child_request._set_child_expiration()
-
     def _post_save(self):
 
         if self.status == "CREATED":
             self._update_raw_file_references()
-
-        if (
-            not self.has_parent
-            and self.expiration_at
-            and self.status in BrewtilsRequest.COMPLETED_STATUSES
-        ):
-
-            self._set_child_expiration()
 
     def _update_raw_file_references(self):
         parameters = self.parameters or {}
@@ -1491,12 +1421,3 @@ class UserToken(MongoModel, Document):
             {"fields": ["expires_at"], "expireAfterSeconds": 0},
         ]
     }
-
-
-class Configuration(Document):
-    # This is a snapshot of the configuration file last loaded
-    # and is reset after migrations are completed. It should not
-    # be used for optional configuration.
-    action_ttl = IntField(default=-1)
-    info_ttl = IntField(default=15)
-    version = StringField(default="0.0.0")

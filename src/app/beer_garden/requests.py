@@ -1108,8 +1108,6 @@ def handle_event_create(event):
         # downstream, so we can skip the request
         return None
     try:
-        event.payload.expiration_at = None
-
         # User mappings back to local usernames
         if event.payload.requester and config.get("auth.enabled"):
             foundUser = False
