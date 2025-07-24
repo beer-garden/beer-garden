@@ -14,8 +14,10 @@ TBD
 - Updated Request Pre_Save function to check for Orphan by parent ID (#1913)
 - Updated request pre and post save methods to set expiration for TEMP and children (#1904)
 - Fixed bug where Garden Entry Points went unresponsive (#1908)
+- Removed duplicate Garden Sync Event sent to UI from downstream events (#1922)
 - Update UI Events to utilize Instance and System events as partial Garden updates (#1925)
 - Bypass Mongoengine for bulk create/update to improve Request throughput in Mongo (#1920)
+- Removed locking from internal queue management for event handlers (#1921)
 
 ## 3.30.0rc1
 

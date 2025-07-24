@@ -995,6 +995,43 @@ def garden_unresponsive_trigger():
                 update_garden(garden)
 
 
+def handle_event_filter(event):
+
+    if event.payload_type == Garden.__name__:
+        if (
+            event.garden == config.get("garden.name")
+            and hasattr(event, "payload")
+            and hasattr(event.payload, "has_parent")
+            and event.payload.has_parent
+            and hasattr(event.payload, "parent")
+            and event.payload.parent != config.get("garden.name")
+        ):
+            # Do not process 2 hop garden events
+            return True
+
+        if event.name == Events.GARDEN_UPDATED.name and event.garden == config.get(
+            "garden.name"
+        ):
+            # Do not reprocess events
+            return True
+
+        if (
+            event.garden == config.get("garden.name")
+            and event.name
+            in [
+                Events.GARDEN_CONFIGURED.name,
+                Events.GARDEN_REMOVED.name,
+                Events.GARDEN_CREATED.name,
+            ]
+            and not config.get("parent.stomp.enabled")
+            and not config.get("parent.http.enabled")
+        ):
+            # No parent to publish to, so we can skip these events
+            return True
+
+    return False
+
+
 def handle_event(event):
     """Handle garden-related events
 
@@ -1064,9 +1101,6 @@ def handle_event(event):
                     pass
 
             upsert_garden(event.payload)
-
-            # Publish update events for UI to dynamically load changes for Systems
-            publish_local_garden_to_api()
 
     elif event.name in [
         Events.GARDEN_CONFIGURED.name,
