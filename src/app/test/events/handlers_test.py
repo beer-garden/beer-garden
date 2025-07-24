@@ -474,6 +474,7 @@ class TestHandlers:
                 processor.put(create_event)
                 processor.put(create_event)
                 assert len(processor._queue) == 1
+                assert len(processor._data) == 1
                 assert (
                     processor._data[next(iter(processor._data))].payload.status
                     == "CREATED"
@@ -481,6 +482,7 @@ class TestHandlers:
 
                 processor.put(update_event)
                 assert len(processor._queue) == 1
+                assert len(processor._data) == 1
                 assert (
                     processor._data[next(iter(processor._data))].payload.status
                     == "IN_PROGRESS"
@@ -488,6 +490,7 @@ class TestHandlers:
 
                 processor.put(complete_event)
                 assert len(processor._queue) == 1
+                assert len(processor._data) == 1
                 assert (
                     processor._data[next(iter(processor._data))].payload.status
                     == "SUCCESS"
@@ -496,6 +499,7 @@ class TestHandlers:
                 processor.put(create_event)
                 processor.put(update_event)
                 assert len(processor._queue) == 1
+                assert len(processor._data) == 1
                 assert (
                     processor._data[next(iter(processor._data))].payload.status
                     == "SUCCESS"

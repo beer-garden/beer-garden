@@ -34,7 +34,7 @@ def add_internal_events_handler(event_manager):
         {
             "name": "Garden",
             "handler": beer_garden.garden.handle_event,
-            "filter_func": None,
+            "filter_func": beer_garden.garden.handle_event_filter,
             "filters": [
                 Events.GARDEN_STARTED,
                 Events.GARDEN_UPDATED,
