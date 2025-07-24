@@ -1065,9 +1065,6 @@ def handle_event(event):
 
             upsert_garden(event.payload)
 
-            # Publish update events for UI to dynamically load changes for Systems
-            publish_local_garden_to_api()
-
     elif event.name in [
         Events.GARDEN_CONFIGURED.name,
         Events.GARDEN_REMOVED.name,
