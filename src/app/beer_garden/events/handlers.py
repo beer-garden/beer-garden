@@ -34,7 +34,7 @@ def add_internal_events_handler(event_manager):
         {
             "name": "Garden",
             "handler": beer_garden.garden.handle_event,
-            "filter_func": None,
+            "filter_func": beer_garden.garden.handle_event_filter,
             "filters": [
                 Events.GARDEN_STARTED,
                 Events.GARDEN_UPDATED,
@@ -46,13 +46,6 @@ def add_internal_events_handler(event_manager):
                 Events.GARDEN_CONFIGURED,
                 Events.GARDEN_REMOVED,
                 Events.GARDEN_CREATED,
-                Events.SYSTEM_CREATED,
-                Events.SYSTEM_UPDATED,
-                Events.SYSTEM_REMOVED,
-                Events.INSTANCE_INITIALIZED,
-                Events.INSTANCE_STARTED,
-                Events.INSTANCE_UPDATED,
-                Events.INSTANCE_STOPPED,
                 Events.ENTRY_STARTED,
             ],
             "local_only": False,

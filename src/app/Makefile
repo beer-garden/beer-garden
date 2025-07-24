@@ -198,6 +198,9 @@ publish-branch-docker-unstable: parse_branch_name package clean-python
 	docker build -t $(DOCKER_NAME):$(BRANCH_NAME)-$(VERSION)-python$(PYTHON_VERSION) -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-alpine .
 	docker push $(DOCKER_NAME):$(BRANCH_NAME)-$(VERSION)-python$(PYTHON_VERSION)
 
+	docker build -t $(DOCKER_NAME):$(BRANCH_NAME)-$(VERSION)-python$(PYTHON_VERSION)-debian -f docker/Dockerfile.unstable-debian --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-slim .
+	docker push $(DOCKER_NAME):$(BRANCH_NAME)-$(VERSION)-python$(PYTHON_VERSION)-debian 
+
 # Publishing
 publish-package-test: package ## upload a package to the testpypi
 	twine upload --repository testpypi dist/*

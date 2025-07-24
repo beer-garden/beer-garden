@@ -183,65 +183,57 @@ class TestHandlers:
         bg_event.name = Events.INSTANCE_INITIALIZED.name
 
         bg_event.garden = "localgarden"
-        self.run_event_handler_test(
-            bg_event, ["Local plugins manager", "Garden"], monkeypatch
-        )
+        self.run_event_handler_test(bg_event, ["Local plugins manager"], monkeypatch)
         bg_event.garden = "remotegaren"
-        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
+        self.run_event_handler_test(bg_event, [], monkeypatch)
 
     def test_instance_started_event(self, bg_event, monkeypatch):
         bg_event.name = Events.INSTANCE_STARTED.name
 
         bg_event.garden = "localgarden"
-        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
+        self.run_event_handler_test(bg_event, [], monkeypatch)
         bg_event.garden = "remotegaren"
-        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
+        self.run_event_handler_test(bg_event, [], monkeypatch)
 
     def test_instance_updated_event(self, bg_event, monkeypatch):
         bg_event.name = Events.INSTANCE_UPDATED.name
 
         bg_event.garden = "localgarden"
-        self.run_event_handler_test(bg_event, ["Plugin", "Garden"], monkeypatch)
+        self.run_event_handler_test(bg_event, ["Plugin"], monkeypatch)
         bg_event.garden = "remotegaren"
-        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
+        self.run_event_handler_test(bg_event, [], monkeypatch)
 
     def test_instance_stopped_event(self, bg_event, monkeypatch):
         bg_event.name = Events.INSTANCE_STOPPED.name
 
         bg_event.garden = "localgarden"
-        self.run_event_handler_test(
-            bg_event, ["Local plugins manager", "Garden"], monkeypatch
-        )
+        self.run_event_handler_test(bg_event, ["Local plugins manager"], monkeypatch)
         bg_event.garden = "remotegaren"
-        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
+        self.run_event_handler_test(bg_event, [], monkeypatch)
 
     def test_system_created_event(self, bg_event, monkeypatch):
         bg_event.name = Events.SYSTEM_CREATED.name
 
         bg_event.garden = "localgarden"
-        self.run_event_handler_test(
-            bg_event, ["Router", "Garden", "System"], monkeypatch
-        )
+        self.run_event_handler_test(bg_event, ["Router", "System"], monkeypatch)
         bg_event.garden = "remotegaren"
-        self.run_event_handler_test(bg_event, ["Router", "Garden"], monkeypatch)
+        self.run_event_handler_test(bg_event, ["Router"], monkeypatch)
 
     def test_system_updated_event(self, bg_event, monkeypatch):
         bg_event.name = Events.SYSTEM_UPDATED.name
 
         bg_event.garden = "localgarden"
-        self.run_event_handler_test(
-            bg_event, ["Router", "Garden", "System"], monkeypatch
-        )
+        self.run_event_handler_test(bg_event, ["Router", "System"], monkeypatch)
         bg_event.garden = "remotegaren"
-        self.run_event_handler_test(bg_event, ["Router", "Garden"], monkeypatch)
+        self.run_event_handler_test(bg_event, ["Router"], monkeypatch)
 
     def test_system_removed_event(self, bg_event, monkeypatch):
         bg_event.name = Events.SYSTEM_REMOVED.name
 
         bg_event.garden = "localgarden"
-        self.run_event_handler_test(bg_event, ["Garden", "System"], monkeypatch)
+        self.run_event_handler_test(bg_event, ["System"], monkeypatch)
         bg_event.garden = "remotegaren"
-        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
+        self.run_event_handler_test(bg_event, [], monkeypatch)
 
     def test_garden_created_event(self, bg_event, monkeypatch):
         bg_event.name = Events.GARDEN_CREATED.name
@@ -482,6 +474,7 @@ class TestHandlers:
                 processor.put(create_event)
                 processor.put(create_event)
                 assert len(processor._queue) == 1
+                assert len(processor._data) == 1
                 assert (
                     processor._data[next(iter(processor._data))].payload.status
                     == "CREATED"
@@ -489,6 +482,7 @@ class TestHandlers:
 
                 processor.put(update_event)
                 assert len(processor._queue) == 1
+                assert len(processor._data) == 1
                 assert (
                     processor._data[next(iter(processor._data))].payload.status
                     == "IN_PROGRESS"
@@ -496,6 +490,7 @@ class TestHandlers:
 
                 processor.put(complete_event)
                 assert len(processor._queue) == 1
+                assert len(processor._data) == 1
                 assert (
                     processor._data[next(iter(processor._data))].payload.status
                     == "SUCCESS"
@@ -504,6 +499,7 @@ class TestHandlers:
                 processor.put(create_event)
                 processor.put(update_event)
                 assert len(processor._queue) == 1
+                assert len(processor._data) == 1
                 assert (
                     processor._data[next(iter(processor._data))].payload.status
                     == "SUCCESS"

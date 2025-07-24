@@ -1142,7 +1142,7 @@ def handle_event_create(event):
                     if foundUser:
                         break
 
-        return db.create(event.payload)
+        return db.create_direct(event.payload)
     except NotUniqueException:
         return
 
@@ -1288,7 +1288,7 @@ def handle_event(event):
                             existing_request.error_class = event.payload.error_class
 
                 if request_changed:
-                    db.update(existing_request)
+                    db.update_direct(existing_request)
                     handle_event_rebroadcast(event.name, existing_request)
 
 
