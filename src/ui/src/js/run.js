@@ -370,20 +370,25 @@ export default function appRun(
         return $rootScope.getLocalGarden(callback);
       });
     } else {
-
-      GardenService.getGarden($rootScope.config.gardenName).then((response) => {
-        $rootScope.garden = response.data;
-        $rootScope.gardensResponse = response;
-        $rootScope.systems = [];
-        updateGardenSystems();
-        return callback();
-      },
-        (response) => {
-          $rootScope.gardenResponse = response;
-          $rootScope.garden = {};
-          $rootScope.systems = [];
-        });
+      $rootScope.reloadGarden(callback);
     }
+  }
+
+  $rootScope.reloadGarden = function (callback) {
+    GardenService.getGarden($rootScope.config.gardenName).then((response) => {
+      $rootScope.garden = response.data;
+      $rootScope.gardensResponse = response;
+      $rootScope.systems = [];
+      updateGardenSystems();
+      if (callback !== undefined){
+        return callback();
+      }
+    },
+      (response) => {
+        $rootScope.gardenResponse = response;
+        $rootScope.garden = {};
+        $rootScope.systems = [];
+      });
   }
 
   $rootScope.getSystems = function () {
@@ -563,6 +568,55 @@ export default function appRun(
         $rootScope.garden = updateGardenChildren($rootScope.garden, event.payload);
       }
       updateGardenSystems();
+    }
+
+    else if ($rootScope.systems !== undefined && event.name.startsWith("INSTANCE_")){
+
+      let matched = false;
+
+      for (let i = 0; i < $rootScope.systems.length; i++){
+        for (let j = 0; j < $rootScope.systems[i].instances.length; j++){
+          if ($rootScope.systems[i].instances[j].id == event.payload.id){
+            matched = true;
+            $rootScope.systems[i].instances[j] = event.payload;
+            break;
+          }
+        }
+        if (matched) {
+          break;
+        }
+      }
+
+      if (!matched) {
+        // If we didn't find a match, then we need to update the root garden
+        $rootScope.reloadGarden();
+      }
+    }
+
+    else if ($rootScope.systems !== undefined && event.name.startsWith("SYSTEM_")){
+
+      let matched = false;
+
+      if (event.name != "SYSTEM_CREATED"){
+
+        for (let i = 0; i < $rootScope.systems.length; i++){
+          if ($rootScope.systems[i].id == event.payload.id){
+            matched = true;
+            if (event.name == "SYSTEM_REMOVED") {
+              $rootScope.systems.splice(i, 1);
+            } else {
+              $rootScope.systems[i] = event.payload;
+            }
+            break;
+          }
+        }
+      }
+
+      if (!matched) {
+        // If we didn't find a match or a system was created
+        // We need to update the root garden
+        $rootScope.reloadGarden();
+      }
     }
   });
 
