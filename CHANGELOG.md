@@ -16,6 +16,7 @@ TBD
 - Fixed bug where Garden Entry Points went unresponsive (#1908)
 - Updated status history to use local config length for downstream gardens on save (#1923)
 - Updated `status_history` config defaults to 5 for garden and plugin (#1923)
+- Fixed bug where Entry Point startup sent Garden sync to `default` instead of actual garden name (#1926)
 - Removed duplicate Garden Sync Event sent to UI from downstream events (#1922)
 - Update UI Events to utilize Instance and System events as partial Garden updates (#1925)
 - Bypass Mongoengine for bulk create/update to improve Request throughput in Mongo (#1920)
