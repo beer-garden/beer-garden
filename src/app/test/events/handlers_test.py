@@ -489,7 +489,7 @@ class TestHandlers:
                 )
 
                 processor.put(update_event)
-                assert len(processor._queue) == 2
+                assert len(processor._queue) == 1
                 assert len(processor._data) == 1
                 assert (
                     processor._data[next(iter(processor._data))].payload.status
@@ -497,7 +497,7 @@ class TestHandlers:
                 )
 
                 processor.put(complete_event)
-                assert len(processor._queue) == 3
+                assert len(processor._queue) == 1
                 assert len(processor._data) == 1
                 assert (
                     processor._data[next(iter(processor._data))].payload.status
@@ -506,7 +506,7 @@ class TestHandlers:
 
                 processor.put(create_event)
                 processor.put(update_event)
-                assert len(processor._queue) == 3
+                assert len(processor._queue) == 1
                 assert len(processor._data) == 1
                 assert (
                     processor._data[next(iter(processor._data))].payload.status
