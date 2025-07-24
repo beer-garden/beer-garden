@@ -141,7 +141,7 @@ class DequeSetListener(DequeListener):
                                     )
 
                         # This will cause some no-ops for pops, but avoids requirement for locks
-                        self._data[str(event.payload.id)] = self.clone(event)
+                        self._data[str(event.payload.id)] = event
                         self._queue.append(str(event.payload.id))
 
                         del ref
