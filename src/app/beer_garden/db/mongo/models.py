@@ -529,6 +529,21 @@ class Request(MongoModel, Document):
                 datetime.datetime.utcnow().timestamp() * 1000
             )
 
+        if self.has_parent:
+            try:
+                if (
+                    not self.parent
+                    or not self.parent
+                    or Request.objects(id=self.parent.id).count() == 0
+                ):
+                    # Request is an Orphan, removing parent
+                    self.has_parent = False
+                    self.parent = None
+            except DoesNotExist:
+                # Request is an Orphan, removing parent
+                self.has_parent = False
+                self.parent = None
+
     def _post_save(self):
 
         if self.status == "CREATED":
@@ -1421,3 +1436,10 @@ class UserToken(MongoModel, Document):
             {"fields": ["expires_at"], "expireAfterSeconds": 0},
         ]
     }
+
+
+class Configuration(Document):
+    # This is a snapshot of the configuration file last loaded
+    # and is reset after migrations are completed. It should not
+    # be used for optional configuration.
+    version = StringField(default="0.0.0")
