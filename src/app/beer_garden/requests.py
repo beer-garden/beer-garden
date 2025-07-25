@@ -42,6 +42,7 @@ from mongoengine import DoesNotExist
 from packaging.version import InvalidVersion
 from packaging.version import parse as versionParse
 from requests import Session
+from pymongo.errors import BulkWriteError
 
 import beer_garden.config as config
 import beer_garden.db.api as db
@@ -1143,7 +1144,7 @@ def handle_event_create(event):
                         break
 
         return db.create_direct(event.payload)
-    except NotUniqueException:
+    except (NotUniqueException, BulkWriteError):
         return
 
 
