@@ -17,7 +17,7 @@ TBD
 - Fixed bug where Entry Point startup sent Garden sync to `default` instead of actual garden name (#1926)
 - Removed duplicate Garden Sync Event sent to UI from downstream events (#1922)
 - Update UI Events to utilize Instance and System events as partial Garden updates (#1925)
-- Bypass Mongoengine for bulk create/update to improve Request throughput in Mongo (#1920)
+- Bypass Mongoengine for bulk create/update to improve Request throughput in Mongo (#1920, #1930)
 - Removed locking from internal queue management for event handlers (#1921)
 
 ## 3.30.0rc1
