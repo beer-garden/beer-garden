@@ -106,14 +106,14 @@ def add_internal_events_handler(event_manager):
         {
             "name": "Router",
             "handler": beer_garden.router.handle_event,
-            "filter_func": None,
+            "filter_func": beer_garden.router.handle_event_filter,
             "filters": [
                 Events.SYSTEM_CREATED,
                 Events.SYSTEM_UPDATED,
-                Events.GARDEN_SYNC,
                 Events.GARDEN_CONFIGURED,
                 Events.GARDEN_REMOVED,
                 Events.GARDEN_UPDATED,
+                Events.GARDEN_UPSERT,
             ],
             "local_only": False,
             "unique_data": False,  # Can not unique due to API configurations

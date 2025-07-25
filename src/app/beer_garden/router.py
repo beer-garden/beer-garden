@@ -593,8 +593,6 @@ def setup_routing():
                 garden.connection_type is not None
                 and garden.connection_type.casefold() != "local"
             ):
-                del garden.children
-                del garden.systems
 
                 with garden_lock:
                     gardens[garden.name] = garden
@@ -671,29 +669,43 @@ def add_routing_garden(garden: Garden):
     if garden.systems:
         for system in garden.systems:
             add_routing_system(system=system, garden_name=garden.name)
+    del garden.systems
 
     if garden.children:
         for child in garden.children:
             add_routing_garden(child)
+    del garden.children
+
+    gardens[garden.name] = garden
+
+
+def handle_event_filter(event):
+
+    # Only accept locally processed garden updates
+    if "GARDEN" in event.name and event.garden != config.get("garden.name"):
+        return True
+
+    return False
 
 
 def handle_event(event):
     """Handle events"""
-    if not event.error:
-        if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
-            add_routing_system(system=event.payload, garden_name=event.garden)
-            return
-        elif event.name == Events.SYSTEM_REMOVED.name:
-            remove_routing_system(system=event.payload)
-            return
+    if event.error:
+        return
 
-    # Here we want to handle sync events from immediate children only
-    if (
-        not event.error
-        and (event.name == Events.GARDEN_SYNC.name)
-        and (event.garden != config.get("garden.name"))
-        and (event.garden == event.payload.name)
-    ):
+    if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
+        add_routing_system(system=event.payload, garden_name=event.garden)
+        return
+    elif event.name == Events.SYSTEM_REMOVED.name:
+        remove_routing_system(system=event.payload)
+        return
+
+    if event.garden != config.get("garden.name"):
+        return
+
+    # These are the post processed Garden Syncs with all of the valid
+    # systems
+    if event.name == Events.GARDEN_UPSERT.name:
         with routing_lock:
             # First remove all current routes to this garden
             remove_routing_garden(garden_name=event.garden)
@@ -707,16 +719,11 @@ def handle_event(event):
     # It's *those* events we want to act on here, not the "raw" downstream ones.
     # This is also why we only handle GARDEN_UPDATED and not STARTED or STOPPED
     # Also skip over error messages and let the Garden handler update based off them
-    if (
-        event.garden == config.get("garden.name")
-        and not event.error
-        and event.name
-        in [
-            Events.GARDEN_CONFIGURED.name,
-            Events.GARDEN_REMOVED.name,
-            Events.GARDEN_UPDATED.name,
-        ]
-    ):
+    if event.name in [
+        Events.GARDEN_CONFIGURED.name,
+        Events.GARDEN_REMOVED.name,
+        Events.GARDEN_UPDATED.name,
+    ]:
 
         # Only store the garden if it's 1 hop of the local garden
         if not event.payload.has_parent or event.payload.parent == config.get(
@@ -770,8 +777,6 @@ def handle_event(event):
                         del stomp_garden_connections[event.payload.name]
                 except KeyError:
                     pass
-            elif event.name == Events.GARDEN_UPDATED.name:
-                gardens[event.payload.name] = event.payload
 
 
 def _operation_conversion(operation: Operation) -> Operation:

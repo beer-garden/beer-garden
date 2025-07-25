@@ -517,6 +517,14 @@ def update_garden(garden: Garden) -> Garden:
     return db.update(garden)
 
 
+@publish_event(Events.GARDEN_UPSERT)
+def upsert_downstream_garden(garden: Garden):
+
+    upsert_garden(garden)
+
+    return get_garden(garden.name, exclude_fields=["systems__instances__status_info"])
+
+
 def upsert_garden(garden: Garden, skip_connections: bool = True) -> Garden:
     """Updates or inserts Garden"""
 
@@ -533,7 +541,7 @@ def upsert_garden(garden: Garden, skip_connections: bool = True) -> Garden:
     del garden.children
 
     if existing_garden is None:
-        return create_garden(garden)
+        return db.create(garden)
     else:
         for attr in ("systems", "metadata", "version"):
             setattr(existing_garden, attr, getattr(garden, attr))
@@ -544,7 +552,7 @@ def upsert_garden(garden: Garden, skip_connections: bool = True) -> Garden:
                     attribute.config = {}
                 setattr(existing_garden, attr, getattr(garden, attr))
 
-        return update_garden(existing_garden)
+        return db.update(existing_garden)
 
 
 @publish_event(Events.GARDEN_CONFIGURED)
@@ -1100,7 +1108,7 @@ def handle_event(event):
                 except DoesNotExist:
                     pass
 
-            upsert_garden(event.payload)
+            upsert_downstream_garden(event.payload)
 
     elif event.name in [
         Events.GARDEN_CONFIGURED.name,

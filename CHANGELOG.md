@@ -18,6 +18,7 @@ TBD
 - Update UI Events to utilize Instance and System events as partial Garden updates (#1925)
 - Bypass Mongoengine for bulk create/update to improve Request throughput in Mongo (#1920)
 - Removed locking from internal queue management for event handlers (#1921)
+- Publish Garden Syncs as Garden Upsert for routing logic with all accepted changed (#)
 
 ## 3.30.0rc1
 
