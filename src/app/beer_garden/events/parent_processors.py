@@ -43,6 +43,10 @@ class HttpParentUpdater(QueueListener):
         if event.error or (event.garden and event.garden != conf.get("garden.name")):
             return
 
+        if "REQUEST" in event.name and event.payload.command_type == "TEMP":
+            # If this is a temporary request, we don't want to publish it
+            return
+
         # TODO - This shouldn't be set here
         event.garden = conf.get("garden.name")
         if event.name in (
