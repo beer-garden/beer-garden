@@ -25,7 +25,6 @@ from beer_garden.db.mongo.pruner import (
     prune_grid_fs,
     prune_info_requests,
     prune_missed_temp_command,
-    prune_orphan_command_type,
     prune_orphan_files,
     prune_outstanding,
     prune_temp_requests,
