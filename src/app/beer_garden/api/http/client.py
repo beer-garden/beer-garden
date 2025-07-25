@@ -43,6 +43,7 @@ class SerializeHelper(object):
             "API",
             f"API::{operation.operation_type}",
             trace_parent_header=trace_parent_header,
+            always_capture=True,
         ):
 
             if config.get("metrics.elastic.enabled") and current_user:
@@ -75,7 +76,7 @@ class SerializeHelper(object):
                 )
 
             if config.get("metrics.elastic.enabled"):
-                extract_custom_context(result)
+                extract_custom_context(result, always_capture=True)
 
             # Handlers overwhelmingly just write the response so default to serializing
             serialize_kwargs = serialize_kwargs or {}

@@ -1448,6 +1448,11 @@ _METRICS_SPEC = {
                     "description": "Enable elastic APM server",
                     "default": False,
                 },
+                "debug": {
+                    "type": "bool",
+                    "description": "Trace lower level spans",
+                    "default": False,
+                },
                 "url": {
                     "type": "str",
                     "description": "URL to elastic apm server.",

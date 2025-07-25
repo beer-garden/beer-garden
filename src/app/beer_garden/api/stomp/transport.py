@@ -136,7 +136,9 @@ class OperationListener(stomp.ConnectionListener):
             if headers.get("model_class") == "Operation":
 
                 operation = SchemaParser.parse_operation(message, from_string=True)
-                with CollectMetrics("STOMP", f"STOMP::{operation.operation_type}"):
+                with CollectMetrics(
+                    "STOMP", f"STOMP::{operation.operation_type}", always_capture=True
+                ):
                     operation.source_api = "STOMP"
 
                     if hasattr(operation, "kwargs"):
@@ -146,7 +148,7 @@ class OperationListener(stomp.ConnectionListener):
 
                     if result:
                         if config.get("metrics.elastic.enabled"):
-                            extract_custom_context(result)
+                            extract_custom_context(result, always_capture=True)
 
                         send(
                             result,

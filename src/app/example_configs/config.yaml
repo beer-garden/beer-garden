@@ -96,6 +96,7 @@ log:
 metrics:
   elastic:
     enabled: false
+    debug: false
     url: http://localhost:8200
   prometheus:
     enabled: false

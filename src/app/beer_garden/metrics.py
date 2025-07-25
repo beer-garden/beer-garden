@@ -206,14 +206,16 @@ def _calculate_size(field) -> int:
     return total_size
 
 
-def extract_custom_context(result) -> None:
+def extract_custom_context(result, always_capture=False) -> None:
     """Extracts values from models to be tracked in the custom context fields
 
     Args:
         result: Any object to be tracked
     """
 
-    if elasticapm.get_trace_parent_header():
+    if (
+        always_capture or config.get("metrics.elastic.debug")
+    ) and elasticapm.get_trace_parent_header():
 
         if isinstance(result, Operation):
             return extract_custom_context(result.model)
@@ -248,8 +250,13 @@ def extract_custom_context(result) -> None:
 
 
 class CollectMetrics(elasticapm.capture_span):
-    def __init__(self, span_type=None, name=None, trace_parent_header=None):
+    def __init__(
+        self, span_type=None, name=None, trace_parent_header=None, always_capture=False
+    ):
         if not config.get("metrics.elastic.enabled"):
+            return
+
+        if not always_capture and not config.get("metrics.elastic.debug"):
             return
 
         if elasticapm.get_trace_parent_header() is not None:
