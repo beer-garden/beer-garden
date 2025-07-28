@@ -21,6 +21,272 @@ logger = logging.getLogger(__name__)
 display_name = "Mongo Pruner"
 
 
+def prune_by_name(ttl_name):
+    with CollectMetrics("PRUNER", f"Pruner::{ttl_name}"):
+        prune_requests(ttl_name)
+
+
+def prune_info_requests():
+    prune_by_name("info")
+
+
+def prune_action_requests():
+    prune_by_name("action")
+
+
+def prune_admin_requests():
+    prune_by_name("admin")
+
+
+def prune_temp_requests():
+    prune_by_name("temp")
+
+
+def prune_requests(ttl_name):
+
+    batch_size = config.get("db.prune.batch_size")
+    current_time = datetime.now(timezone.utc)
+
+    if ttl_name in ["admin", "temp"]:
+        ttl = config.get("db.prune.interval", default=15)
+    else:
+        ttl = config.get(f"db.prune.ttl.{ttl_name}")
+
+    query = (
+        Q(created_at__lt=current_time - timedelta(minutes=ttl))
+        & (Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR"))
+        & Q(has_parent=False)
+    )
+
+    if ttl_name == "admin":
+        query = query & Q(command_type="ADMIN")
+    elif ttl_name == "temp":
+        query = query & Q(command_type="TEMP")
+    elif ttl_name == "action":
+        query = query & (
+            Q(command_type="ACTION")
+            | Q(command_type=None)
+            | Q(command_type__exists=False)
+        )
+    elif ttl_name == "info":
+        query = query & Q(command_type="INFO")
+
+    request_cursor = Request.objects(query).only(
+        "id", "output_gridfs", "parameters_gridfs", "parameters"
+    )
+
+    prune_request_cursor(request_cursor, batch_size, "Expired")
+
+
+def prune_request_cursor(
+    request_cursor,
+    batch_size,
+    label,
+):
+    """
+    Helper function to prune a cursor of requests
+    """
+
+    request_ids = []
+    request_raw_files = []
+    request_grids_fs_files = []
+
+    for request in request_cursor:
+        try:
+
+            request_ids.append(request.id)
+
+            if request.output_gridfs:
+                try:
+                    request_grids_fs_files.append(request.output_gridfs._id)
+                except AttributeError:
+                    logger.error(
+                        f"AttributeError: Attempted to delete request {request.id} "
+                        "but does not have a output_gridfs file id"
+                    )
+            if request.parameters_gridfs:
+                try:
+                    request_grids_fs_files.append(request.parameters_gridfs._id)
+                except AttributeError:
+                    logger.error(
+                        f"AttributeError: Attempted to delete request {request.id} "
+                        "but does not have a parameters_gridfs file id"
+                    )
+
+            parameters = request.parameters or {}
+
+            for param_value in parameters.values():
+                if (
+                    isinstance(param_value, dict)
+                    and param_value.get("type") == "bytes"
+                    and param_value.get("id") is not None
+                ):
+                    request_raw_files.append(param_value["id"])
+
+            if batch_size > 0 and len(request_ids) > batch_size:
+                # Delete the batch of requests to keep in memory usage down
+                delete_requests(
+                    batch_size,
+                    request_ids,
+                    request_raw_files,
+                    request_grids_fs_files,
+                    label,
+                )
+                request_ids = []
+                request_raw_files = []
+                request_grids_fs_files = []
+
+        except DoesNotExist:
+            logger.error(
+                f"DoesNotExist: Attempted to delete request {request.id} "
+                "but does not exist in database"
+            )
+
+    if len(request_ids) > 0:
+        delete_requests(
+            batch_size,
+            request_ids,
+            request_raw_files,
+            request_grids_fs_files,
+            label,
+        )
+
+
+def delete_requests(
+    batch_size, request_ids, request_raw_files, request_grids_fs_files, label
+):
+
+    db = get_db()
+
+    if batch_size > 0:
+        for batch in [
+            request_raw_files[i : i + batch_size]
+            for i in range(0, len(request_raw_files), batch_size)
+        ]:
+            raw_file_grid_fs = []
+            for raw_file in RawFile.objects(Q(id__in=request_raw_files)):
+                raw_file_grid_fs.append(raw_file.file.grid_id)
+            if len(raw_file_grid_fs) > 0:
+                db["fs.chunks"].delete_many({"files_id": {"$in": raw_file_grid_fs}})
+                db["fs.files"].delete_many({"_id": {"$in": raw_file_grid_fs}})
+            db["raw_files"].delete_many({"_id": {"$in": batch}})
+
+        for batch in [
+            request_grids_fs_files[i : i + batch_size]
+            for i in range(0, len(request_grids_fs_files), batch_size)
+        ]:
+            db["fs.chunks"].delete_many({"files_id": {"$in": batch}})
+            db["fs.files"].delete_many({"_id": {"$in": batch}})
+
+        for batch in [
+            request_ids[i : i + batch_size]
+            for i in range(0, len(request_ids), batch_size)
+        ]:
+            db["file"].update_many(
+                {"requests": {"$in": batch}},
+                {"$set": {"request": None}},
+            )
+            db["request"].delete_many({"_id": {"$in": batch}})
+
+    else:
+        if len(request_raw_files) > 0:
+            for raw_file in RawFile.objects(Q(id__in=request_raw_files)):
+                request_grids_fs_files.append(raw_file.file.grid_id)
+
+        db["fs.chunks"].delete_many({"files_id": {"$in": request_grids_fs_files}})
+        db["fs.files"].delete_many({"_id": {"$in": request_grids_fs_files}})
+
+        db["raw_files"].delete_many({"_id": {"$in": request_raw_files}})
+        db["file"].update_many(
+            {"requests": {"$in": request_ids}},
+            {"$set": {"request": None}},
+        )
+        db["request"].delete_many({"_id": {"$in": request_ids}})
+
+    logger.error(f"{len(request_ids)} {label} Requests deleted")
+
+    if len(request_grids_fs_files) > 0:
+        logger.debug(
+            f"{len(request_grids_fs_files)} GridFS files deleted "
+            f"for {label} Requests"
+        )
+
+    if len(request_raw_files) > 0:
+        logger.debug(f"{len(request_raw_files)} Raw files deleted for {label} Requests")
+
+
+def prune_files():
+    ttl_length = config.get("db.prune.ttl.file")
+
+    if ttl_length > -1:
+
+        file_ids = []
+        raw_file_ids = []
+        gridfs_ids = []
+
+        delete_older_than = datetime.now(timezone.utc) - timedelta(minutes=ttl_length)
+
+        try:
+            batch_size = config.get("db.prune.batch_size")
+
+            if batch_size > 0:
+                for file in (
+                    File.objects(
+                        Q(updated_at__lt=delete_older_than)
+                        & (
+                            (
+                                Q(owner_type=None)
+                                | (
+                                    (Q(owner_type__iexact="JOB") & Q(job=None))
+                                    | (
+                                        Q(owner_type__iexact="REQUEST")
+                                        & Q(request=None)
+                                    )
+                                )
+                            )
+                        )
+                    )
+                    .only("id")
+                    .batch_size(batch_size)
+                ):
+                    file_ids.append(file.id)
+
+                for raw_file in RawFile.objects(
+                    Q(created_at__lt=delete_older_than)
+                ).batch_size(batch_size):
+                    raw_file_ids.append(raw_file.id)
+                    gridfs_ids.append(raw_file.file.grid_id)
+
+            else:
+                for file in File.objects(
+                    Q(updated_at__lt=delete_older_than)
+                    & (
+                        (
+                            Q(owner_type=None)
+                            | (
+                                (Q(owner_type__iexact="JOB") & Q(job=None))
+                                | (Q(owner_type__iexact="REQUEST") & Q(request=None))
+                            )
+                        )
+                    )
+                ).only("id"):
+                    file_ids.append(file.id)
+
+                for raw_file in RawFile.objects(Q(created_at__lt=delete_older_than)):
+                    raw_file_ids.append(raw_file.id)
+                    gridfs_ids.append(raw_file.file.grid_id)
+
+        finally:
+            db = get_db()
+
+            db["file_chunks"].delete_many({"files_id": {"$in": file_ids}})
+            db["file"].delete_many({"_id": {"$in": file_ids}})
+
+            db["raw_files"].delete_many({"_id": {"$in": raw_file_ids}})
+            db["fs.chunks"].delete_many({"files_id": {"$in": gridfs_ids}})
+            db["fs.files"].delete_many({"_id": {"$in": gridfs_ids}})
+
+
 def run_pruner(tasks, ttl_name):
     current_time = datetime.utcnow()
 
@@ -74,37 +340,6 @@ def run_pruner(tasks, ttl_name):
                             str(delete_older_than),
                         )
                     )
-
-
-def prune_by_name(ttl_name):
-    with CollectMetrics("PRUNER", f"Pruner::{ttl_name}"):
-        if ttl_name in ["admin", "temp"]:
-            ttl_length = config.get("db.prune.interval", default=15)
-        else:
-            ttl_length = config.get(f"db.prune.ttl.{ttl_name}")
-
-        tasks = determine_tasks(ttl_name, ttl_length)
-        run_pruner(tasks, ttl_name)
-
-
-def prune_info_requests():
-    prune_by_name("info")
-
-
-def prune_action_requests():
-    prune_by_name("action")
-
-
-def prune_admin_requests():
-    prune_by_name("admin")
-
-
-def prune_temp_requests():
-    prune_by_name("temp")
-
-
-def prune_files():
-    prune_by_name("file")
 
 
 def determine_tasks(ttl_name, ttl_length) -> Tuple[List[dict], int]:
