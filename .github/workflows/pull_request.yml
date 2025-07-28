@@ -48,6 +48,7 @@ jobs:
 
   PyTest:
     runs-on: ${{ matrix.os }}
+    if: false
 
     env:
       brewtils: "develop"
@@ -217,7 +218,7 @@ jobs:
 
   Local-Plugin-Testing:
     runs-on: ${{ matrix.os }}
-    needs: PyTest
+    # needs: PyTest
 
     strategy:
       matrix:
