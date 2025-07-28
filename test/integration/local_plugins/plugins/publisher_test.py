@@ -52,9 +52,10 @@ def topic():
 def force_garden_sync(easy_client):
     # Sync Local Garden and give it a second to process it
     print(easy_client.client._config)
-    config = easy_client.client.get_config()
-    print(config)
-    easy_client.client.patch_garden(easy_client.client.get_config()["garen_name"], '[{"operation": "sync"}]')
+    config = easy_client.client.get_config().json()
+    print(easy_client.client.get_config().json())
+    print(easy_client.client.get_config().json()["garen_name"])
+    easy_client.client.patch_garden(easy_client.client.get_config().json()["garen_name"], '[{"operation": "sync"}]')
     time.sleep(10)
 
 
