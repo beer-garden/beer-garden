@@ -9,6 +9,7 @@ TBD
 - Updated Instance Status icon for Downstream Instances to reflect error states (#1907)
 - Updated UI Lazy Loading (#1907)
 - Fixed bug in local garden loading all gardens to one hop away (#1905)
+- Reduced total events processed by Entry Point event handlers (#1882)
 - Expanded Garden query to support include and exclude field parameters (#1916/#1927)
 - Fixed bug in UI handling garden with null children (#1917)
 - Updated Request Pre_Save function to check for Orphan by parent ID (#1913)
@@ -111,7 +112,7 @@ TBD
 - Updated Routing Logic to accept Target Garden provided and cache multi-hop gardens in routing tables
 - Updated Jobs pages to trigger off internal Job events for status changes
 - Updated Events handler to support internal filtering before placing into queue for processing
-- Reduced total events processed by Entry Point event handlers
+- Filtered events forwarded to upstream Garden
 
 # 3.29.1
 
