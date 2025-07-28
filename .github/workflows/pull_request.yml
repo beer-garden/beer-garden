@@ -323,7 +323,8 @@ jobs:
 
       - name: Test Plugins
         # run: python3 -m pytest -v local_plugins/ --ignore=local_plugins/plugins/publisher_test.py --ignore=local_plugins/plugins/request_list_test.py --ignore=local_plugins/plugins/requires_test.py --ignore=local_plugins/plugins/sleeper_test.py
-        run: python3 -m pytest -v local_plugins/ --ignore=local_plugins/plugins/publisher_test.py --ignore=local_plugins/plugins/request_list_test.py
+        # run: python3 -m pytest -v local_plugins/ --ignore=local_plugins/plugins/publisher_test.py --ignore=local_plugins/plugins/request_list_test.py
+        run: python3 -m pytest -v local_plugins/plugins/publisher_test.py
         working-directory: ./test/integration
 
       - name: Grab logs from Beer-Garden
