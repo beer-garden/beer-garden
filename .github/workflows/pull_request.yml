@@ -328,12 +328,12 @@ jobs:
           --ignore=local_plugins/plugins/complex_test.py \
           --ignore=local_plugins/plugins/dynamic_test.py \
           --ignore=local_plugins/plugins/echo_sleeper_test.py \
-          --ignore=local_plugins/plugins/echo_test.py \
           --ignore=local_plugins/plugins/publisher_test.py \
           --ignore=local_plugins/plugins/request_list_test.py \ 
+          --ignore=local_plugins/plugins/requires_test.py \
           --ignore=local_plugins/plugins/sleeper_test.py
-        #--ignore=local_plugins/plugins/requires_test.py \
-
+        # --ignore=local_plugins/plugins/echo_test.py \
+        
         # run: python3 -m pytest -v local_plugins/ 
         #run: python3 -m pytest -v local_plugins/ --ignore=local_plugins/plugins/publisher_test.py --ignore=local_plugins/plugins/request_list_test.py
         # run: python3 -m pytest -v local_plugins/plugins/publisher_test.py
