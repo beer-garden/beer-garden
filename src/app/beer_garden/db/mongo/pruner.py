@@ -52,7 +52,7 @@ def prune_requests(ttl_name):
         ttl_length = config.get(f"db.prune.ttl.{ttl_name}")
 
     query = (
-        Q(created_at__lt=current_time - timedelta(minutes=ttl_length))
+        Q(updated_at__lt=current_time - timedelta(minutes=ttl_length))
         & (Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR"))
         & Q(has_parent=False)
     )
@@ -359,7 +359,7 @@ def prune_missed_temp_command():
         filter = {
             "command_type": "TEMP",
             "status__in": ["CANCELED", "SUCCESS", "ERROR", "INVALID"],
-            "created_at__lte": timeout,
+            "updated_at__lte": timeout,
             "has_parent": True,
         }
 
@@ -436,7 +436,7 @@ def prune_orphan_command_type(command_type):
         filter = {
             "command_type": command_type,
             "status__in": ["CANCELED", "SUCCESS", "ERROR", "INVALID"],
-            "created_at__lte": timeout,
+            "updated_at__lte": timeout,
             "has_parent": True,
         }
 
@@ -499,7 +499,7 @@ def prune_outstanding():
         prune_config = config.get("db.prune")
         cancel_threshold = prune_config.get("in_progress_request_expiration")
         if cancel_threshold > 0:
-            timeout = datetime.utcnow() - timedelta(minutes=cancel_threshold)
+            timeout = datetime.now(timezone.utc) - timedelta(minutes=cancel_threshold)
             batch_size = config.get("db.prune.batch_size")
 
             if batch_size > 0:
@@ -507,17 +507,17 @@ def prune_outstanding():
                 outstanding_requests = (
                     Request.objects.filter(
                         status__in=["IN_PROGRESS", "CREATED"],
-                        created_at__lte=timeout,
+                        updated_at__lte=timeout,
                     )
-                    .order_by("-created_at")
+                    .order_by("-updated_at")
                     .batch_size(batch_size)
                 )
                 prune_outstanding_requests(outstanding_requests)
 
             else:
                 outstanding_requests = Request.objects.filter(
-                    status__in=["IN_PROGRESS", "CREATED"], created_at__lte=timeout
-                ).order_by("-created_at")
+                    status__in=["IN_PROGRESS", "CREATED"], updated_at__lte=timeout
+                ).order_by("-updated_at")
 
                 prune_outstanding_requests(outstanding_requests)
 

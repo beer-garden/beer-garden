@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import datetime
 from datetime import timedelta, timezone
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-from mock import MagicMock, Mock
 from mongoengine.connection import get_db
 from mongomock.gridfs import enable_gridfs_integration
 
@@ -30,6 +30,8 @@ from beer_garden.db.mongo.pruner import (
 )
 
 enable_gridfs_integration()
+
+FAKE_TIME = datetime.datetime.now(timezone.utc) + timedelta(minutes=60)
 
 
 @pytest.fixture
@@ -188,28 +190,40 @@ def canceled():
 
 
 class TestMongoPruner(object):
-    def test_prune_info_requests(self, info_request):
+    @patch("beer_garden.db.mongo.pruner.datetime")
+    def test_prune_info_requests(self, mock_datetime, info_request):
+        mock_datetime.now.return_value = FAKE_TIME
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"info": 1}}}}
         prune_info_requests()
         assert len(Request.objects.filter(command_type="INFO")) == 0
 
-    def test_prune_action_requests(self, action_request):
+    @patch("beer_garden.db.mongo.pruner.datetime")
+    def test_prune_action_requests(self, mock_datetime, action_request):
+        mock_datetime.now.return_value = FAKE_TIME
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"action": 1}}}}
         prune_action_requests()
         assert len(Request.objects.filter(command_type="ACTION")) == 0
 
-    def test_prune_action_request_no_command_type(self, in_progress, created, canceled):
+    @patch("beer_garden.db.mongo.pruner.datetime")
+    def test_prune_action_request_no_command_type(
+        self, mock_datetime, in_progress, created, canceled
+    ):
+        mock_datetime.now.return_value = FAKE_TIME
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"action": 1}}}}
         prune_action_requests()
         assert len(Request.objects.filter(command_type="ACTION")) == 0
         assert len(Request.objects.filter(command_type=None)) == 2
 
-    def test_prune_admin_requests(self, admin_request):
+    @patch("beer_garden.db.mongo.pruner.datetime")
+    def test_prune_admin_requests(self, mock_datetime, admin_request):
+        mock_datetime.now.return_value = FAKE_TIME
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 15}}}
         prune_admin_requests()
         assert len(Request.objects.filter(command_type="ADMIN")) == 0
 
-    def test_prune_temp_requests(self, temp_request):
+    @patch("beer_garden.db.mongo.pruner.datetime")
+    def test_prune_temp_requests(self, mock_datetime, temp_request):
+        mock_datetime.now.return_value = FAKE_TIME
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 15}}}
         prune_temp_requests()
         assert len(Request.objects.filter(command_type="TEMP")) == 0
@@ -355,7 +369,11 @@ class TestMongoPruner(object):
         assert db["fs.files"].count() == 0
         assert db["fs.chunks"].count() == 0
 
-    def test_run_cancels_outstanding_requests(self, task, in_progress, created):
+    @patch("beer_garden.db.mongo.pruner.datetime")
+    def test_run_cancels_outstanding_requests(
+        self, mock_datetime, task, in_progress, created
+    ):
+        mock_datetime.now.return_value = FAKE_TIME
         config._CONFIG = {
             "db": {"prune": {"in_progress_request_expiration": 1, "batch_size": -1}}
         }
@@ -455,7 +473,9 @@ class TestMissedTempPruner(object):
         parent.delete()
         child.delete()
 
-    def test_missed_temp_pruner(self, missed_child_request):
+    @patch("beer_garden.db.mongo.pruner.datetime")
+    def test_missed_temp_pruner(self, mock_datetime, missed_child_request):
+        mock_datetime.now.return_value = FAKE_TIME
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 1}}}
         assert len(Request.objects.filter(command_type="TEMP")) == 1
 
