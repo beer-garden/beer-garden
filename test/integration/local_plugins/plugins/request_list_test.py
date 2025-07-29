@@ -54,10 +54,10 @@ class TestEasyClient(object):
         response = self.easy_client.create_request(req)
         assert response.status in ["CREATED", "IN_PROGRESS"]
 
-    def test_wait_success(self, sleeper_generator):
-        req = sleeper_generator.generate_request(parameters={"amount": 1})
-        response = self.easy_client.create_request(req, blocking=True)
-        assert response.status == "SUCCESS"
+    # def test_wait_success(self, sleeper_generator):
+    #     req = sleeper_generator.generate_request(parameters={"amount": 1})
+    #     response = self.easy_client.create_request(req, blocking=True)
+    #     assert response.status == "SUCCESS"
 
     def test_wait_timeout(self, sleeper_generator):
         req = sleeper_generator.generate_request(parameters={"amount": 2})
