@@ -1,12 +1,12 @@
 # Beer Garden Changelog
 
+## 3.31.0
+
+- TEMP Requests that spawn child requests are overiden to TEMP when created if ACTION or INFO
+
 # 3.30.0
 
 TBD
-
-## 3.30.0rc3
-
-- TEMP Requests that spawn child requests are overiden to TEMP when created if ACTION or INFO
 
 ## 3.30.0rc2
 
