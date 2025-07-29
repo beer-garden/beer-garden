@@ -18,7 +18,6 @@ from beer_garden.db.mongo.models import (
     RequestTemplate,
 )
 from beer_garden.db.mongo.pruner import (
-    determine_tasks,
     prune_action_requests,
     prune_admin_requests,
     prune_files,
@@ -385,69 +384,6 @@ class TestMongoPruner(object):
         new_created = Request.objects.get(id=created.id)
         assert new_in_progress.status == "IN_PROGRESS"
         assert new_created.status == "CREATED"
-
-
-class TestDetermineTasks(object):
-    def test_determine_tasks(self):
-        info_tasks = determine_tasks("info", 5)
-        action_tasks = determine_tasks("action", 10)
-        admin_tasks = determine_tasks("admin", 20)
-        file_tasks = determine_tasks("file", 15)
-
-        assert len(info_tasks) == 1
-        assert len(action_tasks) == 1
-        assert len(admin_tasks) == 1
-        assert len(file_tasks) == 2
-
-        info_task = info_tasks[0]
-        action_task = action_tasks[0]
-        admin_task = admin_tasks[0]
-        file_task = file_tasks[0]
-        raw_file_task = file_tasks[1]
-
-        assert info_task["collection"] == Request
-        assert action_task["collection"] == Request
-        assert file_task["collection"] == File
-        assert raw_file_task["collection"] == RawFile
-        assert admin_task["collection"] == Request
-
-        assert info_task["field"] == "created_at"
-        assert action_task["field"] == "created_at"
-        assert file_task["field"] == "updated_at"
-        assert raw_file_task["field"] == "created_at"
-        assert admin_task["field"] == "created_at"
-
-        assert info_task["delete_after"] == timedelta(minutes=5)
-        assert action_task["delete_after"] == timedelta(minutes=10)
-        assert file_task["delete_after"] == timedelta(minutes=15)
-        assert raw_file_task["delete_after"] == timedelta(minutes=15)
-        assert admin_task["delete_after"] == timedelta(minutes=20)
-
-    def test_setup_pruning_tasks_empty(self):
-        prune_tasks = determine_tasks("info", -1)
-        assert prune_tasks == []
-        prune_tasks = determine_tasks("action", 0)
-        assert prune_tasks == []
-
-    def test_setup_pruning_tasks_one(self):
-        prune_tasks = determine_tasks("info", -1)
-        assert len(prune_tasks) == 0
-        prune_tasks = determine_tasks("action", 1)
-        assert len(prune_tasks) == 1
-
-    def test_setup_pruning_tasks_mixed(self):
-        prune_tasks = determine_tasks("action", -1)
-        assert len(prune_tasks) == 0
-        prune_tasks = determine_tasks("info", 5)
-        assert len(prune_tasks) == 1
-
-        info_task = prune_tasks[0]
-
-        assert info_task["collection"] == Request
-
-        assert info_task["field"] == "created_at"
-
-        assert info_task["delete_after"] == timedelta(minutes=5)
 
 
 class TestMissedTempPruner(object):
