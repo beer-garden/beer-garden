@@ -110,6 +110,7 @@ def add_internal_events_handler(event_manager):
             "filters": [
                 Events.SYSTEM_CREATED,
                 Events.SYSTEM_UPDATED,
+                Events.SYSTEM_REMOVED,
                 Events.GARDEN_SYNC,
                 Events.GARDEN_CONFIGURED,
                 Events.GARDEN_REMOVED,

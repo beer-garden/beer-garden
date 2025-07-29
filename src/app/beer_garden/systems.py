@@ -149,16 +149,29 @@ def create_system(system: System) -> System:
     # Create in the database
     system = db.create(system)
 
-    # Also need to let the routing module know
-    from beer_garden.router import add_routing_system
+    return system
 
-    add_routing_system(system=system)
+
+@publish_event(Events.SYSTEM_UPDATED)
+def update_system(system: System) -> System:
+    """Update an existing System
+
+    Args:
+        system: The System to update
+
+    Returns:
+        The updated System
+
+    """
+
+    # Update in the database
+    system = db.update(system)
 
     return system
 
 
 @publish_event(Events.SYSTEM_UPDATED)
-def update_system(
+def modify_system(
     system_id: str = None,
     system: System = None,
     new_commands: Sequence[Command] = None,
@@ -286,7 +299,7 @@ def upsert(system: System) -> System:
             System, namespace=system.namespace, name=system.name, version=system.version
         )
 
-        return update_system(
+        return modify_system(
             system=existing,
             new_commands=system.commands,
             add_instances=system.instances,
@@ -329,11 +342,6 @@ def remove_system(system_id: str = None, system: System = None) -> System:
     system = system or db.query_unique(System, id=system_id)
 
     db.delete(system)
-
-    # Also need to let the routing module know
-    from beer_garden.router import remove_routing_system
-
-    remove_routing_system(system=system)
 
     return system
 
@@ -525,7 +533,7 @@ def handle_event(event: Event) -> None:
 
                 # Update if the ID matches
                 if db.count(System, id=event.payload.id) > 0:
-                    db.update(event.payload)
+                    update_system(event.payload)
                 # Find and update if payload was missing ID
                 elif (
                     db.count(
@@ -542,10 +550,10 @@ def handle_event(event: Event) -> None:
                         name=event.payload.name,
                         version=event.payload.version,
                     ).id
-                    db.update(event.payload)
+                    update_system(event.payload)
                 # Create object
                 else:
-                    db.create(event.payload)
+                    create_system(event.payload)
 
         elif event.name == Events.SYSTEM_REMOVED.name:
-            db.delete(event.payload)
+            remove_system(event.payload)

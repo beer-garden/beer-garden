@@ -130,7 +130,7 @@ route_functions = {
     "SYSTEM_CREATE": beer_garden.systems.upsert,
     "SYSTEM_READ": beer_garden.systems.get_system,
     "SYSTEM_READ_ALL": beer_garden.systems.get_systems,
-    "SYSTEM_UPDATE": beer_garden.systems.update_system,
+    "SYSTEM_UPDATE": beer_garden.systems.modify_system,
     "SYSTEM_RELOAD": beer_garden.systems.reload_system,
     "SYSTEM_RESCAN": beer_garden.local_plugins.manager.rescan,  # See RUNNER_RESCAN
     "SYSTEM_DELETE": beer_garden.systems.purge_system,

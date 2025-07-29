@@ -8,7 +8,7 @@ from mongoengine import connect
 
 from beer_garden import config
 from beer_garden.db.mongo.models import System
-from beer_garden.systems import create_system, get_systems, update_system
+from beer_garden.systems import create_system, get_systems, modify_system
 
 
 @pytest.fixture
@@ -111,7 +111,7 @@ class TestSystem:
         config._CONFIG = {"plugin": {"allow_command_updates": False}}
 
         with pytest.raises(ModelValidationError):
-            update_system(
+            modify_system(
                 system=system, new_commands=[BrewtilsCommand(name="changed_command")]
             )
 
@@ -120,7 +120,7 @@ class TestSystem:
         allow_command_updates config is set to True
         """
         config._CONFIG = {"plugin": {"allow_command_updates": True}}
-        updated_system = update_system(
+        updated_system = modify_system(
             system=system, new_commands=[BrewtilsCommand(name="changed_command")]
         )
         assert (

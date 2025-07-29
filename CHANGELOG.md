@@ -4,6 +4,10 @@
 
 TBD
 
+## 3.30.0rc3
+
+- Fixed System Event publishing for UI and Routing updates
+
 ## 3.30.0rc2
 
 - Updated Instance Status icon for Downstream Instances to reflect error states (#1907)
