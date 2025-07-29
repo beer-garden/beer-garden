@@ -796,6 +796,20 @@ def create_request(request: Request) -> Request:
     if request.target_garden is None:
         request.target_garden = config.get("garden.name")
 
+    if request.has_parent:
+        try:
+            parent = db.query_unique(
+                Request,
+                id=request.parent.id,
+                include_fields=["command_type"],
+                raise_missing=True,
+            )
+            if parent.command_type == "TEMP":
+                request.command_type = "TEMP"
+        except DoesNotExist:
+            request.has_parent = None
+            request.parent = None
+
     if hasattr(request.metadata, "_topic") and request.source_garden == config.get(
         "garden.name"
     ):

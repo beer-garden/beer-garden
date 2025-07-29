@@ -4,6 +4,10 @@
 
 TBD
 
+## 3.30.0rc3
+
+- TEMP Requests that spawn child requests are overiden to TEMP when created if ACTION or INFO
+
 ## 3.30.0rc2
 
 - Updated Instance Status icon for Downstream Instances to reflect error states (#1907)
