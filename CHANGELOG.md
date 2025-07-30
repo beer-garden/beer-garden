@@ -4,6 +4,10 @@
 
 TBD
 
+## 3.30.0rc3
+
+- Fixed UI bug where Config was not loaded on all pages to properly display Garden Name or Tab titles (#)
+
 ## 3.30.0rc2
 
 - Updated Instance Status icon for Downstream Instances to reflect error states (#1907)
