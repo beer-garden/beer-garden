@@ -561,8 +561,8 @@ export default function appRun(
   }
 
   EventService.addCallback('global_systems', (event) => {
-    if ($rootScope.garden !== undefined && event.garden == $rootScope.garden.name && event.name == "GARDEN_UPDATED"){
-      if ($rootScope.garden.name== event.payload.name){
+    if ($rootScope.garden !== undefined && event.garden == $rootScope.garden.name && ["GARDEN_UPDATED", "GARDEN_UPSERT"].includes(event.name)) {
+      if ($rootScope.garden.name == event.payload.name) {
         $rootScope.garden = event.payload;
       } else {
         $rootScope.garden = updateGardenChildren($rootScope.garden, event.payload);
