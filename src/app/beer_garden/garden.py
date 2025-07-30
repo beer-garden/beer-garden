@@ -551,6 +551,11 @@ def upsert_garden(garden: Garden, skip_connections: bool = True) -> Garden:
 
         garden = db.update(existing_garden)
 
+    # Cleanup model size before returning
+    for system in garden.systems:
+        for instance in system.instances:
+            instance.status_info = None
+
     garden.children = children
     return garden
 
