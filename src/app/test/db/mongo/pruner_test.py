@@ -198,6 +198,56 @@ class TestMongoPruner(object):
         assert len(Request.objects.filter(command_type="INFO")) == 0
 
     @patch("beer_garden.db.mongo.pruner.datetime")
+    def test_prune_info_requests_children(self, mock_datetime):
+        mock_datetime.now.return_value = FAKE_TIME
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"info": 1}}}}
+
+        grandparent = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="G",
+            created_at=datetime.datetime.now(timezone.utc) - timedelta(minutes=60),
+            status="SUCCESS",
+            command_type="INFO",
+        )
+        grandparent.save()
+
+        parent = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="P",
+            created_at=datetime.datetime.now(timezone.utc) - timedelta(minutes=60),
+            status="SUCCESS",
+            command_type="INFO",
+            has_parent=True,
+            parent=grandparent,
+        )
+        parent.save()
+
+        child = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="C",
+            created_at=datetime.datetime.now(timezone.utc) - timedelta(minutes=60),
+            status="SUCCESS",
+            command_type="INFO",
+            has_parent=True,
+            parent=parent,
+        )
+
+        child.save()
+        parent.save()
+
+        prune_info_requests()
+        assert len(Request.objects.filter(command_type="INFO")) == 0
+
+    @patch("beer_garden.db.mongo.pruner.datetime")
     def test_prune_action_requests(self, mock_datetime, action_request):
         mock_datetime.now.return_value = FAKE_TIME
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"action": 1}}}}

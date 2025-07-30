@@ -95,6 +95,11 @@ def prune_request_cursor(
 
             request_ids.append(request.id)
 
+            # Recursively collect all request children as list of ObjectIds
+            child_request_ids = get_all_request_children_ids(request=request)
+            if child_request_ids:
+                request_ids.extend(child_request_ids)
+
             if request.output_gridfs:
                 try:
                     request_grids_fs_files.append(request.output_gridfs._id)
@@ -212,6 +217,20 @@ def delete_requests(
 
     if len(request_raw_files) > 0:
         logger.debug(f"{len(request_raw_files)} Raw files deleted for {label} Requests")
+
+
+def get_all_request_children_ids(request, request_children_ids=None):
+    if request_children_ids is None:
+        request_children_ids = []
+
+    if request:
+        request.children = Request.objects(parent=request).only("id")
+        for child in request.children:
+            request_children_ids.append(child.id)
+            get_all_request_children_ids(
+                request=child, request_children_ids=request_children_ids
+            )
+    return request_children_ids
 
 
 def prune_files():
