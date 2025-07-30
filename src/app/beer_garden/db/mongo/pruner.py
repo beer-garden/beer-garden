@@ -51,54 +51,76 @@ def prune_requests(ttl_name):
     else:
         ttl_length = config.get(f"db.prune.ttl.{ttl_name}")
 
-    query = (
-        Q(updated_at__lt=current_time - timedelta(minutes=ttl_length))
-        & (Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR"))
-        & Q(has_parent=False)
+    query = Q(updated_at__lt=current_time - timedelta(minutes=ttl_length)) & (
+        Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
     )
 
     if ttl_name == "admin":
-        query = query & Q(command_type="ADMIN")
+        query = query & Q(has_parent=False) & Q(command_type="ADMIN")
     elif ttl_name == "temp":
         query = query & Q(command_type="TEMP")
     elif ttl_name == "action":
-        query = query & (
-            Q(command_type="ACTION")
-            | Q(command_type=None)
-            | Q(command_type__exists=False)
+        query = (
+            query
+            & Q(has_parent=False)
+            & (
+                Q(command_type="ACTION")
+                | Q(command_type=None)
+                | Q(command_type__exists=False)
+            )
         )
     elif ttl_name == "info":
-        query = query & Q(command_type="INFO")
+        query = query & Q(has_parent=False) & Q(command_type="INFO")
 
     request_cursor = Request.objects(query).only(
         "id", "output_gridfs", "parameters_gridfs", "parameters"
     )
 
-    prune_request_cursor(request_cursor, batch_size, "Expired")
+    request_ids = []
+    request_raw_files = []
+    request_grids_fs_files = []
+
+    prune_request_cursor(
+        request_cursor,
+        batch_size,
+        "Expired",
+        request_ids,
+        request_raw_files,
+        request_grids_fs_files,
+    )
+
+    if len(request_ids) > 0:
+        delete_requests(
+            batch_size,
+            request_ids,
+            request_raw_files,
+            request_grids_fs_files,
+            "Expired",
+        )
 
 
 def prune_request_cursor(
     request_cursor,
     batch_size,
     label,
-    request_ids=None,
-    request_raw_files=None,
-    request_grids_fs_files=None,
+    request_ids,
+    request_raw_files,
+    request_grids_fs_files,
+    all_request_ids=None,
 ):
     """
     Helper function to prune a cursor of requests
+    request_ids, request_raw_files, request_grids_fs_files modify the list in place
+    so parent function can access for final delete
     """
-    if request_ids is None:
-        request_ids = []
-    if request_raw_files is None:
-        request_raw_files = []
-    if request_grids_fs_files is None:
-        request_grids_fs_files = []
+    if all_request_ids is None:
+        all_request_ids = set()
 
     for request in request_cursor:
         try:
-
-            request_ids.append(request.id)
+            if request.id not in all_request_ids:
+                all_request_ids.add(request.id)
+                request_ids.append(request.id)
 
             if request.output_gridfs:
                 try:
@@ -137,6 +159,7 @@ def prune_request_cursor(
                     request_ids,
                     request_raw_files,
                     request_grids_fs_files,
+                    all_request_ids,
                 )
 
             if batch_size > 0 and len(request_ids) > batch_size:
@@ -148,24 +171,15 @@ def prune_request_cursor(
                     request_grids_fs_files,
                     label,
                 )
-                request_ids = []
-                request_raw_files = []
-                request_grids_fs_files = []
+                request_ids.clear()
+                request_raw_files.clear()
+                request_grids_fs_files.clear()
 
         except DoesNotExist:
             logger.error(
                 f"DoesNotExist: Attempted to delete request {request.id} "
                 "but does not exist in database"
             )
-
-    if len(request_ids) > 0:
-        delete_requests(
-            batch_size,
-            request_ids,
-            request_raw_files,
-            request_grids_fs_files,
-            label,
-        )
 
 
 def delete_requests(

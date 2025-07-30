@@ -240,9 +240,7 @@ class TestMongoPruner(object):
             has_parent=True,
             parent=parent,
         )
-
         child.save()
-        parent.save()
 
         prune_info_requests()
         assert len(Request.objects.filter(command_type="INFO")) == 0
