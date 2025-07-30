@@ -681,7 +681,9 @@ def add_routing_garden(garden: Garden):
 
 def handle_event_filter(event):
 
-    # Only accept locally processed garden updates
+    # Only accept garden events that are for the local garden or been
+    # reprocessed by the Garden Event Handler 
+    # (i.e. GARDEN_UPSERT instead of GARDEN_SYNC)
     if "GARDEN" in event.name and event.garden != config.get("garden.name"):
         return True
 
