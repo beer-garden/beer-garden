@@ -81,24 +81,24 @@ def prune_request_cursor(
     request_cursor,
     batch_size,
     label,
+    request_ids=None,
+    request_raw_files=None,
+    request_grids_fs_files=None,
 ):
     """
     Helper function to prune a cursor of requests
     """
-
-    request_ids = []
-    request_raw_files = []
-    request_grids_fs_files = []
+    if request_ids is None:
+        request_ids = []
+    if request_raw_files is None:
+        request_raw_files = []
+    if request_grids_fs_files is None:
+        request_grids_fs_files = []
 
     for request in request_cursor:
         try:
 
             request_ids.append(request.id)
-
-            # Recursively collect all request children as list of ObjectIds
-            child_request_ids = get_all_request_children_ids(request=request)
-            if child_request_ids:
-                request_ids.extend(child_request_ids)
 
             if request.output_gridfs:
                 try:
@@ -126,6 +126,18 @@ def prune_request_cursor(
                     and param_value.get("id") is not None
                 ):
                     request_raw_files.append(param_value["id"])
+
+            # Get children
+            if request:
+                child_cursor = Request.objects(parent=request).only("id")
+                prune_request_cursor(
+                    child_cursor,
+                    batch_size,
+                    label,
+                    request_ids,
+                    request_raw_files,
+                    request_grids_fs_files,
+                )
 
             if batch_size > 0 and len(request_ids) > batch_size:
                 # Delete the batch of requests to keep in memory usage down
@@ -217,20 +229,6 @@ def delete_requests(
 
     if len(request_raw_files) > 0:
         logger.debug(f"{len(request_raw_files)} Raw files deleted for {label} Requests")
-
-
-def get_all_request_children_ids(request, request_children_ids=None):
-    if request_children_ids is None:
-        request_children_ids = []
-
-    if request:
-        request.children = Request.objects(parent=request).only("id")
-        for child in request.children:
-            request_children_ids.append(child.id)
-            get_all_request_children_ids(
-                request=child, request_children_ids=request_children_ids
-            )
-    return request_children_ids
 
 
 def prune_files():
