@@ -956,6 +956,12 @@ class System(MongoModel, Document):
         super().delete(**kwargs)
 
     def save(self, **kwargs):
+        max_history = config.get("plugin.status_history", default=5)
+        for instance in self.instances:
+            if instance.status_info and len(instance.status_info.history) > max_history:
+                instance.status_info.history = instance.status_info.history[
+                    (max_history * -1) :
+                ]
 
         if self.local:
             self.save_topics(config.get("garden.name"))
@@ -1226,6 +1232,25 @@ class Garden(MongoModel, Document):
     }
 
     def deep_save(self):
+        max_history = config.get("garden.status_history", default=5)
+        for connection in self.receiving_connections:
+            if (
+                connection.status_info
+                and len(connection.status_info.history) > max_history
+            ):
+                connection.status_info.history = connection.status_info.history[
+                    (max_history * -1) :
+                ]
+
+        for connection in self.publishing_connections:
+            if (
+                connection.status_info
+                and len(connection.status_info.history) > max_history
+            ):
+                connection.status_info.history = connection.status_info.history[
+                    (max_history * -1) :
+                ]
+
         if self.connection_type != "LOCAL":
             self._update_associated_systems()
 

@@ -315,7 +315,9 @@ def update_api_heartbeat(operation: Operation):
 
             if operation.model.payload.name != operation.source_garden_name:
 
-                local_garden = get_garden(config.get("garden.name"))
+                local_garden = get_garden(
+                    config.get("garden.name"), include_fields=["name"]
+                )
 
                 # Will only support mapping 1 hop away legacy Garden Syncs
                 multi_hop_garden = True
@@ -364,7 +366,16 @@ def invalid_source_check(operation: Operation):
                 return False
 
     try:
-        loaded_garden = beer_garden.garden.get_garden(operation.source_garden_name)
+        loaded_garden = beer_garden.garden.get_garden(
+            operation.source_garden_name,
+            include_fields=[
+                "name",
+                "receiving_connections__api",
+                "receiving_connections__status",
+                "publishing_connections__api",
+                "publishing_connections__status",
+            ],
+        )
         logger.warning(
             f"Garden {operation.source_garden_name} exists in database and "
             " not in memory routing table, loading into routing table"
@@ -442,7 +453,17 @@ def determine_route_garden(target_garden_name):
     target_garden = gardens.get(target_garden_name)
 
     if not target_garden:
-        target_garden = get_garden(target_garden_name)
+        target_garden = get_garden(
+            target_garden_name,
+            include_fields=[
+                "receiving_connections__api",
+                "receiving_connections__status",
+                "publishing_connections__api",
+                "publishing_connections__status",
+                "has_parent",
+                "parent",
+            ],
+        )
 
     routable = False
     for connection in target_garden.publishing_connections:
@@ -486,7 +507,9 @@ def forward(operation: Operation):
     target_garden = gardens.get(operation.target_garden_name)
 
     if not target_garden:
-        target_garden = get_garden(operation.target_garden_name)
+        target_garden = get_garden(
+            operation.target_garden_name, include_fields=["name"]
+        )
 
     route_garden = determine_route_garden(operation.target_garden_name)
     try:
@@ -549,11 +572,17 @@ def setup_routing():
     It will then query the database for all local systems and add those to the
     dictionaries as well.
     """
-    for system in db.query(System, filter_params={"local": True}):
+    for system in db.query(
+        System,
+        filter_params={"local": True},
+        include_fields=["id", "name", "version", "namespace", "instances__id"],
+    ):
         add_routing_system(system)
 
     # Don't add the local garden
-    for garden in get_gardens(include_local=False):
+    for garden in get_gardens(
+        include_local=False,
+    ):
         if garden.name != config.get("garden.name") and (
             (garden.has_parent and garden.parent == config.get("garden.name"))
             or not garden.has_parent
@@ -811,7 +840,7 @@ def _pre_forward(operation: Operation) -> Operation:
 
             if user_default_user:
                 operation.model.requester = get_garden(
-                    operation.target_garden_name
+                    operation.target_garden_name, include_fields=["default_user"]
                 ).default_user
 
         # Pull out and store the wait event, if it exists
@@ -952,7 +981,16 @@ def _system_name_lookup(system: Union[str, System]) -> str:
             version=system.version,
         )
         if len(systems) == 1:
-            for garden in get_gardens():
+            for garden in get_gardens(
+                include_fields=[
+                    "name",
+                    "systems__id",
+                    "systems__name",
+                    "systems__version",
+                    "systems__namespace",
+                    "systems__instances__id",
+                ]
+            ):
                 for system in garden.systems:
                     if systems[0].id == system.id:
                         with routing_lock:
