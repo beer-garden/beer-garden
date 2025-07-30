@@ -4,6 +4,10 @@
 
 TBD
 
+## 3.30.0rc3
+
+- Fixed bug in UI where missing Children on Garden model errored on isSystemRoutable UI filter (#1938)
+
 ## 3.30.0rc2
 
 - Updated Instance Status icon for Downstream Instances to reflect error states (#1907)
