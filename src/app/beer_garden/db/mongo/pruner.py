@@ -118,9 +118,11 @@ def prune_request_cursor(
 
     for request in request_cursor:
         try:
-            if request.id not in all_request_ids:
-                all_request_ids.add(request.id)
-                request_ids.append(request.id)
+            if request.id in all_request_ids:
+                continue
+
+            all_request_ids.add(request.id)
+            request_ids.append(request.id)
 
             if request.output_gridfs:
                 try:
