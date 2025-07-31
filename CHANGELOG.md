@@ -4,6 +4,10 @@
 
 TBD
 
+## 3.30.0rc3
+
+- Updated Request Event Handler to check Status to determine action instead of event type (#1939)
+
 ## 3.30.0rc2
 
 - Updated Instance Status icon for Downstream Instances to reflect error states (#1907)
