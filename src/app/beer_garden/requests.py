@@ -1175,22 +1175,24 @@ def handle_event(event):
             return
 
         # Only care about downstream garden
-        if (
-            event.name == Events.REQUEST_CREATED.name
-            or event.payload.status == "CREATED"
-        ):
+        if event.payload.status == "CREATED":
             created_request = handle_event_create(event)
             if created_request:
                 handle_event_rebroadcast(event.name, created_request)
-        elif event.name == Events.REQUEST_STARTED.name or event.payload.status in (
-            "RECEIVED",
-            "IN_PROGRESS",
-        ):
+            return
+
+        elif event.payload.status not in Request.COMPLETED_STATUSES:
             existing_request = db.query_unique(
                 Request, id=event.payload.id, include_fields=["status", "metadata"]
             )
 
-            if existing_request and existing_request.status != event.payload.status:
+            if existing_request:
+                if existing_request.status == event.payload.status:
+                    return
+
+                if existing_request.status in Request.COMPLETED_STATUSES:
+                    return
+
                 if (
                     event.payload.status == "RECEIVED"
                     and existing_request.status in ["CREATED"]
@@ -1224,26 +1226,12 @@ def handle_event(event):
                 if created_request:
                     handle_event_rebroadcast(event.name, created_request)
             return
-        else:
+        else:  # Only Completed statuses are handled in this else statement
             existing_request = db.query_unique(Request, id=event.payload.id)
 
             if existing_request and existing_request.status != event.payload.status:
                 # Skip status that revert
-                if existing_request.status in (
-                    "CANCELED",
-                    "SUCCESS",
-                    "ERROR",
-                    "INVALID",
-                ):
-                    return
-                if (
-                    existing_request.status == "IN_PROGRESS"
-                    and event.payload.status
-                    in (
-                        "CREATED",
-                        "RECEIVED",
-                    )
-                ):
+                if existing_request.status in Request.COMPLETED_STATUSES:
                     return
 
             if existing_request is None:
@@ -1251,7 +1239,6 @@ def handle_event(event):
                 if created_request:
                     handle_event_rebroadcast(event.name, event.payload)
             else:
-                request_changed = {}
                 # When we send child requests to child gardens where the parent was on
                 # the local garden we remove the parent before sending them. Only setting
                 # the subset of fields that change "corrects" the parent
@@ -1263,6 +1250,8 @@ def handle_event(event):
                     "updated_at",
                     "command_type",
                     "metadata",
+                    "output",
+                    "error_class",
                 ):
                     new_value = getattr(event.payload, field)
                     # Merge metadata
@@ -1270,27 +1259,11 @@ def handle_event(event):
                         new_value = {**getattr(existing_request, field), **new_value}
 
                     if getattr(existing_request, field) != new_value:
-                        request_changed[field] = new_value
                         setattr(existing_request, field, new_value)
 
-                # Add output fields only if the status changes to a compelted state
-                if "status" in request_changed:
-                    if event.payload.status in (
-                        "CANCELED",
-                        "SUCCESS",
-                        "ERROR",
-                        "INVALID",
-                    ):
-                        if event.payload.output:
-                            request_changed["output"] = event.payload.output
-                            existing_request.output = event.payload.output
-                        if event.payload.error_class:
-                            request_changed["error_class"] = event.payload.error_class
-                            existing_request.error_class = event.payload.error_class
 
-                if request_changed:
-                    db.update_direct(existing_request)
-                    handle_event_rebroadcast(event.name, existing_request)
+                db.update_direct(existing_request)
+                handle_event_rebroadcast(event.name, existing_request)
 
 
 def clean_command_type_temp(request: Request, is_remote: bool):
