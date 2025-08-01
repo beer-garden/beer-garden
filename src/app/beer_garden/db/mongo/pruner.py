@@ -106,22 +106,14 @@ def prune_request_cursor(
     request_ids,
     request_raw_files,
     request_grids_fs_files,
-    all_request_ids=None,
 ):
     """
     Helper function to prune a cursor of requests
     request_ids, request_raw_files, request_grids_fs_files modify the list in place
     so parent function can access for final delete
     """
-    if all_request_ids is None:
-        all_request_ids = set()
-
     for request in request_cursor:
         try:
-            if request.id in all_request_ids:
-                continue
-
-            all_request_ids.add(request.id)
             request_ids.append(request.id)
 
             if request.output_gridfs:
@@ -153,7 +145,9 @@ def prune_request_cursor(
 
             # Get children
             if request:
-                child_cursor = Request.objects(parent=request).only("id")
+                child_cursor = Request.objects(parent=request).only(
+                    "id", "output_gridfs", "parameters_gridfs", "parameters"
+                )
                 prune_request_cursor(
                     child_cursor,
                     batch_size,
@@ -161,21 +155,7 @@ def prune_request_cursor(
                     request_ids,
                     request_raw_files,
                     request_grids_fs_files,
-                    all_request_ids,
                 )
-
-            if batch_size > 0 and len(request_ids) > batch_size:
-                # Delete the batch of requests to keep in memory usage down
-                delete_requests(
-                    batch_size,
-                    request_ids,
-                    request_raw_files,
-                    request_grids_fs_files,
-                    label,
-                )
-                request_ids.clear()
-                request_raw_files.clear()
-                request_grids_fs_files.clear()
 
         except DoesNotExist:
             logger.error(
