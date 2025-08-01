@@ -4,6 +4,10 @@
 
 TBD
 
+## 3.30.0rc3
+
+- Reverted expiration field from #1904/#1870. Refactored request pruner to push forward cursor for bulk deletes (#1924)
+
 ## 3.30.0rc2
 
 - Updated Instance Status icon for Downstream Instances to reflect error states (#1907)
