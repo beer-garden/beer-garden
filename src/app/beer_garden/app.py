@@ -459,6 +459,7 @@ class Application(StoppableThread):
             )
 
             event_manager.register(
+                # Keep filter list in sync with Stomp StompManager._event_handler()
                 HttpParentUpdater(
                     easy_client=easy_client,
                     reconnect_action=reconnect_action,

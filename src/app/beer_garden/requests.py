@@ -41,6 +41,7 @@ from brewtils.pika import PERSISTENT_DELIVERY_MODE
 from mongoengine import DoesNotExist
 from packaging.version import InvalidVersion
 from packaging.version import parse as versionParse
+from pymongo.errors import BulkWriteError
 from requests import Session
 
 import beer_garden.config as config
@@ -1140,8 +1141,8 @@ def handle_event_create(event):
                     if foundUser:
                         break
 
-        return db.create(event.payload)
-    except NotUniqueException:
+        return db.create_direct(event.payload)
+    except (NotUniqueException, BulkWriteError):
         return
 
 
@@ -1286,7 +1287,7 @@ def handle_event(event):
                             existing_request.error_class = event.payload.error_class
 
                 if request_changed:
-                    db.update(existing_request)
+                    db.update_direct(existing_request)
                     handle_event_rebroadcast(event.name, existing_request)
 
 
