@@ -614,6 +614,85 @@ def reset_last_configuration():
     configuration.save()
 
 
+def update_ttl_indexes():
+    from mongoengine.connection import get_db
+
+    db = get_db()
+
+    action_ttl = config.get("db.prune.ttl.action", default=-1)
+    info_ttl = config.get("db.prune.ttl.info", default=-1)
+
+    previous_config = db.get_collection("configuration").find_one()
+
+    if not previous_config:
+        previous_config = {}
+
+    if (
+        action_ttl != previous_config.get("action_ttl", -1)
+        or "action_created_at_index_ttl" not in db["request"].index_information()
+        or "action_created_at_gridfs_index_ttl"
+        not in db["fs.files"].index_information()
+    ):
+        if "action_created_at_index_ttl" in db["request"].index_information():
+            db["request"].drop_index("action_created_at_index_ttl")
+
+        if "action_created_at_gridfs_index_ttl" in db["fs.files"].index_information():
+            db["fs.files"].drop_index("action_created_at_gridfs_index_ttl")
+
+        if action_ttl > -1:
+            db["request"].create_index(
+                [("created_at", 1)],
+                name="action_created_at_index_ttl",
+                expireAfterSeconds=action_ttl * 60,
+                partialFilterExpression={
+                    "root_command_type": "ACTION",
+                    "status": {"$in": Request.COMPLETED_STATUSES},
+                },
+            )
+
+            db["fs.files"].create_index(
+                [("uploadDate", 1)],
+                name="action_created_at_gridfs_index_ttl",
+                expireAfterSeconds=action_ttl * 60,
+                partialFilterExpression={
+                    "root_command_type": "ACTION",
+                    "status": {"$in": Request.COMPLETED_STATUSES},
+                },
+            )
+
+    if (
+        info_ttl != previous_config.get("info_ttl", -1)
+        or "info_created_at_index_ttl" not in db["request"].index_information()
+        or "info_created_at_gridfs_index_ttl" not in db["fs.files"].index_information()
+    ):
+        if "info_created_at_index_ttl" in db["request"].index_information():
+            db["request"].drop_index("info_created_at_index_ttl")
+
+        if "info_created_at_gridfs_index_ttl" in db["fs.files"].index_information():
+            db["fs.files"].drop_index("info_created_at_gridfs_index_ttl")
+
+        if info_ttl > -1:
+            db["request"].create_index(
+                [("created_at", 1)],
+                name="info_created_at_index_ttl",
+                expireAfterSeconds=info_ttl * 60,
+                partialFilterExpression={
+                    "root_command_type": "INFO",
+                    "status": {"$in": Request.COMPLETED_STATUSES},
+                },
+            )
+
+            db["fs.files"].create_index(
+                [("uploadDate", 1)],
+                name="info_created_at_gridfs_index_ttl",
+                expireAfterSeconds=info_ttl * 60,
+                partialFilterExpression={
+                    "root_command_type": "INFO",
+                    "status": {"$in": Request.COMPLETED_STATUSES},
+                },
+            )
+
+
 def check_indexes(document_class):
     """Ensures indexes are correct.
 
@@ -636,30 +715,54 @@ def check_indexes(document_class):
     from .models import Request
 
     try:
-        # Building the indexes could take a while so it'd be nice to give some
-        # indication of what's happening. This would be perfect but can't use
-        # it! It's broken for text indexes!! MongoEngine is awesome!!
-        # diff = collection.compare_indexes(); if diff['missing'] is not None...
 
-        # Since we can't ACTUALLY compare the index spec with what already
-        # exists without ridiculous effort:
-        spec = document_class.list_indexes()
         existing = document_class._get_collection().index_information()
 
         if document_class == Request and "parent_instance_index" in existing:
             raise IndexOperationError("Old Request index found, rebuilding")
 
-        if len(spec) < len(existing):
-            raise IndexOperationError("Extra index found, rebuilding")
+        # Build up list of current indexes
+        spec_indexes = []
+        for spec_index in document_class._meta["indexes"]:
+            if isinstance(spec_index, dict):
+                spec_indexes.append(spec_index["name"])
+            elif isinstance(spec_index, str):
+                raise IndexOperationError(
+                    "Index %s does not have name, must rebuild all indexes", spec_index
+                )
 
-        if len(spec) > len(existing):
-            logger.warning(
-                "Found missing %s indexes, about to build them. This could "
-                "take a while :)",
-                document_class.__name__,
-            )
+        # Only check for BG created indexes that end in "_index"
+        # This skips manual pruner indexes because they end in "_index_ttl"
+        for index, _ in existing.items():
+            if index.endswith("_index") and index and index not in spec_indexes:
+                logger.warning(
+                    "Found extra %s index for %s, about to delete it. This could "
+                    "take a while :)",
+                    index,
+                    document_class.__name__,
+                )
+                db = get_db()
+                db[document_class.__name__.lower()].drop_index(index)
 
-        document_class.ensure_indexes()
+        # Add missing indexes
+        for spec_index in document_class._meta["indexes"]:
+            if isinstance(spec_index, dict):
+
+                if spec_index["name"] not in existing:
+                    new_index = {"background": True}
+                    for key, value in spec_index.items():
+                        if key == "fields":
+                            new_index["keys"] = value
+                        else:
+                            new_index[key] = value
+
+                    logger.warning(
+                        "Found missing %s index for %s, about to build it. This could "
+                        "take a while :)",
+                        spec_index["name"],
+                        document_class.__name__,
+                    )
+                    document_class.create_index(**new_index)
 
     except (IndexOperationError, OperationFailure):
         logger.warning(

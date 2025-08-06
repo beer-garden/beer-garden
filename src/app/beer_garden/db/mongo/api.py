@@ -24,6 +24,7 @@ from beer_garden.db.mongo.util import (
     check_indexes,
     ensure_local_garden,
     ensure_model_migration,
+    update_ttl_indexes,
 )
 from beer_garden.errors import NotUniqueException
 
@@ -189,6 +190,8 @@ def initial_setup():
         beer_garden.db.mongo.models.Topic,
     ):
         check_indexes(doc)
+
+    update_ttl_indexes()
 
     ensure_local_garden()
 

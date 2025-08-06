@@ -47,6 +47,7 @@ from mongoengine import (
     ReferenceField,
     StringField,
 )
+from mongoengine.connection import get_db
 from mongoengine.errors import DoesNotExist
 from pymongo.errors import DocumentTooLarge
 
@@ -377,7 +378,6 @@ class Request(MongoModel, Document):
             {"name": "instance_name_index", "fields": ["instance_name"]},
             {"name": "namespace_index", "fields": ["namespace"]},
             {"name": "status_index", "fields": ["status"]},
-            {"name": "created_at_index", "fields": ["created_at"]},
             {"name": "updated_at_index", "fields": ["updated_at"]},
             {"name": "status_updated_at_index", "fields": ["status_updated_at"]},
             {"name": "comment_index", "fields": ["comment"]},
@@ -490,7 +490,11 @@ class Request(MongoModel, Document):
 
     def _spill_parameters_to_gridfs(self):
 
-        self.parameters_gridfs.put(json.dumps(self.parameters), encoding="utf-8")
+        self.parameters_gridfs.put(
+            json.dumps(self.parameters),
+            encoding="utf-8",
+            parameters=True,
+        )
         self.parameters = None
 
     def _pre_save(self):
@@ -507,17 +511,6 @@ class Request(MongoModel, Document):
         # perform a potentially dangerous rework of the entire Request update flow,
         # we opt to just pull the Request as it exists in the database so that we can
         # check those gridfs field.
-
-        if self.parameters_gridfs.grid_id:
-            self.parameters = None
-
-        if self.output and self.output_gridfs.grid_id is None:
-            if sys.getsizeof(self.output) > REQUEST_MAX_PARAM_SIZE:
-                logger.debug("Output size too big, storing in gridfs")
-                self.output_gridfs.put(self.output, encoding=encoding)
-
-        if self.output_gridfs.grid_id:
-            self.output = None
 
         if not self.metadata:
             self.metadata = {}
@@ -589,6 +582,53 @@ class Request(MongoModel, Document):
                 # to the same as this request
                 self.root_command_type = self.command_type
 
+        if self.parameters_gridfs.grid_id:
+            get_db()["fs.files"].update_one(
+                {"_id": self.parameters_gridfs.grid_id},
+                {
+                    "$set": {
+                        "status": self.status,
+                        "root_command_type": self.root_command_type,
+                    }
+                },
+            )
+            get_db()["fs.chunks"].update_many(
+                {"files_id": self.parameters_gridfs.grid_id},
+                {
+                    "$set": {
+                        "status": self.status,
+                        "uploadDate": self.parameters_gridfs.uploadDate,
+                        "root_command_type": self.root_command_type,
+                    }
+                },
+            )
+            self.parameters = None
+
+        if self.output and self.output_gridfs.grid_id is None:
+            if sys.getsizeof(self.output) > REQUEST_MAX_PARAM_SIZE:
+                logger.debug("Output size too big, storing in gridfs")
+                self.output_gridfs.put(
+                    self.output,
+                    encoding=encoding,
+                    output=True,
+                    root_command_type=self.root_command_type,
+                    status=self.status,
+                )
+
+                get_db()["fs.chunks"].update_many(
+                    {"files_id": self.output_gridfs.grid_id},
+                    {
+                        "$set": {
+                            "status": self.status,
+                            "root_command_type": self.root_command_type,
+                            "uploadDate": self.output_gridfs.uploadDate,
+                        }
+                    },
+                )
+
+        if self.output_gridfs.grid_id:
+            self.output = None
+
     def _set_child_expiration(self):
 
         updates = Request.objects(parent=self, expiration_at=None).update(
@@ -603,10 +643,42 @@ class Request(MongoModel, Document):
         if self.status == "CREATED":
             self._update_raw_file_references()
 
+        self._update_raw_file_pruning()
+
         if (
             self.expiration_at or not self.has_parent
         ) and self.status in BrewtilsRequest.COMPLETED_STATUSES:
             self._set_child_expiration()
+
+    def _update_raw_file_pruning(self):
+        parameters = self.parameters or {}
+
+        for param_value in parameters.values():
+            if (
+                isinstance(param_value, dict)
+                and param_value.get("type") == "bytes"
+                and param_value.get("id") is not None
+            ):
+                # Can't do this in this function because it only happens for CREATE
+                get_db()["fs.files"].update_one(
+                    {"_id": ObjectIdField().to_mongo(param_value["id"])},
+                    {
+                        "$set": {
+                            "status": self.status,
+                            "root_command_type": self.root_command_type,
+                        }
+                    },
+                )
+                get_db()["fs.chunks"].update_many(
+                    {"files_id": ObjectIdField().to_mongo(param_value["id"])},
+                    {
+                        "$set": {
+                            "status": self.status,
+                            "root_command_type": self.root_command_type,
+                            "uploadDate": self.created_at,
+                        }
+                    },
+                )
 
     def _update_raw_file_references(self):
         parameters = self.parameters or {}
@@ -1117,7 +1189,11 @@ class Replication(MongoModel, Document):
 
     meta = {
         "indexes": [
-            {"fields": ["expires_at"], "expireAfterSeconds": 0},
+            {
+                "name": "expires_at_index",
+                "fields": ["expires_at"],
+                "expireAfterSeconds": 0,
+            },
         ],
     }
 
@@ -1515,9 +1591,13 @@ class UserToken(MongoModel, Document):
 
     meta = {
         "indexes": [
-            "username",
-            "uuid",
-            {"fields": ["expires_at"], "expireAfterSeconds": 0},
+            {"name": "username_index", "fields": ["username"]},
+            {"name": "uuid_index", "fields": ["uuid"]},
+            {
+                "name": "expires_at_index",
+                "fields": ["expires_at"],
+                "expireAfterSeconds": 0,
+            },
         ]
     }
 
