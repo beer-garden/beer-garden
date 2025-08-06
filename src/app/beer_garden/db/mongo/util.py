@@ -660,6 +660,16 @@ def update_ttl_indexes():
                 },
             )
 
+            db["fs.chunks"].create_index(
+                [("uploadDate", 1)],
+                name="action_created_at_gridfs_chunk_index_ttl",
+                expireAfterSeconds=action_ttl * 60,
+                partialFilterExpression={
+                    "root_command_type": "ACTION",
+                    "status": {"$in": Request.COMPLETED_STATUSES},
+                },
+            )
+
     if (
         info_ttl != previous_config.get("info_ttl", -1)
         or "info_created_at_index_ttl" not in db["request"].index_information()
@@ -686,6 +696,16 @@ def update_ttl_indexes():
                 [("uploadDate", 1)],
                 name="info_created_at_gridfs_index_ttl",
                 expireAfterSeconds=info_ttl * 60,
+                partialFilterExpression={
+                    "root_command_type": "INFO",
+                    "status": {"$in": Request.COMPLETED_STATUSES},
+                },
+            )
+
+            db["fs.chunks"].create_index(
+                [("uploadDate", 1)],
+                name="info_created_at_gridfs_chunk_index_ttl",
+                expireAfterSeconds=action_ttl * 60,
                 partialFilterExpression={
                     "root_command_type": "INFO",
                     "status": {"$in": Request.COMPLETED_STATUSES},
