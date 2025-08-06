@@ -705,7 +705,7 @@ def update_ttl_indexes():
             db["fs.chunks"].create_index(
                 [("uploadDate", 1)],
                 name="info_created_at_gridfs_chunk_index_ttl",
-                expireAfterSeconds=action_ttl * 60,
+                expireAfterSeconds=info_ttl * 60,
                 partialFilterExpression={
                     "root_command_type": "INFO",
                     "status": {"$in": Request.COMPLETED_STATUSES},
