@@ -80,7 +80,7 @@ services:
             - beer-garden
 
     mongodb:
-        image: mongo:5.0
+        image: mongo:$MONGO_VERSION
         restart: always
         networks:
             - bg-network
