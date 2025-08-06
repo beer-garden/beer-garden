@@ -599,6 +599,7 @@ class Request(MongoModel, Document):
                         "status": self.status,
                         "uploadDate": self.parameters_gridfs.uploadDate,
                         "root_command_type": self.root_command_type,
+                        "parameter": True,
                     }
                 },
             )
@@ -622,6 +623,7 @@ class Request(MongoModel, Document):
                             "status": self.status,
                             "root_command_type": self.root_command_type,
                             "uploadDate": self.output_gridfs.uploadDate,
+                            "output": True,
                         }
                     },
                 )
@@ -666,6 +668,7 @@ class Request(MongoModel, Document):
                         "$set": {
                             "status": self.status,
                             "root_command_type": self.root_command_type,
+                            "parameter": True,
                         }
                     },
                 )
@@ -676,6 +679,7 @@ class Request(MongoModel, Document):
                             "status": self.status,
                             "root_command_type": self.root_command_type,
                             "uploadDate": self.created_at,
+                            "parameter": True,
                         }
                     },
                 )
