@@ -4,6 +4,15 @@
 
 TBD
 
+### MONGODB Update
+- With the update to utilize MongoDB's Expiration At TTL, minimum version for MongoDB is 
+  now 6.0. If you are running an older version, then set all TTLs to -1 to skip setting 
+  the index and manual pruning will be required by System Admins. 
+
+
+- Updated Request and GridFS to utilize MongoDB Expiration At feature in the indexes to 
+  handle pruning. (#1940)
+
 ## 3.30.0rc2
 
 - Updated Instance Status icon for Downstream Instances to reflect error states (#1907)
