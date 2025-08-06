@@ -597,7 +597,7 @@ class Request(MongoModel, Document):
                 {
                     "$set": {
                         "status": self.status,
-                        "uploadDate": self.parameters_gridfs.uploadDate,
+                        "uploadDate": self.created_at,
                         "root_command_type": self.root_command_type,
                         "parameter": True,
                     }
@@ -622,7 +622,7 @@ class Request(MongoModel, Document):
                         "$set": {
                             "status": self.status,
                             "root_command_type": self.root_command_type,
-                            "uploadDate": self.output_gridfs.uploadDate,
+                            "uploadDate": self.created_at,
                             "output": True,
                         }
                     },
