@@ -6,7 +6,8 @@ TBD
 
 ## 3.30.0rc3
 
-- Reverted expiration field from #1904/#1870. Refactored request pruner to push forward cursor for bulk deletes (#1924)
+- Reverted expiration field from #1904/#1870. Pushed forward root_command_type.
+  Refactored request pruner to push forward cursor for bulk deletes (#1924)
 
 ## 3.30.0rc2
 

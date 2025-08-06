@@ -362,6 +362,7 @@ class Request(MongoModel, Document):
     is_event = BooleanField(required=False)
     source_garden = StringField(required=False)
     target_garden = StringField(required=False)
+    root_command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES)
 
     meta = {
         "queryset_class": FileFieldHandlingQuerySet,
@@ -539,6 +540,23 @@ class Request(MongoModel, Document):
                 # Request is an Orphan, removing parent
                 self.has_parent = False
                 self.parent = None
+
+        if not self.has_parent or self.parent is None:
+            if not self.root_command_type:
+                self.root_command_type = self.command_type
+
+        elif not self.root_command_type:
+            # If this is a child request, we need to set the root_command_type
+            # to the same as the parent request
+            try:
+                parent_request = Request.objects.only("root_command_type").get(
+                    id=self.parent.id
+                )
+                self.root_command_type = parent_request.root_command_type
+            except DoesNotExist:
+                # Parent request was deleted, so we need to set the root_command_type
+                # to the same as this request
+                self.root_command_type = self.command_type
 
     def _post_save(self):
 
@@ -1463,4 +1481,6 @@ class Configuration(Document):
     # This is a snapshot of the configuration file last loaded
     # and is reset after migrations are completed. It should not
     # be used for optional configuration.
+    action_ttl = IntField(default=-1)
+    info_ttl = IntField(default=15)
     version = StringField(default="0.0.0")

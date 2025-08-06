@@ -332,6 +332,46 @@ def ensure_v3_30_model_migration():
         if len(garden_updates) > 0:
             garden_collection.bulk_write(garden_updates, ordered=False)
 
+    if missing_field("request", "root_command_type"):
+        logger.warning(
+            "Root Command Type was not found in Requests and will be added."
+            " This is most likely because the database is using the old (v3.29) style of"
+            " storing in the database."
+        )
+        request_collection = db.get_collection("request")
+        updates = []
+        for legacy_request in request_collection.find(
+            {"root_command_type": {"$exists": False}},
+            {
+                "command_type": 1,
+                "_id": 1,
+            },
+        ):
+            if legacy_request:
+
+                root_command_type = getattr(legacy_request, "command_type", "ACTION")
+
+                updates.append(
+                    UpdateOne(
+                        {"_id": legacy_request["_id"]},
+                        {
+                            "$set": {
+                                "root_command_type": root_command_type,
+                            }
+                        },
+                    )
+                )
+
+            if batch_size > 0 and len(updates) > batch_size:
+                request_collection.bulk_write(updates, ordered=False)
+                logger.warning(
+                    f"Migrating root_command_type for {len(updates)} Requests"
+                )
+                updates = []
+        if len(updates) > 0:
+            request_collection.bulk_write(updates, ordered=False)
+            logger.warning(f"Migrating root_command_type for {len(updates)} Requests")
+
 
 def ensure_model_migration():
     """Ensures that the database is properly migrated. All migrations ran from this
@@ -357,6 +397,24 @@ def ensure_model_migration():
         ensure_v3_30_model_migration()
         # After the 3.30.0 migration, we can start parsing the version to determine
         # which migrations to run
+
+    # This sets the last configuration for future migrations to reference
+    reset_last_configuration()
+
+
+def reset_last_configuration():
+    from .models import Configuration
+
+    Configuration.objects().delete()
+
+    # We only want to save certain fields from the config
+
+    configuration = Configuration(
+        action_ttl=config.get("db.prune.ttl.action", default=-1),
+        info_ttl=config.get("db.prune.ttl.info", default=-1),
+        version=str(beer_garden.__version__),
+    )
+    configuration.save()
 
 
 def check_indexes(document_class):
