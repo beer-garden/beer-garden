@@ -87,7 +87,7 @@ services:
             - prometheus
 
     mongodb:
-        image: mongo:5.1
+        image: mongo:6.0
         restart: always
         networks:
             - bg-network
