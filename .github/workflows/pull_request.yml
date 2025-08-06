@@ -224,9 +224,6 @@ jobs:
         python-version: ["3.8"]
         mongodb-version: ["4.2", "5.0", "6.0", "7.0", "8.0"]
         os: ["ubuntu-latest"]
-        include:
-          - python-version: "3.7"
-            os: "ubuntu-22.04"
       fail-fast: false
 
     name: MongoDB Version - ${{ matrix.mongodb-version }} - Python ${{ matrix.python-version }}
