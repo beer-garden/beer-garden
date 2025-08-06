@@ -205,27 +205,37 @@ class TestCheckIndexes(object):
     @patch("mongoengine.register_connection", Mock())
     def test_same_indexes(self, model_mocks):
         for model_mock in model_mocks.values():
-            model_mock.list_indexes = Mock(return_value=["index1"])
+            model_mock._meta = {"indexes": [{"name": "index1_index"}]}
             model_mock._get_collection = Mock(
-                return_value=Mock(index_information=Mock(return_value={"index1": {}}))
+                return_value=Mock(
+                    index_information=Mock(return_value={"index1_index": {}})
+                )
             )
+            model_mock.create_index = Mock()
 
         [beer_garden.db.mongo.util.check_indexes(doc) for doc in model_mocks.values()]
         for model_mock in model_mocks.values():
-            assert model_mock.ensure_indexes.call_count == 1
+            assert model_mock.create_index.call_count == 0
 
     @patch("mongoengine.connect", Mock())
     @patch("mongoengine.register_connection", Mock())
     def test_missing_index(self, model_mocks):
         for model_mock in model_mocks.values():
-            model_mock.list_indexes = Mock(return_value=["index1", "index2"])
-            model_mock._get_collection = Mock(
-                return_value=Mock(index_information=Mock(return_value={"index1": {}}))
-            )
+            model_mock._meta = {
+                "indexes": [{"name": "index1_index"}, {"name": "index2_index"}]
+            }
+
+            mock_collection = Mock()
+            mock_collection.index_information = Mock(return_value={"index1_index": {}})
+            mock_collection.drop_index = Mock()
+
+            model_mock._get_collection = Mock(return_value=mock_collection)
+
+            model_mock.create_index = Mock()
 
         [beer_garden.db.mongo.util.check_indexes(doc) for doc in model_mocks.values()]
         for model_mock in model_mocks.values():
-            assert model_mock.ensure_indexes.call_count == 1
+            assert model_mock.create_index.call_count == 1
 
     @patch("mongoengine.connection.get_db")
     @patch("mongoengine.connect", Mock())
@@ -233,15 +243,15 @@ class TestCheckIndexes(object):
     def test_successful_index_rebuild(self, get_db_mock, model_mocks):
         # 'normal' return values
         for model_mock in model_mocks.values():
-            model_mock.list_indexes = Mock(return_value=["index1"])
+            model_mock._meta = {"indexes": [{"name": "index1_index"}]}
             model_mock._get_collection = Mock(
                 return_value=MagicMock(
-                    index_information=Mock(return_value={"index1": {}})
+                    index_information=Mock(return_value={"index1_index": {}})
                 )
             )
 
         # ... except for this one
-        model_mocks["request"].list_indexes.side_effect = IndexOperationError("")
+        model_mocks["request"]._meta["indexes"][0] = ""
 
         db_mock = MagicMock()
         get_db_mock.return_value = db_mock
@@ -254,12 +264,15 @@ class TestCheckIndexes(object):
     @patch("mongoengine.connection.get_db")
     def test_unsuccessful_index_drop(self, get_db_mock, model_mocks):
         for model_mock in model_mocks.values():
-            model_mock.list_indexes = Mock(return_value=["index1"])
-            model_mock._get_collection = Mock(
-                return_value=Mock(index_information=Mock(return_value={"index1": {}}))
-            )
+            model_mock._meta = {"indexes": [{"name": "index1_index"}]}
 
-            model_mock.ensure_indexes.side_effect = IndexOperationError("")
+            mock_collection = Mock()
+            mock_collection.index_information = Mock(return_value={"index2_index": {}})
+            mock_collection.drop_index = Mock(side_effect=IndexOperationError(""))
+
+            model_mock._get_collection = Mock(return_value=mock_collection)
+
+            model_mock._get_collection.drop_index.side_effect = IndexOperationError("")
 
         get_db_mock.side_effect = IndexOperationError("")
 
@@ -271,13 +284,14 @@ class TestCheckIndexes(object):
     @patch("mongoengine.connection.get_db", MagicMock())
     def test_unsuccessful_index_rebuild(self, model_mocks):
         for model_mock in model_mocks.values():
-            model_mock.list_indexes = Mock(return_value=["index1"])
+            model_mock._meta = {"indexes": [{"name": "index2_index"}]}
             model_mock._get_collection = Mock(
                 return_value=MagicMock(
-                    index_information=Mock(return_value={"index1": {}})
+                    index_information=Mock(return_value={"_id_": {}})
                 )
             )
 
+            model_mock.create_index = Mock(side_effect=IndexOperationError(""))
             model_mock.ensure_indexes.side_effect = IndexOperationError("")
 
         for doc in model_mocks.values():
@@ -288,10 +302,10 @@ class TestCheckIndexes(object):
     @patch("mongoengine.connection.get_db", MagicMock())
     def test_unsuccessful_read_objects(self, model_mocks):
         for model_mock in model_mocks.values():
-            model_mock.list_indexes = Mock(return_value=["index1"])
+            model_mock._meta = {"indexes": [{"name": "index1_index"}]}
             model_mock._get_collection = Mock(
                 return_value=MagicMock(
-                    index_information=Mock(return_value={"index1": {}})
+                    index_information=Mock(return_value={"index1_index": {}})
                 )
             )
 
@@ -307,10 +321,11 @@ class TestCheckIndexes(object):
     def test_old_request_index(self, get_db_mock, model_mocks, monkeypatch):
         # 'normal' return values
         for model_mock in model_mocks.values():
-            model_mock.list_indexes = Mock(return_value=["index1"])
+
+            model_mock._meta = {"indexes": [{"name": "index1_index"}]}
             model_mock._get_collection = Mock(
                 return_value=MagicMock(
-                    index_information=Mock(return_value={"index1": {}})
+                    index_information=Mock(return_value={"index1_index": {}})
                 )
             )
 
@@ -318,7 +333,7 @@ class TestCheckIndexes(object):
         model_mocks[
             "request"
         ]._get_collection.return_value.index_information.return_value = {
-            "index1": {},
+            "index1_index": {},
             "parent_instance_index": {},
         }
 

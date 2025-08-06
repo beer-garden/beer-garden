@@ -748,7 +748,7 @@ def check_indexes(document_class):
                 spec_indexes.append(spec_index["name"])
             elif isinstance(spec_index, str):
                 raise IndexOperationError(
-                    "Index %s does not have name, must rebuild all indexes", spec_index
+                    f"Index {spec_index} does not have name, must rebuild all indexes"
                 )
 
         # Only check for BG created indexes that end in "_index"
@@ -761,8 +761,7 @@ def check_indexes(document_class):
                     index,
                     document_class.__name__,
                 )
-                db = get_db()
-                db[document_class.__name__.lower()].drop_index(index)
+                document_class._get_collection().drop_index(index)
 
         # Add missing indexes
         for spec_index in document_class._meta["indexes"]:
