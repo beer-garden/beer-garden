@@ -730,7 +730,6 @@ def check_indexes(document_class):
     Raises:
         beergarden.IndexOperationError
     """
-    from mongoengine.connection import get_db
 
     from .models import Request
 
@@ -783,6 +782,8 @@ def check_indexes(document_class):
                     )
                     document_class.create_index(**new_index)
 
+        document_class.ensure_indexes()
+
     except (IndexOperationError, OperationFailure):
         logger.warning(
             "%s collection indexes verification failed, attempting to rebuild",
@@ -797,8 +798,7 @@ def check_indexes(document_class):
         # small and built in the background anyway just redo all of them
 
         try:
-            db = get_db()
-            db[document_class.__name__.lower()].drop_indexes()
+            document_class._get_collection().drop_indexes()
             logger.warning("Dropped indexes for %s collection", document_class.__name__)
         except OperationFailure:
             logger.error(

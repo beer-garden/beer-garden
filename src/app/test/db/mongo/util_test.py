@@ -244,20 +244,20 @@ class TestCheckIndexes(object):
         # 'normal' return values
         for model_mock in model_mocks.values():
             model_mock._meta = {"indexes": [{"name": "index1_index"}]}
-            model_mock._get_collection = Mock(
-                return_value=MagicMock(
-                    index_information=Mock(return_value={"index1_index": {}})
-                )
-            )
+            mock_collection = Mock()
+            mock_collection.index_information = Mock(return_value={"index1_index": {}})
+            mock_collection.drop_index = Mock()
+
+            model_mock._get_collection = Mock(return_value=mock_collection)
 
         # ... except for this one
-        model_mocks["request"]._meta["indexes"][0] = ""
+        model_mocks["request"]._meta["indexes"] = []
 
         db_mock = MagicMock()
         get_db_mock.return_value = db_mock
 
         [beer_garden.db.mongo.util.check_indexes(doc) for doc in model_mocks.values()]
-        assert db_mock["request"].drop_indexes.call_count == 1
+        assert model_mocks["request"]._get_collection().drop_index.call_count == 1
         assert model_mocks["request"].ensure_indexes.called is True
 
     @patch("mongoengine.connect", Mock())
@@ -269,10 +269,9 @@ class TestCheckIndexes(object):
             mock_collection = Mock()
             mock_collection.index_information = Mock(return_value={"index2_index": {}})
             mock_collection.drop_index = Mock(side_effect=IndexOperationError(""))
+            mock_collection.drop_indexes = Mock(side_effect=IndexOperationError(""))
 
             model_mock._get_collection = Mock(return_value=mock_collection)
-
-            model_mock._get_collection.drop_index.side_effect = IndexOperationError("")
 
         get_db_mock.side_effect = IndexOperationError("")
 
@@ -323,11 +322,11 @@ class TestCheckIndexes(object):
         for model_mock in model_mocks.values():
 
             model_mock._meta = {"indexes": [{"name": "index1_index"}]}
-            model_mock._get_collection = Mock(
-                return_value=MagicMock(
-                    index_information=Mock(return_value={"index1_index": {}})
-                )
-            )
+            mock_collection = Mock()
+            mock_collection.index_information = Mock(return_value={"index1_index": {}})
+            mock_collection.drop_index = Mock()
+
+            model_mock._get_collection = Mock(return_value=mock_collection)
 
         # ... except for this one
         model_mocks[
@@ -355,7 +354,7 @@ class TestCheckIndexes(object):
         get_db_mock.return_value = db_mock
 
         [beer_garden.db.mongo.util.check_indexes(doc) for doc in model_mocks.values()]
-        assert db_mock["request"].drop_indexes.call_count == 1
+        assert model_mocks["request"]._get_collection().drop_indexes.call_count == 1
         assert model_mocks["request"].ensure_indexes.called is True
         assert update_parent_field_type_mock.called is True
         assert update_has_parent_mock.called is True

@@ -12,7 +12,7 @@ from pymongo import UpdateOne
 
 import beer_garden.config as config
 from beer_garden.db.mongo.api import to_brewtils
-from beer_garden.db.mongo.models import File, Job, RawFile, Request
+from beer_garden.db.mongo.models import File, FileChunk, RawFile, Request
 from beer_garden.events import publish
 from beer_garden.metrics import CollectMetrics
 
@@ -348,52 +348,73 @@ def prune_files():
 
 
 def prune_orphan_files():
+    # Pruning Orphaned Files that think they are associated with a Request or Job
+    # but the Request or Job no longer exists in the database
     with CollectMetrics("PRUNER", "Pruner::orphan_files"):
-        ttl = config.get("db.prune.interval", default=15)
-        if ttl < 0:
-            return
-        timeout = datetime.now(timezone.utc) - timedelta(minutes=ttl)
 
-        batch_size = config.get("db.prune.batch_size")
-        if batch_size > 0:
-            orphaned_files = (
-                File.objects.only("request", "job", "id", "owner_type")
-                .filter(
-                    updated_at__lte=timeout,
+        request_pipeline = [
+            {
+                "$match": {
+                    "owner_type": "REQUEST",
+                    "request": {"$ne": None},
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "request",
+                    "localField": "request",
+                    "foreignField": "_id",
+                    "as": "lookup_result",
+                }
+            },
+            {"$match": {"lookup_result": {"$size": 0}}},
+            {"$project": {"_id": 1}},
+        ]
+
+        job_pipeline = [
+            {
+                "$match": {
+                    "owner_type": "JOB",
+                    "job": {"$ne": None},
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "job",
+                    "localField": "job",
+                    "foreignField": "_id",
+                    "as": "lookup_result",
+                }
+            },
+            {"$match": {"lookup_result": {"$size": 0}}},
+            {"$project": {"_id": 1}},
+        ]
+
+        file_delete_ids = []
+        file_delete_ids_str = []
+
+        for pipeline in [request_pipeline, job_pipeline]:
+            for doc in File._get_collection().aggregate(pipeline):
+                file_delete_ids.append(doc["_id"])
+                file_delete_ids_str.append(str(doc["_id"]))
+
+        if len(file_delete_ids) > 0:
+            batch_size = config.get("db.prune.batch_size")
+
+            if batch_size > 0:
+                for i in range(0, len(file_delete_ids), batch_size):
+                    File._get_collection().delete_many(
+                        {"_id": {"$in": file_delete_ids[i : i + batch_size]}}
+                    )
+                    FileChunk._get_collection().delete_many(
+                        {"file_id": {"$in": file_delete_ids_str[i : i + batch_size]}}
+                    )
+            else:
+                File._get_collection().delete_many({"_id": {"$in": file_delete_ids}})
+                FileChunk._get_collection().delete_many(
+                    {"file_id": {"$in": file_delete_ids_str}}
                 )
-                .batch_size(batch_size)
-            )
-            prune_orphan_file_records(orphaned_files)
-        else:
-
-            orphaned_files = File.objects.only(
-                "request", "job", "id", "owner_type"
-            ).filter(
-                updated_at__lte=timeout,
-            )
-            prune_orphan_file_records(orphaned_files)
-
-
-def prune_orphan_file_records(orphaned_files):
-    counter = 0
-
-    try:
-        for file in orphaned_files:
-            try:
-                if file.owner_type == "JOB" and file.job is not None:
-                    if not Job.objects.with_id(file.job.id):
-                        raise DoesNotExist
-                elif file.owner_type == "REQUEST" and file.request is not None:
-                    if not Request.objects.with_id(file.request.id):
-                        raise DoesNotExist
-            except DoesNotExist:
-                file.delete()
-                counter = counter + 1
-    finally:
-
-        if counter > 0:
-            logger.error(f"{counter} Files missing owner, deleted orphans")
-
+            logger.error(f"{len(file_delete_ids)} Files missing owner, deleted orphans")
         else:
             logger.debug("No missed owners for Files")
 
