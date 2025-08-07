@@ -5,7 +5,6 @@ from datetime import timedelta, timezone
 import pytest
 from mock import MagicMock, Mock
 from mongoengine.connection import get_db
-from mongomock.gridfs import enable_gridfs_integration
 from pymongo import UpdateOne
 
 import beer_garden
@@ -26,6 +25,7 @@ from beer_garden.db.mongo.pruner import (
     prune_outstanding,
     prune_requests,
 )
+from mongomock.gridfs import enable_gridfs_integration
 
 enable_gridfs_integration()
 
@@ -271,10 +271,10 @@ class TestMongoPruner(object):
         prune_requests()
         assert len(Request.objects.filter(command_type="TEMP")) == 0
 
-    def test_prune_files(self, file, raw_file):
+    def test_prune_files(self, raw_file):
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"file": 1}}}}
         prune_files()
-        assert len(File.objects.all()) == 0
+        assert len(RawFile.objects.all()) == 0
 
     def test_skip_prune_request_gridfs_files(self, monkeypatch):
         db = get_db()
@@ -722,14 +722,18 @@ class TestOrphanFile(object):
         file.delete()
 
     def test_orphan_file(self, orphan_request_file, deleted_request_file):
-        config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 1}}}
+        config._CONFIG = {
+            "db": {"prune": {"batch_size": -1, "interval": 1, "ttl": {"file": 1}}}
+        }
         assert len(File.objects.all()) == 2
 
         prune_orphan_files()
         assert len(File.objects.all()) == 1
 
     def test_orphan_job(self, orphan_job_file, deleted_job_file):
-        config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 1}}}
+        config._CONFIG = {
+            "db": {"prune": {"batch_size": -1, "interval": 1, "ttl": {"file": 1}}}
+        }
         assert len(File.objects.all()) == 2
 
         prune_orphan_files()

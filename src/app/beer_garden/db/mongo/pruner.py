@@ -276,75 +276,49 @@ def delete_requests(
 
 
 def prune_files():
-    ttl_length = config.get("db.prune.ttl.file")
 
-    if ttl_length > -1:
+    raw_file_pipeline = [
+        {
+            "$lookup": {
+                "from": "request",
+                "localField": "request",
+                "foreignField": "_id",
+                "as": "lookup_result",
+            }
+        },
+        {"$match": {"lookup_result": {"$size": 0}}},
+        {"$project": {"_id": 1, "file": 1}},
+    ]
 
-        file_ids = []
-        raw_file_ids = []
-        gridfs_ids = []
+    raw_file_ids = []
+    gridfs_ids = []
 
-        delete_older_than = datetime.now(timezone.utc) - timedelta(minutes=ttl_length)
+    for doc in RawFile._get_collection().aggregate(raw_file_pipeline):
+        raw_file_ids.append(doc["_id"])
+        gridfs_ids.append(doc["file"])
 
-        try:
-            batch_size = config.get("db.prune.batch_size")
+    if len(raw_file_ids) > 0:
+        batch_size = config.get("db.prune.batch_size")
+        db = get_db()
+        if batch_size > 0:
+            for i in range(0, len(raw_file_ids), batch_size):
 
-            if batch_size > 0:
-                for file in (
-                    File.objects(
-                        Q(updated_at__lt=delete_older_than)
-                        & (
-                            (
-                                Q(owner_type=None)
-                                | (
-                                    (Q(owner_type__iexact="JOB") & Q(job=None))
-                                    | (
-                                        Q(owner_type__iexact="REQUEST")
-                                        & Q(request=None)
-                                    )
-                                )
-                            )
-                        )
-                    )
-                    .only("id")
-                    .batch_size(batch_size)
-                ):
-                    file_ids.append(file.id)
-
-                for raw_file in RawFile.objects(
-                    Q(created_at__lt=delete_older_than)
-                ).batch_size(batch_size):
-                    raw_file_ids.append(raw_file.id)
-                    gridfs_ids.append(raw_file.file.grid_id)
-
-            else:
-                for file in File.objects(
-                    Q(updated_at__lt=delete_older_than)
-                    & (
-                        (
-                            Q(owner_type=None)
-                            | (
-                                (Q(owner_type__iexact="JOB") & Q(job=None))
-                                | (Q(owner_type__iexact="REQUEST") & Q(request=None))
-                            )
-                        )
-                    )
-                ).only("id"):
-                    file_ids.append(file.id)
-
-                for raw_file in RawFile.objects(Q(created_at__lt=delete_older_than)):
-                    raw_file_ids.append(raw_file.id)
-                    gridfs_ids.append(raw_file.file.grid_id)
-
-        finally:
-            db = get_db()
-
-            db["file_chunks"].delete_many({"files_id": {"$in": file_ids}})
-            db["file"].delete_many({"_id": {"$in": file_ids}})
-
-            db["raw_files"].delete_many({"_id": {"$in": raw_file_ids}})
+                db["raw_file"].delete_many(
+                    {"_id": {"$in": raw_file_ids[i : i + batch_size]}}
+                )
+                db["fs.chunks"].delete_many(
+                    {"files_id": {"$in": gridfs_ids[i : i + batch_size]}}
+                )
+                db["fs.files"].delete_many(
+                    {"_id": {"$in": gridfs_ids[i : i + batch_size]}}
+                )
+        else:
+            db["raw_file"].delete_many({"_id": {"$in": raw_file_ids}})
             db["fs.chunks"].delete_many({"files_id": {"$in": gridfs_ids}})
             db["fs.files"].delete_many({"_id": {"$in": gridfs_ids}})
+        logger.error(f"{len(raw_file_ids)} Raw Files missing request, deleted orphans")
+    else:
+        logger.debug("No missed requests for Raw Files")
 
 
 def prune_orphan_files():
@@ -390,13 +364,42 @@ def prune_orphan_files():
             {"$project": {"_id": 1}},
         ]
 
+        ttl_length = config.get("db.prune.ttl.file")
+
+        if ttl_length > -1:
+            delete_older_than = datetime.now(timezone.utc) - timedelta(
+                minutes=ttl_length
+            )
+
+            pipeline_unassigned = [
+                {
+                    "$match": {
+                        "$or": [
+                            {
+                                "owner_type": "JOB",
+                                "job": None,
+                            },
+                            {
+                                "owner_type": "REQUEST",
+                                "request": None,
+                            },
+                        ],
+                        "updated_at__lt": delete_older_than,
+                    }
+                },
+                {"$project": {"_id": 1}},
+            ]
+        else:
+            pipeline_unassigned = None
+
         file_delete_ids = []
         file_delete_ids_str = []
 
-        for pipeline in [request_pipeline, job_pipeline]:
-            for doc in File._get_collection().aggregate(pipeline):
-                file_delete_ids.append(doc["_id"])
-                file_delete_ids_str.append(str(doc["_id"]))
+        for pipeline in [request_pipeline, job_pipeline, pipeline_unassigned]:
+            if pipeline:
+                for doc in File._get_collection().aggregate(pipeline):
+                    file_delete_ids.append(doc["_id"])
+                    file_delete_ids_str.append(str(doc["_id"]))
 
         if len(file_delete_ids) > 0:
             batch_size = config.get("db.prune.batch_size")
