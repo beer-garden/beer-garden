@@ -1169,7 +1169,7 @@ class TestLatestRequest(object):
                 name="original",
                 version="1.0.0dev",
                 namespace="beer_garden",
-                instances=[Instance(name="1"), Instance(name="2")],
+                instances=[Instance(name="1", status="RUNNING"), Instance(name="2")],
                 commands=[Command(name="original")],
             )
         )
@@ -1209,8 +1209,8 @@ class TestLatestRequest(object):
             Request(system="original", namespace="beer_garden", system_version="latest")
         )
 
-        assert latest_request.system_version != system_v1.version
-        assert latest_request.system_version == system_v2.version
+        assert latest_request.system_version == system_v1.version
+        assert latest_request.system_version != system_v2.version
 
     def test_latest_instance_request(self, system_v1, system_v2):
         latest_request = determine_latest_system_version(
@@ -1222,8 +1222,8 @@ class TestLatestRequest(object):
             )
         )
 
-        assert latest_request.system_version != system_v1.version
-        assert latest_request.system_version == system_v2.version
+        assert latest_request.system_version == system_v1.version
+        assert latest_request.system_version != system_v2.version
 
     def test_latest_instance_request_unique_instance(self, system_v1, system_v2):
         latest_request = determine_latest_system_version(
@@ -1257,8 +1257,8 @@ class TestLatestRequest(object):
             Request(system="original", namespace="beer_garden")
         )
 
-        assert latest_request.system_version != system_v1.version
-        assert latest_request.system_version == system_v2.version
+        assert latest_request.system_version == system_v1.version
+        assert latest_request.system_version != system_v2.version
 
 
 class TestCancelRequest(object):

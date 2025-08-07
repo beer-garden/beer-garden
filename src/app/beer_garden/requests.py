@@ -39,8 +39,6 @@ from brewtils.models import (
 )
 from brewtils.pika import PERSISTENT_DELIVERY_MODE
 from mongoengine import DoesNotExist
-from packaging.version import InvalidVersion
-from packaging.version import parse as versionParse
 from pymongo.errors import BulkWriteError
 from requests import Session
 
@@ -598,6 +596,8 @@ def get_requests(**kwargs) -> List[Request]:
 
 
 def determine_latest_system_version(request: Request):
+    from beer_garden.systems import determine_latest
+
     if request.system_version and request.system_version.lower() != "latest":
         return request
 
@@ -616,23 +616,20 @@ def determine_latest_system_version(request: Request):
         filter_params=filter_criteria,
     )
 
-    versions = []
-    legacy_versions = []
-    system_versions_map = {}
+    running = []
+    not_running = []
 
     for system in systems:
-        try:
-            versions.append(versionParse(system.version))
-            system_versions_map[str(versionParse(system.version))] = system.version
-        except InvalidVersion:
-            legacy_versions.append(system.version)
-            system_versions_map[system.version] = system.version
+        if system.instances and any(
+            "RUNNING" == instance.status for instance in system.instances
+        ):
+            running.append(system)
+        else:
+            not_running.append(system)
 
-    eligible_versions = versions if versions else legacy_versions
+    eligible_versions = running if running else not_running
 
-    if eligible_versions:
-        latest_version = sorted(eligible_versions, reverse=True)[0]
-        request.system_version = system_versions_map.get(str(latest_version))
+    request.system_version = determine_latest(eligible_versions).version
 
     return request
 
