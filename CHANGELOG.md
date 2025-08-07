@@ -4,7 +4,7 @@
 
 TBD
 
-- UI code is now unminimized with source map to enable enhanced debugging of released code (#)
+- UI code is now unminimized with source map to enable enhanced debugging of released code (#1942)
 
 ## 3.30.0rc2
 
