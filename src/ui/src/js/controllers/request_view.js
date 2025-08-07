@@ -60,8 +60,8 @@ export default function requestViewController(
   $scope.formatErrorTitle = undefined;
   $scope.formatErrorMsg = undefined;
   $scope.showFormatted = false;
-  $scope.disabledPourItAgain = true;
-  $scope.msgPourItAgain = 'Loading System Info';
+  $scope.disabledPourItAgain = false;
+  $scope.msgPourItAgain = null
 
   $scope.isMaximized = localStorageService.get('isMaximized');
   if ($scope.isMaximized === null) {
@@ -188,6 +188,22 @@ export default function requestViewController(
         $scope.request.system,
         $scope.request.system_version,
     );
+    if (requestSystem != undefined) {
+      const commands = requestSystem.commands;
+      for (let i = 0; i < commands.length; i++) {
+        if (commands[i].name == request.command) {
+          $scope.disabledPourItAgain = false;
+          $scope.msgPourItAgain = null;
+          break;
+        } else {
+          $scope.disabledPourItAgain = true;
+          $scope.msgPourItAgain = 'Unable to find command';
+        }
+      }
+    } else {
+      $scope.disabledPourItAgain = true;
+      $scope.msgPourItAgain = 'Unable to find system';
+    }
     $scope.setWindowTitle(
         $scope.request.command_display_name || $scope.request.command,
         $scope.request.metadata.system_display_name || $scope.request.system,
@@ -246,11 +262,6 @@ export default function requestViewController(
       }
     }
 
-    $rootScope.getLocalGarden($scope.set_instance_state)
-
-  };
-
-  $scope.set_instance_state = function(){
     // Grab the status of the instance this request targets to display if necessary
     const system = SystemService.findSystem(
       $scope.request.namespace,
@@ -258,31 +269,11 @@ export default function requestViewController(
       $scope.request.system_version,
     );
 
-    if (system !== undefined){
+    $scope.instanceStatus = _.find(system.instances, {
+      name: $scope.request.instance_name,
+    }).status;
 
-      $scope.instanceStatus = _.find(system.instances, {
-        name: $scope.request.instance_name,
-      }).status;
-
-      $scope.instanceStatus;
-
-      const commands = system.commands;
-      for (let i = 0; i < commands.length; i++) {
-        if (commands[i].name == $scope.request.command) {
-          $scope.disabledPourItAgain = false;
-          $scope.msgPourItAgain = null;
-          break;
-        } else {
-          $scope.disabledPourItAgain = true;
-          $scope.msgPourItAgain = 'Unable to find command';
-        }
-      }
-
-    } else {
-      $scope.disabledPourItAgain = true;
-      $scope.msgPourItAgain = 'Unable to find system';
-    }
-  }
+  };
 
   $scope.failureCallback = function(response) {
     $scope.response = response;
@@ -431,7 +422,19 @@ export default function requestViewController(
     $scope.$digest();
   });
 
-  $scope.loadRequest();
+  if ($rootScope.gardensResponse !== undefined){
+    $scope.loadRequest();
+  } 
+  else {
+    setTimeout(function delaySystemLoad() {
+      if ($rootScope.gardensResponse !== undefined){
+        $scope.loadRequest();
+        $scope.$digest();
+      } else {
+        setTimeout(delaySystemLoad, 10);
+      }
+    }, 10);
+  }
   
 }
 

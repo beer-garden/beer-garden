@@ -8,9 +8,13 @@ jobExportController.$inject = ['$scope', '$rootScope', '$filter', 'JobService'];
  */
 export default function jobExportController(
     $scope,
+    $rootScope,
     $filter,
     JobService,
 ) {
+
+  $scope.response = $rootScope.gardensResponse;
+  $scope.data = $rootScope.systems;
 
   $scope.exportAllJobs = function() {
     JobService.exportJobs().then(

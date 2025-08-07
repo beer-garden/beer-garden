@@ -336,12 +336,12 @@ export default function adminSystemController(
     return undefined;
   }
 
-  $scope.systemUpdate = function(){
-    groupRunners();
-    groupSystems();
-  }
+  groupSystems();
+  groupRunners();
 
   // Systems to load async, have to monitor the systems for changes
-  $rootScope.$watchCollection('systems', $scope.systemUpdate);
-  $rootScope.getLocalGarden($scope.systemUpdate)
+  $rootScope.$watchCollection('systems', function systemUpdate(){
+    groupRunners();
+    groupSystems();
+  });
 }

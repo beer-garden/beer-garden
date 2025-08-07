@@ -29,10 +29,31 @@ export default function adminGardenController(
   $scope.gardenCreateSchema = GardenService.CreateSCHEMA;
   $scope.gardenCreateForm = GardenService.CreateFORM;
 
-  $scope.successCallback = function() {
-    $scope.data = $scope.extractGardenChildren([$rootScope.gardensResponse.data]);
-    $scope.response = $rootScope.gardensResponse;
+  $scope.successCallback = function(response) {
+    $scope.data = $scope.extractGardenChildren([response.data]);
+    $scope.response = response;
   };
+  $scope.failureCallback = function(response) {
+    $scope.response = response;
+    $scope.data = [];
+  };
+
+  const loadGardens = function() {
+    if ($rootScope.gardensResponse !== undefined){
+      $scope.successCallback($rootScope.gardensResponse);
+    } 
+    else {
+      setTimeout(function delaySystemLoad() {
+        if ($rootScope.gardensResponse !== undefined){
+          $scope.successCallback($rootScope.gardensResponse);
+          $scope.$digest();
+        } else {
+          setTimeout(delaySystemLoad, 10);
+        }
+      }, 10);
+    }
+
+  }
   
   $scope.garden_name = null;
   $scope.createGardenFormHide = true;
@@ -271,7 +292,7 @@ export default function adminGardenController(
     $scope.response = undefined;
     $scope.data = [];
     
-    $rootScope.getLocalGarden($scope.successCallback);
+    loadGardens();
   };
 
   $scope.removeGardenEventChildren = function(garden) {
