@@ -4,6 +4,8 @@
 
 TBD
 
+- Improved None checking for Request Parents
+
 ## 3.30.0rc2
 
 - Updated Instance Status icon for Downstream Instances to reflect error states (#1907)
