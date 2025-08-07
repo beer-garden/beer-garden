@@ -4,6 +4,9 @@
 
 TBD
 
+- Fixed bug where Cancelled Requests could still spawn child requests because Validator never
+  checked database for status (#1941)
+
 ## 3.30.0rc2
 
 - Updated Instance Status icon for Downstream Instances to reflect error states (#1907)
