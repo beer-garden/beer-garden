@@ -275,7 +275,7 @@ def delete_requests(
         logger.debug(f"{len(request_raw_files)} Raw files deleted for {label} Requests")
 
 
-def prune_files():
+def prune_raw_files():
 
     raw_file_pipeline = [
         {
@@ -321,10 +321,10 @@ def prune_files():
         logger.debug("No missed requests for Raw Files")
 
 
-def prune_orphan_files():
+def prune_files():
     # Pruning Orphaned Files that think they are associated with a Request or Job
     # but the Request or Job no longer exists in the database
-    with CollectMetrics("PRUNER", "Pruner::orphan_files"):
+    with CollectMetrics("PRUNER", "Pruner::files"):
 
         request_pipeline = [
             {

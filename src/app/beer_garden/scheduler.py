@@ -394,10 +394,10 @@ class MixedScheduler(object):
 
             if ttl_config.get("file") > 0:
                 self.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_files,
+                    beer_garden.db.mongo.pruner.prune_raw_files,
                     interval=prune_interval,
                     max_instances=1,
-                    name="prune_files",
+                    name="prune_raw_files",
                 )
 
             if config.get("db.prune.in_progress_request_expiration") > 0:
@@ -423,10 +423,10 @@ class MixedScheduler(object):
         )
 
         self.add_schedule(
-            beer_garden.db.mongo.pruner.prune_orphan_files,
+            beer_garden.db.mongo.pruner.prune_files,
             interval=config.get("db.prune.interval", default=15),
             max_instances=1,
-            name="prune_orphan_files",
+            name="prune_files",
         )
 
         self.add_schedule(

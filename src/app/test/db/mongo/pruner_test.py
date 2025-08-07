@@ -19,9 +19,9 @@ from beer_garden.db.mongo.models import (
 )
 from beer_garden.db.mongo.pruner import (
     find_missing_expiration_requests,
-    prune_files,
+    prune_raw_files,
     prune_grid_fs,
-    prune_orphan_files,
+    prune_files,
     prune_outstanding,
     prune_requests,
 )
@@ -271,9 +271,9 @@ class TestMongoPruner(object):
         prune_requests()
         assert len(Request.objects.filter(command_type="TEMP")) == 0
 
-    def test_prune_files(self, raw_file):
+    def test_prune_raw_files(self, raw_file):
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"file": 1}}}}
-        prune_files()
+        prune_raw_files()
         assert len(RawFile.objects.all()) == 0
 
     def test_skip_prune_request_gridfs_files(self, monkeypatch):
@@ -727,7 +727,7 @@ class TestOrphanFile(object):
         }
         assert len(File.objects.all()) == 2
 
-        prune_orphan_files()
+        prune_files()
         assert len(File.objects.all()) == 1
 
     def test_orphan_job(self, orphan_job_file, deleted_job_file):
@@ -736,5 +736,5 @@ class TestOrphanFile(object):
         }
         assert len(File.objects.all()) == 2
 
-        prune_orphan_files()
+        prune_files()
         assert len(File.objects.all()) == 1
