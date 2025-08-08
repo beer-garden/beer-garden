@@ -6,7 +6,7 @@ TBD
 
 ## 3.30.0rc3
 
-- TEMP Requests that spawn child requests are overiden to TEMP when created if ACTION or INFO
+- TEMP Requests that spawn child requests are overiden to TEMP when created if ACTION or INFO (#1936)
 
 ## 3.30.0rc2
 
