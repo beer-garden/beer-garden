@@ -1,16 +1,14 @@
 # Beer Garden Changelog
 
-# 3.31.0
-
-TBD
-
-- When forwarding requests downstream upgrade TEMP requests to INFO for forwarding to Downstream only.
-  Request will still appear to be be TEMP in local database, only in downstream will it appear at INFO.
-- Filter all Requests of command type TEMP from upstream forwarding to reduce bandwidth between Beer Gardens
-
 # 3.30.0
 
 TBD
+
+## 3.30.0rc3
+
+- When forwarding requests downstream upgrade TEMP requests to INFO for forwarding to Downstream only.
+  Request will still appear to be be TEMP in local database, only in downstream will it appear at INFO. (#1932)
+- Filter all Requests of command type TEMP from upstream forwarding to reduce bandwidth between Beer Gardens (#1932)
 
 ## 3.30.0rc2
 
