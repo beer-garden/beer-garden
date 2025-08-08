@@ -104,7 +104,7 @@ TBD
 - Fixed duplicate subscriber issue when restarting instances (#1857)
 - Updated Admin Garden Page to load Garden models from preloaded Garden models (#1860)
 - Fixed File validate to query for chunks and ensure accurate size (#1855)
-- Fixed bug where API updates to Instance Status did not publish topic request
+- Fixed bug where API updates to Instance Status did not publish topic request (#1817 ?)
 - Request search delay configurable through `ui.search_delay` config option. (#1868)
 - Removed status, status_info, and namespaces from Garden (#1829)
 - Update Request Pruning to utilize new field Expiration At instead of each command type independently (#1870)
