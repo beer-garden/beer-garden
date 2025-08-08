@@ -1094,11 +1094,25 @@ def handle_event_rebroadcast(event_name, request):
     # If no parent are set, we only want to publish to the UI events handler
     if not config.get("parent.stomp.enabled") and not config.get("parent.http.enabled"):
         metadata["API_ONLY"] = True
-    publish(
-        Event(
-            name=event_name, payload=request, payload_type="Request", metadata=metadata
+        metadata
+        publish(
+            Event(
+                name=event_name,
+                payload=Request(
+                    id=request.id,
+                    parent=(
+                        Request(id=request.parent.id)
+                        if request.parent is not None
+                        else None
+                    ),
+                ),
+                payload_type="Request",
+                metadata={"API_ONLY": True, "UI_RELOAD": True},
+            )
         )
-    )
+
+    else:
+        publish(Event(name=event_name, payload=request, payload_type="Request"))
 
 
 def handle_event_create(event):
@@ -1226,18 +1240,38 @@ def handle_event(event):
                 if created_request:
                     handle_event_rebroadcast(event.name, created_request)
             return
+        elif event.payload.status == "CANCELED":
+            existing_request = db.query_unique(Request, id=event.payload.id)
+            if existing_request is None:
+                return  # If the request does not exist, we cannot cancel it
+
+            if (
+                existing_request.status == event.payload.status
+                or existing_request.status in Request.COMPLETED_STATUSES
+            ):
+                return  # If the request is already completed, we cannot cancel it
+
+            pass
         else:  # Only Completed statuses are handled in this else statement
             existing_request = db.query_unique(Request, id=event.payload.id)
 
-            if existing_request and existing_request.status != event.payload.status:
-                # Skip status that revert
-                if existing_request.status in Request.COMPLETED_STATUSES:
+            if existing_request is None:
+                if event.payload.status == "CANCELED":
+                    # If the request does not exist, we cannot cancel it
                     return
 
-            if existing_request is None:
                 created_request = handle_event_create(event)
                 if created_request:
                     handle_event_rebroadcast(event.name, event.payload)
+
+                return
+
+            if (
+                existing_request.status == event.payload.status
+                or existing_request.status in Request.COMPLETED_STATUSES
+            ):
+                # Skip status that revert
+                return
             else:
                 # When we send child requests to child gardens where the parent was on
                 # the local garden we remove the parent before sending them. Only setting
@@ -1253,14 +1287,18 @@ def handle_event(event):
                     "output",
                     "error_class",
                 ):
-                    new_value = getattr(event.payload, field)
-                    # Merge metadata
-                    if field == "metadata":
-                        new_value = {**getattr(existing_request, field), **new_value}
+                    if hasattr(event.payload, field):
+                        new_value = getattr(event.payload, field)
+                        if new_value:
+                            # Merge metadata
+                            if field == "metadata":
+                                new_value = {
+                                    **getattr(existing_request, field),
+                                    **new_value,
+                                }
 
-                    if getattr(existing_request, field) != new_value:
-                        setattr(existing_request, field, new_value)
-
+                            if getattr(existing_request, field) != new_value:
+                                setattr(existing_request, field, new_value)
 
                 db.update_direct(existing_request)
                 handle_event_rebroadcast(event.name, existing_request)
@@ -1328,7 +1366,7 @@ def cancel_request_children(request: Request):
     Args:
         request (Request): Parent Request
     """
-    request.children = db.query(Request, filter_params={"parent": request})
+    request.children = db.query(Request, filter_params={"parent": request.id})
 
     for child in request.children:
         if child.status in [
