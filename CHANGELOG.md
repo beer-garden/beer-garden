@@ -7,6 +7,8 @@ TBD
 ## 3.30.0rc3
 
 - Updated Request Event Handler to check Status to determine action instead of event type (#1939)
+- Reduce event size of Request Cancelled via trigger (#1946)
+- Reduce event size for Request Rebroadcast if for API Only (#1946)
 
 ## 3.30.0rc2
 
