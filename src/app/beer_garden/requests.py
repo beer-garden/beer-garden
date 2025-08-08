@@ -1093,8 +1093,6 @@ def handle_event_rebroadcast(event_name, request):
     metadata = {}
     # If no parent are set, we only want to publish to the UI events handler
     if not config.get("parent.stomp.enabled") and not config.get("parent.http.enabled"):
-        metadata["API_ONLY"] = True
-        metadata
         publish(
             Event(
                 name=event_name,
