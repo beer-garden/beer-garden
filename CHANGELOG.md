@@ -7,7 +7,7 @@ TBD
 ## 3.30.0rc2
 
 - Updated Instance Status icon for Downstream Instances to reflect error states (#1907)
-- Updated UI Lazy Loading (#1907)
+- Updated UI Lazy Loading (#1907/#1945)
 - Fixed bug in local garden loading all gardens to one hop away (#1905)
 - Reduced total events processed by Entry Point event handlers (#1882)
 - Expanded Garden query to support include and exclude field parameters (#1916/#1927)
