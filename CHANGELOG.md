@@ -4,6 +4,7 @@
 
 TBD
 
+- UI code is now unminimized with source map to enable enhanced debugging of released code (#1942)
 - Improved None checking for Request Parents
 
 ## 3.30.0rc2
