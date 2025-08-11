@@ -532,19 +532,18 @@ class Request(MongoModel, Document):
             )
 
         if self.has_parent:
-            try:
-                if (
-                    not self.parent
-                    or not self.parent
-                    or Request.objects(id=self.parent.id).count() == 0
-                ):
+            if self.parent is None:
+                self.has_parent = False
+            else:
+                try:
+                    if Request.objects(id=self.parent.id).count() == 0:
+                        # Request is an Orphan, removing parent
+                        self.has_parent = False
+                        self.parent = None
+                except DoesNotExist:
                     # Request is an Orphan, removing parent
                     self.has_parent = False
                     self.parent = None
-            except DoesNotExist:
-                # Request is an Orphan, removing parent
-                self.has_parent = False
-                self.parent = None
 
         if not self.expiration_at and self.status in BrewtilsRequest.COMPLETED_STATUSES:
             # If parent or orphaned
@@ -565,14 +564,14 @@ class Request(MongoModel, Document):
                     # TEMP or ADMIN
                     self.expiration_at = datetime.datetime.utcnow()
 
-            if self.has_parent and not self.expiration_at:
+            if self.has_parent and self.parent is not None and not self.expiration_at:
                 parent = Request.objects(id=self.parent.id).only("expiration_at")
                 if parent:
                     expiration_at = getattr(parent, "expiration_at", None)
                     if expiration_at:
                         self.expiration_at = expiration_at
 
-        if not self.has_parent:
+        if not self.has_parent or self.parent is None:
             if not self.root_command_type:
                 self.root_command_type = self.command_type
 
