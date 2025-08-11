@@ -1116,7 +1116,7 @@ def handle_event_create(event):
             foundUser = False
 
             # First try to grab requester from Parent Request
-            if event.payload.has_parent:
+            if event.payload.has_parent and event.payload.parent is not None:
                 parent_request = db.query_unique(
                     Request, id=event.payload.parent.id, include_fields=["requester"]
                 )
