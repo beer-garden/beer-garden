@@ -16,7 +16,6 @@ jobImportController.$inject = [
  */
 export function jobImportController(
     $scope,
-    $rootScope,
     $uibModal,
     $state,
     JobService,

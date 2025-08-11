@@ -111,7 +111,6 @@ class TestMigrationScript(object):
 
         del request_dict["id"]
         del request_dict["root_command_type"]
-        del request_dict["expiration_at"]
 
         request_dict["status"] = "SUCCESS"
         request_dict["has_parent"] = False
@@ -127,7 +126,6 @@ class TestMigrationScript(object):
         request = request_collection.find_one()
 
         assert request["root_command_type"] == request["command_type"]
-        assert request["expiration_at"] is not None
 
     @patch("mongoengine.connect", Mock())
     @patch("mongoengine.register_connection", Mock())
@@ -137,7 +135,6 @@ class TestMigrationScript(object):
 
         del request_dict["id"]
         del request_dict["root_command_type"]
-        del request_dict["expiration_at"]
 
         request_dict["status"] = "SUCCESS"
         request_dict["has_parent"] = False
@@ -154,7 +151,6 @@ class TestMigrationScript(object):
 
         assert request["root_command_type"] == "ACTION"
         assert getattr(request, "command_type", None) is None
-        assert request["expiration_at"] is not None
 
     @patch("mongoengine.connect", Mock())
     @patch("mongoengine.register_connection", Mock())
@@ -164,7 +160,6 @@ class TestMigrationScript(object):
 
         del request_dict["id"]
         del request_dict["root_command_type"]
-        del request_dict["expiration_at"]
 
         parent_dict = copy.deepcopy(request_dict)
 
@@ -192,12 +187,10 @@ class TestMigrationScript(object):
         db_parent = request_collection.find_one({"has_parent": False})
 
         assert db_parent["root_command_type"] == "ACTION"
-        assert db_parent["expiration_at"] == datetime(2016, 1, 1)
 
         db_child = request_collection.find_one({"has_parent": True})
 
         assert db_child["root_command_type"] == "ACTION"
-        assert db_child["expiration_at"] == datetime(2016, 1, 1)
 
 
 class TestCheckIndexes(object):

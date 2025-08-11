@@ -354,7 +354,6 @@ class Request(MongoModel, Document):
     command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES)
     created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
     updated_at = DateTimeField(default=None, required=True)
-    expiration_at = DateTimeField(default=None, required=False)
     status_updated_at = DateTimeField()
     error_class = StringField(required=False)
     has_parent = BooleanField(required=False)
@@ -525,47 +524,20 @@ class Request(MongoModel, Document):
             )
 
         if self.has_parent:
-            try:
-                if (
-                    not self.parent
-                    or not self.parent
-                    or Request.objects(id=self.parent.id).count() == 0
-                ):
+            if self.parent is None:
+                self.has_parent = False
+            else:
+                try:
+                    if Request.objects(id=self.parent.id).count() == 0:
+                        # Request is an Orphan, removing parent
+                        self.has_parent = False
+                        self.parent = None
+                except DoesNotExist:
                     # Request is an Orphan, removing parent
                     self.has_parent = False
                     self.parent = None
-            except DoesNotExist:
-                # Request is an Orphan, removing parent
-                self.has_parent = False
-                self.parent = None
 
-        if not self.expiration_at and self.status in BrewtilsRequest.COMPLETED_STATUSES:
-            # If parent or orphaned
-            if not self.has_parent or self.command_type in ["TEMP", "ADMIN"]:
-                if self.command_type == "INFO":
-                    ttl = config.get("db.prune.ttl.info", default=-1)
-                    if ttl > -1:
-                        self.expiration_at = self.created_at + datetime.timedelta(
-                            minutes=ttl
-                        )
-                elif self.command_type == "ACTION":
-                    ttl = config.get("db.prune.ttl.action", default=-1)
-                    if ttl > -1:
-                        self.expiration_at = self.created_at + datetime.timedelta(
-                            minutes=ttl
-                        )
-                else:
-                    # TEMP or ADMIN
-                    self.expiration_at = datetime.datetime.utcnow()
-
-            if self.has_parent and not self.expiration_at:
-                parent = Request.objects(id=self.parent.id).only("expiration_at")
-                if parent:
-                    expiration_at = getattr(parent, "expiration_at", None)
-                    if expiration_at:
-                        self.expiration_at = expiration_at
-
-        if not self.has_parent:
+        if not self.has_parent or self.parent is None:
             if not self.root_command_type:
                 self.root_command_type = self.command_type
 
@@ -631,26 +603,12 @@ class Request(MongoModel, Document):
         if self.output_gridfs.grid_id:
             self.output = None
 
-    def _set_child_expiration(self):
-
-        updates = Request.objects(parent=self, expiration_at=None).update(
-            set__expiration_at=self.expiration_at
-        )
-        if updates > 0:
-            for child_request in Request.objects(parent=self).only("expiration_at"):
-                child_request._set_child_expiration()
-
     def _post_save(self):
 
         if self.status == "CREATED":
             self._update_raw_file_references()
 
         self._update_raw_file_pruning()
-
-        if (
-            self.expiration_at or not self.has_parent
-        ) and self.status in BrewtilsRequest.COMPLETED_STATUSES:
-            self._set_child_expiration()
 
     def _update_raw_file_pruning(self):
         parameters = self.parameters or {}

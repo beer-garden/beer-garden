@@ -86,6 +86,7 @@ export default function appRun(
   $rootScope.apiBaseUrl = '';
 
   $rootScope.config = {};
+  $rootScope.titleParts = [];
 
   $rootScope.config.defaultHome = 'base.systems()';
   $rootScope.config.defaultHomePage = 'base.systems';
@@ -150,6 +151,11 @@ export default function appRun(
         $rootScope.changeUser(TokenService.getToken());
       });
     }
+
+    UtilityService.getConfig().then((response) => {
+      angular.extend($rootScope.config, camelCaseKeys(response.data));
+      $rootScope.reloadWindowTitle();
+    });
 
     // Connect to the event socket
     EventService.connect();
@@ -332,8 +338,16 @@ export default function appRun(
   };
 
   $rootScope.setWindowTitle = function(...titleParts) {
-    titleParts.push($rootScope.config.applicationName);
-    $rootScope.title = _.join(titleParts, ' - ');
+    $rootScope.titleParts = titleParts;
+    $rootScope.reloadWindowTitle();
+  };
+
+  $rootScope.reloadWindowTitle = function() {
+    if ($rootScope.config.applicationName === undefined) {
+      $rootScope.title = _.join($rootScope.titleParts, ' - ');
+    } else{
+      $rootScope.title = _.join($rootScope.titleParts.concat([$rootScope.config.applicationName]), ' - ');
+    } 
   };
 
   $transitions.onSuccess({to: 'base'}, () => {
@@ -423,15 +437,19 @@ export default function appRun(
 
   $rootScope.isSystemRoutable = function(system){
     // Check Local First
-    for (let i = 0; i < $rootScope.garden.systems.length; i++){
-      if (system.id == $rootScope.garden.systems[i].id){
-        return true;
+    if ($rootScope.garden.systems !== undefined) {
+      for (let i = 0; i < $rootScope.garden.systems.length; i++){
+        if (system.id == $rootScope.garden.systems[i].id){
+          return true;
+        }
       }
     }
     // Check children
-    for (let i = 0; i < $rootScope.garden.children.length; i++){
-      if ($rootScope.isRemoteSystemRoutable(system, $rootScope.garden.children[i])){
-        return true;
+    if ($rootScope.garden.children !== undefined) {
+      for (let i = 0; i < $rootScope.garden.children.length; i++){
+        if ($rootScope.isRemoteSystemRoutable(system, $rootScope.garden.children[i])){
+          return true;
+        }
       }
     }
     return false;
@@ -439,24 +457,31 @@ export default function appRun(
 
   $rootScope.isRemoteSystemRoutable = function(system, garden){
     let routable = false;
-    for (let i = 0; i < garden.publishing_connections.length; i++){
-      if (["PUBLISHING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN"].includes(garden.publishing_connections[i].status)){
-        routable = true;
+
+    if (garden.publishing_connections !== undefined && garden.publishing_connections !== null){
+      for (let i = 0; i < garden.publishing_connections.length; i++){
+        if (["PUBLISHING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN"].includes(garden.publishing_connections[i].status)){
+          routable = true;
+        }
       }
     }
 
     if (!routable){
       return false;
     }
-    for (let i = 0; i < garden.systems.length; i++){
-      if (system.id == garden.systems[i].id){
-        return true;
+    if (garden.systems !== undefined || garden.systems !== null){
+      for (let i = 0; i < garden.systems.length; i++){
+        if (system.id == garden.systems[i].id){
+          return true;
+        }
       }
     }
 
-    for (let i = 0; i < garden.children.length; i++){
-      if ($rootScope.isRemoteSystemRoutable(system, garden.children[i])){
-        return true;
+    if (garden.children !== undefined && garden.children !== null){
+      for (let i = 0; i < garden.children.length; i++){
+        if ($rootScope.isRemoteSystemRoutable(system, garden.children[i])){
+          return true;
+        }
       }
     }
 
