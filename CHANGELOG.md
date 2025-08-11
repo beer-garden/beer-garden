@@ -4,6 +4,9 @@
 
 TBD
 
+## 3.30.0rc3
+
+- Fixed bug in UI where missing Children on Garden model errored on isSystemRoutable UI filter (#1938)
 - Fixed bug where Cancelled Requests could still spawn child requests because Validator never
   checked database for status (#1941)
 - UI code is now unminimized with source map to enable enhanced debugging of released code (#1942)
