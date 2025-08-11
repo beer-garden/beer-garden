@@ -1116,7 +1116,7 @@ def handle_event_create(event):
             foundUser = False
 
             # First try to grab requester from Parent Request
-            if event.payload.has_parent:
+            if event.payload.has_parent and event.payload.parent is not None:
                 parent_request = db.query_unique(
                     Request, id=event.payload.parent.id, include_fields=["requester"]
                 )
@@ -1299,17 +1299,20 @@ def clean_command_type_temp(request: Request, is_remote: bool):
         # if its parent has already completed
         if request.command_type == "TEMP" and (
             not request.has_parent
-            or db.count(
-                Request,
-                id=request.parent.id,
-                status__in=[
-                    "INVALID",
-                    "CANCELED",
-                    "ERROR",
-                    "SUCCESS",
-                ],
+            or (
+                request.parent is not None
+                and db.count(
+                    Request,
+                    id=request.parent.id,
+                    status__in=[
+                        "INVALID",
+                        "CANCELED",
+                        "ERROR",
+                        "SUCCESS",
+                    ],
+                )
+                > 0
             )
-            > 0
         ):
             if is_remote:
                 # Give Threading based requests a chance to pull the
