@@ -86,6 +86,7 @@ export default function appRun(
   $rootScope.apiBaseUrl = '';
 
   $rootScope.config = {};
+  $rootScope.titleParts = [];
 
   $rootScope.config.defaultHome = 'base.systems()';
   $rootScope.config.defaultHomePage = 'base.systems';
@@ -150,6 +151,11 @@ export default function appRun(
         $rootScope.changeUser(TokenService.getToken());
       });
     }
+
+    UtilityService.getConfig().then((response) => {
+      angular.extend($rootScope.config, camelCaseKeys(response.data));
+      $rootScope.reloadWindowTitle();
+    });
 
     // Connect to the event socket
     EventService.connect();
@@ -332,8 +338,16 @@ export default function appRun(
   };
 
   $rootScope.setWindowTitle = function(...titleParts) {
-    titleParts.push($rootScope.config.applicationName);
-    $rootScope.title = _.join(titleParts, ' - ');
+    $rootScope.titleParts = titleParts;
+    $rootScope.reloadWindowTitle();
+  };
+
+  $rootScope.reloadWindowTitle = function() {
+    if ($rootScope.config.applicationName === undefined) {
+      $rootScope.title = _.join($rootScope.titleParts, ' - ');
+    } else{
+      $rootScope.title = _.join($rootScope.titleParts.concat([$rootScope.config.applicationName]), ' - ');
+    } 
   };
 
   $transitions.onSuccess({to: 'base'}, () => {
