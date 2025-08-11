@@ -563,7 +563,7 @@ def prune_outstanding_requests(outstanding_requests):
                 logger.debug(ex)
                 logger.debug("Will attempt to check for parents")
 
-                if request.has_parent:
+                if request.has_parent and request.parent is not None:
                     try:
                         Request.objects.get(id=request.parent.id)
                     except DoesNotExist:
