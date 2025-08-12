@@ -189,14 +189,14 @@ def canceled():
 
 
 class TestMongoPruner(object):
-    @patch("beer_garden.db.mongo.pruner.datetime")
+    @patch("beer_garden.db.mongo.legacy_pruner.datetime")
     def test_prune_info_requests(self, mock_datetime, info_request):
         mock_datetime.now.return_value = FAKE_TIME
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"info": 1}}}}
         prune_info_requests()
         assert len(Request.objects.filter(command_type="INFO")) == 0
 
-    @patch("beer_garden.db.mongo.pruner.datetime")
+    @patch("beer_garden.db.mongo.legacy_pruner.datetime")
     def test_prune_info_requests_children(self, mock_datetime):
         mock_datetime.now.return_value = FAKE_TIME
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"info": 1}}}}
@@ -244,14 +244,14 @@ class TestMongoPruner(object):
         prune_info_requests()
         assert len(Request.objects.filter(command_type="INFO")) == 0
 
-    @patch("beer_garden.db.mongo.pruner.datetime")
+    @patch("beer_garden.db.mongo.legacy_pruner.datetime")
     def test_prune_action_requests(self, mock_datetime, action_request):
         mock_datetime.now.return_value = FAKE_TIME
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"action": 1}}}}
         prune_action_requests()
         assert len(Request.objects.filter(command_type="ACTION")) == 0
 
-    @patch("beer_garden.db.mongo.pruner.datetime")
+    @patch("beer_garden.db.mongo.legacy_pruner.datetime")
     def test_prune_action_request_no_command_type(
         self, mock_datetime, in_progress, created, canceled
     ):
@@ -261,14 +261,14 @@ class TestMongoPruner(object):
         assert len(Request.objects.filter(command_type="ACTION")) == 0
         assert len(Request.objects.filter(command_type=None)) == 2
 
-    @patch("beer_garden.db.mongo.pruner.datetime")
+    @patch("beer_garden.db.mongo.legacy_pruner.datetime")
     def test_prune_admin_requests(self, mock_datetime, admin_request):
         mock_datetime.now.return_value = FAKE_TIME
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 15}}}
         prune_admin_requests()
         assert len(Request.objects.filter(command_type="ADMIN")) == 0
 
-    @patch("beer_garden.db.mongo.pruner.datetime")
+    @patch("beer_garden.db.mongo.legacy_pruner.datetime")
     def test_prune_temp_requests(self, mock_datetime, temp_request):
         mock_datetime.now.return_value = FAKE_TIME
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 15}}}
@@ -303,7 +303,7 @@ class TestMongoPruner(object):
             def now(cls, *arg, **kwargs):
                 return FAKE_TIME
 
-        monkeypatch.setattr(beer_garden.db.mongo.pruner, "datetime", mydatetime)
+        monkeypatch.setattr(beer_garden.db.mongo.legacy_pruner, "datetime", mydatetime)
 
         request = Request(
             system="T",
@@ -353,7 +353,7 @@ class TestMongoPruner(object):
             def now(cls, *arg, **kwargs):
                 return FAKE_TIME
 
-        monkeypatch.setattr(beer_garden.db.mongo.pruner, "datetime", mydatetime)
+        monkeypatch.setattr(beer_garden.db.mongo.legacy_pruner, "datetime", mydatetime)
 
         request = Request(
             system="T",
@@ -401,7 +401,7 @@ class TestMongoPruner(object):
             def now(cls, *arg, **kwargs):
                 return FAKE_TIME
 
-        monkeypatch.setattr(beer_garden.db.mongo.pruner, "datetime", mydatetime)
+        monkeypatch.setattr(beer_garden.db.mongo.legacy_pruner, "datetime", mydatetime)
 
         rawfile = RawFile()
         rawfile.file.put(b"test", filename="test.txt")
@@ -486,7 +486,7 @@ class TestMissedTempPruner(object):
         parent.delete()
         child.delete()
 
-    @patch("beer_garden.db.mongo.pruner.datetime")
+    @patch("beer_garden.db.mongo.legacy_pruner.datetime")
     def test_missed_temp_pruner(self, mock_datetime, missed_child_request):
         mock_datetime.now.return_value = FAKE_TIME
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 1}}}
