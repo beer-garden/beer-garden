@@ -417,10 +417,63 @@ def reset_last_configuration():
     configuration.save()
 
 
-def update_ttl_indexes():
+def update_request_ttl_indexes(command_type, ttl, previous_ttl=-1):
+    from brewtils.models import Request
     from mongoengine.connection import get_db
 
-    from .models import Request
+    db = get_db()
+
+    request_index = f"{command_type.lower()}_created_at_index_tt"
+    gridfs_index = f"{command_type.lower()}_created_at_gridfs_index_ttl"
+    gridfs_chunk_index = f"{command_type.lower()}_created_at_gridfs_chunk_index_ttl"
+
+    if ttl != previous_ttl or ttl < 0:
+        if request_index in db["request"].index_information():
+            db["request"].drop_index(request_index)
+
+        if gridfs_index in db["fs.files"].index_information():
+            db["fs.files"].drop_index(gridfs_index)
+
+        if gridfs_chunk_index in db["fs.chunks"].index_information():
+            db["fs.chunks"].drop_index(gridfs_chunk_index)
+
+    if ttl > -1:
+        if request_index not in db["request"].index_information():
+            db["request"].create_index(
+                [("created_at", 1)],
+                name=request_index,
+                expireAfterSeconds=ttl * 60,
+                partialFilterExpression={
+                    "root_command_type": command_type,
+                    "status": {"$in": Request.COMPLETED_STATUSES},
+                },
+            )
+
+        if gridfs_index not in db["fs.files"].index_information():
+            db["fs.files"].create_index(
+                [("uploadDate", 1)],
+                name=gridfs_index,
+                expireAfterSeconds=ttl * 60,
+                partialFilterExpression={
+                    "root_command_type": command_type,
+                    "status": {"$in": Request.COMPLETED_STATUSES},
+                },
+            )
+
+        if gridfs_chunk_index not in db["fs.chunks"].index_information():
+            db["fs.chunks"].create_index(
+                [("uploadDate", 1)],
+                name=gridfs_chunk_index,
+                expireAfterSeconds=ttl * 60,
+                partialFilterExpression={
+                    "root_command_type": command_type,
+                    "status": {"$in": Request.COMPLETED_STATUSES},
+                },
+            )
+
+
+def update_ttl_indexes():
+    from mongoengine.connection import get_db
 
     db = get_db()
 
@@ -432,90 +485,16 @@ def update_ttl_indexes():
     if not previous_config:
         previous_config = {}
 
-    if (
-        action_ttl != previous_config.get("action_ttl", -1)
-        or "action_created_at_index_ttl" not in db["request"].index_information()
-        or "action_created_at_gridfs_index_ttl"
-        not in db["fs.files"].index_information()
-    ):
-        if "action_created_at_index_ttl" in db["request"].index_information():
-            db["request"].drop_index("action_created_at_index_ttl")
+    # TEMP and ADMIN are given 1 minute TTLs by default
+    # This is to ensure that APIs can recall the request
+    # before the TTL expires
 
-        if "action_created_at_gridfs_index_ttl" in db["fs.files"].index_information():
-            db["fs.files"].drop_index("action_created_at_gridfs_index_ttl")
-
-        if action_ttl > -1:
-            db["request"].create_index(
-                [("created_at", 1)],
-                name="action_created_at_index_ttl",
-                expireAfterSeconds=action_ttl * 60,
-                partialFilterExpression={
-                    "root_command_type": "ACTION",
-                    "status": {"$in": Request.COMPLETED_STATUSES},
-                },
-            )
-
-            db["fs.files"].create_index(
-                [("uploadDate", 1)],
-                name="action_created_at_gridfs_index_ttl",
-                expireAfterSeconds=action_ttl * 60,
-                partialFilterExpression={
-                    "root_command_type": "ACTION",
-                    "status": {"$in": Request.COMPLETED_STATUSES},
-                },
-            )
-
-            db["fs.chunks"].create_index(
-                [("uploadDate", 1)],
-                name="action_created_at_gridfs_chunk_index_ttl",
-                expireAfterSeconds=action_ttl * 60,
-                partialFilterExpression={
-                    "root_command_type": "ACTION",
-                    "status": {"$in": Request.COMPLETED_STATUSES},
-                },
-            )
-
-    if (
-        info_ttl != previous_config.get("info_ttl", -1)
-        or "info_created_at_index_ttl" not in db["request"].index_information()
-        or "info_created_at_gridfs_index_ttl" not in db["fs.files"].index_information()
-    ):
-        if "info_created_at_index_ttl" in db["request"].index_information():
-            db["request"].drop_index("info_created_at_index_ttl")
-
-        if "info_created_at_gridfs_index_ttl" in db["fs.files"].index_information():
-            db["fs.files"].drop_index("info_created_at_gridfs_index_ttl")
-
-        if info_ttl > -1:
-            db["request"].create_index(
-                [("created_at", 1)],
-                name="info_created_at_index_ttl",
-                expireAfterSeconds=info_ttl * 60,
-                partialFilterExpression={
-                    "root_command_type": "INFO",
-                    "status": {"$in": Request.COMPLETED_STATUSES},
-                },
-            )
-
-            db["fs.files"].create_index(
-                [("uploadDate", 1)],
-                name="info_created_at_gridfs_index_ttl",
-                expireAfterSeconds=info_ttl * 60,
-                partialFilterExpression={
-                    "root_command_type": "INFO",
-                    "status": {"$in": Request.COMPLETED_STATUSES},
-                },
-            )
-
-            db["fs.chunks"].create_index(
-                [("uploadDate", 1)],
-                name="info_created_at_gridfs_chunk_index_ttl",
-                expireAfterSeconds=info_ttl * 60,
-                partialFilterExpression={
-                    "root_command_type": "INFO",
-                    "status": {"$in": Request.COMPLETED_STATUSES},
-                },
-            )
+    update_request_ttl_indexes(
+        "ACTION", action_ttl, previous_config.get("action_ttl", -1)
+    )
+    update_request_ttl_indexes("INFO", info_ttl, previous_config.get("info_ttl", -1))
+    update_request_ttl_indexes("TEMP", 1)
+    update_request_ttl_indexes("ADMIN", 1)
 
 
 def check_indexes(document_class):

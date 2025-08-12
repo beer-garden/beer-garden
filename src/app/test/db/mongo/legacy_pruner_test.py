@@ -8,6 +8,16 @@ from mongoengine.connection import get_db
 
 import beer_garden
 from beer_garden import config
+from beer_garden.db.mongo.legacy_pruner import (
+    prune_action_requests,
+    prune_admin_requests,
+    prune_files,
+    prune_grid_fs,
+    prune_info_requests,
+    prune_missed_temp_command,
+    prune_orphan_files,
+    prune_temp_requests,
+)
 from beer_garden.db.mongo.models import (
     DateTrigger,
     File,
@@ -15,12 +25,6 @@ from beer_garden.db.mongo.models import (
     RawFile,
     Request,
     RequestTemplate,
-)
-from beer_garden.db.mongo.pruner import (
-    cancel_outstanding,
-    prune_files,
-    prune_grid_fs,
-    prune_raw_files,
 )
 from mongomock.gridfs import enable_gridfs_integration
 
@@ -185,11 +189,96 @@ def canceled():
 
 
 class TestMongoPruner(object):
+    @patch("beer_garden.db.mongo.pruner.datetime")
+    def test_prune_info_requests(self, mock_datetime, info_request):
+        mock_datetime.now.return_value = FAKE_TIME
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"info": 1}}}}
+        prune_info_requests()
+        assert len(Request.objects.filter(command_type="INFO")) == 0
 
-    def test_prune_raw_files(self, raw_file):
+    @patch("beer_garden.db.mongo.pruner.datetime")
+    def test_prune_info_requests_children(self, mock_datetime):
+        mock_datetime.now.return_value = FAKE_TIME
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"info": 1}}}}
+
+        grandparent = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="G",
+            created_at=datetime.datetime.now(timezone.utc) - timedelta(minutes=60),
+            status="SUCCESS",
+            command_type="INFO",
+        )
+        grandparent.save()
+
+        parent = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="P",
+            created_at=datetime.datetime.now(timezone.utc) - timedelta(minutes=60),
+            status="SUCCESS",
+            command_type="INFO",
+            has_parent=True,
+            parent=grandparent,
+        )
+        parent.save()
+
+        child = Request(
+            system="T",
+            system_version="T",
+            instance_name="T",
+            namespace="T",
+            command="C",
+            created_at=datetime.datetime.now(timezone.utc) - timedelta(minutes=60),
+            status="SUCCESS",
+            command_type="INFO",
+            has_parent=True,
+            parent=parent,
+        )
+        child.save()
+
+        prune_info_requests()
+        assert len(Request.objects.filter(command_type="INFO")) == 0
+
+    @patch("beer_garden.db.mongo.pruner.datetime")
+    def test_prune_action_requests(self, mock_datetime, action_request):
+        mock_datetime.now.return_value = FAKE_TIME
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"action": 1}}}}
+        prune_action_requests()
+        assert len(Request.objects.filter(command_type="ACTION")) == 0
+
+    @patch("beer_garden.db.mongo.pruner.datetime")
+    def test_prune_action_request_no_command_type(
+        self, mock_datetime, in_progress, created, canceled
+    ):
+        mock_datetime.now.return_value = FAKE_TIME
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"action": 1}}}}
+        prune_action_requests()
+        assert len(Request.objects.filter(command_type="ACTION")) == 0
+        assert len(Request.objects.filter(command_type=None)) == 2
+
+    @patch("beer_garden.db.mongo.pruner.datetime")
+    def test_prune_admin_requests(self, mock_datetime, admin_request):
+        mock_datetime.now.return_value = FAKE_TIME
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 15}}}
+        prune_admin_requests()
+        assert len(Request.objects.filter(command_type="ADMIN")) == 0
+
+    @patch("beer_garden.db.mongo.pruner.datetime")
+    def test_prune_temp_requests(self, mock_datetime, temp_request):
+        mock_datetime.now.return_value = FAKE_TIME
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 15}}}
+        prune_temp_requests()
+        assert len(Request.objects.filter(command_type="TEMP")) == 0
+
+    def test_prune_files(self, file, raw_file):
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "ttl": {"file": 1}}}}
-        prune_raw_files()
-        assert len(RawFile.objects.all()) == 0
+        prune_files()
+        assert len(File.objects.all()) == 0
 
     def test_skip_prune_request_gridfs_files(self, monkeypatch):
         db = get_db()
@@ -327,40 +416,6 @@ class TestMongoPruner(object):
         assert db["fs.files"].count() == 0
         assert db["fs.chunks"].count() == 0
 
-    @patch("beer_garden.db.mongo.pruner.datetime")
-    def test_run_cancels_outstanding_requests(
-        self, mock_datetime, task, in_progress, created
-    ):
-        mock_datetime.now.return_value = FAKE_TIME
-        config._CONFIG = {
-            "db": {"prune": {"in_progress_request_expiration": 1, "batch_size": -1}}
-        }
-        cancel_outstanding()
-        new_in_progress = Request.objects.get(id=in_progress.id)
-        new_created = Request.objects.get(id=created.id)
-        assert new_in_progress.status == "CANCELED"
-        assert new_created.status == "CANCELED"
-        assert (
-            new_created.status_updated_at.date()
-            == datetime.datetime.now(timezone.utc).date()
-        )
-
-    def test_negative_cancel_threshold(self, task, in_progress, created):
-        config._CONFIG = {"db": {"prune": {"in_progress_request_expiration": -1}}}
-        cancel_outstanding()
-        new_in_progress = Request.objects.get(id=in_progress.id)
-        new_created = Request.objects.get(id=created.id)
-        assert new_in_progress.status == "IN_PROGRESS"
-        assert new_created.status == "CREATED"
-
-    def test_none_cancel_threshold(self, task, in_progress, created):
-        config._CONFIG = {"db": {"prune": {"in_progress_request_expiration": -1}}}
-        cancel_outstanding()
-        new_in_progress = Request.objects.get(id=in_progress.id)
-        new_created = Request.objects.get(id=created.id)
-        assert new_in_progress.status == "IN_PROGRESS"
-        assert new_created.status == "CREATED"
-
 
 class TestMissedTempPruner(object):
     @pytest.fixture
@@ -430,6 +485,22 @@ class TestMissedTempPruner(object):
         yield child
         parent.delete()
         child.delete()
+
+    @patch("beer_garden.db.mongo.pruner.datetime")
+    def test_missed_temp_pruner(self, mock_datetime, missed_child_request):
+        mock_datetime.now.return_value = FAKE_TIME
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 1}}}
+        assert len(Request.objects.filter(command_type="TEMP")) == 1
+
+        prune_missed_temp_command()
+        assert len(Request.objects.filter(command_type="TEMP")) == 0
+
+    def test_valid_temp_pruner(self, valid_child_request):
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 1}}}
+        assert len(Request.objects.filter(command_type="TEMP")) == 1
+
+        prune_missed_temp_command()
+        assert len(Request.objects.filter(command_type="TEMP")) == 1
 
 
 class TestOrphanFile(object):
@@ -557,19 +628,15 @@ class TestOrphanFile(object):
         file.delete()
 
     def test_orphan_file(self, orphan_request_file, deleted_request_file):
-        config._CONFIG = {
-            "db": {"prune": {"batch_size": -1, "interval": 1, "ttl": {"file": 1}}}
-        }
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 1}}}
         assert len(File.objects.all()) == 2
 
-        prune_files()
+        prune_orphan_files()
         assert len(File.objects.all()) == 1
 
     def test_orphan_job(self, orphan_job_file, deleted_job_file):
-        config._CONFIG = {
-            "db": {"prune": {"batch_size": -1, "interval": 1, "ttl": {"file": 1}}}
-        }
+        config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 1}}}
         assert len(File.objects.all()) == 2
 
-        prune_files()
+        prune_orphan_files()
         assert len(File.objects.all()) == 1
