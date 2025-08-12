@@ -222,7 +222,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.8"]
-        mongodb-version: ["6.0", "7.0", "8.0"]
+        mongodb-version: ["4.0","4.2","4.3","5.0","6.0", "7.0", "8.0"]
         os: ["ubuntu-latest"]
       fail-fast: false
 
