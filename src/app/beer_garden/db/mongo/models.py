@@ -599,9 +599,9 @@ class Request(MongoModel, Document):
         if self.status == "CREATED":
             self._update_raw_file_references()
 
-        self._update_raw_file_pruning()
+        self._update_raw_file_gridfs()
 
-    def _update_raw_file_pruning(self):
+    def _update_raw_file_gridfs(self):
         parameters = self.parameters or {}
 
         for param_value in parameters.values():
