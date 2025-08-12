@@ -495,10 +495,10 @@ class MixedScheduler(object):
 
                 if ttl_config.get("file") > 0:
                     self.add_schedule(
-                        beer_garden.db.mongo.legacy_pruner.prune_raw_files,
+                        beer_garden.db.mongo.legacy_pruner.prune_files,
                         interval=prune_interval,
                         max_instances=1,
-                        name="prune_raw_files",
+                        name="prune_files",
                     )
 
 
