@@ -173,64 +173,6 @@ def prune_files():
             logger.debug("No missed owners for Files")
 
 
-def update_orphaned_requests():
-    """
-    Helper function to ensure Oprhan requests are updated to remove parent information
-    when the parent request no longer exists.
-    This is to prevent orphaned requests from having broken links to their parents.
-    """
-    with CollectMetrics("PRUNER", "Pruner::orphaned_requests"):
-
-        orphaned_pipeline = [
-            {
-                "$match": {
-                    "has_parent": True,
-                }
-            },
-            {"$project": {"_id": 1, "parent": 1}},
-            {"$addFields": {"parentId": "$parent.$id"}},
-            {
-                "$lookup": {
-                    "from": "request",
-                    "localField": "parentId",
-                    "foreignField": "_id",
-                    "as": "lookup_result",
-                }
-            },
-            {"$match": {"lookup_result": {"$size": 0}}},
-            {
-                "$project": {
-                    "_id": 1,
-                }
-            },
-        ]
-
-        request_ids = []
-
-        for doc in Request._get_collection().aggregate(orphaned_pipeline):
-            request_ids.append(doc["_id"])
-
-        if len(request_ids) > 0:
-            batch_size = config.get("db.prune.batch_size")
-
-            if batch_size > 0:
-                for i in range(0, len(request_ids), batch_size):
-                    Request._get_collection().update_many(
-                        {"_id": {"$in": request_ids[i : i + batch_size]}},
-                        {"$set": {"has_parent": False, "parent": None}},
-                    )
-
-            else:
-                Request._get_collection().update_many(
-                    {"_id": {"$in": request_ids}},
-                    {"$set": {"has_parent": False, "parent": None}},
-                )
-
-            logger.error(f"{len(request_ids)} Updated Orphaned Requests")
-        else:
-            logger.debug("No Orphaned Requests updated")
-
-
 def cancel_outstanding():
     """
     Helper function for run to mark requests still outstanding after a certain

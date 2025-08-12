@@ -409,13 +409,6 @@ class MixedScheduler(object):
                 name="prune_raw_files",
             )
 
-            self.add_schedule(
-                beer_garden.db.mongo.pruner.update_orphaned_requests,
-                interval=prune_interval,
-                max_instances=1,
-                name="update_orphaned_requests",
-            )
-
         self.add_schedule(
             beer_garden.db.mongo.pruner.prune_files,
             interval=config.get("db.prune.interval", default=15),
@@ -473,6 +466,26 @@ class MixedScheduler(object):
                 interval=config.get("db.prune.interval", default=15),
                 max_instances=1,
                 name="prune_missed_temp_command",
+            )
+            self.add_schedule(
+                beer_garden.db.mongo.legacy_pruner.prune_orphan_command_type_info,
+                interval=config.get("db.prune.interval", default=15),
+                max_instances=1,
+                name="prune_orphan_command_type_info",
+            )
+
+            self.add_schedule(
+                beer_garden.db.mongo.legacy_pruner.prune_orphan_command_type_action,
+                interval=config.get("db.prune.interval", default=15),
+                max_instances=1,
+                name="prune_orphan_command_type_action",
+            )
+
+            self.add_schedule(
+                beer_garden.db.mongo.legacy_pruner.prune_orphan_command_type_admin,
+                interval=config.get("db.prune.interval", default=15),
+                max_instances=1,
+                name="prune_orphan_command_type_admin",
             )
 
             if prune_interval > -1:

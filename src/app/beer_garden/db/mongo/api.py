@@ -111,8 +111,13 @@ def to_brewtils(
         model_class = obj.brewtils_model
         many = False
 
-    if getattr(obj, "pre_serialize", None):
-        obj.pre_serialize()
+    if many:
+        for item in obj:
+            if getattr(item, "pre_serialize", None):
+                item.pre_serialize()
+    else:
+        if getattr(obj, "pre_serialize", None):
+            obj.pre_serialize()
 
     serialized = MongoParser.serialize(obj, to_string=True)
     parsed = SchemaParser.parse(serialized, model_class, from_string=True, many=many)

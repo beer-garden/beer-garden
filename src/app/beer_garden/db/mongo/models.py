@@ -480,12 +480,12 @@ class Request(MongoModel, Document):
             self.parameters = json.loads(self.parameters_gridfs.read().decode(encoding))
             self.parameters_gridfs = None
 
-        if self.has_parent:
-            try:
-                self.parent
-            except DoesNotExist:
-                # Unable to find parent, remove object to allow brewtils serializing
-                self.parent = None
+        try:
+            if self.parent is not None and self.has_parent:
+                pass
+        except DoesNotExist:
+            # Unable to find parent, remove object to allow brewtils serializing
+            self.parent = None
 
     def _spill_parameters_to_gridfs(self):
 

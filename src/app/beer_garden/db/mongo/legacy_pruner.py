@@ -515,3 +515,83 @@ def prune_grid_fs_files(db, files, outstanding_files):
 
         else:
             logger.debug("No orphaned files found in GridFS")
+
+
+def prune_orphan_command_type_info():
+    prune_orphan_command_type("INFO")
+
+
+def prune_orphan_command_type_action():
+    prune_orphan_command_type("ACTION")
+
+
+def prune_orphan_command_type_admin():
+    prune_orphan_command_type("ADMIN")
+
+
+def prune_orphan_command_type(command_type):
+    with CollectMetrics("PRUNER", f"Pruner::orphan_{command_type}"):
+        ttl = config.get("db.prune.interval", default=15)
+
+        if command_type == "ACTION":
+            cmd_ttl_length = config.get("db.prune.ttl.action")
+            if cmd_ttl_length > 0:
+                ttl = ttl + cmd_ttl_length
+        elif command_type == "INFO":
+            cmd_ttl_length = config.get("db.prune.ttl.info")
+            if cmd_ttl_length > 0:
+                ttl = ttl + cmd_ttl_length
+
+        timeout = datetime.now(timezone.utc) - timedelta(minutes=ttl)
+        filter = {
+            "command_type": command_type,
+            "status__in": ["CANCELED", "SUCCESS", "ERROR", "INVALID"],
+            "updated_at__lte": timeout,
+            "has_parent": True,
+        }
+
+        batch_size = config.get("db.prune.batch_size")
+
+        if batch_size > 0:
+
+            orphaned_requests = (
+                Request.objects.only("parent", "id")
+                .filter(**filter)
+                .batch_size(batch_size)
+            )
+            prune_orphan_requests(
+                orphaned_requests, command_type, batch_size=batch_size
+            )
+
+        else:
+            orphaned_requests = Request.objects.only("parent", "id").filter(**filter)
+            prune_orphan_requests(orphaned_requests, command_type)
+
+
+def prune_orphan_requests(orphaned_requests, command_type, batch_size=None):
+    counter = 0
+    try:
+        for request in orphaned_requests:
+            try:
+                Request.objects.get(id=request.parent.id)
+            except DoesNotExist:
+                request.delete()
+                counter = counter + 1
+
+    finally:
+
+        if counter > 0:
+            logger.error(
+                (
+                    f"{counter} orphaned {command_type} Requests deleted "
+                    f"{', batch size: ' + str(batch_size) if batch_size else ''}"
+                )
+            )
+
+        else:
+            logger.debug(
+                (
+                    f"No orphaned {command_type} Requests "
+                    f"{', batch size: ' + str(batch_size) if batch_size else ''}"
+                )
+            )
