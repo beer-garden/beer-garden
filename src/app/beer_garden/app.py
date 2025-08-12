@@ -20,6 +20,7 @@ import beer_garden.api
 import beer_garden.api.entry_point
 import beer_garden.config as config
 import beer_garden.db.api as db
+import beer_garden.db.mongo.legacy_pruner
 import beer_garden.db.mongo.pruner
 import beer_garden.events
 import beer_garden.events.handlers
