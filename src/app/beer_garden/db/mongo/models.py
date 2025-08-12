@@ -502,15 +502,6 @@ class Request(MongoModel, Document):
         self.updated_at = datetime.datetime.utcnow()
         encoding = "utf-8"
 
-        # NOTE: The following was added for #1216, which aims to resolve the duplication
-        # and orphaning of files in gridfs. It is less than ideal to do an additional
-        # database lookup, but the various conversions to and from brewtils mean that
-        # we get here having lost the parameters_gridfs and output_gridfs values,
-        # preventing us from checking if they've already been populated. Rather than
-        # perform a potentially dangerous rework of the entire Request update flow,
-        # we opt to just pull the Request as it exists in the database so that we can
-        # check those gridfs field.
-
         if not self.metadata:
             self.metadata = {}
 
@@ -786,6 +777,15 @@ class Request(MongoModel, Document):
     def clean_update(self):
         """Ensure that the update would not result in an illegal status transition"""
         # Get the original status
+
+        # NOTE: The following was added for #1216, which aims to resolve the duplication
+        # and orphaning of files in gridfs. It is less than ideal to do an additional
+        # database lookup, but the various conversions to and from brewtils mean that
+        # we get here having lost the parameters_gridfs and output_gridfs values,
+        # preventing us from checking if they've already been populated. Rather than
+        # perform a potentially dangerous rework of the entire Request update flow,
+        # we opt to just pull the Request as it exists in the database so that we can
+        # check those gridfs field.
 
         try:
             old_request = Request.objects.only(
