@@ -316,13 +316,13 @@ jobs:
 
       - name: Test Plugins
         uses: nick-invision/retry@v2
-        working-directory: ./test/integration
+        # working-directory: ./test/integration
         with:
           timeout_minutes: 20
           max_attempts: 3
           retry_on: error
           retry_wait_seconds: 5
-          command: python3 -m pytest local_plugins/
+          command: python3 -m pytest ./test/integration/local_plugins/
 
       # - name: Test Plugins
       #   run: python3 -m pytest local_plugins/
