@@ -315,18 +315,18 @@ jobs:
         working-directory: ./test/integration
 
       - name: Test Plugins
-        uses: nick-invision/retry@v2
-        # working-directory: ./test/integration
-        with:
-          timeout_minutes: 20
-          max_attempts: 3
-          retry_on: error
-          retry_wait_seconds: 5
-          command: python3 -m pytest ./test/integration/local_plugins/
+        run: python3 -m pytest local_plugins/
+        working-directory: ./test/integration
 
-      # - name: Test Plugins
-      #   run: python3 -m pytest local_plugins/
-      #   working-directory: ./test/integration
+      - name: Wait for Beer Garden to start
+        if: always()
+        run: sleep 60s
+        shell: bash
+
+      - name: Test Plugins
+        if: always()
+        run: python3 -m pytest local_plugins/
+        working-directory: ./test/integration
 
       - name: Grab logs from Beer-Garden
         if: always()
