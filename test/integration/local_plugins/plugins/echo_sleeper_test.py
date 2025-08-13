@@ -23,7 +23,7 @@ class TestEchoSleeper(object):
         request = self.request_generator.generate_request(
             command="say_sleep", parameters={"message": "foo", "amount": 0.01}
         )
-        response = wait_for_response(self.easy_client, request, timeout=10)
+        response = wait_for_response(self.easy_client, request)
         assert_successful_request(response)
         assert len(response.children) == 2
         for child_request in response.children:
@@ -33,7 +33,7 @@ class TestEchoSleeper(object):
         request = self.request_generator.generate_request(
             command="say_error_and_catch", parameters={"message": "foo"}
         )
-        response = wait_for_response(self.easy_client, request, timeout=10)
+        response = wait_for_response(self.easy_client, request)
         assert_successful_request(response)
         assert len(response.children) == 2
         for child_request in response.children:
@@ -46,7 +46,7 @@ class TestEchoSleeper(object):
         request = self.request_generator.generate_request(
             command="say_error_and_raise", parameters={"message": "foo"}
         )
-        response = wait_for_response(self.easy_client, request, timeout=10)
+        response = wait_for_response(self.easy_client, request)
         assert_errored_request(response)
         assert len(response.children) == 2
         for child_request in response.children:
