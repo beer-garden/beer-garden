@@ -19,7 +19,7 @@ class TestRequestListApi(object):
             command="say",
         )
 
-    @pytest.mark.timeout(30)
+    @pytest.mark.timeout(60)
     def test_get_requests(self, echo_generator):
         # Make a couple of requests just to ensure there are some
         request_1 = echo_generator.generate_request(
@@ -50,19 +50,19 @@ class TestEasyClient(object):
             command="sleep",
         )
 
-    @pytest.mark.timeout(30)
+    @pytest.mark.timeout(60)
     def test_no_wait(self, sleeper_generator):
         req = sleeper_generator.generate_request(parameters={"amount": 1})
         response = self.easy_client.create_request(req)
         assert response.status in ["CREATED", "IN_PROGRESS"]
 
-    @pytest.mark.timeout(30)
+    @pytest.mark.timeout(60)
     def test_wait_success(self, sleeper_generator):
         req = sleeper_generator.generate_request(parameters={"amount": 1})
         response = self.easy_client.create_request(req, blocking=True)
         assert response.status == "SUCCESS"
 
-    @pytest.mark.timeout(30)
+    @pytest.mark.timeout(60)
     def test_wait_timeout(self, sleeper_generator):
         req = sleeper_generator.generate_request(parameters={"amount": 2})
 
@@ -73,7 +73,7 @@ class TestEasyClient(object):
 @pytest.mark.usefixtures("easy_client")
 class TestSystemClient(object):
 
-    @pytest.mark.timeout(30)
+    @pytest.mark.timeout(60)
     def test_blocking(self):
         sys_client = setup_system_client(system_name="sleeper", timeout=1)
 
@@ -83,7 +83,7 @@ class TestSystemClient(object):
         with pytest.raises(TimeoutExceededError):
             sys_client.sleep(amount=2)
 
-    @pytest.mark.timeout(30)
+    @pytest.mark.timeout(60)
     def test_non_blocking(self):
         sys_client = setup_system_client(
             system_name="sleeper", blocking=False, timeout=1

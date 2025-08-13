@@ -314,10 +314,6 @@ jobs:
         run: pip3 install -r requirements.txt
         working-directory: ./test/integration
 
-      - name: Wait for Beer Garden to start
-        run: sleep 60s
-        shell: bash
-
       - name: Test Plugins
         run: python3 -m pytest local_plugins/
         working-directory: ./test/integration
@@ -333,7 +329,7 @@ jobs:
 
   Grandchild-Testing:
     runs-on: ${{ matrix.os }}
-    needs: Local-Plugin-Testing
+    needs: PyTest
 
     strategy:
       matrix:
@@ -484,7 +480,7 @@ jobs:
 
   Replication-Testing:
     runs-on: ${{ matrix.os }}
-    needs: Local-Plugin-Testing
+    needs: PyTest
 
     strategy:
       matrix:
