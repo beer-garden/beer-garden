@@ -1262,7 +1262,7 @@ def handle_event(event):
                 if event.payload.status == "CANCELED":
                     # If the request doesn't exist, we cannot cancel it
                     return
-                
+
                 created_request = handle_event_create(event)
                 if created_request:
                     handle_event_rebroadcast(event.name, event.payload)
