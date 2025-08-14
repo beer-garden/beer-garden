@@ -1101,15 +1101,26 @@ def handle_event_filter(event):
 
 def handle_event_rebroadcast(event_name, request):
 
-    metadata = {}
     # If no parent are set, we only want to publish to the UI events handler
     if not config.get("parent.stomp.enabled") and not config.get("parent.http.enabled"):
-        metadata["API_ONLY"] = True
-    publish(
-        Event(
-            name=event_name, payload=request, payload_type="Request", metadata=metadata
+        publish(
+            Event(
+                name=event_name,
+                payload=Request(
+                    id=request.id,
+                    parent=(
+                        Request(id=request.parent.id)
+                        if request.parent is not None
+                        else None
+                    ),
+                ),
+                payload_type="Request",
+                metadata={"API_ONLY": True, "UI_RELOAD": True},
+            )
         )
-    )
+
+    else:
+        publish(Event(name=event_name, payload=request, payload_type="Request"))
 
 
 def handle_event_create(event):
@@ -1246,6 +1257,11 @@ def handle_event(event):
                     return
 
             if existing_request is None:
+
+                if event.payload.status == "CANCELED":
+                    # If the request doesn't exist, we cannot cancel it
+                    return
+
                 created_request = handle_event_create(event)
                 if created_request:
                     handle_event_rebroadcast(event.name, event.payload)
@@ -1341,7 +1357,7 @@ def cancel_request_children(request: Request):
     Args:
         request (Request): Parent Request
     """
-    request.children = db.query(Request, filter_params={"parent": request})
+    request.children = db.query(Request, filter_params={"parent": request.id})
 
     for child in request.children:
         if child.status in [

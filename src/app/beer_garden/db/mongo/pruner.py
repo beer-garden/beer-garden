@@ -11,7 +11,6 @@ from mongoengine.errors import DoesNotExist
 from pymongo import UpdateOne
 
 import beer_garden.config as config
-from beer_garden.db.mongo.api import to_brewtils
 from beer_garden.db.mongo.models import File, Job, RawFile, Request
 from beer_garden.events import publish
 from beer_garden.metrics import CollectMetrics
@@ -442,13 +441,18 @@ def prune_outstanding_requests(outstanding_requests):
                 request.status_updated_at = datetime.now(timezone.utc)
                 request.save()
 
-                parsed = to_brewtils(request)
-
                 publish(
                     Event(
                         name=Events.REQUEST_CANCELED.name,
                         payload_type="Request",
-                        payload=parsed,
+                        payload=BrewtilsRequest(
+                            id=request.id,
+                            status=request.status,
+                            status_updated_at=request.status_updated_at,
+                            metadata=request.metadata,
+                            target_garden=request.target_garden,
+                        ),
+                        metadata={"UI_RELOAD": True},
                     )
                 )
                 counter = counter + 1
