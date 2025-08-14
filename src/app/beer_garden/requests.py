@@ -1261,7 +1261,6 @@ def handle_event(event):
                     if getattr(existing_request, field) != new_value:
                         setattr(existing_request, field, new_value)
 
-
                 db.update_direct(existing_request)
                 handle_event_rebroadcast(event.name, existing_request)
 
