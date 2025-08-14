@@ -101,8 +101,19 @@ class RequestValidator(object):
         :param request: The request to validate
         :raises ConflictError: The parent request has already completed
         """
-        if request.parent and request.parent.status in Request.COMPLETED_STATUSES:
-            raise ConflictError("Parent request has already completed")
+
+        # Pub/Sub Requests can be generated after Parent Request is completed
+        if request.metadata is not None and "_topic" in request.metadata:
+            return
+
+        if request.parent is not None:
+            if (
+                db.count(
+                    Request, id=request.parent.id, status__in=Request.COMPLETED_STATUSES
+                )
+                > 0
+            ):
+                raise ConflictError("Parent request has already completed")
 
     def get_and_validate_system(self, request):
         """Ensure there is a system in the DB that corresponds to this Request.
@@ -1116,7 +1127,7 @@ def handle_event_create(event):
             foundUser = False
 
             # First try to grab requester from Parent Request
-            if event.payload.has_parent:
+            if event.payload.has_parent and event.payload.parent is not None:
                 parent_request = db.query_unique(
                     Request, id=event.payload.parent.id, include_fields=["requester"]
                 )
@@ -1271,17 +1282,20 @@ def clean_command_type_temp(request: Request, is_remote: bool):
         # if its parent has already completed
         if request.command_type == "TEMP" and (
             not request.has_parent
-            or db.count(
-                Request,
-                id=request.parent.id,
-                status__in=[
-                    "INVALID",
-                    "CANCELED",
-                    "ERROR",
-                    "SUCCESS",
-                ],
+            or (
+                request.parent is not None
+                and db.count(
+                    Request,
+                    id=request.parent.id,
+                    status__in=[
+                        "INVALID",
+                        "CANCELED",
+                        "ERROR",
+                        "SUCCESS",
+                    ],
+                )
+                > 0
             )
-            > 0
         ):
             if is_remote:
                 # Give Threading based requests a chance to pull the
