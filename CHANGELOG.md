@@ -6,6 +6,7 @@ TBD
 
 ## 3.30.0rc3
 
+- Updated Request Event Handler to check Status to determine action instead of event type (#1939)
 - Fixed UI bug where Config was not loaded on all pages to properly display Garden Name or Tab titles (#1937)
 - Fixed bug in UI where missing Children on Garden model errored on isSystemRoutable UI filter (#1938)
 - Fixed bug where Cancelled Requests could still spawn child requests because Validator never
