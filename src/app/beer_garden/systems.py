@@ -89,6 +89,8 @@ def get_systems(**kwargs) -> List[System]:
                 ):
                     running_groups[group_key].append(system)
                     running_systems.append(system)
+            if not running_groups[group_key]:
+                del running_groups[group_key]
         group_systems = running_groups
 
     if filter_latest:

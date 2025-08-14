@@ -15,6 +15,7 @@ from mongoengine import (
     register_connection,
 )
 from mongoengine.queryset.visitor import Q, QCombination
+from pymongo import InsertOne, ReplaceOne, UpdateOne
 
 import beer_garden.db.mongo.models
 from beer_garden.db.mongo.models import MongoModel
@@ -252,12 +253,25 @@ def query_unique(
         mongoengine.MultipleObjectsReturned: More than one matching item exists
 
     """
+
     try:
         for k, v in kwargs.items():
             if isinstance(v, BaseModel):
                 kwargs[k] = from_brewtils(v)
 
-        query_set = _model_map[model_class].objects.get(**kwargs)
+        include_fields = kwargs.pop("include_fields", None)
+        exclude_fields = kwargs.pop("exclude_fields", None)
+
+        if include_fields:
+            query_set = (
+                _model_map[model_class].objects.only(*include_fields).get(**kwargs)
+            )
+        elif exclude_fields:
+            query_set = (
+                _model_map[model_class].objects.exclude(*exclude_fields).get(**kwargs)
+            )
+        else:
+            query_set = _model_map[model_class].objects.get(**kwargs)
 
         return to_brewtils(query_set)
     except DoesNotExist:
@@ -279,6 +293,7 @@ def query(
         model_class: The Brewtils model class to query for
         q_filter: Q or QCombination filter to be applied to the QuerySet
         **kwargs: Arguments to control the query. Valid options are:
+            raw_query: Dict of raw mongo query
             filter_params: Dict of filtering parameters
             order_by: Field that will be used to order the result list
             include_fields: Model fields to include
@@ -293,7 +308,11 @@ def query(
         A list of Brewtils models
 
     """
-    query_set = _model_map[model_class].objects
+
+    if kwargs.get("raw_query"):
+        query_set = _model_map[model_class].objects(__raw__=kwargs.get("raw_query"))
+    else:
+        query_set = _model_map[model_class].objects
 
     if q_filter:
         query_set = query_set.filter(q_filter)
@@ -337,6 +356,76 @@ def query(
     return [] if len(query_set) == 0 else to_brewtils(query_set)
 
 
+def create_direct(obj: ModelItem) -> ModelItem:
+    """Save a new item to the database, that already has an ID
+
+    If the Mongo model corresponding to the Brewtils model has a "pre_save"
+    or "post_save" functions, those will be executed. The Original model is
+    returned without any of the database modifications and is written directly
+    into the collection bypassing MongoEngine
+
+    This is not to be utilized for models that have DBRef objects
+
+    Args:
+        obj: The Brewtils model to save
+
+    Returns:
+        The provided Brewtils model
+
+    """
+
+    if not hasattr(obj, "id"):
+        return create(obj)
+
+    mongo_obj: MongoModel = from_brewtils(obj)
+    if hasattr(mongo_obj, "_pre_save"):
+        mongo_obj._pre_save()
+
+    type(mongo_obj)._get_collection().bulk_write(
+        [InsertOne(mongo_obj.to_mongo().to_dict())]
+    )
+
+    if hasattr(mongo_obj, "_post_save"):
+        mongo_obj._post_save()
+
+    return obj
+
+
+def update_direct(obj: ModelItem) -> ModelItem:
+    """Update a item to the database
+
+    If the Mongo model corresponding to the Brewtils model has a "pre_save"
+    or "post_save" functions, those will be executed. The Original model is
+    returned without any of the database modifications and is written directly
+    into the collection bypassing MongoEngine
+
+    This is not to be utilized for models that have DBRef objects
+
+    Args:
+        obj: The Brewtils model to updated
+
+    Returns:
+        The provided Brewtils model
+
+    """
+
+    mongo_obj: MongoModel = from_brewtils(obj)
+
+    mongo_obj.clean_update()
+
+    if hasattr(mongo_obj, "_pre_save"):
+        mongo_obj._pre_save()
+
+    type(mongo_obj)._get_collection().bulk_write(
+        [ReplaceOne({"_id": mongo_obj.id}, mongo_obj.to_mongo().to_dict(), upsert=True)]
+    )
+
+    if hasattr(mongo_obj, "_post_save"):
+        mongo_obj._post_save()
+
+    return obj
+
+
 def create(obj: ModelItem) -> ModelItem:
     """Save a new item to the database
 
@@ -350,6 +439,7 @@ def create(obj: ModelItem) -> ModelItem:
         The saved Brewtils model
 
     """
+
     mongo_obj: MongoModel = from_brewtils(obj)
 
     try:
@@ -376,6 +466,7 @@ def update(obj: ModelItem) -> ModelItem:
         The saved Brewtils model
 
     """
+
     mongo_obj = from_brewtils(obj)
 
     mongo_obj.clean_update()
@@ -386,6 +477,34 @@ def update(obj: ModelItem) -> ModelItem:
         mongo_obj.save()
 
     return to_brewtils(mongo_obj)
+
+
+def bulk_update(objs: List[ModelItem]) -> None:
+    """List of objects to bulk update. These do not invoke custom functions
+        like save or update in mongoengine models
+
+    Args:
+        objs (list[ModelItem]): List of objects to bulk update
+    """
+    bulk_operations = {}
+
+    for obj in objs:
+        mongo_obj = from_brewtils(obj)
+        mongo_obj.clean_update()
+        mongo_class = type(mongo_obj)
+
+        if mongo_class not in bulk_operations:
+            bulk_operations[mongo_class] = []
+
+        bulk_operations[mongo_class].append(
+            UpdateOne({"_id": mongo_obj.id}, {"$set": mongo_obj.to_mongo().to_dict()})
+        )
+
+    if bulk_operations:
+        for bulk_op in bulk_operations:
+            bulk_op._get_collection().bulk_write(
+                bulk_operations[bulk_op], ordered=False
+            )
 
 
 def modify(obj: ModelItem, query=None, **kwargs) -> ModelItem:
@@ -400,6 +519,7 @@ def modify(obj: ModelItem, query=None, **kwargs) -> ModelItem:
         The modified Brewtils model
 
     """
+
     mongo_obj = from_brewtils(obj)
 
     # If any values are brewtils models those need to be converted
@@ -412,7 +532,7 @@ def modify(obj: ModelItem, query=None, **kwargs) -> ModelItem:
     return to_brewtils(mongo_obj)
 
 
-def delete(obj: ModelItem) -> None:
+def delete(obj: ModelItem, force_delete: bool = False) -> None:
     """Delete an item from the database
 
     If the Mongo model corresponding to the Brewtils model has a "deep_delete" method
@@ -426,8 +546,9 @@ def delete(obj: ModelItem) -> None:
 
     """
     mongo_obj = from_brewtils(obj)
-
-    if hasattr(mongo_obj, "deep_delete"):
+    if force_delete and hasattr(mongo_obj, "force_delete"):
+        mongo_obj.force_delete()
+    elif hasattr(mongo_obj, "deep_delete"):
         mongo_obj.deep_delete()
     else:
         mongo_obj.delete()

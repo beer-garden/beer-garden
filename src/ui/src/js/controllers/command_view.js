@@ -150,9 +150,11 @@ export default function commandViewController(
     if (valid) {
       $scope.createRequest(model);
     } else {
-      $scope.alerts.push(
-          'Looks like there was an error validating the request.',
-      );
+      
+      $scope.alerts.push({
+        type: 'danger',
+        msg: 'Looks like there was an error validating the request.',
+      });
     }
   };
 
@@ -161,7 +163,10 @@ export default function commandViewController(
       try {
         request = JSON.parse(request);
       } catch (err) {
-        $scope.alerts.push(err);
+        $scope.alerts.push({
+          type: 'danger',
+          msg: err,
+        });
         return;
       }
     }
@@ -203,6 +208,14 @@ export default function commandViewController(
     if (isFormData) {
       newRequest = fd;
     }
+
+    setTimeout(function create_timeout() {   
+      $scope.alerts.push({
+        type: 'info',
+        msg: 'Looks like the request is taking longer to submit, hang in there',
+      });
+      $scope.$digest();
+    }, 5000);
 
     RequestService.createRequest(newRequest, false, isFormData).then(
         function(response) {
@@ -260,8 +273,10 @@ export default function commandViewController(
           for (const el of $scope.form) {
             if (el.key && Array.isArray(el.key)) {
               if (el.key.indexOf(p) >= 0) {
-                el['placeholder'] = params[p].details.file_name;
-                break;
+                if (params[p].details && params[p].details.file_name) {
+                  el['placeholder'] = params[p].details.file_name;
+                  break;
+                }
               }
             }
           }
@@ -273,7 +288,9 @@ export default function commandViewController(
     $scope.jsonValues.form = JSON.stringify($scope.form, undefined, 2);
   };
 
-  $scope.successCallback = function(systems) {
+  $scope.successCallback = function() {
+
+    let systems = $rootScope.systems;
 
     for (let i = 0; i < systems.length; i++) {
       let system = systems[i];
@@ -381,17 +398,6 @@ export default function commandViewController(
   // Model instantiate button will emit this so need to listen for it
   $scope.$on('generateSF', generateSF);
 
-  if ($rootScope.gardensResponse !== undefined){
-    $scope.successCallback($rootScope.systems);
-  } 
-  else {
-    setTimeout(function delaySystemLoad() {
-      if ($rootScope.gardensResponse !== undefined){
-        $scope.successCallback($rootScope.systems);
-        $scope.$digest();
-      } else {
-        setTimeout(delaySystemLoad, 10);
-      }
-    }, 10);
-  }
+  $rootScope.getLocalGarden($scope.successCallback)
+
 }

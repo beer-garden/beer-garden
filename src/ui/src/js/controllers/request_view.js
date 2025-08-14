@@ -60,8 +60,8 @@ export default function requestViewController(
   $scope.formatErrorTitle = undefined;
   $scope.formatErrorMsg = undefined;
   $scope.showFormatted = false;
-  $scope.disabledPourItAgain = false;
-  $scope.msgPourItAgain = null;
+  $scope.disabledPourItAgain = true;
+  $scope.msgPourItAgain = 'Loading System Info';
 
   $scope.isMaximized = localStorageService.get('isMaximized');
   if ($scope.isMaximized === null) {
@@ -188,22 +188,6 @@ export default function requestViewController(
         $scope.request.system,
         $scope.request.system_version,
     );
-    if (requestSystem != undefined) {
-      const commands = requestSystem.commands;
-      for (let i = 0; i < commands.length; i++) {
-        if (commands[i].name == request.command) {
-          $scope.disabledPourItAgain = false;
-          $scope.msgPourItAgain = null;
-          break;
-        } else {
-          $scope.disabledPourItAgain = true;
-          $scope.msgPourItAgain = 'Unable to find command';
-        }
-      }
-    } else {
-      $scope.disabledPourItAgain = true;
-      $scope.msgPourItAgain = 'Unable to find system';
-    }
     $scope.setWindowTitle(
         $scope.request.command_display_name || $scope.request.command,
         $scope.request.metadata.system_display_name || $scope.request.system,
@@ -262,17 +246,43 @@ export default function requestViewController(
       }
     }
 
+    $rootScope.getLocalGarden($scope.set_instance_state)
+
+  };
+
+  $scope.set_instance_state = function(){
     // Grab the status of the instance this request targets to display if necessary
     const system = SystemService.findSystem(
       $scope.request.namespace,
       $scope.request.system,
       $scope.request.system_version,
     );
-    $scope.instanceStatus = _.find(system.instances, {
-      name: $scope.request.instance_name,
-    }).status;
 
-  };
+    if (system !== undefined){
+
+      $scope.instanceStatus = _.find(system.instances, {
+        name: $scope.request.instance_name,
+      }).status;
+
+      $scope.instanceStatus;
+
+      const commands = system.commands;
+      for (let i = 0; i < commands.length; i++) {
+        if (commands[i].name == $scope.request.command) {
+          $scope.disabledPourItAgain = false;
+          $scope.msgPourItAgain = null;
+          break;
+        } else {
+          $scope.disabledPourItAgain = true;
+          $scope.msgPourItAgain = 'Unable to find command';
+        }
+      }
+
+    } else {
+      $scope.disabledPourItAgain = true;
+      $scope.msgPourItAgain = 'Unable to find system';
+    }
+  }
 
   $scope.failureCallback = function(response) {
     $scope.response = response;
@@ -302,6 +312,7 @@ export default function requestViewController(
       system: request.system,
       system_version: request.system_version,
       command: request.command_display_name || request.command,
+      command_type: request.command_type,
       instance_name: request.instance_name,
       comment: request.comment || '',
       parameters: request.parameters,
@@ -370,10 +381,17 @@ export default function requestViewController(
   };
 
   function eventCallback(event) {
-    if (event.name.startsWith('REQUEST')) {
-      if (event.payload.id == $stateParams.requestId) {
-        $scope.successCallback(event.payload);
-      } else if (_.get(event, 'payload.parent.id') == $stateParams.requestId) {
+    if (event.name.startsWith('REQUEST') && event.payload.id !== undefined && event.payload.id !== null) {
+      if (event.metadata !== undefined && "UI_RELOAD" in event.metadata) {
+        if (event.payload.id == $stateParams.requestId || _.get(event, 'payload.parent.id') == $stateParams.requestId) {
+          // This does not contain full payload, so we need to reload the request
+          $scope.loadRequest();
+        }
+        return;
+      }
+      if (event.payload.id == $stateParams.requestId) {       
+        $scope.successCallback(event.payload);        
+      } else if (_.get(event, 'payload.parent.id') == $stateParams.requestId) {       
         if (event.name == 'REQUEST_CREATED') {
           $scope.children.push(event.payload);
         } else {
@@ -387,7 +405,7 @@ export default function requestViewController(
             child.updated_at = event.payload.updated_at;
             child.error_class = event.payload.error_class;
           }
-        }
+        }        
 
         if (!$scope.childrenCollapsed) {
           $scope.childrenDisplay = $scope.children;
@@ -420,19 +438,7 @@ export default function requestViewController(
     $scope.$digest();
   });
 
-  if ($rootScope.gardensResponse !== undefined){
-    $scope.loadRequest();
-  } 
-  else {
-    setTimeout(function delaySystemLoad() {
-      if ($rootScope.gardensResponse !== undefined){
-        $scope.loadRequest();
-        $scope.$digest();
-      } else {
-        setTimeout(delaySystemLoad, 10);
-      }
-    }, 10);
-  }
+  $scope.loadRequest();
   
 }
 

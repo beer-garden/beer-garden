@@ -2,7 +2,6 @@ import template from '../../../templates/import_jobs.html';
 
 jobImportController.$inject = [
   '$scope',
-  '$rootScope',
   '$uibModal',
   '$state',
   'JobService',
@@ -11,20 +10,16 @@ jobImportController.$inject = [
 /**
  * jobImportController - Controller for job import.
  * @param  {Object} $scope            Angular's $scope object.
- * @param  {Object} $rootScope        Angular's $rootScope object.
  * @param  {Object} $uibModal         Angular UI's $uibModal object.
  * @param  {Object} $state
  * @param  {Object} JobService        Beer-Garden's job service.
  */
 export function jobImportController(
     $scope,
-    $rootScope,
     $uibModal,
     $state,
     JobService,
 ) {
-  $scope.response = $rootScope.gardensResponse;
-  $scope.data = $rootScope.systems;
 
   $scope.openImportJobsPopup = function() {
     const popupInstance = $uibModal.open({

@@ -7,7 +7,7 @@ from copy import deepcopy
 from typing import List, Optional, Tuple
 
 from apispec import APISpec
-from brewtils.models import Event, Events, User
+from brewtils.models import Event, Events
 from brewtils.schemas import (
     CommandSchema,
     CronTriggerSchema,
@@ -50,11 +50,6 @@ import beer_garden.requests
 import beer_garden.router
 from beer_garden.api.http.client import SerializeHelper
 from beer_garden.api.http.processors import EventManager, websocket_publish
-from beer_garden.api.http.schemas.v1.command_publishing_blocklist import (
-    CommandPublishingBlocklistListInputSchema,
-    CommandPublishingBlocklistListSchema,
-    CommandPublishingBlocklistSchema,
-)
 from beer_garden.api.http.schemas.v1.user import UserPasswordChangeSchema
 from beer_garden.events import publish
 from beer_garden.metrics import initialize_elastic_client
@@ -65,7 +60,6 @@ tornado_app: Application
 logger: logging.Logger = None
 event_publishers = None
 api_spec: APISpec
-anonymous_principal: User
 client_ssl: ssl.SSLContext
 
 
@@ -87,7 +81,6 @@ def _get_published_url_specs(
         (rf"{prefix}api/v1/admin/?", v1.admin.AdminAPI),
         (rf"{prefix}api/v1/jobs/?", v1.job.JobListAPI),
         (rf"{prefix}api/v1/gardens/?", v1.garden.GardenListAPI),
-        (rf"{prefix}api/v1/namespaces/?", v1.namespace.NamespaceListAPI),
         (rf"{prefix}api/v1/instances/(\w+)/?", v1.instance.InstanceAPI),
         (rf"{prefix}api/v1/instances/(\w+)/logs/?", v1.instance.InstanceLogAPI),
         (rf"{prefix}api/v1/instances/(\w+)/queues/?", v1.instance.InstanceQueuesAPI),
@@ -132,14 +125,6 @@ def _get_published_url_specs(
         (rf"{prefix}api/v2/users/?", v1.user.UserListAPI),
         (rf"{prefix}api/v2/users/(\w+)/?", v1.user.UserAPI),
         # Deprecated
-        (
-            rf"{prefix}api/v1/commandpublishingblocklist/(\w+)/?",
-            v1.command_publishing_blocklist.CommandPublishingBlocklistPathAPI,
-        ),
-        (
-            rf"{prefix}api/v1/commandpublishingblocklist/?",
-            v1.command_publishing_blocklist.CommandPublishingBlocklistAPI,
-        ),
         (rf"{prefix}api/v1/commands/?", v1.command.CommandListAPI),
         (rf"{prefix}api/v1/commands/(\w+)/?", v1.command.CommandAPIOld),
         (rf"{prefix}api/v1/config/logging/?", v1.logging.LoggingConfigAPI),
@@ -210,7 +195,6 @@ async def startup():
 
     This is the first thing called from within the ioloop context.
     """
-    global anonymous_principal
 
     http_config = config.get("entry.http")
     logger.debug(f"Starting HTTP server on {http_config.host}:{http_config.port}")
@@ -362,17 +346,6 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition("LoggingConfig", schema=LoggingConfigSchema)
     api_spec.definition("Event", schema=EventSchema)
     api_spec.definition("User", schema=UserSchema)
-    api_spec.definition(
-        "CommandPublishingBlocklist", schema=CommandPublishingBlocklistSchema
-    )
-    api_spec.definition(
-        "CommandPublishingBlocklistListSchema",
-        schema=CommandPublishingBlocklistListSchema,
-    )
-    api_spec.definition(
-        "CommandPublishingBlocklistListInputSchema",
-        schema=CommandPublishingBlocklistListInputSchema,
-    )
     api_spec.definition("UserPasswordChange", schema=UserPasswordChangeSchema)
     api_spec.definition("Role", schema=RoleSchema)
 
@@ -446,13 +419,28 @@ def _event_callback(event):
     # Everything needs to be published to the websocket
     websocket_publish(event)
 
-    # And also register handlers that the entry point needs to care about
-    for handler in [
-        beer_garden.router.handle_event,
-        beer_garden.log.handle_event,
-        beer_garden.requests.handle_wait_events,
-    ]:
+    if not event.error:
+        # And also register handlers that the entry point needs to care about
         try:
-            handler(deepcopy(event))
+            if event.name in [
+                Events.SYSTEM_CREATED.name,
+                Events.SYSTEM_UPDATED.name,
+                Events.GARDEN_SYNC.name,
+                Events.GARDEN_CONFIGURED.name,
+                Events.GARDEN_REMOVED.name,
+                Events.GARDEN_UPDATED.name,
+            ]:
+
+                beer_garden.router.handle_event(deepcopy(event))
+
+            elif event.name == Events.PLUGIN_LOGGER_FILE_CHANGE.name:
+                beer_garden.log.handle_event(deepcopy(event))
+
+            elif event.name in [
+                Events.REQUEST_COMPLETED.name,
+                Events.REQUEST_CANCELED.name,
+                Events.GARDEN_STOPPED.name,
+            ]:
+                beer_garden.requests.handle_wait_events(deepcopy(event))
         except Exception as ex:
             logger.exception(f"Error executing callback for {event!r}: {ex}")

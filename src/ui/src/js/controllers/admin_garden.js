@@ -2,6 +2,7 @@ import gardenMetricsTemplate from '../../templates/admin_garden_metrics.html';
 
 adminGardenController.$inject = [
   '$scope',
+  '$rootScope',
   '$uibModal',
   'GardenService',
   'EventService',
@@ -10,6 +11,7 @@ adminGardenController.$inject = [
 /**
  * adminGardenController - Garden management controller.
  * @param  {Object} $scope          Angular's $scope object.
+ * @param  {Object} $rootScope      Angular's $rootScope object.
  * @param  {Object} $uibModal
  * @param  {Object} GardenService    Beer-Garden's garden service object.
  * @param  {Object} EventService    Beer-Garden's event service object.
@@ -17,6 +19,7 @@ adminGardenController.$inject = [
 
 export default function adminGardenController(
     $scope,
+    $rootScope,
     $uibModal,
     GardenService,
     EventService,
@@ -26,22 +29,16 @@ export default function adminGardenController(
   $scope.gardenCreateSchema = GardenService.CreateSCHEMA;
   $scope.gardenCreateForm = GardenService.CreateFORM;
 
-  $scope.successCallback = function(response) {
-    for (let i = 0; i < response.data.length; i++){
-      if (!response.data.has_parent){
-        $scope.data = $scope.extractGardenChildren([response.data[i]]);
-      }
-    }
-    $scope.response = response;
+  $scope.successCallback = function() {
+    $scope.data = $scope.extractGardenChildren([$rootScope.gardensResponse.data]);
+    $scope.response = $rootScope.gardensResponse;
   };
+  
   $scope.garden_name = null;
   $scope.createGardenFormHide = true;
   $scope.create_garden_name = null;
   $scope.createGardenFormHide = true;
-  $scope.failureCallback = function(response) {
-    $scope.response = response;
-    $scope.data = [];
-  };
+
   $scope.is_unique_garden_name = true;
   $scope.create_garden_popover_message = null;
   $scope.create_garden_name_focus = false;
@@ -91,13 +88,6 @@ export default function adminGardenController(
     return gardenLabel;
 
   }
-
-  const loadGardens = function() {
-    GardenService.getGardens().then(
-        $scope.successCallback,
-        $scope.failureCallback,
-    );
-  };
 
   $scope.closeAlert = function(index) {
     $scope.alerts.splice(index, 1);
@@ -182,9 +172,6 @@ export default function adminGardenController(
 
   $scope.isRemoteConfigured = function(garden) {
     if (garden.connection_type == "LOCAL"){
-      return false;
-    }
-    if (garden.status == "MISSING_CONFIGURATION"){
       return false;
     }
 
@@ -272,10 +259,6 @@ export default function adminGardenController(
       return false;
     }
 
-    if (garden.status == "MISSING_CONFIGURATION"){
-      return true;
-    }
-
     for (let i = 0; i < garden.publishing_connections.length; i++) {
       if (garden.publishing_connections[i].status == "MISSING_CONFIGURATION"){
         return true;
@@ -287,8 +270,8 @@ export default function adminGardenController(
   const loadAll = function() {
     $scope.response = undefined;
     $scope.data = [];
-
-    loadGardens();
+    
+    $rootScope.getLocalGarden($scope.successCallback);
   };
 
   $scope.removeGardenEventChildren = function(garden) {
@@ -309,6 +292,13 @@ export default function adminGardenController(
     }
 
 
+  }
+
+  $scope.hasConfiguredConnection = function(connections) {
+    if (connections !== undefined && connections != null){
+      return connections.some(connection => connection.status != 'NOT_CONFIGURED');
+    }
+    return false;
   }
 
   $scope.eventUpsetGarden = function (garden) {
