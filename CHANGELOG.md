@@ -15,6 +15,8 @@ TBD
   checked database for status (#1941)
 - UI code is now unminimized with source map to enable enhanced debugging of released code (#1942)
 - Improved None checking for Request Parents
+- Updated internal class from EventProcessor to ReplicationProcessor for improved clarity (#1780)
+
 
 ## 3.30.0rc2
 
