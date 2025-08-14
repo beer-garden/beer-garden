@@ -7,11 +7,10 @@ from typing import List
 from brewtils.models import Event, Events, Garden, Operation, Request, System, Topic
 
 import beer_garden.config as config
-from beer_garden.garden import local_garden
+import beer_garden.db.api as db
+from beer_garden.garden import get_garden, local_garden
 from beer_garden.replication import is_primary_replication
 from beer_garden.requests import process_request
-import beer_garden.db.api as db
-from beer_garden.garden import get_garden
 from beer_garden.systems import get_systems
 from beer_garden.topic import (
     get_topics_regex,
