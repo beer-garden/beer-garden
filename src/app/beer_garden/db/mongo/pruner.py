@@ -34,7 +34,7 @@ def determine_expiration_at(request, action_ttl, info_ttl):
     if request.expiration_at:
         return request.expiration_at
 
-    if request.has_parent:
+    if request.has_parent and request.parent is not None:
         try:
             parent = Request.objects.get(id=request.parent.id)
 
@@ -463,7 +463,7 @@ def prune_outstanding_requests(outstanding_requests):
                 logger.debug(ex)
                 logger.debug("Will attempt to check for parents")
 
-                if request.has_parent:
+                if request.has_parent and request.parent is not None:
                     try:
                         if not Request.objects.with_id(request.parent.id):
                             raise DoesNotExist
