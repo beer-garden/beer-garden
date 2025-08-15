@@ -390,31 +390,25 @@ class MixedScheduler(object):
     def internal_scheduled_jobs(self):
 
         # Add scheduled jobs for Mongo Pruner
-        prune_interval = config.get("db.prune.interval")
+
+        prune_interval = config.get("db.prune.interval", default=15)
 
         if prune_interval > -1:
 
             if config.get("db.prune.in_progress_request_expiration") > 0:
                 self.add_schedule(
-                    beer_garden.db.mongo.pruner.cancel_outstanding,
+                    beer_garden.db.mongo.util.cancel_outstanding,
                     interval=prune_interval,
                     max_instances=1,
                     name="cancel_outstanding",
                 )
 
             self.add_schedule(
-                beer_garden.db.mongo.pruner.prune_raw_files,
+                beer_garden.db.mongo.util.unassign_files,
                 interval=prune_interval,
                 max_instances=1,
-                name="prune_raw_files",
+                name="prune_files",
             )
-
-        self.add_schedule(
-            beer_garden.db.mongo.pruner.prune_files,
-            interval=config.get("db.prune.interval", default=15),
-            max_instances=1,
-            name="prune_files",
-        )
 
         # Add scheduled job for checking unresponsive gardens
         self.add_schedule(
@@ -513,6 +507,13 @@ class MixedScheduler(object):
                         max_instances=1,
                         name="prune_files",
                     )
+
+                self.add_schedule(
+                    beer_garden.db.mongo.legacy_pruner.prune_grid_fs,
+                    interval=prune_interval,
+                    max_instances=1,
+                    name="prune_files",
+                )
 
 
 class IntervalTrigger(APInterval):

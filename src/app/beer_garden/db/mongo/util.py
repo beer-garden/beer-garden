@@ -1,13 +1,19 @@
 # -*- coding: utf-8 -*-
 import logging
+from datetime import datetime, timedelta, timezone
 
+from brewtils.errors import ModelValidationError
+from brewtils.models import Event, Events
+from brewtils.schema_parser import SchemaParser
 from mongoengine.connection import get_db
 from mongoengine.errors import DoesNotExist, FieldDoesNotExist, InvalidDocumentError
 from pymongo import UpdateMany, UpdateOne
 from pymongo.errors import OperationFailure
 
 import beer_garden
-from beer_garden import config
+import beer_garden.config as config
+from beer_garden.db.mongo.models import File, FileChunk, Request
+from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.errors import IndexOperationError
 
 logger = logging.getLogger(__name__)
@@ -411,7 +417,8 @@ def reset_last_configuration():
 
     configuration = Configuration(
         action_ttl=config.get("db.prune.ttl.action", default=-1),
-        info_ttl=config.get("db.prune.ttl.info", default=-1),
+        info_ttl=config.get("db.prune.ttl.info", default=15),
+        file_ttl=config.get("db.prune.ttl.info", default=15),
         version=str(beer_garden.__version__),
     )
     configuration.save()
@@ -426,6 +433,7 @@ def update_request_ttl_indexes(command_type, ttl, previous_ttl=-1):
     request_index = f"{command_type.lower()}_created_at_index_tt"
     gridfs_index = f"{command_type.lower()}_created_at_gridfs_index_ttl"
     gridfs_chunk_index = f"{command_type.lower()}_created_at_gridfs_chunk_index_ttl"
+    raw_file_index = f"{command_type.lower()}_created_at_raw_file_index_ttl"
 
     if ttl != previous_ttl or ttl < 0:
         if request_index in db["request"].index_information():
@@ -436,6 +444,9 @@ def update_request_ttl_indexes(command_type, ttl, previous_ttl=-1):
 
         if gridfs_chunk_index in db["fs.chunks"].index_information():
             db["fs.chunks"].drop_index(gridfs_chunk_index)
+
+        if raw_file_index in db["raw_file"].index_information():
+            db["raw_file"].drop_index(raw_file_index)
 
     if ttl > -1:
         if request_index not in db["request"].index_information():
@@ -451,7 +462,7 @@ def update_request_ttl_indexes(command_type, ttl, previous_ttl=-1):
 
         if gridfs_index not in db["fs.files"].index_information():
             db["fs.files"].create_index(
-                [("uploadDate", 1)],
+                [("created_at", 1)],
                 name=gridfs_index,
                 expireAfterSeconds=ttl * 60,
                 partialFilterExpression={
@@ -462,12 +473,76 @@ def update_request_ttl_indexes(command_type, ttl, previous_ttl=-1):
 
         if gridfs_chunk_index not in db["fs.chunks"].index_information():
             db["fs.chunks"].create_index(
-                [("uploadDate", 1)],
+                [("created_at", 1)],
                 name=gridfs_chunk_index,
                 expireAfterSeconds=ttl * 60,
                 partialFilterExpression={
                     "root_command_type": command_type,
                     "status": {"$in": Request.COMPLETED_STATUSES},
+                },
+            )
+
+        if raw_file_index not in db["raw_file"].index_information():
+            db["raw_file"].create_index(
+                [("created_at", 1)],
+                name=raw_file_index,
+                expireAfterSeconds=ttl * 60,
+                partialFilterExpression={
+                    "root_command_type": command_type,
+                    "status": {"$in": Request.COMPLETED_STATUSES},
+                },
+            )
+
+
+def update_file_ttl_indexes(ttl, previous_ttl=-1):
+
+    from mongoengine.connection import get_db
+
+    db = get_db()
+
+    file_raw_index = "created_at_file_raw_index_ttl"
+    file_index = "created_at_file_index_ttl"
+    file_chunk_index = "created_at_file_chunk_index_ttl"
+
+    if ttl != previous_ttl or ttl < 0:
+        if file_raw_index in db["raw_file"].index_information():
+            db["raw_file"].drop_index(file_raw_index)
+
+        if file_index in db["file"].index_information():
+            db["file"].drop_index(file_index)
+
+        if file_chunk_index in db["file_chunk"].index_information():
+            db["file_chunk"].drop_index(file_chunk_index)
+
+    if ttl > -1:
+        if file_raw_index not in db["raw_file"].index_information():
+            db["raw_file"].create_index(
+                [("created_at", 1)],
+                name=file_raw_index,
+                expireAfterSeconds=ttl * 60,
+                partialFilterExpression={
+                    "request": None,
+                },
+            )
+
+        if file_index not in db["file"].index_information():
+            db["file"].create_index(
+                [("updated_at", 1)],
+                name=file_index,
+                expireAfterSeconds=ttl * 60,
+                partialFilterExpression={
+                    "request": None,
+                    "job": None,
+                },
+            )
+
+        if file_chunk_index not in db["file_chunk"].index_information():
+            db["file_chunk"].create_index(
+                [("updated_at", 1)],
+                name=file_chunk_index,
+                expireAfterSeconds=ttl * 60,
+                partialFilterExpression={
+                    "owner": None,
                 },
             )
 
@@ -478,7 +553,8 @@ def update_ttl_indexes():
     db = get_db()
 
     action_ttl = config.get("db.prune.ttl.action", default=-1)
-    info_ttl = config.get("db.prune.ttl.info", default=-1)
+    info_ttl = config.get("db.prune.ttl.info", default=15)
+    file_ttl = config.get("db.prune.ttl.file", default=15)
 
     previous_config = db.get_collection("configuration").find_one()
 
@@ -492,9 +568,11 @@ def update_ttl_indexes():
     update_request_ttl_indexes(
         "ACTION", action_ttl, previous_config.get("action_ttl", -1)
     )
-    update_request_ttl_indexes("INFO", info_ttl, previous_config.get("info_ttl", -1))
+    update_request_ttl_indexes("INFO", info_ttl, previous_config.get("info_ttl", 15))
     update_request_ttl_indexes("TEMP", 1)
     update_request_ttl_indexes("ADMIN", 1)
+
+    update_file_ttl_indexes(file_ttl, previous_config.get("file_ttl", 15))
 
 
 def check_indexes(document_class):
@@ -719,3 +797,163 @@ def prune_topics():
             deleted_subscriber_count = deleted_subscriber_count + 1
 
     return deleted_topic_count, deleted_subscriber_count
+
+
+def unassign_files():
+    # Pruning Orphaned Files that think they are associated with a Request or Job
+    # but the Request or Job no longer exists in the database
+
+    # TODO: We should update the Request pipeline to utilize the TTL index pruning
+    # and not the lookup. Until then, we will keep the lookup to ensure
+    # we are deleting files that are not in use.
+    request_pipeline = [
+        {
+            "$match": {
+                "owner_type": "REQUEST",
+                "request": {"$ne": None},
+            }
+        },
+        {
+            "$lookup": {
+                "from": "request",
+                "localField": "request",
+                "foreignField": "_id",
+                "as": "lookup_result",
+            }
+        },
+        {"$match": {"lookup_result": {"$size": 0}}},
+        {"$project": {"_id": 1}},
+    ]
+
+    job_pipeline = [
+        {
+            "$match": {
+                "owner_type": "JOB",
+                "job": {"$ne": None},
+            }
+        },
+        {
+            "$lookup": {
+                "from": "job",
+                "localField": "job",
+                "foreignField": "_id",
+                "as": "lookup_result",
+            }
+        },
+        {"$match": {"lookup_result": {"$size": 0}}},
+        {"$project": {"_id": 1}},
+    ]
+
+    file_ids = []
+    file_ids_str = []
+
+    for pipeline in [request_pipeline, job_pipeline]:
+        if pipeline:
+            for doc in File._get_collection().aggregate(pipeline):
+                file_ids.append(doc["_id"])
+                file_ids_str.append(str(doc["_id"]))
+
+    if len(file_ids) > 0:
+        batch_size = config.get("db.prune.batch_size")
+
+        if batch_size > 0:
+            for i in range(0, len(file_ids), batch_size):
+                File._get_collection().update_many(
+                    {"_id": {"$in": file_ids[i : i + batch_size]}},
+                    {"$unset": {"job": "", "request": ""}},
+                )
+                FileChunk._get_collection().update_many(
+                    {"file_id": {"$in": file_ids_str[i : i + batch_size]}},
+                    {"$unset": {"owner": ""}},
+                )
+        else:
+            File._get_collection().update_many(
+                {"_id": {"$in": file_ids}}, {"$unset": {"job": "", "request": ""}}
+            )
+            FileChunk._get_collection().update_many(
+                {"file_id": {"$in": file_ids_str}}, {"$unset": {"owner": ""}}
+            )
+        logger.error(f"{len(file_ids)} Files unassigned owners")
+    else:
+        logger.debug("No missed owners for Files")
+
+
+def cancel_outstanding():
+    """
+    Helper function for run to mark requests still outstanding after a certain
+    amount of time as canceled.
+
+    Update the newest requests first to give the oldest a chance to finish before
+    being canceled.
+    """
+
+    prune_config = config.get("db.prune")
+    cancel_threshold = prune_config.get("in_progress_request_expiration")
+    if cancel_threshold > 0:
+        timeout = datetime.now(timezone.utc) - timedelta(minutes=cancel_threshold)
+        batch_size = config.get("db.prune.batch_size")
+
+        if batch_size > 0:
+
+            outstanding_requests = (
+                Request.objects.filter(
+                    status__in=["IN_PROGRESS", "CREATED"],
+                    updated_at__lte=timeout,
+                )
+                .order_by("-updated_at")
+                .batch_size(batch_size)
+            )
+            cancel_outstanding_requests(outstanding_requests)
+
+        else:
+            outstanding_requests = Request.objects.filter(
+                status__in=["IN_PROGRESS", "CREATED"], updated_at__lte=timeout
+            ).order_by("-updated_at")
+
+            cancel_outstanding_requests(outstanding_requests)
+
+
+def cancel_outstanding_requests(outstanding_requests):
+    from beer_garden.events import publish
+
+    counter = 0
+    try:
+        for request in outstanding_requests:
+            try:
+                request.status = "CANCELED"
+                request.status_updated_at = datetime.now(timezone.utc)
+                request.save()
+                serialized = MongoParser.serialize(request, to_string=True)
+                parsed = SchemaParser.parse_request(
+                    serialized, from_string=True, many=False
+                )
+
+                publish(
+                    Event(
+                        name=Events.REQUEST_CANCELED.name,
+                        payload_type="Request",
+                        payload=parsed,
+                    )
+                )
+                counter = counter + 1
+            except ModelValidationError:
+                # If the Request was already cancelled or completed, then skip cancelling it
+                logger.error(
+                    f"ModelValidationError: Failed to update outstanding Request {request.id}"
+                )
+            except DoesNotExist:
+                # If the Request was already deleted, then skip cancelling it
+                logger.error(
+                    (
+                        f"DoesNotExist: Attempted to update outstanding request {request.id} "
+                        "but does not exist in database"
+                    )
+                )
+
+    finally:
+
+        if counter > 0:
+            logger.error(f"{counter} outstanding Requests cancelled")
+
+        else:
+            logger.debug("No outstanding Requests cancelled")

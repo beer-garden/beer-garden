@@ -551,6 +551,7 @@ class Request(MongoModel, Document):
                 {
                     "$set": {
                         "status": self.status,
+                        "created_at": self.created_at,
                         "root_command_type": self.root_command_type,
                     }
                 },
@@ -560,7 +561,7 @@ class Request(MongoModel, Document):
                 {
                     "$set": {
                         "status": self.status,
-                        "uploadDate": self.created_at,
+                        "created_at": self.created_at,
                         "root_command_type": self.root_command_type,
                         "parameter": True,
                     }
@@ -584,6 +585,7 @@ class Request(MongoModel, Document):
                     {
                         "$set": {
                             "status": self.status,
+                            "created_at": self.created_at,
                             "root_command_type": self.root_command_type,
                             "uploadDate": self.created_at,
                             "output": True,
@@ -611,11 +613,23 @@ class Request(MongoModel, Document):
                 and param_value.get("id") is not None
             ):
                 # Can't do this in this function because it only happens for CREATE
+                get_db()["raw_file"].update_one(
+                    {"_id": ObjectIdField().to_mongo(param_value["id"])},
+                    {
+                        "$set": {
+                            "status": self.status,
+                            "created_at": self.created_at,
+                            "root_command_type": self.root_command_type,
+                        }
+                    },
+                )
+
                 get_db()["fs.files"].update_one(
                     {"_id": ObjectIdField().to_mongo(param_value["id"])},
                     {
                         "$set": {
                             "status": self.status,
+                            "created_at": self.created_at,
                             "root_command_type": self.root_command_type,
                             "parameter": True,
                         }
@@ -626,8 +640,8 @@ class Request(MongoModel, Document):
                     {
                         "$set": {
                             "status": self.status,
+                            "created_at": self.created_at,
                             "root_command_type": self.root_command_type,
-                            "uploadDate": self.created_at,
                             "parameter": True,
                         }
                     },
@@ -660,6 +674,7 @@ class Request(MongoModel, Document):
                 try:
                     raw_file = RawFile.objects.get(id=param_value["id"])
                     raw_file.request = self
+                    raw_file.root_command_type = self.root_command_type
                     raw_file.save()
                 except RawFile.DoesNotExist:
                     logger.debug(
@@ -1425,6 +1440,8 @@ class FileChunk(MongoModel, Document):
 class RawFile(Document):
     file = FileField()
     created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
+    status = StringField()
+    root_command_type = StringField()
     request = LazyReferenceField(Request, required=False, reverse_delete_rule=CASCADE)
 
     meta = {"queryset_class": FileFieldHandlingQuerySet}
@@ -1570,4 +1587,5 @@ class Configuration(Document):
     # be used for optional configuration.
     action_ttl = IntField(default=-1)
     info_ttl = IntField(default=15)
+    file_ttl = IntField(default=15)
     version = StringField(default="0.0.0")
