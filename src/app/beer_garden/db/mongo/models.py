@@ -1412,8 +1412,8 @@ class File(MongoModel, Document):
 
     owner_id = StringField(required=False)
     owner_type = StringField(required=False)
-    request = LazyReferenceField(Request, required=False, reverse_delete_rule=NULLIFY)
-    job = LazyReferenceField(Job, required=False, reverse_delete_rule=NULLIFY)
+    request = LazyReferenceField(Request, required=False)
+    job = LazyReferenceField(Job, required=False)
     updated_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
     file_name = StringField(required=True)
     file_size = IntField(required=True)
