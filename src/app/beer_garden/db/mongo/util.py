@@ -314,7 +314,7 @@ def find_root_command_type_and_expiration(request):
     command_type = getattr(request, "command_type", "ACTION")
     if (
         ("has_parent" in request and request["has_parent"])
-        or ("parent" in request and request["parent"])
+        or ("parent" in request and request["parent"] is not None)
     ) and ("expiration_at" not in request or not request["expiration_at"]):
         try:
             parent = (

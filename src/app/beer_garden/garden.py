@@ -922,43 +922,10 @@ def garden_sync(sync_target: str = None):
 def publish_local_garden_to_api():
     local_garden = get_garden(
         config.get("garden.name"),
-        include_fields=[
-            "name",
-            "has_parent",
-            "parent",
-            "version",
-            "has_parent",
-            "shared_users",
-            "default_user",
-            "connection_type",
-            "metadata",
-            "systems__id",
-            "systems__name",
-            "systems__description",
-            "systems__version",
-            "systems__icon_name",
-            "systems__display_name",
-            "systems__metadata",
-            "systems__namespace",
-            "systems__local",
-            "systems__template",
-            "systems__groups",
-            "systems__prefix_topic",
-            "systems__requires",
-            "systems__requires_timeout",
-            "systems__commands",
-            "systems__instances__id",
-            "systems__instances__name",
-            "systems__instances__status",
-            "systems__instances__description",
-            "systems__instances__queue_type",
-            "systems__instances__queue_info",
-            "systems__instances__icon_name",
-            "systems__instances__metadata",
-            "receiving_connections__api",
-            "receiving_connections__status",
-            "publishing_connections__api",
-            "publishing_connections__status",
+        exclude_fields=[
+            "systems__instances__status_info",
+            "receiving_connections__status_info",
+            "publishing_connections__status_info",
         ],
     )
     publish(
@@ -995,6 +962,43 @@ def garden_unresponsive_trigger():
                 update_garden(garden)
 
 
+def handle_event_filter(event):
+
+    if event.payload_type == Garden.__name__:
+        if (
+            event.garden == config.get("garden.name")
+            and hasattr(event, "payload")
+            and hasattr(event.payload, "has_parent")
+            and event.payload.has_parent
+            and hasattr(event.payload, "parent")
+            and event.payload.parent != config.get("garden.name")
+        ):
+            # Do not process 2 hop garden events
+            return True
+
+        if event.name == Events.GARDEN_UPDATED.name and event.garden == config.get(
+            "garden.name"
+        ):
+            # Do not reprocess events
+            return True
+
+        if (
+            event.garden == config.get("garden.name")
+            and event.name
+            in [
+                Events.GARDEN_CONFIGURED.name,
+                Events.GARDEN_REMOVED.name,
+                Events.GARDEN_CREATED.name,
+            ]
+            and not config.get("parent.stomp.enabled")
+            and not config.get("parent.http.enabled")
+        ):
+            # No parent to publish to, so we can skip these events
+            return True
+
+    return False
+
+
 def handle_event(event):
     """Handle garden-related events
 
@@ -1016,7 +1020,7 @@ def handle_event(event):
             children = db.query(
                 Garden,
                 filter_params={"connection_type__ne": "LOCAL", "has_parent": False},
-                include_fields=["receiving_connections"],
+                include_fields=["receiving_connections", "name"],
             )
 
             for child in children:
@@ -1030,11 +1034,6 @@ def handle_event(event):
                     ] and receiving.status not in ["NOT_CONFIGURED", "DISABLED"]:
                         garden_sync(child.name)
                         break
-
-    if "SYSTEM" in event.name or "INSTANCE" in event.name:
-        # If a System or Instance is updated, publish updated Local Garden Model for UI
-        publish_local_garden_to_api()
-        return
 
     if event.garden != config.get("garden.name"):
         if event.name in (
@@ -1069,9 +1068,6 @@ def handle_event(event):
                     pass
 
             upsert_garden(event.payload)
-
-            # Publish update events for UI to dynamically load changes for Systems
-            publish_local_garden_to_api()
 
     elif event.name in [
         Events.GARDEN_CONFIGURED.name,

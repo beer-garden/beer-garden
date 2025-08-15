@@ -23,4 +23,7 @@ bulk_update = beer_garden.db.mongo.api.bulk_update
 modify = beer_garden.db.mongo.api.modify
 delete = beer_garden.db.mongo.api.delete
 
+create_direct = beer_garden.db.mongo.api.create_direct
+update_direct = beer_garden.db.mongo.api.update_direct
+
 prune_topics = beer_garden.db.mongo.util.prune_topics

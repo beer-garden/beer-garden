@@ -12,6 +12,7 @@ from mongoengine import NotUniqueError, connect
 
 import beer_garden.db.api as db
 import beer_garden.db.mongo.models
+from beer_garden import config
 from beer_garden.db.mongo.models import (
     Choices,
     Command,
@@ -720,6 +721,120 @@ class TestGarden:
 
         garden.delete()
 
+    @pytest.fixture
+    def child_garden_history(self, child_system_v1):
+        garden = Garden(
+            name="child_garden",
+            connection_type="http",
+            systems=[child_system_v1],
+            receiving_connections=[
+                {
+                    "api": "HTTP",
+                    "status": "RECEIVING",
+                    "status_info": {
+                        "heartbeat": datetime(2025, 7, 5, 12, 30),
+                        "history": [
+                            {
+                                "heartbeat": datetime(2025, 7, 1, 12, 30),
+                                "status": "RECEIVING",
+                            },
+                            {
+                                "heartbeat": datetime(2025, 7, 2, 12, 30),
+                                "status": "RECEIVING",
+                            },
+                            {
+                                "heartbeat": datetime(2025, 7, 3, 12, 30),
+                                "status": "RECEIVING",
+                            },
+                            {
+                                "heartbeat": datetime(2025, 7, 4, 12, 30),
+                                "status": "RECEIVING",
+                            },
+                            {
+                                "heartbeat": datetime(2025, 7, 5, 12, 30),
+                                "status": "RECEIVING",
+                            },
+                        ],
+                    },
+                }
+            ],
+            publishing_connections=[
+                {
+                    "api": "HTTP",
+                    "status": "PUBLISHING",
+                    "status_info": {
+                        "heartbeat": datetime(2025, 7, 5, 12, 30),
+                        "history": [
+                            {
+                                "heartbeat": datetime(2025, 7, 1, 12, 30),
+                                "status": "PUBLISHING",
+                            },
+                            {
+                                "heartbeat": datetime(2025, 7, 2, 12, 30),
+                                "status": "PUBLISHING",
+                            },
+                            {
+                                "heartbeat": datetime(2025, 7, 3, 12, 30),
+                                "status": "PUBLISHING",
+                            },
+                            {
+                                "heartbeat": datetime(2025, 7, 4, 12, 30),
+                                "status": "PUBLISHING",
+                            },
+                            {
+                                "heartbeat": datetime(2025, 7, 5, 12, 30),
+                                "status": "PUBLISHING",
+                            },
+                        ],
+                    },
+                }
+            ],
+        ).save()
+
+        yield garden
+
+        garden.delete()
+
+    @pytest.fixture
+    def child_system_history(self, child_system):
+        system: System = copy.deepcopy(child_system)
+        system.version = self.v2_str
+        system.instances = [
+            Instance(
+                name="default",
+                status_info={
+                    "heartbeat": datetime(2025, 7, 5, 12, 30),
+                    "history": [
+                        {
+                            "heartbeat": datetime(2025, 7, 1, 12, 30),
+                            "status": "PUBLISHING",
+                        },
+                        {
+                            "heartbeat": datetime(2025, 7, 2, 12, 30),
+                            "status": "PUBLISHING",
+                        },
+                        {
+                            "heartbeat": datetime(2025, 7, 3, 12, 30),
+                            "status": "PUBLISHING",
+                        },
+                        {
+                            "heartbeat": datetime(2025, 7, 4, 12, 30),
+                            "status": "PUBLISHING",
+                        },
+                        {
+                            "heartbeat": datetime(2025, 7, 5, 12, 30),
+                            "status": "PUBLISHING",
+                        },
+                    ],
+                },
+            )
+        ]
+        system.save()
+
+        yield system
+
+        system.delete()
+
     def test_garden_names_are_required_to_be_unique(self, local_garden):
         """Attempting to create a garden that shares a name with an existing garden
         should raise an exception"""
@@ -795,6 +910,42 @@ class TestGarden:
 
         assert new_system_id in new_system_ids
         assert orig_system_ids.intersection(new_system_ids) == set()
+
+    def test_child_garden_save_history(self, child_garden_history):
+        """Verifies that instance.status_info.history is updated to local
+        plugin.status_history length and extra history removed"""
+
+        config._CONFIG = {"garden": {"status_history": 3}}
+
+        # child_system_history.save()
+        child_garden_history.deep_save()
+
+        # we check that the garden written to the DB has the correct systems
+        db_garden = Garden.objects().first()
+
+        for connection in db_garden.publishing_connections:
+            if connection.api == "HTTP":
+                assert len(connection.status_info.history) == 3
+        for connection in db_garden.publishing_connections:
+            if connection.api == "HTTP":
+                assert len(connection.status_info.history) == 3
+
+    def test_child_garden_system_save_history(self, child_garden, child_system_history):
+        """Verifies that instance.status_info.history is updated to local
+        plugin.status_history length and extra history removed"""
+
+        config._CONFIG = {"plugin": {"status_history": 3}}
+
+        # child_system_history.save()
+        child_garden.systems = [child_system_history]
+        child_garden.deep_save()
+
+        # we check that the garden written to the DB has the correct systems
+        db_garden = Garden.objects().first()
+
+        for system in db_garden.systems:
+            for instance in system.instances:
+                assert len(instance.status_info.history) == 3
 
 
 class TestFileUpdates:
