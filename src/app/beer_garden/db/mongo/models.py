@@ -1344,6 +1344,8 @@ class Garden(MongoModel, Document):
             except Exception:
                 remove_system(system=BrewtilsSystem(id=str(bad_system_id)))
 
+        self.systems = System.objects(garden_name=self.name)
+
 
 class SystemGardenMapping(MongoModel, Document):
     system = ReferenceField("System")

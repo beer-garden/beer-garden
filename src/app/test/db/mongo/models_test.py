@@ -693,7 +693,7 @@ class TestGarden:
     def child_system_v1(self, child_system):
         system: System = copy.deepcopy(child_system)
         system.version = self.v1_str
-        system.save()
+        system.id = ObjectId()
 
         yield system
 
