@@ -7,7 +7,6 @@ from mongoengine import DoesNotExist
 
 import beer_garden.config as config
 import beer_garden.db.api as db
-from beer_garden.garden import get_garden
 
 logger = logging.getLogger(__name__)
 
@@ -257,11 +256,9 @@ def subscriber_systems_validate(subscriber, systems, topic_name: str):
 
 def sync_garden_topics(garden_name: str = None):
     if garden_name is None:
-        garden = get_garden(config.get("garden.name"))
-    else:
-        garden = get_garden(garden_name)
+        garden_name
 
-    logger.info(f"Running Garden Topic Sync for {garden.name}")
+    logger.info(f"Running Garden Topic Sync for {garden_name}")
 
     topics = get_all_topics()
 
@@ -269,7 +266,9 @@ def sync_garden_topics(garden_name: str = None):
     for topic in topics:
         topics_dict[topic.name] = topic
 
-    updated_subscribers, created_topics = sync_garden_topics_loop(garden, topics_dict)
+    updated_subscribers, created_topics = sync_garden_topics_loop(
+        garden_name, topics_dict
+    )
 
     deleted_topic_count, deleted_subscriber_count = prune_topics()
 
@@ -327,7 +326,7 @@ def sync_garden_topic_add(subscriber: Subscriber, topic_name: str, topics_dict: 
     return updated_subscribers, created_topics
 
 
-def sync_garden_topics_loop(garden: Garden, topics_dict: dict):
+def sync_garden_topics_loop(garden_name: str, topics_dict: dict):
     """
     Synchronizes topics for a given garden and its systems, commands, and instances.
 
@@ -350,14 +349,27 @@ def sync_garden_topics_loop(garden: Garden, topics_dict: dict):
 
     updated_subscribers = 0
     created_topics = 0
-    for system in garden.systems:
+    for system in db.query(
+        System,
+        garden_name=garden_name,
+        include_fields=[
+            "garden_name",
+            "namespace",
+            "name",
+            "version",
+            "prefix_topic",
+            "instances.name",
+            "commands.topics",
+            "commands.name",
+        ],
+    ):
         default_topic = system.prefix_topic
         for command in system.commands:
             for instance in system.instances:
                 if len(command.topics) > 0:
                     for topic in command.topics:
                         subscriber = Subscriber(
-                            garden=garden.name,
+                            garden=system.garden_name,
                             namespace=system.namespace,
                             system=system.name,
                             version=system.version,
@@ -373,7 +385,7 @@ def sync_garden_topics_loop(garden: Garden, topics_dict: dict):
 
                 if not default_topic:
                     topic_generated = (
-                        f"{garden.name}.{system.namespace}."
+                        f"{system.garden_name}.{system.namespace}."
                         f"{system.name}.{system.version}."
                         f"{instance.name}.{command.name}"
                     )
@@ -381,7 +393,7 @@ def sync_garden_topics_loop(garden: Garden, topics_dict: dict):
                     topic_generated = f"{default_topic}.{command.name}"
 
                 subscriber = Subscriber(
-                    garden=garden.name,
+                    garden=system.garden_name,
                     namespace=system.namespace,
                     system=system.name,
                     version=system.version,
@@ -395,11 +407,14 @@ def sync_garden_topics_loop(garden: Garden, topics_dict: dict):
                 updated_subscribers = updated_subscribers + updated
                 created_topics = created_topics + created
 
-    if garden.children:
-        for child in garden.children:
-            updated, created = sync_garden_topics_loop(child, topics_dict)
-            updated_subscribers = updated_subscribers + updated
-            created_topics = created_topics + created
+    if garden_name == config.get("garden.name"):
+        filter_params = {"connection_type__ne": "LOCAL", "has_parent": False}
+    else:
+        filter_params = {"parent": garden_name}
+    for child in db.query(Garden, filter_params=filter_params, include_fields=["name"]):
+        updated, created = sync_garden_topics_loop(child.name, topics_dict)
+        updated_subscribers = updated_subscribers + updated
+        created_topics = created_topics + created
 
     return updated_subscribers, created_topics
 

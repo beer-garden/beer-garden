@@ -199,6 +199,57 @@ class TestMigrationScript(object):
         assert db_child["root_command_type"] == "ACTION"
         assert db_child["expiration_at"] == datetime(2016, 1, 1)
 
+    @patch("mongoengine.connect", Mock())
+    @patch("mongoengine.register_connection", Mock())
+    def test_3_30_system_garden_name_migration(self, system_dict):
+        config._CONFIG = {"garden": {"name": "localgarden"}}
+
+        del system_dict["id"]
+        system_dict["local"] = True
+        del system_dict["garden_name"]
+        db = get_db()
+        system_collection = db["system"]
+        system_collection.insert_one(system_dict)
+
+        non_migrated_system = system_collection.find_one({})
+
+        assert not hasattr(non_migrated_system, "garden_name")
+
+        ensure_v3_30_model_migration()
+
+        migrated_system = system_collection.find_one({})
+        assert migrated_system["garden_name"] == "localgarden"
+
+    @patch("mongoengine.connect", Mock())
+    @patch("mongoengine.register_connection", Mock())
+    def test_3_30_system_garden_name_migration_downstream(
+        self, system_dict, garden_dict
+    ):
+        config._CONFIG = {"garden": {"name": "localgarden"}}
+
+        del system_dict["id"]
+        system_dict["local"] = False
+        del system_dict["garden_name"]
+        db = get_db()
+        system_collection = db["system"]
+        system_collection.insert_one(system_dict)
+
+        non_migrated_system = system_collection.find_one({})
+
+        assert not hasattr(non_migrated_system, "garden_name")
+
+        garden_dict["systems"] = [non_migrated_system["_id"]]
+        del garden_dict["receiving_connections"]
+        del garden_dict["publishing_connections"]
+        del garden_dict["id"]
+        garden_collection = db["garden"]
+        garden_collection.insert_one(garden_dict)
+
+        ensure_v3_30_model_migration()
+
+        migrated_system = system_collection.find_one({})
+        assert migrated_system["garden_name"] == garden_dict["name"]
+
 
 class TestCheckIndexes(object):
     @patch("mongoengine.connect", Mock())
