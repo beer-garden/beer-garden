@@ -101,8 +101,19 @@ class RequestValidator(object):
         :param request: The request to validate
         :raises ConflictError: The parent request has already completed
         """
-        if request.parent and request.parent.status in Request.COMPLETED_STATUSES:
-            raise ConflictError("Parent request has already completed")
+
+        # Pub/Sub Requests can be generated after Parent Request is completed
+        if request.metadata is not None and "_topic" in request.metadata:
+            return
+
+        if request.parent is not None:
+            if (
+                db.count(
+                    Request, id=request.parent.id, status__in=Request.COMPLETED_STATUSES
+                )
+                > 0
+            ):
+                raise ConflictError("Parent request has already completed")
 
     def get_and_validate_system(self, request):
         """Ensure there is a system in the DB that corresponds to this Request.
@@ -1107,15 +1118,26 @@ def handle_event_filter(event):
 
 def handle_event_rebroadcast(event_name, request):
 
-    metadata = {}
     # If no parent are set, we only want to publish to the UI events handler
     if not config.get("parent.stomp.enabled") and not config.get("parent.http.enabled"):
-        metadata["API_ONLY"] = True
-    publish(
-        Event(
-            name=event_name, payload=request, payload_type="Request", metadata=metadata
+        publish(
+            Event(
+                name=event_name,
+                payload=Request(
+                    id=request.id,
+                    parent=(
+                        Request(id=request.parent.id)
+                        if request.parent is not None
+                        else None
+                    ),
+                ),
+                payload_type="Request",
+                metadata={"API_ONLY": True, "UI_RELOAD": True},
+            )
         )
-    )
+
+    else:
+        publish(Event(name=event_name, payload=request, payload_type="Request"))
 
 
 def handle_event_create(event):
@@ -1133,7 +1155,7 @@ def handle_event_create(event):
             foundUser = False
 
             # First try to grab requester from Parent Request
-            if event.payload.has_parent:
+            if event.payload.has_parent and event.payload.parent is not None:
                 parent_request = db.query_unique(
                     Request, id=event.payload.parent.id, include_fields=["requester"]
                 )
@@ -1192,22 +1214,24 @@ def handle_event(event):
             return
 
         # Only care about downstream garden
-        if (
-            event.name == Events.REQUEST_CREATED.name
-            or event.payload.status == "CREATED"
-        ):
+        if event.payload.status == "CREATED":
             created_request = handle_event_create(event)
             if created_request:
                 handle_event_rebroadcast(event.name, created_request)
-        elif event.name == Events.REQUEST_STARTED.name or event.payload.status in (
-            "RECEIVED",
-            "IN_PROGRESS",
-        ):
+            return
+
+        elif event.payload.status not in Request.COMPLETED_STATUSES:
             existing_request = db.query_unique(
                 Request, id=event.payload.id, include_fields=["status", "metadata"]
             )
 
-            if existing_request and existing_request.status != event.payload.status:
+            if existing_request:
+                if existing_request.status == event.payload.status:
+                    return
+
+                if existing_request.status in Request.COMPLETED_STATUSES:
+                    return
+
                 if (
                     event.payload.status == "RECEIVED"
                     and existing_request.status in ["CREATED"]
@@ -1241,34 +1265,24 @@ def handle_event(event):
                 if created_request:
                     handle_event_rebroadcast(event.name, created_request)
             return
-        else:
+        else:  # Only Completed statuses are handled in this else statement
             existing_request = db.query_unique(Request, id=event.payload.id)
 
             if existing_request and existing_request.status != event.payload.status:
                 # Skip status that revert
-                if existing_request.status in (
-                    "CANCELED",
-                    "SUCCESS",
-                    "ERROR",
-                    "INVALID",
-                ):
-                    return
-                if (
-                    existing_request.status == "IN_PROGRESS"
-                    and event.payload.status
-                    in (
-                        "CREATED",
-                        "RECEIVED",
-                    )
-                ):
+                if existing_request.status in Request.COMPLETED_STATUSES:
                     return
 
             if existing_request is None:
+
+                if event.payload.status == "CANCELED":
+                    # If the request doesn't exist, we cannot cancel it
+                    return
+
                 created_request = handle_event_create(event)
                 if created_request:
                     handle_event_rebroadcast(event.name, event.payload)
             else:
-                request_changed = {}
                 # When we send child requests to child gardens where the parent was on
                 # the local garden we remove the parent before sending them. Only setting
                 # the subset of fields that change "corrects" the parent
@@ -1280,6 +1294,8 @@ def handle_event(event):
                     "updated_at",
                     "command_type",
                     "metadata",
+                    "output",
+                    "error_class",
                 ):
                     new_value = getattr(event.payload, field)
                     # Merge metadata
@@ -1287,27 +1303,10 @@ def handle_event(event):
                         new_value = {**getattr(existing_request, field), **new_value}
 
                     if getattr(existing_request, field) != new_value:
-                        request_changed[field] = new_value
                         setattr(existing_request, field, new_value)
 
-                # Add output fields only if the status changes to a compelted state
-                if "status" in request_changed:
-                    if event.payload.status in (
-                        "CANCELED",
-                        "SUCCESS",
-                        "ERROR",
-                        "INVALID",
-                    ):
-                        if event.payload.output:
-                            request_changed["output"] = event.payload.output
-                            existing_request.output = event.payload.output
-                        if event.payload.error_class:
-                            request_changed["error_class"] = event.payload.error_class
-                            existing_request.error_class = event.payload.error_class
-
-                if request_changed:
-                    db.update_direct(existing_request)
-                    handle_event_rebroadcast(event.name, existing_request)
+                db.update_direct(existing_request)
+                handle_event_rebroadcast(event.name, existing_request)
 
 
 def clean_command_type_temp(request: Request, is_remote: bool):
@@ -1316,17 +1315,20 @@ def clean_command_type_temp(request: Request, is_remote: bool):
         # if its parent has already completed
         if request.command_type == "TEMP" and (
             not request.has_parent
-            or db.count(
-                Request,
-                id=request.parent.id,
-                status__in=[
-                    "INVALID",
-                    "CANCELED",
-                    "ERROR",
-                    "SUCCESS",
-                ],
+            or (
+                request.parent is not None
+                and db.count(
+                    Request,
+                    id=request.parent.id,
+                    status__in=[
+                        "INVALID",
+                        "CANCELED",
+                        "ERROR",
+                        "SUCCESS",
+                    ],
+                )
+                > 0
             )
-            > 0
         ):
             if is_remote:
                 # Give Threading based requests a chance to pull the
@@ -1372,7 +1374,7 @@ def cancel_request_children(request: Request):
     Args:
         request (Request): Parent Request
     """
-    request.children = db.query(Request, filter_params={"parent": request})
+    request.children = db.query(Request, filter_params={"parent": request.id})
 
     for child in request.children:
         if child.status in [
