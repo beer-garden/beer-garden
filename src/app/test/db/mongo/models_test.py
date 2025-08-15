@@ -703,7 +703,6 @@ class TestGarden:
     def child_system_v2(self, child_system):
         system: System = copy.deepcopy(child_system)
         system.version = self.v2_str
-        system.save()
 
         yield system
 
