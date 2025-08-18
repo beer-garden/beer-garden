@@ -1,4 +1,4 @@
-jobExportController.$inject = ['$scope', '$rootScope', '$filter', 'JobService'];
+jobExportController.$inject = ['$scope', '$filter', 'JobService'];
 
 /**
  * jobExportController - Controller for the job export page.
