@@ -424,7 +424,7 @@ _GARDEN_SPEC = {
         },
         "status_history": {
             "type": "int",
-            "default": 10,
+            "default": 5,
             "description": (
                 "Amount of historical status heartbeats tracked for Garden and Connections"
             ),
@@ -1655,7 +1655,7 @@ _PLUGIN_SPEC = {
         },
         "status_history": {
             "type": "int",
-            "default": 10,
+            "default": 5,
             "description": ("Amount of historical status heartbeats tracked"),
         },
     },
