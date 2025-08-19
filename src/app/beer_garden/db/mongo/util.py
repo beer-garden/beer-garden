@@ -868,7 +868,15 @@ def unassign_files():
                 )
         else:
             File._get_collection().update_many(
-                {"_id": {"$in": file_ids}}, {"$unset": {"job": "", "request": ""}}
+                {"_id": {"$in": file_ids}},
+                {
+                    "$unset": {
+                        "job": "",
+                        "request": "",
+                        "owner_id": "",
+                        "owner_type": "",
+                    }
+                },
             )
             FileChunk._get_collection().update_many(
                 {"file_id": {"$in": file_ids_str}}, {"$unset": {"owner": ""}}

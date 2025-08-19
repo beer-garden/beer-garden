@@ -28,7 +28,6 @@ from brewtils.models import System as BrewtilsSystem
 from mongoengine import (
     CASCADE,
     DO_NOTHING,
-    NULLIFY,
     PULL,
     BooleanField,
     DateTimeField,
@@ -587,7 +586,6 @@ class Request(MongoModel, Document):
                             "status": self.status,
                             "created_at": self.created_at,
                             "root_command_type": self.root_command_type,
-                            "uploadDate": self.created_at,
                             "output": True,
                         }
                     },

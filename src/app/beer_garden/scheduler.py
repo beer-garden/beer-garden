@@ -407,7 +407,7 @@ class MixedScheduler(object):
                 beer_garden.db.mongo.util.unassign_files,
                 interval=prune_interval,
                 max_instances=1,
-                name="prune_files",
+                name="unassign_files",
             )
 
         # Add scheduled job for checking unresponsive gardens
