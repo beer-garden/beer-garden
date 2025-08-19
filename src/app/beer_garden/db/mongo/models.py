@@ -622,8 +622,12 @@ class Request(MongoModel, Document):
                     },
                 )
 
+                gridfs_id = get_db()["raw_file"].find_one(
+                    {"_id": ObjectIdField().to_mongo(param_value["id"])}, {"file": 1}
+                )["file"]
+
                 get_db()["fs.files"].update_one(
-                    {"_id": ObjectIdField().to_mongo(param_value["id"])},
+                    {"_id": gridfs_id},
                     {
                         "$set": {
                             "status": self.status,
@@ -634,7 +638,7 @@ class Request(MongoModel, Document):
                     },
                 )
                 get_db()["fs.chunks"].update_many(
-                    {"files_id": ObjectIdField().to_mongo(param_value["id"])},
+                    {"files_id": gridfs_id},
                     {
                         "$set": {
                             "status": self.status,
