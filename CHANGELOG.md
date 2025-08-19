@@ -16,6 +16,7 @@ TBD
 - UI code is now unminimized with source map to enable enhanced debugging of released code (#1942)
 - Improved None checking for Request Parents
 - Updated internal class from EventProcessor to ReplicationProcessor for improved clarity (#1780)
+- Updated Jobs pages to stop triggering off counter update events (#1951)
 
 
 ## 3.30.0rc2
