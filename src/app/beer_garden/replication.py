@@ -106,15 +106,24 @@ def handle_event(event: Event) -> None:
         event: The event to handle
     """
 
-    if event.garden == config.get("garden.name") and config.get("replication.enabled"):
-        if event.name in [
-            Events.REPLICATION_CREATED.name,
-            Events.REPLICATION_UPDATED.name,
-        ]:
-            if event.payload.replication_id == get_replication_id():
-                if not beer_garden.application.scheduler.running:
-                    logger.debug("Starting Scheduler")
-                    beer_garden.application.scheduler.start()
-            elif beer_garden.application.scheduler.running:
-                logger.debug("Stopping Scheduler")
-                beer_garden.application.scheduler.shutdown(wait=False)
+    if event.garden == config.get("garden.name"):
+        if not config.get("replication.enabled"):
+            if (
+                event.name == Events.ENTRY_STARTED.name
+                and event.metadata["entry_point_type"] == "HTTP"
+            ):
+                logger.debug("Starting Scheduler")
+                beer_garden.application.scheduler.start()
+
+        elif config.get("replication.enabled"):
+            if event.name in [
+                Events.REPLICATION_CREATED.name,
+                Events.REPLICATION_UPDATED.name,
+            ]:
+                if event.payload.replication_id == get_replication_id():
+                    if not beer_garden.application.scheduler.running:
+                        logger.debug("Starting Scheduler")
+                        beer_garden.application.scheduler.start()
+                elif beer_garden.application.scheduler.running:
+                    logger.debug("Stopping Scheduler")
+                    beer_garden.application.scheduler.shutdown(wait=False)

@@ -194,7 +194,11 @@ def add_internal_events_handler(event_manager):
             "name": "Replication event handler",
             "handler": beer_garden.replication.handle_event,
             "filter_func": None,
-            "filters": [Events.REPLICATION_CREATED, Events.REPLICATION_UPDATED],
+            "filters": [
+                Events.REPLICATION_CREATED,
+                Events.REPLICATION_UPDATED,
+                Events.ENTRY_STARTED,
+            ],
             "local_only": True,
             # Can not unique due to ensure all replication updates are handled correctly
             "unique_data": False,
