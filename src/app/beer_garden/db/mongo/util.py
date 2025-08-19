@@ -424,7 +424,7 @@ def reset_last_configuration():
     configuration.save()
 
 
-def update_request_ttl_indexes(command_type, ttl, previous_ttl=-1):
+def update_request_ttl_indexes(command_type, ttl, previous_ttl):
     from brewtils.models import Request
     from mongoengine.connection import get_db
 
@@ -494,7 +494,7 @@ def update_request_ttl_indexes(command_type, ttl, previous_ttl=-1):
             )
 
 
-def update_file_ttl_indexes(ttl, previous_ttl=-1):
+def update_file_ttl_indexes(ttl, previous_ttl):
 
     from mongoengine.connection import get_db
 
