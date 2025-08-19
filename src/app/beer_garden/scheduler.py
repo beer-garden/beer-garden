@@ -19,8 +19,6 @@ from brewtils.errors import ModelValidationError
 from brewtils.models import DateTrigger, Event, Events, Job, Operation, Request
 from brewtils.schema_parser import SchemaParser
 from mongoengine import DoesNotExist, ValidationError
-from mongoengine.connection import get_connection
-from packaging.version import Version
 from pytz import utc
 
 import beer_garden
@@ -437,9 +435,7 @@ class MixedScheduler(object):
                 name="publish_garden",
             )
 
-        mongo_version = get_connection().server_info().get("version", "0.0.0")
-        # # Supports MongoGB 6.0+
-        if Version(mongo_version) < Version("6.0.0"):
+        if beer_garden.db.mongo.util.is_legacy_mongodb():
             # Legacy TTL Pruning for MongoDB < 6.0
             self.add_schedule(
                 beer_garden.db.mongo.legacy_pruner.prune_admin_requests,

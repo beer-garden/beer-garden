@@ -5,8 +5,9 @@ from datetime import datetime, timedelta, timezone
 from brewtils.errors import ModelValidationError
 from brewtils.models import Event, Events
 from brewtils.schema_parser import SchemaParser
-from mongoengine.connection import get_db
+from mongoengine.connection import get_connection, get_db
 from mongoengine.errors import DoesNotExist, FieldDoesNotExist, InvalidDocumentError
+from packaging.version import Version
 from pymongo import UpdateMany, UpdateOne
 from pymongo.errors import OperationFailure
 
@@ -406,6 +407,12 @@ def ensure_model_migration():
 
     # This sets the last configuration for future migrations to reference
     reset_last_configuration()
+
+
+def is_legacy_mongodb():
+    mongo_version = get_connection().server_info().get("version", "0.0.0")
+    # # Supports MongoGB 6.0+
+    return Version(mongo_version) < Version("6.0.0")
 
 
 def reset_last_configuration():
@@ -860,12 +867,22 @@ def unassign_files():
             for i in range(0, len(file_ids), batch_size):
                 File._get_collection().update_many(
                     {"_id": {"$in": file_ids[i : i + batch_size]}},
-                    {"$unset": {"job": "", "request": ""}},
+                    {
+                        "$unset": {
+                            "job": "",
+                            "request": "",
+                            "owner_id": "",
+                            "owner_type": "",
+                        }
+                    },
                 )
-                FileChunk._get_collection().update_many(
-                    {"file_id": {"$in": file_ids_str[i : i + batch_size]}},
-                    {"$unset": {"owner": ""}},
-                )
+
+                # Legacy code needs the owner field set to properly prune
+                if not is_legacy_mongodb():
+                    FileChunk._get_collection().update_many(
+                        {"file_id": {"$in": file_ids_str[i : i + batch_size]}},
+                        {"$unset": {"owner": ""}},
+                    )
         else:
             File._get_collection().update_many(
                 {"_id": {"$in": file_ids}},
@@ -878,9 +895,12 @@ def unassign_files():
                     }
                 },
             )
-            FileChunk._get_collection().update_many(
-                {"file_id": {"$in": file_ids_str}}, {"$unset": {"owner": ""}}
-            )
+
+            # Legacy code needs the owner field set to properly prune
+            if not is_legacy_mongodb():
+                FileChunk._get_collection().update_many(
+                    {"file_id": {"$in": file_ids_str}}, {"$unset": {"owner": ""}}
+                )
         logger.error(f"{len(file_ids)} Files unassigned owners")
     else:
         logger.debug("No missed owners for Files")

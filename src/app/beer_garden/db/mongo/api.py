@@ -14,9 +14,7 @@ from mongoengine import (
     connect,
     register_connection,
 )
-from mongoengine.connection import get_connection
 from mongoengine.queryset.visitor import Q, QCombination
-from packaging.version import Version
 from pymongo import InsertOne, ReplaceOne, UpdateOne
 
 import beer_garden.db.mongo.models
@@ -26,6 +24,7 @@ from beer_garden.db.mongo.util import (
     check_indexes,
     ensure_local_garden,
     ensure_model_migration,
+    is_legacy_mongodb,
     update_ttl_indexes,
 )
 from beer_garden.errors import NotUniqueException
@@ -198,9 +197,7 @@ def initial_setup():
     ):
         check_indexes(doc)
 
-    mongo_version = get_connection().server_info().get("version", "0.0.0")
-    # Supports MongoGB 6.0+
-    if Version(mongo_version) >= Version("6.0.0"):
+    if not is_legacy_mongodb():
         update_ttl_indexes()
 
     ensure_local_garden()
