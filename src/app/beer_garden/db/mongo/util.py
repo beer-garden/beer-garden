@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 from brewtils.errors import ModelValidationError
 from brewtils.models import Event, Events
-from brewtils.schema_parser import SchemaParser
+from brewtils.models import Request as BrewtilsRequest
 from mongoengine.connection import get_connection, get_db
 from mongoengine.errors import DoesNotExist, FieldDoesNotExist, InvalidDocumentError
 from packaging.version import Version
@@ -14,7 +14,6 @@ from pymongo.errors import OperationFailure
 import beer_garden
 import beer_garden.config as config
 from beer_garden.db.mongo.models import File, FileChunk, Request
-from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.errors import IndexOperationError
 
 logger = logging.getLogger(__name__)
@@ -951,16 +950,19 @@ def cancel_outstanding_requests(outstanding_requests):
                 request.status = "CANCELED"
                 request.status_updated_at = datetime.now(timezone.utc)
                 request.save()
-                serialized = MongoParser.serialize(request, to_string=True)
-                parsed = SchemaParser.parse_request(
-                    serialized, from_string=True, many=False
-                )
 
                 publish(
                     Event(
                         name=Events.REQUEST_CANCELED.name,
                         payload_type="Request",
-                        payload=parsed,
+                        payload=BrewtilsRequest(
+                            id=request.id,
+                            status=request.status,
+                            status_updated_at=request.status_updated_at,
+                            metadata=request.metadata,
+                            target_garden=request.target_garden,
+                        ),
+                        metadata={"UI_RELOAD": True},
                     )
                 )
                 counter = counter + 1
