@@ -14,7 +14,7 @@ from beer_garden.systems import get_systems
 from beer_garden.topic import (
     get_topics_regex,
 )
-from beer_garden.errors import ModelValidationError
+from brewtils.errors import ModelValidationError
 
 logger = logging.getLogger(__name__)
 
