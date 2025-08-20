@@ -114,7 +114,9 @@ class DequeSetListener(DequeListener):
         if (
             self._unique_data
             and hasattr(event, "payload")
+            and event.payload is not None
             and hasattr(event.payload, "id")
+            and event.payload.id is not None
             and hasattr(event.payload, "is_newer")
         ):
 
