@@ -918,26 +918,12 @@ def cancel_outstanding():
     cancel_threshold = prune_config.get("in_progress_request_expiration")
     if cancel_threshold > 0:
         timeout = datetime.now(timezone.utc) - timedelta(minutes=cancel_threshold)
-        batch_size = config.get("db.prune.batch_size")
 
-        if batch_size > 0:
+        outstanding_requests = Request.objects.filter(
+            status__in=["IN_PROGRESS", "CREATED"], updated_at__lte=timeout
+        ).order_by("-updated_at")
 
-            outstanding_requests = (
-                Request.objects.filter(
-                    status__in=["IN_PROGRESS", "CREATED"],
-                    updated_at__lte=timeout,
-                )
-                .order_by("-updated_at")
-                .batch_size(batch_size)
-            )
-            cancel_outstanding_requests(outstanding_requests)
-
-        else:
-            outstanding_requests = Request.objects.filter(
-                status__in=["IN_PROGRESS", "CREATED"], updated_at__lte=timeout
-            ).order_by("-updated_at")
-
-            cancel_outstanding_requests(outstanding_requests)
+        cancel_outstanding_requests(outstanding_requests)
 
 
 def cancel_outstanding_requests(outstanding_requests):
