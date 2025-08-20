@@ -1130,19 +1130,28 @@ def handle_event_create(event):
     try:
         event.payload.expiration_at = None
 
+        parent_request = None
+
+        # Check if parent request exists and load only fields required for
+        # auth features
+        if event.payload.has_parent and event.payload.parent is not None:
+            parent_request = db.query_unique(
+                Request, id=event.payload.parent.id, include_fields=["requester"]
+            )
+
+            # Missing Parent Request in the database
+            if parent_request is None:
+                event.payload.parent = None
+                event.payload.has_parent = False
+
         # User mappings back to local usernames
         if event.payload.requester and config.get("auth.enabled"):
             foundUser = False
 
             # First try to grab requester from Parent Request
-            if event.payload.has_parent and event.payload.parent is not None:
-                parent_request = db.query_unique(
-                    Request, id=event.payload.parent.id, include_fields=["requester"]
-                )
-
-                if parent_request and parent_request.requester:
-                    event.payload.requester = parent_request.requester
-                    foundUser = True
+            if parent_request and parent_request.requester:
+                event.payload.requester = parent_request.requester
+                foundUser = True
 
             # If no parent request is found or request on it,
             # update via remote user mappings
