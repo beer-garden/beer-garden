@@ -213,6 +213,7 @@ def route_request(create_request):
     except Exception as ex:
         # If an error occurs while trying to process request, log it and keep running
         logger.exception(ex)
+        logger.error("Error while routing request: %s", create_request)
 
 
 def find_subscribers(subscribers, subscriber_field: str, compare_value):
