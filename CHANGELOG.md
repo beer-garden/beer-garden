@@ -8,12 +8,19 @@ TBD
 
 - Reverted expiration field from #1904/#1870. Pushed forward root_command_type.
   Refactored request pruner to push forward cursor for bulk deletes (#1924)
+- Updated Request Event Handler to check Status to determine action instead of event type (#1939)
+- Reduce event size of Request Cancelled via trigger (#1946)
+- Reduce event size for Request Rebroadcast if for API Only (#1946)
 - Fixed UI bug where Config was not loaded on all pages to properly display Garden Name or Tab titles (#1937)
 - Fixed bug in UI where missing Children on Garden model errored on isSystemRoutable UI filter (#1938)
 - Fixed bug where Cancelled Requests could still spawn child requests because Validator never
   checked database for status (#1941)
 - UI code is now unminimized with source map to enable enhanced debugging of released code (#1942)
 - Improved None checking for Request Parents
+- Updated internal class from EventProcessor to ReplicationProcessor for improved clarity (#1780)
+- Updated latest sytem version to prioritize running but still return a system if not (#1949)
+- Updated Jobs pages to trigger off internal Job events for status changes (#1878, #1951)
+
 
 ## 3.30.0rc2
 
@@ -30,7 +37,7 @@ TBD
 - Fixed bug where Entry Point startup sent Garden sync to `default` instead of actual garden name (#1926)
 - Removed duplicate Garden Sync Event sent to UI from downstream events (#1922)
 - Update UI Events to utilize Instance and System events as partial Garden updates (#1925)
-- Bypass Mongoengine for bulk create/update to improve Request throughput in Mongo (#1920, #1930)
+- Bypass Mongoengine for bulk create/update to improve Request throughput in Mongo (#1920, #1930, #1947)
 - Removed locking from internal queue management for event handlers (#1921)
 
 ## 3.30.0rc1
@@ -120,7 +127,6 @@ TBD
 - Update Request Pruning to utilize new field Expiration At instead of each command type independently (#1870)
 - Update Requests index search box from text_search to or filter on UI columns (#1866)
 - Updated Routing Logic to accept Target Garden provided and cache multi-hop gardens in routing tables (#1876)
-- Updated Jobs pages to trigger off internal Job events for status changes (#1878)
 - Updated Events handler to support internal filtering before placing into queue for processing (#1879)
 - Filtered events forwarded to upstream Garden (#1882)
 

@@ -543,16 +543,19 @@ def prune_outstanding_requests(outstanding_requests):
                 request.status = "CANCELED"
                 request.status_updated_at = datetime.now(timezone.utc)
                 request.save()
-                serialized = MongoParser.serialize(request, to_string=True)
-                parsed = SchemaParser.parse_request(
-                    serialized, from_string=True, many=False
-                )
 
                 publish(
                     Event(
                         name=Events.REQUEST_CANCELED.name,
                         payload_type="Request",
-                        payload=parsed,
+                        payload=BrewtilsRequest(
+                            id=request.id,
+                            status=request.status,
+                            status_updated_at=request.status_updated_at,
+                            metadata=request.metadata,
+                            target_garden=request.target_garden,
+                        ),
+                        metadata={"UI_RELOAD": True},
                     )
                 )
                 counter = counter + 1
