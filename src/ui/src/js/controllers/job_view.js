@@ -95,7 +95,7 @@ export function jobViewController(
 
   function eventCallback(event) {
     if ($rootScope.garden !== undefined && event.garden == $rootScope.garden.name) {
-      if (['JOB_PAUSED', 'JOB_RESUMED', 'JOB_COUNTER_UPDATED'].includes(event.name)) {
+      if (['JOB_PAUSED', 'JOB_RESUMED'].includes(event.name)) {
           if ($scope.data.id == event.payload.id){
             $scope.data = event.payload
           }
