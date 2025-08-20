@@ -214,7 +214,7 @@ def route_request(create_request):
     except ModelValidationError as ex:
         logger.error(
             (
-                f"Invalid request for topic '{create_request.metadata["topic"]}' "
+                f"Invalid request for topic '{create_request.metadata['topic']}' "
                 f"for request {create_request}: {ex}"
             )
         )
