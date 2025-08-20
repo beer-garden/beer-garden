@@ -531,15 +531,18 @@ class Request(MongoModel, Document):
             )
 
         if self.has_parent:
-            try:
-                if not self.parent or Request.objects(id=self.parent.id).count() == 0:
+            if self.parent is None:
+                self.has_parent = False
+            else:
+                try:
+                    if Request.objects(id=self.parent.id).count() == 0:
+                        # Request is an Orphan, removing parent
+                        self.has_parent = False
+                        self.parent = None
+                except DoesNotExist:
                     # Request is an Orphan, removing parent
                     self.has_parent = False
                     self.parent = None
-            except DoesNotExist:
-                # Request is an Orphan, removing parent
-                self.has_parent = False
-                self.parent = None
 
         if not self.has_parent or self.parent is None:
             if not self.root_command_type:
