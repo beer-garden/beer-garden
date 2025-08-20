@@ -111,53 +111,64 @@ class DequeSetListener(DequeListener):
             item: New item
         """
 
-        if (
-            self._unique_data
-            and hasattr(event, "payload")
-            and event.payload is not None
-            and hasattr(event.payload, "id")
-            and event.payload.id is not None
-            and hasattr(event.payload, "is_newer")
-        ):
+        try:
+            if (
+                self._unique_data
+                and hasattr(event, "payload")
+                and event.payload is not None
+                and hasattr(event.payload, "id")
+                and event.payload.id is not None
+                and hasattr(event.payload, "is_newer")
+            ):
 
-            if str(event.payload.id) in self._data:
-                ref = self._data[event.payload.id]
-                if isinstance(event.payload, type(ref.payload)):
-                    if event.payload.is_newer(ref.payload):
-                        # Collect Request Metadata
-                        # If this expands past Requests, we'll need to refactor
-                        if isinstance(event.payload, Request):
-                            for metadata_key in ref.payload.metadata:
-                                if metadata_key not in event.payload.metadata:
-                                    event.payload.metadata[metadata_key] = (
-                                        ref.payload.metadata[metadata_key]
+                if str(event.payload.id) in self._data:
+                    ref = self._data[event.payload.id]
+                    if isinstance(event.payload, type(ref.payload)):
+                        if event.payload.is_newer(ref.payload):
+                            # Collect Request Metadata
+                            # If this expands past Requests, we'll need to refactor
+                            if isinstance(event.payload, Request):
+                                for metadata_key in ref.payload.metadata:
+                                    if metadata_key not in event.payload.metadata:
+                                        event.payload.metadata[metadata_key] = (
+                                            ref.payload.metadata[metadata_key]
+                                        )
+                                if ref.payload.status is not event.payload.status:
+                                    status_key = (
+                                        f"{ref.payload.status}_"
+                                        f"{config.get('garden.name')}"
                                     )
-                            if ref.payload.status is not event.payload.status:
-                                status_key = (
-                                    f"{ref.payload.status}_"
-                                    f"{config.get('garden.name')}"
-                                )
-                                if status_key not in event.payload.metadata:
-                                    event.payload.metadata[status_key] = int(
-                                        datetime.datetime.utcnow().timestamp() * 1000
-                                    )
+                                    if status_key not in event.payload.metadata:
+                                        event.payload.metadata[status_key] = int(
+                                            datetime.datetime.utcnow().timestamp()
+                                            * 1000
+                                        )
 
-                        self._data[str(event.payload.id)] = event
+                            self._data[str(event.payload.id)] = event
 
-                        del ref
+                            del ref
+                        else:
+                            del event
                     else:
-                        del event
-                else:
-                    # Type Mis-match, just process the event
-                    super().put(event)
+                        # Type Mis-match, just process the event
+                        super().put(event)
 
-                return
+                    return
 
-            self._data[str(event.payload.id)] = event
-            self._queue.append(str(event.payload.id))
+                self._data[str(event.payload.id)] = event
+                self._queue.append(str(event.payload.id))
 
-        else:
-            super().put(event)
+            else:
+                super().put(event)
+        except Exception as ex:
+            # All exceptions must be captured. If raised, then the queue processor could stop
+            # processing events.
+            logger.error(
+                "Error while putting event on %s: %s. Error: %s",
+                self.name,
+                event,
+                ex,
+            )
 
     def clear(self):
         """Empty the underlying queue without processing items"""
@@ -185,6 +196,13 @@ class DequeSetListener(DequeListener):
                             self.process(ref)
                     else:
                         time.sleep(0.1)
+                except Exception as ex:
+                    logger.error(
+                        "Error while processing event from %s: %s. Error: %s",
+                        self.name,
+                        ref,
+                        ex,
+                    )
 
     def queue_depth(self):
         if not self._unique_data:

@@ -4,6 +4,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from typing import List
 
+from brewtils.errors import ModelValidationError
 from brewtils.models import Event, Events, Garden, Operation, Request, System, Topic
 
 import beer_garden.config as config
@@ -14,7 +15,6 @@ from beer_garden.systems import get_systems
 from beer_garden.topic import (
     get_topics_regex,
 )
-from brewtils.errors import ModelValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -211,8 +211,13 @@ def route_request(create_request):
                 model_type="Request",
             )
         )
-    except ModelValidationError:
-        logger.error("Invalid request that matched topic subscription: %s", create_request)   
+    except ModelValidationError as ex:
+        logger.error(
+            (
+                f"Invalid request for topic '{create_request.metadata["topic"]}' "
+                f"for request {create_request}: {ex}"
+            )
+        )
     except Exception as ex:
         # If an error occurs while trying to process request, log it and keep running
         logger.exception(ex)

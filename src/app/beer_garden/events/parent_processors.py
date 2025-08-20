@@ -38,14 +38,7 @@ class HttpParentUpdater(QueueListener):
         """
         if self._connected:
             if event.name in accepted_forwarding_events:
-                self.logger.info("Putting event on parent queue: %s", event.name)
                 self._queue.put(event)
-            else:
-                self.logger.info("Skipping event because not approved: %s", event.name)
-        else:
-            self.logger.warning(
-                "Not putting event on queue because not connected to parent: %s", event.name
-            )
 
     def process(self, event: Event):
 
@@ -76,7 +69,6 @@ class HttpParentUpdater(QueueListener):
                 source_garden_name=conf.get("garden.name"),
             )
             self._ez_client.forward(operation)
-            self.logger.info("Published event to parent: %s", event.name)
         except RequestException as ex:
             self.logger.error(f"Error while publishing event to parent: {ex}")
 
