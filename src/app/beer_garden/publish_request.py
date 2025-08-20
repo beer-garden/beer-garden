@@ -14,6 +14,7 @@ from beer_garden.systems import get_systems
 from beer_garden.topic import (
     get_topics_regex,
 )
+from beer_garden.errors import ModelValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -210,10 +211,11 @@ def route_request(create_request):
                 model_type="Request",
             )
         )
+    except ModelValidationError:
+        logger.error("Invalid request that matched topic subscription: %s", create_request)   
     except Exception as ex:
         # If an error occurs while trying to process request, log it and keep running
         logger.exception(ex)
-        logger.error("Error while routing request: %s", create_request)
 
 
 def find_subscribers(subscribers, subscriber_field: str, compare_value):
