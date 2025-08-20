@@ -17,6 +17,7 @@ TBD
 - Improved None checking for Request Parents
 - Updated internal class from EventProcessor to ReplicationProcessor for improved clarity (#1780)
 - Updated latest sytem version to prioritize running but still return a system if not (#1949)
+- Updated Jobs pages to trigger off internal Job events for status changes (#1878, #1951)
 
 
 ## 3.30.0rc2
@@ -125,7 +126,6 @@ TBD
 - Update Request Pruning to utilize new field Expiration At instead of each command type independently (#1870)
 - Update Requests index search box from text_search to or filter on UI columns (#1866)
 - Updated Routing Logic to accept Target Garden provided and cache multi-hop gardens in routing tables (#1876)
-- Updated Jobs pages to trigger off internal Job events for status changes (#1878)
 - Updated Events handler to support internal filtering before placing into queue for processing (#1879)
 - Filtered events forwarded to upstream Garden (#1882)
 
