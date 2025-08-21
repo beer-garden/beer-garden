@@ -82,7 +82,15 @@ def _safe_build_object(cls, *objects, ignore=None, **manual_kwargs):
                 _unroll_object(
                     obj,
                     key_map={"id": "file_id"},
-                    ignore=["job", "owner", "request", "updated_at"] + ignore,
+                    ignore=[
+                        "job",
+                        "owner",
+                        "request",
+                        "updated_at",
+                        "status",
+                        "root_command_type",
+                    ]
+                    + ignore,
                 )
             )
 
@@ -91,7 +99,15 @@ def _safe_build_object(cls, *objects, ignore=None, **manual_kwargs):
                 _unroll_object(
                     obj,
                     key_map={"id": "chunk_id"},
-                    ignore=["owner", "job", "request"] + ignore,
+                    ignore=[
+                        "owner",
+                        "job",
+                        "request",
+                        "updated_at",
+                        "status",
+                        "root_command_type",
+                    ]
+                    + ignore,
                 )
             )
 

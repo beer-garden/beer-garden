@@ -28,6 +28,7 @@ from brewtils.models import System as BrewtilsSystem
 from mongoengine import (
     CASCADE,
     DO_NOTHING,
+    NULLIFY,
     PULL,
     BooleanField,
     DateTimeField,
@@ -550,7 +551,7 @@ class Request(MongoModel, Document):
                 {
                     "$set": {
                         "status": self.status,
-                        "created_at": self.created_at,
+                        "updated_at": self.updated_at,
                         "root_command_type": self.root_command_type,
                     }
                 },
@@ -560,7 +561,7 @@ class Request(MongoModel, Document):
                 {
                     "$set": {
                         "status": self.status,
-                        "created_at": self.created_at,
+                        "updated_at": self.updated_at,
                         "root_command_type": self.root_command_type,
                         "parameter": True,
                     }
@@ -577,6 +578,7 @@ class Request(MongoModel, Document):
                     output=True,
                     root_command_type=self.root_command_type,
                     status=self.status,
+                    updated_at=self.updated_at,
                 )
 
                 get_db()["fs.chunks"].update_many(
@@ -584,7 +586,7 @@ class Request(MongoModel, Document):
                     {
                         "$set": {
                             "status": self.status,
-                            "created_at": self.created_at,
+                            "updated_at": self.updated_at,
                             "root_command_type": self.root_command_type,
                             "output": True,
                         }
@@ -600,6 +602,7 @@ class Request(MongoModel, Document):
             self._update_raw_file_references()
 
         self._update_raw_file_gridfs()
+        self._update_file_references(self.parameters)
 
     def _update_raw_file_gridfs(self):
         parameters = self.parameters or {}
@@ -616,33 +619,37 @@ class Request(MongoModel, Document):
                     {
                         "$set": {
                             "status": self.status,
-                            "created_at": self.created_at,
+                            "updated_at": self.updated_at,
                             "root_command_type": self.root_command_type,
                         }
                     },
                 )
 
-                gridfs_id = get_db()["raw_file"].find_one(
+                raw_file = get_db()["raw_file"].find_one(
                     {"_id": ObjectIdField().to_mongo(param_value["id"])}, {"file": 1}
-                )["file"]
+                )
+
+                if raw_file.get("file") is None:
+                    # If the file is None, it means it wasn't uploaded to GridFS
+                    continue
 
                 get_db()["fs.files"].update_one(
-                    {"_id": gridfs_id},
+                    {"_id": raw_file.get("file")},
                     {
                         "$set": {
                             "status": self.status,
-                            "created_at": self.created_at,
+                            "updated_at": self.updated_at,
                             "root_command_type": self.root_command_type,
                             "parameter": True,
                         }
                     },
                 )
                 get_db()["fs.chunks"].update_many(
-                    {"files_id": gridfs_id},
+                    {"files_id": raw_file.get("file")},
                     {
                         "$set": {
                             "status": self.status,
-                            "created_at": self.created_at,
+                            "updated_at": self.updated_at,
                             "root_command_type": self.root_command_type,
                             "parameter": True,
                         }
@@ -677,12 +684,46 @@ class Request(MongoModel, Document):
                     raw_file = RawFile.objects.get(id=param_value["id"])
                     raw_file.request = self
                     raw_file.root_command_type = self.root_command_type
+                    raw_file.status = self.status
+                    raw_file.updated_at = self.updated_at
                     raw_file.save()
                 except RawFile.DoesNotExist:
                     logger.debug(
                         f"Error locating RawFile with id {param_value['id']} "
                         "while saving Request {self.id}"
                     )
+
+    def _update_file_references(self, parameters=None):
+        parameters = parameters or {}
+
+        if isinstance(parameters, dict):
+            if parameters.get("type") == "chunk":
+                file_id = parameters.get("details", {}).get("file_id")
+                get_db()["file"].update_one(
+                    {"_id": file_id},
+                    {
+                        "$set": {
+                            "status": self.status,
+                            "updated_at": self.updated_at,
+                            "root_command_type": self.root_command_type,
+                        }
+                    },
+                )
+                get_db()["file_chunk"].update_many(
+                    {"file_id": file_id},
+                    {
+                        "$set": {
+                            "status": self.status,
+                            "updated_at": self.updated_at,
+                            "root_command_type": self.root_command_type,
+                        }
+                    },
+                )
+
+            # If it's not a resolvable it might be a model, so recurse down and check
+            else:
+                for value in parameters.values():
+                    self._update_file_references(value)
 
     def _delete_gridfs_files(self):
         try:
@@ -1414,8 +1455,8 @@ class File(MongoModel, Document):
 
     owner_id = StringField(required=False)
     owner_type = StringField(required=False)
-    request = LazyReferenceField(Request, required=False)
-    job = LazyReferenceField(Job, required=False)
+    request = LazyReferenceField(Request, required=False, reverse_delete_rule=NULLIFY)
+    job = LazyReferenceField(Job, required=False, reverse_delete_rule=NULLIFY)
     updated_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
     file_name = StringField(required=True)
     file_size = IntField(required=True)
@@ -1428,6 +1469,10 @@ class File(MongoModel, Document):
     # a reverse_delete_rule. Alas!
     owner = DummyField()
 
+    # TTL Fields
+    status = StringField()
+    root_command_type = StringField()
+
 
 class FileChunk(MongoModel, Document):
     brewtils_model = brewtils.models.FileChunk
@@ -1438,13 +1483,21 @@ class FileChunk(MongoModel, Document):
     # Delete Rule (2) = CASCADE; This causes this document to be deleted when the owner doc is.
     owner = LazyReferenceField(File, required=False, reverse_delete_rule=CASCADE)
 
+    # TTL Fields
+    status = StringField()
+    updated_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
+    root_command_type = StringField()
+
 
 class RawFile(Document):
     file = FileField()
     created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
-    status = StringField()
-    root_command_type = StringField()
     request = LazyReferenceField(Request, required=False, reverse_delete_rule=CASCADE)
+
+    # TTL Fields
+    status = StringField()
+    updated_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
+    root_command_type = StringField()
 
     meta = {"queryset_class": FileFieldHandlingQuerySet}
 
