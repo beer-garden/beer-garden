@@ -377,7 +377,7 @@ class Request(MongoModel, Document):
             {"name": "instance_name_index", "fields": ["instance_name"]},
             {"name": "namespace_index", "fields": ["namespace"]},
             {"name": "status_index", "fields": ["status"]},
-            {"name": "updated_at_index", "fields": ["updated_at"]},
+            {"name": "created_at_index", "fields": ["created_at"]},
             {"name": "status_updated_at_index", "fields": ["status_updated_at"]},
             {"name": "comment_index", "fields": ["comment"]},
             {"name": "parent_ref_index", "fields": ["parent"]},
