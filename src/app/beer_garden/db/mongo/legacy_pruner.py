@@ -253,7 +253,7 @@ def prune_files():
                         batch_size, file_ids, raw_file_ids, gridfs_ids, "Expired"
                     )
 
-            for raw_file in RawFile.objects(Q(updated_at__lt=delete_older_than)):
+            for raw_file in RawFile.objects(Q(created_at__lt=delete_older_than)):
                 raw_file_ids.append(raw_file.id)
                 gridfs_ids.append(raw_file.file.grid_id)
                 if batch_size > 0 and len(raw_file_ids) > batch_size:

@@ -1471,6 +1471,7 @@ class File(MongoModel, Document):
 
     # TTL Fields
     status = StringField()
+    created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
     root_command_type = StringField()
 
 
@@ -1485,6 +1486,7 @@ class FileChunk(MongoModel, Document):
 
     # TTL Fields
     status = StringField()
+    created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
     updated_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
     root_command_type = StringField()
 
