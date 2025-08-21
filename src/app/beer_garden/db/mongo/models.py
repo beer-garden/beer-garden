@@ -683,9 +683,6 @@ class Request(MongoModel, Document):
                 try:
                     raw_file = RawFile.objects.get(id=param_value["id"])
                     raw_file.request = self
-                    raw_file.root_command_type = self.root_command_type
-                    raw_file.status = self.status
-                    raw_file.updated_at = self.updated_at
                     raw_file.save()
                 except RawFile.DoesNotExist:
                     logger.debug(
