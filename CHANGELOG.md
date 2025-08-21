@@ -14,6 +14,9 @@ TBD
 
 - Reverted expiration field from #1904/#1870. Pushed forward root_command_type.
   Refactored request pruner to push forward cursor for bulk deletes (#1924)
+- Updated Request Event Handler to check Status to determine action instead of event type (#1939)
+- Reduce event size of Request Cancelled via trigger (#1946)
+- Reduce event size for Request Rebroadcast if for API Only (#1946)
 - Fixed UI bug where Config was not loaded on all pages to properly display Garden Name or Tab titles (#1937)
 - Fixed bug in UI where missing Children on Garden model errored on isSystemRoutable UI filter (#1938)
 - Fixed bug where Cancelled Requests could still spawn child requests because Validator never

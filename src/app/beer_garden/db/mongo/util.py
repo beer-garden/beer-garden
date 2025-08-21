@@ -9,7 +9,7 @@ from mongoengine.connection import get_connection, get_db
 from mongoengine.errors import DoesNotExist, FieldDoesNotExist, InvalidDocumentError
 from packaging.version import Version
 from pymongo import UpdateMany, UpdateOne
-from pymongo.errors import OperationFailure
+from pymongo.errors import OperationFailure, PyMongoError
 
 import beer_garden
 import beer_garden.config as config
@@ -313,6 +313,34 @@ def ensure_v3_29_model_migration():
             request_collection.bulk_write(request_updates, ordered=False)
 
 
+def find_root_command_type(request):
+    command_type = getattr(request, "command_type", "ACTION")
+    if ("has_parent" in request and request["has_parent"]) or (
+        "parent" in request and request["parent"] is not None
+    ):
+        try:
+            parent = (
+                get_db()
+                .get_collection("request")
+                .find_one(
+                    {"_id": request["parent"].id},
+                    {
+                        "has_parent": 1,
+                        "parent": 1,
+                        "command_type": 1,
+                        "_id": 1,
+                    },
+                )
+            )
+            if parent:
+                return find_root_command_type(parent)
+        except PyMongoError:
+            # if any exception is thrown, just return what we currently have
+            pass
+
+    return command_type
+
+
 def ensure_v3_30_model_migration():
     db = get_db()
     batch_size = config.get("db.prune.batch_size", default=-1)
@@ -349,13 +377,15 @@ def ensure_v3_30_model_migration():
         for legacy_request in request_collection.find(
             {"root_command_type": {"$exists": False}},
             {
+                "has_parent": 1,
+                "parent": 1,
                 "command_type": 1,
                 "_id": 1,
             },
         ):
             if legacy_request:
 
-                root_command_type = getattr(legacy_request, "command_type", "ACTION")
+                root_command_type = find_root_command_type(legacy_request)
 
                 updates.append(
                     UpdateOne(
