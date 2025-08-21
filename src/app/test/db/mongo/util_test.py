@@ -2,6 +2,7 @@
 import copy
 from datetime import datetime
 
+import gridfs
 import pytest
 from bson.dbref import DBRef
 from mock import MagicMock, Mock, patch
@@ -20,6 +21,9 @@ from beer_garden.db.mongo.util import (  # ensure_roles,; ensure_users,
     ensure_v3_30_model_migration,
 )
 from beer_garden.errors import IndexOperationError
+from mongomock.gridfs import enable_gridfs_integration
+
+enable_gridfs_integration()
 
 
 @pytest.fixture
@@ -191,6 +195,161 @@ class TestMigrationScript(object):
         db_child = request_collection.find_one({"has_parent": True})
 
         assert db_child["root_command_type"] == "ACTION"
+
+    @patch("mongoengine.connect", Mock())
+    @patch("mongoengine.register_connection", Mock())
+    def test_3_30_request_migration_raw_file(self, request_dict, ts_dt):
+
+        db = get_db()
+        request_collection = db["request"]
+        raw_file_collection = db["raw_file"]
+        fs_files_collection = db["fs.files"]
+        fs_chunks_collection = db["fs.chunks"]
+
+        del request_dict["id"]
+        request_dict["status"] = "SUCCESS"
+        request_dict["updated_at"] = datetime(2017, 1, 1)
+        request_dict["command_type"] = "INFO"
+
+        request_collection.insert_one(request_dict)
+
+        db_request = request_collection.find_one()
+
+        fs = gridfs.GridFS(db)
+
+        raw_file_data_id = fs.put(b"raw file data")
+
+        raw_file_dict = {"file": raw_file_data_id, "request": db_request["_id"]}
+
+        raw_file_collection.insert_one(raw_file_dict)
+
+        for collection in [
+            raw_file_collection,
+            fs_files_collection,
+            fs_chunks_collection,
+        ]:
+
+            pre_migration = collection.find_one()
+
+            assert pre_migration.get("root_command_type") is None
+            assert pre_migration.get("status") is None
+            assert pre_migration.get("updated_at") is None
+
+        ensure_v3_30_model_migration()
+
+        for collection in [
+            raw_file_collection,
+            fs_files_collection,
+            fs_chunks_collection,
+        ]:
+
+            post_migration = collection.find_one()
+
+            assert post_migration.get("root_command_type") == db_request.get(
+                "root_command_type"
+            )
+            assert post_migration.get("status") == db_request.get("status")
+            assert post_migration.get("updated_at") is not None
+
+        db.drop_collection("fs.files")
+        db.drop_collection("fs.chunks")
+
+    @patch("mongoengine.connect", Mock())
+    @patch("mongoengine.register_connection", Mock())
+    def test_3_30_request_migration_gridfs(self, request_dict, ts_dt):
+
+        db = get_db()
+        request_collection = db["request"]
+        fs_files_collection = db["fs.files"]
+        fs_chunks_collection = db["fs.chunks"]
+
+        fs = gridfs.GridFS(db)
+
+        output_gridfs_id = fs.put(b"raw file data")
+        parameter_gridfs_id = fs.put(b"raw file data")
+        del request_dict["id"]
+        request_dict["status"] = "SUCCESS"
+        request_dict["updated_at"] = datetime(2017, 1, 1)
+        request_dict["command_type"] = "INFO"
+        request_dict["output_gridfs"] = {"grid_id": output_gridfs_id}
+        request_dict["parameters_gridfs"] = {"grid_id": parameter_gridfs_id}
+
+        request_collection.insert_one(request_dict)
+
+        db_request = request_collection.find_one()
+
+        for collection in [
+            fs_files_collection,
+            fs_chunks_collection,
+        ]:
+
+            for pre_migration in collection.find({}):
+
+                assert pre_migration.get("root_command_type") is None
+                assert pre_migration.get("status") is None
+                assert pre_migration.get("updated_at") is None
+
+        ensure_v3_30_model_migration()
+
+        for collection in [
+            fs_files_collection,
+            fs_chunks_collection,
+        ]:
+
+            for post_migration in collection.find({}):
+
+                assert post_migration.get("root_command_type") == db_request.get(
+                    "root_command_type"
+                )
+                assert post_migration.get("status") == db_request.get("status")
+                assert post_migration.get("updated_at") is not None
+
+        db.drop_collection("fs.files")
+        db.drop_collection("fs.chunks")
+
+    @patch("mongoengine.connect", Mock())
+    @patch("mongoengine.register_connection", Mock())
+    def test_3_30_request_migration_file(self, request_dict, ts_dt):
+
+        db = get_db()
+        request_collection = db["request"]
+        file_collection = db["file"]
+        file_chunk_collection = db["file_chunk"]
+
+        del request_dict["id"]
+        request_dict["status"] = "SUCCESS"
+        request_dict["updated_at"] = datetime(2017, 1, 1)
+        request_dict["command_type"] = "INFO"
+
+        request_collection.insert_one(request_dict)
+
+        db_request = request_collection.find_one()
+
+        file_collection.insert_one(
+            {"owner_type": "REQUEST", "request": db_request["_id"]}
+        )
+        db_file = file_collection.find_one()
+        file_chunk_collection.insert_one({"file_id": str(db_file["_id"])})
+
+        for collection in [file_collection, file_chunk_collection]:
+
+            pre_migration = collection.find_one()
+
+            assert pre_migration.get("root_command_type") is None
+            assert pre_migration.get("status") is None
+            assert pre_migration.get("updated_at") is None
+
+        ensure_v3_30_model_migration()
+
+        for collection in [file_collection, file_chunk_collection]:
+
+            post_migration = collection.find_one()
+
+            assert post_migration.get("root_command_type") == db_request.get(
+                "root_command_type"
+            )
+            assert post_migration.get("status") == db_request.get("status")
+            assert post_migration.get("updated_at") is not None
 
 
 class TestCheckIndexes(object):

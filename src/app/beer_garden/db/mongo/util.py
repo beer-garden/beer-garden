@@ -5,7 +5,6 @@ from datetime import datetime, timedelta, timezone
 from brewtils.errors import ModelValidationError
 from brewtils.models import Event, Events
 from brewtils.models import Request as BrewtilsRequest
-from mongoengine import ObjectIdField
 from mongoengine.connection import get_connection, get_db
 from mongoengine.errors import DoesNotExist, FieldDoesNotExist, InvalidDocumentError
 from packaging.version import Version
@@ -379,31 +378,231 @@ def ensure_v3_30_model_migration():
             request_collection.bulk_write(updates, ordered=False)
             logger.warning(f"Migrating root_command_type for {len(updates)} Requests")
 
-    if missing_field("raw_file", "root_command_type") or missing_field(
-        "fs.files", "root_command_type"
-    ):
-
+    if missing_field("file", "root_command_type"):
         logger.warning(
-            "Root Command Type was not found in Raw File or GridFS and will be added."
+            "Root Command Type was not found in File/File Chunk and will be added."
             " This is most likely because the database is using the old (v3.29) style of"
             " storing in the database."
         )
-        request_collection = db.get_collection("request")
+
+        file_collection = db.get_collection("file")
+        file_chunk_collection = db.get_collection("file_chunk")
+        file_updates = []
+        file_chunk_updates = []
+        for legacy_file in file_collection.find(
+            {
+                "root_command_type": {
+                    "$exists": False,
+                },
+                "owner_type": "REQUEST",
+                "request": {"$ne": None},
+            },
+            {
+                "request": 1,
+                "_id": 1,
+            },
+        ):
+            if legacy_file:
+
+                file_request = db.get_collection("request").find_one(
+                    {"_id": legacy_file["request"]},
+                    {"root_command_type": 1, "updated_at": 1, "status": 1},
+                )
+
+                file_updates.append(
+                    UpdateOne(
+                        {"_id": legacy_file["_id"]},
+                        {
+                            "$set": {
+                                "root_command_type": file_request["root_command_type"],
+                                "updated_at": file_request["updated_at"],
+                                "status": file_request["status"],
+                            }
+                        },
+                    )
+                )
+
+                file_chunk_updates.append(
+                    UpdateOne(
+                        {"file_id": str(legacy_file["_id"])},
+                        {
+                            "$set": {
+                                "root_command_type": file_request["root_command_type"],
+                                "updated_at": file_request["updated_at"],
+                                "status": file_request["status"],
+                            }
+                        },
+                    )
+                )
+
+            if batch_size > 0 and len(file_updates) > batch_size:
+                file_collection.bulk_write(file_updates, ordered=False)
+                file_chunk_collection.bulk_write(file_chunk_updates, ordered=False)
+                logger.warning(
+                    f"Migrating root_command_type for {len(file_updates)} File/File Chunk"
+                )
+                file_updates = []
+                file_chunk_updates = []
+
+        if len(file_updates) > 0:
+            file_collection.bulk_write(file_updates, ordered=False)
+            file_chunk_collection.bulk_write(file_chunk_updates, ordered=False)
+            logger.warning(
+                f"Migrating root_command_type for {len(file_updates)} File/File Chunk"
+            )
+            file_updates = []
+            file_chunk_updates = []
+
+    if missing_field("raw_file", "root_command_type"):
+        logger.warning(
+            "Root Command Type was not found in File/File Chunk and will be added."
+            " This is most likely because the database is using the old (v3.29) style of"
+            " storing in the database."
+        )
+
         raw_file_collection = db.get_collection("raw_file")
+        request_collection = db.get_collection("request")
         grid_fs_files_collection = db.get_collection("fs.files")
         grid_fs_chunks_collection = db.get_collection("fs.chunks")
 
         raw_file_updates = []
         gridfs_updates = []
         gridfs_chunk_updates = []
+        for legacy_raw_file in raw_file_collection.find(
+            {
+                "root_command_type": {
+                    "$exists": False,
+                },
+                "request": {"$ne": None},
+            },
+            {
+                "request": 1,
+                "_id": 1,
+                "file": 1,
+            },
+        ):
+            if legacy_raw_file:
+
+                raw_file_request = db.get_collection("request").find_one(
+                    {"_id": legacy_raw_file["request"]},
+                    {"root_command_type": 1, "updated_at": 1, "status": 1},
+                )
+
+                raw_file_updates.append(
+                    UpdateOne(
+                        {"_id": legacy_raw_file["_id"]},
+                        {
+                            "$set": {
+                                "root_command_type": raw_file_request[
+                                    "root_command_type"
+                                ],
+                                "updated_at": raw_file_request["updated_at"],
+                                "status": raw_file_request["status"],
+                            }
+                        },
+                    )
+                )
+
+                gridfs_updates.append(
+                    UpdateOne(
+                        {"_id": legacy_raw_file["file"]},
+                        {
+                            "$set": {
+                                "root_command_type": raw_file_request[
+                                    "root_command_type"
+                                ],
+                                "updated_at": raw_file_request["updated_at"],
+                                "status": raw_file_request["status"],
+                            }
+                        },
+                    )
+                )
+
+                gridfs_chunk_updates.append(
+                    UpdateOne(
+                        {"files_id": legacy_raw_file["file"]},
+                        {
+                            "$set": {
+                                "root_command_type": raw_file_request[
+                                    "root_command_type"
+                                ],
+                                "updated_at": raw_file_request["updated_at"],
+                                "status": raw_file_request["status"],
+                            }
+                        },
+                    )
+                )
+
+            if batch_size > 0 and len(raw_file_updates) > batch_size:
+                raw_file_collection.bulk_write(raw_file_updates, ordered=False)
+                logger.warning(
+                    f"Migrating TTL fields for {len(raw_file_updates)} Raw Files"
+                )
+                raw_file_updates = []
+
+            if batch_size > 0 and len(gridfs_updates) > batch_size:
+                grid_fs_files_collection.bulk_write(gridfs_updates, ordered=False)
+                logger.warning(
+                    f"Migrating TTL fields for {len(gridfs_updates)} Grid FS files"
+                )
+                gridfs_updates = []
+
+            if batch_size > 0 and len(gridfs_chunk_updates) > batch_size:
+                grid_fs_chunks_collection.bulk_write(
+                    gridfs_chunk_updates, ordered=False
+                )
+                logger.warning(
+                    f"Migrating TTL fields for {len(gridfs_chunk_updates)} Grid FS chunks"
+                )
+                gridfs_chunk_updates = []
+
+        if len(raw_file_updates) > 0:
+            raw_file_collection.bulk_write(raw_file_updates, ordered=False)
+            logger.warning(
+                f"Migrating TTL fields for {len(raw_file_updates)} Raw Files"
+            )
+            raw_file_updates = []
+
+        if len(gridfs_updates) > 0:
+            grid_fs_files_collection.bulk_write(gridfs_updates, ordered=False)
+            logger.warning(
+                f"Migrating TTL fields for {len(gridfs_updates)} Grid FS files"
+            )
+            gridfs_updates = []
+
+        if len(gridfs_chunk_updates) > 0:
+            grid_fs_chunks_collection.bulk_write(gridfs_chunk_updates, ordered=False)
+            logger.warning(
+                f"Migrating TTL fields for {len(gridfs_chunk_updates)} Grid FS chunks"
+            )
+            gridfs_chunk_updates = []
+
+    if missing_field("fs.files", "root_command_type"):
+
+        logger.warning(
+            "Root Command Type was not found in GridFS and will be added."
+            " This is most likely because the database is using the old (v3.29) style of"
+            " storing in the database."
+        )
+        request_collection = db.get_collection("request")
+
+        grid_fs_files_collection = db.get_collection("fs.files")
+        grid_fs_chunks_collection = db.get_collection("fs.chunks")
+
+        gridfs_updates = []
+        gridfs_chunk_updates = []
 
         for legacy_request in request_collection.find(
-            {},
+            {
+                "$or": [
+                    {"output_gridfs": {"$ne": None}},
+                    {"parameters_gridfs": {"$ne": None}},
+                ]
+            },
             {
                 "root_command_type": 1,
                 "updated_at": 1,
                 "status": 1,
-                "parameters": 1,
                 "output_gridfs": 1,
                 "parameters_gridfs": 1,
             },
@@ -476,73 +675,6 @@ def ensure_v3_30_model_migration():
                         )
                     )
 
-                parameters = legacy_request.get("parameters", {})
-
-                for param_value in parameters.values():
-                    if (
-                        isinstance(param_value, dict)
-                        and param_value.get("type") == "bytes"
-                        and param_value.get("id") is not None
-                    ):
-                        # Can't do this in this function because it only happens for CREATE
-
-                        raw_file_updates.append(
-                            UpdateOne(
-                                {"_id": ObjectIdField().to_mongo(param_value["id"])},
-                                {
-                                    "$set": {
-                                        "status": legacy_request.get("status"),
-                                        "updated_at": legacy_request.get("updated_at"),
-                                        "root_command_type": legacy_request.get(
-                                            "root_command_type"
-                                        ),
-                                    }
-                                },
-                            )
-                        )
-
-                        gridfs_id = raw_file_collection.find_one(
-                            {"_id": ObjectIdField().to_mongo(param_value["id"])},
-                            {"file": 1},
-                        )["file"]
-
-                        gridfs_updates.append(
-                            UpdateOne(
-                                {"_id": gridfs_id},
-                                {
-                                    "$set": {
-                                        "root_command_type": legacy_request.get(
-                                            "root_command_type"
-                                        ),
-                                        "updated_at": legacy_request.get("updated_at"),
-                                        "status": legacy_request.get("status"),
-                                    }
-                                },
-                            )
-                        )
-
-                        gridfs_chunk_updates.append(
-                            UpdateOne(
-                                {"files_id": gridfs_id},
-                                {
-                                    "$set": {
-                                        "root_command_type": legacy_request.get(
-                                            "root_command_type"
-                                        ),
-                                        "updated_at": legacy_request.get("updated_at"),
-                                        "status": legacy_request.get("status"),
-                                    }
-                                },
-                            )
-                        )
-
-            if batch_size > 0 and len(raw_file_updates) > batch_size:
-                raw_file_collection.bulk_write(raw_file_updates, ordered=False)
-                logger.warning(
-                    f"Migrating TTL fields for {len(raw_file_updates)} Raw Files"
-                )
-                raw_file_updates = []
-
             if batch_size > 0 and len(gridfs_updates) > batch_size:
                 grid_fs_files_collection.bulk_write(gridfs_updates, ordered=False)
                 logger.warning(
@@ -559,13 +691,6 @@ def ensure_v3_30_model_migration():
                 )
                 gridfs_chunk_updates = []
 
-        if len(raw_file_updates) > 0:
-            raw_file_collection.bulk_write(raw_file_updates, ordered=False)
-            logger.warning(
-                f"Migrating TTL fields for {len(raw_file_updates)} Raw Files"
-            )
-            raw_file_updates = []
-
         if len(gridfs_updates) > 0:
             grid_fs_files_collection.bulk_write(gridfs_updates, ordered=False)
             logger.warning(
@@ -579,80 +704,6 @@ def ensure_v3_30_model_migration():
                 f"Migrating TTL fields for {len(gridfs_chunk_updates)} Grid FS chunks"
             )
             gridfs_chunk_updates = []
-
-    if missing_field("file", "root_command_type"):
-        logger.warning(
-            "Root Command Type was not found in File/File Chunk and will be added."
-            " This is most likely because the database is using the old (v3.29) style of"
-            " storing in the database."
-        )
-
-        file_collection = db.get_collection("file")
-        file_chunk_collection = db.get_collection("file_chunk")
-        file_updates = []
-        file_chunk_updates = []
-        for legacy_file in file_collection.find(
-            {
-                "root_command_type": {
-                    "$exists": False,
-                    "owner_type": "REQUEST",
-                    "request": {"$ne": None},
-                }
-            },
-            {
-                "request": 1,
-                "_id": 1,
-            },
-        ):
-            if legacy_file:
-
-                file_request = db.get_collection("request").find_one(
-                    {"_id": legacy_file["request"]},
-                    {"root_command_type": 1, "updated_at": 1, "status": 1},
-                )
-                root_command_type = getattr(legacy_file, "command_type", "ACTION")
-
-                file_updates.append(
-                    UpdateOne(
-                        {"_id": legacy_file["_id"]},
-                        {
-                            "$set": {
-                                "root_command_type": file_request["root_command_type"],
-                                "updated_at": file_request["updated_at"],
-                                "status": file_request["status"],
-                            }
-                        },
-                    )
-                )
-
-                file_chunk_updates.append(
-                    UpdateOne(
-                        {"file_id": str(legacy_file["_id"])},
-                        {
-                            "$set": {
-                                "root_command_type": file_request["root_command_type"],
-                                "updated_at": file_request["updated_at"],
-                                "status": file_request["status"],
-                            }
-                        },
-                    )
-                )
-
-            if batch_size > 0 and len(updates) > batch_size:
-                file_collection.bulk_write(file_updates, ordered=False)
-                file_chunk_collection.bulk_write(file_chunk_updates, ordered=False)
-                logger.warning(
-                    f"Migrating root_command_type for {len(updates)} File/File Chunk"
-                )
-                file_updates = []
-                file_chunk_updates = []
-
-        if len(updates) > 0:
-            file_collection.bulk_write(file_updates, ordered=False)
-            file_chunk_collection.bulk_write(file_chunk_updates, ordered=False)
-            logger.warning(
-                f"Migrating root_command_type for {len(updates)} File/File Chunk"
-            )
 
 
 def ensure_model_migration():
