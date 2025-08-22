@@ -6,6 +6,8 @@ TBD
 
 ## 3.30.0rc3
 
+- Reverted expiration field from #1904/#1870. Pushed forward root_command_type.
+  Refactored request pruner to push forward cursor for bulk deletes (#1924)
 - When forwarding requests downstream upgrade TEMP requests to INFO for forwarding to Downstream only.
   Request will still appear to be be TEMP in local database, only in downstream will it appear at INFO. (#1932)
 - Filter all Requests of command type TEMP from upstream forwarding to reduce bandwidth between Beer Gardens (#1932)
@@ -33,7 +35,6 @@ TBD
 - Expanded Garden query to support include and exclude field parameters (#1916/#1927)
 - Fixed bug in UI handling garden with null children (#1917)
 - Updated Request Pre_Save function to check for Orphan by parent ID (#1913)
-- Updated request pre and post save methods to set expiration for TEMP and children (#1904)
 - Fixed bug where Garden Entry Points went unresponsive (#1908)
 - Updated status history to use local config length for downstream gardens on save (#1923)
 - Updated `status_history` config defaults to 5 for garden and plugin (#1923)

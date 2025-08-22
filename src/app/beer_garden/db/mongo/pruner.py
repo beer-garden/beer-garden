@@ -4,14 +4,14 @@ from datetime import datetime, timedelta, timezone
 
 from brewtils.errors import ModelValidationError
 from brewtils.models import Event, Events
-from brewtils.models import Request as BrewtilsRequest
+from brewtils.schema_parser import SchemaParser
 from mongoengine import Q
 from mongoengine.connection import get_db
 from mongoengine.errors import DoesNotExist
-from pymongo import UpdateOne
 
 import beer_garden.config as config
 from beer_garden.db.mongo.models import File, Job, RawFile, Request
+from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.events import publish
 from beer_garden.metrics import CollectMetrics
 
@@ -20,139 +20,100 @@ logger = logging.getLogger(__name__)
 display_name = "Mongo Pruner"
 
 
-def completed_status_query():
-    query = None
-    for status in BrewtilsRequest.COMPLETED_STATUSES:
-        if query:
-            query = query | Q(status=status)
-        else:
-            query = Q(status=status)
-    return query
+def prune_by_name(ttl_name):
+    with CollectMetrics("PRUNER", f"Pruner::{ttl_name}"):
+        prune_requests(ttl_name)
 
 
-def determine_expiration_at(request, action_ttl, info_ttl):
-    if request.expiration_at:
-        return request.expiration_at
-
-    if request.has_parent and request.parent is not None:
-        try:
-            parent = Request.objects.get(id=request.parent.id)
-
-            if parent.expiration_at:
-                # Parent has an expiration, so we will just use that
-                return request.expiration_at
-            if parent.status not in BrewtilsRequest.COMPLETED_STATUSES:
-                # Parent is still running
-                return None
-            return determine_expiration_at(parent, action_ttl, info_ttl)
-        except DoesNotExist:
-            pass
-
-    if action_ttl > -1 and request.root_command_type == "ACTION":
-        return request.created_at + timedelta(minutes=action_ttl)
-
-    if info_ttl > -1 and request.root_command_type == "INFO":
-        return request.created_at + timedelta(minutes=info_ttl)
-
-    # Must be Admin or Temp
-    return request.created_at
+def prune_info_requests():
+    prune_by_name("info")
 
 
-def find_missing_expiration_requests():
-    """
-    Find Requests that do not have expiration_at dates set but should have. Then set
-    them to the most accurate value we can calculate base on what is in the database
-    """
-
-    batch_size = config.get("db.prune.batch_size")
-    action_ttl = config.get("db.prune.ttl.action", default=-1)
-    info_ttl = config.get("db.prune.ttl.info", default=-1)
-
-    current_time = datetime.now(timezone.utc)
-
-    missing_expiration_filter = None
-    if action_ttl > -1:
-        missing_expiration_filter = Q(
-            created_at__lt=current_time - timedelta(minutes=action_ttl)
-        ) & Q(root_command_type="ACTION")
-
-    if info_ttl > -1:
-        if not missing_expiration_filter:
-            missing_expiration_filter = Q(
-                created_at__lt=current_time - timedelta(minutes=info_ttl)
-            ) & Q(root_command_type="INFO")
-        else:
-            missing_expiration_filter = (missing_expiration_filter) | (
-                Q(created_at__lt=current_time - timedelta(minutes=info_ttl))
-                & Q(root_command_type="INFO")
-            )
-
-    if not missing_expiration_filter:
-        return
-
-    query = (
-        Q(expiration_at=None) & (completed_status_query()) & (missing_expiration_filter)
-    )
-
-    updates = []
-    for request in Request.objects(query).only(
-        "id", "parent", "has_parent", "created_at", "expiration_at", "root_command_type"
-    ):
-        expiration_at = determine_expiration_at(request, action_ttl, info_ttl)
-
-        if expiration_at:
-            updates.append(
-                UpdateOne(
-                    {"_id": request.id},
-                    {"$set": {"expiration_at": expiration_at}},
-                )
-            )
-
-            # Bulk update early if the list gets over batch size
-            if batch_size > 0 and len(updates) > batch_size:
-                Request._get_collection().bulk_write(updates, ordered=False)
-                logger.warning(f"Recomputed {len(updates)} missing Request TTLs")
-                updates = []
-
-    # Bulk update any updates needed to correct expiration dates
-    if len(updates) > 0:
-        Request._get_collection().bulk_write(updates, ordered=False)
-        logger.warning(f"Recomputed {len(updates)} missing Request TTLs")
+def prune_action_requests():
+    prune_by_name("action")
 
 
-def prune_requests():
+def prune_admin_requests():
+    prune_by_name("admin")
+
+
+def prune_temp_requests():
+    prune_by_name("temp")
+
+
+def prune_requests(ttl_name):
 
     batch_size = config.get("db.prune.batch_size")
     current_time = datetime.now(timezone.utc)
 
-    query = completed_status_query() & (
-        Q(expiration_at__lt=current_time)
-        | ((Q(command_type="ADMIN") | Q(command_type="TEMP")))
+    if ttl_name in ["admin", "temp"]:
+        ttl_length = config.get("db.prune.interval", default=15)
+    else:
+        ttl_length = config.get(f"db.prune.ttl.{ttl_name}")
+
+    query = Q(updated_at__lt=current_time - timedelta(minutes=ttl_length)) & (
+        Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
     )
+
+    if ttl_name == "admin":
+        query = query & Q(has_parent=False) & Q(command_type="ADMIN")
+    elif ttl_name == "temp":
+        query = query & Q(command_type="TEMP")
+    elif ttl_name == "action":
+        query = (
+            query
+            & Q(has_parent=False)
+            & (
+                Q(command_type="ACTION")
+                | Q(command_type=None)
+                | Q(command_type__exists=False)
+            )
+        )
+    elif ttl_name == "info":
+        query = query & Q(has_parent=False) & Q(command_type="INFO")
 
     request_cursor = Request.objects(query).only(
         "id", "output_gridfs", "parameters_gridfs", "parameters"
     )
 
-    prune_request_cursor(request_cursor, batch_size, "Expired")
+    request_ids = []
+    request_raw_files = []
+    request_grids_fs_files = []
+
+    prune_request_cursor(
+        request_cursor,
+        batch_size,
+        "Expired",
+        request_ids,
+        request_raw_files,
+        request_grids_fs_files,
+    )
+
+    if len(request_ids) > 0:
+        delete_requests(
+            batch_size,
+            request_ids,
+            request_raw_files,
+            request_grids_fs_files,
+            "Expired",
+        )
 
 
 def prune_request_cursor(
     request_cursor,
     batch_size,
     label,
+    request_ids,
+    request_raw_files,
+    request_grids_fs_files,
 ):
     """
     Helper function to prune a cursor of requests
+    request_ids, request_raw_files, request_grids_fs_files modify the list in place
+    so parent function can access for final delete
     """
-
-    request_ids = []
-    request_raw_files = []
-    request_grids_fs_files = []
-
     for request in request_cursor:
         try:
-
             request_ids.append(request.id)
 
             if request.output_gridfs:
@@ -182,33 +143,25 @@ def prune_request_cursor(
                 ):
                     request_raw_files.append(param_value["id"])
 
-            if batch_size > 0 and len(request_ids) > batch_size:
-                # Delete the batch of requests to keep in memory usage down
-                delete_requests(
+            # Get children
+            if request:
+                child_cursor = Request.objects(parent=request).only(
+                    "id", "output_gridfs", "parameters_gridfs", "parameters"
+                )
+                prune_request_cursor(
+                    child_cursor,
                     batch_size,
+                    label,
                     request_ids,
                     request_raw_files,
                     request_grids_fs_files,
-                    label,
                 )
-                request_ids = []
-                request_raw_files = []
-                request_grids_fs_files = []
 
         except DoesNotExist:
             logger.error(
                 f"DoesNotExist: Attempted to delete request {request.id} "
                 "but does not exist in database"
             )
-
-    if len(request_ids) > 0:
-        delete_requests(
-            batch_size,
-            request_ids,
-            request_raw_files,
-            request_grids_fs_files,
-            label,
-        )
 
 
 def delete_requests(
@@ -284,66 +237,77 @@ def prune_files():
         gridfs_ids = []
 
         delete_older_than = datetime.now(timezone.utc) - timedelta(minutes=ttl_length)
+        batch_size = config.get("db.prune.batch_size")
 
         try:
-            batch_size = config.get("db.prune.batch_size")
-
-            if batch_size > 0:
-                for file in (
-                    File.objects(
-                        Q(updated_at__lt=delete_older_than)
-                        & (
-                            (
-                                Q(owner_type=None)
-                                | (
-                                    (Q(owner_type__iexact="JOB") & Q(job=None))
-                                    | (
-                                        Q(owner_type__iexact="REQUEST")
-                                        & Q(request=None)
-                                    )
-                                )
-                            )
+            for file in File.objects(
+                Q(updated_at__lt=delete_older_than)
+                & (
+                    (
+                        Q(owner_type=None)
+                        | (
+                            (Q(owner_type__iexact="JOB") & Q(job=None))
+                            | (Q(owner_type__iexact="REQUEST") & Q(request=None))
                         )
                     )
-                    .only("id")
-                    .batch_size(batch_size)
-                ):
-                    file_ids.append(file.id)
-
-                for raw_file in RawFile.objects(
-                    Q(created_at__lt=delete_older_than)
-                ).batch_size(batch_size):
-                    raw_file_ids.append(raw_file.id)
-                    gridfs_ids.append(raw_file.file.grid_id)
-
-            else:
-                for file in File.objects(
-                    Q(updated_at__lt=delete_older_than)
-                    & (
-                        (
-                            Q(owner_type=None)
-                            | (
-                                (Q(owner_type__iexact="JOB") & Q(job=None))
-                                | (Q(owner_type__iexact="REQUEST") & Q(request=None))
-                            )
-                        )
+                )
+            ).only("id"):
+                file_ids.append(file.id)
+                if batch_size > 0 and len(file_ids) > batch_size:
+                    delete_files(
+                        batch_size, file_ids, raw_file_ids, gridfs_ids, "Expired"
                     )
-                ).only("id"):
-                    file_ids.append(file.id)
 
-                for raw_file in RawFile.objects(Q(created_at__lt=delete_older_than)):
-                    raw_file_ids.append(raw_file.id)
-                    gridfs_ids.append(raw_file.file.grid_id)
+            for raw_file in RawFile.objects(Q(created_at__lt=delete_older_than)):
+                raw_file_ids.append(raw_file.id)
+                gridfs_ids.append(raw_file.file.grid_id)
+                if batch_size > 0 and len(raw_file_ids) > batch_size:
+                    delete_files(
+                        batch_size, file_ids, raw_file_ids, gridfs_ids, "Expired"
+                    )
 
         finally:
-            db = get_db()
+            if len(file_ids) > 0 or len(raw_file_ids) > 0:
+                delete_files(batch_size, file_ids, raw_file_ids, gridfs_ids, "Expired")
 
-            db["file_chunks"].delete_many({"files_id": {"$in": file_ids}})
-            db["file"].delete_many({"_id": {"$in": file_ids}})
 
-            db["raw_files"].delete_many({"_id": {"$in": raw_file_ids}})
-            db["fs.chunks"].delete_many({"files_id": {"$in": gridfs_ids}})
-            db["fs.files"].delete_many({"_id": {"$in": gridfs_ids}})
+def delete_files(batch_size, file_ids, raw_file_ids, gridfs_ids, label):
+    db = get_db()
+
+    if batch_size > 0:
+        for batch in [
+            file_ids[i : i + batch_size] for i in range(0, len(file_ids), batch_size)
+        ]:
+            db["file_chunks"].delete_many({"files_id": {"$in": batch}})
+            db["file"].delete_many({"_id": {"$in": batch}})
+
+        for batch in [
+            raw_file_ids[i : i + batch_size]
+            for i in range(0, len(raw_file_ids), batch_size)
+        ]:
+            db["raw_files"].delete_many({"_id": {"$in": batch}})
+
+        for batch in [
+            gridfs_ids[i : i + batch_size]
+            for i in range(0, len(raw_file_ids), batch_size)
+        ]:
+            db["fs.chunks"].delete_many({"files_id": {"$in": batch}})
+            db["fs.files"].delete_many({"_id": {"$in": batch}})
+    else:
+        db["file_chunks"].delete_many({"files_id": {"$in": file_ids}})
+        db["file"].delete_many({"_id": {"$in": file_ids}})
+
+        db["raw_files"].delete_many({"_id": {"$in": raw_file_ids}})
+        db["fs.chunks"].delete_many({"files_id": {"$in": gridfs_ids}})
+        db["fs.files"].delete_many({"_id": {"$in": gridfs_ids}})
+
+    logger.error(f"{len(file_ids)} {label} Files deleted")
+
+    if len(gridfs_ids) > 0:
+        logger.debug(f"{len(gridfs_ids)} GridFS files deleted " f"for {label} Files")
+
+    if len(raw_file_ids) > 0:
+        logger.debug(f"{len(raw_file_ids)} Raw files deleted for {label} Files")
 
 
 def prune_orphan_files():
@@ -380,11 +344,9 @@ def prune_orphan_file_records(orphaned_files):
         for file in orphaned_files:
             try:
                 if file.owner_type == "JOB" and file.job is not None:
-                    if not Job.objects.with_id(file.job.id):
-                        raise DoesNotExist
+                    Job.objects.get(id=file.job.id)
                 elif file.owner_type == "REQUEST" and file.request is not None:
-                    if not Request.objects.with_id(file.request.id):
-                        raise DoesNotExist
+                    Request.objects.get(id=file.request.id)
             except DoesNotExist:
                 file.delete()
                 counter = counter + 1
@@ -395,6 +357,147 @@ def prune_orphan_file_records(orphaned_files):
 
         else:
             logger.debug("No missed owners for Files")
+
+
+def prune_missed_temp_command():
+    """
+    If the completion event is missed for a TEMP event, clean up the
+    Request from the database
+    """
+    with CollectMetrics("PRUNER", "Pruner::orphan_missed_temp"):
+        ttl = config.get("db.prune.interval", default=15)
+        if ttl < 0:
+            return
+        timeout = datetime.now(timezone.utc) - timedelta(minutes=ttl)
+        filter = {
+            "command_type": "TEMP",
+            "status__in": ["CANCELED", "SUCCESS", "ERROR", "INVALID"],
+            "updated_at__lte": timeout,
+            "has_parent": True,
+        }
+
+        batch_size = config.get("db.prune.batch_size")
+
+        if batch_size > 0:
+
+            temp_requests = (
+                Request.objects.only("parent", "id")
+                .filter(**filter)
+                .batch_size(batch_size)
+            )
+            prune_missed_temp_requests(temp_requests)
+
+        else:
+            temp_requests = Request.objects.only("parent", "id").filter(**filter)
+            prune_missed_temp_requests(temp_requests)
+
+
+def prune_missed_temp_requests(temp_requests):
+    counter = 0
+
+    try:
+        for request in temp_requests:
+            try:
+                Request.objects.get(
+                    id=request.parent.id,
+                    status__in=[
+                        "CREATED",
+                        "RECEIVED",
+                        "IN_PROGRESS",
+                    ],
+                )
+            except DoesNotExist:
+                request.delete()
+                counter = counter + 1
+    finally:
+
+        if counter > 0:
+            logger.error(
+                f"{counter} TEMP Requests deleted due to Parent Request is completed or missing"
+            )
+
+        else:
+            logger.debug("No missed TEMP Requests")
+
+
+def prune_orphan_command_type_info():
+    prune_orphan_command_type("INFO")
+
+
+def prune_orphan_command_type_action():
+    prune_orphan_command_type("ACTION")
+
+
+def prune_orphan_command_type_admin():
+    prune_orphan_command_type("ADMIN")
+
+
+def prune_orphan_command_type(command_type):
+    with CollectMetrics("PRUNER", f"Pruner::orphan_{command_type}"):
+        ttl = config.get("db.prune.interval", default=15)
+
+        if command_type == "ACTION":
+            cmd_ttl_length = config.get("db.prune.ttl.action")
+            if cmd_ttl_length > 0:
+                ttl = ttl + cmd_ttl_length
+        elif command_type == "INFO":
+            cmd_ttl_length = config.get("db.prune.ttl.info")
+            if cmd_ttl_length > 0:
+                ttl = ttl + cmd_ttl_length
+
+        timeout = datetime.now(timezone.utc) - timedelta(minutes=ttl)
+        filter = {
+            "command_type": command_type,
+            "status__in": ["CANCELED", "SUCCESS", "ERROR", "INVALID"],
+            "updated_at__lte": timeout,
+            "has_parent": True,
+        }
+
+        batch_size = config.get("db.prune.batch_size")
+
+        if batch_size > 0:
+
+            orphaned_requests = (
+                Request.objects.only("parent", "id")
+                .filter(**filter)
+                .batch_size(batch_size)
+            )
+            prune_orphan_requests(
+                orphaned_requests, command_type, batch_size=batch_size
+            )
+
+        else:
+            orphaned_requests = Request.objects.only("parent", "id").filter(**filter)
+            prune_orphan_requests(orphaned_requests, command_type)
+
+
+def prune_orphan_requests(orphaned_requests, command_type, batch_size=None):
+    counter = 0
+    try:
+        for request in orphaned_requests:
+            try:
+                Request.objects.get(id=request.parent.id)
+            except DoesNotExist:
+                request.delete()
+                counter = counter + 1
+
+    finally:
+
+        if counter > 0:
+            logger.error(
+                (
+                    f"{counter} orphaned {command_type} Requests deleted "
+                    f"{', batch size: ' + str(batch_size) if batch_size else ''}"
+                )
+            )
+
+        else:
+            logger.debug(
+                (
+                    f"No orphaned {command_type} Requests "
+                    f"{', batch size: ' + str(batch_size) if batch_size else ''}"
+                )
+            )
 
 
 def prune_outstanding():
@@ -409,7 +512,7 @@ def prune_outstanding():
         prune_config = config.get("db.prune")
         cancel_threshold = prune_config.get("in_progress_request_expiration")
         if cancel_threshold > 0:
-            timeout = datetime.utcnow() - timedelta(minutes=cancel_threshold)
+            timeout = datetime.now(timezone.utc) - timedelta(minutes=cancel_threshold)
             batch_size = config.get("db.prune.batch_size")
 
             if batch_size > 0:
@@ -417,17 +520,17 @@ def prune_outstanding():
                 outstanding_requests = (
                     Request.objects.filter(
                         status__in=["IN_PROGRESS", "CREATED"],
-                        created_at__lte=timeout,
+                        updated_at__lte=timeout,
                     )
-                    .order_by("-created_at")
+                    .order_by("-updated_at")
                     .batch_size(batch_size)
                 )
                 prune_outstanding_requests(outstanding_requests)
 
             else:
                 outstanding_requests = Request.objects.filter(
-                    status__in=["IN_PROGRESS", "CREATED"], created_at__lte=timeout
-                ).order_by("-created_at")
+                    status__in=["IN_PROGRESS", "CREATED"], updated_at__lte=timeout
+                ).order_by("-updated_at")
 
                 prune_outstanding_requests(outstanding_requests)
 
@@ -465,8 +568,7 @@ def prune_outstanding_requests(outstanding_requests):
 
                 if request.has_parent and request.parent is not None:
                     try:
-                        if not Request.objects.with_id(request.parent.id):
-                            raise DoesNotExist
+                        Request.objects.get(id=request.parent.id)
                     except DoesNotExist:
                         logger.debug(
                             f"Parent is missing, killing orphan request {request.id}"
@@ -502,8 +604,8 @@ def prune_grid_fs():
         max_request_size = max(
             [prune_config_ttl.get("info"), prune_config_ttl.get("action")]
         )
-        if max_request_size > -1:
-            if file_threshold > -1:
+        if max_request_size > 0:
+            if file_threshold > 0:
                 file_threshold = file_threshold + max_request_size
             else:
                 file_threshold = max_request_size

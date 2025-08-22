@@ -1149,8 +1149,6 @@ def handle_event_create(event):
     # Attempt to create the request, if it already exists then continue on
 
     try:
-        event.payload.expiration_at = None
-
         parent_request = None
 
         # Check if parent request exists and load only fields required for
