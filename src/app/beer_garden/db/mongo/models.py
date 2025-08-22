@@ -629,7 +629,7 @@ class Request(MongoModel, Document):
                     {"_id": ObjectIdField().to_mongo(param_value["id"])}, {"file": 1}
                 )
 
-                if raw_file.get("file") is None:
+                if raw_file is None or raw_file.get("file") is None:
                     # If the file is None, it means it wasn't uploaded to GridFS
                     continue
 
