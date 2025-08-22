@@ -807,6 +807,23 @@ def create_request(request: Request) -> Request:
     if request.target_garden is None:
         request.target_garden = config.get("garden.name")
 
+    if request.has_parent:
+        if request.parent is None:
+            request.has_parent = False
+        else:
+            try:
+                parent = db.query_unique(
+                    Request,
+                    id=request.parent.id,
+                    include_fields=["command_type"],
+                    raise_missing=True,
+                )
+                if parent.command_type == "TEMP":
+                    request.command_type = "TEMP"
+            except DoesNotExist:
+                request.has_parent = None
+                request.parent = None
+
     if hasattr(request.metadata, "_topic") and request.source_garden == config.get(
         "garden.name"
     ):
@@ -1096,6 +1113,14 @@ def handle_event_filter(event):
     ):
         return True
 
+    if (
+        event.garden != config.get("garden.name")
+        and "REQUEST" in event.name
+        and event.payload.command_type == "TEMP"
+    ):
+        # Temporary requests are no longer forwarded, so we don't care about them
+        return False
+
     return False
 
 
@@ -1115,10 +1140,6 @@ def handle_event_rebroadcast(event_name, request):
 def handle_event_create(event):
     # Attempt to create the request, if it already exists then continue on
 
-    if event.payload.command_type == "TEMP":
-        # Nothing could be waiting for it in the handle_wait_event queue and originated from
-        # downstream, so we can skip the request
-        return None
     try:
         parent_request = None
 
@@ -1284,7 +1305,6 @@ def handle_event(event):
                     "status_updated_at",
                     "target_garden",
                     "updated_at",
-                    "command_type",
                     "metadata",
                 ):
                     new_value = getattr(event.payload, field)
