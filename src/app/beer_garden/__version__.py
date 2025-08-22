@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
 
-__version__ = "3.30.0rc3.dev0"
+__version__ = "3.30.0rc3.dev1"
