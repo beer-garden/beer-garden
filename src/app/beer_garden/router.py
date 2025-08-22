@@ -818,6 +818,10 @@ def _pre_forward(operation: Operation) -> Operation:
 
         operation.model.id = local_request.id
 
+        if operation.model.command_type == "TEMP":
+            # Upgraded the command type so it can be routed back
+            operation.model.command_type = "INFO"
+
         beer_garden.files.forward_file(operation)
 
         # Clear parent before forwarding so the child doesn't freak out about an

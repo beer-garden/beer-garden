@@ -8,6 +8,9 @@ TBD
 
 - Reverted expiration field from #1904/#1870. Pushed forward root_command_type.
   Refactored request pruner to push forward cursor for bulk deletes (#1924)
+- When forwarding requests downstream upgrade TEMP requests to INFO for forwarding to Downstream only.
+  Request will still appear to be be TEMP in local database, only in downstream will it appear at INFO. (#1932)
+- Filter all Requests of command type TEMP from upstream forwarding to reduce bandwidth between Beer Gardens (#1932)
 - TEMP Requests that spawn child requests are overiden to TEMP when created if ACTION or INFO (#1936)
 - Updated Request Event Handler to check Status to determine action instead of event type (#1939)
 - Reduce event size of Request Cancelled via trigger (#1946)
