@@ -1110,6 +1110,14 @@ def handle_event_filter(event):
     ):
         return True
 
+    if (
+        event.garden != config.get("garden.name")
+        and "REQUEST" in event.name
+        and event.payload.command_type == "TEMP"
+    ):
+        # Temporary requests are no longer forwarded, so we don't care about them
+        return False
+
     return False
 
 
@@ -1140,10 +1148,6 @@ def handle_event_rebroadcast(event_name, request):
 def handle_event_create(event):
     # Attempt to create the request, if it already exists then continue on
 
-    if event.payload.command_type == "TEMP":
-        # Nothing could be waiting for it in the handle_wait_event queue and originated from
-        # downstream, so we can skip the request
-        return None
     try:
         event.payload.expiration_at = None
 
@@ -1298,7 +1302,6 @@ def handle_event(event):
                     "status_updated_at",
                     "target_garden",
                     "updated_at",
-                    "command_type",
                     "metadata",
                     "output",
                     "error_class",
