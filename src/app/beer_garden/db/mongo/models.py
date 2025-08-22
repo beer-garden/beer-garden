@@ -544,7 +544,7 @@ class Request(MongoModel, Document):
                     self.has_parent = False
                     self.parent = None
 
-        if not self.root_command_type:
+        if not hasattr(self, "root_command_type") or self.root_command_type is None:
             if self.command_type == "TEMP":
                 self.root_command_type = "TEMP"
             elif not self.has_parent or self.parent is None:
