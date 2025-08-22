@@ -271,8 +271,8 @@ class TestMigrationScript(object):
         request_dict["status"] = "SUCCESS"
         request_dict["updated_at"] = datetime(2017, 1, 1)
         request_dict["command_type"] = "INFO"
-        request_dict["output_gridfs"] = {"grid_id": output_gridfs_id}
-        request_dict["parameters_gridfs"] = {"grid_id": parameter_gridfs_id}
+        request_dict["output_gridfs"] = output_gridfs_id
+        request_dict["parameters_gridfs"] = parameter_gridfs_id
 
         request_collection.insert_one(request_dict)
 

@@ -642,7 +642,7 @@ def ensure_v3_30_model_migration():
                 if legacy_request.get("output_gridfs"):
                     gridfs_updates.append(
                         UpdateOne(
-                            {"_id": legacy_request["output_gridfs"]["grid_id"]},
+                            {"_id": legacy_request["output_gridfs"]},
                             {
                                 "$set": {
                                     "root_command_type": legacy_request.get(
@@ -657,7 +657,7 @@ def ensure_v3_30_model_migration():
 
                     gridfs_chunk_updates.append(
                         UpdateOne(
-                            {"files_id": legacy_request["output_gridfs"]["grid_id"]},
+                            {"files_id": legacy_request["output_gridfs"]},
                             {
                                 "$set": {
                                     "root_command_type": legacy_request.get(
@@ -673,7 +673,7 @@ def ensure_v3_30_model_migration():
                 if legacy_request.get("parameters_gridfs"):
                     gridfs_updates.append(
                         UpdateOne(
-                            {"_id": legacy_request["parameters_gridfs"]["grid_id"]},
+                            {"_id": legacy_request["parameters_gridfs"]},
                             {
                                 "$set": {
                                     "root_command_type": legacy_request.get(
@@ -688,11 +688,7 @@ def ensure_v3_30_model_migration():
 
                     gridfs_chunk_updates.append(
                         UpdateOne(
-                            {
-                                "files_id": legacy_request["parameters_gridfs"][
-                                    "grid_id"
-                                ]
-                            },
+                            {"files_id": legacy_request["parameters_gridfs"]},
                             {
                                 "$set": {
                                     "root_command_type": legacy_request.get(
