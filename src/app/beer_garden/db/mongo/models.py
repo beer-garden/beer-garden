@@ -486,6 +486,9 @@ class Request(MongoModel, Document):
             except DoesNotExist:
                 # Unable to find parent, remove object to allow brewtils serializing
                 self.parent = None
+                if not self.metadata:
+                    self.metadata = {}
+                self.metadata["ORPHANED"] = True
 
     def _spill_parameters_to_gridfs(self):
 
@@ -539,10 +542,16 @@ class Request(MongoModel, Document):
                         # Request is an Orphan, removing parent
                         self.has_parent = False
                         self.parent = None
+                        if not self.metadata:
+                            self.metadata = {}
+                        self.metadata["ORPHANED"] = True
                 except DoesNotExist:
                     # Request is an Orphan, removing parent
                     self.has_parent = False
                     self.parent = None
+                    if not self.metadata:
+                        self.metadata = {}
+                    self.metadata["ORPHANED"] = True
 
         if not self.has_parent or self.parent is None:
             if not self.root_command_type:

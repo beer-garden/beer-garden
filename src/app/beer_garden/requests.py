@@ -820,6 +820,9 @@ def create_request(request: Request) -> Request:
             except DoesNotExist:
                 request.has_parent = None
                 request.parent = None
+                if not request.metadata:
+                    request.metadata = {}
+                request.metadata["ORPHANED"] = True
 
     if hasattr(request.metadata, "_topic") and request.source_garden == config.get(
         "garden.name"
@@ -1162,6 +1165,9 @@ def handle_event_create(event):
             if parent_request is None:
                 event.payload.parent = None
                 event.payload.has_parent = False
+                if not event.payload.metadata:
+                    event.payload.metadata = {}
+                event.payload.metadata["ORPHANED"] = True
 
         # User mappings back to local usernames
         if event.payload.requester and config.get("auth.enabled"):
