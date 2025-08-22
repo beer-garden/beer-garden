@@ -4,14 +4,13 @@ from datetime import datetime, timedelta, timezone
 
 from brewtils.errors import ModelValidationError
 from brewtils.models import Event, Events
-from brewtils.schema_parser import SchemaParser
+from brewtils.models import Request as BrewtilsRequest
 from mongoengine import Q
 from mongoengine.connection import get_db
 from mongoengine.errors import DoesNotExist
 
 import beer_garden.config as config
 from beer_garden.db.mongo.models import File, Job, RawFile, Request
-from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.events import publish
 from beer_garden.metrics import CollectMetrics
 
