@@ -331,7 +331,7 @@ def process_publish_event(
                         event_request.command = command.name
                         event_request.command_type = command.command_type
                         event_request.is_event = True
-                        
+
                         if not event_request.metadata:
                             event_request.metadata = {}
                         event_request.metadata["topic"] = topic.name
