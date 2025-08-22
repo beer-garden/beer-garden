@@ -390,6 +390,7 @@ def create_file(
         file_name=file_name,
         file_size=file_size,
         chunk_size=chunk_size,
+        created_at=datetime.utcnow(),
         **kwargs,
     )
 
