@@ -1,13 +1,19 @@
 # -*- coding: utf-8 -*-
 import logging
+from datetime import datetime, timedelta, timezone
 
-from mongoengine.connection import get_db
+from brewtils.errors import ModelValidationError
+from brewtils.models import Event, Events
+from brewtils.models import Request as BrewtilsRequest
+from mongoengine.connection import get_connection, get_db
 from mongoengine.errors import DoesNotExist, FieldDoesNotExist, InvalidDocumentError
+from packaging.version import Version
 from pymongo import UpdateMany, UpdateOne
 from pymongo.errors import OperationFailure, PyMongoError
 
 import beer_garden
-from beer_garden import config
+import beer_garden.config as config
+from beer_garden.db.mongo.models import File, FileChunk, Request
 from beer_garden.errors import IndexOperationError
 
 logger = logging.getLogger(__name__)
@@ -402,6 +408,329 @@ def ensure_v3_30_model_migration():
             request_collection.bulk_write(updates, ordered=False)
             logger.warning(f"Migrating root_command_type for {len(updates)} Requests")
 
+    if missing_field("file", "root_command_type"):
+        logger.warning(
+            "Root Command Type was not found in File/File Chunk and will be added."
+            " This is most likely because the database is using the old (v3.29) style of"
+            " storing in the database."
+        )
+
+        file_collection = db.get_collection("file")
+        file_chunk_collection = db.get_collection("file_chunk")
+        file_updates = []
+        file_chunk_updates = []
+        for legacy_file in file_collection.find(
+            {
+                "root_command_type": {
+                    "$exists": False,
+                },
+                "owner_type": "REQUEST",
+                "request": {"$ne": None},
+            },
+            {
+                "request": 1,
+                "_id": 1,
+            },
+        ):
+            if legacy_file:
+
+                file_request = db.get_collection("request").find_one(
+                    {"_id": legacy_file["request"]},
+                    {"root_command_type": 1, "updated_at": 1, "status": 1},
+                )
+
+                file_updates.append(
+                    UpdateOne(
+                        {"_id": legacy_file["_id"]},
+                        {
+                            "$set": {
+                                "root_command_type": file_request["root_command_type"],
+                                "updated_at": file_request["updated_at"],
+                                "status": file_request["status"],
+                            }
+                        },
+                    )
+                )
+
+                file_chunk_updates.append(
+                    UpdateOne(
+                        {"file_id": str(legacy_file["_id"])},
+                        {
+                            "$set": {
+                                "root_command_type": file_request["root_command_type"],
+                                "updated_at": file_request["updated_at"],
+                                "status": file_request["status"],
+                            }
+                        },
+                    )
+                )
+
+            if batch_size > 0 and len(file_updates) > batch_size:
+                file_collection.bulk_write(file_updates, ordered=False)
+                file_chunk_collection.bulk_write(file_chunk_updates, ordered=False)
+                logger.warning(
+                    f"Migrating root_command_type for {len(file_updates)} File/File Chunk"
+                )
+                file_updates = []
+                file_chunk_updates = []
+
+        if len(file_updates) > 0:
+            file_collection.bulk_write(file_updates, ordered=False)
+            file_chunk_collection.bulk_write(file_chunk_updates, ordered=False)
+            logger.warning(
+                f"Migrating root_command_type for {len(file_updates)} File/File Chunk"
+            )
+            file_updates = []
+            file_chunk_updates = []
+
+    if missing_field("raw_file", "root_command_type"):
+        logger.warning(
+            "Root Command Type was not found in File/File Chunk and will be added."
+            " This is most likely because the database is using the old (v3.29) style of"
+            " storing in the database."
+        )
+
+        raw_file_collection = db.get_collection("raw_file")
+        request_collection = db.get_collection("request")
+        grid_fs_files_collection = db.get_collection("fs.files")
+        grid_fs_chunks_collection = db.get_collection("fs.chunks")
+
+        raw_file_updates = []
+        gridfs_updates = []
+        gridfs_chunk_updates = []
+        for legacy_raw_file in raw_file_collection.find(
+            {
+                "root_command_type": {
+                    "$exists": False,
+                },
+                "request": {"$ne": None},
+            },
+            {
+                "request": 1,
+                "_id": 1,
+                "file": 1,
+            },
+        ):
+            if legacy_raw_file:
+
+                raw_file_request = db.get_collection("request").find_one(
+                    {"_id": legacy_raw_file["request"]},
+                    {"root_command_type": 1, "updated_at": 1, "status": 1},
+                )
+
+                raw_file_updates.append(
+                    UpdateOne(
+                        {"_id": legacy_raw_file["_id"]},
+                        {
+                            "$set": {
+                                "root_command_type": raw_file_request[
+                                    "root_command_type"
+                                ],
+                                "updated_at": raw_file_request["updated_at"],
+                                "status": raw_file_request["status"],
+                            }
+                        },
+                    )
+                )
+
+                gridfs_updates.append(
+                    UpdateOne(
+                        {"_id": legacy_raw_file["file"]},
+                        {
+                            "$set": {
+                                "root_command_type": raw_file_request[
+                                    "root_command_type"
+                                ],
+                                "updated_at": raw_file_request["updated_at"],
+                                "status": raw_file_request["status"],
+                            }
+                        },
+                    )
+                )
+
+                gridfs_chunk_updates.append(
+                    UpdateOne(
+                        {"files_id": legacy_raw_file["file"]},
+                        {
+                            "$set": {
+                                "root_command_type": raw_file_request[
+                                    "root_command_type"
+                                ],
+                                "updated_at": raw_file_request["updated_at"],
+                                "status": raw_file_request["status"],
+                            }
+                        },
+                    )
+                )
+
+            if batch_size > 0 and len(raw_file_updates) > batch_size:
+                raw_file_collection.bulk_write(raw_file_updates, ordered=False)
+                logger.warning(
+                    f"Migrating TTL fields for {len(raw_file_updates)} Raw Files"
+                )
+                raw_file_updates = []
+
+            if batch_size > 0 and len(gridfs_updates) > batch_size:
+                grid_fs_files_collection.bulk_write(gridfs_updates, ordered=False)
+                logger.warning(
+                    f"Migrating TTL fields for {len(gridfs_updates)} Grid FS files"
+                )
+                gridfs_updates = []
+
+            if batch_size > 0 and len(gridfs_chunk_updates) > batch_size:
+                grid_fs_chunks_collection.bulk_write(
+                    gridfs_chunk_updates, ordered=False
+                )
+                logger.warning(
+                    f"Migrating TTL fields for {len(gridfs_chunk_updates)} Grid FS chunks"
+                )
+                gridfs_chunk_updates = []
+
+        if len(raw_file_updates) > 0:
+            raw_file_collection.bulk_write(raw_file_updates, ordered=False)
+            logger.warning(
+                f"Migrating TTL fields for {len(raw_file_updates)} Raw Files"
+            )
+            raw_file_updates = []
+
+        if len(gridfs_updates) > 0:
+            grid_fs_files_collection.bulk_write(gridfs_updates, ordered=False)
+            logger.warning(
+                f"Migrating TTL fields for {len(gridfs_updates)} Grid FS files"
+            )
+            gridfs_updates = []
+
+        if len(gridfs_chunk_updates) > 0:
+            grid_fs_chunks_collection.bulk_write(gridfs_chunk_updates, ordered=False)
+            logger.warning(
+                f"Migrating TTL fields for {len(gridfs_chunk_updates)} Grid FS chunks"
+            )
+            gridfs_chunk_updates = []
+
+    if missing_field("fs.files", "root_command_type"):
+
+        logger.warning(
+            "Root Command Type was not found in GridFS and will be added."
+            " This is most likely because the database is using the old (v3.29) style of"
+            " storing in the database."
+        )
+        request_collection = db.get_collection("request")
+
+        grid_fs_files_collection = db.get_collection("fs.files")
+        grid_fs_chunks_collection = db.get_collection("fs.chunks")
+
+        gridfs_updates = []
+        gridfs_chunk_updates = []
+
+        for legacy_request in request_collection.find(
+            {
+                "$or": [
+                    {"output_gridfs": {"$ne": None}},
+                    {"parameters_gridfs": {"$ne": None}},
+                ]
+            },
+            {
+                "root_command_type": 1,
+                "updated_at": 1,
+                "status": 1,
+                "output_gridfs": 1,
+                "parameters_gridfs": 1,
+            },
+        ):
+            if legacy_request:
+
+                if legacy_request.get("output_gridfs"):
+                    gridfs_updates.append(
+                        UpdateOne(
+                            {"_id": legacy_request["output_gridfs"]},
+                            {
+                                "$set": {
+                                    "root_command_type": legacy_request.get(
+                                        "root_command_type"
+                                    ),
+                                    "updated_at": legacy_request.get("updated_at"),
+                                    "status": legacy_request.get("status"),
+                                }
+                            },
+                        )
+                    )
+
+                    gridfs_chunk_updates.append(
+                        UpdateOne(
+                            {"files_id": legacy_request["output_gridfs"]},
+                            {
+                                "$set": {
+                                    "root_command_type": legacy_request.get(
+                                        "root_command_type"
+                                    ),
+                                    "updated_at": legacy_request.get("updated_at"),
+                                    "status": legacy_request.get("status"),
+                                }
+                            },
+                        )
+                    )
+
+                if legacy_request.get("parameters_gridfs"):
+                    gridfs_updates.append(
+                        UpdateOne(
+                            {"_id": legacy_request["parameters_gridfs"]},
+                            {
+                                "$set": {
+                                    "root_command_type": legacy_request.get(
+                                        "root_command_type"
+                                    ),
+                                    "updated_at": legacy_request.get("updated_at"),
+                                    "status": legacy_request.get("status"),
+                                }
+                            },
+                        )
+                    )
+
+                    gridfs_chunk_updates.append(
+                        UpdateOne(
+                            {"files_id": legacy_request["parameters_gridfs"]},
+                            {
+                                "$set": {
+                                    "root_command_type": legacy_request.get(
+                                        "root_command_type"
+                                    ),
+                                    "updated_at": legacy_request.get("updated_at"),
+                                    "status": legacy_request.get("status"),
+                                }
+                            },
+                        )
+                    )
+
+            if batch_size > 0 and len(gridfs_updates) > batch_size:
+                grid_fs_files_collection.bulk_write(gridfs_updates, ordered=False)
+                logger.warning(
+                    f"Migrating TTL fields for {len(gridfs_updates)} Grid FS files"
+                )
+                gridfs_updates = []
+
+            if batch_size > 0 and len(gridfs_chunk_updates) > batch_size:
+                grid_fs_chunks_collection.bulk_write(
+                    gridfs_chunk_updates, ordered=False
+                )
+                logger.warning(
+                    f"Migrating TTL fields for {len(gridfs_chunk_updates)} Grid FS chunks"
+                )
+                gridfs_chunk_updates = []
+
+        if len(gridfs_updates) > 0:
+            grid_fs_files_collection.bulk_write(gridfs_updates, ordered=False)
+            logger.warning(
+                f"Migrating TTL fields for {len(gridfs_updates)} Grid FS files"
+            )
+            gridfs_updates = []
+
+        if len(gridfs_chunk_updates) > 0:
+            grid_fs_chunks_collection.bulk_write(gridfs_chunk_updates, ordered=False)
+            logger.warning(
+                f"Migrating TTL fields for {len(gridfs_chunk_updates)} Grid FS chunks"
+            )
+            gridfs_chunk_updates = []
+
 
 def ensure_model_migration():
     """Ensures that the database is properly migrated. All migrations ran from this
@@ -432,6 +761,12 @@ def ensure_model_migration():
     reset_last_configuration()
 
 
+def is_legacy_mongodb():
+    mongo_version = get_connection().server_info().get("version", "0.0.0")
+    # # Supports MongoGB 6.0+
+    return Version(mongo_version) < Version("6.0.0")
+
+
 def reset_last_configuration():
     from .models import Configuration
 
@@ -441,10 +776,180 @@ def reset_last_configuration():
 
     configuration = Configuration(
         action_ttl=config.get("db.prune.ttl.action", default=-1),
-        info_ttl=config.get("db.prune.ttl.info", default=-1),
+        info_ttl=config.get("db.prune.ttl.info", default=15),
+        file_ttl=config.get("db.prune.ttl.info", default=15),
         version=str(beer_garden.__version__),
     )
     configuration.save()
+
+
+def update_request_ttl_indexes(command_type, ttl, previous_ttl):
+    from brewtils.models import Request
+    from mongoengine.connection import get_db
+
+    db = get_db()
+
+    request_index = f"{command_type.lower()}_updated_at_index_tt"
+    gridfs_index = f"{command_type.lower()}_updated_at_gridfs_index_ttl"
+    gridfs_chunk_index = f"{command_type.lower()}_updated_at_gridfs_chunk_index_ttl"
+    raw_file_index = f"{command_type.lower()}_updated_at_raw_file_index_ttl"
+    file_index = f"{command_type.lower()}_updated_at_file_index_ttl"
+    file_chunk_index = f"{command_type.lower()}_updated_at_file_chunk_index_ttl"
+
+    if ttl != previous_ttl or ttl < 0:
+        if request_index in db["request"].index_information():
+            db["request"].drop_index(request_index)
+
+        if gridfs_index in db["fs.files"].index_information():
+            db["fs.files"].drop_index(gridfs_index)
+
+        if gridfs_chunk_index in db["fs.chunks"].index_information():
+            db["fs.chunks"].drop_index(gridfs_chunk_index)
+
+        if raw_file_index in db["raw_file"].index_information():
+            db["raw_file"].drop_index(raw_file_index)
+
+        if file_index in db["file"].index_information():
+            db["file"].drop_index(file_index)
+
+        if file_chunk_index in db["file_chunk"].index_information():
+            db["file_chunk"].drop_index(file_chunk_index)
+
+    if ttl > -1:
+        if request_index not in db["request"].index_information():
+            db["request"].create_index(
+                [("updated_at", 1)],
+                name=request_index,
+                expireAfterSeconds=ttl * 60,
+                partialFilterExpression={
+                    "root_command_type": command_type,
+                    "status": {"$in": Request.COMPLETED_STATUSES},
+                },
+            )
+
+        if gridfs_index not in db["fs.files"].index_information():
+            db["fs.files"].create_index(
+                [("updated_at", 1)],
+                name=gridfs_index,
+                expireAfterSeconds=ttl * 60,
+                partialFilterExpression={
+                    "root_command_type": command_type,
+                    "status": {"$in": Request.COMPLETED_STATUSES},
+                },
+            )
+
+        if gridfs_chunk_index not in db["fs.chunks"].index_information():
+            db["fs.chunks"].create_index(
+                [("updated_at", 1)],
+                name=gridfs_chunk_index,
+                expireAfterSeconds=ttl * 60,
+                partialFilterExpression={
+                    "root_command_type": command_type,
+                    "status": {"$in": Request.COMPLETED_STATUSES},
+                },
+            )
+
+        if raw_file_index not in db["raw_file"].index_information():
+            db["raw_file"].create_index(
+                [("updated_at", 1)],
+                name=raw_file_index,
+                expireAfterSeconds=ttl * 60,
+                partialFilterExpression={
+                    "root_command_type": command_type,
+                    "status": {"$in": Request.COMPLETED_STATUSES},
+                },
+            )
+
+        if file_index not in db["file"].index_information():
+            db["file"].create_index(
+                [("updated_at", 1)],
+                name=file_index,
+                expireAfterSeconds=ttl * 60,
+                partialFilterExpression={
+                    "root_command_type": command_type,
+                    "status": {"$in": Request.COMPLETED_STATUSES},
+                },
+            )
+
+        if file_chunk_index not in db["file_chunk"].index_information():
+            db["file_chunk"].create_index(
+                [("updated_at", 1)],
+                name=file_chunk_index,
+                expireAfterSeconds=ttl * 60,
+                partialFilterExpression={
+                    "root_command_type": command_type,
+                    "status": {"$in": Request.COMPLETED_STATUSES},
+                },
+            )
+
+
+def update_file_ttl_indexes(ttl, previous_ttl):
+
+    from mongoengine.connection import get_db
+
+    db = get_db()
+
+    file_index = "created_at_file_index_ttl"
+    file_chunk_index = "created_at_file_chunk_index_ttl"
+
+    if ttl != previous_ttl or ttl < 0:
+
+        if file_index in db["file"].index_information():
+            db["file"].drop_index(file_index)
+
+        if file_chunk_index in db["file_chunk"].index_information():
+            db["file_chunk"].drop_index(file_chunk_index)
+
+    if ttl > -1:
+
+        if file_index not in db["file"].index_information():
+            db["file"].create_index(
+                [("updated_at", 1)],
+                name=file_index,
+                expireAfterSeconds=ttl * 60,
+                partialFilterExpression={
+                    "owner_type": "JOB",
+                    "job": None,
+                },
+            )
+
+        if file_chunk_index not in db["file_chunk"].index_information():
+            db["file_chunk"].create_index(
+                [("updated_at", 1)],
+                name=file_chunk_index,
+                expireAfterSeconds=ttl * 60,
+                partialFilterExpression={
+                    "owner": None,
+                },
+            )
+
+
+def update_ttl_indexes():
+    from mongoengine.connection import get_db
+
+    db = get_db()
+
+    action_ttl = config.get("db.prune.ttl.action", default=-1)
+    info_ttl = config.get("db.prune.ttl.info", default=15)
+    file_ttl = config.get("db.prune.ttl.file", default=15)
+
+    previous_config = db.get_collection("configuration").find_one()
+
+    if not previous_config:
+        previous_config = {}
+
+    # TEMP and ADMIN are given 1 minute TTLs by default
+    # This is to ensure that APIs can recall the request
+    # before the TTL expires
+
+    update_request_ttl_indexes(
+        "ACTION", action_ttl, previous_config.get("action_ttl", -1)
+    )
+    update_request_ttl_indexes("INFO", info_ttl, previous_config.get("info_ttl", 15))
+    update_request_ttl_indexes("TEMP", 1, 1)
+    update_request_ttl_indexes("ADMIN", 1, 1)
+
+    update_file_ttl_indexes(file_ttl, previous_config.get("file_ttl", 15))
 
 
 def check_indexes(document_class):
@@ -464,33 +969,57 @@ def check_indexes(document_class):
     Raises:
         beergarden.IndexOperationError
     """
-    from mongoengine.connection import get_db
 
     from .models import Request
 
     try:
-        # Building the indexes could take a while so it'd be nice to give some
-        # indication of what's happening. This would be perfect but can't use
-        # it! It's broken for text indexes!! MongoEngine is awesome!!
-        # diff = collection.compare_indexes(); if diff['missing'] is not None...
 
-        # Since we can't ACTUALLY compare the index spec with what already
-        # exists without ridiculous effort:
-        spec = document_class.list_indexes()
         existing = document_class._get_collection().index_information()
 
         if document_class == Request and "parent_instance_index" in existing:
             raise IndexOperationError("Old Request index found, rebuilding")
 
-        if len(spec) < len(existing):
-            raise IndexOperationError("Extra index found, rebuilding")
+        # Build up list of current indexes
+        spec_indexes = []
+        for spec_index in document_class._meta["indexes"]:
+            if isinstance(spec_index, dict):
+                spec_indexes.append(spec_index["name"])
+            elif isinstance(spec_index, str):
+                raise IndexOperationError(
+                    f"Index {spec_index} does not have name, must rebuild all indexes"
+                )
 
-        if len(spec) > len(existing):
-            logger.warning(
-                "Found missing %s indexes, about to build them. This could "
-                "take a while :)",
-                document_class.__name__,
-            )
+        # Only check for BG created indexes that end in "_index"
+        # This skips manual pruner indexes because they end in "_index_ttl"
+        for index, _ in existing.items():
+            if index.endswith("_index") and index and index not in spec_indexes:
+                logger.warning(
+                    "Found extra %s index for %s, about to delete it. This could "
+                    "take a while :)",
+                    index,
+                    document_class.__name__,
+                )
+                document_class._get_collection().drop_index(index)
+
+        # Add missing indexes
+        for spec_index in document_class._meta["indexes"]:
+            if isinstance(spec_index, dict):
+
+                if spec_index["name"] not in existing:
+                    new_index = {"background": True}
+                    for key, value in spec_index.items():
+                        if key == "fields":
+                            new_index["keys"] = value
+                        else:
+                            new_index[key] = value
+
+                    logger.warning(
+                        "Found missing %s index for %s, about to build it. This could "
+                        "take a while :)",
+                        spec_index["name"],
+                        document_class.__name__,
+                    )
+                    document_class.create_index(**new_index)
 
         document_class.ensure_indexes()
 
@@ -508,8 +1037,7 @@ def check_indexes(document_class):
         # small and built in the background anyway just redo all of them
 
         try:
-            db = get_db()
-            db[document_class.__name__.lower()].drop_indexes()
+            document_class._get_collection().drop_indexes()
             logger.warning("Dropped indexes for %s collection", document_class.__name__)
         except OperationFailure:
             logger.error(
@@ -646,3 +1174,149 @@ def prune_topics():
             deleted_subscriber_count = deleted_subscriber_count + 1
 
     return deleted_topic_count, deleted_subscriber_count
+
+
+def unassign_files():
+    # Pruning Orphaned Files that think they are associated with a Request or Job
+    # but the Request or Job no longer exists in the database
+
+    job_pipeline = [
+        {
+            "$match": {
+                "owner_type": "JOB",
+                "job": {"$ne": None},
+            }
+        },
+        {
+            "$lookup": {
+                "from": "job",
+                "localField": "job",
+                "foreignField": "_id",
+                "as": "lookup_result",
+            }
+        },
+        {"$match": {"lookup_result": {"$size": 0}}},
+        {"$project": {"_id": 1}},
+    ]
+
+    file_ids = []
+    file_ids_str = []
+
+    for doc in File._get_collection().aggregate(job_pipeline):
+        file_ids.append(doc["_id"])
+        file_ids_str.append(str(doc["_id"]))
+
+    if len(file_ids) > 0:
+        batch_size = config.get("db.prune.batch_size")
+
+        if batch_size > 0:
+            for i in range(0, len(file_ids), batch_size):
+                File._get_collection().update_many(
+                    {"_id": {"$in": file_ids[i : i + batch_size]}},
+                    {
+                        "$unset": {
+                            "job": "",
+                            "request": "",
+                            "owner_id": "",
+                            "owner_type": "",
+                        }
+                    },
+                )
+
+                # Legacy code needs the owner field set to properly prune
+                if not is_legacy_mongodb():
+                    FileChunk._get_collection().update_many(
+                        {"file_id": {"$in": file_ids_str[i : i + batch_size]}},
+                        {"$unset": {"owner": ""}},
+                    )
+        else:
+            File._get_collection().update_many(
+                {"_id": {"$in": file_ids}},
+                {
+                    "$unset": {
+                        "job": "",
+                        "request": "",
+                        "owner_id": "",
+                        "owner_type": "",
+                    }
+                },
+            )
+
+            # Legacy code needs the owner field set to properly prune
+            if not is_legacy_mongodb():
+                FileChunk._get_collection().update_many(
+                    {"file_id": {"$in": file_ids_str}}, {"$unset": {"owner": ""}}
+                )
+        logger.error(f"{len(file_ids)} Files unassigned owners")
+    else:
+        logger.debug("No missed owners for Files")
+
+
+def cancel_outstanding():
+    """
+    Helper function for run to mark requests still outstanding after a certain
+    amount of time as canceled.
+
+    Update the newest requests first to give the oldest a chance to finish before
+    being canceled.
+    """
+
+    prune_config = config.get("db.prune")
+    cancel_threshold = prune_config.get("in_progress_request_expiration")
+    if cancel_threshold > 0:
+        timeout = datetime.now(timezone.utc) - timedelta(minutes=cancel_threshold)
+
+        outstanding_requests = Request.objects.filter(
+            status__in=["IN_PROGRESS", "CREATED"], updated_at__lte=timeout
+        ).order_by("-updated_at")
+
+        cancel_outstanding_requests(outstanding_requests)
+
+
+def cancel_outstanding_requests(outstanding_requests):
+    from beer_garden.events import publish
+
+    counter = 0
+    try:
+        for request in outstanding_requests:
+            try:
+                request.status = "CANCELED"
+                request.status_updated_at = datetime.now(timezone.utc)
+                request.save()
+
+                publish(
+                    Event(
+                        name=Events.REQUEST_CANCELED.name,
+                        payload_type="Request",
+                        payload=BrewtilsRequest(
+                            id=request.id,
+                            status=request.status,
+                            status_updated_at=request.status_updated_at,
+                            metadata=request.metadata,
+                            target_garden=request.target_garden,
+                        ),
+                        metadata={"UI_RELOAD": True},
+                    )
+                )
+                counter = counter + 1
+            except ModelValidationError:
+                # If the Request was already cancelled or completed, then skip cancelling it
+                logger.error(
+                    f"ModelValidationError: Failed to update outstanding Request {request.id}"
+                )
+            except DoesNotExist:
+                # If the Request was already deleted, then skip cancelling it
+                logger.error(
+                    (
+                        f"DoesNotExist: Attempted to update outstanding request {request.id} "
+                        "but does not exist in database"
+                    )
+                )
+
+    finally:
+
+        if counter > 0:
+            logger.error(f"{counter} outstanding Requests cancelled")
+
+        else:
+            logger.debug("No outstanding Requests cancelled")

@@ -416,7 +416,7 @@ class FanoutProcessor(DequeListener):
             self._managed_processors.append(processor)
 
 
-class ReplicationProcessor(FanoutProcessor):
+class EventProcessor(FanoutProcessor):
     """Class responsible for coordinating Event processing"""
 
     def __init__(self, **kwargs):

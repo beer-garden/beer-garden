@@ -10,7 +10,6 @@ from brewtils.models import Event, Events, Garden, Operation, Request, System, T
 import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.garden import get_garden
-from beer_garden.replication import is_primary_replication
 from beer_garden.systems import get_systems
 from beer_garden.topic import (
     get_topics_regex,
@@ -168,14 +167,6 @@ def handle_event_filter(event):
 
 
 def handle_event(event: Event):
-    # Only the primary replication should handle publish request events
-    if (
-        config.get("replication.enabled")
-        and hasattr(event.payload, "replication_id")
-        and not is_primary_replication(event.payload.replication_id)
-    ):
-        return
-
     if event.name == Events.REQUEST_TOPIC_PUBLISH.name and (
         event.garden == config.get("garden.name")
         or event.metadata.get("_propagate", False)

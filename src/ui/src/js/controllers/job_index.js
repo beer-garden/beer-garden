@@ -30,7 +30,7 @@ export default function jobIndexController($scope, $rootScope, JobService, Event
 
   function eventCallback(event) {
     if ($rootScope.garden !== undefined && event.garden == $rootScope.garden.name) {
-      if (['JOB_PAUSED', 'JOB_RESUMED'].includes(event.name)) {
+      if (['JOB_PAUSED', 'JOB_RESUMED', 'JOB_COUNTER_UPDATED'].includes(event.name)) {
         for (let job in $scope.data){
           if ($scope.data[job].id == event.payload.id){
             $scope.data[job] = event.payload

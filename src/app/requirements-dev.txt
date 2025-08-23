@@ -4,7 +4,7 @@
 #
 #    pip-compile requirements-dev.in
 #
--e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
+-e git+https://github.com/beer-garden/brewtils@file_created_at#egg=brewtils
     # via
     #   -c requirements.txt
     #   -r requirements-dev.in

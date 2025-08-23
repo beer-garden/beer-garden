@@ -4,6 +4,12 @@
 
 TBD
 
+### MONGODB Update
+- With the update to utilize MongoDB's Expiration At TTL, minimum version for MongoDB is 
+  now 6.0. If you are running an older version, then set all TTLs to -1 to skip setting 
+  the index and manual pruning will be required by System Admins. 
+
+
 ## 3.30.0rc3
 
 - Reverted expiration field from #1904/#1870. Pushed forward root_command_type.
@@ -26,6 +32,8 @@ TBD
 - Updated Jobs pages to trigger off internal Job events for status changes (#1878, #1951)
 - Updated Publish Request to ensure topic data is added to Request Metadata (#1954)
 - Ensure TEMP Requests have a root command type of TEMP (#1956)
+- Updated Request and GridFS to utilize MongoDB Expiration At feature in the indexes to 
+  handle pruning. (#1940)
 
 ## 3.30.0rc2
 
@@ -42,7 +50,7 @@ TBD
 - Fixed bug where Entry Point startup sent Garden sync to `default` instead of actual garden name (#1926)
 - Removed duplicate Garden Sync Event sent to UI from downstream events (#1922)
 - Update UI Events to utilize Instance and System events as partial Garden updates (#1925)
-- Bypass Mongoengine for bulk create/update to improve Request throughput in Mongo (#1920, #1930, #1947)
+- Bypass Mongoengine for bulk create/update to improve Request throughput in Mongo (#1920, #1930)
 - Removed locking from internal queue management for event handlers (#1921)
 
 ## 3.30.0rc1
@@ -132,6 +140,7 @@ TBD
 - Update Request Pruning to utilize new field Expiration At instead of each command type independently (#1870)
 - Update Requests index search box from text_search to or filter on UI columns (#1866)
 - Updated Routing Logic to accept Target Garden provided and cache multi-hop gardens in routing tables (#1876)
+- Updated Jobs pages to trigger off internal Job events for status changes (#1878)
 - Updated Events handler to support internal filtering before placing into queue for processing (#1879)
 - Filtered events forwarded to upstream Garden (#1882)
 
