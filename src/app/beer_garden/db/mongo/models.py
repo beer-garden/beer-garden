@@ -544,22 +544,24 @@ class Request(MongoModel, Document):
                     self.has_parent = False
                     self.parent = None
 
-        if not self.has_parent or self.parent is None:
-            if not self.root_command_type:
+        if not hasattr(self, "root_command_type") or self.root_command_type is None:
+            if self.command_type == "TEMP":
+                self.root_command_type = "TEMP"
+            elif not self.has_parent or self.parent is None:
                 self.root_command_type = self.command_type
 
-        elif not self.root_command_type:
-            # If this is a child request, we need to set the root_command_type
-            # to the same as the parent request
-            try:
-                parent_request = Request.objects.only("root_command_type").get(
-                    id=self.parent.id
-                )
-                self.root_command_type = parent_request.root_command_type
-            except DoesNotExist:
-                # Parent request was deleted, so we need to set the root_command_type
-                # to the same as this request
-                self.root_command_type = self.command_type
+            else:
+                # If this is a child request, we need to set the root_command_type
+                # to the same as the parent request
+                try:
+                    parent_request = Request.objects.only("root_command_type").get(
+                        id=self.parent.id
+                    )
+                    self.root_command_type = parent_request.root_command_type
+                except DoesNotExist:
+                    # Parent request was deleted, so we need to set the root_command_type
+                    # to the same as this request
+                    self.root_command_type = self.command_type
 
     def _post_save(self):
 
