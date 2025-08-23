@@ -24,8 +24,8 @@ TBD
 - Updated internal class from EventProcessor to ReplicationProcessor for improved clarity (#1780)
 - Updated latest sytem version to prioritize running but still return a system if not (#1949)
 - Updated Jobs pages to trigger off internal Job events for status changes (#1878, #1951)
+- Updated Publish Request to ensure topic data is added to Request Metadata (#1954)
 - Ensure TEMP Requests have a root command type of TEMP (#1956)
-
 
 ## 3.30.0rc2
 
