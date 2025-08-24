@@ -777,7 +777,7 @@ def reset_last_configuration():
     configuration = Configuration(
         action_ttl=config.get("db.prune.ttl.action", default=-1),
         info_ttl=config.get("db.prune.ttl.info", default=15),
-        file_ttl=config.get("db.prune.ttl.info", default=15),
+        file_ttl=config.get("db.prune.ttl.file", default=15),
         version=str(beer_garden.__version__),
     )
     configuration.save()

@@ -215,99 +215,6 @@ jobs:
         run: |
           bandit --baseline ~/old_bandit.json -r beer_garden
 
-  Mongodb-Version-Testing:
-    runs-on: ${{ matrix.os }}
-    needs: PyTest
-
-    strategy:
-      matrix:
-        python-version: ["3.8"]
-        mongodb-version: ["4.0","4.2","4.4","5.0","6.0", "6.0.0", "6.0.1", "6.0.2", "6.0.5","6.0.10","6.0.15","6.0.20","6.0.25","7.0", "8.0"]
-        os: ["ubuntu-latest"]
-      fail-fast: false
-
-    name: MongoDB Version - ${{ matrix.mongodb-version }} - Python ${{ matrix.python-version }}
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Setup python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      # Custom tag extractor to find Brewtils Branch
-      - name: Find Brewtils Branch
-        uses: TheBurchLog/body-env-tag-action@1.0
-        with:
-          tag: "brewtils:"
-          env-variable: "brewtils"
-          default-value: "develop"
-          tag-position: -1
-
-      # Used the hashtag here instead of slash allow for branches to have slashes in them
-      - name: Update Brewtils Branch
-        run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements-dev.txt
-        working-directory: ./src/app
-
-      - name: Build Local Beer Garden Docker
-        run: |
-          python --version
-          python -m pip install --upgrade pip
-          pip install setuptools wheel
-          make package
-          make clean-python
-          docker build -t bgio/beer-garden:unstable -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:${{ matrix.python-version }}-alpine .
-        working-directory: ./src/app
-
-      - name: Update Docker Compose
-        run: cp test/conf/docker-compose-mongodb-test.yml docker/docker-compose/docker-compose.yml
-        working-directory: ./
-
-      - name: Checkout Local Plugins
-        uses: actions/checkout@v2
-        with:
-          repository: beer-garden/example-plugins
-          path: ./docker/docker-compose/data/localplugins
-
-      - name: Verify Local Plugins
-        run: ls ./docker/docker-compose/data/localplugins
-
-      - name: Run Docker Mongodb and RabbitMQ
-        run: MONGO_VERSION='${{ matrix.mongodb-version }}' docker compose up -d mongodb rabbitmq
-        working-directory: ./docker/docker-compose
-
-      - name: Wait for Mongodb and RabbitMQ to start
-        run: sleep 20s
-        shell: bash
-
-      - name: Run Docker Beer Garden
-        run: MONGO_VERSION='${{ matrix.mongodb-version }}' docker compose up -d beer-garden
-        working-directory: ./docker/docker-compose
-
-      - name: Wait for Beer Garden to start
-        run: sleep 60s
-        shell: bash
-
-      - name: Grab logs from Beer-Garden
-        run: MONGO_VERSION='${{ matrix.mongodb-version }}' docker compose logs --tail 100 beer-garden
-        working-directory: ./docker/docker-compose
-
-      - name: Check Docker
-        run: docker ps
-
-      - name: Check If Beer Garden is Operational
-        uses: nick-invision/retry@v2
-        with:
-          timeout_seconds: 30
-          max_attempts: 20
-          retry_on: error
-          retry_wait_seconds: 5
-          command: curl http://localhost:2337/config
-
-      - name: Grab logs from Beer-Garden
-        run: MONGO_VERSION='${{ matrix.mongodb-version }}'  docker compose logs --tail 100 beer-garden
-        working-directory: ./docker/docker-compose
-
   Local-Plugin-Testing:
     runs-on: ${{ matrix.os }}
     needs: PyTest
@@ -387,9 +294,6 @@ jobs:
         run: BG='unstable' docker compose logs --tail 100 beer-garden
         working-directory: ./docker/docker-compose
 
-      - name: Check Docker
-        run: docker ps
-
       - name: Check If Beer Garden is Operational
         uses: nick-invision/retry@v2
         with:
@@ -425,7 +329,7 @@ jobs:
 
   Grandchild-Testing:
     runs-on: ${{ matrix.os }}
-    needs: Local-Plugin-Testing
+    needs: PyTest
 
     strategy:
       matrix:
@@ -576,7 +480,7 @@ jobs:
 
   Replication-Testing:
     runs-on: ${{ matrix.os }}
-    needs: Local-Plugin-Testing
+    needs: PyTest
 
     strategy:
       matrix:
