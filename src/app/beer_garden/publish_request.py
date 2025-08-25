@@ -180,6 +180,11 @@ def handle_event(event: Event):
 
             matching_systems = get_systems_regex(topics)
 
+            if not event.payload.metadata:
+                event.payload.metadata = {}
+
+            event.payload.metadata["_topic"] = event.metadata["topic"]
+
             requests = process_publish_event(matching_systems, event, topics)
 
             db.bulk_update(topics)
