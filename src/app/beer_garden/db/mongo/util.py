@@ -441,7 +441,7 @@ def ensure_v3_30_model_migration():
 
                 if not file_request:
                     file_request = {
-                        "root_command_type": "ACTION",
+                        "root_command_type": "TEMP",
                         "status": "ERROR",
                         "updated_at": datetime.now(timezone.utc),
                     }
@@ -527,7 +527,7 @@ def ensure_v3_30_model_migration():
 
                 if not raw_file_request:
                     raw_file_request = {
-                        "root_command_type": "ACTION",
+                        "root_command_type": "TEMP",
                         "status": "ERROR",
                         "updated_at": datetime.now(timezone.utc),
                     }
