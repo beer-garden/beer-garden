@@ -299,9 +299,6 @@ class Application(StoppableThread):
         for helper_thread in self.helper_threads:
             helper_thread.start()
 
-        if not config.get("replication.enabled"):
-            self.scheduler.start()
-
         if config.get("parent.stomp.enabled") or config.get("parent.http.enabled"):
             self.logger.debug("Publishing to Parent that we are online")
             beer_garden.garden.publish_garden()
