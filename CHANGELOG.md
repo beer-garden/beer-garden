@@ -50,7 +50,7 @@ TBD
 - Fixed bug where Entry Point startup sent Garden sync to `default` instead of actual garden name (#1926)
 - Removed duplicate Garden Sync Event sent to UI from downstream events (#1922)
 - Update UI Events to utilize Instance and System events as partial Garden updates (#1925)
-- Bypass Mongoengine for bulk create/update to improve Request throughput in Mongo (#1920, #1930)
+- Bypass Mongoengine for bulk create/update to improve Request throughput in Mongo (#1920, #1930, #1947)
 - Removed locking from internal queue management for event handlers (#1921)
 
 ## 3.30.0rc1
@@ -140,7 +140,6 @@ TBD
 - Update Request Pruning to utilize new field Expiration At instead of each command type independently (#1870)
 - Update Requests index search box from text_search to or filter on UI columns (#1866)
 - Updated Routing Logic to accept Target Garden provided and cache multi-hop gardens in routing tables (#1876)
-- Updated Jobs pages to trigger off internal Job events for status changes (#1878)
 - Updated Events handler to support internal filtering before placing into queue for processing (#1879)
 - Filtered events forwarded to upstream Garden (#1882)
 
