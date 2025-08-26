@@ -18,14 +18,19 @@ from mongoengine.queryset.visitor import Q, QCombination
 from pymongo import InsertOne, ReplaceOne, UpdateOne
 
 import beer_garden.db.mongo.models
+from beer_garden.db.mongo.indexes import (
+    check_indexes,
+    update_ttl_indexes,
+)
+from beer_garden.db.mongo.migration import (
+    ensure_model_migration,
+)
 from beer_garden.db.mongo.models import MongoModel
 from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.db.mongo.util import (
-    check_indexes,
     ensure_local_garden,
-    ensure_model_migration,
     is_legacy_mongodb,
-    update_ttl_indexes,
+    reset_last_configuration,
 )
 from beer_garden.errors import NotUniqueException
 
@@ -199,6 +204,9 @@ def initial_setup():
 
     if not is_legacy_mongodb():
         update_ttl_indexes()
+
+    # This sets the last configuration for future migrations to reference
+    reset_last_configuration()
 
     ensure_local_garden()
 
