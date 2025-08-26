@@ -757,9 +757,6 @@ def ensure_model_migration():
         # After the 3.30.0 migration, we can start parsing the version to determine
         # which migrations to run
 
-    # This sets the last configuration for future migrations to reference
-    reset_last_configuration()
-
 
 def is_legacy_mongodb():
     mongo_version = get_connection().server_info().get("version", "0.0.0")
@@ -799,21 +796,27 @@ def update_request_ttl_indexes(command_type, ttl, previous_ttl):
     if ttl != previous_ttl or ttl < 0:
         if request_index in db["request"].index_information():
             db["request"].drop_index(request_index)
+            logger.warning(f"Dropped old {request_index} index")
 
         if gridfs_index in db["fs.files"].index_information():
             db["fs.files"].drop_index(gridfs_index)
+            logger.warning(f"Dropped old {gridfs_index} index")
 
         if gridfs_chunk_index in db["fs.chunks"].index_information():
             db["fs.chunks"].drop_index(gridfs_chunk_index)
+            logger.warning(f"Dropped old {gridfs_chunk_index} index")
 
         if raw_file_index in db["raw_file"].index_information():
             db["raw_file"].drop_index(raw_file_index)
+            logger.warning(f"Dropped old {raw_file_index} index")
 
         if file_index in db["file"].index_information():
             db["file"].drop_index(file_index)
+            logger.warning(f"Dropped old {file_index} index")
 
         if file_chunk_index in db["file_chunk"].index_information():
             db["file_chunk"].drop_index(file_chunk_index)
+            logger.warning(f"Dropped old {file_chunk_index} index")
 
     if ttl > -1:
         if request_index not in db["request"].index_information():
@@ -826,6 +829,7 @@ def update_request_ttl_indexes(command_type, ttl, previous_ttl):
                     "status": {"$in": Request.COMPLETED_STATUSES},
                 },
             )
+            logger.warning(f"Created new {request_index} index")
 
         if gridfs_index not in db["fs.files"].index_information():
             db["fs.files"].create_index(
@@ -837,6 +841,7 @@ def update_request_ttl_indexes(command_type, ttl, previous_ttl):
                     "status": {"$in": Request.COMPLETED_STATUSES},
                 },
             )
+            logger.warning(f"Created new {gridfs_index} index")
 
         if gridfs_chunk_index not in db["fs.chunks"].index_information():
             db["fs.chunks"].create_index(
@@ -848,6 +853,7 @@ def update_request_ttl_indexes(command_type, ttl, previous_ttl):
                     "status": {"$in": Request.COMPLETED_STATUSES},
                 },
             )
+            logger.warning(f"Created new {gridfs_chunk_index} index")
 
         if raw_file_index not in db["raw_file"].index_information():
             db["raw_file"].create_index(
@@ -859,6 +865,7 @@ def update_request_ttl_indexes(command_type, ttl, previous_ttl):
                     "status": {"$in": Request.COMPLETED_STATUSES},
                 },
             )
+            logger.warning(f"Created new {raw_file_index} index")
 
         if file_index not in db["file"].index_information():
             db["file"].create_index(
@@ -870,6 +877,7 @@ def update_request_ttl_indexes(command_type, ttl, previous_ttl):
                     "status": {"$in": Request.COMPLETED_STATUSES},
                 },
             )
+            logger.warning(f"Created new {file_index} index")
 
         if file_chunk_index not in db["file_chunk"].index_information():
             db["file_chunk"].create_index(
@@ -881,6 +889,7 @@ def update_request_ttl_indexes(command_type, ttl, previous_ttl):
                     "status": {"$in": Request.COMPLETED_STATUSES},
                 },
             )
+            logger.warning(f"Created new {file_chunk_index} index")
 
 
 def update_file_ttl_indexes(ttl, previous_ttl):
@@ -896,9 +905,11 @@ def update_file_ttl_indexes(ttl, previous_ttl):
 
         if file_index in db["file"].index_information():
             db["file"].drop_index(file_index)
+            logger.warning(f"Dropped old {file_index} index")
 
         if file_chunk_index in db["file_chunk"].index_information():
             db["file_chunk"].drop_index(file_chunk_index)
+            logger.warning(f"Dropped old {file_chunk_index} index")
 
     if ttl > -1:
 
@@ -912,6 +923,7 @@ def update_file_ttl_indexes(ttl, previous_ttl):
                     "job": None,
                 },
             )
+            logger.warning(f"Created new {file_index} index")
 
         if file_chunk_index not in db["file_chunk"].index_information():
             db["file_chunk"].create_index(
@@ -922,6 +934,7 @@ def update_file_ttl_indexes(ttl, previous_ttl):
                     "owner": None,
                 },
             )
+            logger.warning(f"Created new {file_chunk_index} index")
 
 
 def update_ttl_indexes():

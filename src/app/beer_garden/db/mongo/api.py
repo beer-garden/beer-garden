@@ -25,6 +25,7 @@ from beer_garden.db.mongo.util import (
     ensure_local_garden,
     ensure_model_migration,
     is_legacy_mongodb,
+    reset_last_configuration,
     update_ttl_indexes,
 )
 from beer_garden.errors import NotUniqueException
@@ -199,6 +200,9 @@ def initial_setup():
 
     if not is_legacy_mongodb():
         update_ttl_indexes()
+
+    # This sets the last configuration for future migrations to reference
+    reset_last_configuration()
 
     ensure_local_garden()
 
