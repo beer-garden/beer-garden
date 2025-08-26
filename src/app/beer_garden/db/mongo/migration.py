@@ -3,9 +3,10 @@ import logging
 
 from mongoengine.connection import get_db
 from mongoengine.errors import FieldDoesNotExist, InvalidDocumentError
+from packaging.version import Version
 from pymongo import UpdateOne
 from pymongo.errors import PyMongoError
-from packaging.version import Version
+
 import beer_garden
 import beer_garden.config as config
 
@@ -676,4 +677,3 @@ def ensure_model_migration():
             ensure_v3_27_model_migration()
             ensure_v3_29_model_migration()
             ensure_v3_30_model_migration()
-        
