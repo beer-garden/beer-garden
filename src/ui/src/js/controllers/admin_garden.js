@@ -50,21 +50,25 @@ export default function adminGardenController(
 
     let keys = ["CREATE", "START", "COMPLETE"];
 
-    for (let i = 0; i < $scope.data.length; i++) {
-      let gardenMetrics = { "source": $scope.data[i].name };
-      let foundMetrics = false;
-      for (let x = 0; x < keys.length; x++) {
-        if ($scope.data[i].metadata[keys[x] + "_DELTA_" + garden.name] !== undefined) {
-          gardenMetrics[keys[x]] = {
-            "DELTA": $scope.data[i].metadata[keys[x] + "_DELTA_" + garden.name],
-            "AVG": $scope.data[i].metadata[keys[x] + "_AVG_" + garden.name],
-            "COUNT": $scope.data[i].metadata[keys[x] + "_COUNT_" + garden.name],
+    if ($scope.data !== undefined && $scope.data !== null){
+      for (let i = 0; i < $scope.data.length; i++) {
+        let gardenMetrics = { "source": $scope.data[i].name };
+        let foundMetrics = false;
+        for (let x = 0; x < keys.length; x++) {
+          if ($scope.data[i].metadata !== undefined && $scope.data[i].metadata !== null){
+            if ($scope.data[i].metadata[keys[x] + "_DELTA_" + garden.name] !== undefined) {
+              gardenMetrics[keys[x]] = {
+                "DELTA": $scope.data[i].metadata[keys[x] + "_DELTA_" + garden.name],
+                "AVG": $scope.data[i].metadata[keys[x] + "_AVG_" + garden.name],
+                "COUNT": $scope.data[i].metadata[keys[x] + "_COUNT_" + garden.name],
+              }
+              foundMetrics = true;
+            }
           }
-          foundMetrics = true;
         }
-      }
-      if (foundMetrics) {
-        $scope.routeMetrics.push(gardenMetrics);
+        if (foundMetrics) {
+          $scope.routeMetrics.push(gardenMetrics);
+        }
       }
     }
 
@@ -79,9 +83,11 @@ export default function adminGardenController(
   $scope.findGardenLabel = function(garden, gardenLabel) {
     if (garden.parent != null) {
       gardenLabel = garden.parent + "/" + gardenLabel;
-      for (let i = 0; i < $scope.data.length; i++){
-        if ($scope.data[i].name == garden.parent){
-          gardenLabel = $scope.findGardenLabel($scope.data[i], gardenLabel)
+      if ($scope.data !== undefined && $scope.data !== null) {
+        for (let i = 0; i < $scope.data.length; i++){
+          if ($scope.data[i].name == garden.parent){
+            gardenLabel = $scope.findGardenLabel($scope.data[i], gardenLabel)
+          }
         }
       }
     }
@@ -131,40 +137,48 @@ export default function adminGardenController(
 
   $scope.startReceivingConnection = function(garden, api) {
     GardenService.updateReceivingStatus(garden.name, "RECEIVING", api);
-    for (let i = 0; i < garden.receiving_connections.length; i++) {
-      if (garden.receiving_connections[i].api == api){
-        if (garden.receiving_connections[i].status == "DISABLED") {
-          GardenService.updateReceivingStatus(garden.name, "RECEIVING", api);
+    if (garden.receiving_connections !== undefined && garden.receiving_connections !== null) {
+      for (let i = 0; i < garden.receiving_connections.length; i++) {
+        if (garden.receiving_connections[i].api == api){
+          if (garden.receiving_connections[i].status == "DISABLED") {
+            GardenService.updateReceivingStatus(garden.name, "RECEIVING", api);
+          }
         }
       }
     }
   };
 
   $scope.stopReceivingConnection = function(garden, api) {
-    for (let i = 0; i < garden.receiving_connections.length; i++) {
-      if (garden.receiving_connections[i].api == api){
-        if (["PUBLISHING","RECEIVING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN"].includes(garden.receiving_connections[i].status)) {
-          GardenService.updateReceivingStatus(garden.name, "DISABLED", api);
+    if (garden.receiving_connections !== undefined && garden.receiving_connections !== null) {
+      for (let i = 0; i < garden.receiving_connections.length; i++) {
+        if (garden.receiving_connections[i].api == api){
+          if (["PUBLISHING","RECEIVING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN"].includes(garden.receiving_connections[i].status)) {
+            GardenService.updateReceivingStatus(garden.name, "DISABLED", api);
+          }
         }
       }
     }
   };
 
   $scope.startPublishingConnection = function(garden, api) {
-    for (let i = 0; i < garden.publishing_connections.length; i++) {
-      if (garden.publishing_connections[i].api == api){
-        if (garden.publishing_connections[i].status == "DISABLED") {
-          GardenService.updatePublisherStatus(garden.name, "PUBLISHING", api);
+    if (garden.publishing_connections !== undefined && garden.publishing_connections !== null) {
+      for (let i = 0; i < garden.publishing_connections.length; i++) {
+        if (garden.publishing_connections[i].api == api){
+          if (garden.publishing_connections[i].status == "DISABLED") {
+            GardenService.updatePublisherStatus(garden.name, "PUBLISHING", api);
+          }
         }
       }
     }
   };
 
   $scope.stopPublishingConnection = function(garden, api) {
-    for (let i = 0; i < garden.publishing_connections.length; i++) {
-      if (garden.publishing_connections[i].api == api){
-        if (["PUBLISHING","RECEIVING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN"].includes(garden.publishing_connections[i].status)) {
-          GardenService.updatePublisherStatus(garden.name, "DISABLED", api);
+    if (garden.publishing_connections !== undefined && garden.publishing_connections !== null) {
+      for (let i = 0; i < garden.publishing_connections.length; i++) {
+        if (garden.publishing_connections[i].api == api){
+          if (["PUBLISHING","RECEIVING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN"].includes(garden.publishing_connections[i].status)) {
+            GardenService.updatePublisherStatus(garden.name, "DISABLED", api);
+          }
         }
       }
     }
@@ -175,9 +189,11 @@ export default function adminGardenController(
       return false;
     }
 
-    for (let i = 0; i < garden.publishing_connections.length; i++) {
-      if (garden.publishing_connections[i].status == "MISSING_CONFIGURATION"){
-        return false;
+    if (garden.publishing_connections !== undefined && garden.publishing_connections !== null) {
+      for (let i = 0; i < garden.publishing_connections.length; i++) {
+        if (garden.publishing_connections[i].status == "MISSING_CONFIGURATION"){
+          return false;
+        }
       }
     }
     return true;
@@ -191,19 +207,25 @@ export default function adminGardenController(
   };
 
   $scope.showUnconfigured = function(gardens){
-    for (let i = 0; i < gardens.length; i++) {
-      if ($scope.isRemoteUnconfigured(gardens[i])){
-        return true;
+    if (gardens !== undefined && gardens !== null) {
+      for (let i = 0; i < gardens.length; i++) {
+        if ($scope.isRemoteUnconfigured(gardens[i])){
+          return true;
+        }
       }
     }
     return false;
   }
 
   $scope.showUpstream = function(gardens){
-    for (let i = 0; i < gardens.length; i++) {
-      if (gardens[i].connection_type == "LOCAL" && gardens[i].name == $scope.config.gardenName){
-        if (gardens[i].publishing_connections.length > 0){
-          return true;
+    if (gardens !== undefined && gardens !== null) {
+      for (let i = 0; i < gardens.length; i++) {
+        if (gardens[i].connection_type == "LOCAL" && gardens[i].name == $scope.config.gardenName){
+          if (gardens[i].publishing_connections !== undefined && gardens[i].publishing_connections !== null) {
+            if (gardens[i].publishing_connections.length > 0){
+              return true;
+            }
+          }
         }
       }
     }
@@ -259,9 +281,11 @@ export default function adminGardenController(
       return false;
     }
 
-    for (let i = 0; i < garden.publishing_connections.length; i++) {
-      if (garden.publishing_connections[i].status == "MISSING_CONFIGURATION"){
-        return true;
+    if (garden.publishing_connections !== undefined && garden.publishing_connections !== null) {
+      for (let i = 0; i < garden.publishing_connections.length; i++) {
+        if (garden.publishing_connections[i].status == "MISSING_CONFIGURATION"){
+          return true;
+        }
       }
     }
     return false;
@@ -277,17 +301,21 @@ export default function adminGardenController(
   $scope.removeGardenEventChildren = function(garden) {
 
     // Remove children
-    for (let i = 0; i < garden.children.length; i++) {
-      $scope.removeGardenEventChildren(garden.children[i])
+    if (garden.children !== undefined && garden.children !== null){
+      for (let i = 0; i < garden.children.length; i++) {
+        $scope.removeGardenEventChildren(garden.children[i])
+      }
     }
 
     // Remove source garden
-    for (let i = 0; i < $scope.data.length; i++) {
-      if ($scope.data[i].id == garden.id) {
-        $scope.data.splice(i, 1);
-      } else if ($scope.data[i].parent == garden.name){
-        // Clean up any missing children
-        $scope.data.splice(i, 1);
+    if ($scope.data !== undefined && $scope.data !== null) {
+      for (let i = 0; i < $scope.data.length; i++) {
+        if ($scope.data[i].id == garden.id) {
+          $scope.data.splice(i, 1);
+        } else if ($scope.data[i].parent == garden.name){
+          // Clean up any missing children
+          $scope.data.splice(i, 1);
+        }
       }
     }
 
@@ -303,39 +331,44 @@ export default function adminGardenController(
 
   $scope.eventUpsetGarden = function (garden) {
     if (garden.connection_type != "LOCAL" && !garden.has_parent) {
-      for (let i = 0; i < $scope.data.length; i++) {
-        if ($scope.data[i].connection_type == "LOCAL") {
-          garden.parent = $scope.data[i].name;
-          break;
+      if ($scope.data !== undefined && $scope.data !== null) {
+        for (let i = 0; i < $scope.data.length; i++) {
+          if ($scope.data[i].connection_type == "LOCAL") {
+            garden.parent = $scope.data[i].name;
+            break;
+          }
         }
       }
       garden.has_parent = true;
     }
     let gardenNotFound = true;
-    for (let i = 0; i < $scope.data.length; i++) {
-      if ($scope.data[i].name == garden.name) {
-        // Min fields to update
-        let updateValues = ["status", "receiving_connections", "publishing_connections", "metadata"];
 
-        for (let x = 0; x < updateValues.length; x++) {
-          $scope.data[i][updateValues[x]] = garden[updateValues[x]]
-        }
+    if ($scope.data !== undefined && $scope.data !== null) {
+      for (let i = 0; i < $scope.data.length; i++) {
+        if ($scope.data[i].name == garden.name) {
+          // Min fields to update
+          let updateValues = ["status", "receiving_connections", "publishing_connections", "metadata"];
 
-        // Not all events include children, only update when children are provided or added
-        if (
-          garden.children !== undefined &&
-          garden.children != null &&
-          (
-            garden.children.length > 0 ||
-            $scope.data[i].children === undefined ||
-            $scope.data[i].children == null ||
-            $scope.data[i].children.length == 0
-          )
-        ) {
-          $scope.data[i].children = garden.children;
+          for (let x = 0; x < updateValues.length; x++) {
+            $scope.data[i][updateValues[x]] = garden[updateValues[x]]
+          }
+
+          // Not all events include children, only update when children are provided or added
+          if (
+            garden.children !== undefined &&
+            garden.children != null &&
+            (
+              garden.children.length > 0 ||
+              $scope.data[i].children === undefined ||
+              $scope.data[i].children == null ||
+              $scope.data[i].children.length == 0
+            )
+          ) {
+            $scope.data[i].children = garden.children;
+          }
+          gardenNotFound = false;
+          break;
         }
-        gardenNotFound = false;
-        break;
       }
     }
 

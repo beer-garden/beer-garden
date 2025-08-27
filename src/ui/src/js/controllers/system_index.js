@@ -88,10 +88,12 @@ export default function systemIndexController(
 
   $scope.checkGroups = function() {
     $scope.hasGroups = false;
-    for (let i = 0; i < $rootScope.systems.length; i++){
-      if ($rootScope.systems[i].groups.length > 0){
-        $scope.hasGroups = true;
-        break;
+    if ($rootScope.systems !== undefined && $rootScope.systems !== null){
+      for (let i = 0; i < $rootScope.systems.length; i++){
+        if ($rootScope.systems[i].groups.length > 0){
+          $scope.hasGroups = true;
+          break;
+        }
       }
     }
 

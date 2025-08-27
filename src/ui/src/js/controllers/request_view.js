@@ -266,15 +266,17 @@ export default function requestViewController(
 
       $scope.instanceStatus;
 
-      const commands = system.commands;
-      for (let i = 0; i < commands.length; i++) {
-        if (commands[i].name == $scope.request.command) {
-          $scope.disabledPourItAgain = false;
-          $scope.msgPourItAgain = null;
-          break;
-        } else {
-          $scope.disabledPourItAgain = true;
-          $scope.msgPourItAgain = 'Unable to find command';
+      if (system.commands !== undefined && system.commands !== null) {
+        const commands = system.commands;
+        for (let i = 0; i < commands.length; i++) {
+          if (commands[i].name == $scope.request.command) {
+            $scope.disabledPourItAgain = false;
+            $scope.msgPourItAgain = null;
+            break;
+          } else {
+            $scope.disabledPourItAgain = true;
+            $scope.msgPourItAgain = 'Unable to find command';
+          }
         }
       }
 
