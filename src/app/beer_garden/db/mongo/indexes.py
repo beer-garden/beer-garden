@@ -129,8 +129,8 @@ def update_file_ttl_indexes(ttl, previous_ttl):
 
     db = get_db()
 
-    file_index = "created_at_file_index_ttl"
-    file_chunk_index = "created_at_file_chunk_index_ttl"
+    file_index = "updated_at_file_index_ttl"
+    file_chunk_index = "updated_at_file_chunk_index_ttl"
 
     if ttl != previous_ttl or ttl < 0:
 
