@@ -196,5 +196,71 @@ class TestSystem:
     ):
         systems = get_systems(filter_latest=True, filter_running=True)
 
-        assert len(systems) == 1
-        assert systems[0].version == system4.version
+        assert len(systems) == 2
+        system_1_found = False
+        system_2_found = False
+        system_3_found = False
+        system_4_found = False
+        system_5_found = False
+        for db_system in systems:
+            if db_system.name == system.name and db_system.version == system.version:
+                system_1_found = True
+            elif (
+                db_system.name == system2.name and db_system.version == system2.version
+            ):
+                system_2_found = True
+            elif (
+                db_system.name == system3.name and db_system.version == system3.version
+            ):
+                system_3_found = True
+            elif (
+                db_system.name == system4.name and db_system.version == system4.version
+            ):
+                system_4_found = True
+            elif (
+                db_system.name == system5.name and db_system.version == system5.version
+            ):
+                system_5_found = True
+
+        assert not system_1_found
+        assert not system_2_found
+        assert not system_3_found
+        assert system_4_found
+        assert system_5_found
+
+    def test_get_systems_filtered_including_not_running(
+        self, system, system2, system3, system4, system5
+    ):
+        systems = get_systems(filter_latest=True, filter_running=False)
+
+        assert len(systems) == 2
+        system_1_found = False
+        system_2_found = False
+        system_3_found = False
+        system_4_found = False
+        system_5_found = False
+        for db_system in systems:
+            if db_system.name == system.name and db_system.version == system.version:
+                system_1_found = True
+            elif (
+                db_system.name == system2.name and db_system.version == system2.version
+            ):
+                system_2_found = True
+            elif (
+                db_system.name == system3.name and db_system.version == system3.version
+            ):
+                system_3_found = True
+            elif (
+                db_system.name == system4.name and db_system.version == system4.version
+            ):
+                system_4_found = True
+            elif (
+                db_system.name == system5.name and db_system.version == system5.version
+            ):
+                system_5_found = True
+
+        assert not system_1_found
+        assert system_2_found
+        assert not system_3_found
+        assert not system_4_found
+        assert system_5_found

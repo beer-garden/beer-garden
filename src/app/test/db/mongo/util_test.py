@@ -2,6 +2,7 @@
 import copy
 from datetime import datetime
 
+import gridfs
 import pytest
 from bson.dbref import DBRef
 from mock import MagicMock, Mock, patch
@@ -20,6 +21,9 @@ from beer_garden.db.mongo.util import (  # ensure_roles,; ensure_users,
     ensure_v3_30_model_migration,
 )
 from beer_garden.errors import IndexOperationError
+from mongomock.gridfs import enable_gridfs_integration
+
+enable_gridfs_integration()
 
 
 @pytest.fixture
@@ -111,7 +115,6 @@ class TestMigrationScript(object):
 
         del request_dict["id"]
         del request_dict["root_command_type"]
-        del request_dict["expiration_at"]
 
         request_dict["status"] = "SUCCESS"
         request_dict["has_parent"] = False
@@ -127,7 +130,6 @@ class TestMigrationScript(object):
         request = request_collection.find_one()
 
         assert request["root_command_type"] == request["command_type"]
-        assert request["expiration_at"] is not None
 
     @patch("mongoengine.connect", Mock())
     @patch("mongoengine.register_connection", Mock())
@@ -137,7 +139,6 @@ class TestMigrationScript(object):
 
         del request_dict["id"]
         del request_dict["root_command_type"]
-        del request_dict["expiration_at"]
 
         request_dict["status"] = "SUCCESS"
         request_dict["has_parent"] = False
@@ -154,7 +155,6 @@ class TestMigrationScript(object):
 
         assert request["root_command_type"] == "ACTION"
         assert getattr(request, "command_type", None) is None
-        assert request["expiration_at"] is not None
 
     @patch("mongoengine.connect", Mock())
     @patch("mongoengine.register_connection", Mock())
@@ -164,7 +164,6 @@ class TestMigrationScript(object):
 
         del request_dict["id"]
         del request_dict["root_command_type"]
-        del request_dict["expiration_at"]
 
         parent_dict = copy.deepcopy(request_dict)
 
@@ -192,12 +191,165 @@ class TestMigrationScript(object):
         db_parent = request_collection.find_one({"has_parent": False})
 
         assert db_parent["root_command_type"] == "ACTION"
-        assert db_parent["expiration_at"] == datetime(2016, 1, 1)
 
         db_child = request_collection.find_one({"has_parent": True})
 
         assert db_child["root_command_type"] == "ACTION"
-        assert db_child["expiration_at"] == datetime(2016, 1, 1)
+
+    @patch("mongoengine.connect", Mock())
+    @patch("mongoengine.register_connection", Mock())
+    def test_3_30_request_migration_raw_file(self, request_dict, ts_dt):
+
+        db = get_db()
+        request_collection = db["request"]
+        raw_file_collection = db["raw_file"]
+        fs_files_collection = db["fs.files"]
+        fs_chunks_collection = db["fs.chunks"]
+
+        del request_dict["id"]
+        request_dict["status"] = "SUCCESS"
+        request_dict["updated_at"] = datetime(2017, 1, 1)
+        request_dict["command_type"] = "INFO"
+
+        request_collection.insert_one(request_dict)
+
+        db_request = request_collection.find_one()
+
+        fs = gridfs.GridFS(db)
+
+        raw_file_data_id = fs.put(b"raw file data")
+
+        raw_file_dict = {"file": raw_file_data_id, "request": db_request["_id"]}
+
+        raw_file_collection.insert_one(raw_file_dict)
+
+        for collection in [
+            raw_file_collection,
+            fs_files_collection,
+            fs_chunks_collection,
+        ]:
+
+            pre_migration = collection.find_one()
+
+            assert pre_migration.get("root_command_type") is None
+            assert pre_migration.get("status") is None
+            assert pre_migration.get("updated_at") is None
+
+        ensure_v3_30_model_migration()
+
+        for collection in [
+            raw_file_collection,
+            fs_files_collection,
+            fs_chunks_collection,
+        ]:
+
+            post_migration = collection.find_one()
+
+            assert post_migration.get("root_command_type") == db_request.get(
+                "root_command_type"
+            )
+            assert post_migration.get("status") == db_request.get("status")
+            assert post_migration.get("updated_at") is not None
+
+        db.drop_collection("fs.files")
+        db.drop_collection("fs.chunks")
+
+    @patch("mongoengine.connect", Mock())
+    @patch("mongoengine.register_connection", Mock())
+    def test_3_30_request_migration_gridfs(self, request_dict, ts_dt):
+
+        db = get_db()
+        request_collection = db["request"]
+        fs_files_collection = db["fs.files"]
+        fs_chunks_collection = db["fs.chunks"]
+
+        fs = gridfs.GridFS(db)
+
+        output_gridfs_id = fs.put(b"raw file data")
+        parameter_gridfs_id = fs.put(b"raw file data")
+        del request_dict["id"]
+        request_dict["status"] = "SUCCESS"
+        request_dict["updated_at"] = datetime(2017, 1, 1)
+        request_dict["command_type"] = "INFO"
+        request_dict["output_gridfs"] = output_gridfs_id
+        request_dict["parameters_gridfs"] = parameter_gridfs_id
+
+        request_collection.insert_one(request_dict)
+
+        db_request = request_collection.find_one()
+
+        for collection in [
+            fs_files_collection,
+            fs_chunks_collection,
+        ]:
+
+            for pre_migration in collection.find({}):
+
+                assert pre_migration.get("root_command_type") is None
+                assert pre_migration.get("status") is None
+                assert pre_migration.get("updated_at") is None
+
+        ensure_v3_30_model_migration()
+
+        for collection in [
+            fs_files_collection,
+            fs_chunks_collection,
+        ]:
+
+            for post_migration in collection.find({}):
+
+                assert post_migration.get("root_command_type") == db_request.get(
+                    "root_command_type"
+                )
+                assert post_migration.get("status") == db_request.get("status")
+                assert post_migration.get("updated_at") is not None
+
+        db.drop_collection("fs.files")
+        db.drop_collection("fs.chunks")
+
+    @patch("mongoengine.connect", Mock())
+    @patch("mongoengine.register_connection", Mock())
+    def test_3_30_request_migration_file(self, request_dict, ts_dt):
+
+        db = get_db()
+        request_collection = db["request"]
+        file_collection = db["file"]
+        file_chunk_collection = db["file_chunk"]
+
+        del request_dict["id"]
+        request_dict["status"] = "SUCCESS"
+        request_dict["updated_at"] = datetime(2017, 1, 1)
+        request_dict["command_type"] = "INFO"
+
+        request_collection.insert_one(request_dict)
+
+        db_request = request_collection.find_one()
+
+        file_collection.insert_one(
+            {"owner_type": "REQUEST", "request": db_request["_id"]}
+        )
+        db_file = file_collection.find_one()
+        file_chunk_collection.insert_one({"file_id": str(db_file["_id"])})
+
+        for collection in [file_collection, file_chunk_collection]:
+
+            pre_migration = collection.find_one()
+
+            assert pre_migration.get("root_command_type") is None
+            assert pre_migration.get("status") is None
+            assert pre_migration.get("updated_at") is None
+
+        ensure_v3_30_model_migration()
+
+        for collection in [file_collection, file_chunk_collection]:
+
+            post_migration = collection.find_one()
+
+            assert post_migration.get("root_command_type") == db_request.get(
+                "root_command_type"
+            )
+            assert post_migration.get("status") == db_request.get("status")
+            assert post_migration.get("updated_at") is not None
 
     @patch("mongoengine.connect", Mock())
     @patch("mongoengine.register_connection", Mock())
@@ -256,27 +408,37 @@ class TestCheckIndexes(object):
     @patch("mongoengine.register_connection", Mock())
     def test_same_indexes(self, model_mocks):
         for model_mock in model_mocks.values():
-            model_mock.list_indexes = Mock(return_value=["index1"])
+            model_mock._meta = {"indexes": [{"name": "index1_index"}]}
             model_mock._get_collection = Mock(
-                return_value=Mock(index_information=Mock(return_value={"index1": {}}))
+                return_value=Mock(
+                    index_information=Mock(return_value={"index1_index": {}})
+                )
             )
+            model_mock.create_index = Mock()
 
         [beer_garden.db.mongo.util.check_indexes(doc) for doc in model_mocks.values()]
         for model_mock in model_mocks.values():
-            assert model_mock.ensure_indexes.call_count == 1
+            assert model_mock.create_index.call_count == 0
 
     @patch("mongoengine.connect", Mock())
     @patch("mongoengine.register_connection", Mock())
     def test_missing_index(self, model_mocks):
         for model_mock in model_mocks.values():
-            model_mock.list_indexes = Mock(return_value=["index1", "index2"])
-            model_mock._get_collection = Mock(
-                return_value=Mock(index_information=Mock(return_value={"index1": {}}))
-            )
+            model_mock._meta = {
+                "indexes": [{"name": "index1_index"}, {"name": "index2_index"}]
+            }
+
+            mock_collection = Mock()
+            mock_collection.index_information = Mock(return_value={"index1_index": {}})
+            mock_collection.drop_index = Mock()
+
+            model_mock._get_collection = Mock(return_value=mock_collection)
+
+            model_mock.create_index = Mock()
 
         [beer_garden.db.mongo.util.check_indexes(doc) for doc in model_mocks.values()]
         for model_mock in model_mocks.values():
-            assert model_mock.ensure_indexes.call_count == 1
+            assert model_mock.create_index.call_count == 1
 
     @patch("mongoengine.connection.get_db")
     @patch("mongoengine.connect", Mock())
@@ -284,33 +446,35 @@ class TestCheckIndexes(object):
     def test_successful_index_rebuild(self, get_db_mock, model_mocks):
         # 'normal' return values
         for model_mock in model_mocks.values():
-            model_mock.list_indexes = Mock(return_value=["index1"])
-            model_mock._get_collection = Mock(
-                return_value=MagicMock(
-                    index_information=Mock(return_value={"index1": {}})
-                )
-            )
+            model_mock._meta = {"indexes": [{"name": "index1_index"}]}
+            mock_collection = Mock()
+            mock_collection.index_information = Mock(return_value={"index1_index": {}})
+            mock_collection.drop_index = Mock()
+
+            model_mock._get_collection = Mock(return_value=mock_collection)
 
         # ... except for this one
-        model_mocks["request"].list_indexes.side_effect = IndexOperationError("")
+        model_mocks["request"]._meta["indexes"] = []
 
         db_mock = MagicMock()
         get_db_mock.return_value = db_mock
 
         [beer_garden.db.mongo.util.check_indexes(doc) for doc in model_mocks.values()]
-        assert db_mock["request"].drop_indexes.call_count == 1
+        assert model_mocks["request"]._get_collection().drop_index.call_count == 1
         assert model_mocks["request"].ensure_indexes.called is True
 
     @patch("mongoengine.connect", Mock())
     @patch("mongoengine.connection.get_db")
     def test_unsuccessful_index_drop(self, get_db_mock, model_mocks):
         for model_mock in model_mocks.values():
-            model_mock.list_indexes = Mock(return_value=["index1"])
-            model_mock._get_collection = Mock(
-                return_value=Mock(index_information=Mock(return_value={"index1": {}}))
-            )
+            model_mock._meta = {"indexes": [{"name": "index1_index"}]}
 
-            model_mock.ensure_indexes.side_effect = IndexOperationError("")
+            mock_collection = Mock()
+            mock_collection.index_information = Mock(return_value={"index2_index": {}})
+            mock_collection.drop_index = Mock(side_effect=IndexOperationError(""))
+            mock_collection.drop_indexes = Mock(side_effect=IndexOperationError(""))
+
+            model_mock._get_collection = Mock(return_value=mock_collection)
 
         get_db_mock.side_effect = IndexOperationError("")
 
@@ -322,13 +486,14 @@ class TestCheckIndexes(object):
     @patch("mongoengine.connection.get_db", MagicMock())
     def test_unsuccessful_index_rebuild(self, model_mocks):
         for model_mock in model_mocks.values():
-            model_mock.list_indexes = Mock(return_value=["index1"])
+            model_mock._meta = {"indexes": [{"name": "index2_index"}]}
             model_mock._get_collection = Mock(
                 return_value=MagicMock(
-                    index_information=Mock(return_value={"index1": {}})
+                    index_information=Mock(return_value={"_id_": {}})
                 )
             )
 
+            model_mock.create_index = Mock(side_effect=IndexOperationError(""))
             model_mock.ensure_indexes.side_effect = IndexOperationError("")
 
         for doc in model_mocks.values():
@@ -339,10 +504,10 @@ class TestCheckIndexes(object):
     @patch("mongoengine.connection.get_db", MagicMock())
     def test_unsuccessful_read_objects(self, model_mocks):
         for model_mock in model_mocks.values():
-            model_mock.list_indexes = Mock(return_value=["index1"])
+            model_mock._meta = {"indexes": [{"name": "index1_index"}]}
             model_mock._get_collection = Mock(
                 return_value=MagicMock(
-                    index_information=Mock(return_value={"index1": {}})
+                    index_information=Mock(return_value={"index1_index": {}})
                 )
             )
 
@@ -358,18 +523,19 @@ class TestCheckIndexes(object):
     def test_old_request_index(self, get_db_mock, model_mocks, monkeypatch):
         # 'normal' return values
         for model_mock in model_mocks.values():
-            model_mock.list_indexes = Mock(return_value=["index1"])
-            model_mock._get_collection = Mock(
-                return_value=MagicMock(
-                    index_information=Mock(return_value={"index1": {}})
-                )
-            )
+
+            model_mock._meta = {"indexes": [{"name": "index1_index"}]}
+            mock_collection = Mock()
+            mock_collection.index_information = Mock(return_value={"index1_index": {}})
+            mock_collection.drop_index = Mock()
+
+            model_mock._get_collection = Mock(return_value=mock_collection)
 
         # ... except for this one
         model_mocks[
             "request"
         ]._get_collection.return_value.index_information.return_value = {
-            "index1": {},
+            "index1_index": {},
             "parent_instance_index": {},
         }
 
@@ -391,7 +557,7 @@ class TestCheckIndexes(object):
         get_db_mock.return_value = db_mock
 
         [beer_garden.db.mongo.util.check_indexes(doc) for doc in model_mocks.values()]
-        assert db_mock["request"].drop_indexes.call_count == 1
+        assert model_mocks["request"]._get_collection().drop_indexes.call_count == 1
         assert model_mocks["request"].ensure_indexes.called is True
         assert update_parent_field_type_mock.called is True
         assert update_has_parent_mock.called is True

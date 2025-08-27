@@ -39,8 +39,6 @@ from brewtils.models import (
 )
 from brewtils.pika import PERSISTENT_DELIVERY_MODE
 from mongoengine import DoesNotExist
-from packaging.version import InvalidVersion
-from packaging.version import parse as versionParse
 from pymongo.errors import BulkWriteError
 from requests import Session
 
@@ -609,6 +607,8 @@ def get_requests(**kwargs) -> List[Request]:
 
 
 def determine_latest_system_version(request: Request):
+    from beer_garden.systems import determine_latest
+
     if request.system_version and request.system_version.lower() != "latest":
         return request
 
@@ -627,23 +627,20 @@ def determine_latest_system_version(request: Request):
         filter_params=filter_criteria,
     )
 
-    versions = []
-    legacy_versions = []
-    system_versions_map = {}
+    running = []
+    not_running = []
 
     for system in systems:
-        try:
-            versions.append(versionParse(system.version))
-            system_versions_map[str(versionParse(system.version))] = system.version
-        except InvalidVersion:
-            legacy_versions.append(system.version)
-            system_versions_map[system.version] = system.version
+        if system.instances and any(
+            "RUNNING" == instance.status for instance in system.instances
+        ):
+            running.append(system)
+        else:
+            not_running.append(system)
 
-    eligible_versions = versions if versions else legacy_versions
+    eligible_versions = running if running else not_running
 
-    if eligible_versions:
-        latest_version = sorted(eligible_versions, reverse=True)[0]
-        request.system_version = system_versions_map.get(str(latest_version))
+    request.system_version = determine_latest(eligible_versions).version
 
     return request
 
@@ -806,6 +803,23 @@ def create_request(request: Request) -> Request:
 
     if request.target_garden is None:
         request.target_garden = config.get("garden.name")
+
+    if request.has_parent:
+        if request.parent is None:
+            request.has_parent = False
+        else:
+            try:
+                parent = db.query_unique(
+                    Request,
+                    id=request.parent.id,
+                    include_fields=["command_type"],
+                    raise_missing=True,
+                )
+                if parent.command_type == "TEMP":
+                    request.command_type = "TEMP"
+            except DoesNotExist:
+                request.has_parent = None
+                request.parent = None
 
     if hasattr(request.metadata, "_topic") and request.source_garden == config.get(
         "garden.name"
@@ -1096,6 +1110,14 @@ def handle_event_filter(event):
     ):
         return True
 
+    if (
+        event.garden != config.get("garden.name")
+        and "REQUEST" in event.name
+        and event.payload.command_type == "TEMP"
+    ):
+        # Temporary requests are no longer forwarded, so we don't care about them
+        return False
+
     return False
 
 
@@ -1130,22 +1152,30 @@ def handle_event_create(event):
         # Nothing could be waiting for it in the handle_wait_event queue and originated from
         # downstream, so we can skip the request
         return None
+
     try:
-        event.payload.expiration_at = None
+        parent_request = None
+
+        # Check if parent request exists and load only fields required for
+        # auth features
+        if event.payload.has_parent and event.payload.parent is not None:
+            parent_request = db.query_unique(
+                Request, id=event.payload.parent.id, include_fields=["requester"]
+            )
+
+            # Missing Parent Request in the database
+            if parent_request is None:
+                event.payload.parent = None
+                event.payload.has_parent = False
 
         # User mappings back to local usernames
         if event.payload.requester and config.get("auth.enabled"):
             foundUser = False
 
             # First try to grab requester from Parent Request
-            if event.payload.has_parent and event.payload.parent is not None:
-                parent_request = db.query_unique(
-                    Request, id=event.payload.parent.id, include_fields=["requester"]
-                )
-
-                if parent_request and parent_request.requester:
-                    event.payload.requester = parent_request.requester
-                    foundUser = True
+            if parent_request and parent_request.requester:
+                event.payload.requester = parent_request.requester
+                foundUser = True
 
             # If no parent request is found or request on it,
             # update via remote user mappings
@@ -1275,7 +1305,6 @@ def handle_event(event):
                     "status_updated_at",
                     "target_garden",
                     "updated_at",
-                    "command_type",
                     "metadata",
                     "output",
                     "error_class",
