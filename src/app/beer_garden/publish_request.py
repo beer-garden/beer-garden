@@ -220,7 +220,7 @@ def route_request(create_request):
         logger.error(
             (
                 "Invalid request for topic "
-                f"'{create_request.metadata.get('topic', 'Missing Topic')}' "
+                f"'{create_request.metadata.get('_topic', 'Missing Topic')}' "
                 f"for request {create_request}: {ex}"
             )
         )

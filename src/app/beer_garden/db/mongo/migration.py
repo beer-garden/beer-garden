@@ -360,6 +360,13 @@ def ensure_v3_30_model_migration():
                     {"root_command_type": 1, "updated_at": 1, "status": 1},
                 )
 
+                if not file_request:
+                    file_request = {
+                        "root_command_type": "TEMP",
+                        "status": "ERROR",
+                        "updated_at": datetime.now(timezone.utc),
+                    }
+
                 file_updates.append(
                     UpdateOne(
                         {"_id": legacy_file["_id"]},
@@ -438,6 +445,13 @@ def ensure_v3_30_model_migration():
                     {"_id": legacy_raw_file["request"]},
                     {"root_command_type": 1, "updated_at": 1, "status": 1},
                 )
+
+                if not raw_file_request:
+                    raw_file_request = {
+                        "root_command_type": "TEMP",
+                        "status": "ERROR",
+                        "updated_at": datetime.now(timezone.utc),
+                    }
 
                 raw_file_updates.append(
                     UpdateOne(

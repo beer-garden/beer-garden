@@ -210,6 +210,8 @@ class MixedScheduler(object):
         for job in file_jobs:
             observer_threads[job.id] = Monitor(job.id, job.trigger)
 
+        logger.info("Scheduler started")
+
     def resume(self):
         """Resume the scheduler"""
         if self._sync_scheduler:
@@ -787,6 +789,19 @@ def handle_event(event: Event) -> None:
     """
 
     if (
+        not config.get("replication.enabled")
+        and event.garden == config.get("garden.name")
+        and event.name == Events.ENTRY_STARTED.name
+        and event.metadata["entry_point_type"] == "HTTP"
+        and not beer_garden.application.scheduler.running
+    ):
+        # If replication is enabled, then we should allow the replication
+        # event handler to start the scheduler once it is the primary
+        # garden. If replication is disabled, then we can start the
+        # scheduler once the HTTP server is started.
+        beer_garden.application.scheduler.start()
+
+    elif (
         event.garden == config.get("garden.name")
         and beer_garden.application.scheduler.running
     ):
