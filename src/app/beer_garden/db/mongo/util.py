@@ -246,7 +246,7 @@ def unassign_files():
         logger.debug("No missed owners for Files")
 
 
-def cancel_outstanding():
+def cancel_local_outstanding():
     """
     Helper function for run to mark requests still outstanding after a certain
     amount of time as canceled.
@@ -261,12 +261,15 @@ def cancel_outstanding():
         timeout = datetime.now(timezone.utc) - timedelta(minutes=cancel_threshold)
 
         outstanding_requests = Request.objects.filter(
-            status__in=["IN_PROGRESS", "CREATED"], updated_at__lte=timeout
+            status__in=["IN_PROGRESS", "CREATED"],
+            updated_at__lte=timeout,
+            target_garden=config.get("garden.name"),
         ).order_by("-updated_at")
 
         cancel_outstanding_requests(outstanding_requests)
 
 
+# Can be used to cancel outstanding requests for any query
 def cancel_outstanding_requests(outstanding_requests):
     from beer_garden.events import publish
 
