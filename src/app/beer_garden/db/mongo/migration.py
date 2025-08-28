@@ -267,6 +267,20 @@ def ensure_v3_30_model_migration():
     db = get_db()
     batch_size = config.get("db.prune.batch_size", default=-1)
 
+    request_collection = db.get_collection("request")
+
+    # Migration to ensure source_garden and target_garden are set
+    # for new cancellation logic
+    request_collection.update_many(
+        {"source_garden": {"$exists": False}},
+        {"$set": {"source_garden": config.get("garden.name")}},
+    )
+
+    request_collection.update_many(
+        {"target_garden": {"$exists": False}},
+        {"$set": {"target_garden": config.get("garden.name")}},
+    )
+
     if contains_fields("garden", ["status", "status_info", "namespaces"]):
         logger.warning(
             "Status or namespaces was found in Garden and will be removed. This is most"
@@ -294,7 +308,7 @@ def ensure_v3_30_model_migration():
             " This is most likely because the database is using the old (v3.29) style of"
             " storing in the database."
         )
-        request_collection = db.get_collection("request")
+
         updates = []
         for legacy_request in request_collection.find(
             {"root_command_type": {"$exists": False}},
@@ -420,7 +434,6 @@ def ensure_v3_30_model_migration():
         )
 
         raw_file_collection = db.get_collection("raw_file")
-        request_collection = db.get_collection("request")
         grid_fs_files_collection = db.get_collection("fs.files")
         grid_fs_chunks_collection = db.get_collection("fs.chunks")
 
@@ -550,7 +563,6 @@ def ensure_v3_30_model_migration():
             " This is most likely because the database is using the old (v3.29) style of"
             " storing in the database."
         )
-        request_collection = db.get_collection("request")
 
         grid_fs_files_collection = db.get_collection("fs.files")
         grid_fs_chunks_collection = db.get_collection("fs.chunks")

@@ -35,6 +35,7 @@ TBD
 - Updated Request and GridFS to utilize MongoDB Expiration At feature in the indexes to 
   handle pruning. (#1940)
 - Scheduler starts after the HTTP entry point has started to ensure plugins have a chance to start running (#1963)
+- Cancel Requests only handle locally executed Requests (#1967)
 
 ## 3.30.0rc2
 
