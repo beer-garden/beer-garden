@@ -426,7 +426,7 @@ export default function appRun(
 
   $rootScope.extractSystems = function(garden, hideRunners = false){
     let systems = [];
-    if (garden.systems !== undefined){
+    if (garden.systems !== undefined && garden.systems !== null){
       for (let i = 0; i < garden.systems.length; i++){
         if (hideRunners){
           systems.push(hideSystemRunners(garden.systems[i]))
@@ -437,7 +437,7 @@ export default function appRun(
       
       systems = garden.systems;
     }
-    if (garden.children !== undefined) {
+    if (garden.children !== undefined &&  garden.children !== null) {
       for (let i = 0; i < garden.children.length; i++){
         systems = systems.concat($rootScope.extractSystems(garden.children[i], true));
       }
@@ -447,7 +447,7 @@ export default function appRun(
 
   $rootScope.isSystemRoutable = function(system){
     // Check Local First
-    if ($rootScope.garden.systems !== undefined) {
+    if ($rootScope.garden.systems !== undefined && $rootScope.garden.systems !== null) {
       for (let i = 0; i < $rootScope.garden.systems.length; i++){
         if (system.id == $rootScope.garden.systems[i].id){
           return true;
@@ -455,7 +455,7 @@ export default function appRun(
       }
     }
     // Check children
-    if ($rootScope.garden.children !== undefined) {
+    if ($rootScope.garden.children !== undefined && $rootScope.garden.children !== null) {
       for (let i = 0; i < $rootScope.garden.children.length; i++){
         if ($rootScope.isRemoteSystemRoutable(system, $rootScope.garden.children[i])){
           return true;
@@ -500,32 +500,38 @@ export default function appRun(
 
   $rootScope.extractGardenChildren = function(gardens) {
     let results = []
-    for (let i = 0; i < gardens.length; i++){
-      if (gardens[i]["connection_type"] == "LOCAL"){
-        results.push(gardens[i]);
-        $rootScope.extractGardenChildrenLoop(results, gardens[i], true);
+    if (gardens !== undefined && gardens !== null) {
+      for (let i = 0; i < gardens.length; i++){
+        if (gardens[i]["connection_type"] == "LOCAL"){
+          results.push(gardens[i]);
+          $rootScope.extractGardenChildrenLoop(results, gardens[i], true);
+        }
       }
     }
     return results;
   }
 
   $rootScope.extractGardenChildrenLoop = function(gardens, garden, include_systems) {
-    for (let i = 0; i < garden.children.length; i++){
-      gardens.push(garden.children[i]);
-      $rootScope.extractGardenChildrenLoop(gardens, garden.children[i], true);
+    if (garden.children !== undefined && garden.children !== null){
+      for (let i = 0; i < garden.children.length; i++){
+        gardens.push(garden.children[i]);
+        $rootScope.extractGardenChildrenLoop(gardens, garden.children[i], true);
+      }
     }
     return gardens;
   }
 
   function upsertGardenSystems(garden, seenIndexes, hideRunners = false){
     let routable = (garden.connection_type == "LOCAL");
-    for (let i = 0; i < garden.publishing_connections.length; i++){
-      if (["PUBLISHING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN"].includes(garden.publishing_connections[i].status)){
-        routable = true;
+    if (garden.publishing_connections !== undefined && garden.publishing_connections !== null) {
+      for (let i = 0; i < garden.publishing_connections.length; i++){
+        if (["PUBLISHING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN"].includes(garden.publishing_connections[i].status)){
+          routable = true;
+        }
       }
     }
     if (routable) {
-      if (garden.systems !== undefined) {
+      if (garden.systems !== undefined && garden.systems !== null) {
         for (let i = 0; i < garden.systems.length; i++){
           seenIndexes.push(upsertSystem(garden.systems[i], hideRunners));
         }
@@ -543,9 +549,11 @@ export default function appRun(
       let seenIndexes = [];
       upsertGardenSystems($rootScope.garden, seenIndexes);
       // Loop through seen indexes and remove everything not seen starting at the end
-      for (let i = ($rootScope.systems.length - 1); i > -1; i--){
-        if (!seenIndexes.includes(i)){
-          $rootScope.systems.splice(i, 1);
+      if ($rootScope.systems !== undefined && $rootScope.systems !== null) {
+        for (let i = ($rootScope.systems.length - 1); i > -1; i--){
+          if (!seenIndexes.includes(i)){
+            $rootScope.systems.splice(i, 1);
+          }
         }
       }
     }
@@ -553,9 +561,11 @@ export default function appRun(
   }
 
   function hideSystemRunners(system) {
-    for (let i = 0; i < system.instances.length; i++){
-      if (system.instances[i].metadata.runner_id !== undefined){
-        delete system.instances[i].metadata.runner_id
+    if (system.instances !== undefined && system.instances !== null) {
+      for (let i = 0; i < system.instances.length; i++){
+        if (system.instances[i].metadata.runner_id !== undefined){
+          delete system.instances[i].metadata.runner_id
+        }
       }
     }
     return system
@@ -579,16 +589,20 @@ export default function appRun(
   function updateGardenChildren(srcGarden, newGarden) {
 
     let matched = false;
-    for (let i = 0; i < srcGarden.children.length; i++){
-      if (srcGarden.children[i].name== newGarden.name){
-        srcGarden.children[i] = newGarden;
-        matched = true;
-        break
+    if (srcGarden.children !== undefined && srcGarden.children !== null){
+      for (let i = 0; i < srcGarden.children.length; i++){
+        if (srcGarden.children[i].name== newGarden.name){
+          srcGarden.children[i] = newGarden;
+          matched = true;
+          break
+        }
       }
     }
     if (!matched){
-      for (let i = 0; i < srcGarden.children.length; i++){
-        srcGarden.children[i] = updateGardenChildren(srcGarden.children[i], newGarden);
+      if (srcGarden.children !== undefined && srcGarden.children !== null){
+        for (let i = 0; i < srcGarden.children.length; i++){
+          srcGarden.children[i] = updateGardenChildren(srcGarden.children[i], newGarden);
+        }
       }
     }
     
@@ -605,7 +619,7 @@ export default function appRun(
       updateGardenSystems();
     }
 
-    else if ($rootScope.systems !== undefined && event.name.startsWith("INSTANCE_")){
+    else if ($rootScope.systems !== undefined && $rootScope.systems !== null && event.name.startsWith("INSTANCE_")){
 
       let matched = false;
 
@@ -628,7 +642,7 @@ export default function appRun(
       }
     }
 
-    else if ($rootScope.systems !== undefined && event.name.startsWith("SYSTEM_")){
+    else if ($rootScope.systems !== undefined && $rootScope.systems !== null && event.name.startsWith("SYSTEM_")){
 
       let matched = false;
 

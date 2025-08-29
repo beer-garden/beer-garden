@@ -82,7 +82,16 @@ def _safe_build_object(cls, *objects, ignore=None, **manual_kwargs):
                 _unroll_object(
                     obj,
                     key_map={"id": "file_id"},
-                    ignore=["job", "owner", "request", "updated_at"] + ignore,
+                    ignore=[
+                        "job",
+                        "owner",
+                        "request",
+                        "created_at",
+                        "updated_at",
+                        "status",
+                        "root_command_type",
+                    ]
+                    + ignore,
                 )
             )
 
@@ -91,7 +100,16 @@ def _safe_build_object(cls, *objects, ignore=None, **manual_kwargs):
                 _unroll_object(
                     obj,
                     key_map={"id": "chunk_id"},
-                    ignore=["owner", "job", "request"] + ignore,
+                    ignore=[
+                        "owner",
+                        "job",
+                        "request",
+                        "created_at",
+                        "updated_at",
+                        "status",
+                        "root_command_type",
+                    ]
+                    + ignore,
                 )
             )
 
@@ -372,6 +390,7 @@ def create_file(
         file_name=file_name,
         file_size=file_size,
         chunk_size=chunk_size,
+        created_at=datetime.utcnow(),
         **kwargs,
     )
 

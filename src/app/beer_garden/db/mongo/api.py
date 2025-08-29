@@ -18,12 +18,19 @@ from mongoengine.queryset.visitor import Q, QCombination
 from pymongo import InsertOne, ReplaceOne, UpdateOne
 
 import beer_garden.db.mongo.models
+from beer_garden.db.mongo.indexes import (
+    check_indexes,
+    update_ttl_indexes,
+)
+from beer_garden.db.mongo.migration import (
+    ensure_model_migration,
+)
 from beer_garden.db.mongo.models import MongoModel
 from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.db.mongo.util import (
-    check_indexes,
     ensure_local_garden,
-    ensure_model_migration,
+    is_legacy_mongodb,
+    reset_last_configuration,
 )
 from beer_garden.errors import NotUniqueException
 
@@ -108,8 +115,13 @@ def to_brewtils(
         model_class = obj.brewtils_model
         many = False
 
-    if getattr(obj, "pre_serialize", None):
-        obj.pre_serialize()
+    if many:
+        for item in obj:
+            if getattr(item, "pre_serialize", None):
+                item.pre_serialize()
+    else:
+        if getattr(obj, "pre_serialize", None):
+            obj.pre_serialize()
 
     serialized = MongoParser.serialize(obj, to_string=True)
     parsed = SchemaParser.parse(serialized, model_class, from_string=True, many=many)
@@ -189,6 +201,12 @@ def initial_setup():
         beer_garden.db.mongo.models.Topic,
     ):
         check_indexes(doc)
+
+    if not is_legacy_mongodb():
+        update_ttl_indexes()
+
+    # This sets the last configuration for future migrations to reference
+    reset_last_configuration()
 
     ensure_local_garden()
 

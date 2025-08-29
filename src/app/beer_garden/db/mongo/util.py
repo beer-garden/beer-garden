@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
-from brewtils.models import Request
-from mongoengine.connection import get_db
-from mongoengine.errors import DoesNotExist, FieldDoesNotExist, InvalidDocumentError
-from pymongo import UpdateMany, UpdateOne
-from pymongo.errors import OperationFailure, PyMongoError
+from brewtils.errors import ModelValidationError
+from brewtils.models import Event, Events
+from brewtils.models import Request as BrewtilsRequest
+from mongoengine.connection import get_connection
+from mongoengine.errors import DoesNotExist
+from packaging.version import Version
 
 import beer_garden
-from beer_garden import config
-from beer_garden.errors import IndexOperationError
+import beer_garden.config as config
+from beer_garden.db.mongo.models import File, FileChunk, Request
 
 logger = logging.getLogger(__name__)
 
@@ -88,564 +89,10 @@ def ensure_local_garden():
     garden.save()
 
 
-def ensure_v2_to_v3_model_migration():
-    """Ensures that the Role model is flatten and Command model is an
-    EmbeddedDocument
-
-    In Version 2 and earlier the Role model allowed for nested roles. This caused
-    recursive approach to determining Principal permissions. This is changed in
-    Version 3 to allow for Roles to add complexity of Namespace restrictions which
-    would not work properly with nesting.
-
-    Right now if the check fails this will just drop the Roles and Principle
-    collections. Since they'll be recreated anyway this isn't the worst, but
-    it would be better if we could seamlessly flatten existing permissions.
-
-    In version 2 and earlier the Command model was a top-level collection. This
-    causes organization and performance issues, so in version 3 it was changed to be an
-    embedded document of the System model. This ensures that's the case.
-
-    Right now if the check fails this will just drop the Systems, Commands, and
-    Instances collections. Since they'll be recreated anyway this isn't the worst, but
-    it would be better if we could seamlessly move the existing commands into existing
-    Systems.
-    """
-    from beer_garden.db.mongo.models import Role, System
-
-    try:
-        if Role.objects.count() > 0:
-            _ = Role.objects()[0]
-        if System.objects.count() > 0:
-            _ = System.objects()[0]
-    except (FieldDoesNotExist, InvalidDocumentError):
-        logger.warning(
-            "Encountered an error loading Roles or Systems. This is most likely because"
-            " the database is using the old (v2) style of storing in the database. To"
-            " fix this the roles, principles, systems, instances, and commands"
-            " collections will be dropped."
-        )
-
-        db = get_db()
-        db.drop_collection("principal")
-        db.drop_collection("role")
-        db.drop_collection("command")
-        db.drop_collection("instance")
-        db.drop_collection("system")
-
-
-def contains_field(collection_name, field):
-    """Checks if any record in the collection contains the specified field"""
-    db = get_db()
-    collection = db.get_collection(collection_name)
-
-    if collection.find({field: {"$exists": True}}).count() > 0:
-        return True
-    return False
-
-
-def contains_fields(collection_name, fields):
-    """Checks if any record in the collection contains one of the specified fields"""
-    db = get_db()
-    collection = db.get_collection(collection_name)
-
-    filter_criteria = {"$or": [{field: {"$exists": True}}] for field in fields}
-
-    if collection.find(filter_criteria).count() > 0:
-        return True
-    return False
-
-
-def missing_field(collection_name, field):
-    """Checks if any record in the collection is missing the specified field"""
-    db = get_db()
-    collection = db.get_collection(collection_name)
-
-    if collection.find({field: {"$exists": False}}).count() > 0:
-        return True
-    return False
-
-
-def ensure_v3_24_model_migration():
-    """Ensures that the Garden model migration to yaml configs"""
-
-    # Look for 3.23 fields
-    if contains_field("garden", "connection_params"):
-        import os
-        from pathlib import Path
-
-        import yaml
-
-        logger.warning(
-            "Encountered an error loading Gardens. This is most likely because"
-            " the database is using the old (v3.23 or prior) models. Migration"
-            " strategy is to map all records in the Garden collection to yaml"
-            " files, then drop the Garden collection to be rebuilt."
-        )
-
-        db = get_db()
-
-        garden_collection = db.get_collection("garden")
-
-        if garden_collection.find().count() > 1:
-            if not os.path.exists(config.get("children.directory")):
-                os.makedirs(config.get("children.directory"))
-
-            for legacy_garden in garden_collection.find():
-                if legacy_garden["connection_type"] != "LOCAL":
-                    if not Path(
-                        f"{config.get('children.directory')}/{legacy_garden['name']}.yaml"
-                    ).exists():
-                        garden_file_data = {"receiving": False, "publishing": False}
-
-                        if legacy_garden["connection_type"] == "HTTP":
-                            garden_file_data["http"] = legacy_garden[
-                                "connection_params"
-                            ]["http"]
-                        if legacy_garden["connection_type"] == "STOMP":
-                            garden_file_data["stomp"] = legacy_garden[
-                                "connection_params"
-                            ]["stomp"]
-
-                        logger.warning(
-                            (
-                                "Mapping Child Config: "
-                                f"{config.get('children.directory')}/{legacy_garden['name']}.yaml"
-                            )
-                        )
-                        with open(
-                            f"{config.get('children.directory')}/{legacy_garden['name']}.yaml",
-                            "w+",
-                        ) as ff:
-                            yaml.dump(garden_file_data, ff, allow_unicode=True)
-
-        db.drop_collection("garden")
-
-
-def ensure_v3_27_model_migration():
-    """Ensures that the Role model is consolidated
-
-    In Version 3.26 and earlier the utilized role assignments to determine the
-    scope of the Role. In Version 3.27 these scopes were incorporated into the
-    Role model.
-
-    Right now if the check fails this will just drop any collection associated
-    with User Accounts.  Since they'll be recreated anyway this isn't the worst,
-    but it would be better if we could seamlessly flatten existing permissions.
-
-    """
-
-    db = get_db()
-
-    collections = db.collection_names()
-
-    # Look for 3.26 Collections
-    for legacy_user_collection in ["remote_role", "role_assignment", "remote_user"]:
-        if legacy_user_collection in collections:
-            logger.warning(
-                "Encountered an error loading Roles or Users or User Tokens. This is most"
-                " likely because the database is using the old (v3.26 or prior) models."
-                " Migration strategy is to drop the roles, remote_roles, role_assignment,"
-                " user, remote_user, and user_token collections. The required collections"
-                " will be rebuilt."
-            )
-
-            db = get_db()
-            db.drop_collection("role")
-            db.drop_collection("remote_role")
-            db.drop_collection("role_assignment")
-            db.drop_collection("user")
-            db.drop_collection("remote_user")
-            db.drop_collection("user_token")
-            db.drop_collection("legacy_role")
-
-            return
-
-    # Look for 3.26 fields
-    if (
-        contains_field("role", "permissions")
-        or contains_field("user", "role_assignments")
-        or contains_field("user_token", "user")
-    ):
-        logger.warning(
-            "Encountered an error loading Roles or Users or User Tokens. This is most"
-            " likely because the database is using the old (v3.26) style of storing in"
-            " the database. To fix this the roles, remote_roles, role_assignment, user,"
-            " remote_user, and user_token collections will be dropped."
-        )
-
-        db = get_db()
-        db.drop_collection("role")
-        db.drop_collection("remote_role")
-        db.drop_collection("role_assignment")
-        db.drop_collection("user")
-        db.drop_collection("remote_user")
-        db.drop_collection("user_token")
-        db.drop_collection("legacy_role")
-
-
-def ensure_v3_29_model_migration():
-    db = get_db()
-    batch_size = config.get("db.prune.batch_size", default=-1)
-    if missing_field("request", "command_display_name"):
-        logger.warning(
-            "Command display name was not found in Requests and will be added. This is most"
-            " likely because the database is using the old (v3.29) style of storing in"
-            " the database."
-        )
-        request_updates = []
-        request_collection = db.get_collection("request")
-        for legacy_request in request_collection.find(
-            {"command_display_name": {"$exists": False}}
-        ):
-            if legacy_request:
-                legacy_request["command_display_name"] = legacy_request["command"]
-                request_updates.append(
-                    UpdateOne({"_id": legacy_request["_id"]}, {"$set": legacy_request})
-                )
-            if batch_size > 0 and len(request_updates) > batch_size:
-                request_collection.bulk_write(request_updates, ordered=False)
-                request_updates = []
-        if len(request_updates) > 0:
-            request_collection.bulk_write(request_updates, ordered=False)
-
-
-def find_root_command_type_and_expiration(request):
-    expiration_at = None
-    command_type = getattr(request, "command_type", "ACTION")
-    if (
-        ("has_parent" in request and request["has_parent"])
-        or ("parent" in request and request["parent"] is not None)
-    ) and ("expiration_at" not in request or not request["expiration_at"]):
-        try:
-            parent = (
-                get_db()
-                .get_collection("request")
-                .find_one(
-                    {"_id": request["parent"].id},
-                    {
-                        "has_parent": 1,
-                        "parent": 1,
-                        "created_at": 1,
-                        "command_type": 1,
-                        "expiration_at": 1,
-                        "status": 1,
-                        "_id": 1,
-                    },
-                )
-            )
-            if parent:
-                return find_root_command_type_and_expiration(parent)
-        except PyMongoError:
-            # if any exception is thrown, just return what we currently have
-            pass
-    if request["status"] in Request.COMPLETED_STATUSES:
-        if "expiration_at" in request and request["expiration_at"]:
-            expiration_at = request["expiration_at"]
-        elif (
-            command_type == "ACTION"
-            and config.get("db.prune.ttl.action", default=-1) > -1
-        ):
-            expiration_at = request["created_at"] + timedelta(
-                minutes=config.get("db.prune.ttl.action", default=-1)
-            )
-        elif (
-            command_type == "INFO" and config.get("db.prune.ttl.info", default=15) > -1
-        ):
-            expiration_at = request["created_at"] + timedelta(
-                minutes=config.get("db.prune.ttl.info", default=-1)
-            )
-        elif command_type == "TEMP":
-            expiration_at = request["created_at"]
-
-    return command_type, expiration_at
-
-
-def ensure_v3_30_model_migration():
-    db = get_db()
-    batch_size = config.get("db.prune.batch_size", default=-1)
-
-    if contains_fields("garden", ["status", "status_info", "namespaces"]):
-        logger.warning(
-            "Status or namespaces was found in Garden and will be removed. This is most"
-            " likely because the database is using the old (v3.29) style of storing in"
-            " the database."
-        )
-        garden_updates = []
-        garden_collection = db.get_collection("garden")
-        for legacy_garden in garden_collection.find():
-            garden_updates.append(
-                UpdateOne(
-                    {"_id": legacy_garden["_id"]},
-                    {"$unset": {"status": "", "status_info": "", "namespaces": ""}},
-                )
-            )
-            if batch_size > 0 and len(garden_updates) > batch_size:
-                garden_collection.bulk_write(garden_updates, ordered=False)
-                garden_updates = []
-        if len(garden_updates) > 0:
-            garden_collection.bulk_write(garden_updates, ordered=False)
-
-    if missing_field("request", "root_command_type"):
-        logger.warning(
-            "Root Command Type was not found in Requests and will be added."
-            " This is most likely because the database is using the old (v3.29) style of"
-            " storing in the database."
-        )
-        request_collection = db.get_collection("request")
-        updates = []
-        for legacy_request in request_collection.find(
-            {"root_command_type": {"$exists": False}},
-            {
-                "has_parent": 1,
-                "parent": 1,
-                "created_at": 1,
-                "command_type": 1,
-                "expiration_at": 1,
-                "status": 1,
-                "_id": 1,
-            },
-        ):
-            if legacy_request:
-
-                root_command_type, expiration_at = (
-                    find_root_command_type_and_expiration(legacy_request)
-                )
-
-                updates.append(
-                    UpdateOne(
-                        {"_id": legacy_request["_id"]},
-                        {
-                            "$set": {
-                                "expiration_at": expiration_at,
-                                "root_command_type": root_command_type,
-                            }
-                        },
-                    )
-                )
-
-            if batch_size > 0 and len(updates) > batch_size:
-                request_collection.bulk_write(updates, ordered=False)
-                logger.warning(
-                    f"Migrating expiration_at and root_command_type for {len(updates)} Requests"
-                )
-                updates = []
-        if len(updates) > 0:
-            request_collection.bulk_write(updates, ordered=False)
-            logger.warning(
-                f"Migrating expiration_at and root_command_type for {len(updates)} Requests"
-            )
-
-    if missing_field("system", "garden_name"):
-        logger.warning(
-            "Garden Name was not found in Systems and will be added."
-            " This is most likely because the database is using the old (v3.29) style of"
-            " storing in the database."
-        )
-
-        system_collection = db.get_collection("system")
-        garden_collection = db.get_collection("garden")
-
-        updates = []
-        for legacy_system in system_collection.find(
-            {"garden_name": {"$exists": False}, "local": True},
-            {
-                "_id": 1,
-            },
-        ):
-            if legacy_system:
-
-                updates.append(
-                    UpdateOne(
-                        {"_id": legacy_system["_id"]},
-                        {
-                            "$set": {
-                                "garden_name": config.get("garden.name"),
-                            }
-                        },
-                    )
-                )
-
-        # If we roll all local systems on the local Garden model, then this
-        # is the only migration we need for this
-        for garden in garden_collection.find({}, {"name": 1, "systems": 1}):
-            for legacy_system in garden["systems"]:
-                updates.append(
-                    UpdateOne(
-                        {"_id": legacy_system},
-                        {
-                            "$set": {
-                                "garden_name": garden["name"],
-                            }
-                        },
-                    )
-                )
-
-        if len(updates) > 0:
-            system_collection.bulk_write(updates, ordered=False)
-            logger.warning(f"Migrating garden_name for {len(updates)} Systems")
-
-
-def ensure_request_ttl():
-    db = get_db()
-
-    action_ttl = config.get("db.prune.ttl.action", default=-1)
-    info_ttl = config.get("db.prune.ttl.info", default=-1)
-
-    previous_config = db.get_collection("configuration").find_one()
-
-    # No previous configuration found, must be prior to 3.30.0 release
-    if not previous_config:
-        update_request_ttl("ACTION", action_ttl)
-        update_request_ttl("INFO", info_ttl)
-
-    else:
-        # If we can't find the ttl key, just do the recompute
-        try:
-            if action_ttl != previous_config.get("action_ttl"):
-                update_request_ttl("ACTION", action_ttl)
-        except (KeyError, IndexError):
-            update_request_ttl("ACTION", action_ttl)
-
-        try:
-            if info_ttl != previous_config.get("info_ttl"):
-                update_request_ttl("INFO", info_ttl)
-        except (KeyError, IndexError):
-            update_request_ttl("INFO", info_ttl)
-
-
-def ensure_model_migration():
-    """Ensures that the database is properly migrated. All migrations ran from this
-    single function for easy management"""
-
-    db = get_db()
-    previous_config = db.get_collection("configuration").find_one()
-
-    if not previous_config or previous_config.get("version") != str(
-        beer_garden.__version__
-    ):
-        # If the version is not set, or the version is not the same as the current
-        # version, run all migrations
-        logger.warning(
-            "Running database migrations. This may take a while depending on the size of"
-            " your database."
-        )
-
-        ensure_v2_to_v3_model_migration()
-        ensure_v3_24_model_migration()
-        ensure_v3_27_model_migration()
-        ensure_v3_29_model_migration()
-        ensure_v3_30_model_migration()
-        # After the 3.30.0 migration, we can start parsing the version to determine
-        # which migrations to run
-
-    # This should always be the last migration
-    ensure_request_ttl()
-
-    # This sets the last configuration for future migrations to reference
-    reset_last_configuration()
-
-
-def find_root_expiration_at(request, ttl):
-
-    if request is None:
-        return None
-
-    if request["has_parent"]:
-        try:
-
-            parent = (
-                get_db()
-                .get_collection("request")
-                .find_one(
-                    {"_id": request["parent"].id},
-                    {"has_parent": 1, "parent": 1, "created_at": 1, "expiration_at": 1},
-                )
-            )
-            if parent:
-                return find_root_expiration_at(
-                    parent,
-                    ttl,
-                )
-        except PyMongoError:
-            # if any exception is thrown, just return what we currently have
-            pass
-
-    if "expiration_at" in request and request["expiration_at"]:
-        return request["expiration_at"]
-    if request["status"] in ["CANCELED", "SUCCESS", "ERROR", "INVALID"]:
-        return request["created_at"] + timedelta(minutes=ttl)
-    return None
-
-
-def update_request_ttl(command_type, ttl):
-
-    from .models import Request
-
-    logger.warning(f"Recomputing TTL for {command_type} for all completed requests")
-    raw_collection = Request._get_collection()
-
-    if ttl < 0:
-        updated_results = raw_collection.update_many(
-            {
-                "root_command_type": {"$eq": command_type},
-                "expiration_at": {"$ne": None},
-            },
-            {"$set": {"expiration_at": None}},
-        )
-        logger.warning(
-            f"Recomputed {updated_results.modified_count} {command_type} Request TTLs"
-        )
-    else:
-        batch_size = config.get("db.prune.batch_size", default=-1)
-
-        update_counter = 0
-        updates = []
-        for request in raw_collection.find(
-            {
-                "root_command_type": {"$eq": command_type},
-                "expiration_at": {"$ne": None},
-                "status": {
-                    "$in": [
-                        "CANCELED",
-                        "SUCCESS",
-                        "ERROR",
-                        "INVALID",
-                    ],
-                },
-            },
-            {
-                "has_parent": 1,
-                "parent": 1,
-                "created_at": 1,
-                "expiration_at": 1,
-                "_id": 1,
-            },
-        ):
-
-            expiration_at = find_root_expiration_at(request, ttl)
-
-            if (
-                "expiration_at" not in request
-                or expiration_at != request["expiration_at"]
-            ):
-                updates.append(
-                    UpdateOne(
-                        {"_id": request["_id"]},
-                        {"$set": {"expiration_at": expiration_at}},
-                    )
-                )
-                update_counter = update_counter + 1
-
-            if batch_size > 0 and len(updates) > batch_size:
-                raw_collection.bulk_write(updates, ordered=False)
-                logger.warning(f"Recomputed {len(updates)} {command_type} Request TTLs")
-                updates = []
-
-        if len(updates) > 0:
-            raw_collection.bulk_write(updates, ordered=False)
-            logger.warning(f"Recomputed {len(updates)} {command_type} Request TTLs")
-
-        logger.warning(f"Recomputed {command_type} Request TTLs")
+def is_legacy_mongodb():
+    mongo_version = get_connection().server_info().get("version", "0.0.0")
+    # # Supports MongoGB 6.0+
+    return Version(mongo_version) < Version("6.0.0")
 
 
 def reset_last_configuration():
@@ -657,152 +104,11 @@ def reset_last_configuration():
 
     configuration = Configuration(
         action_ttl=config.get("db.prune.ttl.action", default=-1),
-        info_ttl=config.get("db.prune.ttl.info", default=-1),
+        info_ttl=config.get("db.prune.ttl.info", default=15),
+        file_ttl=config.get("db.prune.ttl.file", default=15),
         version=str(beer_garden.__version__),
     )
     configuration.save()
-
-
-def check_indexes(document_class):
-    """Ensures indexes are correct.
-
-    If any indexes are missing they will be created.
-
-    If any of them are 'wrong' (fields have changed, etc.) all the indexes for
-    that collection will be dropped and rebuilt.
-
-    Args:
-        document_class (Document): The document class
-
-    Returns:
-        None
-
-    Raises:
-        beergarden.IndexOperationError
-    """
-    from mongoengine.connection import get_db
-
-    from .models import Request
-
-    try:
-        # Building the indexes could take a while so it'd be nice to give some
-        # indication of what's happening. This would be perfect but can't use
-        # it! It's broken for text indexes!! MongoEngine is awesome!!
-        # diff = collection.compare_indexes(); if diff['missing'] is not None...
-
-        # Since we can't ACTUALLY compare the index spec with what already
-        # exists without ridiculous effort:
-        spec = document_class.list_indexes()
-        existing = document_class._get_collection().index_information()
-
-        if document_class == Request and "parent_instance_index" in existing:
-            raise IndexOperationError("Old Request index found, rebuilding")
-
-        if len(spec) < len(existing):
-            raise IndexOperationError("Extra index found, rebuilding")
-
-        if len(spec) > len(existing):
-            logger.warning(
-                "Found missing %s indexes, about to build them. This could "
-                "take a while :)",
-                document_class.__name__,
-            )
-
-        document_class.ensure_indexes()
-
-    except (IndexOperationError, OperationFailure):
-        logger.warning(
-            "%s collection indexes verification failed, attempting to rebuild",
-            document_class.__name__,
-        )
-
-        # Unfortunately mongoengine sucks. The index that failed is only
-        # returned as part of the error message. I REALLY don't want to parse
-        # an error string to find the index to drop. Also, ME only verifies /
-        # creates the indexes in bulk - there's no way to iterate through the
-        # index definitions and try them one by one. Since our indexes should be
-        # small and built in the background anyway just redo all of them
-
-        try:
-            db = get_db()
-            db[document_class.__name__.lower()].drop_indexes()
-            logger.warning("Dropped indexes for %s collection", document_class.__name__)
-        except OperationFailure:
-            logger.error(
-                "Dropping %s indexes failed, please check the database configuration",
-                document_class.__name__,
-            )
-            raise
-
-        if document_class == Request:
-            logger.warning(
-                "Request definition is potentially out of date. About to check and "
-                "update if necessary - this could take several minutes."
-            )
-
-            # bg-utils 2.3.3 -> 2.3.4 create the `has_parent` field
-            _update_request_has_parent_model()
-
-            # bg-utils 2.4.6 -> 2.4.7 change parent to ReferenceField
-            _update_request_parent_field_type()
-
-            logger.warning("Request definition check/update complete.")
-
-        try:
-            document_class.ensure_indexes()
-            logger.warning("%s indexes rebuilt successfully", document_class.__name__)
-        except OperationFailure:
-            logger.error(
-                "%s index rebuild failed, please check the database configuration",
-                document_class.__name__,
-            )
-            raise
-
-    try:
-        if document_class.objects.count() > 0:
-            document_class.objects.first()
-        logger.info("%s table looks good", document_class.__name__)
-    except (FieldDoesNotExist, InvalidDocumentError):
-        logger.error(
-            (
-                "%s table failed to load properly to validate old indexes and "
-                "fields, please check the Change Log for any major model changes"
-            ),
-            document_class.__name__,
-        )
-        raise
-
-
-def _update_request_parent_field_type():
-    """Change GenericReferenceField to ReferenceField"""
-    from .models import Request
-
-    batch_size = config.get("db.prune.batch_size", default=-1)
-    updates = []
-    raw_collection = Request._get_collection()
-    for request in raw_collection.find({"parent._ref": {"$type": "object"}}):
-        updates.append(
-            UpdateOne(
-                {"_id": request["_id"]}, {"$set": {"parent": request["parent"]["_ref"]}}
-            )
-        )
-        if batch_size > 0 and len(updates) > batch_size:
-            raw_collection.bulk_write(updates, ordered=False)
-            updates = []
-    if len(updates) > 0:
-        raw_collection.bulk_write(updates, ordered=False)
-
-
-def _update_request_has_parent_model():
-    from .models import Request
-
-    updates = []
-    raw_collection = Request._get_collection()
-    updates.append(UpdateMany({"parent": None}, {"$set": {"has_parent": False}}))
-    updates.append(
-        UpdateMany({"parent": {"$not": {"$eq": None}}}, {"$set": {"has_parent": True}})
-    )
-    raw_collection.bulk_write(updates, ordered=False)
 
 
 def prune_topics():
@@ -871,3 +177,149 @@ def prune_topics():
             deleted_subscriber_count = deleted_subscriber_count + 1
 
     return deleted_topic_count, deleted_subscriber_count
+
+
+def unassign_files():
+    # Pruning Orphaned Files that think they are associated with a Request or Job
+    # but the Request or Job no longer exists in the database
+
+    job_pipeline = [
+        {
+            "$match": {
+                "owner_type": "JOB",
+                "job": {"$ne": None},
+            }
+        },
+        {
+            "$lookup": {
+                "from": "job",
+                "localField": "job",
+                "foreignField": "_id",
+                "as": "lookup_result",
+            }
+        },
+        {"$match": {"lookup_result": {"$size": 0}}},
+        {"$project": {"_id": 1}},
+    ]
+
+    file_ids = []
+    file_ids_str = []
+
+    for doc in File._get_collection().aggregate(job_pipeline):
+        file_ids.append(doc["_id"])
+        file_ids_str.append(str(doc["_id"]))
+
+    if len(file_ids) > 0:
+        batch_size = config.get("db.prune.batch_size")
+
+        if batch_size > 0:
+            for i in range(0, len(file_ids), batch_size):
+                File._get_collection().update_many(
+                    {"_id": {"$in": file_ids[i : i + batch_size]}},
+                    {
+                        "$unset": {
+                            "job": "",
+                            "request": "",
+                            "owner_id": "",
+                            "owner_type": "",
+                        }
+                    },
+                )
+
+                # Legacy code needs the owner field set to properly prune
+                if not is_legacy_mongodb():
+                    FileChunk._get_collection().update_many(
+                        {"file_id": {"$in": file_ids_str[i : i + batch_size]}},
+                        {"$unset": {"owner": ""}},
+                    )
+        else:
+            File._get_collection().update_many(
+                {"_id": {"$in": file_ids}},
+                {
+                    "$unset": {
+                        "job": "",
+                        "request": "",
+                        "owner_id": "",
+                        "owner_type": "",
+                    }
+                },
+            )
+
+            # Legacy code needs the owner field set to properly prune
+            if not is_legacy_mongodb():
+                FileChunk._get_collection().update_many(
+                    {"file_id": {"$in": file_ids_str}}, {"$unset": {"owner": ""}}
+                )
+        logger.error(f"{len(file_ids)} Files unassigned owners")
+    else:
+        logger.debug("No missed owners for Files")
+
+
+def cancel_outstanding():
+    """
+    Helper function for run to mark requests still outstanding after a certain
+    amount of time as canceled.
+
+    Update the newest requests first to give the oldest a chance to finish before
+    being canceled.
+    """
+
+    prune_config = config.get("db.prune")
+    cancel_threshold = prune_config.get("in_progress_request_expiration")
+    if cancel_threshold > 0:
+        timeout = datetime.now(timezone.utc) - timedelta(minutes=cancel_threshold)
+
+        outstanding_requests = Request.objects.filter(
+            status__in=["IN_PROGRESS", "CREATED"], updated_at__lte=timeout
+        ).order_by("-updated_at")
+
+        cancel_outstanding_requests(outstanding_requests)
+
+
+def cancel_outstanding_requests(outstanding_requests):
+    from beer_garden.events import publish
+
+    counter = 0
+    try:
+        for request in outstanding_requests:
+            try:
+                request.status = "CANCELED"
+                request.status_updated_at = datetime.now(timezone.utc)
+                request.save()
+
+                publish(
+                    Event(
+                        name=Events.REQUEST_CANCELED.name,
+                        payload_type="Request",
+                        payload=BrewtilsRequest(
+                            id=request.id,
+                            status=request.status,
+                            status_updated_at=request.status_updated_at,
+                            metadata=request.metadata,
+                            target_garden=request.target_garden,
+                        ),
+                        metadata={"UI_RELOAD": True},
+                    )
+                )
+                counter = counter + 1
+            except ModelValidationError:
+                # If the Request was already cancelled or completed, then skip cancelling it
+                logger.error(
+                    f"ModelValidationError: Failed to update outstanding Request {request.id}"
+                )
+            except DoesNotExist:
+                # If the Request was already deleted, then skip cancelling it
+                logger.error(
+                    (
+                        f"DoesNotExist: Attempted to update outstanding request {request.id} "
+                        "but does not exist in database"
+                    )
+                )
+
+    finally:
+
+        if counter > 0:
+            logger.error(f"{counter} outstanding Requests cancelled")
+
+        else:
+            logger.debug("No outstanding Requests cancelled")

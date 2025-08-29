@@ -4,6 +4,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from typing import List
 
+from brewtils.errors import ModelValidationError
 from brewtils.models import Event, Events, Garden, Operation, Request, System, Topic
 
 import beer_garden.config as config
@@ -188,6 +189,11 @@ def handle_event(event: Event):
 
             matching_systems = get_systems_regex(topics)
 
+            if not event.payload.metadata:
+                event.payload.metadata = {}
+
+            event.payload.metadata["_topic"] = event.metadata["topic"]
+
             requests = process_publish_event(matching_systems, event, topics)
 
             db.bulk_update(topics)
@@ -208,6 +214,14 @@ def route_request(create_request):
                 operation_type="REQUEST_CREATE",
                 model=create_request,
                 model_type="Request",
+            )
+        )
+    except ModelValidationError as ex:
+        logger.error(
+            (
+                "Invalid request for topic "
+                f"'{create_request.metadata.get('_topic', 'Missing Topic')}' "
+                f"for request {create_request}: {ex}"
             )
         )
     except Exception as ex:

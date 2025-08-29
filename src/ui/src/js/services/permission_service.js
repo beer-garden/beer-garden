@@ -13,7 +13,7 @@ export default function permissionService($rootScope) {
 
             let permissions = service.get_permissions(permission);
 
-            if ($rootScope.user.local_roles !== undefined) {
+            if ($rootScope.user.local_roles !== undefined && $rootScope.user.local_roles !== null) {
                 for (let i = 0; i < $rootScope.user.local_roles.length; i++) {
                     if (permissions.includes($rootScope.user.local_roles[i].permission)) {
                         if (service.checkRole($rootScope.user.local_roles[i], global = global, garden_name = garden_name, namespace = namespace, system_name = system_name, instance_name = instance_name, system_version = system_version, command_name = command_name)) {
@@ -23,7 +23,7 @@ export default function permissionService($rootScope) {
                 }
             }
 
-            if ($rootScope.user.upstream_roles !== undefined) {
+            if ($rootScope.user.upstream_roles !== undefined && $rootScope.user.upstream_roles !== null) {
                 for (let i = 0; i < $rootScope.user.upstream_roles.length; i++) {
                     if (permissions.includes($rootScope.user.upstream_roles[i].permission)) {
                         if (service.checkRole($rootScope.user.upstream_roles[i], global = global, garden_name = garden_name, namespace = namespace, system_name = system_name, instance_name = instance_name, system_version = system_version, command_name = command_name)) {

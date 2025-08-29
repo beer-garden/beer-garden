@@ -47,6 +47,7 @@ from mongoengine import (
     ReferenceField,
     StringField,
 )
+from mongoengine.connection import get_db
 from mongoengine.errors import DoesNotExist
 from pymongo.errors import DocumentTooLarge
 
@@ -353,7 +354,6 @@ class Request(MongoModel, Document):
     command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES)
     created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
     updated_at = DateTimeField(default=None, required=True)
-    expiration_at = DateTimeField(default=None, required=False)
     status_updated_at = DateTimeField()
     error_class = StringField(required=False)
     has_parent = BooleanField(required=False)
@@ -378,7 +378,6 @@ class Request(MongoModel, Document):
             {"name": "namespace_index", "fields": ["namespace"]},
             {"name": "status_index", "fields": ["status"]},
             {"name": "created_at_index", "fields": ["created_at"]},
-            {"name": "updated_at_index", "fields": ["updated_at"]},
             {"name": "status_updated_at_index", "fields": ["status_updated_at"]},
             {"name": "comment_index", "fields": ["comment"]},
             {"name": "parent_ref_index", "fields": ["parent"]},
@@ -481,16 +480,20 @@ class Request(MongoModel, Document):
             self.parameters = json.loads(self.parameters_gridfs.read().decode(encoding))
             self.parameters_gridfs = None
 
-        if self.has_parent:
-            try:
-                self.parent
-            except DoesNotExist:
-                # Unable to find parent, remove object to allow brewtils serializing
-                self.parent = None
+        try:
+            if self.parent is not None and self.has_parent:
+                pass
+        except DoesNotExist:
+            # Unable to find parent, remove object to allow brewtils serializing
+            self.parent = None
 
     def _spill_parameters_to_gridfs(self):
 
-        self.parameters_gridfs.put(json.dumps(self.parameters), encoding="utf-8")
+        self.parameters_gridfs.put(
+            json.dumps(self.parameters),
+            encoding="utf-8",
+            parameters=True,
+        )
         self.parameters = None
 
     def _pre_save(self):
@@ -498,26 +501,6 @@ class Request(MongoModel, Document):
 
         self.updated_at = datetime.datetime.utcnow()
         encoding = "utf-8"
-
-        # NOTE: The following was added for #1216, which aims to resolve the duplication
-        # and orphaning of files in gridfs. It is less than ideal to do an additional
-        # database lookup, but the various conversions to and from brewtils mean that
-        # we get here having lost the parameters_gridfs and output_gridfs values,
-        # preventing us from checking if they've already been populated. Rather than
-        # perform a potentially dangerous rework of the entire Request update flow,
-        # we opt to just pull the Request as it exists in the database so that we can
-        # check those gridfs field.
-
-        if self.parameters_gridfs.grid_id:
-            self.parameters = None
-
-        if self.output and self.output_gridfs.grid_id is None:
-            if sys.getsizeof(self.output) > REQUEST_MAX_PARAM_SIZE:
-                logger.debug("Output size too big, storing in gridfs")
-                self.output_gridfs.put(self.output, encoding=encoding)
-
-        if self.output_gridfs.grid_id:
-            self.output = None
 
         if not self.metadata:
             self.metadata = {}
@@ -545,67 +528,135 @@ class Request(MongoModel, Document):
                     self.has_parent = False
                     self.parent = None
 
-        if not self.expiration_at and self.status in BrewtilsRequest.COMPLETED_STATUSES:
-            # If parent or orphaned
-            if not self.has_parent or self.command_type in ["TEMP", "ADMIN"]:
-                if self.command_type == "INFO":
-                    ttl = config.get("db.prune.ttl.info", default=-1)
-                    if ttl > -1:
-                        self.expiration_at = self.created_at + datetime.timedelta(
-                            minutes=ttl
-                        )
-                elif self.command_type == "ACTION":
-                    ttl = config.get("db.prune.ttl.action", default=-1)
-                    if ttl > -1:
-                        self.expiration_at = self.created_at + datetime.timedelta(
-                            minutes=ttl
-                        )
-                else:
-                    # TEMP or ADMIN
-                    self.expiration_at = datetime.datetime.utcnow()
-
-            if self.has_parent and self.parent is not None and not self.expiration_at:
-                parent = Request.objects(id=self.parent.id).only("expiration_at")
-                if parent:
-                    expiration_at = getattr(parent, "expiration_at", None)
-                    if expiration_at:
-                        self.expiration_at = expiration_at
-
-        if not self.has_parent or self.parent is None:
-            if not self.root_command_type:
+        if not hasattr(self, "root_command_type") or self.root_command_type is None:
+            if self.command_type == "TEMP":
+                self.root_command_type = "TEMP"
+            elif not self.has_parent or self.parent is None:
                 self.root_command_type = self.command_type
 
-        elif not self.root_command_type:
-            # If this is a child request, we need to set the root_command_type
-            # to the same as the parent request
-            try:
-                parent_request = Request.objects.only("root_command_type").get(
-                    id=self.parent.id
+            else:
+                # If this is a child request, we need to set the root_command_type
+                # to the same as the parent request
+                try:
+                    parent_request = Request.objects.only("root_command_type").get(
+                        id=self.parent.id
+                    )
+                    self.root_command_type = parent_request.root_command_type
+                except DoesNotExist:
+                    # Parent request was deleted, so we need to set the root_command_type
+                    # to the same as this request
+                    self.root_command_type = self.command_type
+
+        if self.parameters_gridfs.grid_id:
+            get_db()["fs.files"].update_one(
+                {"_id": self.parameters_gridfs.grid_id},
+                {
+                    "$set": {
+                        "status": self.status,
+                        "updated_at": self.updated_at,
+                        "root_command_type": self.root_command_type,
+                    }
+                },
+            )
+            get_db()["fs.chunks"].update_many(
+                {"files_id": self.parameters_gridfs.grid_id},
+                {
+                    "$set": {
+                        "status": self.status,
+                        "updated_at": self.updated_at,
+                        "root_command_type": self.root_command_type,
+                        "parameter": True,
+                    }
+                },
+            )
+            self.parameters = None
+
+        if self.output and self.output_gridfs.grid_id is None:
+            if sys.getsizeof(self.output) > REQUEST_MAX_PARAM_SIZE:
+                logger.debug("Output size too big, storing in gridfs")
+                self.output_gridfs.put(
+                    self.output,
+                    encoding=encoding,
+                    output=True,
+                    root_command_type=self.root_command_type,
+                    status=self.status,
+                    updated_at=self.updated_at,
                 )
-                self.root_command_type = parent_request.root_command_type
-            except DoesNotExist:
-                # Parent request was deleted, so we need to set the root_command_type
-                # to the same as this request
-                self.root_command_type = self.command_type
 
-    def _set_child_expiration(self):
+                get_db()["fs.chunks"].update_many(
+                    {"files_id": self.output_gridfs.grid_id},
+                    {
+                        "$set": {
+                            "status": self.status,
+                            "updated_at": self.updated_at,
+                            "root_command_type": self.root_command_type,
+                            "output": True,
+                        }
+                    },
+                )
 
-        updates = Request.objects(parent=self, expiration_at=None).update(
-            set__expiration_at=self.expiration_at
-        )
-        if updates > 0:
-            for child_request in Request.objects(parent=self).only("expiration_at"):
-                child_request._set_child_expiration()
+        if self.output_gridfs.grid_id:
+            self.output = None
 
     def _post_save(self):
 
         if self.status == "CREATED":
             self._update_raw_file_references()
 
-        if (
-            self.expiration_at or not self.has_parent
-        ) and self.status in BrewtilsRequest.COMPLETED_STATUSES:
-            self._set_child_expiration()
+        self._update_raw_file_gridfs()
+        self._update_file_references(self.parameters)
+
+    def _update_raw_file_gridfs(self):
+        parameters = self.parameters or {}
+
+        for param_value in parameters.values():
+            if (
+                isinstance(param_value, dict)
+                and param_value.get("type") == "bytes"
+                and param_value.get("id") is not None
+            ):
+                # Can't do this in this function because it only happens for CREATE
+                get_db()["raw_file"].update_one(
+                    {"_id": ObjectIdField().to_mongo(param_value["id"])},
+                    {
+                        "$set": {
+                            "status": self.status,
+                            "updated_at": self.updated_at,
+                            "root_command_type": self.root_command_type,
+                        }
+                    },
+                )
+
+                raw_file = get_db()["raw_file"].find_one(
+                    {"_id": ObjectIdField().to_mongo(param_value["id"])}, {"file": 1}
+                )
+
+                if raw_file is None or raw_file.get("file") is None:
+                    # If the file is None, it means it wasn't uploaded to GridFS
+                    continue
+
+                get_db()["fs.files"].update_one(
+                    {"_id": raw_file.get("file")},
+                    {
+                        "$set": {
+                            "status": self.status,
+                            "updated_at": self.updated_at,
+                            "root_command_type": self.root_command_type,
+                            "parameter": True,
+                        }
+                    },
+                )
+                get_db()["fs.chunks"].update_many(
+                    {"files_id": raw_file.get("file")},
+                    {
+                        "$set": {
+                            "status": self.status,
+                            "updated_at": self.updated_at,
+                            "root_command_type": self.root_command_type,
+                            "parameter": True,
+                        }
+                    },
+                )
 
     def _update_raw_file_references(self):
         parameters = self.parameters or {}
@@ -640,6 +691,38 @@ class Request(MongoModel, Document):
                         f"Error locating RawFile with id {param_value['id']} "
                         "while saving Request {self.id}"
                     )
+
+    def _update_file_references(self, parameters=None):
+        parameters = parameters or {}
+
+        if isinstance(parameters, dict):
+            if parameters.get("type") == "chunk":
+                file_id = parameters.get("details", {}).get("file_id")
+                get_db()["file"].update_one(
+                    {"_id": file_id},
+                    {
+                        "$set": {
+                            "status": self.status,
+                            "updated_at": self.updated_at,
+                            "root_command_type": self.root_command_type,
+                        }
+                    },
+                )
+                get_db()["file_chunk"].update_many(
+                    {"file_id": file_id},
+                    {
+                        "$set": {
+                            "status": self.status,
+                            "updated_at": self.updated_at,
+                            "root_command_type": self.root_command_type,
+                        }
+                    },
+                )
+
+            # If it's not a resolvable it might be a model, so recurse down and check
+            else:
+                for value in parameters.values():
+                    self._update_file_references(value)
 
     def _delete_gridfs_files(self):
         try:
@@ -751,6 +834,15 @@ class Request(MongoModel, Document):
     def clean_update(self):
         """Ensure that the update would not result in an illegal status transition"""
         # Get the original status
+
+        # NOTE: The following was added for #1216, which aims to resolve the duplication
+        # and orphaning of files in gridfs. It is less than ideal to do an additional
+        # database lookup, but the various conversions to and from brewtils mean that
+        # we get here having lost the parameters_gridfs and output_gridfs values,
+        # preventing us from checking if they've already been populated. Rather than
+        # perform a potentially dangerous rework of the entire Request update flow,
+        # we opt to just pull the Request as it exists in the database so that we can
+        # check those gridfs field.
 
         try:
             old_request = Request.objects.only(
@@ -1112,7 +1204,11 @@ class Replication(MongoModel, Document):
 
     meta = {
         "indexes": [
-            {"fields": ["expires_at"], "expireAfterSeconds": 0},
+            {
+                "name": "expires_at_index",
+                "fields": ["expires_at"],
+                "expireAfterSeconds": 0,
+            },
         ],
     }
 
@@ -1371,6 +1467,11 @@ class File(MongoModel, Document):
     # a reverse_delete_rule. Alas!
     owner = DummyField()
 
+    # TTL Fields
+    status = StringField()
+    created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
+    root_command_type = StringField()
+
 
 class FileChunk(MongoModel, Document):
     brewtils_model = brewtils.models.FileChunk
@@ -1381,11 +1482,22 @@ class FileChunk(MongoModel, Document):
     # Delete Rule (2) = CASCADE; This causes this document to be deleted when the owner doc is.
     owner = LazyReferenceField(File, required=False, reverse_delete_rule=CASCADE)
 
+    # TTL Fields
+    status = StringField()
+    created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
+    updated_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
+    root_command_type = StringField()
+
 
 class RawFile(Document):
     file = FileField()
     created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
     request = LazyReferenceField(Request, required=False, reverse_delete_rule=CASCADE)
+
+    # TTL Fields
+    status = StringField()
+    updated_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
+    root_command_type = StringField()
 
     meta = {"queryset_class": FileFieldHandlingQuerySet}
 
@@ -1513,9 +1625,13 @@ class UserToken(MongoModel, Document):
 
     meta = {
         "indexes": [
-            "username",
-            "uuid",
-            {"fields": ["expires_at"], "expireAfterSeconds": 0},
+            {"name": "username_index", "fields": ["username"]},
+            {"name": "uuid_index", "fields": ["uuid"]},
+            {
+                "name": "expires_at_index",
+                "fields": ["expires_at"],
+                "expireAfterSeconds": 0,
+            },
         ]
     }
 
@@ -1526,4 +1642,5 @@ class Configuration(Document):
     # be used for optional configuration.
     action_ttl = IntField(default=-1)
     info_ttl = IntField(default=15)
+    file_ttl = IntField(default=15)
     version = StringField(default="0.0.0")

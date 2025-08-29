@@ -79,18 +79,21 @@ def get_systems(**kwargs) -> List[System]:
     latest_systems = []
 
     if filter_running:
-        # Rebuild group_systems to only contain running instances in case filter_latest=True
         for group_key in group_systems:
             systems = group_systems[group_key]
             running_groups[group_key] = []
             for system in systems:
+                # Only include systems with current namespace/name that have running instances
+                # This allows filter latest to select only from pool of running systems
                 if system.instances and any(
                     "RUNNING" == instance.status for instance in system.instances
                 ):
                     running_groups[group_key].append(system)
                     running_systems.append(system)
+            # If no running systems with current namespace/name then add them anyway
+            # This allows filter latest to still return a system even if not running
             if not running_groups[group_key]:
-                del running_groups[group_key]
+                running_groups[group_key] = [system for system in systems]
         group_systems = running_groups
 
     if filter_latest:
@@ -98,14 +101,14 @@ def get_systems(**kwargs) -> List[System]:
             if len(group_systems[group_key]) == 1:
                 latest_systems.append(group_systems[group_key][0])
             else:
-                latest_systems.append(_determine_latest(group_systems[group_key]))
+                latest_systems.append(determine_latest(group_systems[group_key]))
     else:
         return running_systems
 
     return latest_systems
 
 
-def _determine_latest(systems):
+def determine_latest(systems):
     # type: (Iterable[System]) -> Optional[System]
     """Returns the system with the latest version from the provided list of Systems.
     Any version adhering to PEP440 is treated as "later" than a version that does

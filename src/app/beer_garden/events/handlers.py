@@ -144,6 +144,7 @@ def add_internal_events_handler(event_manager):
                 Events.JOB_DELETED,
                 Events.JOB_EXECUTED,
                 Events.DIRECTORY_FILE_CHANGE,
+                Events.ENTRY_STARTED,
             ],
             "local_only": True,
             "unique_data": False,  # Can not unique due to Job Execute Events

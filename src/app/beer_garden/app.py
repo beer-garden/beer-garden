@@ -20,7 +20,7 @@ import beer_garden.api
 import beer_garden.api.entry_point
 import beer_garden.config as config
 import beer_garden.db.api as db
-import beer_garden.db.mongo.pruner
+import beer_garden.db.mongo.legacy_pruner
 import beer_garden.events
 import beer_garden.events.handlers
 import beer_garden.garden
@@ -298,9 +298,6 @@ class Application(StoppableThread):
         self.logger.debug("Starting helper threads...")
         for helper_thread in self.helper_threads:
             helper_thread.start()
-
-        if not config.get("replication.enabled"):
-            self.scheduler.start()
 
         if config.get("parent.stomp.enabled") or config.get("parent.http.enabled"):
             self.logger.debug("Publishing to Parent that we are online")

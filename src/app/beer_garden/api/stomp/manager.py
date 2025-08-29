@@ -144,6 +144,10 @@ class StompManager(BaseProcessor):
     def _event_handler(self, event):
         """Internal event handler"""
         if not event.error:
+            if "REQUEST" in event.name and event.payload.command_type == "TEMP":
+                # If this is a temporary request, we don't want to publish it
+                return
+
             if event.name in (
                 Events.GARDEN_STARTED.name,
                 Events.GARDEN_UPDATED.name,
