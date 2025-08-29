@@ -1,3 +1,4 @@
+import copy
 import logging
 from typing import List
 
@@ -253,17 +254,11 @@ def subscriber_systems_validate(subscriber, systems, topic_name: str):
                                 return True
 
 
-def sync_garden_topics():
+def sync_topics():
 
     logger.info("Running Topic Sync")
 
-    topics = get_all_topics()
-
-    topics_dict = {}
-    for topic in topics:
-        topics_dict[topic.name] = topic
-
-    updated_subscribers, created_topics = sync_garden_topics_loop(topics_dict)
+    updated_subscribers, created_topics = sync_topics_batch()
 
     deleted_topic_count, deleted_subscriber_count = prune_topics()
 
@@ -321,7 +316,7 @@ def sync_garden_topic_add(subscriber: Subscriber, topic_name: str, topics_dict: 
     return updated_subscribers, created_topics
 
 
-def sync_garden_topics_loop(topics_dict: dict):
+def sync_topics_batch():
     """
     Synchronizes topics for all systems, commands, and instances.
 
@@ -331,15 +326,15 @@ def sync_garden_topics_loop(topics_dict: dict):
     system's namespace, name, version, instance name, and command name. It then creates a topic
     with the generated name.
 
-    Args:
-        topics_dict (dict): The list of all known topics that are cached in memory
-
     Returns:
         None
     """
 
-    updated_subscribers = 0
-    created_topics = 0
+    cached_topics = {}
+    updated_subscribers, created_topics = 0, 0
+    for topic in get_all_topics():
+        cached_topics[topic.name] = {"topic": topic, "updated": False}
+
     for system in db.query(
         System,
         include_fields=[
@@ -367,11 +362,24 @@ def sync_garden_topics_loop(topics_dict: dict):
                             command=command.name,
                             subscriber_type="ANNOTATED",
                         )
-                        updated, created = sync_garden_topic_add(
-                            subscriber, topic, topics_dict
-                        )
-                        updated_subscribers = updated_subscribers + updated
-                        created_topics = created_topics + created
+
+                        if topic not in cached_topics:
+                            cached_topics[topic] = {
+                                "topic": Topic(
+                                    name=topic, subscribers=[copy.deepcopy(subscriber)]
+                                ),
+                                "updated": True,
+                            }
+                            created_topics = created_topics + 1
+
+                        elif (
+                            subscriber not in cached_topics[topic]["topic"].subscribers
+                        ):
+                            cached_topics[topic]["topic"].subscribers.append(
+                                copy.deepcopy(subscriber)
+                            )
+                            cached_topics[topic]["updated"] = True
+                            updated_subscribers = updated_subscribers + 1
 
                 if not default_topic:
                     topic_generated = (
@@ -391,11 +399,33 @@ def sync_garden_topics_loop(topics_dict: dict):
                     command=command.name,
                     subscriber_type="GENERATED",
                 )
-                updated, created = sync_garden_topic_add(
-                    subscriber, topic_generated, topics_dict
-                )
-                updated_subscribers = updated_subscribers + updated
-                created_topics = created_topics + created
+
+                if topic_generated not in cached_topics:
+                    cached_topics[topic_generated] = {
+                        "topic": Topic(
+                            name=topic_generated,
+                            subscribers=[copy.deepcopy(subscriber)],
+                        ),
+                        "updated": True,
+                    }
+                    created_topics = created_topics + 1
+
+                elif (
+                    subscriber
+                    not in cached_topics[topic_generated]["topic"].subscribers
+                ):
+                    cached_topics[topic_generated]["topic"].subscribers.append(
+                        copy.deepcopy(subscriber)
+                    )
+                    cached_topics[topic_generated]["updated"] = True
+                    updated_subscribers = updated_subscribers + 1
+
+    topic_updates = []
+    for _, topic_info in cached_topics.items():
+        if topic_info["updated"]:
+            topic_updates.append(topic_info["topic"])
+
+    db.bulk_update(topic_updates)
 
     return updated_subscribers, created_topics
 
