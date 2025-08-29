@@ -342,11 +342,9 @@ class TopicListAPI(BaseHandler):
         description: |
           The body of the request needs to contain a set of instructions detailing the
           updates to apply. Currently the only operations are:
-          * sync_garden_topics
           * sync_all_topics
           ```JSON
           [
-            { "operation": "sync_garden_topics", "value": {garden} }
             { "operation": "sync_all_topics"}
           ]
           ```
@@ -376,15 +374,7 @@ class TopicListAPI(BaseHandler):
         for op in patch:
             operation = op.operation.lower()
 
-            if operation == "sync_garden_topics":
-                await self.client(
-                    Operation(
-                        operation_type="TOPIC_SYNC_GARDEN",
-                        kwargs={"garden_name": op.value},
-                    )
-                )
-
-            elif operation == "sync_all_topics":
+            if operation == "sync_all_topics":
                 await self.client(
                     Operation(
                         operation_type="TOPIC_SYNC_GARDEN",

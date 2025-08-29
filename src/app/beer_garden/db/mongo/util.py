@@ -126,31 +126,27 @@ def prune_topics():
         None
     """
 
-    from .models import Garden, System, Topic
+    from .models import System, Topic
 
     command_hash = []
 
-    for garden in Garden.objects().only(
+    for system in System.objects().only(
+        "garden_name",
         "name",
-        "systems.name",
-        "systems.namespace",
-        "systems.version",
-        "systems.instances.name",
-        "systems.commands.name",
+        "namespace",
+        "version",
+        "instances.name",
+        "commands.name",
     ):
-        if garden.name == config.get("garden.name"):
-            garden.systems = System.objects(local=True).only(
-                "name", "namespace", "version", "instances.name", "commands.name"
-            )
-        for system in garden.systems:
-            for instance in system.instances:
-                for command in system.commands:
-                    command_hash.append(
-                        (
-                            f"{garden.name}.{system.namespace}.{system.name}."
-                            f"{system.version}.{instance.name}.{command.name}"
-                        )
+
+        for instance in system.instances:
+            for command in system.commands:
+                command_hash.append(
+                    (
+                        f"{system.garden_name}.{system.namespace}.{system.name}."
+                        f"{system.version}.{instance.name}.{command.name}"
                     )
+                )
 
     deleted_topic_count = 0
     deleted_subscriber_count = 0

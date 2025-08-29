@@ -5,7 +5,6 @@ from brewtils.errors import PluginError
 from brewtils.models import Event, Garden, Subscriber, System, Topic
 from mongoengine import DoesNotExist
 
-import beer_garden.config as config
 import beer_garden.db.api as db
 
 logger = logging.getLogger(__name__)
@@ -254,11 +253,9 @@ def subscriber_systems_validate(subscriber, systems, topic_name: str):
                                 return True
 
 
-def sync_garden_topics(garden_name: str = None):
-    if garden_name is None:
-        garden_name
+def sync_garden_topics():
 
-    logger.info(f"Running Garden Topic Sync for {garden_name}")
+    logger.info("Running Topic Sync")
 
     topics = get_all_topics()
 
@@ -266,9 +263,7 @@ def sync_garden_topics(garden_name: str = None):
     for topic in topics:
         topics_dict[topic.name] = topic
 
-    updated_subscribers, created_topics = sync_garden_topics_loop(
-        garden_name, topics_dict
-    )
+    updated_subscribers, created_topics = sync_garden_topics_loop(topics_dict)
 
     deleted_topic_count, deleted_subscriber_count = prune_topics()
 
@@ -326,22 +321,18 @@ def sync_garden_topic_add(subscriber: Subscriber, topic_name: str, topics_dict: 
     return updated_subscribers, created_topics
 
 
-def sync_garden_topics_loop(garden_name: str, topics_dict: dict):
+def sync_garden_topics_loop(topics_dict: dict):
     """
-    Synchronizes topics for a given garden and its systems, commands, and instances.
+    Synchronizes topics for all systems, commands, and instances.
 
-    This function iterates through all systems in the provided garden, and for each system,
+    This function iterates through all systems, and for each system,
     it iterates through its commands and instances to create topics. If a command has predefined
     topics, it creates topics for each one. If not, it generates a default topic based on the
     system's namespace, name, version, instance name, and command name. It then creates a topic
     with the generated name.
 
-    Additionally, if the garden has child gardens, the function recursively synchronizes topics
-    for each child garden.
-
     Args:
-        garden (Garden): The garden object containing systems, commands, and instances to
-                         synchronize topics for.
+        topics_dict (dict): The list of all known topics that are cached in memory
 
     Returns:
         None
@@ -351,7 +342,6 @@ def sync_garden_topics_loop(garden_name: str, topics_dict: dict):
     created_topics = 0
     for system in db.query(
         System,
-        garden_name=garden_name,
         include_fields=[
             "garden_name",
             "namespace",
@@ -406,15 +396,6 @@ def sync_garden_topics_loop(garden_name: str, topics_dict: dict):
                 )
                 updated_subscribers = updated_subscribers + updated
                 created_topics = created_topics + created
-
-    if garden_name == config.get("garden.name"):
-        filter_params = {"connection_type__ne": "LOCAL", "has_parent": False}
-    else:
-        filter_params = {"parent": garden_name}
-    for child in db.query(Garden, filter_params=filter_params, include_fields=["name"]):
-        updated, created = sync_garden_topics_loop(child.name, topics_dict)
-        updated_subscribers = updated_subscribers + updated
-        created_topics = created_topics + created
 
     return updated_subscribers, created_topics
 
