@@ -35,6 +35,7 @@ TBD
 - Updated Request and GridFS to utilize MongoDB Expiration At feature in the indexes to 
   handle pruning. (#1940)
 - Scheduler starts after the HTTP entry point has started to ensure plugins have a chance to start running (#1963)
+- Fixed bug where Pub/Sub generated requests did not map properly root_command_type field (#1968)
 
 ## 3.30.0rc2
 
