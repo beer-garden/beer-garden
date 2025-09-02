@@ -945,6 +945,7 @@ class System(MongoModel, Document):
     prefix_topic = StringField()
     requires = ListField(field=StringField())
     requires_timeout = IntField(default=300)
+    garden_name = StringField()
 
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves
@@ -979,12 +980,6 @@ class System(MongoModel, Document):
 
         try:
             if len(self.instances) > 0:
-                if self.local:
-                    garden_name = config.get("garden.name")
-                else:
-                    garden_name = Garden.objects.get(
-                        systems__in=[System.objects.get(id=self.id)]
-                    ).name
                 for command in self.commands:
                     for instance in self.instances:
                         if len(command.topics) > 0:
@@ -994,7 +989,7 @@ class System(MongoModel, Document):
 
                                     for subscriber in db_topic.subscribers:
                                         if (
-                                            subscriber.garden == garden_name
+                                            subscriber.garden == self.garden_name
                                             and subscriber.system == self.name
                                             and subscriber.namespace == self.namespace
                                             and subscriber.version == self.version
@@ -1010,7 +1005,7 @@ class System(MongoModel, Document):
 
                         if not self.prefix_topic:
                             topic_generated = (
-                                f"{garden_name}.{self.namespace}."
+                                f"{self.garden_name}.{self.namespace}."
                                 f"{self.name}.{self.version}."
                                 f"{instance.name}.{command.name}"
                             )
@@ -1022,7 +1017,7 @@ class System(MongoModel, Document):
 
                             for subscriber in db_topic.subscribers:
                                 if (
-                                    subscriber.garden == garden_name
+                                    subscriber.garden == self.garden_name
                                     and subscriber.system == self.name
                                     and subscriber.namespace == self.namespace
                                     and subscriber.version == self.version
@@ -1055,14 +1050,15 @@ class System(MongoModel, Document):
                 ]
 
         if self.local:
-            self.save_topics(config.get("garden.name"))
+            self.garden_name = config.get("garden.name")
+            self.save_topics()
 
         return super().save(**kwargs)
 
     def update(self, **kwargs):
 
         if self.local:
-            self.save_topics(config.get("garden.name"))
+            self.save_topics()
 
         return super().update(**kwargs)
 
@@ -1075,11 +1071,11 @@ class System(MongoModel, Document):
             and self.local
             and ("commands" in update or "push_all__instances" in update)
         ):
-            self.save_topics(config.get("garden.name"))
+            self.save_topics()
 
         return is_updated
 
-    def save_topics(self, garden_name: str):
+    def save_topics(self):
 
         if len(self.instances) > 0:
             for command in self.commands:
@@ -1093,7 +1089,7 @@ class System(MongoModel, Document):
 
                             db_topic.add_subscriber(
                                 Subscriber(
-                                    garden=garden_name,
+                                    garden=self.garden_name,
                                     namespace=self.namespace,
                                     system=self.name,
                                     version=self.version,
@@ -1105,7 +1101,7 @@ class System(MongoModel, Document):
 
                     if not self.prefix_topic:
                         topic_generated = (
-                            f"{garden_name}.{self.namespace}."
+                            f"{self.garden_name}.{self.namespace}."
                             f"{self.name}.{self.version}."
                             f"{instance.name}.{command.name}"
                         )
@@ -1119,7 +1115,7 @@ class System(MongoModel, Document):
 
                         db_topic.add_subscriber(
                             Subscriber(
-                                garden=garden_name,
+                                garden=self.garden_name,
                                 namespace=self.namespace,
                                 system=self.name,
                                 version=self.version,
@@ -1378,20 +1374,20 @@ class Garden(MongoModel, Document):
                 version,
             )
 
-        # Check previous save for System records
-        old_garden = None
-
-        if Garden.objects(name=self.name).count() > 0:
-            old_garden = Garden.objects.get(name=self.name)
-
         # we leverage the fact that systems must be unique up to the triple of their
         # namespaces, names and versions
         child_systems_already_known = {}
-        if old_garden:
-            child_systems_already_known = {
-                _get_system_triple(system): str(system.id)
-                for system in old_garden.systems
-            }
+        for system in System.objects(garden_name=self.name).only(
+            "garden_name",
+            "namespace",
+            "name",
+            "version",
+            "prefix_topic",
+            "instances.name",
+            "commands.topics",
+            "commands.name",
+        ):
+            child_systems_already_known[_get_system_triple(system)] = system.id
 
         local_systems = [
             _get_system_triple(system)
@@ -1420,8 +1416,9 @@ class Garden(MongoModel, Document):
                         remove_system(system_id=system_id_to_remove)
 
                 try:
+                    system.garden_name = self.name
                     system.save()
-                    system.save_topics(self.name)
+                    system.save_topics()
                 except Exception as ex:
                     logger.error(
                         f"Error saving system {str(system)} in garden {self.name}: {ex}"
@@ -1442,6 +1439,8 @@ class Garden(MongoModel, Document):
                 remove_system(system_id=bad_system_id)
             except Exception:
                 remove_system(system=BrewtilsSystem(id=str(bad_system_id)))
+
+        self.systems = System.objects(garden_name=self.name)
 
 
 class SystemGardenMapping(MongoModel, Document):

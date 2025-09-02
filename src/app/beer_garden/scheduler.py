@@ -420,10 +420,10 @@ class MixedScheduler(object):
 
         # Add scheduled job for validating Generated and Annotated topics
         self.add_schedule(
-            beer_garden.topic.sync_garden_topics,
+            beer_garden.topic.sync_topics,
             interval=15,
             max_instances=1,
-            name="sync_garden_topics",
+            name="sync_topics",
         )
 
         # Add Garden Sync Scheduler

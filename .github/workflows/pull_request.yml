@@ -303,6 +303,9 @@ jobs:
           retry_wait_seconds: 5
           command: curl http://localhost:2337/config
 
+      - name: Run Topic Sync
+        run: curl -X PATCH --data-raw '{"operations":[{"operation":"sync_all_topics"}]}' http://localhost:2337/api/v1/topics 
+
       - name: Grab logs from Beer-Garden
         run: BG='unstable' docker compose logs --tail 100 beer-garden
         working-directory: ./docker/docker-compose
