@@ -72,7 +72,7 @@ class TestPublish(object):
     def test_one_trigger_topic_subscriber(self, topic1):
         newtopic = self.easy_client.create_topic(topic1)
 
-        updated_topic = self.easy_client.find_unique_topic(name=topic1.name)
+        updated_topic = self.easy_client.get_topic(name=topic1.name)
         assert updated_topic.id == newtopic.id
 
         for sub in topic1.subscribers:
@@ -99,8 +99,8 @@ class TestPublish(object):
     def test_one_trigger_topic_command_and_subscriber(self, topic):
         topic = self.easy_client.create_topic(topic)
 
-        updated_topic = self.easy_client.find_unique_topic(name=topic1.name)
-        assert updated_topic.id == newtopic.id
+        updated_topic = self.easy_client.get_topic(name=topic1.name)
+        assert updated_topic.id == topic.id
 
         for sub in topic1.subscribers:
             matched = False
@@ -113,7 +113,7 @@ class TestPublish(object):
         request_dict = self.request_generator.generate_request(
             parameters={"topic": "topic", "value": "test"}
         )
-        request = self.easy_client.create_request(request_dict)
+        request = self.easy_client.get_topic(request_dict)
 
         completed_request = self.wait_for_request(request, 1)
 
@@ -129,7 +129,7 @@ class TestPublish(object):
             parameters={"topic": "topic", "value": "test"}
         )
 
-        topic = self.easy_client.find_unique_topic(name="topic")
+        topic = self.easy_client.get_topic(name="topic")
         assert len(topic.subscribers) == 1
         
         request = self.easy_client.create_request(request_dict)
@@ -146,7 +146,7 @@ class TestPublish(object):
             parameters={"topic": "topic2", "value": "test"}
         )
 
-        topic = self.easy_client.find_unique_topic(name="topic2")
+        topic = self.easy_client.get_topic(name="topic2")
         assert len(topic.subscribers) == 2
 
         request = self.easy_client.create_request(request_dict)
@@ -166,7 +166,7 @@ class TestPublish(object):
             parameters={"topic": "topic1", "value": "test"}
         )
 
-        topic = self.easy_client.find_unique_topic(name="topic1")
+        topic = self.easy_client.get_topic(name="topic1")
         assert len(topic.subscribers) == 3
 
         request = self.easy_client.create_request(request_dict)
