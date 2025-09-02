@@ -377,7 +377,7 @@ class TopicListAPI(BaseHandler):
             if operation == "sync_all_topics":
                 await self.client(
                     Operation(
-                        operation_type="TOPIC_SYNC_GARDEN",
+                        operation_type="TOPIC_SYNC",
                     )
                 )
 
