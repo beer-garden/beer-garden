@@ -36,6 +36,7 @@ TBD
   handle pruning. (#1940)
 - Scheduler starts after the HTTP entry point has started to ensure plugins have a chance to start running (#1963)
 - Cancel Requests only handle locally executed Requests (#1967)
+- Fixed bug where Pub/Sub generated requests did not map properly root_command_type field (#1968)
 
 ## 3.30.0rc2
 
