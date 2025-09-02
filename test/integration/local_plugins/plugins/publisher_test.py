@@ -94,7 +94,7 @@ class TestPublish(object):
         completed_request = self.wait_for_request(request, 1)
 
         assert len(completed_request.children) == 1
-        
+
         for child_request in completed_request.children:
             assert child_request.command == "subscribe_wildcard_topics"
 
