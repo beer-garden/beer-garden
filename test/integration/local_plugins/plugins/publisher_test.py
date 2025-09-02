@@ -71,6 +71,18 @@ class TestPublish(object):
 
     def test_one_trigger_topic_subscriber(self, topic1):
         newtopic = self.easy_client.create_topic(topic1)
+
+        updated_topic = self.easy_client.find_unique_topic(name=topic1.name)
+        assert updated_topic.id == newtopic.id
+
+        for sub in topic1.subscribers:
+            matched = False
+            for updated_sub in updated_topic.subscribers:
+                if sub.command == updated_sub.command:
+                    matched = True
+                    break
+            assert matched
+
         request_dict = self.request_generator.generate_request(
             parameters={"topic": "newtopic", "value": "test"}
         )
@@ -86,6 +98,18 @@ class TestPublish(object):
 
     def test_one_trigger_topic_command_and_subscriber(self, topic):
         topic = self.easy_client.create_topic(topic)
+
+        updated_topic = self.easy_client.find_unique_topic(name=topic1.name)
+        assert updated_topic.id == newtopic.id
+
+        for sub in topic1.subscribers:
+            matched = False
+            for updated_sub in updated_topic.subscribers:
+                if sub.command == updated_sub.command:
+                    matched = True
+                    break
+            assert matched
+
         request_dict = self.request_generator.generate_request(
             parameters={"topic": "topic", "value": "test"}
         )
@@ -104,6 +128,10 @@ class TestPublish(object):
         request_dict = self.request_generator.generate_request(
             parameters={"topic": "topic", "value": "test"}
         )
+
+        topic = self.easy_client.find_unique_topic(name="topic")
+        assert len(topic.subscribers) == 1
+        
         request = self.easy_client.create_request(request_dict)
 
         completed_request = self.wait_for_request(request, 1)
@@ -117,6 +145,10 @@ class TestPublish(object):
         request_dict = self.request_generator.generate_request(
             parameters={"topic": "topic2", "value": "test"}
         )
+
+        topic = self.easy_client.find_unique_topic(name="topic2")
+        assert len(topic.subscribers) == 2
+
         request = self.easy_client.create_request(request_dict)
 
         completed_request = self.wait_for_request(request, 2)
@@ -133,6 +165,10 @@ class TestPublish(object):
         request_dict = self.request_generator.generate_request(
             parameters={"topic": "topic1", "value": "test"}
         )
+
+        topic = self.easy_client.find_unique_topic(name="topic1")
+        assert len(topic.subscribers) == 3
+
         request = self.easy_client.create_request(request_dict)
 
         completed_request = self.wait_for_request(request, 3)
