@@ -514,7 +514,7 @@ def bulk_update(objs: List[ModelItem]) -> None:
         if mongo_class not in bulk_operations:
             bulk_operations[mongo_class] = []
 
-        if hasattr(mongo_obj, "_id") and mongo_obj._id is not None:
+        if hasattr(mongo_obj, "id") and mongo_obj.id is not None:
             bulk_operations[mongo_class].append(
                 UpdateOne(
                     {"_id": mongo_obj.id}, {"$set": mongo_obj.to_mongo().to_dict()}
