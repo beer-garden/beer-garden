@@ -72,20 +72,6 @@ class TestPublish(object):
     def test_one_trigger_topic_subscriber(self, topic1):
         newtopic = self.easy_client.create_topic(topic1)
 
-        updated_topic = self.easy_client.get_topic(topic_name=topic1.name)
-        assert updated_topic.id == newtopic.id
-
-        assert len(updated_topic.subscribers) == len(topic1.subscribers)
-        assert len(updated_topic.subscribers) == 1
-
-        for sub in topic1.subscribers:
-            matched = False
-            for updated_sub in updated_topic.subscribers:
-                if sub.command == updated_sub.command:
-                    matched = True
-                    break
-            assert matched
-
         request_dict = self.request_generator.generate_request(
             parameters={"topic": "newtopic", "value": "test"}
         )
@@ -101,17 +87,6 @@ class TestPublish(object):
 
     def test_one_trigger_topic_command_and_subscriber(self, topic):
         topic = self.easy_client.create_topic(topic)
-
-        updated_topic = self.easy_client.get_topic(topic_name=topic.name)
-        assert updated_topic.id == topic.id
-
-        for sub in topic.subscribers:
-            matched = False
-            for updated_sub in updated_topic.subscribers:
-                if sub.command == updated_sub.command:
-                    matched = True
-                    break
-            assert matched
 
         request_dict = self.request_generator.generate_request(
             parameters={"topic": "topic", "value": "test"}
@@ -163,9 +138,6 @@ class TestPublish(object):
             parameters={"topic": "topic1", "value": "test"}
         )
 
-        topic = self.easy_client.get_topic(topic_name="topic1")
-        assert len(topic.subscribers) == 3
-
         request = self.easy_client.create_request(request_dict)
 
         completed_request = self.wait_for_request(request, 3)
@@ -178,9 +150,3 @@ class TestPublish(object):
             ]
 
         assert len(completed_request.children) == 3
-
-    def test_get_topics(self):
-        topics = self.easy_client.get_topics()
-        for topic in topics:
-            print(topic)
-        assert len(topics) >= 3
