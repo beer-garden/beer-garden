@@ -196,7 +196,13 @@ def handle_event(event: Event):
 
             requests = process_publish_event(matching_systems, event, topics)
 
-            db.bulk_update(topics)
+            try:
+
+                db.bulk_update(topics)
+
+            except Exception as ex:
+                logger.exception(f"Error updating topics: {ex}")
+                raise ex
 
             if requests:
                 # This could be done by generating an asyncio loop to handle
