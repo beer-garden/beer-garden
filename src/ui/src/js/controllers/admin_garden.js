@@ -115,6 +115,9 @@ export default function adminGardenController(
   $scope.rescan = function() {
     GardenService.rescanGardens();
   };
+  $scope.rescanGarden = function(garden) {
+    GardenService.rescanGarden(garden.name);
+  };
   $scope.syncGarden = function(garden) {
     GardenService.syncGarden(garden.name);
   };
@@ -400,6 +403,10 @@ export default function adminGardenController(
       case 'GARDEN_SYNC':
         if (event.payload.name != $scope.config.gardenName) {
           $scope.pushAlert('info', 'Processing Garden sync event from ' + event.payload.name);
+        }
+      case 'GARDEN_RESCAN':
+        if (event.payload.name != $scope.config.gardenName) {
+          $scope.pushAlert('info', 'Processing Garden rescan event from ' + event.payload.name);
         }
     }
   });

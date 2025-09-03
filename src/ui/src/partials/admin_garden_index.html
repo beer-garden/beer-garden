@@ -102,6 +102,8 @@
             ng-if="isChild(garden)" title="Start Garden {{garden.name}}"></button>
           <button type="button" class="btn btn-default fa fa-stop" ng-click="stopGarden(garden)"
             ng-if="isChild(garden)" title="Stop Garden {{garden.name}}"></button>
+          <button type="button" class="btn btn-default fa fa-folder" ng-click="rescanGarden(garden)"
+            title="Rescan Garden {{garden.name}}"></button>
           <button type="button" class="btn btn-default fa fa-refresh" ng-click="syncGarden(garden)"
             title="Sync Garden {{garden.name}}"></button>
         </div>

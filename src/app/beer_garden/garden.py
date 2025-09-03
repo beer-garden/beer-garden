@@ -789,73 +789,94 @@ def load_garden_config(garden: Garden = None, garden_name: str = None):
     return db.modify(garden, **updates)
 
 
-def rescan(sync_gardens: bool = False):
-    if config.get("children.directory"):
-        loaded_gardens = []
-        children_directory = Path(config.get("children.directory"))
-        if children_directory.exists():
-            for path in children_directory.iterdir():
-                path_parts = path.parts
+def rescan(sync_gardens: bool = False, sync_target: str = None):
+    from beer_garden.router import route
 
-                if len(path_parts) == 0:
-                    continue
-                if path_parts[-1].startswith("."):
-                    continue
+    # If a Garden Name is provided, determine where to route the request
+    if sync_target and sync_target != config.get("garden.name"):
+        try:
+            route(
+                Operation(
+                    operation_type="GARDEN_RESCAN",
+                    target_garden_name=sync_target,
+                    kwargs={
+                        "sync_gardens": sync_gardens,
+                        "sync_target": sync_target,
+                    },
+                )
+            )
+        except (ForwardException, RoutingRequestException):
+            logger.error(f"Failed to forward sync operation to garden {sync_target}")
+    else:
+        if config.get("children.directory"):
+            loaded_gardens = []
+            children_directory = Path(config.get("children.directory"))
+            if children_directory.exists():
+                for path in children_directory.iterdir():
+                    path_parts = path.parts
 
-                if not path_parts[-1].endswith(".yaml"):
-                    continue
+                    if len(path_parts) == 0:
+                        continue
+                    if path_parts[-1].startswith("."):
+                        continue
 
-                if not path.exists():
-                    continue
-                if path.is_dir():
-                    continue
+                    if not path_parts[-1].endswith(".yaml"):
+                        continue
 
-                garden_name = path_parts[-1][:-5]
+                    if not path.exists():
+                        continue
+                    if path.is_dir():
+                        continue
 
-                garden = db.query_unique(Garden, name=garden_name)
+                    garden_name = path_parts[-1][:-5]
 
-                if garden is None:
-                    try:
-                        logger.info(f"Loading new configuration file for {garden_name}")
-                        garden = Garden(name=garden_name, connection_type="Remote")
-                        garden = create_garden(garden)
-                    except NotUniqueException:
-                        logger.error(
-                            f"Write collision occurred when creating {garden_name}"
-                        )
-                        garden = db.query_unique(Garden, name=garden_name)
+                    garden = db.query_unique(Garden, name=garden_name)
 
-                        if garden is None:
-                            raise NotFoundException(
-                                f"Failure to load {garden_name} after write collision occurred"
+                    if garden is None:
+                        try:
+                            logger.info(
+                                f"Loading new configuration file for {garden_name}"
                             )
-                else:
-                    logger.info(
-                        f"Loading existing configuration file for {garden_name}"
+                            garden = Garden(name=garden_name, connection_type="Remote")
+                            garden = create_garden(garden)
+                        except NotUniqueException:
+                            logger.error(
+                                f"Write collision occurred when creating {garden_name}"
+                            )
+                            garden = db.query_unique(Garden, name=garden_name)
+
+                            if garden is None:
+                                raise NotFoundException(
+                                    f"Failure to load {garden_name} after write collision "
+                                    "occurred"
+                                )
+                    else:
+                        logger.info(
+                            f"Loading existing configuration file for {garden_name}"
+                        )
+
+                    load_garden_config(garden=garden)
+                    # Just need to publish the event for routing logic
+                    publish(
+                        Event(
+                            name=Events.GARDEN_UPDATED.name,
+                            garden=config.get("garden.name"),
+                            payload_type="Garden",
+                            payload=garden,
+                        )
                     )
 
-                load_garden_config(garden=garden)
-                # Just need to publish the event for routing logic
-                publish(
-                    Event(
-                        name=Events.GARDEN_UPDATED.name,
-                        garden=config.get("garden.name"),
-                        payload_type="Garden",
-                        payload=garden,
-                    )
+                    loaded_gardens.append(garden.name)
+            else:
+                logger.error(
+                    f"Unable to find Children directory: {str(children_directory.resolve())}"
                 )
 
-                loaded_gardens.append(garden.name)
-        else:
-            logger.error(
-                f"Unable to find Children directory: {str(children_directory.resolve())}"
-            )
-
-        if sync_gardens:
-            for garden_name in loaded_gardens:
-                # Need to give the router a second to load the events
-                time.sleep(0.5)
-                garden_sync(garden_name)
+            if sync_gardens:
+                for garden_name in loaded_gardens:
+                    # Need to give the router a second to load the events
+                    time.sleep(0.5)
+                    garden_sync(garden_name)
 
 
 def garden_sync(sync_target: str = None):

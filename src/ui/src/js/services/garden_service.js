@@ -51,6 +51,14 @@ export default function gardenService($rootScope, $http) {
     });
   };
 
+  GardenService.rescanGarden = function(name) {
+    return $http.patch('api/v1/gardens/' + encodeURIComponent(name), {
+      operation: 'rescan',
+      path: '',
+      value: '',
+    });
+  };
+
   GardenService.syncGarden = function(name) {
     return $http.patch('api/v1/gardens/' + encodeURIComponent(name), {
       operation: 'sync',

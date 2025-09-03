@@ -63,6 +63,7 @@ routable_operations = [
     "INSTANCE_STOP",
     "REQUEST_CREATE",
     "SYSTEM_DELETE",
+    "GARDEN_RESCAN",
     "GARDEN_SYNC",
     "USER_UPSTREAM_SYNC",
 ]
@@ -431,6 +432,11 @@ def initiate_forward(operation: Operation):
     if operation.operation_type == "GARDEN_SYNC":
         logger.info(
             f"About to forward sync operation for garden {operation.kwargs['sync_target']}"
+        )
+
+    if operation.operation_type == "GARDEN_RESCAN":
+        logger.info(
+            f"About to forward rescan operation for garden {operation.kwargs['sync_target']}"
         )
 
     try:
@@ -963,7 +969,10 @@ def _target_from_type(operation: Operation) -> str:
         return config.get("garden.name")
 
     if "GARDEN" in operation.operation_type:
-        if operation.operation_type == "GARDEN_SYNC":
+        if (
+            operation.operation_type == "GARDEN_SYNC"
+            or operation.operation_type == "GARDEN_RESCAN"
+        ):
             sync_target = operation.kwargs.get("sync_target")
             if sync_target:
                 return sync_target
