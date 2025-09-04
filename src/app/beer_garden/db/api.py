@@ -14,9 +14,9 @@ get_job_store = beer_garden.db.mongo.api.get_job_store
 
 count = beer_garden.db.mongo.api.count
 query_unique = beer_garden.db.mongo.api.query_unique
-async_query_unique = beer_garden.db.mongo.motor.async_query_unique
+query_unique_async = beer_garden.db.mongo.motor.query_unique_async
 query = beer_garden.db.mongo.api.query
-async_query = beer_garden.db.mongo.motor.async_query
+query_async = beer_garden.db.mongo.motor.query_async
 reload = beer_garden.db.mongo.api.reload
 distinct = beer_garden.db.mongo.api.distinct
 

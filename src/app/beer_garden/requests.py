@@ -603,7 +603,7 @@ async def get_requests_async(**kwargs) -> List[Request]:
         The list of Requests that matched the query
 
     """
-    return await db.async_query(Request, **kwargs)
+    return await db.query_async(Request, **kwargs)
 
 
 def get_requests(**kwargs) -> List[Request]:

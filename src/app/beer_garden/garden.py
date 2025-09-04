@@ -106,7 +106,7 @@ async def async_get_children_garden(garden: Garden, **kwargs) -> Garden:
                 child.parent = garden.name
     else:
         kwargs["filter_params"]["parent"] = garden.name
-        garden.children = await db.async_query(Garden, **kwargs)
+        garden.children = await db.query_async(Garden, **kwargs)
 
     if garden.children:
         for child in garden.children:
@@ -165,7 +165,7 @@ async def get_garden_async(garden_name: str, **kwargs) -> Garden:
                 kwargs["include_fields"].append(required_field)
 
     if garden_name == config.get("garden.name"):
-        gardens = await db.async_query(Garden, **kwargs)
+        gardens = await db.query_async(Garden, **kwargs)
         garden = None
         for db_garden in gardens:
             if db_garden.name == config.get("garden.name"):
@@ -211,11 +211,11 @@ async def get_garden_async(garden_name: str, **kwargs) -> Garden:
                         if query_values:
                             get_system_kwargs[filter] = query_values
 
-            garden.systems = await db.async_query(System, **get_system_kwargs)
+            garden.systems = await db.query_async(System, **get_system_kwargs)
 
     else:
         # Need to get query unique async
-        garden = await db.async_query_unique(
+        garden = await db.query_unique_async(
             Garden, name=garden_name, raise_missing=True, **kwargs
         )
         await async_get_children_garden(garden, **kwargs)

@@ -37,7 +37,7 @@ def create_connection(db_config: Box = None) -> None:
     motor_db = motor_conn[db_config.name]
 
 
-async def async_query(
+async def query_async(
     model_class, q_filter: Union[Q, QCombination, None] = None, **kwargs
 ):
 
@@ -112,7 +112,7 @@ async def async_query(
     return results
 
 
-async def async_query_unique(model_class, raise_missing=False, **kwargs):
+async def query_unique_async(model_class, raise_missing=False, **kwargs):
     """Query a collection for a unique item
 
     This will search a collection for a single specific item.
