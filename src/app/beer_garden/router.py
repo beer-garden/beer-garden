@@ -85,6 +85,8 @@ instance_id_routes: Dict[str, str] = {}
 async_functions = {
     "INSTANCE_UPDATE": beer_garden.plugin.update_async,
     "INSTANCE_HEARTBEAT": beer_garden.plugin.heartbeat_async,
+    "REQUEST_READ_ALL": beer_garden.requests.get_requests_async,
+    "GARDEN_READ": beer_garden.garden.get_garden_async,
 }
 
 # Fake async functions that need to be run in an executor when in an async context.

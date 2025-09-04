@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import beer_garden.db.mongo.api
+import beer_garden.db.mongo.motor
 import beer_garden.db.mongo.util
 
 from_brewtils = beer_garden.db.mongo.api.from_brewtils
@@ -13,7 +14,9 @@ get_job_store = beer_garden.db.mongo.api.get_job_store
 
 count = beer_garden.db.mongo.api.count
 query_unique = beer_garden.db.mongo.api.query_unique
+async_query_unique = beer_garden.db.mongo.motor.async_query_unique
 query = beer_garden.db.mongo.api.query
+async_query = beer_garden.db.mongo.motor.async_query
 reload = beer_garden.db.mongo.api.reload
 distinct = beer_garden.db.mongo.api.distinct
 

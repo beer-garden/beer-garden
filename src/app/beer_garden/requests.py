@@ -593,6 +593,19 @@ def get_request(request_id: str = None, request: Request = None) -> Request:
     return request
 
 
+async def get_requests_async(**kwargs) -> List[Request]:
+    """Search for Requests
+
+    Args:
+        kwargs: Parameters to be passed to the DB query
+
+    Returns:
+        The list of Requests that matched the query
+
+    """
+    return await db.async_query(Request, **kwargs)
+
+
 def get_requests(**kwargs) -> List[Request]:
     """Search for Requests
 

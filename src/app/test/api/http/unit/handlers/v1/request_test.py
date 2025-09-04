@@ -3,7 +3,6 @@ import json
 
 import pytest
 from brewtils.models import Role, User
-from mongomock.gridfs import enable_gridfs_integration
 from tornado.httpclient import HTTPError, HTTPRequest
 
 import beer_garden.db.mongo.models
@@ -14,6 +13,7 @@ from beer_garden.api.http.authentication import issue_token_pair
 from beer_garden.db.mongo.models import Garden, RawFile, Request, System
 from beer_garden.role import create_role, delete_role
 from beer_garden.user import create_user, delete_user
+from mongomock.gridfs import enable_gridfs_integration
 
 enable_gridfs_integration()
 
@@ -80,6 +80,7 @@ def common_mocks(monkeypatch, local_system):
     monkeypatch.setattr(beer_garden.requests, "_validate_request", mock_validate)
     monkeypatch.setattr(beer_garden.router, "_determine_target", mock_determine_target)
     monkeypatch.setattr(beer_garden.router, "forward", generic_mock)
+    monkeypatch.setattr(beer_garden.router, "async_functions", {})
 
 
 @pytest.fixture(autouse=True)

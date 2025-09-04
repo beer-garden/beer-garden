@@ -86,6 +86,37 @@ def filter_router_result(garden: Garden) -> Garden:
     return filtered_garden
 
 
+async def async_get_children_garden(garden: Garden, **kwargs) -> Garden:
+
+    if "include_fields" in kwargs and kwargs["include_fields"]:
+        for required_field in ["has_parent", "name", "parent"]:
+            if required_field not in kwargs["include_fields"]:
+                kwargs["include_fields"].append(required_field)
+
+    kwargs["filter_params"] = {}
+
+    if garden.connection_type == "LOCAL":
+        kwargs["filter_params"]["connection_type__ne"] = "LOCAL"
+        kwargs["filter_params"]["has_parent"] = False
+
+        garden.children = db.query(Garden, **kwargs)
+        if garden.children:
+            for child in garden.children:
+                child.has_parent = True
+                child.parent = garden.name
+    else:
+        kwargs["filter_params"]["parent"] = garden.name
+        garden.children = await db.async_query(Garden, **kwargs)
+
+    if garden.children:
+        for child in garden.children:
+            async_get_children_garden(child, **kwargs)
+    else:
+        garden.children = []
+
+    return garden
+
+
 def get_children_garden(garden: Garden, **kwargs) -> Garden:
 
     if "include_fields" in kwargs and kwargs["include_fields"]:
@@ -113,6 +144,81 @@ def get_children_garden(garden: Garden, **kwargs) -> Garden:
             get_children_garden(child, **kwargs)
     else:
         garden.children = []
+
+    return garden
+
+
+async def get_garden_async(garden_name: str, **kwargs) -> Garden:
+    """Retrieve an individual Garden
+
+    Args:
+        garden_name: The name of Garden
+
+    Returns:
+        The Garden
+
+    """
+
+    if "include_fields" in kwargs and kwargs["include_fields"]:
+        for required_field in ["has_parent", "name", "parent"]:
+            if required_field not in kwargs["include_fields"]:
+                kwargs["include_fields"].append(required_field)
+
+    if garden_name == config.get("garden.name"):
+        gardens = await db.async_query(Garden, **kwargs)
+        garden = None
+        for db_garden in gardens:
+            if db_garden.name == config.get("garden.name"):
+                garden = db_garden
+            else:
+                if not db_garden.has_parent:
+                    db_garden.has_parent = True
+                    db_garden.parent = config.get("garden.name")
+
+            db_garden.children = [
+                child_garden
+                for child_garden in gardens
+                if child_garden.name != db_garden.name
+                and (
+                    (child_garden.has_parent and child_garden.parent == db_garden.name)
+                    or (
+                        not child_garden.has_parent
+                        and db_garden.name == config.get("garden.name")
+                    )
+                )
+            ]
+
+        if garden:
+            filter_params = {}
+            filter_params["local"] = True
+            get_system_kwargs = {}
+
+            get_system_kwargs["filter_params"] = {"local": True}
+
+            # Pass system filters to Systems query
+            if kwargs:
+                for filter, values in kwargs.items():
+                    if (
+                        values
+                        and isinstance(values, (list, set))
+                        and filter not in get_system_kwargs
+                    ):
+                        query_values = []
+                        for value in values:
+                            if value.startswith("systems__"):
+                                query_values.append(value.replace("systems__", "", 1))
+
+                        if query_values:
+                            get_system_kwargs[filter] = query_values
+
+            garden.systems = await db.async_query(System, **get_system_kwargs)
+
+    else:
+        # Need to get query unique async
+        garden = await db.async_query_unique(
+            Garden, name=garden_name, raise_missing=True, **kwargs
+        )
+        await async_get_children_garden(garden, **kwargs)
 
     return garden
 
