@@ -210,7 +210,7 @@ class GardenAPI(AuthorizationHandler):
                 response = await self.process_operation(
                     Operation(
                         operation_type="GARDEN_RESCAN",
-                        kwargs={"sync_target": garden.name},
+                        target_garden_name=garden.name,
                     )
                 )
 

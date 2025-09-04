@@ -436,7 +436,7 @@ def initiate_forward(operation: Operation):
 
     if operation.operation_type == "GARDEN_RESCAN":
         logger.info(
-            f"About to forward rescan operation for garden {operation.kwargs['sync_target']}"
+            f"About to forward rescan operation for garden {operation.target_garden_name}"
         )
 
     try:
