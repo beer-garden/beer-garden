@@ -184,7 +184,7 @@ async def query_unique_async(model_class, raise_missing=False, **kwargs):
     )
 
 
-async def dbreference_mapping(document, projections: list = None):
+async def dbreference_mapping(document, projections: dict = None):
     """Recursively map MongoDB DBRef fields to their actual documents"""
 
     if isinstance(document, Document):
@@ -192,11 +192,11 @@ async def dbreference_mapping(document, projections: list = None):
             field = document._fields[field_name]
             value = getattr(document, field_name)
 
-            new_projections = []
+            new_projections = {}
             if projections:
                 for item, filter in projections.items():
                     if item.startswith(f"{field_name}."):
-                        new_projections.append({item[len(field_name) + 1 :]: filter})
+                        new_projections[item[len(field_name) + 1 :]] = filter
 
             if (
                 field.__class__.__name__ == "ReferenceField"
@@ -226,13 +226,11 @@ async def dbreference_mapping(document, projections: list = None):
                 )
                 and value
             ):
-                new_projections = []
+                new_projections = {}
                 if projections:
                     for item, filter in projections.items():
                         if item.startswith(f"{field_name}."):
-                            new_projections.append(
-                                {item[len(field_name) + 1 :]: filter}
-                            )
+                            new_projections[item[len(field_name) + 1 :]] = filter
 
                 new_list = []
 
@@ -244,25 +242,29 @@ async def dbreference_mapping(document, projections: list = None):
                     else:
                         ids.append(ObjectId(item.id))
 
-                cursor = motor_db[
-                    field.field.document_type._get_collection_name()
-                ].find({"_id": {"$in": ids}}, projection=new_projections or None)
+                if value and ids:
 
-                for reference_document in await cursor.to_list(length=None):
-                    if reference_document:
-                        if "_id" in reference_document:
-                            reference_document["id"] = str(reference_document["_id"])
-                            del reference_document["_id"]
+                    cursor = motor_db[
+                        field.field.document_type._get_collection_name()
+                    ].find({"_id": {"$in": ids}}, projection=new_projections or None)
 
-                        mongoengine_model = field.field.document_type(
-                            **reference_document
-                        )
-                        if mongoengine_model:
-                            new_list.append(
-                                await dbreference_mapping(
-                                    mongoengine_model, new_projections
+                    for reference_document in await cursor.to_list(length=None):
+                        if reference_document:
+                            if "_id" in reference_document:
+                                reference_document["id"] = str(
+                                    reference_document["_id"]
                                 )
+                                del reference_document["_id"]
+
+                            mongoengine_model = field.field.document_type(
+                                **reference_document
                             )
+                            if mongoengine_model:
+                                new_list.append(
+                                    await dbreference_mapping(
+                                        mongoengine_model, new_projections
+                                    )
+                                )
 
                 setattr(document, field_name, new_list)
 
