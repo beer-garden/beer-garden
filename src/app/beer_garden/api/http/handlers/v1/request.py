@@ -512,6 +512,8 @@ class RequestListAPI(AuthorizationHandler):
                     model=request_model,
                     model_type="Request",
                     kwargs={"wait_event": wait_future},
+                    target_garden_name=request_model.target_garden,
+                    source_garden_name=request_model.source_garden,
                 ),
                 serialize_kwargs={"to_string": False},
             )
