@@ -431,7 +431,7 @@ def initiate_forward(operation: Operation):
 
     if operation.operation_type == "GARDEN_SYNC":
         logger.info(
-            f"About to forward sync operation for garden {operation.kwargs['sync_target']}"
+            f"About to forward sync operation for garden {operation.target_garden_name}"
         )
 
     if operation.operation_type == "GARDEN_RESCAN":
@@ -969,14 +969,6 @@ def _target_from_type(operation: Operation) -> str:
         return config.get("garden.name")
 
     if "GARDEN" in operation.operation_type:
-        if (
-            operation.operation_type == "GARDEN_SYNC"
-            or operation.operation_type == "GARDEN_RESCAN"
-        ):
-            sync_target = operation.kwargs.get("sync_target")
-            if sync_target:
-                return sync_target
-
         return config.get("garden.name")
 
     if operation.operation_type == "QUEUE_DELETE":

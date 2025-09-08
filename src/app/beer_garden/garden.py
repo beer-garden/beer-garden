@@ -859,65 +859,18 @@ def rescan(sync_gardens: bool = False):
                 garden_sync(garden_name)
 
 
-def garden_sync(sync_target: str = None):
+def garden_sync():
     """Do a garden sync
 
-    If we're here it means the Operation.target_garden_name was *this* garden. So the
-    sync_target is either *this garden* or None.
-
-    If the former then call the method to publish the current garden.
-
-    If the latter then we need to send sync operations to *all* known downstream
-    gardens.
+    If we're here it means the Operation.target_garden_name was *this* garden.
 
     Args:
-        sync_target:
 
     Returns:
 
     """
-
-    from beer_garden.router import route
-
-    # If a Garden Name is provided, determine where to route the request
-    if sync_target:
-        if sync_target == config.get("garden.name"):
-            logger.info("Processing local garden sync, about to publish")
-            publish_garden()
-        else:
-            try:
-
-                route(
-                    Operation(
-                        operation_type="GARDEN_SYNC",
-                        target_garden_name=sync_target,
-                        kwargs={"sync_target": sync_target},
-                    )
-                )
-            except (ForwardException, RoutingRequestException):
-                logger.error(
-                    f"Failed to forward sync operation to garden {sync_target}"
-                )
-    else:
-        # Iterate over all gardens and forward the sync requests
-        for garden in get_gardens(include_local=False):
-            try:
-                logger.info(f"About to create sync operation for garden {garden.name}")
-
-                route(
-                    Operation(
-                        operation_type="GARDEN_SYNC",
-                        target_garden_name=garden.name,
-                        kwargs={"sync_target": garden.name},
-                    )
-                )
-            except (ForwardException, RoutingRequestException):
-                logger.error(
-                    f"Failed to forward sync operation to garden {garden.name}"
-                )
-
-        logger.info("Processing local garden sync, about to publish")
-        publish_garden()
+    logger.info("Processing local garden sync, about to publish")
+    publish_garden()
 
 
 def publish_local_garden_to_api():
