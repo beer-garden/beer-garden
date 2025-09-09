@@ -404,10 +404,6 @@ export default function adminGardenController(
         if (event.payload.name != $scope.config.gardenName) {
           $scope.pushAlert('info', 'Processing Garden sync event from ' + event.payload.name);
         }
-      case 'GARDEN_RESCAN':
-        if (event.payload.name != $scope.config.gardenName) {
-          $scope.pushAlert('info', 'Processing Garden rescan event from ' + event.payload.name);
-        }
     }
   });
 
