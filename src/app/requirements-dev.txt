@@ -18,7 +18,7 @@ attrs==23.1.0
     # via flake8-bugbear
 babel==2.12.1
     # via sphinx
-black==25.1.0
+black>=23.3.0
     # via -r requirements-dev.in
 certifi==2023.5.7
     # via
@@ -40,7 +40,7 @@ docutils==0.16
     # via
     #   sphinx
     #   sphinx-rtd-theme
-flake8==7.3.0
+flake8>=5.0.4
     # via
     #   -r requirements-dev.in
     #   flake8-bugbear
@@ -54,7 +54,7 @@ imagesize==1.4.1
     # via sphinx
 iniconfig==2.0.0
     # via pytest
-isort==5.13.2
+isort>=5.11.5
     # via -r requirements-dev.in
 jinja2==3.1.2
     # via sphinx
@@ -99,9 +99,9 @@ platformdirs==3.9.1
     # via black
 pluggy==1.2.0
     # via pytest
-pycodestyle==2.14.0
+pycodestyle>=2.9.1
     # via flake8
-pyflakes==3.4.0
+pyflakes>=2.5.0
     # via flake8
 pygments==2.15.1
     # via sphinx
