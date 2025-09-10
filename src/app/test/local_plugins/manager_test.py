@@ -8,7 +8,11 @@ import pytest
 from box import Box
 from brewtils.models import Instance, System
 from mock import Mock
-from pytest_lazy_fixtures import lf
+
+try:
+    from pytest_lazy_fixtures import lf
+except ModuleNotFoundError:
+    from pytest_lazyfixture import lazy_fixture as lf
 
 import beer_garden.db.api as db
 from beer_garden import config
