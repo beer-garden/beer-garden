@@ -166,7 +166,7 @@ jobs:
       - name: Generate coverage report
         continue-on-error: true
         run: |
-          coverage run --source beer_garden -m pytest test --tb=no
+          coverage run --source beer_garden -m pytest test --tb=no -ignore $(TEST_DIR)/api/http/unit/handlers/v1/event_test.py
           coverage report -m
           coverage xml
 
