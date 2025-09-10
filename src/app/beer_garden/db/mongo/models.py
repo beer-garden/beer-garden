@@ -1404,13 +1404,14 @@ class Garden(MongoModel, Document):
                 if triple in child_systems_already_known:
                     system_id_to_remove = child_systems_already_known.pop(triple)
 
-                    if system_id_to_remove != str(system.id):
+                    # system_id_to_remove and system.id are ObjectIds
+                    if system_id_to_remove != system.id:
                         # remove the system from before this update with the same triple
                         logger.error(
                             f"Removing System <{triple[0]}"
                             f", {triple[1]}"
                             f", {triple[2]}> with ID={system_id_to_remove}"
-                            f"; doesn't match ID={str(system.id)}"
+                            f"; doesn't match ID={system.id}"
                             " for known system with same attributes"
                         )
                         remove_system(system_id=system_id_to_remove)
