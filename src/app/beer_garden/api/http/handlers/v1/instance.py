@@ -139,8 +139,13 @@ class InstanceAPI(AuthorizationHandler):
                 )
 
             elif operation == "start":
+                system = self.get_or_raise(System, instances__id=instance_id)
                 response = await self.process_operation(
-                    Operation(operation_type="INSTANCE_START", args=[instance_id])
+                    Operation(
+                        operation_type="INSTANCE_START",
+                        args=[instance_id],
+                        target_garden_name=system.garden_name,
+                    )
                 )
 
             elif operation == "restart":
@@ -149,8 +154,13 @@ class InstanceAPI(AuthorizationHandler):
                 )
 
             elif operation == "stop":
+                system = self.get_or_raise(System, instances__id=instance_id)
                 response = await self.process_operation(
-                    Operation(operation_type="INSTANCE_STOP", args=[instance_id])
+                    Operation(
+                        operation_type="INSTANCE_STOP",
+                        args=[instance_id],
+                        target_garden_name=system.garden_name,
+                    )
                 )
 
             elif operation == "heartbeat":
