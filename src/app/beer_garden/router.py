@@ -905,10 +905,6 @@ def _determine_target(operation: Operation) -> str:
 def _target_from_type(operation: Operation) -> str:
     """Determine the target garden based on the operation type"""
 
-    # If target garden is provided then return that
-    if operation.target_garden_name:
-        return operation.target_garden_name
-
     # Certain operations are ASSUMED to be targeted at the local garden
     if operation.operation_type not in routable_operations:
         return config.get("garden.name")
