@@ -2,7 +2,7 @@
 -c requirements.txt
 
 # develop branch of brewtils
--e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
+#-e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
 
 # Documentation Dependencies
 sphinx < 2
@@ -15,7 +15,7 @@ coverage
 flake8
 flake8-bugbear
 mock
-mongomock
+mongomock>=4.3
 pytest < 7
 pytest-mock
 pytest-lazy-fixture

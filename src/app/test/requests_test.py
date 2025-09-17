@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import copy
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from box import Box
@@ -11,6 +11,7 @@ from brewtils.models import Instance, Parameter
 from brewtils.models import Request as BrewtilsRequest
 from brewtils.models import System
 from mock import Mock, call, patch
+from mongomock.gridfs import enable_gridfs_integration
 
 import beer_garden.config
 import beer_garden.requests
@@ -21,9 +22,9 @@ from beer_garden.requests import (
     cancel_request_children,
     create_request,
     determine_latest_system_version,
+    get_request,
 )
 from beer_garden.systems import create_system
-from mongomock.gridfs import enable_gridfs_integration
 
 enable_gridfs_integration()
 
@@ -1113,7 +1114,7 @@ class TestHandleEvent:
     def test_status_updated_at_preserved_on_child_garden_requests(
         self, child_garden_request
     ):
-        status_updated_at = datetime.utcnow() - timedelta(days=1)
+        status_updated_at = datetime.now(timezone.utc) - timedelta(days=1)
         status_updated_at = status_updated_at.replace(microsecond=0)
         child_garden_request.status = "SUCCESS"
         child_garden_request.status_updated_at = status_updated_at
@@ -1127,7 +1128,7 @@ class TestHandleEvent:
 
         beer_garden.requests.handle_event(request_event)
 
-        updated_request = Request.objects.get(id=child_garden_request.id)
+        updated_request = get_request(request_id=child_garden_request.id)
 
         assert updated_request.status_updated_at == status_updated_at
 

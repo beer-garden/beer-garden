@@ -21,9 +21,19 @@ class QueueAPI(AuthorizationHandler):
           204:
             description: Queue successfully cleared
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Queues
         """
@@ -46,12 +56,19 @@ class QueueListAPI(AuthorizationHandler):
         responses:
           200:
             description: List of all queue information objects
-            schema:
-              type: array
-              items:
-                $ref: '#/definitions/Queue'
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Queue'
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Queues
         """
@@ -78,7 +95,12 @@ class QueueListAPI(AuthorizationHandler):
           204:
             description: All queues successfully cleared
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Queues
         """

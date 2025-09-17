@@ -18,13 +18,8 @@ from mongoengine.queryset.visitor import Q, QCombination
 from pymongo import InsertOne, ReplaceOne, UpdateOne
 
 import beer_garden.db.mongo.models
-from beer_garden.db.mongo.indexes import (
-    check_indexes,
-    update_ttl_indexes,
-)
-from beer_garden.db.mongo.migration import (
-    ensure_model_migration,
-)
+from beer_garden.db.mongo.indexes import check_indexes, update_ttl_indexes
+from beer_garden.db.mongo.migration import ensure_model_migration
 from beer_garden.db.mongo.models import MongoModel
 from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.db.mongo.util import (

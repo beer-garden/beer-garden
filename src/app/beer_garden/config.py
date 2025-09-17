@@ -10,7 +10,7 @@ The configuration service is responsible for:
 import os
 import sys
 from argparse import ArgumentParser
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Iterable, List, Optional, Sequence, Tuple, Union
 
 from box import Box
@@ -367,7 +367,7 @@ def _is_new_config(filename, tmp_filename):
 
 def _backup_previous_config(filename, tmp_filename):
     try:
-        os.rename(filename, filename + "_" + datetime.utcnow().isoformat())
+        os.rename(filename, filename + "_" + datetime.now(timezone.utc).isoformat())
     except Exception:
         sys.stderr.write(
             "Could not backup the old configuration. Cowardly refusing to "

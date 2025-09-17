@@ -28,28 +28,39 @@ setup(
     license="MIT",
     keywords="beer beer-garden beergarden",
     install_requires=[
-        "apispec<0.39",
+        # "brewtils>=3.29.0",
+        
+        "apispec>=6.7,<7",
+        "apispec-webframeworks>1,<2",
+
         "apscheduler<4",
-        "python-box>=3.3.0",
-        "brewtils>=3.29.1",
-        "marshmallow<3",
-        "mongoengine<0.21",
-        "more-itertools<9",
-        "motor<3",
+
+        # YAPCONF Conflict with python-box
+        "python-box<4",
+
+        "marshmallow<4,>=3.3",
+        "more-itertools<11", 
+
+        # pymongo dependency between motor and mongoengine
+        "pymongo>=4.9,<4.10",
+        "mongoengine>=0.29.1",
+        "motor>3,<4",
+
         "passlib<1.8",
         "prometheus-client<1",
+        "pyyaml<7",
         "pyasn1<0.6.0",
-        "pyyaml<5.4",
         "pyrabbit2<2",
-        "pytz<2021",
         "pyjwt>=2.4.0",
-        "ruamel.yaml<0.17",
-        "stomp.py<6.2.0",
+
+        # Can go to 18 after yapconf 0.4 is released
+        "ruamel.yaml<0.18",
+        "stomp.py<9",
         "tornado<7",
-        "urllib3<2",
-        "watchdog>2.1.0",
+        "urllib3<3",
+        "watchdog<6",
         "wrapt",
-        "yapconf>=1.0.0",
+        "yapconf<1.0",
         "elastic-apm",
         "ldap3>=2.9.1"
     ],
@@ -59,8 +70,6 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",

@@ -18,7 +18,7 @@ delegate requesting information from the plugin to the request service.
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Tuple
 
 from brewtils.models import (
@@ -461,10 +461,10 @@ async def update_async(
 
     if new_status:
         update["instances.$.status"] = new_status
-        update["instances.$.status_info.heartbeat"] = datetime.utcnow()
+        update["instances.$.status_info.heartbeat"] = datetime.now(timezone.utc)
         push["instances.$.status_info.history"] = {
             "status": new_status,
-            "heartbeat": datetime.utcnow(),
+            "heartbeat": datetime.now(timezone.utc),
         }
 
         if new_status == "STOPPED":
@@ -505,7 +505,7 @@ async def heartbeat_async(
         instance["id"] = str(instance["_id"])
         del instance["_id"]
 
-    update_time = datetime.utcnow()
+    update_time = datetime.now(timezone.utc)
     history = {
         "status": "RUNNING",
         "heartbeat": update_time,
@@ -696,7 +696,7 @@ class StatusMonitor(StoppableThread):
                 if last_heartbeat:
                     if (
                         instance.status == "RUNNING"
-                        and datetime.utcnow() - last_heartbeat >= self.timeout
+                        and datetime.now(timezone.utc) - last_heartbeat >= self.timeout
                     ):
                         update(
                             system=system,
@@ -708,7 +708,7 @@ class StatusMonitor(StoppableThread):
                     elif (
                         instance.status
                         in ["UNRESPONSIVE", "STARTING", "INITIALIZING", "UNKNOWN"]
-                        and datetime.utcnow() - last_heartbeat < self.timeout
+                        and datetime.now(timezone.utc) - last_heartbeat < self.timeout
                     ):
                         update(
                             system=system,

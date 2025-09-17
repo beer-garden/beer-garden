@@ -8,7 +8,7 @@ The schedule service is responsible for:
 import json
 import logging
 import threading
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 from apscheduler.events import EVENT_JOB_MAX_INSTANCES
@@ -19,7 +19,6 @@ from brewtils.errors import ModelValidationError
 from brewtils.models import DateTrigger, Event, Events, Job, Operation, Request
 from brewtils.schema_parser import SchemaParser
 from mongoengine import DoesNotExist, ValidationError
-from pytz import utc
 
 import beer_garden
 import beer_garden.config as config
@@ -195,7 +194,7 @@ class MixedScheduler(object):
                 "jobstores": job_stores,
                 "executors": executors,
                 "job_defaults": job_defaults,
-                "timezone": utc,
+                "timezone": timezone.utc,
             }
             self._sync_scheduler.configure(**ap_config)
             self._sync_scheduler.add_listener(
@@ -309,7 +308,7 @@ class MixedScheduler(object):
             job.request_template.metadata["src_path"] = src_path
         self.add_job(
             run_job,
-            trigger=DateTrigger(datetime.utcnow(), timezone="UTC"),
+            trigger=DateTrigger(datetime.now(timezone.utc), timezone="UTC"),
             trigger_type="date",
             coalesce=job.coalesce,
             kwargs={"job_id": job.id, "request_template": job.request_template},
