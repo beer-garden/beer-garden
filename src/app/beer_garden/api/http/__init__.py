@@ -358,7 +358,7 @@ def _load_swagger(url_specs, title=None):
     # If schemas are nested, ensure nested schema is defined first
     api_spec.components.schema("Role", schema=RoleSchema)
     api_spec.components.schema("User", schema=UserSchema)
-    api_spec.components.schema("UserPasswordChange", schema=UserPasswordChangeSchema)   
+    api_spec.components.schema("UserPasswordChange", schema=UserPasswordChangeSchema)
 
     api_spec.components.schema("Queue", schema=QueueSchema)
     api_spec.components.schema("Operation", schema=OperationSchema)
