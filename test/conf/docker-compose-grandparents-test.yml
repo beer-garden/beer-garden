@@ -82,8 +82,6 @@ services:
             BG_PARENT_HTTP_ENABLE: "false"
             BG_PARENT_HTTP_HOST: localhost
 
-            BG_PARENT_SYNC_INTERVAL: 1
-
             BG_CHILDREN_CONFIG_DIRECTORY: /children
 
             # Point at the correct database
@@ -142,8 +140,6 @@ services:
             # We are actively investigating why this is
             TZ: UTC
 
-            BG_PARENT_SYNC_INTERVAL: 1
-
             BG_CHILDREN_CONFIG_DIRECTORY: /children
 
             # Point at the correct database
@@ -194,8 +190,6 @@ services:
             # If you are running in Ubuntu, then you need to set the Timezone
             # We are actively investigating why this is
             TZ: UTC
-
-            BG_PARENT_SYNC_INTERVAL: 1
 
             # Point at the correct database
             BG_DB_HOST: mongodb
