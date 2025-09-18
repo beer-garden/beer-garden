@@ -520,6 +520,8 @@ def update_garden(garden: Garden) -> Garden:
 def upsert_garden(garden: Garden, skip_connections: bool = True) -> Garden:
     """Updates or inserts Garden"""
 
+    logger.info(f"Upsert for {garden.name}")
+
     if garden.children:
         for child in garden.children:
             upsert_garden(child, skip_connections=False)
@@ -1068,6 +1070,7 @@ def handle_event(event):
                             logger.error(
                                 f"Unable to find {db_child.name} in Garden sync"
                             )
+                            logger.info(f"Garden sync event for {event.payload.name} -- REMOVE -- Children {event_child.name}")
                             remove_garden(garden=db_child)
                 except DoesNotExist:
                     pass
