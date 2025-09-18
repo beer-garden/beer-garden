@@ -55,6 +55,10 @@ def process(body) -> Tuple[str, dict]:
 
     if body.__class__.__name__ == "Event":
         body = Operation(operation_type="PUBLISH_EVENT", model=body, model_type="Event")
+        if body.model.name == "GARDEN_SYNC":
+            if body.model.payload.children:
+                for child in body.model.payload.children:
+                    logger.error(f"STOMP SEND: Garden Child == {child.name} to Parent == {child.parent}")
 
     model_class = (body[0] if many else body).__class__.__name__
 
@@ -144,8 +148,9 @@ class OperationListener(stomp.ConnectionListener):
 
                     if (operation.operation_type == "PUBLISH_EVENT"
                         and operation.model.name == "GARDEN_SYNC"):
-                        logger.error(message)
-
+                        if operation.model.payload.children:
+                            for child in operation.model.payload.children:
+                                logger.error(f"STOMP RECEIVE: Garden Child == {child.name} to Parent == {child.parent}")
                     result = beer_garden.router.route(operation)
 
                     if result:
