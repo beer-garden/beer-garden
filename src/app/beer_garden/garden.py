@@ -104,6 +104,7 @@ def get_children_garden(garden: Garden, **kwargs) -> Garden:
             for child in garden.children:
                 child.has_parent = True
                 child.parent = garden.name
+                logger.error(f"Setting child {child.name} field parent to {garden.name}")
     else:
         kwargs["filter_params"]["parent"] = garden.name
         garden.children = db.query(Garden, **kwargs)
