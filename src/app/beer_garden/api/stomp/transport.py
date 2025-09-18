@@ -53,10 +53,12 @@ def process(body) -> Tuple[str, dict]:
     """
     many = isinstance(body, list)
 
+    log_body = False
     if body.__class__.__name__ == "Event":
         body = Operation(operation_type="PUBLISH_EVENT", model=body, model_type="Event")
-        if body.model.name == "GARDEN_SYNC":
+        if body.model.name == "GARDEN_SYNC":     
             if body.model.payload.children:
+                log_body = True
                 for child in body.model.payload.children:
                     logger.error(f"STOMP SEND: Garden Child == {child.name} to Parent == {child.parent}")
 
@@ -65,6 +67,8 @@ def process(body) -> Tuple[str, dict]:
     if not isinstance(body, str):
         body = SchemaParser.serialize(body, to_string=True, many=many)
 
+    if log_body:
+        logger.error(f"STOMP SEND: {body}")
     return body, {"model_class": model_class, "many": many}
 
 
@@ -151,6 +155,7 @@ class OperationListener(stomp.ConnectionListener):
                         if operation.model.payload.children:
                             for child in operation.model.payload.children:
                                 logger.error(f"STOMP RECEIVE: Garden Child == {child.name} to Parent == {child.parent}")
+                                logger.error(f"STOMP RECEIVE: {message}")
                     result = beer_garden.router.route(operation)
 
                     if result:
