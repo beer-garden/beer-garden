@@ -98,10 +98,6 @@ class SystemAPI(AuthorizationHandler):
           - Systems
         """
         self.minimum_permission = Permissions.PLUGIN_ADMIN.name
-        target_garden = self.request.headers.get("target_garden")
-        if not target_garden:
-            system = self.get_or_raise(System, id=system_id)
-            target_garden = system.garden_name
 
         await self.process_operation(
             Operation(
@@ -110,7 +106,6 @@ class SystemAPI(AuthorizationHandler):
                 kwargs={
                     "force": self.get_argument("force", default="").lower() == "true"
                 },
-                target_garden_name=target_garden,
             ),
             filter_results=False,
         )

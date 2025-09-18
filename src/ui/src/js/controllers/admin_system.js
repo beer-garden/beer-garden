@@ -103,12 +103,12 @@ export default function adminSystemController(
     });
   };
 
-  $scope.startInstance = function(instance) {
-    InstanceService.startInstance(instance).catch($scope.addErrorAlert);
+  $scope.startInstance = function(instance, system) {
+    InstanceService.startInstance(instance, system).catch($scope.addErrorAlert);
   };
 
-  $scope.stopInstance = function(instance) {
-    InstanceService.stopInstance(instance).catch($scope.addErrorAlert);
+  $scope.stopInstance = function(instance, system) {
+    InstanceService.stopInstance(instance, system).catch($scope.addErrorAlert);
   };
 
   $scope.startRunner = function(runner) {

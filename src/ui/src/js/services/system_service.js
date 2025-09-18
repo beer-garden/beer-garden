@@ -74,7 +74,7 @@ export default function systemService($rootScope, $http) {
     },
     deleteSystem: (system) => {
       return $http.delete('api/v1/systems/' + system.id, {
-        headers: {target_garden: system.garden_name},
+        headers: {'Target-Garden': system.garden_name},
       });
     },
     forceDeleteSystem: (system) => {
