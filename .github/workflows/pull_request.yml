@@ -631,6 +631,13 @@ jobs:
       - name: Grab logs from Publisher
         run: docker service logs --tail 100 beer-plugins_subscribe 
 
+      - name: Check Plugin Status
+        run: |
+          if docker service ls | grep -q "replicated   0/1        bgio/example-plugins:latest"; then
+            exit 1
+          fi
+        shell: bash
+
       - name: Grab logs from Beer-Garden
         if: always()
         run: docker service logs --tail 1000 beer-garden_beer-garden
