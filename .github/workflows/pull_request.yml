@@ -445,7 +445,7 @@ jobs:
           command: curl http://localhost:2337/config
 
       - name: Wait for Beer Garden plugins to initialize
-        run: sleep 15s
+        run: sleep 90s
         shell: bash
 
       - name: Install Develop Version of Brewtils
