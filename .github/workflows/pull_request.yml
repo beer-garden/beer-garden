@@ -444,6 +444,10 @@ jobs:
           retry_wait_seconds: 5
           command: curl http://localhost:2337/config
 
+      - name: Wait for Garden Syncs
+        run: sleep 120s
+        shell: bash
+
       - name: Grab logs from Child
         if: always()
         run: docker compose logs --tail 3000 beer-garden-child
