@@ -142,6 +142,10 @@ class OperationListener(stomp.ConnectionListener):
                     if hasattr(operation, "kwargs"):
                         operation.kwargs.pop("wait_timeout", None)
 
+                    if (operation.operation_type == "PUBLISH_EVENT"
+                        and operation.model.name == "GARDEN_SYNC"):
+                        logger.error(message)
+
                     result = beer_garden.router.route(operation)
 
                     if result:
