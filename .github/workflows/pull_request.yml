@@ -631,13 +631,6 @@ jobs:
       - name: Grab logs from Publisher
         run: docker service logs --tail 100 beer-plugins_subscribe 
 
-      - name: Check Plugin Status
-        run: |
-          if docker service ls | grep -q "replicated   0/1        bgio/example-plugins:latest"; then
-            exit 1
-          fi
-        shell: bash
-
       - name: Grab logs from Beer-Garden
         if: always()
         run: docker service logs --tail 1000 beer-garden_beer-garden
@@ -651,6 +644,57 @@ jobs:
 
       - name: Check services
         run: docker service ls
+
+      - name: Check Plugin Status
+        run: |
+          if docker service ls | grep -q "replicated   0/1        bgio/example-plugins:latest"; then
+            exit 1
+          fi
+        shell: bash
+
+      - name: Grab logs from Child
+        if: failure()
+        run: docker service logs --tail 100 beer-plugins_child 
+
+      - name: Grab logs from Custom Display
+        if: failure()
+        run: docker service logs --tail 100 beer-plugins_custom-display
+
+      - name: Grab logs from Echo
+        if: failure()
+        run: docker service logs --tail 100 beer-plugins_echo 
+
+      - name: Grab logs from Echo Sleeper
+        if: failure()
+        run: docker service logs --tail 100 beer-plugins_echo-sleeper 
+
+      - name: Grab logs from Error
+        if: failure()
+        run: docker service logs --tail 100 beer-plugins_error 
+
+      - name: Grab logs from Nested Calls
+        if: failure()
+        run: docker service logs --tail 100 beer-plugins_nested-calls 
+
+      - name: Grab logs from Parent
+        if: failure()
+        run: docker service logs --tail 100 beer-plugins_parent 
+
+      - name: Grab logs from Publisher
+        if: failure()
+        run: docker service logs --tail 100 beer-plugins_publisher 
+
+      - name: Grab logs from Sleeper
+        if: failure()
+        run: docker service logs --tail 100 beer-plugins_sleeper 
+
+      - name: Grab logs from Sleeper Solo
+        if: failure()
+        run: docker service logs --tail 100 beer-plugins_sleeper-solo 
+
+      - name: Grab logs from Subscriber
+        if: failure()
+        run: docker service logs --tail 100 beer-plugins_subscribe 
 
       - name: Test Plugins
         run: python${{ matrix.python-version }} -m pytest local_plugins --ignore=local_plugins/plugins/autobrew_test.py --ignore=local_plugins/plugins/complex_test.py --ignore=local_plugins/plugins/dynamic_test.py --ignore=local_plugins/plugins/requires_test.py --timeout=360
