@@ -1070,7 +1070,6 @@ def handle_event(event):
                             logger.error(
                                 f"Unable to find {db_child.name} in Garden sync"
                             )
-                            logger.info(f"Garden sync event for {event.payload.name} -- REMOVE -- Children {event_child.name}")
                             remove_garden(garden=db_child)
                 except DoesNotExist:
                     pass
