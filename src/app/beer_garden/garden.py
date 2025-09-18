@@ -1052,6 +1052,8 @@ def handle_event(event):
                 if event.payload.children:
                     for event_child in event.payload.children:
                         logger.info(f"Garden sync event for {event.payload.name} -- Children {event_child.name}")
+                else:
+                    logger.info(f"Garden sync event for {event.payload.name} -- NONE")
                 try:
                     # Check if child garden as deleted
                     db_garden = get_garden(event.payload.name)
