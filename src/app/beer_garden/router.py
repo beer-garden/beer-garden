@@ -323,6 +323,9 @@ def update_api_heartbeat(operation: Operation):
                     and parse(operation.model.payload.version) > parse("3.16")
                 ):
                     operation.source_garden_name = operation.model.payload.name
+                    if operation.model.payload.children:
+                        for child in operation.model.payload.children:
+                            logger.error(f"Garden Child == {child.name} to Parent == {child.parent}")
                 else:
                     local_garden = get_garden(
                         config.get("garden.name"), include_fields=["name"]
