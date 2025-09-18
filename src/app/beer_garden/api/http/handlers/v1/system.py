@@ -98,6 +98,7 @@ class SystemAPI(AuthorizationHandler):
           - Systems
         """
         self.minimum_permission = Permissions.PLUGIN_ADMIN.name
+        _ = self.get_or_raise(System, id=system_id)
 
         await self.process_operation(
             Operation(
