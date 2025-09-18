@@ -402,32 +402,6 @@ jobs:
         run: sleep 30s
         shell: bash
 
-      - name: Run Docker Beer Garden Child
-        run: docker compose up -d beer-garden-child
-        working-directory: ./docker/docker-compose
-
-      - name: Check If Beer Garden Child is Operational
-        uses: nick-invision/retry@v2
-        with:
-          timeout_seconds: 30
-          max_attempts: 20
-          retry_on: error
-          retry_wait_seconds: 5
-          command: curl http://localhost:2357/config
-
-      - name: Run Docker Beer Garden Parent
-        run: docker compose up -d beer-garden-parent
-        working-directory: ./docker/docker-compose
-
-      - name: Check If Beer Garden Parent is Operational
-        uses: nick-invision/retry@v2
-        with:
-          timeout_seconds: 30
-          max_attempts: 20
-          retry_on: error
-          retry_wait_seconds: 5
-          command: curl http://localhost:2347/config
-
       - name: Run Docker Beer Garden Grandparent
         run: docker compose up -d beer-garden-grandparent
         working-directory: ./docker/docker-compose
@@ -443,6 +417,32 @@ jobs:
           retry_on: error
           retry_wait_seconds: 5
           command: curl http://localhost:2337/config
+
+      - name: Run Docker Beer Garden Parent
+        run: docker compose up -d beer-garden-parent
+        working-directory: ./docker/docker-compose
+
+      - name: Check If Beer Garden Parent is Operational
+        uses: nick-invision/retry@v2
+        with:
+          timeout_seconds: 30
+          max_attempts: 20
+          retry_on: error
+          retry_wait_seconds: 5
+          command: curl http://localhost:2347/config
+
+      - name: Run Docker Beer Garden Child
+        run: docker compose up -d beer-garden-child
+        working-directory: ./docker/docker-compose
+
+      - name: Check If Beer Garden Child is Operational
+        uses: nick-invision/retry@v2
+        with:
+          timeout_seconds: 30
+          max_attempts: 20
+          retry_on: error
+          retry_wait_seconds: 5
+          command: curl http://localhost:2357/config
 
       - name: Wait for Garden Syncs
         run: sleep 120s
