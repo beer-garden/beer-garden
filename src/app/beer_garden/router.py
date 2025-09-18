@@ -27,7 +27,8 @@ from brewtils import EasyClient
 from brewtils.models import Connection as BrewtilsConnection
 from brewtils.models import Events, Garden, Operation, Request, System
 from mongoengine import DoesNotExist
-from packaging.version import parse
+
+# from packaging.version import parse
 from stomp.exception import ConnectFailedException
 
 import beer_garden
@@ -316,36 +317,34 @@ def update_api_heartbeat(operation: Operation):
 
             if operation.model.payload.name != operation.source_garden_name:
 
-                if (
-                    hasattr(operation.model.payload, "version")
-                    and operation.model.payload.version is not None
-                    and operation.model.payload.version != "UNKNOWN"
-                    and parse(operation.model.payload.version) > parse("3.16")
-                ):
-                    operation.source_garden_name = operation.model.payload.name
-                    if operation.model.payload.children:
-                        for child in operation.model.payload.children:
-                            logger.error(f"Garden Child == {child.name} to Parent == {child.parent}")
-                else:
-                    local_garden = get_garden(
-                        config.get("garden.name"), include_fields=["name"]
-                    )
+                # if (
+                #     hasattr(operation.model.payload, "version")
+                #     and operation.model.payload.version is not None
+                #     and operation.model.payload.version != "UNKNOWN"
+                #     and parse(operation.model.payload.version) > parse("3.16")
+                # ):
+                #     operation.source_garden_name = operation.model.payload.name
 
-                    # Will only support mapping 1 hop away legacy Garden Syncs
-                    multi_hop_garden = True
-                    for child in local_garden.children:
-                        if child.name == operation.model.payload.name:
-                            logger.warning(
-                                (
-                                    "Legacy (3.16 or prior) GARDEN_SYNC operation "
-                                    f"seen for Beer-Garden '{operation.model.payload.name}'"
-                                )
+                # else:
+                local_garden = get_garden(
+                    config.get("garden.name"), include_fields=["name"]
+                )
+
+                # Will only support mapping 1 hop away legacy Garden Syncs
+                multi_hop_garden = True
+                for child in local_garden.children:
+                    if child.name == operation.model.payload.name:
+                        logger.warning(
+                            (
+                                "Legacy (3.16 or prior) GARDEN_SYNC operation "
+                                f"seen for Beer-Garden '{operation.model.payload.name}'"
                             )
-                            operation.source_garden_name = operation.model.payload.name
-                            multi_hop_garden = False
-                            break
-                    if multi_hop_garden:
-                        return
+                        )
+                        operation.source_garden_name = operation.model.payload.name
+                        multi_hop_garden = False
+                        break
+                if multi_hop_garden:
+                    return
             else:
                 return
 

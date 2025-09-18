@@ -104,7 +104,7 @@ def get_children_garden(garden: Garden, **kwargs) -> Garden:
             for child in garden.children:
                 child.has_parent = True
                 child.parent = garden.name
-                logger.error(f"Setting child {child.name} field parent to {garden.name}")
+
     else:
         kwargs["filter_params"]["parent"] = garden.name
         garden.children = db.query(Garden, **kwargs)
@@ -520,8 +520,6 @@ def update_garden(garden: Garden) -> Garden:
 
 def upsert_garden(garden: Garden, skip_connections: bool = True) -> Garden:
     """Updates or inserts Garden"""
-
-    logger.info(f"Upsert for {garden.name}")
 
     if garden.children:
         for child in garden.children:
@@ -1052,11 +1050,7 @@ def handle_event(event):
 
             if event.name == Events.GARDEN_SYNC.name:
                 logger.info(f"Garden sync event for {event.payload.name}")
-                if event.payload.children:
-                    for event_child in event.payload.children:
-                        logger.info(f"Garden sync event for {event.payload.name} -- Children {event_child.name}")
-                else:
-                    logger.info(f"Garden sync event for {event.payload.name} -- NONE")
+
                 try:
                     # Check if child garden as deleted
                     db_garden = get_garden(event.payload.name)
