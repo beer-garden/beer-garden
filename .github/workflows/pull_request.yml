@@ -646,10 +646,8 @@ jobs:
         run: docker service ls
 
       - name: Test Plugins
-        run: python${{ matrix.python-version }} -m pytest local_plugins --ignore=local_plugins/plugins/autobrew_test.py --ignore=local_plugins/plugins/complex_test.py --ignore=local_plugins/plugins/dynamic_test.py --ignore=local_plugins/plugins/requires_test.py --ignore=local_plugins/plugins/request_list_test.py --timeout=360
+        run: python${{ matrix.python-version }} -m pytest local_plugins --ignore=local_plugins/plugins/autobrew_test.py --ignore=local_plugins/plugins/complex_test.py --ignore=local_plugins/plugins/dynamic_test.py --ignore=local_plugins/plugins/requires_test.py --timeout=360
         working-directory: ./test/integration
-        # timeout-minutes: 5
-        # Add back request_list_test
 
       - name: Check docker
         if: always()
