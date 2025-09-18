@@ -449,15 +449,15 @@ jobs:
         shell: bash
 
       - name: Print Grandparent Garden Database
-        run: docker exec -it $(docker ps --filter "name=mongodb" --format "{{.Names}}") mongosh --eval "db.getSiblingDB('grandparent').garden.find({})"
+        run: docker exec $(docker ps --filter "name=mongodb" --format "{{.Names}}") mongosh --eval "db.getSiblingDB('grandparent').garden.find({})"
         shell: bash
 
       - name: Print Parent Garden Database
-        run: docker exec -it $(docker ps --filter "name=mongodb" --format "{{.Names}}") mongosh --eval "db.getSiblingDB('parent').garden.find({})"
+        run: docker exec $(docker ps --filter "name=mongodb" --format "{{.Names}}") mongosh --eval "db.getSiblingDB('parent').garden.find({})"
         shell: bash
 
       - name: Print Child Garden Database
-        run: docker exec -it $(docker ps --filter "name=mongodb" --format "{{.Names}}") mongosh --eval "db.getSiblingDB('child').garden.find({})"
+        run: docker exec $(docker ps --filter "name=mongodb" --format "{{.Names}}") mongosh --eval "db.getSiblingDB('child').garden.find({})"
         shell: bash
 
       - name: Grab logs from Child
