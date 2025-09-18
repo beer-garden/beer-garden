@@ -444,9 +444,20 @@ jobs:
           retry_wait_seconds: 5
           command: curl http://localhost:2337/config
 
-      - name: Wait for Beer Garden plugins to initialize
-        run: sleep 90s
-        shell: bash
+      - name: Grab logs from Child
+        if: always()
+        run: docker compose logs --tail 3000 beer-garden-child
+        working-directory: ./docker/docker-compose
+
+      - name: Grab logs from Parent
+        if: always()
+        run: docker compose logs --tail 3000 beer-garden-parent
+        working-directory: ./docker/docker-compose
+
+      - name: Grab logs from Grand Parent
+        if: always()
+        run: docker compose logs --tail 3000 beer-garden-grandparent
+        working-directory: ./docker/docker-compose
 
       - name: Install Develop Version of Brewtils
         run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@${{env.brewtils}}#egg=brewtils
