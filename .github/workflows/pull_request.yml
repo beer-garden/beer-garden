@@ -606,7 +606,7 @@ jobs:
         run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.3 --quiet | tail -1)
 
       - name: Copy Brewtils Source
-        run: cp -r $(pip show brewtils | grep 'Location:' | sed 's/Location: //g')/brewtils* ./test/conf/swarm/brewtils
+        run: cp -r $(pip show brewtils | grep 'Location:' | sed 's/^.* //g')/brewtils* ./test/conf/swarm/brewtils
 
       - name: Run Docker Beer Garden Plugins
         run: docker stack deploy -c docker-compose-plugins.yml beer-plugins
