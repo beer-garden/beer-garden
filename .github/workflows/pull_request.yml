@@ -605,6 +605,9 @@ jobs:
         if: always()
         run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.3 --quiet | tail -1)
 
+      - name: Copy Brewtils Source
+        run: cp -r ./src/app/src/brewtils ./test/conf/swarm/brewtils
+
       - name: Run Docker Beer Garden Plugins
         run: docker stack deploy -c docker-compose-plugins.yml beer-plugins
         working-directory: ./test/conf/swarm/
