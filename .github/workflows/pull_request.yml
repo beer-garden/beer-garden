@@ -605,15 +605,15 @@ jobs:
         if: always()
         run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.3 --quiet | tail -1)
 
-      - name: Install Brewtils
-        run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@${{env.brewtils}}#egg=brewtils
-        working-directory: ./src/app
+      # - name: Install Brewtils
+      #   run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@${{env.brewtils}}#egg=brewtils
+      #   working-directory: ./src/app
 
-      - name: show brewtils
-        run: pip show brewtils
+      # - name: show brewtils
+      #   run: pip show brewtils
 
-      - name: Copy Brewtils Source
-        run: cp -r $(pip show brewtils | grep 'location:' | sed 's/^.* //g')/brewtils ./test/conf/swarm/brewtils
+      # - name: Copy Brewtils Source
+      #   run: cp -r $(pip show brewtils | grep 'location:' | sed 's/^.* //g')/brewtils ./test/conf/swarm/brewtils
 
       - name: Run Docker Beer Garden Plugins
         run: docker stack deploy -c docker-compose-plugins.yml beer-plugins

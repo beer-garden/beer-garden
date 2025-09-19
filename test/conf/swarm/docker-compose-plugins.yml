@@ -13,7 +13,7 @@ x-definitions: &plugin
         replicas: 1
     volumes:
         - ./data/certs/ca_certificate.pem:/certs/ca_certificate.pem
-        - ./brewtils:/usr/local/lib/python3.11/site-packages/brewtils:ro
+        # - ./brewtils:/usr/local/lib/python3.11/site-packages/brewtils:ro
     environment:
         BG_SSL_ENABLED: "False"
         BG_HOST: beer-garden
