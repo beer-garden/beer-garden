@@ -605,6 +605,7 @@ jobs:
         if: always()
         run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.3 --quiet | tail -1)
 
+      # Uncomment if we want to start injecting latest brewtils for testing
       # - name: Install Brewtils
       #   run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@${{env.brewtils}}#egg=brewtils
       #   working-directory: ./src/app
