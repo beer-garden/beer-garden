@@ -56,6 +56,8 @@ export default function gardenService($rootScope, $http) {
       operation: 'rescan',
       path: '',
       value: '',
+    },{
+      headers: {'Target-Garden': name}
     });
   };
 
@@ -64,6 +66,8 @@ export default function gardenService($rootScope, $http) {
       operation: 'sync',
       path: '',
       value: '',
+    },{
+      headers: {'Target-Garden': name}
     });
   };
 
