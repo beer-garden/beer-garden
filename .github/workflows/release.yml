@@ -67,6 +67,11 @@ jobs:
       - name: Make Package
         run: make package
 
+      - name: Check Package Distributions
+        with:
+          packages-dir: src/app/
+        run: python -m twine check dist/*
+
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
