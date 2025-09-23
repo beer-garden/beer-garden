@@ -92,7 +92,7 @@ def ensure_local_garden():
 def is_legacy_mongodb():
     mongo_version = get_connection().server_info().get("version", "0.0.0")
     # # Supports MongoGB 6.0+
-    return Version(mongo_version) < Version("6.0.0")
+    return Version(mongo_version) < Version("7.0.0")
 
 
 def reset_last_configuration():
