@@ -1,13 +1,15 @@
 import {formatDate} from '../services/utility_service.js';
 
-jobIndexController.$inject = ['$scope', 'JobService'];
+jobIndexController.$inject = ['$scope', '$rootScope', 'JobService','EventService'];
 
 /**
  * jobIndexController - Controller for the job index page.
  * @param  {Object} $scope      Angular's $scope object.
+ * @param  {Object} $rootScope      Angular's $rootScope object.
  * @param  {Object} JobService  Beer-Garden's job service.
+ * @param  {Object} EventService    Beer-Garden's event service object.
  */
-export default function jobIndexController($scope, JobService) {
+export default function jobIndexController($scope, $rootScope, JobService, EventService) {
   $scope.setWindowTitle('scheduler');
 
   $scope.successCallback = function(response) {
@@ -23,11 +25,32 @@ export default function jobIndexController($scope, JobService) {
   $scope.formatDate = formatDate;
 
   function loadJobs() {
-    $scope.response = undefined;
-    $scope.data = {};
-
     JobService.getJobs().then($scope.successCallback, $scope.failureCallback);
   }
+
+  function eventCallback(event) {
+    if ($rootScope.garden !== undefined && event.garden == $rootScope.garden.name) {
+      if (['JOB_PAUSED', 'JOB_RESUMED'].includes(event.name)) {
+        for (let job in $scope.data){
+          if ($scope.data[job].id == event.payload.id){
+            $scope.data[job] = event.payload
+          }
+        }
+      } else if (event.name.startsWith('JOB')) {
+        loadJobs();
+      }
+    }
+  }
+
+  EventService.addCallback('job_index', (event) => {
+    $scope.$apply(() => {
+      eventCallback(event);
+    });
+  });
+
+  $scope.$on('$destroy', function() {
+    EventService.removeCallback('job_index');
+  });
 
   $scope.$on('userChange', () => {
     loadJobs();

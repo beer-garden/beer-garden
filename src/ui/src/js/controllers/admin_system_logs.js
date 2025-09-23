@@ -60,8 +60,10 @@ export default function adminSystemLogsController(
     $scope.displayLogs = '';
     $scope.requestId = response.headers('request_id');
 
-    for (let i = 0; i < $scope.logs.length; i++) {
-      $scope.displayLogs = $scope.displayLogs.concat($scope.logs[i]);
+    if ($scope.logs !== undefined && $scope.logs !== null) {
+      for (let i = 0; i < $scope.logs.length; i++) {
+        $scope.displayLogs = $scope.displayLogs.concat($scope.logs[i]);
+      }
     }
 
     $scope.downloadHref = 'api/v1/requests/output/' + $scope.requestId;
@@ -98,12 +100,14 @@ export default function adminSystemLogsController(
     $scope.requestId = response.headers('request_id');
     $scope.downloadHref = 'api/v1/requests/output/' + $scope.requestId;
 
-    if (response.data.length > 0){
-      $scope.tail_start = $scope.tail_start + response.data.match(/\n/g).length + 1;
+    if (response.data !== undefined && response.data !== null) {
+      if (response.data.length > 0){
+        $scope.tail_start = $scope.tail_start + response.data.match(/\n/g).length + 1;
+      }
     }
 
     // Sleep so you don't spam the server
-    if (response.data.length == 0 || response.data.match(/\n/g).length < $scope.tail_line){
+    if ((response.data !== undefined && response.data !== null && response.data.length == 0) || response.data.match(/\n/g).length < $scope.tail_line){
       $timeout(() => {$scope.getLogsTailLoop();}, 10000); // Sleep Ten seconds
     } else {
       $timeout(() => {$scope.getLogsTailLoop();}, 1000); // Sleep One Second

@@ -110,7 +110,7 @@ install_apps() {
 
         $PIP_BIN install \
                 "$SRC_PATH/brewtils/dist/brewtils-$brewtils_version.tar.gz" \
-                "$SRC_PATH/app/dist/beer-garden-$app_version.tar.gz"
+                "$SRC_PATH/app/dist/beer_garden-$app_version.tar.gz"
     else
         $PIP_BIN install beer-garden==${VERSION}
     fi

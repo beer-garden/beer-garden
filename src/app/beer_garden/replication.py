@@ -23,6 +23,13 @@ def get_replication_id() -> str:
     return replication_id
 
 
+def is_primary_replication(replication_id) -> bool:
+
+    if not config.get("replication.enabled"):
+        return True
+    return replication_id == get_replication_id()
+
+
 @publish_event(Events.REPLICATION_CREATED)
 def create_replication(replication: Replication):
     return db.create(replication)
@@ -99,7 +106,7 @@ def handle_event(event: Event) -> None:
         event: The event to handle
     """
 
-    if event.garden == config.get("garden.name"):
+    if event.garden == config.get("garden.name") and config.get("replication.enabled"):
         if event.name in [
             Events.REPLICATION_CREATED.name,
             Events.REPLICATION_UPDATED.name,
