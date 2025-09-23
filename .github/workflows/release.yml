@@ -68,8 +68,6 @@ jobs:
         run: make package
 
       - name: Check Package Distributions
-        with:
-          packages-dir: src/app/
         run: python -m twine check dist/*
 
       - name: Publish package distributions to PyPI
