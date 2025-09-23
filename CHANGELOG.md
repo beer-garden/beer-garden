@@ -2,7 +2,7 @@
 
 # 3.30.0
 
-TBD
+9/23/2025
 
 ## MONGODB Update
 - With the update to utilize MongoDB's Expiration At TTL, minimum version for MongoDB is 
