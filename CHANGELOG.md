@@ -4,8 +4,6 @@
 
 TBD
 
-This release has a large amount of changes. 
-
 ## MONGODB Update
 - With the update to utilize MongoDB's Expiration At TTL, minimum version for MongoDB is 
   now 8.0. If you are running an older version, then legacy pruning will be invoked. This
