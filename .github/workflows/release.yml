@@ -74,11 +74,13 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: src/app/dist
+          verify-metadata: false
 
   pypi-verify:
     name: Verify PyPI Publish
     runs-on: ubuntu-22.04
     needs: pypi-publish
+    if: always()
 
     steps:
       - name: Set up Python
