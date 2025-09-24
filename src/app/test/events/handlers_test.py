@@ -247,25 +247,25 @@ class TestHandlers:
         bg_event.name = Events.GARDEN_CONFIGURED.name
 
         bg_event.garden = "localgarden"
-        self.run_event_handler_test(bg_event, ["Router", "Garden"], monkeypatch)
+        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
         bg_event.garden = "remotegaren"
-        self.run_event_handler_test(bg_event, ["Router", "Garden"], monkeypatch)
+        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
 
     def test_garden_updated_event(self, bg_event, monkeypatch):
         bg_event.name = Events.GARDEN_UPDATED.name
 
         bg_event.garden = "localgarden"
-        self.run_event_handler_test(bg_event, ["Router", "Garden"], monkeypatch)
+        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
         bg_event.garden = "remotegaren"
-        self.run_event_handler_test(bg_event, ["Router", "Garden"], monkeypatch)
+        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
 
     def test_garden_removed_event(self, bg_event, monkeypatch):
         bg_event.name = Events.GARDEN_REMOVED.name
 
         bg_event.garden = "localgarden"
-        self.run_event_handler_test(bg_event, ["Router", "Garden"], monkeypatch)
+        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
         bg_event.garden = "remotegaren"
-        self.run_event_handler_test(bg_event, ["Router", "Garden"], monkeypatch)
+        self.run_event_handler_test(bg_event, ["Garden"], monkeypatch)
 
     def test_garden_started_event(self, bg_event, monkeypatch):
         bg_event.name = Events.GARDEN_STARTED.name

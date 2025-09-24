@@ -445,6 +445,15 @@ _CHILDREN_GARDEN_SPEC = {
                 "BG_CHILDREN_CONFIG_DIRECTORY",
             ],
         },
+        "router_ttl": {
+            "type": "int",
+            "required": False,
+            "default": 60,
+            "description": (
+                "Number of seconds to cache child garden connection info "
+                "(negative number for never)"
+            ),
+        },
     },
 }
 

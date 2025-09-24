@@ -44,6 +44,7 @@ auth:
     read_only: 720
 children:
   directory: ./children
+  router_ttl: 60
 db:
   connection:
     host: localhost

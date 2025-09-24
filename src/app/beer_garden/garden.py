@@ -854,7 +854,6 @@ def rescan(sync_gardens: bool = False):
         if sync_gardens:
             for garden_name in loaded_gardens:
                 # Need to give the router a second to load the events
-                time.sleep(0.5)
                 garden_sync(garden_name)
 
 
@@ -885,6 +884,10 @@ def garden_sync(sync_target: str = None):
             publish_garden()
         else:
             try:
+                from beer_garden.router import clear_garden_ttl_cache
+
+                # Clearing cache to ensure we get fresh connection info
+                clear_garden_ttl_cache(sync_target)
 
                 route(
                     Operation(

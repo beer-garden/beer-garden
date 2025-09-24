@@ -21,6 +21,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from copy import deepcopy
 from functools import partial
 from typing import Dict, Union
+from datetime import datetime
 
 import brewtils.models
 from brewtils import EasyClient
@@ -70,10 +71,8 @@ routable_operations = [
 # Executor used to run REQUEST_CREATE operations in an async context
 t_pool = ThreadPoolExecutor()
 
-# Used for actually sending operations to other gardens
-garden_lock = threading.RLock()
-gardens: Dict[str, Garden] = {}  # garden_name -> garden
-stomp_garden_connections: Dict[str, Connection] = {}
+# Cache of recently used child gardens to avoid DB hits
+children_garden_ttl_cache: Dict = {}
 
 # Used for determining WHERE to route an operation
 routing_lock = threading.RLock()
@@ -344,6 +343,61 @@ def update_api_heartbeat(operation: Operation):
             )
 
 
+def clear_garden_ttl_cache(garden_name: str = None):
+    if garden_name:
+        if garden_name in children_garden_ttl_cache:
+            del children_garden_ttl_cache[garden_name]
+        clear_garden_children_ttl_cache(garden_name)
+    else:
+        children_garden_ttl_cache = {}
+
+
+def clear_garden_children_ttl_cache(garden_name: str):
+    """Clear the TTL cache for all children of the specified garden"""
+    to_delete = []
+    for cached_garden_name, (cached_garden, _) in children_garden_ttl_cache.items():
+        if cached_garden.has_parent and cached_garden.parent == garden_name:
+            to_delete.append(cached_garden_name)
+
+    for name in to_delete:
+        clear_garden_ttl_cache(name)
+
+
+def get_garden_ttl_cache(garden_name: str):
+    if garden_name in children_garden_ttl_cache:
+        garden, timestamp = children_garden_ttl_cache[garden_name]
+        if (datetime.now() - timestamp).seconds < config.get("children.router_ttl", default=60):
+            return garden
+
+    garden = get_garden(
+        garden_name=garden_name,
+        include_fields=[
+            "name",
+            "parent",
+            "has_parent",
+            "receiving_connections__api",
+            "receiving_connections__status",
+            "publishing_connections__api",
+            "publishing_connections__status",
+            "publishing_connections__config",
+        ],
+    )
+
+    if garden is None:
+        garden = beer_garden.garden.load_garden_file(Garden(name=garden_name))
+        logger.warning(
+            f"Loaded {garden_name} from config file into in memory"
+            " routing cache, please manually kick off rescan of directories if this"
+            " continues"
+        )
+
+    if garden is None:
+        return None
+
+    children_garden_ttl_cache[garden_name] = (garden, datetime.now())
+    return garden
+
+
 def invalid_source_check(operation: Operation):
     # Unable to validate source or api
     if (
@@ -353,40 +407,14 @@ def invalid_source_check(operation: Operation):
     ):
         return False
 
-    # Receiving Connections have not been configured yet
-    if operation.source_garden_name in gardens:
-        if not gardens[operation.source_garden_name].receiving_connections:
+    garden = get_garden_ttl_cache(operation.source_garden_name)
+
+    if garden:
+
+        if not garden.receiving_connections:
             return False
 
-        for connection in gardens[operation.source_garden_name].receiving_connections:
-            if (
-                connection.api == operation.source_api
-                and connection.status != "DISABLED"
-            ):
-                return False
-
-    try:
-        loaded_garden = beer_garden.garden.get_garden(
-            operation.source_garden_name,
-            include_fields=[
-                "name",
-                "receiving_connections__api",
-                "receiving_connections__status",
-                "publishing_connections__api",
-                "publishing_connections__status",
-            ],
-        )
-        logger.warning(
-            f"Garden {operation.source_garden_name} exists in database and "
-            " not in memory routing table, loading into routing table"
-        )
-    except DoesNotExist:
-
-        loaded_garden = beer_garden.garden.load_garden_file(
-            Garden(name=operation.source_garden_name)
-        )
-
-        for connection in loaded_garden.receiving_connections:
+        for connection in garden.receiving_connections:
             if (
                 connection.api == operation.source_api
                 and connection.status == "CONFIGURATION_ERROR"
@@ -397,18 +425,12 @@ def invalid_source_check(operation: Operation):
                 )
                 return True
 
-        logger.warning(
-            f"Loaded {operation.source_garden_name} from config file into in memory"
-            " routing table, please manually kick off rescan of directories if this"
-            " continues"
-        )
-
-    with garden_lock:
-        gardens[operation.source_garden_name] = loaded_garden
-
-    for connection in loaded_garden.receiving_connections:
-        if connection.api == operation.source_api and connection.status != "DISABLED":
-            return False
+            if connection.api == operation.source_api and connection.status not in [
+                "DISABLED",
+                "NOT_CONFIGURED",
+                "MISSING_CONFIGURATION",
+            ]:
+                return False
 
     return True
 
@@ -450,21 +472,7 @@ def initiate_forward(operation: Operation):
 
 
 def determine_route_garden(target_garden_name):
-    target_garden = gardens.get(target_garden_name)
-
-    if not target_garden:
-        target_garden = get_garden(
-            target_garden_name,
-            include_fields=[
-                "receiving_connections__api",
-                "receiving_connections__status",
-                "publishing_connections__api",
-                "publishing_connections__status",
-                "has_parent",
-                "parent",
-            ],
-        )
-
+    target_garden = get_garden_ttl_cache(target_garden_name)
     routable = False
     for connection in target_garden.publishing_connections:
         if connection.status not in [
@@ -504,12 +512,7 @@ def forward(operation: Operation):
         RoutingRequestException: Could not determine a route to child
         UnknownGardenException: The specified target garden is unknown
     """
-    target_garden = gardens.get(operation.target_garden_name)
-
-    if not target_garden:
-        target_garden = get_garden(
-            operation.target_garden_name, include_fields=["name"]
-        )
+    target_garden = get_garden_ttl_cache(operation.target_garden_name)
 
     route_garden = determine_route_garden(operation.target_garden_name)
     try:
@@ -595,28 +598,6 @@ def setup_routing():
             or not garden.has_parent
         ):
             add_routing_garden(garden)
-
-            if (
-                garden.connection_type is not None
-                and garden.connection_type.casefold() != "local"
-            ):
-                del garden.children
-                del garden.systems
-
-                with garden_lock:
-                    gardens[garden.name] = garden
-                    for connection in gardens[garden.name].publishing_connections:
-                        if (
-                            connection.api.upper() == "STOMP"
-                            and connection.status != "DISABLED"
-                        ):
-                            if garden.name not in stomp_garden_connections:
-                                stomp_garden_connections[garden.name] = (
-                                    create_stomp_connection(connection)
-                                )
-
-            else:
-                logger.warning(f"Garden with invalid connection info: {garden!r}")
 
 
 def add_routing_system(system=None, garden_name=None):
@@ -717,77 +698,6 @@ def handle_event(event):
             # Then add routes to the new systems
             add_routing_garden(event.payload)
         return
-
-    # This is a little unintuitive. We want to let the garden module deal with handling
-    # any downstream garden changes since handling those changes is nontrivial.
-    # It's *those* events we want to act on here, not the "raw" downstream ones.
-    # This is also why we only handle GARDEN_UPDATED and not STARTED or STOPPED
-    # Also skip over error messages and let the Garden handler update based off them
-    if (
-        event.garden == config.get("garden.name")
-        and not event.error
-        and event.name
-        in [
-            Events.GARDEN_CONFIGURED.name,
-            Events.GARDEN_REMOVED.name,
-            Events.GARDEN_UPDATED.name,
-        ]
-    ):
-
-        # Only store the garden if it's 1 hop of the local garden
-        if not event.payload.has_parent or event.payload.parent == config.get(
-            "garden.name"
-        ):
-            # To save memory, we need to remove children
-            if event.payload_type == "Garden":
-                del event.payload.children
-                del event.payload.systems
-
-            if event.name == Events.GARDEN_CONFIGURED.name:
-                if event.payload.name != config.get("garden.name") and (
-                    (
-                        event.payload.has_parent
-                        and event.payload.parent == config.get("garden.name")
-                    )
-                    or not event.payload.has_parent
-                ):
-                    gardens[event.payload.name] = event.payload
-
-                    stomp_found = False
-                    for connection in event.payload.publishing_connections:
-                        if connection.api.upper() == "STOMP":
-                            stomp_found = True
-                            if (
-                                event.payload.name not in stomp_garden_connections
-                                and connection.status == "PUBLISHING"
-                            ):
-                                stomp_garden_connections[event.payload.name] = (
-                                    create_stomp_connection(connection)
-                                )
-
-                            elif connection.status == "DISABLED":
-                                if event.payload.name in stomp_garden_connections:
-                                    stomp_garden_connections[
-                                        event.payload.name
-                                    ].disconnect()
-
-                if (
-                    not stomp_found
-                    and event.payload.name not in stomp_garden_connections
-                ):
-                    stomp_garden_connections[event.payload.name].disconnect()
-                    del stomp_garden_connections[event.payload.name]
-
-            elif event.name == Events.GARDEN_REMOVED.name:
-                try:
-                    del gardens[event.payload.name]
-                    if event.payload.name in stomp_garden_connections:
-                        stomp_garden_connections[event.payload.name].disconnect()
-                        del stomp_garden_connections[event.payload.name]
-                except KeyError:
-                    pass
-            elif event.name == Events.GARDEN_UPDATED.name:
-                gardens[event.payload.name] = event.payload
 
 
 def _operation_conversion(operation: Operation) -> Operation:
@@ -1077,7 +987,7 @@ def _forward_stomp(operation: Operation, target_garden: Garden) -> None:
             "CONFIGURATION_ERROR",
         ]:
             try:
-                conn = stomp_garden_connections[target_garden.name]
+                conn = create_stomp_connection(connection)
 
                 if not conn.is_connected() and not conn.connect():
                     connection.status = "UNREACHABLE"
@@ -1105,6 +1015,8 @@ def _forward_stomp(operation: Operation, target_garden: Garden) -> None:
                     operation=operation,
                     event_name=Events.GARDEN_UNREACHABLE.name,
                 ) from ex
+            finally:
+                conn.disconnect()
 
             if connection.status != "PUBLISHING":
                 connection.status = "PUBLISHING"

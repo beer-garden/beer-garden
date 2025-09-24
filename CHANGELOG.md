@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+# TBD
+TBD
+
+- Added new configuration for Router for Garden cache TTL: `children.router_ttl`
+- Updated Router caching logic to utilize database results and cache in memory for configured 
+  TTL. Router Garden information no longer depends on Event Driven Updates.
+
 # 3.30.0
 
 9/23/2025

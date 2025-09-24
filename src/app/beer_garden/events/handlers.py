@@ -111,9 +111,6 @@ def add_internal_events_handler(event_manager):
                 Events.SYSTEM_CREATED,
                 Events.SYSTEM_UPDATED,
                 Events.GARDEN_SYNC,
-                Events.GARDEN_CONFIGURED,
-                Events.GARDEN_REMOVED,
-                Events.GARDEN_UPDATED,
             ],
             "local_only": False,
             "unique_data": False,  # Can not unique due to API configurations
