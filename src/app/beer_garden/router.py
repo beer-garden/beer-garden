@@ -989,6 +989,7 @@ def _forward_stomp(operation: Operation, target_garden: Garden) -> None:
             "DISABLED",
             "CONFIGURATION_ERROR",
         ]:
+            conn = None
             try:
                 conn = create_stomp_connection(connection)
 
@@ -1019,7 +1020,8 @@ def _forward_stomp(operation: Operation, target_garden: Garden) -> None:
                     event_name=Events.GARDEN_UNREACHABLE.name,
                 ) from ex
             finally:
-                conn.disconnect()
+                if conn:
+                    conn.disconnect()
 
             if connection.status != "PUBLISHING":
                 connection.status = "PUBLISHING"
