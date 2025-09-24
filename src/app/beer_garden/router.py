@@ -19,15 +19,14 @@ import logging
 import threading
 from concurrent.futures.thread import ThreadPoolExecutor
 from copy import deepcopy
+from datetime import datetime
 from functools import partial
 from typing import Dict, Union
-from datetime import datetime
 
 import brewtils.models
 from brewtils import EasyClient
 from brewtils.models import Connection as BrewtilsConnection
 from brewtils.models import Events, Garden, Operation, Request, System
-from mongoengine import DoesNotExist
 from stomp.exception import ConnectFailedException
 
 import beer_garden
@@ -344,6 +343,8 @@ def update_api_heartbeat(operation: Operation):
 
 
 def clear_garden_ttl_cache(garden_name: str = None):
+    global children_garden_ttl_cache
+
     if garden_name:
         if garden_name in children_garden_ttl_cache:
             del children_garden_ttl_cache[garden_name]
@@ -366,7 +367,9 @@ def clear_garden_children_ttl_cache(garden_name: str):
 def get_garden_ttl_cache(garden_name: str):
     if garden_name in children_garden_ttl_cache:
         garden, timestamp = children_garden_ttl_cache[garden_name]
-        if (datetime.now() - timestamp).seconds < config.get("children.router_ttl", default=60):
+        if (datetime.now() - timestamp).seconds < config.get(
+            "children.router_ttl", default=60
+        ):
             return garden
 
     garden = get_garden(
