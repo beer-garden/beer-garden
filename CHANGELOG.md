@@ -1,5 +1,9 @@
 # Beer Garden Changelog
 
+# Auth Release Candidate  
+
+TBD
+
 # 3.30.0
 
 9/23/2025
