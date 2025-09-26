@@ -4,6 +4,9 @@
 
 TBD
 
+- Fixed model filtering to include missing namespace properties (#1848)
+- Updated model filtering, if query filters are generated pre-query then skip filtering records when returning API models (#1848)
+
 # 3.30.0
 
 9/23/2025
