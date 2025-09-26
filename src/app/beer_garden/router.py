@@ -161,8 +161,8 @@ route_functions = {
     "TOPIC_DELETE": beer_garden.topic.remove_topic,
     "TOPIC_ADD_SUBSCRIBER": beer_garden.topic.topic_add_subscriber,
     "TOPIC_REMOVE_SUBSCRIBER": beer_garden.topic.topic_remove_subscriber,
+    "TOPIC_SYNC": beer_garden.topic.sync_topics,
     "TOKEN_USER_DELETE": beer_garden.user.revoke_tokens,
-    "TOPIC_SYNC_GARDEN": beer_garden.topic.sync_garden_topics,
     "ROLE_CREATE": beer_garden.role.create_role,
     "ROLE_UPDATE": beer_garden.role.update_role,
     "ROLE_DELETE": beer_garden.role.delete_role,
@@ -575,7 +575,14 @@ def setup_routing():
     for system in db.query(
         System,
         filter_params={"local": True},
-        include_fields=["id", "name", "version", "namespace", "instances__id"],
+        include_fields=[
+            "id",
+            "name",
+            "garden_name",
+            "version",
+            "namespace",
+            "instances__id",
+        ],
     ):
         add_routing_system(system)
 
@@ -622,7 +629,16 @@ def add_routing_system(system=None, garden_name=None):
 
     """
     # Default to local garden name
-    garden_name = garden_name or config.get("garden.name")
+    if getattr(system, "garden_name", None):
+        garden_name = system.garden_name
+    elif not garden_name:
+        for garden in get_gardens():
+            for garden_system in garden.systems:
+                if garden_system.id == system.id:
+                    garden_name = garden.name
+                    break
+            if garden_name:
+                break
 
     with routing_lock:
         logger.debug(f"{garden_name}: Adding system {system} ({system.id})")
@@ -818,6 +834,10 @@ def _pre_forward(operation: Operation) -> Operation:
 
         operation.model.id = local_request.id
 
+        if operation.model.command_type == "TEMP":
+            # Upgraded the command type so it can be routed back
+            operation.model.command_type = "INFO"
+
         beer_garden.files.forward_file(operation)
 
         # Clear parent before forwarding so the child doesn't freak out about an
@@ -981,25 +1001,36 @@ def _system_name_lookup(system: Union[str, System]) -> str:
             version=system.version,
         )
         if len(systems) == 1:
-            for garden in get_gardens(
-                include_fields=[
-                    "name",
-                    "systems__id",
-                    "systems__name",
-                    "systems__version",
-                    "systems__namespace",
-                    "systems__instances__id",
-                ]
-            ):
-                for system in garden.systems:
-                    if systems[0].id == system.id:
-                        with routing_lock:
-                            # Then add routes to systems
-                            add_routing_system(system=system, garden_name=garden.name)
-                        logger.error(
-                            "Router mapping is out of sync, you should consider re-syncing"
-                        )
-                        return garden.name
+            garden_name = systems[0].garden_name
+
+            if not garden_name:
+                for garden in get_gardens(
+                    include_fields=[
+                        "name",
+                        "systems__id",
+                        "systems__name",
+                        "systems__garden_name" "systems__version",
+                        "systems__namespace",
+                        "systems__instances__id",
+                    ]
+                ):
+                    for system in garden.systems:
+                        if systems[0].id == system.id:
+                            garden_name = garden.name
+
+                            break
+                    if garden_name:
+                        break
+
+            if garden_name:
+                systems[0].garden_name = garden.name
+                with routing_lock:
+                    # Then add routes to systems
+                    add_routing_system(system=systems[0])
+                logger.error(
+                    "Router mapping is out of sync, you should consider re-syncing"
+                )
+            return garden_name
 
     return None
 

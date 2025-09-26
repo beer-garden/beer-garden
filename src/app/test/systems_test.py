@@ -7,8 +7,17 @@ from brewtils.models import System as BrewtilsSystem
 from mongoengine import connect
 
 from beer_garden import config
-from beer_garden.db.mongo.models import System
+from beer_garden.db.mongo.models import Garden, System, Topic
 from beer_garden.systems import create_system, get_systems, update_system
+
+
+@pytest.fixture(autouse=True)
+def setup_teardown():
+    """Setup and teardown for each test to ensure a clean state."""
+    yield Garden(name="default", connection_type="LOCAL").save()
+    System.drop_collection()
+    Topic.drop_collection()
+    Garden.drop_collection()
 
 
 @pytest.fixture
@@ -18,11 +27,11 @@ def system():
             name="original",
             version="v0.0.1",
             namespace="beer_garden",
+            garden_name="default",
+            local=True,
             commands=[BrewtilsCommand(name="original")],
         )
     )
-
-    System.drop_collection()
 
 
 @pytest.fixture
@@ -32,11 +41,11 @@ def system2():
             name="original",
             version="v0.0.2",
             namespace="beer_garden",
+            garden_name="default",
+            local=True,
             commands=[BrewtilsCommand(name="original")],
         )
     )
-
-    System.drop_collection()
 
 
 @pytest.fixture
@@ -46,6 +55,8 @@ def system3():
             name="original",
             version="v0.0.0.dev0",
             namespace="beer_garden",
+            garden_name="default",
+            local=True,
             commands=[BrewtilsCommand(name="original")],
             instances=[
                 BrewtilsInstance(
@@ -56,8 +67,6 @@ def system3():
         )
     )
 
-    System.drop_collection()
-
 
 @pytest.fixture
 def system4():
@@ -66,6 +75,8 @@ def system4():
             name="original",
             version="v0.0.0.dev1",
             namespace="beer_garden",
+            garden_name="default",
+            local=True,
             commands=[BrewtilsCommand(name="original")],
             instances=[
                 BrewtilsInstance(
@@ -76,8 +87,6 @@ def system4():
         )
     )
 
-    System.drop_collection()
-
 
 @pytest.fixture
 def system5():
@@ -86,6 +95,8 @@ def system5():
             name="default",
             version="v0.0.1",
             namespace="beer_garden",
+            garden_name="default",
+            local=True,
             commands=[BrewtilsCommand(name="default")],
             instances=[
                 BrewtilsInstance(
@@ -187,5 +198,71 @@ class TestSystem:
     ):
         systems = get_systems(filter_latest=True, filter_running=True)
 
-        assert len(systems) == 1
-        assert systems[0].version == system4.version
+        assert len(systems) == 2
+        system_1_found = False
+        system_2_found = False
+        system_3_found = False
+        system_4_found = False
+        system_5_found = False
+        for db_system in systems:
+            if db_system.name == system.name and db_system.version == system.version:
+                system_1_found = True
+            elif (
+                db_system.name == system2.name and db_system.version == system2.version
+            ):
+                system_2_found = True
+            elif (
+                db_system.name == system3.name and db_system.version == system3.version
+            ):
+                system_3_found = True
+            elif (
+                db_system.name == system4.name and db_system.version == system4.version
+            ):
+                system_4_found = True
+            elif (
+                db_system.name == system5.name and db_system.version == system5.version
+            ):
+                system_5_found = True
+
+        assert not system_1_found
+        assert not system_2_found
+        assert not system_3_found
+        assert system_4_found
+        assert system_5_found
+
+    def test_get_systems_filtered_including_not_running(
+        self, system, system2, system3, system4, system5
+    ):
+        systems = get_systems(filter_latest=True, filter_running=False)
+
+        assert len(systems) == 2
+        system_1_found = False
+        system_2_found = False
+        system_3_found = False
+        system_4_found = False
+        system_5_found = False
+        for db_system in systems:
+            if db_system.name == system.name and db_system.version == system.version:
+                system_1_found = True
+            elif (
+                db_system.name == system2.name and db_system.version == system2.version
+            ):
+                system_2_found = True
+            elif (
+                db_system.name == system3.name and db_system.version == system3.version
+            ):
+                system_3_found = True
+            elif (
+                db_system.name == system4.name and db_system.version == system4.version
+            ):
+                system_4_found = True
+            elif (
+                db_system.name == system5.name and db_system.version == system5.version
+            ):
+                system_5_found = True
+
+        assert not system_1_found
+        assert system_2_found
+        assert not system_3_found
+        assert not system_4_found
+        assert system_5_found

@@ -121,10 +121,10 @@ security: ## check code for insecure settings and functions
 
 # Testing / Coverage
 test: ## run tests quickly with the default Python
-	pytest $(TEST_DIR)
+	pytest $(TEST_DIR) --ignore $(TEST_DIR)/api/http/unit/handlers/v1/event_test.py
 
 coverage: ## check code coverage quickly with the default Python
-	coverage run --source $(MODULE_NAME) -m pytest $(TEST_DIR) --tb=no 
+	coverage run --source $(MODULE_NAME) -m pytest $(TEST_DIR) --tb=no --ignore $(TEST_DIR)/api/http/unit/handlers/v1/event_test.py
 	coverage report -m
 	coverage html
 

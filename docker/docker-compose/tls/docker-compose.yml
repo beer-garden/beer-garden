@@ -89,7 +89,7 @@ services:
             - rabbitmq
 
     mongodb:
-        image: mongo:4.2
+        image: mongo:6.0
         networks:
             - bg-network
         ports:

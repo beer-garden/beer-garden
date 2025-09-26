@@ -223,6 +223,8 @@ class QueryFilterBuilder:
                 if role.permission in permission_levels:
                     filter = {}
                     or_filter = {}
+                    if len(role.scope_gardens) > 0:
+                        filter["garden_name__in"] = role.scope_gardens
                     if len(role.scope_systems) > 0:
                         filter["name__in"] = role.scope_systems
                     if len(role.scope_instances) > 0:
@@ -374,6 +376,8 @@ class ModelFilter:
                 system_version = system.version
             if check_namespace and system_namespace is None:
                 system_namespace = system.namespace
+            if check_garden and garden_name is None:
+                garden_name = system.garden_name
 
         if system_name and check_garden and garden_name is None:
             if system and system.id and not system.local:
@@ -448,7 +452,7 @@ class ModelFilter:
         permission_levels: list,
         skip_global: bool = False,
         **kwargs
-    ) -> BrewtilsSystem:
+    ) -> BrewtilsUser:
         """Returns a filtered User object based on the roles of the user"""
 
         if user_output.username == user.username:
@@ -471,8 +475,8 @@ class ModelFilter:
         permission_levels: list,
         skip_global: bool = False,
         **kwargs
-    ) -> BrewtilsSystem:
-        """Returns a filtered User object based on the roles of the user"""
+    ) -> BrewtilsRole:
+        """Returns a filtered Role object based on the roles of the user"""
 
         if not skip_global and check_global_roles(
             user, permission_levels=permission_levels
@@ -494,7 +498,7 @@ class ModelFilter:
         source_garden: str = None,
         skip_global: bool = False,
         **kwargs
-    ) -> BrewtilsSystem:
+    ) -> BrewtilsJob:
         """Returns a filtered Job object based on the roles of the user"""
 
         if not skip_global and check_global_roles(
@@ -524,8 +528,8 @@ class ModelFilter:
         source_garden: str = None,
         skip_global: bool = False,
         **kwargs
-    ) -> BrewtilsSystem:
-        """Returns a filtered Job object based on the roles of the user"""
+    ) -> BrewtilsRequest:
+        """Returns a filtered Request object based on the roles of the user"""
 
         if not skip_global and check_global_roles(
             user, permission_levels=permission_levels
@@ -572,7 +576,7 @@ class ModelFilter:
         skip_global: bool = False,
         skip_system: bool = False,
         **kwargs
-    ) -> BrewtilsSystem:
+    ) -> BrewtilsCommand:
         """Returns a filtered Command object based on the roles of the user"""
 
         if not skip_global and check_global_roles(
@@ -617,7 +621,8 @@ class ModelFilter:
         skip_global: bool = False,
         skip_system: bool = False,
         **kwargs
-    ):
+    ) -> BrewtilsRunner:
+        """Returns a filtered Runner object based on the roles of the user"""
         if not skip_global and check_global_roles(
             user, permission_levels=permission_levels
         ):
@@ -657,8 +662,8 @@ class ModelFilter:
         skip_global: bool = False,
         skip_system: bool = False,
         **kwargs
-    ) -> BrewtilsSystem:
-        """Returns a filtered Command object based on the roles of the user"""
+    ) -> BrewtilsInstance:
+        """Returns a filtered Instance object based on the roles of the user"""
 
         if not skip_global and check_global_roles(
             user, permission_levels=permission_levels

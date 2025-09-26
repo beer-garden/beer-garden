@@ -39,7 +39,7 @@ services:
             - ./data/activemq-config/etc-override-non-ssl:/var/lib/artemis/etc-override
 
     mongodb:
-        image: mongo:4.2
+        image: mongo:6.0
         restart: always
         networks:
             - bg-network

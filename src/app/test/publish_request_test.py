@@ -11,8 +11,17 @@ from brewtils.models import (
     Topic,
 )
 from mock import Mock
+from mongoengine.connection import get_db
 
 from beer_garden import config, publish_request
+
+
+@pytest.fixture(autouse=True)
+def drop():
+    yield
+    db = get_db()
+    for collection in db.list_collection_names():
+        db[collection].drop()
 
 
 @pytest.fixture
@@ -127,6 +136,7 @@ def topic_wildcard():
 
 
 class TestSubscriptionEvent(object):
+
     def test_newtopic(self, monkeypatch, localgarden):
         mock_route_request = Mock(return_value=None)
         monkeypatch.setattr(publish_request, "route_request", mock_route_request)

@@ -266,15 +266,17 @@ export default function requestViewController(
 
       $scope.instanceStatus;
 
-      const commands = system.commands;
-      for (let i = 0; i < commands.length; i++) {
-        if (commands[i].name == $scope.request.command) {
-          $scope.disabledPourItAgain = false;
-          $scope.msgPourItAgain = null;
-          break;
-        } else {
-          $scope.disabledPourItAgain = true;
-          $scope.msgPourItAgain = 'Unable to find command';
+      if (system.commands !== undefined && system.commands !== null) {
+        const commands = system.commands;
+        for (let i = 0; i < commands.length; i++) {
+          if (commands[i].name == $scope.request.command) {
+            $scope.disabledPourItAgain = false;
+            $scope.msgPourItAgain = null;
+            break;
+          } else {
+            $scope.disabledPourItAgain = true;
+            $scope.msgPourItAgain = 'Unable to find command';
+          }
         }
       }
 
@@ -382,9 +384,16 @@ export default function requestViewController(
 
   function eventCallback(event) {
     if (event.name.startsWith('REQUEST') && event.payload.id !== undefined && event.payload.id !== null) {
-      if (event.payload.id == $stateParams.requestId) {
-        $scope.successCallback(event.payload);
-      } else if (_.get(event, 'payload.parent.id') == $stateParams.requestId) {
+      if (event.metadata !== undefined && "UI_RELOAD" in event.metadata) {
+        if (event.payload.id == $stateParams.requestId || _.get(event, 'payload.parent.id') == $stateParams.requestId) {
+          // This does not contain full payload, so we need to reload the request
+          $scope.loadRequest();
+        }
+        return;
+      }
+      if (event.payload.id == $stateParams.requestId) {       
+        $scope.successCallback(event.payload);        
+      } else if (_.get(event, 'payload.parent.id') == $stateParams.requestId) {       
         if (event.name == 'REQUEST_CREATED') {
           $scope.children.push(event.payload);
         } else {
@@ -398,7 +407,7 @@ export default function requestViewController(
             child.updated_at = event.payload.updated_at;
             child.error_class = event.payload.error_class;
           }
-        }
+        }        
 
         if (!$scope.childrenCollapsed) {
           $scope.childrenDisplay = $scope.children;
