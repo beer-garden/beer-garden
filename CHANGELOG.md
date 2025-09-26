@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# Auth Release Candidate  
+
+TBD
+
+- Fixed user login to first check for User Authorization Token, then login credentials
+
 # 3.30.0
 
 9/23/2025
