@@ -20,8 +20,10 @@ certifi==2025.8.3
     #   requests
 charset-normalizer==3.4.3
     # via requests
-dnspython==2.8.0
-    # via pymongo
+dnspython==2.7.0
+    # via
+    #   beer_garden (setup.py)
+    #   pymongo
 docopt==0.6.2
     # via stomp-py
 ecs-logging==2.2.0
@@ -50,7 +52,7 @@ pyasn1==0.6.1
     # via ldap3
 pyjwt==2.10.1
     # via beer_garden (setup.py)
-pymongo==4.15.1
+pymongo==4.10.1
     # via
     #   beer_garden (setup.py)
     #   mongoengine

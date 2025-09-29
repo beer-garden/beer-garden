@@ -52,9 +52,13 @@ setup(
         "watchdog<6.1", # Latest 6.0.0
 
         # Pymongo needs 4.9 for Async features from motor
-        "pymongo>=4.9", # Latest 4.15.1
+        # Pymongo needs mockmongo to fix issue #912 before we can go past
+        # pymongo 4.11
+        "pymongo>=4.9,<4.11", # Latest 4.15.1
         "mongoengine>=0.29.1", # Latest 0.29.1
 
+        "dnspython<2.8", # Latest 2.9.0, Update after 3.9 Support drop
+        
         # YAPCONF Conflict with python-box
         "python-box<4", # Latest 7.3.2     
         # Can't go to 18 after yapconf migrates away from _safe functions
