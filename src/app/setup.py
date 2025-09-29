@@ -29,40 +29,37 @@ setup(
     keywords="beer beer-garden beergarden",
     install_requires=[
         # "brewtils>=3.29.0",
-        
-        "apispec>=6.7,<7",
-        "apispec-webframeworks>1,<2",
 
-        "apscheduler<4",
+        # Using Latest Version   
+        "apispec>=6.7,<7", # Latest 6.8.4
+        "apispec-webframeworks>1,<2", # Latest 1.2.0
+        "apscheduler<4", # Latest 3.11.0
+        "more-itertools<11", # Latest 10.8.0
+        "wrapt", # Latest 1.17.3      
+        "elastic-apm", # Latest 6.24.0
+        "ldap3>=2.9.1", # Latest 2.9.1
+        "pyrabbit2<2", # Latest 1.0.7
+        "pyjwt>=2.4.0", # Latest 2.10.1
+        "passlib<1.8", # Latest 1.7.4
+        "prometheus-client<1", # Latest 0.23.1
+        "pyyaml<7", # Latest 6.0.3
+        "stomp.py<9", # Latest 8.2.0
+        "tornado<7", # Latest 6.5.2
+        "urllib3<3", # Latest 2.5.0
+        "watchdog<6.1", # Latest 6.0.0
+
+        # Pymongo needs 4.9 for Async features from motor
+        "pymongo>=4.9", # Latest 4.15.1
+        "mongoengine>=0.29.1", # Latest 0.29.1
 
         # YAPCONF Conflict with python-box
-        "python-box<4",
+        "python-box<4", # Latest 7.3.2     
+        # Can't go to 18 after yapconf migrates away from _safe functions
+        "ruamel.yaml<0.18", # Latest 0.18.5
+        "yapconf<1.0", # Latest 0.4.0
 
-        "marshmallow<4,>=3.3",
-        "more-itertools<11", 
-
-        # pymongo dependency between motor and mongoengine
-        "pymongo>=4.9,<4.10",
-        "mongoengine>=0.29.1",
-        "motor>3,<4",
-
-        "passlib<1.8",
-        "prometheus-client<1",
-        "pyyaml<7",
-        "pyasn1<0.6.0",
-        "pyrabbit2<2",
-        "pyjwt>=2.4.0",
-
-        # Can go to 18 after yapconf 0.4 is released
-        "ruamel.yaml<0.18",
-        "stomp.py<9",
-        "tornado<7",
-        "urllib3<3",
-        "watchdog<6",
-        "wrapt",
-        "yapconf<1.0",
-        "elastic-apm",
-        "ldap3>=2.9.1"
+        # Brewtils drives marshmallow version
+        "marshmallow<4,>=3.3", # Latest 4.0.1
     ],
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -75,6 +72,7 @@ setup(
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
     ],
     entry_points={
         "console_scripts": [

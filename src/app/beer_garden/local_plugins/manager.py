@@ -187,6 +187,7 @@ class PluginManager(StoppableThread):
         connection_info=None,
         username=None,
         password=None,
+        config_data=None,
     ):
         super().__init__(logger=logging.getLogger(__name__), name="PluginManager")
 
@@ -200,6 +201,9 @@ class PluginManager(StoppableThread):
         self._password: Optional[str] = password
 
         self._runner_id_generator = None
+
+        if config_data is not None:
+            config.set_config(config_data)
 
     def run(self):
         """Run this thread."""

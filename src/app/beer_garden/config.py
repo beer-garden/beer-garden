@@ -34,6 +34,11 @@ __all__ = [
 _CONFIG = None
 
 
+def set_config(config: Box):
+    global _CONFIG
+    _CONFIG = config
+
+
 def load(args: Sequence[str], force: bool = False) -> None:
     """Load the application configuration.
 
@@ -264,7 +269,7 @@ def get(
 
     value = config if config else _CONFIG
     for key_part in key.split("."):
-        if key_part not in value:
+        if value is None or key_part not in value:
             return default
         value = value[key_part]
     return value

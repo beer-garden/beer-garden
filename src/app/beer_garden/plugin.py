@@ -37,7 +37,7 @@ from mongoengine.fields import ObjectIdField
 
 import beer_garden.config as config
 import beer_garden.db.api as db
-import beer_garden.db.mongo.motor as moto
+import beer_garden.db.mongo.async_api as async_api
 import beer_garden.local_plugins.manager as lpm
 import beer_garden.queue.api as queue
 import beer_garden.requests as requests
@@ -479,7 +479,7 @@ async def update_async(
     )
 
     if new_status:
-        system = await moto.query(
+        system = await async_api.query(
             collection="system",
             filter={
                 "instances._id": ObjectIdField().to_mongo(instance.id),
@@ -498,7 +498,9 @@ async def heartbeat_async(
     query = {"instances._id": ObjectIdField().to_mongo(instance_id)}
     projection = {"instances.$": 1, "_id": 0}
 
-    result = await moto.query(collection="system", filter=query, projection=projection)
+    result = await async_api.query(
+        collection="system", filter=query, projection=projection
+    )
 
     instance = result["instances"][0]
     if "_id" in instance:
@@ -531,14 +533,16 @@ async def heartbeat_async(
             "$push": {"instances.$.status_info.history": history},
         }
 
-    await moto.update_one(collection="system", filter=query, update=update)
+    await async_api.update_one(collection="system", filter=query, update=update)
 
     return SchemaParser.parse_instance(instance)
 
 
 async def _get_instance_async(filter, projection) -> dict:
     """Helper to get an instance async-style"""
-    result = await moto.query(collection="system", filter=filter, projection=projection)
+    result = await async_api.query(
+        collection="system", filter=filter, projection=projection
+    )
 
     # TODO - This is not the best
     instance = result["instances"][0]
@@ -566,7 +570,7 @@ async def _get_instance_async(filter, projection) -> dict:
 
 async def _update_instance_async(filter, projection, update) -> dict:
     """Helper to update an instance async-style"""
-    await moto.update_one(collection="system", filter=filter, update=update)
+    await async_api.update_one(collection="system", filter=filter, update=update)
 
     return await _get_instance_async(filter, projection)
 

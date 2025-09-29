@@ -59,7 +59,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9","3.10","3.11.11","3.12","3.13"]
+        python-version: ["3.9","3.10","3.11.11","3.12","3.13", "3.14.0-rc.3"]
         os: ["ubuntu-latest"]
 
     name: PyTests OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
@@ -67,7 +67,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Setup python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 

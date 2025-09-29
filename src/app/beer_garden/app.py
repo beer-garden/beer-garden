@@ -128,7 +128,9 @@ class Application(StoppableThread):
 
         self.mp_manager = self._setup_multiprocessing_manager()
 
-        beer_garden.local_plugins.manager.lpm_proxy = self.mp_manager.PluginManager()
+        beer_garden.local_plugins.manager.lpm_proxy = self.mp_manager.PluginManager(
+            config_data=config._CONFIG
+        )
 
         self.entry_manager = beer_garden.api.entry_point.Manager()
 
@@ -491,12 +493,19 @@ class Application(StoppableThread):
             ),
         )
 
-        def initializer():
-            signal.signal(signal.SIGINT, signal.SIG_IGN)
-            signal.signal(signal.SIGTERM, signal.SIG_IGN)
+        # Signals are inherited when Manager is started. Set ignore for
+        # signals, then reset to original after data_manager is started.
+        original_sigint_handler = signal.getsignal(signal.SIGINT)
+        original_sigterm_handler = signal.getsignal(signal.SIGTERM)
+
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
 
         data_manager = BaseManager()
-        data_manager.start(initializer=initializer)
+        data_manager.start()
+
+        signal.signal(signal.SIGINT, original_sigint_handler)
+        signal.signal(signal.SIGTERM, original_sigterm_handler)
 
         return data_manager
 

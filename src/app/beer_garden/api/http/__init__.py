@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import asyncio
 import logging
 import os
 import ssl
@@ -44,7 +45,7 @@ import beer_garden.api.http.handlers.misc as misc
 import beer_garden.api.http.handlers.v1 as v1
 import beer_garden.api.http.handlers.vbeta as vbeta
 import beer_garden.config as config
-import beer_garden.db.mongo.motor as moto
+import beer_garden.db.mongo.async_api as async_api
 import beer_garden.events
 import beer_garden.log
 import beer_garden.requests
@@ -249,10 +250,15 @@ def _setup_application():
     """Setup things that can be taken care of before io loop is started"""
     global io_loop, tornado_app, server, client_ssl
 
-    io_loop = IOLoop.current()
+    try:
+        io_loop = IOLoop.current()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        io_loop = IOLoop.current()
 
-    # Set up motor connection
-    moto.create_connection(db_config=beer_garden.config.get("db"))
+    # Set up async connection
+    async_api.create_connection(db_config=beer_garden.config.get("db"))
 
     auth_config = config.get("auth")
     if not auth_config.token_secret:
