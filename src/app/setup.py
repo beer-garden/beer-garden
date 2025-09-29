@@ -2,8 +2,10 @@ import re
 
 from setuptools import find_packages, setup
 
-with open("README.rst") as readme_file:
-    readme = readme_file.read()
+# read the contents of the README file
+from pathlib import Path
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.rst").read_text()
 
 
 def find_version(version_file):
@@ -20,7 +22,8 @@ setup(
     name="beer_garden",
     version=find_version("beer_garden/__version__.py"),
     description="Beergarden Application",
-    long_description=readme,
+    long_description=long_description,
+    long_description_content_type="text/x-rst",
     author="The Beer Garden Team",
     author_email="beer@beer-garden.io",
     url="https://beer-garden.io",
@@ -28,7 +31,7 @@ setup(
     license="MIT",
     keywords="beer beer-garden beergarden",
     install_requires=[
-        # "brewtils>=3.29.0",
+        # "brewtils>=3.30.0",
 
         # Using Latest Version   
         "apispec>=6.7,<7", # Latest 6.8.4
