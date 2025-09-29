@@ -56,7 +56,6 @@ setup(
         # pymongo 4.11
         "pymongo>=4.9,<4.11", # Latest 4.15.1
         "mongoengine>=0.29.1", # Latest 0.29.1
-        "dnspython<2.8", # Latest 2.9.0, Update after 3.9 Support drop (dep of pymongo)
         
         # YAPCONF Conflict with python-box
         "python-box<4", # Latest 7.3.2     
@@ -73,8 +72,6 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3.13",
