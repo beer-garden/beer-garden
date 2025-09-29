@@ -24,8 +24,10 @@ charset-normalizer==3.4.3
     # via
     #   -c requirements.txt
     #   requests
-click==8.3.0
-    # via black
+click==8.1.8
+    # via
+    #   -r requirements-dev.in
+    #   black
 codecov==2.1.13
     # via -r requirements-dev.in
 coverage==7.10.7
