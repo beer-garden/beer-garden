@@ -64,7 +64,7 @@ setup(
         "yapconf<1.0", # Latest 0.4.0
 
         # Brewtils drives marshmallow version
-        "marshmallow<4,>=3.3", # Latest 4.0.1
+        "marshmallow<4.1,>=4.0", # Latest 4.0.1
     ],
     classifiers=[
         "Development Status :: 4 - Beta",

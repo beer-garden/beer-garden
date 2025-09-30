@@ -32,16 +32,14 @@ idna==3.10
     # via requests
 ldap3==2.9.1
     # via beer_garden (setup.py)
-marshmallow==3.26.1
+marshmallow==4.0.1
     # via beer_garden (setup.py)
 mongoengine==0.29.1
     # via beer_garden (setup.py)
 more-itertools==10.8.0
     # via beer_garden (setup.py)
 packaging==25.0
-    # via
-    #   apispec
-    #   marshmallow
+    # via apispec
 passlib==1.7.4
     # via beer_garden (setup.py)
 prometheus-client==0.23.1
