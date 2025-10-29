@@ -154,6 +154,13 @@ export default function appRun(
 
     UtilityService.getConfig().then((response) => {
       angular.extend($rootScope.config, camelCaseKeys(response.data));
+
+      // Check if we are utilizing Auth Headers
+      if ($rootScope.config.trustedHeaderAuthEnabled && TokenService.getToken() === null){
+        TokenService.doLogin(null,null);
+        $rootScope.changeUser(TokenService.getToken());
+      }
+
       $rootScope.reloadWindowTitle();
     });
 

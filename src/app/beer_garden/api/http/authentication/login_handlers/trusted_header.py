@@ -71,7 +71,7 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                         authenticated_user.upstream_roles = upstream_roles
                         authenticated_user.metadata[
                             "last_authentication_headers_upstream_roles"
-                        ] = json.loads(
+                        ] = self._parse_header_array(
                             request.headers.get(self.user_upstream_roles_header, "[]")
                         )
                     elif (
@@ -86,7 +86,7 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                         authenticated_user.roles = local_roles
                         authenticated_user.metadata[
                             "last_authentication_headers_local_roles"
-                        ] = json.loads(
+                        ] = self._parse_header_array(
                             request.headers.get(self.user_local_roles_header, "[]")
                         )
                     elif (
@@ -101,7 +101,7 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                         authenticated_user.user_alias_mapping = user_alias_mappings
                         authenticated_user.metadata[
                             "last_authentication_headers_user_alias_mapping"
-                        ] = json.loads(
+                        ] = self._parse_header_array(
                             request.headers.get(self.user_alias_mapping_header, "[]")
                         )
                     elif (
@@ -118,6 +118,19 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                     authenticated_user = update_user(authenticated_user)
 
         return authenticated_user
+    
+    def _parse_header_array(self, header):
+        """Parse array from header value"""
+        if not header or len(header) == 0:
+            return []
+
+        if header.startswith("[") and header.endswith("]"):
+            return json.loads(header)
+        
+        if "," in header:
+            return header.split(",")
+        
+        return [header]
 
     def _upstream_roles_from_headers(self, headers: HTTPHeaders) -> List[str]:
         """Parse the header containing the user's groups and return them as a list"""
@@ -146,7 +159,7 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
         local_roles = []
 
         try:
-            for role_name in json.loads(
+            for role_name in self._parse_header_array(
                 headers.get(self.user_local_roles_header, "[]")
             ):
                 try:
