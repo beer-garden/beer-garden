@@ -157,8 +157,7 @@ export default function appRun(
 
       // Check if we are utilizing Auth Headers
       if ($rootScope.config.trustedHeaderAuthEnabled && TokenService.getToken() === null){
-        TokenService.doLogin(null,null);
-        $rootScope.changeUser(TokenService.getToken());
+        TokenService.doLogin(null, null).then(()=>{$rootScope.changeUser(TokenService.getToken());})
       }
 
       $rootScope.reloadWindowTitle();
