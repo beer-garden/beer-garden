@@ -118,7 +118,7 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                     authenticated_user = update_user(authenticated_user)
 
         return authenticated_user
-    
+
     def _parse_header_array(self, header):
         """Parse array from header value"""
         if not header or len(header) == 0:
@@ -126,10 +126,10 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
 
         if header.startswith("[") and header.endswith("]"):
             return json.loads(header)
-        
+
         if "," in header:
             return header.split(",")
-        
+
         return [header]
 
     def _upstream_roles_from_headers(self, headers: HTTPHeaders) -> List[str]:
