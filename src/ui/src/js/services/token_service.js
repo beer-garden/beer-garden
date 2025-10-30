@@ -72,7 +72,7 @@ export default function tokenService($http, localStorageService, EventService) {
       }
       
       return $http
-          .post('/api/v1/token', headers)
+          .post('api/v1/token', headers)
           .then((response) => {
             service.handleRefresh(response.data.refresh);
             service.handleToken(response.data.access);
@@ -80,7 +80,7 @@ export default function tokenService($http, localStorageService, EventService) {
     },
     doRefresh: (refreshToken) => {
       return $http
-          .post('/api/v1/token/refresh', {refresh: refreshToken})
+          .post('api/v1/token/refresh', {refresh: refreshToken})
           .then(
               (response) => {
                 service.handleRefresh(response.data.refresh);
