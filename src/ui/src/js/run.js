@@ -415,7 +415,9 @@ export default function appRun(
       $rootScope.garden = response.data;
       $rootScope.gardensResponse = response;
       $rootScope.systems = [];
-      updateGardenSystems();
+      if ($rootScope.garden !== undefined && $rootScope.garden !== null) {
+        updateGardenSystems();
+      }
       if (callback !== undefined){
         return callback();
       }
@@ -458,23 +460,25 @@ export default function appRun(
   }
 
   $rootScope.isSystemRoutable = function(system){
-    // Check Local First
-    if ($rootScope.garden.systems !== undefined && $rootScope.garden.systems !== null) {
-      for (let i = 0; i < $rootScope.garden.systems.length; i++){
-        if (system.id == $rootScope.garden.systems[i].id){
-          return true;
-        }
-      }
-    }
-    // Check children
-    if ($rootScope.garden.children !== undefined && $rootScope.garden.children !== null) {
-      for (let i = 0; i < $rootScope.garden.children.length; i++){
-        if ($rootScope.isRemoteSystemRoutable(system, $rootScope.garden.children[i])){
-          return true;
-        }
-      }
-    }
-    return false;
+    return true; // Override to determine if we need this
+
+    // // Check Local First
+    // if ($rootScope.garden.systems !== undefined && $rootScope.garden.systems !== null) {
+    //   for (let i = 0; i < $rootScope.garden.systems.length; i++){
+    //     if (system.id == $rootScope.garden.systems[i].id){
+    //       return true;
+    //     }
+    //   }
+    // }
+    // // Check children
+    // if ($rootScope.garden.children !== undefined && $rootScope.garden.children !== null) {
+    //   for (let i = 0; i < $rootScope.garden.children.length; i++){
+    //     if ($rootScope.isRemoteSystemRoutable(system, $rootScope.garden.children[i])){
+    //       return true;
+    //     }
+    //   }
+    // }
+    // return false;
   }
 
   $rootScope.isRemoteSystemRoutable = function(system, garden){
@@ -557,7 +561,7 @@ export default function appRun(
   }
 
   function updateGardenSystems(){
-    if ($rootScope.garden !== undefined) {
+    if ($rootScope.garden !== undefined && $rootScope.garden !== null) {
       let seenIndexes = [];
       upsertGardenSystems($rootScope.garden, seenIndexes);
       // Loop through seen indexes and remove everything not seen starting at the end
