@@ -1612,10 +1612,14 @@ class User(MongoModel, Document):
                 except DoesNotExist:
                     raise ModelValidationError(f"Local Role '{role}' does not exist")
 
-        try:
-            UserToken.objects.get(username=self.username).delete()
-        except DoesNotExist:
-            pass
+        db_user = User.objects(username=self.username).first()
+        if db_user and (
+            db_user.roles != self.roles or db_user.upstream_roles != self.upstream_roles
+        ):
+            try:
+                UserToken.objects.get(username=self.username).delete()
+            except DoesNotExist:
+                pass
 
         return super().save(*args, **kwargs)
 

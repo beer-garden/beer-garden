@@ -172,7 +172,9 @@ class TestRole:
         assert len(db_plugin_admin.scope_systems) == 0
 
     def test_rescan_roles_remove_missing(self, app_config_roles_file):
-        create_role(Role(name="to_be_removed", permission="READ_ONLY"))
+        create_role(
+            Role(name="to_be_removed", permission="READ_ONLY", file_generated=True)
+        )
 
         assert get_role(role_name="to_be_removed") is not None
 

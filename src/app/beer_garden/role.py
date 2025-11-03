@@ -141,7 +141,9 @@ def rescan():
 
         updated_roles.append(role.name)
 
-    for missing_role in db.query(Role, file_generated=True, name__nin=updated_roles):
+    for missing_role in db.query(
+        Role, filter_params={"file_generated": True, "name__nin": updated_roles}
+    ):
         delete_role(missing_role)
 
 
