@@ -10,6 +10,7 @@ TBD
 - Fixed how array headers are parsed to support JSON and comma separated lists
 - Fixed UI handling Auth Header login where user was not loaded into memory of browser
 - Fixed user mapping forwarding to downstream Gardens
+- Fixed Global Admin permission check in UI
 
 # 3.30.0
 

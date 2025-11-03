@@ -54,37 +54,37 @@ export default function permissionService($rootScope) {
             
             if (garden_name !== undefined && garden_name != null && role.scope_gardens.length > 0 && !role.scope_gardens.includes(garden_name)) {
                 return false;
-            } else if (global && garden_name !== undefined && garden_name != null && role.scope_gardens.length > 0) {
+            } else if (global (garden_name !== undefined || garden_name != null || role.scope_gardens.length > 0)) {
                 return false
             }
 
             if (namespace !== undefined && namespace != null && role.scope_namespaces.length > 0 && !role.scope_namespaces.includes(namespace)) {
                 return false;
-            } else if (global && namespace !== undefined && namespace != null && role.scope_namespaces.length > 0) {
+            } else if (global (namespace !== undefined || namespace != null || role.scope_namespaces.length > 0)) {
                 return false
             }
 
             if (system_name !== undefined && system_name != null && role.scope_systems.length > 0 && !role.scope_systems.includes(system_name)) {
                 return false;
-            } else if (global && system_name !== undefined && system_name != null && role.scope_systems.length > 0) {
+            } else if (global (system_name !== undefined || system_name != null || role.scope_systems.length > 0)) {
                 return false
             }
 
             if (instance_name !== undefined && instance_name != null && role.scope_instances.length > 0 && !role.scope_instances.includes(instance_name)) {
                 return false;
-            } else if (global && instance_name !== undefined && instance_name != null && role.scope_instances.length > 0 ) {
+            } else if (global (instance_name !== undefined || instance_name != null || role.scope_instances.length > 0 )) {
                 return false
             }
 
             if (system_version !== undefined && system_version != null && role.scope_versions.length > 0 && !role.scope_versions.includes(system_version)) {
                 return false;
-            } else if (global && system_version !== undefined && system_version != null && role.scope_versions.length > 0) {
+            } else if (global (system_version !== undefined || system_version != null || role.scope_versions.length > 0)) {
                 return false
             }
 
             if (command_name !== undefined && command_name != null && role.scope_commands.length > 0 && !role.scope_commands.includes(command_name)) {
                 return false;
-            } else if (global && command_name !== undefined && command_name != null && role.scope_commands.length > 0) {
+            } else if (global (command_name !== undefined || command_name != null || role.scope_commands.length > 0)) {
                 return false
             }
 
