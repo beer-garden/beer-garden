@@ -597,7 +597,7 @@ class TestRole:
 
     def test_delete_role_removes_from_users(self):
         role = Role(name="test_role", permission="READ_ONLY").save()
-        user = User(username="testuser", roles=[role.name]).save()
+        User(username="testuser", roles=[role.name]).save()
 
         assert role.name in User.objects.get(username="testuser").roles
 
