@@ -829,52 +829,32 @@ class ModelFilter:
         skip_global: bool = False,
         **kwargs
     ) -> BrewtilsGarden:
-        """Returns a filtered Garden object based on the roles of the user"""
+        """Returns a filtered Garden object based on the roles of the user
+        Priority in checks:
+            1. Check for Global Admin
+            2. Check for Permission Level
+            3. Filter Children
+            4. Filter Systems
+            5. Check Garden, if invalid and no systems or children remain, return None
+        """
 
         if not skip_global and check_global_roles(
             user, permission_levels=permission_levels
         ):
             return garden
 
-        if not self._checks(
-            user,
-            permission_levels=permission_levels,
-            garden_name=garden.name,
-            check_garden=True,
-            **kwargs,
-        ):
+        if not self._checks(user, permission_levels=permission_levels, **kwargs):
             return None
 
-        # Filter Connection Params
-        allow_connection_params = False
-        for roles in [user.local_roles, user.upstream_roles]:
-            for role in roles:
-                if (
-                    role.permission == Permissions.GARDEN_ADMIN.name
-                    and garden.name in role.scope_gardens
-                    and _has_empty_scopes(
-                        role,
-                        [
-                            "scope_namespaces",
-                            "scope_systems",
-                            "scope_instances",
-                            "scope_versions",
-                            "scope_commands",
-                        ],
-                    )
-                ):
-                    allow_connection_params = True
-                    break
-            if allow_connection_params:
-                break
-
-        if not allow_connection_params:
-            for connections in [
-                garden.receiving_connections,
-                garden.publishing_connections,
-            ]:
-                for connection in connections:
-                    del connection.config
+        new_child_gardens = []
+        if garden.children:
+            for child in garden.children:
+                filtered_garden = self._get_garden_filter(
+                    child, user, permission_levels, skip_global=True
+                )
+                if filtered_garden:
+                    new_child_gardens.append(filtered_garden)
+            garden.children = new_child_gardens
 
         # Filter Garden Systems
         if garden.systems:
@@ -909,15 +889,49 @@ class ModelFilter:
 
                 garden.systems = new_systems
 
-        new_child_gardens = []
-        if garden.children:
-            for child in garden.children:
-                filtered_garden = self._get_garden_filter(
-                    child, user, permission_levels, skip_global=True
-                )
-                if filtered_garden:
-                    new_child_gardens.append(filtered_garden)
-            garden.children = new_child_gardens
+        if (
+            not self._checks(
+                user,
+                permission_levels=permission_levels,
+                garden_name=garden.name,
+                check_garden=True,
+                **kwargs,
+            )
+            and not garden.children
+        ):
+            return None
+
+        # Filter Connection Params
+        allow_connection_params = False
+        for roles in [user.local_roles, user.upstream_roles]:
+            for role in roles:
+                if (
+                    role.permission == Permissions.GARDEN_ADMIN.name
+                    and garden.name in role.scope_gardens
+                    and _has_empty_scopes(
+                        role,
+                        [
+                            "scope_namespaces",
+                            "scope_systems",
+                            "scope_instances",
+                            "scope_versions",
+                            "scope_commands",
+                        ],
+                    )
+                ):
+                    allow_connection_params = True
+                    break
+            if allow_connection_params:
+                break
+
+        if not allow_connection_params:
+            for connections in [
+                garden.receiving_connections,
+                garden.publishing_connections,
+            ]:
+                for connection in connections:
+                    if connection and hasattr(connection, "config"):
+                        del connection.config
 
         return garden
 
