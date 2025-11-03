@@ -9,6 +9,7 @@ from brewtils.schemas import RequestTemplateSchema
 from bson.objectid import ObjectId
 from mock import Mock
 from mongoengine import NotUniqueError, connect
+from mongomock.gridfs import enable_gridfs_integration
 
 import beer_garden.db.api as db
 import beer_garden.db.mongo.models
@@ -30,7 +31,6 @@ from beer_garden.db.mongo.models import (
     User,
     UserToken,
 )
-from mongomock.gridfs import enable_gridfs_integration
 
 enable_gridfs_integration()
 
@@ -594,6 +594,16 @@ class TestRole:
 
         with pytest.raises(ModelValidationError):
             role.save()
+
+    def test_delete_role_removes_from_users(self):
+        role = Role(name="test_role", permission="READ_ONLY").save()
+        user = User(username="testuser", roles=[role.name]).save()
+
+        assert role.name in User.objects.get(username="testuser").roles
+
+        role.delete()
+
+        assert role.name not in User.objects.get(username="testuser").roles
 
 
 class TestUser:

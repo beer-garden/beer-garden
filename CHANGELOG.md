@@ -7,10 +7,12 @@ TBD
 - Fixed user login to first check for User Authorization Token, then login credentials
 - Fixed model filtering to include missing namespace properties (#1848)
 - Updated model filtering, if query filters are generated pre-query then skip filtering records when returning API models (#1848)
-- Fixed how array headers are parsed to support JSON and comma separated lists
-- Fixed UI handling Auth Header login where user was not loaded into memory of browser
-- Fixed user mapping forwarding to downstream Gardens
-- Fixed Global Admin permission check in UI
+- Fixed how array headers are parsed to support JSON and comma separated lists (#1982)
+- Fixed UI handling Auth Header login where user was not loaded into memory of browser (#1982)
+- Fixed user mapping forwarding to downstream Gardens (#1982)
+- Fixed Global Admin permission check in UI (#1982)
+- Fixed Role Rescan to remove missing roles from database (#1982)
+- Fixed Role Delete to removes role from Users and forces Token refresh (#1982)
 
 # 3.30.0
 
