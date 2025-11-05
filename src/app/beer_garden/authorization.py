@@ -857,6 +857,7 @@ class ModelFilter:
             garden.children = new_child_gardens
 
         # Filter Garden Systems
+        filter_systems = False
         if garden.systems:
             filter_systems = True
             for roles in [user.local_roles, user.upstream_roles]:
@@ -890,14 +891,15 @@ class ModelFilter:
                 garden.systems = new_systems
 
         if (
-            not self._checks(
+            not garden.children
+            and (not filter_systems or (filter_systems and len(garden.systems) == 0))
+            and not self._checks(
                 user,
                 permission_levels=permission_levels,
                 garden_name=garden.name,
                 check_garden=True,
                 **kwargs,
             )
-            and not garden.children
         ):
             return None
 
