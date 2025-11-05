@@ -112,7 +112,11 @@ export default function permissionService($rootScope) {
         },
         findGardenScope: (garden = null, namespace = null, system_name = null, instance_name = null, system_version = null) => {
             if (garden === undefined || garden == null) {
-                garden = $rootScope.garden;
+                if ($rootScope.garden === undefined || $rootScope.garden == null) {
+                    return null;
+                } else {
+                    garden = $rootScope.garden;
+                }
             }
 
             if (garden.systems !== undefined || garden.systems != null) {
