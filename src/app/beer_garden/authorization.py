@@ -139,6 +139,8 @@ class QueryFilterBuilder:
                 if role.permission in permission_levels:
                     filter = {}
                     or_filter = {}
+                    if len(role.scope_gardens) > 0:
+                        filter["target_garden__in"] = role.scope_gardens
                     if len(role.scope_systems) > 0:
                         filter["system__in"] = role.scope_systems
                     if len(role.scope_instances) > 0:
