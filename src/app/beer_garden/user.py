@@ -352,9 +352,11 @@ def update_user(
             # Roles changed, so cached tokens are no longer valid
             revoke_tokens(user=user)
 
-        if key in ["roles", "local_roles"]:
-            # If roles are updated, clear roles
+        if key == "roles":
+            # If roles are updated, clear local roles
             user.local_roles = []
+        elif key == "local_roles":
+            # If local roles are updated, clear roles
             user.roles = []
 
         setattr(user, key, value)
