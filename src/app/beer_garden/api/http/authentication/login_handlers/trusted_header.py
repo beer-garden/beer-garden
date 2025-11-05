@@ -67,7 +67,7 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                         authenticated_user = create_user(authenticated_user)
 
                 if authenticated_user:
-                    if upstream_roles:
+                    if upstream_roles is not None:
                         authenticated_user.upstream_roles = upstream_roles
                         authenticated_user.metadata[
                             "last_authentication_headers_upstream_roles"
@@ -82,7 +82,8 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                             "last_authentication_headers_upstream_roles"
                         ]
 
-                    if local_roles:
+                    if local_roles is not None:
+                        authenticated_user.local_roles = []
                         authenticated_user.roles = local_roles
                         authenticated_user.metadata[
                             "last_authentication_headers_local_roles"
@@ -97,7 +98,7 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                             "last_authentication_headers_local_roles"
                         ]
 
-                    if user_alias_mappings:
+                    if user_alias_mappings is not None:
                         authenticated_user.user_alias_mapping = user_alias_mappings
                         authenticated_user.metadata[
                             "last_authentication_headers_user_alias_mapping"
