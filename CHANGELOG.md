@@ -1,5 +1,13 @@
 # Beer Garden Changelog
 
+# TBD
+
+TBD
+
+- Removed Plugin Logs line range query
+- Updated Plugin Logs tail to only return the last N lines then tail, instead of loading entire log file
+- Updated Plugin Logs to support scroll bar for long log files
+
 # 3.30.0
 
 9/23/2025
