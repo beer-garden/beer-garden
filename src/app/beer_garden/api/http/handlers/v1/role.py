@@ -153,8 +153,6 @@ class RoleListAPI(AuthorizationHandler):
           - Roles
         """
 
-        self.verify_user_permission_for_object(local_garden())
-
         response = await self.process_operation(
             Operation(operation_type="ROLE_READ_ALL")
         )
