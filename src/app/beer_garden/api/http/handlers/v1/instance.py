@@ -258,8 +258,11 @@ class InstanceLogAPI(AuthorizationHandler):
 
         if self.get_query_argument("logs_only", default="").lower() == "true":
             if response.output:
-                output = json.loads(response.output)
-                self.write(output["logs"])
+                try:
+                    output = json.loads(response.output)
+                    self.write(output["logs"])
+                except json.JSONDecodeError:
+                    self.write(response.output if response.output else "")
             else:
                 self.write("")
         else:
