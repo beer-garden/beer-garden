@@ -63,6 +63,7 @@ routable_operations = [
     "INSTANCE_STOP",
     "REQUEST_CREATE",
     "SYSTEM_DELETE",
+    "SYSTEM_RESCAN",
     "GARDEN_RESCAN",
     "GARDEN_SYNC",
     "USER_UPSTREAM_SYNC",

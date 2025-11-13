@@ -206,6 +206,14 @@ class GardenAPI(AuthorizationHandler):
                         )
                     )
 
+            elif operation == "rescan_plugins":
+                response = await self.process_operation(
+                    Operation(
+                        operation_type="SYSTEM_RESCAN",
+                        target_garden_name=garden.name,
+                    )
+                )
+
             elif operation == "rescan":
                 response = await self.process_operation(
                     Operation(

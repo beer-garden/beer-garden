@@ -115,6 +115,9 @@ export default function adminGardenController(
   $scope.rescan = function() {
     GardenService.rescanGardens();
   };
+  $scope.rescanGardenPlugins = function(garden) {
+    GardenService.rescanGardenPlugins(garden.name);
+  }
   $scope.rescanGarden = function(garden) {
     GardenService.rescanGarden(garden.name);
   };
