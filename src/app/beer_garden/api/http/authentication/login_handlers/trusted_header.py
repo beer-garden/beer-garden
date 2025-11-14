@@ -130,7 +130,7 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
             return []
 
         if header.startswith("[") and header.endswith("]"):
-            try:         
+            try:
                 headers = json.loads(header)
                 if isinstance(headers, list):
                     return headers
