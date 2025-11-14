@@ -126,6 +126,13 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
 
     def _parse_header_array(self, header):
         """Parse array from header value"""
+
+        if isinstance(header, list):
+            return header
+
+        if not isinstance(header, str):
+            raise ValidationError("Unable to parse header")
+
         if not header or len(header) == 0:
             return []
 
@@ -134,13 +141,14 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                 headers = json.loads(header)
                 if isinstance(headers, list):
                     return headers
-                raise ValidationError("Header is not a valid array")
             except json.JSONDecodeError:
-                raise ValidationError("Header is not a valid array")
+                pass
 
-        if "," in header:
+        elif "," in header:
             return header.split(",")
 
+        # We should always return something iterable, that way the Garden Admin
+        # can see the failed header parsing
         return [header]
 
     def _upstream_roles_from_headers(self, headers: HTTPHeaders) -> List[str]:
