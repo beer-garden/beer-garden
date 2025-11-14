@@ -12,11 +12,13 @@ ENV BG_LOG_CONFIG_FILE=/conf/app-logging.yaml \
 ADD example_configs/app-logging.yaml /conf/
 ADD example_configs/local-plugin-logging.yaml /conf/
 ADD example_configs/remote-plugin-logging.yaml /conf/
+ADD ./requirements.txt .
 
 RUN set -ex \
     && apk add --no-cache --virtual .build-deps \
        gcc make musl-dev libffi-dev openssl-dev alpine-conf \
     && setup-timezone -z UTC \
-    && pip install --no-cache-dir beer-garden==$VERSION \
+    && pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir beer-garden==3.30.0 \
     && apk del .build-deps \
     && mkdir -p /conf/children
