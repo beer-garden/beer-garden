@@ -67,7 +67,7 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                         authenticated_user = create_user(authenticated_user)
 
                 if authenticated_user:
-                    if type(upstream_roles) is list:
+                    if isinstance(upstream_roles, list):
                         authenticated_user.upstream_roles = upstream_roles
                         authenticated_user.metadata[
                             "last_authentication_headers_upstream_roles"
@@ -82,7 +82,7 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                             "last_authentication_headers_upstream_roles"
                         ]
 
-                    if type(local_roles) is list:
+                    if isinstance(local_roles, list):
                         authenticated_user.roles = local_roles
                         authenticated_user.local_roles = [
                             role
@@ -129,8 +129,10 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
         if not header or len(header) == 0:
             return []
 
-        if header.startswith("[") and header.endswith("]"):
+        try:
             return json.loads(header)
+        except json.JSONDecodeError:
+            pass
 
         if "," in header:
             return header.split(",")
