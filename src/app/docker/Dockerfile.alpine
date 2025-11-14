@@ -19,6 +19,6 @@ RUN set -ex \
        gcc make musl-dev libffi-dev openssl-dev alpine-conf \
     && setup-timezone -z UTC \
     && pip install --no-cache-dir -r requirements.txt \
-    && pip install --no-cache-dir beer-garden==3.30.0 \
+    && pip install --no-cache-dir beer-garden==$VERSION \
     && apk del .build-deps \
     && mkdir -p /conf/children
