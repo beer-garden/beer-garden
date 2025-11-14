@@ -129,10 +129,14 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
         if not header or len(header) == 0:
             return []
 
-        try:
-            return json.loads(header)
-        except json.JSONDecodeError:
-            pass
+        if header.startswith("[") and header.endswith("]"):
+            try:         
+                headers = json.loads(header)
+                if isinstance(headers, list):
+                    return headers
+                raise ValidationError("Header is not a valid array")
+            except json.JSONDecodeError:
+                raise ValidationError("Header is not a valid array")
 
         if "," in header:
             return header.split(",")
