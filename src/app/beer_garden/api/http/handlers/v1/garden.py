@@ -238,6 +238,14 @@ class GardenAPI(AuthorizationHandler):
                     )
                 )
 
+            elif operation == "delete_queues":
+                response = await self.process_operation(
+                    Operation(
+                        operation_type="QUEUE_DELETE_ALL",
+                        target_garden_name=garden.name,
+                    )
+                )
+
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 

@@ -129,6 +129,10 @@ export default function adminGardenController(
     GardenService.syncUsersGarden(garden.name);
   };
 
+  $scope.deleteQueues = function(garden) {
+    GardenService.deleteQueues(garden.name);
+  }
+
   $scope.deleteGarden = function(garden) {
     GardenService.deleteGarden(garden.name);
   };

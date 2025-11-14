@@ -89,6 +89,16 @@ export default function gardenService($rootScope, $http) {
     });
   };
 
+  GardenService.deleteQueues = function(name) {
+    return $http.patch('api/v1/gardens/' + encodeURIComponent(name), {
+      operation: 'delete_queues',
+      path: '',
+      value: '',
+    },{
+      headers: {'Target-Garden': name}
+    });
+  };
+
   GardenService.updateStatus = function(name, status) {
     return $http.patch('api/v1/gardens/' + encodeURIComponent(name), {
       operation: status,

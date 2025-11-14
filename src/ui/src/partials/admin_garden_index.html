@@ -114,6 +114,9 @@
             <li>
               <a href="" ng-click="rescanGarden(garden)" title="Rescan Children Directory {{garden.name}}">Rescan Children</a>
             </li>
+            <li>
+              <a href="" ng-click="deleteQueues(garden)" title="Clear All Queues {{garden.name}}">Clear All Queues</a>
+            </li>
           </ul>
         </div>
         <div class="btn-group btn-group-sm pull-right" ng-if="hasGardenPermission('GARDEN_ADMIN', garden)">

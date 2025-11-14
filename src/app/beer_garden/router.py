@@ -66,6 +66,7 @@ routable_operations = [
     "SYSTEM_RESCAN",
     "GARDEN_RESCAN",
     "GARDEN_SYNC",
+    "QUEUE_DELETE_ALL",
     "USER_UPSTREAM_SYNC",
 ]
 
