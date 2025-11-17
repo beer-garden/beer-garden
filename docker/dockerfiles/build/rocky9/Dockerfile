@@ -56,3 +56,5 @@ RUN cd $APP_HOME/bin && \
     find $APP_HOME -type d '(' -name '__pycache__' -o -name 'test' -o -name 'tests' ')' -exec rm -rfv '{}' + && \
     find $APP_HOME -type f '(' -name '*.py[co]' -o -name '*.exe' ')' -exec rm -fv '{}' +  && \
     rm -rf /usr/src/python
+
+RUN pip install --no-cache-dir setuptools   

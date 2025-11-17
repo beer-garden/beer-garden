@@ -90,6 +90,8 @@ RUN gem install pleaserun:0.0.32 --ignore-dependencies
 # Install GEM FPM Package
 RUN gem install fpm:1.15.0 --ignore-dependencies
 
+RUN pip install --no-cache-dir setuptools  
+
 
 
 
