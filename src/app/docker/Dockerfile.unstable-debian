@@ -21,7 +21,7 @@ RUN set -ex \
     && apt-get -y install git \
     && pip install --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt \
-    && pip install -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils \
+    && pip install --no-cache-dir -r requirements-dev.txt \
     && pip install --no-cache-dir ./*.whl \
     && mkdir -p /conf/children
 
