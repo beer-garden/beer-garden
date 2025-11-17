@@ -102,7 +102,7 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                             "last_authentication_headers_local_roles"
                         ]
 
-                    if type(user_alias_mappings) is list:
+                    if isinstance(user_alias_mappings, list):
                         authenticated_user.user_alias_mapping = user_alias_mappings
                         authenticated_user.metadata[
                             "last_authentication_headers_user_alias_mapping"
