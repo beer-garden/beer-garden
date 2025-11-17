@@ -86,6 +86,9 @@ jobs:
         run: make deps    
         working-directory: ./src/app
 
+      - name: Install Setuptools
+        run: pip install --no-cache-dir setuptools   
+
       - name: Copy Brewtils
         run: cp -r ./app/src/brewtils brewtils
         working-directory: ./src
