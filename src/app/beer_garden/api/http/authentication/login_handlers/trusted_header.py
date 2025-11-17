@@ -118,7 +118,7 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
                         ]
 
                     authenticated_user.metadata["last_authentication"] = (
-                        datetime.utcnow().timestamp()
+                        datetime.utcnow().timestamp() * 1000
                     )
                     authenticated_user = update_user(authenticated_user)
 

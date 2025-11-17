@@ -115,7 +115,7 @@ class LdapLoginHandler(BaseLoginHandler):
                                 )
                                 authenticated_user = create_user(authenticated_user)
                             authenticated_user.metadata["last_authentication"] = (
-                                datetime.now(timezone.utc).timestamp()
+                                datetime.now(timezone.utc).timestamp() * 1000
                             )
                             authenticated_user.local_roles = self.get_user_roles(
                                 conn, username
