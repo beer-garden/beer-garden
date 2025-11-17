@@ -136,15 +136,14 @@ class TrustedHeaderLoginHandler(BaseLoginHandler):
         if not header or len(header) == 0:
             return []
 
-        if header.startswith("[") and header.endswith("]"):
-            try:
-                headers = json.loads(header)
-                if isinstance(headers, list):
-                    return headers
-            except json.JSONDecodeError:
-                pass
+        try:
+            headers = json.loads(header)
+            if isinstance(headers, list):
+                return headers
+        except json.JSONDecodeError:
+            pass
 
-        elif "," in header:
+        if "," in header:
             return header.split(",")
 
         # We should always return something iterable, that way the Garden Admin
