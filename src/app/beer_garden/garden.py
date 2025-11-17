@@ -864,7 +864,9 @@ def garden_sync(sync_target: str = None):
 
     If we're here it means the Operation.target_garden_name was *this* garden. So the
     sync_target is either *this garden* or None.
+
     If the former then call the method to publish the current garden.
+
     If the latter then we need to send sync operations to *all* known downstream
     gardens.
 
@@ -874,7 +876,7 @@ def garden_sync(sync_target: str = None):
     Returns:
 
     """
-    
+
     from beer_garden.router import route
 
     # If a Garden Name is provided, determine where to route the request
