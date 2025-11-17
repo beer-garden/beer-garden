@@ -3,6 +3,8 @@ ARG VERSION=unstable
 
 FROM bgio/beer-garden:$VERSION-python$PYTHON_VERSION
 
+RUN pip install --no-cache-dir setuptools
+
 RUN mkdir -p /source/rpm/dist 
 ADD rpm/dist /source/rpm/dist
 
