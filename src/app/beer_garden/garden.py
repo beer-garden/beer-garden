@@ -23,6 +23,7 @@ from brewtils.models import (
     Event,
     Events,
     Garden,
+    Operation,
     StatusInfo,
     System,
 )
@@ -38,8 +39,10 @@ import beer_garden
 import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.errors import (
+    ForwardException,
     NotFoundException,
     NotUniqueException,
+    RoutingRequestException,
 )
 from beer_garden.events import publish, publish_event
 from beer_garden.systems import get_systems, remove_system
@@ -856,18 +859,63 @@ def rescan(sync_gardens: bool = False):
                 garden_sync(garden_name)
 
 
-def garden_sync():
+def garden_sync(sync_target: str = None):
     """Do a garden sync
 
-    If we're here it means the Operation.target_garden_name was *this* garden.
+    If we're here it means the Operation.target_garden_name was *this* garden. So the
+    sync_target is either *this garden* or None.
+    If the former then call the method to publish the current garden.
+    If the latter then we need to send sync operations to *all* known downstream
+    gardens.
 
     Args:
+        sync_target:
 
     Returns:
 
     """
-    logger.info("Processing local garden sync, about to publish")
-    publish_garden()
+    
+    from beer_garden.router import route
+
+    # If a Garden Name is provided, determine where to route the request
+    if sync_target:
+        if sync_target == config.get("garden.name"):
+            logger.info("Processing local garden sync, about to publish")
+            publish_garden()
+        else:
+            try:
+
+                route(
+                    Operation(
+                        operation_type="GARDEN_SYNC",
+                        target_garden_name=sync_target,
+                        kwargs={"sync_target": sync_target},
+                    )
+                )
+            except (ForwardException, RoutingRequestException):
+                logger.error(
+                    f"Failed to forward sync operation to garden {sync_target}"
+                )
+    else:
+        # Iterate over all gardens and forward the sync requests
+        for garden in get_gardens(include_local=False):
+            try:
+                logger.info(f"About to create sync operation for garden {garden.name}")
+
+                route(
+                    Operation(
+                        operation_type="GARDEN_SYNC",
+                        target_garden_name=garden.name,
+                        kwargs={"sync_target": garden.name},
+                    )
+                )
+            except (ForwardException, RoutingRequestException):
+                logger.error(
+                    f"Failed to forward sync operation to garden {garden.name}"
+                )
+
+        logger.info("Processing local garden sync, about to publish")
+        publish_garden()
 
 
 def publish_local_garden_to_api():

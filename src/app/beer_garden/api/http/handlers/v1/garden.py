@@ -227,6 +227,7 @@ class GardenAPI(AuthorizationHandler):
                     Operation(
                         operation_type="GARDEN_SYNC",
                         target_garden_name=garden.name,
+                        kwargs={"sync_target": garden.name},
                     )
                 )
 

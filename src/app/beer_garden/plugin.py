@@ -641,6 +641,7 @@ def handle_event(event: Event) -> None:
                     Operation(
                         operation_type="GARDEN_SYNC",
                         target_garden_name=event.garden,
+                        kwargs={"sync_target": event.garden},
                     )
                 )
             except Exception as ex:

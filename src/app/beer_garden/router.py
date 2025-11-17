@@ -940,6 +940,9 @@ def _target_from_type(operation: Operation) -> str:
 
     if "USER" in operation.operation_type:
         return config.get("garden.name")
+    
+    if operation.operation_type == "QUEUE_DELETE_ALL":
+        return config.get("garden.name")
 
     raise Exception(f"Bad operation type {operation.operation_type}")
 
