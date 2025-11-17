@@ -62,6 +62,7 @@ RUN mkdir -p /usr/src/python && \
     ./configure --prefix=$APP_HOME --with-openssl=/usr/local/openssl --with-openssl-rpath=auto && \
     make altinstall prefix=$APP_HOME exec-prefix=$APP_HOME && \
     $APP_HOME/bin/python${PYTHON_MINOR_VERSION} -m "ensurepip" && \
+    $APP_HOME/bin/python${PYTHON_MINOR_VERSION} -m pip install setuptools && \
     cd $APP_HOME/bin && \
     ln -fs python${PYTHON_MINOR_VERSION} python && ln -fs pip${PYTHON_MINOR_VERSION} pip && \
     find $APP_HOME -type d '(' -name '__pycache__' -o -name 'test' -o -name 'tests' ')' -exec rm -rfv '{}' + && \
@@ -89,8 +90,6 @@ RUN gem install pleaserun:0.0.32 --ignore-dependencies
 
 # Install GEM FPM Package
 RUN gem install fpm:1.15.0 --ignore-dependencies
-
-RUN pip install --no-cache-dir setuptools  
 
 
 

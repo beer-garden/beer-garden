@@ -50,11 +50,10 @@ RUN mkdir -p /usr/src/python && \
 RUN cd /usr/src/python && \
     ./configure --prefix=$APP_HOME && \
     make altinstall prefix=$APP_HOME exec-prefix=$APP_HOME && \
-    $APP_HOME/bin/python${PYTHON_MINOR_VERSION} -m "ensurepip"
+    $APP_HOME/bin/python${PYTHON_MINOR_VERSION} -m "ensurepip" && \
+    $APP_HOME/bin/python${PYTHON_MINOR_VERSION} -m pip install setuptools
 RUN cd $APP_HOME/bin && \
     ln -fs python${PYTHON_MINOR_VERSION} python && ln -fs pip${PYTHON_MINOR_VERSION} pip && \
     find $APP_HOME -type d '(' -name '__pycache__' -o -name 'test' -o -name 'tests' ')' -exec rm -rfv '{}' + && \
     find $APP_HOME -type f '(' -name '*.py[co]' -o -name '*.exe' ')' -exec rm -fv '{}' +  && \
     rm -rf /usr/src/python
-
-RUN pip install --no-cache-dir setuptools   
