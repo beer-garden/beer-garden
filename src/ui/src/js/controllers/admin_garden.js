@@ -6,6 +6,8 @@ adminGardenController.$inject = [
   '$uibModal',
   'GardenService',
   'EventService',
+  'QueueService',
+  'SystemService',
 ];
 
 /**
@@ -15,6 +17,8 @@ adminGardenController.$inject = [
  * @param  {Object} $uibModal
  * @param  {Object} GardenService    Beer-Garden's garden service object.
  * @param  {Object} EventService    Beer-Garden's event service object.
+ * @param  {Object} QueueService    Beer-Garden's queue service object.
+ * @param  {Object} SystemService    Beer-Garden's system service object.
  */
 
 export default function adminGardenController(
@@ -23,6 +27,8 @@ export default function adminGardenController(
     $uibModal,
     GardenService,
     EventService,
+    QueueService,
+    SystemService,
 ) {
   $scope.setWindowTitle('gardens');
   $scope.alerts = [];
@@ -116,7 +122,7 @@ export default function adminGardenController(
     GardenService.rescanGardens();
   };
   $scope.rescanGardenPlugins = function(garden) {
-    GardenService.rescanGardenPlugins(garden.name);
+    SystemService.rescan(garden.name);
   }
   $scope.rescanGarden = function(garden) {
     GardenService.rescanGarden(garden.name);
@@ -130,7 +136,7 @@ export default function adminGardenController(
   };
 
   $scope.deleteQueues = function(garden) {
-    GardenService.deleteQueues(garden.name);
+    QueueService.clearQueues(garden.name);
   }
 
   $scope.deleteGarden = function(garden) {

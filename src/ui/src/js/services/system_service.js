@@ -91,6 +91,17 @@ export default function systemService($rootScope, $http) {
         headers: {target_garden: system.garden_name},
       });
     },
+    rescan: (gardenName) => {
+      if (gardenName) {
+        return $http.patch(
+          'api/v1/systems?garden_name=' + encodeURIComponent(gardenName),
+          {operation: 'rescan'},
+          {headers: {'Target-Garden': gardenName}
+        });
+      } else {
+        return $http.patch('api/v1/systems', {operation: 'rescan'});
+      }
+    },
   };
 
   /**

@@ -206,14 +206,6 @@ class GardenAPI(AuthorizationHandler):
                         )
                     )
 
-            elif operation == "rescan_plugins":
-                response = await self.process_operation(
-                    Operation(
-                        operation_type="SYSTEM_RESCAN",
-                        target_garden_name=garden.name,
-                    )
-                )
-
             elif operation == "rescan":
                 response = await self.process_operation(
                     Operation(
@@ -236,14 +228,6 @@ class GardenAPI(AuthorizationHandler):
                     Operation(
                         operation_type="USER_SYNC_GARDEN",
                         kwargs={"garden_name": garden.name},
-                    )
-                )
-
-            elif operation == "delete_queues":
-                response = await self.process_operation(
-                    Operation(
-                        operation_type="QUEUE_DELETE_ALL",
-                        target_garden_name=garden.name,
                     )
                 )
 

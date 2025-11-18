@@ -63,7 +63,7 @@ routable_operations = [
     "INSTANCE_STOP",
     "REQUEST_CREATE",
     "SYSTEM_DELETE",
-    "SYSTEM_RESCAN",
+    "RUNNER_RESCAN",
     "GARDEN_RESCAN",
     "GARDEN_SYNC",
     "QUEUE_DELETE_ALL",
@@ -942,6 +942,9 @@ def _target_from_type(operation: Operation) -> str:
         return config.get("garden.name")
 
     if operation.operation_type == "QUEUE_DELETE_ALL":
+        return config.get("garden.name")
+    
+    if operation.operation_type == "RUNNER_RESCAN":
         return config.get("garden.name")
 
     raise Exception(f"Bad operation type {operation.operation_type}")

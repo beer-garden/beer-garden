@@ -51,16 +51,6 @@ export default function gardenService($rootScope, $http) {
     });
   };
 
-  GardenService.rescanGardenPlugins = function(name) {
-    return $http.patch('api/v1/gardens/' + encodeURIComponent(name), {
-      operation: 'rescan_plugins',
-      path: '',
-      value: '',
-    },{
-      headers: {'Target-Garden': name}
-    });
-  };
-
   GardenService.rescanGarden = function(name) {
     return $http.patch('api/v1/gardens/' + encodeURIComponent(name), {
       operation: 'rescan',
@@ -86,16 +76,6 @@ export default function gardenService($rootScope, $http) {
       operation: 'sync_users',
       path: '',
       value: '',
-    });
-  };
-
-  GardenService.deleteQueues = function(name) {
-    return $http.patch('api/v1/gardens/' + encodeURIComponent(name), {
-      operation: 'delete_queues',
-      path: '',
-      value: '',
-    },{
-      headers: {'Target-Garden': name}
     });
   };
 

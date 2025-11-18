@@ -13,6 +13,7 @@ class AdminAPI(AuthorizationHandler):
         """
         ---
         summary: Initiate administrative actions
+        deprecated: true
         description: |
           The body of the request needs to contain a set of instructions
           detailing the operations to perform.
@@ -49,7 +50,7 @@ class AdminAPI(AuthorizationHandler):
           50x:
             $ref: '#/definitions/50xError'
         tags:
-          - Admin
+          - Deprecated
         """
         self.minimum_permission = Permissions.GARDEN_ADMIN.name
 
