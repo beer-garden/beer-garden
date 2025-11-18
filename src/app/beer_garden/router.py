@@ -943,7 +943,7 @@ def _target_from_type(operation: Operation) -> str:
 
     if operation.operation_type == "QUEUE_DELETE_ALL":
         return config.get("garden.name")
-    
+
     if operation.operation_type == "RUNNER_RESCAN":
         return config.get("garden.name")
 
