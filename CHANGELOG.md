@@ -1,5 +1,13 @@
 # Beer Garden Changelog
 
+# TBD
+
+TBD
+
+- Fixed Username/Password login for Mongodb
+- Added configuration `db.connection.authentication_source` and ENV `DB_AUTHENTICATION_SOURCE` 
+  to specify Mongodb login authority. Default is `admin`
+
 # 3.30.0
 
 9/23/2025
