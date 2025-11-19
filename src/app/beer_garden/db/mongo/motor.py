@@ -19,10 +19,20 @@ def create_connection(db_config: Box = None) -> None:
     """
     global motor_db
 
-    motor_conn = MotorClient(
-        host=db_config.connection.host,
-        port=db_config.connection.port,
-    )
+    if db_config.connection.username is not None:
+        motor_conn = MotorClient(
+            (
+                f"mongodb://{db_config.connection.username}:{db_config.connection.password}"
+                f"@{db_config.connection.host}:{db_config.connection.port}/"
+                f"{db_config.name}?authSource={db_config.connection.authentication_source}"
+            )
+        )
+    else:
+
+        motor_conn = MotorClient(
+            host=db_config.connection.host,
+            port=db_config.connection.port,
+        )
     motor_db = motor_conn[db_config.name]
 
 
