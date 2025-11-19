@@ -1,7 +1,13 @@
 # Beer Garden Changelog
 
+# 3.31.0rc1
+
+TBD
+
+- Fixed migration script for collection contains field (#1981)
+- Cancel Requests only handle locally executed Requests (#1967)
 - Fixed UI bug where Garden Update events would omit downstream Garden from UI. UI now will preserve the previous downstream Gardens until
-  a delete event is provided.
+  a delete event is provided. (#1986)
 
 # 3.30.0
 
