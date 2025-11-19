@@ -6,6 +6,9 @@ TBD
 
 - Fixed migration script for collection contains field (#1981)
 - Cancel Requests only handle locally executed Requests (#1967)
+- Removed Plugin Logs line range query (#1983)
+- Updated Plugin Logs tail to only return the last N lines then tail, instead of loading entire log file (#1983)
+- Updated Plugin Logs to support scroll bar for long log files (#1983)
 - Fixed Username/Password login for Mongodb (#1984)
 - Added configuration `db.connection.authentication_source` and ENV `DB_AUTHENTICATION_SOURCE` 
   to specify Mongodb login authority. Default is `admin` (#1984)

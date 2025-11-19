@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 from asyncio import Future
 
 from brewtils.errors import ModelValidationError, RequestProcessingError
@@ -211,6 +212,12 @@ class InstanceLogAPI(AuthorizationHandler):
             required: false
             description: End line of logs to read from instance
             type: int
+          - name: logs_only
+            in: query
+            required: false
+            description: Return only the log content
+            type: boolean
+            default: false
           - name: timeout
             in: query
             required: false
@@ -248,7 +255,18 @@ class InstanceLogAPI(AuthorizationHandler):
 
         self.set_header("request_id", response.id)
         self.set_header("Content-Type", "text/plain; charset=UTF-8")
-        self.write(response.output if response.output else "")
+
+        if self.get_query_argument("logs_only", default="").lower() == "true":
+            if response.output:
+                try:
+                    output = json.loads(response.output)
+                    self.write(output["logs"])
+                except json.JSONDecodeError:
+                    self.write(response.output if response.output else "")
+            else:
+                self.write("")
+        else:
+            self.write(response.output if response.output else "")
 
     async def _generate_get_response(self, instance_id, start_line, end_line):
         wait_future = Future()
