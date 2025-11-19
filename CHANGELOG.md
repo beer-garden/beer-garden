@@ -1,150 +1,136 @@
 # Beer Garden Changelog
 
+- Cancel Requests only handle locally executed Requests (#1967)
+
 # 3.30.0
 
-TBD
+9/23/2025
 
-### MONGODB Update
+## MONGODB Update
 - With the update to utilize MongoDB's Expiration At TTL, minimum version for MongoDB is 
-  now 6.0. If you are running an older version, then set all TTLs to -1 to skip setting 
-  the index and manual pruning will be required by System Admins. 
+  now 8.0. If you are running an older version, then legacy pruning will be invoked. This
+  will be deprecated in a future release.
 
-
-## 3.30.0rc3
-
-- Reverted expiration field from #1904/#1870. Pushed forward root_command_type.
-  Refactored request pruner to push forward cursor for bulk deletes (#1924)
-- When forwarding requests downstream upgrade TEMP requests to INFO for forwarding to Downstream only.
+## Backend
+- Added support to track Garden Name on System Models and migration scripts (#1950)
+- Added root_command_type to Request Model and migration scripts (#1870, #1904, #1924, #1956, #1968)
+- Added tracking for last known high level configuration (TTL, Version) of Beer Garden in database for startup logic based on configuration
+  changes (#1870, #1880)
+- Added UI code to be unminimized with source map to enable enhanced debugging of released code (#1942)
+- Added filter to check if value exists for field in 3.29 db model migration (#1783)
+- Added logging for jobs created or updated from import (#1797)
+- Added override when forwarding requests downstream upgrade TEMP requests to INFO for forwarding to Downstream only.
   Request will still appear to be be TEMP in local database, only in downstream will it appear at INFO. (#1932)
-- Filter all Requests of command type TEMP from upstream forwarding to reduce bandwidth between Beer Gardens (#1932)
-- TEMP Requests that spawn child requests are overiden to TEMP when created if ACTION or INFO (#1936)
-- Updated Request Event Handler to check Status to determine action instead of event type (#1939)
-- Reduce event size of Request Cancelled via trigger (#1946)
-- Reduce event size for Request Rebroadcast if for API Only (#1946)
-- Fixed UI bug where Config was not loaded on all pages to properly display Garden Name or Tab titles (#1937)
-- Fixed bug in UI where missing Children on Garden model errored on isSystemRoutable UI filter (#1938)
-- Fixed bug where Cancelled Requests could still spawn child requests because Validator never
-  checked database for status (#1941)
-- UI code is now unminimized with source map to enable enhanced debugging of released code (#1942)
-- Improved None checking for Request Parents
-- Updated internal class from EventProcessor to ReplicationProcessor for improved clarity (#1780)
-- Updated latest sytem version to prioritize running but still return a system if not (#1949)
-- Updated Jobs pages to trigger off internal Job events for status changes (#1878, #1951)
-- Updated Publish Request to ensure topic data is added to Request Metadata (#1954)
-- Ensure TEMP Requests have a root command type of TEMP (#1956)
-- Updated Request and GridFS to utilize MongoDB Expiration At feature in the indexes to 
-  handle pruning. (#1940)
-- Scheduler starts after the HTTP entry point has started to ensure plugins have a chance to start running (#1963)
-- Cancel Requests only handle locally executed Requests (#1967)
-- Fixed bug where Pub/Sub generated requests did not map properly root_command_type field (#1968)
-
-## 3.30.0rc2
-
-- Updated Instance Status icon for Downstream Instances to reflect error states (#1907)
-- Updated UI Lazy Loading (#1907/#1945)
-- Fixed bug in local garden loading all gardens to one hop away (#1905)
-- Reduced total events processed by Entry Point event handlers (#1882)
-- Expanded Garden query to support include and exclude field parameters (#1916/#1927)
-- Fixed bug in UI handling garden with null children (#1917)
-- Updated Request Pre_Save function to check for Orphan by parent ID (#1913)
-- Fixed bug where Garden Entry Points went unresponsive (#1908)
-- Updated status history to use local config length for downstream gardens on save (#1923)
-- Updated `status_history` config defaults to 5 for garden and plugin (#1923)
-- Fixed bug where Entry Point startup sent Garden sync to `default` instead of actual garden name (#1926)
-- Removed duplicate Garden Sync Event sent to UI from downstream events (#1922)
-- Update UI Events to utilize Instance and System events as partial Garden updates (#1925)
-- Bypass Mongoengine for bulk create/update to improve Request throughput in Mongo (#1920, #1930, #1947)
-- Removed locking from internal queue management for event handlers (#1921)
-
-## 3.30.0rc1
-
-- Improved docker naming conventions
-- Removed double save for Garden API Status Update calls (#1892)
-- Request create skips Gridfs existing data checks and only checks for Request Update (#1892)
-- Corrected 3.30 migration script to handle missing Command Types (#1894)
-- Updated request list api from `hidden__ne=True` to `hidden=False` for more efficient use of index. (#1889)
-- Fixed bug in `SystemsList` API using `filter_running` causing SchemaParser to fail(#1889)
-- Removed redundant call to get UtilityService getConfig (#1891)
-- Implemented previous Beer Garden installed version check to determine database migrations required (#1880)
-- Updated Router Logic for handling Error Events for System Deletes
-- Moved Info message for downstream garden syncs to prior to forwarding
-- Implemented Lazy Loading of the root Garden for UI pages that do not require the Garden/System models to be loaded (#1896)
-- Loaded all Gardens in single DB call when returning Local Garden instead of individual calls per downstream garden (#1896)
-- Fixed bug where Replication Events published when Replication was disabled (#1990)
-
-
-## 3.30.0rc0
-
+- Added filter on all Requests of command type TEMP from upstream forwarding to reduce bandwidth between Beer Gardens (#1932)
+- Updated pruner configuration to consolidate options under `db.prune` (#1796)
+- Updated standardized Topic Names for Generated topics to start with the prefix of garden name
+  New format: <garden_name>.<namespace>.<system_name>.<system_version>.<instance_name>.<command> (#1800)
 - Updated rpm script to supply cli values to config migration. Beer-garden `migrate` will apply cli
   values prior to yapconf `migrate_config_file`. (#1837)
-- Fixed forwarding operations to downstream causing blocking to the router. Mostly seen during File Forwarding. (#1804)
-- Optimized how Request Topic Publisher matches systems (#1803)
-- Fixed bug where Topic Publish did not match on Gardens and Namespaces (#1803)
-- Fixed Request view bug where `REQUEST_TOPIC_PUBLISH` was causing blank line in children list (#1801)
-- Updated Topics generation and removal to Mongo Model instead of through Events (#1777)
-- Optimized Topic pruning and generation (#1777)
-- Expanded topics API to support manual execution of Topic Generation (#1777)
-- Standardized Topic Names for Generated topics to start with the prefix of garden name
-  New format: <garden_name>.<namespace>.<system_name>.<system_version>.<instance_name>.<command> (#1800)
-- Optimized the query to clean TEMP child requests (#1798)
-- Fixed bug where upon completion of Parent Request, running TEMP child requests got deleted prematurely (#1798)
-- Fixed issue where local Garden version was not persisted to database, or setup upstream (#1790)
-- Fixed multi-hop check for legacy Gardens in Router (#1789)
-- Removed Garden load file from setup_routing because it was unnessary (#1787)
-- Fixed bug where `NOT_CONFIGURED` status for Receiving connection was not filtered out (#1782)
-- Added logging for jobs created or updated from import (#1797)
-- Fixed bugs with ELK APM integration and improved labeling (#1774)
-- Expanded APM Metrics to collect Event Processing Queue Depths (#1814)
+- Updated docker naming conventions for testing branches
+- Updated `garden.status_history` and `plugin.status_history` config defaults to 5 for garden and plugin (#1844, #1923)
+- Updated Routing Logic to accept Target Garden provided and cache multi-hop gardens in routing tables (#1876)
+- Updated filtered events forwarded to upstream Garden (#1882)
+- Updated all pruners to support batching (#1849)
+- Updated 3.24 DB model migration script to skip children config creation if only one garden (#1781)
+- Updated Topic Sync logging to track update/delete counts (#1827)
+- Updated orphan pruner to delete orphaned files (#1771) (Legacy MongoDB Only)
+- Updated downstream Garden Sync events execute at startup after Entry Points start (#1834)
+- Updated Garden Event Handler logic (#1821)
+- Updated Events Websocket to support Async calls (#1810)
+- Updated logging for Cancel Outstanding Requests (#1844)
+- Updated how Garden configurations are loaded (#1779)
+- Updated merging Request metadata if uniqued in event handler (#1799)
+- Updated Info message for downstream garden syncs to prior to forwarding
+- Updated status history to use local config length for downstream gardens on save (#1923)
+- Updated TEMP Requests spawned child requests to be overriden to TEMP if created as ACTION or INFO (#1936)
+- Updated Request Event Handler to check Status to determine action instead of event type (#1939)
+- Updated internal class name from EventProcessor to ReplicationProcessor for improved clarity (#1780)
+- Updated latest system version to prioritize running but still return a system if none are running (#1949)
+- Updated Publish Request to ensure topic data is added to Request Metadata (#1954)
+- Updated Request and GridFS to utilize MongoDB Expiration At feature in the indexes to 
+  handle pruning. (#1940)
+- Updated Router Logic for handling Error Events for System Deletes
+- Updated Request Pre_Save function to check for Orphan by parent ID (#1913)
+- Updated None checking for Request Parents (#1943)
+- Updated Events handler to support internal filtering before placing into queue for processing (#1879)
+- Updated logic for forwarding Requests to remove DB call (#1833)
+- Updated total mongodb calls required to update instance heartbeat (#1831)
+- Updated how publish request handles topic matching (#1820)
+- Updated how Gardens are stored in the Router table (#1821)
 - Updated internal events to utilize deque to improve performance (#1814)
 - Updated internal events to allow for unique and sorting events based on timestamps, only
   latest instance of the transaction event is handled within the event handlers (#1814)
-- Merge Request metadata if uniqued in event handler (#1799)
-- Optimizing how Garden configurations are loaded (#1779)
-- Reduced default Status History from 50 to 10 (#1844)
-- Updated logging for Prune Outstanding Requests (1844)
-- Fixed bug where Garden historical status info is maintained after rescan (#1779)
-- Fixed how Garden files are loaded, added HTTP Receiving defaults to prevent missed events prior
-  to `GARDEN_SYNC` (#1779)
-- Fixed Alerts on Command View page that were not showing up. (#1805)
-- On `Make Request` if request takes longer than 5 seconds, push alert to UI (#1805)
-- Merge event metadata on Request Update (#1811)
-- Updated Events Websocket to support Async calls (#1810)
-- Fixed bug where Publish Topic did not evalute downstream garden systems
-- Optimized how Gardens are stored in the Router table (#1821)
-- Cleaned up Garden Event Handler logic (#1821)
-- Optimized how publish request handles topic matching (#1820)
-- Downstream Garden Sync events execute at startup after Entry Points start (#1834)
-- Added filter to check if value exists for field in 3.29 db model migration (#1783)
+- Updated topics API to support manual execution of Topic Generation (#1777)
+- Updated Topics generation and removal to Mongo Model instead of through Events (#1777)
+- Updated Topic pruning and generation (#1777)
+- Updated how Request Topic Publisher matches systems (#1803)
+- Updated Loaded all Gardens in single DB call when returning Local Garden instead of individual calls per downstream garden (#1896)
+- Updated request list api from `hidden__ne=True` to `hidden=False` for more efficient use of index. (#1889)
+- Updated bulk create/update to improve Request throughput in Mongo (#1920, #1930, #1947)
+- Updated Garden query to support include and exclude field parameters (#1916/#1927)
+- Updated total events processed by Entry Point event handlers (#1882)
+- Updated event size for Request Cancelled for Event Handler (#1946)
+- Updated event size for Request Rebroadcast for API Only (#1946)
+- Updated APM Metrics to collect Event Processing Queue Depths (#1814)
+- Updated Request create skips Gridfs existing data checks and only checks for Request Update (#1892)
+- Removed status, status_info, and namespaces from Garden model (#1829)
+- Removed Garden load file from setup_routing (#1787)
+- Removed double save for Garden API Status Update calls (#1892)
+- Removed locking from internal queue management for event handlers (#1921)
+- Fixed Scheduler to startup after HTTP entry point to avoid race condition with plugins not being initialized yet (#1936)
+- Fixed File validate to query for chunks and ensure accurate size (#1855)
+- Fixed API updates to Instance Status did not publish topic request
+- Fixed duplicate subscriber issue when restarting instances (#1857)
+- Fixed internal jobs that utilized APscheduler did not have max concurrency set to 1 (#1846)
+- Fixed Request only based scheduled jobs that attempt to update missed counter in the database (#1846)
+- Fixed Paused Jobs being imported as `Running` in the background (#1772)
 - Fixed logic when `instance_name` is included on Request object with the system version of `latest` that
   the instance name is included in the filter criteria (#1825)
-- Updated orphan pruner to delete orphaned files (#1771)
-- Updated Topic Sync logging to track update/delete counts (#1827)
-- Fixed bug where pour again invalid property caused broken UI (#1795)
-- Fixed metric collection on queue depth of HTTP Parent Updater (#1843)
-- Updated pruner configuration to consolidate options under `db.prune` (#1796)
-- Fixed bug where Paused Jobs being imported were Running in the background (#1772)
-- Fixed bug where Request pruning did not remove GridFS stored objects. (#1785)
-- Fix prune orphaned GridFS objects. (#1785)
+- Fixed Publish Topic did not evalute downstream garden systems
+- Fixed merge event metadata on Request Update (#1811)
+- Fixed Garden historical connection info being maintained after rescan (#1779)
+- Fixed how Garden files are loaded, added HTTP Receiving defaults to prevent missed events prior
+  to `GARDEN_SYNC` (#1779)
+- Fixed multi-hop check for legacy Gardens in Router (#1789)
+- Fixed local Garden version was not persisted to database, or setup upstream (#1790)
+- Fixed when completion of Parent Request, running TEMP child requests got deleted prematurely (#1798)
+- Fixed Topic Publish did not match on Gardens and Namespaces (#1803)
+- Fixed forwarding operations to downstream causing blocking to the router. Mostly seen during File Forwarding. (#1804)
+- Fixed Replication Events being published when Replication was disabled (#1900)
+- Fixed `SystemsList` API using `filter_running` causing SchemaParser to fail(#1889)
+- Fixed Entry Point startup sent Garden sync to `default` instead of actual garden name (#1926)
+- Fixed Garden Entry Points went unresponsive (#1908)
+- Fixed local garden loading all gardens to one hop away (#1905)
+- Fixed removing known systems because ID didn't match (#1972)
+- Fixed Canceled Requests could still spawn child requests because Validator never
+  checked database for status (#1941)
 - Fixed extra database calls for Garden deletes (#1841)
-- Updated 3.24 migration script to skip children config creation if only one garden (#1781)
-- Reduced mongodb calls required to update instance heartbeat (#1831)
-- Updated logic for forwarding Requests to remove DB call (#1833)
+- Fixed metric collection on queue depth of HTTP Parent Updater (#1843)
+- Fixed bugs with ELK APM integration and improved labeling (#1774)
+
+## UI
+
+- Added request search delay configurable through `ui.search_delay` config option. (#1868)
+- Added on `Make Request` if request takes longer than 5 seconds, push alert to UI (#1805)
+- Updated Requests index search box from `text_search` to an `OR filter` on UI columns (#1866)
 - Updated pour it again requests to respect command type override (#1840)
-- Fixed bug where internal jobs that utilized APscheduler did not have max concurrency set to 1 (#1846)
-- Fixed bug, only Request based scheduled jobs will attempt to update missed counter in the database (#1846)
-- Updated all pruners to support batching (#1849)
-- Fixed bug in Job Scheduler where dynamic choices parameter did not load (#1851)
-- Fixed duplicate subscriber issue when restarting instances (#1857)
-- Updated Admin Garden Page to load Garden models from preloaded Garden models (#1860)
-- Fixed File validate to query for chunks and ensure accurate size (#1855)
-- Fixed bug where API updates to Instance Status did not publish topic request (#1817 ?)
-- Request search delay configurable through `ui.search_delay` config option. (#1868)
-- Removed status, status_info, and namespaces from Garden (#1829)
-- Update Request Pruning to utilize new field Expiration At instead of each command type independently (#1870)
-- Update Requests index search box from text_search to or filter on UI columns (#1866)
-- Updated Routing Logic to accept Target Garden provided and cache multi-hop gardens in routing tables (#1876)
-- Updated Events handler to support internal filtering before placing into queue for processing (#1879)
-- Filtered events forwarded to upstream Garden (#1882)
+- Updated Lazy Loading of the root Garden for UI pages that do not require the Garden/System models to be loaded (#1860, #1896)
+- Updated UI Events to utilize Instance and System events as partial Garden updates (#1925)
+- Updated UI Lazy Loading (#1907/#1945)
+- Updated Instance Status icon for Downstream Instances to reflect error states (#1907)
+- Updated Jobs pages to trigger off internal Job events for status changes (#1878, #1951)
+- Removed redundant call to get UtilityService getConfig (#1891)
+- Removed duplicate Garden Sync Event sent to UI from downstream events (#1922)
+- Fixed pour again invalid property caused broken UI (#1795)
+- Fixed Job Scheduler where dynamic choices parameter did not load (#1851)
+- Fixed Alerts on Command View page that were not showing up. (#1805)
+- Fixed bug where `NOT_CONFIGURED` status for Receiving connection was not filtered out (#1782)
+- Fixed Request view bug where `REQUEST_TOPIC_PUBLISH` was causing blank line in children list (#1801)
+- Fixed handling garden with null children (#1917)
+- Fixed Config was not loaded on all pages to properly display Garden Name or Tab titles (#1937)
+- Fixed missing Children on Garden model errored on isSystemRoutable UI filter (#1938)
+
 
 # 3.29.1
 

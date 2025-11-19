@@ -7,8 +7,17 @@ from brewtils.models import System as BrewtilsSystem
 from mongoengine import connect
 
 from beer_garden import config
-from beer_garden.db.mongo.models import System
+from beer_garden.db.mongo.models import Garden, System, Topic
 from beer_garden.systems import create_system, get_systems, update_system
+
+
+@pytest.fixture(autouse=True)
+def setup_teardown():
+    """Setup and teardown for each test to ensure a clean state."""
+    yield Garden(name="default", connection_type="LOCAL").save()
+    System.drop_collection()
+    Topic.drop_collection()
+    Garden.drop_collection()
 
 
 @pytest.fixture
@@ -18,11 +27,11 @@ def system():
             name="original",
             version="v0.0.1",
             namespace="beer_garden",
+            garden_name="default",
+            local=True,
             commands=[BrewtilsCommand(name="original")],
         )
     )
-
-    System.drop_collection()
 
 
 @pytest.fixture
@@ -32,11 +41,11 @@ def system2():
             name="original",
             version="v0.0.2",
             namespace="beer_garden",
+            garden_name="default",
+            local=True,
             commands=[BrewtilsCommand(name="original")],
         )
     )
-
-    System.drop_collection()
 
 
 @pytest.fixture
@@ -46,6 +55,8 @@ def system3():
             name="original",
             version="v0.0.0.dev0",
             namespace="beer_garden",
+            garden_name="default",
+            local=True,
             commands=[BrewtilsCommand(name="original")],
             instances=[
                 BrewtilsInstance(
@@ -56,8 +67,6 @@ def system3():
         )
     )
 
-    System.drop_collection()
-
 
 @pytest.fixture
 def system4():
@@ -66,6 +75,8 @@ def system4():
             name="original",
             version="v0.0.0.dev1",
             namespace="beer_garden",
+            garden_name="default",
+            local=True,
             commands=[BrewtilsCommand(name="original")],
             instances=[
                 BrewtilsInstance(
@@ -76,8 +87,6 @@ def system4():
         )
     )
 
-    System.drop_collection()
-
 
 @pytest.fixture
 def system5():
@@ -86,6 +95,8 @@ def system5():
             name="default",
             version="v0.0.1",
             namespace="beer_garden",
+            garden_name="default",
+            local=True,
             commands=[BrewtilsCommand(name="default")],
             instances=[
                 BrewtilsInstance(

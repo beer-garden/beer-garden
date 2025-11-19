@@ -1,3 +1,4 @@
+import copy
 import logging
 from typing import List
 
@@ -5,9 +6,7 @@ from brewtils.errors import PluginError
 from brewtils.models import Event, Garden, Subscriber, System, Topic
 from mongoengine import DoesNotExist
 
-import beer_garden.config as config
 import beer_garden.db.api as db
-from beer_garden.garden import get_garden
 
 logger = logging.getLogger(__name__)
 
@@ -255,21 +254,11 @@ def subscriber_systems_validate(subscriber, systems, topic_name: str):
                                 return True
 
 
-def sync_garden_topics(garden_name: str = None):
-    if garden_name is None:
-        garden = get_garden(config.get("garden.name"))
-    else:
-        garden = get_garden(garden_name)
+def sync_topics():
 
-    logger.info(f"Running Garden Topic Sync for {garden.name}")
+    logger.info("Running Topic Sync")
 
-    topics = get_all_topics()
-
-    topics_dict = {}
-    for topic in topics:
-        topics_dict[topic.name] = topic
-
-    updated_subscribers, created_topics = sync_garden_topics_loop(garden, topics_dict)
+    updated_subscribers, created_topics = sync_topics_batch()
 
     deleted_topic_count, deleted_subscriber_count = prune_topics()
 
@@ -327,37 +316,45 @@ def sync_garden_topic_add(subscriber: Subscriber, topic_name: str, topics_dict: 
     return updated_subscribers, created_topics
 
 
-def sync_garden_topics_loop(garden: Garden, topics_dict: dict):
+def sync_topics_batch():
     """
-    Synchronizes topics for a given garden and its systems, commands, and instances.
+    Synchronizes topics for all systems, commands, and instances.
 
-    This function iterates through all systems in the provided garden, and for each system,
+    This function iterates through all systems, and for each system,
     it iterates through its commands and instances to create topics. If a command has predefined
     topics, it creates topics for each one. If not, it generates a default topic based on the
     system's namespace, name, version, instance name, and command name. It then creates a topic
     with the generated name.
 
-    Additionally, if the garden has child gardens, the function recursively synchronizes topics
-    for each child garden.
-
-    Args:
-        garden (Garden): The garden object containing systems, commands, and instances to
-                         synchronize topics for.
-
     Returns:
         None
     """
 
-    updated_subscribers = 0
-    created_topics = 0
-    for system in garden.systems:
+    cached_topics = {}
+    updated_subscribers, created_topics = 0, 0
+    for topic in get_all_topics():
+        cached_topics[topic.name] = {"topic": topic, "updated": False}
+
+    for system in db.query(
+        System,
+        include_fields=[
+            "garden_name",
+            "namespace",
+            "name",
+            "version",
+            "prefix_topic",
+            "instances.name",
+            "commands.topics",
+            "commands.name",
+        ],
+    ):
         default_topic = system.prefix_topic
         for command in system.commands:
             for instance in system.instances:
                 if len(command.topics) > 0:
                     for topic in command.topics:
                         subscriber = Subscriber(
-                            garden=garden.name,
+                            garden=system.garden_name,
                             namespace=system.namespace,
                             system=system.name,
                             version=system.version,
@@ -365,15 +362,28 @@ def sync_garden_topics_loop(garden: Garden, topics_dict: dict):
                             command=command.name,
                             subscriber_type="ANNOTATED",
                         )
-                        updated, created = sync_garden_topic_add(
-                            subscriber, topic, topics_dict
-                        )
-                        updated_subscribers = updated_subscribers + updated
-                        created_topics = created_topics + created
+
+                        if topic not in cached_topics:
+                            cached_topics[topic] = {
+                                "topic": Topic(
+                                    name=topic, subscribers=[copy.deepcopy(subscriber)]
+                                ),
+                                "updated": True,
+                            }
+                            created_topics = created_topics + 1
+
+                        elif (
+                            subscriber not in cached_topics[topic]["topic"].subscribers
+                        ):
+                            cached_topics[topic]["topic"].subscribers.append(
+                                copy.deepcopy(subscriber)
+                            )
+                            cached_topics[topic]["updated"] = True
+                            updated_subscribers = updated_subscribers + 1
 
                 if not default_topic:
                     topic_generated = (
-                        f"{garden.name}.{system.namespace}."
+                        f"{system.garden_name}.{system.namespace}."
                         f"{system.name}.{system.version}."
                         f"{instance.name}.{command.name}"
                     )
@@ -381,7 +391,7 @@ def sync_garden_topics_loop(garden: Garden, topics_dict: dict):
                     topic_generated = f"{default_topic}.{command.name}"
 
                 subscriber = Subscriber(
-                    garden=garden.name,
+                    garden=system.garden_name,
                     namespace=system.namespace,
                     system=system.name,
                     version=system.version,
@@ -389,17 +399,33 @@ def sync_garden_topics_loop(garden: Garden, topics_dict: dict):
                     command=command.name,
                     subscriber_type="GENERATED",
                 )
-                updated, created = sync_garden_topic_add(
-                    subscriber, topic_generated, topics_dict
-                )
-                updated_subscribers = updated_subscribers + updated
-                created_topics = created_topics + created
 
-    if garden.children:
-        for child in garden.children:
-            updated, created = sync_garden_topics_loop(child, topics_dict)
-            updated_subscribers = updated_subscribers + updated
-            created_topics = created_topics + created
+                if topic_generated not in cached_topics:
+                    cached_topics[topic_generated] = {
+                        "topic": Topic(
+                            name=topic_generated,
+                            subscribers=[copy.deepcopy(subscriber)],
+                        ),
+                        "updated": True,
+                    }
+                    created_topics = created_topics + 1
+
+                elif (
+                    subscriber
+                    not in cached_topics[topic_generated]["topic"].subscribers
+                ):
+                    cached_topics[topic_generated]["topic"].subscribers.append(
+                        copy.deepcopy(subscriber)
+                    )
+                    cached_topics[topic_generated]["updated"] = True
+                    updated_subscribers = updated_subscribers + 1
+
+    topic_updates = []
+    for _, topic_info in cached_topics.items():
+        if topic_info["updated"]:
+            topic_updates.append(topic_info["topic"])
+
+    db.bulk_update(topic_updates)
 
     return updated_subscribers, created_topics
 

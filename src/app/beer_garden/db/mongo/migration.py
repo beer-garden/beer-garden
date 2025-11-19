@@ -679,6 +679,55 @@ def ensure_v3_30_model_migration():
             )
             gridfs_chunk_updates = []
 
+    if missing_field("system", "garden_name"):
+        logger.warning(
+            "Garden Name was not found in Systems and will be added."
+            " This is most likely because the database is using the old (v3.29) style of"
+            " storing in the database."
+        )
+
+        system_collection = db.get_collection("system")
+        garden_collection = db.get_collection("garden")
+
+        updates = []
+        for legacy_system in system_collection.find(
+            {"garden_name": {"$exists": False}, "local": True},
+            {
+                "_id": 1,
+            },
+        ):
+            if legacy_system:
+
+                updates.append(
+                    UpdateOne(
+                        {"_id": legacy_system["_id"]},
+                        {
+                            "$set": {
+                                "garden_name": config.get("garden.name"),
+                            }
+                        },
+                    )
+                )
+
+        # If we roll all local systems on the local Garden model, then this
+        # is the only migration we need for this
+        for garden in garden_collection.find({}, {"name": 1, "systems": 1}):
+            for legacy_system in garden["systems"]:
+                updates.append(
+                    UpdateOne(
+                        {"_id": legacy_system},
+                        {
+                            "$set": {
+                                "garden_name": garden["name"],
+                            }
+                        },
+                    )
+                )
+
+        if len(updates) > 0:
+            system_collection.bulk_write(updates, ordered=False)
+            logger.warning(f"Migrating garden_name for {len(updates)} Systems")
+
 
 def ensure_model_migration():
     """Ensures that the database is properly migrated. All migrations ran from this
