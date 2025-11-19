@@ -1,12 +1,14 @@
 # Beer Garden Changelog
 
-# TBD
+# 3.31.0rc1
 
 TBD
 
-- Fixed Username/Password login for Mongodb
+- Fixed migration script for collection contains field (#1981)
+- Cancel Requests only handle locally executed Requests (#1967)
+- - Fixed Username/Password login for Mongodb (#1984)
 - Added configuration `db.connection.authentication_source` and ENV `DB_AUTHENTICATION_SOURCE` 
-  to specify Mongodb login authority. Default is `admin`
+  to specify Mongodb login authority. Default is `admin` (#1984)
 
 # 3.30.0
 
