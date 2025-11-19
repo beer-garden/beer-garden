@@ -1,5 +1,9 @@
 # Beer Garden Changelog
 
+# 3.31.0rc1
+
+TBD
+
 # 3.30.0
 
 9/23/2025
