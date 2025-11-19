@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# 3.31.0rc1
+
+TBD
+
+- Fixed migration script for collection contains field (#1981)
+
 # 3.30.0
 
 9/23/2025
