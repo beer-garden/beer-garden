@@ -1,5 +1,8 @@
 # Beer Garden Changelog
 
+- Fixed UI bug where Garden Update events would omit downstream Garden from UI. UI now will preserve the previous downstream Gardens until
+  a delete event is provided.
+
 # 3.30.0
 
 9/23/2025
