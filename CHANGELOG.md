@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+# 3.31.0
+
+TBD
+
+- Updated Garden Admin page to add drop down to child gardens to rescan plugins, rescan children, and clear queues(#1971)
+- Marked Admin API deprecated. Moved rescan plugins functionality to Systems API. (#1971)
+
 # 3.30.0
 
 9/23/2025
