@@ -74,7 +74,7 @@ def contains_fields(collection_name, fields):
     db = get_db()
     collection = db.get_collection(collection_name)
 
-    filter_criteria = {"$or": [{field: {"$exists": True}}] for field in fields}
+    filter_criteria = {"$or": [{field: {"$exists": True}} for field in fields]}
 
     if collection.find(filter_criteria).count() > 0:
         return True

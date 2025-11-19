@@ -4,6 +4,8 @@
 
 TBD
 
+- Fixed migration script for collection contains field (#1981)
+
 # 3.30.0
 
 9/23/2025
