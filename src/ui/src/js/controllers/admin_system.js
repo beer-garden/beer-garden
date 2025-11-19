@@ -60,7 +60,7 @@ export default function adminSystemController(
   $scope.getIcon = UtilityService.getIcon;
 
   $scope.rescan = function() {
-    AdminService.rescan().then(_.noop, $scope.addErrorAlert);
+    SystemService.rescan().then(_.noop, $scope.addErrorAlert);
   };
 
   $scope.startSystem = function(system) {

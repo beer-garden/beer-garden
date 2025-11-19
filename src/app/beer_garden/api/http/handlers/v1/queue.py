@@ -92,16 +92,14 @@ class QueueListAPI(AuthorizationHandler):
 
         self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         if garden_name:
-            garden = self.get_or_raise(Garden, name=garden_name)
+            self.get_or_raise(Garden, name=garden_name)
         else:
-            garden = local_garden()
-
-        self.verify_user_permission_for_object(garden)
+            self.verify_user_permission_for_object(local_garden())
 
         await self.process_operation(
             Operation(
                 operation_type="QUEUE_DELETE_ALL",
-                target_garden_name=garden.name,
+                target_garden_name=garden_name,
             )
         )
 

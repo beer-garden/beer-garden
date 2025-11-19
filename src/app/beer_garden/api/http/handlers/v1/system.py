@@ -464,11 +464,9 @@ class SystemListAPI(AuthorizationHandler):
 
         self.minimum_permission = Permissions.GARDEN_ADMIN.name
         if garden_name:
-            garden = self.get_or_raise(Garden, name=garden_name)
+            self.get_or_raise(Garden, name=garden_name)
         else:
-            garden = local_garden()
-
-        self.verify_user_permission_for_object(garden)
+            self.verify_user_permission_for_object(local_garden())
 
         operations = SchemaParser.parse_patch(
             self.request.decoded_body, many=True, from_string=True
@@ -476,7 +474,12 @@ class SystemListAPI(AuthorizationHandler):
 
         for op in operations:
             if op.operation == "rescan":
-                await self.process_operation(Operation(operation_type="RUNNER_RESCAN"))
+                await self.process_operation(
+                    Operation(
+                        operation_type="RUNNER_RESCAN",
+                        target_garden_name=garden_name,
+                    )
+                )
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
