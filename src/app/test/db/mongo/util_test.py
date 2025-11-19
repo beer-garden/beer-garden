@@ -21,7 +21,11 @@ FAKE_TIME = datetime.datetime.now(timezone.utc) + timedelta(minutes=60)
 class TestCancelRequests:
     @classmethod
     def setup_class(cls):
-        connect("beer_garden", host="mongomock://localhost")
+        connect(
+        "beer_garden",
+        host="mongodb://localhost",
+        mongo_client_class=mongomock.MongoClient,
+    )
 
     def teardown_method(self):
         beer_garden.db.mongo.models.Request.drop_collection()
