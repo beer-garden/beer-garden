@@ -396,10 +396,10 @@ class MixedScheduler(object):
 
             if config.get("db.prune.in_progress_request_expiration") > 0:
                 self.add_schedule(
-                    beer_garden.db.mongo.util.cancel_outstanding,
+                    beer_garden.db.mongo.util.cancel_local_outstanding,
                     interval=prune_interval,
                     max_instances=1,
-                    name="cancel_outstanding",
+                    name="cancel_local_outstanding",
                 )
 
             self.add_schedule(

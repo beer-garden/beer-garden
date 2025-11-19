@@ -21,6 +21,9 @@ def create_connection(db_config: Box = None) -> None:
     async_conn = AsyncMongoClient(
         host=db_config.connection.host,
         port=db_config.connection.port,
+        username=db_config.connection.username,
+        password=db_config.connection.password,
+        authSource=db_config.connection.authentication_source,
     )
     async_db = async_conn[db_config.name]
 

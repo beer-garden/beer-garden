@@ -3,6 +3,7 @@ import copy
 from datetime import datetime
 
 import gridfs
+import pytest
 from bson.dbref import DBRef
 from mock import Mock, patch
 from mongoengine.connection import get_db
@@ -16,6 +17,14 @@ from beer_garden.db.mongo.migration import (  # ensure_roles,; ensure_users,
 )
 
 enable_gridfs_integration()
+
+
+@pytest.fixture(autouse=True)
+def drop():
+    yield
+    db = get_db()
+    for collection in db.list_collection_names():
+        db[collection].drop()
 
 
 class TestMigrationScript(object):
@@ -302,6 +311,40 @@ class TestMigrationScript(object):
 
     @patch("mongoengine.connect", Mock())
     @patch("mongoengine.register_connection", Mock())
+    def test_3_30_request_migration_no_target_garden(self, request_dict, ts_dt):
+
+        config._CONFIG = {"garden": {"name": "test_garden"}}
+
+        del request_dict["target_garden"]
+
+        db = get_db()
+        request_collection = db["request"]
+        request_collection.insert_one(request_dict)
+
+        ensure_v3_30_model_migration()
+
+        request = request_collection.find_one()
+
+        assert request["target_garden"] == "test_garden"
+
+    @patch("mongoengine.connect", Mock())
+    @patch("mongoengine.register_connection", Mock())
+    def test_3_30_request_migration_no_source_garden(self, request_dict, ts_dt):
+
+        config._CONFIG = {"garden": {"name": "test_garden"}}
+
+        del request_dict["source_garden"]
+
+        db = get_db()
+        request_collection = db["request"]
+        request_collection.insert_one(request_dict)
+
+        ensure_v3_30_model_migration()
+
+        request = request_collection.find_one()
+
+        assert request["source_garden"] == "test_garden"
+
     def test_3_30_system_garden_name_migration(self, system_dict):
         config._CONFIG = {"garden": {"name": "localgarden"}}
 

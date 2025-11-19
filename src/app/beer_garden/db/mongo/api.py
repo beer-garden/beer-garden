@@ -175,7 +175,9 @@ def create_connection(connection_alias: str = "default", db_config: Box = None) 
     # Now register the default connection with real timeouts
     # Yes, mongoengine uses 'db' in connect and 'name' in register_connection
     register_connection(
-        connection_alias, name=db_config["name"], **db_config["connection"]
+        connection_alias,
+        name=db_config["name"],
+        **db_config["connection"],
     )
 
 

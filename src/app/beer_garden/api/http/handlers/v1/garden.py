@@ -284,10 +284,19 @@ class GardenAPI(AuthorizationHandler):
                         )
                     )
 
+            elif operation == "rescan":
+                response = await self.process_operation(
+                    Operation(
+                        operation_type="GARDEN_RESCAN",
+                        target_garden_name=garden.name,
+                    )
+                )
+
             elif operation == "sync":
                 response = await self.process_operation(
                     Operation(
                         operation_type="GARDEN_SYNC",
+                        target_garden_name=garden.name,
                         kwargs={"sync_target": garden.name},
                     )
                 )
@@ -436,6 +445,7 @@ class GardenListAPI(AuthorizationHandler):
           The body of the request needs to contain a set of instructions detailing the
           updates to apply. Currently the only operations are:
 
+          * rescan
           * sync
           * sync_users
 
