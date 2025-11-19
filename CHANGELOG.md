@@ -1,5 +1,10 @@
 # Beer Garden Changelog
 
+# 3.31.0rc1
+
+TBD
+
+- Fixed migration script for collection contains field (#1981)
 - Cancel Requests only handle locally executed Requests (#1967)
 
 # 3.30.0
