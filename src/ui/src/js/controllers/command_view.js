@@ -190,6 +190,9 @@ export default function commandViewController(
       newRequest['command_display_name'] = $scope.command['display_name'];
     }
 
+    newRequest['target_garden'] = $scope.system.garden_name;
+    newRequest['source_garden'] = $rootScope.config.gardenName;
+
     let isFormData = false;
     const fd = new FormData();
     for (const i in $scope.command.parameters) {

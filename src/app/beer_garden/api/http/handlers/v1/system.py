@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 from brewtils.errors import ModelValidationError
-from brewtils.models import Operation, Permissions, System
+from brewtils.models import Garden, Operation, Permissions, System
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import SystemSchema as BrewtilsSystemSchema
 
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.api.http.schemas.v1.system import SystemSansQueueSchema
+from beer_garden.garden import local_garden
 
 
 def _remove_queue_info(response: str, many: bool = False) -> str:
@@ -421,3 +422,65 @@ class SystemListAPI(AuthorizationHandler):
         self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(_remove_queue_info(response))
+
+    async def patch(self):
+        """
+        ---
+        summary: Partially update systems
+        description: |
+          The body of the request needs to contain a set of instructions
+          detailing the operations to perform.
+
+          Currently the supported operations are `rescan`:
+          ```JSON
+          [
+            { "operation": "rescan" }
+          ]
+          ```
+          * Will remove from the registry and database any currently stopped
+            plugins who's directory has been removed.
+          * Will add and start any new plugin directories.
+        parameters:
+          - name: garden_name
+            in: query
+            required: false
+            description: Specify garden to target
+            type: string
+          - name: patch
+            in: body
+            required: true
+            description: Instructions for operations
+            schema:
+              $ref: '#/definitions/Patch'
+        responses:
+          204:
+            description: Operation successfully initiated
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Systems
+        """
+        garden_name = self.get_query_argument("garden_name", None)
+
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
+        if garden_name:
+            self.get_or_raise(Garden, name=garden_name)
+        else:
+            self.verify_user_permission_for_object(local_garden())
+
+        operations = SchemaParser.parse_patch(
+            self.request.decoded_body, many=True, from_string=True
+        )
+
+        for op in operations:
+            if op.operation == "rescan":
+                await self.process_operation(
+                    Operation(
+                        operation_type="RUNNER_RESCAN",
+                        target_garden_name=garden_name,
+                    )
+                )
+            else:
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+
+        self.set_status(204)

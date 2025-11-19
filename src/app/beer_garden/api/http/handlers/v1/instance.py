@@ -141,7 +141,10 @@ class InstanceAPI(AuthorizationHandler):
 
             elif operation == "start":
                 response = await self.process_operation(
-                    Operation(operation_type="INSTANCE_START", args=[instance_id])
+                    Operation(
+                        operation_type="INSTANCE_START",
+                        args=[instance_id],
+                    )
                 )
 
             elif operation == "restart":
@@ -151,7 +154,10 @@ class InstanceAPI(AuthorizationHandler):
 
             elif operation == "stop":
                 response = await self.process_operation(
-                    Operation(operation_type="INSTANCE_STOP", args=[instance_id])
+                    Operation(
+                        operation_type="INSTANCE_STOP",
+                        args=[instance_id],
+                    )
                 )
 
             elif operation == "heartbeat":

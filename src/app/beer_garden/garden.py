@@ -827,7 +827,8 @@ def rescan(sync_gardens: bool = False):
 
                         if garden is None:
                             raise NotFoundException(
-                                f"Failure to load {garden_name} after write collision occurred"
+                                f"Failure to load {garden_name} after write collision "
+                                "occurred"
                             )
                 else:
                     logger.info(
