@@ -10,7 +10,7 @@ The configuration service is responsible for:
 import os
 import sys
 from argparse import ArgumentParser
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Iterable, List, Optional, Sequence, Tuple, Union
 
 from box import Box
@@ -32,6 +32,11 @@ __all__ = [
 ]
 
 _CONFIG = None
+
+
+def set_config(config: Box):
+    global _CONFIG
+    _CONFIG = config
 
 
 def load(args: Sequence[str], force: bool = False) -> None:
@@ -264,7 +269,7 @@ def get(
 
     value = config if config else _CONFIG
     for key_part in key.split("."):
-        if key_part not in value:
+        if value is None or key_part not in value:
             return default
         value = value[key_part]
     return value
@@ -367,7 +372,7 @@ def _is_new_config(filename, tmp_filename):
 
 def _backup_previous_config(filename, tmp_filename):
     try:
-        os.rename(filename, filename + "_" + datetime.utcnow().isoformat())
+        os.rename(filename, filename + "_" + datetime.now(timezone.utc).isoformat())
     except Exception:
         sys.stderr.write(
             "Could not backup the old configuration. Cowardly refusing to "

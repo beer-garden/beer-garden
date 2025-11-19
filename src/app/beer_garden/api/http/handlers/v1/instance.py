@@ -25,12 +25,24 @@ class InstanceAPI(AuthorizationHandler):
         responses:
           200:
             description: Instance with the given ID
-            schema:
-              $ref: '#/definitions/Instance'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Instance'
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Instances
         """
@@ -58,9 +70,19 @@ class InstanceAPI(AuthorizationHandler):
           204:
             description: Instance has been successfully deleted
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Instances
         """
@@ -92,29 +114,47 @@ class InstanceAPI(AuthorizationHandler):
             { "operation": "" }
           ]
           ```
+        requestBody:
+          name: patch
+          description: Instructions for how to update the Instance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchOperation'
         parameters:
           - name: instance_id
             in: path
             required: true
             description: The ID of the Instance
             type: string
-          - name: patch
-            in: body
-            required: true
-            description: Instructions for how to update the Instance
-            schema:
-              $ref: '#/definitions/Patch'
         responses:
           200:
             description: Instance with the given ID
-            schema:
-              $ref: '#/definitions/Instance'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Instance'
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Instances
         """
@@ -233,12 +273,24 @@ class InstanceLogAPI(AuthorizationHandler):
         responses:
           200:
             description: Instance with the given ID
-            schema:
-              $ref: '#/definitions/Instance'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Instance'
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Instances
         """
@@ -321,12 +373,19 @@ class InstanceQueuesAPI(AuthorizationHandler):
         responses:
           200:
             description: List of queue information objects for this instance
-            schema:
-              type: array
-              items:
-                $ref: '#/definitions/Queue'
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Queue'
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Queues
         """

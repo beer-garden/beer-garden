@@ -53,6 +53,7 @@ def process(body) -> Tuple[str, dict]:
     """
     many = isinstance(body, list)
 
+    log_body = False
     if body.__class__.__name__ == "Event":
         body = Operation(operation_type="PUBLISH_EVENT", model=body, model_type="Event")
 
@@ -61,6 +62,8 @@ def process(body) -> Tuple[str, dict]:
     if not isinstance(body, str):
         body = SchemaParser.serialize(body, to_string=True, many=many)
 
+    if log_body:
+        logger.error(f"STOMP SEND: {body}")
     return body, {"model_class": model_class, "many": many}
 
 
@@ -111,7 +114,7 @@ class OperationListener(stomp.ConnectionListener):
     def on_error(self, headers, message):
         logger.warning(f"Error:\n\tMessage: {message}\n\tHeaders: {headers}")
 
-    def on_message(self, headers: dict, message: str):
+    def on_message(self, frame):
         """Handle an incoming message
 
         Will first verify that the model type (according to the message headers) is an
@@ -130,12 +133,12 @@ class OperationListener(stomp.ConnectionListener):
         Returns:
             None
         """
-        logger.debug(f"Message:\n\tMessage: {message}\n\tHeaders: {headers}")
+        logger.debug(f"Message:\n\tMessage: {frame.body}\n\tHeaders: {frame.headers}")
 
         try:
-            if headers.get("model_class") == "Operation":
+            if frame.headers.get("model_class") == "Operation":
 
-                operation = SchemaParser.parse_operation(message, from_string=True)
+                operation = SchemaParser.parse_operation(frame.body, from_string=True)
                 with CollectMetrics("STOMP", f"STOMP::{operation.operation_type}"):
                     operation.source_api = "STOMP"
 
@@ -150,7 +153,7 @@ class OperationListener(stomp.ConnectionListener):
 
                         send(
                             result,
-                            request_headers=headers,
+                            request_headers=frame.headers,
                             conn=self.conn,
                             send_destination=self.send_destination,
                         )
@@ -158,7 +161,7 @@ class OperationListener(stomp.ConnectionListener):
             logger.warning(f"Error parsing and routing message: {e}")
             send(
                 str(e),
-                request_headers=headers,
+                request_headers=frame.headers,
                 conn=self.conn,
                 send_destination=self.send_destination,
             )

@@ -4,6 +4,9 @@
 
 TBD
 
+## Major dependency upgrades and dropping 3.6, 3.7, 3.8, 3.9, 3.10 Python Support
+
+- Upgraded all dependencies to latest versions (#1792)
 - Fixed migration script for collection contains field (#1981)
 - Cancel Requests only handle locally executed Requests (#1967)
 - Removed Plugin Logs line range query (#1983)

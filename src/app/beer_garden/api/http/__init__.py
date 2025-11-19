@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import asyncio
 import logging
 import os
 import ssl
@@ -7,6 +8,8 @@ from copy import deepcopy
 from typing import List, Optional, Tuple
 
 from apispec import APISpec
+from apispec.ext.marshmallow import MarshmallowPlugin
+from apispec_webframeworks.tornado import TornadoPlugin
 from brewtils.models import Event, Events
 from brewtils.schemas import (
     CommandSchema,
@@ -24,7 +27,6 @@ from brewtils.schemas import (
     LoggingConfigSchema,
     OperationSchema,
     ParameterSchema,
-    PatchSchema,
     QueueSchema,
     RequestSchema,
     RoleSchema,
@@ -43,13 +45,19 @@ import beer_garden.api.http.handlers.misc as misc
 import beer_garden.api.http.handlers.v1 as v1
 import beer_garden.api.http.handlers.vbeta as vbeta
 import beer_garden.config as config
-import beer_garden.db.mongo.motor as moto
+import beer_garden.db.mongo.async_api as async_api
 import beer_garden.events
 import beer_garden.log
 import beer_garden.requests
 import beer_garden.router
 from beer_garden.api.http.client import SerializeHelper
 from beer_garden.api.http.processors import EventManager, websocket_publish
+from beer_garden.api.http.schemas.v1.operation import PatchOperationSchema
+from beer_garden.api.http.schemas.v1.token import (
+    TokenInputSchema,
+    TokenRefreshInputSchema,
+    TokenResponseSchema,
+)
 from beer_garden.api.http.schemas.v1.user import UserPasswordChangeSchema
 from beer_garden.events import publish
 from beer_garden.metrics import initialize_elastic_client
@@ -242,10 +250,15 @@ def _setup_application():
     """Setup things that can be taken care of before io loop is started"""
     global io_loop, tornado_app, server, client_ssl
 
-    io_loop = IOLoop.current()
+    try:
+        io_loop = IOLoop.current()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        io_loop = IOLoop.current()
 
-    # Set up motor connection
-    moto.create_connection(db_config=beer_garden.config.get("db"))
+    # Set up async connection
+    async_api.create_connection(db_config=beer_garden.config.get("db"))
 
     auth_config = config.get("auth")
     if not auth_config.token_secret:
@@ -329,8 +342,10 @@ def _load_swagger(url_specs, title=None):
     global api_spec
     api_spec = APISpec(
         title=title,
-        version="1.0",
-        plugins=("apispec.ext.marshmallow", "apispec.ext.tornado"),
+        version="2.0",
+        openapi_version="3.0.0",
+        plugins=(MarshmallowPlugin(), TornadoPlugin()),
+        info=dict(description="Beer Garden API"),
         securityDefinitions={
             "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"},
         },
@@ -338,73 +353,82 @@ def _load_swagger(url_specs, title=None):
     )
 
     # Schemas from Marshmallow
-    api_spec.definition("Parameter", schema=ParameterSchema)
-    api_spec.definition("Command", schema=CommandSchema)
-    api_spec.definition("Instance", schema=InstanceSchema)
-    api_spec.definition("Request", schema=RequestSchema)
-    api_spec.definition("System", schema=SystemSchema)
-    api_spec.definition("LoggingConfig", schema=LoggingConfigSchema)
-    api_spec.definition("Event", schema=EventSchema)
-    api_spec.definition("User", schema=UserSchema)
-    api_spec.definition("UserPasswordChange", schema=UserPasswordChangeSchema)
-    api_spec.definition("Role", schema=RoleSchema)
+    api_spec.components.schema("Parameter", schema=ParameterSchema)
+    api_spec.components.schema("Command", schema=CommandSchema)
+    api_spec.components.schema("Instance", schema=InstanceSchema)
+    api_spec.components.schema("Request", schema=RequestSchema)
+    api_spec.components.schema("System", schema=SystemSchema)
+    api_spec.components.schema("LoggingConfig", schema=LoggingConfigSchema)
+    api_spec.components.schema("Event", schema=EventSchema)
 
-    api_spec.definition("Queue", schema=QueueSchema)
-    api_spec.definition("Operation", schema=OperationSchema)
-    api_spec.definition("FileStatus", schema=FileStatusSchema)
-    api_spec.definition("UserToken", schema=UserTokenSchema)
-    api_spec.definition("Topic", schema=TopicSchema)
+    # If schemas are nested, ensure nested schema is defined first
+    api_spec.components.schema("Role", schema=RoleSchema)
+    api_spec.components.schema("User", schema=UserSchema)
+    api_spec.components.schema("UserPasswordChange", schema=UserPasswordChangeSchema)
 
-    api_spec.definition("Garden", schema=GardenSchema)
-    api_spec.definition("Runner", schema=RunnerSchema)
+    api_spec.components.schema("Queue", schema=QueueSchema)
+    api_spec.components.schema("Operation", schema=OperationSchema)
+    api_spec.components.schema("FileStatus", schema=FileStatusSchema)
+    api_spec.components.schema("UserToken", schema=UserTokenSchema)
+    api_spec.components.schema("Topic", schema=TopicSchema)
 
-    api_spec.definition("_patch", schema=PatchSchema)
-    api_spec.definition(
-        "Patch",
-        properties={
-            "operations": {"type": "array", "items": {"$ref": "#/definitions/_patch"}}
-        },
-    )
-    api_spec.definition("DateTrigger", schema=DateTriggerSchema)
-    api_spec.definition("CronTrigger", schema=CronTriggerSchema)
-    api_spec.definition("FileTrigger", schema=FileTriggerSchema)
-    api_spec.definition("IntervalTrigger", schema=IntervalTriggerSchema)
-    api_spec.definition("Job", schema=JobSchema)
+    api_spec.components.schema("Garden", schema=GardenSchema)
+    api_spec.components.schema("Runner", schema=RunnerSchema)
+
+    api_spec.components.schema("PatchOperation", schema=PatchOperationSchema)
+
+    api_spec.components.schema("DateTrigger", schema=DateTriggerSchema)
+    api_spec.components.schema("CronTrigger", schema=CronTriggerSchema)
+    api_spec.components.schema("FileTrigger", schema=FileTriggerSchema)
+    api_spec.components.schema("IntervalTrigger", schema=IntervalTriggerSchema)
+    api_spec.components.schema("Job", schema=JobSchema)
+
+    api_spec.components.schema("TokenInput", schema=TokenInputSchema)
+    api_spec.components.schema("TokenRefreshInput", schema=TokenRefreshInputSchema)
+    api_spec.components.schema("TokenResponse", schema=TokenResponseSchema)
+
     trigger_properties = {
         "allOf": [
-            {"$ref": "#/definitions/CronTrigger"},
-            {"$ref": "#/definitions/DateTrigger"},
-            {"$ref": "#/definitions/FileTrigger"},
-            {"$ref": "#/definitions/IntervalTrigger"},
+            {"type": "object", "nullable": True},
+            {"$ref": "#/components/schemas/CronTrigger"},
+            {"$ref": "#/components/schemas/DateTrigger"},
+            {"$ref": "#/components/schemas/FileTrigger"},
+            {"$ref": "#/components/schemas/IntervalTrigger"},
         ]
     }
-    api_spec._definitions["Job"]["properties"]["trigger"] = trigger_properties  # noqa
+    api_spec.components.schemas["Job"]["properties"][
+        "trigger"
+    ] = trigger_properties  # noqa
 
-    api_spec.definition("JobExport", schema=JobExportInputSchema)
-    api_spec.definition("JobImport", schema=JobExportSchema)
-    api_spec._definitions["JobImport"]["properties"][  # noqa
+    api_spec.components.schema("JobExport", schema=JobExportInputSchema)
+    api_spec.components.schema("JobImport", schema=JobExportSchema)
+    api_spec.components.schemas["JobImport"]["properties"][  # noqa
         "trigger"
     ] = trigger_properties
 
     error = {"message": {"type": "string"}}
-    api_spec.definition(
+    api_spec.components.schema(
         "400Error", properties=error, description="Parameter validation error"
     )
-    api_spec.definition(
+    api_spec.components.schema(
         "401Error", properties=error, description="Authorization required"
     )
-    api_spec.definition("403Error", properties=error, description="Access denied")
-    api_spec.definition(
+    api_spec.components.schema(
+        "403Error", properties=error, description="Access denied"
+    )
+    api_spec.components.schema(
         "404Error", properties=error, description="Resource does not exist"
     )
-    api_spec.definition(
+    api_spec.components.schema(
         "409Error", properties=error, description="Resource already exists"
     )
-    api_spec.definition("50xError", properties=error, description="Server exception")
+    api_spec.components.schema(
+        "50xError", properties=error, description="Server exception"
+    )
 
     # Finally, add documentation for all our published paths
     for url_spec in url_specs:
-        api_spec.add_path(urlspec=url_spec)
+        api_spec.path(urlspec=url_spec)
 
 
 def _setup_event_handling(ep_conn):

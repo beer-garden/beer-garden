@@ -223,7 +223,7 @@ def _generate_access_token(user: User, identifier: UUID, max_permission: str) ->
     jwt_payload = {
         "jti": str(identifier),
         "sub": str(user.id),
-        "iat": datetime.utcnow(),
+        "iat": datetime.now(timezone.utc),
         "exp": _get_access_token_expiration(max_permission=max_permission),
         "type": "access",
         "username": user.username,
@@ -243,7 +243,7 @@ def _generate_refresh_token(user: User, identifier: UUID, expiration: datetime) 
     jwt_payload = {
         "jti": str(identifier),
         "sub": str(user.id),
-        "iat": datetime.utcnow(),
+        "iat": datetime.now(timezone.utc),
         "exp": expiration,
         "type": "refresh",
     }
@@ -256,18 +256,18 @@ def _generate_refresh_token(user: User, identifier: UUID, expiration: datetime) 
 def _get_access_token_expiration(max_permission=None) -> datetime:
     """Calculate and return the access token expiration time"""
     if max_permission == Permissions.GARDEN_ADMIN.name:
-        return datetime.utcnow() + timedelta(
+        return datetime.now(timezone.utc) + timedelta(
             minutes=config.get("auth.token_access_ttl.garden_admin")
         )
     elif max_permission == Permissions.PLUGIN_ADMIN.name:
-        return datetime.utcnow() + timedelta(
+        return datetime.now(timezone.utc) + timedelta(
             minutes=config.get("auth.token_access_ttl.plugin_admin")
         )
     elif max_permission == Permissions.OPERATOR.name:
-        return datetime.utcnow() + timedelta(
+        return datetime.now(timezone.utc) + timedelta(
             minutes=config.get("auth.token_access_ttl.operator")
         )
-    return datetime.utcnow() + timedelta(
+    return datetime.now(timezone.utc) + timedelta(
         minutes=config.get("auth.token_access_ttl.read_only")
     )
 
@@ -275,17 +275,17 @@ def _get_access_token_expiration(max_permission=None) -> datetime:
 def _get_refresh_token_expiration(max_permission=None) -> datetime:
     """Calculate and return the refresh token expiration time"""
     if max_permission == Permissions.GARDEN_ADMIN.name:
-        return datetime.utcnow() + timedelta(
+        return datetime.now(timezone.utc) + timedelta(
             minutes=config.get("auth.token_refresh_ttl.garden_admin")
         )
     elif max_permission == Permissions.PLUGIN_ADMIN.name:
-        return datetime.utcnow() + timedelta(
+        return datetime.now(timezone.utc) + timedelta(
             minutes=config.get("auth.token_refresh_ttl.plugin_admin")
         )
     elif max_permission == Permissions.OPERATOR.name:
-        return datetime.utcnow() + timedelta(
+        return datetime.now(timezone.utc) + timedelta(
             minutes=config.get("auth.token_refresh_ttl.operator")
         )
-    return datetime.utcnow() + timedelta(
+    return datetime.now(timezone.utc) + timedelta(
         minutes=config.get("auth.token_refresh_ttl.read_only")
     )

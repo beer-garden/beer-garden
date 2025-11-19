@@ -27,6 +27,8 @@ from brewtils import EasyClient
 from brewtils.models import Connection as BrewtilsConnection
 from brewtils.models import Events, Garden, Operation, System
 from mongoengine import DoesNotExist
+
+# from packaging.version import parse
 from stomp.exception import ConnectFailedException
 
 import beer_garden
@@ -318,6 +320,15 @@ def update_api_heartbeat(operation: Operation):
 
             if operation.model.payload.name != operation.source_garden_name:
 
+                # if (
+                #     hasattr(operation.model.payload, "version")
+                #     and operation.model.payload.version is not None
+                #     and operation.model.payload.version != "UNKNOWN"
+                #     and parse(operation.model.payload.version) > parse("3.16")
+                # ):
+                #     operation.source_garden_name = operation.model.payload.name
+
+                # else:
                 local_garden = get_garden(
                     config.get("garden.name"), include_fields=["name"]
                 )

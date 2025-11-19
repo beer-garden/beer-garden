@@ -34,12 +34,24 @@ class RequestAPI(AuthorizationHandler):
         responses:
           200:
             description: Request with the given ID
-            schema:
-              $ref: '#/definitions/Request'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Request'
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Requests
         """
@@ -68,32 +80,51 @@ class RequestAPI(AuthorizationHandler):
             { "operation": "replace", "path": "/error_class", "value": "" }
           ]
           ```
+        requestBody:
+          name: patch
+          description: Instructions for how to update the Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchOperation'
         parameters:
           - name: request_id
             in: path
             required: true
             description: The ID of the Request
             type: string
-          - name: patch
-            in: body
-            required: true
-            description: Instructions for how to update the Request
-            schema:
-              $ref: '#/definitions/Patch'
         responses:
           200:
             description: Request with the given ID
-            schema:
-              $ref: '#/definitions/Request'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Request'
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Requests
         """
+
         self.minimum_permission = Permissions.OPERATOR.name
         _ = self.get_or_raise(Request, id=request_id)
 
@@ -151,9 +182,19 @@ class RequestOutputAPI(AuthorizationHandler):
             description: Request output for request with the given ID
             type: String
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Requests
         """
@@ -336,10 +377,12 @@ class RequestListAPI(AuthorizationHandler):
         responses:
           200:
             description: A page of Requests
-            schema:
-              type: array
-              items:
-                $ref: '#/definitions/Request'
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Request'
             headers:
               start:
                 type: integer
@@ -357,7 +400,12 @@ class RequestListAPI(AuthorizationHandler):
                 type: integer
                 description: The total number of Requests
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Requests
         """
@@ -418,12 +466,13 @@ class RequestListAPI(AuthorizationHandler):
         """
         ---
         summary: Create a new Request
+        requestBody:
+          name: request
+          description: IThe Request definition
+          content:
+            application/json:
+              schema: Request
         parameters:
-          - name: request
-            in: body
-            description: The Request definition
-            schema:
-              $ref: '#/definitions/Request'
           - name: blocking
             in: query
             required: false
@@ -461,8 +510,10 @@ class RequestListAPI(AuthorizationHandler):
         responses:
           201:
             description: A new Request has been created
-            schema:
-              $ref: '#/definitions/Request'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Request'
             headers:
               Instance-Status:
                 type: string
@@ -470,12 +521,23 @@ class RequestListAPI(AuthorizationHandler):
                     Current status of the Instance that will process the
                     created Request
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Requests
         """
+
         self.minimum_permission = Permissions.OPERATOR.name
 
         if self.request.mime_type == "application/json":
@@ -553,19 +615,21 @@ class RequestListAPI(AuthorizationHandler):
         """
         ---
         summary: Update a new Request
-        parameters:
-          - name: request
-            in: body
-            description: The Request definition
-            schema:
-              $ref: '#/definitions/Request'
+        requestBody:
+          name: request
+          description: The Request definition
+          content:
+            application/json:
+              schema: Request
         consumes:
           - application/json
         responses:
           201:
             description: A updated Request
-            schema:
-              $ref: '#/definitions/Request'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Request'
             headers:
               Instance-Status:
                 type: string
@@ -573,12 +637,23 @@ class RequestListAPI(AuthorizationHandler):
                     Current status of the Instance that will process the
                     created Request
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Requests
         """
+
         self.minimum_permission = Permissions.OPERATOR.name
         request_model = self.parser.parse_request(
             (
@@ -716,10 +791,16 @@ class RequestListAPI(AuthorizationHandler):
           204:
             description: Requests has been successfully deleted
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Requests
         """
+
         self.minimum_permission = Permissions.PLUGIN_ADMIN.name
 
         query_kwargs = {}

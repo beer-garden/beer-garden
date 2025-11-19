@@ -123,9 +123,9 @@ class TestTokenRefreshAPI:
         self, app_config_auth_enabled, http_client, base_url, user
     ):
         url = f"{base_url}/api/v1/token/refresh"
-        refresh_token = issue_token_pair(user, refresh_expiration=datetime.utcnow())[
-            "refresh"
-        ]
+        refresh_token = issue_token_pair(
+            user, refresh_expiration=datetime.now(timezone.utc)
+        )["refresh"]
         body = json.dumps({"refresh": refresh_token})
 
         with pytest.raises(HTTPError) as excinfo:
@@ -138,9 +138,9 @@ class TestTokenRefreshAPI:
         self, app_config_auth_enabled, http_client, base_url, user
     ):
         url = f"{base_url}/api/v1/token/refresh"
-        refresh_token = issue_token_pair(user, refresh_expiration=datetime.utcnow())[
-            "refresh"
-        ]
+        refresh_token = issue_token_pair(
+            user, refresh_expiration=datetime.now(timezone.utc)
+        )["refresh"]
         body = json.dumps({"refresh": refresh_token})
 
         MongoUserToken.drop_collection()
@@ -193,9 +193,9 @@ class TestTokenRevokeAPI:
         self, app_config_auth_enabled, http_client, base_url, user
     ):
         url = f"{base_url}/api/v1/token/revoke"
-        refresh_token = issue_token_pair(user, refresh_expiration=datetime.utcnow())[
-            "refresh"
-        ]
+        refresh_token = issue_token_pair(
+            user, refresh_expiration=datetime.now(timezone.utc)
+        )["refresh"]
         body = json.dumps({"refresh": refresh_token})
 
         response = yield http_client.fetch(url, method="POST", body=body)

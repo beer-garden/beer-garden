@@ -5,7 +5,6 @@ from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import SystemSchema as BrewtilsSystemSchema
 
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.api.http.schemas.v1.system import SystemSansQueueSchema
 from beer_garden.garden import local_garden
 
 
@@ -18,8 +17,14 @@ def _remove_queue_info(response: str, many: bool = False) -> str:
     risky. Instead, this takes the serialized response and just runs it through another
     Schema that strips out the queue info.
     """
-    system_data = SystemSansQueueSchema(many=many).loads(response).data
-    return SystemSansQueueSchema(many=many).dumps(system_data).data
+    if isinstance(response, str):
+        system_data = SchemaParser.parse_system(response, many=many, from_string=True)
+    else:
+        system_data = response
+
+    return BrewtilsSystemSchema(
+        many=many, exclude=("instances.queue_type", "instances.queue_info")
+    ).dumps(system_data)
 
 
 class SystemAPI(AuthorizationHandler):
@@ -42,12 +47,24 @@ class SystemAPI(AuthorizationHandler):
         responses:
           200:
             description: System with the given ID
-            schema:
-              $ref: '#/definitions/System'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/System'
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Systems
         """
@@ -62,7 +79,7 @@ class SystemAPI(AuthorizationHandler):
         if not include_commands:
             system.commands = []
 
-        response = SystemSansQueueSchema().dump(system).data
+        response = _remove_queue_info(system)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -92,9 +109,19 @@ class SystemAPI(AuthorizationHandler):
           204:
             description: System has been successfully deleted
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Systems
         """
@@ -134,29 +161,47 @@ class SystemAPI(AuthorizationHandler):
           ]
           ```
           Where `value` is a list of new Commands.
+        requestBody:
+          name: patch
+          description: Instructions for how to update the System
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchOperation'
         parameters:
           - name: system_id
             in: path
             required: true
             description: The ID of the System
             type: string
-          - name: patch
-            in: body
-            required: true
-            description: Instructions for how to update the System
-            schema:
-              $ref: '#/definitions/Patch'
         responses:
           200:
             description: System with the given ID
-            schema:
-              $ref: '#/definitions/System'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/System'
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Systems
         """
@@ -300,12 +345,19 @@ class SystemListAPI(AuthorizationHandler):
         responses:
           200:
             description: All Systems
-            schema:
-              type: array
-              items:
-                $ref: '#/definitions/System'
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/System'
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Systems
         """
@@ -386,25 +438,40 @@ class SystemListAPI(AuthorizationHandler):
         description: |
             If the System does not exist it will be created. If the System
             already exists it will be updated (assuming it passes validation).
-        parameters:
-          - name: system
-            in: body
-            description: The System definition to create / update
-            schema:
-              $ref: '#/definitions/System'
+        requestBody:
+          name: patch
+          description: The System definition to create / update
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/System'
         responses:
           200:
             description: An existing System has been updated
-            schema:
-              $ref: '#/definitions/System'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/System'
           201:
             description: A new System has been created
-            schema:
-              $ref: '#/definitions/System'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/System'
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Systems
         """
