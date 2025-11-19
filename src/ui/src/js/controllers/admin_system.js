@@ -14,7 +14,6 @@ adminSystemController.$inject = [
   'SystemService',
   'InstanceService',
   'UtilityService',
-  'AdminService',
   'QueueService',
   'RunnerService',
   'EventService',
@@ -29,7 +28,6 @@ adminSystemController.$inject = [
  * @param  {Object} SystemService   Beer-Garden's system service object.
  * @param  {Object} InstanceService Beer-Garden's instance service object.
  * @param  {Object} UtilityService  Beer-Garden's utility service object.
- * @param  {Object} AdminService    Beer-Garden's admin service object.
  * @param  {Object} QueueService    Beer-Garden's event service object.
  * @param  {Object} RunnerService   Beer-Garden's runner service object.
  * @param  {Object} EventService    Beer-Garden's event service object.
@@ -42,7 +40,6 @@ export default function adminSystemController(
     SystemService,
     InstanceService,
     UtilityService,
-    AdminService,
     QueueService,
     RunnerService,
     EventService,
