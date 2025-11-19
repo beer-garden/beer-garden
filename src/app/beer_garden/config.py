@@ -923,6 +923,12 @@ _DB_SPEC = {
                     "previous_names": ["db_username"],
                     "alt_env_names": ["DB_USERNAME"],
                 },
+                "authentication_source": {
+                    "type": "str",
+                    "default": "admin",
+                    "description": "Authentication source/DB for the database user",
+                    "alt_env_names": ["DB_AUTHENTICATION_SOURCE"],
+                },
             },
         },
         "prune": {
