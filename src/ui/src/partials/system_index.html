@@ -1,6 +1,12 @@
-<fetch-data response="response"></fetch-data>
+<fetch-data response="response" ng-if="hasPermission('READ_ONLY')"></fetch-data>
 
-<div ng-if="responseState(response) === 'success'">
+<div ng-if="!hasPermission('READ_ONLY')">
+  <h1>
+    <span>401: Unauthorized to access</span>
+  </h1>
+</div>
+
+<div ng-if="hasPermission('READ_ONLY') && responseState(response) === 'success'">
   <h1 class="page-header">Systems</h1>
 
   <div class="container-fluid animate-if">
