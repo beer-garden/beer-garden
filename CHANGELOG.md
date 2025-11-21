@@ -1,5 +1,9 @@
 # Beer Garden Changelog
 
+- Updated UI to utilize only cookies for themes until models are updated to 
+  persist preferences in database (#)
+- Updated dark.css to fix `page-header` extra spacing (#)
+
 # 3.30.0
 
 9/23/2025
