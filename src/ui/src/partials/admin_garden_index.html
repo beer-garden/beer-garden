@@ -19,11 +19,7 @@
 
 <fetch-data response="response" ng-if="hasPermission('READ_ONLY')"></fetch-data>
 
-<div ng-if="!hasPermission('READ_ONLY')">
-  <h1>
-    <span>401: Unauthorized. You are not authorized to access this page.</span>
-  </h1>
-</div>
+<unauthorized-message ng-if="!hasPermission('READ_ONLY')"/>
 
 <div id="gardens-container" class="animate-if" ng-if="responseState(response) === 'success' && hasPermission('READ_ONLY')">
   <div class="container-item panel panel-danger" style="display: block" ng-if="showUnconfigured(data)">

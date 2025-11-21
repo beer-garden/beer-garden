@@ -41,11 +41,7 @@
 
 <fetch-data response="response"></fetch-data>
 
-<div ng-if="!hasPermission('READ_ONLY')">
-  <h1>
-    <span>401: Unauthorized. You are not authorized to access this page.</span>
-  </h1>
-</div>
+<unauthorized-message ng-if="!hasPermission('READ_ONLY')"/>
 
 <div ng-show="hasPermission('READ_ONLY') && (responseState(response) === 'success') && !template">
 
