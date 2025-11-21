@@ -4,35 +4,31 @@
 #
 #    pip-compile requirements-dev.in
 #
--e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
+-e git+https://github.com/beer-garden/brewtils@rc_3_31#egg=brewtils
     # via
     #   -c requirements.txt
     #   -r requirements-dev.in
 alabaster==0.7.13
     # via sphinx
-appdirs==1.4.4
-    # via
-    #   -c requirements.txt
-    #   brewtils
-attrs==23.1.0
+attrs==25.3.0
     # via flake8-bugbear
-babel==2.12.1
+babel==2.17.0
     # via sphinx
-black>=23.3.0
+black==25.9.0
     # via -r requirements-dev.in
-certifi==2023.5.7
+certifi==2025.8.3
     # via
     #   -c requirements.txt
     #   requests
-charset-normalizer==3.2.0
+charset-normalizer==3.4.3
     # via
     #   -c requirements.txt
     #   requests
-click==8.1.6
+click==8.3.0
     # via black
 codecov==2.1.13
     # via -r requirements-dev.in
-coverage==7.2.7
+coverage==7.10.7
     # via
     #   -r requirements-dev.in
     #   codecov
@@ -40,70 +36,52 @@ docutils==0.16
     # via
     #   sphinx
     #   sphinx-rtd-theme
-flake8>=5.0.4
+flake8==7.3.0
     # via
     #   -r requirements-dev.in
     #   flake8-bugbear
-flake8-bugbear==23.3.12
+flake8-bugbear==24.12.12
     # via -r requirements-dev.in
-idna==3.4
+idna==3.10
     # via
     #   -c requirements.txt
     #   requests
 imagesize==1.4.1
     # via sphinx
-iniconfig==2.0.0
+iniconfig==2.1.0
     # via pytest
-isort>=5.11.5
+isort==5.13.2
     # via -r requirements-dev.in
-jinja2==3.1.2
+jinja2==3.1.6
     # via sphinx
-lark-parser==0.6.7
-    # via
-    #   -c requirements.txt
-    #   brewtils
-markupsafe==2.1.3
+markupsafe==3.0.3
     # via jinja2
-marshmallow==2.21.0
-    # via
-    #   -c requirements.txt
-    #   brewtils
-    #   marshmallow-polyfield
-marshmallow-polyfield==3.2
-    # via
-    #   -c requirements.txt
-    #   brewtils
 mccabe==0.7.0
     # via flake8
-mock==5.1.0
+mock==5.2.0
     # via -r requirements-dev.in
-mongomock==4.1.2
+mongomock==4.3.0
     # via -r requirements-dev.in
-mypy-extensions==1.0.0
+mypy-extensions==1.1.0
     # via black
-packaging==23.1
+packaging==25.0
     # via
     #   -c requirements.txt
     #   black
-    #   brewtils
     #   mongomock
     #   pytest
     #   sphinx
-pathspec==0.11.1
+pathspec==0.12.1
     # via black
-pika==1.2.0
-    # via
-    #   -c requirements.txt
-    #   brewtils
-platformdirs==3.9.1
+platformdirs==4.4.0
     # via black
-pluggy==1.2.0
+pluggy==1.6.0
     # via pytest
-pycodestyle>=2.9.1
+pycodestyle==2.14.0
     # via flake8
-pyflakes>=2.5.0
+pyflakes==3.4.0
     # via flake8
-pygments==2.15.1
+pygments==2.19.2
     # via sphinx
 pytest==7.4.4
     # via
@@ -111,40 +89,28 @@ pytest==7.4.4
     #   pytest-lazy-fixtures
     #   pytest-mock
     #   pytest-tornado
-pytest-lazy-fixture==0.6.3 ; python_version < "3.8"
-pytest-lazy-fixtures==1.3.4 ; python_version >= "3.8"
+pytest-lazy-fixtures==1.4.0
     # via -r requirements-dev.in
-pytest-mock==3.11.1
+pytest-mock==3.15.1
     # via -r requirements-dev.in
 pytest-tornado==0.8.1
     # via -r requirements-dev.in
-python-box==3.4.6
+pytokens==0.1.10
+    # via black
+pytz==2025.2
+    # via mongomock
+requests==2.32.5
     # via
     #   -c requirements.txt
-    #   yapconf
-pytz==2020.5
-    # via
-    #   -c requirements.txt
-    #   brewtils
-requests==2.31.0
-    # via
-    #   -c requirements.txt
-    #   brewtils
     #   codecov
     #   sphinx
-sentinels==1.0.0
+sentinels==1.1.1
     # via mongomock
-simplejson==3.19.1
+six==1.17.0
     # via
     #   -c requirements.txt
-    #   brewtils
-six==1.16.0
-    # via
-    #   -c requirements.txt
-    #   brewtils
     #   sphinx
-    #   yapconf
-snowballstemmer==2.2.0
+snowballstemmer==3.0.1
     # via sphinx
 sphinx==1.8.6
     # via
@@ -152,32 +118,20 @@ sphinx==1.8.6
     #   sphinx-rtd-theme
 sphinx-rtd-theme==0.5.2
     # via -r requirements-dev.in
-sphinxcontrib-serializinghtml==1.1.5
+sphinxcontrib-serializinghtml==2.0.0
     # via sphinxcontrib-websupport
 sphinxcontrib-websupport==1.2.4
     # via sphinx
-tornado==6.2
+tornado==6.5.2
     # via
     #   -c requirements.txt
     #   pytest-tornado
-urllib3==1.26.16
+urllib3==2.5.0
     # via
     #   -c requirements.txt
     #   requests
-watchdog==3.0.0
-    # via
-    #   -c requirements.txt
-    #   yapconf
-wheel==0.40.0
+wheel==0.45.1
     # via -r requirements-dev.in
-wrapt==1.15.0
-    # via
-    #   -c requirements.txt
-    #   brewtils
-yapconf==1.0.0
-    # via
-    #   -c requirements.txt
-    #   brewtils
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

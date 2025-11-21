@@ -4,7 +4,6 @@ import json
 import logging
 import sys
 
-import pytz
 import six
 
 try:
@@ -14,6 +13,7 @@ except ImportError:
     from lark.common import ParseError
 
     LarkError = ParseError
+import zoneinfo
 from typing import Tuple
 
 import brewtils.models
@@ -89,6 +89,10 @@ __all__ = [
 REQUEST_MAX_PARAM_SIZE = 5 * 1_000_000
 
 logger = logging.getLogger(__name__)
+
+
+def get_current_time():
+    return datetime.datetime.now(tz=datetime.timezone.utc)
 
 
 class MongoModel:
@@ -352,7 +356,7 @@ class Request(MongoModel, Document):
     output_type = StringField(choices=BrewtilsCommand.OUTPUT_TYPES)
     status = StringField(choices=BrewtilsRequest.STATUS_LIST, default="CREATED")
     command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES)
-    created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
+    created_at = DateTimeField(default=get_current_time, required=True)
     updated_at = DateTimeField(default=None, required=True)
     status_updated_at = DateTimeField()
     error_class = StringField(required=False)
@@ -499,7 +503,7 @@ class Request(MongoModel, Document):
     def _pre_save(self):
         """Move request attributes to GridFS if too big"""
 
-        self.updated_at = datetime.datetime.utcnow()
+        self.updated_at = get_current_time()
         encoding = "utf-8"
 
         if not self.metadata:
@@ -510,9 +514,7 @@ class Request(MongoModel, Document):
 
         status_key = f"{self.status}_{config.get('garden.name')}"
         if status_key not in self.metadata:
-            self.metadata[status_key] = int(
-                datetime.datetime.utcnow().timestamp() * 1000
-            )
+            self.metadata[status_key] = int(get_current_time().timestamp() * 1000)
 
         if self.has_parent:
 
@@ -829,7 +831,7 @@ class Request(MongoModel, Document):
         if (
             not self.target_garden or self.target_garden == config.get("garden.name")
         ) and ("status" in self.changed_fields or self.created):
-            self.status_updated_at = datetime.datetime.utcnow()
+            self.status_updated_at = get_current_time()
 
     def clean_update(self):
         """Ensure that the update would not result in an illegal status transition"""
@@ -1149,7 +1151,9 @@ class DateTrigger(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.DateTrigger
 
     run_date = DateTimeField(required=True)
-    timezone = StringField(required=False, default="utc", chocies=pytz.all_timezones)
+    timezone = StringField(
+        required=False, default="utc", chocies=zoneinfo.available_timezones()
+    )
 
 
 class IntervalTrigger(MongoModel, EmbeddedDocument):
@@ -1162,7 +1166,9 @@ class IntervalTrigger(MongoModel, EmbeddedDocument):
     seconds = IntField(default=0)
     start_date = DateTimeField(required=False)
     end_date = DateTimeField(required=False)
-    timezone = StringField(required=False, default="utc", chocies=pytz.all_timezones)
+    timezone = StringField(
+        required=False, default="utc", chocies=zoneinfo.available_timezones()
+    )
     jitter = IntField(required=False)
     reschedule_on_finish = BooleanField(required=False, default=False)
 
@@ -1180,7 +1186,9 @@ class CronTrigger(MongoModel, EmbeddedDocument):
     second = StringField(default="0")
     start_date = DateTimeField(required=False)
     end_date = DateTimeField(required=False)
-    timezone = StringField(required=False, default="utc", chocies=pytz.all_timezones)
+    timezone = StringField(
+        required=False, default="utc", chocies=zoneinfo.available_timezones()
+    )
     jitter = IntField(required=False)
 
 
@@ -1456,7 +1464,7 @@ class File(MongoModel, Document):
     owner_type = StringField(required=False)
     request = LazyReferenceField(Request, required=False, reverse_delete_rule=NULLIFY)
     job = LazyReferenceField(Job, required=False, reverse_delete_rule=NULLIFY)
-    updated_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
+    updated_at = DateTimeField(default=get_current_time, required=True)
     file_name = StringField(required=True)
     file_size = IntField(required=True)
     chunks = DictField(required=False)
@@ -1470,7 +1478,7 @@ class File(MongoModel, Document):
 
     # TTL Fields
     status = StringField()
-    created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
+    created_at = DateTimeField(default=get_current_time, required=True)
     root_command_type = StringField()
 
 
@@ -1485,19 +1493,19 @@ class FileChunk(MongoModel, Document):
 
     # TTL Fields
     status = StringField()
-    created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
-    updated_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
+    created_at = DateTimeField(default=get_current_time, required=True)
+    updated_at = DateTimeField(default=get_current_time, required=True)
     root_command_type = StringField()
 
 
 class RawFile(Document):
     file = FileField()
-    created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
+    created_at = DateTimeField(default=get_current_time, required=True)
     request = LazyReferenceField(Request, required=False, reverse_delete_rule=CASCADE)
 
     # TTL Fields
     status = StringField()
-    updated_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
+    updated_at = DateTimeField(default=get_current_time, required=True)
     root_command_type = StringField()
 
     meta = {"queryset_class": FileFieldHandlingQuerySet}
@@ -1619,7 +1627,7 @@ class User(MongoModel, Document):
 class UserToken(MongoModel, Document):
     brewtils_model = brewtils.models.UserToken
 
-    issued_at = DateTimeField(required=True, default=datetime.datetime.utcnow)
+    issued_at = DateTimeField(required=True, default=get_current_time)
     expires_at = DateTimeField(required=True)
     username = StringField()
     uuid = StringField()

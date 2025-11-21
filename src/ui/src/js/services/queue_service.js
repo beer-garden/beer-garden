@@ -10,8 +10,15 @@ export default function queueService($http) {
     getQueues: (success, error) => {
       return $http.get('api/v1/queues');
     },
-    clearQueues: () => {
-      return $http.delete('api/v1/queues');
+    clearQueues: (gardenName) => {
+      if (gardenName) {
+        return $http.delete(
+          'api/v1/queues?garden_name=' + encodeURIComponent(gardenName),
+          {headers: {'Target-Garden': gardenName}}
+        );
+      } else {
+        return $http.delete('api/v1/queues');
+      }
     },
     clearQueue: (name) => {
       return $http.delete('api/v1/queues/' + name);

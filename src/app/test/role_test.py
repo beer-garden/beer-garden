@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from pathlib import Path
 
+import mongomock
 import pytest
 from box import Box
 from brewtils.errors import ModelValidationError
@@ -92,7 +93,11 @@ def user(role):
 class TestRole:
     @classmethod
     def setup_class(cls):
-        connect("beer_garden", host="mongomock://localhost")
+        connect(
+            "beer_garden",
+            host="mongodb://localhost",
+            mongo_client_class=mongomock.MongoClient,
+        )
 
     @pytest.mark.parametrize(
         "permission", ["READ_ONLY", "OPERATOR", "PLUGIN_ADMIN", "GARDEN_ADMIN"]

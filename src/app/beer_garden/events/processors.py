@@ -140,7 +140,9 @@ class DequeSetListener(DequeListener):
                                     )
                                     if status_key not in event.payload.metadata:
                                         event.payload.metadata[status_key] = int(
-                                            datetime.datetime.utcnow().timestamp()
+                                            datetime.datetime.now(
+                                                datetime.timezone.utc
+                                            ).timestamp()
                                             * 1000
                                         )
 

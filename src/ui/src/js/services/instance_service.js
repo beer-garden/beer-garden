@@ -7,14 +7,18 @@ instanceService.$inject = ['$http'];
  */
 export default function instanceService($http) {
   return {
-    startInstance: (instance) => {
+    startInstance: (instance, system) => {
       return $http.patch('api/v1/instances/' + instance.id, {
         operation: 'start',
+      },{
+        headers: {'Target-Garden': system.garden_name},
       });
     },
-    stopInstance: (instance) => {
+    stopInstance: (instance, system) => {
       return $http.patch('api/v1/instances/' + instance.id, {
         operation: 'stop',
+      },{
+        headers: {'Target-Garden': system.garden_name},
       });
     },
     getInstance: (instanceId) => {

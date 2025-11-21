@@ -1168,6 +1168,13 @@ def handle_event_create(event):
                 event.payload.parent = None
                 event.payload.has_parent = False
 
+        # Set source and target gardens if not already set
+        if event.payload.source_garden is None:
+            event.payload.source_garden = event.garden
+
+        if event.payload.target_garden is None:
+            event.payload.target_garden = event.garden
+
         # User mappings back to local usernames
         if event.payload.requester and config.get("auth.enabled"):
             foundUser = False
