@@ -463,7 +463,7 @@ export default function appRun(
     let results = []
     if (gardens !== undefined && gardens !== null) {
       for (let i = 0; i < gardens.length; i++){
-        if (gardens[i]["connection_type"] == "LOCAL"){
+        if (gardens[i] !== undefined && gardens[i] !== null && gardens[i]["connection_type"] == "LOCAL"){
           results.push(gardens[i]);
           $rootScope.extractGardenChildrenLoop(results, gardens[i], true);
         }

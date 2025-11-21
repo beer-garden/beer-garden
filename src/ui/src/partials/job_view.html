@@ -1,7 +1,7 @@
 <h1 class="page-header">
   <span>Job</span>
 
-  <span ng-if="responseState(response) === 'success'">
+  <span ng-if="hasPermission('READ_ONLY') && responseState(response) === 'success'">
     <small>{{data.name}} - {{data.id}}</small>
   </span>
 </h1>
@@ -51,9 +51,11 @@
 
 <fetch-data response="response"></fetch-data>
 
+<unauthorized-message ng-if="!hasPermission('READ_ONLY')"/>
+
 <div
   class="container-fluid animate-if"
-  ng-if="responseState(response) === 'success'"
+  ng-if="hasPermission('READ_ONLY') && responseState(response) === 'success'"
 >
   <table id="jobTable" class="table">
     <thead>
