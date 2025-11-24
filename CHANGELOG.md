@@ -1,7 +1,7 @@
 # Beer Garden Changelog
 
-- Updated Garden Admin page to have visual indication that a routing error has occurred upstream from Garden (#)
-- Added interval push for Garden Syncs for unresponsive Gardens (#)
+- Updated Garden Admin page to have visual indication that a routing error has occurred upstream from Garden (#1989)
+- Added interval push for Garden Syncs for unresponsive Gardens (#1989)
 
 # 3.30.0
 
