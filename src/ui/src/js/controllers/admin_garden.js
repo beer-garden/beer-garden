@@ -383,6 +383,77 @@ export default function adminGardenController(
 
   }
 
+  $scope.getUnRoutableGarden = function(garden, connection_type){
+    if (!garden.has_parent || garden.parent === $rootScope.config.gardenName){
+      return garden.name
+    }
+
+    let routable = false;
+    if (connection_type == "publishing_connections" && garden.publishing_connections !== undefined && garden.publishing_connections !== null && garden.publishing_connections.length > 0){
+      for (let i = 0; i < garden.publishing_connections.length; i++){
+        if ("PUBLISHING" === garden.publishing_connections[i].status){
+          routable = true;
+        }
+      }
+    }
+    else if (connection_type == "receiving_connections" && garden.receiving_connections !== undefined && garden.receiving_connections !== null && garden.receiving_connections.length > 0){
+      for (let i = 0; i < garden.receiving_connections.length; i++){
+        if ("RECEIVING" === garden.receiving_connections[i].status){
+          routable = true;
+        }
+      }
+    }
+
+    if (!routable){
+      return garden.name;
+    }
+
+    if (garden.has_parent){
+      for (let i = 0; i < $scope.data.length; i++) {
+        if ($scope.data[i].name == garden.parent){
+          return $scope.getUnRoutableGarden($scope.data[i], connection_type)
+        }
+      }
+    } 
+
+    return garden.name;
+  };
+
+  $scope.isGardenRoutable = function(garden, connection_type){
+    let routable = false;
+
+    if (connection_type == "publishing_connections" && garden.publishing_connections !== undefined && garden.publishing_connections !== null){
+      for (let i = 0; i < garden.publishing_connections.length; i++){
+        if ("PUBLISHING" == garden.publishing_connections[i].status){
+          routable = true;
+        }
+      }
+    }
+    else if (connection_type == "receiving_connections" && garden.receiving_connections !== undefined && garden.receiving_connections !== null){
+      for (let i = 0; i < garden.receiving_connections.length; i++){
+        if ("RECEIVING" == garden.receiving_connections[i].status){
+          routable = true;
+        }
+      }
+    }
+
+    if (!routable){
+      return false;
+    }
+
+    if (garden.has_parent){
+      for (let i = 0; i < $scope.data.length; i++) {
+        if ($scope.data[i].name == garden.parent){
+          return $scope.isGardenRoutable($scope.data[i], connection_type)
+        }
+      }
+    } else {
+      return true;
+    }
+
+    return false;
+  };
+
   EventService.addCallback('admin_garden', (event) => {
     switch (event.name) {
       case 'GARDEN_REMOVED':
