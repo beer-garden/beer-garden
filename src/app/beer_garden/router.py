@@ -477,8 +477,10 @@ def determine_route_garden(target_garden_name):
             include_fields=[
                 "receiving_connections__api",
                 "receiving_connections__status",
+                "receiving_connections__config",
                 "publishing_connections__api",
                 "publishing_connections__status",
+                "publishing_connections__config",
                 "has_parent",
                 "parent",
             ],
