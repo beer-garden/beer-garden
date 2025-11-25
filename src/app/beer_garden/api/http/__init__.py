@@ -4,6 +4,7 @@ import logging
 import os
 import ssl
 import types
+import warnings
 from copy import deepcopy
 from typing import List, Optional, Tuple
 
@@ -339,6 +340,13 @@ def _setup_ssl_context() -> Tuple[Optional[ssl.SSLContext], Optional[ssl.SSLCont
 
 
 def _load_swagger(url_specs, title=None):
+
+    # Filter out warning because Request Schema self references with the excludes feature
+    # that generates a second schema with the same name.
+    warnings.filterwarnings(
+        "ignore", message=".*Multiple schemas resolved to the name Request.*"
+    )
+
     global api_spec
     api_spec = APISpec(
         title=title,
