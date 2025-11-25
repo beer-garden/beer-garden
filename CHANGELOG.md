@@ -1,6 +1,6 @@
 # Beer Garden Changelog
 
-- Fixed router loading Garden Model from database missing the config field (#) 
+- Fixed router loading Garden Model from database missing the config field (#1993) 
 
 # 3.30.0
 
