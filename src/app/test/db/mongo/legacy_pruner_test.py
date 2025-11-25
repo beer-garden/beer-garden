@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from mongoengine.connection import get_db
+from mongomock.gridfs import enable_gridfs_integration
 
 import beer_garden
 from beer_garden import config
@@ -26,7 +27,6 @@ from beer_garden.db.mongo.models import (
     Request,
     RequestTemplate,
 )
-from mongomock.gridfs import enable_gridfs_integration
 
 enable_gridfs_integration()
 
@@ -320,12 +320,12 @@ class TestMongoPruner(object):
         request.save()
 
         # Orphaned Gridfs files
-        assert db["fs.files"].count() == 2
-        assert db["fs.chunks"].count() == 2
+        assert db["fs.files"].count_documents({}) == 2
+        assert db["fs.chunks"].count_documents({}) == 2
 
         prune_grid_fs()
-        assert db["fs.files"].count() == 2
-        assert db["fs.chunks"].count() == 2
+        assert db["fs.files"].count_documents({}) == 2
+        assert db["fs.chunks"].count_documents({}) == 2
         db["request"].delete_many({})
         db["fs.files"].delete_many({})
         db["fs.chunks"].delete_many({})
@@ -371,12 +371,12 @@ class TestMongoPruner(object):
 
         db["request"].delete_one({})
         # Orphaned Gridfs files
-        assert db["fs.files"].count() == 2
-        assert db["fs.chunks"].count() == 2
+        assert db["fs.files"].count_documents({}) == 2
+        assert db["fs.chunks"].count_documents({}) == 2
 
         prune_grid_fs()
-        assert db["fs.files"].count() == 0
-        assert db["fs.chunks"].count() == 0
+        assert db["fs.files"].count_documents({}) == 0
+        assert db["fs.chunks"].count_documents({}) == 0
 
     def test_prune_raw_file_gridfs_files(self, monkeypatch):
         db = get_db()
@@ -409,12 +409,12 @@ class TestMongoPruner(object):
 
         db["raw_file"].delete_one({})
         # Orphaned Gridfs files
-        assert db["fs.files"].count() == 1
-        assert db["fs.chunks"].count() == 1
+        assert db["fs.files"].count_documents({}) == 1
+        assert db["fs.chunks"].count_documents({}) == 1
 
         prune_grid_fs()
-        assert db["fs.files"].count() == 0
-        assert db["fs.chunks"].count() == 0
+        assert db["fs.files"].count_documents({}) == 0
+        assert db["fs.chunks"].count_documents({}) == 0
 
 
 class TestMissedTempPruner(object):
