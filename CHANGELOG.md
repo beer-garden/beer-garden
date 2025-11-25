@@ -17,6 +17,9 @@ TBD
   to specify Mongodb login authority. Default is `admin` (#1984)
 - Updated Garden Admin page to add drop down to child gardens to rescan plugins, rescan children, and clear queues (#1971)
 - Marked Admin API deprecated. Moved rescan plugins functionality to Systems API. (#1971)
+- Updated UI to utilize only cookies for themes until models are updated to 
+  persist preferences in database (#1988)
+- Updated dark.css to fix `page-header` extra spacing (#1988)
 
 # 3.30.0
 
