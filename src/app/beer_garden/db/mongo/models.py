@@ -1583,6 +1583,7 @@ class User(MongoModel, Document):
     metadata = DictField()
     protected = BooleanField(required=True, default=False)
     file_generated = BooleanField(required=True, default=False)
+    preferences = DictField()
 
     meta = {
         "indexes": [{"name": "unique_index", "fields": ["username"], "unique": True}],

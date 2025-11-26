@@ -348,6 +348,7 @@ def update_user(
         )
 
     for key, value in kwargs.items():
+
         if key in ["roles", "local_roles", "remote_roles"]:
             # Roles changed, so cached tokens are no longer valid
             revoke_tokens(user=user)
@@ -358,6 +359,11 @@ def update_user(
         elif key == "local_roles":
             # If local roles are updated, clear roles
             user.roles = []
+        elif key == "preferences" and isinstance(value, dict):
+            # Merge existing preferences with new preferences
+            prefs = user.preferences or {}
+            prefs.update(value)
+            value = prefs
 
         setattr(user, key, value)
 

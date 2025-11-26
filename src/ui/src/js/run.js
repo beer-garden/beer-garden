@@ -107,17 +107,33 @@ export default function appRun(
   $rootScope.loadUser = function(token) {
     $rootScope.userPromise = UserService.loadUser(token).then(
         (response) => {
-        // Angular doesn't do a deep watch here, so make sure we calculate
-        // and set the permissions before setting $rootScope.user
+          // Angular doesn't do a deep watch here, so make sure we calculate
+          // and set the permissions before setting $rootScope.user
           const user = response.data;
 
-          // If user is logged in, change to their default theme selection
+          // If user is logged in, change to their default theme/home selection
           let theme;
+          let defaultHome = 'base.systems()';
+          let defaultHomePage = 'base.systems';
+          let defaultHomeParameters = {};
+
           if (user.id) {
             theme = _.get(user, 'preferences.theme', 'default');
+
+            if (_.get(user, 'preferences.home', null) !== null) {
+              defaultHome = _.get(user, 'preferences.home.default_home', 'base.systems()');
+              defaultHomePage = _.get(user, 'preferences.home.default_home_page', 'base.systems');
+              defaultHomeParameters = _.get(user, 'preferences.home.default_home_parameters', {});
+            }
+
           } else {
             theme = localStorageService.get('currentTheme') || 'default';
+            defaultHome = localStorageService.get('defaultHome', 'base.systems()');
+            defaultHomePage = localStorageService.get('defaultHomePage', 'base.systems');
+            defaultHomeParameters = localStorageService.get('defaultHomeParameters', {});
           }
+
+          $rootScope.setHome(defaultHome, defaultHomePage, defaultHomeParameters, false);
           $rootScope.changeTheme(theme, false);
 
           $rootScope.user = user;
@@ -258,13 +274,25 @@ export default function appRun(
       newHomePage = `${page}(${paramsString})`;
     }
 
-    localStorageService.set('defaultHome', newHomePage);
-    localStorageService.set('defaultHomePage', page);
-    localStorageService.set('defaultHomeParameters', homeParameters);
+    $rootScope.setHome(newHomePage, page, homeParameters, true);
 
-    $rootScope.config.defaultHome = newHomePage;
-    $rootScope.config.defaultHomePage = page;
-    $rootScope.config.defaultHomeParameters = homeParameters;
+  }
+
+  $rootScope.setHome = function(defaultHome, defaultHomePage, defaultHomeParameters, sendUpdate) {
+    localStorageService.set('defaultHome', defaultHome);
+    localStorageService.set('defaultHomePage', defaultHomePage);
+    localStorageService.set('defaultHomeParameters', defaultHomeParameters);
+
+    if ($rootScope.isUser($rootScope.user) && sendUpdate) {
+      UserService.setHome($rootScope.user.id, 
+        { 'defaultHome': defaultHome, 
+          'defaultHomePage': defaultHomePage, 
+          'defaultHomeParameters': defaultHomeParameters });
+    }
+
+    $rootScope.config.defaultHome = defaultHome;
+    $rootScope.config.defaultHomePage = defaultHomePage;
+    $rootScope.config.defaultHomeParameters = defaultHomeParameters;
 
     location.reload();
   }

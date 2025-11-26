@@ -153,6 +153,33 @@ class UserAPI(AuthorizationHandler):
                     ),
                     filter_results=False,
                 )
+            elif operation == "set":
+                if operation.path == "/preferences/home":
+                    response = await self.process_operation(
+                        Operation(
+                            operation_type="USER_UPDATE",
+                            kwargs={
+                                "username": username,
+                                "preferences": {
+                                    "home": op.value,
+                                },
+                            },
+                        ),
+                        filter_results=False,
+                    )
+                elif operation.path == "/preferences/theme":
+                    response = await self.process_operation(
+                        Operation(
+                            operation_type="USER_UPDATE",
+                            kwargs={
+                                "username": username,
+                                "preferences": {
+                                    "theme": op.value,
+                                },
+                            },
+                        ),
+                        filter_results=False,
+                    )
 
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")

@@ -77,6 +77,11 @@ export default function userService($http, GardenService, SystemService) {
         {operation: 'set', path: '/preferences/theme', value: theme},
       ]);
     },
+    setHome: (userId, home) => {
+      return service.updateUser(userId, [
+        {operation: 'set', path: '/preferences/home', value: home},
+      ]);
+    },
   });
 
   return service;
