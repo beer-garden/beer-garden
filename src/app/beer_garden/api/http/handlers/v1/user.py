@@ -154,7 +154,7 @@ class UserAPI(AuthorizationHandler):
                     filter_results=False,
                 )
             elif operation == "set":
-                if operation.path == "/preferences/home":
+                if op.path == "/preferences/home":
                     response = await self.process_operation(
                         Operation(
                             operation_type="USER_UPDATE",
@@ -167,7 +167,7 @@ class UserAPI(AuthorizationHandler):
                         ),
                         filter_results=False,
                     )
-                elif operation.path == "/preferences/theme":
+                elif op.path == "/preferences/theme":
                     response = await self.process_operation(
                         Operation(
                             operation_type="USER_UPDATE",

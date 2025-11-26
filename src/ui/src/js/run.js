@@ -249,7 +249,7 @@ export default function appRun(
     }
 
     if ($rootScope.isUser($rootScope.user) && sendUpdate) {
-      UserService.setTheme($rootScope.user.id, theme);
+      UserService.setTheme($rootScope.user.username, theme);
     }
   };
 
@@ -284,17 +284,21 @@ export default function appRun(
     localStorageService.set('defaultHomeParameters', defaultHomeParameters);
 
     if ($rootScope.isUser($rootScope.user) && sendUpdate) {
-      UserService.setHome($rootScope.user.id, 
+      UserService.setHome($rootScope.user.username, 
         { 'defaultHome': defaultHome, 
           'defaultHomePage': defaultHomePage, 
           'defaultHomeParameters': defaultHomeParameters });
     }
 
-    $rootScope.config.defaultHome = defaultHome;
-    $rootScope.config.defaultHomePage = defaultHomePage;
-    $rootScope.config.defaultHomeParameters = defaultHomeParameters;
+    if ($rootScope.config.defaultHome !== defaultHome ||
+        $rootScope.config.defaultHomePage !== defaultHomePage ||
+        !_.isEqual($rootScope.config.defaultHomeParameters, defaultHomeParameters)) {
+          $rootScope.config.defaultHome = defaultHome;
+          $rootScope.config.defaultHomePage = defaultHomePage;
+          $rootScope.config.defaultHomeParameters = defaultHomeParameters;
 
-    location.reload();
+          location.reload();
+        }
   }
 
   $rootScope.convertDictToJson = function(dictObject) {
