@@ -32,7 +32,10 @@ from stomp.exception import ConnectFailedException
 import beer_garden
 import beer_garden.commands
 import beer_garden.config as config
+import beer_garden.db
 import beer_garden.db.api as db
+import beer_garden.db.mongo
+import beer_garden.db.mongo.cleanup
 import beer_garden.files
 import beer_garden.garden
 import beer_garden.local_plugins.manager
@@ -186,6 +189,8 @@ route_functions = {
     "USER_SYNC": beer_garden.user.initiate_user_sync,
     "USER_UPSTREAM_SYNC": beer_garden.user.upstream_users_sync,
     "PUBLISH_EVENT": beer_garden.events.publish,
+    "CLEANUP_DB_COMPACT": beer_garden.db.mongo.cleanup.compact,
+    "CLEANUP_DB_REINDEX": beer_garden.db.mongo.cleanup.reindex,
 }
 
 # Filter for fields that should not be published outside of Beer Garden
@@ -982,6 +987,9 @@ def _target_from_type(operation: Operation) -> str:
     if "USER" in operation.operation_type:
         if operation.target_garden_name:
             return operation.target_garden_name
+        return config.get("garden.name")
+
+    if "CLEANUP" in operation.operation_type:
         return config.get("garden.name")
 
     raise Exception(f"Bad operation type {operation.operation_type}")

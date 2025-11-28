@@ -44,12 +44,21 @@ def compact(collection_names=None, execute=False):
     db = get_db()
     results = {}
     collection_names = validate_collection_names(collection_names)
+    db_version = db.command({"buildInfo": 1})["version"]
+    db_version_major = int(db_version.split(".")[0])
     for collection_name in collection_names:
         results[collection_name] = {}
         logger.info(f"Before {collection_name} compact: {get_stats(collection_name)}")
         results[collection_name]["before"] = get_stats(collection_name)
+        if db_version_major >= 8:
+            results[collection_name]["compact"] = db.command(
+                {"compact": collection_name, "dryRun": not execute}
+            )
+        elif execute:
+            results[collection_name]["compact"] = db.command(
+                {"compact": collection_name}
+            )
         if execute:
-            db.command({"compact": collection_name})
             logger.info(
                 f"After {collection_name} compact: {get_stats(collection_name)}"
             )
@@ -61,6 +70,7 @@ def compact(collection_names=None, execute=False):
 def reindex(collection_names=None, execute=False):
     """
     Run mongodb reIndex operation
+    reIndex deprecated since mongo 6.0
     """
     db = get_db()
     results = {}
