@@ -65,25 +65,3 @@ def compact(collection_names=None, execute=False):
             results[collection_name]["after"] = get_stats(collection_name)
 
     return results
-
-
-def reindex(collection_names=None, execute=False):
-    """
-    Run mongodb reIndex operation
-    reIndex deprecated since mongo 6.0
-    """
-    db = get_db()
-    results = {}
-    collection_names = validate_collection_names(collection_names)
-    for collection_name in collection_names:
-        results[collection_name] = {}
-        logger.info(f"Before {collection_name} reIndex: {get_stats(collection_name)}")
-        results[collection_name]["before"] = get_stats(collection_name)
-        if execute:
-            db.command({"reIndex": collection_name})
-            logger.info(
-                f"After {collection_name} reIndex: {get_stats(collection_name)}"
-            )
-            results[collection_name]["after"] = get_stats(collection_name)
-
-    return results

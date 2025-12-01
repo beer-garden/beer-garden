@@ -190,7 +190,6 @@ route_functions = {
     "USER_UPSTREAM_SYNC": beer_garden.user.upstream_users_sync,
     "PUBLISH_EVENT": beer_garden.events.publish,
     "CLEANUP_DB_COMPACT": beer_garden.db.mongo.cleanup.compact,
-    "CLEANUP_DB_REINDEX": beer_garden.db.mongo.cleanup.reindex,
 }
 
 # Filter for fields that should not be published outside of Beer Garden

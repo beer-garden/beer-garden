@@ -120,7 +120,6 @@ def _get_published_url_specs(
             beer_garden.api.http.handlers.vbeta.chunk.ChunkNameAPI,
         ),
         (rf"{prefix}api/vbeta/cleanup/memory?", vbeta.cleanup.DBCleanupMemoryAPI),
-        (rf"{prefix}api/vbeta/cleanup/indexes?", vbeta.cleanup.DBCleanupIndexesAPI),
         (rf"{prefix}api/vbeta/file/?", vbeta.file.RawFileListAPI),
         (rf"{prefix}api/vbeta/file/(\w+)/?", vbeta.file.RawFileAPI),
         # V2
