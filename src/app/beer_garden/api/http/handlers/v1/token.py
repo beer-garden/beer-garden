@@ -24,21 +24,22 @@ class TokenAPI(BaseHandler):
                      and password, which grants an access token to be used on
                      for authentication against all other protected endpoints, as well
                      as a refresh token for renewing the access token.
-        parameters:
-          - name: credentials
-            in: body
-            required: false
-            description: The login credentials of the User
-            type: string
-            schema:
-              $ref: '#/definitions/TokenInput'
+        requestBody:
+          name: credentials
+          description: The login credentials of the User
+          content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/TokenInput'
         responses:
           200:
             description: On successful authentication, a token to be used on subsequent
                          requests as well as a refresh token for renewing the access
                          token.
-            schema:
-              $ref: '#/definitions/TokenResponse'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/TokenResponse'
           400:
             description: Authentication failed.
         tags:
@@ -72,9 +73,19 @@ class TokenListAPI(AuthorizationHandler):
           204:
             description: User Token has been successfully deleted
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Token
         """
@@ -100,23 +111,25 @@ class TokenRefreshAPI(BaseHandler):
         summary: Token refresh endpoint
         description: This endpoint is used to do retrieve a new access token and refresh
                      token pair using an existing refresh token.
-        parameters:
-          - name: refresh
-            in: body
-            required: true
-            description: A valid refresh token, previously retrieved via either the
-                         /token /token/refresh endpoints.
-            type: string
-            schema:
-              $ref: '#/definitions/TokenRefreshInput'
+        requestBody:
+          name: refresh
+          description: |
+            A valid refresh token, previously retrieved via either the
+            /token /token/refresh endpoints.
+          content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/TokenRefreshInput'
         responses:
           200:
             description: An access and refresh token pair. The issued pair will replace
                          the pair with the supplied refresh token's identifier in the
                          user's list of valid tokens. The expiration time of the new
                          refresh token will be the same as that of the supplied token.
-            schema:
-              $ref: '#/definitions/TokenResponse'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/TokenResponse'
           400:
             description: The provided refresh token is invalid, possibly because it has
               expired or been revoked.
@@ -142,14 +155,13 @@ class TokenRevokeAPI(BaseHandler):
         description: This endpoint is used to revoke an issued refresh token and any
           access tokens issued along with it. For added safety, this should be called
           when a user intends to log out and end their session.
-        parameters:
-          - name: refresh
-            in: body
-            required: true
-            description: The refresh token to revoke
-            type: string
-            schema:
-              $ref: '#/definitions/TokenRefreshInput'
+        requestBody:
+          name: refresh
+          description: The refresh token to revoke.
+          content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/TokenRefreshInput'
         responses:
           204:
             description: Token successfully revoked

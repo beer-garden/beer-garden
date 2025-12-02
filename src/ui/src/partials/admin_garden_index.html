@@ -102,8 +102,22 @@
             ng-if="isChild(garden)" title="Start Garden {{garden.name}}"></button>
           <button type="button" class="btn btn-default fa fa-stop" ng-click="stopGarden(garden)"
             ng-if="isChild(garden)" title="Stop Garden {{garden.name}}"></button>
-          <button type="button" class="btn btn-default fa fa-refresh" ng-click="syncGarden(garden)"
-            title="Sync Garden {{garden.name}}"></button>
+          <button type="button" class="btn btn-default fa fa-bars dropdown-toggle" data-toggle="dropdown"
+            title="Garden Menu"></button>
+          <ul class="dropdown-menu">
+            <li>
+              <a href="" ng-click="syncGarden(garden)" title="Sync Garden {{garden.name}}">Sync Garden</a>
+            </li>
+            <li>
+              <a href="" ng-click="rescanGardenPlugins(garden)" title="Rescan Plugins Directory {{garden.name}}">Rescan Plugins</a>
+            </li>
+            <li>
+              <a href="" ng-click="rescanGarden(garden)" title="Rescan Children Directory {{garden.name}}">Rescan Children</a>
+            </li>
+            <li>
+              <a href="" ng-click="clearQueues(garden)" title="Clear All Queues {{garden.name}}">Clear All Queues</a>
+            </li>
+          </ul>
         </div>
         <div class="btn-group btn-group-sm pull-right" ng-if="hasGardenPermission('GARDEN_ADMIN', garden)">
           <button type="button" class="btn btn-default fa fa-users-gear" ng-if="authEnabled()" ng-click="syncUsersGarden(garden)"

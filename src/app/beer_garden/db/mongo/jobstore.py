@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+from datetime import datetime, timezone
 
 from apscheduler.job import Job as APJob
 from apscheduler.jobstores.base import BaseJobStore
@@ -8,7 +9,6 @@ from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
 from brewtils.models import Job
-from pytz import utc
 
 from beer_garden.db.mongo.api import delete, query, query_unique, update
 from beer_garden.db.mongo.models import Job as MongoJob
@@ -41,6 +41,12 @@ class FileTrigger(BaseTrigger):
         return super().get_next_fire_time(previous_fire_time, now)
 
 
+def localize_datetime(dt: datetime) -> datetime:
+    if dt.tzinfo is not None:
+        return dt
+    return dt.replace(tzinfo=timezone.utc)
+
+
 def construct_trigger(trigger_type: str, bg_trigger) -> BaseTrigger:
     """Convert a Beergarden trigger to an APScheduler one."""
     if trigger_type == "date":
@@ -61,7 +67,7 @@ def construct_job(job: Job, scheduler, alias="beer_garden"):
         return None
 
     trigger = construct_trigger(job.trigger_type, job.trigger)
-    next_run_time = utc.localize(job.next_run_time) if job.next_run_time else None
+    next_run_time = localize_datetime(job.next_run_time) if job.next_run_time else None
 
     ap_job = APJob.__new__(APJob)
     ap_job._scheduler = scheduler
@@ -110,7 +116,7 @@ class MongoJobStore(BaseJobStore):
             order_by="next_run_time",
         )
 
-        return None if not jobs else utc.localize(jobs[0].next_run_time)
+        return None if not jobs else localize_datetime(jobs[0].next_run_time)
 
     def get_all_jobs(self):
         """Get all jobs in apscheduler speak."""

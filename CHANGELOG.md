@@ -1,5 +1,26 @@
 # Beer Garden Changelog
 
+# 3.31.0rc1
+
+TBD
+
+## Major dependency upgrades and dropping 3.6, 3.7, 3.8, 3.9, 3.10 Python Support
+
+- Upgraded all dependencies to latest versions (#1792)
+- Fixed migration script for collection contains field (#1981)
+- Cancel Requests only handle locally executed Requests (#1967)
+- Removed Plugin Logs line range query (#1983)
+- Updated Plugin Logs tail to only return the last N lines then tail, instead of loading entire log file (#1983)
+- Updated Plugin Logs to support scroll bar for long log files (#1983)
+- Fixed Username/Password login for Mongodb (#1984)
+- Added configuration `db.connection.authentication_source` and ENV `DB_AUTHENTICATION_SOURCE` 
+  to specify Mongodb login authority. Default is `admin` (#1984)
+- Updated Garden Admin page to add drop down to child gardens to rescan plugins, rescan children, and clear queues (#1971)
+- Marked Admin API deprecated. Moved rescan plugins functionality to Systems API. (#1971)
+- Updated UI to utilize only cookies for themes until models are updated to 
+  persist preferences in database (#1988)
+- Updated dark.css to fix `page-header` extra spacing (#1988)
+- Removed any references to Six from python2 legacy support (#1996)
 - Updated Garden Admin page to have visual indication that a routing error has occurred upstream from Garden (#1989)
 - Added interval push for Garden Syncs for unresponsive Gardens (#1989)
 

@@ -12,9 +12,7 @@ import beer_garden.garden
 import beer_garden.router
 from beer_garden.db.mongo.models import Garden, Request, System
 from beer_garden.errors import UnknownGardenException
-from beer_garden.garden import (
-    create_garden,
-)
+from beer_garden.garden import create_garden
 from beer_garden.router import _determine_target
 from beer_garden.systems import create_system
 

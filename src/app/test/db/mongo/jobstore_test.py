@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import copy
+from datetime import timezone
 
 import pytest
 from apscheduler.job import Job as APJob
@@ -7,9 +8,8 @@ from apscheduler.schedulers.base import BaseScheduler as APBaseScheduler
 from apscheduler.triggers.date import DateTrigger as APDateTrigger
 from brewtils.test.comparable import assert_request_template_equal
 from mock import Mock, patch
-from pytz import utc
 
-from beer_garden.db.mongo.jobstore import construct_job
+from beer_garden.db.mongo.jobstore import construct_job, localize_datetime
 from beer_garden.db.mongo.models import DateTrigger as MongoDateTrigger
 from beer_garden.db.mongo.models import Job, RequestTemplate
 
@@ -18,7 +18,7 @@ from beer_garden.db.mongo.models import Job, RequestTemplate
 def ap_job(mongo_job, mongo_request_template):
     job_kwargs = {
         "func": Mock(),
-        "scheduler": Mock(APBaseScheduler, timezone=utc),
+        "scheduler": Mock(APBaseScheduler, timezone=timezone.utc),
         "trigger": APDateTrigger(),
         "executor": "default",
         "args": (),
@@ -74,7 +74,7 @@ class TestConstructJob(object):
         assert state["misfire_grace_time"] == bg_job.misfire_grace_time
         assert state["coalesce"] == bg_job.coalesce
         assert state["max_instances"] == 3
-        assert state["next_run_time"] == utc.localize(bg_job.next_run_time)
+        assert state["next_run_time"] == localize_datetime(bg_job.next_run_time)
         assert state["kwargs"]["job_id"] == bg_job.id
         assert isinstance(state["trigger"], APDateTrigger)
         assert_request_template_equal(
@@ -100,7 +100,7 @@ class TestJobStore(object):
         assert len(jobstore.get_all_jobs()) == 1
 
     def test_get_due_jobs(self, jobstore, ts_dt, mongo_job):
-        now = utc.localize(ts_dt)
+        now = localize_datetime(ts_dt)
         assert jobstore.get_due_jobs(now) == []
 
         mongo_job.save()
@@ -126,4 +126,6 @@ class TestJobStore(object):
         assert jobstore.get_next_run_time() is None
 
         mongo_job.save()
-        assert jobstore.get_next_run_time() == utc.localize(mongo_job.next_run_time)
+        assert jobstore.get_next_run_time() == localize_datetime(
+            mongo_job.next_run_time
+        )
