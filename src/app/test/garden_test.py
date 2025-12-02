@@ -9,6 +9,7 @@ from brewtils.models import Connection as BrewtilsConnection
 from brewtils.models import Event, Events
 from brewtils.models import Garden as BrewtilsGarden
 from brewtils.models import System as BrewtilsSystem
+from mock import Mock
 from mongoengine import DoesNotExist, connect
 
 import beer_garden
@@ -557,6 +558,20 @@ stomp:
         # Changed
         assert updated_garden.metadata == {"alt": "alt"}
         assert updated_garden.version == "2.0.0"
+
+    def test_garden_unresponsive_trigger_send_sync(self, monkeypatch, bg_garden):
+        bg_garden.systems = []
+        for connection in bg_garden.receiving_connections:
+            connection.status = "UNRESPONSIVE"
+        bg_garden.metadata = {"_unresponsive_timeout": 15}
+
+        create_garden(bg_garden)
+
+        sync_mock = Mock()
+        monkeypatch.setattr(beer_garden.garden, "garden_sync", sync_mock)
+        garden_unresponsive_trigger()
+
+        assert sync_mock.assert_called_once
 
     def test_garden_unresponsive_trigger(self, bg_garden):
         bg_garden.systems = []

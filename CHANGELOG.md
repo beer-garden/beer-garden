@@ -22,6 +22,8 @@ TBD
 - Updated dark.css to fix `page-header` extra spacing (#1988)
 - Migrated Plugin Status Topic publisher from Garden Name to `plugin.lifecycle` (#1997)
 - Removed any references to Six from python2 legacy support (#1996)
+- Updated Garden Admin page to have visual indication that a routing error has occurred upstream from Garden (#1989)
+- Added interval push for Garden Syncs for unresponsive Gardens (#1989)
 
 # 3.30.0
 

@@ -959,6 +959,9 @@ def garden_unresponsive_trigger():
                             f"{garden.name} Timed out {interval_value} minutes"
                         )
                         update_connection = True
+                elif connection.status == "UNRESPONSIVE":
+                    logger.info(f"{garden.name} still unresponsive, pushing sync")
+                    garden_sync(garden.name)
 
             if update_connection:
                 update_garden(garden)
