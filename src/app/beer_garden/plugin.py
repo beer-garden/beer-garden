@@ -294,7 +294,7 @@ def publish_status_update(system: System, instance: Instance):
         Event(
             name=Events.REQUEST_TOPIC_PUBLISH.name,
             metadata={
-                "topic": config.get("garden.name"),
+                "topic": "plugin.lifecycle",
                 "propagate": True,
             },
             payload=Request(

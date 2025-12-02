@@ -20,6 +20,7 @@ TBD
 - Updated UI to utilize only cookies for themes until models are updated to 
   persist preferences in database (#1988)
 - Updated dark.css to fix `page-header` extra spacing (#1988)
+- Migrated Plugin Status Topic publisher from Garden Name to `plugin.lifecycle` (#1997)
 - Removed any references to Six from python2 legacy support (#1996)
 
 # 3.30.0
