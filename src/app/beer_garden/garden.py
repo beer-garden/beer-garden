@@ -941,7 +941,12 @@ def publish_local_garden_to_api():
 
 def garden_unresponsive_trigger():
     for garden in get_gardens(include_local=False):
-        interval_value = garden.metadata.get("_unresponsive_timeout", -1)
+        if garden.version is None or garden.version == "UNKNOWN" or garden.version == "0.0.0":
+            default_value = 60
+        else:
+            default_value = -1
+        
+        interval_value = garden.metadata.get("_unresponsive_timeout", default_value)
 
         if interval_value > 0:
             timeout = datetime.utcnow() - timedelta(minutes=interval_value)

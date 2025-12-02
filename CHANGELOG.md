@@ -1,5 +1,7 @@
 # Beer Garden Changelog
 
+- Updated downstream unresponsive timeout for legacy Gardens to 60 minutes. 
+
 # 3.30.1
 
 11/25/2025
