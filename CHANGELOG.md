@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+# TBD
+
+TBD
+
+- Added DB Cleanup API with support for MongoDB compact method.
+
+
 # 3.30.0
 
 9/23/2025
