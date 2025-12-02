@@ -15,6 +15,8 @@ TBD
 - Removed any references to Six from python2 legacy support (#1996)
 - Updated Garden Admin page to have visual indication that a routing error has occurred upstream from Garden (#1989)
 - Added interval push for Garden Syncs for unresponsive Gardens (#1989)
+- Fixed UI bug where Garden Update events would omit downstream Garden from UI. UI now will preserve the previous downstream Gardens until
+  a delete event is provided. (#1986)
 
 # 3.31.0rc1
 
