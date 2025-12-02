@@ -4,7 +4,6 @@ from inspect import isawaitable
 from typing import Any, Optional
 
 import elasticapm
-import six
 from brewtils.models import BaseModel, Operation, User
 from brewtils.schema_parser import SchemaParser
 
@@ -83,9 +82,7 @@ class SerializeHelper(object):
                 serialize_kwargs["to_string"] = True
 
             # Don't serialize if that's not desired
-            if serialize_kwargs.get("return_raw") or isinstance(
-                result, six.string_types
-            ):
+            if serialize_kwargs.get("return_raw") or isinstance(result, str):
                 return result
 
             if self.json_dump(result):

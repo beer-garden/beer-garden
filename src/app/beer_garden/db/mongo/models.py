@@ -4,8 +4,6 @@ import json
 import logging
 import sys
 
-import six
-
 try:
     from lark import ParseError
     from lark.exceptions import LarkError
@@ -157,14 +155,12 @@ class Choices(MongoModel, EmbeddedDocument):
                 f"Can not save choices '{self}': type is 'static' but the value is "
                 "not a list or dictionary"
             )
-        elif self.type == "url" and not isinstance(self.value, six.string_types):
+        elif self.type == "url" and not isinstance(self.value, str):
             raise ModelValidationError(
                 f"Can not save choices '{self}': type is 'url' but the value is "
                 "not a string"
             )
-        elif self.type == "command" and not isinstance(
-            self.value, (six.string_types, dict)
-        ):
+        elif self.type == "command" and not isinstance(self.value, (str, dict)):
             raise ModelValidationError(
                 f"Can not save choices '{self}': type is 'command' but the value is "
                 "not a string or dict"
@@ -181,7 +177,7 @@ class Choices(MongoModel, EmbeddedDocument):
 
         try:
             if self.details == {}:
-                if isinstance(self.value, six.string_types):
+                if isinstance(self.value, str):
                     self.details = parse(self.value)
                 elif isinstance(self.value, dict):
                     self.details = parse(self.value["command"])
