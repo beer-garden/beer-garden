@@ -376,8 +376,10 @@ def invalid_source_check(operation: Operation):
                 "name",
                 "receiving_connections__api",
                 "receiving_connections__status",
+                "receiving_connections__config",
                 "publishing_connections__api",
                 "publishing_connections__status",
+                "publishing_connections__config",
             ],
         )
         logger.warning(

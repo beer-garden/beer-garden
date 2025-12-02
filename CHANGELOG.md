@@ -7,6 +7,12 @@ TBD
 - Added DB Cleanup API with support for MongoDB compact method.
 
 
+# 3.30.1
+
+11/25/2025
+
+- Fixed router loading Garden Model from database missing the config field (#1993) 
+
 # 3.30.0
 
 9/23/2025
