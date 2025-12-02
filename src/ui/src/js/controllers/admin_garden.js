@@ -436,6 +436,10 @@ export default function adminGardenController(
   };
 
   $scope.isGardenRoutable = function(garden, connection_type){
+    if (garden.name == $rootScope.config.gardenName){
+      return true;
+    }
+    
     let routable = false;
 
     if (connection_type == "publishing_connections" && garden.publishing_connections !== undefined && garden.publishing_connections !== null){
