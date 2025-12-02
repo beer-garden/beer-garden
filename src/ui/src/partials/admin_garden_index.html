@@ -44,7 +44,7 @@
             </div>
           </div>
           <div class="list-group-item clearfix" ng-repeat="connection in garden.receiving_connections | orderBy: 'api'">
-            <bg-status target="connection.status"></bg-status>
+            <bg-status target="getGardenRoutingStatus(garden, 'receiving_connections', connection.api)"></bg-status>
             <span style="padding: 0 10px" title="{{getConnectionUrl(connection, true)}}">{{connection.api}}</span>
             <span class="btn-toolbar pull-right" ng-if="!garden.has_parent && hasGardenPermission('GARDEN_ADMIN', garden)">
               <span class="btn-group btn-group-xs">
@@ -126,7 +126,7 @@
           </span>
         </div>
         <div class="list-group-item clearfix" ng-repeat="connection in garden.receiving_connections | orderBy: 'api'" ng-if="connection.status != 'NOT_CONFIGURED'">
-          <bg-status target="connection.status"></bg-status>
+          <bg-status target="getGardenRoutingStatus(garden, 'receiving_connections', connection.api)"></bg-status>
           <span style="padding: 0 10px" title="{{getConnectionUrl(connection, true)}}">{{connection.api}}</span>
           <span class="btn-toolbar pull-right" ng-if="isChild(garden) && hasGardenPermission('GARDEN_ADMIN', garden)">
             <span class="btn-group btn-group-xs">
@@ -151,7 +151,7 @@
           </span>
         </div>
         <div class="list-group-item clearfix" ng-repeat="connection in garden.publishing_connections | orderBy: 'api'" ng-if="connection.status != 'NOT_CONFIGURED'">
-          <bg-status target="connection.status"></bg-status>
+          <bg-status target="getGardenRoutingStatus(garden, 'publishing_connections', connection.api)"></bg-status>
           <span style="padding: 0 10px" title="{{getConnectionUrl(connection, false)}}">{{connection.api}}</span>
           <span class="btn-toolbar pull-right" ng-if="isChild(garden) && hasGardenPermission('GARDEN_ADMIN', garden)">
             <span class="btn-group btn-group-xs">

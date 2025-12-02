@@ -454,6 +454,45 @@ export default function adminGardenController(
     return false;
   };
 
+  $scope.getGardenRoutingStatus = function (garden, connection_type, connection_api) {
+    let actualStatus = "UNKNOWN";
+    for (let i = 0; i < garden[connection_type].length; i++) {
+      if (garden[connection_type][i].api == connection_api) {
+        actualStatus = garden[connection_type][i].status;
+      }
+    }
+
+    if ($scope.isGardenRoutable(garden, connection_type)) {
+      return actualStatus;
+    } else {
+      let unroutableGarden = $scope.getUnRoutableGarden(garden, connection_type);
+      if (unroutableGarden == garden.name) {
+        return actualStatus;
+      }
+
+      for (let i = 0; i < $scope.data.length; i++) {
+        if ($scope.data[i].name == unroutableGarden) {
+          let invalidStatus = null;
+          for (let j = 0; j < $scope.data[i][connection_type].length; j++) {
+            if ($scope.data[i][connection_type][j].api == connection_api) {
+              if (invalidStatus == null) {
+                invalidStatus = $scope.data[i][connection_type][j].status;
+              } else if ($scope.data[i][connection_type][j].status != "DISABLED") {
+                invalidStatus = $scope.data[i][connection_type][j].status;
+              }
+            }
+          }
+
+          if (invalidStatus != null && invalidStatus == "DISABLED") {
+            return "DISABLED";
+          }
+        }
+      }
+    }
+    
+    return "UNKNOWN";
+  }
+
   EventService.addCallback('admin_garden', (event) => {
     switch (event.name) {
       case 'GARDEN_REMOVED':
