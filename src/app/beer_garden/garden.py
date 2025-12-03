@@ -28,6 +28,7 @@ from brewtils.models import (
     System,
 )
 from mongoengine import DoesNotExist
+from packaging.version import InvalidVersion, parse
 from yapconf.exceptions import (
     YapconfItemNotFound,
     YapconfLoadError,
@@ -941,11 +942,18 @@ def publish_local_garden_to_api():
 
 def garden_unresponsive_trigger():
     for garden in get_gardens(include_local=False):
-        if garden.version is None or garden.version == "UNKNOWN" or garden.version == "0.0.0":
+        try:
+            if (
+                garden.version is None
+                or garden.version == "UNKNOWN"
+                or parse(garden.version) < parse("3.25.1")
+            ):
+                default_value = 60
+            else:
+                default_value = -1
+        except InvalidVersion:
             default_value = 60
-        else:
-            default_value = -1
-        
+
         interval_value = garden.metadata.get("_unresponsive_timeout", default_value)
 
         if interval_value > 0:
