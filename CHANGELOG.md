@@ -1,5 +1,7 @@
 # Beer Garden Changelog
 
+- Fixed UI bug where icons on Admin page did not display while utilizing the Dark theme
+
 # 3.30.1
 
 11/25/2025
