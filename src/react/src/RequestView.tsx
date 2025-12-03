@@ -17,6 +17,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 // import RequestTimeline from "./RequestTimeline"
 // import ApexTimeline from "./ApexTimeline";
 import RequestHistory from "./RequestHistory";
+import RequestGanttHistory from "./RequestGanttHistory";
 
 function ExampleRequest() {
     const request: Request = {
@@ -232,8 +233,9 @@ function RequestView() {
                     <Accordion.Header>Request History</Accordion.Header>
                     <Accordion.Body>
                         {/* <RequestTimeline {...request} /> */}
-                         <RequestHistory {...request} /> 
+                         {/* <RequestHistory {...request} />  */}
                         {/* <ApexTimeline {...request} />*/}
+                        <RequestGanttHistory {...request} />
                     </Accordion.Body>
                 </Accordion.Item>
             </Accordion>

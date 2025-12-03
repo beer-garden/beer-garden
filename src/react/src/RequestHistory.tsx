@@ -51,10 +51,10 @@ function RequestHistory(request: Request) {
 
 
     return {
-      HeaderCell: props => {
+      HeaderCell: (props: any) => {
         return <HeaderCell {...props} >{(index % 2 == 0) ? displayDate : ''}</HeaderCell>;
       },
-      Cell: ({ rowData, depth, ...rest }) => {
+      Cell: ({ rowData, depth, ...rest }: { rowData: any; depth: number; [key: string]: any }) => {
         const colors = ['#c8f0c7', '#4cb04f', '#0f9119'];
         const startDate = rowData.created_at;
         const endDate = rowData.status_updated_at;
@@ -112,7 +112,7 @@ function RequestHistory(request: Request) {
         return (
           <Column key={index} width={40} align="center" verticalAlign="middle" >
             <column.HeaderCell />
-            <column.Cell />
+            <column.Cell rowData={data[index]} depth={0} />
           </Column>
         );
       })}

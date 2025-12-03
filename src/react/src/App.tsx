@@ -6,6 +6,7 @@ import SystemIndex from './SystemIndex';
 import SystemIndexGroups from './SystemIndexGroups';
 import RequestView from './RequestView';
 // import RequestGantt from './RequestGantt';
+import RequestTimeline from './RequestTimeline';
 
 function App() {
   return (
@@ -21,7 +22,7 @@ function App() {
           <RequestView />
         </Route>
         {/* <Route path="/gantt">
-          <RequestGantt />
+          <RequestTimeline />
         </Route> */}
         <Route path="/page2">
           <Page2 />
