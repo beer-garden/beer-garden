@@ -54,18 +54,14 @@ db:
     port: 27017
     username: null
   name: beer_garden
-  prune_interval: 15
-  ttl:
-    action: -1
-    file: 15
-    in_progress: 15
-    info: 15   
-    temp: 15
-    admin: 15
-    
-    orphan: -1
-
+  prune:
     batch_size: -1
+    interval: 15
+    in_progress_request_expiration: 180
+    ttl:
+      action: -1
+      file: 15
+      info: 15
 entry:
   http:
     enabled: true
@@ -113,7 +109,7 @@ events_handler:
     unique_data: false
 garden:
   name: default
-  status_history: 50
+  status_history: 5
 log:
   config_file: example_configs/app-logging.yaml
   fallback_file: null
@@ -213,7 +209,7 @@ plugin:
       fallback_level: INFO
   status_heartbeat: 5
   status_timeout: 30
-  status_history: 50
+  status_history: 5
 replication:
   enabled: false
 request_validation:
@@ -236,3 +232,4 @@ ui:
   icon_default: fa-beer
   name: Beer Garden
   auto_refresh: false
+  search_delay: 400

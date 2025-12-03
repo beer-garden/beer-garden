@@ -193,7 +193,6 @@ def handle_event(event: Event) -> None:
 
     Args:
         event: The Event to process
-
     Returns:
         None
     """

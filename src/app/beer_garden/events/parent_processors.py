@@ -2,6 +2,7 @@ from brewtils.models import Event, Events, Operation
 from requests import RequestException
 
 import beer_garden.config as conf
+from beer_garden.api import accepted_forwarding_events
 from beer_garden.events.processors import QueueListener
 from beer_garden.garden import local_garden, update_garden
 
@@ -21,6 +22,7 @@ class HttpParentUpdater(QueueListener):
         self._ez_client = easy_client
         self._reconnect_action = reconnect_action
         self._connected = True
+        self._handler_tag = "HTTP Parent Updater"
 
         super().__init__(
             logger_name=self.__module__ + "." + self.__class__.__name__, **kwargs
@@ -35,11 +37,16 @@ class HttpParentUpdater(QueueListener):
             event: The event to publish
         """
         if self._connected:
-            self._queue.put(event)
+            if event.name in accepted_forwarding_events:
+                self._queue.put(event)
 
     def process(self, event: Event):
 
         if event.error or (event.garden and event.garden != conf.get("garden.name")):
+            return
+
+        if "REQUEST" in event.name and event.payload.command_type == "TEMP":
+            # If this is a temporary request, we don't want to publish it
             return
 
         # TODO - This shouldn't be set here

@@ -10,6 +10,7 @@ import wrapt
 from brewtils.models import Event, Events
 
 from beer_garden import config as config
+from beer_garden.api import accepted_forwarding_events
 from beer_garden.metrics import CollectMetrics, extract_custom_context
 
 # In this master process this should be an instance of EventManager, and in entry points
@@ -31,7 +32,10 @@ def publish(event: Event) -> None:
     Returns:
         None
     """
-    with CollectMetrics("Publish_Event", f"PUBLISHER::{event.name}::publish()"):
+
+    with CollectMetrics(
+        "Publish_Event", f"PUBLISHER::{event.garden}::{event.name}::publish()"
+    ):
         try:
             # Do some formatting / tweaking
             if not event.garden:
@@ -40,10 +44,18 @@ def publish(event: Event) -> None:
                 event.timestamp = datetime.now(timezone.utc)
 
             if config.get("metrics.elastic.enabled"):
-                extract_custom_context(event.payload)
-                trace_parent_string = elasticapm.get_trace_parent_header()
-                if trace_parent_string:
-                    event.metadata["_trace_parent"] = trace_parent_string
+                extract_custom_context(event)
+                if hasattr(event, "metadata") and "_trace_parent" not in event.metadata:
+                    trace_parent_string = elasticapm.get_trace_parent_header()
+                    if trace_parent_string:
+                        event.metadata["_trace_parent"] = trace_parent_string
+
+            if (
+                event.garden
+                and event.garden != config.get("garden.name")
+                and event.name not in accepted_forwarding_events
+            ):
+                return
 
             return manager.put(event)
         except Exception as ex:
@@ -83,6 +95,7 @@ def publish_event(event_type: Events):
             event = Event(name=event_type.name)
 
             try:
+
                 result = wrapped(*args, **kwargs)
 
                 event.payload_type = result.__class__.__name__
@@ -95,6 +108,7 @@ def publish_event(event_type: Events):
 
                 return result
             except Exception as ex:
+
                 event.error = True
 
                 # Generate Traceback information

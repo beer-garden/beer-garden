@@ -282,8 +282,10 @@ class PluginManager(StoppableThread):
             )
 
             the_runner = self._from_runner_id(runner_id)
-            the_runner.associate(instance=instance)
-            the_runner.restart = True
+
+            if the_runner is not None:
+                the_runner.associate(instance=instance)
+                the_runner.restart = True
 
     def handle_stopped(self, event: Event) -> None:
         """Called whenever an INSTANCE_STOPPED occurs.

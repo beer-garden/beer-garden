@@ -18,7 +18,7 @@ from apscheduler.triggers.interval import IntervalTrigger as APInterval
 from brewtils.errors import ModelValidationError
 from brewtils.models import DateTrigger, Event, Events, Job, Operation, Request
 from brewtils.schema_parser import SchemaParser
-from mongoengine import ValidationError
+from mongoengine import DoesNotExist, ValidationError
 from pytz import utc
 
 import beer_garden
@@ -165,8 +165,22 @@ class MixedScheduler(object):
     running = False
 
     def max_concurrence_listener(scheduler, event):
-        db_job = db.query_unique(Job, id=event.job_id)
-        db.modify(db_job, inc__skip_count=1)
+
+        if event.jobstore == "beer_garden":
+            try:
+                db_job = db.query_unique(Job, id=event.job_id)
+                db.modify(db_job, inc__skip_count=1)
+            except DoesNotExist:
+                job, _ = scheduler._sync_scheduler._lookup_job(
+                    jobstore_alias=event.jobstore, job_id=event.job_id
+                )
+                if job:
+                    logger.error(
+                        (
+                            f"Job {job.name} in {event.jobstore} has reached its max "
+                            "instances. Skipping this job but not in mongo database."
+                        )
+                    )
 
     def start(self):
         """Starts the scheduler"""
@@ -195,6 +209,8 @@ class MixedScheduler(object):
         file_jobs = get_jobs(filter_params={"trigger_type": "file"})
         for job in file_jobs:
             observer_threads[job.id] = Monitor(job.id, job.trigger)
+
+        logger.info("Scheduler started")
 
     def resume(self):
         """Resume the scheduler"""
@@ -372,63 +388,42 @@ class MixedScheduler(object):
         )
 
     def internal_scheduled_jobs(self):
+
         # Add scheduled jobs for Mongo Pruner
-        prune_interval = config.get("db.prune_interval")
-        if prune_interval > 0:
-            ttl_config = config.get("db.ttl")
-            if ttl_config.get("info") > 0:
-                self.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_info_requests,
-                    interval=prune_interval,
-                    max_running_jobs=1,
-                )
 
-            if ttl_config.get("action") > 0:
-                self.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_action_requests,
-                    interval=prune_interval,
-                    max_running_jobs=1,
-                )
+        prune_interval = config.get("db.prune.interval", default=15)
 
-            if ttl_config.get("admin") > 0:
-                self.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_admin_requests,
-                    interval=prune_interval,
-                    max_running_jobs=1,
-                )
+        if prune_interval > -1:
 
-            if ttl_config.get("temp") > 0:
+            if config.get("db.prune.in_progress_request_expiration") > 0:
                 self.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_temp_requests,
+                    beer_garden.db.mongo.util.cancel_outstanding,
                     interval=prune_interval,
-                    max_running_jobs=1,
-                )
-
-            if ttl_config.get("file") > 0:
-                self.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_files,
-                    interval=prune_interval,
-                    max_running_jobs=1,
-                )
-
-            if ttl_config.get("in_progress") > 0:
-                self.add_schedule(
-                    beer_garden.db.mongo.pruner.prune_outstanding,
-                    interval=prune_interval,
-                    max_running_jobs=1,
+                    max_instances=1,
+                    name="cancel_outstanding",
                 )
 
             self.add_schedule(
-                beer_garden.db.mongo.pruner.prune_orphans,
+                beer_garden.db.mongo.util.unassign_files,
                 interval=prune_interval,
-                max_running_jobs=1,
+                max_instances=1,
+                name="unassign_files",
             )
 
         # Add scheduled job for checking unresponsive gardens
         self.add_schedule(
             beer_garden.garden.garden_unresponsive_trigger,
             interval=15,
-            max_running_jobs=1,
+            max_instances=1,
+            name="garden_unresponsive_trigger",
+        )
+
+        # Add scheduled job for validating Generated and Annotated topics
+        self.add_schedule(
+            beer_garden.topic.sync_topics,
+            interval=15,
+            max_instances=1,
+            name="sync_topics",
         )
 
         # Add scheduled job for validating Generated and Annotated topics
@@ -445,8 +440,86 @@ class MixedScheduler(object):
             self.add_schedule(
                 beer_garden.garden.publish_garden,
                 interval=config.get("parent.sync_interval"),
-                max_running_jobs=1,
+                max_instances=1,
+                name="publish_garden",
             )
+
+        if beer_garden.db.mongo.util.is_legacy_mongodb():
+            # Legacy TTL Pruning for MongoDB < 6.0
+
+            self.add_schedule(
+                beer_garden.db.mongo.legacy_pruner.prune_admin_requests,
+                interval=15,
+                max_instances=1,
+                name="prune_admin_requests",
+            )
+
+            self.add_schedule(
+                beer_garden.db.mongo.legacy_pruner.prune_temp_requests,
+                interval=15,
+                max_instances=1,
+                name="prune_temp_requests",
+            )
+
+            self.add_schedule(
+                beer_garden.db.mongo.legacy_pruner.prune_missed_temp_command,
+                interval=15,
+                max_instances=1,
+                name="prune_missed_temp_command",
+            )
+            self.add_schedule(
+                beer_garden.db.mongo.legacy_pruner.prune_orphan_command_type_info,
+                interval=15,
+                max_instances=1,
+                name="prune_orphan_command_type_info",
+            )
+
+            self.add_schedule(
+                beer_garden.db.mongo.legacy_pruner.prune_orphan_command_type_action,
+                interval=15,
+                max_instances=1,
+                name="prune_orphan_command_type_action",
+            )
+
+            self.add_schedule(
+                beer_garden.db.mongo.legacy_pruner.prune_orphan_command_type_admin,
+                interval=15,
+                max_instances=1,
+                name="prune_orphan_command_type_admin",
+            )
+
+            if prune_interval > -1:
+                ttl_config = config.get("db.prune.ttl")
+                if ttl_config.get("info") > 0:
+                    self.add_schedule(
+                        beer_garden.db.mongo.legacy_pruner.prune_info_requests,
+                        interval=prune_interval,
+                        max_instances=1,
+                        name="prune_info_requests",
+                    )
+
+                if ttl_config.get("action") > 0:
+                    self.add_schedule(
+                        beer_garden.db.mongo.legacy_pruner.prune_action_requests,
+                        interval=prune_interval,
+                        max_instances=1,
+                        name="prune_action_requests",
+                    )
+
+                if ttl_config.get("file") > 0:
+                    self.add_schedule(
+                        beer_garden.db.mongo.legacy_pruner.prune_files,
+                        interval=prune_interval,
+                        max_instances=1,
+                        name="prune_files",
+                    )
+
+                self.add_schedule(
+                    beer_garden.db.mongo.legacy_pruner.prune_grid_fs,
+                    interval=prune_interval,
+                    max_instances=1,
+                    name="prune_grid_fs",
+                )
 
 
 class IntervalTrigger(APInterval):
@@ -593,8 +666,10 @@ def create_jobs(jobs: List[Job]) -> dict:
         try:
             if job.id and db.query(Job, filter_params={"id": job.id}):
                 updated.append(update_job(job))
+                logger.info(f"Scheduler job updated: {job}")
             else:
                 created.append(create_job(job))
+                logger.info(f"Scheduler job created: {job}")
         except (ModelValidationError, ValidationError) as exc:
             rejected.append((job, str(exc)))
 
@@ -721,6 +796,19 @@ def handle_event(event: Event) -> None:
     """
 
     if (
+        not config.get("replication.enabled")
+        and event.garden == config.get("garden.name")
+        and event.name == Events.ENTRY_STARTED.name
+        and event.metadata["entry_point_type"] == "HTTP"
+        and not beer_garden.application.scheduler.running
+    ):
+        # If replication is enabled, then we should allow the replication
+        # event handler to start the scheduler once it is the primary
+        # garden. If replication is disabled, then we can start the
+        # scheduler once the HTTP server is started.
+        beer_garden.application.scheduler.start()
+
+    elif (
         event.garden == config.get("garden.name")
         and beer_garden.application.scheduler.running
     ):

@@ -5,9 +5,10 @@ MODULE_NAME    = beer_garden
 APP_DIR        = src/app
 UI_DIR         = src/ui
 
-VERSION        ?= 0.0.0
-PYTHON_VERSION ?=3.7
-DIST           ?=centos7
+VERSION          ?= 0.0.0
+PYTHON_VERSION   ?=3.7
+DIST             ?=centos7
+DATE             ?= $(shell date +%Y-%m-%dT%H)
 
 .PHONY: clean clean-build clean-test clean-pyc help test
 
@@ -46,7 +47,7 @@ rpm-build:  ## build rpm
 	rpm/bin/build.py rpm $(VERSION) --iteration py$(PYTHON_VERSION) --python $(PYTHON_VERSION) --distribution $(DIST)
 
 rpm-build-local:  ## build local rpm
-	rpm/bin/build.py rpm --local $(VERSION) --python $(PYTHON_VERSION) --distribution $(DIST)
+	rpm/bin/build.py rpm --local $(VERSION) --iteration py$(PYTHON_VERSION) --python $(PYTHON_VERSION) --distribution $(DIST)
 
 # Docker
 docker-login: ## log in to the docker registry
@@ -85,6 +86,21 @@ publish-rpm: ## publish the rpm
 publish-docker-rpm: rpm-build
 	docker build -t bgio/beer-garden:$(VERSION)-RPM-$(PYTHON_VERSION)-${DIST} -f docker/dockerfiles/bundle_rpm/Dockerfile --build-arg VERSION=$(VERSION) --build-arg PYTHON_VERSION=$(PYTHON_VERSION) .
 	docker push bgio/beer-garden:$(VERSION)-RPM-$(PYTHON_VERSION)-${DIST}
+
+parse_unstable_version:
+	$(eval VERSION := $(shell python -c "import os; import sys; sys.path.insert(1, './src/app/beer_garden/'); from __version__ import __version__; print(__version__);"))
+
+parse_branch_name:
+	$(eval BRANCH_NAME := $(shell git rev-parse --abbrev-ref HEAD))
+
+# Requires the docker image already built and UI packaged
+publish-docker-unstable-rpm: parse_unstable_version rpm-build-local
+	docker build -t bgio/beer-garden:unstable-RPM-$(PYTHON_VERSION)-${DIST} -f docker/dockerfiles/bundle_rpm/Dockerfile --build-arg VERSION=unstable --build-arg PYTHON_VERSION=$(PYTHON_VERSION) .
+	docker push bgio/beer-garden:unstable-RPM-$(PYTHON_VERSION)-${DIST}
+
+publish-docker-unstable-branch-rpm: parse_branch_name parse_unstable_version rpm-build-local
+	docker build -t bgio/beer-garden:$(BRANCH_NAME)-$(VERSION)-python$(PYTHON_VERSION)-${DIST}-RPM -f docker/dockerfiles/bundle_rpm/Dockerfile --build-arg VERSION=$(BRANCH_NAME)-$(VERSION) --build-arg PYTHON_VERSION=$(PYTHON_VERSION) .
+	docker push bgio/beer-garden:$(BRANCH_NAME)-$(VERSION)-python$(PYTHON_VERSION)-${DIST}-RPM
 
 # Setup Environment
 setup:

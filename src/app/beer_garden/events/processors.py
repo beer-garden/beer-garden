@@ -1,15 +1,18 @@
 # -*- coding: utf-8 -*-
+import datetime
 import logging
-import threading
+import os
+import sys
 import time
-import traceback
 import uuid
 from collections import deque
 from copy import deepcopy
 from multiprocessing import Queue
 from queue import Empty
 
-from brewtils.models import Event, Events
+import elasticapm
+from brewtils.models import Event, Events, Request
+from brewtils.schema_parser import SchemaParser
 from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden.config as config
@@ -26,15 +29,185 @@ class BaseProcessor(StoppableThread):
         super().__init__(**kwargs)
 
         self._action = action
+        self._schema_parser = SchemaParser()
 
     def process(self, item):
         try:
             self._action(item)
+            del item
         except Exception as ex:
             logger.exception(f"Error processing: {ex}")
 
     def put(self, item):
         self.process(item)
+
+    def clone(self, item):
+
+        if (
+            isinstance(item, Event)
+            and hasattr(item, "payload")
+            and item.payload_type == "Request"
+        ):
+            # If payload is a Request, we need to check if the output is large
+            # and if so, we will serialize it to avoid memory issues
+            if (
+                hasattr(item.payload, "output")
+                and item.payload.output is not None
+                and sys.getsizeof(item.payload.output) > 1000000
+            ):
+                return self._schema_parser.parse_event(
+                    self._schema_parser.serialize_event(item, to_string=False),
+                    from_string=False,
+                )
+
+        return deepcopy(item)
+
+
+class DequeListener(BaseProcessor):
+    """Listens for items on a collections.deque"""
+
+    def __init__(self, queue=None, **kwargs):
+        super().__init__(**kwargs)
+
+        self._queue = queue or deque()
+
+    def put(self, item):
+        """Put a new item on the queue to be processed
+
+        Args:
+            item: New item
+        """
+        self._queue.append(item)
+
+    def clear(self):
+        """Empty the underlying queue without processing items"""
+        self._queue.clear()
+
+    def run(self):
+        """Process events as they are received"""
+        while not self.stopped():
+            try:
+                self.process(self._queue.popleft())
+            except IndexError:
+                time.sleep(0.1)
+
+    def queue_depth(self):
+        return len(self._queue)
+
+
+class DequeSetListener(DequeListener):
+    """Listens for items on a multiprocessing.Queue"""
+
+    def __init__(self, queue=None, unique_data=False, **kwargs):
+        super().__init__(**kwargs)
+
+        self._data = {}
+        self._unique_data = unique_data
+
+    def put(self, event: Event):
+        """Put a new item on the queue to be processed
+
+        Args:
+            item: New item
+        """
+
+        try:
+            if (
+                self._unique_data
+                and hasattr(event, "payload")
+                and event.payload is not None
+                and hasattr(event.payload, "id")
+                and event.payload.id is not None
+                and hasattr(event.payload, "is_newer")
+            ):
+
+                if str(event.payload.id) in self._data:
+                    ref = self._data[event.payload.id]
+                    if isinstance(event.payload, type(ref.payload)):
+                        if event.payload.is_newer(ref.payload):
+                            # Collect Request Metadata
+                            # If this expands past Requests, we'll need to refactor
+                            if isinstance(event.payload, Request):
+                                for metadata_key in ref.payload.metadata:
+                                    if metadata_key not in event.payload.metadata:
+                                        event.payload.metadata[metadata_key] = (
+                                            ref.payload.metadata[metadata_key]
+                                        )
+                                if ref.payload.status is not event.payload.status:
+                                    status_key = (
+                                        f"{ref.payload.status}_"
+                                        f"{config.get('garden.name')}"
+                                    )
+                                    if status_key not in event.payload.metadata:
+                                        event.payload.metadata[status_key] = int(
+                                            datetime.datetime.utcnow().timestamp()
+                                            * 1000
+                                        )
+
+                            self._data[str(event.payload.id)] = event
+
+                            del ref
+                        else:
+                            del event
+                    else:
+                        # Type Mis-match, just process the event
+                        super().put(event)
+
+                    return
+
+                self._data[str(event.payload.id)] = event
+                self._queue.append(str(event.payload.id))
+
+            else:
+                super().put(event)
+        except Exception as ex:
+            # All exceptions must be captured. If raised, then the queue processor could stop
+            # processing events.
+            logger.error(
+                "Error while putting event on %s: %s. Error: %s",
+                self.name,
+                event,
+                ex,
+            )
+
+    def clear(self):
+        """Empty the underlying queue without processing items"""
+
+        super().clear()
+        if self._unique_data:
+            self._data = {}
+
+    def run(self):
+        """Process events as they are received"""
+        if not self._unique_data:
+            super().run()
+        else:
+            while not self.stopped():
+                try:
+                    ref = self._queue.popleft()
+                    if isinstance(ref, str):
+                        ref = self._data.pop(ref, None)
+                    if ref:
+                        self.process(ref)
+                except IndexError:
+                    if self._unique_data and self._data:
+                        ref = self._data.pop(next(iter(self._data)))
+                        if ref:
+                            self.process(ref)
+                    else:
+                        time.sleep(0.1)
+                except Exception as ex:
+                    logger.error(
+                        "Error while processing event from %s: %s. Error: %s",
+                        self.name,
+                        ref,
+                        ex,
+                    )
+
+    def queue_depth(self):
+        if not self._unique_data:
+            return super().queue_depth()
+        return len(self._data)
 
 
 class DequeListener(BaseProcessor):
@@ -181,7 +354,15 @@ class QueueListener(BaseProcessor):
 class InternalQueueListener(DequeSetListener):
     """Listener for internal events only"""
 
-    def __init__(self, handler, handler_tag, local_only=False, filters=None, **kwargs):
+    def __init__(
+        self,
+        handler,
+        local_only=False,
+        filters=None,
+        filter_func=None,
+        allow_api_only=False,
+        **kwargs,
+    ):
         super().__init__(action=self.handle_event, **kwargs)
 
         self._filters = []
@@ -190,41 +371,64 @@ class InternalQueueListener(DequeSetListener):
             for filter in filters:
                 self._filters.append(filter.name)
 
+        self._filter_func = filter_func
+
         self._handler = handler
-        self._handler_tag = handler_tag
+        self._handler_tag = self._name
         self._local_only = local_only
 
-        self._transaction_type = handler_tag
+        self._transaction_type = self._name
+        self.allow_api_only = allow_api_only
 
     def handle_event(self, event):
         trace_parent_header = None
-        if (
-            config.get("metrics.elastic.enabled")
-            and hasattr(event, "metadata")
-            and "_trace_parent" in event.metadata
-        ):
-            trace_parent_header = event.metadata["_trace_parent"]
+        if config.get("metrics.elastic.enabled"):
+            if hasattr(event, "metadata") and "_trace_parent" in event.metadata:
+                trace_parent_header = event.metadata["_trace_parent"]
+            elif elasticapm.get_trace_parent_header() is not None:
+                trace_parent_header = elasticapm.get_trace_parent_header()
 
-        with CollectMetrics(
-            "Queue_Event",
-            f"QUEUE_POP::{self._handler_tag}",
-            trace_parent_header=trace_parent_header,
-        ):
-            try:
+        try:
+            with CollectMetrics(
+                "Queue_Event",
+                f"QUEUE_POP::{self._handler_tag}",
+                trace_parent_header=trace_parent_header,
+            ):
                 if config.get("metrics.elastic.enabled"):
                     extract_custom_context(event)
 
-                self._handler(deepcopy(event))
-            except Exception as ex:
-                logger.error(
-                    "'%s' handler received an error executing callback for event %s: %s: %s"
-                    % (
-                        self._handler_tag,
-                        repr(event),
-                        str(ex),
-                        traceback.TracebackException.from_exception(ex),
-                    )
+                self._handler(event)
+        except Exception as ex:
+            _, _, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            logger.error(
+                "'%s' handler received an error executing callback for event %s: %s: %s Line %s"
+                % (
+                    self._handler_tag,
+                    repr(event),
+                    str(ex),
+                    fname,
+                    exc_tb.tb_lineno,
                 )
+
+    def filter_event(self, event):
+
+        if not self._filters or event.name not in self._filters:
+            return True
+
+        if event.error:
+            return True
+
+        if self._local_only and event.garden != config.get("garden.name"):
+            return True
+
+        if event.metadata.get("API_ONLY", False) and not self.allow_api_only:
+            return True
+
+        if self._filter_func and self._filter_func(event):
+            return True
+
+        return False
 
     def put(self, event: Event):
         """Put a new item on the queue to be processed
@@ -233,33 +437,25 @@ class InternalQueueListener(DequeSetListener):
             item: New item
         """
 
-        if not self._filters:
-            return
-
-        if event.error:
-            return
-
-        if self._local_only and event.garden != config.get("garden.name"):
-            return
-
-        if event.metadata.get("API_ONLY", False):
-            return
-
-        if event.name in self._filters:
+        if not self.filter_event(event):
             trace_parent_header = None
-            if (
-                config.get("metrics.elastic.enabled")
-                and hasattr(event, "metadata")
-                and "_trace_parent" in event.metadata
-            ):
-                trace_parent_header = event.metadata["_trace_parent"]
+            if config.get("metrics.elastic.enabled"):
+                if hasattr(event, "metadata") and "_trace_parent" in event.metadata:
+                    trace_parent_header = event.metadata["_trace_parent"]
+                elif elasticapm.get_trace_parent_header() is not None:
+                    trace_parent_header = elasticapm.get_trace_parent_header()
+
+                if hasattr(event, "metadata") and "_trace_parent" not in event.metadata:
+                    event.metadata["_trace_parent"] = trace_parent_header
 
             with CollectMetrics(
                 "Queue_Event",
-                f"QUEUE_PUT::{self._handler_tag}",
+                f"QUEUE_PUT::{self._name}",
                 trace_parent_header=trace_parent_header,
             ):
-                super().put(event)
+                if config.get("metrics.elastic.enabled"):
+                    extract_custom_context(event)
+                super().put(self.clone(event))
 
 
 class DelayListener(QueueListener):
@@ -310,6 +506,7 @@ class FanoutProcessor(DequeListener):
                 processor.stop()
 
     def process(self, event):
+
         for processor in self._processors:
             processor.put(event)
 

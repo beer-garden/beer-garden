@@ -20,7 +20,7 @@ from beer_garden.topic import (
     prune_topics,
     remove_topic,
     subscriber_match,
-    sync_garden_topics_loop,
+    sync_topics_batch,
     topic_add_subscriber,
     topic_remove_subscriber,
 )
@@ -114,26 +114,22 @@ def local_garden(local_garden_system):
 
 
 @pytest.fixture
-def remote_garden_system():
-    yield create_system(
-        BrewtilsSystem(
-            name="remote_system",
-            version="1.2.3",
-            namespace="remote_garden",
-            local=False,
-            instances=[BrewtilsInstance(name="1")],
-            commands=[BrewtilsCommand(name="command")],
-        )
-    )
-
-
-@pytest.fixture
-def remote_garden(remote_garden_system):
+def remote_garden():
     yield create_garden(
         BrewtilsGarden(
             name="remote_garden",
             connection_type="REMOTE",
-            systems=[remote_garden_system],
+            systems=[
+                BrewtilsSystem(
+                    name="remote_system",
+                    version="1.2.3",
+                    namespace="remote_garden",
+                    garden_name="remote_garden",
+                    local=False,
+                    instances=[BrewtilsInstance(name="1")],
+                    commands=[BrewtilsCommand(name="command")],
+                )
+            ],
             version=beer_garden.__version__,
         )
     )
@@ -198,7 +194,7 @@ class TestTopic:
         assert (subscriber_match(subscriber1, subscriber2)) is False
         assert (subscriber_match(subscriber1, subscriber3)) is True
 
-    def test_garden_sync(self, local_garden):
+    def test_sync_batched(self, local_garden):
 
         topics_generated = Topic.objects().count()
         assert topics_generated == 1
@@ -207,7 +203,7 @@ class TestTopic:
         topics_generated = Topic.objects().count()
         assert topics_generated == 0
 
-        sync_garden_topics_loop(local_garden)
+        sync_topics_batch()
         topics_generated = Topic.objects().count()
         assert topics_generated == 1
 

@@ -22,7 +22,6 @@ def _remove_queue_info(response: str, many: bool = False) -> str:
 
 
 class SystemAPI(AuthorizationHandler):
-
     async def get(self, system_id):
         """
         ---

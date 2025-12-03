@@ -37,42 +37,41 @@ def drop():
 
 
 @pytest.fixture
-def localgarden_system():
-    yield create_system(
-        BrewtilsSystem(
-            name="localsystem", version="1.2.3", namespace="localgarden", local=True
-        )
-    )
-
-
-@pytest.fixture
-def localgarden(localgarden_system):
-    yield create_garden(
+def localgarden():
+    garden = create_garden(
         BrewtilsGarden(
             name="localgarden",
             connection_type="LOCAL",
-            systems=[localgarden_system],
             version=beer_garden.__version__,
         )
     )
-
-
-@pytest.fixture
-def remotegarden_system():
-    yield create_system(
+    create_system(
         BrewtilsSystem(
-            name="remotesystem", version="1.2.3", namespace="remotegarden", local=False
+            name="localsystem",
+            version="1.2.3",
+            namespace="localgarden",
+            local=True,
+            garden_name=garden.name,
         )
     )
+    yield garden
 
 
 @pytest.fixture
-def remotegarden(remotegarden_system):
+def remotegarden():
     yield create_garden(
         BrewtilsGarden(
             name="remotegarden",
             connection_type="REMOTE",
-            systems=[remotegarden_system],
+            systems=[
+                BrewtilsSystem(
+                    name="remotesystem",
+                    version="1.2.3",
+                    namespace="remotegarden",
+                    local=False,
+                    garden_name="remotegarden",
+                )
+            ],
             version="1.0.0",
         )
     )
@@ -458,7 +457,10 @@ stomp:
         assert len(garden.receiving_connections) == 2
 
         for connection in garden.receiving_connections:
-            assert connection.status == "RECEIVING"
+            if connection.api == "STOMP":
+                assert connection.status == "DISABLED"
+            else:
+                assert connection.status == "RECEIVING"
 
         os.remove(config_file)
 
@@ -512,7 +514,6 @@ stomp:
         bg_garden.children = [
             BrewtilsGarden(
                 name="child",
-                status="RUNNING",
                 connection_type="REMOTE",
                 has_parent=True,
                 parent="garden",
@@ -530,16 +531,17 @@ stomp:
     def test_upsert_garden_update_values(self, bg_garden):
         bg_garden.systems = []
         bg_garden.has_parent = False
-        bg_garden.status = "RUNNING"
         bg_garden.metadata = {"test": "test"}
         bg_garden.connection_type = "REMOTE"
+        bg_garden.version = "1.0.0"
 
         garden = create_garden(bg_garden)
+        assert garden.version == "1.0.0"
 
         garden.has_parent = True
-        garden.status = "STOPPED"
         garden.metadata = {"alt": "alt"}
         garden.connection_type = "LOCAL"
+        garden.version = "2.0.0"
 
         updated_garden = upsert_garden(garden)
 
@@ -549,7 +551,7 @@ stomp:
 
         # Changed
         assert updated_garden.metadata == {"alt": "alt"}
-        assert updated_garden.status == "STOPPED"
+        assert updated_garden.version == "2.0.0"
 
     def test_garden_unresponsive_trigger(self, bg_garden):
         bg_garden.systems = []
@@ -650,3 +652,112 @@ stomp:
 
         with pytest.raises(DoesNotExist):
             get_garden(child.name)
+
+    def test_get_local_garden(self, localgarden):
+        """get_garden should return the correct garden when multiple gardens exist"""
+
+        two_hop_1 = BrewtilsGarden(
+            name="two_hop_1",
+            connection_type="REMOTE",
+            has_parent=True,
+            parent="one_hop_1",
+            systems=[
+                BrewtilsSystem(
+                    name="remotesystem",
+                    version="1.2.3",
+                    namespace="two_hop_1",
+                    local=False,
+                )
+            ],
+        )
+
+        one_hop_1 = BrewtilsGarden(
+            name="one_hop_1",
+            connection_type="REMOTE",
+            systems=[
+                BrewtilsSystem(
+                    name="remotesystem",
+                    version="1.2.3",
+                    namespace="one_hop_1",
+                    local=False,
+                )
+            ],
+            children=[two_hop_1],
+        )
+
+        two_hop_2 = BrewtilsGarden(
+            name="two_hop_2",
+            connection_type="REMOTE",
+            has_parent=True,
+            parent="one_hop_2",
+            systems=[
+                BrewtilsSystem(
+                    name="remotesystem",
+                    version="1.2.3",
+                    namespace="two_hop_2",
+                    local=False,
+                )
+            ],
+        )
+
+        one_hop_2 = BrewtilsGarden(
+            name="one_hop_2",
+            connection_type="REMOTE",
+            systems=[
+                BrewtilsSystem(
+                    name="remotesystem",
+                    version="1.2.3",
+                    namespace="one_hop_2",
+                    local=False,
+                )
+            ],
+            children=[two_hop_2],
+        )
+
+        two_hop_3 = BrewtilsGarden(
+            name="two_hop_3",
+            connection_type="REMOTE",
+            has_parent=True,
+            parent="one_hop_3",
+            systems=[
+                BrewtilsSystem(
+                    name="remotesystem",
+                    version="1.2.3",
+                    namespace="two_hop_3",
+                    local=False,
+                )
+            ],
+        )
+
+        one_hop_3 = BrewtilsGarden(
+            name="one_hop_3",
+            connection_type="REMOTE",
+            systems=[
+                BrewtilsSystem(
+                    name="remotesystem",
+                    version="1.2.3",
+                    namespace="one_hop_3",
+                    local=False,
+                )
+            ],
+            children=[two_hop_3],
+        )
+
+        upsert_garden(one_hop_1)
+        upsert_garden(one_hop_2)
+        upsert_garden(one_hop_3)
+
+        local_garden_model = get_garden(localgarden.name)
+
+        assert len(local_garden_model.children) == 3
+
+        for child in local_garden_model.children:
+            if child.name == "one_hop_1":
+                assert len(child.children) == 1
+                assert child.children[0].name == "two_hop_1"
+            elif child.name == "one_hop_2":
+                assert len(child.children) == 1
+                assert child.children[0].name == "two_hop_2"
+            elif child.name == "one_hop_3":
+                assert len(child.children) == 1
+                assert child.children[0].name == "two_hop_3"

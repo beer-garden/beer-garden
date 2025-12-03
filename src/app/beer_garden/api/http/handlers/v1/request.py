@@ -9,6 +9,7 @@ from typing import Sequence
 from brewtils.errors import ModelValidationError
 from brewtils.models import Operation, Permissions, Request, System
 from brewtils.schema_parser import SchemaParser
+from mongoengine import Q
 
 import beer_garden.config as config
 import beer_garden.db.api as db
@@ -20,7 +21,6 @@ from beer_garden.requests import remove_bytes_parameter_base64
 
 
 class RequestAPI(AuthorizationHandler):
-
     async def get(self, request_id):
         """
         ---
@@ -136,7 +136,6 @@ class RequestAPI(AuthorizationHandler):
 
 
 class RequestOutputAPI(AuthorizationHandler):
-
     async def get(self, request_id):
         """
         ---
@@ -368,7 +367,14 @@ class RequestListAPI(AuthorizationHandler):
 
         # Add the filter for only requests the user is permitted to see
         q_filter = self.permitted_objects_filter(Request)
-        query_args["q_filter"] = q_filter
+        q_filtered = None
+
+        if query_args.get("q_filter"):
+            query_args_q_filter = query_args["q_filter"]
+            q_filtered = q_filter & query_args_q_filter
+            query_args["q_filter"] = q_filtered
+        else:
+            query_args["q_filter"] = q_filter
 
         # There are also some sane parameters
         query_args["start"] = self.get_argument("start", default="0")
@@ -393,7 +399,9 @@ class RequestListAPI(AuthorizationHandler):
             "length": len(requests),
             # And these are required by datatables
             "recordsFiltered": db.count(
-                Request, q_filter=q_filter, **query_args["filter_params"]
+                Request,
+                q_filter=q_filtered if q_filtered else q_filter,
+                **query_args["filter_params"],
             ),
             "recordsTotal": db.count(Request, q_filter=q_filter),
             "draw": self.get_argument("draw", ""),
@@ -811,6 +819,7 @@ class RequestListAPI(AuthorizationHandler):
         """
         # These are what this function is populating
         filter_params = {}
+        q_filter = Q()
         include_fields = []
         order_by = None
         text_search = None
@@ -835,13 +844,26 @@ class RequestListAPI(AuthorizationHandler):
 
         # Cool, now we can do stuff
         if search and search["value"]:
-            text_search = '"' + search["value"] + '"'
+            text_search = None
+            for column in columns:
+                if column["data"] and column["data"] in [
+                    "command_display_name",
+                    "namespace",
+                    "system",
+                    "system_version",
+                    "instance",
+                    "status",
+                    "comment",
+                ]:
+                    q_filter = q_filter | (
+                        Q(**{column["data"] + "__contains": search["value"]})
+                    )
 
         if not include_children:
             filter_params["has_parent"] = False
 
         if not include_hidden:
-            filter_params["hidden__ne"] = True
+            filter_params["hidden"] = False
 
         for column in columns:
             query_columns.append(column)
@@ -910,6 +932,7 @@ class RequestListAPI(AuthorizationHandler):
             "text_search": text_search,
             "order_by": order_by,
             "hint": self._determine_hint(hint_helper, include_children, include_hidden),
+            "q_filter": q_filter,
         }
 
     @staticmethod
