@@ -121,16 +121,16 @@ export default function appRun(
             theme = _.get(user, 'preferences.theme', 'default');
 
             if (_.get(user, 'preferences.home', null) !== null) {
-              defaultHome = _.get(user, 'preferences.home.default_home', 'base.systems()');
-              defaultHomePage = _.get(user, 'preferences.home.default_home_page', 'base.systems');
-              defaultHomeParameters = _.get(user, 'preferences.home.default_home_parameters', {});
+              defaultHome = _.get(user, 'preferences.home.defaultHome', defaultHome);
+              defaultHomePage = _.get(user, 'preferences.home.defaultHomePage', defaultHomePage);
+              defaultHomeParameters = _.get(user, 'preferences.home.defaultHomeParameters', defaultHomeParameters);
             }
 
           } else {
             theme = localStorageService.get('currentTheme') || 'default';
-            defaultHome = localStorageService.get('defaultHome', 'base.systems()');
-            defaultHomePage = localStorageService.get('defaultHomePage', 'base.systems');
-            defaultHomeParameters = localStorageService.get('defaultHomeParameters', {});
+            defaultHome = localStorageService.get('defaultHome', defaultHome);
+            defaultHomePage = localStorageService.get('defaultHomePage', defaultHomePage);
+            defaultHomeParameters = localStorageService.get('defaultHomeParameters', defaultHomeParameters);
           }
 
           $rootScope.setHome(defaultHome, defaultHomePage, defaultHomeParameters, false);
