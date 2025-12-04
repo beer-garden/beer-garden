@@ -1,6 +1,6 @@
 # Beer Garden Changelog
 
-# Auth Release Candidate  
+# 3.32.0rc0
 
 TBD
 
@@ -14,6 +14,12 @@ TBD
 - Fixed Role Rescan to remove missing roles from database (#1982)
 - Fixed Role Delete to removes role from Users and forces Token refresh (#1982)
 - Updated UI pages to display 401 error if user does not have access to view the contents of the page (#1987)
+
+# 3.30.1
+
+11/25/2025
+
+- Fixed router loading Garden Model from database missing the config field (#1993) 
 
 # 3.30.0
 
