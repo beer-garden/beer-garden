@@ -14,10 +14,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 // import { Gantt, WillowDark, task, link } from "wx-react-gantt";
 
 // import { RequestGantt } from './RequestGantt';
-// import RequestTimeline from "./RequestTimeline"
+import RequestTimeline from "./RequestTimeline"
 // import ApexTimeline from "./ApexTimeline";
-import RequestHistory from "./RequestHistory";
-import RequestGanttHistory from "./RequestGanttHistory";
+// import RequestHistory from "./RequestHistory";
+// import RequestGanttHistory from "./RequestGanttHistory";
+import RequestTreeChart from "./RequestTreeChart";
+
 
 function ExampleRequest() {
     const request: Request = {
@@ -232,10 +234,10 @@ function RequestView() {
                 <Accordion.Item eventKey="1">
                     <Accordion.Header>Request History</Accordion.Header>
                     <Accordion.Body>
-                        {/* <RequestTimeline {...request} /> */}
+                        <RequestTreeChart {...request} />
                          {/* <RequestHistory {...request} />  */}
                         {/* <ApexTimeline {...request} />*/}
-                        <RequestGanttHistory {...request} />
+                        {/* <RequestGanttHistory {...request} /> */}
                     </Accordion.Body>
                 </Accordion.Item>
             </Accordion>
