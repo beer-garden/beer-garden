@@ -9,6 +9,7 @@ from brewtils.schemas import RequestTemplateSchema
 from bson.objectid import ObjectId
 from mock import Mock
 from mongoengine import NotUniqueError, connect
+from mongomock.gridfs import enable_gridfs_integration
 
 import beer_garden.db.api as db
 import beer_garden.db.mongo.models
@@ -30,7 +31,6 @@ from beer_garden.db.mongo.models import (
     User,
     UserToken,
 )
-from mongomock.gridfs import enable_gridfs_integration
 
 enable_gridfs_integration()
 
@@ -595,6 +595,16 @@ class TestRole:
         with pytest.raises(ModelValidationError):
             role.save()
 
+    def test_delete_role_removes_from_users(self):
+        role = Role(name="test_role", permission="READ_ONLY").save()
+        User(username="testuser", roles=[role.name]).save()
+
+        assert role.name in User.objects.get(username="testuser").roles
+
+        role.delete()
+
+        assert role.name not in User.objects.get(username="testuser").roles
+
 
 class TestUser:
     @classmethod
@@ -605,13 +615,17 @@ class TestUser:
     def role(self):
         role = Role(name="test_role", permission="READ_ONLY").save()
         yield role
-        role.delete()
 
     @pytest.fixture()
     def user(self):
         user = User(username="testuser").save()
         yield user
-        user.delete()
+
+    @pytest.fixture(autouse=True)
+    def drop(self, mongo_conn):
+        User.drop_collection()
+        Role.drop_collection()
+        UserToken.drop_collection()
 
     @pytest.fixture()
     def user_token(self, user):
@@ -641,7 +655,12 @@ class TestUserToken:
     def user(self):
         user = User(username="testuser").save()
         yield user
-        user.delete()
+
+    @pytest.fixture(autouse=True)
+    def drop(self, mongo_conn):
+        User.drop_collection()
+        Role.drop_collection()
+        UserToken.drop_collection()
 
     @pytest.fixture()
     def user_token(self, user):

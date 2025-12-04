@@ -61,11 +61,18 @@ export default function tokenService($http, localStorageService, EventService) {
 
   _.assign(service, {
     doLogin: (username, password) => {
+
+      let headers = {};
+      
+      if (username !== null && password !== null) {
+        headers = {
+          username: username,
+          password: password,
+        };
+      }
+      
       return $http
-          .post('/api/v1/token', {
-            username: username,
-            password: password,
-          })
+          .post('api/v1/token', headers)
           .then((response) => {
             service.handleRefresh(response.data.refresh);
             service.handleToken(response.data.access);
@@ -73,7 +80,7 @@ export default function tokenService($http, localStorageService, EventService) {
     },
     doRefresh: (refreshToken) => {
       return $http
-          .post('/api/v1/token/refresh', {refresh: refreshToken})
+          .post('api/v1/token/refresh', {refresh: refreshToken})
           .then(
               (response) => {
                 service.handleRefresh(response.data.refresh);

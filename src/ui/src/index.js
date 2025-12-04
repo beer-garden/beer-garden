@@ -76,6 +76,7 @@ import {compilerConfig} from './js/configs/compiler_config.js';
 import fetchDataDirective from './js/directives/fetch_data.js';
 import bgStatusDirective from './js/directives/system_status.js';
 import customOnChangeDirective from './js/directives/custom_on_change.js';
+import unauthorizedDirective from './js/directives/unauthorized_message.js';
 
 import adminService from './js/services/admin_service.js';
 import commandService from './js/services/command_service.js';
@@ -189,6 +190,7 @@ angular
     .animation('.slide', slideAnimation)
 
     .directive('fetchData', fetchDataDirective)
+    .directive('unauthorizedMessage', unauthorizedDirective)
     .directive('bgStatus', bgStatusDirective)
     .directive('customOnChange', customOnChangeDirective)
 

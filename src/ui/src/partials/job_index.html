@@ -28,10 +28,12 @@
   </button>
 </h1>
 
-<fetch-data response="response" hide="empty"></fetch-data>
+<fetch-data response="response" hide="empty" ng-if="hasPermission('READ_ONLY')"></fetch-data>
+
+<unauthorized-message ng-if="!hasPermission('READ_ONLY')"/>
 
 <div class="container-fluid animate-if"
-     ng-if="responseState(response) === 'empty'">
+     ng-if="hasPermission('READ_ONLY') && responseState(response) === 'empty'">
   <br />
   <div class="jumbotron">
     <h1>Welcome to the Request Scheduler</h1>
