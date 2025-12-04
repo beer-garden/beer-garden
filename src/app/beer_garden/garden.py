@@ -13,7 +13,7 @@ import copy
 import json
 import logging
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import List
 
@@ -105,6 +105,7 @@ def get_children_garden(garden: Garden, **kwargs) -> Garden:
             for child in garden.children:
                 child.has_parent = True
                 child.parent = garden.name
+
     else:
         kwargs["filter_params"]["parent"] = garden.name
         garden.children = db.query(Garden, **kwargs)
@@ -828,7 +829,8 @@ def rescan(sync_gardens: bool = False):
 
                         if garden is None:
                             raise NotFoundException(
-                                f"Failure to load {garden_name} after write collision occurred"
+                                f"Failure to load {garden_name} after write collision "
+                                "occurred"
                             )
                 else:
                     logger.info(
@@ -957,7 +959,7 @@ def garden_unresponsive_trigger():
         interval_value = garden.metadata.get("_unresponsive_timeout", default_value)
 
         if interval_value > 0:
-            timeout = datetime.utcnow() - timedelta(minutes=interval_value)
+            timeout = datetime.now(timezone.utc) - timedelta(minutes=interval_value)
 
             update_connection = False
             for connection in garden.receiving_connections:
@@ -970,6 +972,9 @@ def garden_unresponsive_trigger():
                             f"{garden.name} Timed out {interval_value} minutes"
                         )
                         update_connection = True
+                elif connection.status == "UNRESPONSIVE":
+                    logger.info(f"{garden.name} still unresponsive, pushing sync")
+                    garden_sync(garden.name)
 
             if update_connection:
                 update_garden(garden)
@@ -1062,6 +1067,7 @@ def handle_event(event):
 
             if event.name == Events.GARDEN_SYNC.name:
                 logger.info(f"Garden sync event for {event.payload.name}")
+
                 try:
                     # Check if child garden as deleted
                     db_garden = get_garden(event.payload.name)

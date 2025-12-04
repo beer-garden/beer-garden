@@ -25,8 +25,10 @@ from typing import Dict, Union
 import brewtils.models
 from brewtils import EasyClient
 from brewtils.models import Connection as BrewtilsConnection
-from brewtils.models import Events, Garden, Operation, Request, System
+from brewtils.models import Events, Garden, Operation, System
 from mongoengine import DoesNotExist
+
+# from packaging.version import parse
 from stomp.exception import ConnectFailedException
 
 import beer_garden
@@ -63,7 +65,10 @@ routable_operations = [
     "INSTANCE_STOP",
     "REQUEST_CREATE",
     "SYSTEM_DELETE",
+    "RUNNER_RESCAN",
+    "GARDEN_RESCAN",
     "GARDEN_SYNC",
+    "QUEUE_DELETE_ALL",
     "USER_UPSTREAM_SYNC",
 ]
 
@@ -315,6 +320,15 @@ def update_api_heartbeat(operation: Operation):
 
             if operation.model.payload.name != operation.source_garden_name:
 
+                # if (
+                #     hasattr(operation.model.payload, "version")
+                #     and operation.model.payload.version is not None
+                #     and operation.model.payload.version != "UNKNOWN"
+                #     and parse(operation.model.payload.version) > parse("3.16")
+                # ):
+                #     operation.source_garden_name = operation.model.payload.name
+
+                # else:
                 local_garden = get_garden(
                     config.get("garden.name"), include_fields=["name"]
                 )
@@ -432,7 +446,12 @@ def initiate_forward(operation: Operation):
 
     if operation.operation_type == "GARDEN_SYNC":
         logger.info(
-            f"About to forward sync operation for garden {operation.kwargs['sync_target']}"
+            f"About to forward sync operation for garden {operation.target_garden_name}"
+        )
+
+    if operation.operation_type == "GARDEN_RESCAN":
+        logger.info(
+            f"About to forward rescan operation for garden {operation.target_garden_name}"
         )
 
     try:
@@ -900,44 +919,12 @@ def _determine_target(operation: Operation) -> str:
 
 def _target_from_type(operation: Operation) -> str:
     """Determine the target garden based on the operation type"""
+
     # Certain operations are ASSUMED to be targeted at the local garden
-    if (
-        "READ" in operation.operation_type
-        or "JOB" in operation.operation_type
-        or "FILE" in operation.operation_type
-        or "TOKEN" in operation.operation_type
-        or operation.operation_type
-        in (
-            "PLUGIN_LOG_RELOAD",
-            "SYSTEM_CREATE",
-            "SYSTEM_RESCAN",
-        )
-        or "PUBLISH_EVENT" in operation.operation_type
-        or "RUNNER" in operation.operation_type
-        or "TOPIC" in operation.operation_type
-        or "ROLE" in operation.operation_type
-        or operation.operation_type
-        in (
-            "PLUGIN_LOG_RELOAD",
-            "QUEUE_DELETE_ALL",
-            "SYSTEM_CREATE",
-            "REQUEST_DELETE",
-            "REQUEST_CANCEL",
-        )
-    ):
+    if operation.operation_type not in routable_operations:
         return config.get("garden.name")
 
-    # Otherwise, each operation needs to be "parsed"
-    if operation.operation_type in ("SYSTEM_RELOAD", "SYSTEM_UPDATE"):
-        return _system_id_lookup(operation.args[0])
-
-    if operation.operation_type == "SYSTEM_DELETE":
-        # Force deletes get routed to local garden
-        if operation.kwargs.get("force"):
-            return config.get("garden.name")
-
-        return _system_id_lookup(operation.args[0])
-
+    # Lookups for routable operations
     if "INSTANCE" in operation.operation_type:
         if "system_id" in operation.kwargs and "instance_name" in operation.kwargs:
             return _system_id_lookup(operation.kwargs["system_id"])
@@ -955,35 +942,22 @@ def _target_from_type(operation: Operation) -> str:
         )
         return _system_name_lookup(target_system)
 
-    if operation.operation_type in ["REQUEST_UPDATE"]:
-        return config.get("garden.name")
-
-    if operation.operation_type.startswith("REQUEST"):
-        request = db.query_unique(Request, id=operation.args[0])
-        operation.kwargs["request"] = request
-
-        return config.get("garden.name")
+    if operation.operation_type == "SYSTEM_DELETE":
+        # Force deletes get routed to local garden
+        if operation.kwargs.get("force"):
+            return config.get("garden.name")
+        return _system_id_lookup(operation.args[0])
 
     if "GARDEN" in operation.operation_type:
-        if operation.operation_type == "GARDEN_SYNC":
-            sync_target = operation.kwargs.get("sync_target")
-            if sync_target:
-                return sync_target
-
         return config.get("garden.name")
 
-    if operation.operation_type == "QUEUE_DELETE":
-        # Need to deconstruct the queue name
-        parts = operation.args[0].split(".")
-        version = parts[2].replace("-", ".")
-
-        return _system_name_lookup(
-            System(namespace=parts[0], name=parts[1], version=version)
-        )
-
     if "USER" in operation.operation_type:
-        if operation.target_garden_name:
-            return operation.target_garden_name
+        return config.get("garden.name")
+
+    if operation.operation_type == "QUEUE_DELETE_ALL":
+        return config.get("garden.name")
+
+    if operation.operation_type == "RUNNER_RESCAN":
         return config.get("garden.name")
 
     raise Exception(f"Bad operation type {operation.operation_type}")

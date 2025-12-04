@@ -77,7 +77,6 @@ import fetchDataDirective from './js/directives/fetch_data.js';
 import bgStatusDirective from './js/directives/system_status.js';
 import customOnChangeDirective from './js/directives/custom_on_change.js';
 
-import adminService from './js/services/admin_service.js';
 import commandService from './js/services/command_service.js';
 import instanceService from './js/services/instance_service.js';
 import queueService from './js/services/queue_service.js';
@@ -192,7 +191,6 @@ angular
     .directive('bgStatus', bgStatusDirective)
     .directive('customOnChange', customOnChangeDirective)
 
-    .factory('AdminService', adminService)
     .factory('CommandService', commandService)
     .factory('InstanceService', instanceService)
     .factory('QueueService', queueService)

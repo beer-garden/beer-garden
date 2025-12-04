@@ -50,6 +50,7 @@ db:
     password: null
     port: 27017
     username: null
+    authentication_source: admin
   name: beer_garden
   prune:
     batch_size: -1

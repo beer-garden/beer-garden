@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from uuid import uuid4
 
@@ -136,7 +136,7 @@ def user_token(user):
         UserToken(
             uuid=uuid4(),
             username=user.username,
-            expires_at=datetime.utcnow() + timedelta(hours=12),
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=12),
         )
     )
 
