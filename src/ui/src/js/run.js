@@ -170,6 +170,18 @@ export default function appRun(
 
     UtilityService.getConfig().then((response) => {
       angular.extend($rootScope.config, camelCaseKeys(response.data));
+
+      // Check if we are utilizing Auth Headers
+      if ($rootScope.config.trustedHeaderAuthEnabled){
+        if (TokenService.getToken() === null){
+          TokenService.doLogin(null, null).then(()=>{
+            $rootScope.changeUser(TokenService.getToken());
+          });
+        } else {
+          $rootScope.changeUser(TokenService.getToken());
+        }
+      }
+
       $rootScope.reloadWindowTitle();
     });
 
@@ -435,7 +447,9 @@ export default function appRun(
       $rootScope.garden = response.data;
       $rootScope.gardensResponse = response;
       $rootScope.systems = [];
-      updateGardenSystems();
+      if ($rootScope.garden !== undefined && $rootScope.garden !== null) {
+        updateGardenSystems();
+      }
       if (callback !== undefined){
         return callback();
       }
@@ -477,64 +491,11 @@ export default function appRun(
     return systems;
   }
 
-  $rootScope.isSystemRoutable = function(system){
-    // Check Local First
-    if ($rootScope.garden.systems !== undefined && $rootScope.garden.systems !== null) {
-      for (let i = 0; i < $rootScope.garden.systems.length; i++){
-        if (system.id == $rootScope.garden.systems[i].id){
-          return true;
-        }
-      }
-    }
-    // Check children
-    if ($rootScope.garden.children !== undefined && $rootScope.garden.children !== null) {
-      for (let i = 0; i < $rootScope.garden.children.length; i++){
-        if ($rootScope.isRemoteSystemRoutable(system, $rootScope.garden.children[i])){
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  $rootScope.isRemoteSystemRoutable = function(system, garden){
-    let routable = false;
-
-    if (garden.publishing_connections !== undefined && garden.publishing_connections !== null){
-      for (let i = 0; i < garden.publishing_connections.length; i++){
-        if (["PUBLISHING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN"].includes(garden.publishing_connections[i].status)){
-          routable = true;
-        }
-      }
-    }
-
-    if (!routable){
-      return false;
-    }
-    if (garden.systems !== undefined || garden.systems !== null){
-      for (let i = 0; i < garden.systems.length; i++){
-        if (system.id == garden.systems[i].id){
-          return true;
-        }
-      }
-    }
-
-    if (garden.children !== undefined && garden.children !== null){
-      for (let i = 0; i < garden.children.length; i++){
-        if ($rootScope.isRemoteSystemRoutable(system, garden.children[i])){
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
   $rootScope.extractGardenChildren = function(gardens) {
     let results = []
     if (gardens !== undefined && gardens !== null) {
       for (let i = 0; i < gardens.length; i++){
-        if (gardens[i]["connection_type"] == "LOCAL"){
+        if (gardens[i] !== undefined && gardens[i] !== null && gardens[i]["connection_type"] == "LOCAL"){
           results.push(gardens[i]);
           $rootScope.extractGardenChildrenLoop(results, gardens[i], true);
         }
@@ -554,30 +515,22 @@ export default function appRun(
   }
 
   function upsertGardenSystems(garden, seenIndexes, hideRunners = false){
-    let routable = (garden.connection_type == "LOCAL");
-    if (garden.publishing_connections !== undefined && garden.publishing_connections !== null) {
-      for (let i = 0; i < garden.publishing_connections.length; i++){
-        if (["PUBLISHING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN"].includes(garden.publishing_connections[i].status)){
-          routable = true;
-        }
+
+    if (garden.systems !== undefined && garden.systems !== null) {
+      for (let i = 0; i < garden.systems.length; i++){
+        seenIndexes.push(upsertSystem(garden.systems[i], hideRunners));
       }
     }
-    if (routable) {
-      if (garden.systems !== undefined && garden.systems !== null) {
-        for (let i = 0; i < garden.systems.length; i++){
-          seenIndexes.push(upsertSystem(garden.systems[i], hideRunners));
-        }
-      }
-      if (garden.children !== undefined && garden.children !== null) {
-        for (let i = 0; i < garden.children.length; i++){
-          upsertGardenSystems(garden.children[i], seenIndexes, true);
-        }
+    if (garden.children !== undefined && garden.children !== null) {
+      for (let i = 0; i < garden.children.length; i++){
+        upsertGardenSystems(garden.children[i], seenIndexes, true);
       }
     }
+    
   }
 
   function updateGardenSystems(){
-    if ($rootScope.garden !== undefined) {
+    if ($rootScope.garden !== undefined && $rootScope.garden !== null) {
       let seenIndexes = [];
       upsertGardenSystems($rootScope.garden, seenIndexes);
       // Loop through seen indexes and remove everything not seen starting at the end

@@ -93,7 +93,7 @@ class UserAPI(AuthorizationHandler):
             description: |
               A subset of User attributes to update, most commonly the password.
             schema:
-              $ref: '#/definitions/UserPatch'
+              $ref: '#/definitions/Patch'
         responses:
           200:
             description: User with the given username
