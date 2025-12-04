@@ -14,6 +14,7 @@ import "primereact/resources/primereact.min.css"; // Core CSS
 
 import PrimeSystemIndex from './PrimeSystemIndex';
 // import 'primeflex/primeflex.css';
+import 'primereact/resources/themes/bootstrap4-light-blue/theme.css';
 
 function App() {
   return (
