@@ -108,15 +108,16 @@ class UserAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        self.minimum_permission = Permissions.GARDEN_ADMIN.name
-        self.verify_user_global_permission()
 
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
         for op in patch:
             operation = op.operation.lower()
 
             if operation == "update_roles":
+                self.verify_user_global_permission()
+
                 response = await self.process_operation(
                     Operation(
                         operation_type="USER_UPDATE",
@@ -128,6 +129,8 @@ class UserAPI(AuthorizationHandler):
                     filter_results=False,
                 )
             elif operation == "update_user_mappings":
+                self.verify_user_global_permission()
+
                 response = await self.process_operation(
                     Operation(
                         operation_type="USER_UPDATE",
@@ -143,6 +146,10 @@ class UserAPI(AuthorizationHandler):
                     filter_results=False,
                 )
             elif operation == "update_user_password":
+
+                if username != self.current_user.username:
+                    self.verify_user_global_permission()
+
                 response = await self.process_operation(
                     Operation(
                         operation_type="USER_UPDATE",
@@ -153,6 +160,36 @@ class UserAPI(AuthorizationHandler):
                     ),
                     filter_results=False,
                 )
+            elif operation == "set":
+                if username != self.current_user.username:
+                    self.verify_user_global_permission()
+
+                if op.path == "/preferences/home":
+                    response = await self.process_operation(
+                        Operation(
+                            operation_type="USER_UPDATE",
+                            kwargs={
+                                "username": username,
+                                "preferences": {
+                                    "home": op.value,
+                                },
+                            },
+                        ),
+                        filter_results=False,
+                    )
+                elif op.path == "/preferences/theme":
+                    response = await self.process_operation(
+                        Operation(
+                            operation_type="USER_UPDATE",
+                            kwargs={
+                                "username": username,
+                                "preferences": {
+                                    "theme": op.value,
+                                },
+                            },
+                        ),
+                        filter_results=False,
+                    )
 
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")

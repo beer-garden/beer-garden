@@ -363,6 +363,20 @@ class TestUser:
 
         assert len(user4.user_alias_mapping) == 2
 
+    def test_update_user_preferences(self, user):
+        prefs = {"theme": "dark", "home": {"dashboard": "dashboard"}}
+        update_user(user=user, preferences=prefs)
+
+        db_user = get_user(username=user.username)
+        assert db_user.preferences["theme"] == "dark"
+        assert db_user.preferences["home"] == {"dashboard": "dashboard"}
+
+        # Update only one preference
+        update_user(user=user, preferences={"theme": "light"})
+        db_user = get_user(username=user.username)
+        assert db_user.preferences["theme"] == "light"
+        assert db_user.preferences["home"] == {"dashboard": "dashboard"}
+
 
 class TestUserForwarding:
     def test_flatten_user_role(self):

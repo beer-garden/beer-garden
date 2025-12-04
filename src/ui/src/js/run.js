@@ -107,17 +107,33 @@ export default function appRun(
   $rootScope.loadUser = function(token) {
     $rootScope.userPromise = UserService.loadUser(token).then(
         (response) => {
-        // Angular doesn't do a deep watch here, so make sure we calculate
-        // and set the permissions before setting $rootScope.user
+          // Angular doesn't do a deep watch here, so make sure we calculate
+          // and set the permissions before setting $rootScope.user
           const user = response.data;
 
-          // If user is logged in, change to their default theme selection
+          // If user is logged in, change to their default theme/home selection
           let theme;
+          let defaultHome = 'base.systems()';
+          let defaultHomePage = 'base.systems';
+          let defaultHomeParameters = {};
+
           if (user.id) {
             theme = _.get(user, 'preferences.theme', 'default');
+
+            if (_.get(user, 'preferences.home', null) !== null) {
+              defaultHome = _.get(user, 'preferences.home.defaultHome', defaultHome);
+              defaultHomePage = _.get(user, 'preferences.home.defaultHomePage', defaultHomePage);
+              defaultHomeParameters = _.get(user, 'preferences.home.defaultHomeParameters', defaultHomeParameters);
+            }
+
           } else {
             theme = localStorageService.get('currentTheme') || 'default';
+            defaultHome = localStorageService.get('defaultHome', defaultHome);
+            defaultHomePage = localStorageService.get('defaultHomePage', defaultHomePage);
+            defaultHomeParameters = localStorageService.get('defaultHomeParameters', defaultHomeParameters);
           }
+
+          $rootScope.setHome(defaultHome, defaultHomePage, defaultHomeParameters, false);
           $rootScope.changeTheme(theme, false);
 
           $rootScope.user = user;
@@ -245,7 +261,7 @@ export default function appRun(
     }
 
     if ($rootScope.isUser($rootScope.user) && sendUpdate) {
-      UserService.setTheme($rootScope.user.id, theme);
+      UserService.setTheme($rootScope.user.username, theme);
     }
   };
 
@@ -270,15 +286,31 @@ export default function appRun(
       newHomePage = `${page}(${paramsString})`;
     }
 
-    localStorageService.set('defaultHome', newHomePage);
-    localStorageService.set('defaultHomePage', page);
-    localStorageService.set('defaultHomeParameters', homeParameters);
+    $rootScope.setHome(newHomePage, page, homeParameters, true);
 
-    $rootScope.config.defaultHome = newHomePage;
-    $rootScope.config.defaultHomePage = page;
-    $rootScope.config.defaultHomeParameters = homeParameters;
+  }
 
-    location.reload();
+  $rootScope.setHome = function(defaultHome, defaultHomePage, defaultHomeParameters, sendUpdate) {
+    localStorageService.set('defaultHome', defaultHome);
+    localStorageService.set('defaultHomePage', defaultHomePage);
+    localStorageService.set('defaultHomeParameters', defaultHomeParameters);
+
+    if ($rootScope.isUser($rootScope.user) && sendUpdate) {
+      UserService.setHome($rootScope.user.username, 
+        { 'defaultHome': defaultHome, 
+          'defaultHomePage': defaultHomePage, 
+          'defaultHomeParameters': defaultHomeParameters });
+    }
+
+    if ($rootScope.config.defaultHome !== defaultHome ||
+        $rootScope.config.defaultHomePage !== defaultHomePage ||
+        !_.isEqual($rootScope.config.defaultHomeParameters, defaultHomeParameters)) {
+          $rootScope.config.defaultHome = defaultHome;
+          $rootScope.config.defaultHomePage = defaultHomePage;
+          $rootScope.config.defaultHomeParameters = defaultHomeParameters;
+
+          location.reload();
+        }
   }
 
   $rootScope.convertDictToJson = function(dictObject) {
