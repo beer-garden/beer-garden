@@ -6,6 +6,10 @@ TBD
 
 ## Major dependency upgrades and dropping 3.6, 3.7, 3.8, 3.9, 3.10 Python Support
 
+# 3.31.0rc3
+
+- Fixed UI bug where icons on Admin page did not display while utilizing the Dark theme
+
 # 3.31.0rc2
 
 - Updated UI to utilize only cookies for themes until models are updated to 
