@@ -4,6 +4,9 @@
   background: inherit;
   border-left: 1px solid #cbcbcb !important;
 }
+.navbar {
+  margin-bottom: 0px;
+}
 .navbar-default {
   background-image: none;
 }
