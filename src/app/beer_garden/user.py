@@ -653,20 +653,22 @@ def initiate_user_sync() -> None:
             if downstream_user:
                 child_users.append(downstream_user)
 
-        operation = Operation(
-            operation_type="USER_UPSTREAM_SYNC",
-            target_garden_name=child.name,
-            kwargs={
-                "upstream_users": SchemaParser.serialize_user(
-                    child_users, to_string=False, many=True
-                ),
-            },
-        )
+        if len(child_users) > 0:
 
-        try:
-            route(operation)
-        except (ForwardException, RoutingRequestException):
-            logger.error(f"Failed to sync users to {child.name}")
+            operation = Operation(
+                operation_type="USER_UPSTREAM_SYNC",
+                target_garden_name=child.name,
+                kwargs={
+                    "upstream_users": SchemaParser.serialize_user(
+                        child_users, to_string=False, many=True
+                    ),
+                },
+            )
+
+            try:
+                route(operation)
+            except (ForwardException, RoutingRequestException):
+                logger.error(f"Failed to sync users to {child.name}")
 
 
 def upstream_user_sync(upstream_user: User) -> User:

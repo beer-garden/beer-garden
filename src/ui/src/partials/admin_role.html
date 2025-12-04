@@ -20,11 +20,13 @@
   </div>
 </h1>
 
-<fetch-data response="response"></fetch-data>
+<fetch-data response="response" ng-if="hasPermission('READ_ONLY')"></fetch-data>
+
+<unauthorized-message ng-if="!hasPermission('READ_ONLY')"/>
 
 <div
   class="container-fluid animate-if"
-  ng-show="responseState(response) === 'success'"
+  ng-show="hasPermission('READ_ONLY') && responseState(response) === 'success'"
 >
   <div ng-show="!config.authEnabled" uib-alert class="alert alert-danger">
     Warning - Beergarden authorization is currently disabled. Changes made here

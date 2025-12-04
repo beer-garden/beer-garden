@@ -1,8 +1,10 @@
-<div ng-show="(responseState(response) === 'success') && template">
+<unauthorized-message ng-if="!hasPermission('READ_ONLY')"/>
+
+<div ng-show="hasPermission('READ_ONLY') && (responseState(response) === 'success') && template">
   <div ng-bind-html="template"></div>
 </div>
 
-<div ng-show="!template">
+<div ng-show="hasPermission('READ_ONLY') && !template">
   <h1 class="page-header">Commands</h1>
 
   <ol class="tagline breadcrumb">
@@ -21,7 +23,7 @@
 
   <div
     class="container-fluid animate-if"
-    ng-if="responseState(response) === 'success'"
+    ng-if="hasPermission('READ_ONLY') && responseState(response) === 'success'"
   >
     <div>
       <table
