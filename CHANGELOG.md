@@ -8,7 +8,8 @@ TBD
 
 # 3.31.0rc3
 
-- Fixed UI bug where icons on Admin page did not display while utilizing the Dark theme
+- Fixed UI bug where icons on Admin page did not display while utilizing the Dark theme (#1999)
+- Updated downstream unresponsive timeout for legacy Gardens to 60 minutes. (#1998)
 
 # 3.31.0rc2
 
