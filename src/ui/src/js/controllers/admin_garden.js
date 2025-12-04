@@ -6,6 +6,8 @@ adminGardenController.$inject = [
   '$uibModal',
   'GardenService',
   'EventService',
+  'QueueService',
+  'SystemService',
 ];
 
 /**
@@ -15,6 +17,8 @@ adminGardenController.$inject = [
  * @param  {Object} $uibModal
  * @param  {Object} GardenService    Beer-Garden's garden service object.
  * @param  {Object} EventService    Beer-Garden's event service object.
+ * @param  {Object} QueueService    Beer-Garden's queue service object.
+ * @param  {Object} SystemService    Beer-Garden's system service object.
  */
 
 export default function adminGardenController(
@@ -23,6 +27,8 @@ export default function adminGardenController(
     $uibModal,
     GardenService,
     EventService,
+    QueueService,
+    SystemService,
 ) {
   $scope.setWindowTitle('gardens');
   $scope.alerts = [];
@@ -115,6 +121,12 @@ export default function adminGardenController(
   $scope.rescan = function() {
     GardenService.rescanGardens();
   };
+  $scope.rescanGardenPlugins = function(garden) {
+    SystemService.rescan(garden.name);
+  }
+  $scope.rescanGarden = function(garden) {
+    GardenService.rescanGarden(garden.name);
+  };
   $scope.syncGarden = function(garden) {
     GardenService.syncGarden(garden.name);
   };
@@ -122,6 +134,10 @@ export default function adminGardenController(
   $scope.syncUsersGarden = function(garden) {
     GardenService.syncUsersGarden(garden.name);
   };
+
+  $scope.clearQueues = function(garden) {
+    QueueService.clearQueues(garden.name);
+  }
 
   $scope.deleteGarden = function(garden) {
     GardenService.deleteGarden(garden.name);
@@ -381,6 +397,120 @@ export default function adminGardenController(
       }
     }
 
+  }
+
+  $scope.getUnRoutableGarden = function(garden, connection_type){
+    if (!garden.has_parent || garden.parent === $rootScope.config.gardenName){
+      return garden.name
+    }
+
+    let routable = false;
+    if (connection_type == "publishing_connections" && garden.publishing_connections !== undefined && garden.publishing_connections !== null && garden.publishing_connections.length > 0){
+      for (let i = 0; i < garden.publishing_connections.length; i++){
+        if ("PUBLISHING" === garden.publishing_connections[i].status){
+          routable = true;
+        }
+      }
+    }
+    else if (connection_type == "receiving_connections" && garden.receiving_connections !== undefined && garden.receiving_connections !== null && garden.receiving_connections.length > 0){
+      for (let i = 0; i < garden.receiving_connections.length; i++){
+        if ("RECEIVING" === garden.receiving_connections[i].status){
+          routable = true;
+        }
+      }
+    }
+
+    if (!routable){
+      return garden.name;
+    }
+
+    if (garden.has_parent){
+      for (let i = 0; i < $scope.data.length; i++) {
+        if ($scope.data[i].name == garden.parent){
+          return $scope.getUnRoutableGarden($scope.data[i], connection_type)
+        }
+      }
+    } 
+
+    return garden.name;
+  };
+
+  $scope.isGardenRoutable = function(garden, connection_type){
+    if (garden.name == $rootScope.config.gardenName){
+      return true;
+    }
+    
+    let routable = false;
+
+    if (connection_type == "publishing_connections" && garden.publishing_connections !== undefined && garden.publishing_connections !== null){
+      for (let i = 0; i < garden.publishing_connections.length; i++){
+        if ("PUBLISHING" == garden.publishing_connections[i].status){
+          routable = true;
+        }
+      }
+    }
+    else if (connection_type == "receiving_connections" && garden.receiving_connections !== undefined && garden.receiving_connections !== null){
+      for (let i = 0; i < garden.receiving_connections.length; i++){
+        if ("RECEIVING" == garden.receiving_connections[i].status){
+          routable = true;
+        }
+      }
+    }
+
+    if (!routable){
+      return false;
+    }
+
+    if (garden.has_parent){
+      for (let i = 0; i < $scope.data.length; i++) {
+        if ($scope.data[i].name == garden.parent){
+          return $scope.isGardenRoutable($scope.data[i], connection_type)
+        }
+      }
+    } else {
+      return true;
+    }
+
+    return false;
+  };
+
+  $scope.getGardenRoutingStatus = function (garden, connection_type, connection_api) {
+    let actualStatus = "UNKNOWN";
+    for (let i = 0; i < garden[connection_type].length; i++) {
+      if (garden[connection_type][i].api == connection_api) {
+        actualStatus = garden[connection_type][i].status;
+      }
+    }
+
+    if ($scope.isGardenRoutable(garden, connection_type)) {
+      return actualStatus;
+    } else {
+      let unroutableGarden = $scope.getUnRoutableGarden(garden, connection_type);
+      if (unroutableGarden == garden.name) {
+        return actualStatus;
+      }
+
+      for (let i = 0; i < $scope.data.length; i++) {
+        if ($scope.data[i].name == unroutableGarden) {
+          let invalidStatus = null;
+          for (let j = 0; j < $scope.data[i][connection_type].length; j++) {
+            if ($scope.data[i][connection_type][j].api == connection_api) {
+              if (invalidStatus == null) {
+                invalidStatus = $scope.data[i][connection_type][j].status;
+              } else if ($scope.data[i][connection_type][j].status != "DISABLED") {
+                invalidStatus = $scope.data[i][connection_type][j].status;
+              }
+            }
+          }
+
+          if (invalidStatus != null && invalidStatus == "DISABLED") {
+            return "DISABLED";
+          }
+        }
+      }
+    }
+    
+    return "UNKNOWN";
   }
 
   EventService.addCallback('admin_garden', (event) => {

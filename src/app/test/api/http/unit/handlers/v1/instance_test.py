@@ -17,6 +17,14 @@ from beer_garden.user import create_user, delete_user
 
 
 @pytest.fixture(autouse=True)
+def async_loop():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    yield
+    loop.close()
+
+
+@pytest.fixture(autouse=True)
 def garden(system):
     garden = Garden(name="somegarden", connection_type="LOCAL", systems=[system]).save()
 

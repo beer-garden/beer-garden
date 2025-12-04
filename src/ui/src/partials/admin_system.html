@@ -215,13 +215,13 @@
                 <button
                   type="button"
                   class="btn btn-default"
-                  ng-click="startInstance(instance)"
+                  ng-click="startInstance(instance, system)"
                   title="Start Instance {{instance.name}}"
                 ><i class="{{getIcon('fa-play')}}"></i></button>
                 <button
                   type="button"
                   class="btn btn-default"
-                  ng-click="stopInstance(instance)"
+                  ng-click="stopInstance(instance, system)"
                   title="Stop Instance {{instance.name}}"
                 ><i class="{{getIcon('fa-stop')}}"></i></button>
                 <button

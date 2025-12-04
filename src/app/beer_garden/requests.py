@@ -19,7 +19,6 @@ from builtins import str
 from copy import deepcopy
 from typing import Dict, List, Sequence, Union
 
-import six
 import urllib3
 from brewtils.choices import parse
 from brewtils.errors import (
@@ -312,7 +311,7 @@ class RequestValidator(object):
                     self._session.get(parsed_value["address"], params=query_params).text
                 )
             elif choices.type == "command":
-                if isinstance(choices.value, six.string_types):
+                if isinstance(choices.value, str):
                     parsed_value = parse(choices.value, parse_as="func")
 
                     choices_request = Request(
@@ -529,8 +528,8 @@ class RequestValidator(object):
                     "and this field is not nullable." % parameter.key
                 )
             elif parameter.type.upper() == "STRING":
-                if isinstance(value, six.string_types):
-                    return str(value)
+                if isinstance(value, str):
+                    return value
                 else:
                     raise TypeError("Invalid value for string (%s)" % value)
             elif parameter.type.upper() == "INTEGER":
@@ -1167,6 +1166,13 @@ def handle_event_create(event):
             if parent_request is None:
                 event.payload.parent = None
                 event.payload.has_parent = False
+
+        # Set source and target gardens if not already set
+        if event.payload.source_garden is None:
+            event.payload.source_garden = event.garden
+
+        if event.payload.target_garden is None:
+            event.payload.target_garden = event.garden
 
         # User mappings back to local usernames
         if event.payload.requester and config.get("auth.enabled"):
