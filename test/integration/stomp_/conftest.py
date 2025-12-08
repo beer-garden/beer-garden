@@ -5,7 +5,6 @@ from brewtils.schema_parser import SchemaParser
 from helper import RequestGenerator, setup_easy_client
 
 
-
 @pytest.fixture(scope="class")
 def request_generator(request, system_spec):
     request.cls.request_generator = RequestGenerator(**system_spec)

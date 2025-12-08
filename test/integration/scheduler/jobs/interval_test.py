@@ -4,7 +4,6 @@ import pytest
 from brewtils.models import IntervalTrigger, Job, RequestTemplate
 
 
-
 @pytest.fixture()
 def system_spec():
     return {

@@ -4,7 +4,6 @@ from typing import List
 import pytest
 from brewtils.models import Garden, PatchOperation
 
-
 from helper import wait_for_response
 from helper.assertion import assert_successful_request
 

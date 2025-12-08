@@ -3,7 +3,6 @@ from time import sleep
 import pytest
 from brewtils.models import PatchOperation
 
-
 from helper import wait_for_response
 from helper.assertion import assert_successful_request
 

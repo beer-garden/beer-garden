@@ -1,6 +1,7 @@
-import pytest
 import json
 import time
+
+import pytest
 
 
 @pytest.fixture(scope="class")

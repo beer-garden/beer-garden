@@ -1,6 +1,5 @@
 import pytest
 
-
 from helper import setup_easy_client  # noqa
 
 

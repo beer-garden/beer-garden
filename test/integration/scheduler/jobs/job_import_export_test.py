@@ -13,7 +13,6 @@ from brewtils.models import (  # type: ignore
     RequestTemplate,
 )
 
-
 job_name_base = f"import_export_interval_test_{{}}"  # noqa
 job_wait_length = "seconds"
 job_wait_default = 300

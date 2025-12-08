@@ -1,6 +1,5 @@
 import pytest
 
-
 from helper import RequestGenerator, setup_easy_client
 
 

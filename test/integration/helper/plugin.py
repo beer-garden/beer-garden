@@ -1,8 +1,9 @@
 import time
 from threading import Thread
 
+from brewtils import Plugin, parameter, system
+
 import helper
-from brewtils import system, parameter, Plugin
 
 thread_map = {}
 

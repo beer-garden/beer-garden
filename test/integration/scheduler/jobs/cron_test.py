@@ -4,7 +4,6 @@ import pytest
 from brewtils.models import CronTrigger, Job, RequestTemplate
 
 
-
 @pytest.fixture()
 def system_spec():
     return {
