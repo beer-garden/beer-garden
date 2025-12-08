@@ -24,7 +24,7 @@ x-definitions: &env
 
 services:
     beer-garden:
-        image: bgio/beer-garden:$BG
+        image: bgio/beer-garden:unstable
         networks:
             - bg-network
         ports:
@@ -80,7 +80,7 @@ services:
             - beer-garden
 
     mongodb:
-        image: mongo:6.0
+        image: mongo:$MONGO_VERSION
         restart: always
         networks:
             - bg-network

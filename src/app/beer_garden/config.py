@@ -424,7 +424,7 @@ _GARDEN_SPEC = {
         },
         "status_history": {
             "type": "int",
-            "default": 10,
+            "default": 5,
             "description": (
                 "Amount of historical status heartbeats tracked for Garden and Connections"
             ),
@@ -652,6 +652,11 @@ _UI_SPEC = {
             "type": "bool",
             "default": False,
             "description": "Auto refresh user interface",
+        },
+        "search_delay": {
+            "type": "int",
+            "default": 400,
+            "description": "Search delay for filtering user interface",
         },
     },
 }
@@ -1645,7 +1650,7 @@ _PLUGIN_SPEC = {
         },
         "status_history": {
             "type": "int",
-            "default": 10,
+            "default": 5,
             "description": ("Amount of historical status heartbeats tracked"),
         },
     },

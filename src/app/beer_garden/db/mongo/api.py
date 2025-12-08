@@ -15,15 +15,22 @@ from mongoengine import (
     register_connection,
 )
 from mongoengine.queryset.visitor import Q, QCombination
-from pymongo import UpdateOne
+from pymongo import InsertOne, ReplaceOne, UpdateOne
 
 import beer_garden.db.mongo.models
+from beer_garden.db.mongo.indexes import (
+    check_indexes,
+    update_ttl_indexes,
+)
+from beer_garden.db.mongo.migration import (
+    ensure_model_migration,
+)
 from beer_garden.db.mongo.models import MongoModel
 from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.db.mongo.util import (
-    check_indexes,
     ensure_local_garden,
-    ensure_model_migration,
+    is_legacy_mongodb,
+    reset_last_configuration,
 )
 from beer_garden.errors import NotUniqueException
 
@@ -108,8 +115,13 @@ def to_brewtils(
         model_class = obj.brewtils_model
         many = False
 
-    if getattr(obj, "pre_serialize", None):
-        obj.pre_serialize()
+    if many:
+        for item in obj:
+            if getattr(item, "pre_serialize", None):
+                item.pre_serialize()
+    else:
+        if getattr(obj, "pre_serialize", None):
+            obj.pre_serialize()
 
     serialized = MongoParser.serialize(obj, to_string=True)
     parsed = SchemaParser.parse(serialized, model_class, from_string=True, many=many)
@@ -190,6 +202,12 @@ def initial_setup():
     ):
         check_indexes(doc)
 
+    if not is_legacy_mongodb():
+        update_ttl_indexes()
+
+    # This sets the last configuration for future migrations to reference
+    reset_last_configuration()
+
     ensure_local_garden()
 
 
@@ -253,12 +271,25 @@ def query_unique(
         mongoengine.MultipleObjectsReturned: More than one matching item exists
 
     """
+
     try:
         for k, v in kwargs.items():
             if isinstance(v, BaseModel):
                 kwargs[k] = from_brewtils(v)
 
-        query_set = _model_map[model_class].objects.get(**kwargs)
+        include_fields = kwargs.pop("include_fields", None)
+        exclude_fields = kwargs.pop("exclude_fields", None)
+
+        if include_fields:
+            query_set = (
+                _model_map[model_class].objects.only(*include_fields).get(**kwargs)
+            )
+        elif exclude_fields:
+            query_set = (
+                _model_map[model_class].objects.exclude(*exclude_fields).get(**kwargs)
+            )
+        else:
+            query_set = _model_map[model_class].objects.get(**kwargs)
 
         return to_brewtils(query_set)
     except DoesNotExist:
@@ -295,6 +326,7 @@ def query(
         A list of Brewtils models
 
     """
+
     if kwargs.get("raw_query"):
         query_set = _model_map[model_class].objects(__raw__=kwargs.get("raw_query"))
     else:
@@ -342,6 +374,76 @@ def query(
     return [] if len(query_set) == 0 else to_brewtils(query_set)
 
 
+def create_direct(obj: ModelItem) -> ModelItem:
+    """Save a new item to the database, that already has an ID
+
+    If the Mongo model corresponding to the Brewtils model has a "pre_save"
+    or "post_save" functions, those will be executed. The Original model is
+    returned without any of the database modifications and is written directly
+    into the collection bypassing MongoEngine
+
+    This is not to be utilized for models that have DBRef objects
+
+    Args:
+        obj: The Brewtils model to save
+
+    Returns:
+        The provided Brewtils model
+
+    """
+
+    if not hasattr(obj, "id"):
+        return create(obj)
+
+    mongo_obj: MongoModel = from_brewtils(obj)
+    if hasattr(mongo_obj, "_pre_save"):
+        mongo_obj._pre_save()
+
+    type(mongo_obj)._get_collection().bulk_write(
+        [InsertOne(mongo_obj.to_mongo().to_dict())]
+    )
+
+    if hasattr(mongo_obj, "_post_save"):
+        mongo_obj._post_save()
+
+    return obj
+
+
+def update_direct(obj: ModelItem) -> ModelItem:
+    """Update a item to the database
+
+    If the Mongo model corresponding to the Brewtils model has a "pre_save"
+    or "post_save" functions, those will be executed. The Original model is
+    returned without any of the database modifications and is written directly
+    into the collection bypassing MongoEngine
+
+    This is not to be utilized for models that have DBRef objects
+
+    Args:
+        obj: The Brewtils model to updated
+
+    Returns:
+        The provided Brewtils model
+
+    """
+
+    mongo_obj: MongoModel = from_brewtils(obj)
+
+    mongo_obj.clean_update()
+
+    if hasattr(mongo_obj, "_pre_save"):
+        mongo_obj._pre_save()
+
+    type(mongo_obj)._get_collection().bulk_write(
+        [ReplaceOne({"_id": mongo_obj.id}, mongo_obj.to_mongo().to_dict(), upsert=True)]
+    )
+
+    if hasattr(mongo_obj, "_post_save"):
+        mongo_obj._post_save()
+
+    return obj
+
+
 def create(obj: ModelItem) -> ModelItem:
     """Save a new item to the database
 
@@ -355,6 +457,7 @@ def create(obj: ModelItem) -> ModelItem:
         The saved Brewtils model
 
     """
+
     mongo_obj: MongoModel = from_brewtils(obj)
 
     try:
@@ -381,6 +484,7 @@ def update(obj: ModelItem) -> ModelItem:
         The saved Brewtils model
 
     """
+
     mongo_obj = from_brewtils(obj)
 
     mongo_obj.clean_update()
@@ -410,9 +514,16 @@ def bulk_update(objs: List[ModelItem]) -> None:
         if mongo_class not in bulk_operations:
             bulk_operations[mongo_class] = []
 
-        bulk_operations[mongo_class].append(
-            UpdateOne({"_id": mongo_obj.id}, {"$set": mongo_obj.to_mongo().to_dict()})
-        )
+        if hasattr(mongo_obj, "id") and mongo_obj.id is not None:
+            bulk_operations[mongo_class].append(
+                UpdateOne(
+                    {"_id": mongo_obj.id}, {"$set": mongo_obj.to_mongo().to_dict()}
+                )
+            )
+        else:
+            bulk_operations[mongo_class].append(
+                InsertOne(mongo_obj.to_mongo().to_dict())
+            )
 
     if bulk_operations:
         for bulk_op in bulk_operations:
@@ -433,6 +544,7 @@ def modify(obj: ModelItem, query=None, **kwargs) -> ModelItem:
         The modified Brewtils model
 
     """
+
     mongo_obj = from_brewtils(obj)
 
     # If any values are brewtils models those need to be converted

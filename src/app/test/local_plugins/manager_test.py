@@ -8,7 +8,11 @@ import pytest
 from box import Box
 from brewtils.models import Instance, System
 from mock import Mock
-from pytest_lazyfixture import lazy_fixture
+
+try:
+    from pytest_lazy_fixtures import lf
+except ModuleNotFoundError:
+    from pytest_lazyfixture import lazy_fixture as lf
 
 import beer_garden.db.api as db
 from beer_garden import config
@@ -236,11 +240,11 @@ class TestLoadPlugin(object):
         [
             (None, "malformed plugin path"),
             (Path("/not/a_real/directory"), "does not exist"),
-            (lazy_fixture("_file_path"), "not a directory"),
+            (lf("_file_path"), "not a directory"),
             (Path("."), "empty path"),
-            (lazy_fixture("_hidden_path"), "hidden file"),
-            (lazy_fixture("_good_path"), "does not exist"),
-            (lazy_fixture("_good_path_bad_config"), "is not a file"),
+            (lf("_hidden_path"), "hidden file"),
+            (lf("_good_path"), "does not exist"),
+            (lf("_good_path_bad_config"), "is not a file"),
         ],
     )
     def test_plugin_path_validator_bad_paths(self, value, message, manager, caplog):

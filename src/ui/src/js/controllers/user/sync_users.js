@@ -23,12 +23,6 @@ export default function syncUsersController(
   $scope.gardens = [];
 
   $scope.sync = function() {
-    $scope.gardens.forEach((garden) => {
-      if (garden.status === 'RUNNING') {
-        garden.syncStatus = 'IN_PROGRESS';
-      }
-    });
-
     GardenService.syncUsers();
   };
 
@@ -70,12 +64,6 @@ export default function syncUsersController(
 
     response.data.forEach((garden) => {
       if (garden.connection_type !== 'LOCAL') {
-        if (garden.status !== 'RUNNING') {
-          garden.syncStatus = 'NOT RUNNING';
-        } else {
-          garden.syncStatus = 'PENDING';
-        }
-
         $scope.gardens.push(garden);
       }
     });

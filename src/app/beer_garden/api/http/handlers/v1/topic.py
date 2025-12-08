@@ -557,11 +557,9 @@ class TopicListAPI(AuthorizationHandler):
         description: |
           The body of the request needs to contain a set of instructions detailing the
           updates to apply. Currently the only operations are:
-          * sync_garden_topics
           * sync_all_topics
           ```JSON
           [
-            { "operation": "sync_garden_topics", "value": {garden} }
             { "operation": "sync_all_topics"}
           ]
           ```

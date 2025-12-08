@@ -16,9 +16,9 @@ flake8
 flake8-bugbear
 mock
 mongomock
-pytest < 7
+pytest < 8
 pytest-mock
-pytest-lazy-fixture
+pytest-lazy-fixtures
 pytest-tornado
 isort < 6
 wheel

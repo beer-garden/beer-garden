@@ -89,7 +89,7 @@ export default function jobCreateRequestController(
     }
 
     // If parameters are specified we need to use the model value
-    if (angular.isDefined(requestPrototype['parameterNames'])) {
+    if (angular.isDefined(requestPrototype['parameterNames']) && requestPrototype['parameterNames'] !== null) {
       request['parameters'] = {};
       const nameList = requestPrototype['parameterNames'];
       for (let i = 0; i < nameList.length; i++) {

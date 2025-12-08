@@ -39,8 +39,8 @@ class TestFileOperations(object):
     def simple_file(self, base64_data):
         file = File(
             file_name="my_test_data.txt",
-            file_size=len(base64_data) * 4,
-            chunk_size=len(base64_data),
+            file_size=len(b64decode(base64_data)) * 4,
+            chunk_size=len(b64decode(base64_data)),
             id=str(ObjectIdField().to_python(None)),
             owner_type=None,
             owner_id=None,

@@ -82,7 +82,16 @@ def _safe_build_object(cls, *objects, ignore=None, **manual_kwargs):
                 _unroll_object(
                     obj,
                     key_map={"id": "file_id"},
-                    ignore=["job", "owner", "request", "updated_at"] + ignore,
+                    ignore=[
+                        "job",
+                        "owner",
+                        "request",
+                        "created_at",
+                        "updated_at",
+                        "status",
+                        "root_command_type",
+                    ]
+                    + ignore,
                 )
             )
 
@@ -91,7 +100,16 @@ def _safe_build_object(cls, *objects, ignore=None, **manual_kwargs):
                 _unroll_object(
                     obj,
                     key_map={"id": "chunk_id"},
-                    ignore=["owner", "job", "request"] + ignore,
+                    ignore=[
+                        "owner",
+                        "job",
+                        "request",
+                        "created_at",
+                        "updated_at",
+                        "status",
+                        "root_command_type",
+                    ]
+                    + ignore,
                 )
             )
 
@@ -255,7 +273,7 @@ def _verify_chunks(file_id: str) -> FileStatus:
             if chunk is None or chunk.offset != x:
                 missing.append(x)
             else:
-                chunk_size = chunk_size + len(chunk.data)
+                chunk_size = chunk_size + len(b64decode(chunk.data))
 
     size_ok = file.file_size == chunk_size
 
@@ -372,6 +390,7 @@ def create_file(
         file_name=file_name,
         file_size=file_size,
         chunk_size=chunk_size,
+        created_at=datetime.utcnow(),
         **kwargs,
     )
 
@@ -582,6 +601,19 @@ def forward_file(operation: Operation) -> None:
 
             # This should put push the file operations before the current one
             router.forward(chunk_op)
+
+
+def handle_event_filter(event: Event) -> bool:
+    if event.garden != config.get("garden.name"):
+        return True
+    if event.name == Events.JOB_CREATED.name:
+        if len(_find_chunk_params(event.payload.request_template.parameters)) > 0:
+            return False
+
+    elif event.name == Events.REQUEST_CREATED.name:
+        if len(_find_chunk_params(event.payload.parameters)) > 0:
+            return False
+    return True
 
 
 def handle_event(event: Event) -> None:

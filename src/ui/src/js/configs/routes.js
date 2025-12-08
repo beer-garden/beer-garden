@@ -1,5 +1,3 @@
-import {camelCaseKeys} from '../services/utility_service.js';
-
 routeConfig.$inject = [
   '$stateProvider',
   '$urlRouterProvider',
@@ -32,28 +30,10 @@ export default function routeConfig(
         resolve: {
           config: [
             '$rootScope',
-            'UtilityService',
-            ($rootScope, UtilityService) => {
-              return UtilityService.getConfig().then((response) => {
-                angular.extend($rootScope.config, camelCaseKeys(response.data));
-              });
-            },
-          ],
-          namespaces: [
-            '$rootScope',
-            'UtilityService',
-            ($rootScope, UtilityService) => {
-              return UtilityService.getNamespaces().then((response) => {
-                $rootScope.namespaces = response.data;
-              });
-            },
-          ],
-          systems: [
-            '$rootScope',
             ($rootScope) => {
-              return $rootScope.getSystems();
+              return $rootScope.config;
             },
-          ],
+          ]
         },
       })
       .state('base.about', {

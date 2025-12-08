@@ -4,11 +4,13 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from typing import List
 
+from brewtils.errors import ModelValidationError
 from brewtils.models import Event, Events, Garden, Operation, Request, System, Topic
 
 import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.garden import get_garden
+from beer_garden.replication import is_primary_replication
 from beer_garden.systems import get_systems
 from beer_garden.topic import (
     get_topics_regex,
@@ -154,7 +156,26 @@ def determine_target_garden(request: Request, garden: Garden = None) -> str:
     return None
 
 
+def handle_event_filter(event):
+
+    if event.name == Events.REQUEST_TOPIC_PUBLISH.name and (
+        event.garden == config.get("garden.name")
+        or event.metadata.get("_propagate", False)
+    ):
+        return False
+
+    return True
+
+
 def handle_event(event: Event):
+    # Only the primary replication should handle publish request events
+    if (
+        config.get("replication.enabled")
+        and hasattr(event.payload, "replication_id")
+        and not is_primary_replication(event.payload.replication_id)
+    ):
+        return
+
     if event.name == Events.REQUEST_TOPIC_PUBLISH.name and (
         event.garden == config.get("garden.name")
         or event.metadata.get("_propagate", False)
@@ -167,6 +188,11 @@ def handle_event(event: Event):
         if topics:
 
             matching_systems = get_systems_regex(topics)
+
+            if not event.payload.metadata:
+                event.payload.metadata = {}
+
+            event.payload.metadata["_topic"] = event.metadata["topic"]
 
             requests = process_publish_event(matching_systems, event, topics)
 
@@ -188,6 +214,14 @@ def route_request(create_request):
                 operation_type="REQUEST_CREATE",
                 model=create_request,
                 model_type="Request",
+            )
+        )
+    except ModelValidationError as ex:
+        logger.error(
+            (
+                "Invalid request for topic "
+                f"'{create_request.metadata.get('_topic', 'Missing Topic')}' "
+                f"for request {create_request}: {ex}"
             )
         )
     except Exception as ex:
@@ -302,6 +336,7 @@ def process_publish_event(
                         event_request.instance_name = instance.name
                         event_request.command = command.name
                         event_request.command_type = command.command_type
+                        event_request.has_parent = True
                         event_request.is_event = True
 
                         request_hash = (
