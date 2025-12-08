@@ -1,6 +1,6 @@
 import pytest
 
-from helper import setup_easy_client  # noqa
+from helper import setup_easy_client
 
 
 @pytest.fixture(scope="class")
