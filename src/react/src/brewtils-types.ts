@@ -1,4 +1,7 @@
 
+type parameter_types = "String" | "Integer" | "Float" | "Boolean" | "Any" | "Dictionary" | "Date" | "DateTime" | "Bytes" | "Base64" | "null";
+type output_types = "STRING"| "JSON"| "XML"| "HTML"| "JS"| "CSS" ; 
+
 export interface AliasUserMap {
     targetGarden?: string;
     username?: string;
@@ -22,7 +25,7 @@ export interface Command {
     description?: string;
     parameters?: Parameter[];
     command_type?: string;
-    output_type?: string;
+    output_type?: output_types;
     schema?: object;
     form?: object;
     template?: string;
@@ -234,10 +237,10 @@ export interface Operation {
     sourceApi?: string;
     operationType?: string;
 }
-    
+
 export interface Parameter {
     key?: string;
-    type?: string;
+    type?: parameter_types;
     multi?: boolean;
     display_name?: string;
     optional?: boolean;
@@ -292,7 +295,7 @@ export interface Request {
     parameters?: object;
     comment?: string;
     metadata?: object;
-    output_type?: string;
+    output_type?: output_types;
     id?: string;
     is_event?: boolean;
     parent?: any;

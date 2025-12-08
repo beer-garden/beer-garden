@@ -234,7 +234,7 @@ function RequestView() {
                 <Accordion.Item eventKey="1">
                     <Accordion.Header>Request History</Accordion.Header>
                     <Accordion.Body>
-                        <RequestTreeChart {...request} />
+                        {/* <RequestTreeChart {...request} /> */}
                          {/* <RequestHistory {...request} />  */}
                         {/* <ApexTimeline {...request} />*/}
                         {/* <RequestGanttHistory {...request} /> */}

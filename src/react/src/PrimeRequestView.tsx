@@ -1,0 +1,399 @@
+import { Request, System } from './brewtils-types';
+
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { BreadCrumb } from 'primereact/breadcrumb';
+import RequestTreeChart from "./RequestTreeChart";
+import { Steps } from 'primereact/steps';
+import { Toast } from 'primereact/toast';
+import { useState, useRef } from 'react';
+import { MenuItem } from 'primereact/menuitem';
+import { Button } from 'primereact/button';
+import { Menubar } from 'primereact/menubar';
+import PrimeCommandForm  from './PrimeCommandForm';
+import PrimeRequestOutput from './PrimeRequestOutput';
+import { Splitter, SplitterPanel } from 'primereact/splitter';
+
+function ExampleSystem() {
+    const system : System = {
+        id: '6932016e45c60d9fef2ed235',
+        name: 'echo',
+        description: 'Annoying plugin that just repeats stuff',
+        version: '3.0.0.dev0',
+        namespace: 'default',
+        max_instances: -1,
+        instances: [
+          {
+            id: '6932016d45c60d9fef2ed231',
+            name: '1',
+            status: 'RUNNING',
+            status_info: {},
+            metadata: {},
+          }
+        ],
+        commands: [
+          {
+            name: 'say',
+            display_name: 'say',
+            description: 'Echos!',
+            parameters: [
+              {
+                key: 'message',
+                type: 'String',
+                multi: false,
+                display_name: 'message',
+                optional: true,
+                default: 'Hello, World!',
+                description: 'The Message to be Echoed',
+                nullable: false,
+                type_info: {},
+                parameters: []
+              },
+              {
+                key: 'loud',
+                type: 'Boolean',
+                multi: false,
+                display_name: 'loud',
+                optional: true,
+                default: false,
+                description: 'Determines if Exclamation marks are added',
+                nullable: false,
+                type_info: {},
+                parameters: []
+              },
+              {
+                key: 'Integer',
+                type: 'Integer',
+                multi: false,
+                display_name: 'Integer',
+                optional: true,
+                default: null,
+                description: 'Determines if Exclamation marks are added',
+                nullable: false,
+                type_info: {},
+                parameters: []
+              },
+              {
+                key: 'Float',
+                type: 'Float',
+                multi: false,
+                display_name: 'Float',
+                optional: true,
+                default: null,
+                description: 'Determines if Exclamation marks are added',
+                nullable: false,
+                type_info: {},
+                parameters: []
+              },
+              {
+                key: 'Date',
+                type: 'Date',
+                multi: false,
+                display_name: 'Date',
+                optional: true,
+                default: null,
+                description: 'Determines if Exclamation marks are added',
+                nullable: false,
+                type_info: {},
+                parameters: []
+              },
+              {
+                key: 'DateTime',
+                type: 'DateTime',
+                multi: false,
+                display_name: 'DateTime',
+                optional: true,
+                default: null,
+                description: 'Determines if Exclamation marks are added',
+                nullable: false,
+                type_info: {},
+                parameters: []
+              },
+              {
+                key: 'Bytes',
+                type: 'Bytes',
+                multi: false,
+                display_name: 'Bytes',
+                optional: true,
+                default: null,
+                description: 'Determines if Exclamation marks are added',
+                nullable: false,
+                type_info: {},
+                parameters: []
+              },
+              {
+                key: 'Base64',
+                type: 'Base64',
+                multi: false,
+                display_name: 'Base64',
+                optional: true,
+                default: null,
+                description: 'Determines if Exclamation marks are added',
+                nullable: false,
+                type_info: {},
+                parameters: []
+              }
+            ],
+            command_type: 'ACTION',
+            output_type: 'STRING',
+            schema: {},
+            form: {},
+            hidden: false,
+            metadata: {},
+            tags: [],
+            topics: [],
+            allow_any_kwargs: false
+          },
+          {
+            name: 'say_html',
+            display_name: 'say_html',
+            description: 'Echos with HTML output_type',
+            parameters: [
+              {
+                key: 'message',
+                type: 'String',
+                multi: false,
+                display_name: 'message',
+                optional: true,
+                default: '<h1>Hello, World</h1>',
+                description: 'The Message to be Echoed',
+                nullable: false,
+                type_info: {},
+                parameters: []
+              }
+            ],
+            command_type: 'ACTION',
+            output_type: 'HTML',
+            schema: {},
+            form: {},
+            hidden: false,
+            metadata: {},
+            tags: [],
+            topics: [],
+            allow_any_kwargs: false
+          },
+          {
+            name: 'say_json',
+            display_name: 'say_json',
+            description: 'Echos with JSON output_type',
+            parameters: [
+              {
+                key: 'message',
+                type: 'String',
+                multi: false,
+                display_name: 'message',
+                optional: true,
+                default: '{"str": "value", "nums": [1, 17], "obj": {"nested": "sweet"}}',
+                description: 'The Message to be Echoed',
+                nullable: false,
+                type_info: {},
+                parameters: []
+              }
+            ],
+            command_type: 'ACTION',
+            output_type: 'JSON',
+            schema: {},
+            form: {},
+            hidden: false,
+            metadata: {},
+            tags: [],
+            topics: [],
+            allow_any_kwargs: false
+          }
+        ],
+        icon_name: 'fa-comment',
+        metadata: {},
+        local: true,
+        groups: [],
+        requires: [],
+        requires_timeout: 300,
+      };
+
+    return system;
+}
+
+function ExampleRequest() {
+    const request: Request = {
+        "system_version": "3.0.0.dev0",
+        "id": "6772ed28aa78c5898091e9e7",
+        "output": "Happy World!",
+        "parent": null,
+        "command_type": "ACTION",
+        "updated_at": 1735585075473,
+        "namespace": "default",
+        "output_type": "STRING",
+        "is_event": false,
+        "command": "say",
+        "status": "SUCCESS",
+
+        "created_at": 1735585064780,
+        "system": "echo",
+        "instance_name": "default",
+        "metadata": {
+            "CREATED_default": 1735603064781,
+            "IN_PROGRESS_default": 1735603064915,
+            "SUCCESS_default": 1735603075474
+        },
+        "target_garden": "default",
+        "status_updated_at": 1735585075474,
+        "source_garden": "default",
+        "parameters": {
+            "message": "Happy World!",
+            "loud": false,
+        },
+        "hidden": false,
+        "has_parent": false,
+        "children": [
+            {
+                "system_version": "3.0.0.dev0",
+                "id": "6772ed29aa78c5898091e9ee",
+                "output": "null",
+                "command_type": "ACTION",
+                "updated_at": 1735585075214,
+                "namespace": "default",
+                "output_type": "STRING",
+                "is_event": false,
+                "command": "sleep",
+                "status": "SUCCESS",
+
+                "created_at": 1735585065046,
+                "system": "sleeper",
+                "instance_name": "default",
+                "metadata": {
+                    "CREATED_default": 1735603065046,
+                    "IN_PROGRESS_default": 1735603065131,
+                    "SUCCESS_default": 1735603075216
+                },
+                "target_garden": "default",
+                "status_updated_at": 1735585075216,
+                "source_garden": "default",
+                "parameters": {
+                    "amount": 10
+                },
+                "hidden": false,
+                "has_parent": true,
+
+                "command_display_name": "sleep",
+                "comment": null
+            },
+            {
+                "system_version": "3.0.0.dev0",
+                "id": "6772ed33aa78c5898091ea5d",
+                "output": "Happy World!",
+                "command_type": "ACTION",
+                "updated_at": 1735585075434,
+                "namespace": "default",
+                "output_type": "STRING",
+                "is_event": false,
+                "command": "say",
+                "status": "SUCCESS",
+
+                "created_at": 1735585075334,
+                "system": "echo",
+                "instance_name": "default",
+                "metadata": {
+                    "CREATED_default": 1735603075334,
+                    "IN_PROGRESS_default": 1735603075400,
+                    "SUCCESS_default": 1735603075436
+                },
+                "target_garden": "default",
+                "status_updated_at": 1735585075436,
+                "source_garden": "default",
+                "parameters": {
+                    "message": "Happy World!",
+                    "loud": false
+                },
+                "hidden": false,
+                "has_parent": true,
+
+                "command_display_name": "say",
+                "comment": null
+            }
+        ],
+
+        "command_display_name": "sleep_say",
+        "comment": ""
+    }
+
+    return request;
+}
+
+function RequestHeader(request: Request) {
+
+    const iconItemTemplate = (item:any, options:any) => {
+        
+        if (item.icon) {
+            return <span className={options.className}><FontAwesomeIcon icon={item.icon}/></span>;
+        }
+        return <span className={options.className}>{item.label}</span>;
+        
+    }
+
+    const items = [
+        {
+            icon: "file-lines",
+            template: iconItemTemplate
+        },      
+        {
+            label: request.namespace,
+            template: iconItemTemplate
+        },
+        {
+            label: request.system,
+            template: iconItemTemplate
+        },
+        {
+            label: request.system_version,
+            template: iconItemTemplate
+        },
+        {
+            label: request.instance_name,
+            template: iconItemTemplate
+        },
+        {
+            label: request.command,
+            template: iconItemTemplate
+        },
+        {
+            label: request.id,
+            template: iconItemTemplate
+        }
+    ];
+
+    if (request.has_parent && request.parent) {
+        items.push({
+            icon: "arrow-turn-up",
+            template: iconItemTemplate
+        });
+    }  
+
+    return (
+
+            <BreadCrumb model={items} />
+
+    )
+
+}
+
+function PrimeRequestView() {
+
+    const request: Request = ExampleRequest();
+    const currentRequestId = request.id || '';
+    const system: System = ExampleSystem();
+
+    const command = system.commands?.find(cmd => cmd.name === request.command);
+
+    const props = {rootRequest: request, currentRequestId: currentRequestId};
+    return (<div>
+        <RequestHeader {...request} />
+        {command && (
+            <PrimeCommandForm {...(command)} />
+        )}
+        <RequestTreeChart {...props} />
+        {request.output && (<PrimeRequestOutput {...request} />)}
+        
+    </div>);
+}
+
+export default PrimeRequestView;
+       
+        

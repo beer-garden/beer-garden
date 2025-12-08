@@ -7,6 +7,7 @@ import SystemIndexGroups from './SystemIndexGroups';
 import RequestView from './RequestView';
 // import RequestGantt from './RequestGantt';
 import RequestTimeline from './RequestTimeline';
+import PrimeRequestView from './PrimeRequestView';
 
 import "primereact/resources/themes/lara-light-blue/theme.css"; // Theme
 import "primereact/resources/primereact.min.css"; // Core CSS
@@ -28,6 +29,9 @@ function App() {
         </Route>
         <Route path="/request">
           <RequestView />
+        </Route>
+        <Route path="/request2">
+          <PrimeRequestView />
         </Route>
         {/* <Route path="/gantt">
           <RequestTimeline />
