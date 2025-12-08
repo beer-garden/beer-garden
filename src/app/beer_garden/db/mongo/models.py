@@ -3,14 +3,6 @@ import datetime
 import json
 import logging
 import sys
-
-# try:
-from lark import ParseError
-from lark.exceptions import LarkError
-# except ImportError:
-#     from lark.common import ParseError
-
-#     LarkError = ParseError
 import zoneinfo
 from typing import Tuple
 
@@ -23,6 +15,8 @@ from brewtils.models import Job as BrewtilsJob
 from brewtils.models import Parameter as BrewtilsParameter
 from brewtils.models import Request as BrewtilsRequest
 from brewtils.models import System as BrewtilsSystem
+from lark import ParseError
+from lark.exceptions import LarkError
 from mongoengine import (
     CASCADE,
     DO_NOTHING,
