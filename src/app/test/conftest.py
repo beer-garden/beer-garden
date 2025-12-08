@@ -118,8 +118,8 @@ def pytest_configure():
 
 
 def pytest_unconfigure():
-    delattr(brewtils.test, "_running_tests")
-    delattr(beer_garden, "_running_tests")
+    del brewtils.test._running_tests
+    del beer_garden._running_tests
 
 
 @pytest.fixture(autouse=True)
