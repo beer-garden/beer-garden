@@ -22,6 +22,13 @@
       </ol>
     </div>
 
+    <div id="command-view-alert-list">
+      <div uib-alert ng-repeat="alert in alerts" ng-class="'alert-' + alert.type" close="closeAlert($index)">
+        <div class="alert-item">{{alert.msg}} <a ng-if="alert.type == 'danger' && !manualOverride" style="color: blue; cursor:pointer" class='pull-right' ng-click="toggleManualOverride()">Override</a></div>
+      </div>
+    </div>
+    
+
     <div class="page-header" ng-show="manualOverride">
       <h1>Manual Request Creation</h1>
       <h4>
@@ -42,11 +49,6 @@
     <div class="row">
       <div class="col-md-8">
         <form name="ngform" sf-schema="schema" sf-form="form" sf-model="model" ng-submit="submitForm(ngform, model)"/>
-        <div uib-alert ng-repeat="alert in alerts" class="alert-danger" close="closeAlert($index)">
-          <strong>Uh-oh!</strong>
-          <span ng-bind=alert></span>
-          <a style="color: blue; cursor:pointer" class='pull-right' ng-click="toggleManualOverride()">Override</a>
-        </div>
       </div>
       <div class="col-md-4">
         <h3 class="col-md-4" style="margin-top: 0px">Preview</h3>
@@ -103,9 +105,5 @@
     <button type="button" class="btn btn-warning" ng-click="toggleManualOverride()">Go back</button>
     <button type="button" class="btn btn-primary" ng-click="createRequest(manualModel)">Make Request</button>
 
-    <div uib-alert ng-repeat="alert in alerts" class="alert-danger" close="closeAlert($index)">
-      <strong>Uh-oh!</strong>
-      <span ng-bind=alert></span>
-    </div>
   </div>
 </div>

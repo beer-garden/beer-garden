@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 from box import Box
+from brewtils.models import Role, User
 from ldap3 import MOCK_SYNC, Connection, Server
 from mock import patch
 from tornado.httputil import HTTPServerRequest
@@ -13,7 +14,6 @@ from beer_garden.db.mongo.models import Role as DB_Role
 from beer_garden.db.mongo.models import User as DB_User
 from beer_garden.role import create_role
 from beer_garden.user import create_user
-from brewtils.models import Role, User
 
 ldap_groups_json = {
     "entries": [

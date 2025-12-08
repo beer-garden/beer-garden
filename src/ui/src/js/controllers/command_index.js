@@ -119,8 +119,11 @@ export default function commandIndexController(
     });
   }
 
-  $scope.successCallback = function(response, systems) {
+  $scope.successCallback = function() {
     // Pull out what we care about
+    let response = $rootScope.gardensResponse;
+    let systems = $rootScope.systems;
+
     let commands = [];
     const breadCrumbs = [];
     $scope.userCanTask = false;
@@ -207,19 +210,6 @@ export default function commandIndexController(
     $scope.data = {};
   };
 
-  if ($rootScope.gardensResponse !== undefined){
-    $scope.successCallback($rootScope.gardensResponse, $rootScope.systems);
-  } 
-  else {
-    setTimeout(function delaySystemLoad() {
-      if ($rootScope.gardensResponse !== undefined){
-        $scope.successCallback($rootScope.gardensResponse, $rootScope.systems);
-        $scope.$digest();
-      } else {
-        setTimeout(delaySystemLoad, 10);
-      }
-    }, 10);
-  }
-
+  $rootScope.getLocalGarden($scope.successCallback)
 
 }

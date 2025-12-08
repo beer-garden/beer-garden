@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import copy
 from datetime import datetime, timedelta
 
 import pytest
@@ -6,11 +7,10 @@ from box import Box
 from brewtils.errors import ModelValidationError
 from brewtils.models import Choices, Command, Event, Events
 from brewtils.models import Garden as BrewtilsGarden
-from brewtils.models import Parameter
+from brewtils.models import Instance, Parameter
 from brewtils.models import Request as BrewtilsRequest
 from brewtils.models import System
 from mock import Mock, call, patch
-from mongomock.gridfs import enable_gridfs_integration
 
 import beer_garden.config
 import beer_garden.requests
@@ -19,9 +19,11 @@ from beer_garden.garden import create_garden
 from beer_garden.requests import (
     RequestValidator,
     cancel_request_children,
+    create_request,
     determine_latest_system_version,
 )
 from beer_garden.systems import create_system
+from mongomock.gridfs import enable_gridfs_integration
 
 enable_gridfs_integration()
 
@@ -1129,6 +1131,36 @@ class TestHandleEvent:
 
         assert updated_request.status_updated_at == status_updated_at
 
+    def test_metadata_merged_on_child_garden_requests(self, child_garden_request):
+        child_garden_request.metadata = {
+            "CREATED_child": 1737558145883,
+        }
+        request_event = Event(
+            payload=copy.deepcopy(child_garden_request),
+            name=Events.REQUEST_UPDATED.name,
+            garden="child",
+        )
+        request_event.payload.status = "IN_PROGRESS"
+        request_event.payload.metadata = {
+            "CREATED_child": 1737558145883,
+            "IN_PROGRESS_child": 1737558153258,
+        }
+
+        beer_garden.config._CONFIG = {"garden": {"name": "parent"}}
+
+        beer_garden.requests.handle_event(request_event)
+
+        updated_request = Request.objects.get(id=child_garden_request.id)
+
+        # Updated_request contains all metadata from child_garden_request and event.payload
+        assert all(
+            updated_request.metadata.get(key) == val
+            for key, val in {
+                **child_garden_request.metadata,
+                **request_event.payload.metadata,
+            }.items()
+        )
+
 
 class TestLatestRequest(object):
     @pytest.fixture
@@ -1138,6 +1170,7 @@ class TestLatestRequest(object):
                 name="original",
                 version="1.0.0dev",
                 namespace="beer_garden",
+                instances=[Instance(name="1", status="RUNNING"), Instance(name="2")],
                 commands=[Command(name="original")],
             )
         )
@@ -1151,6 +1184,7 @@ class TestLatestRequest(object):
                 name="original",
                 version="2.0.0",
                 namespace="beer_garden",
+                instances=[Instance(name="2"), Instance(name="3")],
                 commands=[Command(name="original")],
             )
         )
@@ -1176,8 +1210,34 @@ class TestLatestRequest(object):
             Request(system="original", namespace="beer_garden", system_version="latest")
         )
 
-        assert latest_request.system_version != system_v1.version
-        assert latest_request.system_version == system_v2.version
+        assert latest_request.system_version == system_v1.version
+        assert latest_request.system_version != system_v2.version
+
+    def test_latest_instance_request(self, system_v1, system_v2):
+        latest_request = determine_latest_system_version(
+            Request(
+                system="original",
+                namespace="beer_garden",
+                instance_name="2",
+                system_version="latest",
+            )
+        )
+
+        assert latest_request.system_version == system_v1.version
+        assert latest_request.system_version != system_v2.version
+
+    def test_latest_instance_request_unique_instance(self, system_v1, system_v2):
+        latest_request = determine_latest_system_version(
+            Request(
+                system="original",
+                namespace="beer_garden",
+                instance_name="1",
+                system_version="latest",
+            )
+        )
+
+        assert latest_request.system_version == system_v1.version
+        assert latest_request.system_version != system_v2.version
 
     def test_v1_request_no_version(self, system_v1):
         latest_request = determine_latest_system_version(
@@ -1198,8 +1258,8 @@ class TestLatestRequest(object):
             Request(system="original", namespace="beer_garden")
         )
 
-        assert latest_request.system_version != system_v1.version
-        assert latest_request.system_version == system_v2.version
+        assert latest_request.system_version == system_v1.version
+        assert latest_request.system_version != system_v2.version
 
 
 class TestCancelRequest(object):
@@ -1265,3 +1325,98 @@ class TestCancelRequest(object):
         cancel_request_children(request)
 
         cancel_mock.assert_called_once()
+
+
+class TestCreateRequest(object):
+
+    @pytest.fixture(autouse=True)
+    def drop(self):
+        yield
+        Request.drop_collection()
+
+    @pytest.fixture
+    def local_system(self, bg_system):
+        yield create_system(bg_system)
+        beer_garden.db.mongo.models.System.drop_collection()
+
+    def test_create_request(self, local_system):
+
+        request = BrewtilsRequest(
+            namespace=local_system.namespace,
+            system=local_system.name,
+            system_version=local_system.version,
+            instance_name=local_system.instances[0].name,
+            command=local_system.commands[0].name,
+            parameters={},
+            status="CREATED",
+        )
+
+        created_request = create_request(request)
+
+        assert created_request.id is not None
+
+    def test_create_request_with_parent(self, local_system):
+
+        parent_request = BrewtilsRequest(
+            namespace=local_system.namespace,
+            system=local_system.name,
+            system_version=local_system.version,
+            instance_name=local_system.instances[0].name,
+            command=local_system.commands[0].name,
+            parameters={},
+            status="CREATED",
+            command_type="ACTION",
+        )
+
+        parent_request = create_request(parent_request)
+
+        child_request = BrewtilsRequest(
+            namespace=local_system.namespace,
+            system=local_system.name,
+            system_version=local_system.version,
+            instance_name=local_system.instances[0].name,
+            command=local_system.commands[0].name,
+            command_type="ACTION",
+            parameters={},
+            status="CREATED",
+            has_parent=True,
+            parent=parent_request,
+        )
+
+        child_request = create_request(child_request)
+
+        assert child_request.id is not None
+        assert child_request.command_type == "ACTION"
+
+    def test_create_request_with_temp_parent(self, local_system):
+
+        parent_request = BrewtilsRequest(
+            namespace=local_system.namespace,
+            system=local_system.name,
+            system_version=local_system.version,
+            instance_name=local_system.instances[0].name,
+            command=local_system.commands[0].name,
+            parameters={},
+            status="CREATED",
+            command_type="TEMP",
+        )
+
+        parent_request = create_request(parent_request)
+
+        child_request = BrewtilsRequest(
+            namespace=local_system.namespace,
+            system=local_system.name,
+            system_version=local_system.version,
+            instance_name=local_system.instances[0].name,
+            command=local_system.commands[0].name,
+            command_type="ACTION",
+            parameters={},
+            status="CREATED",
+            has_parent=True,
+            parent=parent_request,
+        )
+
+        child_request = create_request(child_request)
+
+        assert child_request.id is not None
+        assert child_request.command_type == "TEMP"
