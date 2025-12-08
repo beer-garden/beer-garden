@@ -4,13 +4,13 @@ import json
 import logging
 import sys
 
-try:
-    from lark import ParseError
-    from lark.exceptions import LarkError
-except ImportError:
-    from lark.common import ParseError
+# try:
+from lark import ParseError
+from lark.exceptions import LarkError
+# except ImportError:
+#     from lark.common import ParseError
 
-    LarkError = ParseError
+#     LarkError = ParseError
 import zoneinfo
 from typing import Tuple
 

@@ -2,10 +2,8 @@ import pytest
 from brewtils import get_easy_client
 from brewtils.schema_parser import SchemaParser
 
-try:
-    from ..helper import RequestGenerator, setup_easy_client
-except (ImportError, ValueError):
-    from helper import RequestGenerator, setup_easy_client
+from ..helper import RequestGenerator, setup_easy_client
+
 
 
 @pytest.fixture(scope="class")

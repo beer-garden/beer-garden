@@ -1,9 +1,7 @@
 import pytest
 
-try:
-    from helper import RequestGenerator, setup_easy_client
-except (ImportError, ValueError):
-    from ..helper import RequestGenerator, setup_easy_client  # noqa
+
+from ..helper import setup_easy_client  # noqa
 
 
 @pytest.fixture(scope="class")

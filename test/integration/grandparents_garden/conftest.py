@@ -4,10 +4,9 @@ from brewtils.schema_parser import SchemaParser
 import json
 import time
 
-try:
-    from ..helper import RequestGenerator
-except (ImportError, ValueError):
-    from helper import RequestGenerator
+
+from ..helper import RequestGenerator
+
 
 
 @pytest.fixture(scope="class")
