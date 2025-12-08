@@ -40,7 +40,7 @@ flake8==7.3.0
     # via
     #   -r requirements-dev.in
     #   flake8-bugbear
-flake8-bugbear==25.11.29
+flake8-bugbear==24.12.12
     # via -r requirements-dev.in
 idna==3.10
     # via
