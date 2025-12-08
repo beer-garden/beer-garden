@@ -1,7 +1,7 @@
 import pytest
 
 
-from ..helper import RequestGenerator, setup_easy_client
+from helper import RequestGenerator, setup_easy_client
 
 
 @pytest.fixture(scope="class")

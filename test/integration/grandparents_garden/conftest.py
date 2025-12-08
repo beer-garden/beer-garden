@@ -5,7 +5,7 @@ import json
 import time
 
 
-from ..helper import RequestGenerator
+from helper import RequestGenerator
 
 
 
