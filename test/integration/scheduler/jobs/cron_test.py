@@ -3,16 +3,6 @@ import time
 import pytest
 from brewtils.models import CronTrigger, Job, RequestTemplate
 
-try:
-    from helper import wait_for_response
-    from helper.assertion import assert_successful_request, assert_validation_error
-except (ImportError, ValueError):
-    from ...helper import wait_for_response  # noqa
-    from ...helper.assertion import (  # noqa
-        assert_successful_request,
-        assert_validation_error,
-    )
-
 
 @pytest.fixture()
 def system_spec():

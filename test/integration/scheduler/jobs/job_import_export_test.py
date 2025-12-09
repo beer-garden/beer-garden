@@ -13,17 +13,6 @@ from brewtils.models import (  # type: ignore
     RequestTemplate,
 )
 
-try:
-    from helper import wait_for_response
-    from helper.assertion import assert_successful_request, assert_validation_error
-except ImportError:
-    from ...helper import wait_for_response  # type: ignore # noqa: F401
-    from ...helper.assertion import (  # type: ignore  # noqa: F401
-        assert_successful_request,
-        assert_validation_error,
-    )
-
-
 job_name_base = f"import_export_interval_test_{{}}"  # noqa
 job_wait_length = "seconds"
 job_wait_default = 300

@@ -14,7 +14,7 @@ class BaseHTTPError(HTTPError):
     log_message: Optional[str] = None
     reason: Optional[str] = None
 
-    def __init__(
+    def __init__(  # noqa
         self,
         status_code: Optional[int] = None,
         log_message: Optional[str] = None,
