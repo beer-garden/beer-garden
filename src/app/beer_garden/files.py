@@ -385,7 +385,7 @@ def create_file(
             f"Cannot create a file with chunk size greater than {File.MAX_CHUNK_SIZE}."
         )
 
-    max_body_size = config.get("entry.http.max_body_size")
+    max_body_size = config.convert_size_to_bytes(config.get("entry.http.max_body_size"))
     if max_body_size and file_size > max_body_size:
         raise ValueError(
             f"Cannot create a file with size greater than max body size of {max_body_size}"
