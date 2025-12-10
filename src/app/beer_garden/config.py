@@ -97,6 +97,8 @@ def generate(args: Sequence[str]):
 
 def convert_size_to_bytes(size_dict):
     """Parses size dictionary and returns the number of bytes"""
+    if not size_dict:
+        size_dict = {}
     value = size_dict.get("value", 2)
     units = size_dict.get("units", "GB")
 
