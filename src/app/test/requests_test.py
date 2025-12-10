@@ -1112,8 +1112,9 @@ class TestValidateChoices(object):
 
 class TestHandleEvent:
     def test_status_updated_at_preserved_on_child_garden_requests(
-        self, child_garden_request
+        self, child_garden_request, set_failed_event_manager, check_failed_event_manager
     ):
+
         status_updated_at = datetime.now(timezone.utc) - timedelta(days=1)
         status_updated_at = status_updated_at.replace(microsecond=0)
         child_garden_request.status = "SUCCESS"
@@ -1126,13 +1127,20 @@ class TestHandleEvent:
 
         beer_garden.config._CONFIG = {"garden": {"name": "parent"}}
 
+        set_failed_event_manager()
+
         beer_garden.requests.handle_event(request_event)
 
         updated_request = get_request(request_id=child_garden_request.id)
 
         assert updated_request.status_updated_at == status_updated_at
 
-    def test_metadata_merged_on_child_garden_requests(self, child_garden_request):
+        # TODO: Fix handler from publishing events
+        # check_failed_event_manager()
+
+    def test_metadata_merged_on_child_garden_requests(
+        self, child_garden_request, set_failed_event_manager, check_failed_event_manager
+    ):
         child_garden_request.metadata = {
             "CREATED_child": 1737558145883,
         }
@@ -1149,6 +1157,7 @@ class TestHandleEvent:
 
         beer_garden.config._CONFIG = {"garden": {"name": "parent"}}
 
+        set_failed_event_manager()
         beer_garden.requests.handle_event(request_event)
 
         updated_request = Request.objects.get(id=child_garden_request.id)
@@ -1161,6 +1170,9 @@ class TestHandleEvent:
                 **request_event.payload.metadata,
             }.items()
         )
+
+        # TODO: Fix handler from publishing events
+        # check_failed_event_manager()
 
 
 class TestLatestRequest(object):

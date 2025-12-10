@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 import brewtils.test
 import mongomock
 import pytest
@@ -147,3 +148,26 @@ def jobstore(mongo_conn):
     js = MongoJobStore()
     yield js
     js.remove_all_jobs()
+
+
+@pytest.fixture
+def set_failed_event_manager():
+
+    class FailEventsManager:
+        put_event = False
+
+        def put(self, *args, **kwargs):
+            self.put_event = True
+
+    def inner_set_failed_event_manager():
+        beer_garden.events.manager = FailEventsManager()
+
+    yield inner_set_failed_event_manager
+
+
+@pytest.fixture
+def check_failed_event_manager():
+    def inner_check_failed_event_manager():
+        assert beer_garden.events.manager.put_event is False
+
+    yield inner_check_failed_event_manager

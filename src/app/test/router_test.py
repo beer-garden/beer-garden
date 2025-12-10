@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
-from brewtils.models import Connection
+from brewtils.models import Connection, Event, Events
 from brewtils.models import Garden as BrewtilsGarden
 from brewtils.models import Instance as BrewtilsInstance
 from brewtils.models import Operation
@@ -13,7 +13,7 @@ import beer_garden.router
 from beer_garden.db.mongo.models import Garden, Request, System
 from beer_garden.errors import UnknownGardenException
 from beer_garden.garden import create_garden
-from beer_garden.router import _determine_target
+from beer_garden.router import _determine_target, handle_event
 from beer_garden.systems import create_system
 
 
@@ -261,3 +261,83 @@ class TestRequestRouting:
         assert target_from_type_mock.call_count == 0
         assert forward_mock.call_args[0][0].target_garden_name == "two_hop"
         assert forward_mock.call_args[0][1].name == "one_hop"
+
+
+class TestHandleEvent:
+
+    @pytest.fixture(autouse=True)
+    def router_cleanup(self):
+        yield
+        beer_garden.router.system_name_routes = {}
+        beer_garden.router.system_id_routes = {}
+        beer_garden.router.instance_id_routes = {}
+
+    def test_system_create_event(
+        self, set_failed_event_manager, check_failed_event_manager
+    ):
+        event = Event(
+            payload=BrewtilsSystem(
+                id="123",
+                namespace="ns",
+                name="name",
+                version="1.2.3",
+                instances=[BrewtilsInstance(id="456")],
+            ),
+            name=Events.SYSTEM_CREATED.name,
+            garden="child",
+        )
+        set_failed_event_manager()
+
+        handle_event(event)
+        assert beer_garden.router.system_name_routes == {"ns:name-1.2.3": "child"}
+        assert beer_garden.router.system_id_routes == {"123": "child"}
+        assert beer_garden.router.instance_id_routes == {"456": "child"}
+        check_failed_event_manager()
+
+    def test_system_update_event(
+        self, set_failed_event_manager, check_failed_event_manager
+    ):
+        event = Event(
+            payload=BrewtilsSystem(
+                id="123",
+                namespace="ns",
+                name="name",
+                version="1.2.3",
+                instances=[BrewtilsInstance(id="456")],
+            ),
+            name=Events.SYSTEM_UPDATED.name,
+            garden="child",
+        )
+        set_failed_event_manager()
+
+        handle_event(event)
+        assert beer_garden.router.system_name_routes == {"ns:name-1.2.3": "child"}
+        assert beer_garden.router.system_id_routes == {"123": "child"}
+        assert beer_garden.router.instance_id_routes == {"456": "child"}
+        check_failed_event_manager()
+
+    def test_system_delete_event(
+        self, set_failed_event_manager, check_failed_event_manager
+    ):
+        event = Event(
+            payload=BrewtilsSystem(
+                id="123",
+                namespace="ns",
+                name="name",
+                version="1.2.3",
+                instances=[BrewtilsInstance(id="456")],
+            ),
+            name=Events.SYSTEM_REMOVED.name,
+            garden="child",
+        )
+        set_failed_event_manager()
+
+        beer_garden.router.system_name_routes = {"ns:name-1.2.3": "child"}
+        beer_garden.router.system_id_routes = {"123": "child"}
+        beer_garden.router.instance_id_routes = {"456": "child"}
+
+        handle_event(event)
+        assert beer_garden.router.system_name_routes == {}
+        assert beer_garden.router.system_id_routes == {}
+        assert beer_garden.router.instance_id_routes == {}
+        check_failed_event_manager()

@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
 import pytest
+from brewtils.models import Event, Events
+from brewtils.models import Instance as BrewtilsInstance
+from brewtils.models import System as BrewtilsSystem
 from mock import Mock, patch
 
 import beer_garden.monitor
-from beer_garden.plugin import StatusMonitor
+from beer_garden.db.mongo.models import Garden, System, Topic
+from beer_garden.plugin import StatusMonitor, handle_event
+from beer_garden.systems import create_system
 
 
 @pytest.fixture
@@ -108,3 +113,57 @@ class TestStatusMonitor(object):
 
         monitor.check_status()
         assert update_mock.called is True
+
+
+class TestHandleEvent(object):
+
+    @pytest.fixture(autouse=True)
+    def setup_teardown(self):
+        """Setup and teardown for each test to ensure a clean state."""
+        yield Garden(name="default", connection_type="LOCAL").save()
+        System.drop_collection()
+        Topic.drop_collection()
+        Garden.drop_collection()
+
+    @pytest.fixture
+    def system(self):
+        yield create_system(
+            BrewtilsSystem(
+                name="original",
+                version="v0.0.0.dev0",
+                namespace="beer_garden",
+                garden_name="downstream_garden",
+                local=True,
+                commands=[],
+                instances=[
+                    BrewtilsInstance(
+                        name="instance1",
+                        status="RUNNING",
+                    )
+                ],
+            )
+        )
+
+    def test_event_handler(
+        self, system, set_failed_event_manager, check_failed_event_manager
+    ):
+        beer_garden.config._CONFIG = {"garden": {"name": "default"}}
+
+        update_instance = system.instances[0]
+        update_instance.status = "AWAITING_SYSTEM"
+
+        event = Event(
+            name=Events.INSTANCE_UPDATED.name,
+            garden=system.garden_name,
+            payload=update_instance,
+            payload_type=BrewtilsInstance.__name__,
+        )
+
+        set_failed_event_manager()
+        handle_event(event)
+        updated_system = System.objects.get(id=system.id)
+        updated_instance = updated_system.instances[0]
+        assert updated_instance.status == "AWAITING_SYSTEM"
+
+        # TODO: Fix handler from publishing events
+        # check_failed_event_manager()

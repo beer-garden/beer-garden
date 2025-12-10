@@ -648,7 +648,10 @@ stomp:
         for connection in garden.receiving_connections:
             assert connection.status == "RECEIVING"
 
-    def test_handle_event_child_delete_garden(self):
+    def test_handle_event_child_delete_garden(
+        self, set_failed_event_manager, check_failed_event_manager
+    ):
+
         grand_parent = create_garden(
             BrewtilsGarden(
                 name="grand",
@@ -676,10 +679,14 @@ stomp:
 
         event = Event(name=Events.GARDEN_SYNC.name, payload=parent, garden=parent.name)
 
+        set_failed_event_manager()
         handle_event(event)
 
         with pytest.raises(DoesNotExist):
             get_garden(child.name)
+
+        # TODO: Fix handler from publishing events
+        # check_failed_event_manager()
 
     def test_get_local_garden(self, localgarden):
         """get_garden should return the correct garden when multiple gardens exist"""
