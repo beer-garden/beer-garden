@@ -267,7 +267,6 @@ class TestHandleEvent:
 
     @pytest.fixture(autouse=True)
     def router_cleanup(self):
-        yield
         beer_garden.router.system_name_routes = {}
         beer_garden.router.system_id_routes = {}
         beer_garden.router.instance_id_routes = {}
