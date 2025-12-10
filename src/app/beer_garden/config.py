@@ -95,6 +95,29 @@ def generate(args: Sequence[str]):
     dump_data(config, filename=bootstrap.configuration.file, file_type="yaml")
 
 
+def convert_size_to_bytes(size_dict):
+    """Parses size dictionary and returns the number of bytes"""
+    if not size_dict:
+        size_dict = {}
+    value = size_dict.get("value", 2)
+    units = size_dict.get("units", "GB")
+
+    if units == "MB":
+        value = value * 1000**2
+    elif units == "MiB":
+        value = value * 1024**2
+    elif units == "GB":
+        value = value * 1000**3
+    elif units == "GiB":
+        value = value * 1024**3
+    elif units == "TB":
+        value = value * 1000**4
+    elif units == "TiB":
+        value = value * 1024**4
+
+    return value
+
+
 def migrate_dict(d1: dict, d2: dict):
     """Merges d2 into d1 and will replace existing key values in d1"""
     for k, v in d2.items():
@@ -1015,6 +1038,21 @@ _HTTP_SPEC = {
             "default": 2337,
             "description": "Serve content on this port",
             "previous_names": ["web_port"],
+        },
+        "max_body_size": {
+            "type": "dict",
+            "description": "Default max body size for web server (represented in bytes)",
+            "items": {
+                "value": {
+                    "type": "int",
+                    "default": 2,
+                },
+                "units": {
+                    "type": "str",
+                    "default": "GB",
+                    "choices": ["MB", "MiB", "GB", "GiB", "TB", "TiB"],
+                },
+            },
         },
         "ssl": {
             "type": "dict",
