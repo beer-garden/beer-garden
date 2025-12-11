@@ -18,7 +18,7 @@ appRun.$inject = [
   '$uibModal',
   '$transitions',
   '$interval',
-  'localStorageService',
+  'storageService',
   'UtilityService',
   'PermissionService',
   'SystemService',
@@ -40,7 +40,7 @@ appRun.$inject = [
  * @param  {Object} $uibModal            Angular UI's $uibModal object.
  * @param  {Object} $transitions         Angular's $transitions object.
  * @param  {Object} $interval            Angular's $interval object.
- * @param  {Object} localStorageService  Storage service
+ * @param  {Object} storageService       Service for Storage
  * @param  {Object} UtilityService       Service for configuration/icons.
  * @param  {Object} PermissionService    Service for filtering user accesses.
  * @param  {Object} SystemService        Service for System information.
@@ -60,7 +60,7 @@ export default function appRun(
     $uibModal,
     $transitions,
     $interval,
-    localStorageService,
+    storageService,
     UtilityService,
     PermissionService,
     SystemService,
@@ -127,10 +127,10 @@ export default function appRun(
             }
 
           } else {
-            theme = localStorageService.get('currentTheme') || 'default';
-            defaultHome = localStorageService.get('defaultHome', defaultHome);
-            defaultHomePage = localStorageService.get('defaultHomePage', defaultHomePage);
-            defaultHomeParameters = localStorageService.get('defaultHomeParameters', defaultHomeParameters);
+            theme = storageService.get('currentTheme', 'default');
+            defaultHome = storageService.get('defaultHome', defaultHome);
+            defaultHomePage = storageService.get('defaultHomePage', defaultHomePage);
+            defaultHomeParameters = storageService.get('defaultHomeParameters', defaultHomeParameters);
           }
 
           $rootScope.setHome(defaultHome, defaultHomePage, defaultHomeParameters, false);
@@ -171,6 +171,8 @@ export default function appRun(
     UtilityService.getConfig().then((response) => {
       angular.extend($rootScope.config, camelCaseKeys(response.data));
 
+      storageService.setPrefix($rootScope.config.gardenName);
+
       // Check if we are utilizing Auth Headers
       if ($rootScope.config.trustedHeaderAuthEnabled){
         if (TokenService.getToken() === null){
@@ -190,12 +192,10 @@ export default function appRun(
 
     // Load theme from local storage
     // REMOVE THIS ONCE THE rootScope.loadUser CALL BELOW IS ENABLED
-    const theme = localStorageService.get('currentTheme') || 'default';
+    const theme = storageService.get('currentTheme', 'default');
     $rootScope.changeTheme(theme, false);
 
-    $rootScope.config.defaultHome = localStorageService.get('defaultHome') || 'base.systems()';
-    $rootScope.config.defaultHomePage = localStorageService.get('defaultHomePage') || 'base.systems';
-    $rootScope.config.defaultHomeParameters = localStorageService.get('defaultHomeParameters') || {};
+    storageService.reloadDefaults();
 
     // $rootScope.loadUser(token).catch(
     //   // This prevents the situation where the user needs to logout but the
@@ -255,7 +255,7 @@ export default function appRun(
   };
 
   $rootScope.changeTheme = function(theme, sendUpdate) {
-    localStorageService.set('currentTheme', theme);
+    storageService.set('currentTheme', theme);
     for (const key of Object.keys($rootScope.themes)) {
       $rootScope.themes[key] = key == theme;
     }
@@ -291,9 +291,9 @@ export default function appRun(
   }
 
   $rootScope.setHome = function(defaultHome, defaultHomePage, defaultHomeParameters, sendUpdate) {
-    localStorageService.set('defaultHome', defaultHome);
-    localStorageService.set('defaultHomePage', defaultHomePage);
-    localStorageService.set('defaultHomeParameters', defaultHomeParameters);
+    storageService.set('defaultHome', defaultHome);
+    storageService.set('defaultHomePage', defaultHomePage);
+    storageService.set('defaultHomeParameters', defaultHomeParameters);
 
     if ($rootScope.isUser($rootScope.user) && sendUpdate) {
       UserService.setHome($rootScope.user.username, 
@@ -435,6 +435,8 @@ export default function appRun(
     if ($rootScope.config.gardenName === undefined) {
       UtilityService.getConfig().then((response) => {
         angular.extend($rootScope.config, camelCaseKeys(response.data));
+        storageService.setPrefix($rootScope.config.gardenName);
+        
         return $rootScope.getLocalGarden(callback);
       });
     } else {

@@ -1,7 +1,7 @@
 systemIndexController.$inject = [
   '$scope',
   '$rootScope',
-  'localStorageService',
+  'storageService',
   'UtilityService',
   'DTOptionsBuilder',
 ];
@@ -10,14 +10,14 @@ systemIndexController.$inject = [
  * systemIndexController - Controller for the system index page.
  * @param  {Object} $scope         Angular's $scope object.
  * @param  {Object} $rootScope     Angular's $rootScope object.
- * @param  {Object} localStorageService  Storage service
+ * @param  {Object} storageService Storage service
  * @param  {Object} UtilityService Beer-Garden's utility service.
  * @param  {Object} DTOptionsBuilder
  */
 export default function systemIndexController(
     $scope,
     $rootScope,
-    localStorageService,
+    storageService,
     UtilityService,
     DTOptionsBuilder,
 ) {
@@ -67,7 +67,7 @@ export default function systemIndexController(
       .withOption('autoWidth', false)
       .withOption(
           'pageLength',
-          localStorageService.get('_system_index_length') || 10,
+          storageService.get('_system_index_length', 10),
       )
       .withOption('order', [
         [0, 'asc'],
@@ -82,7 +82,7 @@ export default function systemIndexController(
     $scope.dtInstance = _instance;
 
     $('#systemIndexTable').on('length.dt', (event, settings, len) => {
-      localStorageService.set('_system_index_length', len);
+      storageService.set('_system_index_length', len);
     });
   };
 
