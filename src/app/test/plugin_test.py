@@ -103,7 +103,7 @@ class TestStatusMonitor(object):
         )
 
         monkeypatch.setattr(
-            beer_garden.plugin, "datetime", Mock(utcnow=Mock(return_value=ts_dt))
+            beer_garden.plugin, "datetime", Mock(now=Mock(return_value=ts_dt))
         )
 
         monitor.check_status()

@@ -13,6 +13,7 @@ class AdminAPI(AuthorizationHandler):
         """
         ---
         summary: Initiate administrative actions
+        deprecated: true
         description: |
           The body of the request needs to contain a set of instructions
           detailing the operations to perform.
@@ -36,20 +37,25 @@ class AdminAPI(AuthorizationHandler):
             }
           ]
           ```
-        parameters:
-          - name: patch
-            in: body
-            required: true
+        requestBody:
+            name: patch
             description: Instructions for operations
-            schema:
-              $ref: '#/definitions/Patch'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/PatchOperation'
         responses:
           204:
             description: Operation successfully initiated
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
-          - Admin
+          - Deprecated
         """
         self.minimum_permission = Permissions.GARDEN_ADMIN.name
 

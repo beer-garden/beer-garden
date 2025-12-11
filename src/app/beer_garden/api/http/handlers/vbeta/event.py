@@ -13,24 +13,36 @@ class EventPublisherAPI(AuthorizationHandler):
         """
         ---
         summary: Publish a new event
+        requestBody:
+          name: event
+          description: The the Event object
+          content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Event'
         parameters:
           - name: bg-namespace
             in: header
             required: false
             description: Namespace to use
             type: string
-          - name: event
-            in: body
-            description: The the Event object
-            schema:
-              $ref: '#/definitions/Event'
         responses:
           204:
             description: An Event has been published
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Event
         """

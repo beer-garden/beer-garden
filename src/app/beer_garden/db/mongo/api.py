@@ -18,13 +18,8 @@ from mongoengine.queryset.visitor import Q, QCombination
 from pymongo import InsertOne, ReplaceOne, UpdateOne
 
 import beer_garden.db.mongo.models
-from beer_garden.db.mongo.indexes import (
-    check_indexes,
-    update_ttl_indexes,
-)
-from beer_garden.db.mongo.migration import (
-    ensure_model_migration,
-)
+from beer_garden.db.mongo.indexes import check_indexes, update_ttl_indexes
+from beer_garden.db.mongo.migration import ensure_model_migration
 from beer_garden.db.mongo.models import MongoModel
 from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.db.mongo.util import (
@@ -180,7 +175,9 @@ def create_connection(connection_alias: str = "default", db_config: Box = None) 
     # Now register the default connection with real timeouts
     # Yes, mongoengine uses 'db' in connect and 'name' in register_connection
     register_connection(
-        connection_alias, name=db_config["name"], **db_config["connection"]
+        connection_alias,
+        name=db_config["name"],
+        **db_config["connection"],
     )
 
 

@@ -1,13 +1,11 @@
-import pytest
-from brewtils import get_easy_client
-from brewtils.schema_parser import SchemaParser
 import json
 import time
 
-try:
-    from ..helper import RequestGenerator
-except (ImportError, ValueError):
-    from helper import RequestGenerator
+import pytest
+from brewtils import get_easy_client
+from brewtils.schema_parser import SchemaParser
+
+from helper import RequestGenerator
 
 
 @pytest.fixture(scope="class")

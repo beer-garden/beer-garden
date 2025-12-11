@@ -22,12 +22,24 @@ class RunnerAPI(AuthorizationHandler):
         responses:
           200:
             description: List of runner states
-            schema:
-              $ref: '#/definitions/Runner'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Runner'
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Runners
         """
@@ -52,12 +64,24 @@ class RunnerAPI(AuthorizationHandler):
         responses:
           200:
             description: List of runner states
-            schema:
-              $ref: '#/definitions/Runner'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Runner'
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Runners
         """
@@ -88,29 +112,47 @@ class RunnerAPI(AuthorizationHandler):
             { "operation": "" }
           ]
           ```
+        requestBody:
+          name: patch
+          description: Instructions for how to update the Runner
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchOperation'
         parameters:
           - name: runner_id
             in: path
             required: true
             description: The ID of the Instance
             type: string
-          - name: patch
-            in: body
-            required: true
-            description: Instructions for how to update the Runner
-            schema:
-              $ref: '#/definitions/Patch'
         responses:
           200:
             description: Runner with the given ID
-            schema:
-              $ref: '#/definitions/Runner'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Runner'
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Runners
         """
@@ -152,12 +194,26 @@ class RunnerListAPI(AuthorizationHandler):
         responses:
           200:
             description: List of runner states
-            schema:
-              $ref: '#/definitions/Runner'
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Runner'
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Runners
         """
@@ -184,24 +240,43 @@ class RunnerListAPI(AuthorizationHandler):
             { "operation": "reload", "path": "echo-3.0.0" }
           ]
           ```
-        parameters:
-          - name: patch
-            in: body
-            required: true
-            description: Instructions for how to update the Runner
-            schema:
-              $ref: '#/definitions/Patch'
+        requestBody:
+          name: patch
+          description: Instructions for how to update the Runner
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchOperation'
         responses:
           200:
             description: Reloaded Runners
-            schema:
-              $ref: '#/definitions/Runner'
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Runner'
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Runners
         """

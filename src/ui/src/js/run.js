@@ -111,13 +111,16 @@ export default function appRun(
         // and set the permissions before setting $rootScope.user
           const user = response.data;
 
-          // If user is logged in, change to their default theme selection
           let theme;
-          if (user.id) {
-            theme = _.get(user, 'preferences.theme', 'default');
-          } else {
+          // Currently prefences don't exist on user, so always use local storage
+          // until it is added back to the user model
+
+          // If user is logged in, change to their default theme selection
+          // if (user.id) {
+          //   theme = _.get(user, 'preferences.theme', 'default');
+          // } else {
             theme = localStorageService.get('currentTheme') || 'default';
-          }
+          // }
           $rootScope.changeTheme(theme, false);
 
           $rootScope.user = user;
@@ -232,9 +235,12 @@ export default function appRun(
       $rootScope.themes[key] = key == theme;
     }
 
-    if ($rootScope.isUser($rootScope.user) && sendUpdate) {
-      UserService.setTheme($rootScope.user.id, theme);
-    }
+    // Currently prefences don't exist on user, so always use local storage
+    // until it is added back to the user model
+    
+    // if ($rootScope.isUser($rootScope.user) && sendUpdate) {
+    //   UserService.setTheme($rootScope.user.id, theme);
+    // }
   };
 
   $rootScope.setHomeToCurrent = function() {
@@ -591,13 +597,17 @@ export default function appRun(
     let matched = false;
     if (srcGarden.children !== undefined && srcGarden.children !== null){
       for (let i = 0; i < srcGarden.children.length; i++){
-        if (srcGarden.children[i].name== newGarden.name){
+        if (srcGarden.children[i].name == newGarden.name){
+          // Serialization doesn't always include children, so make sure to preserve them
+          if (newGarden.children === undefined || newGarden.children === null || newGarden.children.length == 0){
+            newGarden.children = srcGarden.children[i].children;
+          }
           srcGarden.children[i] = newGarden;
           matched = true;
           break
         }
       }
-    }
+    } 
     if (!matched){
       if (srcGarden.children !== undefined && srcGarden.children !== null){
         for (let i = 0; i < srcGarden.children.length; i++){

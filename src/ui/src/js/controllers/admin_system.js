@@ -14,7 +14,6 @@ adminSystemController.$inject = [
   'SystemService',
   'InstanceService',
   'UtilityService',
-  'AdminService',
   'QueueService',
   'RunnerService',
   'EventService',
@@ -29,7 +28,6 @@ adminSystemController.$inject = [
  * @param  {Object} SystemService   Beer-Garden's system service object.
  * @param  {Object} InstanceService Beer-Garden's instance service object.
  * @param  {Object} UtilityService  Beer-Garden's utility service object.
- * @param  {Object} AdminService    Beer-Garden's admin service object.
  * @param  {Object} QueueService    Beer-Garden's event service object.
  * @param  {Object} RunnerService   Beer-Garden's runner service object.
  * @param  {Object} EventService    Beer-Garden's event service object.
@@ -42,7 +40,6 @@ export default function adminSystemController(
     SystemService,
     InstanceService,
     UtilityService,
-    AdminService,
     QueueService,
     RunnerService,
     EventService,
@@ -60,7 +57,7 @@ export default function adminSystemController(
   $scope.getIcon = UtilityService.getIcon;
 
   $scope.rescan = function() {
-    AdminService.rescan().then(_.noop, $scope.addErrorAlert);
+    SystemService.rescan().then(_.noop, $scope.addErrorAlert);
   };
 
   $scope.startSystem = function(system) {
@@ -103,12 +100,12 @@ export default function adminSystemController(
     });
   };
 
-  $scope.startInstance = function(instance) {
-    InstanceService.startInstance(instance).catch($scope.addErrorAlert);
+  $scope.startInstance = function(instance, system) {
+    InstanceService.startInstance(instance, system).catch($scope.addErrorAlert);
   };
 
-  $scope.stopInstance = function(instance) {
-    InstanceService.stopInstance(instance).catch($scope.addErrorAlert);
+  $scope.stopInstance = function(instance, system) {
+    InstanceService.stopInstance(instance, system).catch($scope.addErrorAlert);
   };
 
   $scope.startRunner = function(runner) {

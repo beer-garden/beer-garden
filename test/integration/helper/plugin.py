@@ -1,8 +1,9 @@
 import time
 from threading import Thread
 
+from brewtils import Plugin, parameter, system
+
 import helper
-from brewtils import system, parameter, Plugin
 
 thread_map = {}
 
@@ -61,9 +62,9 @@ def create_plugin(name, version, clazz, **kwargs):
     # It's been fixed in brewtils, but fix it here so we can run tests on that version
     # See https://github.com/beer-garden/beer-garden/issues/1014
     if hasattr(clazz, "current_request"):
-        delattr(clazz, "current_request")
+        del clazz.current_request
     if hasattr(clazz, "_current_request"):
-        delattr(clazz, "_current_request")
+        del clazz._current_request
 
     return Thread_Plugin(
         client=clazz(),

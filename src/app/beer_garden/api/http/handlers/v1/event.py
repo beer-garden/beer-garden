@@ -66,7 +66,7 @@ class EventSocket(WebSocketHandler):
         """Process incoming messages. Called by WebSocketHandler automatically when
         a message is received."""
         try:
-            token = IncomingMessageSchema(strict=True).loads(message).data["payload"]
+            token = IncomingMessageSchema().loads(message)["payload"]
             await self._update_access_token(token)
         except (ValidationError, JSONDecodeError) as exc:
             await self._message_processing_error(
@@ -157,7 +157,7 @@ class EventSocket(WebSocketHandler):
                         else:
 
                             await listener.write_message(message)
-                except BaseException:
+                except Exception:
                     continue
 
     @classmethod
