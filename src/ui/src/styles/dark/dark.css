@@ -4,8 +4,14 @@
   background: inherit;
   border-left: 1px solid #cbcbcb !important;
 }
+.navbar {
+  margin-bottom: 0px;
+}
 .navbar-default {
   background-image: none;
+}
+.page-header {
+  margin-top: 0px;
 }
 .sidebar ul li a.active {
   background: #5b85ab;

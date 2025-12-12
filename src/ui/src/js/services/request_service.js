@@ -41,10 +41,17 @@ export default function requestService($q, $http, $interval) {
         promise = $http.post('api/v1/requests?blocking='+waitForCompletion, request, {
           headers: {
             'Content-Type': undefined,
+            'Target-Garden': request.target_garden,
+            'Source-Garden': request.source_garden,
           },
         });
       } else {
-        promise = $http.post('api/v1/requests?blocking='+waitForCompletion, request);
+        promise = $http.post('api/v1/requests?blocking='+waitForCompletion, request, {
+          headers: {
+            'Target-Garden': request.target_garden,
+            'Source-Garden': request.source_garden,
+          },
+        });
       }
 
       if (!waitForCompletion) {

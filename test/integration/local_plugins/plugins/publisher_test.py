@@ -1,7 +1,7 @@
-import pytest
 import time
 
-from brewtils.models import Topic, Subscriber
+import pytest
+from brewtils.models import Subscriber, Topic
 
 
 @pytest.fixture(scope="class")

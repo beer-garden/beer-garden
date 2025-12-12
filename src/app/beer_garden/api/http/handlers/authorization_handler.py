@@ -64,6 +64,12 @@ class AuthorizationHandler(BaseHandler):
             return self._anonymous_superuser()
 
     async def process_operation(self, operation: Operation, **kwargs):
+        # Inject target garden if provided in headers
+        if self.request.headers.get("Target-Garden"):
+            operation.target_garden_name = self.request.headers.get("Target-Garden")
+        if self.request.headers.get("Source-Garden"):
+            operation.source_garden_name = self.request.headers.get("Source-Garden")
+
         return await self.client(
             operation,
             current_user=self.current_user,

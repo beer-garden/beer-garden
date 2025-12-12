@@ -453,7 +453,7 @@ class ModelFilter:
         user: BrewtilsUser,
         permission_levels: list,
         skip_global: bool = False,
-        **kwargs
+        **kwargs,
     ) -> BrewtilsUser:
         """Returns a filtered User object based on the roles of the user"""
 
@@ -476,7 +476,7 @@ class ModelFilter:
         user: BrewtilsUser,
         permission_levels: list,
         skip_global: bool = False,
-        **kwargs
+        **kwargs,
     ) -> BrewtilsRole:
         """Returns a filtered Role object based on the roles of the user"""
 
@@ -499,7 +499,7 @@ class ModelFilter:
         permission_levels: list,
         source_garden: str = None,
         skip_global: bool = False,
-        **kwargs
+        **kwargs,
     ) -> BrewtilsJob:
         """Returns a filtered Job object based on the roles of the user"""
 
@@ -529,7 +529,7 @@ class ModelFilter:
         permission_levels: list,
         source_garden: str = None,
         skip_global: bool = False,
-        **kwargs
+        **kwargs,
     ) -> BrewtilsRequest:
         """Returns a filtered Request object based on the roles of the user"""
 
@@ -577,7 +577,7 @@ class ModelFilter:
         source_system_version: str = None,
         skip_global: bool = False,
         skip_system: bool = False,
-        **kwargs
+        **kwargs,
     ) -> BrewtilsCommand:
         """Returns a filtered Command object based on the roles of the user"""
 
@@ -622,7 +622,7 @@ class ModelFilter:
         source_system_instances: list = None,
         skip_global: bool = False,
         skip_system: bool = False,
-        **kwargs
+        **kwargs,
     ) -> BrewtilsRunner:
         """Returns a filtered Runner object based on the roles of the user"""
         if not skip_global and check_global_roles(
@@ -663,7 +663,7 @@ class ModelFilter:
         source_system_version: str = None,
         skip_global: bool = False,
         skip_system: bool = False,
-        **kwargs
+        **kwargs,
     ) -> BrewtilsInstance:
         """Returns a filtered Instance object based on the roles of the user"""
 
@@ -700,7 +700,7 @@ class ModelFilter:
         permission_levels: list,
         source_garden_name: str = None,
         skip_global: bool = False,
-        **kwargs
+        **kwargs,
     ) -> BrewtilsSystem:
         """Returns a filtered System object based on the roles of the user"""
 
@@ -829,7 +829,7 @@ class ModelFilter:
         user: BrewtilsUser,
         permission_levels: list,
         skip_global: bool = False,
-        **kwargs
+        **kwargs,
     ) -> BrewtilsGarden:
         """Returns a filtered Garden object based on the roles of the user
         Priority in checks:
@@ -945,7 +945,7 @@ class ModelFilter:
         user: BrewtilsUser = None,
         permission: str = None,
         permission_levels=None,
-        **kwargs
+        **kwargs,
     ) -> BrewtilsModel:
         if isinstance(obj, BrewtilsUser):
             del obj.password

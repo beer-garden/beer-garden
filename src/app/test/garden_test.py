@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import mongomock
 import pytest
 from brewtils.models import Connection as BrewtilsConnection
 from brewtils.models import Event, Events
 from brewtils.models import Garden as BrewtilsGarden
 from brewtils.models import System as BrewtilsSystem
+from mock import Mock
 from mongoengine import DoesNotExist, connect
 
 import beer_garden
@@ -80,7 +82,11 @@ def remotegarden():
 class TestGarden:
     @classmethod
     def setup_class(cls):
-        connect("beer_garden", host="mongomock://localhost")
+        connect(
+            "beer_garden",
+            host="mongodb://localhost",
+            mongo_client_class=mongomock.MongoClient,
+        )
         config._CONFIG = {"garden": {"name": "localgarden"}}
 
     def test_get_garden(self, localgarden):
@@ -553,10 +559,26 @@ stomp:
         assert updated_garden.metadata == {"alt": "alt"}
         assert updated_garden.version == "2.0.0"
 
+    def test_garden_unresponsive_trigger_send_sync(self, monkeypatch, bg_garden):
+        bg_garden.systems = []
+        for connection in bg_garden.receiving_connections:
+            connection.status = "UNRESPONSIVE"
+        bg_garden.metadata = {"_unresponsive_timeout": 15}
+
+        create_garden(bg_garden)
+
+        sync_mock = Mock()
+        monkeypatch.setattr(beer_garden.garden, "garden_sync", sync_mock)
+        garden_unresponsive_trigger()
+
+        assert sync_mock.assert_called_once
+
     def test_garden_unresponsive_trigger(self, bg_garden):
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
-            connection.status_info.heartbeat = datetime.utcnow() - timedelta(minutes=60)
+            connection.status_info.heartbeat = datetime.now(timezone.utc) - timedelta(
+                minutes=60
+            )
         bg_garden.metadata = {"_unresponsive_timeout": 15}
 
         create_garden(bg_garden)
@@ -572,7 +594,9 @@ stomp:
     def test_garden_unresponsive_trigger_in_window(self, bg_garden):
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
-            connection.status_info.heartbeat = datetime.utcnow() - timedelta(minutes=10)
+            connection.status_info.heartbeat = datetime.now(timezone.utc) - timedelta(
+                minutes=10
+            )
 
         bg_garden.metadata = {"_unresponsive_timeout": 15}
 
@@ -589,7 +613,9 @@ stomp:
     def test_garden_unresponsive_trigger_child_metadata(self, bg_garden):
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
-            connection.status_info.heartbeat = datetime.utcnow() - timedelta(minutes=10)
+            connection.status_info.heartbeat = datetime.now(timezone.utc) - timedelta(
+                minutes=10
+            )
 
         bg_garden.metadata["_unresponsive_timeout"] = 5
 
@@ -606,7 +632,9 @@ stomp:
     def test_garden_unresponsive_trigger_missing_window(self, bg_garden):
         bg_garden.systems = []
         for connection in bg_garden.receiving_connections:
-            connection.status_info.heartbeat = datetime.utcnow() - timedelta(minutes=10)
+            connection.status_info.heartbeat = datetime.now(timezone.utc) - timedelta(
+                minutes=10
+            )
 
         bg_garden.metadata = {"_unresponsive_timeout": 15}
 

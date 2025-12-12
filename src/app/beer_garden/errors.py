@@ -35,6 +35,7 @@ class EndpointRemovedException(Exception):
     """Requested endpoint is no longer valid"""
 
     def __init__(self, message=None):
+        super().__init__(message)
         self.message = message
 
 
@@ -42,6 +43,7 @@ class IndexOperationError(Exception):
     """Index operation was invalid"""
 
     def __init__(self, message=None):
+        super().__init__(message)
         self.message = message
 
 
@@ -67,7 +69,8 @@ class RoutingRequestException(RoutingException):
 class ForwardException(RoutingException):
     """Error forwarding an Operation"""
 
-    def __init__(self, message=None, operation=None, event_name=None):
+    def __init__(self, message=None, operation=None, event_name=None):  # noqa
+        super().__init__(message)
         self.message = message
         self.operation = operation
         self.event_name = event_name
