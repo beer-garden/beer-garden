@@ -22,7 +22,9 @@
 
 <fetch-data response="response" ng-if="hasPermission('READ_ONLY')"></fetch-data>
 
-<unauthorized-message ng-if="!hasPermission('READ_ONLY')"/>
+<div ng-if="!hasPermission('READ_ONLY')">
+  <unauthorized-message/>
+</div>
 
 <div
   class="container-fluid animate-if"
