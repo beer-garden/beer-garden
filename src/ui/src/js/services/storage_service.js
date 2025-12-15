@@ -36,6 +36,11 @@ export default function storageService($rootScope, localStorageService) {
         $rootScope.config.defaultHome = service.get('defaultHome', 'base.systems()');
         $rootScope.config.defaultHomePage = service.get('defaultHomePage', 'base.systems');
         $rootScope.config.defaultHomeParameters = service.get('defaultHomeParameters', {});   
+        
+        let theme = service.get('currentTheme', theme);
+        for (const key of Object.keys($rootScope.themes)) {
+            $rootScope.themes[key] = key == theme;
+        }
     };
     service["setPrefix"] = (prefix) => {
         localStorageService.setPrefix(prefix);  
