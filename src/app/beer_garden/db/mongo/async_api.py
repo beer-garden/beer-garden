@@ -2,10 +2,9 @@
 from typing import Optional
 
 from box import Box
-from motor import MotorDatabase
-from motor.motor_tornado import MotorClient
+from pymongo import AsyncMongoClient
 
-motor_db: Optional[MotorDatabase] = None
+async_db: Optional[AsyncMongoClient] = None
 
 
 def create_connection(db_config: Box = None) -> None:
@@ -17,13 +16,16 @@ def create_connection(db_config: Box = None) -> None:
     Returns:
         None
     """
-    global motor_db
+    global async_db
 
-    motor_conn = MotorClient(
+    async_conn = AsyncMongoClient(
         host=db_config.connection.host,
         port=db_config.connection.port,
+        username=db_config.connection.username,
+        password=db_config.connection.password,
+        authSource=db_config.connection.authentication_source,
     )
-    motor_db = motor_conn[db_config.name]
+    async_db = async_conn[db_config.name]
 
 
 async def query(
@@ -40,7 +42,7 @@ async def query(
         Dict of the find_one result
 
     """
-    return await motor_db[collection].find_one(filter=filter, projection=projection)
+    return await async_db[collection].find_one(filter=filter, projection=projection)
 
 
 async def update_one(
@@ -57,4 +59,4 @@ async def update_one(
         None
 
     """
-    return await motor_db[collection].update_one(filter=filter, update=update)
+    return await async_db[collection].update_one(filter=filter, update=update)

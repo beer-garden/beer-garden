@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime
+from datetime import datetime, timezone
 from time import sleep
 
 import pytest
@@ -22,7 +22,7 @@ def prometheus_mocks(monkeypatch):
 class TestMetrics(object):
     @pytest.mark.parametrize("wait", [0, 0.1, 0.25])
     def test_request_latency(self, wait):
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         sleep(wait)
         latency = metrics.request_latency(now)
         assert 0.01 > latency - wait

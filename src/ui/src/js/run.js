@@ -578,13 +578,17 @@ export default function appRun(
     let matched = false;
     if (srcGarden.children !== undefined && srcGarden.children !== null){
       for (let i = 0; i < srcGarden.children.length; i++){
-        if (srcGarden.children[i].name== newGarden.name){
+        if (srcGarden.children[i].name == newGarden.name){
+          // Serialization doesn't always include children, so make sure to preserve them
+          if (newGarden.children === undefined || newGarden.children === null || newGarden.children.length == 0){
+            newGarden.children = srcGarden.children[i].children;
+          }
           srcGarden.children[i] = newGarden;
           matched = true;
           break
         }
       }
-    }
+    } 
     if (!matched){
       if (srcGarden.children !== undefined && srcGarden.children !== null){
         for (let i = 0; i < srcGarden.children.length; i++){

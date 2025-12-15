@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from brewtils.models import User
@@ -29,7 +29,7 @@ class BasicLoginHandler(BaseLoginHandler):
         if request.body:
             schema = TokenInputSchema()
 
-            request_data = schema.loads(request.body.decode("utf-8")).data
+            request_data = schema.loads(request.body.decode("utf-8"))
             username = request_data.get("username")
             password = request_data.get("password")
 
@@ -40,7 +40,7 @@ class BasicLoginHandler(BaseLoginHandler):
                     if verify_password(user, password):
                         authenticated_user = user
                         authenticated_user.metadata["last_authentication"] = int(
-                            datetime.utcnow().timestamp() * 1000
+                            datetime.now(timezone.utc).timestamp() * 1000
                         )
                         authenticated_user = update_user(user=authenticated_user)
 

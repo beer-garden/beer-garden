@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import copy
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
+import mongomock
 import pytest
 from brewtils.errors import ModelValidationError, RequestStatusTransitionError
 from brewtils.schemas import RequestTemplateSchema
@@ -609,7 +610,11 @@ class TestRole:
 class TestUser:
     @classmethod
     def setup_class(cls):
-        connect("beer_garden", host="mongomock://localhost")
+        connect(
+            "beer_garden",
+            host="mongodb://localhost",
+            mongo_client_class=mongomock.MongoClient,
+        )
 
     @pytest.fixture()
     def role(self):
@@ -630,7 +635,7 @@ class TestUser:
     @pytest.fixture()
     def user_token(self, user):
         user_token = UserToken(
-            expires_at=datetime.utcnow() + timedelta(minutes=10),
+            expires_at=datetime.now(timezone.utc) + timedelta(minutes=10),
             user=user,
             uuid=uuid4(),
         ).save()
@@ -665,7 +670,7 @@ class TestUserToken:
     @pytest.fixture()
     def user_token(self, user):
         user_token = UserToken(
-            expires_at=datetime.utcnow() + timedelta(minutes=10),
+            expires_at=datetime.now(timezone.utc) + timedelta(minutes=10),
             username=user.username,
             uuid=str(uuid4()),
         ).save()
@@ -687,7 +692,11 @@ class TestGarden:
 
     @classmethod
     def setup_class(cls):
-        connect("beer_garden", host="mongomock://localhost")
+        connect(
+            "beer_garden",
+            host="mongodb://localhost",
+            mongo_client_class=mongomock.MongoClient,
+        )
         Garden.drop_collection()
         Garden.ensure_indexes()
 
@@ -1111,7 +1120,7 @@ class TestFileUpdates:
 
         request_model.save()
 
-        status_updated_at = datetime.utcnow() - timedelta(days=1)
+        status_updated_at = datetime.now(timezone.utc) - timedelta(days=1)
         request_model.status = "SUCCESS"
         request_model.status_updated_at = status_updated_at
         request_model.save()

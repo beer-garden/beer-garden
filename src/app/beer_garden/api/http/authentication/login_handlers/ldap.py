@@ -92,7 +92,7 @@ class LdapLoginHandler(BaseLoginHandler):
         if request.body:
             schema = TokenInputSchema()
 
-            request_data = schema.loads(request.body.decode("utf-8")).data
+            request_data = schema.loads(request.body.decode("utf-8"))
             username = request_data.get("username")
             password = request_data.get("password")
             host = config.get("auth.authentication_handlers.ldap.host")

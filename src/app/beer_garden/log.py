@@ -16,7 +16,6 @@ from typing import Any, Dict
 
 import brewtils.log
 from brewtils.models import Events
-from ruamel import yaml
 from ruamel.yaml import YAML
 
 import beer_garden.config as config
@@ -240,13 +239,13 @@ class PluginLoggingManager(object):
         """
         if remote_file:
             with open(remote_file) as log_config_file:
-                cls._REMOTE_CONFIG = yaml.safe_load(log_config_file)
+                cls._REMOTE_CONFIG = YAML(typ="safe", pure=True).load(log_config_file)
         else:
             cls._REMOTE_CONFIG = remote_default
 
         if local_file:
             with open(local_file) as log_config_file:
-                cls._LOCAL_CONFIG = yaml.safe_load(log_config_file)
+                cls._LOCAL_CONFIG = YAML(typ="safe", pure=True).load(log_config_file)
         else:
             cls._LOCAL_CONFIG = local_default
 
