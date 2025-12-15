@@ -2,7 +2,6 @@ import logging
 import os
 from copy import deepcopy
 
-import yaml
 from brewtils.models import (
     AliasUserMap,
     Event,
@@ -18,6 +17,7 @@ from brewtils.schema_parser import SchemaParser
 from mongoengine import DoesNotExist
 from mongoengine.errors import FieldDoesNotExist
 from passlib.apps import custom_app_context
+from ruamel.yaml import YAML
 
 import beer_garden.db.api as db
 from beer_garden import config
@@ -200,7 +200,7 @@ def load_users_config() -> list:
     if config.get("auth.user_definition_file"):
         if os.path.isfile(config.get("auth.user_definition_file")):
             with open(config.get("auth.user_definition_file"), "r") as config_file:
-                return yaml.safe_load(config_file)
+                return YAML(typ="safe", pure=True).load(config_file)
         else:
             logger.error(
                 f"Unable to load User file: {config.get('auth.user_definition_file')}"

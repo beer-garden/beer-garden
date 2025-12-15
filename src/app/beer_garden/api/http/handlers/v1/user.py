@@ -8,13 +8,11 @@ from beer_garden.api.http.exceptions import BadRequest
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.api.http.schemas.v1.user import UserPasswordChangeSchema
 from beer_garden.errors import InvalidPasswordException
-from beer_garden.metrics import collect_metrics
 
 
 class UserAPI(AuthorizationHandler):
     parser = SchemaParser()
 
-    @collect_metrics(transaction_type="API", group="UserAPI")
     async def get(self, username):
         """
         ---
@@ -28,12 +26,24 @@ class UserAPI(AuthorizationHandler):
         responses:
           200:
             description: User with the given username
-            schema:
-              $ref: '#/definitions/User'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/User'
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Users
         """
@@ -47,7 +57,6 @@ class UserAPI(AuthorizationHandler):
 
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="UserAPI")
     async def delete(self, username):
         """
         ---
@@ -62,9 +71,19 @@ class UserAPI(AuthorizationHandler):
           204:
             description: User has been successfully deleted
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Users
         """
@@ -80,35 +99,52 @@ class UserAPI(AuthorizationHandler):
 
         self.set_status(204)
 
-    @collect_metrics(transaction_type="API", group="UserAPI")
     async def patch(self, username):
         """
         ---
         summary: Partially update a User
+        requestBody:
+          name: patch
+          description: |
+              A subset of User attributes to update, most commonly the password.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchOperation'
         parameters:
           - name: username
             in: path
             required: true
             description: The username of the User
             type: string
-          - name: patch
-            in: body
-            required: true
-            description: |
-              A subset of User attributes to update, most commonly the password.
-            schema:
-              $ref: '#/definitions/UserPatch'
         responses:
           200:
             description: User with the given username
-            schema:
-              $ref: '#/definitions/User'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/User'
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Users
         """
@@ -169,7 +205,6 @@ class UserAPI(AuthorizationHandler):
 class UserListAPI(AuthorizationHandler):
     parser = SchemaParser()
 
-    @collect_metrics(transaction_type="API", group="UserListAPI")
     async def get(self):
         """
         ---
@@ -177,10 +212,19 @@ class UserListAPI(AuthorizationHandler):
         responses:
           200:
             description: All Users
-            schema:
-              $ref: '#/definitions/UserList'
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/UserList'
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Users
         """
@@ -193,28 +237,40 @@ class UserListAPI(AuthorizationHandler):
 
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="UserListAPI")
     async def post(self):
         """
         ---
         summary: Create a new User
-        parameters:
-          - name: user
-            in: body
-            description: The user
-            schema:
-              $ref: '#/definitions/UserCreate'
+        requestBody:
+          name: patch
+          description: The user
+          content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/User'
         consumes:
           - application/json
         responses:
           201:
             description: A new User has been created
-            schema:
-              $ref: '#/definitions/User'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/User'
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Users
         """
@@ -231,7 +287,6 @@ class UserListAPI(AuthorizationHandler):
         self.write(response)
         self.set_status(201)
 
-    @collect_metrics(transaction_type="API", group="UserListAPI")
     async def patch(self):
         """
         ---
@@ -247,23 +302,37 @@ class UserListAPI(AuthorizationHandler):
             { "operation": "" }
           ]
           ```
-        parameters:
-          - name: patch
-            in: body
-            required: true
-            description: |
-              Instructions for how to update the User
-            schema:
-              $ref: '#/definitions/Patch'
+        requestBody:
+          name: patch
+          description: Instructions for how to update the User
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchOperation'
         responses:
           204:
             description: Patch operation has been successfully forwarded
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Users
         """
@@ -285,35 +354,43 @@ class UserListAPI(AuthorizationHandler):
 
 class UserPasswordChangeAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="UserPasswordChangeAPI")
     async def post(self):
         """
         ---
         summary: Allows a user to change their own password
-        parameters:
-          - name: password_change
-            in: body
-            description: The current password for verification and the new password
-            schema:
-              $ref: '#/definitions/UserPasswordChange'
+        requestBody:
+          name: password_change
+          description: The current password for verification and the new password
+          content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/UserPasswordChange'
         consumes:
           - application/json
         responses:
           204:
             description: The password has been changed
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Password
         """
         user = self.current_user
 
         try:
-            password_data = (
-                UserPasswordChangeSchema(strict=True).load(self.request_body).data
-            )
+            password_data = UserPasswordChangeSchema().load(self.request_body)
         except ValidationError as exc:
             raise BadRequest(reason=f"{exc}")
 
@@ -336,7 +413,6 @@ class UserPasswordChangeAPI(AuthorizationHandler):
 
 class WhoAmIAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="WhoAmIAPI")
     def get(self):
         """
         ---
@@ -344,12 +420,14 @@ class WhoAmIAPI(AuthorizationHandler):
         responses:
           200:
             description: Requesting User
-            schema:
-              $ref: '#/definitions/User'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/User'
           401:
-            $ref: '#/definitions/401Error'
+            $ref: '#/components/schemas/401Error'
           403:
-            $ref: '#/definitions/403Error'
+            $ref: '#/components/schemas/403Error'
         tags:
           - Users
         """

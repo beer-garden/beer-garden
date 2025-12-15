@@ -1,10 +1,10 @@
 import logging
 import os
 
-import yaml
 from brewtils.models import Event, Events, Permissions, Role
 from mongoengine import DoesNotExist
 from mongoengine.errors import FieldDoesNotExist
+from ruamel.yaml import YAML
 
 import beer_garden.db.api as db
 from beer_garden import config
@@ -104,7 +104,7 @@ def load_roles_config():
     if config.get("auth.role_definition_file"):
         if os.path.isfile(config.get("auth.role_definition_file")):
             with open(config.get("auth.role_definition_file"), "r") as config_file:
-                return yaml.safe_load(config_file)
+                return YAML(typ="safe", pure=True).load(config_file)
         else:
             logger.error(
                 f"Unable to load Roles file: {config.get('auth.role_definition_file')}"
@@ -188,10 +188,12 @@ def handle_event(event: Event) -> None:
     """Processes the provided event by calling the correct handler function(s) for the
     given event type.
 
+    This is not implemented in the handlers logic. Once implemented, this function will
+    need to be included in the list.
+
     Args:
         event: The Event to process
-
     Returns:
         None
     """
-    return
+    pass

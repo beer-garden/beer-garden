@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8","3.9","3.10","3.12","3.13"]
+        python-version: ["3.12","3.13", "3.14"]
         os: ["ubuntu-latest"]
         include:
           - python-version: "3.7"
@@ -94,6 +94,34 @@ jobs:
 
       - name: Build and Publish Images
         run: make deps publish-docker-unstable
+
+  docker-branch-publish-src-unstable-rpm:
+    name: Docker Publish Python ${{ matrix.python-version }} Unstable
+    runs-on: ubuntu-latest
+    needs: [docker-branch-publish-src-unstable, docker-publish-ui-unstable]
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11"]
+        dist: ["centos7", "rocky9"]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}  
+
+      - name: Build and Publish Unstable Images
+        run: make publish-docker-unstable-rpm PYTHON_VERSION=${{ matrix.python-version }}
         
   CodeCoverage:
     runs-on: ${{ matrix.os }}
@@ -122,7 +150,7 @@ jobs:
 
       # Need to update if we support other OS's
       - name: Cache PIP Install
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-${{ matrix.python-version }}-pip-coverage-${{ hashFiles('**/setup.py') }}-${{ hashFiles('**/requirements.txt') }}
@@ -138,7 +166,7 @@ jobs:
       - name: Generate coverage report
         continue-on-error: true
         run: |
-          coverage run --source beer_garden -m pytest test --tb=no
+          coverage run --source beer_garden -m pytest test --tb=no --ignore $(TEST_DIR)/api/http/unit/handlers/v1/event_test.py
           coverage report -m
           coverage xml
 

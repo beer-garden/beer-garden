@@ -20,12 +20,16 @@ export default function addRemoveRolesController($scope, $uibModalInstance, User
 
     $scope.resetSubmission = function() {
         $scope.user_roles = [];
-        for (let i = 0; i < $scope.user.local_roles.length; i++) {
-            $scope.user_roles.push($scope.user.local_roles[i].name)
+        if ($scope.user.local_roles !== undefined && $scope.user.local_roles !== null) {
+          for (let i = 0; i < $scope.user.local_roles.length; i++) {
+              $scope.user_roles.push($scope.user.local_roles[i].name)
+          }
         }
 
-        for (let i = 0; i < $scope.data.length; i++) {
-            $scope.data[i].is_checked = $scope.user.roles.includes($scope.data[i].name)
+        if ($scope.data !== undefined && $scope.data !== null) {
+          for (let i = 0; i < $scope.data.length; i++) {
+              $scope.data[i].is_checked = $scope.user.roles.includes($scope.data[i].name)
+          }
         }
     }
 
@@ -50,8 +54,10 @@ export default function addRemoveRolesController($scope, $uibModalInstance, User
     $scope.data = RoleService.getRoles().then(
         (responses) => {
             $scope.data = responses.data;
-            for (let i = 0; i < $scope.data.length; i++) {
-                $scope.data[i].is_checked = $scope.user.roles.includes($scope.data[i].name)
+            if ($scope.data !== undefined && $scope.data !== null) {
+              for (let i = 0; i < $scope.data.length; i++) {
+                  $scope.data[i].is_checked = $scope.user.roles.includes($scope.data[i].name)
+              }
             }
         },
         (response) => {
@@ -62,27 +68,27 @@ export default function addRemoveRolesController($scope, $uibModalInstance, User
     $scope.roleTitle = function(role) {
         let title = role.permission;
     
-        if (role.scope_gardens.length > 0){
+        if (role.scope_gardens !== undefined && role.scope_gardens !== null && role.scope_gardens.length > 0){
           title += ", Gardens = " + role.scope_gardens;
         }
     
-        if (role.scope_namespaces.length > 0){
+        if (role.scope_namespaces !== undefined && role.scope_namespaces !== null && role.scope_namespaces.length > 0){
           title += ", Namespaces = " + role.scope_namespaces;
         }
     
-        if (role.scope_systems.length > 0){
+        if (role.scope_systems !== undefined && role.scope_systems !== null && role.scope_systems.length > 0){
           title += ", Systems = " + role.scope_systems;
         }
     
-        if (role.scope_instances.length > 0){
+        if (role.scope_instances !== undefined && role.scope_instances !== null && role.scope_instances.length > 0){
           title += ", Instances = " + role.scope_instances;
         }
     
-        if (role.scope_versions.length > 0){
+        if (role.scope_versions !== undefined && role.scope_versions !== null && role.scope_versions.length > 0){
           title += ", Versions = " + role.scope_versions;
         }
     
-        if (role.scope_commands.length > 0){
+        if (role.scope_commands !== undefined && role.scope_commands !== null && role.scope_commands.length > 0){
           title += ", Commands = " + role.scope_commands;
         }
     

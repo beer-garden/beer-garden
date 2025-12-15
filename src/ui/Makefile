@@ -3,6 +3,7 @@
 DOCKER_NAME    = bgio/ui
 VERSION       ?= latest
 SHORT_VERSION  = $(shell echo $(VERSION) | head -c 1)
+DATE          ?= $(shell date +%Y-%m-%d)
 
 .PHONY: clean clean-build clean-test help test deps
 .DEFAULT_GOAL := help
@@ -90,3 +91,7 @@ publish-docker: docker-build ## push the docker image
 
 publish-docker-unstable: docker-build-unstable ## push the unstable docker image
 	docker push $(DOCKER_NAME):unstable
+
+publish-branch-docker-unstable: package
+	docker build -t $(DOCKER_NAME):branch-unstable-${DATE} .
+	docker push $(DOCKER_NAME):branch-unstable-${DATE}

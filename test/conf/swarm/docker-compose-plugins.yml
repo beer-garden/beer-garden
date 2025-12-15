@@ -1,17 +1,5 @@
 version: '3.5'
 
-x-definitions: &common-env
-    # IMPORTANT!!
-    # Comment this out when using the "secure" compose file
-    BG_SSL_ENABLED: "False"
-
-    BG_HOST: beer-garden
-    BG_CA_CERT: /certs/ca_certificate.pem
-
-x-definitions: &complex-env
-    DB_NAME: complex
-    DB_PASS: supersecret
-
 x-definitions: &plugin
     image: bgio/example-plugins
     networks:
@@ -25,9 +13,12 @@ x-definitions: &plugin
         replicas: 1
     volumes:
         - ./data/certs/ca_certificate.pem:/certs/ca_certificate.pem
+        # Uncomment if we want to start injecting latest brewtils for testing
+        # - ./brewtils:/usr/local/lib/python3.11/site-packages/brewtils:ro
     environment:
-        <<: *common-env
-
+        BG_SSL_ENABLED: "False"
+        BG_HOST: beer-garden
+        BG_CA_CERT: /certs/ca_certificate.pem
 
 services:
     child:

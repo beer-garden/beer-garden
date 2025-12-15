@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
-from brewtils.models import Operation, Permissions, Queue, System
+from brewtils.models import Garden, Operation, Permissions, Queue, System
 
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.garden import local_garden
-from beer_garden.metrics import collect_metrics
 
 
 class QueueAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="QueueAPI")
     async def delete(self, queue_name):
         """
         ---
@@ -23,9 +21,19 @@ class QueueAPI(AuthorizationHandler):
           204:
             description: Queue successfully cleared
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Queues
         """
@@ -41,7 +49,6 @@ class QueueAPI(AuthorizationHandler):
 
 class QueueListAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="QueueListAPI")
     async def get(self):
         """
         ---
@@ -49,12 +56,19 @@ class QueueListAPI(AuthorizationHandler):
         responses:
           200:
             description: List of all queue information objects
-            schema:
-              type: array
-              items:
-                $ref: '#/definitions/Queue'
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Queue'
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Queues
         """
@@ -73,22 +87,42 @@ class QueueListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="QueueListAPI")
     async def delete(self):
         """
         ---
         summary: Cancel and clear all requests in all queues
+        parameters:
+          - name: garden_name
+            in: query
+            required: false
+            description: Specify garden to target
+            type: string
         responses:
           204:
             description: All queues successfully cleared
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Queues
         """
-        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
-        self.verify_user_permission_for_object(local_garden())
+        garden_name = self.get_query_argument("garden_name", None)
 
-        await self.process_operation(Operation(operation_type="QUEUE_DELETE_ALL"))
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
+        if garden_name:
+            self.get_or_raise(Garden, name=garden_name)
+        else:
+            self.verify_user_permission_for_object(local_garden())
+
+        await self.process_operation(
+            Operation(
+                operation_type="QUEUE_DELETE_ALL",
+                target_garden_name=garden_name,
+            )
+        )
 
         self.set_status(204)

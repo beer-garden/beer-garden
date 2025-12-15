@@ -4,12 +4,8 @@ from typing import List
 import pytest
 from brewtils.models import Garden, PatchOperation
 
-try:
-    from helper import wait_for_response
-    from helper.assertion import assert_successful_request
-except (ImportError, ValueError):
-    from ...helper import wait_for_response
-    from ...helper.assertion import assert_successful_request
+from helper import wait_for_response
+from helper.assertion import assert_successful_request
 
 
 class IntegrationTestSetupFailure(Exception):

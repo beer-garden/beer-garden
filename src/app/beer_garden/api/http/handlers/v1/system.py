@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 from brewtils.errors import ModelValidationError
-from brewtils.models import Operation, Permissions, System
+from brewtils.models import Garden, Operation, Permissions, System
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import SystemSchema as BrewtilsSystemSchema
 
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.api.http.schemas.v1.system import SystemSansQueueSchema
-from beer_garden.metrics import collect_metrics
+from beer_garden.garden import local_garden
 
 
 def _remove_queue_info(response: str, many: bool = False) -> str:
@@ -18,12 +17,17 @@ def _remove_queue_info(response: str, many: bool = False) -> str:
     risky. Instead, this takes the serialized response and just runs it through another
     Schema that strips out the queue info.
     """
-    system_data = SystemSansQueueSchema(many=many).loads(response).data
-    return SystemSansQueueSchema(many=many).dumps(system_data).data
+    if isinstance(response, str):
+        system_data = SchemaParser.parse_system(response, many=many, from_string=True)
+    else:
+        system_data = response
+
+    return BrewtilsSystemSchema(
+        many=many, exclude=("instances.queue_type", "instances.queue_info")
+    ).dumps(system_data)
 
 
 class SystemAPI(AuthorizationHandler):
-    @collect_metrics(transaction_type="API", group="SystemAPI")
     async def get(self, system_id):
         """
         ---
@@ -43,12 +47,24 @@ class SystemAPI(AuthorizationHandler):
         responses:
           200:
             description: System with the given ID
-            schema:
-              $ref: '#/definitions/System'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/System'
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Systems
         """
@@ -63,12 +79,11 @@ class SystemAPI(AuthorizationHandler):
         if not include_commands:
             system.commands = []
 
-        response = SystemSansQueueSchema().dump(system).data
+        response = _remove_queue_info(system)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="SystemAPI")
     async def delete(self, system_id):
         """
         Will give Bartender a chance to remove instances of this system from the
@@ -94,9 +109,19 @@ class SystemAPI(AuthorizationHandler):
           204:
             description: System has been successfully deleted
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Systems
         """
@@ -116,7 +141,6 @@ class SystemAPI(AuthorizationHandler):
 
         self.set_status(204)
 
-    @collect_metrics(transaction_type="API", group="SystemAPI")
     async def patch(self, system_id):
         """
         ---
@@ -137,29 +161,47 @@ class SystemAPI(AuthorizationHandler):
           ]
           ```
           Where `value` is a list of new Commands.
+        requestBody:
+          name: patch
+          description: Instructions for how to update the System
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchOperation'
         parameters:
           - name: system_id
             in: path
             required: true
             description: The ID of the System
             type: string
-          - name: patch
-            in: body
-            required: true
-            description: Instructions for how to update the System
-            schema:
-              $ref: '#/definitions/Patch'
         responses:
           200:
             description: System with the given ID
-            schema:
-              $ref: '#/definitions/System'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/System'
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Systems
         """
@@ -238,7 +280,6 @@ class SystemAPI(AuthorizationHandler):
 class SystemListAPI(AuthorizationHandler):
     REQUEST_FIELDS = set(BrewtilsSystemSchema.get_attribute_names())
 
-    @collect_metrics(transaction_type="API", group="SystemListAPI")
     async def get(self):
         """
         ---
@@ -304,12 +345,19 @@ class SystemListAPI(AuthorizationHandler):
         responses:
           200:
             description: All Systems
-            schema:
-              type: array
-              items:
-                $ref: '#/definitions/System'
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/System'
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Systems
         """
@@ -383,7 +431,6 @@ class SystemListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(_remove_queue_info(response, many=True))
 
-    @collect_metrics(transaction_type="API", group="SystemListAPI")
     async def post(self):
         """
         ---
@@ -391,25 +438,40 @@ class SystemListAPI(AuthorizationHandler):
         description: |
             If the System does not exist it will be created. If the System
             already exists it will be updated (assuming it passes validation).
-        parameters:
-          - name: system
-            in: body
-            description: The System definition to create / update
-            schema:
-              $ref: '#/definitions/System'
+        requestBody:
+          name: patch
+          description: The System definition to create / update
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/System'
         responses:
           200:
             description: An existing System has been updated
-            schema:
-              $ref: '#/definitions/System'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/System'
           201:
             description: A new System has been created
-            schema:
-              $ref: '#/definitions/System'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/System'
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Systems
         """
@@ -427,3 +489,65 @@ class SystemListAPI(AuthorizationHandler):
         self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(_remove_queue_info(response))
+
+    async def patch(self):
+        """
+        ---
+        summary: Partially update systems
+        description: |
+          The body of the request needs to contain a set of instructions
+          detailing the operations to perform.
+
+          Currently the supported operations are `rescan`:
+          ```JSON
+          [
+            { "operation": "rescan" }
+          ]
+          ```
+          * Will remove from the registry and database any currently stopped
+            plugins who's directory has been removed.
+          * Will add and start any new plugin directories.
+        parameters:
+          - name: garden_name
+            in: query
+            required: false
+            description: Specify garden to target
+            type: string
+          - name: patch
+            in: body
+            required: true
+            description: Instructions for operations
+            schema:
+              $ref: '#/definitions/Patch'
+        responses:
+          204:
+            description: Operation successfully initiated
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Systems
+        """
+        garden_name = self.get_query_argument("garden_name", None)
+
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
+        if garden_name:
+            self.get_or_raise(Garden, name=garden_name)
+        else:
+            self.verify_user_permission_for_object(local_garden())
+
+        operations = SchemaParser.parse_patch(
+            self.request.decoded_body, many=True, from_string=True
+        )
+
+        for op in operations:
+            if op.operation == "rescan":
+                await self.process_operation(
+                    Operation(
+                        operation_type="RUNNER_RESCAN",
+                        target_garden_name=garden_name,
+                    )
+                )
+            else:
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+
+        self.set_status(204)

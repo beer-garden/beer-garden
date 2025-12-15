@@ -20,17 +20,20 @@ import beer_garden.api
 import beer_garden.api.entry_point
 import beer_garden.config as config
 import beer_garden.db.api as db
-import beer_garden.db.mongo.pruner
+import beer_garden.db.mongo.legacy_pruner
 import beer_garden.events
 import beer_garden.events.handlers
 import beer_garden.garden
 import beer_garden.local_plugins.manager
-import beer_garden.namespace
 import beer_garden.queue.api as queue
 import beer_garden.router
 import beer_garden.scheduler
 from beer_garden.events.parent_processors import HttpParentUpdater
-from beer_garden.events.processors import EventProcessor, FanoutProcessor, QueueListener
+from beer_garden.events.processors import (
+    FanoutProcessor,
+    QueueListener,
+    ReplicationProcessor,
+)
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer, initialize_elastic_client
@@ -110,13 +113,14 @@ class Application(StoppableThread):
                 )
             )
 
-        self.helper_threads.append(
-            HelperThread(
-                beer_garden.replication.PrimaryReplicationMonitor,
-                10,
-                30,
+        if config.get("replication.enabled"):
+            self.helper_threads.append(
+                HelperThread(
+                    beer_garden.replication.PrimaryReplicationMonitor,
+                    10,
+                    30,
+                )
             )
-        )
 
         beer_garden.router.forward_processor = QueueListener(
             action=beer_garden.router.forward, name="forwarder"
@@ -124,7 +128,9 @@ class Application(StoppableThread):
 
         self.mp_manager = self._setup_multiprocessing_manager()
 
-        beer_garden.local_plugins.manager.lpm_proxy = self.mp_manager.PluginManager()
+        beer_garden.local_plugins.manager.lpm_proxy = self.mp_manager.PluginManager(
+            config_data=config._CONFIG
+        )
 
         self.entry_manager = beer_garden.api.entry_point.Manager()
 
@@ -295,8 +301,9 @@ class Application(StoppableThread):
         for helper_thread in self.helper_threads:
             helper_thread.start()
 
-        self.logger.debug("Publishing to Parent that we are online")
-        beer_garden.garden.publish_garden()
+        if config.get("parent.stomp.enabled") or config.get("parent.http.enabled"):
+            self.logger.debug("Publishing to Parent that we are online")
+            beer_garden.garden.publish_garden()
 
         self.logger.info("All set! Let me know if you need anything else!")
 
@@ -308,7 +315,7 @@ class Application(StoppableThread):
 
         try:
             self.logger.debug("Publishing shutdown sync")
-            beer_garden.garden.publish_garden(status="STOPPED")
+            beer_garden.garden.publish_garden()
         except Exception as ex:
             self.logger.info("Failed: Publishing shutdown sync")
             self.logger.error(ex)
@@ -420,7 +427,7 @@ class Application(StoppableThread):
         """Set up the event manager for the Main Processor"""
 
         if config.get("replication.enabled"):
-            event_manager = EventProcessor(name="event manager")
+            event_manager = ReplicationProcessor(name="event manager")
         else:
             event_manager = FanoutProcessor(name="event manager")
 
@@ -435,7 +442,7 @@ class Application(StoppableThread):
         if cfg.enabled:
 
             def reconnect_action():
-                beer_garden.garden.publish_garden(status="RUNNING")
+                beer_garden.garden.publish_garden()
 
             easy_client = EasyClient(
                 bg_host=cfg.host,
@@ -455,6 +462,7 @@ class Application(StoppableThread):
             )
 
             event_manager.register(
+                # Keep filter list in sync with Stomp StompManager._event_handler()
                 HttpParentUpdater(
                     easy_client=easy_client,
                     reconnect_action=reconnect_action,
@@ -485,12 +493,19 @@ class Application(StoppableThread):
             ),
         )
 
-        def initializer():
-            signal.signal(signal.SIGINT, signal.SIG_IGN)
-            signal.signal(signal.SIGTERM, signal.SIG_IGN)
+        # Signals are inherited when Manager is started. Set ignore for
+        # signals, then reset to original after data_manager is started.
+        original_sigint_handler = signal.getsignal(signal.SIGINT)
+        original_sigterm_handler = signal.getsignal(signal.SIGTERM)
+
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
 
         data_manager = BaseManager()
-        data_manager.start(initializer=initializer)
+        data_manager.start()
+
+        signal.signal(signal.SIGINT, original_sigint_handler)
+        signal.signal(signal.SIGTERM, original_sigterm_handler)
 
         return data_manager
 

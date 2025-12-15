@@ -37,6 +37,7 @@ export default function systemStatusDirective() {
           case 'DISABLED':
           case 'ERROR':
           case 'UNREACHABLE':
+          case 'UNKNOWN':
           case 'DISABLED':
           case 'NOT_CONFIGURED':
           case 'CONFIGURATION_ERROR':

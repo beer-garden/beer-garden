@@ -80,7 +80,7 @@ export default function commandViewController(
     }
 
     // If parameters are specified we need to use the model value
-    if (angular.isDefined(requestPrototype['parameterNames'])) {
+    if (angular.isDefined(requestPrototype['parameterNames']) && requestPrototype['parameterNames'] !== null) {
       request['parameters'] = {};
       const nameList = requestPrototype['parameterNames'];
       for (let i = 0; i < nameList.length; i++) {
@@ -150,9 +150,11 @@ export default function commandViewController(
     if (valid) {
       $scope.createRequest(model);
     } else {
-      $scope.alerts.push(
-          'Looks like there was an error validating the request.',
-      );
+      
+      $scope.alerts.push({
+        type: 'danger',
+        msg: 'Looks like there was an error validating the request.',
+      });
     }
   };
 
@@ -161,7 +163,10 @@ export default function commandViewController(
       try {
         request = JSON.parse(request);
       } catch (err) {
-        $scope.alerts.push(err);
+        $scope.alerts.push({
+          type: 'danger',
+          msg: err,
+        });
         return;
       }
     }
@@ -185,6 +190,9 @@ export default function commandViewController(
       newRequest['command_display_name'] = $scope.command['display_name'];
     }
 
+    newRequest['target_garden'] = $scope.system.garden_name;
+    newRequest['source_garden'] = $rootScope.config.gardenName;
+
     let isFormData = false;
     const fd = new FormData();
     for (const i in $scope.command.parameters) {
@@ -203,6 +211,14 @@ export default function commandViewController(
     if (isFormData) {
       newRequest = fd;
     }
+
+    setTimeout(function create_timeout() {   
+      $scope.alerts.push({
+        type: 'info',
+        msg: 'Looks like the request is taking longer to submit, hang in there',
+      });
+      $scope.$digest();
+    }, 5000);
 
     RequestService.createRequest(newRequest, false, isFormData).then(
         function(response) {
@@ -260,8 +276,10 @@ export default function commandViewController(
           for (const el of $scope.form) {
             if (el.key && Array.isArray(el.key)) {
               if (el.key.indexOf(p) >= 0) {
-                el['placeholder'] = params[p].details.file_name;
-                break;
+                if (params[p].details && params[p].details.file_name) {
+                  el['placeholder'] = params[p].details.file_name;
+                  break;
+                }
               }
             }
           }
@@ -273,23 +291,29 @@ export default function commandViewController(
     $scope.jsonValues.form = JSON.stringify($scope.form, undefined, 2);
   };
 
-  $scope.successCallback = function(systems) {
+  $scope.successCallback = function() {
 
-    for (let i = 0; i < systems.length; i++) {
-      let system = systems[i];
-      if (system.namespace == $stateParams.namespace &&
-        (system.display_name || system.name) == $stateParams.systemName &&
-        system.version == $stateParams.systemVersion) {
-        $scope.system = system;
-        break;
+    if ($rootScope.systems !== undefined && $rootScope.systems !== null) {
+      let systems = $rootScope.systems;
+
+      for (let i = 0; i < systems.length; i++) {
+        let system = systems[i];
+        if (system.namespace == $stateParams.namespace &&
+          (system.display_name || system.name) == $stateParams.systemName &&
+          system.version == $stateParams.systemVersion) {
+          $scope.system = system;
+          break;
+        }
       }
-    }
 
-    for (let i = 0; i < $scope.system.commands.length; i++) {
-      let command = $scope.system.commands[i];
-      if ((command.display_name || command.name) == $stateParams.commandName) {
-        $scope.command = command;
-        break;
+      if ($scope.system.commands !== undefined && $scope.system.commands !== null) {
+        for (let i = 0; i < $scope.system.commands.length; i++) {
+          let command = $scope.system.commands[i];
+          if ((command.display_name || command.name) == $stateParams.commandName) {
+            $scope.command = command;
+            break;
+          }
+        }
       }
     }
 
@@ -381,17 +405,6 @@ export default function commandViewController(
   // Model instantiate button will emit this so need to listen for it
   $scope.$on('generateSF', generateSF);
 
-  if ($rootScope.gardensResponse !== undefined){
-    $scope.successCallback($rootScope.systems);
-  } 
-  else {
-    setTimeout(function delaySystemLoad() {
-      if ($rootScope.gardensResponse !== undefined){
-        $scope.successCallback($rootScope.systems);
-        $scope.$digest();
-      } else {
-        setTimeout(delaySystemLoad, 10);
-      }
-    }, 10);
-  }
+  $rootScope.getLocalGarden($scope.successCallback)
+
 }

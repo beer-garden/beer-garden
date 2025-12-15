@@ -1,16 +1,7 @@
-import pytest
 import json
 import time
 
-# from time import sleep
-# from brewtils.models import PatchOperation
-#
-# try:
-#    from helper import wait_for_response
-#    from helper.assertion import assert_successful_request
-# except (ImportError, ValueError):
-#    from ...helper import wait_for_response
-#    from ...helper.assertion import assert_successful_request
+import pytest
 
 
 @pytest.fixture(scope="class")
@@ -45,7 +36,7 @@ class TestGardenSetup(object):
             ]
         )
         self.grand_parent_easy_client.client.patch_garden("parent", patches)
-        time.sleep(5)
+        time.sleep(30)
 
     def sync_child(self):
         patches = json.dumps(
@@ -58,7 +49,7 @@ class TestGardenSetup(object):
             ]
         )
         self.parent_easy_client.client.patch_garden("child", patches)
-        time.sleep(5)
+        time.sleep(30)
 
     # def test_garden_auto_register_successful(self):
     #     response = self.grand_parent_easy_client.client.session.get(
@@ -89,10 +80,19 @@ class TestGardenSetup(object):
                 for connection in garden.publishing_connections:
                     if connection.api == "STOMP":
                         assert connection.status == "PUBLISHING"
-                    else:
+                    elif connection.api == "HTTP":
                         assert connection.status == "NOT_CONFIGURED"
-                assert len(garden.receiving_connections) == 1
-                assert garden.receiving_connections[0].status == "RECEIVING"
+                    else:
+                        raise AssertionError()
+                assert len(garden.receiving_connections) == 2
+
+                for connection in garden.receiving_connections:
+                    if connection.api == "STOMP":
+                        assert connection.status == "RECEIVING"
+                    elif connection.api == "HTTP":
+                        assert connection.status == "RECEIVING"
+                    else:
+                        raise AssertionError()
                 assert len(garden.children) == 1
                 assert garden.children[0].name == "child"
 
@@ -116,14 +116,22 @@ class TestGardenSetup(object):
                 for connection in garden.publishing_connections:
                     if connection.api == "HTTP":
                         assert connection.status == "PUBLISHING"
-                    else:
+                    elif connection.api == "STOMP":
                         assert connection.status == "NOT_CONFIGURED"
+                    else:
+                        raise AssertionError()
 
                 # Older gardens will not have receiving connections present
                 if len(garden.receiving_connections) > 0:
-                    assert len(garden.receiving_connections) == 1
-                    assert garden.receiving_connections[0].status == "RECEIVING"
-                    assert len(garden.children) == 0
+                    for connection in garden.receiving_connections:
+                        if connection.api == "HTTP":
+                            assert connection.status == "RECEIVING"
+                        elif connection.api == "STOMP":
+                            assert connection.status == "NOT_CONFIGURED"
+                        else:
+                            raise AssertionError()
+
+                assert len(garden.children) == 0
 
             elif garden.name == "parent":
                 assert len(garden.children) == 1

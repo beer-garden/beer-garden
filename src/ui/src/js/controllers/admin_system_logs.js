@@ -25,8 +25,7 @@ export default function adminSystemLogsController(
     instance,
 ) {
   $scope.logs = undefined;
-  $scope.start_line = 0;
-  $scope.end_line = 20;
+  $scope.tail_line_start = 20;
   $scope.tail_start = 0;
   $scope.tail_line = 20;
   $scope.wait_timeout = 30;
@@ -60,25 +59,13 @@ export default function adminSystemLogsController(
     $scope.displayLogs = '';
     $scope.requestId = response.headers('request_id');
 
-    for (let i = 0; i < $scope.logs.length; i++) {
-      $scope.displayLogs = $scope.displayLogs.concat($scope.logs[i]);
+    if ($scope.logs !== undefined && $scope.logs !== null) {
+      for (let i = 0; i < $scope.logs.length; i++) {
+        $scope.displayLogs = $scope.displayLogs.concat($scope.logs[i]);
+      }
     }
 
     $scope.downloadHref = 'api/v1/requests/output/' + $scope.requestId;
-  };
-
-
-  $scope.getLogsLines = function() {
-    $scope.loadingLogs = true;
-    $scope.displayLogs = undefined;
-
-
-    InstanceService.getInstanceLogs(
-        instance.id,
-        $scope.wait_timeout,
-        $scope.start_line,
-        $scope.end_line,
-    ).then($scope.successLogs, $scope.addErrorAlert);
   };
 
   $scope.successTailLogs = function(response) {
@@ -91,19 +78,34 @@ export default function adminSystemLogsController(
       appendLogs = false;
     } 
 
-    for (let i = 0; i < response.data.length; i++) {
-      $scope.displayLogs = $scope.displayLogs.concat(response.data[i]);
-    }
-
     $scope.requestId = response.headers('request_id');
     $scope.downloadHref = 'api/v1/requests/output/' + $scope.requestId;
 
-    if (response.data.length > 0){
-      $scope.tail_start = $scope.tail_start + response.data.match(/\n/g).length + 1;
+    let response_logs = null;
+
+    if (typeof response.data === 'string'){
+      // Legacy support for log only responses
+      response_logs = response.data;
+
+      if (response_logs !== null && response_logs.length > 0){
+        $scope.tail_start = $scope.tail_start + response.data.match(/\n/g).length + 1;    
+      }
+
+    } else {
+      // New log response structure
+      response_logs = response.data.logs;
+      
+      if (response_logs !== null && response_logs.length > 0){
+        $scope.tail_start = response.data.end_line + 1;
+      }
+    }
+
+    for (let i = 0; i < response_logs.length; i++) {
+      $scope.displayLogs = $scope.displayLogs.concat(response_logs[i]);
     }
 
     // Sleep so you don't spam the server
-    if (response.data.length == 0 || response.data.match(/\n/g).length < $scope.tail_line){
+    if ((response_logs !== null && response_logs.length == 0) || response_logs.match(/\n/g).length < $scope.tail_line){
       $timeout(() => {$scope.getLogsTailLoop();}, 10000); // Sleep Ten seconds
     } else {
       $timeout(() => {$scope.getLogsTailLoop();}, 1000); // Sleep One Second
@@ -130,14 +132,20 @@ export default function adminSystemLogsController(
   $scope.getLogsTail = function() {
     $scope.loadingLogs = true;
     $scope.displayLogs = undefined;
-    $scope.tail_start = 0;
+
+    if ($scope.tail_line_start > 0){
+      $scope.tail_start = $scope.tail_line_start * -1;
+    } else {
+      $scope.tail_start = $scope.tail_line_start;
+    }
+
     $scope.stopTailing = false;
 
     InstanceService.getInstanceLogs(
         instance.id,
         $scope.wait_timeout,
         $scope.tail_start,
-        $scope.tail_line + $scope.tail_start,
+        null,
     ).then($scope.successTailLogs, $scope.addErrorAlert);
   };
 

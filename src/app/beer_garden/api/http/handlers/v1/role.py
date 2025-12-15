@@ -4,13 +4,11 @@ from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.garden import local_garden
-from beer_garden.metrics import collect_metrics
 
 
 class RoleAPI(AuthorizationHandler):
     parser = SchemaParser()
 
-    @collect_metrics(transaction_type="API", group="RoleAPI")
     async def get(self, role_id):
         """
         ---
@@ -24,12 +22,24 @@ class RoleAPI(AuthorizationHandler):
         responses:
           200:
             description: Role with the given role name
-            schema:
-              $ref: '#/definitions/Role'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Role'
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Roles
         """
@@ -49,7 +59,6 @@ class RoleAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="RoleAPI")
     async def delete(self, role_id):
         """
         ---
@@ -64,9 +73,19 @@ class RoleAPI(AuthorizationHandler):
           204:
             description: Role has been successfully deleted
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Roles
         """
@@ -84,35 +103,51 @@ class RoleAPI(AuthorizationHandler):
 
         self.set_status(204)
 
-    @collect_metrics(transaction_type="API", group="RoleAPI")
     async def patch(self, role_id):
         """
         ---
         summary: Partially update a Role
+        requestBody:
+          name: patch
+          description: A subset of Role attributes to update
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchOperation'
         parameters:
           - name: role_id
             in: path
             required: true
             description: The role id name of the Role
             type: string
-          - name: patch
-            in: body
-            required: true
-            description: |
-              A subset of Role attributes to update
-            schema:
-              $ref: '#/definitions/Patch'
         responses:
           200:
             description: Role with the given role name
-            schema:
-              $ref: '#/definitions/Role'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Role'
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Users
         """
@@ -142,7 +177,6 @@ class RoleAPI(AuthorizationHandler):
 class RoleListAPI(AuthorizationHandler):
     parser = SchemaParser()
 
-    @collect_metrics(transaction_type="API", group="RoleListAPI")
     async def get(self):
         """
         ---
@@ -150,10 +184,19 @@ class RoleListAPI(AuthorizationHandler):
         responses:
           200:
             description: All Roles
-            schema:
-              $ref: '#/definitions/RoleList'
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Role'
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Roles
         """
@@ -167,28 +210,40 @@ class RoleListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="RoleListAPI")
     async def post(self):
         """
         ---
         summary: Create a new Role
-        parameters:
-          - name: role
-            in: body
-            description: The role
-            schema:
-              $ref: '#/definitions/Role'
+        requestBody:
+          name: patch
+          description: The Role definition to create
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
         consumes:
           - application/json
         responses:
           201:
             description: A new Role has been created
-            schema:
-              $ref: '#/definitions/Role'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Role'
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Users
         """
@@ -205,7 +260,6 @@ class RoleListAPI(AuthorizationHandler):
         self.write(response)
         self.set_status(201)
 
-    @collect_metrics(transaction_type="API", group="RoleListAPI")
     async def patch(self):
         """
         ---
@@ -221,23 +275,37 @@ class RoleListAPI(AuthorizationHandler):
             { "operation": "" }
           ]
           ```
-        parameters:
-          - name: patch
-            in: body
-            required: true
-            description: |
-              Instructions for how to update the Role
-            schema:
-              $ref: '#/definitions/Patch'
+        requestBody:
+          name: patch
+          description: Instructions for how to update the Role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchOperation'
         responses:
           204:
             description: Patch operation has been successfully forwarded
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Users
         """
