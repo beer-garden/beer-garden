@@ -201,6 +201,7 @@ class Parameter(MongoModel, EmbeddedDocument):
     )
     type_info = DictField(required=False)
     parameters = EmbeddedDocumentListField("Parameter")
+    deprecated = BooleanField(default=False)
 
     # If no display name was set, it will default it to the same thing as the key
     def __init__(self, *args, **kwargs):
@@ -245,6 +246,7 @@ class Command(MongoModel, EmbeddedDocument):
     tags = ListField(field=StringField())
     topics = ListField(field=StringField())
     allow_any_kwargs = BooleanField(default=False)
+    deprecated = BooleanField(default=False)
 
     def clean(self):
         """Validate before saving to the database"""
