@@ -14,7 +14,7 @@ TBD
 - Fixed Global Admin permission check in UI (#1982)
 - Fixed Role Rescan to remove missing roles from database (#1982)
 - Fixed Role Delete to removes role from Users and forces Token refresh (#1982)
-- Updated UI pages to display 401 error if user does not have access to view the contents of the page (#1987)
+- Updated UI pages to display 401 error if user does not have access to view the contents of the page (#1987,#2013)
 
 # 3.31.0
 
