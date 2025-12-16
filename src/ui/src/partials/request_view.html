@@ -52,7 +52,9 @@
 
 <fetch-data response="response" ng-if="hasPermission('READ_ONLY')"></fetch-data>
 
-<unauthorized-message ng-if="!hasPermission('READ_ONLY')"/>
+<div ng-if="!hasPermission('READ_ONLY')">
+  <unauthorized-message/>
+</div>
 
 <div ng-if="hasPermission('READ_ONLY') && responseState(response) === 'success'">
   <ol class="tagline breadcrumb" ng-show="request_tree.length > 1">

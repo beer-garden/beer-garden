@@ -1,4 +1,6 @@
-<unauthorized-message ng-if="!hasPermission('READ_ONLY')"/>
+<div ng-if="!hasPermission('READ_ONLY')">
+  <unauthorized-message/>
+</div>
 
 <div ng-show="hasPermission('READ_ONLY') && (responseState(response) === 'success') && template">
   <div ng-bind-html="template"></div>
