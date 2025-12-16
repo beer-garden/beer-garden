@@ -2,7 +2,7 @@
 -c requirements.txt
 
 # develop branch of brewtils
-#-e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
+-e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
 
 # Documentation Dependencies
 sphinx < 2
