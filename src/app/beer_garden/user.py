@@ -802,7 +802,7 @@ def remove_local_role_assignments_for_role(role: Role) -> int:
     """
     # Avoid circular import
 
-    impacted_users = db.query(User, query={"roles__name": role.name})
+    impacted_users = db.query(User, filter_params={"roles": role.name})
 
     for user in impacted_users:
         user.roles.remove(role.name)
@@ -824,7 +824,7 @@ def update_local_role_assignments_for_role(role: Role) -> int:
     """
     # Avoid circular import
 
-    impacted_users = db.query(User, query={"roles__name": role.name})
+    impacted_users = db.query(User, filter_params={"roles": role.name})
 
     for user in impacted_users:
         # Roles changed, so cached tokens are no longer valid
