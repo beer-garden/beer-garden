@@ -48,9 +48,11 @@ export default function storageService($rootScope, localStorageService) {
             $rootScope.themes[key] = key == theme;
         }
     };
-    service["setPrefix"] = (prefix) => {
-        localStorageService.setPrefix(prefix);
-        service.reloadDefaults();
+    service["setPrefix"] = () => {
+        if ($rootScope.config.gardenName === undefined){
+            localStorageService.setPrefix($rootScope.config.gardenName);
+            service.reloadDefaults();
+        }
     };
 
     return service;

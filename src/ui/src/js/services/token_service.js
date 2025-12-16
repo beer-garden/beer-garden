@@ -13,7 +13,7 @@ tokenService.$inject = ['$http', 'storageService', 'EventService'];
 export default function tokenService($http, storageService, EventService) {
   const service = {
     getToken: () => {
-      return storageService.get('token');
+      return storageService.get('token', null);
     },
     preemptiveRefresh: () => {
       const token = service.getToken();

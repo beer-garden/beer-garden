@@ -104,6 +104,8 @@ export default function appRun(
   $rootScope.getIcon = UtilityService.getIcon;
   $rootScope.hasPermission = PermissionService.hasPermission;
 
+  storageService.setPrefix();
+  
   $rootScope.loadUser = function(token) {
     $rootScope.userPromise = UserService.loadUser(token).then(
         (response) => {
@@ -171,7 +173,7 @@ export default function appRun(
     UtilityService.getConfig().then((response) => {
       angular.extend($rootScope.config, camelCaseKeys(response.data));
 
-      storageService.setPrefix($rootScope.config.gardenName);
+      storageService.setPrefix();
 
       // Check if we are utilizing Auth Headers
       if ($rootScope.config.trustedHeaderAuthEnabled){
@@ -435,7 +437,7 @@ export default function appRun(
     if ($rootScope.config.gardenName === undefined) {
       UtilityService.getConfig().then((response) => {
         angular.extend($rootScope.config, camelCaseKeys(response.data));
-        storageService.setPrefix($rootScope.config.gardenName);
+        storageService.setPrefix();
         
         return $rootScope.getLocalGarden(callback);
       });
