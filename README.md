@@ -2,7 +2,8 @@ Beer Garden
 =================================
 
 [![PyPi Version](https://img.shields.io/pypi/v/beer-garden.svg)](https://pypi.python.org/pypi/beer-garden/)
-[![Integration Tests](https://github.com/beer-garden/beer-garden/actions/workflows/integration_tests.yml/badge.svg)](https://github.com/beer-garden/beer-garden/actions/workflows/integration_tests.yml)
+![Python](https://img.shields.io/badge/python-3.11-blue.svg)
+[![Unstable Docker Build](https://github.com/beer-garden/beer-garden/actions/workflows/branch_unstable_build.yml/badge.svg)](https://github.com/beer-garden/beer-garden/actions/workflows/branch_unstable_build.yml)
 [![CodeCov](https://codecov.io/gh/beer-garden/beer-garden/branch/develop/graph/badge.svg)](https://codecov.io/gh/beer-garden/beer-garden)
 
 Looking for better documentation? Check out the dedicated documentation at [beer-garden.io](https://beer-garden.io)!

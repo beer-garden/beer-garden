@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 # read the contents of the README file
 from pathlib import Path
 this_directory = Path(__file__).parent
-long_description = (this_directory / "README.rst").read_text()
+long_description = (this_directory / "README.md").read_text()
 
 
 def find_version(version_file):
@@ -23,7 +23,7 @@ setup(
     version=find_version("beer_garden/__version__.py"),
     description="Beergarden Application",
     long_description=long_description,
-    long_description_content_type="text/x-rst",
+    long_description_content_type="text/markdown",
     author="The Beer Garden Team",
     author_email="beer@beer-garden.io",
     url="https://beer-garden.io",
