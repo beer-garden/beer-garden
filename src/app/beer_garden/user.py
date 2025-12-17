@@ -92,6 +92,18 @@ def get_token(uuid: str) -> UserToken:
     return db.query_unique(UserToken, uuid=uuid, raise_missing=True)
 
 
+def verify_token(uuid: str) -> bool:
+    """Check if Token Exists
+
+    Args:
+        uuid (str): UUID of Token to check
+    Returns:
+        bool: If Token exists
+    """
+
+    return db.count(UserToken, uuid=uuid) == 1
+
+
 def delete_token(token: UserToken) -> UserToken:
     """Delete UserToken
 
