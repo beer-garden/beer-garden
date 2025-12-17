@@ -4,6 +4,7 @@
 
 TBD
 
+- Update API Token verification to only call database to verify Token, instead of User (#2029)
 - Fixed user login to first check for User Authorization Token, then login credentials
 - Fixed model filtering to include missing namespace properties (#1848)
 - Updated model filtering, if query filters are generated pre-query then skip filtering records when returning API models (#1848)
