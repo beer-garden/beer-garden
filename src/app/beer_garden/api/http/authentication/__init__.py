@@ -153,7 +153,7 @@ def get_user_from_token(access_token: dict, revoke_expired=True) -> User:
             raise InvalidTokenException
 
         if revoke_expired:
-            revoke_tokens(user=access_token["username"])
+            revoke_tokens(username=access_token["username"])
 
         raise ExpiredTokenException
 
