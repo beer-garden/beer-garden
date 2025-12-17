@@ -148,7 +148,7 @@ def get_user_from_token(access_token: dict, revoke_expired=True) -> User:
     valid_token = verify_token(uuid=access_token["jti"])
     if not valid_token:
         try:
-            user = get_user(id=access_token["sub"], include_roles=False)
+            get_user(id=access_token["sub"], include_roles=False)
         except DoesNotExist:
             raise InvalidTokenException
 
