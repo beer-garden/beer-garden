@@ -2,7 +2,7 @@
 
 # 3.32.0rc0
 
-TBD
+12/17/2025
 
 - Update API Token verification to only call database to verify Token, instead of User (#2029)
 - Fixed user login to first check for User Authorization Token, then login credentials
