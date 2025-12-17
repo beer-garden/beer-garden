@@ -443,7 +443,7 @@ class UserPasswordChangeAPI(AuthorizationHandler):
                 Operation(
                     operation_type="USER_UPDATE",
                     kwargs={
-                        "user": user,
+                        "username": user.username,
                         "current_password": password_data["current_password"],
                         "new_password": password_data["new_password"],
                     },
