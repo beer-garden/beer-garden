@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# TBD
+
+TBD
+
+- Bug fix to handle when latest is used for system version but there are no systems with that name (#2032)
+
 # 3.31.0
 
 12/11/2025
