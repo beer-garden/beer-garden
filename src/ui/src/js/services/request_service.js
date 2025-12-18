@@ -32,6 +32,11 @@ export default function requestService($q, $http, $interval) {
         value: 'CANCELED',
       });
     },
+    refreshRequest: (id) => {
+      return $http.patch('api/v1/requests/' + id, {
+        operation: 'rebroadcast',
+      });
+    },
   };
 
   _.assign(service, {

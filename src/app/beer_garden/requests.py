@@ -1120,6 +1120,23 @@ def handle_event_filter(event):
     return False
 
 
+def rebroadcast(request_id: str):
+    """
+    Rebroadcast a request event.
+    This function retrieves a request by its ID and triggers a rebroadcast of the
+    REQUEST_UPDATED event for that request.
+    Args:
+        request_id (str): The unique identifier of the request to rebroadcast.
+    Returns:
+        None
+    Raises:
+        RequestDoesNotExist: If a request with the given request_id does not exist.
+    """
+
+    request = get_request(request_id=request_id)
+    handle_event_rebroadcast(Events.REQUEST_UPDATED.name, request)
+
+
 def handle_event_rebroadcast(event_name, request):
 
     # If no parent are set, we only want to publish to the UI events handler

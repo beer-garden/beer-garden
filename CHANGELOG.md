@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+# TDB
+
+TDB
+
+- Added Refresh feature for Requests that will push a Request Update event from Downstream Gardens
+  back to local garden, used for if a Request was lost in transit. (#) 
+
 # 3.31.0
 
 12/11/2025
