@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# TBD
+
+TBD
+
+- Fixed UI Request Create with unicode garden names not supported via headers (#) 
+
 # 3.31.0
 
 12/11/2025
