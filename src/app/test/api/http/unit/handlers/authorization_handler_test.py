@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
+import mongomock
 import pytest
 import tornado.web
 from box import Box
@@ -83,7 +84,11 @@ def app():
 class TestAuthorizationHandler:
     @classmethod
     def setup_class(cls):
-        connect("beer_garden", host="mongomock://localhost")
+        connect(
+            "beer_garden",
+            host="mongodb://localhost",
+            mongo_client_class=mongomock.MongoClient,
+        )
 
     @pytest.mark.gen_test
     def test_auth_disabled_allows_anonymous_access(
@@ -179,7 +184,7 @@ class TestAuthorizationHandler:
         self, monkeypatch, http_client, base_url, app_config_auth_enabled, user
     ):
         def yesterday(max_permission=None):
-            return datetime.utcnow() - timedelta(days=1)
+            return datetime.now(timezone.utc) - timedelta(days=1)
 
         monkeypatch.setattr(
             beer_garden.api.http.authentication,

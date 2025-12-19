@@ -9,6 +9,7 @@ from typing import Sequence
 from brewtils.errors import ModelValidationError
 from brewtils.models import Operation, Permissions, Request, System
 from brewtils.schema_parser import SchemaParser
+from mongoengine import Q
 
 import beer_garden.config as config
 import beer_garden.db.api as db
@@ -16,12 +17,10 @@ from beer_garden.api.http.base_handler import future_wait
 from beer_garden.api.http.exceptions import BadRequest, RequestForbidden
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.errors import UnknownGardenException
-from beer_garden.metrics import collect_metrics
 from beer_garden.requests import remove_bytes_parameter_base64
 
 
 class RequestAPI(AuthorizationHandler):
-    @collect_metrics(transaction_type="API", group="RequestAPI")
     async def get(self, request_id):
         """
         ---
@@ -35,12 +34,24 @@ class RequestAPI(AuthorizationHandler):
         responses:
           200:
             description: Request with the given ID
-            schema:
-              $ref: '#/definitions/Request'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Request'
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Requests
         """
@@ -54,7 +65,6 @@ class RequestAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="RequestAPI")
     async def patch(self, request_id):
         """
         ---
@@ -70,32 +80,51 @@ class RequestAPI(AuthorizationHandler):
             { "operation": "replace", "path": "/error_class", "value": "" }
           ]
           ```
+        requestBody:
+          name: patch
+          description: Instructions for how to update the Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchOperation'
         parameters:
           - name: request_id
             in: path
             required: true
             description: The ID of the Request
             type: string
-          - name: patch
-            in: body
-            required: true
-            description: Instructions for how to update the Request
-            schema:
-              $ref: '#/definitions/Patch'
         responses:
           200:
             description: Request with the given ID
-            schema:
-              $ref: '#/definitions/Request'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Request'
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Requests
         """
+
         self.minimum_permission = Permissions.OPERATOR.name
         _ = self.get_or_raise(Request, id=request_id)
 
@@ -138,7 +167,6 @@ class RequestAPI(AuthorizationHandler):
 
 
 class RequestOutputAPI(AuthorizationHandler):
-    @collect_metrics(transaction_type="API", group="RequestOutputAPI")
     async def get(self, request_id):
         """
         ---
@@ -154,9 +182,19 @@ class RequestOutputAPI(AuthorizationHandler):
             description: Request output for request with the given ID
             type: String
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Requests
         """
@@ -186,7 +224,6 @@ class RequestOutputAPI(AuthorizationHandler):
 class RequestListAPI(AuthorizationHandler):
     parser = SchemaParser()
 
-    @collect_metrics(transaction_type="API", group="RequestListAPI")
     async def get(self):
         """
         ---
@@ -340,10 +377,12 @@ class RequestListAPI(AuthorizationHandler):
         responses:
           200:
             description: A page of Requests
-            schema:
-              type: array
-              items:
-                $ref: '#/definitions/Request'
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Request'
             headers:
               start:
                 type: integer
@@ -361,7 +400,12 @@ class RequestListAPI(AuthorizationHandler):
                 type: integer
                 description: The total number of Requests
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Requests
         """
@@ -371,7 +415,14 @@ class RequestListAPI(AuthorizationHandler):
 
         # Add the filter for only requests the user is permitted to see
         q_filter = self.permitted_objects_filter(Request)
-        query_args["q_filter"] = q_filter
+        q_filtered = None
+
+        if query_args.get("q_filter"):
+            query_args_q_filter = query_args["q_filter"]
+            q_filtered = q_filter & query_args_q_filter
+            query_args["q_filter"] = q_filtered
+        else:
+            query_args["q_filter"] = q_filter
 
         # There are also some sane parameters
         query_args["start"] = self.get_argument("start", default="0")
@@ -396,7 +447,9 @@ class RequestListAPI(AuthorizationHandler):
             "length": len(requests),
             # And these are required by datatables
             "recordsFiltered": db.count(
-                Request, q_filter=q_filter, **query_args["filter_params"]
+                Request,
+                q_filter=q_filtered if q_filtered else q_filter,
+                **query_args["filter_params"],
             ),
             "recordsTotal": db.count(Request, q_filter=q_filter),
             "draw": self.get_argument("draw", ""),
@@ -409,17 +462,17 @@ class RequestListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(json.dumps(requests))
 
-    @collect_metrics(transaction_type="API", group="RequestListAPI")
     async def post(self):
         """
         ---
         summary: Create a new Request
+        requestBody:
+          name: request
+          description: IThe Request definition
+          content:
+            application/json:
+              schema: Request
         parameters:
-          - name: request
-            in: body
-            description: The Request definition
-            schema:
-              $ref: '#/definitions/Request'
           - name: blocking
             in: query
             required: false
@@ -457,8 +510,10 @@ class RequestListAPI(AuthorizationHandler):
         responses:
           201:
             description: A new Request has been created
-            schema:
-              $ref: '#/definitions/Request'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Request'
             headers:
               Instance-Status:
                 type: string
@@ -466,12 +521,23 @@ class RequestListAPI(AuthorizationHandler):
                     Current status of the Instance that will process the
                     created Request
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Requests
         """
+
         self.minimum_permission = Permissions.OPERATOR.name
 
         if self.request.mime_type == "application/json":
@@ -508,6 +574,8 @@ class RequestListAPI(AuthorizationHandler):
                     model=request_model,
                     model_type="Request",
                     kwargs={"wait_event": wait_future},
+                    target_garden_name=request_model.target_garden,
+                    source_garden_name=request_model.source_garden,
                 ),
                 serialize_kwargs={"to_string": False},
             )
@@ -543,24 +611,25 @@ class RequestListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="RequestListAPI")
     async def put(self):
         """
         ---
         summary: Update a new Request
-        parameters:
-          - name: request
-            in: body
-            description: The Request definition
-            schema:
-              $ref: '#/definitions/Request'
+        requestBody:
+          name: request
+          description: The Request definition
+          content:
+            application/json:
+              schema: Request
         consumes:
           - application/json
         responses:
           201:
             description: A updated Request
-            schema:
-              $ref: '#/definitions/Request'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Request'
             headers:
               Instance-Status:
                 type: string
@@ -568,12 +637,23 @@ class RequestListAPI(AuthorizationHandler):
                     Current status of the Instance that will process the
                     created Request
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Requests
         """
+
         self.minimum_permission = Permissions.OPERATOR.name
         request_model = self.parser.parse_request(
             (
@@ -618,7 +698,6 @@ class RequestListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="RequestListAPI")
     async def delete(self):
         """
         ---
@@ -712,10 +791,16 @@ class RequestListAPI(AuthorizationHandler):
           204:
             description: Requests has been successfully deleted
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Requests
         """
+
         self.minimum_permission = Permissions.PLUGIN_ADMIN.name
 
         query_kwargs = {}
@@ -816,6 +901,7 @@ class RequestListAPI(AuthorizationHandler):
         """
         # These are what this function is populating
         filter_params = {}
+        q_filter = Q()
         include_fields = []
         order_by = None
         text_search = None
@@ -840,13 +926,26 @@ class RequestListAPI(AuthorizationHandler):
 
         # Cool, now we can do stuff
         if search and search["value"]:
-            text_search = '"' + search["value"] + '"'
+            text_search = None
+            for column in columns:
+                if column["data"] and column["data"] in [
+                    "command_display_name",
+                    "namespace",
+                    "system",
+                    "system_version",
+                    "instance",
+                    "status",
+                    "comment",
+                ]:
+                    q_filter = q_filter | (
+                        Q(**{column["data"] + "__contains": search["value"]})
+                    )
 
         if not include_children:
             filter_params["has_parent"] = False
 
         if not include_hidden:
-            filter_params["hidden__ne"] = True
+            filter_params["hidden"] = False
 
         for column in columns:
             query_columns.append(column)
@@ -915,6 +1014,7 @@ class RequestListAPI(AuthorizationHandler):
             "text_search": text_search,
             "order_by": order_by,
             "hint": self._determine_hint(hint_helper, include_children, include_hidden),
+            "q_filter": q_filter,
         }
 
     @staticmethod

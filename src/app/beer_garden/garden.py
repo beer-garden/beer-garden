@@ -12,13 +12,23 @@ The garden service is responsible for:
 import copy
 import json
 import logging
-from datetime import datetime, timedelta
+import time
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import List
 
 from brewtils.errors import PluginError
-from brewtils.models import Connection, Event, Events, Garden, Operation, System
+from brewtils.models import (
+    Connection,
+    Event,
+    Events,
+    Garden,
+    Operation,
+    StatusInfo,
+    System,
+)
 from mongoengine import DoesNotExist
+from packaging.version import InvalidVersion, parse
 from yapconf.exceptions import (
     YapconfItemNotFound,
     YapconfLoadError,
@@ -36,7 +46,6 @@ from beer_garden.errors import (
     RoutingRequestException,
 )
 from beer_garden.events import publish, publish_event
-from beer_garden.namespace import get_namespaces
 from beer_garden.systems import get_systems, remove_system
 
 logger = logging.getLogger(__name__)
@@ -78,29 +87,39 @@ def filter_router_result(garden: Garden) -> Garden:
     return filtered_garden
 
 
-def get_downstream_garden(garden: Garden) -> Garden:
+def get_downstream_garden(garden: Garden, **kwargs) -> Garden:
+
+    if "include_fields" in kwargs and kwargs["include_fields"]:
+        for required_field in ["has_upstream", "name", "upstream"]:
+            if required_field not in kwargs["include_fields"]:
+                kwargs["include_fields"].append(required_field)
+
+    kwargs["filter_params"] = {}
+
     if garden.connection_type == "LOCAL":
-        garden.downstream = db.query(
-            Garden,
-            filter_params={"connection_type__ne": "LOCAL", "has_upstream": False},
-        )
+        kwargs["filter_params"]["connection_type__ne"] = "LOCAL"
+        kwargs["filter_params"]["has_upstream"] = False
+
+        garden.downstream = db.query(Garden, **kwargs)
         if garden.downstream:
-            for downstream_garden in garden.downstream:
-                downstream_garden.has_upstream = True
-                downstream_garden.upstream = garden.name
+            for child in garden.downstream:
+                child.has_upstream = True
+                child.upstream = garden.name
+
     else:
-        garden.downstream = db.query(Garden, filter_params={"upstream": garden.name})
+        kwargs["filter_params"]["upstream"] = garden.name
+        garden.downstream = db.query(Garden, **kwargs)
 
     if garden.downstream:
-        for downstream_garden in garden.downstream:
-            get_downstream_garden(downstream_garden)
+        for child in garden.downstream:
+            get_downstream_garden(child, **kwargs)
     else:
         garden.downstream = []
 
     return garden
 
 
-def get_garden(garden_name: str) -> Garden:
+def get_garden(garden_name: str, **kwargs) -> Garden:
     """Retrieve an individual Garden
 
     Args:
@@ -110,15 +129,69 @@ def get_garden(garden_name: str) -> Garden:
         The Garden
 
     """
+
+    if "include_fields" in kwargs and kwargs["include_fields"]:
+        for required_field in ["has_upstream", "name", "upstream"]:
+            if required_field not in kwargs["include_fields"]:
+                kwargs["include_fields"].append(required_field)
+
     if garden_name == config.get("garden.name"):
-        garden = local_garden()
+        gardens = db.query(Garden, **kwargs)
+        garden = None
+        for db_garden in gardens:
+            if db_garden.name == config.get("garden.name"):
+                garden = db_garden
+            else:
+                if not db_garden.has_upstream:
+                    db_garden.has_upstream = True
+                    db_garden.upstream = config.get("garden.name")
+
+            db_garden.downstream = [
+                child_garden
+                for child_garden in gardens
+                if child_garden.name != db_garden.name
+                and (
+                    (child_garden.has_upstream and child_garden.upstream == db_garden.name)
+                    or (
+                        not child_garden.has_upstream
+                        and db_garden.name == config.get("garden.name")
+                    )
+                )
+            ]
+
+        if garden:
+            filter_params = {}
+            filter_params["local"] = True
+            get_system_kwargs = {}
+
+            get_system_kwargs["filter_params"] = {"local": True}
+
+            # Pass system filters to Systems query
+            if kwargs:
+                for filter, values in kwargs.items():
+                    if (
+                        values
+                        and isinstance(values, (list, set))
+                        and filter not in get_system_kwargs
+                    ):
+                        query_values = []
+                        for value in values:
+                            if value.startswith("systems__"):
+                                query_values.append(value.replace("systems__", "", 1))
+
+                        if query_values:
+                            get_system_kwargs[filter] = query_values
+
+            garden.systems = get_systems(**get_system_kwargs)
+
     else:
-        garden = db.query_unique(Garden, name=garden_name, raise_missing=True)
-    get_downstream_garden(garden)
+        garden = db.query_unique(Garden, name=garden_name, raise_missing=True, **kwargs)
+        get_downstream_garden(garden, **kwargs)
+
     return garden
 
 
-def get_gardens(include_local: bool = True) -> List[Garden]:
+def get_gardens(include_local: bool = True, **kwargs) -> List[Garden]:
     """Retrieve list of all Gardens
 
     Args:
@@ -130,20 +203,31 @@ def get_gardens(include_local: bool = True) -> List[Garden]:
     """
     # This is necessary for as long as local_garden is still needed. See the notes
     # there for more detail.
-    gardens = db.query(
-        Garden, filter_params={"connection_type__ne": "LOCAL", "has_upstream": False}
-    )
+    gardens = []
+
+    if "include_fields" in kwargs and kwargs["include_fields"]:
+        for required_field in ["has_upstream", "name", "upstream"]:
+            if required_field not in kwargs["include_fields"]:
+                kwargs["include_fields"].append(required_field)
 
     if include_local:
-        gardens += [local_garden()]
+        gardens = [local_garden(**kwargs)]
+
+    if "filter_params" not in kwargs:
+        kwargs["filter_params"] = {}
+
+    kwargs["filter_params"]["connection_type__ne"] = "LOCAL"
+    kwargs["filter_params"]["has_upstream"] = False
+
+    gardens += db.query(Garden, **kwargs)
 
     for garden in gardens:
-        get_downstream_garden(garden)
+        get_downstream_garden(garden, **kwargs)
 
     return gardens
 
 
-def local_garden(all_systems: bool = False) -> Garden:
+def local_garden(all_systems: bool = False, **kwargs) -> Garden:
     """Get the local garden definition
 
     Args:
@@ -156,27 +240,42 @@ def local_garden(all_systems: bool = False) -> Garden:
     # the system information to be embedded in the garden document itself (as opposed
     # Systems just having a reference to their garden). There is nothing that would
     # keep a LOCAL garden's embedded list of systems up to date currently, so we instead
-    # build the list of systems (and namespaces) at call time. Once the System
+    # build the list of systems at call time. Once the System
     # relationship has been refactored, the need for this function should go away.
-    garden: Garden = db.query_unique(Garden, connection_type="LOCAL")
 
-    filter_params = {}
+    if "include_fields" in kwargs and kwargs["include_fields"]:
+        if "name" not in kwargs["include_fields"]:
+            kwargs["include_fields"].append("name")
+
+    garden: Garden = db.query_unique(Garden, connection_type="LOCAL", **kwargs)
+
+    get_system_kwargs = {}
+
+    get_system_kwargs["filter_params"] = {}
     if not all_systems:
-        filter_params["local"] = True
+        get_system_kwargs["filter_params"]["local"] = True
 
-    garden.systems = get_systems(filter_params=filter_params)
-    garden.namespaces = get_namespaces()
+    # Pass system filters to Systems query
+    if kwargs:
+        for filter, values in kwargs.items():
+            if values and isinstance(values, list) and filter not in get_system_kwargs:
+                query_values = []
+                for value in values:
+                    if value.startswith("systems__"):
+                        query_values.append(value.replace("systems__", "", 1))
+
+                if query_values:
+                    get_system_kwargs[filter] = query_values
+
+    garden.systems = get_systems(**get_system_kwargs)
     garden.version = beer_garden.__version__
 
     return garden
 
 
 @publish_event(Events.GARDEN_SYNC)
-def publish_garden(status: str = "RUNNING") -> Garden:
+def publish_garden() -> Garden:
     """Get the local garden, publishing a GARDEN_SYNC event
-
-    Args:
-        status: The garden status
 
     Returns:
         The local garden, all systems
@@ -184,7 +283,6 @@ def publish_garden(status: str = "RUNNING") -> Garden:
     garden = local_garden()
     get_downstream_garden(garden)
     garden.connection_type = None
-    garden.status = status
 
     return garden
 
@@ -202,7 +300,6 @@ def update_garden_config(garden: Garden) -> Garden:
     db_garden = db.query_unique(Garden, id=garden.id)
     db_garden.connection_params = garden.connection_params
     db_garden.connection_type = garden.connection_type
-    db_garden.status = "INITIALIZING"
 
     return update_garden(db_garden)
 
@@ -211,7 +308,9 @@ def check_garden_receiving_heartbeat(
     api: str, garden_name: str = None, garden: Garden = None
 ):
     if garden is None:
-        garden = db.query_unique(Garden, name=garden_name)
+        garden = db.query_unique(
+            Garden, name=garden_name, include_fields=["receiving_connections"]
+        )
 
     # if garden doens't exist, create it
     if garden is None:
@@ -223,13 +322,17 @@ def check_garden_receiving_heartbeat(
         for connection in garden.receiving_connections:
             if connection.api == api:
                 connection_set = True
-
-                if connection.status not in ["DISABLED", "RECEIVING"]:
+                if connection.status not in [
+                    "DISABLED",
+                    "NOT_CONFIGURED",
+                    "MISSING_CONFIGURATION",
+                    "CONFIGURATION_ERROR",
+                ]:
                     connection.status = "RECEIVING"
-
-                connection.status_info.set_status_heartbeat(
-                    connection.status, max_history=config.get("garden.status_history")
-                )
+                    connection.status_info.set_status_heartbeat(
+                        connection.status,
+                        max_history=config.get("garden.status_history"),
+                    )
     else:
         garden.receiving_connections = []
 
@@ -254,9 +357,10 @@ def check_garden_receiving_heartbeat(
 
 @publish_event(Events.GARDEN_UPDATED)
 def update_receiving_connections(garden: Garden):
-    updates = {}
 
-    if update_garden:
+    if garden:
+        updates = {}
+
         updates["receiving_connections"] = [
             db.from_brewtils(connection) for connection in garden.receiving_connections
         ]
@@ -326,21 +430,12 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
                     "DISABLED", api=connection.api, garden=garden, override_status=False
                 )
 
-    garden.status = new_status
-    garden.status_info.set_status_heartbeat(
-        garden.status, max_history=config.get("garden.status_history")
-    )
-
     return update_garden(garden)
 
 
 def remove_remote_systems(garden: Garden):
     for system in garden.systems:
         remove_system(system.id)
-
-    if garden.downstream:
-        for downstream_garden in garden.downstream:
-            remove_remote_systems(downstream_garden)
 
 
 @publish_event(Events.GARDEN_REMOVED)
@@ -356,10 +451,10 @@ def remove_garden(garden_name: str = None, garden: Garden = None) -> None:
 
     garden = garden or get_garden(garden_name)
 
-    remove_remote_systems(garden)
+    for child in garden.downstream:
+        remove_garden(garden=child)
 
-    for downstream_garden in garden.downstream:
-        remove_garden(downstream_garden.name)
+    remove_remote_systems(garden)
 
     db.delete(garden)
 
@@ -383,10 +478,6 @@ def create_garden(garden: Garden) -> Garden:
             Connection(api="STOMP", status="MISSING_CONFIGURATION"),
         ]
 
-    garden.status_info.set_status_heartbeat(
-        garden.status, max_history=config.get("garden.status_history")
-    )
-
     return db.create(garden)
 
 
@@ -407,9 +498,6 @@ def garden_add_system(system: System, garden_name: str) -> Garden:
         raise PluginError(
             f"Garden '{garden_name}' does not exist, unable to map '{str(system)}"
         )
-
-    if system.namespace not in garden.namespaces:
-        garden.namespaces.append(system.namespace)
 
     if str(system) not in garden.systems:
         garden.systems.append(str(system))
@@ -449,7 +537,7 @@ def upsert_garden(garden: Garden, skip_connections: bool = True) -> Garden:
     if existing_garden is None:
         return create_garden(garden)
     else:
-        for attr in ("status", "status_info", "namespaces", "systems", "metadata"):
+        for attr in ("systems", "metadata", "version"):
             setattr(existing_garden, attr, getattr(garden, attr))
         if not skip_connections:
             for attr in ("receiving_connections", "publishing_connections"):
@@ -515,129 +603,170 @@ def update_garden_receiving(
     if not connection_set and api:
         garden.receiving_connections.append(Connection(api=api, status=status))
 
-    return db.update(garden)
+    return garden
 
 
 def load_garden_file(garden: Garden):
     path = Path(f"{config.get('downstream.directory')}/{garden.name}.yaml")
 
-    garden.publishing_connections.clear()
-    garden.receiving_connections.clear()
+    http_publishing_connection = Connection(
+        api="HTTP", status="CONFIGURATION_ERROR", status_info=StatusInfo()
+    )
+    http_receiving_connection = Connection(
+        api="HTTP", status="CONFIGURATION_ERROR", status_info=StatusInfo()
+    )
+    stomp_publishing_connection = Connection(
+        api="STOMP", status="CONFIGURATION_ERROR", status_info=StatusInfo()
+    )
+    stomp_receiving_connection = Connection(
+        api="STOMP", status="CONFIGURATION_ERROR", status_info=StatusInfo()
+    )
+
+    for connection in garden.publishing_connections:
+        if connection.api == "HTTP":
+            http_publishing_connection.status_info = connection.status_info
+        elif connection.api == "STOMP":
+            stomp_publishing_connection.status_info = connection.status_info
+
+    for connection in garden.receiving_connections:
+        if connection.api == "HTTP":
+            http_receiving_connection.status_info = connection.status_info
+        elif connection.api == "STOMP":
+            stomp_receiving_connection.status_info = connection.status_info
 
     if not path.exists():
-        garden.status = "NOT_CONFIGURED"
         return garden
 
     try:
         garden_config = config.load_downstream(path)
+        garden.default_user = config.get("default_user", garden_config)
+        garden.shared_users = config.get("shared_users", garden_config)
+
+        if config.get("http.enabled", garden_config):
+            config_map = {
+                "http.host": "host",
+                "http.port": "port",
+                "http.ssl.enabled": "ssl",
+                "http.url_prefix": "url_prefix",
+                "http.ssl.ca_cert": "ca_cert",
+                "http.ssl.ca_verify": "ca_verify",
+                "http.ssl.client_cert": "client_cert",
+                "http.client_timeout": "client_timeout",
+                "http.username": "username",
+                "http.password": "password",
+                "http.access_token": "access_token",
+                "http.refresh_token": "refresh_token",
+            }
+
+            http_publishing_connection.status = (
+                "PUBLISHING" if garden_config.get("publishing") else "DISABLED"
+            )
+
+            for key in config_map:
+                http_publishing_connection.config.setdefault(
+                    config_map[key], config.get(key, garden_config)
+                )
+
+        else:
+            http_publishing_connection.status = "NOT_CONFIGURED"
+
+        if config.get("stomp.enabled", garden_config):
+            config_map = {
+                "stomp.host": "host",
+                "stomp.port": "port",
+                "stomp.send_destination": "send_destination",
+                "stomp.subscribe_destination": "subscribe_destination",
+                "stomp.username": "username",
+                "stomp.password": "password",
+                "stomp.ssl": "ssl",
+            }
+
+            stomp_publishing_connection.status = (
+                "PUBLISHING" if garden_config.get("publishing") else "DISABLED"
+            )
+
+            for key in config_map:
+                stomp_publishing_connection.config.setdefault(
+                    config_map[key], config.get(key, garden_config)
+                )
+
+            headers = []
+            for header in config.get("stomp.headers", garden_config):
+                stomp_header = {}
+
+                header_dict = json.loads(header.replace("'", '"'))
+
+                stomp_header["key"] = header_dict["stomp.headers.key"]
+                stomp_header["value"] = header_dict["stomp.headers.value"]
+
+                headers.append(stomp_header)
+
+            stomp_publishing_connection.config.setdefault("headers", headers)
+
+            if not config.get("stomp.send_destination", garden_config):
+                stomp_publishing_connection.status = "DISABLED"
+
+            if config.get("stomp.subscribe_destination", garden_config):
+                stomp_receiving_connection.status = (
+                    "RECEIVING" if garden_config.get("receiving") else "DISABLED"
+                )
+                stomp_receiving_connection.config = copy.deepcopy(
+                    stomp_publishing_connection.config
+                )
+
+        else:
+            stomp_publishing_connection.status = (
+                "NOT_CONFIGURED" if garden_config.get("publishing") else "DISABLED"
+            )
+            stomp_receiving_connection.status = (
+                "NOT_CONFIGURED" if garden_config.get("receiving") else "DISABLED"
+            )
+
+        if not garden_config.get("receiving"):
+            http_receiving_connection.status = "DISABLED"
+        elif config.get("entry.http.enabled"):
+            http_receiving_connection.status = "RECEIVING"
+        else:
+            http_receiving_connection.status = "NOT_CONFIGURED"
+
     except (
         YapconfItemNotFound,
         YapconfLoadError,
         YapconfSourceError,
         YapconfSpecError,
     ):
-        garden.status = "CONFIGURATION_ERROR"
-        garden.publishing_connections.append(
-            Connection(api="HTTP", status="CONFIGURATION_ERROR")
-        )
-        garden.publishing_connections.append(
-            Connection(api="STOMP", status="CONFIGURATION_ERROR")
-        )
-        return garden
+        pass
+    finally:
 
-    garden.default_user = config.get("default_user", garden_config)
-    garden.shared_users = config.get("shared_users", garden_config)
-
-    if config.get("http.enabled", garden_config):
-        config_map = {
-            "http.host": "host",
-            "http.port": "port",
-            "http.ssl.enabled": "ssl",
-            "http.url_prefix": "url_prefix",
-            "http.ssl.ca_cert": "ca_cert",
-            "http.ssl.ca_verify": "ca_verify",
-            "http.ssl.client_cert": "client_cert",
-            "http.client_timeout": "client_timeout",
-            "http.username": "username",
-            "http.password": "password",
-            "http.access_token": "access_token",
-            "http.refresh_token": "refresh_token",
-        }
-
-        http_connection = Connection(
-            api="HTTP",
-            status="PUBLISHING" if garden_config.get("publishing") else "DISABLED",
+        http_publishing_connection.status_info.set_status_heartbeat(
+            http_publishing_connection.status,
+            max_history=config.get("garden.status_history"),
         )
 
-        http_connection.status_info.set_status_heartbeat(
-            http_connection.status, max_history=config.get("garden.status_history")
+        stomp_publishing_connection.status_info.set_status_heartbeat(
+            stomp_publishing_connection.status,
+            max_history=config.get("garden.status_history"),
         )
 
-        for key in config_map:
-            http_connection.config.setdefault(
-                config_map[key], config.get(key, garden_config)
-            )
-        garden.publishing_connections.append(http_connection)
-    else:
-        garden.publishing_connections.append(
-            Connection(api="HTTP", status="NOT_CONFIGURED")
+        stomp_receiving_connection.status_info.set_status_heartbeat(
+            stomp_receiving_connection.status,
+            max_history=config.get("garden.status_history"),
         )
 
-    if config.get("stomp.enabled", garden_config):
-        config_map = {
-            "stomp.host": "host",
-            "stomp.port": "port",
-            "stomp.send_destination": "send_destination",
-            "stomp.subscribe_destination": "subscribe_destination",
-            "stomp.username": "username",
-            "stomp.password": "password",
-            "stomp.ssl": "ssl",
-        }
+        garden.publishing_connections = [
+            http_publishing_connection,
+            stomp_publishing_connection,
+        ]
 
-        stomp_connection = Connection(
-            api="STOMP",
-            status="PUBLISHING" if garden_config.get("publishing") else "DISABLED",
+        http_receiving_connection.status_info.set_status_heartbeat(
+            http_receiving_connection.status,
+            max_history=config.get("garden.status_history"),
         )
 
-        stomp_connection.status_info.set_status_heartbeat(
-            stomp_connection.status, max_history=config.get("garden.status_history")
-        )
-
-        for key in config_map:
-            stomp_connection.config.setdefault(
-                config_map[key], config.get(key, garden_config)
-            )
-
-        headers = []
-        for header in config.get("stomp.headers", garden_config):
-            stomp_header = {}
-
-            header_dict = json.loads(header.replace("'", '"'))
-
-            stomp_header["key"] = header_dict["stomp.headers.key"]
-            stomp_header["value"] = header_dict["stomp.headers.value"]
-
-            headers.append(stomp_header)
-
-        stomp_connection.config.setdefault("headers", headers)
-
-        if config.get("stomp.send_destination", garden_config):
-            garden.publishing_connections.append(stomp_connection)
-
-        if config.get("stomp.subscribe_destination", garden_config):
-            subscribe_connection = copy.deepcopy(stomp_connection)
-            subscribe_connection.status = "RECEIVING"
-            garden.receiving_connections.append(subscribe_connection)
-    else:
-        garden.publishing_connections.append(
-            Connection(api="STOMP", status="NOT_CONFIGURED")
-        )
-
-    for connection in garden.receiving_connections:
-        if config.get("receiving", config=garden_config):
-            connection.status = "RECEIVING"
-        else:
-            connection.status = "DISABLED"
+        garden.receiving_connections = [
+            stomp_receiving_connection,
+            http_receiving_connection,
+        ]
 
     return garden
 
@@ -649,11 +778,22 @@ def load_garden_config(garden: Garden = None, garden_name: str = None):
 
     garden = load_garden_file(garden)
 
-    return db.update(garden)
+    updates = {}
+
+    updates["publishing_connections"] = []
+    for connection in garden.publishing_connections:
+        updates["publishing_connections"].append(db.from_brewtils(connection))
+
+    updates["receiving_connections"] = []
+    for connection in garden.receiving_connections:
+        updates["receiving_connections"].append(db.from_brewtils(connection))
+
+    return db.modify(garden, **updates)
 
 
-def rescan():
+def rescan(sync_gardens: bool = False):
     if config.get("downstream.directory"):
+        loaded_gardens = []
         downstream_directory = Path(config.get("downstream.directory"))
         if downstream_directory.exists():
             for path in downstream_directory.iterdir():
@@ -689,7 +829,8 @@ def rescan():
 
                         if garden is None:
                             raise NotFoundException(
-                                f"Failure to load {garden_name} after write collision occurred"
+                                f"Failure to load {garden_name} after write collision "
+                                "occurred"
                             )
                 else:
                     logger.info(
@@ -697,13 +838,33 @@ def rescan():
                     )
 
                 load_garden_config(garden=garden)
-                garden = update_garden(garden)
+                # Just need to publish the event for routing logic
+                publish(
+                    Event(
+                        name=Events.GARDEN_UPDATED.name,
+                        garden=config.get("garden.name"),
+                        payload_type="Garden",
+                        payload=garden,
+                    )
+                )
 
-                garden_sync(garden.name)
+                loaded_gardens.append(garden.name)
         else:
             logger.error(
                 f"Unable to find downstream directory: {str(downstream_directory.resolve())}"
             )
+
+        if sync_gardens:
+            for garden_name in loaded_gardens:
+                # Need to give the router a second to load the events
+                time.sleep(0.5)
+                garden_sync(garden_name)
+
+        if sync_gardens:
+            for garden_name in loaded_gardens:
+                # Need to give the router a second to load the events
+                time.sleep(0.5)
+                garden_sync(garden_name)
 
 
 def garden_sync(sync_target: str = None):
@@ -733,7 +894,6 @@ def garden_sync(sync_target: str = None):
             publish_garden()
         else:
             try:
-                logger.info(f"About to create sync operation for garden {sync_target}")
 
                 route(
                     Operation(
@@ -769,7 +929,14 @@ def garden_sync(sync_target: str = None):
 
 
 def publish_local_garden_to_api():
-    local_garden = get_garden(config.get("garden.name"))
+    local_garden = get_garden(
+        config.get("garden.name"),
+        exclude_fields=[
+            "systems__instances__status_info",
+            "receiving_connections__status_info",
+            "publishing_connections__status_info",
+        ],
+    )
     publish(
         Event(
             name=Events.GARDEN_UPDATED.name,
@@ -783,11 +950,24 @@ def publish_local_garden_to_api():
 
 def garden_unresponsive_trigger():
     for garden in get_gardens(include_local=False):
-        interval_value = garden.metadata.get("_unresponsive_timeout", -1)
+        try:
+            if (
+                garden.version is None
+                or garden.version == "UNKNOWN"
+                or parse(garden.version) < parse("3.25.1")
+            ):
+                default_value = 60
+            else:
+                default_value = -1
+        except InvalidVersion:
+            default_value = 60
+
+        interval_value = garden.metadata.get("_unresponsive_timeout", default_value)
 
         if interval_value > 0:
-            timeout = datetime.utcnow() - timedelta(minutes=interval_value)
+            timeout = datetime.now(timezone.utc) - timedelta(minutes=interval_value)
 
+            update_connection = False
             for connection in garden.receiving_connections:
                 if connection.status in ["RECEIVING"]:
                     if connection.status_info.heartbeat < timeout:
@@ -797,6 +977,50 @@ def garden_unresponsive_trigger():
                         logger.error(
                             f"{garden.name} Timed out {interval_value} minutes"
                         )
+                        update_connection = True
+                elif connection.status == "UNRESPONSIVE":
+                    logger.info(f"{garden.name} still unresponsive, pushing sync")
+                    garden_sync(garden.name)
+
+            if update_connection:
+                update_garden(garden)
+
+
+def handle_event_filter(event):
+
+    if event.payload_type == Garden.__name__:
+        if (
+            event.garden == config.get("garden.name")
+            and hasattr(event, "payload")
+            and hasattr(event.payload, "has_upstream")
+            and event.payload.has_upstream
+            and hasattr(event.payload, "upstream")
+            and event.payload.upstream != config.get("garden.name")
+        ):
+            # Do not process 2 hop garden events
+            return True
+
+        if event.name == Events.GARDEN_UPDATED.name and event.garden == config.get(
+            "garden.name"
+        ):
+            # Do not reprocess events
+            return True
+
+        if (
+            event.garden == config.get("garden.name")
+            and event.name
+            in [
+                Events.GARDEN_CONFIGURED.name,
+                Events.GARDEN_REMOVED.name,
+                Events.GARDEN_CREATED.name,
+            ]
+            and not config.get("upstream.stomp.enabled")
+            and not config.get("upstream.http.enabled")
+        ):
+            # No upstream to publish to, so we can skip these events
+            return True
+
+    return False
 
 
 def handle_event(event):
@@ -810,6 +1034,31 @@ def handle_event(event):
 
     This method should NOT update the routing module. Let its handler worry about that!
     """
+
+    if (
+        event.garden == config.get("garden.name")
+        and event.name == Events.ENTRY_STARTED.name
+    ):
+
+        if "entry_point_type" in event.metadata:
+            downstream = db.query(
+                Garden,
+                filter_params={"connection_type__ne": "LOCAL", "has_upstream": False},
+                include_fields=["receiving_connections", "name"],
+            )
+
+            for child in downstream:
+                for receiving in child.receiving_connections:
+                    # Due to HTTP being enabled by default, if STOMP is enabled
+                    # duplicate sync events will be published. Since we don't
+                    # know how to identify the correct entry point, we have
+                    # to just deque unique the event
+                    if receiving.api == event.metadata[
+                        "entry_point_type"
+                    ] and receiving.status not in ["NOT_CONFIGURED", "DISABLED"]:
+                        garden_sync(child.name)
+                        break
+
     if event.garden != config.get("garden.name"):
         if event.name in (
             Events.GARDEN_STARTED.name,
@@ -822,27 +1071,9 @@ def handle_event(event):
             for system in event.payload.systems:
                 system.local = False
 
-            # Remove systems that are tracking locally
-            remote_systems = []
-            for system in event.payload.systems:
-                if (
-                    len(
-                        get_systems(
-                            filter_params={
-                                "local": True,
-                                "namespace": system.namespace,
-                                "name": system.name,
-                                "version": system.version,
-                            }
-                        )
-                    )
-                    < 1
-                ):
-                    remote_systems.append(system)
-            event.payload.systems = remote_systems
-
             if event.name == Events.GARDEN_SYNC.name:
                 logger.info(f"Garden sync event for {event.payload.name}")
+
                 try:
                     # Check if downstream garden is deleted
                     db_garden = get_garden(event.payload.name)
@@ -866,43 +1097,22 @@ def handle_event(event):
 
             upsert_garden(event.payload)
 
-            # Publish update events for UI to dynamically load changes for Systems
-            publish_local_garden_to_api()
-
-    elif event.name == Events.GARDEN_UNREACHABLE.name:
-        target_garden = get_garden(event.payload.target_garden_name)
-
-        if target_garden.status not in [
-            "UNREACHABLE",
-            "STOPPED",
-            "BLOCKED",
-            "ERROR",
-        ]:
-            update_garden_status(event.payload.target_garden_name, "UNREACHABLE")
-    elif event.name == Events.GARDEN_ERROR.name:
-        target_garden = get_garden(event.payload.target_garden_name)
-
-        if target_garden.status not in [
-            "UNREACHABLE",
-            "STOPPED",
-            "BLOCKED",
-            "ERROR",
-        ]:
-            update_garden_status(event.payload.target_garden_name, "ERROR")
-    elif event.name == Events.GARDEN_NOT_CONFIGURED.name:
-        target_garden = get_garden(event.payload.target_garden_name)
-
-        if target_garden.status == "NOT_CONFIGURED":
-            update_garden_status(event.payload.target_garden_name, "NOT_CONFIGURED")
-
     elif event.name in [
         Events.GARDEN_CONFIGURED.name,
         Events.GARDEN_REMOVED.name,
         Events.GARDEN_CREATED.name,
-        Events.GARDEN_UPDATED.name,
     ]:
-        publish_garden()
+        # This publish garden event is to keep upstream gardens in sync
+        if config.get("upstream.stomp.enabled") or config.get("upstream.http.enabled"):
+            publish_garden()
+    elif "GARDEN" in event.name and event.garden != event.payload.name:
+        if event.name in (Events.GARDEN_UPDATED.name,):
+            # These are generated by the upsert and needed for the Router logic
+            return
 
-    if "SYSTEM" in event.name or "INSTANCE" in event.name:
-        # If a System or Instance is updated, publish updated Local Garden Model for UI
-        publish_local_garden_to_api()
+        logger.error(
+            (
+                f"{event.name} source garden {event.garden} does "
+                f"not match payload garden {event.payload.name}"
+            )
+        )

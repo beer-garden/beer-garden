@@ -6,12 +6,10 @@ from brewtils.models import Permissions
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.metrics import collect_metrics
 
 
 class ForwardAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="ForwardAPI")
     async def post(self):
         """
         ---
@@ -19,6 +17,12 @@ class ForwardAPI(AuthorizationHandler):
         description: |
             When a Beer Garden needs to forward a request, this API will support routing
             to all CRUD actions exposed by the entry points.
+        requestBody:
+          description: The Forward Object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Forward'
         parameters:
           - name: blocking
             in: query
@@ -32,19 +36,23 @@ class ForwardAPI(AuthorizationHandler):
             description: Max seconds to wait for request completion. (-1 = wait forever)
             type: float
             default: -1
-          - name: forward
-            in: body
-            required: true
-            description: The Forward Object
-            schema:
-                $ref: '#/definitions/Forward'
         responses:
           204:
             description: Forward Request Accepted
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Forward
         """

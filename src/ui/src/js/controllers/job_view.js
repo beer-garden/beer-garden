@@ -8,6 +8,7 @@ jobViewController.$inject = [
   '$stateParams',
   '$uibModal',
   'JobService',
+  'EventService',
 ];
 
 /**
@@ -18,6 +19,7 @@ jobViewController.$inject = [
  * @param  {Object} $stateParams  Angular's $stateParams object.
  * @param  {Object} $uibModal     Angular UI's $uibModal object.
  * @param  {Object} JobService    Beer-Garden's job service.
+ * @param  {Object} EventService    Beer-Garden's event service object.
  */
 export function jobViewController(
     $scope,
@@ -26,6 +28,7 @@ export function jobViewController(
     $stateParams,
     $uibModal,
     JobService,
+    EventService,
 ) {
   $scope.setWindowTitle('scheduler');
 
@@ -89,6 +92,22 @@ export function jobViewController(
         $scope.failureCallback,
     );
   }
+
+  function eventCallback(event) {
+    if ($rootScope.garden !== undefined && event.garden == $rootScope.garden.name) {
+      if (['JOB_PAUSED', 'JOB_RESUMED'].includes(event.name)) {
+          if ($scope.data.id == event.payload.id){
+            $scope.data = event.payload
+          }
+      } 
+    }
+  }
+
+  EventService.addCallback('job_view', (event) => {
+    $scope.$apply(() => {
+      eventCallback(event);
+    });
+  });
 
   $scope.$on('userChange', () => {
     loadJob();

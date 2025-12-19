@@ -6,12 +6,10 @@ from brewtils.schema_parser import SchemaParser
 from tornado.escape import json_decode
 
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.metrics import collect_metrics
 
 
 class FileChunkAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="FileChunkAPI")
     async def get(self):
         """
         ---
@@ -36,12 +34,24 @@ class FileChunkAPI(AuthorizationHandler):
         responses:
           200:
             description: The requested File or FileChunk data
-            schema:
-              $ref: '#/definitions/FileStatus'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/FileStatus'
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Files
         """
@@ -64,11 +74,23 @@ class FileChunkAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="FileChunkAPI")
     async def post(self):
         """
         ---
         summary: Create a new FileChunk
+        requestBody:
+          name: body
+          description: Data - A Base64 string encoding your data;
+                        Offset - The chunk number (0, 1, ... N)
+          content:
+              application/json:
+                schema:
+                  properties:
+                    "data":
+                      type: string
+                      format: byte
+                    "offset":
+                      type: integer
         parameters:
           - name: file_id
             in: query
@@ -80,27 +102,27 @@ class FileChunkAPI(AuthorizationHandler):
             required: false
             description: Creates a top-level file if one doesn't exist
             type: boolean
-          - name: body
-            in: body
-            required: true
-            description: Data - A Base64 string encoding your data;
-                         Offset - The chunk number (0, 1, ... N)
-            schema:
-              properties:
-                "data":
-                  type: string
-                  format: byte
-                "offset":
-                  type: integer
         responses:
           201:
             description: A new FileChunk is created
-            schema:
-              $ref: '#/definitions/FileStatus'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/FileStatus'
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Files
         """
@@ -132,7 +154,6 @@ class FileChunkAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="FileChunkAPI")
     async def delete(self):
         """
         ---
@@ -146,12 +167,24 @@ class FileChunkAPI(AuthorizationHandler):
         responses:
           200:
             description: The file and all of its contents have been removed.
-            schema:
-              $ref: '#/definitions/FileStatus'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/FileStatus'
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Files
         """
@@ -170,7 +203,6 @@ class FileChunkAPI(AuthorizationHandler):
 
 class ChunkNameAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="ChunkNameAPI")
     async def get(self):
         """
         ---
@@ -219,12 +251,24 @@ class ChunkNameAPI(AuthorizationHandler):
         responses:
           200:
             description: The File ID
-            schema:
-              $ref: '#/definitions/FileStatus'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/FileStatus'
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Files
         """

@@ -9,6 +9,7 @@ import beer_garden.config as config
 import beer_garden.log
 import beer_garden.requests
 import beer_garden.router
+from beer_garden.api import accepted_forwarding_events
 from beer_garden.api.stomp.transport import Connection, parse_header_list
 from beer_garden.events import publish
 from beer_garden.events.processors import BaseProcessor
@@ -143,6 +144,10 @@ class StompManager(BaseProcessor):
     def _event_handler(self, event):
         """Internal event handler"""
         if not event.error:
+            if "REQUEST" in event.name and event.payload.command_type == "TEMP":
+                # If this is a temporary request, we don't want to publish it
+                return
+
             if event.name in (
                 Events.GARDEN_STARTED.name,
                 Events.GARDEN_UPDATED.name,
@@ -155,7 +160,7 @@ class StompManager(BaseProcessor):
                     event.payload.upstream = config.get("garden.name")
                     event.payload.has_upstream = True
 
-            if event.name == Events.GARDEN_REMOVED.name:
+            elif event.name == Events.GARDEN_REMOVED.name:
                 self.remove_garden_from_list(garden_name=event.payload.name)
 
             elif event.name == Events.GARDEN_CONFIGURED.name:
@@ -181,15 +186,17 @@ class StompManager(BaseProcessor):
                 )
 
         if not event.error and event.garden == config.get("garden.name"):
-            for value in self.conn_dict.values():
-                conn = value["conn"]
-                if conn:
-                    if conn.is_connected():
-                        if value["headers_list"]:
-                            for headers in value["headers_list"]:
-                                conn.send(event, headers=headers)
-                        else:
-                            conn.send(event)
+            # Keep filter list in sync with HTTP Parent Updater
+            if event.name in accepted_forwarding_events:
+                for value in self.conn_dict.values():
+                    conn = value["conn"]
+                    if conn:
+                        if conn.is_connected():
+                            if value["headers_list"]:
+                                for headers in value["headers_list"]:
+                                    conn.send(event, headers=headers)
+                            else:
+                                conn.send(event)
 
     def handle_event(self, event):
         """Main event entry point
@@ -203,13 +210,33 @@ class StompManager(BaseProcessor):
         - And then the actually event handler logic for this entry point
 
         """
-        for handler in [
-            beer_garden.router.handle_event,
-            beer_garden.log.handle_event,
-            beer_garden.requests.handle_wait_events,
-            self._event_handler,
-        ]:
+
+        try:
+            if "GARDEN" in event.name:
+                self._event_handler(deepcopy(event))
+        except Exception as ex:
+            logger.exception(f"Error executing callback for {event!r}: {ex}")
+
+        if not event.error:
             try:
-                handler(deepcopy(event))
+                if event.name in [
+                    Events.SYSTEM_CREATED.name,
+                    Events.SYSTEM_UPDATED.name,
+                    Events.GARDEN_SYNC.name,
+                    Events.GARDEN_CONFIGURED.name,
+                    Events.GARDEN_REMOVED.name,
+                    Events.GARDEN_UPDATED.name,
+                ]:
+                    beer_garden.router.handle_event(deepcopy(event))
+
+                elif event.name == Events.PLUGIN_LOGGER_FILE_CHANGE.name:
+                    beer_garden.log.handle_event(deepcopy(event))
+
+                elif event.name in [
+                    Events.REQUEST_COMPLETED.name,
+                    Events.REQUEST_CANCELED.name,
+                    Events.GARDEN_STOPPED.name,
+                ]:
+                    beer_garden.requests.handle_wait_events(deepcopy(event))
             except Exception as ex:
                 logger.exception(f"Error executing callback for {event!r}: {ex}")

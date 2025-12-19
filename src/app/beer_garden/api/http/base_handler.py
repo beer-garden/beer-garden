@@ -114,7 +114,7 @@ class BaseHandler(RequestHandler):
     def prepare(self):
         """Called before each verb handler"""
         # Used for calculating request handling duration
-        self.request.created_time = datetime.datetime.utcnow()
+        self.request.created_time = datetime.datetime.now(datetime.timezone.utc)
 
         content_type = self.request.headers.get("content-type", "")
         if self.request.method.upper() in ["POST", "PATCH"] and content_type:
@@ -143,7 +143,9 @@ class BaseHandler(RequestHandler):
         """Called after a handler completes processing"""
         # Latency measurement for blocking request creation just muddies the waters
         if not getattr(self.request, "ignore_latency", False):
-            timedelta = datetime.datetime.utcnow() - self.request.created_time
+            timedelta = (
+                datetime.datetime.now(datetime.timezone.utc) - self.request.created_time
+            )
 
             http_api_latency_total.labels(
                 method=self.request.method.upper(),
@@ -258,6 +260,6 @@ class BaseHandler(RequestHandler):
             BadRequest: The request body failed to validate with the supplied schema
         """
         try:
-            return schema(strict=True).load(self.request_body).data
+            return schema().load(self.request_body)
         except MarshmallowValidationError:
             raise BadRequest

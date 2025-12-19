@@ -3,12 +3,10 @@ from brewtils.models import Operation, System
 
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.errors import EndpointRemovedException
-from beer_garden.metrics import collect_metrics
 
 
 class CommandAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="CommandAPI")
     async def get(self, system_id, command_name):
         """
         ---
@@ -27,12 +25,24 @@ class CommandAPI(AuthorizationHandler):
         responses:
           200:
             description: Command with the given name
-            schema:
-              $ref: '#/definitions/Command'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Command'
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Commands
         """
@@ -48,7 +58,6 @@ class CommandAPI(AuthorizationHandler):
 
 class CommandAPIOld(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="CommandAPIOld")
     async def get(self, command_id):
         """
         ---
@@ -63,12 +72,24 @@ class CommandAPIOld(AuthorizationHandler):
         responses:
           200:
             description: Command with the given ID
-            schema:
-              $ref: '#/definitions/Command'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Command'
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Deprecated
         """
@@ -82,7 +103,6 @@ class CommandAPIOld(AuthorizationHandler):
 
 class CommandListAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="CommandListAPI")
     async def get(self):
         """
         ---
@@ -91,12 +111,19 @@ class CommandListAPI(AuthorizationHandler):
         responses:
           200:
             description: All Commands
-            schema:
-              type: array
-              items:
-                $ref: '#/definitions/Command'
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Command'
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Deprecated
         """

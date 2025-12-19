@@ -2,8 +2,10 @@ import re
 
 from setuptools import find_packages, setup
 
-with open("README.rst") as readme_file:
-    readme = readme_file.read()
+# read the contents of the README file
+from pathlib import Path
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.md").read_text()
 
 
 def find_version(version_file):
@@ -20,7 +22,8 @@ setup(
     name="beer_garden",
     version=find_version("beer_garden/__version__.py"),
     description="Beergarden Application",
-    long_description=readme,
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     author="The Beer Garden Team",
     author_email="beer@beer-garden.io",
     url="https://beer-garden.io",
@@ -28,30 +31,40 @@ setup(
     license="MIT",
     keywords="beer beer-garden beergarden",
     install_requires=[
-        "apispec<0.39",
-        "apscheduler<4",
-        "python-box>=3.3.0",
-        "brewtils>=3.29.1",
-        "marshmallow<3",
-        "mongoengine<0.21",
-        "more-itertools<9",
-        "motor<3",
-        "passlib<1.8",
-        "prometheus-client<1",
-        "pyasn1<0.6.0",
-        "pyyaml<5.4",
-        "pyrabbit2<2",
-        "pytz<2021",
-        "pyjwt>=2.4.0",
-        "ruamel.yaml<0.17",
-        "stomp.py<6.2.0",
-        "tornado<7",
-        "urllib3<2",
-        "watchdog>2.1.0",
-        "wrapt",
-        "yapconf>=1.0.0",
-        "elastic-apm",
-        "ldap3>=2.9.1"
+        "brewtils>=3.31.0",
+
+        # Using Latest Version   
+        "apispec>=6.7,<7", # Latest 6.8.4
+        "apispec-webframeworks>1,<2", # Latest 1.2.0
+        "apscheduler<4", # Latest 3.11.0
+        "more-itertools<11", # Latest 10.8.0
+        "wrapt", # Latest 1.17.3      
+        "elastic-apm", # Latest 6.24.0
+        "ldap3>=2.9.1", # Latest 2.9.1
+        "pyrabbit2<2", # Latest 1.0.7
+        "pyjwt>=2.4.0", # Latest 2.10.1
+        "passlib<1.8", # Latest 1.7.4
+        "prometheus-client<1", # Latest 0.23.1
+        "pyyaml<7", # Latest 6.0.3
+        "stomp.py>=7,<9", # Latest 8.2.0
+        "tornado<7", # Latest 6.5.2
+        "urllib3<3", # Latest 2.5.0
+        "watchdog<6.1", # Latest 6.0.0
+
+        # Pymongo needs 4.9 for Async features from motor
+        # Pymongo needs mockmongo to fix issue #912 before we can go past
+        # pymongo 4.11
+        "pymongo>=4.9,<4.11", # Latest 4.15.1
+        "mongoengine>=0.29.1", # Latest 0.29.1
+        
+        # YAPCONF Conflict with python-box
+        "python-box<4", # Latest 7.3.2     
+        # Can't go to 18 after yapconf migrates away from _safe functions
+        "ruamel.yaml<0.18", # Latest 0.18.5
+        "yapconf<1.0", # Latest 0.4.0
+
+        # Brewtils drives marshmallow version
+        "marshmallow<4.1,>=4.0", # Latest 4.0.1
     ],
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -59,13 +72,10 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
     ],
     entry_points={
         "console_scripts": [

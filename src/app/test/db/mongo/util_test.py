@@ -1,212 +1,117 @@
 # -*- coding: utf-8 -*-
-import pytest
-from mock import MagicMock, Mock, patch
+
+import datetime
+from datetime import timedelta, timezone
+from unittest.mock import patch
+
+import mongomock
 from mongoengine import connect
-from mongoengine.errors import FieldDoesNotExist
 
 import beer_garden.db.mongo.models
-import beer_garden.db.mongo.util
 from beer_garden import config
-from beer_garden.db.mongo.models import Garden
+from beer_garden.db.mongo.models import Garden, Request
 from beer_garden.db.mongo.util import (  # ensure_roles,; ensure_users,
+    cancel_local_outstanding,
     ensure_local_garden,
 )
-from beer_garden.errors import IndexOperationError
+
+FAKE_TIME = datetime.datetime.now(timezone.utc) + timedelta(minutes=60)
 
 
-@pytest.fixture
-def model_mocks(monkeypatch):
-    request_mock = Mock(
-        objects=Mock(count=Mock(return_value=1), first=Mock(return_value=[{}]))
-    )
-    system_mock = Mock(
-        objects=Mock(count=Mock(return_value=1), first=Mock(return_value=[{}]))
-    )
-    job_mock = Mock(
-        objects=Mock(count=Mock(return_value=1), first=Mock(return_value=[{}]))
-    )
+class TestCancelRequests:
+    @classmethod
+    def setup_class(cls):
+        connect(
+            "beer_garden",
+            host="mongodb://localhost",
+            mongo_client_class=mongomock.MongoClient,
+        )
 
-    request_mock.__name__ = "Request"
-    system_mock.__name__ = "System"
-    job_mock.__name__ = "Job"
+    def teardown_method(self):
+        beer_garden.db.mongo.models.Request.drop_collection()
 
-    monkeypatch.setattr(beer_garden.db.mongo.models, "Request", request_mock)
-    monkeypatch.setattr(beer_garden.db.mongo.models, "System", system_mock)
-    monkeypatch.setattr(beer_garden.db.mongo.models, "Job", job_mock)
+    @patch("beer_garden.db.mongo.util.datetime")
+    def test_no_canceled_requests(self, mock_datetime, request_dict):
+        mock_datetime.now.return_value = FAKE_TIME
+        config._CONFIG = {"db": {"prune": {"in_progress_request_expiration": 1}}}
 
-    return {
-        "request": request_mock,
-        "system": system_mock,
-        "job": job_mock,
-    }
+        request_dict["status"] = "SUCCESS"
+        request_dict["updated_at"] = FAKE_TIME - timedelta(minutes=2)
+        request_dict["created_at"] = FAKE_TIME - timedelta(minutes=2)
+        request_dict["status_updated_at"] = FAKE_TIME - timedelta(minutes=2)
 
+        del request_dict["has_parent"]
+        del request_dict["parent"]
 
-@pytest.fixture
-def config_mock_value(monkeypatch):
-    def config_get_value(config_name):
-        return "somevalue"
+        Request(**request_dict).save()
+        cancel_local_outstanding()
 
-    monkeypatch.setattr(config, "get", config_get_value)
+        assert Request.objects(status="CANCELED").count() == 0
+        assert Request.objects(status="SUCCESS").count() == 1
 
-
-@pytest.fixture
-def config_mock_none(monkeypatch):
-    def config_get_value(config_name):
-        return None
-
-    monkeypatch.setattr(config, "get", config_get_value)
-
-
-class TestCheckIndexes(object):
-    @patch("mongoengine.connect", Mock())
-    @patch("mongoengine.register_connection", Mock())
-    def test_same_indexes(self, model_mocks):
-        for model_mock in model_mocks.values():
-            model_mock.list_indexes = Mock(return_value=["index1"])
-            model_mock._get_collection = Mock(
-                return_value=Mock(index_information=Mock(return_value={"index1": {}}))
-            )
-
-        [beer_garden.db.mongo.util.check_indexes(doc) for doc in model_mocks.values()]
-        for model_mock in model_mocks.values():
-            assert model_mock.ensure_indexes.call_count == 1
-
-    @patch("mongoengine.connect", Mock())
-    @patch("mongoengine.register_connection", Mock())
-    def test_missing_index(self, model_mocks):
-        for model_mock in model_mocks.values():
-            model_mock.list_indexes = Mock(return_value=["index1", "index2"])
-            model_mock._get_collection = Mock(
-                return_value=Mock(index_information=Mock(return_value={"index1": {}}))
-            )
-
-        [beer_garden.db.mongo.util.check_indexes(doc) for doc in model_mocks.values()]
-        for model_mock in model_mocks.values():
-            assert model_mock.ensure_indexes.call_count == 1
-
-    @patch("mongoengine.connection.get_db")
-    @patch("mongoengine.connect", Mock())
-    @patch("mongoengine.register_connection", Mock())
-    def test_successful_index_rebuild(self, get_db_mock, model_mocks):
-        # 'normal' return values
-        for model_mock in model_mocks.values():
-            model_mock.list_indexes = Mock(return_value=["index1"])
-            model_mock._get_collection = Mock(
-                return_value=MagicMock(
-                    index_information=Mock(return_value={"index1": {}})
-                )
-            )
-
-        # ... except for this one
-        model_mocks["request"].list_indexes.side_effect = IndexOperationError("")
-
-        db_mock = MagicMock()
-        get_db_mock.return_value = db_mock
-
-        [beer_garden.db.mongo.util.check_indexes(doc) for doc in model_mocks.values()]
-        assert db_mock["request"].drop_indexes.call_count == 1
-        assert model_mocks["request"].ensure_indexes.called is True
-
-    @patch("mongoengine.connect", Mock())
-    @patch("mongoengine.connection.get_db")
-    def test_unsuccessful_index_drop(self, get_db_mock, model_mocks):
-        for model_mock in model_mocks.values():
-            model_mock.list_indexes = Mock(return_value=["index1"])
-            model_mock._get_collection = Mock(
-                return_value=Mock(index_information=Mock(return_value={"index1": {}}))
-            )
-
-            model_mock.ensure_indexes.side_effect = IndexOperationError("")
-
-        get_db_mock.side_effect = IndexOperationError("")
-
-        for doc in model_mocks.values():
-            with pytest.raises(IndexOperationError):
-                beer_garden.db.mongo.util.check_indexes(doc)
-
-    @patch("mongoengine.connect", Mock())
-    @patch("mongoengine.connection.get_db", MagicMock())
-    def test_unsuccessful_index_rebuild(self, model_mocks):
-        for model_mock in model_mocks.values():
-            model_mock.list_indexes = Mock(return_value=["index1"])
-            model_mock._get_collection = Mock(
-                return_value=MagicMock(
-                    index_information=Mock(return_value={"index1": {}})
-                )
-            )
-
-            model_mock.ensure_indexes.side_effect = IndexOperationError("")
-
-        for doc in model_mocks.values():
-            with pytest.raises(IndexOperationError):
-                beer_garden.db.mongo.util.check_indexes(doc)
-
-    @patch("mongoengine.connect", Mock())
-    @patch("mongoengine.connection.get_db", MagicMock())
-    def test_unsuccessful_read_objects(self, model_mocks):
-        for model_mock in model_mocks.values():
-            model_mock.list_indexes = Mock(return_value=["index1"])
-            model_mock._get_collection = Mock(
-                return_value=MagicMock(
-                    index_information=Mock(return_value={"index1": {}})
-                )
-            )
-
-            model_mock.objects.first.side_effect = FieldDoesNotExist("")
-
-        for doc in model_mocks.values():
-            with pytest.raises(FieldDoesNotExist):
-                beer_garden.db.mongo.util.check_indexes(doc)
-
-    @patch("mongoengine.connection.get_db")
-    @patch("mongoengine.connect", Mock())
-    @patch("mongoengine.register_connection", Mock())
-    def test_old_request_index(self, get_db_mock, model_mocks, monkeypatch):
-        # 'normal' return values
-        for model_mock in model_mocks.values():
-            model_mock.list_indexes = Mock(return_value=["index1"])
-            model_mock._get_collection = Mock(
-                return_value=MagicMock(
-                    index_information=Mock(return_value={"index1": {}})
-                )
-            )
-
-        # ... except for this one
-        model_mocks[
-            "request"
-        ]._get_collection.return_value.index_information.return_value = {
-            "index1": {},
-            "parent_instance_index": {},
+    @patch("beer_garden.db.mongo.util.datetime")
+    def test_cancel_local_request(self, mock_datetime, request_dict):
+        mock_datetime.now.return_value = FAKE_TIME
+        config._CONFIG = {
+            "garden": {"name": "target_garden"},
+            "db": {"prune": {"in_progress_request_expiration": 1}},
         }
 
-        # Mock out request model update methods
-        update_parent_field_type_mock = Mock()
-        update_has_parent_mock = Mock()
-        monkeypatch.setattr(
-            beer_garden.db.mongo.util,
-            "_update_request_parent_field_type",
-            update_parent_field_type_mock,
-        )
-        monkeypatch.setattr(
-            beer_garden.db.mongo.util,
-            "_update_request_has_parent_model",
-            update_has_parent_mock,
-        )
+        request_dict["status"] = "IN_PROGRESS"
+        request_dict["updated_at"] = FAKE_TIME - timedelta(minutes=2)
+        request_dict["created_at"] = FAKE_TIME - timedelta(minutes=2)
+        request_dict["status_updated_at"] = FAKE_TIME - timedelta(minutes=2)
 
-        db_mock = MagicMock()
-        get_db_mock.return_value = db_mock
+        del request_dict["has_parent"]
+        del request_dict["parent"]
 
-        [beer_garden.db.mongo.util.check_indexes(doc) for doc in model_mocks.values()]
-        assert db_mock["request"].drop_indexes.call_count == 1
-        assert model_mocks["request"].ensure_indexes.called is True
-        assert update_parent_field_type_mock.called is True
-        assert update_has_parent_mock.called is True
+        request_dict["target_garden"] = "target_garden"
+
+        Request(**request_dict).save()
+
+        assert Request.objects(status="IN_PROGRESS").count() == 1
+
+        cancel_local_outstanding()
+
+        assert Request.objects(status="CANCELED").count() == 1
+        assert Request.objects(status="IN_PROGRESS").count() == 0
+
+    @patch("beer_garden.db.mongo.util.datetime")
+    def test_skip_non_local_request(self, mock_datetime, request_dict):
+        mock_datetime.now.return_value = FAKE_TIME
+        config._CONFIG = {
+            "garden": {"name": "target_garden"},
+            "db": {"prune": {"in_progress_request_expiration": 1}},
+        }
+
+        request_dict["status"] = "IN_PROGRESS"
+        request_dict["updated_at"] = FAKE_TIME - timedelta(minutes=2)
+        request_dict["created_at"] = FAKE_TIME - timedelta(minutes=2)
+        request_dict["status_updated_at"] = FAKE_TIME - timedelta(minutes=2)
+
+        del request_dict["has_parent"]
+        del request_dict["parent"]
+
+        request_dict["target_garden"] = "not_target_garden"
+
+        Request(**request_dict).save()
+
+        assert Request.objects(status="IN_PROGRESS").count() == 1
+
+        cancel_local_outstanding()
+
+        assert Request.objects(status="CANCELED").count() == 0
+        assert Request.objects(status="IN_PROGRESS").count() == 1
 
 
 class TestEnsureLocalGarden:
     @classmethod
     def setup_class(cls):
-        connect("beer_garden", host="mongomock://localhost")
+        connect(
+            "beer_garden",
+            host="mongodb://localhost",
+            mongo_client_class=mongomock.MongoClient,
+        )
 
     def teardown_method(self):
         beer_garden.db.mongo.models.Garden.drop_collection()

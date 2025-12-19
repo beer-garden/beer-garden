@@ -9,12 +9,22 @@ gardenService.$inject = ['$rootScope', '$http'];
 export default function gardenService($rootScope, $http) {
   const GardenService = {};
 
+  const exclude_fields = [
+    "systems__instances__status_info",
+    "receiving_connections__status_info",
+    "publishing_connections__status_info",
+  ]
+
   GardenService.getGardens = function() {
     return $http.get('api/v1/gardens/');
   };
 
   GardenService.getGarden = function(name) {
-    return $http.get('api/v1/gardens/' + encodeURIComponent(name));
+    return $http.get('api/v1/gardens/' + encodeURIComponent(name), {
+      params: {
+        exclude_fields: exclude_fields.join()
+      },
+    });
   };
 
   GardenService.syncGardens = function() {
@@ -41,11 +51,23 @@ export default function gardenService($rootScope, $http) {
     });
   };
 
+  GardenService.rescanGarden = function(name) {
+    return $http.patch('api/v1/gardens/' + encodeURIComponent(name), {
+      operation: 'rescan',
+      path: '',
+      value: '',
+    },{
+      headers: {'Target-Garden': name}
+    });
+  };
+
   GardenService.syncGarden = function(name) {
     return $http.patch('api/v1/gardens/' + encodeURIComponent(name), {
       operation: 'sync',
       path: '',
       value: '',
+    },{
+      headers: {'Target-Garden': name}
     });
   };
 

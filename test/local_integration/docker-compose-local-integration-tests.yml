@@ -59,7 +59,7 @@ services:
             - mongodb
             - rabbitmq
     mongodb:
-        image: mongo:4.2
+        image: mongo:6.0
         restart: always
         networks:
             - bg-integration-test-network

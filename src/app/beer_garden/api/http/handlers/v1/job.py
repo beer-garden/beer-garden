@@ -7,13 +7,11 @@ from mongoengine.errors import ValidationError
 
 from beer_garden.api.http.exceptions import BadRequest
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.metrics import collect_metrics
 from beer_garden.scheduler import create_jobs
 
 
 class JobAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="JobAPI")
     async def get(self, job_id):
         """
         ---
@@ -27,12 +25,24 @@ class JobAPI(AuthorizationHandler):
         responses:
           200:
             description: Job with the given ID
-            schema:
-              $ref: '#/definitions/Job'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Job'
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Jobs
         """
@@ -46,7 +56,6 @@ class JobAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="JobAPI")
     async def patch(self, job_id):
         """
         ---
@@ -66,29 +75,47 @@ class JobAPI(AuthorizationHandler):
           ```JSON
           { "operation": "update", "path": "/status", "value": "RUNNING" }
           ```
+        requestBody:
+          name: patch
+          description: Instructions for how to update the Job
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchOperation'
         parameters:
           - name: job_id
             in: path
             required: true
             description: The ID of the Job
             type: string
-          - name: patch
-            in: body
-            required: true
-            description: Instructions for the actions to take
-            schema:
-              $ref: '#/definitions/Patch'
         responses:
           200:
             description: Job with the given ID
-            schema:
-              $ref: '#/definitions/Job'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Job'
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Jobs
         """
@@ -127,7 +154,6 @@ class JobAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="JobAPI")
     async def delete(self, job_id):
         """
         ---
@@ -143,9 +169,19 @@ class JobAPI(AuthorizationHandler):
           204:
             description: Job has been successfully deleted.
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Jobs
         """
@@ -161,7 +197,6 @@ class JobAPI(AuthorizationHandler):
 
 class JobListAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="JobListAPI")
     async def get(self):
         """
         ---
@@ -169,12 +204,19 @@ class JobListAPI(AuthorizationHandler):
         responses:
           200:
             description: Successfully retrieved all systems.
-            schema:
-              type: array
-              items:
-                $ref: '#/definitions/Job'
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Job'
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Jobs
         """
@@ -199,7 +241,6 @@ class JobListAPI(AuthorizationHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @collect_metrics(transaction_type="API", group="JobListAPI")
     async def post(self):
         """
         ---
@@ -207,21 +248,34 @@ class JobListAPI(AuthorizationHandler):
         description: |
           Given a job, it will be scheduled to run on the interval
           set in the trigger argument.
-        parameters:
-          - name: job
-            in: body
-            description: The Job to create/schedule
-            schema:
-              $ref: '#/definitions/Job'
+        requestBody:
+          name: job
+          description: The Job to create/schedule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
         responses:
           201:
             description: A new job has been created
-            schema:
-              $ref: '#/definitions/Job'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Job'
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Jobs
         """
@@ -246,7 +300,6 @@ class JobListAPI(AuthorizationHandler):
 
 class JobImportAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="JobImportAPI")
     async def post(self):
         """
         ---
@@ -254,23 +307,35 @@ class JobImportAPI(AuthorizationHandler):
         description: |
           Given a list of jobs from /export/jobs, each will be scheduled to run
           on the intervals that are set in their trigger arguments.
-        parameters:
-          - name: jobs
-            in: body
-            description: The Jobs to create/schedule
-            schema:
-              type: array
-              items:
-                $ref: '#/definitions/JobImport'
+        requestBody:
+          description: The Jobs to create/schedule
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JobImport'
         responses:
           201:
             description: All new jobs have been created
-            schema:
-              $ref: '#/definitions/JobExport'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/JobExport'
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Jobs
         """
@@ -292,7 +357,6 @@ class JobImportAPI(AuthorizationHandler):
 
 class JobExportAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="JobExportAPI")
     async def post(self):
         """
         ---
@@ -300,25 +364,41 @@ class JobExportAPI(AuthorizationHandler):
         description: |
           Jobs will be scheduled from a provided list to run on the intervals
           set in their trigger arguments.
-        parameters:
-          - name: ids
-            in: body
-            description: A list of the Jobs IDs whose job definitions should be \
-            exported. Omitting this parameter or providing an empty map will export \
+        requestBody:
+          name: ids
+          description: |
+            A list of the Jobs IDs whose job definitions should be
+            exported. Omitting this parameter or providing an empty map will export
             all jobs.
-            schema:
-              $ref: '#/definitions/JobExport'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JobExport'
         responses:
           201:
             description: A list of jobs has been exported.
-            schema:
-              type: array
-              items:
-                $ref: '#/definitions/JobImport'
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/JobImport'
           400:
-            $ref: '#/definitions/400Error'
+            description: Parameter validation error
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Parameter validation error
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Jobs
         """
@@ -332,7 +412,7 @@ class JobExportAPI(AuthorizationHandler):
 
             if len(decoded_body_as_dict) > 0:  # i.e. it has keys
                 input_schema = JobExportInputSchema()
-                validated_input_data_dict = input_schema.load(decoded_body_as_dict).data
+                validated_input_data_dict = input_schema.load(decoded_body_as_dict)
                 filter_params_dict["id__in"] = validated_input_data_dict["ids"]
 
         response_objects = await self.process_operation(
@@ -355,7 +435,6 @@ class JobExportAPI(AuthorizationHandler):
 
 class JobExecutionAPI(AuthorizationHandler):
 
-    @collect_metrics(transaction_type="API", group="JobExecutionAPI")
     async def post(self, job_id):
         """
         ---
@@ -380,9 +459,19 @@ class JobExecutionAPI(AuthorizationHandler):
           202:
             description: Job has been executed
           404:
-            $ref: '#/definitions/404Error'
+            description: Resource does not exist
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Resource does not exist
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Jobs
         """
