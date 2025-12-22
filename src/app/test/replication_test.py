@@ -1,6 +1,6 @@
 import os
 from datetime import datetime, timedelta, timezone
-
+import time
 from brewtils.models import Replication
 
 from beer_garden.replication import (
@@ -26,11 +26,19 @@ class TestReplication(object):
         create_replication(
             Replication(
                 replication_id="1111",
-                expires_at=datetime.now(timezone.utc) - timedelta(seconds=10),
+                expires_at=datetime.now(timezone.utc) - timedelta(seconds=100000),
             )
         )
 
-        assert len(get_replications()) == 0
+        valid = False
+        # Could take up to 60 seconds for the TTL monitor to delete the expired replication
+        for _ in range(70):
+            if len(get_replications()) == 0:
+                valid = True
+                break
+            time.sleep(1)
+
+        assert valid
 
     def test_update_replication(self):
         replication = create_replication(

@@ -4,9 +4,6 @@ import datetime
 from datetime import timedelta, timezone
 from unittest.mock import patch
 
-import mongomock
-from mongoengine import connect
-
 import beer_garden.db.mongo.models
 from beer_garden import config
 from beer_garden.db.mongo.models import Garden, Request
@@ -19,13 +16,6 @@ FAKE_TIME = datetime.datetime.now(timezone.utc) + timedelta(minutes=60)
 
 
 class TestCancelRequests:
-    @classmethod
-    def setup_class(cls):
-        connect(
-            "beer_garden",
-            host="mongodb://localhost",
-            mongo_client_class=mongomock.MongoClient,
-        )
 
     def teardown_method(self):
         beer_garden.db.mongo.models.Request.drop_collection()
@@ -105,13 +95,6 @@ class TestCancelRequests:
 
 
 class TestEnsureLocalGarden:
-    @classmethod
-    def setup_class(cls):
-        connect(
-            "beer_garden",
-            host="mongodb://localhost",
-            mongo_client_class=mongomock.MongoClient,
-        )
 
     def teardown_method(self):
         beer_garden.db.mongo.models.Garden.drop_collection()

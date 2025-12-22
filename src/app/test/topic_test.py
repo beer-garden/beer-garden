@@ -1,4 +1,3 @@
-import mongomock
 import pytest
 from brewtils.models import Command as BrewtilsCommand
 from brewtils.models import Garden as BrewtilsGarden
@@ -6,7 +5,6 @@ from brewtils.models import Instance as BrewtilsInstance
 from brewtils.models import Subscriber as BrewtilsSubscriber
 from brewtils.models import System as BrewtilsSystem
 from brewtils.models import Topic as BrewtilsTopic
-from mongoengine import connect
 
 import beer_garden
 from beer_garden.db.mongo.models import Garden, System, Topic
@@ -137,13 +135,6 @@ def remote_garden():
 
 
 class TestTopic:
-    @classmethod
-    def setup_class(cls):
-        connect(
-            "beer_garden",
-            host="mongodb://localhost",
-            mongo_client_class=mongomock.MongoClient,
-        )
 
     def test_get_topic_id(self, topic1):
         """get_topic should allow for retrieval by name"""
