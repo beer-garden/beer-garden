@@ -848,6 +848,10 @@ jobs:
         run: BG='${{ matrix.previous }}' docker compose up -d beer-garden
         working-directory: ./docker/docker-compose     
 
+      - name: Wait for Beer Garden to start
+        run: sleep 60s
+        shell: bash
+
       - name: Check If Beer Garden is Operational
         uses: nick-invision/retry@v2
         with:
@@ -857,10 +861,6 @@ jobs:
           retry_wait_seconds: 5
           command: curl http://localhost:2337/config
 
-      - name: Wait for Beer Garden to start
-        run: sleep 30s
-        shell: bash
-
       - name: Grab logs from Beer-Garden
         if: always()
         run: BG='${{ matrix.previous }}' docker compose logs --tail 100 beer-garden
@@ -868,7 +868,11 @@ jobs:
 
       - name: Run Docker Beer Garden
         run: BG='${{ matrix.previous }}' docker compose stop beer-garden
-        working-directory: ./docker/docker-compose 
+        working-directory: ./docker/docker-compose
+
+      - name: Wait for Beer Garden to start
+        run: sleep 60s
+        shell: bash
 
       - name: Check If Beer Garden is Operational
         uses: nick-invision/retry@v2
