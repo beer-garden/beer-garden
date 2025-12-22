@@ -762,6 +762,7 @@ jobs:
           - "3.4.0"
           - "3.5.0"
           - "3.6.0"
+          - "3.7.0"
           - "3.8.1"
           - "3.9.0"
           - "3.10.0"
@@ -847,10 +848,6 @@ jobs:
         run: BG='${{ matrix.previous }}' docker compose up -d beer-garden
         working-directory: ./docker/docker-compose     
 
-      - name: Wait for Beer Garden to start
-        run: sleep 30s
-        shell: bash
-
       - name: Check If Beer Garden is Operational
         uses: nick-invision/retry@v2
         with:
@@ -859,6 +856,10 @@ jobs:
           retry_on: error
           retry_wait_seconds: 5
           command: curl http://localhost:2337/config
+
+      - name: Wait for Beer Garden to start
+        run: sleep 30s
+        shell: bash
 
       - name: Grab logs from Beer-Garden
         if: always()
@@ -872,10 +873,6 @@ jobs:
       - name: Start Docker Beer Garden - Unstable 
         run: BG='unstable' docker compose up -d beer-garden
         working-directory: ./docker/docker-compose
-
-      # - name: Wait for Beer Garden to start
-      #   run: sleep 60s
-      #   shell: bash
 
       - name: Check If Beer Garden is Operational
         uses: nick-invision/retry@v2

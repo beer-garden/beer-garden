@@ -1,5 +1,7 @@
 # Beer Garden Changelog
 
+- Fixed Migration script logic for MongoDB
+
 # 3.31.0
 
 12/11/2025
