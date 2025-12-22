@@ -5,11 +5,13 @@ from pathlib import Path
 import pytest
 import yapconf
 from mock import Mock, patch
-from ruamel import yaml
+from ruamel.yaml import YAML
 from yapconf import YapconfSpec
 
 import beer_garden.config
 from beer_garden.log import default_app_config
+
+yaml = YAML(typ="safe", pure=True)
 
 
 class TestLoadConfig(object):
@@ -80,7 +82,7 @@ class TestGenerateConfig(object):
         assert config.configuration.file is None
 
         with open(config_file) as f:
-            yaml_config = yaml.safe_load(f)
+            yaml_config = yaml.load(f.read())
         assert "configuration" not in yaml_config
 
     def test_create_file(self, tmpdir):
@@ -100,7 +102,7 @@ class TestGenerateConfig(object):
         beer_garden.config.generate(["-c", filename])
 
         with open(filename) as f:
-            config = yaml.safe_load(f)
+            config = yaml.load(f.read())
 
         assert "log" in config
         assert "configuration" not in config
@@ -293,30 +295,26 @@ class TestSafeMigrate(object):
         old_config["configuration"]["file"] = str(config_file)
 
         with open(config_file, "w") as f:
-            yaml.safe_dump(
-                old_config, stream=f, default_flow_style=False, encoding="utf-8"
-            )
+            yaml.dump(old_config, f)
 
         beer_garden.config.load(["-c", str(config_file)], force=True)
         assert beer_garden.config.get("log.level") == "INFO"
 
         with open(config_file) as f:
-            new_config_value = yaml.safe_load(f)
+            new_config_value = yaml.load(f.read())
 
         assert new_config_value == new_config
         assert len(os.listdir(tmpdir)) == 2
 
     def test_no_change(self, tmpdir, spec, config_file, new_config):
         with open(config_file, "w") as f:
-            yaml.safe_dump(
-                new_config, stream=f, default_flow_style=False, encoding="utf-8"
-            )
+            yaml.dump(new_config, f)
 
         beer_garden.config.load(["-c", str(config_file)], force=True)
         assert beer_garden.config.get("log.level") == "INFO"
 
         with open(config_file) as f:
-            new_config_value = yaml.safe_load(f)
+            new_config_value = yaml.load(f.read())
 
         assert new_config_value == new_config
         assert len(os.listdir(tmpdir)) == 1
@@ -331,9 +329,7 @@ class TestSafeMigrate(object):
         )
 
         with open(config_file, "w") as f:
-            yaml.safe_dump(
-                old_config, stream=f, default_flow_style=False, encoding="utf-8"
-            )
+            yaml.dump(old_config, f)
 
         beer_garden.config.load(["-c", str(config_file)], force=True)
 
@@ -343,7 +339,7 @@ class TestSafeMigrate(object):
         # If the migration fails, we should still have a single unchanged JSON file.
         assert len(os.listdir(tmpdir)) == 1
         with open(config_file) as f:
-            new_config_value = yaml.safe_load(f)
+            new_config_value = yaml.load(f.read())
         assert new_config_value == old_config
 
         # And the values should be unchanged
@@ -351,9 +347,7 @@ class TestSafeMigrate(object):
 
     def test_rename_failure(self, capsys, tmpdir, spec, config_file, old_config):
         with open(config_file, "w") as f:
-            yaml.safe_dump(
-                old_config, stream=f, default_flow_style=False, encoding="utf-8"
-            )
+            yaml.dump(old_config, f)
 
         with patch("os.rename", Mock(side_effect=ValueError)):
             beer_garden.config.load(["-c", str(config_file)], force=True)
@@ -369,15 +363,13 @@ class TestSafeMigrate(object):
 
         # The loaded config should be the original file.
         with open(config_file) as f:
-            new_config_value = yaml.safe_load(f)
+            new_config_value = yaml.load(f.read())
 
         assert new_config_value == old_config
 
     def test_catastrophe(self, capsys, tmpdir, spec, config_file, old_config):
         with open(config_file, "w") as f:
-            yaml.safe_dump(
-                old_config, stream=f, default_flow_style=False, encoding="utf-8"
-            )
+            yaml.dump(old_config, f)
 
         with patch("os.rename", Mock(side_effect=[Mock(), ValueError])):
             with pytest.raises(ValueError):
