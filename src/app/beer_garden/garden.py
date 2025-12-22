@@ -151,7 +151,10 @@ def get_garden(garden_name: str, **kwargs) -> Garden:
                 for child_garden in gardens
                 if child_garden.name != db_garden.name
                 and (
-                    (child_garden.has_upstream and child_garden.upstream == db_garden.name)
+                    (
+                        child_garden.has_upstream
+                        and child_garden.upstream == db_garden.name
+                    )
                     or (
                         not child_garden.has_upstream
                         and db_garden.name == config.get("garden.name")

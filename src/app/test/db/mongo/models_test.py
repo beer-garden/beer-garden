@@ -905,7 +905,9 @@ class TestGarden:
         and versions remain constant, but the IDs are different, the original systms
         are removed and replaced with the new systems when the garden is saved."""
         orig_system_ids = set(
-            map(lambda x: str(getattr(x, "id")), downstream_garden.systems)  # noqa: B009
+            map(
+                lambda x: str(getattr(x, "id")), downstream_garden.systems  # noqa: B009
+            )
         )
         downstream_garden.systems[0].id = ObjectId()
         new_system_id = str(downstream_garden.systems[0].id)
@@ -941,7 +943,9 @@ class TestGarden:
             if connection.api == "HTTP":
                 assert len(connection.status_info.history) == 3
 
-    def test_downstream_garden_system_save_history(self, downstream_garden, downstream_system_history):
+    def test_downstream_garden_system_save_history(
+        self, downstream_garden, downstream_system_history
+    ):
         """Verifies that instance.status_info.history is updated to local
         plugin.status_history length and extra history removed"""
 

@@ -1132,7 +1132,9 @@ class TestHandleEvent:
 
         assert updated_request.status_updated_at == status_updated_at
 
-    def test_metadata_merged_on_downstream_garden_requests(self, downstream_garden_request):
+    def test_metadata_merged_on_downstream_garden_requests(
+        self, downstream_garden_request
+    ):
         downstream_garden_request.metadata = {
             "CREATED_child": 1737558145883,
         }
