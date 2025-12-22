@@ -2,18 +2,19 @@
 import brewtils.test
 import pytest
 from box import Box
-from mongoengine import connect, disconnect_all, Document
+from mongoengine import Document, connect, disconnect_all
+from mongoengine.connection import get_db
 from testcontainers.mongodb import MongoDbContainer
 
 import beer_garden
 import beer_garden.config as config
 import beer_garden.db.mongo.models
 import beer_garden.events
-from mongoengine.connection import get_db
+
 pytest_plugins = ["brewtils.test.fixtures"]
 
-# @pytest.fixture(scope="module", autouse=True)
-@pytest.fixture(scope="function", autouse=True)
+
+@pytest.fixture(scope="session", autouse=True)
 def mongo_conn():
     with MongoDbContainer("mongo:6.0") as mongo_container:
         connect(
@@ -33,6 +34,7 @@ def data_cleanup():
             mongo_class.ensure_indexes()
     yield
     db = get_db()
+    # db.drop_database()
     db.get_collection("fs.files").drop()
     db.get_collection("fs.chunks").drop()
     for model_name in beer_garden.db.mongo.models.__all__:

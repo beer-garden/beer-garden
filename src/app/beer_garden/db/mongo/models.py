@@ -40,7 +40,7 @@ from mongoengine import (
     StringField,
 )
 from mongoengine.connection import get_db
-from mongoengine.errors import DoesNotExist
+from mongoengine.errors import DoesNotExist, OperationError
 from pymongo.errors import DocumentTooLarge
 
 from beer_garden import config
@@ -765,7 +765,7 @@ class Request(MongoModel, Document):
         self._pre_save()
         try:
             super(Request, self).save(*args, **kwargs)
-        except DocumentTooLarge:
+        except (DocumentTooLarge, OperationError):
             # Output values are capped at 5MB, so the parameters must be too large
             # spilling them to gridfs
             self._spill_parameters_to_gridfs()

@@ -1008,11 +1008,10 @@ class TestFileUpdates:
         self, request_model, request_local_system
     ):
 
-        request_model.parameters["large_message"] = { "a" * (16 * 1024 * 1024)}
+        request_model.parameters = {"large_message": "a" * (16 * 1024 * 1024)}
         request_model.save()
 
-        # TODO: Determine how to get this to trigger
-        # request_model.parameters_gridfs.put.assert_called_once()
+        request_model.parameters_gridfs.put.assert_called_once()
 
     def test_save_retains_if_under_maxsize(
         self, request_model, request_local_system, max_size

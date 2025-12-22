@@ -32,7 +32,7 @@ class TestCancelRequests:
 
         del request_dict["has_parent"]
         del request_dict["parent"]
-
+        Request.objects.delete()
         Request(**request_dict).save()
         cancel_local_outstanding()
 

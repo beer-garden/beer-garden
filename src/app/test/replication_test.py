@@ -1,6 +1,7 @@
 import os
-from datetime import datetime, timedelta, timezone
 import time
+from datetime import datetime, timedelta, timezone
+
 from brewtils.models import Replication
 
 from beer_garden.replication import (
