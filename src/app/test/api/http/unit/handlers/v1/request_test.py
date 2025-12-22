@@ -114,7 +114,7 @@ def remote_garden(remote_system):
     garden = Garden(
         name="remotegarden",
         connection_type="HTTP",
-        has_parent=True,
+        has_upstream=True,
         systems=[remote_system],
     ).save()
 
@@ -127,7 +127,7 @@ def local_garden(local_system, remote_garden):
     garden = Garden(
         name="somegarden",
         connection_type="LOCAL",
-        children=[remote_garden],
+        downstream=[remote_garden],
         systems=[local_system],
     ).save()
 

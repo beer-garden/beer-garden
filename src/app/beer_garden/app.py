@@ -263,7 +263,7 @@ class Application(StoppableThread):
             self.logger.debug("Setting up fanout message queues...")
             queue.setup_event_consumer(config.get("mq"))
 
-        self.logger.debug("Loading child configurations...")
+        self.logger.debug("Loading downstream configurations...")
         beer_garden.garden.rescan()
 
         self.logger.debug("Setting up garden routing...")
@@ -301,8 +301,8 @@ class Application(StoppableThread):
         for helper_thread in self.helper_threads:
             helper_thread.start()
 
-        if config.get("parent.stomp.enabled") or config.get("parent.http.enabled"):
-            self.logger.debug("Publishing to Parent that we are online")
+        if config.get("upstream.stomp.enabled") or config.get("upstream.http.enabled"):
+            self.logger.debug("Publishing to Upstream that we are online")
             beer_garden.garden.publish_garden()
 
         self.logger.info("All set! Let me know if you need anything else!")
@@ -437,8 +437,8 @@ class Application(StoppableThread):
         # Register the callback processor
         beer_garden.events.handlers.add_internal_events_handler(event_manager)
 
-        # Set up parent connection
-        cfg = config.get("parent.http")
+        # Set up upstream connection
+        cfg = config.get("upstream.http")
         if cfg.enabled:
 
             def reconnect_action():

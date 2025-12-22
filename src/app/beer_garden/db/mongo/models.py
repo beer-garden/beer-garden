@@ -862,7 +862,7 @@ class Request(MongoModel, Document):
                             f"are {BrewtilsRequest.COMPLETED_STATUSES}."
                         )
         except self.DoesNotExist:
-            # Requests to child gardens have an id set from the parent, but no
+            # Requests to downstream gardens have an id set from the parent, but no
             # local Request yet
             pass
 
@@ -1294,10 +1294,10 @@ class Garden(MongoModel, Document):
 
     systems = ListField(ReferenceField(System, reverse_delete_rule=PULL))
 
-    parent = StringField(required=False)
+    upstream = StringField(required=False)
 
-    children = DummyField(required=False)
-    has_parent = BooleanField(required=False, default=False)
+    downstream = DummyField(required=False)
+    has_upstream = BooleanField(required=False, default=False)
 
     default_user = StringField(required=False)
     shared_users = BooleanField(required=False, default=False)
@@ -1344,7 +1344,7 @@ class Garden(MongoModel, Document):
             self._update_associated_systems()
 
             # Ensure no configurations are stored locally, if sent
-            if self.has_parent:
+            if self.has_upstream:
                 for connection in self.receiving_connections:
                     connection.config = {}
 
@@ -1354,7 +1354,7 @@ class Garden(MongoModel, Document):
         self.save()
 
     def _update_associated_systems(self):
-        """If the call to the `deep_save` method is on a child garden object, we ensure
+        """If the call to the `deep_save` method is on a downstream garden object, we ensure
         that when saving the systems, unknowns are deleted."""
         # import moved here to avoid a circular import loop
         from beer_garden.systems import remove_system
@@ -1374,7 +1374,7 @@ class Garden(MongoModel, Document):
 
         # we leverage the fact that systems must be unique up to the triple of their
         # namespaces, names and versions
-        child_systems_already_known = {}
+        downstream_systems_already_known = {}
         for system in System.objects(garden_name=self.name).only(
             "garden_name",
             "namespace",
@@ -1385,7 +1385,7 @@ class Garden(MongoModel, Document):
             "commands.topics",
             "commands.name",
         ):
-            child_systems_already_known[_get_system_triple(system)] = system.id
+            downstream_systems_already_known[_get_system_triple(system)] = system.id
 
         local_systems = [
             _get_system_triple(system)
@@ -1399,8 +1399,8 @@ class Garden(MongoModel, Document):
 
             # Check is System is a Local System
             if triple not in local_systems:
-                if triple in child_systems_already_known:
-                    system_id_to_remove = child_systems_already_known.pop(triple)
+                if triple in downstream_systems_already_known:
+                    system_id_to_remove = downstream_systems_already_known.pop(triple)
 
                     # system_id_to_remove and system.id are ObjectIds
                     if system_id_to_remove != system.id:
@@ -1427,12 +1427,12 @@ class Garden(MongoModel, Document):
                 system.delete()
 
         # if there's anything left over, delete those too; this could occur, e.g.,
-        # if a child system deleted a particular version of a plugin and installed
+        # if a downstream system deleted a particular version of a plugin and installed
         # another version of the same plugin
-        for bad_system_id in child_systems_already_known.values():
+        for bad_system_id in downstream_systems_already_known.values():
             logger.error(
                 f"Removing System with ID={str(bad_system_id)} because it "
-                f"matches no known system in child garden ({self.name})"
+                f"matches no known system in downstream garden ({self.name})"
             )
             try:
                 remove_system(system_id=bad_system_id)

@@ -120,9 +120,9 @@ export default function permissionService($rootScope) {
                 }
             }
 
-            if (garden.children !== undefined || garden.children != null) {
-                for (let i = 0; i < garden.children.length; i++) {
-                    let garden_name = service.findGardenScope(garden = garden.children[i], namespace = namespace, system_name = system_name, instance_name = instance_name, system_version = system_version)
+            if (garden.downstream !== undefined || garden.downstream != null) {
+                for (let i = 0; i < garden.downstream.length; i++) {
+                    let garden_name = service.findGardenScope(garden = garden.downstream[i], namespace = namespace, system_name = system_name, instance_name = instance_name, system_version = system_version)
                     if (garden_name !== undefined || garden_name != null) {
                         return garden_name;
                     }

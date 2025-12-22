@@ -154,11 +154,11 @@ class StompManager(BaseProcessor):
                 Events.GARDEN_STOPPED.name,
                 Events.GARDEN_SYNC.name,
             ):
-                if event.payload.parent is None and event.payload.name != config.get(
+                if event.payload.upstream is None and event.payload.name != config.get(
                     "garden.name"
                 ):
-                    event.payload.parent = config.get("garden.name")
-                    event.payload.has_parent = True
+                    event.payload.upstream = config.get("garden.name")
+                    event.payload.has_upstream = True
 
             elif event.name == Events.GARDEN_REMOVED.name:
                 self.remove_garden_from_list(garden_name=event.payload.name)

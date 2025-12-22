@@ -146,8 +146,8 @@ def determine_target_garden(request: Request, garden: Garden = None) -> str:
                     if command.name == request.command:
                         return garden.name
 
-    for child in garden.children:
-        garden_name = determine_target_garden(request, garden=child)
+    for downstream_garden in garden.downstream:
+        garden_name = determine_target_garden(request, garden=downstream_garden)
         if garden_name:
             return garden_name
 

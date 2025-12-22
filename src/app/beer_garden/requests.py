@@ -1302,7 +1302,7 @@ def handle_event(event):
                 if created_request:
                     handle_event_rebroadcast(event.name, event.payload)
             else:
-                # When we send child requests to child gardens where the parent was on
+                # When we send child requests to downstream gardens where the parent was on
                 # the local garden we remove the parent before sending them. Only setting
                 # the subset of fields that change "corrects" the parent
 

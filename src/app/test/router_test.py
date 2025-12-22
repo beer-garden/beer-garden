@@ -119,8 +119,8 @@ class TestRequestRouting:
                 name="two_hop",
                 connection_type="REMOTE",
                 publishing_connections=[Connection(api="HTTP", status="RECEIVING")],
-                parent="one_hop",
-                has_parent=True,
+                upstream="one_hop",
+                has_upstream=True,
                 systems=[
                     BrewtilsSystem(
                         name="two_hop_system",

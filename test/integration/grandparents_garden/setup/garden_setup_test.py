@@ -93,11 +93,11 @@ class TestGardenSetup(object):
                         assert connection.status == "RECEIVING"
                     else:
                         raise AssertionError()
-                assert len(garden.children) == 1
-                assert garden.children[0].name == "child"
+                assert len(garden.downstream) == 1
+                assert garden.downstream[0].name == "child"
 
             elif garden.name == "grandparent":
-                assert len(garden.children) == 1
+                assert len(garden.downstream) == 1
             else:
                 raise AssertionError()
 
@@ -131,10 +131,10 @@ class TestGardenSetup(object):
                         else:
                             raise AssertionError()
 
-                assert len(garden.children) == 0
+                assert len(garden.downstream) == 0
 
             elif garden.name == "parent":
-                assert len(garden.children) == 1
+                assert len(garden.downstream) == 1
             else:
                 raise AssertionError()
 
@@ -160,12 +160,12 @@ class TestGardenSetup(object):
 
         for garden in gardens:
             print(garden)
-            assert not garden.has_parent
+            assert not garden.has_upstream
 
         for garden in gardens:
             if garden.name == "parent":
-                assert garden.children is not None
-                assert len(garden.children) == 1
+                assert garden.downstream is not None
+                assert len(garden.downstream) == 1
 
         assert len(gardens) == 2
 

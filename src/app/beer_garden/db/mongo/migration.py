@@ -113,13 +113,13 @@ def ensure_v3_24_model_migration():
         garden_collection = db.get_collection("garden")
 
         if garden_collection.count_documents({}) > 1:
-            if not os.path.exists(config.get("children.directory")):
-                os.makedirs(config.get("children.directory"))
+            if not os.path.exists(config.get("downstream.directory")):
+                os.makedirs(config.get("downstream.directory"))
 
             for legacy_garden in garden_collection.find():
                 if legacy_garden["connection_type"] != "LOCAL":
                     if not Path(
-                        f"{config.get('children.directory')}/{legacy_garden['name']}.yaml"
+                        f"{config.get('downstream.directory')}/{legacy_garden['name']}.yaml"
                     ).exists():
                         garden_file_data = {"receiving": False, "publishing": False}
 
@@ -134,12 +134,12 @@ def ensure_v3_24_model_migration():
 
                         logger.warning(
                             (
-                                "Mapping Child Config: "
-                                f"{config.get('children.directory')}/{legacy_garden['name']}.yaml"
+                                "Mapping Downstream Config: "
+                                f"{config.get('downstream.directory')}/{legacy_garden['name']}.yaml"
                             )
                         )
                         with open(
-                            f"{config.get('children.directory')}/{legacy_garden['name']}.yaml",
+                            f"{config.get('downstream.directory')}/{legacy_garden['name']}.yaml",
                             "w+",
                         ) as ff:
                             yaml.dump(garden_file_data, ff, allow_unicode=True)
@@ -233,6 +233,39 @@ def ensure_v3_29_model_migration():
                 request_updates = []
         if len(request_updates) > 0:
             request_collection.bulk_write(request_updates, ordered=False)
+
+
+def ensure_v3_31_model_migration():
+    db = get_db()
+    if (
+        contains_field("garden", ["has_parent"])
+        or contains_field("garden", ["parent"])
+        or contains_field("garden", ["children"])
+    ):
+        logger.warning(
+            "Parent/children garden naming convention was found and will be updated to"
+            " upstream/downstream. Database is likely using the old (v3.29) style"
+            " of storing in the database."
+        )
+        garden_collection = db.get_collection("garden")
+        garden_collection.update(
+            {"has_parent": {"$exists": True}},
+            {"$rename": {"has_parent": "has_upstream"}},
+            False,
+            True,
+        )
+        garden_collection.update(
+            {"parent": {"$exists": True}},
+            {"$rename": {"parent": "upstream"}},
+            False,
+            True,
+        )
+        garden_collection.update(
+            {"has_parent": {"$exists": True}},
+            {"$rename": {"children": "downstream"}},
+            False,
+            True,
+        )
 
 
 def find_root_command_type(request):
@@ -753,3 +786,4 @@ def ensure_model_migration():
             ensure_v3_27_model_migration()
             ensure_v3_29_model_migration()
             ensure_v3_30_model_migration()
+            ensure_v3_31_model_migration()

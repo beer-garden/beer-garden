@@ -28,7 +28,7 @@ __all__ = [
     "generate",
     "migrate",
     "get",
-    "load_child",
+    "load_downstream",
 ]
 
 _CONFIG = None
@@ -412,10 +412,10 @@ def _parse_args(args: Sequence[str]) -> Tuple[YapconfSpec, dict]:
     return spec, cli_vars
 
 
-def load_child(config_file):
-    child_spec = YapconfSpec(_CHILD_SPECIFICATION)
-    child_spec.add_source("child.yaml", "yaml", filename=config_file)
-    return child_spec.load_config("child.yaml")
+def load_downstream(config_file):
+    downstream_spec = YapconfSpec(_DOWNSTREAM_SPECIFICATION)
+    downstream_spec.add_source("child.yaml", "yaml", filename=config_file)
+    return downstream_spec.load_config("child.yaml")
 
 
 _GARDEN_SPEC = {
@@ -437,16 +437,20 @@ _GARDEN_SPEC = {
     },
 }
 
-_CHILDREN_GARDEN_SPEC = {
+_DOWNSTREAM_GARDENS_SPEC = {
     "type": "dict",
+    "previous_names": ["children"],
     "items": {
         "directory": {
             "type": "str",
             "required": False,
             "default": "./children",
-            "description": "Directory where child garden configs are located",
+            "description": "Directory where downstream garden configs are located",
+            "previous_names": ["children.directory"],
             "alt_env_names": [
+                "DOWNSTREAM_CONFIG_DIRECTORY",
                 "CHILDREN_CONFIG_DIRECTORY",
+                "BG_DOWNSTREAM_CONFIG_DIRECTORY",
                 "BG_CHILDREN_CONFIG_DIRECTORY",
             ],
         },
@@ -1188,8 +1192,9 @@ _ENTRY_SPEC = {
     },
 }
 
-_PARENT_SPEC = {
+_UPSTREAM_SPEC = {
     "type": "dict",
+    "previous_names": ["parent"],
     "items": {
         "http": {
             "type": "dict",
@@ -1197,23 +1202,31 @@ _PARENT_SPEC = {
                 "enabled": {
                     "type": "bool",
                     "default": False,
-                    "description": "Publish events to parent garden over HTTP",
+                    "description": "Publish events to upstream garden over HTTP",
+                    "previous_names": ["parent.http.enabled"],
+                    "alt_env_names": ["PARENT_HTTP_ENABLED"],
                 },
                 "host": {
                     "type": "str",
                     "description": "Host for the HTTP Server to bind to",
                     "required": False,
+                    "previous_names": ["parent.http.host"],
+                    "alt_env_names": ["PARENT_HTTP_HOST"],
                 },
                 "port": {
                     "type": "int",
                     "default": 2337,
                     "description": "Serve content on this port",
+                    "previous_names": ["parent.http.port"],
+                    "alt_env_names": ["PARENT_HTTP_PORT"],
                 },
                 "api_version": {
                     "type": "int",
                     "description": "Beergarden API version",
                     "default": 1,
                     "choices": [1],
+                    "previous_names": ["parent.http.api_version"],
+                    "alt_env_names": ["PARENT_HTTP_API_VERSION"],
                 },
                 "client_timeout": {
                     "type": "float",
@@ -1226,26 +1239,36 @@ _PARENT_SPEC = {
                         " bad idea in production code, see the Requests documentation)."
                     ),
                     "default": -1,
+                    "previous_names": ["parent.http.client_timeout"],
+                    "alt_env_names": ["PARENT_HTTP_CLIENT_TIMEOUT"],
                 },
                 "username": {
                     "type": "str",
                     "description": "Username for authentication",
                     "required": False,
+                    "previous_names": ["parent.http.username"],
+                    "alt_env_names": ["PARENT_HTTP_USERNAME"],
                 },
                 "password": {
                     "type": "str",
                     "description": "Password for authentication",
                     "required": False,
+                    "previous_names": ["parent.http.password"],
+                    "alt_env_names": ["PARENT_HTTP_PASSWORD"],
                 },
                 "access_token": {
                     "type": "str",
                     "description": "Access token for authentication",
                     "required": False,
+                    "previous_names": ["parent.http.access_token"],
+                    "alt_env_names": ["PARENT_HTTP_ACCESS_TOKEN"],
                 },
                 "refresh_token": {
                     "type": "str",
                     "description": "Refresh token for authentication",
                     "required": False,
+                    "previous_names": ["parent.http.refresh_token"],
+                    "alt_env_names": ["PARENT_HTTP_REFRESH_TOKEN"],
                 },
                 "ssl": {
                     "type": "dict",
@@ -1254,6 +1277,8 @@ _PARENT_SPEC = {
                             "type": "bool",
                             "default": False,
                             "description": "Use SSL when connecting",
+                            "previous_names": ["parent.http.ssl.enabled"],
+                            "alt_env_names": ["PARENT_HTTP_SSL_ENABLED"],
                         },
                         "ca_cert": {
                             "type": "str",
@@ -1261,21 +1286,29 @@ _PARENT_SPEC = {
                                 "Path to CA certificate file to use for SSLContext"
                             ),
                             "required": False,
+                            "previous_names": ["parent.http.ssl.ca_cert"],
+                            "alt_env_names": ["PARENT_HTTP_SSL_CA_CERT"],
                         },
                         "ca_verify": {
                             "type": "bool",
                             "description": "Verify server certificate when using SSL",
                             "default": True,
+                            "previous_names": ["parent.http.ssl.ca_verify"],
+                            "alt_env_names": ["PARENT_HTTP_SSL_CA_VERIFY"],
                         },
                         "client_cert": {
                             "type": "str",
                             "description": "Client certificate to use",
                             "required": False,
+                            "previous_names": ["parent.http.ssl.client_cert"],
+                            "alt_env_names": ["PARENT_HTTP_SSL_CLIENT_CERT"],
                         },
                         "client_key": {
                             "type": "str",
                             "description": "Client key to use",
                             "required": False,
+                            "previous_names": ["parent.http.ssl.client_key"],
+                            "alt_env_names": ["PARENT_HTTP_SSL_CLIENT_KEY"],
                         },
                     },
                 },
@@ -1284,6 +1317,8 @@ _PARENT_SPEC = {
                     "default": "/",
                     "description": "URL path prefix",
                     "required": False,
+                    "previous_names": ["parent.http.url_prefix"],
+                    "alt_env_names": ["PARENT_HTTP_URL_PREFIX"],
                 },
             },
         },
@@ -1293,14 +1328,17 @@ _PARENT_SPEC = {
             "default": [],
             "required": False,
             "description": "Events to be skipped",
+            "previous_names": ["parent.skip_events"],
         },
         "sync_interval": {
             "type": "int",
             "default": 15,
             "description": (
                 "Number of minutes to wait before sending "
-                "Garden Sync event to parent"
+                "Garden Sync event to upstream garden"
             ),
+            "previous_names": ["parent.sync_interval"],
+            "alt_env_names": ["PARENT_SYNC_INTERVAL"],
         },
         "stomp": {
             "type": "dict",
@@ -1308,37 +1346,51 @@ _PARENT_SPEC = {
                 "enabled": {
                     "type": "bool",
                     "default": False,
-                    "description": "Publish events to parent garden over STOMP",
+                    "description": "Publish events to upstream garden over STOMP",
+                    "previous_names": ["parent.stomp.enabled"],
+                    "alt_env_names": ["PARENT_STOMP_ENABLED"],
                 },
                 "host": {
                     "type": "str",
                     "default": "localhost",
                     "description": "Broker hostname",
+                    "previous_names": ["parent.stomp.host"],
+                    "alt_env_names": ["PARENT_STOMP_HOST"],
                 },
                 "port": {
                     "type": "int",
                     "default": 61613,
                     "description": "Broker port",
+                    "previous_names": ["parent.stomp.port"],
+                    "alt_env_names": ["PARENT_STOMP_PORT"],
                 },
                 "username": {
                     "type": "str",
                     "description": "Username to use for authentication",
                     "required": False,
+                    "previous_names": ["parent.stomp.username"],
+                    "alt_env_names": ["PARENT_STOMP_USERNAME"],
                 },
                 "password": {
                     "type": "str",
                     "description": "Password to use for authentication",
                     "required": False,
+                    "previous_names": ["parent.stomp.password"],
+                    "alt_env_names": ["PARENT_STOMP_PASSWORD"],
                 },
                 "send_destination": {
                     "type": "str",
                     "description": "Topic where events are published",
                     "required": False,
+                    "previous_names": ["parent.stomp.send_destination"],
+                    "alt_env_names": ["PARENT_STOMP_SEND_DESTINATION"],
                 },
                 "subscribe_destination": {
                     "type": "str",
                     "description": "Topic to listen for operations",
                     "required": False,
+                    "previous_names": ["parent.stomp.subscribe_destination"],
+                    "alt_env_names": ["PARENT_STOMP_SUBSCRIBE_DESTINATION"],
                 },
                 "headers": {
                     "type": "list",
@@ -1353,6 +1405,7 @@ _PARENT_SPEC = {
                         "value": {"type": "str"},
                     },
                     "default": [],
+                    "previous_names": ["parent.stomp.headers"],
                 },
                 "ssl": {
                     "type": "dict",
@@ -1361,6 +1414,8 @@ _PARENT_SPEC = {
                             "type": "bool",
                             "description": "Use SSL when connecting to message broker",
                             "default": False,
+                            "previous_names": ["parent.stomp.ssl.use_ssl"],
+                            "alt_env_names": ["PARENT_STOMP_SSL_USE_SSL"],
                         },
                         "client_key": {
                             "type": "str",
@@ -1369,7 +1424,11 @@ _PARENT_SPEC = {
                                 "communicating with the message broker"
                             ),
                             "required": False,
-                            "previous_names": ["private_key"],
+                            "previous_names": [
+                                "private_key",
+                                "parent.stomp.ssl.client_key",
+                            ],
+                            "alt_env_names": ["PARENT_STOMP_SSL_CLIENT_KEY"],
                         },
                         "client_cert": {
                             "type": "str",
@@ -1378,7 +1437,11 @@ _PARENT_SPEC = {
                                 "when communicating with the message broker"
                             ),
                             "required": False,
-                            "previous_names": ["cert_file"],
+                            "previous_names": [
+                                "cert_file",
+                                "parent.stomp.ssl.client_cert",
+                            ],
+                            "alt_env_names": ["PARENT_STOMP_SSL_CLIENT_CERT"],
                         },
                         "ca_cert": {
                             "type": "str",
@@ -1388,6 +1451,8 @@ _PARENT_SPEC = {
                                 "broker certificate"
                             ),
                             "required": False,
+                            "previous_names": ["parent.stomp.ssl.ca_cert"],
+                            "alt_env_names": ["PARENT_STOMP_SSL_CA_CERT"],
                         },
                     },
                 },
@@ -1761,23 +1826,23 @@ _REPLICATION_SPEC = {
 
 _SPECIFICATION = {
     "auth": _AUTH_SPEC,
-    "children": _CHILDREN_GARDEN_SPEC,
     "configuration": _META_SPEC,
     "db": _DB_SPEC,
+    "downstream": _DOWNSTREAM_GARDENS_SPEC,
     "entry": _ENTRY_SPEC,
     "garden": _GARDEN_SPEC,
     "log": _LOG_SPEC,
     "metrics": _METRICS_SPEC,
     "mq": _MQ_SPEC,
-    "parent": _PARENT_SPEC,
     "plugin": _PLUGIN_SPEC,
     "request_validation": _REQUEST_VALIDATION_SPEC,
     "scheduler": _SCHEDULER_SPEC,
     "replication": _REPLICATION_SPEC,
     "ui": _UI_SPEC,
+    "upstream": _UPSTREAM_SPEC,
 }
 
-_CHILD_SPECIFICATION = {
+_DOWNSTREAM_SPECIFICATION = {
     "publishing": {
         "type": "bool",
         "default": False,
@@ -1801,7 +1866,7 @@ _CHILD_SPECIFICATION = {
         "default": False,
         "description": (
             "If local users should be shared without filtering based on "
-            "the scope of the Child Garden"
+            "the scope of the downstream Garden"
         ),
     },
     "http": {
@@ -1810,7 +1875,7 @@ _CHILD_SPECIFICATION = {
             "enabled": {
                 "type": "bool",
                 "default": False,
-                "description": "Publish events to Child garden over HTTP",
+                "description": "Publish events to downstream garden over HTTP",
             },
             "host": {
                 "type": "str",
@@ -1906,7 +1971,7 @@ _CHILD_SPECIFICATION = {
             "enabled": {
                 "type": "bool",
                 "default": False,
-                "description": "Publish events to child garden over STOMP",
+                "description": "Publish events to downstream garden over STOMP",
             },
             "host": {
                 "type": "str",

@@ -221,9 +221,9 @@ def subscriber_validate(
         if subscriber_systems_validate(subscriber, garden.systems, topic_name):
             return True
 
-    if garden.children:
-        for child in garden.children:
-            if subscriber_validate(subscriber, child, topic_name):
+    if garden.downstream:
+        for downstream_garden in garden.downstream:
+            if subscriber_validate(subscriber, downstream_garden, topic_name):
                 return True
     return False
 

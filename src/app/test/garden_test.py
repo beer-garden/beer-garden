@@ -122,7 +122,7 @@ class TestGarden:
         assert type(garden) is BrewtilsGarden
 
     def test_local_garden_returns_all_systems(self, localgarden, remotegarden):
-        """local_garden returns all systems (those of the local garden and its children)
+        """local_garden returns all systems (those of the local garden and its downstream)
         when requested"""
         garden = local_garden(all_systems=True)
 
@@ -199,7 +199,7 @@ stomp:
         with open(config_file, "w") as f:
             f.write(contents)
 
-        config._CONFIG = {"children": {"directory": tmpdir}}
+        config._CONFIG = {"downstream": {"directory": tmpdir}}
 
         garden = load_garden_file(bg_garden)
         for connection in garden.publishing_connections:
@@ -255,7 +255,7 @@ stomp:
         with open(config_file, "w") as f:
             f.write(contents)
 
-        config._CONFIG = {"children": {"directory": tmpdir}}
+        config._CONFIG = {"downstream": {"directory": tmpdir}}
 
         garden = load_garden_file(bg_garden)
         for connection in garden.publishing_connections:
@@ -322,7 +322,7 @@ stomp:
         with open(config_file, "w") as f:
             f.write(contents)
 
-        config._CONFIG = {"children": {"directory": tmpdir}}
+        config._CONFIG = {"downstream": {"directory": tmpdir}}
 
         garden = load_garden_file(bg_garden)
         for connection in garden.publishing_connections:
@@ -375,7 +375,7 @@ stomp:
         with open(config_file, "w") as f:
             f.write(contents)
 
-        config._CONFIG = {"children": {"directory": tmpdir}}
+        config._CONFIG = {"downstream": {"directory": tmpdir}}
 
         bg_garden.receiving_connections = [
             BrewtilsConnection(api="http", status="RECEIVING")
@@ -456,7 +456,7 @@ stomp:
         with open(config_file, "w") as f:
             f.write(contents)
 
-        config._CONFIG = {"children": {"directory": tmpdir}}
+        config._CONFIG = {"downstream": {"directory": tmpdir}}
 
         garden = check_garden_receiving_heartbeat("STOMP", garden_name=garden.name)
 
@@ -514,15 +514,15 @@ stomp:
         for connection in garden.publishing_connections:
             assert connection.status == "PUBLISHING"
 
-    def test_upsert_garden_add_children(self, bg_garden):
+    def test_upsert_garden_add_downstream(self, bg_garden):
         bg_garden.systems = []
 
-        bg_garden.children = [
+        bg_garden.downstream = [
             BrewtilsGarden(
                 name="child",
                 connection_type="REMOTE",
-                has_parent=True,
-                parent="garden",
+                has_upstream=True,
+                upstream="garden",
             )
         ]
 
@@ -532,11 +532,11 @@ stomp:
         parent = get_garden("garden")
 
         assert child.name == "child"
-        assert len(parent.children) == 1
+        assert len(parent.downstream) == 1
 
     def test_upsert_garden_update_values(self, bg_garden):
         bg_garden.systems = []
-        bg_garden.has_parent = False
+        bg_garden.has_upstream = False
         bg_garden.metadata = {"test": "test"}
         bg_garden.connection_type = "REMOTE"
         bg_garden.version = "1.0.0"
@@ -544,7 +544,7 @@ stomp:
         garden = create_garden(bg_garden)
         assert garden.version == "1.0.0"
 
-        garden.has_parent = True
+        garden.has_upstream = True
         garden.metadata = {"alt": "alt"}
         garden.connection_type = "LOCAL"
         garden.version = "2.0.0"
@@ -552,7 +552,7 @@ stomp:
         updated_garden = upsert_garden(garden)
 
         # Not changed
-        assert not updated_garden.has_parent
+        assert not updated_garden.has_upstream
         assert updated_garden.connection_type == "REMOTE"
 
         # Changed
@@ -660,8 +660,8 @@ stomp:
             BrewtilsGarden(
                 name="parent",
                 connection_type="REMOTE",
-                has_parent=True,
-                parent=grand_parent.name,
+                has_upstream=True,
+                upstream=grand_parent.name,
             )
         )
 
@@ -669,8 +669,8 @@ stomp:
             BrewtilsGarden(
                 name="child",
                 connection_type="REMOTE",
-                has_parent=True,
-                parent=parent.name,
+                has_upstream=True,
+                upstream=parent.name,
             )
         )
 
@@ -687,8 +687,8 @@ stomp:
         two_hop_1 = BrewtilsGarden(
             name="two_hop_1",
             connection_type="REMOTE",
-            has_parent=True,
-            parent="one_hop_1",
+            has_upstream=True,
+            upstream="one_hop_1",
             systems=[
                 BrewtilsSystem(
                     name="remotesystem",
@@ -710,14 +710,14 @@ stomp:
                     local=False,
                 )
             ],
-            children=[two_hop_1],
+            downstream=[two_hop_1],
         )
 
         two_hop_2 = BrewtilsGarden(
             name="two_hop_2",
             connection_type="REMOTE",
-            has_parent=True,
-            parent="one_hop_2",
+            has_upstream=True,
+            upstream="one_hop_2",
             systems=[
                 BrewtilsSystem(
                     name="remotesystem",
@@ -739,14 +739,14 @@ stomp:
                     local=False,
                 )
             ],
-            children=[two_hop_2],
+            downstream=[two_hop_2],
         )
 
         two_hop_3 = BrewtilsGarden(
             name="two_hop_3",
             connection_type="REMOTE",
-            has_parent=True,
-            parent="one_hop_3",
+            has_upstream=True,
+            upstream="one_hop_3",
             systems=[
                 BrewtilsSystem(
                     name="remotesystem",
@@ -768,7 +768,7 @@ stomp:
                     local=False,
                 )
             ],
-            children=[two_hop_3],
+            downstream=[two_hop_3],
         )
 
         upsert_garden(one_hop_1)
@@ -777,15 +777,15 @@ stomp:
 
         local_garden_model = get_garden(localgarden.name)
 
-        assert len(local_garden_model.children) == 3
+        assert len(local_garden_model.downstream) == 3
 
-        for child in local_garden_model.children:
+        for child in local_garden_model.downstream:
             if child.name == "one_hop_1":
-                assert len(child.children) == 1
-                assert child.children[0].name == "two_hop_1"
+                assert len(child.downstream) == 1
+                assert child.downstream[0].name == "two_hop_1"
             elif child.name == "one_hop_2":
-                assert len(child.children) == 1
-                assert child.children[0].name == "two_hop_2"
+                assert len(child.downstream) == 1
+                assert child.downstream[0].name == "two_hop_2"
             elif child.name == "one_hop_3":
-                assert len(child.children) == 1
-                assert child.children[0].name == "two_hop_3"
+                assert len(child.downstream) == 1
+                assert child.downstream[0].name == "two_hop_3"

@@ -901,15 +901,15 @@ class ModelFilter:
 
                 garden.systems = new_systems
 
-        new_child_gardens = []
-        if garden.children:
-            for child in garden.children:
+        new_downstream_gardens = []
+        if garden.downstream:
+            for downstream_garden in garden.downstream:
                 filtered_garden = self._get_garden_filter(
-                    child, user, permission_levels, skip_global=True
+                    downstream_garden, user, permission_levels, skip_global=True
                 )
                 if filtered_garden:
-                    new_child_gardens.append(filtered_garden)
-            garden.children = new_child_gardens
+                    new_downstream_gardens.append(filtered_garden)
+            garden.downstream = new_downstream_gardens
 
         return garden
 

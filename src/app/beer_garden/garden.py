@@ -6,7 +6,7 @@ The garden service is responsible for:
 * Generating local `Garden` record
 * Getting `Garden` objects from the database
 * Updating `Garden` objects in the database
-* Responding to `Garden` sync requests and forwarding request to children
+* Responding to `Garden` sync requests and forwarding request to downstream gardens
 * Handling `Garden` events
 """
 import copy
@@ -81,16 +81,16 @@ def filter_router_result(garden: Garden) -> Garden:
             for key in drop_keys:
                 connection.config.pop(key)
 
-    if filtered_garden.children:
-        for child in filtered_garden.children:
-            filter_router_result(child)
+    if filtered_garden.downstream:
+        for downstream_garden in filtered_garden.downstream:
+            filter_router_result(downstream_garden)
     return filtered_garden
 
 
-def get_children_garden(garden: Garden, **kwargs) -> Garden:
+def get_downstream_garden(garden: Garden, **kwargs) -> Garden:
 
     if "include_fields" in kwargs and kwargs["include_fields"]:
-        for required_field in ["has_parent", "name", "parent"]:
+        for required_field in ["has_upstream", "name", "upstream"]:
             if required_field not in kwargs["include_fields"]:
                 kwargs["include_fields"].append(required_field)
 
@@ -98,23 +98,23 @@ def get_children_garden(garden: Garden, **kwargs) -> Garden:
 
     if garden.connection_type == "LOCAL":
         kwargs["filter_params"]["connection_type__ne"] = "LOCAL"
-        kwargs["filter_params"]["has_parent"] = False
+        kwargs["filter_params"]["has_upstream"] = False
 
-        garden.children = db.query(Garden, **kwargs)
-        if garden.children:
-            for child in garden.children:
-                child.has_parent = True
-                child.parent = garden.name
+        garden.downstream = db.query(Garden, **kwargs)
+        if garden.downstream:
+            for child in garden.downstream:
+                child.has_upstream = True
+                child.upstream = garden.name
 
     else:
-        kwargs["filter_params"]["parent"] = garden.name
-        garden.children = db.query(Garden, **kwargs)
+        kwargs["filter_params"]["upstream"] = garden.name
+        garden.downstream = db.query(Garden, **kwargs)
 
-    if garden.children:
-        for child in garden.children:
-            get_children_garden(child, **kwargs)
+    if garden.downstream:
+        for child in garden.downstream:
+            get_downstream_garden(child, **kwargs)
     else:
-        garden.children = []
+        garden.downstream = []
 
     return garden
 
@@ -131,7 +131,7 @@ def get_garden(garden_name: str, **kwargs) -> Garden:
     """
 
     if "include_fields" in kwargs and kwargs["include_fields"]:
-        for required_field in ["has_parent", "name", "parent"]:
+        for required_field in ["has_upstream", "name", "upstream"]:
             if required_field not in kwargs["include_fields"]:
                 kwargs["include_fields"].append(required_field)
 
@@ -142,18 +142,21 @@ def get_garden(garden_name: str, **kwargs) -> Garden:
             if db_garden.name == config.get("garden.name"):
                 garden = db_garden
             else:
-                if not db_garden.has_parent:
-                    db_garden.has_parent = True
-                    db_garden.parent = config.get("garden.name")
+                if not db_garden.has_upstream:
+                    db_garden.has_upstream = True
+                    db_garden.upstream = config.get("garden.name")
 
-            db_garden.children = [
+            db_garden.downstream = [
                 child_garden
                 for child_garden in gardens
                 if child_garden.name != db_garden.name
                 and (
-                    (child_garden.has_parent and child_garden.parent == db_garden.name)
+                    (
+                        child_garden.has_upstream
+                        and child_garden.upstream == db_garden.name
+                    )
                     or (
-                        not child_garden.has_parent
+                        not child_garden.has_upstream
                         and db_garden.name == config.get("garden.name")
                     )
                 )
@@ -186,7 +189,7 @@ def get_garden(garden_name: str, **kwargs) -> Garden:
 
     else:
         garden = db.query_unique(Garden, name=garden_name, raise_missing=True, **kwargs)
-        get_children_garden(garden, **kwargs)
+        get_downstream_garden(garden, **kwargs)
 
     return garden
 
@@ -206,7 +209,7 @@ def get_gardens(include_local: bool = True, **kwargs) -> List[Garden]:
     gardens = []
 
     if "include_fields" in kwargs and kwargs["include_fields"]:
-        for required_field in ["has_parent", "name", "parent"]:
+        for required_field in ["has_upstream", "name", "upstream"]:
             if required_field not in kwargs["include_fields"]:
                 kwargs["include_fields"].append(required_field)
 
@@ -217,12 +220,12 @@ def get_gardens(include_local: bool = True, **kwargs) -> List[Garden]:
         kwargs["filter_params"] = {}
 
     kwargs["filter_params"]["connection_type__ne"] = "LOCAL"
-    kwargs["filter_params"]["has_parent"] = False
+    kwargs["filter_params"]["has_upstream"] = False
 
     gardens += db.query(Garden, **kwargs)
 
     for garden in gardens:
-        get_children_garden(garden, **kwargs)
+        get_downstream_garden(garden, **kwargs)
 
     return gardens
 
@@ -281,7 +284,7 @@ def publish_garden() -> Garden:
         The local garden, all systems
     """
     garden = local_garden()
-    get_children_garden(garden)
+    get_downstream_garden(garden)
     garden.connection_type = None
 
     return garden
@@ -341,9 +344,9 @@ def check_garden_receiving_heartbeat(
         connection = Connection(api=api, status="DISABLED")
 
         # Check if there is a config file
-        path = Path(f"{config.get('children.directory')}/{garden.name}.yaml")
+        path = Path(f"{config.get('downstream.directory')}/{garden.name}.yaml")
         if path.exists():
-            garden_config = config.load_child(path)
+            garden_config = config.load_downstream(path)
             if config.get("receiving", config=garden_config):
                 connection.status = "RECEIVING"
 
@@ -451,7 +454,7 @@ def remove_garden(garden_name: str = None, garden: Garden = None) -> None:
 
     garden = garden or get_garden(garden_name)
 
-    for child in garden.children:
+    for child in garden.downstream:
         remove_garden(garden=child)
 
     remove_remote_systems(garden)
@@ -522,9 +525,9 @@ def update_garden(garden: Garden) -> Garden:
 def upsert_garden(garden: Garden, skip_connections: bool = True) -> Garden:
     """Updates or inserts Garden"""
 
-    if garden.children:
-        for child in garden.children:
-            upsert_garden(child, skip_connections=False)
+    if garden.downstream:
+        for downstream_garden in garden.downstream:
+            upsert_garden(downstream_garden, skip_connections=False)
 
     try:
         existing_garden = get_garden(garden.name)
@@ -532,7 +535,7 @@ def upsert_garden(garden: Garden, skip_connections: bool = True) -> Garden:
     except DoesNotExist:
         existing_garden = None
 
-    del garden.children
+    del garden.downstream
 
     if existing_garden is None:
         return create_garden(garden)
@@ -607,7 +610,7 @@ def update_garden_receiving(
 
 
 def load_garden_file(garden: Garden):
-    path = Path(f"{config.get('children.directory')}/{garden.name}.yaml")
+    path = Path(f"{config.get('downstream.directory')}/{garden.name}.yaml")
 
     http_publishing_connection = Connection(
         api="HTTP", status="CONFIGURATION_ERROR", status_info=StatusInfo()
@@ -638,7 +641,7 @@ def load_garden_file(garden: Garden):
         return garden
 
     try:
-        garden_config = config.load_child(path)
+        garden_config = config.load_downstream(path)
         garden.default_user = config.get("default_user", garden_config)
         garden.shared_users = config.get("shared_users", garden_config)
 
@@ -792,11 +795,11 @@ def load_garden_config(garden: Garden = None, garden_name: str = None):
 
 
 def rescan(sync_gardens: bool = False):
-    if config.get("children.directory"):
+    if config.get("downstream.directory"):
         loaded_gardens = []
-        children_directory = Path(config.get("children.directory"))
-        if children_directory.exists():
-            for path in children_directory.iterdir():
+        downstream_directory = Path(config.get("downstream.directory"))
+        if downstream_directory.exists():
+            for path in downstream_directory.iterdir():
                 path_parts = path.parts
 
                 if len(path_parts) == 0:
@@ -851,8 +854,14 @@ def rescan(sync_gardens: bool = False):
                 loaded_gardens.append(garden.name)
         else:
             logger.error(
-                f"Unable to find Children directory: {str(children_directory.resolve())}"
+                f"Unable to find downstream directory: {str(downstream_directory.resolve())}"
             )
+
+        if sync_gardens:
+            for garden_name in loaded_gardens:
+                # Need to give the router a second to load the events
+                time.sleep(0.5)
+                garden_sync(garden_name)
 
         if sync_gardens:
             for garden_name in loaded_gardens:
@@ -986,10 +995,10 @@ def handle_event_filter(event):
         if (
             event.garden == config.get("garden.name")
             and hasattr(event, "payload")
-            and hasattr(event.payload, "has_parent")
-            and event.payload.has_parent
-            and hasattr(event.payload, "parent")
-            and event.payload.parent != config.get("garden.name")
+            and hasattr(event.payload, "has_upstream")
+            and event.payload.has_upstream
+            and hasattr(event.payload, "upstream")
+            and event.payload.upstream != config.get("garden.name")
         ):
             # Do not process 2 hop garden events
             return True
@@ -1008,10 +1017,10 @@ def handle_event_filter(event):
                 Events.GARDEN_REMOVED.name,
                 Events.GARDEN_CREATED.name,
             ]
-            and not config.get("parent.stomp.enabled")
-            and not config.get("parent.http.enabled")
+            and not config.get("upstream.stomp.enabled")
+            and not config.get("upstream.http.enabled")
         ):
-            # No parent to publish to, so we can skip these events
+            # No upstream to publish to, so we can skip these events
             return True
 
     return False
@@ -1021,7 +1030,7 @@ def handle_event(event):
     """Handle garden-related events
 
     For GARDEN events we only care about events originating from downstream. We also
-    only care about immediate children, not grandchildren.
+    only care about immediate downstream gardens.
 
     Whenever a garden event is detected we should update that garden's database
     representation.
@@ -1035,13 +1044,13 @@ def handle_event(event):
     ):
 
         if "entry_point_type" in event.metadata:
-            children = db.query(
+            downstream = db.query(
                 Garden,
-                filter_params={"connection_type__ne": "LOCAL", "has_parent": False},
+                filter_params={"connection_type__ne": "LOCAL", "has_upstream": False},
                 include_fields=["receiving_connections", "name"],
             )
 
-            for child in children:
+            for child in downstream:
                 for receiving in child.receiving_connections:
                     # Due to HTTP being enabled by default, if STOMP is enabled
                     # duplicate sync events will be published. Since we don't
@@ -1069,20 +1078,23 @@ def handle_event(event):
                 logger.info(f"Garden sync event for {event.payload.name}")
 
                 try:
-                    # Check if child garden as deleted
+                    # Check if downstream garden is deleted
                     db_garden = get_garden(event.payload.name)
-                    for db_child in db_garden.children:
-                        child_deleted = True
-                        if event.payload.children:
-                            for event_child in event.payload.children:
-                                if db_child.name == event_child.name:
-                                    child_deleted = False
+                    for db_downstream_garden in db_garden.downstream:
+                        downstream_garden_deleted = True
+                        if event.payload.downstream:
+                            for event_downstream_garden in event.payload.downstream:
+                                if (
+                                    db_downstream_garden.name
+                                    == event_downstream_garden.name
+                                ):
+                                    downstream_garden_deleted = False
                                     break
-                        if child_deleted:
+                        if downstream_garden_deleted:
                             logger.error(
-                                f"Unable to find {db_child.name} in Garden sync"
+                                f"Unable to find {db_downstream_garden.name} in Garden sync"
                             )
-                            remove_garden(garden=db_child)
+                            remove_garden(garden=db_downstream_garden)
                 except DoesNotExist:
                     pass
 
@@ -1093,8 +1105,8 @@ def handle_event(event):
         Events.GARDEN_REMOVED.name,
         Events.GARDEN_CREATED.name,
     ]:
-        # This publish garden event is to keep parent gardens in sync
-        if config.get("parent.stomp.enabled") or config.get("parent.http.enabled"):
+        # This publish garden event is to keep upstream gardens in sync
+        if config.get("upstream.stomp.enabled") or config.get("upstream.http.enabled"):
             publish_garden()
     elif "GARDEN" in event.name and event.garden != event.payload.name:
         if event.name in (Events.GARDEN_UPDATED.name,):

@@ -46,7 +46,7 @@
           <div class="list-group-item clearfix" ng-repeat="connection in garden.receiving_connections | orderBy: 'api'">
             <bg-status target="getGardenRoutingStatus(garden, 'receiving_connections', connection.api)"></bg-status>
             <span style="padding: 0 10px" title="{{getConnectionUrl(connection, true)}}">{{connection.api}}</span>
-            <span class="btn-toolbar pull-right" ng-if="!garden.has_parent && hasGardenPermission('GARDEN_ADMIN', garden)">
+            <span class="btn-toolbar pull-right" ng-if="!garden.has_upstream && hasGardenPermission('GARDEN_ADMIN', garden)">
               <span class="btn-group btn-group-xs">
                 <button type="button" class="btn btn-default"
                   ng-click="startReceivingConnection(garden, connection.api)"
@@ -99,9 +99,9 @@
 
         <div class="btn-group btn-group-sm pull-right" ng-if="hasGardenPermission('GARDEN_ADMIN', garden)" >
           <button type="button" class="btn btn-default" ng-click="startGarden(garden)"
-            ng-if="isChild(garden)" title="Start Garden {{garden.name}}"><i class="{{getIcon('fa-play')}}"></i></button>
+            ng-if="isDownstream(garden)" title="Start Garden {{garden.name}}"><i class="{{getIcon('fa-play')}}"></i></button>
           <button type="button" class="btn btn-default" ng-click="stopGarden(garden)"
-            ng-if="isChild(garden)" title="Stop Garden {{garden.name}}"><i class="{{getIcon('fa-stop')}}"></i></button>
+            ng-if="isDownstream(garden)" title="Stop Garden {{garden.name}}"><i class="{{getIcon('fa-stop')}}"></i></button>
           <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"
             title="Garden Menu"><i class="{{getIcon('fa-bars')}}"></i></button>
           <ul class="dropdown-menu">
@@ -112,7 +112,7 @@
               <a href="" ng-click="rescanGardenPlugins(garden)" title="Rescan Plugins Directory {{garden.name}}">Rescan Plugins</a>
             </li>
             <li>
-              <a href="" ng-click="rescanGarden(garden)" title="Rescan Children Directory {{garden.name}}">Rescan Children</a>
+              <a href="" ng-click="rescanGarden(garden)" title="Rescan Downstream Directory {{garden.name}}">Rescan Downstream</a>
             </li>
             <li>
               <a href="" ng-click="clearQueues(garden)" title="Clear All Queues {{garden.name}}">Clear All Queues</a>
@@ -142,7 +142,7 @@
         <div class="list-group-item clearfix" ng-repeat="connection in garden.receiving_connections | orderBy: 'api'" ng-if="connection.status != 'NOT_CONFIGURED'">
           <bg-status target="getGardenRoutingStatus(garden, 'receiving_connections', connection.api)"></bg-status>
           <span style="padding: 0 10px" title="{{getConnectionUrl(connection, true)}}">{{connection.api}}</span>
-          <span class="btn-toolbar pull-right" ng-if="isChild(garden) && hasGardenPermission('GARDEN_ADMIN', garden)">
+          <span class="btn-toolbar pull-right" ng-if="isDownstream(garden) && hasGardenPermission('GARDEN_ADMIN', garden)">
             <span class="btn-group btn-group-xs">
               <button type="button" class="btn btn-default"
                 ng-click="startReceivingConnection(garden, connection.api)"
@@ -167,7 +167,7 @@
         <div class="list-group-item clearfix" ng-repeat="connection in garden.publishing_connections | orderBy: 'api'" ng-if="connection.status != 'NOT_CONFIGURED'">
           <bg-status target="getGardenRoutingStatus(garden, 'publishing_connections', connection.api)"></bg-status>
           <span style="padding: 0 10px" title="{{getConnectionUrl(connection, false)}}">{{connection.api}}</span>
-          <span class="btn-toolbar pull-right" ng-if="isChild(garden) && hasGardenPermission('GARDEN_ADMIN', garden)">
+          <span class="btn-toolbar pull-right" ng-if="isDownstream(garden) && hasGardenPermission('GARDEN_ADMIN', garden)">
             <span class="btn-group btn-group-xs">
               <button type="button" class="btn btn-default"
                 ng-click="startPublishingConnection(garden, connection.api)"

@@ -210,9 +210,9 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, isNew, 
       return true;
     }
 
-    if (garden.children !== undefined && garden.children != null && garden.children.length > 0) {
-      for (const child of garden.children) {
-        if ($scope.gardenValidation(value, child)) {
+    if (garden.downstream !== undefined && garden.downstream != null && garden.downstream.length > 0) {
+      for (const downstream of garden.downstream) {
+        if ($scope.gardenValidation(value, downstream)) {
           return true;
         }
       }
@@ -255,9 +255,9 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, isNew, 
       }
     }
 
-    if (garden.children !== undefined && garden.children != null && garden.children.length > 0) {
-      for (const child of garden.children) {
-        if ($scope.namespaceValidation(value, child)) {
+    if (garden.downstream !== undefined && garden.downstream != null && garden.downstream.length > 0) {
+      for (const downstream of garden.downstream) {
+        if ($scope.namespaceValidation(value, downstream)) {
           return true;
         }
       }
@@ -302,9 +302,9 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, isNew, 
       }
     }
 
-    if (garden.children !== undefined && garden.children != null && garden.children.length > 0) {
-      for (const child of garden.children) {
-        if ($scope.systemValidation(value, child)) {
+    if (garden.downstream !== undefined && garden.downstream != null && garden.downstream.length > 0) {
+      for (const downstream of garden.downstream) {
+        if ($scope.systemValidation(value, downstream)) {
           return true;
         }
       }
@@ -349,9 +349,9 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, isNew, 
       }
     }
 
-    if (garden.children !== undefined && garden.children != null && garden.children.length > 0) {
-      for (const child of garden.children) {
-        if ($scope.versionValidation(value, child)) {
+    if (garden.downstream !== undefined && garden.downstream != null && garden.downstream.length > 0) {
+      for (const downstream of garden.downstream) {
+        if ($scope.versionValidation(value, downstream)) {
           return true;
         }
       }
@@ -398,9 +398,9 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, isNew, 
       }
     }
 
-    if (garden.children !== undefined && garden.children != null && garden.children.length > 0) {
-      for (const child of garden.children) {
-        if ($scope.instanceValidation(value, child)) {
+    if (garden.downstream !== undefined && garden.downstream != null && garden.downstream.length > 0) {
+      for (const downstream of garden.downstream) {
+        if ($scope.instanceValidation(value, downstream)) {
           return true;
         }
       }
@@ -452,9 +452,9 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, isNew, 
       }
     }
 
-    if (garden.children !== undefined && garden.children != null && garden.children.length > 0) {
-      for (const child of garden.children) {
-        if ($scope.commandValidation(value, child)) {
+    if (garden.downstream !== undefined && garden.downstream != null && garden.downstream.length > 0) {
+      for (const downstream of garden.downstream) {
+        if ($scope.commandValidation(value, downstream)) {
           return true;
         }
       }

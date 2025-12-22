@@ -669,7 +669,7 @@ class TestGarden:
     v1_str = "v1"
     v2_str = "v2"
     garden_name = "test_garden"
-    child_garden_name = "child_garden"
+    downstream_garden_name = "downstream_garden"
 
     @classmethod
     def setup_class(cls):
@@ -690,17 +690,17 @@ class TestGarden:
         garden.delete()
 
     @pytest.fixture
-    def child_system(self):
+    def downstream_system(self):
         return System(
             name="echoer",
-            namespace=self.child_garden_name,
+            namespace=self.downstream_garden_name,
             local=False,
-            garden_name=self.child_garden_name,
+            garden_name=self.downstream_garden_name,
         )
 
     @pytest.fixture
-    def child_system_v1(self, child_system):
-        system: System = copy.deepcopy(child_system)
+    def downstream_system_v1(self, downstream_system):
+        system: System = copy.deepcopy(downstream_system)
         system.version = self.v1_str
         system.id = ObjectId()
 
@@ -709,8 +709,8 @@ class TestGarden:
         system.delete()
 
     @pytest.fixture
-    def child_system_v2(self, child_system):
-        system: System = copy.deepcopy(child_system)
+    def downstream_system_v2(self, downstream_system):
+        system: System = copy.deepcopy(downstream_system)
         system.version = self.v2_str
 
         yield system
@@ -718,11 +718,11 @@ class TestGarden:
         system.delete()
 
     @pytest.fixture
-    def child_garden(self, child_system_v1):
+    def downstream_garden(self, downstream_system_v1):
         garden = Garden(
-            name=self.child_garden_name,
+            name=self.downstream_garden_name,
             connection_type="http",
-            systems=[child_system_v1],
+            systems=[downstream_system_v1],
         ).save()
 
         yield garden
@@ -730,11 +730,11 @@ class TestGarden:
         garden.delete()
 
     @pytest.fixture
-    def child_garden_history(self, child_system_v1):
+    def downstream_garden_history(self, downstream_system_v1):
         garden = Garden(
-            name="child_garden",
+            name="downstream_garden",
             connection_type="http",
-            systems=[child_system_v1],
+            systems=[downstream_system_v1],
             receiving_connections=[
                 {
                     "api": "HTTP",
@@ -804,8 +804,8 @@ class TestGarden:
         garden.delete()
 
     @pytest.fixture
-    def child_system_history(self, child_system):
-        system: System = copy.deepcopy(child_system)
+    def downstream_system_history(self, downstream_system):
+        system: System = copy.deepcopy(downstream_system)
         system.version = self.v2_str
         system.instances = [
             Instance(
@@ -855,17 +855,22 @@ class TestGarden:
         with pytest.raises(NotUniqueError):
             Garden(name=f"not{local_garden.name}", connection_type="LOCAL").save()
 
-    def test_child_garden_system_attrib_update(self, child_garden, child_system_v2):
-        """If the systems of a child garden are updated such that their names,
+    def test_downstream_garden_system_attrib_update(
+        self, downstream_garden, downstream_system_v2
+    ):
+        """If the systems of a downstream garden are updated such that their names,
         namespaces, or versions are changed, the original systems are removed and
         replaced with the new systems when the garden is saved."""
         orig_system_ids = set(
-            map(lambda x: str(getattr(x, "id")), child_garden.systems)  # noqa: B009
+            map(
+                lambda x: str(getattr(x, "id")), downstream_garden.systems  # noqa: B009
+            )
         )
 
         orig_system_versions = set(
             map(
-                lambda x: str(getattr(x, "version")), child_garden.systems  # noqa: B009
+                lambda x: str(getattr(x, "version")),  # noqa: B009
+                downstream_garden.systems,
             )
         )
 
@@ -874,12 +879,12 @@ class TestGarden:
             and self.v2_str not in orig_system_versions
         )
 
-        child_garden.systems = [child_system_v2]
-        child_garden.deep_save()
+        downstream_garden.systems = [downstream_system_v2]
+        downstream_garden.deep_save()
 
         # we check that the garden written to the DB has the correct systems
         print("New Systems")
-        garden_systems = System.objects(garden_name=child_garden.name)
+        garden_systems = System.objects(garden_name=downstream_garden.name)
         for system in garden_systems:
             print(system)
         new_system_ids = set(
@@ -895,19 +900,21 @@ class TestGarden:
         )
         assert new_system_ids.intersection(orig_system_ids) == set()
 
-    def test_child_garden_system_id_update(self, child_garden):
-        """If the systems of a child garden are updated such that the names, namespaces
+    def test_downstream_garden_system_id_update(self, downstream_garden):
+        """If the systems of a downstream garden are updated such that the names, namespaces
         and versions remain constant, but the IDs are different, the original systms
         are removed and replaced with the new systems when the garden is saved."""
         orig_system_ids = set(
-            map(lambda x: str(getattr(x, "id")), child_garden.systems)  # noqa: B009
+            map(
+                lambda x: str(getattr(x, "id")), downstream_garden.systems  # noqa: B009
+            )
         )
-        child_garden.systems[0].id = ObjectId()
-        new_system_id = str(child_garden.systems[0].id)
+        downstream_garden.systems[0].id = ObjectId()
+        new_system_id = str(downstream_garden.systems[0].id)
 
         assert new_system_id not in orig_system_ids
 
-        child_garden.deep_save()
+        downstream_garden.deep_save()
         db_garden = Garden.objects().first()
 
         new_system_ids = set(
@@ -917,14 +924,14 @@ class TestGarden:
         assert new_system_id in new_system_ids
         assert orig_system_ids.intersection(new_system_ids) == set()
 
-    def test_child_garden_save_history(self, child_garden_history):
+    def test_downstream_garden_save_history(self, downstream_garden_history):
         """Verifies that instance.status_info.history is updated to local
         plugin.status_history length and extra history removed"""
 
         config._CONFIG = {"garden": {"status_history": 3}}
 
-        # child_system_history.save()
-        child_garden_history.deep_save()
+        # downstream_system_history.save()
+        downstream_garden_history.deep_save()
 
         # we check that the garden written to the DB has the correct systems
         db_garden = Garden.objects().first()
@@ -936,21 +943,23 @@ class TestGarden:
             if connection.api == "HTTP":
                 assert len(connection.status_info.history) == 3
 
-    def test_child_garden_system_save_history(self, child_garden, child_system_history):
+    def test_downstream_garden_system_save_history(
+        self, downstream_garden, downstream_system_history
+    ):
         """Verifies that instance.status_info.history is updated to local
         plugin.status_history length and extra history removed"""
 
         config._CONFIG = {"plugin": {"status_history": 3}}
 
-        for instance in child_system_history.instances:
+        for instance in downstream_system_history.instances:
             assert len(instance.status_info.history) == 5
 
-        # child_system_history.save()
-        child_garden.systems = [child_system_history]
-        child_garden.deep_save()
+        # downstream_system_history.save()
+        downstream_garden.systems = [downstream_system_history]
+        downstream_garden.deep_save()
 
         # we check that the garden written to the DB has the correct systems
-        for system in System.objects(garden_name=child_garden.name):
+        for system in System.objects(garden_name=downstream_garden.name):
             for instance in system.instances:
                 assert len(instance.status_info.history) == 3
 
@@ -1083,14 +1092,14 @@ class TestFileUpdates:
 
         assert first_time != request_model.status_updated_at
 
-    def test_save_preserves_status_updated_at_for_child_garden_requests(
+    def test_save_preserves_status_updated_at_for_downstream_garden_requests(
         self,
         request_model,
     ):
-        beer_garden.config._CONFIG = {"garden": {"name": "parent"}}
+        beer_garden.config._CONFIG = {"garden": {"name": "upstream"}}
 
-        request_model.namespace = "child_garden"
-        request_model.target_garden = "child_garden"
+        request_model.namespace = "downstream_garden"
+        request_model.target_garden = "downstream_garden"
 
         System(
             namespace=request_model.namespace,

@@ -40,9 +40,9 @@ export default function userGardenAccountsController($scope, $rootScope, $uibMod
        
       }
 
-      if (garden.children !== undefined && garden.children != null && garden.children.length > 0){
-        for (const childGarden of garden.children){
-          $scope.addGardenNames(childGarden);
+      if (garden.downstream !== undefined && garden.downstream != null && garden.downstream.length > 0){
+        for (const downstreamGarden of garden.downstream){
+          $scope.addGardenNames(downstreamGarden);
         }
       }
     }
@@ -54,20 +54,20 @@ export default function userGardenAccountsController($scope, $rootScope, $uibMod
 
     $scope.resetSubmission();
 
-    $scope.findParentGarden = function (gardenName, garden = null) {
+    $scope.findUpstreamGarden = function (gardenName, garden = null) {
       if (garden == null){
         garden = $rootScope.garden;
       }
 
-      // Loop through children to determien if parent is the garden
-      if (garden.children !== undefined && garden.children != null && garden.children.length > 0){
-        for (let i = 0; i < garden.children.length; i++) {
-          if (garden.children[i].name == gardenName){
+      // Loop through downstream to determine if upstream is the garden
+      if (garden.downstream !== undefined && garden.downstream != null && garden.downstream.length > 0){
+        for (let i = 0; i < garden.downstream.length; i++) {
+          if (garden.downstream[i].name == gardenName){
             return garden.name;
           }
-          let parentName = $scope.findParentGarden(gardenName, garden.children[i]);
-          if (parentName != null){
-            return parentName;
+          let upstreamName = $scope.findUpstreamGarden(gardenName, garden.downstream[i]);
+          if (upstreamName != null){
+            return upstreamName;
           }    
         }
       }
@@ -85,11 +85,11 @@ export default function userGardenAccountsController($scope, $rootScope, $uibMod
         }
       }
 
-      if (garden.children !== undefined && garden.children != null && garden.children.length > 0){
-        for (let i = 0; i < garden.children.length; i++) {
-          let childDefaultUser = $scope.findGardenDefaultUsername(gardenName, garden.children[i]);
-          if (childDefaultUser != null){
-            return childDefaultUser;
+      if (garden.downstream !== undefined && garden.downstream != null && garden.downstream.length > 0){
+        for (let i = 0; i < garden.downstream.length; i++) {
+          let downstreamDefaultUser = $scope.findGardenDefaultUsername(gardenName, garden.downstream[i]);
+          if (downstreamDefaultUser != null){
+            return downstreamDefaultUser;
           }   
         }
       }
@@ -97,22 +97,22 @@ export default function userGardenAccountsController($scope, $rootScope, $uibMod
       return null;
     }
 
-    $scope.findParentGardenRoute = function(gardenName) {
-      return $sce.trustAsHtml($scope.findParentGardenRouteHtml(gardenName))
+    $scope.findUpstreamGardenRoute = function(gardenName) {
+      return $sce.trustAsHtml($scope.findUpstreamGardenRouteHtml(gardenName))
     }
 
-    $scope.findParentGardenRouteHtml = function (gardenName, route = null) {
+    $scope.findUpstreamGardenRouteHtml = function (gardenName, route = null) {
       if (route == null){
         route = gardenName;
       }
 
-      let parent = $scope.findParentGarden(gardenName);
+      let upstream = $scope.findUpstreamGarden(gardenName);
 
-      if (parent == null){
+      if (upstream == null){
         return route;
       } else {
-        route = "<span> " + parent + ' </span><span class="fa fa-arrow-right" ></span><span> ' + route + " </span>";      
-        return $scope.findParentGardenRouteHtml(parent, route);
+        route = "<span> " + upstream + ' </span><span class="fa fa-arrow-right" ></span><span> ' + route + " </span>";      
+        return $scope.findUpstreamGardenRouteHtml(upstream, route);
       }
     }
 
@@ -123,13 +123,13 @@ export default function userGardenAccountsController($scope, $rootScope, $uibMod
         return gardenDefaultUsername;
       }
       
-      let parentGarden = $scope.findParentGarden(gardenName);
-      if (parentGarden == null) {
+      let upstreamGarden = $scope.findUpstreamGarden(gardenName);
+      if (upstreamGarden == null) {
         return $scope.editUser.username;
       }
 
       for (const user_mapping of $scope.editUser.user_alias_mapping){
-        if (parentGarden == user_mapping.target_garden){
+        if (upstreamGarden == user_mapping.target_garden){
           if (user_mapping.username !== undefined && user_mapping.username != null){
             return user_mapping.username;
           }
@@ -137,7 +137,7 @@ export default function userGardenAccountsController($scope, $rootScope, $uibMod
         }
       }
 
-      return $scope.findDefaultUsername(parentGarden);
+      return $scope.findDefaultUsername(upstreamGarden);
     }
 
     $scope.submitAccounts = function() {

@@ -59,7 +59,7 @@ from beer_garden.requests import complete_request, create_request
 
 logger = logging.getLogger(__name__)
 
-# These are the operations that we will forward to child gardens
+# These are the operations that we will forward to downstream gardens
 routable_operations = [
     "INSTANCE_START",
     "INSTANCE_STOP",
@@ -317,7 +317,6 @@ def update_api_heartbeat(operation: Operation):
         and operation.model.name == Events.GARDEN_SYNC.name
     ):
         if operation.source_garden_name == config.get("garden.name"):
-
             if operation.model.payload.name != operation.source_garden_name:
 
                 # if (
@@ -335,7 +334,7 @@ def update_api_heartbeat(operation: Operation):
 
                 # Will only support mapping 1 hop away legacy Garden Syncs
                 multi_hop_garden = True
-                for child in local_garden.children:
+                for child in local_garden.downstream:
                     if child.name == operation.model.payload.name:
                         logger.warning(
                             (
@@ -409,7 +408,7 @@ def invalid_source_check(operation: Operation):
             ):
                 logger.error(
                     f"There is no configuration file for {operation.source_garden_name}, "
-                    "please validate your children directory for the correct file name"
+                    "please validate your downstream directory for the correct file name"
                 )
                 return True
 
@@ -430,7 +429,7 @@ def invalid_source_check(operation: Operation):
 
 
 def initiate_forward(operation: Operation):
-    """Forward an operation to a child garden
+    """Forward an operation to a downstream garden
 
     Will:
     - Pre-process the operation
@@ -481,8 +480,8 @@ def determine_route_garden(target_garden_name):
                 "receiving_connections__status",
                 "publishing_connections__api",
                 "publishing_connections__status",
-                "has_parent",
-                "parent",
+                "has_upstream",
+                "upstream",
             ],
         )
 
@@ -500,18 +499,20 @@ def determine_route_garden(target_garden_name):
         raise RoutingRequestException(
             "Attempted to forward operation to garden "
             f"'{target_garden_name}' but the connection was not enabled. "
-            "This probably means that the connection to the child garden has not "
+            "This probably means that the connection to the downstream garden has not "
             "been configured or the connection is DISABLED"
         )
 
-    if target_garden.has_parent and target_garden.parent != config.get("garden.name"):
-        return determine_route_garden(target_garden.parent)
+    if target_garden.has_upstream and target_garden.upstream != config.get(
+        "garden.name"
+    ):
+        return determine_route_garden(target_garden.upstream)
 
     return target_garden
 
 
 def forward(operation: Operation):
-    """Forward the operation to a child garden
+    """Forward the operation to a downstream garden
 
     Intended to be called in the context of an executor or processor.
 
@@ -522,7 +523,7 @@ def forward(operation: Operation):
         The result of the specific forward transport function used
 
     Raises:
-        RoutingRequestException: Could not determine a route to child
+        RoutingRequestException: Could not determine a route to downstream garden
         UnknownGardenException: The specified target garden is unknown
     """
     target_garden = gardens.get(operation.target_garden_name)
@@ -536,7 +537,7 @@ def forward(operation: Operation):
     try:
         if not target_garden:
             raise UnknownGardenException(
-                f"Unknown child garden {operation.target_garden_name}"
+                f"Unknown downstream garden {operation.target_garden_name}"
             )
 
         operation_forwarded = False
@@ -565,7 +566,7 @@ def forward(operation: Operation):
             raise RoutingRequestException(
                 "Attempted to forward operation to garden "
                 f"'{operation.target_garden_name}' but the connection was not enabled. "
-                "This probably means that the connection to the child garden has not "
+                "This probably means that the connection to the downstream garden has not "
                 "been configured or the connection is DISABLED"
             )
 
@@ -587,7 +588,7 @@ def forward(operation: Operation):
 def setup_routing():
     """Initialize the routing subsystem
 
-    This will load the cached child garden definitions and use them to populate the
+    This will load the cached downstream garden definitions and use them to populate the
     two dictionaries that matter, garden_lookup and garden_connections.
 
     It will then query the database for all local systems and add those to the
@@ -612,8 +613,8 @@ def setup_routing():
         include_local=False,
     ):
         if garden.name != config.get("garden.name") and (
-            (garden.has_parent and garden.parent == config.get("garden.name"))
-            or not garden.has_parent
+            (garden.has_upstream and garden.upstream == config.get("garden.name"))
+            or not garden.has_upstream
         ):
             add_routing_garden(garden)
 
@@ -621,7 +622,7 @@ def setup_routing():
                 garden.connection_type is not None
                 and garden.connection_type.casefold() != "local"
             ):
-                del garden.children
+                del garden.downstream
                 del garden.systems
 
                 with garden_lock:
@@ -709,8 +710,8 @@ def add_routing_garden(garden: Garden):
         for system in garden.systems:
             add_routing_system(system=system, garden_name=garden.name)
 
-    if garden.children:
-        for child in garden.children:
+    if garden.downstream:
+        for child in garden.downstream:
             add_routing_garden(child)
 
 
@@ -724,7 +725,7 @@ def handle_event(event):
             remove_routing_system(system=event.payload)
             return
 
-    # Here we want to handle sync events from immediate children only
+    # Here we want to handle sync events from immediate downstream gardens only
     if (
         not event.error
         and (event.name == Events.GARDEN_SYNC.name)
@@ -756,21 +757,21 @@ def handle_event(event):
     ):
 
         # Only store the garden if it's 1 hop of the local garden
-        if not event.payload.has_parent or event.payload.parent == config.get(
+        if not event.payload.has_upstream or event.payload.upstream == config.get(
             "garden.name"
         ):
-            # To save memory, we need to remove children
+            # To save memory, we need to remove downstream
             if event.payload_type == "Garden":
-                del event.payload.children
+                del event.payload.downstream
                 del event.payload.systems
 
             if event.name == Events.GARDEN_CONFIGURED.name:
                 if event.payload.name != config.get("garden.name") and (
                     (
-                        event.payload.has_parent
-                        and event.payload.parent == config.get("garden.name")
+                        event.payload.has_upstream
+                        and event.payload.upstream == config.get("garden.name")
                     )
-                    or not event.payload.has_parent
+                    or not event.payload.has_upstream
                 ):
                     gardens[event.payload.name] = event.payload
 

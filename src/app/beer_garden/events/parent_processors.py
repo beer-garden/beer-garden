@@ -57,13 +57,13 @@ class HttpParentUpdater(QueueListener):
             Events.GARDEN_STOPPED.name,
             Events.GARDEN_SYNC.name,
         ):
-            if event.payload.parent is None and event.payload.name != event.garden:
-                event.payload.parent = event.garden
+            if event.payload.upstream is None and event.payload.name != event.garden:
+                event.payload.upstream = event.garden
                 for connection in event.payload.publishing_connections:
                     connection.config = {}
                 for connection in event.payload.receiving_connections:
                     connection.config = {}
-                event.payload.has_parent = True
+                event.payload.has_upstream = True
 
         try:
             operation = Operation(
@@ -74,7 +74,7 @@ class HttpParentUpdater(QueueListener):
             )
             self._ez_client.forward(operation)
         except RequestException as ex:
-            self.logger.error(f"Error while publishing event to parent: {ex}")
+            self.logger.error(f"Error while publishing event to upstream: {ex}")
 
             self._connected = False
             self._reconnect()
@@ -100,13 +100,13 @@ class HttpParentUpdater(QueueListener):
 
         wait_time = 0.1
         while not self.stopped() and not self._connected:
-            self.logger.warning("Attempting to reconnect to parent garden")
+            self.logger.warning("Attempting to reconnect to upstream garden")
 
             try:
                 if self._ez_client.can_connect():
                     self._connected = True
 
-                    self.logger.warning("Successfully reconnected to parent garden")
+                    self.logger.warning("Successfully reconnected to upstream garden")
                     self._update_garden_connection("PUBLISHING")
 
                     if self._reconnect_action:

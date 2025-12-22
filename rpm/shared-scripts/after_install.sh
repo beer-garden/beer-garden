@@ -4,7 +4,7 @@ USER=$APP_NAME
 APP_HOME="/opt/${APP_NAME}"
 
 CONFIG_HOME="$APP_HOME/conf"
-CHILDREN_CONFIG_HOME="$CONFIG_HOME/children"
+DOWNSTREAM_CONFIG_HOME="$CONFIG_HOME/children"
 LOG_HOME="$APP_HOME/log"
 BIN_HOME="$APP_HOME/bin"
 PLUGIN_LOG_HOME="$LOG_HOME/plugins"
@@ -29,8 +29,8 @@ BEERCTL="/usr/bin/beerctl"
 if [ ! -d "$CONFIG_HOME" ]; then
     mkdir -p "$CONFIG_HOME"
 fi
-if [ ! -d "$CHILDREN_CONFIG_HOME" ]; then
-    mkdir -p "$CHILDREN_CONFIG_HOME"
+if [ ! -d "$DOWNSTREAM_CONFIG_HOME" ]; then
+    mkdir -p "$DOWNSTREAM_CONFIG_HOME"
 fi
 if [ ! -d "$LOG_HOME" ]; then
     mkdir -p "$LOG_HOME"
@@ -62,7 +62,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
         --plugin-local-directory "$PLUGIN_HOME" \
         --plugin-local-logging-config-file "$LOCAL_PLUGIN_LOG_CONFIG" \
         --plugin-remote-logging-config-file "$REMOTE_PLUGIN_LOG_CONFIG" \
-        --children-directory "$CHILDREN_CONFIG_HOME" \
+        --downstream-directory "$DOWNSTREAM_CONFIG_HOME" \
         --scheduler-job-startup-file "$JOB_STARTUP_FILE"
 fi
 

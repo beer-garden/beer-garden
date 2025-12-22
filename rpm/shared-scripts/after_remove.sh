@@ -5,7 +5,7 @@ APP_HOME="/opt/${APP_NAME}"
 
 CONFIG_HOME="$APP_HOME/conf"
 PLUGIN_HOME="$APP_HOME/plugins"
-CHILDREN_CONFIG_HOME="$CONFIG_HOME/children"
+DOWNSTREAM_CONFIG_HOME="$CONFIG_HOME/children"
 CONFIG_FILE="${CONFIG_HOME}/config.yaml"
 APP_LOG_CONFIG="${CONFIG_HOME}/app-logging.yaml"
 LOCAL_PLUGIN_LOG_CONFIG="${CONFIG_HOME}/local-plugin-logging.yaml"
@@ -43,7 +43,7 @@ case "$1" in
             --plugin-local-directory "$PLUGIN_HOME" \
             --plugin-local-logging-config-file "$LOCAL_PLUGIN_LOG_CONFIG" \
             --plugin-remote-logging-config-file "$REMOTE_PLUGIN_LOG_CONFIG" \
-            --children-directory "$CHILDREN_CONFIG_HOME" \
+            --downstream-directory "$CHILDREN_CONFIG_HOME" \
             --scheduler-job-startup-file "$JOB_STARTUP_FILE"
 
             # Set owner and group of new config

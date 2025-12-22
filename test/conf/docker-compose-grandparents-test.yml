@@ -79,7 +79,7 @@ services:
             <<: *env
 
             BG_GARDEN_NAME: grandparent
-            BG_PARENT_HTTP_ENABLE: "false"
+            BG_PARENT_HTTP_ENABLED: "false"
             BG_PARENT_HTTP_HOST: localhost
 
             BG_CHILDREN_CONFIG_DIRECTORY: /children
