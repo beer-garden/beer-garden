@@ -796,11 +796,11 @@ class PluginManager(StoppableThread):
         env.update(
             {
                 # Connection info comes from Beer-garden config
-                "BG_HOST": self._connection_info.host,
-                "BG_PORT": self._connection_info.port,
-                "BG_URL_PREFIX": self._connection_info.url_prefix,
-                "BG_SSL_ENABLED": self._connection_info.ssl.enabled,
-                "BG_CA_CERT": self._connection_info.ssl.ca_cert,
+                "BG_HOST": config.get("connection.host", self._connection_info),
+                "BG_PORT": config.get("connection.port", self._connection_info),
+                "BG_URL_PREFIX": config.get("connection.url_prefix", self._connection_info),
+                "BG_SSL_ENABLED": config.get("connection.ssl.enabled", self._connection_info),
+                "BG_CA_CERT": config.get("connection.ssl.ca_cert", self._connection_info),
                 "BG_CA_VERIFY": False,  # TODO - Fix this
                 # The rest
                 "BG_INSTANCE_NAME": instance_name,

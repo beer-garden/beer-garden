@@ -3,6 +3,7 @@ from typing import Optional
 
 from box import Box
 from pymongo import AsyncMongoClient
+import beer_garden.config as config
 
 async_db: Optional[AsyncMongoClient] = None
 
@@ -19,13 +20,13 @@ def create_connection(db_config: Box = None) -> None:
     global async_db
 
     async_conn = AsyncMongoClient(
-        host=db_config.connection.host,
-        port=db_config.connection.port,
-        username=db_config.connection.username,
-        password=db_config.connection.password,
-        authSource=db_config.connection.authentication_source,
+        host=config.get("connection.host", db_config),
+        port=config.get("connection.port", db_config),
+        username=config.get("connection.username", db_config),
+        password=config.get("connection.password", db_config),
+        authSource=config.get("connection.authentication_source", db_config),
     )
-    async_db = async_conn[db_config.name]
+    async_db = async_conn[config.get("name", db_config)]
 
 
 async def query(
