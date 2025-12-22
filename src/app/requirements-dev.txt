@@ -114,7 +114,7 @@ pytest-mock==3.15.1
     # via -r requirements-dev.in
 pytest-tornado==0.8.1
     # via -r requirements-dev.in
-python-box==3.4.6
+python-box==7.3.2
     # via
     #   -c requirements.txt
     #   yapconf
@@ -135,10 +135,7 @@ simplejson==3.20.2
     #   -c requirements.txt
     #   brewtils
 six==1.17.0
-    # via
-    #   -c requirements.txt
-    #   sphinx
-    #   yapconf
+    # via sphinx
 snowballstemmer==3.0.1
     # via sphinx
 sphinx==1.8.6
@@ -151,7 +148,7 @@ sphinxcontrib-serializinghtml==2.0.0
     # via sphinxcontrib-websupport
 sphinxcontrib-websupport==1.2.4
     # via sphinx
-tornado==6.5.3
+tornado==6.5.4
     # via
     #   -c requirements.txt
     #   pytest-tornado
@@ -169,7 +166,7 @@ wrapt==2.0.1
     # via
     #   -c requirements.txt
     #   brewtils
-yapconf==0.4.0
+yapconf==0.5.0
     # via
     #   -c requirements.txt
     #   brewtils
