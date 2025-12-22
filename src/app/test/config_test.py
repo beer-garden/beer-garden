@@ -15,10 +15,21 @@ yaml = YAML(typ="safe", pure=True)
 
 
 class TestLoadConfig(object):
+
+    def compare_keys(self, root=None, value=None):
+        assert isinstance(value, dict)
+
+        if isinstance(value, dict):
+            for k, v in value.items():
+                if isinstance(v, dict):
+                    self.compare_keys(f"{root+'.' if root else ''}{k}", v)
+                else:
+                    assert beer_garden.config.get(f"{root+'.' if root else ''}{k}") == v
+
     def test_no_config_file(self):
         beer_garden.config.load([], force=True)
         spec = YapconfSpec(beer_garden.config._SPECIFICATION)
-        assert beer_garden.config._CONFIG.to_dict() == spec.defaults
+        self.compare_keys(None, spec.defaults)
 
     @pytest.mark.parametrize(
         "extension,contents",
