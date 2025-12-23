@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# TBD
+
+TBD
+
+- Fixed the old APM code from performance testing, now APM tracks HTTP/STOMP/Queue Depth
+
 # 3.31.0
 
 12/11/2025
