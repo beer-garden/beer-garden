@@ -4,7 +4,7 @@
 
 TBD
 
-- Fixed error comparing timezone-aware and timezone-naive datetimes. (#)
+- Fixed error comparing timezone-aware and timezone-naive datetimes. (#2038)
 
 # 3.31.0
 
