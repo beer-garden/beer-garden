@@ -34,36 +34,36 @@ def create_clients(mq_config):
 
     clients = {
         "pika": TransientPikaClient(
-            host=mq_config.host,
-            port=mq_config.connections.message.port,
-            ssl=mq_config.connections.message.ssl,
-            user=mq_config.connections.admin.user,
-            password=mq_config.connections.admin.password,
-            virtual_host=mq_config.virtual_host,
-            connection_attempts=mq_config.connection_attempts,
-            blocked_connection_timeout=mq_config.blocked_connection_timeout,
-            exchange=mq_config.exchange,
+            host=config.get("host", mq_config),
+            port=config.get("connections.message.port", mq_config),
+            ssl=config.get("connections.message.ssl", mq_config),
+            user=config.get("connections.admin.user", mq_config),
+            password=config.get("connections.admin.password", mq_config),
+            virtual_host=config.get("virtual_host", mq_config),
+            connection_attempts=config.get("connection_attempts", mq_config),
+            blocked_connection_timeout=config.get("blocked_connection_timeout", mq_config),
+            exchange=config.get("exchange", mq_config),
         ),
         "pyrabbit": PyrabbitClient(
-            host=mq_config.host,
-            virtual_host=mq_config.virtual_host,
-            admin_expires=mq_config.admin_queue_expiry,
-            **mq_config.connections.admin,
+            host=config.get("host", mq_config),
+            virtual_host=config.get("virtual_host", mq_config),
+            admin_expires=config.get("admin_queue_expiry", mq_config),
+            **config.get("connections.admin", mq_config),
         ),
     }
 
 
 def create_fanout_client(mq_config):
     clients["pika_fanout"] = TransientPikaClient(
-        host=mq_config.host,
-        port=mq_config.connections.message.port,
-        ssl=mq_config.connections.message.ssl,
-        user=mq_config.connections.admin.user,
-        password=mq_config.connections.admin.password,
-        virtual_host=mq_config.virtual_host,
-        connection_attempts=mq_config.connection_attempts,
-        blocked_connection_timeout=mq_config.blocked_connection_timeout,
-        exchange=f"{mq_config.exchange}_fanout",
+        host=config.get("host", mq_config),
+        port=config.get("connections.message.port", mq_config),
+        ssl=config.get("connections.message.ssl", mq_config),
+        user=config.get("connections.admin.user", mq_config),
+        password=config.get("connections.admin.password", mq_config),
+        virtual_host=config.get("virtual_host", mq_config),
+        connection_attempts=config.get("connection_attempts", mq_config),
+        blocked_connection_timeout=config.get("blocked_connection_timeout", mq_config),
+        exchange=f"{config.get('exchange', mq_config)}_fanout",
         exchange_type="fanout",
     )
 
@@ -77,17 +77,17 @@ def setup_event_consumer(mq_config):
         result = conn.channel().queue_declare("")
         queue_name = result.method.queue
         conn.channel().queue_bind(
-            exchange=f"{mq_config.exchange}_fanout", queue=queue_name
+            exchange=f"{config.get('exchange', mq_config)}_fanout", queue=queue_name
         )
 
     connection = {
-        "host": mq_config.host,
-        "port": mq_config.connections.message.port,
-        "user": mq_config.connections.message.user,
-        "password": mq_config.connections.message.password,
-        "virtual_host": mq_config.virtual_host,
-        "ssl": mq_config.connections.message.ssl,
-        "exchange": f"{mq_config.exchange}_fanout",
+        "host": config.get("host", mq_config),
+        "port": config.get("connections.message.port", mq_config),
+        "user": config.get("connections.message.user", mq_config),
+        "password": config.get("connections.message.password", mq_config),
+        "virtual_host": config.get("virtual_host", mq_config),
+        "ssl": config.get("connections.message.ssl", mq_config),
+        "exchange": f"{config.get('exchange', mq_config)}_fanout",
     }
 
     logger.debug("Setting up Events Consumer...")
@@ -152,12 +152,12 @@ def create(instance: Instance, system: System) -> dict:
     mq_config = config.get("mq")
     plugin_config = config.get("plugin")
     connection = {
-        "host": plugin_config.mq.host,
-        "port": mq_config.connections.message.port,
-        "user": mq_config.connections.message.user,
-        "password": mq_config.connections.message.password,
-        "virtual_host": mq_config.virtual_host,
-        "ssl": mq_config.connections.message.ssl,
+        "host": config.get("mq.host", plugin_config),
+        "port": config.get("connections.message.port", mq_config),
+        "user": config.get("connections.message.user", mq_config),
+        "password": config.get("connections.message.password", mq_config),
+        "virtual_host": config.get("virtual_host", mq_config),
+        "ssl": config.get("connections.message.ssl", mq_config),
     }
 
     return {
