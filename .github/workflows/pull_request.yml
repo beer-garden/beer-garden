@@ -61,7 +61,62 @@ jobs:
       matrix:
         python-version: ["3.11.11","3.12","3.13", "3.14"]
         os: ["ubuntu-latest"]
-        mongodb-version: ["6.0", "7.0","8.0", "8.2", "latest"]
+
+    name: PyTests Python ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Custom tag extractor to find Brewtils Branch
+      - name: Find Brewtils Branch
+        uses: TheBurchLog/body-env-tag-action@1.0
+        with:
+          tag: "brewtils:"
+          env-variable: "brewtils"
+          default-value: "develop"
+          tag-position: -1
+
+      # Used the hashtag here instead of slash allow for branches to have slashes in them
+      - name: Update Brewtils Branch
+        run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements-dev.txt
+
+      # Need to update if we support other OS's
+      - name: Cache PIP Install
+        uses: actions/cache@v4
+        if: env.brewtils == 'develop'
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-${{ matrix.python-version }}-pip-install-${{ hashFiles('**/setup.py') }}-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.python-version }}-pip-install-
+
+      - name: Make Deps
+        run: make deps
+
+      - name: Run Tests
+        run: make test
+
+  PyTest-Mongodb:
+    runs-on: ${{ matrix.os }}
+    needs: PyTest
+
+    env:
+      brewtils: "develop"
+
+    defaults:
+      run:
+        working-directory: ./src/app
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12"]
+        os: ["ubuntu-latest"]
+        mongodb-version: ["3.0", "4.0", "5.0", "6.0", "7.0","8.0", "8.2", "latest"]
 
     name: PyTests Python ${{ matrix.python-version }} - Mongodb ${{ matrix.mongodb-version }}
     steps:
