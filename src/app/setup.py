@@ -58,7 +58,7 @@ setup(
         "mongoengine>=0.29.1", # Latest 0.29.1
         
         # YAPCONF drives python-box/ruamel.yaml
-        "python-box<8", # Latest 7.3.2     
+        "python-box<8", # Latest 7.3.2
         "ruamel.yaml<0.19", # Latest 0.18.5
         "yapconf<1.0", # Latest 0.5.0
 
