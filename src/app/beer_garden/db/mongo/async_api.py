@@ -3,6 +3,7 @@ from typing import Optional
 
 from box import Box
 from pymongo import AsyncMongoClient
+
 import beer_garden.config as config
 
 async_db: Optional[AsyncMongoClient] = None
