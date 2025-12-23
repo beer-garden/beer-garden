@@ -62,14 +62,18 @@ class RequestValidator(object):
     def __init__(self, validator_config):
         self.logger = logging.getLogger(__name__)
 
-        self._command_timeout = validator_config.dynamic_choices.command.timeout
+        self._command_timeout = config.get(
+            "dynamic_choices.command.timeout", validator_config
+        )
 
         self._session = Session()
-        if not validator_config.dynamic_choices.url.ca_verify:
+        if not config.get("dynamic_choices.url.ca_verify", validator_config):
             urllib3.disable_warnings()
             self._session.verify = False
-        elif validator_config.dynamic_choices.url.ca_cert:
-            self._session.verify = validator_config.dynamic_choices.url.ca_cert
+        elif config.get("dynamic_choices.url.ca_cert", validator_config):
+            self._session.verify = config.get(
+                "dynamic_choices.url.ca_cert", validator_config
+            )
 
     @classmethod
     def instance(cls):

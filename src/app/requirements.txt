@@ -64,7 +64,7 @@ pymongo==4.15.5
     #   mongoengine
 pyrabbit2==1.0.7
     # via beer_garden (setup.py)
-python-box==3.4.6
+python-box==7.3.2
     # via
     #   beer_garden (setup.py)
     #   yapconf
@@ -76,14 +76,12 @@ requests==2.32.5
     # via
     #   brewtils
     #   pyrabbit2
-ruamel-yaml==0.17.40
+ruamel-yaml==0.18.17
     # via beer_garden (setup.py)
 ruamel-yaml-clib==0.2.15
     # via ruamel-yaml
 simplejson==3.20.2
     # via brewtils
-six==1.17.0
-    # via yapconf
 stomp-py==8.2.0
     # via beer_garden (setup.py)
 tornado==6.5.4
@@ -106,7 +104,7 @@ wrapt==2.0.1
     #   beer_garden (setup.py)
     #   brewtils
     #   elastic-apm
-yapconf==0.4.0
+yapconf==0.5.0
     # via
     #   beer_garden (setup.py)
     #   brewtils

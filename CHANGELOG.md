@@ -1,5 +1,7 @@
 # Beer Garden Changelog
 
+- Update Yapconf library (#2036)
+
 # 3.31.0
 
 12/11/2025

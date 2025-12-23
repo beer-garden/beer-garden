@@ -57,11 +57,10 @@ setup(
         "pymongo<4.16", # Latest 4.15.1
         "mongoengine>=0.29.1", # Latest 0.29.1
         
-        # YAPCONF Conflict with python-box
-        "python-box<4", # Latest 7.3.2     
-        # Can't go to 18 after yapconf migrates away from _safe functions
-        "ruamel.yaml<0.18", # Latest 0.18.5
-        "yapconf<0.5", # Latest 0.5.0
+        # YAPCONF drives python-box/ruamel.yaml
+        "python-box<8", # Latest 7.3.2
+        "ruamel.yaml<0.19", # Latest 0.18.5
+        "yapconf<1.0", # Latest 0.5.0
 
         # Brewtils drives marshmallow version
         "marshmallow<4.1,>=4.0", # Latest 4.0.1
