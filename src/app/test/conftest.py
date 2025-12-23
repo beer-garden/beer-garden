@@ -19,7 +19,7 @@ pytest_plugins = ["brewtils.test.fixtures"]
 @pytest.fixture(scope="session", autouse=True)
 def mongo_conn():
     """A MongoDB connection for the duration of the test session."""
-    mongo_version = os.getenv("MONGO_VERSION", "6.0")
+    mongo_version = os.getenv("MONGODB_VERSION", "6.0")
     with MongoDbContainer(f"mongo:{mongo_version}") as mongo_container:
         connect(
             "beer_garden",
