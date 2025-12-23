@@ -61,7 +61,7 @@ setup(
         "python-box<4", # Latest 7.3.2     
         # Can't go to 18 after yapconf migrates away from _safe functions
         "ruamel.yaml<0.18", # Latest 0.18.5
-        "yapconf<1.0", # Latest 0.4.0
+        "yapconf<0.5", # Latest 0.5.0
 
         # Brewtils drives marshmallow version
         "marshmallow<4.1,>=4.0", # Latest 4.0.1

@@ -28,19 +28,14 @@ def mongo_conn():
 @pytest.fixture(scope="function", autouse=True)
 def data_cleanup():
     """Cleanup all data between test modules to ensure each one is independent"""
-    for model_name in beer_garden.db.mongo.models.__all__:
-        mongo_class = getattr(beer_garden.db.mongo.models, model_name)
-        if isinstance(mongo_class, Document):
-            mongo_class.ensure_indexes()
     yield
     db = get_db()
-    # db.drop_database()
     db.get_collection("fs.files").drop()
     db.get_collection("fs.chunks").drop()
     for model_name in beer_garden.db.mongo.models.__all__:
         mongo_class = getattr(beer_garden.db.mongo.models, model_name)
         if isinstance(mongo_class, Document):
-            mongo_class.drop_collection()
+            mongo_class.objects.delete()
 
 
 @pytest.fixture(scope="module")
