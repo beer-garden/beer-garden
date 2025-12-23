@@ -41,7 +41,9 @@ def create_clients(mq_config):
             password=config.get("connections.admin.password", mq_config),
             virtual_host=config.get("virtual_host", mq_config),
             connection_attempts=config.get("connection_attempts", mq_config),
-            blocked_connection_timeout=config.get("blocked_connection_timeout", mq_config),
+            blocked_connection_timeout=config.get(
+                "blocked_connection_timeout", mq_config
+            ),
             exchange=config.get("exchange", mq_config),
         ),
         "pyrabbit": PyrabbitClient(
