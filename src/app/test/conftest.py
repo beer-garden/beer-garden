@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import os
+
 import brewtils.test
 import pytest
 from box import Box
@@ -16,7 +18,9 @@ pytest_plugins = ["brewtils.test.fixtures"]
 
 @pytest.fixture(scope="session", autouse=True)
 def mongo_conn():
-    with MongoDbContainer("mongo:6.0") as mongo_container:
+    """A MongoDB connection for the duration of the test session."""
+    mongo_version = os.getenv("MONGO_VERSION", "6.0")
+    with MongoDbContainer(f"mongo:{mongo_version}") as mongo_container:
         connect(
             "beer_garden",
             host=mongo_container.get_connection_url(),
