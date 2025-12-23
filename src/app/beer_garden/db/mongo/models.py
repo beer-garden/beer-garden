@@ -770,9 +770,6 @@ class Request(MongoModel, Document):
             # spilling them to gridfs
             self._spill_parameters_to_gridfs()
             super(Request, self).save(*args, **kwargs)
-        except Exception as e:
-            logger.exception(f"Error saving Request {self}: {e}")
-            raise
         self._post_save()
 
         return self
