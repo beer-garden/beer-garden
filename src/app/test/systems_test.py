@@ -3,13 +3,15 @@ import mongomock
 import pytest
 from brewtils.errors import ModelValidationError
 from brewtils.models import Command as BrewtilsCommand
+from brewtils.models import Event, Events
 from brewtils.models import Instance as BrewtilsInstance
 from brewtils.models import System as BrewtilsSystem
 from mongoengine import connect
 
+import beer_garden.config
 from beer_garden import config
 from beer_garden.db.mongo.models import Garden, System, Topic
-from beer_garden.systems import create_system, get_systems, update_system
+from beer_garden.systems import create_system, get_systems, handle_event, update_system
 
 
 @pytest.fixture(autouse=True)
@@ -271,3 +273,104 @@ class TestSystem:
         assert not system_3_found
         assert not system_4_found
         assert system_5_found
+
+    def test_handle_event_system_delete(
+        self, set_failed_event_manager, check_failed_event_manager
+    ):
+
+        beer_garden.config._CONFIG = {"garden": {"name": "default"}}
+
+        system = create_system(
+            BrewtilsSystem(
+                name="original",
+                version="v0.0.0.dev0",
+                namespace="beer_garden",
+                garden_name="downstream",
+                local=False,
+                commands=[BrewtilsCommand(name="original")],
+                instances=[
+                    BrewtilsInstance(
+                        name="instance1",
+                        status="RUNNING",
+                    )
+                ],
+            )
+        )
+
+        event = Event(
+            payload=system,
+            name=Events.SYSTEM_REMOVED.name,
+            garden="child",
+        )
+
+        set_failed_event_manager()
+        handle_event(event)
+        check_failed_event_manager()
+
+        assert len(get_systems(name=system.name)) == 0
+
+    def test_handle_event_system_create(
+        self, set_failed_event_manager, check_failed_event_manager
+    ):
+
+        beer_garden.config._CONFIG = {"garden": {"name": "default"}}
+
+        system = BrewtilsSystem(
+            name="original",
+            version="v0.0.0.dev0",
+            namespace="beer_garden",
+            garden_name="downstream",
+            local=False,
+            commands=[BrewtilsCommand(name="original")],
+            instances=[
+                BrewtilsInstance(
+                    name="instance1",
+                    status="RUNNING",
+                )
+            ],
+        )
+
+        event = Event(
+            payload=system,
+            name=Events.SYSTEM_CREATED.name,
+            garden="child",
+        )
+
+        set_failed_event_manager()
+        handle_event(event)
+        check_failed_event_manager()
+
+        assert len(get_systems(name=system.name)) == 1
+
+    def test_handle_event_system_updated(
+        self, set_failed_event_manager, check_failed_event_manager
+    ):
+
+        beer_garden.config._CONFIG = {"garden": {"name": "default"}}
+
+        system = BrewtilsSystem(
+            name="original",
+            version="v0.0.0.dev0",
+            namespace="beer_garden",
+            garden_name="downstream",
+            local=False,
+            commands=[BrewtilsCommand(name="original")],
+            instances=[
+                BrewtilsInstance(
+                    name="instance1",
+                    status="RUNNING",
+                )
+            ],
+        )
+
+        event = Event(
+            payload=system,
+            name=Events.SYSTEM_UPDATED.name,
+            garden="child",
+        )
+
+        set_failed_event_manager()
+        handle_event(event)
+        check_failed_event_manager()
+
+        assert len(get_systems(name=system.name)) == 1

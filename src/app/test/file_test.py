@@ -3,10 +3,14 @@ from base64 import b64decode, b64encode
 
 import pytest
 from brewtils.errors import ModelValidationError, NotFoundError
-from brewtils.models import FileStatus
+from brewtils.models import Event, Events, FileStatus
+from brewtils.models import Job as BrewJob
+from brewtils.models import Request as BrewRequest
+from brewtils.models import RequestTemplate as BrewRequestTemplate
 from mongoengine.fields import ObjectIdField
 
 import beer_garden.files as files
+from beer_garden import config
 from beer_garden.db.mongo.models import (
     File,
     FileChunk,
@@ -23,6 +27,8 @@ def drop():
     yield
     File.drop_collection()
     FileChunk.drop_collection()
+    Job.drop_collection()
+    Request.drop_collection()
 
 
 class TestFileOperations(object):
@@ -264,3 +270,77 @@ class TestFileOperations(object):
         my_dict = files._safe_build_object(dict, files.check_file(str(simple_file.id)))
         assert str(simple_file.id) in my_dict["file_id"]
         assert my_dict["file_size"] == simple_file.file_size
+
+    def test_event_set_request_owner(
+        self,
+        simple_file,
+        simple_request,
+        set_failed_event_manager,
+        check_failed_event_manager,
+    ):
+        config._CONFIG = {"garden": {"name": "localgarden"}}
+
+        event = Event(
+            name=Events.REQUEST_CREATED.name,
+            garden="localgarden",
+            payload=BrewRequest(
+                id=str(simple_request.id),
+                parameters={
+                    "value": {
+                        "type": "chunk",
+                        "details": {
+                            "file_id": simple_file.id,
+                        },
+                    }
+                },
+            ),
+        )
+
+        set_failed_event_manager()
+        files.handle_event(event)
+
+        updated_file = File.objects.get(
+            id=simple_file.id
+        )  # Just to ensure the file still exists
+        assert updated_file.owner_type == "REQUEST"
+        assert updated_file.owner_id == str(simple_request.id)
+
+        check_failed_event_manager()
+
+    def test_event_set_job_owner(
+        self,
+        simple_file,
+        simple_job,
+        set_failed_event_manager,
+        check_failed_event_manager,
+    ):
+        config._CONFIG = {"garden": {"name": "localgarden"}}
+
+        event = Event(
+            name=Events.JOB_CREATED.name,
+            garden="localgarden",
+            payload=BrewJob(
+                id=str(simple_job.id),
+                request_template=BrewRequestTemplate(
+                    parameters={
+                        "value": {
+                            "type": "chunk",
+                            "details": {
+                                "file_id": simple_file.id,
+                            },
+                        }
+                    }
+                ),
+            ),
+        )
+
+        set_failed_event_manager()
+        files.handle_event(event)
+
+        updated_file = File.objects.get(
+            id=simple_file.id
+        )  # Just to ensure the file still exists
+        assert updated_file.owner_type == "JOB"
+        assert updated_file.owner_id == str(simple_job.id)
+
+        check_failed_event_manager()

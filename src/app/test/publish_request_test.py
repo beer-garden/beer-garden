@@ -137,7 +137,13 @@ def topic_wildcard():
 
 class TestSubscriptionEvent(object):
 
-    def test_newtopic(self, monkeypatch, localgarden):
+    def test_newtopic(
+        self,
+        monkeypatch,
+        localgarden,
+        set_failed_event_manager,
+        check_failed_event_manager,
+    ):
         mock_route_request = Mock(return_value=None)
         monkeypatch.setattr(publish_request, "route_request", mock_route_request)
         monkeypatch.setattr(publish_request, "get_topics_regex", Mock(return_value=[]))
@@ -156,11 +162,20 @@ class TestSubscriptionEvent(object):
             payload=Request(),
         )
 
+        set_failed_event_manager()
         publish_request.handle_event(event)
 
         assert mock_route_request.call_count == 0
+        check_failed_event_manager()
 
-    def test_topic_one(self, monkeypatch, topic_1, localgarden):
+    def test_topic_one(
+        self,
+        monkeypatch,
+        topic_1,
+        localgarden,
+        set_failed_event_manager,
+        check_failed_event_manager,
+    ):
         mock_route_request = Mock(return_value=None)
         monkeypatch.setattr(publish_request, "route_request", mock_route_request)
         monkeypatch.setattr(
@@ -181,11 +196,20 @@ class TestSubscriptionEvent(object):
             garden=localgarden.name,
             payload=Request(),
         )
+        set_failed_event_manager()
         publish_request.handle_event(event)
 
         assert mock_route_request.call_count == 2
+        check_failed_event_manager()
 
-    def test_topic_two(self, monkeypatch, topic_2, localgarden):
+    def test_topic_two(
+        self,
+        monkeypatch,
+        topic_2,
+        localgarden,
+        set_failed_event_manager,
+        check_failed_event_manager,
+    ):
         mock_route_request = Mock(return_value=None)
         monkeypatch.setattr(publish_request, "route_request", mock_route_request)
         monkeypatch.setattr(
@@ -205,11 +229,20 @@ class TestSubscriptionEvent(object):
             garden=localgarden.name,
             payload=Request(),
         )
+        set_failed_event_manager()
         publish_request.handle_event(event)
 
         assert mock_route_request.call_count == 0
+        check_failed_event_manager()
 
-    def test_topic_wildcard(self, monkeypatch, topic_wildcard, localgarden):
+    def test_topic_wildcard(
+        self,
+        monkeypatch,
+        topic_wildcard,
+        localgarden,
+        set_failed_event_manager,
+        check_failed_event_manager,
+    ):
         mock_route_request = Mock(return_value=None)
         monkeypatch.setattr(publish_request, "route_request", mock_route_request)
         monkeypatch.setattr(
@@ -235,11 +268,20 @@ class TestSubscriptionEvent(object):
             garden=localgarden.name,
             payload=Request(),
         )
+        set_failed_event_manager()
         publish_request.handle_event(event)
 
         assert mock_route_request.call_count == 2
+        check_failed_event_manager()
 
-    def test_topic_one_not_local(self, monkeypatch, topic_wildcard, localgarden):
+    def test_topic_one_not_local(
+        self,
+        monkeypatch,
+        topic_wildcard,
+        localgarden,
+        set_failed_event_manager,
+        check_failed_event_manager,
+    ):
         mock_route_request = Mock(return_value=None)
         monkeypatch.setattr(publish_request, "route_request", mock_route_request)
         monkeypatch.setattr(
@@ -260,11 +302,20 @@ class TestSubscriptionEvent(object):
             garden="remote_garden",
             payload=Request(),
         )
+        set_failed_event_manager()
         publish_request.handle_event(event)
 
         assert mock_route_request.call_count == 0
+        check_failed_event_manager()
 
-    def test_topic_one_not_local_propagate(self, monkeypatch, topic_1, localgarden):
+    def test_topic_one_not_local_propagate(
+        self,
+        monkeypatch,
+        topic_1,
+        localgarden,
+        set_failed_event_manager,
+        check_failed_event_manager,
+    ):
         mock_route_request = Mock(return_value=None)
         monkeypatch.setattr(publish_request, "route_request", mock_route_request)
         monkeypatch.setattr(
@@ -285,6 +336,8 @@ class TestSubscriptionEvent(object):
             garden="remote_garden",
             payload=Request(),
         )
+        set_failed_event_manager()
         publish_request.handle_event(event)
 
         assert mock_route_request.call_count == 2
+        check_failed_event_manager()

@@ -186,9 +186,12 @@ class MixedScheduler(object):
         if self._sync_scheduler is None:
             self._sync_scheduler = BackgroundScheduler()
             job_stores = {"beer_garden": db.get_job_store()}
-            scheduler_config = config.get("scheduler")
-            executors = {"default": APThreadPoolExecutor(scheduler_config.max_workers)}
-            job_defaults = scheduler_config.job_defaults.to_dict()
+            executors = {
+                "default": APThreadPoolExecutor(config.get("scheduler.max_workers"))
+            }
+            job_defaults = config.get("scheduler.job_defaults")
+            if not isinstance(job_defaults, dict):
+                job_defaults = job_defaults.to_dict()
 
             ap_config = {
                 "jobstores": job_stores,

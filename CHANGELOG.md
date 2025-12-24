@@ -1,5 +1,7 @@
 # Beer Garden Changelog
 
+- Fixed bug in Roles Events where Users did not get local roles removed at role delete.
+
 # 3.31.0
 
 12/11/2025

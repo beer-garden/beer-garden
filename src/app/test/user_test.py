@@ -8,6 +8,8 @@ from box import Box
 from brewtils.models import (
     AliasUserMap,
     Command,
+    Event,
+    Events,
     Garden,
     Instance,
     Role,
@@ -38,6 +40,7 @@ from beer_garden.user import (
     get_token,
     get_user,
     get_users,
+    handle_event,
     has_token,
     rescan,
     revoke_tokens,
@@ -676,3 +679,50 @@ class TestUpstreamSync:
         assert len(db_user.upstream_roles) == 1
         assert len(db_user.roles) == 0
         assert db_user.is_remote
+
+
+class TestEventHandler:
+
+    def test_delete_role(
+        self, user, set_failed_event_manager, check_failed_event_manager
+    ):
+        beer_garden.config._CONFIG = {"garden": {"name": "default"}}
+        delete_role = create_role(Role(name="delete_role", permission="READ_ONLY"))
+
+        user.local_roles = [delete_role]
+        update_user(user)
+        updated_user = get_user(id=user.id)
+        assert len(updated_user.local_roles) == 2
+
+        event = Event(
+            payload=delete_role,
+            name=Events.ROLE_DELETED.name,
+            garden="default",
+        )
+
+        set_failed_event_manager()
+        DB_Role.objects(name="delete_role").delete()
+        handle_event(event)
+        check_failed_event_manager()
+
+        updated_user = get_user(id=user.id)
+
+        assert len(updated_user.local_roles) == 1
+
+    def test_update_user(
+        self, user, set_failed_event_manager, check_failed_event_manager
+    ):
+        beer_garden.config._CONFIG = {"garden": {"name": "default"}}
+        delete_role = create_role(Role(name="update_role", permission="READ_ONLY"))
+
+        user.local_roles.append(delete_role)
+
+        event = Event(
+            payload=user,
+            name=Events.USER_UPDATED.name,
+            garden="default",
+        )
+
+        set_failed_event_manager()
+        handle_event(event)
+        check_failed_event_manager()

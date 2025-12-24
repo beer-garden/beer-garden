@@ -4,6 +4,7 @@ import logging.config
 from pathlib import Path
 
 import pytest
+from brewtils.models import Event, Events
 from mock import Mock
 
 import beer_garden.log
@@ -45,3 +46,17 @@ class TestLoad(object):
         beer_garden.log.load({"config_file": str(config_file)}, force=True)
 
         assert beer_garden.log._APP_LOGGING == logging_config
+
+    def test_event_handler(self, set_failed_event_manager, check_failed_event_manager):
+        beer_garden.config._CONFIG = {"garden": {"name": "parent"}}
+
+        set_failed_event_manager()
+
+        log_event = Event(
+            name=Events.PLUGIN_LOGGER_FILE_CHANGE.name,
+            garden="child",
+        )
+
+        beer_garden.log.handle_event(log_event)
+
+        check_failed_event_manager()
