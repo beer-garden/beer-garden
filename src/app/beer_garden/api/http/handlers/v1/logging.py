@@ -26,8 +26,17 @@ class LoggingAPI(AuthorizationHandler):
         responses:
           200:
             description: Logging Configuration for system
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/LoggingConfig'
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Logging
         """
@@ -64,10 +73,17 @@ class LoggingConfigAPI(AuthorizationHandler):
         responses:
           200:
             description: Logging Configuration for system
-            schema:
-                $ref: '#/definitions/LoggingConfig'
+            content:
+              application/json:
+                schema:
+                    $ref: '#/components/schemas/LoggingConfig'
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Deprecated
         """
@@ -92,20 +108,27 @@ class LoggingConfigAPI(AuthorizationHandler):
           ```JSON
           { "operation": "reload" }
           ```
-        parameters:
-          - name: patch
-            in: body
-            required: true
-            description: Operation to perform
-            schema:
-              $ref: '#/definitions/Patch'
+        requestBody:
+          name: patch
+          description: Instructions for how to update the Logging
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchOperation'
         responses:
           200:
             description: Updated plugin logging configuration
-            schema:
-              $ref: '#/definitions/LoggingConfig'
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/LoggingConfig'
           50x:
-            $ref: '#/definitions/50xError'
+            description: Server Exception
+            content:
+              text/plain:
+                schema:
+                  type: 'string'
+                example: Server Exception
         tags:
           - Deprecated
         """

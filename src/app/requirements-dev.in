@@ -15,10 +15,10 @@ coverage
 flake8
 flake8-bugbear
 mock
-mongomock
-pytest < 8
+mongomock>=4.3
+pytest
 pytest-mock
 pytest-lazy-fixtures
 pytest-tornado
-isort < 6
+isort < 8
 wheel

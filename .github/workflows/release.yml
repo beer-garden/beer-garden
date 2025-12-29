@@ -49,15 +49,15 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.7
+          python-version: 3.11
 
       - name: Cache PIP Install
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-3.7-pip-build-${{ hashFiles('**/setup.py') }}-${{ hashFiles('**/requirements.txt') }}
+          key: ${{ runner.os }}-3.11-pip-build-${{ hashFiles('**/setup.py') }}-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
-            ${{ runner.os }}-3.7-pip-build
+            ${{ runner.os }}-3.11-pip-build
 
       - name: Install dependencies
         run: |
@@ -86,7 +86,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.7
+          python-version: 3.11
 
       - name: Check PyPi
         uses: nick-invision/retry@v2
@@ -129,10 +129,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8","3.9","3.10","3.12","3.13"]
+        python-version: ["3.12","3.13", "3.14"]
         os: ["ubuntu-latest"]
         include:
-          - python-version: "3.7"
+          - python-version: "3.11"
             os: "ubuntu-22.04"
 
 
@@ -193,16 +193,17 @@ jobs:
     name: Docker Publish - Python ${{ matrix.python-version }} - ${{ matrix.dist }} 
     runs-on: ${{ matrix.os }}
     needs: [docker-publish-src, docker-publish-src-latest]
-    if: ${{always() && needs.docker-publish-src.result == 'success' && needs.docker-publish-src-latest.result == 'success'}}
+    # if: ${{always() && needs.docker-publish-src.result == 'success' && needs.docker-publish-src-latest.result == 'success'}}
+    if: false
 
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8","3.9","3.10","3.11","3.12","3.13"]
+        python-version: ["3.11","3.12","3.13", "3.14"]
         os: ["ubuntu-latest"]
         dist: ["centos7", "rocky9"]
         include:
-          - python-version: "3.7"
+          - python-version: "3.11"
             os: "ubuntu-22.04"
 
     steps:
@@ -227,11 +228,12 @@ jobs:
     name: RPM Publish - ${{ matrix.dist }} - Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     needs: [pypi-verify, github-release]
-    if: ${{always() && needs.pypi-verify.result == 'success' && needs.github-release.result == 'success'}}
+    # if: ${{always() && needs.pypi-verify.result == 'success' && needs.github-release.result == 'success'}}
+    if: false
 
     strategy:
       matrix:
-        python-version: ["3.9","3.10","3.11","3.12","3.13"]
+        python-version: ["3.11","3.12","3.13", "3.14"]
         dist: ["centos7"]
       fail-fast: false
 
@@ -275,7 +277,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.9","3.10","3.11","3.12","3.13"]
+        python-version: ["3.11","3.12","3.13", "3.14"]
         dist: ["rocky9"]
 
     steps:

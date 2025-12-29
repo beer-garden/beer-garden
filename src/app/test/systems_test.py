@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import mongomock
 import pytest
 from brewtils.errors import ModelValidationError
 from brewtils.models import Command as BrewtilsCommand
@@ -113,7 +114,11 @@ def system5():
 class TestSystem:
     @classmethod
     def setup_class(cls):
-        connect("beer_garden", host="mongomock://localhost")
+        connect(
+            "beer_garden",
+            host="mongodb://localhost",
+            mongo_client_class=mongomock.MongoClient,
+        )
 
     def test_disallow_command_updates(self, system):
         """System commands should not be allowed to update if the

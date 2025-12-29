@@ -64,7 +64,7 @@ def contains_field(collection_name, field):
     db = get_db()
     collection = db.get_collection(collection_name)
 
-    if collection.find({field: {"$exists": True}}).count() > 0:
+    if collection.count_documents({field: {"$exists": True}}) > 0:
         return True
     return False
 
@@ -74,9 +74,9 @@ def contains_fields(collection_name, fields):
     db = get_db()
     collection = db.get_collection(collection_name)
 
-    filter_criteria = {"$or": [{field: {"$exists": True}}] for field in fields}
+    filter_criteria = {"$or": [{field: {"$exists": True}} for field in fields]}
 
-    if collection.find(filter_criteria).count() > 0:
+    if collection.count_documents(filter_criteria) > 0:
         return True
     return False
 
@@ -86,7 +86,7 @@ def missing_field(collection_name, field):
     db = get_db()
     collection = db.get_collection(collection_name)
 
-    if collection.find({field: {"$exists": False}}).count() > 0:
+    if collection.count_documents({field: {"$exists": False}}) > 0:
         return True
     return False
 
@@ -112,7 +112,7 @@ def ensure_v3_24_model_migration():
 
         garden_collection = db.get_collection("garden")
 
-        if garden_collection.find().count() > 1:
+        if garden_collection.count_documents({}) > 1:
             if not os.path.exists(config.get("children.directory")):
                 os.makedirs(config.get("children.directory"))
 
@@ -162,7 +162,7 @@ def ensure_v3_27_model_migration():
 
     db = get_db()
 
-    collections = db.collection_names()
+    collections = db.list_collection_names()
 
     # Look for 3.26 Collections
     for legacy_user_collection in ["remote_role", "role_assignment", "remote_user"]:
@@ -267,6 +267,20 @@ def ensure_v3_30_model_migration():
     db = get_db()
     batch_size = config.get("db.prune.batch_size", default=-1)
 
+    request_collection = db.get_collection("request")
+
+    # Migration to ensure source_garden and target_garden are set
+    # for new cancellation logic
+    request_collection.update_many(
+        {"source_garden": {"$exists": False}},
+        {"$set": {"source_garden": config.get("garden.name")}},
+    )
+
+    request_collection.update_many(
+        {"target_garden": {"$exists": False}},
+        {"$set": {"target_garden": config.get("garden.name")}},
+    )
+
     if contains_fields("garden", ["status", "status_info", "namespaces"]):
         logger.warning(
             "Status or namespaces was found in Garden and will be removed. This is most"
@@ -294,7 +308,7 @@ def ensure_v3_30_model_migration():
             " This is most likely because the database is using the old (v3.29) style of"
             " storing in the database."
         )
-        request_collection = db.get_collection("request")
+
         updates = []
         for legacy_request in request_collection.find(
             {"root_command_type": {"$exists": False}},
@@ -420,7 +434,6 @@ def ensure_v3_30_model_migration():
         )
 
         raw_file_collection = db.get_collection("raw_file")
-        request_collection = db.get_collection("request")
         grid_fs_files_collection = db.get_collection("fs.files")
         grid_fs_chunks_collection = db.get_collection("fs.chunks")
 
@@ -550,7 +563,6 @@ def ensure_v3_30_model_migration():
             " This is most likely because the database is using the old (v3.29) style of"
             " storing in the database."
         )
-        request_collection = db.get_collection("request")
 
         grid_fs_files_collection = db.get_collection("fs.files")
         grid_fs_chunks_collection = db.get_collection("fs.chunks")
