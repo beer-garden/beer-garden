@@ -1,5 +1,7 @@
-import { Request } from "./brewtils-types";
+import { Request } from "../models/brewtils-types";
 import { Fieldset } from 'primereact/fieldset';
+import { Skeleton } from "primereact/skeleton";
+
 function displautOutput(request: Request ) {
     if (request.output_type === "JSON") {
 
@@ -50,16 +52,20 @@ function displautOutput(request: Request ) {
 
 
 
-function PrimeRequestOutput(request: Request) {
+function RequestOutput(request: Request) {
 
-    
+    if (request.status && ["CREATED","RECEIVED","IN_PROGRESS"].includes(request.status)) {
+        return (
+            <div>
+                <Skeleton width="100%" height="200px" borderRadius="16px"/>       
+            </div>
+        );
+    }
 
     return (
-    <div>
-        <Fieldset legend="Output">  
+        <div>
             {displautOutput(request)}
-        </Fieldset>
-    </div>);
+        </div>);
 }
 
-export default PrimeRequestOutput;
+export default RequestOutput;

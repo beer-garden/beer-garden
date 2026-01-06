@@ -1,6 +1,6 @@
 import { TreeTable } from 'primereact/treetable';
 import { Column } from 'primereact/column';
-import { Request } from './brewtils-types';
+import { Request } from '../models/brewtils-types';
 import { Fieldset } from 'primereact/fieldset';
 
 function parseRequest(request: Request, currentRequestId?: string) {
@@ -39,13 +39,16 @@ function parseRequest(request: Request, currentRequestId?: string) {
 }
 
 interface RequestTreeChartProps {
-    rootRequest: Request;
+    rootRequest?: Request;
     currentRequestId?: string;
 }
 
 function RequestTreeChart(props: RequestTreeChartProps) {
 
-    const node = parseRequest(props.rootRequest, props.currentRequestId);
+    let node = {};
+    if (props.rootRequest !== undefined && props.rootRequest !== null) {
+        node = parseRequest(props.rootRequest, props.currentRequestId);
+    }
 
     const rowClassName = (node: any) => {
         return { 'p-highlight': (node.data.active) };
@@ -53,22 +56,20 @@ function RequestTreeChart(props: RequestTreeChartProps) {
 
 
     return (
-        <Fieldset legend="History"> 
-            <TreeTable value={[node]} rowClassName={rowClassName} tableStyle={{ minWidth: '50rem' }}>
-                <Column field="command" header="Command" expander></Column>
-                
-                <Column field="status" header="status"></Column>
-                <Column field="namespace" header="Namespace"></Column>
-                <Column field="system" header="System"></Column>
-                <Column field="system_version" header="System Version"></Column>
-                <Column field="instance_name" header="Instance Name"></Column>
+        <TreeTable value={[node]} rowClassName={rowClassName} tableStyle={{ minWidth: '50rem' }}>
+            <Column field="command" header="Command" expander></Column>
+            
+            <Column field="status" header="status"></Column>
+            <Column field="namespace" header="Namespace"></Column>
+            <Column field="system" header="System"></Column>
+            <Column field="system_version" header="System Version"></Column>
+            <Column field="instance_name" header="Instance Name"></Column>
 
-                <Column field="created_at" header="Created"></Column>
-                <Column field="status_updated_at" header="Status Updated"></Column>
-                <Column field="updated_at" header="Updated"></Column>
-                <Column field="comment" header="Comment"></Column>
-            </TreeTable>
-        </Fieldset>
+            <Column field="created_at" header="Created"></Column>
+            <Column field="status_updated_at" header="Status Updated"></Column>
+            <Column field="updated_at" header="Updated"></Column>
+            <Column field="comment" header="Comment"></Column>
+        </TreeTable>
     )
 }
 

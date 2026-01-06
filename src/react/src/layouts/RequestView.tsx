@@ -1,17 +1,25 @@
-import { Request, System } from './brewtils-types';
+import { Request, System } from '../models/brewtils-types';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { BreadCrumb } from 'primereact/breadcrumb';
-import RequestTreeChart from "./RequestTreeChart";
+import RequestTreeChart from "../components/RequestTreeChart";
 import { Steps } from 'primereact/steps';
 import { Toast } from 'primereact/toast';
-import { useState, useRef } from 'react';
+import { useState, useRef, use, useEffect } from 'react';
 import { MenuItem } from 'primereact/menuitem';
 import { Button } from 'primereact/button';
 import { Menubar } from 'primereact/menubar';
-import PrimeCommandForm  from './PrimeCommandForm';
-import PrimeRequestOutput from './PrimeRequestOutput';
+import CommandForm  from '../components/CommandForm';
+import RequestOutput from '../components/RequestOutput';
 import { Splitter, SplitterPanel } from 'primereact/splitter';
+import { Stepper } from 'primereact/stepper';
+import { StepperPanel } from 'primereact/stepperpanel';
+import { Message } from 'primereact/message';
+import { SplitButton } from 'primereact/splitbutton';
+import {useParams} from 'react-router-dom'; 
+
+import {GetRequest} from '../services/request_service';
+import {GetSystemList} from '../services/system_service';
 
 function ExampleSystem() {
     const system : System = {
@@ -49,21 +57,38 @@ function ExampleSystem() {
                 parameters: []
               },
               {
+                key: 'message_choices',
+                type: 'String',
+                multi: true,
+                display_name: 'message',
+                optional: true,
+                default: 'Hello, World!',
+                choices: {
+                    type: 'static',
+                    strict: true,
+                    value: ['Hello, World!', "test","1"]
+                },
+                description: 'The Message to be Echoed',
+                nullable: false,
+                type_info: {},
+                parameters: []
+              },
+              {
                 key: 'loud',
                 type: 'Boolean',
                 multi: false,
                 display_name: 'loud',
                 optional: true,
-                default: false,
+                default: true,
                 description: 'Determines if Exclamation marks are added',
-                nullable: false,
+                nullable: true,
                 type_info: {},
                 parameters: []
               },
               {
                 key: 'Integer',
                 type: 'Integer',
-                multi: false,
+                multi: true,
                 display_name: 'Integer',
                 optional: true,
                 default: null,
@@ -87,7 +112,7 @@ function ExampleSystem() {
               {
                 key: 'Date',
                 type: 'Date',
-                multi: false,
+                multi: true,
                 display_name: 'Date',
                 optional: true,
                 default: null,
@@ -99,7 +124,7 @@ function ExampleSystem() {
               {
                 key: 'DateTime',
                 type: 'DateTime',
-                multi: false,
+                multi: true,
                 display_name: 'DateTime',
                 optional: true,
                 default: null,
@@ -317,6 +342,62 @@ function ExampleRequest() {
     return request;
 }
 
+function UnformattedInput(request: Request) {
+    return (
+      <div>
+        <Message severity="warn" text="Unable to find source System/Command" />
+        <pre>{JSON.stringify(request.parameters, null, 2)}</pre>
+      </div>
+        
+    );
+}
+
+function RequestOptions(request: Request) {
+    const items: MenuItem[] = [];
+
+    if (request.status && ["CREATED","RECEIVED","IN_PROGRESS"].includes(request.status)) {
+      items.push({
+        label: 'Cancel Request',
+            icon: <FontAwesomeIcon icon="xmark" />,
+            command: () => {
+                // 
+            }
+      });
+    } else {
+      items.push({
+            label: 'Download Output',
+            icon: <FontAwesomeIcon icon="download" />,
+            command: () => {
+                // 
+            }
+        });
+      items.push({
+        label: 'Delete Request',
+            icon: <FontAwesomeIcon icon="xmark" />,
+            command: () => {
+                // 
+            }
+      });
+    }
+
+    const pourAgain = (request: Request) => {
+
+    };
+
+    return (
+        <div className="card flex justify-content-end">
+          <SplitButton 
+            label="Pour Again" 
+            icon={<FontAwesomeIcon icon="plus" />}
+            model={items} 
+            className="p-button-secondary" 
+            onClick={() => pourAgain(request)} 
+            severity="success"
+            />
+        </div>
+    );
+}
+
 function RequestHeader(request: Request) {
 
     const iconItemTemplate = (item:any, options:any) => {
@@ -374,26 +455,74 @@ function RequestHeader(request: Request) {
 
 }
 
-function PrimeRequestView() {
+function RequestView() {
 
-    const request: Request = ExampleRequest();
-    const currentRequestId = request.id || '';
-    const system: System = ExampleSystem();
+    const { requestId } = useParams<{ requestId: string }>();
+    const [request, setRequest] = useState<Request | null>(null);
+    const [system, setSystem] = useState<System | null>(null);
+    const [command, setCommand] = useState<any>(null);
 
-    const command = system.commands?.find(cmd => cmd.name === request.command);
+    useEffect(() => {
+        if (!request) {
+            GetRequest(requestId, {}).then((data: Request) => {
+                setRequest(data);
+            }).catch((error) => {
+                console.error("Error fetching request:", error);
+            });
+        }
+    }, []);
 
-    const props = {rootRequest: request, currentRequestId: currentRequestId};
+    
+
+    useEffect(() => {
+        if (request) {
+            if (request.status && ["CANCELED","SUCCESS","ERROR","INVALID"].includes(request.status)){
+              setActiveIndex(1);
+            }
+
+            const systems = GetSystemList({name: request.system, version: request.system_version, namespace: request.namespace, garden_name: request.target_garden}).then((data) => {
+                if (data.length > 0) {
+                    setSystem(data[0]);
+                }
+            }).catch((error) => {
+                console.error("Error fetching system list:", error);
+            });
+
+            
+        }
+    }, [request]);
+
+    useEffect(() => {
+        if (system && system.commands && request) {
+            const commandData = system.commands.find((cmd) => cmd.name === request.command);
+            setCommand(commandData);
+        }
+      }, [system]);
+
+    const stepperRef = useRef(null);
+    const [activeIndex, setActiveIndex] = useState(0);
+
     return (<div>
-        <RequestHeader {...request} />
-        {command && (
-            <PrimeCommandForm {...(command)} />
-        )}
-        <RequestTreeChart {...props} />
-        {request.output && (<PrimeRequestOutput {...request} />)}
+        {request && <RequestHeader {...request} />}
+        
+        {request && <RequestTreeChart {...{rootRequest: request, currentRequestId: requestId}} />}
+        
+        {request && <Stepper ref={stepperRef} activeStep={activeIndex} style={{ flexBasis: '50rem' }}>
+          <StepperPanel header="Request Parameters">
+            <RequestOptions {...request} />
+            {command && (<CommandForm {...{command: command, request:request}} />)}
+            {!command && (<UnformattedInput {...request} />)}
+          </StepperPanel>
+          <StepperPanel header="Request Output">
+            {request && <RequestOptions {...request} />}
+            {request && <RequestOutput {...request} />}
+          </StepperPanel>
+
+        </Stepper>}
         
     </div>);
 }
 
-export default PrimeRequestView;
+export default RequestView;
        
         

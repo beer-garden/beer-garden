@@ -1,16 +1,19 @@
-import { System, Instance } from './brewtils-types';
+import { System, Instance } from '../models/brewtils-types';
 
-import SampleSystems from './SampleSystems';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button } from 'primereact/button';
 import { Card } from 'primereact/card';
 import { classNames } from 'primereact/utils';
 import { DataView } from 'primereact/dataview';
 import 'primeflex/primeflex.css';
+import { useState, useEffect } from 'react';
+import {GetSystemList} from '../services/system_service';
 
-function PrimeSystemIndex() {
+function SystemIndex() {
 
-  const systems: Array<System> = SampleSystems();
+  const [systems, setSystems] = useState<Array<System>>([]);
+
+  GetSystemList().then((data: Array<System>) => {setSystems(data)});  
 
   const instanceTemplate = (instance: Instance, index: number) => {
     return (
@@ -64,6 +67,13 @@ function PrimeSystemIndex() {
   };
 
   const systemListTemplate = (systems: System[]) => {
+    if (!Array.isArray(systems) && typeof systems === 'object') {
+      const newSystems = [] as System[];
+      Object.values(systems).forEach((system) => {
+        newSystems.push(system as System);
+      });
+      systems = newSystems;
+    }
     return (
       <div
         className="grid grid-nogutter"
@@ -77,4 +87,4 @@ function PrimeSystemIndex() {
 
   return (<div className="card"><DataView value={systems} listTemplate={systemListTemplate} layout="grid" /></div>)
 }
-export default PrimeSystemIndex;
+export default SystemIndex;

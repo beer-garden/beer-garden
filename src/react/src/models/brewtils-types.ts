@@ -292,7 +292,7 @@ export interface Request {
     command?: string;
     command_display_name?: string;
     command_type?: string;
-    parameters?: object;
+    parameters?: Record<string, any>;
     comment?: string;
     metadata?: object;
     output_type?: output_types;

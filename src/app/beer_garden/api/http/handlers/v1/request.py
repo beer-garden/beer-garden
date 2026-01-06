@@ -374,6 +374,26 @@ class RequestListAPI(AuthorizationHandler):
             required: false
             description: Datatables order object
             type: string
+          - name: filter
+            in: query
+            required: false
+            description: Filters for database query
+            type: array
+            collectionFormat: multi
+            items:
+              properties:
+                field:
+                  type: string
+                modifier:
+                  type: string
+                value:
+                  type: string
+          - name: include
+            in: query
+            required: false
+            description: Fields to include in response objects
+            type: string
+            collectionFormat: multi
         responses:
           200:
             description: A page of Requests
@@ -423,6 +443,18 @@ class RequestListAPI(AuthorizationHandler):
             query_args["q_filter"] = q_filtered
         else:
             query_args["q_filter"] = q_filter
+
+        if query_args.get("filter_params"):
+            query_args["filter_params"]  = query_args["filter_params"] | self._parse_query_object()
+        else:
+            query_args["filter_params"] = self._parse_query_object()
+
+        if query_args.get("include_fields"):
+            query_args["include_fields"].extend(self.get_arguments("include"))
+        else:
+            query_args["include_fields"] = self.get_arguments("include")
+
+            
 
         # There are also some sane parameters
         query_args["start"] = self.get_argument("start", default="0")
@@ -886,7 +918,17 @@ class RequestListAPI(AuthorizationHandler):
                 args[key] = decoded_param
 
         return Request(**args)
+    
+    def _parse_query_object(self) -> dict:
+        
+        filter_params = {}
+        
+        for query in self.get_query_arguments("query"):
+            query_obj = json.loads(query)
+            filter_params[f"{query_obj['field_name']}__{query_obj['modifier']}" if (query_obj['modifier'] and query_obj['modifier'] is not '') else query_obj['field_name']] = query_obj['value']
 
+        return filter_params
+    
     def _parse_datatables_parameters(self) -> dict:
         """Parse the HTTP request's datatables query parameters
 

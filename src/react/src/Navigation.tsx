@@ -70,7 +70,7 @@ function NavigationMenu() {
     if (item.root) {
         return (
             <a className="flex align-items-center cursor-pointer px-3 py-2 overflow-hidden relative font-semibold text-lg uppercase p-ripple hover:surface-ground" style={{ borderRadius: '2rem' }} onClick={(e) => options.onClick(e)}>
-                <FontAwesomeIcon icon={item.icon} />
+                {/* <FontAwesomeIcon icon={item.icon} /> */}
                 <span className="ml-2">{item.label}</span>
                 <Ripple />
             </a>

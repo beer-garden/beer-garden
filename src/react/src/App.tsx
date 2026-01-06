@@ -1,46 +1,54 @@
 import { BrowserRouter, Switch, Route } from 'react-router-dom';
-import Page1 from './Page1';
-import Page2 from './Page2';
-// import './App.css';
-import SystemIndex from './SystemIndex';
-import SystemIndexGroups from './SystemIndexGroups';
-import RequestView from './RequestView';
-// import RequestGantt from './RequestGantt';
-import RequestTimeline from './RequestTimeline';
-import PrimeRequestView from './PrimeRequestView';
+
+// import SystemIndexGroups from './SystemIndexGroups';
+
+import { Garden } from './models/brewtils-types';
+import { System } from './models/brewtils-types';
+import RequestView from './layouts/RequestView';
 
 import "primereact/resources/themes/lara-light-blue/theme.css"; // Theme
 import "primereact/resources/primereact.min.css"; // Core CSS
 // import "primeicons/primeicons.css"; // Icons
 
-import PrimeSystemIndex from './PrimeSystemIndex';
+import SystemIndex from './layouts/SystemIndex';
 // import 'primeflex/primeflex.css';
 import 'primereact/resources/themes/bootstrap4-light-blue/theme.css';
 
+import { useState, useEffect } from 'react';
+import {ExtractSystemsFromGardens} from './services/system_service';
+import {GetGardenList} from './services/garden_service';
+import RequestIndex from './layouts/RequestIndex';
+
+
 function App() {
+
+  // const [systems, setSystems] = useState<Array<System>>([]);
+  // const [gardens, setGardens] = useState<Array<Garden>>([]);
+
+  // useEffect(() => { 
+  //   const newSystems = ExtractSystemsFromGardens(gardens, [] as Array<System>);
+  //   setSystems([...newSystems]);
+  // },[gardens]);
+
+  // GetGardenList().then((data: Array<Garden>) => {
+  //   setGardens(data);
+  // });
+
   return (
     <BrowserRouter>
       <Switch>
       <Route path="/systems">
-          <PrimeSystemIndex />
+          <SystemIndex />
         </Route>
-        <Route path="/systemsgroups">
-          <SystemIndexGroups />
-        </Route>
-        <Route path="/request">
+        <Route path="/request/:requestId">
           <RequestView />
         </Route>
-        <Route path="/request2">
-          <PrimeRequestView />
+        <Route path="/requests">
+          <RequestIndex />
         </Route>
-        {/* <Route path="/gantt">
-          <RequestTimeline />
-        </Route> */}
-        <Route path="/page2">
-          <Page2 />
-        </Route>
+
         <Route path="/">
-          <Page1 />
+          <SystemIndex />
         </Route>
 
       </Switch>
