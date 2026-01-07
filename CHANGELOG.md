@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# TBD
+
+TBD
+
+- Fixed error comparing timezone-aware and timezone-naive datetimes. (#2038)
+
 # 3.31.0
 
 12/11/2025
