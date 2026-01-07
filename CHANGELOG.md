@@ -4,6 +4,7 @@
 
 TBD
 
+- Fixed UI Request Create with unicode garden names not supported via headers (#2035) 
 - Fixed error comparing timezone-aware and timezone-naive datetimes. (#2038)
 
 # 3.31.0

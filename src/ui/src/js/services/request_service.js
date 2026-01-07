@@ -38,18 +38,18 @@ export default function requestService($q, $http, $interval) {
     createRequest: (request, waitForCompletion, isFormData) => {
       let promise = undefined;
       if (isFormData) {
-        promise = $http.post('api/v1/requests?blocking='+waitForCompletion, request, {
+        promise = $http.post('api/v1/requests?blocking=' + waitForCompletion, request, {
           headers: {
             'Content-Type': undefined,
-            'Target-Garden': request.target_garden,
-            'Source-Garden': request.source_garden,
+            'Target-Garden': encodeURI(request.target_garden) == request.target_garden ? request.target_garden : undefined,
+            'Source-Garden': encodeURI(request.source_garden) == request.source_garden ? request.source_garden : undefined,
           },
         });
       } else {
-        promise = $http.post('api/v1/requests?blocking='+waitForCompletion, request, {
+        promise = $http.post('api/v1/requests?blocking=' + waitForCompletion, request, {
           headers: {
-            'Target-Garden': request.target_garden,
-            'Source-Garden': request.source_garden,
+            'Target-Garden': encodeURI(request.target_garden) == request.target_garden ? request.target_garden : undefined,
+            'Source-Garden': encodeURI(request.source_garden) == request.source_garden ? request.source_garden : undefined,
           },
         });
       }
