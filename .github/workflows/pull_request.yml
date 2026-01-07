@@ -745,6 +745,153 @@ jobs:
         if: always()
         run: docker logs --tail 3000 $(docker ps --filter name=beer-garden_beer-garden.3 --quiet | tail -1)
 
+  Migration-Testing:
+    runs-on: ${{ matrix.os }}
+    needs: PyTest
+
+    strategy:
+      matrix:
+        python-version: ["3.11.11"]
+        os: ["ubuntu-latest"]
+        previous:
+          - "unstable"
+          - "3.0.5"
+          - "3.1.1"
+          - "3.2.3"
+          - "3.3.0"
+          - "3.4.0"
+          - "3.5.0"
+          - "3.6.0"
+          # - "3.7.1" # Skipping 3.7.1 due to issues with starting image
+          - "3.8.1"
+          - "3.9.0"
+          - "3.10.0"
+          - "3.11.0"
+          - "3.12.0"
+          - "3.13.0"
+          - "3.14.0"
+          - "3.14.0"
+          - "3.15.0"
+          - "3.16.2"
+          - "3.17.2"
+          - "3.18.1"
+          - "3.19.1"
+          - "3.20.0"
+          - "3.21.0"
+          - "3.22.0"
+          - "3.23.1"
+          - "3.24.4"
+          - "3.25.1"
+          - "3.26.4"
+          - "3.27.2-python3.11"
+          - "3.28.2-python3.11"
+          - "3.29.1-python3.11"
+          - "3.30.1"
+          - "3.31.0"
+      fail-fast: false
+
+    name: Migration Testing - ${{ matrix.previous }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Custom tag extractor to find Brewtils Branch
+      - name: Find Brewtils Branch
+        uses: TheBurchLog/body-env-tag-action@1.0
+        with:
+          tag: "brewtils:"
+          env-variable: "brewtils"
+          default-value: "develop"
+          tag-position: -1
+
+      # Used the hashtag here instead of slash allow for branches to have slashes in them
+      - name: Update Brewtils Branch
+        run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements-dev.txt
+        working-directory: ./src/app
+
+      - name: Build Local Beer Garden Docker
+        run: |
+          python --version
+          python -m pip install --upgrade pip
+          pip install setuptools wheel
+          make package
+          make clean-python
+          docker build -t bgio/beer-garden:unstable -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:${{ matrix.python-version }}-alpine .
+        working-directory: ./src/app
+
+      - name: Update Docker Compose
+        run: cp test/conf/docker-compose.yml docker/docker-compose/docker-compose.yml
+        working-directory: ./
+
+      - name: Checkout Local Plugins
+        uses: actions/checkout@v2
+        with:
+          repository: beer-garden/example-plugins
+          path: ./docker/docker-compose/data/localplugins
+
+      - name: Verify Local Plugins
+        run: ls ./docker/docker-compose/data/localplugins
+
+      - name: Run Docker Mongodb and RabbitMQ
+        run: docker compose up -d mongodb rabbitmq
+        working-directory: ./docker/docker-compose
+
+      - name: Wait for Mongodb and RabbitMQ to start
+        run: sleep 20s
+        shell: bash
+
+      - name: Run Docker Beer Garden
+        run: BG='${{ matrix.previous }}' docker compose up -d beer-garden
+        working-directory: ./docker/docker-compose     
+
+      - name: Check If Beer Garden is Operational
+        uses: nick-invision/retry@v2
+        with:
+          timeout_seconds: 30
+          max_attempts: 20
+          retry_on: error
+          retry_wait_seconds: 5
+          command: curl http://localhost:2337/config
+
+      - name: Wait for Beer Garden to start
+        run: sleep 30s
+        shell: bash
+
+      - name: Grab logs from Beer-Garden
+        if: always()
+        run: BG='${{ matrix.previous }}' docker compose logs --tail 100 beer-garden
+        working-directory: ./docker/docker-compose
+
+      - name: Stop Docker Beer Garden
+        run: BG='${{ matrix.previous }}' docker compose stop beer-garden
+        working-directory: ./docker/docker-compose
+
+      - name: Start Docker Beer Garden - Unstable 
+        run: BG='unstable' docker compose up -d beer-garden
+        working-directory: ./docker/docker-compose
+
+      - name: Check If Beer Garden is Operational
+        uses: nick-invision/retry@v2
+        with:
+          timeout_seconds: 30
+          max_attempts: 20
+          retry_on: error
+          retry_wait_seconds: 5
+          command: curl http://localhost:2337/config
+
+      - name: Grab logs from Beer-Garden
+        if: always()
+        run: BG='unstable' docker compose logs --tail 1000 beer-garden
+        working-directory: ./docker/docker-compose
+
+      - name: Shutdown Docker Containers
+        run: docker compose stop
+        working-directory: ./docker/docker-compose
+
   JMeter-Testing:
     runs-on: ${{ matrix.os }}
     needs: Grandchild-Testing
