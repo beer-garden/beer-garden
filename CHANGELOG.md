@@ -4,6 +4,7 @@
 
 TBD
 
+- Bug fix to handle when latest is used for system version but there are no systems with that name (#2032)
 - Fixed UI Request Create with unicode garden names not supported via headers (#2035) 
 - Fixed error comparing timezone-aware and timezone-naive datetimes. (#2038)
 
