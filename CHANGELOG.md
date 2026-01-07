@@ -1,11 +1,11 @@
 # Beer Garden Changelog
 
 
-# TBD
+# 3.31.1
 
-TBD
+1/7/2026
 
-- Bug fix to handle when latest is used for system version but there are no systems with that name (#2032)
+- Fixed when latest is used for system version but there are no systems with that name (#2032)
 - Fixed UI Request Create with unicode garden names not supported via headers (#2035) 
 - Fixed error comparing timezone-aware and timezone-naive datetimes. (#2038)
 - Fixed Migration script logic for MongoDB (#2034)
