@@ -5,6 +5,7 @@
 TBD
 
 - Bug fix to handle when latest is used for system version but there are no systems with that name (#2032)
+- Fixed error comparing timezone-aware and timezone-naive datetimes. (#2038)
 
 # 3.31.0
 
