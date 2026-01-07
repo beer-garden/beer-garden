@@ -13,6 +13,7 @@ import { MultiSelect } from 'primereact/multiselect';
 import { TriStateCheckbox } from 'primereact/tristatecheckbox';
 import { Request } from '../models/brewtils-types';
 import {InputTextarea} from 'primereact/inputtextarea';
+import { classNames } from 'primereact/utils';
 
 interface CommandFormProps {
     command: Command;
@@ -261,6 +262,7 @@ function CommandForm(commandFormProps: CommandFormProps) {
                             invalid={!disabled && parameter.optional || undefined}
                             onChange={(e) => handleChange(e.target.id, e.target.value)}
                             disabled={disabled}
+                            className={classNames({'p-invalid':parameter.isInvalid})}
                         />
                     </div>
                 );

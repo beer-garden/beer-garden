@@ -440,13 +440,6 @@ function RequestHeader(request: Request) {
         }
     ];
 
-    if (request.has_parent && request.parent) {
-        items.push({
-            icon: "arrow-turn-up",
-            template: iconItemTemplate
-        });
-    }  
-
     return (
 
             <BreadCrumb model={items} />
@@ -461,6 +454,17 @@ function RequestView() {
     const [request, setRequest] = useState<Request | null>(null);
     const [system, setSystem] = useState<System | null>(null);
     const [command, setCommand] = useState<any>(null);
+    const [rootRequest, setRootRequest] = useState<Request | null>(null);
+
+    function loadRootRequest(check_request: Request) {
+        if (check_request.has_parent === true && check_request.parent && check_request.parent.id){
+            GetRequest(check_request.parent.id, {}).then((root_request)=> {
+                loadRootRequest(root_request);
+            });
+        } else {
+            setRootRequest(check_request);
+        }
+    }
 
     useEffect(() => {
         if (!request) {
@@ -479,6 +483,8 @@ function RequestView() {
             if (request.status && ["CANCELED","SUCCESS","ERROR","INVALID"].includes(request.status)){
               setActiveIndex(1);
             }
+
+            loadRootRequest(request);
 
             const systems = GetSystemList({name: request.system, version: request.system_version, namespace: request.namespace, garden_name: request.target_garden}).then((data) => {
                 if (data.length > 0) {
@@ -505,7 +511,7 @@ function RequestView() {
     return (<div>
         {request && <RequestHeader {...request} />}
         
-        {request && <RequestTreeChart {...{rootRequest: request, currentRequestId: requestId}} />}
+        {rootRequest && <RequestTreeChart {...{rootRequest: rootRequest, currentRequestId: requestId}} />}
         
         {request && <Stepper ref={stepperRef} activeStep={activeIndex} style={{ flexBasis: '50rem' }}>
           <StepperPanel header="Request Parameters">
