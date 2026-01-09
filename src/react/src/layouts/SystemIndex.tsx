@@ -1,30 +1,42 @@
-import { System, Instance } from '../models/brewtils-types';
+import { System, Instance } from "../models/brewtils-types";
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Button } from 'primereact/button';
-import { Card } from 'primereact/card';
-import { classNames } from 'primereact/utils';
-import { DataView } from 'primereact/dataview';
-import 'primeflex/primeflex.css';
-import { useState, useEffect } from 'react';
-import {GetSystemList} from '../services/system_service';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Button } from "primereact/button";
+import { Card } from "primereact/card";
+import { classNames } from "primereact/utils";
+import { DataView } from "primereact/dataview";
+import "primeflex/primeflex.css";
+import { useState, useEffect } from "react";
+import { GetSystemList } from "../services/system_service";
 
 function SystemIndex() {
-
   const [systems, setSystems] = useState<Array<System>>([]);
 
-  GetSystemList().then((data: Array<System>) => {setSystems(data)});  
+  GetSystemList().then((data: Array<System>) => {
+    setSystems(data);
+  });
 
   const instanceTemplate = (instance: Instance, index: number) => {
     return (
       <div className="col-12" key={instance.id}>
-        <div className={classNames('flex flex-column xl:flex-row xl:align-items-start p-4 gap-4', { 'border-top-1 surface-border': index !== 0 })}>
-        <div className="mt-4">
-            <FontAwesomeIcon icon="folder" /> {instance.name} 
+        <div
+          className={classNames(
+            "flex flex-column xl:flex-row xl:align-items-start p-4 gap-4",
+            { "border-top-1 surface-border": index !== 0 },
+          )}
+        >
+          <div className="mt-4">
+            <FontAwesomeIcon icon="folder" /> {instance.name}
             <div>
-            <Button className="mr-2"><FontAwesomeIcon icon="play"/></Button>
-            <Button className="mr-2"><FontAwesomeIcon icon="stop"/></Button>
-            <Button className="mr-2"><FontAwesomeIcon icon="file-lines"/></Button>
+              <Button className="mr-2">
+                <FontAwesomeIcon icon="play" />
+              </Button>
+              <Button className="mr-2">
+                <FontAwesomeIcon icon="stop" />
+              </Button>
+              <Button className="mr-2">
+                <FontAwesomeIcon icon="file-lines" />
+              </Button>
             </div>
           </div>
         </div>
@@ -47,27 +59,43 @@ function SystemIndex() {
       return;
     }
 
-    const title = system.namespace + " / " + system.name + " / " + system.version;
+    const title =
+      system.namespace + " / " + system.name + " / " + system.version;
     return (
-
-      <Card title={title} key={system.id} className="m-2" style={{ width: '20%' }}>
+      <Card
+        title={title}
+        key={system.id}
+        className="m-2"
+        style={{ width: "20%" }}
+      >
         <p className="m-0">{system.description}</p>
         <div className="mt-4">
-          <Button className="mr-2"><FontAwesomeIcon icon="play"/></Button>
-          <Button className="mr-2"><FontAwesomeIcon icon="stop"/></Button>
-          <Button className="mr-2"><FontAwesomeIcon icon="refresh"/></Button>
-          <Button className="mr-2"><FontAwesomeIcon icon="trash"/></Button>
-          <Button className="mr-2"><FontAwesomeIcon icon="file-circle-plus"/></Button>
+          <Button className="mr-2">
+            <FontAwesomeIcon icon="play" />
+          </Button>
+          <Button className="mr-2">
+            <FontAwesomeIcon icon="stop" />
+          </Button>
+          <Button className="mr-2">
+            <FontAwesomeIcon icon="refresh" />
+          </Button>
+          <Button className="mr-2">
+            <FontAwesomeIcon icon="trash" />
+          </Button>
+          <Button className="mr-2">
+            <FontAwesomeIcon icon="file-circle-plus" />
+          </Button>
         </div>
-        <DataView value={system.instances} listTemplate={instanceListTemplate} />
+        <DataView
+          value={system.instances}
+          listTemplate={instanceListTemplate}
+        />
       </Card>
-
     );
-    
   };
 
   const systemListTemplate = (systems: System[]) => {
-    if (!Array.isArray(systems) && typeof systems === 'object') {
+    if (!Array.isArray(systems) && typeof systems === "object") {
       const newSystems = [] as System[];
       Object.values(systems).forEach((system) => {
         newSystems.push(system as System);
@@ -84,7 +112,14 @@ function SystemIndex() {
     );
   };
 
-
-  return (<div className="card"><DataView value={systems} listTemplate={systemListTemplate} layout="grid" /></div>)
+  return (
+    <div className="card">
+      <DataView
+        value={systems}
+        listTemplate={systemListTemplate}
+        layout="grid"
+      />
+    </div>
+  );
 }
 export default SystemIndex;

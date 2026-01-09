@@ -1,5 +1,5 @@
-import * as React from 'react';
-import Button, { ButtonProps } from 'react-bootstrap/Button';
+import * as React from "react";
+import Button, { ButtonProps } from "react-bootstrap/Button";
 
 interface ButtonLinkProps extends ButtonProps {
   navigate: () => void;
@@ -17,7 +17,7 @@ const ButtonLink: React.FC<ButtonLinkProps> = ({ navigate, ...props }) => {
     if (
       !event.defaultPrevented && // onClick prevented default
       event.button === 0 && // ignore everything but left clicks
-      (!props.target || props.target === '_self') && // let browser handle "target=_blank" etc.
+      (!props.target || props.target === "_self") && // let browser handle "target=_blank" etc.
       !isModifiedEvent(event) // ignore clicks with modifier keys
     ) {
       event.preventDefault();

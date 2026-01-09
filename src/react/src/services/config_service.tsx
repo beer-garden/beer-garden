@@ -1,13 +1,13 @@
 import { Config } from "../models/models";
 
 export const GetConfig = async (): Promise<Config> => {
-    try {
+  try {
     const response = await fetch(`/config`);
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);
     }
-    const data = await response.json() as Config;
+    const data = (await response.json()) as Config;
     return data;
   } catch (error) {
     // Handle network errors or the error thrown above

@@ -65,3 +65,6 @@ chromium_clean:
 	docker volume prune
 	docker image rm -f lscr.io/linuxserver/chromium
 
+format:
+	npx prettier --write src/
+
