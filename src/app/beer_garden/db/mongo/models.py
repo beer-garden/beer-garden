@@ -277,12 +277,24 @@ class StatusHistory(MongoModel, EmbeddedDocument):
     heartbeat = DateTimeField()
     status = StringField()
 
+    def clean(self):
+        """Validate before saving to the database"""
+
+        if isinstance(self.heartbeat, int):
+            self.heartbeat = datetime.datetime.fromtimestamp(int(self.heartbeat) / 1000)
+
 
 class StatusInfo(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.StatusInfo
 
     heartbeat = DateTimeField()
     history = EmbeddedDocumentListField("StatusHistory")
+
+    def clean(self):
+        """Validate before saving to the database"""
+
+        if isinstance(self.heartbeat, int):
+            self.heartbeat = datetime.datetime.fromtimestamp(int(self.heartbeat) / 1000)
 
 
 def generate_objectid():
@@ -1591,8 +1603,13 @@ class User(MongoModel, Document):
     def save(self, *args, **kwargs):
         if self.local_roles:
             for local_role in self.local_roles:
-                if local_role.name not in self.roles:
-                    self.roles.append(local_role.name)
+                # TODO: This is a poor hack for dict that should be Role
+                try:
+                    if local_role.name not in self.roles:
+                        self.roles.append(local_role.name)
+                except AttributeError:
+                    if local_role.get("name") not in self.roles:
+                        self.roles.append(local_role.get("name"))
 
         if self.roles:
             for role in self.roles:

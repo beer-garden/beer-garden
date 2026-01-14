@@ -9,34 +9,48 @@ from copy import deepcopy
 from typing import List, Optional, Tuple
 
 from apispec import APISpec
-from apispec.ext.marshmallow import MarshmallowPlugin
+from apispec_pydantic_plugin import PydanticPlugin
+# from apispec.ext.marshmallow import MarshmallowPlugin
 from apispec_webframeworks.tornado import TornadoPlugin
-from brewtils.models import Event, Events
-from brewtils.schemas import (
-    CommandSchema,
-    CronTriggerSchema,
-    DateTriggerSchema,
-    EventSchema,
-    FileStatusSchema,
-    FileTriggerSchema,
-    GardenSchema,
-    InstanceSchema,
-    IntervalTriggerSchema,
-    JobExportInputSchema,
-    JobExportSchema,
-    JobSchema,
-    LoggingConfigSchema,
-    OperationSchema,
-    ParameterSchema,
-    QueueSchema,
-    RequestSchema,
-    RoleSchema,
-    RunnerSchema,
-    SystemSchema,
-    TopicSchema,
-    UserSchema,
-    UserTokenSchema,
+from brewtils.models import (
+    Event, Events, Command, CronTrigger, DateTrigger, 
+    FileStatus, FileTrigger, Garden, Instance, IntervalTrigger,
+    JobExportInput, JobExport, Job, LoggingConfig, Operation, Parameter,
+    PatchOperation,
+    Queue,
+    Request,
+    Role,
+    Runner,
+    System,
+    Topic,
+    User,
+    UserToken,
 )
+# from brewtils.schemas import (
+#     CommandSchema,
+#     CronTriggerSchema,
+#     DateTriggerSchema,
+#     EventSchema,
+#     FileStatusSchema,
+#     FileTriggerSchema,
+#     GardenSchema,
+#     InstanceSchema,
+#     IntervalTriggerSchema,
+#     JobExportInputSchema,
+#     JobExportSchema,
+#     JobSchema,
+#     LoggingConfigSchema,
+#     OperationSchema,
+#     ParameterSchema,
+#     QueueSchema,
+#     RequestSchema,
+#     RoleSchema,
+#     RunnerSchema,
+#     SystemSchema,
+#     TopicSchema,
+#     UserSchema,
+#     UserTokenSchema,
+# )
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 from tornado.web import Application, RedirectHandler, RequestHandler
@@ -53,13 +67,13 @@ import beer_garden.requests
 import beer_garden.router
 from beer_garden.api.http.client import SerializeHelper
 from beer_garden.api.http.processors import EventManager, websocket_publish
-from beer_garden.api.http.schemas.v1.operation import PatchOperationSchema
+# from beer_garden.api.http.schemas.v1.operation import PatchOperation
 from beer_garden.api.http.schemas.v1.token import (
-    TokenInputSchema,
-    TokenRefreshInputSchema,
-    TokenResponseSchema,
+    TokenInput,
+    TokenRefreshInput,
+    TokenResponse,
 )
-from beer_garden.api.http.schemas.v1.user import UserPasswordChangeSchema
+from beer_garden.api.http.schemas.v1.user import UserPasswordChange
 from beer_garden.events import publish
 from beer_garden.metrics import initialize_elastic_client
 
@@ -298,7 +312,7 @@ def _setup_tornado_app() -> Application:
     published_url_specs = _get_published_url_specs()
     unpublished_url_specs = _get_unpublished_url_specs()
 
-    _load_swagger(published_url_specs, title=ui_config.name)
+    # _load_swagger(published_url_specs, title=ui_config.name)
 
     return Application(
         published_url_specs + unpublished_url_specs,
@@ -352,7 +366,7 @@ def _load_swagger(url_specs, title=None):
         title=title,
         version="2.0",
         openapi_version="3.0.0",
-        plugins=(MarshmallowPlugin(), TornadoPlugin()),
+        plugins=(PydanticPlugin(), TornadoPlugin()),
         info=dict(description="Beer Garden API"),
         securityDefinitions={
             "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"},
@@ -361,39 +375,39 @@ def _load_swagger(url_specs, title=None):
     )
 
     # Schemas from Marshmallow
-    api_spec.components.schema("Parameter", schema=ParameterSchema)
-    api_spec.components.schema("Command", schema=CommandSchema)
-    api_spec.components.schema("Instance", schema=InstanceSchema)
-    api_spec.components.schema("Request", schema=RequestSchema)
-    api_spec.components.schema("System", schema=SystemSchema)
-    api_spec.components.schema("LoggingConfig", schema=LoggingConfigSchema)
-    api_spec.components.schema("Event", schema=EventSchema)
+    api_spec.components.schema("Parameter", schema=Parameter)
+    api_spec.components.schema("Command", schema=Command)
+    api_spec.components.schema("Instance", schema=Instance)
+    api_spec.components.schema("Request", schema=Request)
+    api_spec.components.schema("System", schema=System)
+    api_spec.components.schema("LoggingConfig", schema=LoggingConfig)
+    api_spec.components.schema("Event", schema=Event)
 
     # If schemas are nested, ensure nested schema is defined first
-    api_spec.components.schema("Role", schema=RoleSchema)
-    api_spec.components.schema("User", schema=UserSchema)
-    api_spec.components.schema("UserPasswordChange", schema=UserPasswordChangeSchema)
+    api_spec.components.schema("Role", schema=Role)
+    api_spec.components.schema("User", schema=User)
+    api_spec.components.schema("UserPasswordChange", schema=UserPasswordChange)
 
-    api_spec.components.schema("Queue", schema=QueueSchema)
-    api_spec.components.schema("Operation", schema=OperationSchema)
-    api_spec.components.schema("FileStatus", schema=FileStatusSchema)
-    api_spec.components.schema("UserToken", schema=UserTokenSchema)
-    api_spec.components.schema("Topic", schema=TopicSchema)
+    api_spec.components.schema("Queue", schema=Queue)
+    api_spec.components.schema("Operation", schema=Operation)
+    api_spec.components.schema("FileStatus", schema=FileStatus)
+    api_spec.components.schema("UserToken", schema=UserToken)
+    api_spec.components.schema("Topic", schema=Topic)
 
-    api_spec.components.schema("Garden", schema=GardenSchema)
-    api_spec.components.schema("Runner", schema=RunnerSchema)
+    api_spec.components.schema("Garden", schema=Garden)
+    api_spec.components.schema("Runner", schema=Runner)
 
-    api_spec.components.schema("PatchOperation", schema=PatchOperationSchema)
+    api_spec.components.schema("PatchOperation", schema=PatchOperation)
 
-    api_spec.components.schema("DateTrigger", schema=DateTriggerSchema)
-    api_spec.components.schema("CronTrigger", schema=CronTriggerSchema)
-    api_spec.components.schema("FileTrigger", schema=FileTriggerSchema)
-    api_spec.components.schema("IntervalTrigger", schema=IntervalTriggerSchema)
-    api_spec.components.schema("Job", schema=JobSchema)
+    api_spec.components.schema("DateTrigger", schema=DateTrigger)
+    api_spec.components.schema("CronTrigger", schema=CronTrigger)
+    api_spec.components.schema("FileTrigger", schema=FileTrigger)
+    api_spec.components.schema("IntervalTrigger", schema=IntervalTrigger)
+    api_spec.components.schema("Job", schema=Job)
 
-    api_spec.components.schema("TokenInput", schema=TokenInputSchema)
-    api_spec.components.schema("TokenRefreshInput", schema=TokenRefreshInputSchema)
-    api_spec.components.schema("TokenResponse", schema=TokenResponseSchema)
+    api_spec.components.schema("TokenInput", schema=TokenInput)
+    api_spec.components.schema("TokenRefreshInput", schema=TokenRefreshInput)
+    api_spec.components.schema("TokenResponse", schema=TokenResponse)
 
     trigger_properties = {
         "allOf": [
@@ -408,8 +422,8 @@ def _load_swagger(url_specs, title=None):
         "trigger"
     ] = trigger_properties  # noqa
 
-    api_spec.components.schema("JobExport", schema=JobExportInputSchema)
-    api_spec.components.schema("JobImport", schema=JobExportSchema)
+    api_spec.components.schema("JobExport", schema=JobExportInput)
+    api_spec.components.schema("JobImport", schema=JobExport)
     api_spec.components.schemas["JobImport"]["properties"][  # noqa
         "trigger"
     ] = trigger_properties

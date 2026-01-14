@@ -36,6 +36,7 @@ setup(
         # Using Latest Version   
         "apispec>=6.7,<7", # Latest 6.8.4
         "apispec-webframeworks>1,<2", # Latest 1.2.0
+        "apispec-pydantic-plugin<1", # Latest 0.8.2
         "apscheduler<4", # Latest 3.11.0
         "more-itertools<11", # Latest 10.8.0
         "wrapt", # Latest 1.17.3      
@@ -63,8 +64,9 @@ setup(
         "ruamel.yaml<0.18", # Latest 0.18.5
         "yapconf<0.5", # Latest 0.4.0
 
-        # Brewtils drives marshmallow version
+        # Brewtils drives pydantic version
         "marshmallow<4.1,>=4.0", # Latest 4.0.1
+        "pydantic<3", # Latest 2.12.5
     ],
     classifiers=[
         "Development Status :: 4 - Beta",

@@ -19,6 +19,8 @@ from brewtils.errors import (
 )
 from marshmallow import Schema
 from marshmallow.exceptions import ValidationError as MarshmallowValidationError
+from pydantic import BaseModel
+from pydantic import ValidationError as PydanticValidationError
 from mongoengine.errors import DoesNotExist, NotUniqueError
 from mongoengine.errors import ValidationError as MongoValidationError
 from tornado.web import HTTPError, RequestHandler
@@ -64,6 +66,7 @@ class BaseHandler(RequestHandler):
     charset_re = re.compile(r"charset=(.*)$")
 
     error_map = {
+        PydanticValidationError: {"status_code": 400},
         MarshmallowValidationError: {"status_code": 400},
         MongoValidationError: {"status_code": 400},
         ModelError: {"status_code": 400},
@@ -245,12 +248,31 @@ class BaseHandler(RequestHandler):
                 reason="A body was expected with the request, but none was provided.",
             )
 
-    def schema_validated_body(self, schema: Type[Schema]) -> dict:
+    # def schema_validated_body(self, schema: Type[Schema]) -> dict:
+    #     """Get the contents of the request body after having been loaded with the
+    #     supplied schema to ensure that the data validates properly.
+
+    #     Args:
+    #         schema: A schema derived from a marshmallow Schema that the request body
+    #             will be loaded and validated against.
+
+    #     Returns:
+    #         dict: The validated request body
+
+    #     Raises:
+    #         BadRequest: The request body failed to validate with the supplied schema
+    #     """
+    #     try:
+    #         return schema().load(self.request_body)
+    #     except MarshmallowValidationError:
+    #         raise BadRequest
+    
+    def model_validated_body(self, model: Type[BaseModel]) -> dict:
         """Get the contents of the request body after having been loaded with the
-        supplied schema to ensure that the data validates properly.
+        supplied model to ensure that the data validates properly.
 
         Args:
-            schema: A schema derived from a marshmallow Schema that the request body
+            model: A model derived from a pydantic BaseModel that the request body
                 will be loaded and validated against.
 
         Returns:
@@ -260,6 +282,7 @@ class BaseHandler(RequestHandler):
             BadRequest: The request body failed to validate with the supplied schema
         """
         try:
-            return schema().load(self.request_body)
-        except MarshmallowValidationError:
+            return model.model_validate(self.request.body)
+        except PydanticValidationError:
             raise BadRequest
+        
