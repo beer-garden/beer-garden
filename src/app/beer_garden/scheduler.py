@@ -440,7 +440,7 @@ class MixedScheduler(object):
         # Add scheduled job for checking dead runners
         self.add_schedule(
             beer_garden.systems.check_dead_runners,
-            interval=15,
+            interval=5,
             max_instances=1,
             name="check_dead_runners",
         )
