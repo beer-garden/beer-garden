@@ -505,8 +505,10 @@ def check_dead_runners() -> None:
         if runner.dead:
             system = db.query_unique(
                 System,
-                instances__metadata__runner_id=runner.id,
-                instances__status__ne="ERROR",
+                instances__match={
+                    "metadata__runner_id": runner.id,
+                    "status__ne": "ERROR",
+                },
             )
             if system:
                 system = db.modify(
