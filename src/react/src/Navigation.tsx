@@ -75,13 +75,16 @@ function NavigationMenu() {
       label: "Scheduler",
       root: true,
       template: itemRenderer,
+      command: () => {
+        window.open("/jobs", "_self");
+      },
     },
     {
       label: "Create Request",
       root: true,
       template: itemRenderer,
       command: () => {
-        window.open("/create", "_self");
+        window.open("/create/request", "_self");
       },
     },
     {

@@ -56,7 +56,9 @@ function RequestOptions(request: Request) {
       label: "Delete Request",
       icon: <FontAwesomeIcon icon="xmark" />,
       command: () => {
-        DeleteRequest(request);
+        DeleteRequest(request).then(() => {
+          window.open("/requests", "_self");
+        });
       },
     });
   }
@@ -217,7 +219,13 @@ function RequestView() {
           <StepperPanel header="Request Parameters">
             <RequestOptions {...request} />
             {command && (
-              <CommandForm {...{ command: command, request: request }} />
+              <CommandForm
+                {...{
+                  command: command,
+                  request: request,
+                  setRequest: setRequest,
+                }}
+              />
             )}
             {!command && <UnformattedInput {...request} />}
           </StepperPanel>

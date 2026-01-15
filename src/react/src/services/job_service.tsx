@@ -1,42 +1,24 @@
-import { Request } from "../models/brewtils-types";
+import { Job } from "../models/brewtils-types";
 
-export const GetRequestList = async (
+export const GetJobList = async (
   headerData?: any,
-): Promise<[Request[], Headers]> => {
+): Promise<[Job[], Headers]> => {
   try {
-    const fetchHeaders = new Headers();
+    const headers = new Headers();
     if (headerData) {
       for (const [key, value] of Object.entries(headerData)) {
-        fetchHeaders.append(key, value as string);
+        headers.append(key, value as string);
       }
-    } else {
-      headerData = {};
     }
 
-    let queryString = "";
-
-    if (headerData) {
-      // queryString = new URLSearchParams(headerData).toString();
-      let searchParams = new URLSearchParams();
-      for (const [key, value] of Object.entries(headerData)) {
-        if (Array.isArray(value)) {
-          for (const item of value) {
-            searchParams.append(key, item as string);
-          }
-        } else {
-          searchParams.append(key, value as string);
-        }
-      }
-
-      queryString = searchParams.toString();
-    }
-
-    const response = await fetch(`/api/v1/requests?${queryString}`);
+    const response = await fetch(`/api/v1/jobs`, {
+      headers: headers,
+    });
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);
     }
-    const data = (await response.json()) as Request[];
+    const data = (await response.json()) as Job[];
     const responseHeaders = response.headers;
     return [data, responseHeaders];
   } catch (error) {
@@ -45,24 +27,22 @@ export const GetRequestList = async (
     throw error; // Re-throw to be handled by the component/hook
   }
 };
-export const GetRequest = async (
-  requestId: string,
-  headerData: any,
-): Promise<Request> => {
+
+export const GetJob = async (jobId: string, headerData: any): Promise<Job> => {
   try {
     const headers = new Headers();
     for (const [key, value] of Object.entries(headerData)) {
       headers.append(key, value as string);
     }
 
-    const response = await fetch(`/api/v1/requests/${requestId}`, {
+    const response = await fetch(`/api/v1/jobs/${jobId}`, {
       headers: headers,
     });
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);
     }
-    const data = (await response.json()) as Request;
+    const data = (await response.json()) as Job;
 
     return data;
   } catch (error) {
@@ -72,10 +52,9 @@ export const GetRequest = async (
   }
 };
 
-export const PostRequest = async (
-  request: Request,
+export const CreateJob = async (
+  job: Job,
   headerData?: any,
-  waitForCompletion?: boolean,
 ): Promise<Request> => {
   try {
     const headers = new Headers();
@@ -86,21 +65,11 @@ export const PostRequest = async (
 
     headers.append("Content-Type", "application/json");
 
-    if (waitForCompletion === null || waitForCompletion === undefined) {
-      waitForCompletion = false;
-    }
-
-    const response = await fetch(
-      "/api/v1/requests?blocking=" + waitForCompletion,
-      {
-        // headers: {
-        //   'Content-Type': 'application/json' // *specify the content type
-        // },
-        headers: headers,
-        method: "POST",
-        body: JSON.stringify(request),
-      },
-    );
+    const response = await fetch("/api/v1/jobs/", {
+      headers: headers,
+      method: "POST",
+      body: JSON.stringify(job),
+    });
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);
@@ -115,7 +84,10 @@ export const PostRequest = async (
   }
 };
 
-export const DeleteRequest = async (request: Request, headerData?: any) => {
+export const UpdateJob = async (
+  job: Job,
+  headerData?: any,
+): Promise<Request> => {
   try {
     const headers = new Headers();
 
@@ -123,19 +95,28 @@ export const DeleteRequest = async (request: Request, headerData?: any) => {
       headers.append(key, value as string);
     }
 
-    const response = await fetch("/api/v1/requests?id=" + request.id, {
-      // headers: {
-      //   'Content-Type': 'application/json' // *specify the content type
-      // },
+    headers.append("Content-Type", "application/json");
+
+    const response = await fetch("/api/v1/jobs/" + job.id, {
       headers: headers,
-      method: "DELETE",
+      method: "PATCH",
+      body: JSON.stringify({
+        operations: [
+          {
+            operation: "update",
+            path: "/job",
+            value: job,
+          },
+        ],
+      }),
     });
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);
     }
+    const data = (await response.json()) as Request;
 
-    return;
+    return data;
   } catch (error) {
     // Handle network errors or the error thrown above
     console.error("Error fetching Requests:", error);

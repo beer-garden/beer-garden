@@ -13,7 +13,7 @@ export const GetGarden = async (
       }
     }
 
-    const response = await fetch(`api/v1/garden/${garden_name}`, {
+    const response = await fetch(`api/v1/gardens/${garden_name}`, {
       headers: headers,
     });
     if (!response.ok) {

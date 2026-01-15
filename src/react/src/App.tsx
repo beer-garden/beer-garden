@@ -19,6 +19,9 @@ import { ExtractSystemsFromGardens } from "./services/system_service";
 import { GetGardenList } from "./services/garden_service";
 import RequestIndex from "./layouts/RequestIndex";
 import RequestCreate from "./layouts/RequestCreate";
+import JobIndex from "./layouts/JobIndex";
+import SystemTable from "./layouts/SystemTable";
+import GardenIndex from "./layouts/GardenIndex";
 
 function App() {
   // const [systems, setSystems] = useState<Array<System>>([]);
@@ -39,17 +42,29 @@ function App() {
         <Route path="/systems">
           <SystemIndex />
         </Route>
+        <Route path="/systemtable">
+          <SystemTable />
+        </Route>
         <Route path="/request/:requestId">
           <RequestView />
         </Route>
         <Route path="/requests">
           <RequestIndex />
         </Route>
-        <Route path="/create">
+        <Route path="/create/:defaultType">
           <RequestCreate />
         </Route>
         <Route path="/recreate/:requestId">
           <RequestCreate />
+        </Route>
+        <Route path="/jobs">
+          <JobIndex />
+        </Route>
+        <Route path="/job/:jobId">
+          <RequestCreate />
+        </Route>
+        <Route path="/garden">
+          <GardenIndex />
         </Route>
 
         <Route path="/">

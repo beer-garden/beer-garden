@@ -19,6 +19,8 @@
     "react-bootstrap": "^2.10.0",
     "react-calendar-timeline": "^0.30.0-beta.3",
     "react-dom": "19.2.1",
+    "react-hook-form": "^7.71.0",
+    "react-js-cron": "^5.2.0",
     "react-modern-gantt": "^0.6.1",
     "react-router-dom": "^5.3.4",
     "react-scripts": "5.0.1",

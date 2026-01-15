@@ -64,7 +64,7 @@ export interface CronTrigger {
   startDate?: any;
   endDate?: any;
   timezone?: string;
-  jitter?: number;
+  jitter?: number | null;
 }
 
 export interface DateTrigger {
@@ -214,19 +214,19 @@ export interface JobExport {
 export interface Job {
   id?: string;
   name?: string;
-  triggerType?: string;
+  trigger_type?: string;
   trigger?: any;
-  requestTemplate?: any;
-  misfireGraceTime?: number;
+  request_template?: any;
+  misfire_grace_time?: number | null;
   coalesce?: boolean;
-  nextRunTime?: any;
-  successCount?: number;
-  errorCount?: number;
-  canceledCount?: number;
-  skipCount?: number;
+  next_run_time?: any;
+  success_count?: number;
+  error_count?: number;
+  canceled_count?: number;
+  skip_count?: number;
   status?: string;
-  max_instances?: number;
-  timeout?: number;
+  max_instances?: number | null;
+  timeout?: number | null;
 }
 
 export interface LoggingConfig {

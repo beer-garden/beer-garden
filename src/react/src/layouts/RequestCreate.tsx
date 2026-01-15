@@ -3,15 +3,23 @@ import { Stepper } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
 import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
-import { Request, System, Command, Instance } from "../models/brewtils-types";
+import {
+  Request,
+  System,
+  Command,
+  Instance,
+  Job,
+} from "../models/brewtils-types";
 import { GetSystemList } from "../services/system_service";
 import CommandSelect from "../components/CommandSelect";
 import { GetRequest } from "../services/request_service";
+import { GetJob, CreateJob, UpdateJob } from "../services/job_service";
 import CommandForm from "../components/CommandForm";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { PostRequest } from "../services/request_service";
 import { useParams } from "react-router-dom";
 import { Skeleton } from "primereact/skeleton";
+import SchedulerForm from "../components/SchedulerForm";
 
 interface RequestCommand {
   namespace: string | null;
@@ -24,6 +32,7 @@ interface RequestCommand {
 function RequestCreate() {
   const { requestId } = useParams<{ requestId: string }>();
   const { jobId } = useParams<{ jobId: string }>();
+  const { defaultType } = useParams<{ defaultType: string }>();
 
   const stepperRef = useRef<null | any>(null);
 
@@ -31,8 +40,21 @@ function RequestCreate() {
   const selectCommandHeader = "Select Command";
   const createRequestHeader = "Create Request";
 
+  const defaultStepperStep = requestId
+    ? 2
+    : jobId || defaultType === "job"
+      ? 0
+      : 1;
+
   // Input Request
   const [request, setRequest] = useState<Request | null>(null);
+
+  // Job Panel
+  const [job, setJob] = useState<Job | null>(null);
+  const runOptions = ["Run Now", "Schedule Job"];
+  const [runState, setRunState] = useState(
+    jobId || defaultType === "job" ? runOptions[1] : runOptions[0],
+  );
 
   // System Panel
   const [requestCommand, setRequestCommand] = useState<RequestCommand | null>({
@@ -48,6 +70,7 @@ function RequestCreate() {
   // Command Panel
   const [showCommand, setShowCommand] = useState<boolean>(false);
   const [command, setCommand] = useState<Command | null>(null);
+  const [validCommand, setValidCommand] = useState(false);
 
   function findCommand() {
     if (systems) {
@@ -125,8 +148,23 @@ function RequestCreate() {
     }
   };
 
+  const submitJob = () => {
+    if (job && request) {
+      CreateJob({ ...job, ...{ request_template: request } }).then(() => {
+        window.open("/jobs/", "_self");
+      });
+    }
+  };
+
+  const updateJob = () => {
+    if (job && request) {
+      UpdateJob({ ...job, ...{ request_template: request } }).then(() => {
+        window.open("/jobs/", "_self");
+      });
+    }
+  };
+
   const indexCheck = (index: any) => {
-    console.log(index);
     if (index === 2) {
       findCommand();
       if (
@@ -150,7 +188,11 @@ function RequestCreate() {
           reject: resetRequest,
         });
       } else {
-        setShowCommand(true);
+        if (request === null) {
+          resetRequest();
+        } else {
+          setShowCommand(true);
+        }
       }
     }
   };
@@ -174,7 +216,19 @@ function RequestCreate() {
           command: responseRequest?.command ?? null,
         });
       });
+    } else if (jobId !== null && jobId !== undefined) {
+      GetJob(jobId, {}).then((responseJob) => {
+        setJob(responseJob);
+        setRequestCommand({
+          namespace: responseJob?.request_template?.namespace ?? null,
+          systemName: responseJob?.request_template?.system ?? null,
+          version: responseJob?.request_template?.system_version ?? null,
+          instance: responseJob?.request_template?.instance_name ?? null,
+          command: responseJob?.request_template?.command ?? null,
+        });
+      });
     }
+
     GetSystemList()
       .then((data) => {
         setSystems(data);
@@ -191,13 +245,10 @@ function RequestCreate() {
         ref={stepperRef}
         onChangeStep={(e) => indexCheck(e.index)}
         style={{ flexBasis: "50rem" }}
+        linear={true}
+        activeStep={defaultStepperStep}
       >
         <StepperPanel header={scheduleHeader}>
-          <div className="flex flex-column h-12rem">
-            <div className="border-2 border-dashed surface-border border-round surface-ground flex-auto flex justify-content-center align-items-center font-medium">
-              Content I
-            </div>
-          </div>
           <div className="flex pt-4 justify-content-end">
             <Button
               label="Next"
@@ -206,16 +257,20 @@ function RequestCreate() {
               onClick={() => nextStep(selectCommandHeader)}
             />
           </div>
+          <div className="flex flex-column h-12rem">
+            {(!jobId || job) && (
+              <SchedulerForm
+                scheduledJob={job}
+                setScheduledJob={setJob}
+                runOptions={runOptions}
+                runState={runState}
+                setRunState={setRunState}
+              />
+            )}
+            {jobId && !job && <Skeleton width="100%" height="150px"></Skeleton>}
+          </div>
         </StepperPanel>
         <StepperPanel header={selectCommandHeader}>
-          <div className="flex flex-column h-12rem">
-            <CommandSelect
-              systems={systems}
-              requestCommand={requestCommand}
-              setRequestCommand={setRequestCommand}
-            />
-          </div>
-
           <div className="flex pt-4 justify-content-between">
             <Button
               label="Back"
@@ -228,25 +283,24 @@ function RequestCreate() {
               icon="pi pi-arrow-right"
               iconPos="right"
               onClick={() => nextStep(createRequestHeader)}
+              disabled={!validCommand}
             />
+          </div>
+          <div className="flex flex-column h-12rem">
+            {systems && systems.length > 0 && (
+              <CommandSelect
+                systems={systems}
+                requestCommand={requestCommand}
+                setRequestCommand={setRequestCommand}
+                setValidCommand={setValidCommand}
+              />
+            )}
+            {(!systems || systems.length === 0) && (
+              <Skeleton width="100%" height="150px"></Skeleton>
+            )}
           </div>
         </StepperPanel>
         <StepperPanel header={createRequestHeader}>
-          <div className="flex flex-column h-12rem">
-            <div className="border-2 border-dashed surface-border border-round surface-ground flex-auto flex justify-content-center align-items-center font-medium">
-              {showCommand && (
-                <CommandForm
-                  command={command}
-                  disabled={false}
-                  request={request}
-                />
-              )}
-              {!showCommand && (
-                <Skeleton width="100%" height="150px"></Skeleton>
-              )}
-            </div>
-          </div>
-
           <div className="flex pt-4 justify-content-between">
             <Button
               label="Back"
@@ -254,13 +308,48 @@ function RequestCreate() {
               icon="pi pi-arrow-left"
               onClick={() => prevStep(selectCommandHeader)}
             />
-            <Button
-              label="Submit"
-              severity="success"
-              icon="pi pi-arrow-right"
-              iconPos="right"
-              onClick={submitRequest}
-            />
+            {runState === runOptions[0] && (
+              <Button
+                label="Submit"
+                severity="success"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                onClick={submitRequest}
+              />
+            )}
+            {runState === runOptions[1] && !jobId && (
+              <Button
+                label="Submit Job"
+                severity="success"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                onClick={submitJob}
+              />
+            )}
+            {runState === runOptions[1] && jobId && (
+              <Button
+                label="Update Job"
+                severity="success"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                onClick={updateJob}
+              />
+            )}
+          </div>
+          <div className="flex flex-column h-12rem">
+            <div className="border-2 border-dashed surface-border border-round surface-ground flex-auto flex justify-content-center align-items-center font-medium">
+              {showCommand && (
+                <CommandForm
+                  command={command}
+                  disabled={false}
+                  request={request}
+                  setRequest={setRequest}
+                />
+              )}
+              {!showCommand && (
+                <Skeleton width="100%" height="150px"></Skeleton>
+              )}
+            </div>
           </div>
         </StepperPanel>
       </Stepper>

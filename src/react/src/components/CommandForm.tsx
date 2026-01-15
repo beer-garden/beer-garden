@@ -19,9 +19,15 @@ interface CommandFormProps {
   command: Command | null;
   disabled?: boolean;
   request?: Request | null | undefined;
+  setRequest: (request: Request) => void;
 }
 
-function CommandForm({ command, disabled, request }: CommandFormProps) {
+function CommandForm({
+  command,
+  disabled,
+  request,
+  setRequest,
+}: CommandFormProps) {
   interface InputParam extends Parameter {
     value?: any;
     isInvalid: boolean;
@@ -97,6 +103,7 @@ function CommandForm({ command, disabled, request }: CommandFormProps) {
   const [parametersFields, setParameterFields] = useState(prepareDefaultValues);
 
   useEffect(() => {
+    let updated = false;
     parametersFields.forEach((inputParameter) => {
       if (inputParameter.key === null || inputParameter.key === undefined) {
         return;
@@ -111,16 +118,29 @@ function CommandForm({ command, disabled, request }: CommandFormProps) {
           inputParameter.value === undefined
         ) {
           delete request.parameters[inputParameter.key];
+          updated = true;
           return;
         }
       }
       if (request && !request.parameters) {
         request.parameters = {};
+        updated = true;
       }
       if (request && request.parameters) {
+        if (
+          inputParameter.key in request.parameters &&
+          request.parameters[inputParameter.key] === inputParameter.value
+        ) {
+          return;
+        }
+
         request.parameters[inputParameter.key] = inputParameter.value;
+        updated = true;
       }
     });
+    if (updated) {
+      setRequest({ ...request });
+    }
   }, [parametersFields]);
 
   const handleChange = (name: any, value: any) => {

@@ -20,12 +20,14 @@ interface CommandSelectProps {
   systems: Array<System> | null;
   requestCommand: RequestCommand | null;
   setRequestCommand: (request: RequestCommand) => void;
+  setValidCommand: (valid: boolean) => void;
 }
 
 function CommandSelect({
   systems,
   requestCommand,
   setRequestCommand,
+  setValidCommand,
 }: CommandSelectProps) {
   const [namespaces, setNamespaces] = useState<Array<string>>([]);
   const [systemNames, setSystemNames] = useState<Array<string>>([]);
@@ -45,6 +47,56 @@ function CommandSelect({
       setNamespaces(namespaceList);
     }
   }, [systems]);
+
+  useEffect(() => {
+    if (
+      !requestCommand?.command ||
+      !commands ||
+      commands.length === 0 ||
+      !commands.includes(requestCommand.command)
+    ) {
+      setValidCommand(false);
+      return;
+    }
+    if (
+      !requestCommand?.instance ||
+      !instances ||
+      instances.length === 0 ||
+      !instances.includes(requestCommand.instance)
+    ) {
+      setValidCommand(false);
+      return;
+    }
+    if (
+      !requestCommand?.version ||
+      !versions ||
+      versions.length === 0 ||
+      !versions.includes(requestCommand.version)
+    ) {
+      setValidCommand(false);
+      return;
+    }
+    if (
+      !requestCommand?.systemName ||
+      !systemNames ||
+      systemNames.length === 0 ||
+      !systemNames.includes(requestCommand.systemName)
+    ) {
+      setValidCommand(false);
+      return;
+    }
+    if (
+      !requestCommand?.namespace ||
+      !namespaces ||
+      namespaces.length === 0 ||
+      !namespaces.includes(requestCommand.namespace)
+    ) {
+      setValidCommand(false);
+      return;
+    }
+
+    setValidCommand(true);
+  }, [requestCommand, commands, instances, versions, systemNames, namespaces]);
 
   useEffect(() => {
     let namespaceList: Array<string> = [];
