@@ -23,8 +23,6 @@ from mongoengine import DoesNotExist, ValidationError
 import beer_garden
 import beer_garden.config as config
 import beer_garden.db.api as db
-import beer_garden.local_plugins
-import beer_garden.local_plugins.manager
 import beer_garden.systems
 from beer_garden.db.mongo.jobstore import construct_trigger
 from beer_garden.events import publish_event

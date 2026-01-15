@@ -1,5 +1,10 @@
 # Beer Garden Changelog
 
+# TBD
+
+TBD
+
+- Added scheduled job to check if runner is dead and update associated instance to ERROR
 
 # 3.31.1
 
