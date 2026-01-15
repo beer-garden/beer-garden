@@ -499,6 +499,21 @@ def remove_instance(
     return instance
 
 
+def check_dead_runners() -> None:
+    runners = lpm.runners()
+    for runner in runners:
+        if runner.dead:
+            system = db.query_unique(System, instances__metadata__runner_id=runner.id)
+            if system:
+                db.modify(
+                    system,
+                    query={"instances__metadata__runner_id": runner.id},
+                    **{
+                        "set__instances__S__status": "ERROR",
+                    },
+                )
+
+
 def handle_event(event: Event) -> None:
     """Handle SYSTEM events
 

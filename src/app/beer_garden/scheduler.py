@@ -23,6 +23,9 @@ from mongoengine import DoesNotExist, ValidationError
 import beer_garden
 import beer_garden.config as config
 import beer_garden.db.api as db
+import beer_garden.local_plugins
+import beer_garden.local_plugins.manager
+import beer_garden.systems
 from beer_garden.db.mongo.jobstore import construct_trigger
 from beer_garden.events import publish_event
 from beer_garden.monitor import MonitorDirectory
@@ -435,6 +438,14 @@ class MixedScheduler(object):
                 max_instances=1,
                 name="publish_garden",
             )
+
+        # Add scheduled job for checking dead runners
+        self.add_schedule(
+            beer_garden.systems.check_dead_runners,
+            interval=15,
+            max_instances=1,
+            name="check_dead_runners",
+        )
 
         if beer_garden.db.mongo.util.is_legacy_mongodb():
             # Legacy TTL Pruning for MongoDB < 6.0
