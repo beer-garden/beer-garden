@@ -146,17 +146,17 @@ export interface Garden {
   name?: string;
   status?: string;
   status_info?: any;
-  connectionType?: string;
-  receivingConnections?: any;
-  publishingConnections?: any;
+  connection_type?: string;
+  receiving_connections?: any;
+  publishing_connections?: any;
   namespaces?: any[];
   systems?: any;
-  hasParent?: boolean;
+  has_parent?: boolean;
   parent?: string;
   children?: any;
   metadata?: object;
-  defaultUser?: string;
-  sharedUsers?: boolean;
+  default_user?: string;
+  shared_users?: boolean;
   version?: string;
 }
 

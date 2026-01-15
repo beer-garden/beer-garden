@@ -7,6 +7,7 @@ import { SplitButton } from "primereact/splitbutton";
 import { MenuItem } from "primereact/menuitem";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { DataView } from "primereact/dataview";
+import { Panel } from 'primereact/panel';
 
 function GardenIndex() {
   const [garden, setGarden] = useState<Garden | null>(null);
@@ -16,6 +17,10 @@ function GardenIndex() {
     let node = {
       label: garden.name as string,
       expanded: true,
+      data: {
+      receivingConnections: garden.receiving_connections,
+      publishingConnections: garden.publishing_connections,
+      },
       children: [] as Array<any>,
     };
 
@@ -26,6 +31,7 @@ function GardenIndex() {
     }
     return node;
   };
+
   useEffect(() => {
     if (garden) {
       setGardenNode([mapNode(garden)]);
@@ -41,7 +47,7 @@ function GardenIndex() {
   }, []);
 
   const connectionTemplate = (connection: Connection, index: number) => {
-    return <div></div>;
+    return <div>{connection.api} {connection.status}</div>;
   };
 
   const connectionsListTemplate = (connections: Array<Connection>) => {
@@ -106,8 +112,10 @@ function GardenIndex() {
           label="Sync"
           icon="pi pi-plus"
           onClick={() => {}}
-          model={items}
+          model={items ? items: []}
         />
+          {node?.data?.receivingConnections.length > 0 && (<Panel header="Receiving"><DataView value={node.data.receivingConnections} listTemplate={connectionsListTemplate} /></Panel>)}
+          {node?.data?.publishingConnections.length > 0 && (<Panel header="Publishing"><DataView value={node.data.publishingConnections} listTemplate={connectionsListTemplate} /></Panel>)}
       </div>
     );
   };
