@@ -281,7 +281,7 @@ class StatusHistory(MongoModel, EmbeddedDocument):
         """Validate before saving to the database"""
 
         if isinstance(self.heartbeat, int):
-            self.heartbeat = datetime.datetime.fromtimestamp(int(self.heartbeat) / 1000)
+            self.heartbeat = datetime.datetime.fromtimestamp(self.heartbeat / 1000)
 
 
 class StatusInfo(MongoModel, EmbeddedDocument):
@@ -294,7 +294,7 @@ class StatusInfo(MongoModel, EmbeddedDocument):
         """Validate before saving to the database"""
 
         if isinstance(self.heartbeat, int):
-            self.heartbeat = datetime.datetime.fromtimestamp(int(self.heartbeat) / 1000)
+            self.heartbeat = datetime.datetime.fromtimestamp(self.heartbeat / 1000)
 
 
 def generate_objectid():
@@ -470,6 +470,11 @@ class Request(MongoModel, Document):
             },
         ],
     }
+
+    def __init__(self, *args, **kwargs):
+        if kwargs.get("parent") and isinstance(kwargs["parent"], dict):
+            kwargs["parent"] = Request(**kwargs["parent"])
+        super(Request, self).__init__(*args, **kwargs)
 
     def pre_serialize(self):
         """Pull any fields out of GridFS"""
@@ -835,6 +840,13 @@ class Request(MongoModel, Document):
         ) and ("status" in self.changed_fields or self.created):
             self.status_updated_at = get_current_time()
 
+        if isinstance(self.created_at, int):
+            self.created_at = datetime.datetime.fromtimestamp(self.created_at / 1000)
+        if isinstance(self.updated_at, int):
+            self.updated_at = datetime.datetime.fromtimestamp(self.updated_at / 1000)
+        if isinstance(self.status_updated_at, int):
+            self.status_updated_at = datetime.datetime.fromtimestamp(self.status_updated_at / 1000)
+
     def clean_update(self):
         """Ensure that the update would not result in an illegal status transition"""
         # Get the original status
@@ -877,6 +889,13 @@ class Request(MongoModel, Document):
             # Requests to child gardens have an id set from the parent, but no
             # local Request yet
             pass
+
+        if isinstance(self.created_at, int):
+            self.created_at = datetime.datetime.fromtimestamp(self.created_at / 1000)
+        if isinstance(self.updated_at, int):
+            self.updated_at = datetime.datetime.fromtimestamp(self.updated_at / 1000)
+        if isinstance(self.status_updated_at, int):
+            self.status_updated_at = datetime.datetime.fromtimestamp(self.status_updated_at / 1000)
 
 
 class Subscriber(MongoModel, EmbeddedDocument):
@@ -1332,6 +1351,13 @@ class Garden(MongoModel, Document):
         ],
     }
 
+    def __init__(self, *args, **kwargs):
+        if kwargs.get("systems") and isinstance(kwargs["systems"], list):
+            for index, system in enumerate(kwargs["systems"]):
+                if isinstance(system, dict):
+                    kwargs["systems"][index] = System(**system)
+        super(Garden, self).__init__(*args, **kwargs)
+
     def deep_save(self):
         max_history = config.get("garden.status_history", default=5)
         for connection in self.receiving_connections:
@@ -1600,16 +1626,18 @@ class User(MongoModel, Document):
 
     # _permissions_cache: Optional[dict] = None
 
+    def __init__(self, *args, **kwargs):
+        if kwargs.get("local_roles") and isinstance(kwargs["local_roles"], list):
+            for index, role in enumerate(kwargs["local_roles"]):
+                if isinstance(role, dict):
+                    kwargs["local_roles"][index] = Role(**role)
+        super(User, self).__init__(*args, **kwargs)
+
     def save(self, *args, **kwargs):
         if self.local_roles:
             for local_role in self.local_roles:
-                # TODO: This is a poor hack for dict that should be Role
-                try:
-                    if local_role.name not in self.roles:
-                        self.roles.append(local_role.name)
-                except AttributeError:
-                    if local_role.get("name") not in self.roles:
-                        self.roles.append(local_role.get("name"))
+                if local_role.name not in self.roles:
+                    self.roles.append(local_role.name)
 
         if self.roles:
             for role in self.roles:
@@ -1650,6 +1678,12 @@ class UserToken(MongoModel, Document):
             },
         ]
     }
+
+    def clean(self):
+        if isinstance(self.issued_at, int):
+            self.issued_at = datetime.datetime.fromtimestamp(self.issued_at / 1000)
+        if isinstance(self.expires_at, int):
+            self.expires_at = datetime.datetime.fromtimestamp(self.expires_at / 1000)
 
 
 class Configuration(Document):

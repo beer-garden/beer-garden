@@ -363,13 +363,13 @@ class TestGetAndValidateParameters(object):
         command_parameter = Parameter(
             key="key1", multi=False, type="String", optional=False, maximum=10
         )
-        command = Command("test", parameters=[command_parameter])
+        command = Command(name="test", parameters=[command_parameter])
         validator.get_and_validate_parameters(req, command)
 
         command_parameter = Parameter(
             key="key1", multi=False, type="String", optional=False, maximum=3
         )
-        command = Command("test", parameters=[command_parameter])
+        command = Command(name="test", parameters=[command_parameter])
 
         with pytest.raises(ModelValidationError):
             validator.get_and_validate_parameters(req, command)
@@ -380,13 +380,13 @@ class TestGetAndValidateParameters(object):
         command_parameter = Parameter(
             key="key1", multi=False, type="Integer", optional=False, maximum=10
         )
-        command = Command("test", parameters=[command_parameter])
+        command = Command(name="test", parameters=[command_parameter])
         validator.get_and_validate_parameters(req, command)
 
         command_parameter = Parameter(
             key="key1", multi=False, type="Integer", optional=False, maximum=3
         )
-        command = Command("test", parameters=[command_parameter])
+        command = Command(name="test", parameters=[command_parameter])
 
         with pytest.raises(ModelValidationError):
             validator.get_and_validate_parameters(req, command)
@@ -399,13 +399,13 @@ class TestGetAndValidateParameters(object):
         command_parameter = Parameter(
             key="key1", multi=False, type="String", optional=False, minimum=3
         )
-        command = Command("test", parameters=[command_parameter])
+        command = Command(name="test", parameters=[command_parameter])
         validator.get_and_validate_parameters(req, command)
 
         command_parameter = Parameter(
             key="key1", multi=False, type="String", optional=False, minimum=10
         )
-        command = Command("test", parameters=[command_parameter])
+        command = Command(name="test", parameters=[command_parameter])
 
         with pytest.raises(ModelValidationError):
             validator.get_and_validate_parameters(req, command)
@@ -415,10 +415,10 @@ class TestGetAndValidateParameters(object):
             system="foo", command="command1", parameters={"key1": "value"}
         )
 
-        command = Command("test", parameters=[], allow_any_kwargs=True)
+        command = Command(name="test", parameters=[], allow_any_kwargs=True)
         validator.get_and_validate_parameters(req, command)
 
-        command = Command("test", parameters=[], allow_any_kwargs=False)
+        command = Command(name="test", parameters=[], allow_any_kwargs=False)
 
         with pytest.raises(ModelValidationError):
             validator.get_and_validate_parameters(req, command)
@@ -429,13 +429,13 @@ class TestGetAndValidateParameters(object):
         command_parameter = Parameter(
             key="key1", multi=False, type="Integer", optional=False, minimum=3
         )
-        command = Command("test", parameters=[command_parameter])
+        command = Command(name="test", parameters=[command_parameter])
         validator.get_and_validate_parameters(req, command)
 
         command_parameter = Parameter(
             key="key1", multi=False, type="Integer", optional=False, minimum=10
         )
-        command = Command("test", parameters=[command_parameter])
+        command = Command(name="test", parameters=[command_parameter])
 
         with pytest.raises(ModelValidationError):
             validator.get_and_validate_parameters(req, command)
@@ -448,13 +448,13 @@ class TestGetAndValidateParameters(object):
         command_parameter = Parameter(
             key="key1", multi=False, type="String", optional=False, regex=r"^Hi.*"
         )
-        command = Command("test", parameters=[command_parameter])
+        command = Command(name="test", parameters=[command_parameter])
         validator.get_and_validate_parameters(req, command)
 
         command_parameter = Parameter(
             key="key1", multi=False, type="String", optional=False, regex=r"^Hello.*"
         )
-        command = Command("test", parameters=[command_parameter])
+        command = Command(name="test", parameters=[command_parameter])
 
         with pytest.raises(ModelValidationError):
             validator.get_and_validate_parameters(req, command)
@@ -466,7 +466,7 @@ class TestGetAndValidateParameters(object):
         command_parameter = Parameter(
             key="key1", multi=False, type="String", regex=r"^Hi.*", nullable=True
         )
-        command = Command("test", parameters=[command_parameter])
+        command = Command(name="test", parameters=[command_parameter])
         validator.get_and_validate_parameters(req, command)
 
     def test_validate_minimum_nullable(self, validator):
@@ -481,7 +481,7 @@ class TestGetAndValidateParameters(object):
             minimum=3,
             nullable=True,
         )
-        command = Command("test", parameters=[command_parameter])
+        command = Command(name="test", parameters=[command_parameter])
         validator.get_and_validate_parameters(req, command)
 
     def test_validate_maximum_nullable(self, validator):
@@ -496,7 +496,7 @@ class TestGetAndValidateParameters(object):
             minimum=3,
             nullable=True,
         )
-        command = Command("test", parameters=[command_parameter])
+        command = Command(name="test", parameters=[command_parameter])
         validator.get_and_validate_parameters(req, command)
 
 
