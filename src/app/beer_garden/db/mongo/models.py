@@ -1176,6 +1176,12 @@ class DateTrigger(MongoModel, EmbeddedDocument):
         required=False, default="utc", chocies=zoneinfo.available_timezones()
     )
 
+    def clean(self):
+        """Validate before saving to the database"""
+
+        if isinstance(self.run_date, int):
+            self.run_date = datetime.datetime.fromtimestamp(self.run_date / 1000)
+
 
 class IntervalTrigger(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.IntervalTrigger
@@ -1192,6 +1198,14 @@ class IntervalTrigger(MongoModel, EmbeddedDocument):
     )
     jitter = IntField(required=False)
     reschedule_on_finish = BooleanField(required=False, default=False)
+
+    def clean(self):
+        """Validate before saving to the database"""
+
+        if isinstance(self.start_date, int):
+            self.start_date = datetime.datetime.fromtimestamp(self.start_date / 1000)
+        if isinstance(self.end_date, int):
+            self.end_date = datetime.datetime.fromtimestamp(self.end_date / 1000)
 
 
 class CronTrigger(MongoModel, EmbeddedDocument):
@@ -1240,6 +1254,10 @@ class Replication(MongoModel, Document):
             },
         ],
     }
+
+    def clean(self):
+        if isinstance(self.expires_at, int):
+            self.expires_at = datetime.datetime.fromtimestamp(self.expires_at / 1000)
 
 
 class Job(MongoModel, Document):
@@ -1313,6 +1331,9 @@ class Job(MongoModel, Document):
                 f"Cannot save job. Expected trigger type {self.trigger_type} but "
                 f"actual type was {type(self.trigger)}"
             )
+
+        if isinstance(self.next_run_time, int):
+            self.next_run_time = datetime.datetime.fromtimestamp(self.next_run_time / 1000)
 
 
 class Connection(MongoModel, EmbeddedDocument):
@@ -1518,6 +1539,10 @@ class File(MongoModel, Document):
     status = StringField()
     created_at = DateTimeField(default=get_current_time, required=True)
     root_command_type = StringField()
+
+    def clean(self):
+        if isinstance(self.created_at, int):
+            self.created_at = datetime.datetime.fromtimestamp(self.created_at / 1000)
 
 
 class FileChunk(MongoModel, Document):
