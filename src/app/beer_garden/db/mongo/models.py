@@ -1289,6 +1289,16 @@ class Job(MongoModel, Document):
     max_instances = IntField(default=3, min_value=1)
     timeout = IntField()
 
+    def __init__(self, *args, **kwargs):
+        if kwargs.get("trigger") and isinstance(kwargs["trigger"], dict):
+            if kwargs.get("trigger_type") not in self.TRIGGER_MODEL_MAPPING:
+                raise ModelValidationError(
+                    f"Cannot save job. No mongo model for trigger type {self.trigger_type}"
+                )
+            # Convert dict to valid trigger model
+            kwargs["trigger"] = self.TRIGGER_MODEL_MAPPING[kwargs["trigger_type"]](**kwargs["trigger"])
+        super(Job, self).__init__(*args, **kwargs)
+
     def clean(self):
         """Validate before saving to the database"""
 
