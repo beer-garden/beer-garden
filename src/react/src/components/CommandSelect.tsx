@@ -1,7 +1,6 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Dropdown } from "primereact/dropdown";
 import { System, Command, Instance } from "../models/brewtils-types";
-import { GetSystemList } from "../services/system_service";
 
 interface RequestCommand {
   namespace: string | null;
@@ -35,18 +34,37 @@ function CommandSelect({
   const [instances, setInstances] = useState<Array<string>>([]);
   const [commands, setCommands] = useState<Array<string>>([]);
 
-  useEffect(() => {
-    if (systems && namespaces.length == 0) {
-      let namespaceList: Array<string> = [];
+  const [selectedNamespace, setSelectedNamespace] = useState<string | null>(
+    requestCommand?.namespace ?? null,
+  );
+  const [selectedSystemName, setSelectedSystemName] = useState<string | null>(
+    requestCommand?.systemName ?? null,
+  );
+  const [selectedVersion, setSelectedVersion] = useState<string | null>(
+    requestCommand?.version ?? null,
+  );
+  const [selectedInstance, setSelectedInstance] = useState<string | null>(
+    requestCommand?.instance ?? null,
+  );
+  const [selectedCommand, setSelectedCommand] = useState<string | null>(
+    requestCommand?.command ?? null,
+  );
 
-      systems.forEach((system: System) => {
-        if (!namespaceList.includes(system.namespace as string)) {
-          namespaceList.push(system.namespace as string);
-        }
-      });
-      setNamespaces(namespaceList);
-    }
-  }, [systems]);
+  useEffect(() => {
+    setRequestCommand({
+      namespace: selectedNamespace,
+      systemName: selectedSystemName,
+      version: selectedVersion,
+      instance: selectedInstance,
+      command: selectedCommand,
+    });
+  }, [
+    selectedNamespace,
+    selectedSystemName,
+    selectedVersion,
+    selectedInstance,
+    selectedCommand,
+  ]);
 
   useEffect(() => {
     if (
@@ -166,166 +184,96 @@ function CommandSelect({
     setInstances(instanceList);
     setCommands(commandList);
 
-    let updatedRequest = {
-      namespace: requestCommand?.namespace ?? null,
-      systemName: requestCommand?.systemName ?? null,
-      version: requestCommand?.version ?? null,
-      instance: requestCommand?.instance ?? null,
-      command: requestCommand?.command ?? null,
-    };
-
-    let pushUpdate = false;
-
-    if (
-      namespaceList.length === 1 &&
-      updatedRequest.namespace !== namespaceList[0]
-    ) {
-      pushUpdate = true;
-      updatedRequest.namespace = namespaceList[0];
+    if (namespaceList.length === 1 && selectedNamespace !== namespaceList[0]) {
+      setSelectedNamespace(namespaceList[0]);
     } else if (
       namespaceList.length > 0 &&
-      updatedRequest.namespace !== null &&
-      !namespaceList.includes(updatedRequest.namespace)
+      selectedNamespace !== null &&
+      !namespaceList.includes(selectedNamespace)
     ) {
-      pushUpdate = true;
-      updatedRequest.namespace = null;
+      setSelectedNamespace(null);
     }
 
     if (
       systemNameList.length === 1 &&
-      updatedRequest.systemName !== systemNameList[0]
+      selectedSystemName !== systemNameList[0]
     ) {
-      pushUpdate = true;
-      updatedRequest.systemName = systemNameList[0];
+      setSelectedSystemName(systemNameList[0]);
     } else if (
       systemNameList.length > 0 &&
-      updatedRequest.systemName !== null &&
-      !systemNameList.includes(updatedRequest.systemName)
+      selectedSystemName !== null &&
+      !systemNameList.includes(selectedSystemName)
     ) {
-      pushUpdate = true;
-      updatedRequest.systemName = null;
+      setSelectedSystemName(null);
     }
 
     if (
       systemVersionList.length === 1 &&
-      updatedRequest.version !== systemVersionList[0]
+      selectedVersion !== systemVersionList[0]
     ) {
-      pushUpdate = true;
-      updatedRequest.version = systemVersionList[0];
+      setSelectedVersion(systemVersionList[0]);
     } else if (
       systemVersionList.length > 0 &&
-      updatedRequest.version !== null &&
-      !systemVersionList.includes(updatedRequest.version)
+      selectedVersion !== null &&
+      !systemVersionList.includes(selectedVersion)
     ) {
-      pushUpdate = true;
-      updatedRequest.version = null;
+      setSelectedVersion(null);
     }
 
-    if (
-      instanceList.length === 1 &&
-      updatedRequest.instance !== instanceList[0]
-    ) {
-      pushUpdate = true;
-      updatedRequest.instance = instanceList[0];
+    if (instanceList.length === 1 && selectedInstance !== instanceList[0]) {
+      setSelectedInstance(instanceList[0]);
     } else if (
       instanceList.length > 0 &&
-      updatedRequest.instance !== null &&
-      !instanceList.includes(updatedRequest.instance)
+      selectedInstance !== null &&
+      !instanceList.includes(selectedInstance)
     ) {
-      pushUpdate = true;
-      updatedRequest.instance = null;
+      setSelectedInstance(null);
     }
 
-    if (commandList.length === 1 && updatedRequest.command !== commandList[0]) {
-      pushUpdate = true;
-      updatedRequest.command = commandList[0];
+    if (commandList.length === 1 && selectedCommand !== commandList[0]) {
+      setSelectedCommand(commandList[0]);
     } else if (
       commandList.length > 0 &&
-      updatedRequest.command !== null &&
-      !commandList.includes(updatedRequest.command)
+      selectedCommand !== null &&
+      !commandList.includes(selectedCommand)
     ) {
-      pushUpdate = true;
-      updatedRequest.command = null;
+      setSelectedCommand(null);
     }
-
-    if (pushUpdate) {
-      setRequestCommand(updatedRequest);
-    }
-  }, [requestCommand]);
+  }, [systems, requestCommand]);
 
   return (
     <div className="border-2 border-dashed surface-border border-round surface-ground flex-auto flex justify-content-center align-items-center font-medium">
       <Dropdown
-        value={requestCommand?.namespace}
-        onChange={(e) => {
-          setRequestCommand({
-            namespace: e.value as string,
-            systemName: requestCommand?.systemName ?? null,
-            version: requestCommand?.version ?? null,
-            instance: requestCommand?.instance ?? null,
-            command: requestCommand?.command ?? null,
-          });
-        }}
+        value={selectedNamespace}
+        onChange={(e) => setSelectedNamespace(e.value)}
         options={namespaces}
         optionLabel="Namespace"
         placeholder="Select Namespace"
       />
       <Dropdown
-        value={requestCommand?.systemName}
-        onChange={(e) => {
-          setRequestCommand({
-            namespace: requestCommand?.namespace ?? null,
-            systemName: e.value as string,
-            version: requestCommand?.version ?? null,
-            instance: requestCommand?.instance ?? null,
-            command: requestCommand?.command ?? null,
-          });
-        }}
+        value={selectedSystemName}
+        onChange={(e) => setSelectedSystemName(e.value)}
         options={systemNames}
         optionLabel="System"
         placeholder="Select System"
       />
       <Dropdown
-        value={requestCommand?.version}
-        onChange={(e) => {
-          setRequestCommand({
-            namespace: requestCommand?.namespace ?? null,
-            systemName: requestCommand?.systemName ?? null,
-            version: e.value as string,
-            instance: requestCommand?.instance ?? null,
-            command: requestCommand?.command ?? null,
-          });
-        }}
+        value={selectedVersion}
+        onChange={(e) => setSelectedVersion(e.value)}
         options={versions}
         optionLabel="Version"
         placeholder="Select Version"
       />
       <Dropdown
-        value={requestCommand?.instance}
-        onChange={(e) => {
-          setRequestCommand({
-            namespace: requestCommand?.namespace ?? null,
-            systemName: requestCommand?.systemName ?? null,
-            version: requestCommand?.version ?? null,
-            instance: e.value as string,
-            command: requestCommand?.command ?? null,
-          });
-        }}
+        value={selectedInstance}
+        onChange={(e) => setSelectedInstance(e.value)}
         options={instances}
         optionLabel="Instance"
         placeholder="Select Instance"
       />
       <Dropdown
-        value={requestCommand?.command}
-        onChange={(e) => {
-          setRequestCommand({
-            namespace: requestCommand?.namespace ?? null,
-            systemName: requestCommand?.systemName ?? null,
-            version: requestCommand?.version ?? null,
-            instance: requestCommand?.instance ?? null,
-            command: e.value as string,
-          });
-        }}
+        value={selectedCommand}
+        onChange={(e) => setSelectedCommand(e.value)}
         options={commands}
         optionLabel="Command"
         placeholder="Select Command"

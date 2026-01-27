@@ -4,6 +4,16 @@ export const GetSystemList = async (
   queryData?: any,
   headerData?: any,
 ): Promise<System[]> => {
+  if (
+    (queryData === null || queryData === undefined) &&
+    (headerData === null || headerData === undefined)
+  ) {
+    const storedValue = sessionStorage.getItem("systems");
+
+    if (storedValue !== null) {
+      return JSON.parse(storedValue) as Array<System>;
+    }
+  }
   try {
     const headers = new Headers();
     if (headerData) {
@@ -36,6 +46,12 @@ export const GetSystemList = async (
       throw new Error(`HTTP error: Status ${response.status}`);
     }
     const data = (await response.json()) as System[];
+    if (
+      (queryData === null || queryData === undefined) &&
+      (headerData === null || headerData === undefined)
+    ) {
+      sessionStorage.setItem("systems", JSON.stringify(data));
+    }
     return data;
   } catch (error) {
     // Handle network errors or the error thrown above

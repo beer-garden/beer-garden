@@ -1,10 +1,5 @@
-import { System, Instance } from "../models/brewtils-types";
+import { System } from "../models/brewtils-types";
 
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "primereact/button";
-import { Card } from "primereact/card";
-import { classNames } from "primereact/utils";
-import { DataView } from "primereact/dataview";
 import "primeflex/primeflex.css";
 import { useState, useEffect, Children } from "react";
 import { GetSystemList } from "../services/system_service";

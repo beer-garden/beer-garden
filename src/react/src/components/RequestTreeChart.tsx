@@ -1,11 +1,9 @@
 import { TreeTable } from "primereact/treetable";
 import { Column } from "primereact/column";
 import { Request } from "../models/brewtils-types";
-import { Fieldset } from "primereact/fieldset";
 import { Button } from "primereact/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useState, useEffect } from "react";
-import { GetRequest, DeleteRequest } from "../services/request_service";
+import { DeleteRequest } from "../services/request_service";
 
 function parseRequest(request: Request, currentRequestId?: string) {
   let item = {

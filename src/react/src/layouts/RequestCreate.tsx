@@ -1,15 +1,8 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Stepper } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
 import { Button } from "primereact/button";
-import { Dropdown } from "primereact/dropdown";
-import {
-  Request,
-  System,
-  Command,
-  Instance,
-  Job,
-} from "../models/brewtils-types";
+import { Request, System, Command, Job } from "../models/brewtils-types";
 import { GetSystemList } from "../services/system_service";
 import CommandSelect from "../components/CommandSelect";
 import { GetRequest } from "../services/request_service";

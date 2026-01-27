@@ -1,14 +1,10 @@
-import Container from "react-bootstrap/Container";
-
-import { MenuItem } from "primereact/menuitem";
-import React from "react";
 import { MegaMenu } from "primereact/megamenu";
-import { InputText } from "primereact/inputtext";
 import { Ripple } from "primereact/ripple";
 import { Button } from "primereact/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import CurrentRequestsTemplate from "./components/CurrentRequestsTemplate";
 
-function NavigationMenu() {
+function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
   const itemRenderer = (item: any, options: any) => {
     if (item.root) {
       return (
@@ -140,6 +136,7 @@ function NavigationMenu() {
         model={items}
         orientation="horizontal"
         start={start}
+        end={<CurrentRequestsTemplate listeners={listeners} />}
         breakpoint="960px"
         className="p-3 surface-0 shadow-2"
         style={{ borderRadius: "3rem" }}

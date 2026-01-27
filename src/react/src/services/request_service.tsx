@@ -1,4 +1,5 @@
 import { Request } from "../models/brewtils-types";
+import { v4 as uuidv4 } from "uuid";
 
 export const GetRequestList = async (
   headerData?: any,
@@ -86,6 +87,16 @@ export const PostRequest = async (
 
     headers.append("Content-Type", "application/json");
 
+    let sessionUUID = localStorage.getItem("sessionUUID");
+    if (!sessionUUID) {
+      sessionUUID = uuidv4();
+      localStorage.setItem("sessionUUID", sessionUUID);
+    }
+
+    request.metadata = request.metadata
+      ? { ...request.metadata, ...{ sessionUUID: sessionUUID } }
+      : { sessionUUID: sessionUUID };
+
     if (waitForCompletion === null || waitForCompletion === undefined) {
       waitForCompletion = false;
     }
@@ -106,6 +117,16 @@ export const PostRequest = async (
       throw new Error(`HTTP error: Status ${response.status}`);
     }
     const data = (await response.json()) as Request;
+
+    // const storedRequests = localStorage.getItem("currentRequests");
+    // if (storedRequests) {
+    //   let parsedRequests = JSON.parse(storedRequests) as Array<Request>;
+
+    //   parsedRequests.push(data);
+    //   localStorage.setItem("currentRequests", JSON.stringify(parsedRequests));
+    // } else {
+    //   localStorage.setItem("currentRequests", JSON.stringify([data]));
+    // }
 
     return data;
   } catch (error) {
@@ -141,4 +162,31 @@ export const DeleteRequest = async (request: Request, headerData?: any) => {
     console.error("Error fetching Requests:", error);
     throw error; // Re-throw to be handled by the component/hook
   }
+};
+
+export const WatchRequest = (
+  request: Request,
+  setRequest: (request: Request) => void,
+) => {
+  const eventUrl =
+    (window.location.protocol === "https:" ? "wss://" : "ws://") +
+    window.location.host +
+    "/" +
+    `api/v1/socket/events/`;
+  const current = new WebSocket("ws://localhost:2337/api/v1/socket/events/");
+
+  current.onmessage = (e: any) => {
+    const message = JSON.parse(e.data);
+
+    if (message.payload_type === "Request") {
+      if (message.payload.id && message.payload.id === request.id) {
+        setRequest(message.payload as Request);
+        if (!["CREATED", "IN_PROGRESS"].includes(message.payload.status)) {
+          current.close();
+        }
+      }
+    }
+  };
+
+  return current;
 };

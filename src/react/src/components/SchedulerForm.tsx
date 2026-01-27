@@ -6,7 +6,7 @@ import {
   Job,
 } from "../models/brewtils-types";
 import { SelectButton } from "primereact/selectbutton";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { InputText } from "primereact/inputtext";
 import { Checkbox } from "primereact/checkbox";
 import { InputNumber } from "primereact/inputnumber";

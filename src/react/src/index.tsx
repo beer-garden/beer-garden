@@ -5,7 +5,6 @@ import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 
 // import 'bootstrap/dist/css/bootstrap.min.css';
-import NavigationMenu from "./Navigation";
 import { library } from "@fortawesome/fontawesome-svg-core";
 import * as Icons from "@fortawesome/free-solid-svg-icons";
 
@@ -34,9 +33,9 @@ library.add(...(iconList as IconDefinitionOrPack[]));
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement,
 );
+
 root.render(
   <React.StrictMode>
-    <NavigationMenu />
     <App />
   </React.StrictMode>,
 );

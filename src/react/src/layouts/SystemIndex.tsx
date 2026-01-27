@@ -12,9 +12,11 @@ import { GetSystemList } from "../services/system_service";
 function SystemIndex() {
   const [systems, setSystems] = useState<Array<System>>([]);
 
-  GetSystemList().then((data: Array<System>) => {
-    setSystems(data);
-  });
+  useEffect(() => {
+    GetSystemList().then((data: Array<System>) => {
+      setSystems(data);
+    });
+  }, []);
 
   const instanceTemplate = (instance: Instance, index: number) => {
     return (

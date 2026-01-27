@@ -12,9 +12,21 @@ module.exports = function (app) {
         Object.keys(req.headers).forEach((key) => {
           proxyReq.setHeader(key, req.headers[key]);
         });
-        // proxyReq.headers = req.headers;
-        proxyReq.setHeader("X-Added-Header", "my-custom-value");
-        proxyReq.setHeader("start", "3");
+      },
+    }),
+  );
+  app.use(
+    "/api/v1/socket/events",
+    createProxyMiddleware({
+      target: "ws://localhost:2337/api/v1/socket/events",
+      changeOrigin: true, // Needed for virtual hosted sites
+      ws: true,
+      onProxyReq: (proxyReq, req, res) => {
+        // Forward custom headers from the original request or add new ones
+        // Convert all header keys to lowercase
+        Object.keys(req.headers).forEach((key) => {
+          proxyReq.setHeader(key, req.headers[key]);
+        });
       },
     }),
   );

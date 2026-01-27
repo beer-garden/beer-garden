@@ -13,3 +13,13 @@ export interface Config {
   action_ttl: number;
   info_ttl: number;
 }
+
+export interface Listener {
+  listener: (message: any) => void;
+  props: Record<string, any>;
+}
+
+export interface ScratchPadValue {
+  padType: string | null;
+  values: any;
+}

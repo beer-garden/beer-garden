@@ -3,15 +3,10 @@ import { Request, System } from "../models/brewtils-types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { BreadCrumb } from "primereact/breadcrumb";
 import RequestTreeChart from "../components/RequestTreeChart";
-import { Steps } from "primereact/steps";
-import { Toast } from "primereact/toast";
 import { useState, useRef, use, useEffect } from "react";
 import { MenuItem } from "primereact/menuitem";
-import { Button } from "primereact/button";
-import { Menubar } from "primereact/menubar";
 import CommandForm from "../components/CommandForm";
 import RequestOutput from "../components/RequestOutput";
-import { Splitter, SplitterPanel } from "primereact/splitter";
 import { Stepper } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
 import { Message } from "primereact/message";
@@ -127,12 +122,29 @@ function RequestHeader(request: Request) {
   return <BreadCrumb model={items} />;
 }
 
-function RequestView() {
+function RequestView({ listeners }: { listeners: Record<string, any> }) {
   const { requestId } = useParams<{ requestId: string }>();
   const [request, setRequest] = useState<Request | null>(null);
   const [system, setSystem] = useState<System | null>(null);
   const [command, setCommand] = useState<any>(null);
   const [rootRequest, setRootRequest] = useState<Request | null>(null);
+
+  const rootRequestId = useRef<string | null>(null);
+
+  const MonitorRequestId = (message: any) => {
+    if (message.payload_type === "Request") {
+      if (requestId && message.payload.id && message.payload.id === requestId) {
+        setRequest(message.payload as Request);
+      }
+      if (
+        rootRequestId.current &&
+        message.payload.id &&
+        message.payload.id === rootRequestId.current
+      ) {
+        setRootRequest(message.payload as Request);
+      }
+    }
+  };
 
   function loadRootRequest(check_request: Request) {
     if (
@@ -145,6 +157,12 @@ function RequestView() {
       });
     } else {
       setRootRequest(check_request);
+      if (check_request.id) {
+        rootRequestId.current = check_request.id;
+        if (!(check_request.id in listeners)) {
+          listeners[check_request.id] = { listener: MonitorRequestId };
+        }
+      }
     }
   }
 
@@ -153,11 +171,29 @@ function RequestView() {
       GetRequest(requestId, {})
         .then((data: Request) => {
           setRequest(data);
+
+          if (
+            !(requestId in listeners) &&
+            data.status &&
+            ["CREATED", "IN_PROGRESS"].includes(data.status)
+          ) {
+            listeners[requestId] = {
+              listener: MonitorRequestId,
+            };
+          }
         })
         .catch((error) => {
           console.error("Error fetching request:", error);
         });
     }
+    return () => {
+      if (requestId) {
+        delete listeners[requestId];
+      }
+      if (rootRequestId.current) {
+        delete listeners[rootRequestId.current];
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -167,6 +203,10 @@ function RequestView() {
         ["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(request.status)
       ) {
         setActiveIndex(1);
+
+        if (requestId in listeners) {
+          delete listeners[requestId];
+        }
       }
 
       loadRootRequest(request);

@@ -1,5 +1,5 @@
 import { Request } from "../models/brewtils-types";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { GetRequestList } from "../services/request_service";
 import { DataTable } from "primereact/datatable";
@@ -11,12 +11,22 @@ import { Button } from "primereact/button";
 
 import { useLocation } from "react-router-dom";
 
-function RequestIndex() {
+import { PushToScratchPad } from "../services/scratchpad_service";
+
+function RequestIndex({
+  listeners,
+  setReloadScratchPad,
+}: {
+  listeners: Record<string, any>;
+  setReloadScratchPad: any;
+}) {
   const [requests, setRequests] = useState<Array<Request>>([]);
+  const altRequests = useRef<Array<Request>>([]);
   const [loading, setLoading] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
   const [lazyParams, setLazyParams] = useState({ first: 0, rows: 10, page: 0 });
   let location = useLocation();
+  const [recordsUpdated, setRecordsUpdated] = useState(false);
 
   const [filters, setFilters] = useState({
     command_display_name: {
@@ -31,6 +41,11 @@ function RequestIndex() {
     created_at: { value: null, matchMode: FilterMatchMode.DATE_IS },
     comment: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
   });
+
+  const setDisplayRequests = (requests: Array<Request>) => {
+    setRequests(requests);
+    altRequests.current = requests;
+  };
 
   const generateFilterQuery = () => {
     let filterQuery: Record<string, any> = {};
@@ -138,7 +153,8 @@ function RequestIndex() {
     GetRequestList(queryHeaders).then((data: [Array<Request>, Headers]) => {
       const [requests, headers] = data;
 
-      setRequests(requests);
+      setDisplayRequests(requests);
+      setRecordsUpdated(false);
 
       if (headers.has("Recordstotal")) {
         setTotalRecords(parseInt(headers.get("Recordstotal") || "0", 10));
@@ -149,9 +165,58 @@ function RequestIndex() {
     });
   };
 
-  useEffect(() => {
-    lazyLoadData();
-  }, [lazyParams, filters]);
+  const MonitorNewRequests = (message: any) => {
+    if (message.payload_type === "Request") {
+      let updateList = false;
+      let updatedRequests = [] as Array<Request>;
+
+      for (const request of altRequests.current) {
+        if (
+          message.payload.id === request.id &&
+          message.payload.status &&
+          request.status &&
+          request.status !== message.payload.status
+        ) {
+          if (
+            (request.status === "IN_PROGRESS" &&
+              ["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(
+                message.payload.status,
+              )) ||
+            (request.status === "RECEIVED" &&
+              [
+                "IN_PROGRESS",
+                "CANCELED",
+                "SUCCESS",
+                "ERROR",
+                "INVALID",
+              ].includes(message.payload.status)) ||
+            (request.status === "CREATED" &&
+              [
+                "RECEIVED",
+                "IN_PROGRESS",
+                "CANCELED",
+                "SUCCESS",
+                "ERROR",
+                "INVALID",
+              ].includes(message.payload.status))
+          ) {
+            updateList = true;
+            updatedRequests.push(message.payload);
+          } else {
+            updatedRequests.push(request);
+          }
+        } else {
+          updatedRequests.push(request);
+        }
+      }
+
+      if (updateList) {
+        setDisplayRequests(updatedRequests);
+      } else {
+        setRecordsUpdated(true);
+      }
+    }
+  };
 
   const onPage = (event: any) => {
     setLazyParams(event);
@@ -202,11 +267,24 @@ function RequestIndex() {
   const header = (
     <div className="flex flex-wrap align-items-center justify-content-between gap-2">
       <span className="text-xl text-900 font-bold">Requests</span>
-      <Button rounded raised onClick={lazyLoadData}>
-        <FontAwesomeIcon icon="refresh" />{" "}
+      <Button
+        rounded
+        raised
+        onClick={lazyLoadData}
+        tooltip={recordsUpdated ? "New updates available" : "Refresh"}
+      >
+        {recordsUpdated && <FontAwesomeIcon icon={"circle-exclamation"} />}
+        <FontAwesomeIcon icon="refresh" />
       </Button>
     </div>
   );
+
+  const PushToPad = (request: Request) => {
+    if (request.id) {
+      PushToScratchPad("REQUEST_VIEW", { requestId: request.id });
+      setReloadScratchPad(new Date());
+    }
+  };
 
   const commandNameTemplate = (request: Request) => {
     return (
@@ -216,13 +294,35 @@ function RequestIndex() {
           raised
           link
           onClick={() => window.open("/request/" + request.id, "_self")}
+          tooltip={"Open Request " + request.command_display_name}
         >
           <FontAwesomeIcon icon="arrow-up-right-from-square" />{" "}
         </Button>{" "}
+        <Button
+          rounded
+          raised
+          link
+          onClick={() => PushToPad(request)}
+          tooltip={"Push to Pad " + request.command_display_name}
+        >
+          <FontAwesomeIcon icon="arrow-right-from-bracket" />{" "}
+        </Button>
         {request.command_display_name}
       </div>
     );
   };
+
+  useEffect(() => {
+    lazyLoadData();
+  }, [lazyParams, filters]);
+
+  useEffect(() => {
+    listeners["requestIndex"] = { listener: MonitorNewRequests };
+    return () => {
+      // Cleanup function for when component unmounts
+      delete listeners["requestIndex"];
+    };
+  }, []);
 
   return (
     <div>
