@@ -36,6 +36,7 @@ function ScratchPad({
           updateValues={(values) => {
             updateIndex(index, values);
           }}
+          reloadScratchPad={reloadScratchPad}
         />
       );
     } else if (value.padType === "REQUEST_VIEW") {
@@ -45,6 +46,7 @@ function ScratchPad({
           updateValues={(values) => {
             updateIndex(index, values);
           }}
+          reloadScratchPad={reloadScratchPad}
           listeners={listeners}
         />
       );

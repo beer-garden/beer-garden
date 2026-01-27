@@ -7,13 +7,19 @@ import { Request, System, Command } from "../../models/brewtils-types";
 import { GetSystemList } from "../../services/system_service";
 import { Toast } from "primereact/toast";
 import RequestOutput from "../RequestOutput";
-import { GetRequest, DeleteRequest } from "../../services/request_service";
+import {
+  GetRequest,
+  DeleteRequest,
+  PostRequest,
+} from "../../services/request_service";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Badge } from "primereact/badge";
 import { Stepper } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
 import { Message } from "primereact/message";
+import { SplitButton } from "primereact/splitbutton";
+import { PushToScratchPad } from "../../services/scratchpad_service";
 
 interface RequestCommand {
   namespace: string | null;
@@ -34,10 +40,12 @@ function UnformattedInput(request: Request) {
 function RequestViewCard({
   values,
   updateValues,
+  reloadScratchPad,
   listeners,
 }: {
   values: any;
   updateValues: (values: any) => void;
+  reloadScratchPad: () => void;
   listeners: Record<string, any>;
 }) {
   const requestId = useRef<string | null | undefined>(null);
@@ -96,33 +104,6 @@ function RequestViewCard({
     );
   };
 
-  const optionsTemplate = (request: Request) => {
-    return (
-      <div>
-        <Button
-          rounded
-          raised
-          link
-          onClick={() => window.open("/request/" + request.id, "_self")}
-        >
-          <FontAwesomeIcon icon="arrow-up-right-from-square" />
-        </Button>
-        <Button
-          rounded
-          raised
-          link
-          onClick={() => {
-            DeleteRequest(request).then(() => {
-              // getCurrentRequests();
-            });
-          }}
-        >
-          <FontAwesomeIcon icon="xmark" />
-        </Button>
-      </div>
-    );
-  };
-
   const CardTitle = () => {
     let title = "Request View";
     if (request?.namespace && request?.system && request?.instance_name) {
@@ -140,9 +121,69 @@ function RequestViewCard({
     }
     return title;
   };
+
+  const submitRequest = (openRequest: boolean, addToScratchPad?: boolean) => {
+    if (request) {
+      PostRequest({
+        namespace: request?.namespace || undefined,
+        system: request?.system || undefined,
+        system_version: request?.system_version || undefined,
+        instance_name: request?.instance_name || undefined,
+        command: request?.command || undefined,
+        parameters: request?.parameters || {},
+      } as Request).then((response_request: any) => {
+        if (openRequest) {
+          if (addToScratchPad) {
+            PushToScratchPad("REQUEST_VIEW", {
+              requestId: response_request.id,
+              request: response_request,
+            });
+            reloadScratchPad();
+          } else {
+            window.open("/request/" + response_request.id, "_self");
+          }
+        } else {
+          toast?.current?.show({
+            severity: "info",
+            summary: "Info",
+            detail: "Request Created: " + response_request.id,
+          });
+        }
+      });
+    }
+  };
+
+  const cloneAndPushToScratchPad = () => {
+    if (request) {
+      PushToScratchPad("REQUEST", {
+        requestCommand: {
+          namespace: request.namespace ?? null,
+          systemName: request.system ?? null,
+          version: request.system_version ?? null,
+          instance: request.instance_name ?? null,
+          command: request.command ?? null,
+        },
+        request: {
+          namespace: request.namespace,
+          system: request.system,
+          system_version: request.system_version,
+          instance_name: request.instance_name,
+          command: request.command,
+          parameters: request.parameters,
+        },
+      });
+      reloadScratchPad();
+    }
+  };
+
   useEffect(() => {
     requestId.current = values.requestId ? values.requestId : null;
-    if (!request && requestId.current) {
+    if (
+      (!request ||
+        (request?.status &&
+          ["CREATED", "IN_PROGRESS"].includes(request.status))) &&
+      requestId.current
+    ) {
       GetRequest(requestId.current, {})
         .then((data: Request) => {
           setRequest(data);
@@ -218,7 +259,7 @@ function RequestViewCard({
           <DataTable value={[request]}>
             <Column field="command" header="Command"></Column>
             <Column header="Status" body={statusTemplate}></Column>
-            <Column header="Options" body={optionsTemplate}></Column>
+            {/* <Column header="Options" body={optionsTemplate}></Column> */}
           </DataTable>
           <Stepper
             ref={stepperRef}
@@ -244,12 +285,42 @@ function RequestViewCard({
           </Stepper>
           {/* <RequestOutput {...request} /> */}
 
-          <Button
-            label="Open Request"
-            severity="success"
-            icon="pi pi-arrow-right"
-            iconPos="right"
-            onClick={(e) => {}}
+          <SplitButton
+            label="Open"
+            icon="pi pi-plus"
+            onClick={() => {
+              window.open("/request/" + request.id, "_self");
+            }}
+            model={[
+              {
+                label: "Run Again",
+                // icon: <FontAwesomeIcon icon="arrow-up-right-from-square" />,
+                command: () => {
+                  submitRequest(false);
+                },
+              },
+              {
+                label: "Run Again and Add to Scratch Pad",
+                // icon: <FontAwesomeIcon icon="arrow-up-from-bracket" />,
+                command: () => {
+                  submitRequest(true, true);
+                },
+              },
+              {
+                label: "Clone Request and Open",
+                // icon: <FontAwesomeIcon icon="arrow-up-from-bracket" />,
+                command: () => {
+                  window.open("/recreate/" + request.id, "_self");
+                },
+              },
+              {
+                label: "Clone Request and Add to Scratch Pad",
+                // icon: <FontAwesomeIcon icon="arrow-up-from-bracket" />,
+                command: () => {
+                  cloneAndPushToScratchPad();
+                },
+              },
+            ]}
           />
         </div>
       )}

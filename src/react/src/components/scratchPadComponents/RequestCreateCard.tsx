@@ -7,6 +7,8 @@ import { Request, System, Command } from "../../models/brewtils-types";
 import { GetSystemList } from "../../services/system_service";
 import { PostRequest } from "../../services/request_service";
 import { Toast } from "primereact/toast";
+import { SplitButton } from "primereact/splitbutton";
+import { PushToScratchPad } from "../../services/scratchpad_service";
 
 interface RequestCommand {
   namespace: string | null;
@@ -19,9 +21,11 @@ interface RequestCommand {
 function RequestCreateCard({
   values,
   updateValues,
+  reloadScratchPad,
 }: {
   values: any;
   updateValues: (values: any) => void;
+  reloadScratchPad: () => void;
 }) {
   const [request, setRequest] = useState<Request | null>(
     values.request ? values.request : null,
@@ -141,11 +145,19 @@ function RequestCreateCard({
     updateScratchPadValues();
   }, [request]);
 
-  const submitRequest = (openRequest: boolean) => {
+  const submitRequest = (openRequest: boolean, addToScratchPad?: boolean) => {
     if (request) {
       PostRequest(request).then((response_request) => {
         if (openRequest) {
-          window.open("/request/" + response_request.id, "_self");
+          if (addToScratchPad) {
+            PushToScratchPad("REQUEST_VIEW", {
+              requestId: response_request.id,
+              request: response_request,
+            });
+            reloadScratchPad();
+          } else {
+            window.open("/request/" + response_request.id, "_self");
+          }
         } else {
           toast?.current?.show({
             severity: "info",
@@ -174,27 +186,29 @@ function RequestCreateCard({
             request={request}
             setRequest={setRequest}
           />
-          <Button
-            label="Run Now"
-            severity="success"
-            icon="pi pi-arrow-right"
-            iconPos="right"
-            onClick={(e) => submitRequest(true)}
+          <SplitButton
+            label="Run"
+            icon="pi pi-plus"
+            onClick={() => {
+              submitRequest(false);
+            }}
+            model={[
+              {
+                label: " Run and Open",
+                // icon: <FontAwesomeIcon icon="arrow-up-right-from-square" />,
+                command: () => {
+                  submitRequest(true);
+                },
+              },
+              {
+                label: " Run and Add to Scratch Pad",
+                // icon: <FontAwesomeIcon icon="arrow-up-from-bracket" />,
+                command: () => {
+                  submitRequest(true, true);
+                },
+              },
+            ]}
           />
-          <Button
-            label="Run Background"
-            severity="success"
-            icon="pi pi-arrow-right"
-            iconPos="right"
-            onClick={(e) => submitRequest(false)}
-          />
-          {/* <Button
-            label="Run Here"
-            severity="success"
-            icon="pi pi-arrow-right"
-            iconPos="right"
-            onClick={(e) => submitRequest(false)}
-          /> */}
         </div>
       )}
     </Card>
