@@ -22,10 +22,37 @@ import { Listener } from "./models/models";
 
 function App() {
   const [showScratchPad, setShowScratchPad] = useState<boolean>(false);
+  const [showMainApp, setShowMainApp] = useState<boolean>(true);
   const socketRef = useRef(null as null | any);
   const listeners = useRef<Record<string, Listener>>({});
 
   const [reloadScratchPadTrigger, setReloadScratchPadTrigger] = useState(0);
+
+  const nagivateLeft = () => {
+    if (showScratchPad && showMainApp) {
+      setShowMainApp(false);
+    } else if (showScratchPad && !showMainApp) {
+      // Do Nothing
+    } else if (!showScratchPad && showMainApp) {
+      setShowScratchPad(true);
+    } else if (!showScratchPad && !showMainApp) {
+      // Bad State, show scratch pad
+      setShowScratchPad(true);
+    }
+  };
+
+  const nagivateRight = () => {
+    if (showScratchPad && showMainApp) {
+      setShowScratchPad(false);
+    } else if (showScratchPad && !showMainApp) {
+      setShowMainApp(true);
+    } else if (!showScratchPad && showMainApp) {
+      // Do Nothing
+    } else if (!showScratchPad && !showMainApp) {
+      // Bad State, show scratch pad
+      setShowMainApp(true);
+    }
+  };
 
   useEffect(() => {
     // Create WebSocket connection when component mounts
@@ -56,7 +83,7 @@ function App() {
     <div>
       <NavigationMenu listeners={listeners} />
       <div className="flex">
-        <div className="flex-grow-1">
+        <div className={showMainApp ? "flex-grow-1" : "hidden"}>
           <BrowserRouter>
             <Switch>
               <Route path="/systems">
@@ -102,24 +129,23 @@ function App() {
         </div>
         <Divider layout="vertical">
           {showScratchPad && (
-            <Button onClick={() => setShowScratchPad(false)}>
+            <Button onClick={() => nagivateRight()}>
               <FontAwesomeIcon icon="angles-right" />
             </Button>
           )}
-          {!showScratchPad && (
-            <Button onClick={() => setShowScratchPad(true)}>
+
+          {showMainApp && (
+            <Button onClick={() => nagivateLeft()}>
               <FontAwesomeIcon icon="angles-left" />
             </Button>
           )}
         </Divider>
-        {showScratchPad && (
-          <div className="flex-grow-1">
-            <ScratchPad
-              listeners={listeners}
-              reloadTrigger={reloadScratchPadTrigger}
-            />
-          </div>
-        )}
+        <div className={showScratchPad ? "flex-grow-1" : "hidden"}>
+          <ScratchPad
+            listeners={listeners}
+            reloadTrigger={reloadScratchPadTrigger}
+          />
+        </div>
       </div>
     </div>
   );

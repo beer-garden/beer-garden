@@ -283,7 +283,6 @@ function RequestViewCard({
               <RequestOutput {...request} />
             </StepperPanel>
           </Stepper>
-          {/* <RequestOutput {...request} /> */}
 
           <SplitButton
             label="Open"
