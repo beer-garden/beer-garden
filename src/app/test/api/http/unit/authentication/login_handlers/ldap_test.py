@@ -489,7 +489,7 @@ class TestLdapLoginHandler:
     def test_user_groups_replaced(
         self, mock_connection, ldap_connection2, role0, role2, role3, role4
     ):
-        user = create_user(User(username="sbrown20", roles=[role0]))
+        user = create_user(User(username="sbrown20", local_roles=[role0]))
         assert user is not None
         assert user.username == "sbrown20"
         assert len(user.local_roles) == 1

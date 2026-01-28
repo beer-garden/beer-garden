@@ -1688,6 +1688,16 @@ class User(MongoModel, Document):
                     kwargs["local_roles"][index] = Role(**role)
         super(User, self).__init__(*args, **kwargs)
 
+    def to_dict(self):
+        m_dict = self.to_mongo()
+        if self.local_roles:
+            if "local_roles" not in m_dict:
+                m_dict["local_roles"] = [local_role.to_mongo() for local_role in self.local_roles]
+            else:
+                for n, local_role in enumerate(self.local_roles):
+                    m_dict["local_roles"][n] = local_role.to_mongo()
+        return m_dict.to_dict()
+
     def save(self, *args, **kwargs):
         if self.local_roles:
             for local_role in self.local_roles:
