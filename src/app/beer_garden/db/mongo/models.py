@@ -479,6 +479,12 @@ class Request(MongoModel, Document):
             kwargs["parent"] = Request(**kwargs["parent"])
         super(Request, self).__init__(*args, **kwargs)
 
+    def to_dict(self):
+        m_dict = self.to_mongo()
+        if self.parent:
+            m_dict["parent"] = self.parent.to_mongo()
+        return m_dict.to_dict()
+
     def pre_serialize(self):
         """Pull any fields out of GridFS"""
 
