@@ -1,5 +1,5 @@
-from marshmallow import Schema, fields
 from apispec_pydantic_plugin import ApiBaseModel
+from marshmallow import Schema, fields
 
 
 class TokenInputSchema(Schema):
@@ -7,6 +7,7 @@ class TokenInputSchema(Schema):
 
     username = fields.Str(required=True, allow_none=False)
     password = fields.Str(required=True, allow_none=False)
+
 
 class TokenInput(ApiBaseModel):
     username: str
@@ -28,6 +29,7 @@ class TokenResponseSchema(Schema):
 
     access = fields.Str()
     refresh = fields.Str()
+
 
 class TokenResponse(ApiBaseModel):
     access: str

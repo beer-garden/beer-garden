@@ -19,10 +19,10 @@ from brewtils.errors import (
 )
 from marshmallow import Schema
 from marshmallow.exceptions import ValidationError as MarshmallowValidationError
-from pydantic import BaseModel
-from pydantic import ValidationError as PydanticValidationError
 from mongoengine.errors import DoesNotExist, NotUniqueError
 from mongoengine.errors import ValidationError as MongoValidationError
+from pydantic import BaseModel
+from pydantic import ValidationError as PydanticValidationError
 from tornado.web import HTTPError, RequestHandler
 
 import beer_garden.api.http
@@ -266,7 +266,7 @@ class BaseHandler(RequestHandler):
     #         return schema().load(self.request_body)
     #     except MarshmallowValidationError:
     #         raise BadRequest
-    
+
     def model_validated_body(self, model: Type[BaseModel]) -> dict:
         """Get the contents of the request body after having been loaded with the
         supplied model to ensure that the data validates properly.
@@ -285,4 +285,3 @@ class BaseHandler(RequestHandler):
             return model.model_validate(self.request.body)
         except PydanticValidationError:
             raise BadRequest
-        

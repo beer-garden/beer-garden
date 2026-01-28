@@ -123,6 +123,9 @@ class MongoModel:
     def created(self):
         return getattr(self, "_created", False)
 
+    def to_dict(self):
+        return self.to_mongo().to_dict()
+
 
 # MongoEngine needs all EmbeddedDocuments to be defined before any Documents that
 # reference them. So Parameter must be defined before Command, and choices should be
@@ -845,7 +848,9 @@ class Request(MongoModel, Document):
         if isinstance(self.updated_at, int):
             self.updated_at = datetime.datetime.fromtimestamp(self.updated_at / 1000)
         if isinstance(self.status_updated_at, int):
-            self.status_updated_at = datetime.datetime.fromtimestamp(self.status_updated_at / 1000)
+            self.status_updated_at = datetime.datetime.fromtimestamp(
+                self.status_updated_at / 1000
+            )
 
     def clean_update(self):
         """Ensure that the update would not result in an illegal status transition"""
@@ -895,7 +900,9 @@ class Request(MongoModel, Document):
         if isinstance(self.updated_at, int):
             self.updated_at = datetime.datetime.fromtimestamp(self.updated_at / 1000)
         if isinstance(self.status_updated_at, int):
-            self.status_updated_at = datetime.datetime.fromtimestamp(self.status_updated_at / 1000)
+            self.status_updated_at = datetime.datetime.fromtimestamp(
+                self.status_updated_at / 1000
+            )
 
 
 class Subscriber(MongoModel, EmbeddedDocument):
@@ -981,6 +988,9 @@ class System(MongoModel, Document):
             }
         ],
     }
+
+    def to_dict(self):
+        return self.to_mongo().to_dict()
 
     def clean(self):
         """Validate before saving to the database"""
@@ -1314,7 +1324,9 @@ class Job(MongoModel, Document):
                     f"Cannot save job. No mongo model for trigger type {self.trigger_type}"
                 )
             # Convert dict to valid trigger model
-            kwargs["trigger"] = self.TRIGGER_MODEL_MAPPING[kwargs["trigger_type"]](**kwargs["trigger"])
+            kwargs["trigger"] = self.TRIGGER_MODEL_MAPPING[kwargs["trigger_type"]](
+                **kwargs["trigger"]
+            )
         super(Job, self).__init__(*args, **kwargs)
 
     def clean(self):
@@ -1333,7 +1345,9 @@ class Job(MongoModel, Document):
             )
 
         if isinstance(self.next_run_time, int):
-            self.next_run_time = datetime.datetime.fromtimestamp(self.next_run_time / 1000)
+            self.next_run_time = datetime.datetime.fromtimestamp(
+                self.next_run_time / 1000
+            )
 
 
 class Connection(MongoModel, EmbeddedDocument):
@@ -1381,6 +1395,12 @@ class Garden(MongoModel, Document):
             },
         ],
     }
+
+    def to_dict(self):
+        garden_dict = self.to_mongo()
+        for n, system in enumerate(self.systems):
+            garden_dict["systems"][n] = system.to_mongo()
+        return garden_dict.to_dict()
 
     def __init__(self, *args, **kwargs):
         if kwargs.get("systems") and isinstance(kwargs["systems"], list):

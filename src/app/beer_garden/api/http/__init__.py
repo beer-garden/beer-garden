@@ -10,12 +10,26 @@ from typing import List, Optional, Tuple
 
 from apispec import APISpec
 from apispec_pydantic_plugin import PydanticPlugin
+
 # from apispec.ext.marshmallow import MarshmallowPlugin
 from apispec_webframeworks.tornado import TornadoPlugin
 from brewtils.models import (
-    Event, Events, Command, CronTrigger, DateTrigger, 
-    FileStatus, FileTrigger, Garden, Instance, IntervalTrigger,
-    JobExportInput, JobExport, Job, LoggingConfig, Operation, Parameter,
+    Command,
+    CronTrigger,
+    DateTrigger,
+    Event,
+    Events,
+    FileStatus,
+    FileTrigger,
+    Garden,
+    Instance,
+    IntervalTrigger,
+    Job,
+    JobExport,
+    JobExportInput,
+    LoggingConfig,
+    Operation,
+    Parameter,
     PatchOperation,
     Queue,
     Request,
@@ -26,6 +40,7 @@ from brewtils.models import (
     User,
     UserToken,
 )
+
 # from brewtils.schemas import (
 #     CommandSchema,
 #     CronTriggerSchema,
@@ -67,6 +82,7 @@ import beer_garden.requests
 import beer_garden.router
 from beer_garden.api.http.client import SerializeHelper
 from beer_garden.api.http.processors import EventManager, websocket_publish
+
 # from beer_garden.api.http.schemas.v1.operation import PatchOperation
 from beer_garden.api.http.schemas.v1.token import (
     TokenInput,

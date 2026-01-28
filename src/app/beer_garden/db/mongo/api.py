@@ -119,9 +119,15 @@ def to_brewtils(
             obj.pre_serialize()
 
     if many:
-        serialized = MongoParser.serialize([item.to_mongo().to_dict() for item in obj], to_string=False, schema_name=type(obj[0]).__name__)
+        serialized = MongoParser.serialize(
+            [item.to_dict() for item in obj],
+            to_string=False,
+            schema_name=type(obj[0]).__name__,
+        )
     else:
-        serialized = MongoParser.serialize(obj.to_mongo().to_dict(), to_string=False, schema_name=type(obj).__name__)
+        serialized = MongoParser.serialize(
+            obj.to_dict(), to_string=False, schema_name=type(obj).__name__
+        )
     parsed = SchemaParser.parse(serialized, model_class, from_string=False, many=many)
 
     return parsed
