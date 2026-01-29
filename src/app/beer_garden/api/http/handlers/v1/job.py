@@ -2,7 +2,7 @@
 from brewtils.errors import ModelValidationError, NotFoundError
 from brewtils.models import Job, Operation, Permissions
 from brewtils.schema_parser import SchemaParser
-from brewtils.schemas import JobExportInputSchema, JobSchema
+from brewtils.models import JobExportInput, Job
 from mongoengine.errors import ValidationError
 
 from beer_garden.api.http.exceptions import BadRequest
@@ -225,7 +225,7 @@ class JobListAPI(AuthorizationHandler):
 
         filter_params = {}
         for key in self.request.arguments.keys():
-            if key in JobSchema.get_attribute_names():
+            if key in Job.get_attribute_names():
                 filter_params[key] = self.get_query_argument(key)
 
         response = await self.process_operation(
@@ -411,8 +411,8 @@ class JobExportAPI(AuthorizationHandler):
             decoded_body_as_dict = self.request_body
 
             if len(decoded_body_as_dict) > 0:  # i.e. it has keys
-                input_schema = JobExportInputSchema()
-                validated_input_data_dict = input_schema.load(decoded_body_as_dict)
+                input_schema = JobExportInput()
+                validated_input_data_dict = input_schema.model_validate(decoded_body_as_dict).model_dump()
                 filter_params_dict["id__in"] = validated_input_data_dict["ids"]
 
         response_objects = await self.process_operation(
@@ -426,7 +426,7 @@ class JobExportAPI(AuthorizationHandler):
             serialize_kwargs={"return_raw": True},
         )
         response = SchemaParser.serialize(
-            response_objects, to_string=True, schema_name="JobExportSchema"
+            response_objects, to_string=True, schema_name="JobExport"
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")

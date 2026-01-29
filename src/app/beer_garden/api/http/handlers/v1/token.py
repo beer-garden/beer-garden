@@ -10,7 +10,7 @@ from beer_garden.api.http.authentication import (
 from beer_garden.api.http.base_handler import BaseHandler
 from beer_garden.api.http.exceptions import AuthenticationFailed, BadRequest
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.api.http.schemas.v1.token import TokenRefreshInputSchema
+from beer_garden.api.http.schemas.v1.token import TokenRefreshInput
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
 
 
@@ -136,7 +136,7 @@ class TokenRefreshAPI(BaseHandler):
         tags:
           - Token
         """
-        refresh_token = self.schema_validated_body(TokenRefreshInputSchema)["refresh"]
+        refresh_token = self.model_validated_body(TokenRefreshInput)["refresh"]
 
         try:
             response = refresh_token_pair(refresh_token=refresh_token)
@@ -170,7 +170,7 @@ class TokenRevokeAPI(BaseHandler):
         tags:
           - Token
         """
-        refresh_token = self.schema_validated_body(TokenRefreshInputSchema)["refresh"]
+        refresh_token = self.model_validated_body(TokenRefreshInput)["refresh"]
 
         try:
             revoke_token_pair(refresh_token)
