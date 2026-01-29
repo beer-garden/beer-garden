@@ -14,7 +14,7 @@ export default function queueService($http) {
       if (gardenName) {
         return $http.delete(
           'api/v1/queues?garden_name=' + encodeURIComponent(gardenName),
-          {headers: {'Target-Garden': gardenName}}
+          {headers: {'Target-Garden': encodeURI(gardenName) == gardenName ? gardenName : undefined}}
         );
       } else {
         return $http.delete('api/v1/queues');
