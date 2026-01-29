@@ -1566,6 +1566,14 @@ class File(MongoModel, Document):
     created_at = DateTimeField(default=get_current_time, required=True)
     root_command_type = StringField()
 
+    def to_dict(self):
+        m_dict = self.to_mongo()
+        if self.request:
+            m_dict["request"] = dict(id=m_dict["request"])
+        if self.job:
+            m_dict["job"] = dict(id=m_dict["job"])
+        return m_dict.to_dict()
+
     def clean(self):
         if isinstance(self.created_at, int):
             self.created_at = datetime.datetime.fromtimestamp(self.created_at / 1000)
@@ -1586,6 +1594,12 @@ class FileChunk(MongoModel, Document):
     updated_at = DateTimeField(default=get_current_time, required=True)
     root_command_type = StringField()
 
+    def to_dict(self):
+        m_dict = self.to_mongo()
+        if self.owner:
+            m_dict["owner"] = dict(id=m_dict["owner"])
+        return m_dict.to_dict()
+
 
 class RawFile(Document):
     file = FileField()
@@ -1598,6 +1612,12 @@ class RawFile(Document):
     root_command_type = StringField()
 
     meta = {"queryset_class": FileFieldHandlingQuerySet}
+
+    def to_dict(self):
+        m_dict = self.to_mongo()
+        if self.request:
+            m_dict["request"] = dict(id=m_dict["request"])
+        return m_dict.to_dict()
 
 
 class Role(MongoModel, Document):
