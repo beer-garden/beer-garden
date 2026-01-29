@@ -1,5 +1,10 @@
 # Beer Garden Changelog
 
+# TBD
+
+TBD
+
+- Fixed Target-Garden header mapping to handle special character exceptions (#)
 
 # 3.31.1
 
