@@ -3,7 +3,7 @@ import { Request, System } from "../models/brewtils-types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { BreadCrumb } from "primereact/breadcrumb";
 import RequestTreeChart from "../components/RequestTreeChart";
-import { useState, useRef, use, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { MenuItem } from "primereact/menuitem";
 import CommandForm from "../components/CommandForm";
 import RequestOutput from "../components/RequestOutput";
@@ -131,40 +131,27 @@ function RequestView({ listeners }: { listeners: Record<string, any> }) {
 
   const rootRequestId = useRef<string | null>(null);
 
-  const MonitorRequestId = (message: any) => {
-    if (message.payload_type === "Request") {
-      if (requestId && message.payload.id && message.payload.id === requestId) {
-        setRequest(message.payload as Request);
-      }
-      if (
-        rootRequestId.current &&
-        message.payload.id &&
-        message.payload.id === rootRequestId.current
-      ) {
-        setRootRequest(message.payload as Request);
-      }
-    }
-  };
-
-  function loadRootRequest(check_request: Request) {
-    if (
-      check_request.has_parent === true &&
-      check_request.parent &&
-      check_request.parent.id
-    ) {
-      GetRequest(check_request.parent.id, {}).then((root_request) => {
-        loadRootRequest(root_request);
-      });
-    } else {
-      setRootRequest(check_request);
-      if (check_request.id) {
-        rootRequestId.current = check_request.id;
-        if (!(check_request.id in listeners)) {
-          listeners[check_request.id] = { listener: MonitorRequestId };
+  const MonitorRequestId = useCallback(
+    (message: any) => {
+      if (message.payload_type === "Request") {
+        if (
+          requestId &&
+          message.payload.id &&
+          message.payload.id === requestId
+        ) {
+          setRequest(message.payload as Request);
+        }
+        if (
+          rootRequestId.current &&
+          message.payload.id &&
+          message.payload.id === rootRequestId.current
+        ) {
+          setRootRequest(message.payload as Request);
         }
       }
-    }
-  }
+    },
+    [requestId],
+  );
 
   useEffect(() => {
     if (!request) {
@@ -185,19 +172,7 @@ function RequestView({ listeners }: { listeners: Record<string, any> }) {
         .catch((error) => {
           console.error("Error fetching request:", error);
         });
-    }
-    return () => {
-      if (requestId) {
-        delete listeners[requestId];
-      }
-      if (rootRequestId.current) {
-        delete listeners[rootRequestId.current];
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (request) {
+    } else {
       if (
         request.status &&
         ["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(request.status)
@@ -209,33 +184,60 @@ function RequestView({ listeners }: { listeners: Record<string, any> }) {
         }
       }
 
+      const loadRootRequest = (check_request: Request) => {
+        if (
+          check_request.has_parent === true &&
+          check_request.parent &&
+          check_request.parent.id
+        ) {
+          GetRequest(check_request.parent.id, {}).then((root_request) => {
+            loadRootRequest(root_request);
+          });
+        } else {
+          setRootRequest(check_request);
+          if (check_request.id) {
+            rootRequestId.current = check_request.id;
+            if (!(check_request.id in listeners)) {
+              listeners[check_request.id] = { listener: MonitorRequestId };
+            }
+          }
+        }
+      };
+
       loadRootRequest(request);
 
-      const systems = GetSystemList({
-        name: request.system,
-        version: request.system_version,
-        namespace: request.namespace,
-        garden_name: request.target_garden,
-      })
-        .then((data) => {
-          if (data.length > 0) {
-            setSystem(data[0]);
-          }
+      if (!system) {
+        GetSystemList({
+          name: request.system,
+          version: request.system_version,
+          namespace: request.namespace,
+          garden_name: request.target_garden,
         })
-        .catch((error) => {
-          console.error("Error fetching system list:", error);
-        });
+          .then((data) => {
+            if (data.length > 0) {
+              setSystem(data[0]);
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching system list:", error);
+          });
+      } else if (system.commands) {
+        const commandData = system.commands.find(
+          (cmd) => cmd.name === request.command,
+        );
+        setCommand(commandData);
+      }
     }
-  }, [request]);
 
-  useEffect(() => {
-    if (system && system.commands && request) {
-      const commandData = system.commands.find(
-        (cmd) => cmd.name === request.command,
-      );
-      setCommand(commandData);
-    }
-  }, [system]);
+    return () => {
+      if (requestId) {
+        delete listeners[requestId];
+      }
+      if (rootRequestId.current) {
+        delete listeners[rootRequestId.current];
+      }
+    };
+  }, [request, requestId, listeners, MonitorRequestId, system]);
 
   const stepperRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(0);

@@ -58,7 +58,7 @@ function RequestCreate() {
     command: null,
   });
 
-  const [systems, setSystems] = useState<Array<System>>([]);
+  const [systems, setSystems] = useState<Array<System> | null>(null);
 
   // Command Panel
   const [showCommand, setShowCommand] = useState<boolean>(false);
@@ -222,14 +222,16 @@ function RequestCreate() {
       });
     }
 
-    GetSystemList()
-      .then((data) => {
-        setSystems(data);
-      })
-      .catch((error) => {
-        console.error("Error fetching system list:", error);
-      });
-  }, []);
+    if (!systems) {
+      GetSystemList()
+        .then((data) => {
+          setSystems(data);
+        })
+        .catch((error) => {
+          console.error("Error fetching system list:", error);
+        });
+    }
+  }, [jobId, requestId, systems]);
 
   return (
     <div className="card flex justify-content-center">

@@ -68,3 +68,6 @@ chromium_clean:
 format:
 	npx prettier --write src/
 
+lint:
+	npx eslint src/ 
+

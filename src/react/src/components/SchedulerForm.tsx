@@ -420,28 +420,16 @@ function SchedulerForm({
   );
 
   useEffect(() => {
-    if (jobState === "CRON") {
-      setScheduledJob({ ...scheduledJob, ...{ trigger: cronTrigger } });
-    }
-  }, [cronTrigger]);
-
-  useEffect(() => {
-    if (jobState === "Interval") {
-      setScheduledJob({ ...scheduledJob, ...{ trigger: intervalTrigger } });
-    }
-  }, [intervalTrigger]);
-
-  useEffect(() => {
     if (jobState === "Date") {
       setScheduledJob({ ...scheduledJob, ...{ trigger: dateTrigger } });
-    }
-  }, [dateTrigger]);
-
-  useEffect(() => {
-    if (jobState === "File") {
+    } else if (jobState === "Interval") {
+      setScheduledJob({ ...scheduledJob, ...{ trigger: intervalTrigger } });
+    } else if (jobState === "File") {
       setScheduledJob({ ...scheduledJob, ...{ trigger: fileTrigger } });
+    } else if (jobState === "CRON") {
+      setScheduledJob({ ...scheduledJob, ...{ trigger: cronTrigger } });
     }
-  }, [fileTrigger]);
+  }, [dateTrigger, intervalTrigger, fileTrigger, cronTrigger]);
 
   useEffect(() => {
     if (jobState === "CRON") {
@@ -466,16 +454,6 @@ function SchedulerForm({
       });
     }
   }, [jobState]);
-
-  // useEffect(() => {
-  //   if (scheduledJob && scheduledJob.trigger_type !== jobState.toLowerCase()){
-  //     jobOptions.forEach((option) => {
-  //       if (option.toLocaleLowerCase() === scheduledJob?.trigger_type){
-  //         setJobState(option);
-  //       }
-  //     })
-  //   }
-  // },[scheduledJob]);
 
   return (
     <div>

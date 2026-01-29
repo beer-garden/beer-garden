@@ -257,8 +257,6 @@ function SystemCards() {
     ]);
   });
 
-  let groups = Array(systemGroup.keys()).sort();
-
   const groupHeaderTemplate = (options: any) => {
     const className = `${options.className} justify-content-space-between`;
 

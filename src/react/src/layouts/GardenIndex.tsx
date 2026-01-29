@@ -13,7 +13,10 @@ function GardenIndex() {
   const [garden, setGarden] = useState<Garden | null>(null);
   const [gardenNode, setGardenNode] = useState<any>([{}]);
 
-  const mapNode = (garden: Garden) => {
+  
+
+  useEffect(() => {
+    const mapNode = (garden: Garden) => {
     let node = {
       label: garden.name as string,
       expanded: true,
@@ -31,8 +34,6 @@ function GardenIndex() {
     }
     return node;
   };
-
-  useEffect(() => {
     if (garden) {
       setGardenNode([mapNode(garden)]);
     }

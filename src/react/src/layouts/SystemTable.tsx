@@ -16,10 +16,6 @@ function SystemTable() {
   });
 
   useEffect(() => {
-    // Name
-    // Namespace/Version
-    // Instance
-
     let systemNodes: any[] = [];
 
     if (systems && systems.length > 0) {
