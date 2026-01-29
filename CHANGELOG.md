@@ -4,7 +4,7 @@
 
 TBD
 
-- Fixed Target-Garden header mapping to handle special character exceptions (#)
+- Fixed Target-Garden header mapping to handle special character exceptions (#2045)
 
 # 3.31.1
 
