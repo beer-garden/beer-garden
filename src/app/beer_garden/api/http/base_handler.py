@@ -282,6 +282,6 @@ class BaseHandler(RequestHandler):
             BadRequest: The request body failed to validate with the supplied schema
         """
         try:
-            return model.model_validate(self.request.body)
+            return model.model_validate_json(self.request.body).model_dump()
         except PydanticValidationError:
             raise BadRequest
