@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Dropdown } from "primereact/dropdown";
 import { System, Command, Instance } from "../models/brewtils-types";
+import { CompareObjects } from "../services/util_service";
 
 interface RequestCommand {
   namespace: string | null;
@@ -10,15 +11,11 @@ interface RequestCommand {
   command: string | null;
 }
 
-interface CreateRequestProps {
-  systems: Array<System> | null;
-  request: Request | null;
-}
-
 interface CommandSelectProps {
   systems: Array<System> | null;
   requestCommand: RequestCommand | null;
   setRequestCommand: (request: RequestCommand) => void;
+  validCommand: boolean;
   setValidCommand: (valid: boolean) => void;
 }
 
@@ -26,6 +23,7 @@ function CommandSelect({
   systems,
   requestCommand,
   setRequestCommand,
+  validCommand,
   setValidCommand,
 }: CommandSelectProps) {
   const [namespaces, setNamespaces] = useState<Array<string>>([]);
@@ -51,72 +49,6 @@ function CommandSelect({
   );
 
   useEffect(() => {
-    setRequestCommand({
-      namespace: selectedNamespace,
-      systemName: selectedSystemName,
-      version: selectedVersion,
-      instance: selectedInstance,
-      command: selectedCommand,
-    });
-  }, [
-    selectedNamespace,
-    selectedSystemName,
-    selectedVersion,
-    selectedInstance,
-    selectedCommand,
-  ]);
-
-  useEffect(() => {
-    if (
-      !requestCommand?.command ||
-      !commands ||
-      commands.length === 0 ||
-      !commands.includes(requestCommand.command)
-    ) {
-      setValidCommand(false);
-      return;
-    }
-    if (
-      !requestCommand?.instance ||
-      !instances ||
-      instances.length === 0 ||
-      !instances.includes(requestCommand.instance)
-    ) {
-      setValidCommand(false);
-      return;
-    }
-    if (
-      !requestCommand?.version ||
-      !versions ||
-      versions.length === 0 ||
-      !versions.includes(requestCommand.version)
-    ) {
-      setValidCommand(false);
-      return;
-    }
-    if (
-      !requestCommand?.systemName ||
-      !systemNames ||
-      systemNames.length === 0 ||
-      !systemNames.includes(requestCommand.systemName)
-    ) {
-      setValidCommand(false);
-      return;
-    }
-    if (
-      !requestCommand?.namespace ||
-      !namespaces ||
-      namespaces.length === 0 ||
-      !namespaces.includes(requestCommand.namespace)
-    ) {
-      setValidCommand(false);
-      return;
-    }
-
-    setValidCommand(true);
-  }, [requestCommand, commands, instances, versions, systemNames, namespaces]);
-
-  useEffect(() => {
     let namespaceList: Array<string> = [];
     let systemNameList: Array<string> = [];
     let systemVersionList: Array<string> = [];
@@ -129,48 +61,35 @@ function CommandSelect({
           namespaceList.push(system.namespace as string);
         }
 
-        if (requestCommand) {
-          if (
-            requestCommand.namespace !== null &&
-            system.name !== null &&
-            system.namespace === requestCommand.namespace
-          ) {
-            if (!systemNameList.includes(system.name as string)) {
-              systemNameList.push(system.name as string);
+        if (system.name !== null && system.namespace === selectedNamespace) {
+          if (!systemNameList.includes(system.name as string)) {
+            systemNameList.push(system.name as string);
+          }
+          if (system.version !== null && system.name === selectedSystemName) {
+            if (!systemVersionList.includes(system.version as string)) {
+              systemVersionList.push(system.version as string);
             }
-            if (
-              requestCommand.systemName !== null &&
-              system.version !== null &&
-              system.name === requestCommand.systemName
-            ) {
-              if (!systemVersionList.includes(system.version as string)) {
-                systemVersionList.push(system.version as string);
-              }
 
-              if (
-                requestCommand.version !== null &&
-                system.version === requestCommand.version
-              ) {
-                if (system.instances) {
-                  system.instances.forEach((instance: Instance) => {
-                    if (
-                      instance.name &&
-                      !instanceList.includes(instance.name as string)
-                    ) {
-                      instanceList.push(instance.name as string);
-                    }
-                  });
-                }
-                if (system.commands) {
-                  system.commands.forEach((command: Command) => {
-                    if (
-                      command.name &&
-                      !commandList.includes(command.name as string)
-                    ) {
-                      commandList.push(command.name as string);
-                    }
-                  });
-                }
+            if (system.version === selectedVersion) {
+              if (system.instances) {
+                system.instances.forEach((instance: Instance) => {
+                  if (
+                    instance.name &&
+                    !instanceList.includes(instance.name as string)
+                  ) {
+                    instanceList.push(instance.name as string);
+                  }
+                });
+              }
+              if (system.commands) {
+                system.commands.forEach((command: Command) => {
+                  if (
+                    command.name &&
+                    !commandList.includes(command.name as string)
+                  ) {
+                    commandList.push(command.name as string);
+                  }
+                });
               }
             }
           }
@@ -178,11 +97,26 @@ function CommandSelect({
       });
     }
 
-    setNamespaces(namespaceList);
-    setSystemNames(systemNameList);
-    setVersions(systemVersionList);
-    setInstances(instanceList);
-    setCommands(commandList);
+    // Check if change
+    if (!CompareObjects(namespaces, namespaceList)) {
+      setNamespaces(namespaceList);
+    }
+
+    if (!CompareObjects(systemNames, systemNameList)) {
+      setSystemNames(systemNameList);
+    }
+
+    if (!CompareObjects(versions, systemVersionList)) {
+      setVersions(systemVersionList);
+    }
+
+    if (!CompareObjects(instances, instanceList)) {
+      setInstances(instanceList);
+    }
+
+    if (!CompareObjects(commands, commandList)) {
+      setCommands(commandList);
+    }
 
     if (namespaceList.length === 1 && selectedNamespace !== namespaceList[0]) {
       setSelectedNamespace(namespaceList[0]);
@@ -239,7 +173,89 @@ function CommandSelect({
     ) {
       setSelectedCommand(null);
     }
-  }, [systems, requestCommand]);
+
+    if (
+      requestCommand?.namespace !== selectedNamespace ||
+      requestCommand?.systemName !== selectedSystemName ||
+      requestCommand?.version !== selectedVersion ||
+      requestCommand?.instance !== selectedInstance ||
+      requestCommand?.command !== selectedCommand
+    ) {
+      if (
+        !requestCommand?.command ||
+        !commands ||
+        commands.length === 0 ||
+        !commands.includes(requestCommand.command)
+      ) {
+        if (validCommand) {
+          setValidCommand(false);
+        }
+      } else if (
+        !requestCommand?.instance ||
+        !instances ||
+        instances.length === 0 ||
+        !instances.includes(requestCommand.instance)
+      ) {
+        if (validCommand) {
+          setValidCommand(false);
+        }
+      } else if (
+        !requestCommand?.version ||
+        !versions ||
+        versions.length === 0 ||
+        !versions.includes(requestCommand.version)
+      ) {
+        if (validCommand) {
+          setValidCommand(false);
+        }
+      } else if (
+        !requestCommand?.systemName ||
+        !systemNames ||
+        systemNames.length === 0 ||
+        !systemNames.includes(requestCommand.systemName)
+      ) {
+        if (validCommand) {
+          setValidCommand(false);
+        }
+      } else if (
+        !requestCommand?.namespace ||
+        !namespaces ||
+        namespaces.length === 0 ||
+        !namespaces.includes(requestCommand.namespace)
+      ) {
+        if (validCommand) {
+          setValidCommand(false);
+        }
+      } else {
+        if (!validCommand) {
+          setValidCommand(true);
+        }
+      }
+      setRequestCommand({
+        namespace: selectedNamespace,
+        systemName: selectedSystemName,
+        version: selectedVersion,
+        instance: selectedInstance,
+        command: selectedCommand,
+      });
+    }
+  }, [
+    systems,
+    requestCommand,
+    commands,
+    instances,
+    versions,
+    systemNames,
+    namespaces,
+    selectedNamespace,
+    selectedSystemName,
+    selectedVersion,
+    selectedInstance,
+    selectedCommand,
+    validCommand,
+    setValidCommand,
+    setRequestCommand,
+  ]);
 
   return (
     <div className="border-2 border-dashed surface-border border-round surface-ground flex-auto flex justify-content-center align-items-center font-medium">

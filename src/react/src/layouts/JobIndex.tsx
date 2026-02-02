@@ -11,7 +11,7 @@ function JobIndex() {
 
   useEffect(() => {
     GetJobList().then((data: [Array<Job>, Headers]) => {
-      const [responseJobs, ] = data;
+      const [responseJobs] = data;
       setJobs(responseJobs);
     });
   }, []);

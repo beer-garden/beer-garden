@@ -1,17 +1,11 @@
 import { useState, useRef, useEffect } from "react";
-import { Button } from "primereact/button";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Card } from "primereact/card";
 import CommandForm from "../../components/CommandForm";
 import { Request, System, Command } from "../../models/brewtils-types";
 import { GetSystemList } from "../../services/system_service";
 import { Toast } from "primereact/toast";
 import RequestOutput from "../RequestOutput";
-import {
-  GetRequest,
-  DeleteRequest,
-  PostRequest,
-} from "../../services/request_service";
+import { GetRequest, PostRequest } from "../../services/request_service";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Badge } from "primereact/badge";
@@ -21,13 +15,8 @@ import { Message } from "primereact/message";
 import { SplitButton } from "primereact/splitbutton";
 import { PushToScratchPad } from "../../services/scratchpad_service";
 
-interface RequestCommand {
-  namespace: string | null;
-  systemName: string | null;
-  version: string | null;
-  instance: string | null;
-  command: string | null;
-}
+import { ScratchPadValue } from "../../models/models";
+
 function UnformattedInput(request: Request) {
   return (
     <div>
@@ -38,19 +27,19 @@ function UnformattedInput(request: Request) {
 }
 
 function RequestViewCard({
-  values,
-  updateValues,
+  padItem,
+  updatePadItem,
   reloadScratchPad,
   listeners,
 }: {
-  values: any;
-  updateValues: (values: any) => void;
+  padItem: ScratchPadValue;
+  updatePadItem: (padItem: ScratchPadValue) => void;
   reloadScratchPad: () => void;
   listeners: Record<string, any>;
 }) {
   const requestId = useRef<string | null | undefined>(null);
   const [request, setRequest] = useState<Request | null>(
-    values.request ? values.request : null,
+    padItem?.values?.request ? padItem.values.request : null,
   );
   const [system, setSystem] = useState<System | null>(null);
 
@@ -58,30 +47,6 @@ function RequestViewCard({
 
   const [command, setCommand] = useState<Command | any>(null);
 
-  const updateScratchPadValues = () => {
-    updateValues({
-      ...values,
-      ...{ request: request, requestId: requestId.current },
-    });
-  };
-
-  const MonitorRequestId = (message: any) => {
-    if (message.payload_type === "Request") {
-      if (
-        requestId.current &&
-        message.payload.id &&
-        message.payload.id === requestId.current
-      ) {
-        setRequest(message.payload as Request);
-      }
-    }
-  };
-
-  const header = (
-    <div className="flex flex-wrap align-items-center justify-content-between gap-2">
-      <span className="text-xl text-900 font-bold">Current Requests</span>
-    </div>
-  );
   const SeverityCheck = (status?: string) => {
     if (!status) {
       return "danger";
@@ -177,16 +142,41 @@ function RequestViewCard({
   };
 
   useEffect(() => {
-    requestId.current = values.requestId ? values.requestId : null;
-    if (
-      (!request ||
-        (request?.status &&
-          ["CREATED", "IN_PROGRESS"].includes(request.status))) &&
-      requestId.current
-    ) {
+    const updateScratchPadValues = () => {
+      updatePadItem({
+        ...padItem,
+        values: {
+          ...padItem.values,
+          request: request,
+          requestId: requestId.current,
+        },
+      });
+    };
+
+    const MonitorRequestId = (message: any) => {
+      if (message.payload_type === "Request") {
+        if (
+          requestId.current &&
+          message.payload.id &&
+          message.payload.id === requestId.current
+        ) {
+          setRequest(message.payload as Request);
+          updateScratchPadValues();
+        }
+      }
+    };
+
+    if (!requestId.current) {
+      requestId.current = padItem?.values?.requestId
+        ? padItem.values.requestId
+        : null;
+    }
+
+    if (!request && requestId.current) {
       GetRequest(requestId.current, {})
         .then((data: Request) => {
           setRequest(data);
+          updateScratchPadValues();
 
           if (
             requestId.current &&
@@ -203,25 +193,30 @@ function RequestViewCard({
           console.error("Error fetching request:", error);
         });
     }
-    return () => {
-      if (requestId.current) {
-        delete listeners[requestId.current];
-      }
-    };
-  }, []);
 
-  useEffect(() => {
-    if (request) {
-      if (
-        request.status &&
-        ["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(request.status)
-      ) {
-        if (requestId.current && requestId.current in listeners) {
-          delete listeners[requestId.current];
-        }
-      }
+    if (
+      request &&
+      requestId.current &&
+      !(requestId.current in listeners) &&
+      request?.status &&
+      ["CREATED", "IN_PROGRESS"].includes(request.status)
+    ) {
+      listeners[requestId.current] = {
+        listener: MonitorRequestId,
+      };
+    }
 
-      const systems = GetSystemList({
+    if (
+      requestId.current &&
+      requestId.current in listeners &&
+      request?.status &&
+      !["CREATED", "IN_PROGRESS"].includes(request.status)
+    ) {
+      delete listeners[requestId.current];
+    }
+
+    if (request && !system) {
+      GetSystemList({
         name: request.system,
         version: request.system_version,
         namespace: request.namespace,
@@ -236,20 +231,25 @@ function RequestViewCard({
           console.error("Error fetching system list:", error);
         });
     }
-    updateScratchPadValues();
-  }, [request]);
 
-  useEffect(() => {
-    if (system && system.commands && request) {
-      const commandData = system.commands.find(
-        (cmd) => cmd.name === request.command,
-      );
-      setCommand(commandData);
+    if (system && !command) {
+      if (system && system.commands && request) {
+        const commandData = system.commands.find(
+          (cmd) => cmd.name === request.command,
+        );
+        setCommand(commandData);
+      }
     }
-  }, [system]);
+
+    return () => {
+      if (requestId.current) {
+        delete listeners[requestId.current];
+      }
+    };
+  }, [request, system, command, listeners, padItem, updatePadItem]);
 
   const stepperRef = useRef(null);
-  const [activeIndex, setActiveIndex] = useState(1);
+  const [activeIndex] = useState(1);
 
   return (
     <Card title={CardTitle()}>
@@ -259,7 +259,6 @@ function RequestViewCard({
           <DataTable value={[request]}>
             <Column field="command" header="Command"></Column>
             <Column header="Status" body={statusTemplate}></Column>
-            {/* <Column header="Options" body={optionsTemplate}></Column> */}
           </DataTable>
           <Stepper
             ref={stepperRef}

@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import CommandSelect from "../../components/CommandSelect";
 import CommandForm from "../../components/CommandForm";
@@ -9,6 +8,7 @@ import { PostRequest } from "../../services/request_service";
 import { Toast } from "primereact/toast";
 import { SplitButton } from "primereact/splitbutton";
 import { PushToScratchPad } from "../../services/scratchpad_service";
+import { ScratchPadValue } from "../../models/models";
 
 interface RequestCommand {
   namespace: string | null;
@@ -19,24 +19,24 @@ interface RequestCommand {
 }
 
 function RequestCreateCard({
-  values,
-  updateValues,
+  padItem,
+  updatePadItem,
   reloadScratchPad,
 }: {
-  values: any;
-  updateValues: (values: any) => void;
+  padItem: ScratchPadValue;
+  updatePadItem: (padItem: ScratchPadValue) => void;
   reloadScratchPad: () => void;
 }) {
   const [request, setRequest] = useState<Request | null>(
-    values.request ? values.request : null,
+    padItem?.values?.request ? padItem.values.request : null,
   );
 
   const toast = useRef(null as null | any);
 
   // System Panel
   const [requestCommand, setRequestCommand] = useState<RequestCommand | null>(
-    values.requestCommand
-      ? values.requestCommand
+    padItem?.values?.requestCommand
+      ? padItem.values.requestCommand
       : {
           namespace: null,
           systemName: null,
@@ -53,52 +53,7 @@ function RequestCreateCard({
   const [command, setCommand] = useState<Command | null>(null);
   // const [validCommand, setValidCommand] = useState(false);
 
-  function findCommand() {
-    let foundCommand = false;
-    setShowCommand(false);
-    if (systems && systems.length > 0) {
-      systems.forEach((system) => {
-        if (
-          system.namespace === requestCommand?.namespace &&
-          system.name === requestCommand?.systemName &&
-          system.version === requestCommand?.version
-        ) {
-          if (system.instances) {
-            system.instances.forEach((instance) => {
-              if (instance.name === requestCommand?.instance) {
-                if (system.commands) {
-                  system.commands.forEach((command) => {
-                    if (command.name === requestCommand?.command) {
-                      setCommand(command);
-                      setShowCommand(true);
-                      foundCommand = true;
-                      return;
-                    }
-                  });
-                }
-              }
-            });
-          }
-        }
-      });
-    } else {
-      console.error("Missing Systems for Commands");
-      return;
-    }
-
-    if (!foundCommand) {
-      console.error("Missing Command");
-      // setShowCommand(false);
-    }
-  }
-
-  const updateScratchPadValues = () => {
-    updateValues({
-      ...values,
-      ...{ requestCommand: requestCommand, request: request },
-    });
-  };
-
+  // Effect only runs at startup to get systems
   useEffect(() => {
     GetSystemList()
       .then((data) => {
@@ -108,42 +63,89 @@ function RequestCreateCard({
         console.error("Error fetching system list:", error);
       });
   }, []);
-  useEffect(() => {
-    findCommand();
-  }, [systems]);
 
   useEffect(() => {
+    const updateScratchPadValues = () => {
+      updatePadItem({
+        ...padItem,
+        values: {
+          ...padItem.values,
+          requestCommand: requestCommand,
+          request: request,
+        },
+      });
+    };
+
+    function findCommand() {
+      setShowCommand(false);
+      if (systems && systems.length > 0) {
+        systems.forEach((system) => {
+          if (
+            system.namespace === requestCommand?.namespace &&
+            system.name === requestCommand?.systemName &&
+            system.version === requestCommand?.version
+          ) {
+            if (system.instances) {
+              system.instances.forEach((instance) => {
+                if (instance.name === requestCommand?.instance) {
+                  if (system.commands) {
+                    system.commands.forEach((command) => {
+                      if (command.name === requestCommand?.command) {
+                        setCommand(command);
+                        setShowCommand(true);
+                        return;
+                      }
+                    });
+                  }
+                }
+              });
+            }
+          }
+        });
+      }
+    }
+
+    // Target Command Changed, need to update
     if (
+      requestCommand?.namespace &&
+      requestCommand.namespace !== request?.namespace &&
+      requestCommand?.systemName &&
+      requestCommand.systemName !== request?.system &&
+      requestCommand?.version &&
+      requestCommand.version !== request?.system_version &&
+      requestCommand?.instance &&
+      requestCommand.instance !== request?.instance_name &&
+      requestCommand?.command &&
+      requestCommand.command !== request?.command
+    ) {
+      setRequest({
+        namespace: requestCommand?.namespace || undefined,
+        system: requestCommand?.systemName || undefined,
+        system_version: requestCommand?.version || undefined,
+        instance_name: requestCommand?.instance || undefined,
+        command: requestCommand?.command || undefined,
+      });
+      findCommand();
+      updateScratchPadValues();
+    }
+
+    // Command is null, have all values to populate it
+    else if (
+      systems &&
+      systems.length > 0 &&
+      !command &&
       requestCommand?.namespace &&
       requestCommand?.systemName &&
       requestCommand?.version &&
       requestCommand?.instance &&
       requestCommand?.command
     ) {
-      if (
-        requestCommand.namespace !== request?.namespace ||
-        requestCommand?.systemName !== request?.system ||
-        requestCommand?.version !== request?.system_version ||
-        requestCommand?.instance !== request?.instance_name ||
-        requestCommand?.command !== request?.command
-      ) {
-        setRequest({
-          namespace: requestCommand?.namespace || undefined,
-          system: requestCommand?.systemName || undefined,
-          system_version: requestCommand?.version || undefined,
-          instance_name: requestCommand?.instance || undefined,
-          command: requestCommand?.command || undefined,
-        });
-      }
       findCommand();
     } else {
+      // Event from Request or Command
       updateScratchPadValues();
     }
-  }, [requestCommand]);
-
-  useEffect(() => {
-    updateScratchPadValues();
-  }, [request]);
+  }, [systems, requestCommand, request, command, padItem, updatePadItem]);
 
   const submitRequest = (openRequest: boolean, addToScratchPad?: boolean) => {
     if (request) {
@@ -176,6 +178,7 @@ function RequestCreateCard({
         systems={systems}
         requestCommand={requestCommand}
         setRequestCommand={setRequestCommand}
+        validCommand={true}
         setValidCommand={() => {}}
       />
       {showCommand && (

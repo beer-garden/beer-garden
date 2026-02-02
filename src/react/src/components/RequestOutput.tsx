@@ -1,5 +1,4 @@
 import { Request } from "../models/brewtils-types";
-import { Fieldset } from "primereact/fieldset";
 import { Skeleton } from "primereact/skeleton";
 
 function displautOutput(request: Request) {

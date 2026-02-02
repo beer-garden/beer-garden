@@ -20,6 +20,7 @@ export interface Listener {
 }
 
 export interface ScratchPadValue {
+  padId: string;
   padType: string | null;
   values: any;
 }

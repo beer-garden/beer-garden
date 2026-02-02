@@ -13,27 +13,25 @@ function GardenIndex() {
   const [garden, setGarden] = useState<Garden | null>(null);
   const [gardenNode, setGardenNode] = useState<any>([{}]);
 
-  
-
   useEffect(() => {
     const mapNode = (garden: Garden) => {
-    let node = {
-      label: garden.name as string,
-      expanded: true,
-      data: {
-        receivingConnections: garden.receiving_connections,
-        publishingConnections: garden.publishing_connections,
-      },
-      children: [] as Array<any>,
-    };
+      let node = {
+        label: garden.name as string,
+        expanded: true,
+        data: {
+          receivingConnections: garden.receiving_connections,
+          publishingConnections: garden.publishing_connections,
+        },
+        children: [] as Array<any>,
+      };
 
-    if (garden.children) {
-      garden.children.forEach((childGarden: Garden) => {
-        node.children.push(mapNode(childGarden));
-      });
-    }
-    return node;
-  };
+      if (garden.children) {
+        garden.children.forEach((childGarden: Garden) => {
+          node.children.push(mapNode(childGarden));
+        });
+      }
+      return node;
+    };
     if (garden) {
       setGardenNode([mapNode(garden)]);
     }

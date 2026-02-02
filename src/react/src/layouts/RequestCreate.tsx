@@ -287,6 +287,7 @@ function RequestCreate() {
                 systems={systems}
                 requestCommand={requestCommand}
                 setRequestCommand={setRequestCommand}
+                validCommand={validCommand}
                 setValidCommand={setValidCommand}
               />
             )}

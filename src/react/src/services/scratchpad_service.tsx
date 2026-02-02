@@ -1,4 +1,5 @@
 import { ScratchPadValue } from "../models/models";
+import { v4 as uuidv4 } from "uuid";
 
 export const GetScratchPadItems = () => {
   const storedValue = localStorage.getItem("scratchPadItems");
@@ -16,11 +17,11 @@ export const SetScratchPadItems = (items: Array<ScratchPadValue>) => {
   return items;
 };
 
-export const UpdateScratchPadItem = (index: number, values: any) => {
+export const UpdateScratchPadItem = (updatedPadValue: ScratchPadValue) => {
   const currentItems = GetScratchPadItems();
-  let list = currentItems.map((value: any, idx: number) => {
-    if (index === idx) {
-      value.values = values;
+  let list = currentItems.map((value: ScratchPadValue) => {
+    if (value.padId === updatedPadValue.padId) {
+      return updatedPadValue;
     }
     return value;
   });
@@ -29,14 +30,19 @@ export const UpdateScratchPadItem = (index: number, values: any) => {
 
 export const PushToScratchPad = (padType: string, values: any) => {
   const currentItems = GetScratchPadItems();
-  currentItems.push({ padType: padType, values: values });
+
+  currentItems.push({
+    padId: uuidv4(),
+    padType: padType,
+    values: values,
+  } as ScratchPadValue);
   return SetScratchPadItems(currentItems);
 };
 
-export const RemoveScratchPadItem = (index: number) => {
+export const RemoveScratchPadItem = (padId: string) => {
   const currentItems = GetScratchPadItems();
-  let list = currentItems.filter((value: any, idx: number) => {
-    return index !== idx && value !== null;
+  let list = currentItems.filter((value: ScratchPadValue) => {
+    return value.padId !== padId && value !== null;
   });
   return SetScratchPadItems(list);
 };

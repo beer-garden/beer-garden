@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "primereact/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Badge } from "primereact/badge";
@@ -21,7 +21,7 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
     setCurrentRequests(requests);
   };
 
-  const getCurrentRequests = () => {
+  const getCurrentRequests = useCallback(() => {
     const sessionUUID = localStorage.getItem("sessionUUID");
 
     if (sessionUUID) {
@@ -40,7 +40,7 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
         }),
       ];
       GetRequestList(filterQuery).then((data: [Array<Request>, Headers]) => {
-        const [requests, headers] = data;
+        const [requests] = data;
         setAllRequests(requests);
         if (!("CurrentRequests" in listeners)) {
           listeners["CurrentRequests"] = { listener: ProcessEventRequests };
@@ -49,7 +49,7 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
     } else {
       setAllRequests([] as Array<Request>);
     }
-  };
+  }, []);
 
   const ProcessEventRequests = (message: any) => {
     if (message.payload_type === "Request") {
@@ -96,7 +96,7 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
 
   useEffect(() => {
     getCurrentRequests();
-  }, []);
+  }, [getCurrentRequests]);
 
   const SeverityCheck = (status?: string) => {
     if (!status) {
@@ -136,9 +136,7 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
           raised
           link
           onClick={() => {
-            DeleteRequest(request).then(() => {
-              // getCurrentRequests();
-            });
+            DeleteRequest(request);
           }}
         >
           <FontAwesomeIcon icon="xmark" />

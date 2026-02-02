@@ -164,7 +164,7 @@ function CommandForm({
     parametersFields.forEach((param: InputParam) => {
       if (param.key === key) {
         let newItems: any[] = [];
-        param.value.map((param_value: any, param_index: any) => {
+        param.value.forEach((param_value: any, param_index: any) => {
           if (param_index !== index) {
             newItems.push(param_value);
           }
@@ -178,7 +178,7 @@ function CommandForm({
     parametersFields.forEach((param: InputParam) => {
       if (param.key === key) {
         let newItems: any[] = [];
-        param.value.map((param_value: any) => {
+        param.value.forEach((param_value: any) => {
           newItems.push(param_value);
         });
         newItems.push(param_default || null);

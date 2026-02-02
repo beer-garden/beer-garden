@@ -13,6 +13,10 @@ import {
   RemoveScratchPadItem,
 } from "../services/scratchpad_service";
 
+import { ScratchPadValue } from "../models/models";
+
+import { CompareObjects } from "../services/util_service";
+
 function ScratchPad({
   listeners,
   reloadTrigger,
@@ -28,24 +32,20 @@ function ScratchPad({
 
   const [showitems, setShowItems] = useState(true);
 
-  const ScratchPadTemplate = (value: any, index: any) => {
+  const ScratchPadTemplate = (value: ScratchPadValue) => {
     if (value.padType === "REQUEST") {
       return (
         <RequestCreateCard
-          values={value.values}
-          updateValues={(values) => {
-            updateIndex(index, values);
-          }}
+          padItem={value}
+          updatePadItem={updatePadValue}
           reloadScratchPad={reloadScratchPad}
         />
       );
     } else if (value.padType === "REQUEST_VIEW") {
       return (
         <RequestViewCard
-          values={value.values}
-          updateValues={(values) => {
-            updateIndex(index, values);
-          }}
+          padItem={value.values}
+          updatePadItem={updatePadValue}
           reloadScratchPad={reloadScratchPad}
           listeners={listeners}
         />
@@ -54,32 +54,44 @@ function ScratchPad({
     return <div>ERROR</div>;
   };
 
-  const updateIndex = (updateIndex: number, updateValue: any) => {
-    setScratchPadItems(UpdateScratchPadItem(updateIndex, updateValue));
+  const updatePadValue = (padValue: ScratchPadValue) => {
+    // Need to verify it is still in the list and changed
+    if (
+      scratchPadItems.some(
+        (item) =>
+          item.padId === padValue.padId && !CompareObjects(item, padValue),
+      )
+    ) {
+      setScratchPadItems(UpdateScratchPadItem(padValue));
+    }
   };
 
-  const removeIndex = (removeIndex: number) => {
-    setShowItems(false);
-    setScratchPadItems(RemoveScratchPadItem(removeIndex));
-    setShowItems(true);
+  const removePadItem = (padValue: ScratchPadValue) => {
+    if (scratchPadItems.some((item) => item.padId === padValue.padId)) {
+      setShowItems(false);
+      setScratchPadItems(RemoveScratchPadItem(padValue.padId));
+      setShowItems(true);
+    }
   };
 
   const listTemplate = (items: any) => {
     if (!items || items.length === 0) return null;
 
-    let list = items.map((value: any, index: number) => {
+    let list = [] as Array<any>;
+
+    items.forEach((value: ScratchPadValue) => {
       if (value !== null && value !== undefined) {
-        return (
-          <div>
+        list.push(
+          <div key={value.padId}>
             <Button
               onClick={() => {
-                removeIndex(index);
+                removePadItem(value);
               }}
             >
               <FontAwesomeIcon icon="minus" />
             </Button>
-            {ScratchPadTemplate(value, index)}
-          </div>
+            {ScratchPadTemplate(value)}
+          </div>,
         );
       }
     });

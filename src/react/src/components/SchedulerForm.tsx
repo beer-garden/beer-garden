@@ -11,9 +11,10 @@ import { InputText } from "primereact/inputtext";
 import { Checkbox } from "primereact/checkbox";
 import { InputNumber } from "primereact/inputnumber";
 import { Calendar } from "primereact/calendar";
-import { Cron, converter } from "react-js-cron";
+import { Cron } from "react-js-cron";
 import { Dropdown } from "primereact/dropdown";
 import { MultiSelect } from "primereact/multiselect";
+import { CompareObjects } from "../services/util_service";
 
 interface SchedulerFormProps {
   scheduledJob: Job | null;
@@ -55,16 +56,42 @@ function FileForm({
     useState<Array<string>>(defaultTypes);
 
   useEffect(() => {
-    setFileTrigger({
-      ...fileTrigger,
-      ...{
+    let updateNeeded = false;
+    let updates = {};
+
+    if (!fileTrigger) {
+      updateNeeded = true;
+      updates = {
         create: selectedTypes.includes(CREATE),
         modify: selectedTypes.includes(MODIFY),
         move: selectedTypes.includes(MOVE),
         delete: selectedTypes.includes(DELETE),
-      },
-    });
-  }, [selectedTypes]);
+      };
+    } else {
+      if (fileTrigger?.create !== selectedTypes.includes(CREATE)) {
+        updateNeeded = true;
+        updates = { ...updates, ...{ create: selectedTypes.includes(CREATE) } };
+      }
+      if (fileTrigger?.modify !== selectedTypes.includes(MODIFY)) {
+        updateNeeded = true;
+        updates = { ...updates, ...{ modify: selectedTypes.includes(MODIFY) } };
+      }
+      if (fileTrigger?.move !== selectedTypes.includes(MOVE)) {
+        updateNeeded = true;
+        updates = { ...updates, ...{ move: selectedTypes.includes(MOVE) } };
+      }
+      if (fileTrigger?.delete !== selectedTypes.includes(DELETE)) {
+        updateNeeded = true;
+        updates = { ...updates, ...{ delete: selectedTypes.includes(DELETE) } };
+      }
+    }
+    if (updateNeeded) {
+      setFileTrigger({
+        ...fileTrigger,
+        ...updates,
+      });
+    }
+  }, [selectedTypes, fileTrigger, setFileTrigger]);
 
   if (fileTrigger === null) {
     setFileTrigger({});
@@ -128,8 +155,10 @@ function DateForm({
   );
 
   useEffect(() => {
-    setDateTrigger({ ...dateTrigger, ...{ runDate: runDate } });
-  }, [runDate]);
+    if (!dateTrigger || dateTrigger.runDate !== runDate) {
+      setDateTrigger({ ...dateTrigger, ...{ runDate: runDate } });
+    }
+  }, [runDate, dateTrigger, setDateTrigger]);
 
   return (
     <div>
@@ -201,17 +230,12 @@ function IntervalForm({
   );
 
   useEffect(() => {
-    setIntervalTrigger({ ...intervalTrigger, ...{ startDate: startDate } });
-  }, [startDate]);
+    let updateNeeded = false;
+    let updates = {};
 
-  useEffect(() => {
-    setIntervalTrigger({ ...intervalTrigger, ...{ endDate: endDate } });
-  }, [endDate]);
-
-  useEffect(() => {
-    setIntervalTrigger({
-      ...intervalTrigger,
-      ...{
+    if (!intervalTrigger) {
+      updateNeeded = true;
+      updates = {
         seconds:
           intervalNumber && intervalType === "seconds" ? intervalNumber : 0,
         minutes:
@@ -219,9 +243,53 @@ function IntervalForm({
         hours: intervalNumber && intervalType === "hours" ? intervalNumber : 0,
         days: intervalNumber && intervalType === "days" ? intervalNumber : 0,
         weeks: intervalNumber && intervalType === "weeks" ? intervalNumber : 0,
-      },
-    });
-  }, [intervalType, intervalNumber]);
+        endDate: endDate,
+        startDate: startDate,
+      };
+    } else {
+      if (intervalTrigger?.endDate !== endDate) {
+        updateNeeded = true;
+        updates = { ...updates, ...{ endDate: endDate } };
+      }
+
+      if (intervalTrigger?.startDate !== startDate) {
+        updateNeeded = true;
+        updates = { ...updates, ...{ startDate: startDate } };
+      }
+
+      const intervalUpdates = {
+        seconds:
+          intervalNumber && intervalType === "seconds" ? intervalNumber : 0,
+        minutes:
+          intervalNumber && intervalType === "minutes" ? intervalNumber : 0,
+        hours: intervalNumber && intervalType === "hours" ? intervalNumber : 0,
+        days: intervalNumber && intervalType === "days" ? intervalNumber : 0,
+        weeks: intervalNumber && intervalType === "weeks" ? intervalNumber : 0,
+      };
+
+      if (
+        intervalTrigger?.seconds !== intervalUpdates.seconds ||
+        intervalTrigger?.minutes !== intervalUpdates.minutes ||
+        intervalTrigger?.hours !== intervalUpdates.hours ||
+        intervalTrigger?.days !== intervalUpdates.days ||
+        intervalTrigger?.weeks !== intervalUpdates.weeks
+      ) {
+        updateNeeded = true;
+        updates = { ...updates, ...intervalUpdates };
+      }
+    }
+
+    if (updateNeeded) {
+      setIntervalTrigger({ ...intervalTrigger, ...updates });
+    }
+  }, [
+    intervalType,
+    intervalNumber,
+    startDate,
+    endDate,
+    intervalTrigger,
+    setIntervalTrigger,
+  ]);
 
   return (
     <div>
@@ -307,26 +375,62 @@ function CronForm({
   );
 
   useEffect(() => {
-    setCronTrigger({ ...cronTrigger, ...{ startDate: startDate } });
-  }, [startDate]);
+    let updateNeeded = false;
+    let updates = {};
+    const cronValues = cronValue.trim().split(/\s+/);
 
-  useEffect(() => {
-    setCronTrigger({ ...cronTrigger, ...{ endDate: endDate } });
-  }, [endDate]);
+    if (!cronTrigger) {
+      updateNeeded = true;
+      updates = {
+        endDate: endDate,
+        startDate: startDate,
+        minute: cronValues[0],
+        hour: cronValues[1],
+        day: cronValues[2],
+        month: cronValues[3],
+        dayOfWeek: cronValues[4],
+      };
+    } else {
+      if (cronTrigger?.endDate !== endDate) {
+        updateNeeded = true;
+        updates = { ...updates, ...{ endDate: endDate } };
+      }
 
-  useEffect(() => {
-    const values = cronValue.trim().split(/\s+/);
-    setCronTrigger({
-      ...cronTrigger,
-      ...{
-        minute: values[0],
-        hour: values[1],
-        day: values[2],
-        month: values[3],
-        dayOfWeek: values[4],
-      },
-    });
-  }, [cronValue]);
+      if (cronTrigger?.startDate !== startDate) {
+        updateNeeded = true;
+        updates = { ...updates, ...{ startDate: startDate } };
+      }
+
+      if (cronTrigger?.minute !== cronValues[0]) {
+        updateNeeded = true;
+        updates = { ...updates, ...{ minute: cronValues[0] } };
+      }
+
+      if (cronTrigger?.hour !== cronValues[1]) {
+        updateNeeded = true;
+        updates = { ...updates, ...{ hour: cronValues[1] } };
+      }
+
+      if (cronTrigger?.day !== cronValues[2]) {
+        updateNeeded = true;
+        updates = { ...updates, ...{ day: cronValues[2] } };
+      }
+
+      if (cronTrigger?.month !== cronValues[3]) {
+        updateNeeded = true;
+        updates = { ...updates, ...{ month: cronValues[3] } };
+      }
+
+      if (cronTrigger?.dayOfWeek !== cronValues[4]) {
+        updateNeeded = true;
+        updates = { ...updates, ...{ dayOfWeek: cronValues[4] } };
+      }
+    }
+
+    if (updateNeeded) {
+      setCronTrigger({ ...cronTrigger, ...updates });
+    }
+  }, [cronValue, endDate, startDate, cronTrigger, setCronTrigger]);
 
   return (
     <div>
@@ -421,39 +525,31 @@ function SchedulerForm({
 
   useEffect(() => {
     if (jobState === "Date") {
-      setScheduledJob({ ...scheduledJob, ...{ trigger: dateTrigger } });
+      if (!CompareObjects(scheduledJob?.trigger, dateTrigger)) {
+        setScheduledJob({ ...scheduledJob, ...{ trigger: dateTrigger } });
+      }
     } else if (jobState === "Interval") {
-      setScheduledJob({ ...scheduledJob, ...{ trigger: intervalTrigger } });
+      if (!CompareObjects(scheduledJob?.trigger, intervalTrigger)) {
+        setScheduledJob({ ...scheduledJob, ...{ trigger: intervalTrigger } });
+      }
     } else if (jobState === "File") {
-      setScheduledJob({ ...scheduledJob, ...{ trigger: fileTrigger } });
+      if (!CompareObjects(scheduledJob?.trigger, fileTrigger)) {
+        setScheduledJob({ ...scheduledJob, ...{ trigger: fileTrigger } });
+      }
     } else if (jobState === "CRON") {
-      setScheduledJob({ ...scheduledJob, ...{ trigger: cronTrigger } });
+      if (!CompareObjects(scheduledJob?.trigger, cronTrigger)) {
+        setScheduledJob({ ...scheduledJob, ...{ trigger: cronTrigger } });
+      }
     }
-  }, [dateTrigger, intervalTrigger, fileTrigger, cronTrigger]);
-
-  useEffect(() => {
-    if (jobState === "CRON") {
-      setScheduledJob({
-        ...scheduledJob,
-        ...{ trigger_type: "cron", trigger: cronTrigger },
-      });
-    } else if (jobState === "Interval") {
-      setScheduledJob({
-        ...scheduledJob,
-        ...{ trigger_type: "interval", trigger: intervalTrigger },
-      });
-    } else if (jobState === "Date") {
-      setScheduledJob({
-        ...scheduledJob,
-        ...{ trigger_type: "date", trigger: dateTrigger },
-      });
-    } else if (jobState === "File") {
-      setScheduledJob({
-        ...scheduledJob,
-        ...{ trigger_type: "file", trigger: fileTrigger },
-      });
-    }
-  }, [jobState]);
+  }, [
+    jobState,
+    dateTrigger,
+    intervalTrigger,
+    fileTrigger,
+    cronTrigger,
+    scheduledJob,
+    setScheduledJob,
+  ]);
 
   return (
     <div>
