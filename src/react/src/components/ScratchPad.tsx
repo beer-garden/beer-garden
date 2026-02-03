@@ -44,7 +44,7 @@ function ScratchPad({
     } else if (value.padType === "REQUEST_VIEW") {
       return (
         <RequestViewCard
-          padItem={value.values}
+          padItem={value}
           updatePadItem={updatePadValue}
           reloadScratchPad={reloadScratchPad}
           listeners={listeners}
