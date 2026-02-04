@@ -1,12 +1,13 @@
-import { System, Instance } from "../models/brewtils-types";
+import "primeflex/primeflex.css";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
-import { classNames } from "primereact/utils";
 import { DataView } from "primereact/dataview";
-import "primeflex/primeflex.css";
-import { useState, useEffect } from "react";
+import { classNames } from "primereact/utils";
+import { useEffect,useState } from "react";
+
+import { Instance,System } from "../models/brewtils-types";
 import { GetSystemList } from "../services/system_service";
 
 function SystemIndex() {
@@ -49,7 +50,7 @@ function SystemIndex() {
   const instanceListTemplate = (instances: System[]) => {
     if (!instances || instances.length === 0) return null;
 
-    let list = instances.map((instance: Instance, index: number) => {
+    const list = instances.map((instance: Instance, index: number) => {
       return instanceTemplate(instance, index);
     });
 

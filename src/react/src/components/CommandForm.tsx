@@ -1,19 +1,20 @@
-import { useState, useEffect } from "react";
-import { InputText } from "primereact/inputtext";
-import { InputNumber } from "primereact/inputnumber";
-import { Dropdown } from "primereact/dropdown";
-import { Checkbox } from "primereact/checkbox";
 import { Button } from "primereact/button";
-import { Command, Parameter } from "../models/brewtils-types"; // Assuming this is the correct path
 import { Calendar } from "primereact/calendar";
-import { FileUpload } from "primereact/fileupload";
-import { DataTable } from "primereact/datatable";
+import { Checkbox } from "primereact/checkbox";
 import { Column } from "primereact/column";
+import { DataTable } from "primereact/datatable";
+import { Dropdown } from "primereact/dropdown";
+import { FileUpload } from "primereact/fileupload";
+import { InputNumber } from "primereact/inputnumber";
+import { InputText } from "primereact/inputtext";
+import { InputTextarea } from "primereact/inputtextarea";
 import { MultiSelect } from "primereact/multiselect";
 import { TriStateCheckbox } from "primereact/tristatecheckbox";
-import { Request } from "../models/brewtils-types";
-import { InputTextarea } from "primereact/inputtextarea";
 import { classNames } from "primereact/utils";
+import { useEffect,useState } from "react";
+
+import { Command, Parameter } from "../models/brewtils-types"; // Assuming this is the correct path
+import { Request } from "../models/brewtils-types";
 
 interface CommandFormProps {
   command: Command | null;
@@ -41,7 +42,7 @@ function CommandForm({
 
   if (command !== null) {
     for (const param of command.parameters || []) {
-      let newParam = { ...param } as InputParam;
+      const newParam = { ...param } as InputParam;
       if (
         request &&
         request.parameters &&
@@ -163,7 +164,7 @@ function CommandForm({
   const removeMultiItem = (key: any, index: any) => {
     parametersFields.forEach((param: InputParam) => {
       if (param.key === key) {
-        let newItems: any[] = [];
+        const newItems: any[] = [];
         param.value.forEach((param_value: any, param_index: any) => {
           if (param_index !== index) {
             newItems.push(param_value);
@@ -177,7 +178,7 @@ function CommandForm({
   const addMultiItem = (key: any, param_default: any) => {
     parametersFields.forEach((param: InputParam) => {
       if (param.key === key) {
-        let newItems: any[] = [];
+        const newItems: any[] = [];
         param.value.forEach((param_value: any) => {
           newItems.push(param_value);
         });
@@ -670,7 +671,7 @@ function CommandForm({
           // convert file to bytes encoded
           const file = event.files[0];
           const reader = new FileReader();
-          let blob = await fetch(file.objectURL).then((r) => r.blob()); //blob:url
+          const blob = await fetch(file.objectURL).then((r) => r.blob()); //blob:url
 
           reader.readAsDataURL(blob);
 
@@ -695,7 +696,7 @@ function CommandForm({
           // convert file to base64 encoded
           const file = event.files[0];
           const reader = new FileReader();
-          let blob = await fetch(file.objectURL).then((r) => r.blob()); //blob:url
+          const blob = await fetch(file.objectURL).then((r) => r.blob()); //blob:url
 
           reader.readAsDataURL(blob);
 

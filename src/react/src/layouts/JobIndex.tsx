@@ -1,10 +1,11 @@
-import { Job } from "../models/brewtils-types";
-import { useState, useEffect } from "react";
-import { GetJobList } from "../services/job_service";
-import { DataTable } from "primereact/datatable";
-import { Column } from "primereact/column";
-import { Button } from "primereact/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Button } from "primereact/button";
+import { Column } from "primereact/column";
+import { DataTable } from "primereact/datatable";
+import { useEffect,useState } from "react";
+
+import { Job } from "../models/brewtils-types";
+import { GetJobList } from "../services/job_service";
 
 function JobIndex() {
   const [jobs, setJobs] = useState<Array<Job>>([]);

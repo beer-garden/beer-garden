@@ -409,9 +409,9 @@ export interface System {
   namespace?: string;
   local?: boolean;
   template?: string;
-  groups?: String[];
+  groups?: string[];
   prefix_topic?: string;
-  requires?: String[];
+  requires?: string[];
   requires_timeout?: number;
 }
 

@@ -24,7 +24,7 @@ export const GetSystemList = async (
     let queryString = "";
     if (queryData) {
       // queryString = new URLSearchParams(headerData).toString();
-      let searchParams = new URLSearchParams();
+      const searchParams = new URLSearchParams();
       for (const [key, value] of Object.entries(queryData)) {
         if (Array.isArray(value)) {
           for (const item of value) {

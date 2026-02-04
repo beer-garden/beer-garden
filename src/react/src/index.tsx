@@ -1,19 +1,18 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-// import './index.css';
-import App from "./App";
-import reportWebVitals from "./reportWebVitals";
-
 // import 'bootstrap/dist/css/bootstrap.min.css';
 import { library } from "@fortawesome/fontawesome-svg-core";
 import * as Icons from "@fortawesome/free-solid-svg-icons";
-
 // Types
 import {
   IconDefinition,
-  IconPrefix,
   IconPack,
+  IconPrefix,
 } from "@fortawesome/free-solid-svg-icons";
+import React from "react";
+import ReactDOM from "react-dom/client";
+
+// import './index.css';
+import App from "./App";
+import reportWebVitals from "./reportWebVitals";
 
 // Type that `library.add()` expects.
 type IconDefinitionOrPack = IconDefinition | IconPack;

@@ -1,12 +1,13 @@
-import { TreeTable } from "primereact/treetable";
-import { Column } from "primereact/column";
-import { Request } from "../models/brewtils-types";
-import { Button } from "primereact/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Button } from "primereact/button";
+import { Column } from "primereact/column";
+import { TreeTable } from "primereact/treetable";
+
+import { Request } from "../models/brewtils-types";
 import { DeleteRequest } from "../services/request_service";
 
 function parseRequest(request: Request, currentRequestId?: string) {
-  let item = {
+  const item = {
     key: request.id,
     data: {
       id: request.id,
@@ -33,7 +34,7 @@ function parseRequest(request: Request, currentRequestId?: string) {
     request.children.length > 0
   ) {
     request.children.forEach((childRequest: Request) => {
-      let child_item = parseRequest(childRequest);
+      const child_item = parseRequest(childRequest);
       child_item.key = item.key + "-" + child_item.key;
       item.children.push(child_item);
     });

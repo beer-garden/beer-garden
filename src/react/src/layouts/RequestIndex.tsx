@@ -1,14 +1,14 @@
-import { Request } from "../models/brewtils-types";
-import { useState, useEffect, useRef, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { GetRequestList } from "../services/request_service";
-import { DataTable } from "primereact/datatable";
-import { Column } from "primereact/column";
 import { FilterMatchMode } from "primereact/api";
-import { Calendar } from "primereact/calendar";
-import { MultiSelect } from "primereact/multiselect";
 import { Button } from "primereact/button";
+import { Calendar } from "primereact/calendar";
+import { Column } from "primereact/column";
+import { DataTable } from "primereact/datatable";
+import { MultiSelect } from "primereact/multiselect";
+import { useCallback,useEffect, useRef, useState } from "react";
 
+import { Request } from "../models/brewtils-types";
+import { GetRequestList } from "../services/request_service";
 import { PushToScratchPad } from "../services/scratchpad_service";
 
 function RequestIndex({
@@ -48,7 +48,7 @@ function RequestIndex({
     setLoading(true);
 
     const generateFilterQuery = () => {
-      let filterQuery: Record<string, any> = {};
+      const filterQuery: Record<string, any> = {};
 
       Object.entries(filters).forEach(([field, filterMeta]) => {
         if (field === null || field === undefined) {
@@ -68,7 +68,7 @@ function RequestIndex({
 
         filterQuery["query"] = filterQuery["query"] || [];
 
-        let filter: Record<string, any> = {
+        const filter: Record<string, any> = {
           field_name: field,
           modifier: "",
           value: filterMeta.value,
@@ -265,7 +265,7 @@ function RequestIndex({
       const MonitorNewRequests = (message: any) => {
         if (message.payload_type === "Request") {
           let updateList = false;
-          let updatedRequests = [] as Array<Request>;
+          const updatedRequests = [] as Array<Request>;
 
           for (const request of altRequests.current) {
             if (

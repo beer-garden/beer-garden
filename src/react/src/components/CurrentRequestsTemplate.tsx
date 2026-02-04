@@ -1,13 +1,13 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Button } from "primereact/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Badge } from "primereact/badge";
-import { ConfirmPopup, confirmPopup } from "primereact/confirmpopup";
-import { Request } from "../models/brewtils-types";
-import { DataTable } from "primereact/datatable";
+import { Button } from "primereact/button";
 import { Column } from "primereact/column";
+import { ConfirmPopup, confirmPopup } from "primereact/confirmpopup";
+import { DataTable } from "primereact/datatable";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
-import { GetRequestList, DeleteRequest } from "../services/request_service";
+import { Request } from "../models/brewtils-types";
+import { DeleteRequest,GetRequestList } from "../services/request_service";
 
 function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
   const [currentRequests, setCurrentRequests] = useState<Array<Request>>([]);
@@ -25,7 +25,7 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
     const sessionUUID = localStorage.getItem("sessionUUID");
 
     if (sessionUUID) {
-      let filterQuery: Record<string, any> = {};
+      const filterQuery: Record<string, any> = {};
       filterQuery["include"] = ["id", "status", "command"];
       filterQuery["query"] = [
         JSON.stringify({
@@ -63,7 +63,7 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
         message.payload.metadata.sessionUUID === sessionUUID
       ) {
         let updateList = false;
-        let updatedRequests = [] as Array<Request>;
+        const updatedRequests = [] as Array<Request>;
 
         for (const request of altRequests.current) {
           if (message.payload.id === request.id) {

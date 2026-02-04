@@ -1,18 +1,19 @@
-import { useState, useRef, useEffect } from "react";
+import { Button } from "primereact/button";
+import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import { Skeleton } from "primereact/skeleton";
 import { Stepper } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
-import { Button } from "primereact/button";
-import { Request, System, Command, Job } from "../models/brewtils-types";
-import { GetSystemList } from "../services/system_service";
-import CommandSelect from "../components/CommandSelect";
-import { GetRequest } from "../services/request_service";
-import { GetJob, CreateJob, UpdateJob } from "../services/job_service";
-import CommandForm from "../components/CommandForm";
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
-import { PostRequest } from "../services/request_service";
+import { useEffect,useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Skeleton } from "primereact/skeleton";
+
+import CommandForm from "../components/CommandForm";
+import CommandSelect from "../components/CommandSelect";
 import SchedulerForm from "../components/SchedulerForm";
+import { Command, Job,Request, System } from "../models/brewtils-types";
+import { CreateJob, GetJob, UpdateJob } from "../services/job_service";
+import { GetRequest } from "../services/request_service";
+import { PostRequest } from "../services/request_service";
+import { GetSystemList } from "../services/system_service";
 
 interface RequestCommand {
   namespace: string | null;
@@ -103,7 +104,7 @@ function RequestCreate() {
   };
 
   const migrateRequest = () => {
-    let updatedRequest: Request = {
+    const updatedRequest: Request = {
       namespace: requestCommand?.namespace || undefined,
       system: requestCommand?.systemName || undefined,
       system_version: requestCommand?.version || undefined,

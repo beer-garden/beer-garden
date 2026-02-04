@@ -42,7 +42,7 @@ build-models:
 	pip install py
 
 start:
-	PORT=3002 npm start
+	npm start
 
 chromium_test:
 	docker run \

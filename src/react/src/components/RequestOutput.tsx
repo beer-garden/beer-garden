@@ -1,5 +1,6 @@
-import { Request } from "../models/brewtils-types";
 import { Skeleton } from "primereact/skeleton";
+
+import { Request } from "../models/brewtils-types";
 
 function displautOutput(request: Request) {
   if (request.output_type === "JSON") {

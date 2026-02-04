@@ -1,10 +1,11 @@
-import { System } from "../models/brewtils-types";
-
 import "primeflex/primeflex.css";
-import { useState, useEffect, Children } from "react";
-import { GetSystemList } from "../services/system_service";
-import { TreeTable, TreeTableSelectionEvent } from "primereact/treetable";
+
 import { Column } from "primereact/column";
+import { TreeTable, TreeTableSelectionEvent } from "primereact/treetable";
+import { Children,useEffect, useState } from "react";
+
+import { System } from "../models/brewtils-types";
+import { GetSystemList } from "../services/system_service";
 
 function SystemTable() {
   const [systems, setSystems] = useState<Array<System>>([]);
@@ -16,7 +17,7 @@ function SystemTable() {
   });
 
   useEffect(() => {
-    let systemNodes: any[] = [];
+    const systemNodes: any[] = [];
 
     if (systems && systems.length > 0) {
       systems.forEach((system) => {

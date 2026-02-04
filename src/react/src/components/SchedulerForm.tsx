@@ -1,3 +1,13 @@
+import { Calendar } from "primereact/calendar";
+import { Checkbox } from "primereact/checkbox";
+import { Dropdown } from "primereact/dropdown";
+import { InputNumber } from "primereact/inputnumber";
+import { InputText } from "primereact/inputtext";
+import { MultiSelect } from "primereact/multiselect";
+import { SelectButton } from "primereact/selectbutton";
+import { useEffect, useState } from "react";
+import { Cron } from "react-js-cron";
+
 import {
   CronTrigger,
   DateTrigger,
@@ -5,15 +15,6 @@ import {
   IntervalTrigger,
   Job,
 } from "../models/brewtils-types";
-import { SelectButton } from "primereact/selectbutton";
-import { useEffect, useState } from "react";
-import { InputText } from "primereact/inputtext";
-import { Checkbox } from "primereact/checkbox";
-import { InputNumber } from "primereact/inputnumber";
-import { Calendar } from "primereact/calendar";
-import { Cron } from "react-js-cron";
-import { Dropdown } from "primereact/dropdown";
-import { MultiSelect } from "primereact/multiselect";
 import { CompareObjects } from "../services/util_service";
 
 interface SchedulerFormProps {
@@ -37,7 +38,7 @@ function FileForm({
   const DELETE = "Delete";
   const typeOptions = [CREATE, MODIFY, MOVE, DELETE];
 
-  let defaultTypes = [];
+  const defaultTypes = [];
 
   if (fileTrigger?.create) {
     defaultTypes.push(CREATE);
@@ -350,7 +351,7 @@ function CronForm({
   cronTrigger: CronTrigger | null;
   setCronTrigger: (trigger: CronTrigger) => void;
 }) {
-  let defaultCronValue =
+  const defaultCronValue =
     (cronTrigger?.minute ? cronTrigger.minute : "*") +
     " " +
     (cronTrigger?.hour ? cronTrigger.hour : "*") +

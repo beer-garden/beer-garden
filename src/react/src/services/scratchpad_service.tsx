@@ -1,5 +1,6 @@
-import { ScratchPadValue } from "../models/models";
 import { v4 as uuidv4 } from "uuid";
+
+import { ScratchPadValue } from "../models/models";
 
 export const GetScratchPadItems = () => {
   const storedValue = localStorage.getItem("scratchPadItems");
@@ -19,7 +20,7 @@ export const SetScratchPadItems = (items: Array<ScratchPadValue>) => {
 
 export const UpdateScratchPadItem = (updatedPadValue: ScratchPadValue) => {
   const currentItems = GetScratchPadItems();
-  let list = currentItems.map((value: ScratchPadValue) => {
+  const list = currentItems.map((value: ScratchPadValue) => {
     if (value.padId === updatedPadValue.padId) {
       return updatedPadValue;
     }
@@ -41,7 +42,7 @@ export const PushToScratchPad = (padType: string, values: any) => {
 
 export const RemoveScratchPadItem = (padId: string) => {
   const currentItems = GetScratchPadItems();
-  let list = currentItems.filter((value: ScratchPadValue) => {
+  const list = currentItems.filter((value: ScratchPadValue) => {
     return value.padId !== padId && value !== null;
   });
   return SetScratchPadItems(list);

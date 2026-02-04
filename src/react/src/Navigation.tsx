@@ -1,7 +1,8 @@
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Button } from "primereact/button";
 import { MegaMenu } from "primereact/megamenu";
 import { Ripple } from "primereact/ripple";
-import { Button } from "primereact/button";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
 import CurrentRequestsTemplate from "./components/CurrentRequestsTemplate";
 
 function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {

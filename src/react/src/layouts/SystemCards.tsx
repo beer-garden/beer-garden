@@ -1,15 +1,16 @@
-import { System, Instance } from "../models/brewtils-types";
+import "primeflex/primeflex.css";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "primereact/button";
-import { classNames } from "primereact/utils";
-import { DataView } from "primereact/dataview";
-import "primeflex/primeflex.css";
-import { useState, useEffect, useRef } from "react";
-import { GetSystemList } from "../services/system_service";
-import { Panel } from "primereact/panel";
 import { Badge } from "primereact/badge";
+import { Button } from "primereact/button";
+import { DataView } from "primereact/dataview";
 import { Menu } from "primereact/menu";
+import { Panel } from "primereact/panel";
+import { classNames } from "primereact/utils";
+import { useEffect, useRef,useState } from "react";
+
+import { Instance,System } from "../models/brewtils-types";
+import { GetSystemList } from "../services/system_service";
 
 function SystemCards() {
   const [systems, setSystems] = useState<Array<System>>([]);
@@ -140,7 +141,7 @@ function SystemCards() {
   const instanceListTemplate = (instances: System[]) => {
     if (!instances || instances.length === 0) return null;
 
-    let list = instances.map((instance: Instance, index: number) => {
+    const list = instances.map((instance: Instance, index: number) => {
       return instanceTemplate(instance, index);
     });
 
@@ -152,7 +153,7 @@ function SystemCards() {
       return;
     }
 
-    let statusCounts = new Map();
+    const statusCounts = new Map();
 
     statusList.forEach((status) => {
       // statusCounts[status] = {count: 0, severity:getSeverity(status)}
@@ -246,7 +247,7 @@ function SystemCards() {
       </div>
     );
   };
-  let systemGroup = new Map<string, System[]>();
+  const systemGroup = new Map<string, System[]>();
 
   const groupField = "namespace";
   // const groupField = "version";
@@ -260,7 +261,7 @@ function SystemCards() {
   const groupHeaderTemplate = (options: any) => {
     const className = `${options.className} justify-content-space-between`;
 
-    let statusCounts = new Map();
+    const statusCounts = new Map();
 
     statusList.forEach((status) => {
       // statusCounts[status] = {count: 0, severity:getSeverity(status)}

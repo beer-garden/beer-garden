@@ -1,14 +1,15 @@
-import { useState, useRef, useEffect } from "react";
 import { Card } from "primereact/card";
-import CommandSelect from "../../components/CommandSelect";
-import CommandForm from "../../components/CommandForm";
-import { Request, System, Command } from "../../models/brewtils-types";
-import { GetSystemList } from "../../services/system_service";
-import { PostRequest } from "../../services/request_service";
-import { Toast } from "primereact/toast";
 import { SplitButton } from "primereact/splitbutton";
-import { PushToScratchPad } from "../../services/scratchpad_service";
+import { Toast } from "primereact/toast";
+import { useEffect,useRef, useState } from "react";
+
+import CommandForm from "../../components/CommandForm";
+import CommandSelect from "../../components/CommandSelect";
+import { Command,Request, System } from "../../models/brewtils-types";
 import { ScratchPadValue } from "../../models/models";
+import { PostRequest } from "../../services/request_service";
+import { PushToScratchPad } from "../../services/scratchpad_service";
+import { GetSystemList } from "../../services/system_service";
 
 interface RequestCommand {
   namespace: string | null;
