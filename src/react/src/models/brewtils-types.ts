@@ -17,8 +17,6 @@ export interface AliasUserMap {
   username?: string;
 }
 
-export interface Base {}
-
 export interface Choices {
   type?: string;
   display?: string;

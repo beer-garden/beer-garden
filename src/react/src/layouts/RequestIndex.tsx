@@ -5,7 +5,7 @@ import { Calendar } from "primereact/calendar";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { MultiSelect } from "primereact/multiselect";
-import { useCallback,useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Request } from "../models/brewtils-types";
 import { GetRequestList } from "../services/request_service";
@@ -147,19 +147,24 @@ function RequestIndex({
       ...generateFilterQuery(),
     };
 
-    GetRequestList(queryHeaders).then((data: [Array<Request>, Headers]) => {
-      const [requests, headers] = data;
+    GetRequestList(queryHeaders)
+      .then((data: [Array<Request>, Headers]) => {
+        const [requests, headers] = data;
 
-      setDisplayRequests(requests);
-      setRecordsUpdated(false);
+        setDisplayRequests(requests);
+        setRecordsUpdated(false);
 
-      if (headers.has("Recordstotal")) {
-        setTotalRecords(parseInt(headers.get("Recordstotal") || "0", 10));
-      } else {
-        setTotalRecords(requests.length);
-      }
-      setLoading(false);
-    });
+        if (headers.has("Recordstotal")) {
+          setTotalRecords(parseInt(headers.get("Recordstotal") || "0", 10));
+        } else {
+          setTotalRecords(requests.length);
+        }
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching request list:", error);
+        setLoading(false);
+      });
   }, [lazyParams, filters]);
 
   const onPage = (event: any) => {
