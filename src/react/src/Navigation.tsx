@@ -96,6 +96,9 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
                 icon: "info",
                 subtext: "Subtext of item",
                 template: itemRenderer,
+                command: () => {
+                  window.open("/about", "_self");
+                },
               },
               {
                 label: "Garden",

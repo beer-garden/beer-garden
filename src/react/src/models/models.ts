@@ -14,6 +14,13 @@ export interface Config {
   info_ttl: number;
 }
 
+export interface Version {
+  beer_garden_version: string;
+  python_version: string;
+  current_api_version: string;
+  supported_api_versions: string[];
+}
+
 export interface Listener {
   listener: (message: any) => void;
   props: Record<string, any>;

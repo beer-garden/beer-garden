@@ -14,6 +14,7 @@ import JobIndex from "./layouts/JobIndex";
 import SystemTable from "./layouts/SystemTable";
 import GardenIndex from "./layouts/GardenIndex";
 import SystemCards from "./layouts/SystemCards";
+import AboutIndex from "./layouts/AboutIndex";
 import { Divider } from "primereact/divider";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
@@ -119,6 +120,9 @@ function App() {
               </Route>
               <Route path="/garden">
                 <GardenIndex />
+              </Route>
+              <Route path="/about">
+                <AboutIndex />
               </Route>
 
               <Route path="/">
