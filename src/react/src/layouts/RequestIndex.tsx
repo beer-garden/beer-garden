@@ -155,19 +155,24 @@ function RequestIndex({
       ...generateFilterQuery(),
     };
 
-    GetRequestList(queryHeaders).then((data: [Array<Request>, Headers]) => {
-      const [requests, headers] = data;
+    GetRequestList(queryHeaders)
+      .then((data: [Array<Request>, Headers]) => {
+        const [requests, headers] = data;
 
-      setDisplayRequests(requests);
-      setRecordsUpdated(false);
+        setDisplayRequests(requests);
+        setRecordsUpdated(false);
 
-      if (headers.has("Recordstotal")) {
-        setTotalRecords(parseInt(headers.get("Recordstotal") || "0", 10));
-      } else {
-        setTotalRecords(requests.length);
-      }
-      setLoading(false);
-    });
+        if (headers.has("Recordstotal")) {
+          setTotalRecords(parseInt(headers.get("Recordstotal") || "0", 10));
+        } else {
+          setTotalRecords(requests.length);
+        }
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching request list:", error);
+        setLoading(false);
+      });
   }, [lazyParams, filters]);
 
   const onPage = (event: any) => {

@@ -7,7 +7,7 @@ function displautOutput(request: Request) {
     let parsed_output = {};
     try {
       parsed_output = JSON.parse(request.output || "{}");
-    } catch (e) {
+    } catch {
       parsed_output = { error: "Failed to parse JSON output" };
     }
 

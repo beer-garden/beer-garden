@@ -7,7 +7,7 @@ import { DataTable } from "primereact/datatable";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { Request } from "../models/brewtils-types";
-import { DeleteRequest,GetRequestList } from "../services/request_service";
+import { DeleteRequest, GetRequestList } from "../services/request_service";
 
 function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
   const [currentRequests, setCurrentRequests] = useState<Array<Request>>([]);
@@ -39,13 +39,17 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
           value: ["CREATED", "IN_PROGRESS"],
         }),
       ];
-      GetRequestList(filterQuery).then((data: [Array<Request>, Headers]) => {
-        const [requests] = data;
-        setAllRequests(requests);
-        if (!("CurrentRequests" in listeners)) {
-          listeners["CurrentRequests"] = { listener: ProcessEventRequests };
-        }
-      });
+      GetRequestList(filterQuery)
+        .then((data: [Array<Request>, Headers]) => {
+          const [requests] = data;
+          setAllRequests(requests);
+          if (!("CurrentRequests" in listeners)) {
+            listeners["CurrentRequests"] = { listener: ProcessEventRequests };
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching current requests:", error);
+        });
     } else {
       setAllRequests([] as Array<Request>);
     }
@@ -136,7 +140,9 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
           raised
           link
           onClick={() => {
-            DeleteRequest(request);
+            DeleteRequest(request).catch((error) => {
+              console.error("Error deleting request:", error);
+            });
           }}
         >
           <FontAwesomeIcon icon="xmark" />
@@ -164,17 +170,7 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
     <div>
       <ConfirmPopup
         dismissable={true}
-        content={({
-          message,
-          acceptBtnRef,
-          rejectBtnRef,
-          hide,
-        }: {
-          message: any;
-          acceptBtnRef: any;
-          rejectBtnRef: any;
-          hide: any;
-        }) => (
+        content={({ acceptBtnRef, hide }: { acceptBtnRef: any; hide: any }) => (
           <div className="bg-gray-900 text-white border-round p-3">
             <div className="card">
               <DataTable

@@ -2,7 +2,7 @@ import "primeflex/primeflex.css";
 
 import { Column } from "primereact/column";
 import { TreeTable, TreeTableSelectionEvent } from "primereact/treetable";
-import { Children,useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { System } from "../models/brewtils-types";
 import { GetSystemList } from "../services/system_service";
@@ -12,9 +12,13 @@ function SystemTable() {
   const [nodes, setNodes] = useState([] as any[]);
   const [selectedNodeKeys, setSelectedNodeKeys] = useState<any | null>(null);
 
-  GetSystemList().then((data: Array<System>) => {
-    setSystems(data);
-  });
+  GetSystemList()
+    .then((data: Array<System>) => {
+      setSystems(data);
+    })
+    .catch((error) => {
+      console.error("Error fetching systems:", error);
+    });
 
   useEffect(() => {
     const systemNodes: any[] = [];

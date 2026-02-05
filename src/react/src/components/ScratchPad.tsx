@@ -1,7 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
 import { DataView } from "primereact/dataview";
-import React, { useEffect,useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { ScratchPadValue } from "../models/models";
 import {

@@ -5,18 +5,22 @@ import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { DataView } from "primereact/dataview";
 import { classNames } from "primereact/utils";
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 
-import { Instance,System } from "../models/brewtils-types";
+import { Instance, System } from "../models/brewtils-types";
 import { GetSystemList } from "../services/system_service";
 
 function SystemIndex() {
   const [systems, setSystems] = useState<Array<System>>([]);
 
   useEffect(() => {
-    GetSystemList().then((data: Array<System>) => {
-      setSystems(data);
-    });
+    GetSystemList()
+      .then((data: Array<System>) => {
+        setSystems(data);
+      })
+      .catch((error) => {
+        console.error("Error fetching systems:", error);
+      });
   }, []);
 
   const instanceTemplate = (instance: Instance, index: number) => {
@@ -57,7 +61,7 @@ function SystemIndex() {
     return <div className="grid grid-nogutter">{list}</div>;
   };
 
-  const systemTemplateGrid = (system: System, index: number) => {
+  const systemTemplateGrid = (system: System) => {
     if (!system) {
       return;
     }
@@ -110,7 +114,7 @@ function SystemIndex() {
         className="grid grid-nogutter"
         style={{ gridTemplateColumns: `repeat(auto-fit, minmax(250px, 1fr))` }}
       >
-        {systems.map((system, index) => systemTemplateGrid(system, index))}
+        {systems.map((system) => systemTemplateGrid(system))}
       </div>
     );
   };

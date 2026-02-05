@@ -6,7 +6,7 @@ import { TreeTable } from "primereact/treetable";
 import { Request } from "../models/brewtils-types";
 import { DeleteRequest } from "../services/request_service";
 
-function parseRequest(request: Request, currentRequestId?: string) {
+function parseRequest(request: Request) {
   const item = {
     key: request.id,
     data: {
@@ -51,7 +51,7 @@ interface RequestTreeChartProps {
 function RequestTreeChart(props: RequestTreeChartProps) {
   let node = {};
   if (props.rootRequest !== undefined && props.rootRequest !== null) {
-    node = parseRequest(props.rootRequest, props.currentRequestId);
+    node = parseRequest(props.rootRequest);
   }
 
   const rowClassName = (node: any) => {
@@ -87,7 +87,11 @@ function RequestTreeChart(props: RequestTreeChartProps) {
             rounded
             raised
             link
-            onClick={() => DeleteRequest(node.data)}
+            onClick={() =>
+              DeleteRequest(node.data).catch((error) => {
+                console.error("Error deleting request:", error);
+              })
+            }
             title="Delete"
           >
             <FontAwesomeIcon icon="trash" />{" "}

@@ -7,18 +7,22 @@ import { DataView } from "primereact/dataview";
 import { Menu } from "primereact/menu";
 import { Panel } from "primereact/panel";
 import { classNames } from "primereact/utils";
-import { useEffect, useRef,useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { Instance,System } from "../models/brewtils-types";
+import { Instance, System } from "../models/brewtils-types";
 import { GetSystemList } from "../services/system_service";
 
 function SystemCards() {
   const [systems, setSystems] = useState<Array<System>>([]);
 
   useEffect(() => {
-    GetSystemList().then((data: Array<System>) => {
-      setSystems(data);
-    });
+    GetSystemList()
+      .then((data: Array<System>) => {
+        setSystems(data);
+      })
+      .catch((error) => {
+        console.error("Error fetching systems:", error);
+      });
   }, []);
 
   const getSeverity = (
@@ -148,7 +152,7 @@ function SystemCards() {
     return <div className="grid grid-nogutter">{list}</div>;
   };
 
-  const systemTemplateGrid = (system: System, index: number) => {
+  const systemTemplateGrid = (system: System) => {
     if (!system) {
       return;
     }
@@ -243,7 +247,7 @@ function SystemCards() {
         className="grid grid-nogutter"
         style={{ gridTemplateColumns: `repeat(auto-fit, minmax(250px, 1fr))` }}
       >
-        {systems.map((system, index) => systemTemplateGrid(system, index))}
+        {systems.map((system) => systemTemplateGrid(system))}
       </div>
     );
   };

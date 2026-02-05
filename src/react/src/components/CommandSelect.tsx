@@ -1,7 +1,7 @@
 import { Dropdown } from "primereact/dropdown";
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 
-import { Command, Instance,System } from "../models/brewtils-types";
+import { Command, Instance, System } from "../models/brewtils-types";
 import { CompareObjects } from "../services/util_service";
 
 interface RequestCommand {
@@ -74,20 +74,14 @@ function CommandSelect({
             if (system.version === selectedVersion) {
               if (system.instances) {
                 system.instances.forEach((instance: Instance) => {
-                  if (
-                    instance.name &&
-                    !instanceList.includes(instance.name)
-                  ) {
+                  if (instance.name && !instanceList.includes(instance.name)) {
                     instanceList.push(instance.name);
                   }
                 });
               }
               if (system.commands) {
                 system.commands.forEach((command: Command) => {
-                  if (
-                    command.name &&
-                    !commandList.includes(command.name)
-                  ) {
+                  if (command.name && !commandList.includes(command.name)) {
                     commandList.push(command.name);
                   }
                 });
