@@ -1,5 +1,10 @@
 # Beer Garden Changelog
 
+# TBD
+
+TBD
+
+- Fixed UI bug where Pour Again failed to render if a parameter value is `null`
 
 # 3.31.1
 
