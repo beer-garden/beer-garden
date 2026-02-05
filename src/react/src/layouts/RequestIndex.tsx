@@ -5,11 +5,18 @@ import { Calendar } from "primereact/calendar";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { MultiSelect } from "primereact/multiselect";
-import { useCallback,useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { Request } from "../models/brewtils-types";
 import { GetRequestList } from "../services/request_service";
 import { PushToScratchPad } from "../services/scratchpad_service";
+import { Checkbox } from "primereact/checkbox";
 
 function RequestIndex({
   listeners,
@@ -24,6 +31,7 @@ function RequestIndex({
   const [totalRecords, setTotalRecords] = useState(0);
   const [lazyParams, setLazyParams] = useState({ first: 0, rows: 10, page: 0 });
   const [recordsUpdated, setRecordsUpdated] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(false);
 
   const [filters, setFilters] = useState({
     command_display_name: {
@@ -208,9 +216,27 @@ function RequestIndex({
     );
   };
 
+  const handleChange = (event: any) => {
+    setAutoRefresh(event.checked);
+  };
+
+  useLayoutEffect(() => {
+    if (autoRefresh && recordsUpdated) {
+      lazyLoadData();
+    }
+  }, [autoRefresh, recordsUpdated]);
+
   const header = (
     <div className="flex flex-wrap align-items-center justify-content-between gap-2">
       <span className="text-xl text-900 font-bold">Requests</span>
+      <label>
+        <Checkbox
+          onChange={handleChange}
+          checked={autoRefresh}
+          className="mr-2"
+        />
+        Auto Refresh
+      </label>
       <Button
         rounded
         raised
