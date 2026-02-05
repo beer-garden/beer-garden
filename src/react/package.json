@@ -23,15 +23,14 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "eslintConfig": {
     "extends": [
-      "react-app",
-      "react-app/jest"
+      "eslint:recommended",
+      "plugin:@typescript-eslint/recommended"
     ]
   },
   "browserslist": {
@@ -48,11 +47,13 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
-    "eslint": "^8.57.1",
+    "@vitejs/plugin-react": "^5.1.3",
+    "eslint": "^9.39.2",
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "jiti": "^2.6.1",
     "prettier": "^3.7.4",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.54.0"
+    "typescript-eslint": "^8.54.0",
+    "vite": "^7.3.1"
   }
 }

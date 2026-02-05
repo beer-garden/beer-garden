@@ -1,23 +1,28 @@
-import { System, Instance } from "../models/brewtils-types";
+import "primeflex/primeflex.css";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "primereact/button";
-import { classNames } from "primereact/utils";
-import { DataView } from "primereact/dataview";
-import "primeflex/primeflex.css";
-import { useState, useEffect, useRef } from "react";
-import { GetSystemList } from "../services/system_service";
-import { Panel } from "primereact/panel";
 import { Badge } from "primereact/badge";
+import { Button } from "primereact/button";
+import { DataView } from "primereact/dataview";
 import { Menu } from "primereact/menu";
+import { Panel } from "primereact/panel";
+import { classNames } from "primereact/utils";
+import { useEffect, useRef, useState } from "react";
+
+import { Instance, System } from "../models/brewtils-types";
+import { GetSystemList } from "../services/system_service";
 
 function SystemCards() {
   const [systems, setSystems] = useState<Array<System>>([]);
 
   useEffect(() => {
-    GetSystemList().then((data: Array<System>) => {
-      setSystems(data);
-    });
+    GetSystemList()
+      .then((data: Array<System>) => {
+        setSystems(data);
+      })
+      .catch((error) => {
+        console.error("Error fetching systems:", error);
+      });
   }, []);
 
   const getSeverity = (
@@ -140,19 +145,19 @@ function SystemCards() {
   const instanceListTemplate = (instances: System[]) => {
     if (!instances || instances.length === 0) return null;
 
-    let list = instances.map((instance: Instance, index: number) => {
+    const list = instances.map((instance: Instance, index: number) => {
       return instanceTemplate(instance, index);
     });
 
     return <div className="grid grid-nogutter">{list}</div>;
   };
 
-  const systemTemplateGrid = (system: System, index: number) => {
+  const systemTemplateGrid = (system: System) => {
     if (!system) {
       return;
     }
 
-    let statusCounts = new Map();
+    const statusCounts = new Map();
 
     statusList.forEach((status) => {
       // statusCounts[status] = {count: 0, severity:getSeverity(status)}
@@ -242,11 +247,11 @@ function SystemCards() {
         className="grid grid-nogutter"
         style={{ gridTemplateColumns: `repeat(auto-fit, minmax(250px, 1fr))` }}
       >
-        {systems.map((system, index) => systemTemplateGrid(system, index))}
+        {systems.map((system) => systemTemplateGrid(system))}
       </div>
     );
   };
-  let systemGroup = new Map<string, System[]>();
+  const systemGroup = new Map<string, System[]>();
 
   const groupField = "namespace";
   // const groupField = "version";
@@ -260,7 +265,7 @@ function SystemCards() {
   const groupHeaderTemplate = (options: any) => {
     const className = `${options.className} justify-content-space-between`;
 
-    let statusCounts = new Map();
+    const statusCounts = new Map();
 
     statusList.forEach((status) => {
       // statusCounts[status] = {count: 0, severity:getSeverity(status)}

@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
 import { Dropdown } from "primereact/dropdown";
-import { System, Command, Instance } from "../models/brewtils-types";
+import { useEffect, useState } from "react";
+
+import { Command, Instance, System } from "../models/brewtils-types";
 import { CompareObjects } from "../services/util_service";
 
 interface RequestCommand {
@@ -49,11 +50,11 @@ function CommandSelect({
   );
 
   useEffect(() => {
-    let namespaceList: Array<string> = [];
-    let systemNameList: Array<string> = [];
-    let systemVersionList: Array<string> = [];
-    let instanceList: Array<string> = [];
-    let commandList: Array<string> = [];
+    const namespaceList: Array<string> = [];
+    const systemNameList: Array<string> = [];
+    const systemVersionList: Array<string> = [];
+    const instanceList: Array<string> = [];
+    const commandList: Array<string> = [];
 
     if (systems) {
       systems.forEach((system: System) => {
@@ -73,21 +74,15 @@ function CommandSelect({
             if (system.version === selectedVersion) {
               if (system.instances) {
                 system.instances.forEach((instance: Instance) => {
-                  if (
-                    instance.name &&
-                    !instanceList.includes(instance.name as string)
-                  ) {
-                    instanceList.push(instance.name as string);
+                  if (instance.name && !instanceList.includes(instance.name)) {
+                    instanceList.push(instance.name);
                   }
                 });
               }
               if (system.commands) {
                 system.commands.forEach((command: Command) => {
-                  if (
-                    command.name &&
-                    !commandList.includes(command.name as string)
-                  ) {
-                    commandList.push(command.name as string);
+                  if (command.name && !commandList.includes(command.name)) {
+                    commandList.push(command.name);
                   }
                 });
               }

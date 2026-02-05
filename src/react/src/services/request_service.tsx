@@ -1,5 +1,6 @@
-import { Request } from "../models/brewtils-types";
 import { v4 as uuidv4 } from "uuid";
+
+import { Request } from "../models/brewtils-types";
 
 export const GetRequestList = async (
   headerData?: any,
@@ -18,7 +19,7 @@ export const GetRequestList = async (
 
     if (headerData) {
       // queryString = new URLSearchParams(headerData).toString();
-      let searchParams = new URLSearchParams();
+      const searchParams = new URLSearchParams();
       for (const [key, value] of Object.entries(headerData)) {
         if (Array.isArray(value)) {
           for (const item of value) {
@@ -145,9 +146,6 @@ export const DeleteRequest = async (request: Request, headerData?: any) => {
     }
 
     const response = await fetch("/api/v1/requests?id=" + request.id, {
-      // headers: {
-      //   'Content-Type': 'application/json' // *specify the content type
-      // },
       headers: headers,
       method: "DELETE",
     });

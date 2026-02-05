@@ -1,19 +1,18 @@
-import { Request, System } from "../models/brewtils-types";
-
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { BreadCrumb } from "primereact/breadcrumb";
-import RequestTreeChart from "../components/RequestTreeChart";
-import { useState, useRef, useEffect, useCallback } from "react";
 import { MenuItem } from "primereact/menuitem";
-import CommandForm from "../components/CommandForm";
-import RequestOutput from "../components/RequestOutput";
-import { Stepper } from "primereact/stepper";
-import { StepperPanel } from "primereact/stepperpanel";
 import { Message } from "primereact/message";
 import { SplitButton } from "primereact/splitbutton";
+import { Stepper } from "primereact/stepper";
+import { StepperPanel } from "primereact/stepperpanel";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
-import { GetRequest, DeleteRequest } from "../services/request_service";
+import CommandForm from "../components/CommandForm";
+import RequestOutput from "../components/RequestOutput";
+import RequestTreeChart from "../components/RequestTreeChart";
+import { Request, System } from "../models/brewtils-types";
+import { DeleteRequest, GetRequest } from "../services/request_service";
 import { GetSystemList } from "../services/system_service";
 
 function UnformattedInput(request: Request) {
@@ -51,9 +50,13 @@ function RequestOptions(request: Request) {
       label: "Delete Request",
       icon: <FontAwesomeIcon icon="xmark" />,
       command: () => {
-        DeleteRequest(request).then(() => {
-          window.open("/requests", "_self");
-        });
+        DeleteRequest(request)
+          .then(() => {
+            window.open("/requests", "_self");
+          })
+          .catch((error) => {
+            console.error("Error deleting request:", error);
+          });
       },
     });
   }
@@ -190,9 +193,13 @@ function RequestView({ listeners }: { listeners: Record<string, any> }) {
           check_request.parent &&
           check_request.parent.id
         ) {
-          GetRequest(check_request.parent.id, {}).then((root_request) => {
-            loadRootRequest(root_request);
-          });
+          GetRequest(check_request.parent.id, {})
+            .then((root_request) => {
+              loadRootRequest(root_request);
+            })
+            .catch((error) => {
+              console.error("Error fetching parent request:", error);
+            });
         } else {
           setRootRequest(check_request);
           if (check_request.id) {

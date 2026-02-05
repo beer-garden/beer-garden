@@ -1,21 +1,18 @@
-import React, { useState, useEffect } from "react";
-import { Button } from "primereact/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Button } from "primereact/button";
 import { DataView } from "primereact/dataview";
-
-import RequestCreateCard from "./scratchPadComponents/RequestCreateCard";
-import RequestViewCard from "./scratchPadComponents/RequestViewCard";
-
-import {
-  GetScratchPadItems,
-  UpdateScratchPadItem,
-  PushToScratchPad,
-  RemoveScratchPadItem,
-} from "../services/scratchpad_service";
+import React, { useEffect, useState } from "react";
 
 import { ScratchPadValue } from "../models/models";
-
+import {
+  GetScratchPadItems,
+  PushToScratchPad,
+  RemoveScratchPadItem,
+  UpdateScratchPadItem,
+} from "../services/scratchpad_service";
 import { CompareObjects } from "../services/util_service";
+import RequestCreateCard from "./scratchPadComponents/RequestCreateCard";
+import RequestViewCard from "./scratchPadComponents/RequestViewCard";
 
 function ScratchPad({
   listeners,
@@ -77,7 +74,7 @@ function ScratchPad({
   const listTemplate = (items: any) => {
     if (!items || items.length === 0) return null;
 
-    let list = [] as Array<any>;
+    const list = [] as Array<any>;
 
     items.forEach((value: ScratchPadValue) => {
       if (value !== null && value !== undefined) {

@@ -1,25 +1,24 @@
-import { BrowserRouter, Switch, Route } from "react-router-dom";
-
-import RequestView from "./layouts/RequestView";
-import NavigationMenu from "./Navigation";
 import "primereact/resources/themes/lara-light-blue/theme.css"; // Theme
 import "primereact/resources/primereact.min.css"; // Core CSS
-
 import "primereact/resources/themes/bootstrap4-light-blue/theme.css";
 
-import { useState, useEffect, useRef } from "react";
-import RequestIndex from "./layouts/RequestIndex";
-import RequestCreate from "./layouts/RequestCreate";
-import JobIndex from "./layouts/JobIndex";
-import SystemTable from "./layouts/SystemTable";
-import GardenIndex from "./layouts/GardenIndex";
-import SystemCards from "./layouts/SystemCards";
-import AboutIndex from "./layouts/AboutIndex";
-import { Divider } from "primereact/divider";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
+import { Divider } from "primereact/divider";
+import { useEffect, useRef, useState } from "react";
+import { BrowserRouter, Route, Switch } from "react-router-dom";
+
 import ScratchPad from "./components/ScratchPad";
+import GardenIndex from "./layouts/GardenIndex";
+import JobIndex from "./layouts/JobIndex";
+import RequestCreate from "./layouts/RequestCreate";
+import RequestIndex from "./layouts/RequestIndex";
+import RequestView from "./layouts/RequestView";
+import SystemCards from "./layouts/SystemCards";
+import SystemTable from "./layouts/SystemTable";
+import AboutIndex from "./layouts/AboutIndex";
 import { Listener } from "./models/models";
+import NavigationMenu from "./Navigation";
 
 function App() {
   const [showScratchPad, setShowScratchPad] = useState<boolean>(false);

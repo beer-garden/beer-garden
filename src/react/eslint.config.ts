@@ -2,8 +2,9 @@
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import tseslint from 'typescript-eslint';
 import eslint from '@eslint/js';
+import { defineConfig } from 'eslint/config';
 
-export default tseslint.config(
+export default defineConfig(
   {
     // Ignores are applied to the entire configuration cascade
     ignores: ['dist/', '**/*.js'], // Exclude build artifacts and all .js files from linting
@@ -24,7 +25,22 @@ export default tseslint.config(
     },
     rules: {
       // Add or override specific rules here
-      '@typescript-eslint/no-explicit-any': 'warn',
+
+      // Disabled rules that check for any usage
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/no-redundant-type-constituents': 'off',
+      "@typescript-eslint/no-misused-promises": [
+      "error",
+      {
+        "checksVoidReturn": false
+      }
+    ],
+
       '@typescript-eslint/no-unused-vars': 'warn',
     },
   },

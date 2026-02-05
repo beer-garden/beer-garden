@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
-import { Connection, Garden } from "../models/brewtils-types";
-import { OrganizationChart } from "primereact/organizationchart";
-import { GetRootGarden } from "../services/garden_service";
-import { GetConfig } from "../services/config_service";
-import { SplitButton } from "primereact/splitbutton";
-import { MenuItem } from "primereact/menuitem";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { DataView } from "primereact/dataview";
+import { MenuItem } from "primereact/menuitem";
+import { OrganizationChart } from "primereact/organizationchart";
 import { Panel } from "primereact/panel";
+import { SplitButton } from "primereact/splitbutton";
+import { useEffect, useState } from "react";
+
+import { Connection, Garden } from "../models/brewtils-types";
+import { GetConfig } from "../services/config_service";
+import { GetRootGarden } from "../services/garden_service";
 
 function GardenIndex() {
   const [garden, setGarden] = useState<Garden | null>(null);
@@ -15,7 +16,7 @@ function GardenIndex() {
 
   useEffect(() => {
     const mapNode = (garden: Garden) => {
-      let node = {
+      const node = {
         label: garden.name as string,
         expanded: true,
         data: {
@@ -38,14 +39,22 @@ function GardenIndex() {
   }, [garden]);
 
   useEffect(() => {
-    GetConfig().then((config) => {
-      GetRootGarden(config, {}).then((response_garden: Garden) => {
-        setGarden(response_garden);
+    GetConfig()
+      .then((config) => {
+        GetRootGarden(config, {})
+          .then((response_garden: Garden) => {
+            setGarden(response_garden);
+          })
+          .catch((error) => {
+            console.error("Error fetching root garden:", error);
+          });
+      })
+      .catch((error) => {
+        console.error("Error fetching root garden:", error);
       });
-    });
   }, []);
 
-  const connectionTemplate = (connection: Connection, index: number) => {
+  const connectionTemplate = (connection: Connection) => {
     return (
       <div>
         {connection.api} {connection.status}
@@ -56,8 +65,8 @@ function GardenIndex() {
   const connectionsListTemplate = (connections: Array<Connection>) => {
     if (!connections || connections.length === 0) return null;
 
-    let list = connections.map((connection, index) => {
-      return connectionTemplate(connection, index);
+    const list = connections.map((connection) => {
+      return connectionTemplate(connection);
     });
 
     return <div className="grid grid-nogutter">{list}</div>;

@@ -1,12 +1,13 @@
-import { Request } from "../models/brewtils-types";
 import { Skeleton } from "primereact/skeleton";
+
+import { Request } from "../models/brewtils-types";
 
 function displautOutput(request: Request) {
   if (request.output_type === "JSON") {
     let parsed_output = {};
     try {
       parsed_output = JSON.parse(request.output || "{}");
-    } catch (e) {
+    } catch {
       parsed_output = { error: "Failed to parse JSON output" };
     }
 

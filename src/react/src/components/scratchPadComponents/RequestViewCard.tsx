@@ -1,21 +1,21 @@
-import { useState, useRef, useEffect } from "react";
-import { Card } from "primereact/card";
-import CommandForm from "../../components/CommandForm";
-import { Request, System, Command } from "../../models/brewtils-types";
-import { GetSystemList } from "../../services/system_service";
-import { Toast } from "primereact/toast";
-import RequestOutput from "../RequestOutput";
-import { GetRequest, PostRequest } from "../../services/request_service";
-import { DataTable } from "primereact/datatable";
-import { Column } from "primereact/column";
 import { Badge } from "primereact/badge";
-import { Stepper } from "primereact/stepper";
-import { StepperPanel } from "primereact/stepperpanel";
+import { Card } from "primereact/card";
+import { Column } from "primereact/column";
+import { DataTable } from "primereact/datatable";
 import { Message } from "primereact/message";
 import { SplitButton } from "primereact/splitbutton";
-import { PushToScratchPad } from "../../services/scratchpad_service";
+import { Stepper } from "primereact/stepper";
+import { StepperPanel } from "primereact/stepperpanel";
+import { Toast } from "primereact/toast";
+import { useEffect, useRef, useState } from "react";
 
+import CommandForm from "../../components/CommandForm";
+import { Command, Request, System } from "../../models/brewtils-types";
 import { ScratchPadValue } from "../../models/models";
+import { GetRequest, PostRequest } from "../../services/request_service";
+import { PushToScratchPad } from "../../services/scratchpad_service";
+import { GetSystemList } from "../../services/system_service";
+import RequestOutput from "../RequestOutput";
 
 function UnformattedInput(request: Request) {
   return (
@@ -96,25 +96,29 @@ function RequestViewCard({
         instance_name: request?.instance_name || undefined,
         command: request?.command || undefined,
         parameters: request?.parameters || {},
-      } as Request).then((response_request: any) => {
-        if (openRequest) {
-          if (addToScratchPad) {
-            PushToScratchPad("REQUEST_VIEW", {
-              requestId: response_request.id,
-              request: response_request,
-            });
-            reloadScratchPad();
+      } as Request)
+        .then((response_request: any) => {
+          if (openRequest) {
+            if (addToScratchPad) {
+              PushToScratchPad("REQUEST_VIEW", {
+                requestId: response_request.id,
+                request: response_request,
+              });
+              reloadScratchPad();
+            } else {
+              window.open("/request/" + response_request.id, "_self");
+            }
           } else {
-            window.open("/request/" + response_request.id, "_self");
+            toast?.current?.show({
+              severity: "info",
+              summary: "Info",
+              detail: "Request Created: " + response_request.id,
+            });
           }
-        } else {
-          toast?.current?.show({
-            severity: "info",
-            summary: "Info",
-            detail: "Request Created: " + response_request.id,
-          });
-        }
-      });
+        })
+        .catch((error) => {
+          console.error("Error creating request:", error);
+        });
     }
   };
 
