@@ -4,7 +4,7 @@
 
 TBD
 
-- Fixed UI bug where Pour Again failed to render if a parameter value is `null`
+- Fixed UI bug where Pour Again failed to render if a parameter value is `null` (#2050)
 
 # 3.31.1
 
