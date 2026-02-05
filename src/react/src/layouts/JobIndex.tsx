@@ -2,7 +2,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Job } from "../models/brewtils-types";
 import { GetJobList } from "../services/job_service";
@@ -11,10 +11,14 @@ function JobIndex() {
   const [jobs, setJobs] = useState<Array<Job>>([]);
 
   useEffect(() => {
-    GetJobList().then((data: [Array<Job>, Headers]) => {
-      const [responseJobs] = data;
-      setJobs(responseJobs);
-    });
+    GetJobList()
+      .then((data: [Array<Job>, Headers]) => {
+        const [responseJobs] = data;
+        setJobs(responseJobs);
+      })
+      .catch((error) => {
+        console.error("Error fetching jobs:", error);
+      });
   }, []);
 
   const runTimeTemplate = (job: Job) => {
