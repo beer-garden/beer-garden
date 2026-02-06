@@ -124,7 +124,7 @@ jobs:
         working-directory: ./src/react
 
       - name: Run Tests
-        run: npm test -- --watchAll=false
+        run: npm test
         working-directory: ./src/react
 
   CodeCoverage:
