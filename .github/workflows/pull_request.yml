@@ -116,8 +116,8 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install Firefox
-        run: apt install firefox
+      - name: Check Firefox version
+        run: firefox --version
 
       - name: Install Dependencies
         run: npm ci
