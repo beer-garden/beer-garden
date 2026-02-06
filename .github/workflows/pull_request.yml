@@ -120,7 +120,7 @@ jobs:
         run: firefox --version
 
       - name: Install Dependencies
-        run: npm ci
+        run: npm install
         working-directory: ./src/react
 
       - name: Run Tests
