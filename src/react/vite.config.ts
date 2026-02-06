@@ -24,9 +24,6 @@ export default defineConfig({
         },
       ],
     },
-    // setupFiles: [
-    //   './src/setupTests.tsx', // Adjust the path to your setup file
-    // ],
   },
   server: {
     port: 3002,
