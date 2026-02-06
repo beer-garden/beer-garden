@@ -100,6 +100,33 @@ jobs:
       - name: Run Tests
         run: make test
 
+  Vitest:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: ["ubuntu-latest"]
+
+    name: Vitest OS ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Firefox
+        run: apt install firefox
+
+      - name: Install Dependencies
+        run: npm ci
+        working-directory: ./src/react
+
+      - name: Run Tests
+        run: npm test -- --watchAll=false
+        working-directory: ./src/react
+
   CodeCoverage:
     runs-on: ${{ matrix.os }}
     needs: PyTest
