@@ -13,6 +13,7 @@ import {
 import { CompareObjects } from "../services/util_service";
 import RequestCreateCard from "./scratchPadComponents/RequestCreateCard";
 import RequestViewCard from "./scratchPadComponents/RequestViewCard";
+import SystemViewCard from "./scratchPadComponents/SystemViewCard";
 
 function ScratchPad({
   listeners,
@@ -41,6 +42,15 @@ function ScratchPad({
     } else if (value.padType === "REQUEST_VIEW") {
       return (
         <RequestViewCard
+          padItem={value}
+          updatePadItem={updatePadValue}
+          reloadScratchPad={reloadScratchPad}
+          listeners={listeners}
+        />
+      );
+    } else if (value.padType === "SYSTEM_VIEW") {
+      return (
+        <SystemViewCard
           padItem={value}
           updatePadItem={updatePadValue}
           reloadScratchPad={reloadScratchPad}
