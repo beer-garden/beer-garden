@@ -126,7 +126,6 @@ function App() {
 
               <Route path="/">
                 <SystemCards
-                  listeners={listeners}
                   setReloadScratchPad={setReloadScratchPadTrigger}
                 />
               </Route>
