@@ -88,7 +88,6 @@ function App() {
               <Route path="/systems">
                 {/* <SystemIndex /> */}
                 <SystemCards
-                  listeners={listeners}
                   setReloadScratchPad={setReloadScratchPadTrigger}
                 />
               </Route>
@@ -97,7 +96,6 @@ function App() {
               </Route>
               <Route path="/systemcard">
                 <SystemCards
-                  listeners={listeners}
                   setReloadScratchPad={setReloadScratchPadTrigger}
                 />
               </Route>
