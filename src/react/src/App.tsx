@@ -57,7 +57,7 @@ function App() {
   useEffect(() => {
     // Create WebSocket connection when component mounts
     socketRef.current = new WebSocket(
-      "ws://localhost:2337/api/v1/socket/events/",
+      "/api/v1/socket/events/",
     );
     const handleMessage = (event: any) => {
       // Update React state with new message
