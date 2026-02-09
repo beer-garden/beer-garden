@@ -14,7 +14,7 @@ export default defineConfig({
         target: 'ws://localhost:2337',
         changeOrigin: true,
         ws: true
-      }
+      },
       '/config': {
         target: 'http://localhost:2337',
         changeOrigin: true,

@@ -100,7 +100,7 @@ function FileForm({
   return (
     <div>
       <div className="p-field">
-        <label className="ml-2">Path</label>
+        Path
         <InputText
           value={fileTrigger?.path}
           onChange={(e) => {
@@ -109,7 +109,7 @@ function FileForm({
         />
       </div>
       <div className="p-field">
-        <label className="ml-2">Pattern</label>
+        Pattern
         <InputText
           value={fileTrigger?.pattern}
           onChange={(e) => {
@@ -118,7 +118,7 @@ function FileForm({
         />
       </div>
       <div className="p-field">
-        <label className="ml-2">Recursive</label>
+        Recursive
         <Checkbox
           onChange={(e) => {
             setFileTrigger({
@@ -130,7 +130,7 @@ function FileForm({
         ></Checkbox>
       </div>
       <div className="p-field">
-        <label className="ml-2">Event Type</label>
+        Event Type
         <MultiSelect
           value={selectedTypes}
           onChange={(e) => setSelectedTypes(e.value)}
@@ -164,7 +164,7 @@ function DateForm({
   return (
     <div>
       <div className="p-field">
-        <label className="ml-2">Run Date</label>
+        Run Date
         <Calendar
           value={runDate}
           showTime
@@ -173,7 +173,7 @@ function DateForm({
         />
       </div>
       <div className="p-field">
-        <label className="ml-2">Timezone</label>
+        Timezone
         <InputText
           value={dateTrigger?.timezone}
           onChange={(e) => {
@@ -295,7 +295,7 @@ function IntervalForm({
   return (
     <div>
       <div className="p-field">
-        <label>Interval Number</label>
+        Interval Number
         <InputNumber
           value={intervalNumber}
           onChange={(e) => setIntervalNumber(e.value)}
@@ -303,7 +303,7 @@ function IntervalForm({
         />
       </div>
       <div className="p-field">
-        <label>Interval Type</label>
+        Interval Type
         <Dropdown
           options={typeOptions || []}
           value={intervalType}
@@ -311,7 +311,7 @@ function IntervalForm({
         />
       </div>
       <div className="p-field">
-        <label className="ml-2">Start Date</label>
+        Start Date
         <Calendar
           value={startDate}
           showTime
@@ -320,7 +320,7 @@ function IntervalForm({
         />
       </div>
       <div className="p-field">
-        <label className="ml-2">End Date</label>
+        End Date
         <Calendar
           value={endDate}
           showTime
@@ -329,7 +329,7 @@ function IntervalForm({
         />
       </div>
       <div className="p-field">
-        <label className="ml-2">Timezone</label>
+        Timezone
         <InputText
           value={intervalTrigger?.timezone}
           onChange={(e) => {
@@ -444,7 +444,7 @@ function CronForm({
       </div>
 
       <div className="p-field">
-        <label className="ml-2">CRON Jitter</label>
+        CRON Jitter
         <InputNumber
           value={cronTrigger?.jitter}
           onValueChange={(e) => {
@@ -454,7 +454,7 @@ function CronForm({
         />
       </div>
       <div className="p-field">
-        <label className="ml-2">Start Date</label>
+        Start Date
         <Calendar
           value={startDate}
           showTime
@@ -463,7 +463,7 @@ function CronForm({
         />
       </div>
       <div className="p-field">
-        <label className="ml-2">End Date</label>
+        End Date
         <Calendar
           value={endDate}
           showTime
@@ -472,7 +472,7 @@ function CronForm({
         />
       </div>
       <div className="p-field">
-        <label className="ml-2">Timezone</label>
+        Timezone
         <InputText
           value={cronTrigger?.timezone}
           onChange={(e) => {
@@ -564,7 +564,7 @@ function SchedulerForm({
       {runState === runOptions[1] && (
         <div className="card flex flex-column align-items-center gap-3 ">
           <div className="p-field">
-            <label className="ml-2">Job Name</label>
+            Job Name
             <InputText
               value={scheduledJob?.name}
               onChange={(e) => {
@@ -577,7 +577,7 @@ function SchedulerForm({
           </div>
 
           <div className="p-field">
-            <label className="ml-2">Coalesce</label>
+            Coalesce
             <Checkbox
               onChange={(e) => {
                 setScheduledJob({ ...scheduledJob, ...{ coalesce: e.value } });
@@ -586,7 +586,7 @@ function SchedulerForm({
             ></Checkbox>
           </div>
           <div className="p-field">
-            <label className="ml-2">Misfire Grace Time</label>
+            Misfire Grace Time
             <InputNumber
               value={scheduledJob?.misfire_grace_time}
               onValueChange={(e) => {
@@ -600,7 +600,7 @@ function SchedulerForm({
             />
           </div>
           <div className="p-field">
-            <label className="ml-2">Max Instances</label>
+            Max Instances
             <InputNumber
               value={scheduledJob?.max_instances}
               onValueChange={(e) => {
@@ -614,7 +614,7 @@ function SchedulerForm({
             />
           </div>
           <div className="p-field">
-            <label className="ml-2">Timeout</label>
+            Timeout
             <InputNumber
               value={scheduledJob?.timeout}
               onValueChange={(e) => {

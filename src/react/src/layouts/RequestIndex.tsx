@@ -2,6 +2,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { FilterMatchMode } from "primereact/api";
 import { Button } from "primereact/button";
 import { Calendar } from "primereact/calendar";
+import { Checkbox } from "primereact/checkbox";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { MultiSelect } from "primereact/multiselect";
@@ -16,7 +17,6 @@ import {
 import { Request } from "../models/brewtils-types";
 import { GetRequestList } from "../services/request_service";
 import { PushToScratchPad } from "../services/scratchpad_service";
-import { Checkbox } from "primereact/checkbox";
 
 function RequestIndex({
   listeners,
@@ -234,14 +234,14 @@ function RequestIndex({
   const header = (
     <div className="flex flex-wrap align-items-center justify-content-between gap-2">
       <span className="text-xl text-900 font-bold">Requests</span>
-      <label>
+      <div>
         <Checkbox
           onChange={handleChange}
           checked={autoRefresh}
           className="mr-2"
         />
         Auto Refresh
-      </label>
+      </div>
       <Button
         rounded
         raised
