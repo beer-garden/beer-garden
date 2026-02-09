@@ -5,8 +5,8 @@ import "primereact/resources/themes/bootstrap4-light-blue/theme.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
 import { Divider } from "primereact/divider";
-import { useEffect, useRef,useState } from "react";
-import { BrowserRouter, Route,Switch } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { BrowserRouter, Route, Switch } from "react-router-dom";
 
 import ScratchPad from "./components/ScratchPad";
 import GardenIndex from "./layouts/GardenIndex";
@@ -16,6 +16,7 @@ import RequestIndex from "./layouts/RequestIndex";
 import RequestView from "./layouts/RequestView";
 import SystemCards from "./layouts/SystemCards";
 import SystemTable from "./layouts/SystemTable";
+import AboutIndex from "./layouts/AboutIndex";
 import { Listener } from "./models/models";
 import NavigationMenu from "./Navigation";
 
@@ -118,6 +119,9 @@ function App() {
               </Route>
               <Route path="/garden">
                 <GardenIndex />
+              </Route>
+              <Route path="/about">
+                <AboutIndex />
               </Route>
 
               <Route path="/">

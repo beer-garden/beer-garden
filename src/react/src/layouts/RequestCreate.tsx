@@ -3,13 +3,13 @@ import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Skeleton } from "primereact/skeleton";
 import { Stepper } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
-import { useEffect,useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import CommandForm from "../components/CommandForm";
 import CommandSelect from "../components/CommandSelect";
 import SchedulerForm from "../components/SchedulerForm";
-import { Command, Job,Request, System } from "../models/brewtils-types";
+import { Command, Job, Request, System } from "../models/brewtils-types";
 import { CreateJob, GetJob, UpdateJob } from "../services/job_service";
 import { GetRequest } from "../services/request_service";
 import { PostRequest } from "../services/request_service";
@@ -126,35 +126,47 @@ function RequestCreate() {
     setShowCommand(true);
   };
 
-  const nextStep = (nextStep: string) => {
+  const nextStep = () => {
     stepperRef.current?.nextCallback();
   };
 
-  const prevStep = (prevStep: string) => {
+  const prevStep = () => {
     stepperRef.current?.prevCallback();
   };
 
   const submitRequest = () => {
     if (request) {
-      PostRequest(request).then((response_request) => {
-        window.open("/request/" + response_request.id, "_self");
-      });
+      PostRequest(request)
+        .then((response_request) => {
+          window.open("/request/" + response_request.id, "_self");
+        })
+        .catch((error) => {
+          console.error("Error creating request:", error);
+        });
     }
   };
 
   const submitJob = () => {
     if (job && request) {
-      CreateJob({ ...job, ...{ request_template: request } }).then(() => {
-        window.open("/jobs/", "_self");
-      });
+      CreateJob({ ...job, ...{ request_template: request } })
+        .then(() => {
+          window.open("/jobs/", "_self");
+        })
+        .catch((error) => {
+          console.error("Error creating job:", error);
+        });
     }
   };
 
   const updateJob = () => {
     if (job && request) {
-      UpdateJob({ ...job, ...{ request_template: request } }).then(() => {
-        window.open("/jobs/", "_self");
-      });
+      UpdateJob({ ...job, ...{ request_template: request } })
+        .then(() => {
+          window.open("/jobs/", "_self");
+        })
+        .catch((error) => {
+          console.error("Error updating job:", error);
+        });
     }
   };
 
@@ -193,34 +205,42 @@ function RequestCreate() {
 
   useEffect(() => {
     if (requestId !== null && requestId !== undefined) {
-      GetRequest(requestId, {}).then((responseRequest) => {
-        setRequest({
-          namespace: responseRequest.namespace,
-          system: responseRequest.system,
-          system_version: responseRequest.system_version,
-          instance_name: responseRequest.instance_name,
-          command: responseRequest.command,
-          parameters: responseRequest.parameters,
+      GetRequest(requestId, {})
+        .then((responseRequest) => {
+          setRequest({
+            namespace: responseRequest.namespace,
+            system: responseRequest.system,
+            system_version: responseRequest.system_version,
+            instance_name: responseRequest.instance_name,
+            command: responseRequest.command,
+            parameters: responseRequest.parameters,
+          });
+          setRequestCommand({
+            namespace: responseRequest?.namespace ?? null,
+            systemName: responseRequest?.system ?? null,
+            version: responseRequest?.system_version ?? null,
+            instance: responseRequest?.instance_name ?? null,
+            command: responseRequest?.command ?? null,
+          });
+        })
+        .catch((error) => {
+          console.error("Error fetching request:", error);
         });
-        setRequestCommand({
-          namespace: responseRequest?.namespace ?? null,
-          systemName: responseRequest?.system ?? null,
-          version: responseRequest?.system_version ?? null,
-          instance: responseRequest?.instance_name ?? null,
-          command: responseRequest?.command ?? null,
-        });
-      });
     } else if (jobId !== null && jobId !== undefined) {
-      GetJob(jobId, {}).then((responseJob) => {
-        setJob(responseJob);
-        setRequestCommand({
-          namespace: responseJob?.request_template?.namespace ?? null,
-          systemName: responseJob?.request_template?.system ?? null,
-          version: responseJob?.request_template?.system_version ?? null,
-          instance: responseJob?.request_template?.instance_name ?? null,
-          command: responseJob?.request_template?.command ?? null,
+      GetJob(jobId, {})
+        .then((responseJob) => {
+          setJob(responseJob);
+          setRequestCommand({
+            namespace: responseJob?.request_template?.namespace ?? null,
+            systemName: responseJob?.request_template?.system ?? null,
+            version: responseJob?.request_template?.system_version ?? null,
+            instance: responseJob?.request_template?.instance_name ?? null,
+            command: responseJob?.request_template?.command ?? null,
+          });
+        })
+        .catch((error) => {
+          console.error("Error fetching job:", error);
         });
-      });
     }
 
     if (!systems) {
@@ -250,7 +270,7 @@ function RequestCreate() {
               label="Next"
               icon="pi pi-arrow-right"
               iconPos="right"
-              onClick={() => nextStep(selectCommandHeader)}
+              onClick={() => nextStep()}
             />
           </div>
           <div className="flex flex-column h-12rem">
@@ -272,13 +292,13 @@ function RequestCreate() {
               label="Back"
               severity="secondary"
               icon="pi pi-arrow-left"
-              onClick={() => prevStep(scheduleHeader)}
+              onClick={() => prevStep()}
             />
             <Button
               label="Next"
               icon="pi pi-arrow-right"
               iconPos="right"
-              onClick={() => nextStep(createRequestHeader)}
+              onClick={() => nextStep()}
               disabled={!validCommand}
             />
           </div>
@@ -303,7 +323,7 @@ function RequestCreate() {
               label="Back"
               severity="secondary"
               icon="pi pi-arrow-left"
-              onClick={() => prevStep(selectCommandHeader)}
+              onClick={() => prevStep()}
             />
             {runState === runOptions[0] && (
               <Button

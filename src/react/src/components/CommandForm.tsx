@@ -11,7 +11,7 @@ import { InputTextarea } from "primereact/inputtextarea";
 import { MultiSelect } from "primereact/multiselect";
 import { TriStateCheckbox } from "primereact/tristatecheckbox";
 import { classNames } from "primereact/utils";
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Command, Parameter } from "../models/brewtils-types"; // Assuming this is the correct path
 import { Request } from "../models/brewtils-types";

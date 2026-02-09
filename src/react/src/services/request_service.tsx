@@ -146,9 +146,6 @@ export const DeleteRequest = async (request: Request, headerData?: any) => {
     }
 
     const response = await fetch("/api/v1/requests?id=" + request.id, {
-      // headers: {
-      //   'Content-Type': 'application/json' // *specify the content type
-      // },
       headers: headers,
       method: "DELETE",
     });

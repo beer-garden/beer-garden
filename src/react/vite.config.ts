@@ -15,6 +15,14 @@ export default defineConfig({
         changeOrigin: true,
         ws: true
       }
+      '/config': {
+        target: 'http://localhost:2337',
+        changeOrigin: true,
+      },
+      '/version': {
+        target: 'http://localhost:2337',
+        changeOrigin: true,
+      },
     }
   },
   build: {

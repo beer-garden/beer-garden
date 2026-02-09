@@ -1,0 +1,86 @@
+import { Panel } from "primereact/panel";
+import { GetConfig } from "../services/config_service";
+import { GetVersion } from "../services/util_service";
+import { useEffect, useState } from "react";
+import { Config, Version } from "../models/models"
+import "../App.css"
+
+function AboutIndex() {
+    const [config, setConfig] = useState<Config | null>(null)
+    const [version, setVersion] = useState<Version | null>(null)
+
+    useEffect(() => {
+        GetConfig().then((config) => {
+          setConfig(config);
+        });
+      }, []);
+
+      useEffect(() => {
+        GetVersion().then((version) => {
+          setVersion(version);
+        });
+      }, []);
+
+    
+    function AboutHeader({config}: {config: Config | null}) {
+        return <h1 className="ml-2 page-header">About {config ? config.application_name : ""}</h1> 
+    }
+
+    function HelpfulLinks({config}: {config: Config | null}) {
+        if (!config)
+            return <p>Loading configuration...</p>
+        return (
+            <ul>
+                <li>
+                    <a
+                        href={`${config.url_prefix}swagger/index.html?config=${config.url_prefix}config/swagger`} target="_blank" rel="noopener noreferrer"
+                        >Open API documentation</a>
+                    - {config.application_name} uses OpenAPI Documentation for our ReST Interface.
+                </li>
+                {config.metrics_url && 
+                    <li>
+                        <a href={config.metrics_url} target="_blank" rel="noopener noreferrer">Metrics</a> - Link to the configured metrics backend.
+                    </li>
+                }
+                <li>
+                <a href="https://grafana.com/dashboards/6621" target="_blank" rel="noopener noreferrer"
+                    >Grafana Dashboard ({config.application_name})</a>
+                - A grafana dashboard for monitoring {config.application_name}
+                performance.
+                </li>
+                <li>
+                <a href="https://grafana.com/dashboards/6624" target="_blank" rel="noopener noreferrer"
+                    >Grafana Dashboard (Plugins)</a>
+                - A grafana dashboard for monitoring {config.application_name}
+                plugin performance.
+                </li>
+            </ul>
+        )
+    }
+
+    function VersionInformation({config, version}: {config: Config | null, version:Version | null}) {
+        if (!config || !version)
+            return <p>Loading version information...</p>
+        return (
+            <p>{config.application_name} is currently on version <span className="font-bold">{version.beer_garden_version}</span>
+            <br/>
+            Python version <span className="font-bold">{version.python_version}</span></p>
+        )
+    }
+
+    return (
+        <div>
+            <AboutHeader config={config} />
+            <div className="flex">
+                <Panel header="Helpful Links" className="m-2 flex-1">
+                    <><HelpfulLinks config={config} /></>
+                </Panel>
+                <Panel header="Version Information" className="m-2 flex-1">
+                    <><VersionInformation config={config} version={version} /></>
+                </Panel>
+            </div>
+        </div>
+    )
+}
+
+export default AboutIndex;

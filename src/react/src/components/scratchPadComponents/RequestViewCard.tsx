@@ -7,10 +7,10 @@ import { SplitButton } from "primereact/splitbutton";
 import { Stepper } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
 import { Toast } from "primereact/toast";
-import { useEffect,useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import CommandForm from "../../components/CommandForm";
-import { Command,Request, System } from "../../models/brewtils-types";
+import { Command, Request, System } from "../../models/brewtils-types";
 import { ScratchPadValue } from "../../models/models";
 import { GetRequest, PostRequest } from "../../services/request_service";
 import { PushToScratchPad } from "../../services/scratchpad_service";
@@ -96,25 +96,29 @@ function RequestViewCard({
         instance_name: request?.instance_name || undefined,
         command: request?.command || undefined,
         parameters: request?.parameters || {},
-      } as Request).then((response_request: any) => {
-        if (openRequest) {
-          if (addToScratchPad) {
-            PushToScratchPad("REQUEST_VIEW", {
-              requestId: response_request.id,
-              request: response_request,
-            });
-            reloadScratchPad();
+      } as Request)
+        .then((response_request: any) => {
+          if (openRequest) {
+            if (addToScratchPad) {
+              PushToScratchPad("REQUEST_VIEW", {
+                requestId: response_request.id,
+                request: response_request,
+              });
+              reloadScratchPad();
+            } else {
+              window.open("/request/" + response_request.id, "_self");
+            }
           } else {
-            window.open("/request/" + response_request.id, "_self");
+            toast?.current?.show({
+              severity: "info",
+              summary: "Info",
+              detail: "Request Created: " + response_request.id,
+            });
           }
-        } else {
-          toast?.current?.show({
-            severity: "info",
-            summary: "Info",
-            detail: "Request Created: " + response_request.id,
-          });
-        }
-      });
+        })
+        .catch((error) => {
+          console.error("Error creating request:", error);
+        });
     }
   };
 
