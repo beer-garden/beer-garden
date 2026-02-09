@@ -9,7 +9,15 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:2337',
         changeOrigin: true,
-      }
+      },
+      '/config': {
+        target: 'http://localhost:2337',
+        changeOrigin: true,
+      },
+      '/version': {
+        target: 'http://localhost:2337',
+        changeOrigin: true,
+      },
     }
   },
   build: {

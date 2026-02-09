@@ -16,6 +16,7 @@ import RequestIndex from "./layouts/RequestIndex";
 import RequestView from "./layouts/RequestView";
 import SystemCards from "./layouts/SystemCards";
 import SystemTable from "./layouts/SystemTable";
+import AboutIndex from "./layouts/AboutIndex";
 import { Listener } from "./models/models";
 import NavigationMenu from "./Navigation";
 
@@ -118,6 +119,9 @@ function App() {
               </Route>
               <Route path="/garden">
                 <GardenIndex />
+              </Route>
+              <Route path="/about">
+                <AboutIndex />
               </Route>
 
               <Route path="/">
