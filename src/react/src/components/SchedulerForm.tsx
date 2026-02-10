@@ -100,8 +100,9 @@ function FileForm({
   return (
     <div>
       <div className="p-field">
-        Path
+        <label htmlFor="path">Path</label>
         <InputText
+          id="path"
           value={fileTrigger?.path}
           onChange={(e) => {
             setFileTrigger({ ...fileTrigger, ...{ path: e.target.value } });
@@ -109,8 +110,9 @@ function FileForm({
         />
       </div>
       <div className="p-field">
-        Pattern
+        <label htmlFor="pattern">Pattern</label>
         <InputText
+          id="pattern"
           value={fileTrigger?.pattern}
           onChange={(e) => {
             setFileTrigger({ ...fileTrigger, ...{ pattern: e.target.value } });
@@ -118,7 +120,7 @@ function FileForm({
         />
       </div>
       <div className="p-field">
-        Recursive
+        <label htmlFor="recursive">Recursive</label>
         <Checkbox
           onChange={(e) => {
             setFileTrigger({
@@ -130,7 +132,7 @@ function FileForm({
         ></Checkbox>
       </div>
       <div className="p-field">
-        Event Type
+        <label htmlFor="eventTypes">Event Types</label>
         <MultiSelect
           value={selectedTypes}
           onChange={(e) => setSelectedTypes(e.value)}
@@ -164,7 +166,7 @@ function DateForm({
   return (
     <div>
       <div className="p-field">
-        Run Date
+        <label htmlFor="runDate">Run Date</label>
         <Calendar
           value={runDate}
           showTime
@@ -173,7 +175,7 @@ function DateForm({
         />
       </div>
       <div className="p-field">
-        Timezone
+        <label htmlFor="timezone">Timezone</label>
         <InputText
           value={dateTrigger?.timezone}
           onChange={(e) => {
