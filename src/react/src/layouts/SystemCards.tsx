@@ -3,14 +3,17 @@ import "primeflex/primeflex.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Badge } from "primereact/badge";
 import { Button } from "primereact/button";
+import { ConfirmDialog } from "primereact/confirmdialog";
 import { DataView } from "primereact/dataview";
 import { Menu } from "primereact/menu";
 import { Panel } from "primereact/panel";
+import { Toast } from "primereact/toast";
 import { classNames } from "primereact/utils";
 import { useEffect, useRef, useState } from "react";
 
 import { Instance, System } from "../models/brewtils-types";
-import { GetSystemList } from "../services/system_service";
+import { ClearAllQueues } from "../services/queue_service";
+import { GetSystemList, Rescan } from "../services/system_service";
 
 function SystemCards() {
   const [systems, setSystems] = useState<Array<System>>([]);
@@ -303,25 +306,75 @@ function SystemCards() {
     );
   };
 
+  const [visible, setVisible] = useState(false);
+  const toast = useRef<Toast | null>(null);
+
+  const accept = () => {
+    toast.current?.show({
+      severity: "info",
+      summary: "Confirmation",
+      detail: "Clearing All Queues",
+      life: 3000,
+    });
+    void ClearAllQueues();
+  };
+
+  const reject = () => {
+    setVisible(false);
+  };
+
+  const handleRescan = () => {
+    void Rescan();
+  };
+
   return (
-    <div>
-      {Array.from(systemGroup, ([group, groupedSystems]) => (
-        <Panel
-          headerTemplate={groupHeaderTemplate}
-          toggleable
-          // collapsed
-          title={group}
-          className="m-2"
-          style={{ width: "100%" }}
-        >
-          <DataView
-            value={groupedSystems}
-            listTemplate={systemListTemplate}
-            layout="grid"
+    <>
+      <div className="flex items-end ml-2 page-header">
+        <h1 className="flex-1">Systems Management</h1>
+        <div>
+          <Toast ref={toast} />
+          <ConfirmDialog
+            id="dlg_confirmation"
+            visible={visible}
+            onHide={() => setVisible(false)}
+            message="Are you sure you want to delete all Queues?"
+            header="Confirmation"
+            icon="pi pi-exclamation-triangle"
+            accept={accept}
+            reject={reject}
           />
-        </Panel>
-      ))}
-    </div>
+          <Button
+            style={{ float: "right" }}
+            onClick={() => setVisible(true)}
+            icon="pi pi-check"
+            label="Clear All Queues"
+          />
+          <Button
+            style={{ float: "right" }}
+            onClick={handleRescan}
+            label="Rescan Plugin Directory"
+          />
+        </div>
+      </div>
+      <div>
+        {Array.from(systemGroup, ([group, groupedSystems]) => (
+          <Panel
+            headerTemplate={groupHeaderTemplate}
+            toggleable
+            // collapsed
+            title={group}
+            className="m-2"
+            style={{ width: "100%" }}
+          >
+            <DataView
+              value={groupedSystems}
+              listTemplate={systemListTemplate}
+              layout="grid"
+            />
+          </Panel>
+        ))}
+      </div>
+    </>
   );
 }
 export default SystemCards;

@@ -74,3 +74,38 @@ export const ExtractSystemsFromGardens = (
 
   return systems;
 };
+
+export const Rescan = async (gardenName?: string): Promise<void> => {
+  try {
+    const headers = new Headers();
+    headers.append("Content-Type", "application/json");
+    let fetch_url = "api/v1/systems";
+    if (gardenName) {
+      headers.append("Target-Garden", gardenName);
+      fetch_url =
+        "api/v1/systems?garden_name=" + encodeURIComponent(gardenName);
+    }
+    const response = await fetch(fetch_url, {
+      headers: headers,
+      method: "PATCH",
+      body: JSON.stringify({
+        operations: [
+          {
+            operation: "rescan",
+          },
+        ],
+      }),
+    });
+    if (!response.ok) {
+      // Handle non-OK responses (e.g., 404, 500)
+      throw new Error(`HTTP error: Status ${response.status}`);
+    }
+    console.log(response);
+    // const data = (await response.json()) as Request;
+    // return data;
+  } catch (error) {
+    // Handle network errors or the error thrown above
+    console.error("Error fetching Systems:", error);
+    throw error; // Re-throw to be handled by the component/hook
+  }
+};

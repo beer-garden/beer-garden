@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 
 import ScratchPad from "./components/ScratchPad";
+import AboutIndex from "./layouts/AboutIndex";
 import GardenIndex from "./layouts/GardenIndex";
 import JobIndex from "./layouts/JobIndex";
 import RequestCreate from "./layouts/RequestCreate";
@@ -16,7 +17,6 @@ import RequestIndex from "./layouts/RequestIndex";
 import RequestView from "./layouts/RequestView";
 import SystemCards from "./layouts/SystemCards";
 import SystemTable from "./layouts/SystemTable";
-import AboutIndex from "./layouts/AboutIndex";
 import { Listener } from "./models/models";
 import NavigationMenu from "./Navigation";
 
@@ -56,9 +56,7 @@ function App() {
 
   useEffect(() => {
     // Create WebSocket connection when component mounts
-    socketRef.current = new WebSocket(
-      "/api/v1/socket/events/",
-    );
+    socketRef.current = new WebSocket("/api/v1/socket/events/");
     const handleMessage = (event: any) => {
       // Update React state with new message
       if (event.data) {
