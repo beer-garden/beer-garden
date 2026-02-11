@@ -100,9 +100,6 @@ export const Rescan = async (gardenName?: string): Promise<void> => {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);
     }
-    console.log(response);
-    // const data = (await response.json()) as Request;
-    // return data;
   } catch (error) {
     // Handle network errors or the error thrown above
     console.error("Error fetching Systems:", error);
