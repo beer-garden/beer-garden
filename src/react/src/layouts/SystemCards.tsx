@@ -113,65 +113,6 @@ function SystemCards() {
     },
   ];
 
-  const instanceTemplate = (
-    system: System,
-    instance: Instance,
-    index: number,
-  ) => {
-    const statusSeverity = getSeverity(instance?.status);
-    return (
-      <div className="col-12" key={instance.id}>
-        <div
-          className={classNames(
-            "flex flex-column xl:flex-row xl:align-items-start p-4 ",
-            { "border-top-1 surface-border": index !== 0 },
-          )}
-        >
-          <div className="mt-4">
-            <div>
-              <FontAwesomeIcon icon="folder" />
-              <label>{instance.name}</label>
-              <Badge value={instance.status} severity={statusSeverity} />
-            </div>
-            <div>
-              <Button
-                className="mr-2"
-                title={`Start Instance ${instance.name}`}
-                onClick={() => StartInstance(instance, system)}
-              >
-                <FontAwesomeIcon icon="play" />
-              </Button>
-              <Button
-                className="mr-2"
-                title={`Stop Instance ${instance.name}`}
-                onClick={() => StopInstance(instance, system)}
-              >
-                <FontAwesomeIcon icon="stop" />
-              </Button>
-              <Button
-                className="mr-2"
-                title={`Admin Tools for ${instance.name}`}
-              >
-                <FontAwesomeIcon icon="bars" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const instanceListTemplate = (system: System) => {
-    const instances = system.instances;
-    if (!instances || instances.length === 0) return null;
-
-    const list = instances.map((instance: Instance, index: number) => {
-      return instanceTemplate(system, instance, index);
-    });
-
-    return <div className="grid grid-nogutter">{list}</div>;
-  };
-
   const systemTemplateGrid = (system: System) => {
     if (!system) {
       return;
@@ -236,6 +177,64 @@ function SystemCards() {
       );
     };
 
+    const instanceTemplate = (
+      system: System,
+      instance: Instance,
+      index: number,
+    ) => {
+      const statusSeverity = getSeverity(instance?.status);
+      return (
+        <div className="col-12" key={instance.id}>
+          <div
+            className={classNames(
+              "flex flex-column xl:flex-row xl:align-items-start p-4 ",
+              { "border-top-1 surface-border": index !== 0 },
+            )}
+          >
+            <div className="mt-4">
+              <div>
+                <FontAwesomeIcon icon="folder" />
+                <label>{instance.name}</label>
+                <Badge value={instance.status} severity={statusSeverity} />
+              </div>
+              <div>
+                <Button
+                  className="mr-2"
+                  title={`Start Instance ${instance.name}`}
+                  onClick={() => StartInstance(instance, system)}
+                >
+                  <FontAwesomeIcon icon="play" />
+                </Button>
+                <Button
+                  className="mr-2"
+                  title={`Stop Instance ${instance.name}`}
+                  onClick={() => StopInstance(instance, system)}
+                >
+                  <FontAwesomeIcon icon="stop" />
+                </Button>
+                <Button
+                  className="mr-2"
+                  title={`Admin Tools for ${instance.name}`}
+                >
+                  <FontAwesomeIcon icon="bars" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    };
+    
+    const instanceListTemplate = (instances: Instance[]) => {
+      if (!instances || instances.length === 0) return null;
+
+      const list = instances.map((instance: Instance, index: number) => {
+        return instanceTemplate(system, instance, index);
+      });
+
+      return <div className="grid grid-nogutter">{list}</div>;
+    };
+
     return (
       <Panel
         headerTemplate={headerTemplate}
@@ -246,7 +245,10 @@ function SystemCards() {
         collapsed
       >
         <p className="m-0">{system.description}</p>
-        <DataView value={system} listTemplate={instanceListTemplate} />
+        <DataView
+          value={system.instances}
+          listTemplate={instanceListTemplate}
+        />
       </Panel>
     );
   };
