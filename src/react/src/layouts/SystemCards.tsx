@@ -14,7 +14,11 @@ import { useEffect, useRef, useState } from "react";
 import { Instance, System } from "../models/brewtils-types";
 import { StartInstance, StopInstance } from "../services/instance_service";
 import { ClearAllQueues } from "../services/queue_service";
-import { GetSystemList, Rescan } from "../services/system_service";
+import {
+  GetSystemList,
+  ReloadSystem,
+  Rescan,
+} from "../services/system_service";
 
 function SystemCards() {
   const [systems, setSystems] = useState<Array<System>>([]);
@@ -90,29 +94,6 @@ function SystemCards() {
     "ERROR",
   ] as Array<string>;
 
-  const systemConfigMenu = useRef<Menu>(null);
-  const systemMenuItems = [
-    {
-      label: "Start",
-      icon: <FontAwesomeIcon icon="play" />,
-    },
-    {
-      label: "Stop",
-      icon: <FontAwesomeIcon icon="stop" />,
-    },
-    {
-      label: "Restart",
-      icon: <FontAwesomeIcon icon="refresh" />,
-    },
-    {
-      separator: true,
-    },
-    {
-      label: "Delete",
-      icon: <FontAwesomeIcon icon="trash" />,
-    },
-  ];
-
   const systemTemplateGrid = (system: System) => {
     if (!system) {
       return;
@@ -134,8 +115,50 @@ function SystemCards() {
       }
     });
 
+    function startSystem(system: System) {
+      system.instances?.forEach((instance) => {
+        void StartInstance(instance, system);
+      });
+    }
+
+    function stopSystem(system: System) {
+      system.instances?.forEach((instance) => {
+        void StopInstance(instance, system);
+      });
+    }
+
+    function reloadSystem(system: System) {
+      void ReloadSystem(system);
+    }
+
     const headerTemplate = (options: any) => {
       const className = `${options.className} justify-content-space-between`;
+      const systemConfigMenu = useRef<Menu>(null);
+
+      const systemMenuItems = [
+        {
+          label: "Start",
+          icon: <FontAwesomeIcon icon="play" />,
+          command: () => startSystem(system),
+        },
+        {
+          label: "Stop",
+          icon: <FontAwesomeIcon icon="stop" />,
+          command: () => stopSystem(system),
+        },
+        {
+          label: "Restart",
+          icon: <FontAwesomeIcon icon="refresh" />,
+          command: () => reloadSystem(system),
+        },
+        {
+          separator: true,
+        },
+        {
+          label: "Delete",
+          icon: <FontAwesomeIcon icon="trash" />,
+        },
+      ];
 
       return (
         <div className={className}>
@@ -224,7 +247,7 @@ function SystemCards() {
         </div>
       );
     };
-    
+
     const instanceListTemplate = (instances: Instance[]) => {
       if (!instances || instances.length === 0) return null;
 

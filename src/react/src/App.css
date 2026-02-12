@@ -42,3 +42,7 @@
   margin: 20px 0 20px;
   border-bottom: 1px solid #eeeeee;
 }
+
+.p-menuitem-text {
+  margin-left: 5px;
+}
