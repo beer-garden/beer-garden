@@ -12,6 +12,7 @@ import { classNames } from "primereact/utils";
 import { useEffect, useRef, useState } from "react";
 
 import { Instance, System } from "../models/brewtils-types";
+import { StartInstance, StopInstance } from "../services/instance_service";
 import { ClearAllQueues } from "../services/queue_service";
 import { GetSystemList, Rescan } from "../services/system_service";
 
@@ -112,7 +113,11 @@ function SystemCards() {
     },
   ];
 
-  const instanceTemplate = (instance: Instance, index: number) => {
+  const instanceTemplate = (
+    system: System,
+    instance: Instance,
+    index: number,
+  ) => {
     const statusSeverity = getSeverity(instance?.status);
     return (
       <div className="col-12" key={instance.id}>
@@ -129,14 +134,25 @@ function SystemCards() {
               <Badge value={instance.status} severity={statusSeverity} />
             </div>
             <div>
-              <Button className="mr-2">
+              <Button
+                className="mr-2"
+                title={`Start Instance ${instance.name}`}
+                onClick={() => StartInstance(instance, system)}
+              >
                 <FontAwesomeIcon icon="play" />
               </Button>
-              <Button className="mr-2">
+              <Button
+                className="mr-2"
+                title={`Stop Instance ${instance.name}`}
+                onClick={() => StopInstance(instance, system)}
+              >
                 <FontAwesomeIcon icon="stop" />
               </Button>
-              <Button className="mr-2">
-                <FontAwesomeIcon icon="file-lines" />
+              <Button
+                className="mr-2"
+                title={`Admin Tools for ${instance.name}`}
+              >
+                <FontAwesomeIcon icon="bars" />
               </Button>
             </div>
           </div>
@@ -145,11 +161,12 @@ function SystemCards() {
     );
   };
 
-  const instanceListTemplate = (instances: System[]) => {
+  const instanceListTemplate = (system: System) => {
+    const instances = system.instances;
     if (!instances || instances.length === 0) return null;
 
     const list = instances.map((instance: Instance, index: number) => {
-      return instanceTemplate(instance, index);
+      return instanceTemplate(system, instance, index);
     });
 
     return <div className="grid grid-nogutter">{list}</div>;
@@ -229,10 +246,7 @@ function SystemCards() {
         collapsed
       >
         <p className="m-0">{system.description}</p>
-        <DataView
-          value={system.instances}
-          listTemplate={instanceListTemplate}
-        />
+        <DataView value={system} listTemplate={instanceListTemplate} />
       </Panel>
     );
   };
@@ -343,17 +357,8 @@ function SystemCards() {
             accept={accept}
             reject={reject}
           />
-          <Button
-            style={{ float: "right" }}
-            onClick={() => setVisible(true)}
-            icon="pi pi-check"
-            label="Clear All Queues"
-          />
-          <Button
-            style={{ float: "right" }}
-            onClick={handleRescan}
-            label="Rescan Plugin Directory"
-          />
+          <Button onClick={() => setVisible(true)} label="Clear All Queues" />
+          <Button onClick={handleRescan} label="Rescan Plugin Directory" />
         </div>
       </div>
       <div>

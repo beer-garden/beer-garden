@@ -17,7 +17,6 @@ export const ClearAllQueues = async (gardenName?: string): Promise<void> => {
     }
   } catch (error) {
     // Handle network errors or the error thrown above
-    console.error("Error fetching Systems:", error);
     throw error; // Re-throw to be handled by the component/hook
   }
 };
