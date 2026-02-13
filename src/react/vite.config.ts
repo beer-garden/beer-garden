@@ -31,7 +31,20 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:2337',
         changeOrigin: true,
-      }
+      },
+      '/api/v1/socket/events': {
+        target: 'ws://localhost:2337',
+        changeOrigin: true,
+        ws: true
+      },
+      '/config': {
+        target: 'http://localhost:2337',
+        changeOrigin: true,
+      },
+      '/version': {
+        target: 'http://localhost:2337',
+        changeOrigin: true,
+      },
     }
   },
   build: {

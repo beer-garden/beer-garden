@@ -198,7 +198,7 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
           </div>
         )}
       />
-      <span className="fa-layers fa-fw fa-2x" onClick={confirm}>
+      <button className="fa-layers fa-fw fa-2x" onClick={confirm}>
         <FontAwesomeIcon
           icon="envelope"
           className={currentRequests.length > 0 ? "fa-shake" : ""}
@@ -209,7 +209,7 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
             {currentRequests.length}
           </span>
         )}
-      </span>
+      </button>
     </div>
   );
 }
