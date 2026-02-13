@@ -3,7 +3,7 @@ import "primeflex/primeflex.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Badge } from "primereact/badge";
 import { Button } from "primereact/button";
-import { ConfirmDialog } from "primereact/confirmdialog";
+import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { DataView } from "primereact/dataview";
 import { Menu } from "primereact/menu";
 import { Panel } from "primereact/panel";
@@ -15,6 +15,7 @@ import { Instance, System } from "../models/brewtils-types";
 import { StartInstance, StopInstance } from "../services/instance_service";
 import { ClearAllQueues } from "../services/queue_service";
 import {
+  DeleteSystem,
   GetSystemList,
   ReloadSystem,
   Rescan,
@@ -131,6 +132,35 @@ function SystemCards() {
       void ReloadSystem(system);
     }
 
+    function hasRunningInstances(system: System) {
+      return system.instances?.some((instance) => {
+        return instance.status == 'RUNNING';
+      });
+    };
+
+    function deleteSystem(system: System) {
+      const accept = () => {
+        DeleteSystem(system);
+      }
+      const reject = () => {}
+      const confirm = () => {
+        confirmDialog({
+            message: 'Are you sure you want to delete a system with running instances?',
+            header: 'Confirmation',
+            icon: 'pi pi-exclamation-triangle',
+            defaultFocus: 'accept',
+            accept,
+            reject
+        });
+      };
+
+      if (hasRunningInstances(system)) {
+        confirm();
+      } else {
+        DeleteSystem(system);
+      }
+    }
+
     const headerTemplate = (options: any) => {
       const className = `${options.className} justify-content-space-between`;
       const systemConfigMenu = useRef<Menu>(null);
@@ -157,6 +187,7 @@ function SystemCards() {
         {
           label: "Delete",
           icon: <FontAwesomeIcon icon="trash" />,
+          command: () => deleteSystem(system),
         },
       ];
 
@@ -345,8 +376,10 @@ function SystemCards() {
     );
   };
 
-  const [visible, setVisible] = useState(false);
-  const toast = useRef<Toast | null>(null);
+  // Confirm Dialog visibility
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  // Toast ref
+  const toast = useRef<Toast>(null);
 
   const accept = () => {
     toast.current?.show({
@@ -358,9 +391,7 @@ function SystemCards() {
     void ClearAllQueues();
   };
 
-  const reject = () => {
-    setVisible(false);
-  };
+  const reject = () => {};
 
   const handleRescan = () => {
     void Rescan();
@@ -372,17 +403,18 @@ function SystemCards() {
         <h1 className="flex-1">Systems Management</h1>
         <div>
           <Toast ref={toast} />
+          <ConfirmDialog />
           <ConfirmDialog
             id="dlg_confirmation"
-            visible={visible}
-            onHide={() => setVisible(false)}
+            visible={confirmVisible}
+            onHide={() => setConfirmVisible(false)}
             message="Are you sure you want to delete all Queues?"
             header="Confirmation"
             icon="pi pi-exclamation-triangle"
             accept={accept}
             reject={reject}
           />
-          <Button onClick={() => setVisible(true)} label="Clear All Queues" />
+          <Button onClick={() => setConfirmVisible(true)} label="Clear All Queues" />
           <Button onClick={handleRescan} label="Rescan Plugin Directory" />
         </div>
       </div>

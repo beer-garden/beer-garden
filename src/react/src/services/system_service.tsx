@@ -122,3 +122,36 @@ export const Rescan = async (gardenName?: string): Promise<void> => {
     throw new Error(`HTTP error: Status ${response.status}`);
   }
 };
+
+export const DeleteSystem = async (system: System): Promise<void> => {
+  const headers = new Headers();
+  headers.append("Content-Type", "application/json");
+  if (system.garden_name !== undefined) {
+    headers.append("Target-Garden", system.garden_name);
+  }
+  const response = await fetch("api/v1/systems/" + system.id, {
+    headers: headers,
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    // Handle non-OK responses (e.g., 404, 500)
+    throw new Error(`HTTP error: Status ${response.status}`);
+  }
+};
+
+export const ForceDeleteSystem = async (system: System): Promise<void> => {
+  const headers = new Headers();
+  headers.append("Content-Type", "application/json");
+  if (system.garden_name !== undefined) {
+    headers.append("Target-Garden", system.garden_name);
+  }
+  let params = new URLSearchParams({"force": "true"}).toString();
+  const response = await fetch(`api/v1/systems/${system.id}?${params}`, {
+    headers: headers,
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    // Handle non-OK responses (e.g., 404, 500)
+    throw new Error(`HTTP error: Status ${response.status}`);
+  }
+};
