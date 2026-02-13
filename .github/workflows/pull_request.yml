@@ -125,6 +125,33 @@ jobs:
       - name: Run Tests
         run: make test
 
+  Vitest:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: ["ubuntu-latest"]
+
+    name: Vitest OS ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Check Firefox version
+        run: firefox --version
+
+      - name: Install Dependencies
+        run: npm install
+        working-directory: ./src/react
+
+      - name: Run Tests
+        run: npm test
+        working-directory: ./src/react
+
   CodeCoverage:
     runs-on: ${{ matrix.os }}
     needs: PyTest
