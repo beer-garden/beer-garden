@@ -1,4 +1,4 @@
-import { Garden } from "../models/brewtils-types";
+import { Garden, Patch } from "../models/brewtils-types";
 import { Config } from "../models/models";
 
 export const GetGarden = async (
@@ -21,6 +21,37 @@ export const GetGarden = async (
       throw new Error(`HTTP error: Status ${response.status}`);
     }
     const data = (await response.json()) as Garden;
+    return data;
+  } catch (error) {
+    // Handle network errors or the error thrown above
+    console.error("Error fetching Requests:", error);
+    throw error; // Re-throw to be handled by the component/hook
+  }
+};
+
+export const PatchGarden = async (
+  patch: Patch,
+  garden_name?: string,
+  headerData?: any,
+): Promise<any> => {
+  try {
+    const headers = new Headers();
+    if (headerData) {
+      for (const [key, value] of Object.entries(headerData)) {
+        headers.append(key, value as string);
+      }
+    }
+
+    const response = await fetch(`api/v1/gardens/${garden_name ? garden_name : ''}`, {
+      headers: headers,
+      body: JSON.stringify(patch),
+      method: "PATCH",
+    });
+    if (!response.ok) {
+      // Handle non-OK responses (e.g., 404, 500)
+      throw new Error(`HTTP error: Status ${response.status}`);
+    }
+    const data = (await response.json()) as any;
     return data;
   } catch (error) {
     // Handle network errors or the error thrown above
