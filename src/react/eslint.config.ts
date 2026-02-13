@@ -3,6 +3,7 @@ import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import tseslint from 'typescript-eslint';
 import eslint from '@eslint/js';
 import { defineConfig } from 'eslint/config';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
 
 export default defineConfig(
   {
@@ -57,6 +58,10 @@ export default defineConfig(
       // Make sure it is disabled or not included if it conflicts with simple-import-sort.
       // e.g., '@typescript-eslint/sort-imports': 'off', 
     },
+  },
+  {
+    files: ['**/*.{js,mjs,cjs,jsx,mjsx,ts,tsx,mtsx}'],
+    ...jsxA11y.flatConfigs.recommended,
   },
 );
 
