@@ -120,67 +120,92 @@ function SystemCards() {
 
     function startSystem(system: System) {
       system.instances?.forEach((instance) => {
-        StartInstance(instance, system).then(() => {
-          setUpdated(!updated);
-        });
+        StartInstance(instance, system)
+          .then(() => {
+            setUpdated(!updated);
+          })
+          .catch((error) => {
+            console.error("Error starting system:", error);
+          });
       });
     }
 
     function stopSystem(system: System) {
       system.instances?.forEach((instance) => {
-        StopInstance(instance, system).then(() => {
-          setUpdated(!updated);
-        });
+        StopInstance(instance, system)
+          .then(() => {
+            setUpdated(!updated);
+          })
+          .catch((error) => {
+            console.error("Error stopping system:", error);
+          });
       });
     }
 
     function reloadSystem(system: System) {
-      void ReloadSystem(system).then(() => {
-        setUpdated(!updated);
-      });
+      ReloadSystem(system)
+        .then(() => {
+          setUpdated(!updated);
+        })
+        .catch((error) => {
+          console.error("Error reloading system:", error);
+        });
     }
 
     function hasRunningInstances(system: System) {
       return system.instances?.some((instance) => {
-        return instance.status == 'RUNNING';
+        return instance.status == "RUNNING";
       });
-    };
+    }
 
     function deleteSystem(system: System) {
       const accept = () => {
-        DeleteSystem(system).then(() => {
-          setUpdated(!updated);
-        });
-      }
-      const reject = () => {}
+        DeleteSystem(system)
+          .then(() => {
+            setUpdated(!updated);
+          })
+          .catch((error) => {
+            console.error("Error deleting system:", error);
+          });
+      };
+      const reject = () => {};
       const confirm = () => {
         confirmDialog({
-            message: 'Are you sure you want to delete a system with running instances?',
-            header: 'Confirmation',
-            icon: 'pi pi-exclamation-triangle',
-            defaultFocus: 'accept',
-            accept,
-            reject
+          message:
+            "Are you sure you want to delete a system with running instances?",
+          header: "Confirmation",
+          icon: "pi pi-exclamation-triangle",
+          defaultFocus: "accept",
+          accept,
+          reject,
         });
       };
 
       if (hasRunningInstances(system)) {
         confirm();
       } else {
-        DeleteSystem(system);
+        accept();
       }
     }
 
     function handleStartInstance(instance: Instance, system: System) {
-      StartInstance(instance, system).then(() => {
-        setUpdated(!updated);
-      });
+      StartInstance(instance, system)
+        .then(() => {
+          setUpdated(!updated);
+        })
+        .catch((error) => {
+          console.error("Error starting instance:", error);
+        });
     }
 
-    function handleStopInstance(instance: Instance, system: System){
-      StopInstance(instance, system).then(() => {
-        setUpdated(!updated);
-      });
+    function handleStopInstance(instance: Instance, system: System) {
+      StopInstance(instance, system)
+        .then(() => {
+          setUpdated(!updated);
+        })
+        .catch((error) => {
+          console.error("Error deleting stopping instance:", error);
+        });
     }
 
     const headerTemplate = (options: any) => {
@@ -416,9 +441,13 @@ function SystemCards() {
   const reject = () => {};
 
   const handleRescan = () => {
-    Rescan().then(() => {
-      setUpdated(!updated);
-    });
+    Rescan()
+      .then(() => {
+        setUpdated(!updated);
+      })
+      .catch((error) => {
+        console.error("Error deleting system:", error);
+      });
   };
 
   return (
@@ -438,7 +467,10 @@ function SystemCards() {
             accept={accept}
             reject={reject}
           />
-          <Button onClick={() => setConfirmVisible(true)} label="Clear All Queues" />
+          <Button
+            onClick={() => setConfirmVisible(true)}
+            label="Clear All Queues"
+          />
           <Button onClick={handleRescan} label="Rescan Plugin Directory" />
         </div>
       </div>

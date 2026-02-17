@@ -4,16 +4,16 @@ export const GetSystemList = async (
   queryData?: any,
   headerData?: any,
 ): Promise<System[]> => {
-  if (
-    (queryData === null || queryData === undefined) &&
-    (headerData === null || headerData === undefined)
-  ) {
-    const storedValue = sessionStorage.getItem("systems");
+  // if (
+  //   (queryData === null || queryData === undefined) &&
+  //   (headerData === null || headerData === undefined)
+  // ) {
+  //   const storedValue = sessionStorage.getItem("systems");
 
-    // if (storedValue !== null) {
-    //   return JSON.parse(storedValue) as Array<System>;
-    // }
-  }
+  //   if (storedValue !== null) {
+  //     return JSON.parse(storedValue) as Array<System>;
+  //   }
+  // }
   try {
     const headers = new Headers();
     if (headerData) {
@@ -145,7 +145,7 @@ export const ForceDeleteSystem = async (system: System): Promise<void> => {
   if (system.garden_name !== undefined) {
     headers.append("Target-Garden", system.garden_name);
   }
-  let params = new URLSearchParams({"force": "true"}).toString();
+  const params = new URLSearchParams({ force: "true" }).toString();
   const response = await fetch(`api/v1/systems/${system.id}?${params}`, {
     headers: headers,
     method: "DELETE",
