@@ -10,9 +10,9 @@ export const GetSystemList = async (
   ) {
     const storedValue = sessionStorage.getItem("systems");
 
-    if (storedValue !== null) {
-      return JSON.parse(storedValue) as Array<System>;
-    }
+    // if (storedValue !== null) {
+    //   return JSON.parse(storedValue) as Array<System>;
+    // }
   }
   try {
     const headers = new Headers();

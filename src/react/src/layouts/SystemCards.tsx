@@ -23,16 +23,18 @@ import {
 
 function SystemCards() {
   const [systems, setSystems] = useState<Array<System>>([]);
+  const [updated, setUpdated] = useState<boolean>(false);
 
   useEffect(() => {
     GetSystemList()
       .then((data: Array<System>) => {
+        console.log(data);
         setSystems(data);
       })
       .catch((error) => {
         console.error("Error fetching systems:", error);
       });
-  }, []);
+  }, [updated]);
 
   const getSeverity = (
     status?: string,
@@ -118,18 +120,24 @@ function SystemCards() {
 
     function startSystem(system: System) {
       system.instances?.forEach((instance) => {
-        void StartInstance(instance, system);
+        StartInstance(instance, system).then(() => {
+          setUpdated(!updated);
+        });
       });
     }
 
     function stopSystem(system: System) {
       system.instances?.forEach((instance) => {
-        void StopInstance(instance, system);
+        StopInstance(instance, system).then(() => {
+          setUpdated(!updated);
+        });
       });
     }
 
     function reloadSystem(system: System) {
-      void ReloadSystem(system);
+      void ReloadSystem(system).then(() => {
+        setUpdated(!updated);
+      });
     }
 
     function hasRunningInstances(system: System) {
@@ -140,7 +148,9 @@ function SystemCards() {
 
     function deleteSystem(system: System) {
       const accept = () => {
-        DeleteSystem(system);
+        DeleteSystem(system).then(() => {
+          setUpdated(!updated);
+        });
       }
       const reject = () => {}
       const confirm = () => {
@@ -159,6 +169,18 @@ function SystemCards() {
       } else {
         DeleteSystem(system);
       }
+    }
+
+    function handleStartInstance(instance: Instance, system: System) {
+      StartInstance(instance, system).then(() => {
+        setUpdated(!updated);
+      });
+    }
+
+    function handleStopInstance(instance: Instance, system: System){
+      StopInstance(instance, system).then(() => {
+        setUpdated(!updated);
+      });
     }
 
     const headerTemplate = (options: any) => {
@@ -255,14 +277,14 @@ function SystemCards() {
                 <Button
                   className="mr-2"
                   title={`Start Instance ${instance.name}`}
-                  onClick={() => StartInstance(instance, system)}
+                  onClick={() => handleStartInstance(instance, system)}
                 >
                   <FontAwesomeIcon icon="play" />
                 </Button>
                 <Button
                   className="mr-2"
                   title={`Stop Instance ${instance.name}`}
-                  onClick={() => StopInstance(instance, system)}
+                  onClick={() => handleStopInstance(instance, system)}
                 >
                   <FontAwesomeIcon icon="stop" />
                 </Button>
@@ -394,7 +416,9 @@ function SystemCards() {
   const reject = () => {};
 
   const handleRescan = () => {
-    void Rescan();
+    Rescan().then(() => {
+      setUpdated(!updated);
+    });
   };
 
   return (
