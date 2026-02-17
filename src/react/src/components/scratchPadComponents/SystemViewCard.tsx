@@ -136,25 +136,6 @@ function SystemViewCard({
   }
 
   useEffect(() => {
-    GetSystemList({ id: system.id }, {})
-      .then((data: System[]) => {
-        if (data.length > 0) {
-          setSystem(data[0]);
-        }
-        updateScratchPadValues();
-
-        if (systemId.current && !(systemId.current in listeners)) {
-          listeners[systemId.current] = {
-            listener: MonitorSystemId,
-          };
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching system:", error);
-      });
-  }, []);
-
-  useEffect(() => {
     if (!system && systemId.current) {
       GetSystemList({ id: systemId.current }, {})
         .then((data: System[]) => {

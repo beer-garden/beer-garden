@@ -87,17 +87,13 @@ function App() {
             <Switch>
               <Route path="/systems">
                 {/* <SystemIndex /> */}
-                <SystemCards
-                  setReloadScratchPad={setReloadScratchPadTrigger}
-                />
+                <SystemCards setReloadScratchPad={setReloadScratchPadTrigger} />
               </Route>
               <Route path="/systemtable">
                 <SystemTable />
               </Route>
               <Route path="/systemcard">
-                <SystemCards
-                  setReloadScratchPad={setReloadScratchPadTrigger}
-                />
+                <SystemCards setReloadScratchPad={setReloadScratchPadTrigger} />
               </Route>
               <Route path="/request/:requestId">
                 <RequestView listeners={listeners} />
@@ -125,9 +121,7 @@ function App() {
               </Route>
 
               <Route path="/">
-                <SystemCards
-                  setReloadScratchPad={setReloadScratchPadTrigger}
-                />
+                <SystemCards setReloadScratchPad={setReloadScratchPadTrigger} />
               </Route>
             </Switch>
           </BrowserRouter>
