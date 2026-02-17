@@ -1,36 +1,54 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { DataView } from "primereact/dataview";
+import { Badge } from "primereact/badge";
+import { Button } from "primereact/button";
+import { Column } from "primereact/column";
+import { Dialog } from "primereact/dialog";
 import { MenuItem } from "primereact/menuitem";
-import { OrganizationChart } from "primereact/organizationchart";
-import { Panel } from "primereact/panel";
 import { SplitButton } from "primereact/splitbutton";
-import { useEffect, useState, useMemo } from "react";
-import { DataTable } from "primereact/datatable";
+import { TreeTable } from "primereact/treetable";
+import { useEffect, useMemo, useState } from "react";
+
 import { Connection, Garden } from "../models/brewtils-types";
 import { GetConfig } from "../services/config_service";
-import { GetRootGarden } from "../services/garden_service";
-import { Button } from "primereact/button";
-import { Badge } from "primereact/badge";
-import { TreeTable } from "primereact/treetable";
-import { Column } from "primereact/column";
-import { ColumnGroup } from "primereact/columngroup";
-import { Row } from "primereact/row";
-import { SelectButton } from "primereact/selectbutton";
+import {
+  DeleteGarden,
+  GetRootGarden,
+  RescanGarden,
+  SyncGarden,
+  SyncUsersGarden,
+  UpdateApiGarden,
+} from "../services/garden_service";
 
 function GardenTable() {
   const [garden, setGarden] = useState<Garden | null>(null);
   const [gardenNode, setGardenNode] = useState<any>([{}]);
+  const [expandedKeys, setExpandedKeys] = useState<any>({});
 
-  function parseGarden(garden: Garden) {
+  function parseGarden(garden: Garden, is_one_hop: boolean = false): any {
     function findStatus(connections: Array<Connection>, api: string) {
       const matchedAPIs = connections.filter((connection: Connection) => {
-        return connection.api?.toLowerCase() === api.toLowerCase();
+        return (
+          connection.api?.toLowerCase() === api.toLowerCase() &&
+          connection.status !== "NOT_CONFIGURED"
+        );
       });
 
       if (matchedAPIs && matchedAPIs.length === 1) {
         return matchedAPIs[0].status;
       }
       return null;
+    }
+
+    function findLastSynced(connections: Array<Connection>): string | null {
+      if (connections.length === 0) {
+        return null;
+      }
+      const sortedConnections = connections.sort((a, b) => {
+        const dateA = new Date(a?.status_info?.heartbeat || 0).getTime();
+        const dateB = new Date(b?.status_info?.heartbeat || 0).getTime();
+        return dateB - dateA; // Sort in descending order
+      });
+      return sortedConnections[0]?.status_info?.heartbeat || null;
     }
 
     const item = {
@@ -43,12 +61,11 @@ function GardenTable() {
         http_publishing: findStatus(garden.publishing_connections, "HTTP"),
         stomp_receiving: findStatus(garden.receiving_connections, "STOMP"),
         stomp_publishing: findStatus(garden.publishing_connections, "STOMP"),
-        // stomp_receiving: garden.name === "default" ? null : "ERROR",
-        // stomp_publishing: garden.name === "default" ? null : "ERROR",
         receiving_connections: garden.receiving_connections,
         publishing_connections: garden.publishing_connections,
+        is_one_hop: is_one_hop,
+        last_synced: findLastSynced(garden.receiving_connections),
       },
-      expanded: true,
       children: [] as Array<any>,
     };
 
@@ -67,38 +84,49 @@ function GardenTable() {
     return item;
   }
 
+  const getAllKeys = (nodes: any) => {
+    let keys = {} as any;
+    if (nodes && nodes.length) {
+      for (const node of nodes) {
+        keys[node.key] = true; // Mark as expanded
+        if (node.children && node.children.length) {
+          keys = { ...keys, ...getAllKeys(node.children) };
+        }
+      }
+    }
+    return keys;
+  };
+
   useEffect(() => {
     if (garden) {
       if (
-      typeof garden.children !== "undefined" &&
-      garden.children !== null &&
-      garden.children.length > 0
-    ) {
-      const newGardenNodes = [];
-      for (const child of garden.children){
-        newGardenNodes.push(parseGarden(child))
+        typeof garden.children !== "undefined" &&
+        garden.children !== null &&
+        garden.children.length > 0
+      ) {
+        const newGardenNodes = [];
+        for (const child of garden.children) {
+          newGardenNodes.push(parseGarden(child, true));
+        }
+        setGardenNode(newGardenNodes);
+        setExpandedKeys(getAllKeys(newGardenNodes));
       }
-      setGardenNode(newGardenNodes);
-    }
-      // setGardenNode([parseGarden(garden)]);
+    } else {
+      GetConfig()
+        .then((config) => {
+          GetRootGarden(config, {})
+            .then((response_garden: Garden) => {
+              setGarden(response_garden);
+            })
+            .catch((error) => {
+              console.error("Error fetching root garden:", error);
+            });
+        })
+        .catch((error) => {
+          console.error("Error fetching root garden:", error);
+        });
     }
   }, [garden]);
-
-  useEffect(() => {
-    GetConfig()
-      .then((config) => {
-        GetRootGarden(config, {})
-          .then((response_garden: Garden) => {
-            setGarden(response_garden);
-          })
-          .catch((error) => {
-            console.error("Error fetching root garden:", error);
-          });
-      })
-      .catch((error) => {
-        console.error("Error fetching root garden:", error);
-      });
-  }, []);
 
   const connectionTemplate = (node: any, field: string) => {
     if (node.data[field]) {
@@ -118,58 +146,183 @@ function GardenTable() {
             value={node.data[field]}
             severity={severityLevel(node.data[field])}
           />
-          <Button className="mr-2">
-            <FontAwesomeIcon icon="play" />
-          </Button>
-          <Button className="mr-2">
-            <FontAwesomeIcon icon="stop" />
-          </Button>
+          {node.data.is_one_hop && (
+            <Button
+              className="mr-2"
+              data-testid={node.data.id + "_" + field + "_START"}
+              onClick={() => {
+                UpdateApiGarden(
+                  node.data.name,
+                  ["http_publishing", "stomp_publishing"].includes(field)
+                    ? "PUBLISHING"
+                    : "RECEIVING",
+                  ["http_publishing", "http_receiving"].includes(field)
+                    ? "HTTP"
+                    : "STOMP",
+                  ["http_publishing", "stomp_publishing"].includes(field)
+                    ? "PUBLISHING"
+                    : "RECEIVING",
+                ).catch((error) => {
+                  console.error("Error Updating Garden API Connection:", error);
+                });
+              }}
+            >
+              <FontAwesomeIcon icon="play" />
+            </Button>
+          )}
+          {node.data.is_one_hop && (
+            <Button
+              className="mr-2"
+              data-testid={node.data.id + "_" + field + "_STOP"}
+              onClick={() => {
+                UpdateApiGarden(
+                  node.data.name,
+                  "DISABLED",
+                  ["http_publishing", "http_receiving"].includes(field)
+                    ? "HTTP"
+                    : "STOMP",
+                  ["http_publishing", "stomp_publishing"].includes(field)
+                    ? "PUBLISHING"
+                    : "RECEIVING",
+                ).catch((error) => {
+                  console.error("Error Updating Garden API Connection:", error);
+                });
+              }}
+            >
+              <FontAwesomeIcon icon="stop" />
+            </Button>
+          )}
         </div>
       );
     }
   };
 
-
   const gardenActionsTemplate = (node: any) => {
     const items: MenuItem[] = [];
+    const [visibleConfig, setVisibleConfig] = useState<boolean>(false);
 
     items.push({
       label: "Delete",
-      icon: <FontAwesomeIcon icon="download" />,
-      command: () => {},
+      icon: <FontAwesomeIcon className="mr-2" icon="circle-minus" />,
+      command: () => {
+        DeleteGarden(node.data.name).catch((error) => {
+          console.error("Error Deleting Garden:", error);
+        });
+      },
     });
 
-    // items.push({
-    //   label: "Info",
-    //   icon: <FontAwesomeIcon icon="download" />,
-    //   command: () => {},
-    // });
+    if (node?.data?.is_one_hop) {
+      items.push({
+        label: "Configuration",
+        icon: <FontAwesomeIcon className="mr-2" icon="file-code" />,
+        command: () => {
+          setVisibleConfig(true);
+        },
+      });
+    }
 
     items.push({
       label: "Rescan Plugins",
-      icon: <FontAwesomeIcon icon="download" />,
+      icon: <FontAwesomeIcon className="mr-2" icon="magnifying-glass" />,
       command: () => {},
     });
 
     items.push({
       label: "Rescan Downstream",
-      icon: <FontAwesomeIcon icon="download" />,
-      command: () => {},
+      icon: <FontAwesomeIcon className="mr-2" icon="magnifying-glass" />,
+      command: () => {
+        RescanGarden(node.data.name).catch((error) => {
+          console.error("Error Rescanning Garden:", error);
+        });
+      },
     });
 
     items.push({
       label: "Clear Plugin Queues",
-      icon: <FontAwesomeIcon icon="download" />,
+      icon: <FontAwesomeIcon className="mr-2" icon="eraser" />,
       command: () => {},
     });
 
+    items.push({
+      label: "Sync Users",
+      icon: <FontAwesomeIcon className="mr-2" icon="users" />,
+      command: () => {
+        SyncUsersGarden(node.data.name).catch((error) => {
+          console.error("Error Syncing Users in Garden:", error);
+        });
+      },
+    });
+
+    const configs = {
+      http_publishing_config: undefined,
+      stomp_publishing_config: undefined,
+      stomp_receiving_config: undefined,
+    };
+
+    if (node?.data?.publishing_connections) {
+      for (const connection of node.data.publishing_connections) {
+        if (connection.api.toUpperCase() === "HTTP") {
+          configs.http_publishing_config = connection.config;
+        }
+        if (connection.api.toUpperCase() === "STOMP") {
+          configs.stomp_publishing_config = connection.config;
+        }
+      }
+    }
+    if (node?.data?.receiving_connections) {
+      for (const connection of node.data.receiving_connections) {
+        if (connection.api.toUpperCase() === "STOMP") {
+          configs.stomp_receiving_config = connection.config;
+        }
+      }
+    }
+
     return (
-      <SplitButton
-        label="Sync"
-        icon="pi pi-plus"
-        onClick={() => {}}
-        model={items ? items : []}
-      />
+      <div>
+        <SplitButton
+          label="Sync"
+          icon={<FontAwesomeIcon className="mr-2" icon="arrows-rotate" />}
+          onClick={() => {}}
+          model={items ? items : []}
+        />
+        <Dialog
+          header={"Configuration: " + node?.data?.name}
+          visible={visibleConfig}
+          onHide={() => {
+            if (!visibleConfig) return;
+            setVisibleConfig(false);
+          }}
+          style={{ width: "50vw" }}
+          breakpoints={{ "960px": "75vw", "641px": "100vw" }}
+        >
+          <p className="m-0">
+            {configs.http_publishing_config && (
+              <>
+                <h5>HTTP Publishing Configuration</h5>
+                <pre>
+                  {JSON.stringify(configs.http_publishing_config, null, 2)}
+                </pre>
+              </>
+            )}
+            {configs.stomp_publishing_config && (
+              <>
+                <h5>STOMP Publishing Configuration</h5>
+                <pre>
+                  {JSON.stringify(configs.stomp_publishing_config, null, 2)}
+                </pre>
+              </>
+            )}
+            {configs.stomp_receiving_config && (
+              <>
+                <h5>STOMP Receiving Configuration</h5>
+                <pre>
+                  {JSON.stringify(configs.stomp_receiving_config, null, 2)}
+                </pre>
+              </>
+            )}
+          </p>
+        </Dialog>
+      </div>
     );
   };
 
@@ -210,35 +363,91 @@ function GardenTable() {
     return true;
   };
 
+  const formatDate = (value: string) => {
+    if (value === null || value === undefined || value === "") {
+      return "UNKNOWN";
+    }
+    const date = new Date(value);
+    return date.toLocaleDateString() + " " + date.toLocaleTimeString();
+  };
+
   const columns = useMemo(() => {
     const cols = [
-      { field: "http_receiving", header: "HTTP Receiving" },
-      { field: "http_publishing", header: "HTTP Publishing" },
-      { field: "stomp_receiving", header: "STOMP Receiving" },
-      { field: "stomp_publishing", header: "STOMP Publishing" },
+      { field: "version", header: "Version", body: undefined },
+      {
+        field: "last_synced",
+        header: "Last Sync Seen",
+        body: (node: any) => formatDate(node?.data?.last_synced),
+      },
+      {
+        field: "http_receiving",
+        header: "HTTP Receiving",
+        body: (node: any) => connectionTemplate(node, "http_receiving"),
+      },
+      {
+        field: "http_publishing",
+        header: "HTTP Publishing",
+        body: (node: any) => connectionTemplate(node, "http_publishing"),
+      },
+      {
+        field: "stomp_receiving",
+        header: "STOMP Receiving",
+        body: (node: any) => connectionTemplate(node, "stomp_receiving"),
+      },
+      {
+        field: "stomp_publishing",
+        header: "STOMP Publishing",
+        body: (node: any) => connectionTemplate(node, "stomp_publishing"),
+      },
     ];
 
     // Filter out columns where isColumnEmpty is true
     return cols.filter((col) => !isColumnEmpty(col.field));
   }, [gardenNode]);
 
-  const header = (<div><Button className="mr-2" label="Sync All"/><Button className="mr-2" label="Rescan Downstream Configurations"/></div>);
+  const header = (
+    <div>
+      <Button
+        className="mr-2"
+        label="Sync All"
+        onClick={() => {
+          SyncGarden().catch((error) => {
+            console.error("Error Syncing Gardens:", error);
+          });
+        }}
+      />
+      <Button
+        className="mr-2"
+        label="Rescan Downstream Configurations"
+        onClick={() => {
+          RescanGarden().catch((error) => {
+            console.error("Error Rescanning Gardens:", error);
+          });
+        }}
+      />
+    </div>
+  );
 
   return (
     gardenNode && (
-      <TreeTable value={gardenNode} header={header} resizableColumns showGridlines>
+      <TreeTable
+        value={gardenNode}
+        header={header}
+        resizableColumns
+        showGridlines
+        expandedKeys={expandedKeys}
+        onToggle={(e) => setExpandedKeys(e.value)}
+      >
         <Column field="name" expander header="Name"></Column>
-        <Column field="version" header="Version"></Column>
-        <Column body={gardenActionsTemplate} header="Actions"></Column>
-
         {columns.map((col) => (
           <Column
             key={col.field}
             field={col.field}
             header={col.header}
-            body={(node) => connectionTemplate(node, col.field)}
+            body={col.body}
           />
         ))}
+        <Column body={gardenActionsTemplate} header="Actions"></Column>
       </TreeTable>
     )
   );
