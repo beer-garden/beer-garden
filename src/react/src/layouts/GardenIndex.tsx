@@ -282,8 +282,13 @@ function GardenTable() {
         <SplitButton
           label="Sync"
           icon={<FontAwesomeIcon className="mr-2" icon="arrows-rotate" />}
-          onClick={() => {}}
+          onClick={() => {
+            SyncGarden(node.data.name).catch((error) => {
+              console.error("Error Syncing Garden:", error);
+            });
+          }}
           model={items ? items : []}
+          data-testid={node?.data?.id + "_ACTIONS"}
         />
         <Dialog
           header={"Configuration: " + node?.data?.name}
