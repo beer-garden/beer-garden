@@ -530,8 +530,9 @@ describe("GardenTable", () => {
     await userEvent.click(rescanButton);
 
     await waitFor(() => {
-      // expect(gardenService.DeleteGarden).toBeCalled();
-      // expect(gardenService.DeleteGarden).toHaveBeenCalledWith("Child Garden");
+      expect(false).toBe(true); // Fail until we merge and update it
+      // expect(systemService.rescanPlugins).toBeCalled();
+      // expect(systemService.rescanPlugins).toHaveBeenCalledWith("Child Garden");
     });
   });
 
@@ -624,8 +625,9 @@ describe("GardenTable", () => {
     await userEvent.click(clearQueueButton);
 
     await waitFor(() => {
-      // expect(gardenService.RescanGarden).toBeCalled();
-      // expect(gardenService.RescanGarden).toHaveBeenCalledWith("Child Garden");
+      expect(false).toBe(true); // Fail until we merge and update it
+      // expect(systemService.clearPluginQueue).toBeCalled();
+      // expect(systemService.clearPluginQueue).toHaveBeenCalledWith("Child Garden");
     });
   });
 
