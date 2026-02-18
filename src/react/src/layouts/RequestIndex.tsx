@@ -234,14 +234,14 @@ function RequestIndex({
   const header = (
     <div className="flex flex-wrap align-items-center justify-content-between gap-2">
       <span className="text-xl text-900 font-bold">Requests</span>
-      <label>
+      <div>
         <Checkbox
           onChange={handleChange}
           checked={autoRefresh}
           className="mr-2"
         />
         Auto Refresh
-      </label>
+      </div>
       <Button
         rounded
         raised
