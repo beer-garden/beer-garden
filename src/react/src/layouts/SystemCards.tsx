@@ -163,6 +163,12 @@ function SystemCards() {
         DeleteSystem(system)
           .then(() => {
             setUpdated(!updated);
+            toast.current?.show({
+              severity: "info",
+              summary: "Confirmation",
+              detail: `Deleted system ${system.name}`,
+              life: 3000,
+            });
           })
           .catch((error) => {
             console.error("Error deleting system:", error);
@@ -173,7 +179,7 @@ function SystemCards() {
         confirmDialog({
           message:
             "Are you sure you want to delete a system with running instances?",
-          header: "Confirmation",
+          header: `Confirm Delete ${system.name}`,
           icon: "pi pi-exclamation-triangle",
           defaultFocus: "accept",
           accept,
@@ -423,27 +429,46 @@ function SystemCards() {
     );
   };
 
-  // Confirm Dialog visibility
-  const [confirmVisible, setConfirmVisible] = useState(false);
   // Toast ref
   const toast = useRef<Toast>(null);
 
-  const accept = () => {
-    toast.current?.show({
-      severity: "info",
-      summary: "Confirmation",
-      detail: "Clearing All Queues",
-      life: 3000,
-    });
-    void ClearAllQueues();
-  };
+  function handleClearAllQueues() {
+    const accept = () => {
+      toast.current?.show({
+        severity: "info",
+        summary: "Confirmation",
+        detail: "Clearing All Queues",
+        life: 3000,
+      });
+      void ClearAllQueues();
+    };
 
-  const reject = () => {};
+    const reject = () => {};
+
+    const confirm = () => {
+      confirmDialog({
+        message: "Are you sure you want to delete all Queues?",
+        header: "Confirmation",
+        icon: "pi pi-exclamation-triangle",
+        defaultFocus: "accept",
+        accept,
+        reject,
+      });
+    };
+
+    confirm();
+  }
 
   const handleRescan = () => {
     Rescan()
       .then(() => {
         setUpdated(!updated);
+        toast.current?.show({
+          severity: "info",
+          summary: "Confirmation",
+          detail: "Rescan complete",
+          life: 3000,
+        });
       })
       .catch((error) => {
         console.error("Error deleting system:", error);
@@ -457,20 +482,7 @@ function SystemCards() {
         <div>
           <Toast ref={toast} />
           <ConfirmDialog />
-          <ConfirmDialog
-            id="dlg_confirmation"
-            visible={confirmVisible}
-            onHide={() => setConfirmVisible(false)}
-            message="Are you sure you want to delete all Queues?"
-            header="Confirmation"
-            icon="pi pi-exclamation-triangle"
-            accept={accept}
-            reject={reject}
-          />
-          <Button
-            onClick={() => setConfirmVisible(true)}
-            label="Clear All Queues"
-          />
+          <Button onClick={handleClearAllQueues} label="Clear All Queues" />
           <Button onClick={handleRescan} label="Rescan Plugin Directory" />
         </div>
       </div>
