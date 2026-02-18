@@ -74,7 +74,6 @@ lint:
 
 test_docker_image:
 	docker build . -t test_server
-	docker run --rm test_server npx vitest
 
 test: test_docker_image
 	docker run --rm test_server npx vitest
