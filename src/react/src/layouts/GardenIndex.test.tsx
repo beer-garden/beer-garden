@@ -1,4 +1,4 @@
-import { cleanup,render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -16,97 +16,99 @@ describe("GardenTable", () => {
     cleanup();
   });
 
-  test('renders garden table', async () => {
-      const mockConfig = { garden_name: 'Root' } as Config;
-      const mockGarden = {
-          id: '1',
-          name: 'Root',
-          version: '1.0.0',
-          children: [],
-          receiving_connections: [],
-          publishing_connections: [],
-      };
+  test("renders garden table", async () => {
+    const mockConfig = { garden_name: "Root" } as Config;
+    const mockGarden = {
+      id: "1",
+      name: "Root",
+      version: "1.0.0",
+      children: [],
+      receiving_connections: [],
+      publishing_connections: [],
+    };
 
-      vi.mocked(configService.GetConfig).mockResolvedValue(mockConfig);
-      vi.mocked(gardenService.GetRootGarden).mockResolvedValue(mockGarden);
+    vi.mocked(configService.GetConfig).mockResolvedValue(mockConfig);
+    vi.mocked(gardenService.GetRootGarden).mockResolvedValue(mockGarden);
 
-      render(<GardenTable />);
+    render(<GardenTable />);
 
-      await waitFor(() => {
-          expect(screen.getByText('Sync All')).toBeInTheDocument();
-      });
+    await waitFor(() => {
+      expect(screen.getByText("Sync All")).toBeInTheDocument();
+    });
   });
 
-  test('fetches root garden on mount', async () => {
-      const mockConfig = { garden_name: 'Root' } as Config;
-      const mockGarden = {
-          id: '1',
-          name: 'Root Garden',
-          version: '1.0.0',
-          children: [],
-          receiving_connections: [],
-          publishing_connections: [],
-      };
+  test("fetches root garden on mount", async () => {
+    const mockConfig = { garden_name: "Root" } as Config;
+    const mockGarden = {
+      id: "1",
+      name: "Root Garden",
+      version: "1.0.0",
+      children: [],
+      receiving_connections: [],
+      publishing_connections: [],
+    };
 
-      vi.mocked(configService.GetConfig).mockResolvedValue(mockConfig);
-      vi.mocked(gardenService.GetRootGarden).mockResolvedValue(mockGarden);
+    vi.mocked(configService.GetConfig).mockResolvedValue(mockConfig);
+    vi.mocked(gardenService.GetRootGarden).mockResolvedValue(mockGarden);
 
-      render(<GardenTable />);
+    render(<GardenTable />);
 
-      await waitFor(() => {
-          expect(configService.GetConfig).toHaveBeenCalled();
-          expect(gardenService.GetRootGarden).toHaveBeenCalledWith(mockConfig, {});
-      });
+    await waitFor(() => {
+      expect(configService.GetConfig).toHaveBeenCalled();
+      expect(gardenService.GetRootGarden).toHaveBeenCalledWith(mockConfig, {});
+    });
   });
 
-  test('calls SyncGarden when Sync All button clicked', async () => {
-      const mockConfig = { garden_name: 'Root' } as Config;
-      const mockGarden = {
-          id: '1',
-          name: 'Root Garden',
-          version: '1.0.0',
-          children: [],
-          receiving_connections: [],
-          publishing_connections: [],
-      };
+  test("calls SyncGarden when Sync All button clicked", async () => {
+    const mockConfig = { garden_name: "Root" } as Config;
+    const mockGarden = {
+      id: "1",
+      name: "Root Garden",
+      version: "1.0.0",
+      children: [],
+      receiving_connections: [],
+      publishing_connections: [],
+    };
 
-      vi.mocked(configService.GetConfig).mockResolvedValue(mockConfig);
-      vi.mocked(gardenService.GetRootGarden).mockResolvedValue(mockGarden);
-      vi.mocked(gardenService.SyncGarden).mockResolvedValue(mockGarden);
+    vi.mocked(configService.GetConfig).mockResolvedValue(mockConfig);
+    vi.mocked(gardenService.GetRootGarden).mockResolvedValue(mockGarden);
+    vi.mocked(gardenService.SyncGarden).mockResolvedValue(mockGarden);
 
-      render(<GardenTable />);
+    render(<GardenTable />);
 
-      const syncButton = await screen.findByText('Sync All');
-      await userEvent.click(syncButton);
+    const syncButton = await screen.findByText("Sync All");
+    await userEvent.click(syncButton);
 
-      await waitFor(() => {
-          expect(gardenService.SyncGarden).toHaveBeenCalled();
-      });
+    await waitFor(() => {
+      expect(gardenService.SyncGarden).toHaveBeenCalled();
+    });
   });
 
-  test('calls RescanGarden when Rescan Downstream Configurations button clicked', async () => {
-      const mockConfig = { garden_name: 'Root' } as Config;
-      const mockGarden = {
-          id: '1',
-          name: 'Root Garden',
-          version: '1.0.0',
-          children: [],
-          receiving_connections: [],
-          publishing_connections: [],
-      };
+  test("calls RescanGarden when Rescan Downstream Configurations button clicked", async () => {
+    const mockConfig = { garden_name: "Root" } as Config;
+    const mockGarden = {
+      id: "1",
+      name: "Root Garden",
+      version: "1.0.0",
+      children: [],
+      receiving_connections: [],
+      publishing_connections: [],
+    };
 
-      vi.mocked(configService.GetConfig).mockResolvedValue(mockConfig);
-      vi.mocked(gardenService.GetRootGarden).mockResolvedValue(mockGarden);
-      vi.mocked(gardenService.RescanGarden).mockResolvedValue(mockGarden);
+    vi.mocked(configService.GetConfig).mockResolvedValue(mockConfig);
+    vi.mocked(gardenService.GetRootGarden).mockResolvedValue(mockGarden);
+    vi.mocked(gardenService.RescanGarden).mockResolvedValue(mockGarden);
 
-      render(<GardenTable />);
+    render(<GardenTable />);
 
-      const rescanButton = await screen.findByText('Rescan Downstream Configurations');
-      await userEvent.click(rescanButton);
+    const rescanButton = await screen.findByText(
+      "Rescan Downstream Configurations",
+    );
+    await userEvent.click(rescanButton);
 
-      await waitFor(() => {
-          expect(gardenService.RescanGarden).toHaveBeenCalled();
-      });
+    await waitFor(() => {
+      expect(gardenService.RescanGarden).toHaveBeenCalled();
+    });
   });
 
   test("handles child gardens in tree structure", async () => {
@@ -241,12 +243,13 @@ describe("GardenTable", () => {
 
     render(<GardenTable />);
 
-    const httpPublishingStartButton = await screen.findByTestId("2_http_publishing_START");
+    const httpPublishingStartButton = await screen.findByTestId(
+      "2_http_publishing_START",
+    );
     await userEvent.click(httpPublishingStartButton);
 
     await waitFor(() => {
-        expect(gardenService.UpdateApiGarden).toHaveBeenCalled();
+      expect(gardenService.UpdateApiGarden).toHaveBeenCalled();
     });
-
   });
 });

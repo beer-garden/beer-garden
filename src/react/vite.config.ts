@@ -1,7 +1,6 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { playwright } from '@vitest/browser-playwright'
-import { webdriverio } from '@vitest/browser-webdriverio'
 
 export default defineConfig({
   plugins: [react()],

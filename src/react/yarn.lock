@@ -1248,7 +1248,7 @@
     "@testing-library/user-event" "^14.6.1"
     "@vitest/browser" "4.0.18"
 
-"@vitest/browser-webdriverio@^4.0.18", "@vitest/browser-webdriverio@4.0.18":
+"@vitest/browser-webdriverio@4.0.18":
   version "4.0.18"
   resolved "https://registry.npmjs.org/@vitest/browser-webdriverio/-/browser-webdriverio-4.0.18.tgz"
   integrity sha512-dKn4kBq6gFk+wT5DMjPTvivXptz9MaN7CONoP+bA0bZxWofNsZtf9R4oPwQakuB95WBQ3j5kZ/9SXvB9i+XYQw==
