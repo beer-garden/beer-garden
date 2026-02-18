@@ -72,3 +72,10 @@ format:
 lint:
 	npx eslint src/ 
 
+test_server:
+	docker build . -t test_server
+	docker run --rm test_server npx vitest
+
+test:
+	npx vitest
+

@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
-
+import { playwright } from '@vitest/browser-playwright'
 import { webdriverio } from '@vitest/browser-webdriverio'
 
 export default defineConfig({
@@ -8,21 +8,8 @@ export default defineConfig({
   test: {
     browser: {
       enabled: true,
-      provider: webdriverio(),
-      instances: [
-        {
-          browser: 'firefox',
-          // overriding options only for a single instance
-          // this will NOT merge options with the parent one
-          provider: webdriverio({
-            capabilities: {
-              'moz:firefoxOptions': {
-                args: ['--headless'],
-              },
-            },
-          })
-        },
-      ],
+       provider: playwright(),
+      instances: [{ browser: 'chromium', headless: true}],
     },
   },
   server: {
