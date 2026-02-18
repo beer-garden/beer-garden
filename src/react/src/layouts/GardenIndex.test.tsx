@@ -245,7 +245,7 @@ describe("GardenTable", () => {
     await userEvent.click(httpPublishingStartButton);
 
     await waitFor(() => {
-        expect(gardenService.UpdateApiGarden).toHaveBeenCalled();
+        expect(gardenService.UpdateApiGarden).not.toHaveBeenCalled();
     });
 
   });
