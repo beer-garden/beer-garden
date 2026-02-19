@@ -9,15 +9,17 @@ import { useEffect, useRef, useState } from "react";
 
 import { Instance, System } from "../../models/brewtils-types";
 import { ScratchPadValue } from "../../models/models";
-import { GetSystemList } from "../../services/system_service";
+import { GetSystem } from "../../services/system_service";
 
 function SystemViewCard({
   padItem,
   updatePadItem,
+  reloadScratchPad,
   listeners,
 }: {
   padItem: ScratchPadValue;
   updatePadItem: (padItem: ScratchPadValue) => void;
+  reloadScratchPad: () => void;
   listeners: Record<string, any>;
 }) {
   const systemId = useRef<string | null | undefined>(null);
@@ -127,6 +129,27 @@ function SystemViewCard({
         updateScratchPadValues();
       }
     }
+    if (message.payload_type === "Instance") {
+      if (
+        system &&
+        systemId.current && 
+        message.payload.id
+      ) {
+        if (system.instances) {
+          const inst_index = system.instances.findIndex(i => i.id == message.payload.id)
+          if (inst_index > -1) {
+            // Update on status changes
+            if (system.instances[inst_index].status != message.payload.status) {
+              system.instances[inst_index] = message.payload as Instance;
+              setSystem(system);
+              updateScratchPadValues();
+              // Must call this to force scratchpad to trigger reload
+              reloadScratchPad();
+            }
+          }
+        }
+      }
+    }
   };
 
   if (!systemId.current) {
@@ -137,11 +160,9 @@ function SystemViewCard({
 
   useEffect(() => {
     if (!system && systemId.current) {
-      GetSystemList({ id: systemId.current }, {})
-        .then((data: System[]) => {
-          if (data.length > 0) {
-            setSystem(data[0]);
-          }
+      GetSystem(systemId.current, {})
+        .then((data: System) => {
+          setSystem(data);
           updateScratchPadValues();
 
           if (systemId.current && !(systemId.current in listeners)) {
@@ -153,6 +174,16 @@ function SystemViewCard({
         .catch((error) => {
           console.error("Error fetching system:", error);
         });
+    }
+
+    if (
+      system &&
+      systemId.current &&
+      !(systemId.current in listeners)
+    ) {
+      listeners[systemId.current] = {
+        listener: MonitorSystemId,
+      };
     }
 
     return () => {
