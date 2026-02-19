@@ -25,7 +25,7 @@ export const GetSystem = async (
     console.error("Error fetching System:", error);
     throw error; // Re-throw to be handled by the component/hook
   }
-}
+};
 
 export const GetSystemList = async (
   queryData?: any,

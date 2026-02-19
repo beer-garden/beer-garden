@@ -130,13 +130,11 @@ function SystemViewCard({
       }
     }
     if (message.payload_type === "Instance") {
-      if (
-        system &&
-        systemId.current && 
-        message.payload.id
-      ) {
+      if (system && systemId.current && message.payload.id) {
         if (system.instances) {
-          const inst_index = system.instances.findIndex(i => i.id == message.payload.id)
+          const inst_index = system.instances.findIndex(
+            (i) => i.id == message.payload.id,
+          );
           if (inst_index > -1) {
             // Update on status changes
             if (system.instances[inst_index].status != message.payload.status) {
@@ -176,11 +174,7 @@ function SystemViewCard({
         });
     }
 
-    if (
-      system &&
-      systemId.current &&
-      !(systemId.current in listeners)
-    ) {
+    if (system && systemId.current && !(systemId.current in listeners)) {
       listeners[systemId.current] = {
         listener: MonitorSystemId,
       };
