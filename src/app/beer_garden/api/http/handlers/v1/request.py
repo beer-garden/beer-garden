@@ -928,7 +928,7 @@ class RequestListAPI(AuthorizationHandler):
             filter_params[
                 (
                     f"{query_obj['field_name']}__{query_obj['modifier']}"
-                    if (query_obj["modifier"] and query_obj["modifier"] is not "")
+                    if (query_obj["modifier"] and query_obj["modifier"] != "")
                     else query_obj["field_name"]
                 )
             ] = query_obj["value"]
