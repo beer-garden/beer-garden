@@ -6,7 +6,7 @@ import { Dialog } from "primereact/dialog";
 import { MenuItem } from "primereact/menuitem";
 import { SplitButton } from "primereact/splitbutton";
 import { TreeTable } from "primereact/treetable";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Connection, Garden } from "../models/brewtils-types";
 import { GetConfig } from "../services/config_service";
@@ -19,10 +19,16 @@ import {
   UpdateApiGarden,
 } from "../services/garden_service";
 
-function GardenTable() {
-  const [garden, setGarden] = useState<Garden | null>(null);
+function GardenTable({ listeners }: { listeners: Record<string, any> }) {
+  const gardenRef = useRef<Garden | null>(null);
+  const [rootGarden, setRootGarden] = useState<Garden | null>(null);
   const [gardenNode, setGardenNode] = useState<any>([{}]);
   const [expandedKeys, setExpandedKeys] = useState<any>({});
+
+  function setGarden(garden: Garden | null) {
+    gardenRef.current = garden;
+    setRootGarden(garden ? { ...garden } : null);
+  }
 
   function parseGarden(garden: Garden, is_one_hop: boolean = false): any {
     function findStatus(connections: Array<Connection>, api: string) {
@@ -84,7 +90,7 @@ function GardenTable() {
     return item;
   }
 
-  const getAllKeys = (nodes: any) => {
+  function getAllKeys(nodes: any) {
     let keys = {} as any;
     if (nodes && nodes.length) {
       for (const node of nodes) {
@@ -95,21 +101,88 @@ function GardenTable() {
       }
     }
     return keys;
-  };
+  }
+
+  const MonitorGardenEvents = useCallback(
+    (message: any) => {
+      if (message.name === "GARDEN_REMOVED") {
+        const removeGarden = (
+          gardenId: string,
+          compareGarden: Garden,
+        ): Garden | null => {
+          if (gardenId === compareGarden.id) {
+            return null;
+          } else {
+            compareGarden.children = compareGarden.children
+              .map((child: Garden) => removeGarden(gardenId, child))
+              .filter(
+                (child: Garden | null) => child !== null,
+              ) as Array<Garden>;
+          }
+          return compareGarden;
+        };
+        setGarden(
+          removeGarden(message.payload.id, gardenRef.current as Garden),
+        );
+      } else if (
+        ["GARDEN_CONFIGURED", "GARDEN_UPDATED", "GARDEN_CREATED"].includes(
+          message.name,
+        )
+      ) {
+        const upsertGarden = (
+          updatedGarden: Garden,
+          compareGarden: Garden,
+        ): Garden => {
+          if (updatedGarden.id === compareGarden.id) {
+            compareGarden = {
+              ...compareGarden,
+              receiving_connections: updatedGarden.receiving_connections,
+              publishing_connections: updatedGarden.publishing_connections,
+              metadata: updatedGarden.metadata,
+            };
+          } else {
+            compareGarden.children = compareGarden.children.map(
+              (child: Garden) => upsertGarden(updatedGarden, child),
+            );
+            // New one hop Garden
+            if (
+              !updatedGarden.has_parent &&
+              updatedGarden.connection_type === "Remote" &&
+              compareGarden.connection_type !== "Remote"
+            ) {
+              if (
+                !compareGarden.children.some(
+                  (child: Garden) => child.id === updatedGarden.id,
+                )
+              ) {
+                compareGarden.children.push(updatedGarden);
+              }
+            }
+          }
+          return compareGarden;
+        };
+        setGarden(upsertGarden(message.payload, gardenRef.current as Garden));
+      }
+    },
+    [gardenRef],
+  );
 
   useEffect(() => {
-    if (garden) {
+    if (rootGarden) {
       if (
-        typeof garden.children !== "undefined" &&
-        garden.children !== null &&
-        garden.children.length > 0
+        typeof rootGarden.children !== "undefined" &&
+        rootGarden.children !== null &&
+        rootGarden.children.length > 0
       ) {
         const newGardenNodes = [];
-        for (const child of garden.children) {
+        for (const child of rootGarden.children) {
           newGardenNodes.push(parseGarden(child, true));
         }
         setGardenNode(newGardenNodes);
         setExpandedKeys(getAllKeys(newGardenNodes));
+      } else {
+        setGardenNode([]);
+        setExpandedKeys({});
       }
     } else {
       GetConfig()
@@ -117,6 +190,9 @@ function GardenTable() {
           GetRootGarden(config, {})
             .then((response_garden: Garden) => {
               setGarden(response_garden);
+              listeners["GARDEN_EVENTS"] = {
+                listener: MonitorGardenEvents,
+              };
             })
             .catch((error) => {
               console.error("Error fetching root garden:", error);
@@ -126,7 +202,7 @@ function GardenTable() {
           console.error("Error fetching root garden:", error);
         });
     }
-  }, [garden]);
+  }, [rootGarden, MonitorGardenEvents, listeners]);
 
   const connectionTemplate = (node: any, field: string) => {
     if (node.data[field]) {

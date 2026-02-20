@@ -39,6 +39,7 @@ export const PatchGarden = async (
 ): Promise<any> => {
   try {
     const headers = new Headers();
+    headers.append("Content-Type", "application/json");
     if (headerData) {
       for (const [key, value] of Object.entries(headerData)) {
         headers.append(key, value as string);
@@ -46,7 +47,7 @@ export const PatchGarden = async (
     }
 
     const response = await fetch(
-      `api/v1/gardens/${garden_name ? encodeURIComponent(garden_name) : ""}`,
+      `api/v1/gardens${garden_name ? "/" + encodeURIComponent(garden_name) : ""}`,
       {
         headers: headers,
         body: JSON.stringify(patch),

@@ -116,7 +116,7 @@ function App() {
                 <RequestCreate />
               </Route>
               <Route path="/garden">
-                <GardenIndex />
+                <GardenIndex listeners={listeners} />
               </Route>
               <Route path="/about">
                 <AboutIndex />
