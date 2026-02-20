@@ -1,0 +1,155 @@
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { DataView } from "primereact/dataview";
+import { MenuItem } from "primereact/menuitem";
+import { OrganizationChart } from "primereact/organizationchart";
+import { Panel } from "primereact/panel";
+import { SplitButton } from "primereact/splitbutton";
+import { useEffect, useState } from "react";
+
+import { Connection, Garden } from "../models/brewtils-types";
+import { GetConfig } from "../services/config_service";
+import { GetRootGarden } from "../services/garden_service";
+
+function GardenIndex() {
+  const [garden, setGarden] = useState<Garden | null>(null);
+  const [gardenNode, setGardenNode] = useState<any>([{}]);
+
+  useEffect(() => {
+    const mapNode = (garden: Garden) => {
+      const node = {
+        label: garden.name as string,
+        expanded: true,
+        data: {
+          receivingConnections: garden.receiving_connections,
+          publishingConnections: garden.publishing_connections,
+        },
+        children: [] as Array<any>,
+      };
+
+      if (garden.children) {
+        garden.children.forEach((childGarden: Garden) => {
+          node.children.push(mapNode(childGarden));
+        });
+      }
+      return node;
+    };
+    if (garden) {
+      setGardenNode([mapNode(garden)]);
+    }
+  }, [garden]);
+
+  useEffect(() => {
+    GetConfig()
+      .then((config) => {
+        GetRootGarden(config, {})
+          .then((response_garden: Garden) => {
+            setGarden(response_garden);
+          })
+          .catch((error) => {
+            console.error("Error fetching root garden:", error);
+          });
+      })
+      .catch((error) => {
+        console.error("Error fetching root garden:", error);
+      });
+  }, []);
+
+  const connectionTemplate = (connection: Connection) => {
+    return (
+      <div>
+        {connection.api} {connection.status}
+      </div>
+    );
+  };
+
+  const connectionsListTemplate = (connections: Array<Connection>) => {
+    if (!connections || connections.length === 0) return null;
+
+    const list = connections.map((connection) => {
+      return connectionTemplate(connection);
+    });
+
+    return <div className="grid grid-nogutter">{list}</div>;
+  };
+
+  const gardenTemplate = (node: any) => {
+    const items: MenuItem[] = [];
+
+    items.push({
+      label: "Delete",
+      icon: <FontAwesomeIcon icon="download" />,
+      command: () => {},
+    });
+
+    items.push({
+      label: "Accept Flow",
+      icon: <FontAwesomeIcon icon="download" />,
+      command: () => {},
+    });
+
+    items.push({
+      label: "Block Flow",
+      icon: <FontAwesomeIcon icon="download" />,
+      command: () => {},
+    });
+
+    items.push({
+      label: "Info",
+      icon: <FontAwesomeIcon icon="download" />,
+      command: () => {},
+    });
+
+    items.push({
+      label: "Rescan Plugins",
+      icon: <FontAwesomeIcon icon="download" />,
+      command: () => {},
+    });
+
+    items.push({
+      label: "Rescan Downstream",
+      icon: <FontAwesomeIcon icon="download" />,
+      command: () => {},
+    });
+
+    items.push({
+      label: "Clear Plugin Queues",
+      icon: <FontAwesomeIcon icon="download" />,
+      command: () => {},
+    });
+
+    return (
+      <div className="flex flex-column align-items-center">
+        <label>{node.label}</label>
+        <SplitButton
+          label="Sync"
+          icon="pi pi-plus"
+          onClick={() => {}}
+          model={items ? items : []}
+        />
+        {node?.data?.receivingConnections.length > 0 && (
+          <Panel header="Receiving">
+            <DataView
+              value={node.data.receivingConnections}
+              listTemplate={connectionsListTemplate}
+            />
+          </Panel>
+        )}
+        {node?.data?.publishingConnections.length > 0 && (
+          <Panel header="Publishing">
+            <DataView
+              value={node.data.publishingConnections}
+              listTemplate={connectionsListTemplate}
+            />
+          </Panel>
+        )}
+      </div>
+    );
+  };
+  return (
+    <div>
+      <OrganizationChart value={gardenNode} nodeTemplate={gardenTemplate} />
+    </div>
+  );
+}
+
+export default GardenIndex;
