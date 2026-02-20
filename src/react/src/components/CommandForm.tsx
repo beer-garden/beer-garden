@@ -34,74 +34,80 @@ function CommandForm({
     isInvalid: boolean;
   }
 
-  // const command = commandFormProps.command;
   disabled = disabled === undefined ? true : disabled;
-  // const request = commandFormProps.request;
 
-  const prepareDefaultValues = Array<InputParam>();
+  const buildDefaults = (mapRequest = true): Array<InputParam> => {
+    const prepareDefaultValues = Array<InputParam>();
 
-  if (command !== null) {
-    for (const param of command.parameters || []) {
-      const newParam = { ...param } as InputParam;
-      if (
-        request &&
-        request.parameters &&
-        param.key &&
-        param.key in request.parameters
-      ) {
-        newParam.value = request.parameters[param.key];
-      } else {
-        newParam.value = param.default;
-      }
-
-      newParam.isInvalid =
-        newParam.value !== undefined ||
-        param.optional === undefined ||
-        param.optional;
-
-      if (
-        (newParam.value === undefined || newParam.value === null) &&
-        param.multi
-      ) {
-        newParam.value = [null];
-      } else if (param.multi && !Array.isArray(newParam.value)) {
-        newParam.value = [newParam.value];
-      }
-
-      if (param.type === "Dictionary") {
-        if (param.multi) {
-          newParam.value = (newParam.value as Array<any>).map((value) => {
-            return JSON.stringify(value);
-          });
+    if (command !== null) {
+      for (const param of command.parameters || []) {
+        const newParam = { ...param } as InputParam;
+        if (
+          mapRequest &&
+          request &&
+          request.parameters &&
+          param.key &&
+          param.key in request.parameters
+        ) {
+          newParam.value = request.parameters[param.key];
         } else {
-          newParam.value = JSON.stringify(newParam.value);
+          newParam.value = param.default;
         }
-      }
 
-      if (param.type === "DateTime") {
-        if (param.multi) {
-          newParam.value = (newParam.value as Array<any>).map((value) => {
-            return new Date(value);
-          });
-        } else {
-          newParam.value = new Date(newParam.value);
+        newParam.isInvalid =
+          newParam.value !== undefined ||
+          param.optional === undefined ||
+          param.optional;
+
+        if (
+          (newParam.value === undefined || newParam.value === null) &&
+          param.multi
+        ) {
+          newParam.value = [null];
+        } else if (param.multi && !Array.isArray(newParam.value)) {
+          newParam.value = [newParam.value];
         }
-      }
 
-      if (param.type === "Date") {
-        if (param.multi) {
-          newParam.value = (newParam.value as Array<any>).map((value) => {
-            return new Date(value);
-          });
-        } else {
-          newParam.value = new Date(newParam.value);
+        if (param.type === "Dictionary") {
+          if (param.multi) {
+            newParam.value = (newParam.value as Array<any>).map((value) => {
+              return JSON.stringify(value);
+            });
+          } else {
+            newParam.value = JSON.stringify(newParam.value);
+          }
         }
-      }
 
-      prepareDefaultValues.push(newParam);
+        if (param.type === "DateTime") {
+          if (param.multi) {
+            newParam.value = (newParam.value as Array<any>).map((value) => {
+              return new Date(value);
+            });
+          } else {
+            newParam.value = new Date(newParam.value);
+          }
+        }
+
+        if (param.type === "Date") {
+          if (param.multi) {
+            newParam.value = (newParam.value as Array<any>).map((value) => {
+              return new Date(value);
+            });
+          } else {
+            newParam.value = new Date(newParam.value);
+          }
+        }
+
+        prepareDefaultValues.push(newParam);
+      }
     }
-  }
-  const [parametersFields, setParameterFields] = useState(prepareDefaultValues);
+    return prepareDefaultValues;
+  };
+  const [parametersFields, setParameterFields] = useState(buildDefaults());
+
+  const resetRequest = () => {
+    setParameterFields(buildDefaults(false));
+  };
 
   useEffect(() => {
     let updated = false;
@@ -722,15 +728,24 @@ function CommandForm({
   };
 
   return (
-    <DataTable
-      value={parametersFields}
-      showHeaders={false}
-      tableStyle={{ minWidth: "60rem" }}
-    >
-      <Column header="Field" body={renderInputLabel}></Column>
-      <Column header="Value" body={renderInputField}></Column>
-      <Column header="Description" field="description"></Column>
-    </DataTable>
+    <div>
+      <DataTable
+        value={parametersFields}
+        showHeaders={false}
+        tableStyle={{ minWidth: "60rem" }}
+      >
+        <Column header="Field" body={renderInputLabel}></Column>
+        <Column header="Value" body={renderInputField}></Column>
+        <Column header="Description" field="description"></Column>
+      </DataTable>
+      <Button
+        label="Reset Form"
+        severity="warning"
+        icon="pi pi-arrow-right"
+        iconPos="right"
+        onClick={resetRequest}
+      />
+    </div>
   );
 }
 
