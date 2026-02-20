@@ -46,6 +46,11 @@ function RequestCreate() {
     instance: null,
     command: null,
   });
+  
+  const [showCreateRequest, setShowCreateRequest] = useState<boolean>(
+    (requestId === undefined || requestId === null) &&
+      (jobId === undefined || jobId === null),
+  );
 
   const [visibleCodeExample, setVisibleCodeExample] = useState<boolean>(false);
 
@@ -112,6 +117,7 @@ function RequestCreate() {
             instance: responseRequest?.instance_name ?? null,
             command: responseRequest?.command ?? null,
           });
+          setShowCreateRequest(true);
         })
         .catch((error) => {
           console.error("Error fetching request:", error);
@@ -127,6 +133,7 @@ function RequestCreate() {
             instance: responseJob?.request_template?.instance_name ?? null,
             command: responseJob?.request_template?.command ?? null,
           });
+          setShowCreateRequest(true);
         })
         .catch((error) => {
           console.error("Error fetching job:", error);
@@ -351,21 +358,17 @@ print(request)
             )}
           </div>
           <div className="flex flex-column h-12rem">
-            {requestId === null ||
-              requestId === undefined ||
-              (request !== undefined && (
-                <CommandCreate
-                  request={request}
-                  setRequest={setRequest}
-                  requestCommand={requestCommand}
-                  setRequestCommand={setRequestCommand}
-                />
-              ))}
-            {requestId !== null &&
-              requestId !== undefined &&
-              request === undefined && (
-                <Skeleton width="100%" height="150px"></Skeleton>
-              )}
+            {showCreateRequest && (
+              <CommandCreate
+                request={request}
+                setRequest={setRequest}
+                requestCommand={requestCommand}
+                setRequestCommand={setRequestCommand}
+              />
+            )}
+            {!showCreateRequest && (
+              <Skeleton width="100%" height="150px"></Skeleton>
+            )}
           </div>
         </StepperPanel>
       </Stepper>
