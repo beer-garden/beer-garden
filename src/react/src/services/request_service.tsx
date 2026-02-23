@@ -23,7 +23,11 @@ export const GetRequestList = async (
       for (const [key, value] of Object.entries(headerData)) {
         if (Array.isArray(value)) {
           for (const item of value) {
-            searchParams.append(key, item as string);
+            if (typeof(item) == "object" && item !== null) {
+              searchParams.append(key, JSON.stringify(item) as string);
+            } else {
+              searchParams.append(key, item as string);
+            }
           }
         } else {
           searchParams.append(key, value as string);

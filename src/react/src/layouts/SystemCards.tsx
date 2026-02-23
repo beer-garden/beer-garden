@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Badge } from "primereact/badge";
 import { Button } from "primereact/button";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import { Dialog } from "primereact/dialog";
 import { DataView } from "primereact/dataview";
 import { Menu } from "primereact/menu";
 import { Panel } from "primereact/panel";
@@ -11,15 +12,17 @@ import { Toast } from "primereact/toast";
 import { classNames } from "primereact/utils";
 import { useEffect, useRef, useState } from "react";
 
-import { Instance, System } from "../models/brewtils-types";
+import { Instance, Queue, Request, System } from "../models/brewtils-types";
+import { GetRequestList } from "../services/request_service";
 import { StartInstance, StopInstance } from "../services/instance_service";
-import { ClearAllQueues } from "../services/queue_service";
+import { ClearQueue, ClearAllQueues, GetInstanceQueues } from "../services/queue_service";
 import {
   DeleteSystem,
   GetSystemList,
   ReloadSystem,
   Rescan,
 } from "../services/system_service";
+import { Message } from "primereact/message";
 
 function SystemCards() {
   const [systems, setSystems] = useState<Array<System>>([]);
@@ -289,7 +292,292 @@ function SystemCards() {
       instance: Instance,
       index: number,
     ) => {
+      const instanceConfigMenu = useRef<Menu>(null);
+      const [logsVisible, setLogsVisible] = useState(false)
+      const [queueVisible, setQueueVisible] = useState(false)
+      const [queues, setQueues] = useState<Array<Queue>>([])
+      const [cancelDeleteVisible, setCancelDeleteVisible] = useState(false)
+
       const statusSeverity = getSeverity(instance?.status);
+
+      const all_count = useRef<number>(0);
+      const success_count = useRef<number>(0);
+      const cancelled_count = useRef<number>(0);
+      const error_count = useRef<number>(0);
+      const created_count = useRef<number>(0);
+      const received_count = useRef<number>(0);
+      const in_progress_count = useRef<number>(0);
+
+
+      function showLogs(system: System, instance: Instance){
+        setLogsVisible(true);
+          // $uibModal.open({
+          //   template: readLogs,
+          //   resolve: {
+          //     system: system,
+          //     instance: instance,
+          //   },
+          //   controller: 'AdminSystemLogsController',
+          //   windowClass: 'app-modal-window',
+          // });
+      }
+
+      function manageQueue(system: System, instance: Instance){
+        GetInstanceQueues(instance.id)
+          .then((data: Array<Queue>) => {
+            setQueues(data);
+            setQueueVisible(true);
+          })
+          .catch((error) => {
+            console.error("Error fetching queues:", error);
+          });
+      }
+
+      function clearQueue(queueName: string) {
+        const accept = () => {
+          void ClearQueue(queueName);
+        }
+
+        const reject = () => {}
+
+        const confirm = () => {
+          confirmDialog({
+            message: "Are you sure you want to clear the Queue?",
+            header: "Confirm",
+            icon: <FontAwesomeIcon icon="exclamation" />,
+            defaultFocus: "accept",
+            accept,
+            reject,
+          });
+        };
+    
+        confirm();
+      }
+
+      function buildFilter(status: string) {
+        return {
+          "include_children": true,
+          "length": 1,
+          "columns": [
+            {
+              "data": "namespace__exact",
+              "name": "",
+              "searchable": true,
+              "orderable": true,
+              "search": {
+                "value": system.namespace,
+                "regex": false
+              }
+            },
+            {
+              "data": "system__exact",
+              "name": "",
+              "searchable": true,
+              "orderable": true,
+              "search": {
+                "value": system.name,
+                "regex": false
+              }
+            },
+            {
+              "data": "system_version__exact",
+              "name": "",
+              "searchable": true,
+              "orderable": true,
+              "search": {
+                "value": system.version,
+                "regex": false
+              }
+            },
+            {
+              "data": "instance_name__exact",
+              "name": "",
+              "searchable": true,
+              "orderable": true,
+              "search": {
+                "value": instance.name,
+                "regex": false
+              }
+            },
+            {
+              "data": "status",
+              "name": "",
+              "searchable": true,
+              "orderable": true,
+              "search": {
+                "value": ((status == "ALL") ? "" : status),
+                "regex": false
+              }
+            },
+          ]
+        };
+      }
+
+      function loadRequests() {
+        GetRequestList(buildFilter("SUCCESS")).then(
+          (data: [Array<Request>, Headers]) => {
+            let headers = data[1]
+            success_count.current = parseInt(headers.get('recordsFiltered') ?? "0");
+            all_count.current += success_count.current;
+          },
+          (response) => {
+            let msg = 'Uh oh! It looks like there was a problem counting the SUCCESS Requests.\n';
+            if (response.data !== undefined && response.data !== null) {
+              msg += response.data;
+            }
+            console.log(msg);
+            // $scope.alerts.push({
+            //   type: 'danger',
+            //   msg: msg,
+            // });
+          }
+        );
+    
+        GetRequestList(buildFilter("CANCELED")).then(
+          (data: [Array<Request>, Headers]) => {
+            let headers = data[1]
+            cancelled_count.current = parseInt(headers.get('recordsFiltered') ?? "0");
+            all_count.current += cancelled_count.current;
+          },
+          (response) => {
+            let msg = 'Uh oh! It looks like there was a problem counting the CANCELED Requests.\n';
+            if (response.data !== undefined && response.data !== null) {
+              msg += response.data;
+            }
+            console.log(msg);
+            // $scope.alerts.push({
+            //   type: 'danger',
+            //   msg: msg,
+            // });
+          }
+        );
+
+        GetRequestList(buildFilter("ERROR")).then(
+          (data: [Array<Request>, Headers]) => {
+            let headers = data[1]
+            error_count.current = parseInt(headers.get('recordsFiltered') ?? "0");
+            all_count.current += error_count.current;
+          },
+          (response) => {
+            let msg = 'Uh oh! It looks like there was a problem counting the ERROR Requests.\n';
+            if (response.data !== undefined && response.data !== null) {
+              msg += response.data;
+            }
+            console.log(msg);
+            // $scope.alerts.push({
+            //   type: 'danger',
+            //   msg: msg,
+            // });
+          }
+        );
+
+        GetRequestList(buildFilter("CREATED")).then(
+          (data: [Array<Request>, Headers]) => {
+            let headers = data[1]
+            created_count.current = parseInt(headers.get('recordsFiltered') ?? "0");
+            all_count.current += created_count.current;
+          },
+          (response) => {
+            let msg = 'Uh oh! It looks like there was a problem counting the CREATED Requests.\n';
+            if (response.data !== undefined && response.data !== null) {
+              msg += response.data;
+            }
+            console.log(msg);
+            // $scope.alerts.push({
+            //   type: 'danger',
+            //   msg: msg,
+            // });
+          }
+        );
+
+        GetRequestList(buildFilter("RECEIVED")).then(
+          (data: [Array<Request>, Headers]) => {
+            let headers = data[1]
+            received_count.current = parseInt(headers.get('recordsFiltered') ?? "0");
+            all_count.current += received_count.current;
+          },
+          (response) => {
+            let msg = 'Uh oh! It looks like there was a problem counting the RECEIVED Requests.\n';
+            if (response.data !== undefined && response.data !== null) {
+              msg += response.data;
+            }
+            console.log(msg);
+            // $scope.alerts.push({
+            //   type: 'danger',
+            //   msg: msg,
+            // });
+          }
+        );
+    
+        GetRequestList(buildFilter("IN_PROGRESS")).then(
+          (data: [Array<Request>, Headers]) => {
+            let headers = data[1]
+            in_progress_count.current = parseInt(headers.get('recordsFiltered') ?? "0");
+            all_count.current += in_progress_count.current;
+          },
+          (response) => {
+            let msg = 'Uh oh! It looks like there was a problem counting the IN PROGRESS Requests.\n';
+            if (response.data !== undefined && response.data !== null) {
+              msg += response.data;
+            }
+            console.log(msg);
+            // $scope.alerts.push({
+            //   type: 'danger',
+            //   msg: msg,
+            // });
+          }
+        );
+    
+      };
+
+      function cancelDeleteRequests(system: System, instance: Instance){
+        loadRequests();
+        setCancelDeleteVisible(true);
+      }
+
+      
+      function deleteRequests(status: string, is_cancel: boolean=false) {
+        let deleteParams = {
+          "namespace": system.namespace,
+          "system": system.name,
+          "system_version": system.version,
+          "instance_name": instance.name
+        };
+    
+        if (is_cancel){
+          deleteParams["is_cancel"] = true
+        }
+    
+        if (status != "ALL") {
+          deleteParams["status"] = status;
+        }
+    
+        // DeleteRequests(deleteParams)
+        //   .then(addSuccessAlert, addDeleteErrorAlert)
+        //   .catch((error) => {
+        //     console.error("Error fetching queues:", error);
+        //   });
+      }
+
+      const instanceMenuItems = [
+        {
+          label: "Show Logs",
+          command: () => showLogs(system, instance),
+        },
+        {
+          label: "Manage Queue",
+          command: () => manageQueue(system, instance),
+        },
+        {
+          label: "Cancel/Delete Requests",
+          command: () => cancelDeleteRequests(system, instance),
+        },
+      ];
+
+      const filename = system.name + '[' + system.version +
+      ']-' + instance.name +
+      '.log';
+
       return (
         <div className="col-12" key={instance.id}>
           <div
@@ -319,12 +607,180 @@ function SystemCards() {
                 >
                   <FontAwesomeIcon icon="stop" />
                 </Button>
-                <Button
-                  className="mr-2"
-                  title={`Admin Tools for ${instance.name}`}
-                >
-                  <FontAwesomeIcon icon="bars" />
-                </Button>
+                <>
+                  <Menu
+                    model={instanceMenuItems}
+                    popup
+                    ref={instanceConfigMenu}
+                    id="instance_menu"
+                  />
+                  <Dialog header={`Log File: ${system.name}[${system.version}]-${instance.name}`} footer={<Button onClick={() => setLogsVisible(false)}>Close Logs</Button>} visible={logsVisible} style={{ width: '50vw' }} onHide={() => {if (!logsVisible) return; setLogsVisible(false); }}>
+                    <Message text="Plugin must be listening to the Admin Queue and logging to File for logs to be returned. This will only return information from the log file being actively written to." />
+                    <div>
+                      <form>
+                        <input type="submit" name="start" value="Get Tail Logs" onClick={() => getLogsTail()} />
+                        <input type="submit" name="stop" value="Stop Tail Logs" onClick={() => stopLogsTail()} />
+                        <label htmlFor="tail_line_start">Tail Lines</label> 
+                        <input
+                          type="number"
+                          id="tail_line_start"
+                          min="0"
+                          name="tail_line_start"
+                          // ng-model="tail_line_start"
+                        />
+                      </form>
+                    </div>
+                    <div>
+                      <a href={`api/v1/instances/${instance.id}/logs/?logs_only=true`} download={filename}
+                        ><button>Get Full Logs</button></a
+                      >
+                    </div>
+                  </Dialog>
+                  <Dialog header={`Queue Manager: ${system.name}[${system.version}]-${instance.name}`} footer={<Button onClick={() => setQueueVisible(false)}>Close</Button>} visible={queueVisible} style={{ width: '50vw' }} onHide={() => {if (!queueVisible) return; setQueueVisible(false); }}>
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Name</th>
+                          <th scope="col">Message Size</th>
+                          <th scope="col"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {queues.map((queue, index) => (
+                          <tr key={index}>
+                            <td>{queue.name}</td>
+                            <td>{queue.size}</td>
+                            <td>
+                              <ConfirmDialog message="Are you sure you want to clear the Queue?" />
+                              <Button
+                                onClick={() => clearQueue(queue.name)}
+                              >
+                                Clear Queue
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </Dialog>
+                  <Dialog header={`Cancel/Delete Requests: ${system.name}[${system.version}]-${instance.name}`} footer={<Button onClick={() => setCancelDeleteVisible(false)}>Close</Button>} visible={cancelDeleteVisible} style={{ width: '50vw' }} onHide={() => {if (!cancelDeleteVisible) return; setCancelDeleteVisible(false); }}>
+                  <div>
+                    Currently {all_count.current} Requests present in the database
+                  </div>
+                  <br />
+                  <table
+                    id="requestDeleteCancelTable"
+                    // dt-options="dtOptions"
+                    // dt-columns="dtColumns"
+                    // className="table table-striped table-bordered w-100"
+                    >
+                    <tbody>
+                    <tr>
+                      <th>Status</th>
+                      <th>Count</th>
+                      <th>Action</th>
+                    </tr>
+                    <tr>
+                      <td>SUCCESS</td>
+                      <td>{success_count.current}</td>
+                      <td>
+                        <Button onClick={() => deleteRequests('SUCCESS')}>
+                          {/* confirm="Are you sure you want to delete Requests with status SUCCESS?"> */}
+                          Delete SUCCESS
+                        </Button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>CANCELED</td>
+                      <td>{cancelled_count.current}</td>
+                      <td>
+                        <Button onClick={() => deleteRequests('CANCELED')}>
+                          {/* confirm="Are you sure you want to delete Requests with status CANCELED?" */}
+                          Delete CANCELED
+                        </Button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>ERROR</td>
+                      <td>
+                        {error_count.current}
+                      </td>
+                      <td>
+                        <Button onClick={() => deleteRequests('ERROR')}>
+                          {/* confirm="Are you sure you want to delete Requests with status ERROR?" */}
+                          Delete ERROR
+                        </Button>
+                      </td> 
+                    </tr>
+                    <tr>
+                      <td>IN PROGRESS</td>
+                      <td>{in_progress_count.current}</td>
+                      <td>
+                        <Button onClick={() => deleteRequests('IN PROGRESS', is_cancel=true)}>
+                          {/* confirm="Are you sure you want to cancel Requests with status IN PROGRESS? There may be a plugin already running the request." */}
+                          Cancel IN PROGRESS
+                        </Button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>RECEIVED</td>
+                      <td>
+                        {received_count.current}
+                      </td>
+                      <td>
+                        <Button onClick={() => deleteRequests('RECEIVED', is_cancel=true)}>
+                          {/* confirm="Are you sure you want to cancel Requests with status RECEIVED?"> */}
+                          Cancel RECEIVED
+                        </Button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>CREATED</td>
+                      <td>
+                        {created_count.current}
+                      </td>
+                      <td>
+                        <Button onClick={() => deleteRequests('CREATED', is_cancel=true)}>
+                          {/* confirm="Are you sure you want to cancel Requests with status CREATED? Recommend clearing topics as well."> */}
+                          Cancel CREATED
+                        </Button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Non-Completed (CREATED/RECEIVED/IN PROGRESS)</td>
+                      <td>
+                      {in_progress_count.current + received_count.current + created_count.current}
+                      </td>
+                      <td>
+                        <Button onClick={() => deleteRequests('ALL', is_cancel=true)}>
+                          {/* confirm="Are you sure you want to cancel all non-completed Requests?"> */}
+                          Cancel Non-Completed
+                        </Button>
+                      </td>     
+                    </tr>
+                    <tr>
+                      <td>ALL</td>
+                      <td>
+                        {all_count.current}
+                      </td>
+                      <td>
+                        <Button onClick={() => deleteRequests('ALL')}>
+                          {/* confirm="Are you sure you want to delete all the Requests?"> */}
+                          Delete All
+                        </Button>
+                      </td>
+                    </tr>
+                    </tbody>
+                  </table>
+                  </Dialog>
+                  <Button
+                    className="mr-2"
+                    title={`Admin Tools for ${instance.name}`}
+                    onClick={(e) => instanceConfigMenu?.current?.toggle(e)}
+                  >
+                    <FontAwesomeIcon icon="bars" />
+                  </Button>
+                </>
               </div>
             </div>
           </div>
