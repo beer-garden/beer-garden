@@ -46,7 +46,7 @@ function RequestCreate() {
     instance: null,
     command: null,
   });
-  
+
   const [showCreateRequest, setShowCreateRequest] = useState<boolean>(
     (requestId === undefined || requestId === null) &&
       (jobId === undefined || jobId === null),
