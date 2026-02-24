@@ -198,6 +198,48 @@ function CommandForm({
     return <label htmlFor={parameter.key}>{parameter.key}</label>;
   };
 
+  const generateChoices = (parameter: InputParam) => {
+    if (
+      parameter.choices &&
+      parameter.choices.type === "static" &&
+      Array.isArray(parameter.choices.value)
+    ) {
+      return parameter.choices.value.map((choice) => ({
+        label: choice,
+        value: choice,
+      }));
+
+    }
+
+    if (
+      parameter.choices &&
+      parameter.choices.type === "url" &&
+      (typeof parameter.choices.value === "string" || parameter.choices.value instanceof String)
+    ) {
+      // get URL and return as choices
+      return [];
+    }
+
+    if (
+      parameter.choices &&
+      parameter.choices.type === "command" &&
+      (typeof parameter.choices.value === "string" || parameter.choices.value instanceof String)
+    ) {
+      // parse command and return as choices
+      return [];
+    }
+
+    if (
+      parameter.choices &&
+      parameter.choices.type === "command" &&
+      (typeof parameter.choices.value === "object" && parameter.choices.value !== null)
+    ) {
+      // parse command and return as choices
+      return [];
+    }
+
+  }
+
   const renderInputField = (parameter: InputParam) => {
     if (!parameter.key) return null;
 
@@ -209,6 +251,7 @@ function CommandForm({
       parameter.value = [parameter.value];
     }
 
+    // Choices = command, static, url
     if (
       parameter.choices &&
       parameter.choices.type === "static" &&
