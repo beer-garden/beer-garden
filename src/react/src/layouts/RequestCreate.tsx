@@ -314,6 +314,7 @@ print(request)
                   }}
                   style={{ width: "50vw" }}
                 >
+                  <div>Bytes and Base64 parameters are not supported in code examples.</div>
                   {CodeBlock("Python")}
 
                   {CodeBlock("cURL")}
