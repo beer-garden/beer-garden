@@ -53,6 +53,7 @@ function ScratchPad({
         <SystemViewCard
           padItem={value}
           updatePadItem={updatePadValue}
+          removePadItem={removePadItem}
           reloadScratchPad={reloadScratchPad}
           listeners={listeners}
         />

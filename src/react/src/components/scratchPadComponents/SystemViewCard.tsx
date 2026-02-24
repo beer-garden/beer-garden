@@ -14,11 +14,13 @@ import { GetSystem } from "../../services/system_service";
 function SystemViewCard({
   padItem,
   updatePadItem,
+  removePadItem,
   reloadScratchPad,
   listeners,
 }: {
   padItem: ScratchPadValue;
   updatePadItem: (padItem: ScratchPadValue) => void;
+  removePadItem: (padItem: ScratchPadValue) => void;
   reloadScratchPad: () => void;
   listeners: Record<string, any>;
 }) {
@@ -125,8 +127,12 @@ function SystemViewCard({
         message.payload.id &&
         message.payload.id === systemId.current
       ) {
-        setSystem(message.payload as System);
-        updateScratchPadValues();
+        if (message.name === "SYSTEM_REMOVED") {
+          removePadItem(padItem);
+        } else {
+          setSystem(message.payload as System);
+          updateScratchPadValues();
+        }
       }
     }
     if (message.payload_type === "Instance") {
