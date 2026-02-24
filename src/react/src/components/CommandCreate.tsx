@@ -57,7 +57,6 @@ function CommandCreate({
                     system.commands.forEach((command) => {
                       if (command.name === requestCommand?.command) {
                         setCommand(command);
-                        setShowCommand(true);
                         return;
                       }
                     });
@@ -90,6 +89,7 @@ function CommandCreate({
         }
       }
       setRequest(updatedRequest);
+      setShowCommand(true);
       if (callback) {
         callback();
       }
@@ -97,6 +97,7 @@ function CommandCreate({
 
     // Target Command Changed, need to update
     if (
+      command !== null &&
       requestCommand?.namespace &&
       requestCommand?.systemName &&
       requestCommand?.version &&
@@ -108,8 +109,16 @@ function CommandCreate({
         requestCommand.instance !== request?.instance_name ||
         requestCommand.command !== request?.command)
     ) {
-      migrateRequest();
-      findCommand();
+      // These all have to be different loops to allow for React to Render changes
+      if (showCommand) {
+        // Selected Command changed via dropdown and new command needs to be found
+        setCommand(null);
+        setShowCommand(false);
+      } else {
+        // New Command found and need to migrate old request to new command 
+        migrateRequest();
+      }
+
       if (callback) {
         callback();
       }
@@ -119,7 +128,7 @@ function CommandCreate({
     else if (
       systems &&
       systems.length > 0 &&
-      !command &&
+      command === null &&
       requestCommand?.namespace &&
       requestCommand?.systemName &&
       requestCommand?.version &&
@@ -147,7 +156,7 @@ function CommandCreate({
           setValidCommand={() => {}}
         />
       )}
-      {showCommand && request && (
+      {showCommand && (
         <div>
           <CommandForm
             command={command}

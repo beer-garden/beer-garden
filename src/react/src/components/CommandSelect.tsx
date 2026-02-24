@@ -258,6 +258,7 @@ function CommandSelect({
         value={selectedNamespace}
         onChange={(e) => setSelectedNamespace(e.value)}
         options={namespaces}
+        filter
         optionLabel="Namespace"
         placeholder="Select Namespace"
       />
@@ -265,6 +266,7 @@ function CommandSelect({
         value={selectedSystemName}
         onChange={(e) => setSelectedSystemName(e.value)}
         options={systemNames}
+        filter
         optionLabel="System"
         placeholder="Select System"
       />
@@ -272,6 +274,7 @@ function CommandSelect({
         value={selectedVersion}
         onChange={(e) => setSelectedVersion(e.value)}
         options={versions}
+        filter
         optionLabel="Version"
         placeholder="Select Version"
       />
@@ -279,6 +282,7 @@ function CommandSelect({
         value={selectedInstance}
         onChange={(e) => setSelectedInstance(e.value)}
         options={instances}
+        filter
         optionLabel="Instance"
         placeholder="Select Instance"
       />
@@ -286,6 +290,7 @@ function CommandSelect({
         value={selectedCommand}
         onChange={(e) => setSelectedCommand(e.value)}
         options={commands}
+        filter
         optionLabel="Command"
         placeholder="Select Command"
       />
