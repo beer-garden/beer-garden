@@ -212,18 +212,18 @@ curl -X POST ${getHostName()}:${getPort()}${getPrefix()}/api/v1/requests?blockin
 from brewtils import SystemClient
 
 request = SystemClient(
-  system_name='${request?.system}',
-	system_namespace='${request?.namespace}',
-	version_constraint='${request?.system_version}',
-	default_instance='${request?.instance_name}',
-	bg_host='${getHostName()}',
-	bg_url_prefix='${getPrefix()}',
-	bg_port=${getPort()},
-	blocking=True,
-	ssl_enabled=${getSslEnabled()},
-	ca_cert=None,
-	ca_verify=None
-	client_cert=None).command(${generateParams()})
+  system_name = '${request?.system}',
+	system_namespace = '${request?.namespace}',
+	version_constraint = '${request?.system_version}',
+	default_instance = '${request?.instance_name}',
+	bg_host = '${getHostName()}',
+	bg_url_prefix = '${getPrefix()}',
+	bg_port = ${getPort()},
+	blocking = True,
+	ssl_enabled = ${getSslEnabled()},
+	ca_cert = None,
+	ca_verify = None,
+	client_cert = None).${request?.command ? request?.command : "command"}(${generateParams()})
 
 print(request)
 `;
