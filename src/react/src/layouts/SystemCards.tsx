@@ -31,7 +31,6 @@ function SystemCards() {
   useEffect(() => {
     GetSystemList()
       .then((data: Array<System>) => {
-        console.log(data);
         setSystems(data);
       })
       .catch((error) => {
@@ -261,6 +260,7 @@ function SystemCards() {
                   <Badge
                     value={count}
                     severity={statusSeverity}
+                    key={status}
                     title={status}
                   />
                 );
@@ -874,7 +874,7 @@ function SystemCards() {
             if (count && count > 0) {
               const statusSeverity = getSeverity(status);
               return (
-                <Badge value={count} severity={statusSeverity} title={status} />
+                <Badge value={count} severity={statusSeverity} key={status} title={status} />
               );
             }
             return null;
@@ -949,6 +949,7 @@ function SystemCards() {
             toggleable
             // collapsed
             title={group}
+            key={group}
             className="m-2"
             style={{ width: "100%" }}
           >
