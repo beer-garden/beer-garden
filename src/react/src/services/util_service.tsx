@@ -1,3 +1,5 @@
+import { Version } from "../models/models";
+
 export const CompareObjects = (obj1: any, obj2: any) => {
   if (obj1 === obj2) return true; // Check if they are the same reference
 
@@ -24,4 +26,20 @@ export const CompareObjects = (obj1: any, obj2: any) => {
   }
 
   return true;
+};
+
+export const GetVersion = async (): Promise<Version> => {
+  try {
+    const response = await fetch(`/version`);
+    if (!response.ok) {
+      // Handle non-OK responses (e.g., 404, 500)
+      throw new Error(`HTTP error: Status ${response.status}`);
+    }
+    const data = (await response.json()) as Version;
+    return data;
+  } catch (error) {
+    // Handle network errors or the error thrown above
+    console.error("Error fetching Version:", error);
+    throw error; // Re-throw to be handled by the component/hook
+  }
 };

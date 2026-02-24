@@ -45,13 +45,13 @@ function RequestOutput(request: Request) {
     ["CREATED", "RECEIVED", "IN_PROGRESS"].includes(request.status)
   ) {
     return (
-      <div>
+      <div id="request-output-skeleton">
         <Skeleton width="100%" height="200px" borderRadius="16px" />
       </div>
     );
   }
 
-  return <div>{displautOutput(request)}</div>;
+  return <div id="request-output">{displautOutput(request)}</div>;
 }
 
 export default RequestOutput;
