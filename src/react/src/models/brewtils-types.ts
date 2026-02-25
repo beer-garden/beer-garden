@@ -20,9 +20,24 @@ export interface AliasUserMap {
 export interface Choices {
   type?: string;
   display?: string;
-  value?: any;
+  value?: any[] | ChoicesValue | string;
   strict?: boolean;
-  details?: object;
+  details?: Details;
+}
+
+export interface ChoicesValue {
+  system?: string;
+  system_version?: string;
+  instance_name?: string;
+  namespace?: string;
+  command?: string;
+}
+
+export interface Details {
+  name?: string;
+  args?: Array<Array<string>>;
+  address?: string;
+  key_reference?: string;
 }
 
 export interface Command {
