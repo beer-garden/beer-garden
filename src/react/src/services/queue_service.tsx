@@ -18,11 +18,10 @@ export const ClearAllQueues = async (gardenName?: string): Promise<void> => {
   }
 };
 
-
 export const ClearQueue = async (queueName: string): Promise<void> => {
   const headers = new Headers();
   headers.append("Content-Type", "application/json");
-  const response = await fetch('api/v1/queues/' + queueName, {
+  const response = await fetch("api/v1/queues/" + queueName, {
     headers: headers,
     method: "DELETE",
   });
@@ -32,13 +31,15 @@ export const ClearQueue = async (queueName: string): Promise<void> => {
   }
 };
 
-export const GetInstanceQueues = async (instanceId: string | undefined): Promise<Queue[]> => {
+export const GetInstanceQueues = async (
+  instanceId: string | undefined,
+): Promise<Queue[]> => {
   if (!instanceId) {
     return [] as Queue[];
   }
   const headers = new Headers();
   headers.append("Content-Type", "application/json");
-  const response = await fetch('api/v1/instances/' + instanceId + '/queues', {
+  const response = await fetch("api/v1/instances/" + instanceId + "/queues", {
     headers: headers,
     method: "GET",
   });
