@@ -24,19 +24,42 @@ import {
 } from "../services/system_service";
 import { Message } from "primereact/message";
 
-function SystemCards() {
+function SystemCards({listeners}:{listeners: Record<string, any>}) {
   const [systems, setSystems] = useState<Array<System>>([]);
-  const [updated, setUpdated] = useState<boolean>(false);
+
+  const MonitorSystemEvents = (message: any) => {
+      if (message.name == "SYSTEM_REMOVED") {
+        setSystems(prevSystems => {
+          return prevSystems.filter((s) => s.id != message.payload.id);
+        })
+      }
+      if (message.name == "INSTANCE_STARTED" || message.name == "INSTANCE_STOPPED" || message.name == "INSTANCE_UPDATED" || message.name == "INSTANCE_INITIALIZED") {
+        setSystems(prevSystems => {
+          const newSystems = prevSystems.map(system => {
+            system.instances?.map(instance => {
+              if (instance.id == message.payload.id) {
+                instance.status = message.payload.status
+              }
+            })
+            return {...system}
+          });
+          return newSystems;
+        })
+      }
+    }
 
   useEffect(() => {
     GetSystemList()
       .then((data: Array<System>) => {
         setSystems(data);
+        listeners["SYSTEM_EVENTS"] = {
+          listener: MonitorSystemEvents,
+        };
       })
       .catch((error) => {
         console.error("Error fetching systems:", error);
       });
-  }, [updated]);
+  }, []);
 
   const getSeverity = (
     status?: string,
@@ -123,9 +146,7 @@ function SystemCards() {
     function startSystem(system: System) {
       system.instances?.forEach((instance) => {
         StartInstance(instance, system)
-          .then(() => {
-            setUpdated(!updated);
-          })
+          .then(() => {})
           .catch((error) => {
             console.error("Error starting system:", error);
           });
@@ -135,9 +156,7 @@ function SystemCards() {
     function stopSystem(system: System) {
       system.instances?.forEach((instance) => {
         StopInstance(instance, system)
-          .then(() => {
-            setUpdated(!updated);
-          })
+          .then(() => {})
           .catch((error) => {
             console.error("Error stopping system:", error);
           });
@@ -146,9 +165,7 @@ function SystemCards() {
 
     function reloadSystem(system: System) {
       ReloadSystem(system)
-        .then(() => {
-          setUpdated(!updated);
-        })
+        .then(() => {})
         .catch((error) => {
           console.error("Error reloading system:", error);
         });
@@ -164,7 +181,6 @@ function SystemCards() {
       const accept = () => {
         DeleteSystem(system)
           .then(() => {
-            setUpdated(!updated);
             toast.current?.show({
               severity: "info",
               summary: "Confirmation",
@@ -198,9 +214,7 @@ function SystemCards() {
 
     function handleStartInstance(instance: Instance, system: System) {
       StartInstance(instance, system)
-        .then(() => {
-          setUpdated(!updated);
-        })
+        .then(() => {})
         .catch((error) => {
           console.error("Error starting instance:", error);
         });
@@ -208,9 +222,7 @@ function SystemCards() {
 
     function handleStopInstance(instance: Instance, system: System) {
       StopInstance(instance, system)
-        .then(() => {
-          setUpdated(!updated);
-        })
+        .then(() => {})
         .catch((error) => {
           console.error("Error deleting stopping instance:", error);
         });
@@ -311,15 +323,6 @@ function SystemCards() {
 
       function showLogs(system: System, instance: Instance){
         setLogsVisible(true);
-          // $uibModal.open({
-          //   template: readLogs,
-          //   resolve: {
-          //     system: system,
-          //     instance: instance,
-          //   },
-          //   controller: 'AdminSystemLogsController',
-          //   windowClass: 'app-modal-window',
-          // });
       }
 
       function manageQueue(system: System, instance: Instance){
@@ -833,6 +836,7 @@ function SystemCards() {
       </div>
     );
   };
+
   const systemGroup = new Map<string, System[]>();
 
   const groupField = "namespace";
@@ -918,7 +922,6 @@ function SystemCards() {
   const handleRescan = () => {
     Rescan()
       .then(() => {
-        setUpdated(!updated);
         toast.current?.show({
           severity: "info",
           summary: "Confirmation",

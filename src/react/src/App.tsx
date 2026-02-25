@@ -86,13 +86,13 @@ function App() {
             <Switch>
               <Route path="/systems">
                 {/* <SystemIndex /> */}
-                <SystemCards />
+                <SystemCards listeners={listeners} />
               </Route>
               <Route path="/systemtable">
                 <SystemTable />
               </Route>
               <Route path="/systemcard">
-                <SystemCards />
+                <SystemCards listeners={listeners} />
               </Route>
               <Route path="/request/:requestId">
                 <RequestView listeners={listeners} />
@@ -123,7 +123,7 @@ function App() {
               </Route>
 
               <Route path="/">
-                <SystemCards />
+                <SystemCards listeners={listeners} />
               </Route>
             </Switch>
           </BrowserRouter>
