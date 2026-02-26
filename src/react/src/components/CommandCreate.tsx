@@ -41,7 +41,7 @@ function CommandCreate({
   }, []);
 
   useEffect(() => {
-    function findCommand() {
+    const findCommand = () => {
       setShowCommand(false);
       if (systems && systems.length > 0) {
         systems.forEach((system) => {
@@ -67,7 +67,7 @@ function CommandCreate({
           }
         });
       }
-    }
+    };
 
     const migrateRequest = () => {
       const updatedRequest: Request = {
@@ -142,7 +142,17 @@ function CommandCreate({
         callback();
       }
     }
-  }, [systems, requestCommand, request, command]);
+  }, [
+    systems,
+    requestCommand,
+    request,
+    command,
+    showCommand,
+    setRequest,
+    setShowCommand,
+    setCommand,
+    callback,
+  ]);
 
   return (
     <div>
