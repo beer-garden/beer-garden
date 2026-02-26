@@ -107,10 +107,11 @@ function CommandForm({
   };
   const [parametersFields, setParameterFields] = useState(buildDefaults());
 
-  const [resetForm, setResetForm] = useState(0);
+  const [resetForm, setResetForm] = useState(false);
 
   const resetRequest = () => {
-    setResetForm(resetForm + 1);
+    // Doesn't matter the value, just invert it to trigger the useEffect
+    setResetForm(!resetForm);
     setParameterFields(buildDefaults(false));
   };
 
