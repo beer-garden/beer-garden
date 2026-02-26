@@ -346,7 +346,23 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
 
       function clearQueue(queueName: string) {
         const accept = () => {
-          void ClearQueue(queueName);
+          ClearQueue(queueName)
+            .then(() => {
+              //QUEUE_CLEARED events do not have name to indicate the queue
+              // Set to 0 on success code
+              setQueues(prevQueues => {
+                const newQueues = prevQueues.map((queue) => {
+                  if (queue.name == queueName) {
+                    queue.size = 0;
+                  }
+                  return { ...queue };
+                });
+                return newQueues;
+              })
+            })
+            .catch((error) => {
+              console.error("Error starting system:", error);
+            });
         };
 
         const reject = () => {};
@@ -717,7 +733,7 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
                             <td>{queue.size}</td>
                             <td>
                               <ConfirmDialog message="Are you sure you want to clear the Queue?" />
-                              <Button onClick={() => clearQueue(queue.name)}>
+                              <Button onClick={() => clearQueue(queue.name)} disabled={true ? queue.size < 1 : false}>
                                 Clear Queue
                               </Button>
                             </td>
