@@ -10,7 +10,6 @@ import { InputNumber } from "primereact/inputnumber";
 import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
 import { MultiSelect } from "primereact/multiselect";
-import { Skeleton } from "primereact/skeleton";
 import { TriStateCheckbox } from "primereact/tristatecheckbox";
 import { classNames } from "primereact/utils";
 import { useEffect, useState } from "react";
@@ -346,8 +345,8 @@ function CommandForm({
               !updatedKeys.includes(parameter.key) &&
               (shouldUpdate || parameter.options === undefined)
             ) {
-              generateChoices(parameter, parametersFields).then(
-                (options: any) => {
+              generateChoices(parameter, parametersFields)
+                .then((options: any) => {
                   const updatedParameterFields = parametersFields.map((p) => {
                     if (p.key === parameter.key) {
                       p.options = options;
@@ -358,8 +357,13 @@ function CommandForm({
                   setLoadingChoices(
                     loadingChoices.filter((key) => key !== parameter.key),
                   );
-                },
-              );
+                })
+                .catch((error) => {
+                  console.error("Error generating choices:", error);
+                  setLoadingChoices(
+                    loadingChoices.filter((key) => key !== parameter.key),
+                  );
+                });
             }
           }
         }
@@ -450,7 +454,8 @@ function CommandForm({
               disabled={
                 disabled ||
                 parameter.options === undefined ||
-                parameter.options.length === 0
+                parameter.options.length === 0 ||
+                loadingChoices.includes(parameter.key)
               }
             />
           </div>
@@ -468,7 +473,8 @@ function CommandForm({
             disabled={
               disabled ||
               parameter.options === undefined ||
-              parameter.options.length === 0
+              parameter.options.length === 0 ||
+              loadingChoices.includes(parameter.key)
             }
           />
         </div>
@@ -496,7 +502,7 @@ function CommandForm({
             completeMethod={searchItems}
             invalid={(!disabled && parameter.optional) || undefined}
             onChange={(e) => handleChange(e.target.id, e.target.value)}
-            disabled={disabled}
+            disabled={disabled || loadingChoices.includes(parameter.key)}
             multiple={parameter.multi}
             dropdown
           />
@@ -982,6 +988,8 @@ function CommandForm({
     }
   };
 
+  // Need to find a better way to handle states of dynamic options loading instead of
+  // checking if loading choices has items and rendering two tables
   return (
     <div>
       {loadingChoices.length === 0 && (
@@ -995,8 +1003,17 @@ function CommandForm({
           <Column header="Description" field="description"></Column>
         </DataTable>
       )}
+
       {loadingChoices.length > 0 && (
-        <Skeleton width="100%" height="150px"></Skeleton>
+        <DataTable
+          value={parametersFields}
+          showHeaders={false}
+          tableStyle={{ minWidth: "60rem" }}
+        >
+          <Column header="Field" body={renderInputLabel}></Column>
+          <Column header="Value" body={renderInputField}></Column>
+          <Column header="Description" field="description"></Column>
+        </DataTable>
       )}
       <Button
         label="Reset Form"
