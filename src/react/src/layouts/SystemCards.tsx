@@ -10,9 +10,10 @@ import { classNames } from "primereact/utils";
 import { useEffect, useRef, useState } from "react";
 
 import { Instance, System } from "../models/brewtils-types";
+import { PushToScratchPad } from "../services/scratchpad_service";
 import { GetSystemList } from "../services/system_service";
 
-function SystemCards() {
+function SystemCards({ setReloadScratchPad }: { setReloadScratchPad: any }) {
   const [systems, setSystems] = useState<Array<System>>([]);
 
   useEffect(() => {
@@ -173,6 +174,16 @@ function SystemCards() {
       }
     });
 
+    const PushToPad = (system: System) => {
+      if (system) {
+        PushToScratchPad("SYSTEM_VIEW", {
+          systemId: system.id,
+          system: system,
+        });
+        setReloadScratchPad(new Date());
+      }
+    };
+
     const headerTemplate = (options: any) => {
       const className = `${options.className} justify-content-space-between`;
 
@@ -182,6 +193,15 @@ function SystemCards() {
             <label className="max-w-10rem">
               {system.name}/ {system.version}
             </label>
+            <Button
+              rounded
+              raised
+              link
+              onClick={() => PushToPad(system)}
+              tooltip={"Push to Pad " + system.name}
+            >
+              <FontAwesomeIcon icon="arrow-right-from-bracket" />{" "}
+            </Button>
 
             {Array.from(statusCounts, ([status, count]) => {
               if (count && count > 0) {

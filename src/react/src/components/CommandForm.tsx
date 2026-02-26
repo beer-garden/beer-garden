@@ -4,17 +4,19 @@ import { Checkbox } from "primereact/checkbox";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Dropdown } from "primereact/dropdown";
-import { FileUpload } from "primereact/fileupload";
+import { FileUpload, FileUploadFile } from "primereact/fileupload";
 import { InputNumber } from "primereact/inputnumber";
 import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
 import { MultiSelect } from "primereact/multiselect";
+import { ProgressBar } from "primereact/progressbar";
 import { TriStateCheckbox } from "primereact/tristatecheckbox";
 import { classNames } from "primereact/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Command, Parameter } from "../models/brewtils-types"; // Assuming this is the correct path
 import { Request } from "../models/brewtils-types";
+import { uploadFile } from "../services/file_service";
 
 interface CommandFormProps {
   command: Command | null;
@@ -34,74 +36,84 @@ function CommandForm({
     isInvalid: boolean;
   }
 
-  // const command = commandFormProps.command;
   disabled = disabled === undefined ? true : disabled;
-  // const request = commandFormProps.request;
 
-  const prepareDefaultValues = Array<InputParam>();
+  const buildDefaults = (mapRequest = true): Array<InputParam> => {
+    const prepareDefaultValues = Array<InputParam>();
 
-  if (command !== null) {
-    for (const param of command.parameters || []) {
-      const newParam = { ...param } as InputParam;
-      if (
-        request &&
-        request.parameters &&
-        param.key &&
-        param.key in request.parameters
-      ) {
-        newParam.value = request.parameters[param.key];
-      } else {
-        newParam.value = param.default;
-      }
-
-      newParam.isInvalid =
-        newParam.value !== undefined ||
-        param.optional === undefined ||
-        param.optional;
-
-      if (
-        (newParam.value === undefined || newParam.value === null) &&
-        param.multi
-      ) {
-        newParam.value = [null];
-      } else if (param.multi && !Array.isArray(newParam.value)) {
-        newParam.value = [newParam.value];
-      }
-
-      if (param.type === "Dictionary") {
-        if (param.multi) {
-          newParam.value = (newParam.value as Array<any>).map((value) => {
-            return JSON.stringify(value);
-          });
+    if (command !== null) {
+      for (const param of command.parameters || []) {
+        const newParam = { ...param } as InputParam;
+        if (
+          mapRequest &&
+          request &&
+          request.parameters &&
+          param.key &&
+          param.key in request.parameters
+        ) {
+          newParam.value = request.parameters[param.key];
         } else {
-          newParam.value = JSON.stringify(newParam.value);
+          newParam.value = param.default;
         }
-      }
 
-      if (param.type === "DateTime") {
-        if (param.multi) {
-          newParam.value = (newParam.value as Array<any>).map((value) => {
-            return new Date(value);
-          });
-        } else {
-          newParam.value = new Date(newParam.value);
+        newParam.isInvalid =
+          newParam.value !== undefined ||
+          param.optional === undefined ||
+          param.optional;
+
+        if (
+          (newParam.value === undefined || newParam.value === null) &&
+          param.multi
+        ) {
+          newParam.value = [null];
+        } else if (param.multi && !Array.isArray(newParam.value)) {
+          newParam.value = [newParam.value];
         }
-      }
 
-      if (param.type === "Date") {
-        if (param.multi) {
-          newParam.value = (newParam.value as Array<any>).map((value) => {
-            return new Date(value);
-          });
-        } else {
-          newParam.value = new Date(newParam.value);
+        if (param.type === "Dictionary") {
+          if (param.multi) {
+            newParam.value = (newParam.value as Array<any>).map((value) => {
+              return JSON.stringify(value);
+            });
+          } else {
+            newParam.value = JSON.stringify(newParam.value);
+          }
         }
-      }
 
-      prepareDefaultValues.push(newParam);
+        if (param.type === "DateTime") {
+          if (param.multi) {
+            newParam.value = (newParam.value as Array<any>).map((value) => {
+              return new Date(value);
+            });
+          } else {
+            newParam.value = new Date(newParam.value);
+          }
+        }
+
+        if (param.type === "Date") {
+          if (param.multi) {
+            newParam.value = (newParam.value as Array<any>).map((value) => {
+              return new Date(value);
+            });
+          } else {
+            newParam.value = new Date(newParam.value);
+          }
+        }
+
+        prepareDefaultValues.push(newParam);
+      }
     }
-  }
-  const [parametersFields, setParameterFields] = useState(prepareDefaultValues);
+    return prepareDefaultValues;
+  };
+  const [parametersFields, setParameterFields] = useState(buildDefaults());
+
+  const [resetForm, setResetForm] = useState(false);
+
+  const resetRequest = () => {
+    // Doesn't matter the value, just invert it to trigger the useEffect
+    setResetForm(!resetForm);
+    setParameterFields(buildDefaults(false));
+  };
 
   useEffect(() => {
     let updated = false;
@@ -666,71 +678,111 @@ function CommandForm({
             />
           </div>
         );
-      case "Bytes":
-        const customBytesUploader = async (event: any) => {
-          // convert file to bytes encoded
+      case "Bytes": {
+        const customBytesUploader = (event: any) => {
           const file = event.files[0];
-          const reader = new FileReader();
-          const blob = await fetch(file.objectURL).then((r) => r.blob()); //blob:url
-
-          reader.readAsDataURL(blob);
-
-          reader.onloadend = function () {
-            const base64data = reader.result;
-            // Run Upload
-          };
+          handleChange(parameter.key, file as FileUploadFile);
         };
+        const bytesUploadRef = useRef<FileUpload>(null);
+
+        useEffect(() => {
+          if (bytesUploadRef && bytesUploadRef.current) {
+            bytesUploadRef.current.clear();
+          }
+        }, [resetForm]);
         return (
           <div key={parameter.key} className="p-field">
             <FileUpload
+              ref={bytesUploadRef}
               id={parameter.key}
               mode="basic"
               customUpload
-              uploadHandler={customBytesUploader}
+              onSelect={customBytesUploader}
               disabled={disabled}
             />
           </div>
         );
-      case "Base64":
+      }
+      case "Base64": {
+        const [uploadPercentage, setUploadPercentage] = useState(0);
+        const fileUploadRef = useRef<FileUpload>(null);
+
         const customBase64Uploader = async (event: any) => {
-          // convert file to base64 encoded
+          if (fileUploadRef && fileUploadRef.current) {
+            fileUploadRef.current.setUploadedFiles([]);
+          }
           const file = event.files[0];
-          const reader = new FileReader();
-          const blob = await fetch(file.objectURL).then((r) => r.blob()); //blob:url
 
-          reader.readAsDataURL(blob);
+          const fileUploadResult = await uploadFile(file, setUploadPercentage);
 
-          reader.onloadend = function () {
-            const base64data = reader.result;
-            // Run Upload
-          };
+          handleChange(parameter.key, fileUploadResult);
+          if (fileUploadRef && fileUploadRef.current) {
+            fileUploadRef.current.clear();
+            fileUploadRef.current.setUploadedFiles([file]);
+          }
+          setUploadPercentage(100);
         };
+
+        const removeFile = () => {
+          handleChange(parameter.key, null);
+          setUploadPercentage(0);
+          if (fileUploadRef && fileUploadRef.current) {
+            fileUploadRef.current.clear();
+          }
+        };
+
+        useEffect(() => {
+          setUploadPercentage(0);
+          if (fileUploadRef && fileUploadRef.current) {
+            fileUploadRef.current.clear();
+          }
+        }, [resetForm]);
+
         return (
           <div key={parameter.key} className="p-field">
             <FileUpload
+              ref={fileUploadRef}
               id={parameter.key}
-              mode="basic"
+              // mode="basic"
               customUpload
+              auto
               uploadHandler={customBase64Uploader}
+              onRemove={removeFile}
               disabled={disabled}
+              progressBarTemplate={
+                <ProgressBar
+                  value={uploadPercentage}
+                  displayValueTemplate={() => `${uploadPercentage}%`}
+                />
+              }
             />
           </div>
         );
+      }
       default:
         return null;
     }
   };
 
   return (
-    <DataTable
-      value={parametersFields}
-      showHeaders={false}
-      tableStyle={{ minWidth: "60rem" }}
-    >
-      <Column header="Field" body={renderInputLabel}></Column>
-      <Column header="Value" body={renderInputField}></Column>
-      <Column header="Description" field="description"></Column>
-    </DataTable>
+    <div>
+      <DataTable
+        value={parametersFields}
+        showHeaders={false}
+        tableStyle={{ minWidth: "60rem" }}
+      >
+        <Column header="Field" body={renderInputLabel}></Column>
+        <Column header="Value" body={renderInputField}></Column>
+        <Column header="Description" field="description"></Column>
+      </DataTable>
+      <Button
+        label="Reset Form"
+        severity="warning"
+        icon="pi pi-arrow-right"
+        iconPos="right"
+        onClick={resetRequest}
+      />
+    </div>
   );
 }
 
