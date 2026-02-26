@@ -1,3 +1,5 @@
+import { compare } from "compare-versions";
+
 import { Garden, System } from "../models/brewtils-types";
 
 export const GetSystem = async (
@@ -100,4 +102,34 @@ export const ExtractSystemsFromGardens = (
   });
 
   return systems;
+};
+
+export const DetermineLatestSystemVersion = (
+  systems: System[],
+  systemName: string | null,
+  systemNameSpace: string | null,
+  systemVersion: string | null,
+): System => {
+  return systems
+    .filter((system) => {
+      return (
+        (system.namespace === systemNameSpace || systemNameSpace === null) &&
+        (system.name === systemName || systemName === null) &&
+        (system.version === systemVersion ||
+          systemVersion === null ||
+          systemVersion === "latest")
+      );
+    })
+    .reduce((latestSystem, currentSystem) => {
+      if (currentSystem.version && latestSystem.version) {
+        return compare(
+          currentSystem.version.replace(".dev", "-dev"),
+          latestSystem.version.replace(".dev", "-dev"),
+          ">",
+        )
+          ? currentSystem
+          : latestSystem;
+      }
+      return latestSystem;
+    });
 };

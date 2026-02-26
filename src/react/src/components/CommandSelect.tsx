@@ -2,6 +2,7 @@ import { Dropdown } from "primereact/dropdown";
 import { useEffect, useState } from "react";
 
 import { Command, Instance, System } from "../models/brewtils-types";
+import { DetermineLatestSystemVersion } from "../services/system_service";
 import { CompareObjects } from "../services/util_service";
 
 interface RequestCommand {
@@ -71,7 +72,16 @@ function CommandSelect({
               systemVersionList.push(system.version as string);
             }
 
-            if (system.version === selectedVersion) {
+            if (
+              system.version === selectedVersion ||
+              (selectedVersion?.toLowerCase() === "latest" &&
+                DetermineLatestSystemVersion(
+                  systems,
+                  selectedSystemName,
+                  selectedNamespace,
+                  selectedVersion,
+                ).version === system.version)
+            ) {
               if (system.instances) {
                 system.instances.forEach((instance: Instance) => {
                   if (instance.name && !instanceList.includes(instance.name)) {
@@ -102,7 +112,11 @@ function CommandSelect({
     }
 
     if (!CompareObjects(versions, systemVersionList)) {
-      setVersions(systemVersionList);
+      if (systemVersionList.includes("latest")) {
+        setVersions(systemVersionList);
+      } else {
+        setVersions([...systemVersionList, "latest"]);
+      }
     }
 
     if (!CompareObjects(instances, instanceList)) {
@@ -137,13 +151,16 @@ function CommandSelect({
     }
 
     if (
-      systemVersionList.length === 1 &&
-      selectedVersion !== systemVersionList[0]
+      selectedVersion !== "latest" &&
+      selectedVersion !== null &&
+      !systemVersionList.includes(selectedVersion) &&
+      ((systemVersionList.length === 2 && systemVersionList[1] === "latest") ||
+        systemVersionList.length === 1)
     ) {
       setSelectedVersion(systemVersionList[0]);
     } else if (
-      systemVersionList.length > 0 &&
       selectedVersion !== null &&
+      selectedVersion !== "latest" &&
       !systemVersionList.includes(selectedVersion)
     ) {
       setSelectedVersion(null);

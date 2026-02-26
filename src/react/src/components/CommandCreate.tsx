@@ -6,7 +6,10 @@ import CommandForm from "../components/CommandForm";
 import CommandSelect from "../components/CommandSelect";
 import { Command, Request, System } from "../models/brewtils-types";
 import { RequestCommand } from "../models/models";
-import { GetSystemList } from "../services/system_service";
+import {
+  DetermineLatestSystemVersion,
+  GetSystemList,
+} from "../services/system_service";
 
 function CommandCreate({
   request,
@@ -44,28 +47,27 @@ function CommandCreate({
     const findCommand = () => {
       setShowCommand(false);
       if (systems && systems.length > 0) {
-        systems.forEach((system) => {
-          if (
-            system.namespace === requestCommand?.namespace &&
-            system.name === requestCommand?.systemName &&
-            system.version === requestCommand?.version
-          ) {
-            if (system.instances) {
-              system.instances.forEach((instance) => {
-                if (instance.name === requestCommand?.instance) {
-                  if (system.commands) {
-                    system.commands.forEach((command) => {
-                      if (command.name === requestCommand?.command) {
-                        setCommand(command);
-                        return;
-                      }
-                    });
+        const latestSystem = DetermineLatestSystemVersion(
+          systems,
+          requestCommand?.systemName,
+          requestCommand?.namespace,
+          requestCommand?.version,
+        );
+
+        if (latestSystem && latestSystem.instances) {
+          latestSystem.instances.forEach((instance) => {
+            if (instance.name === requestCommand?.instance) {
+              if (latestSystem.commands) {
+                latestSystem.commands.forEach((command) => {
+                  if (command.name === requestCommand?.command) {
+                    setCommand(command);
+                    return;
                   }
-                }
-              });
+                });
+              }
             }
-          }
-        });
+          });
+        }
       }
     };
 
@@ -115,7 +117,7 @@ function CommandCreate({
         setCommand(null);
         setShowCommand(false);
       } else {
-        // New Command found and need to migrate old request to new command 
+        // New Command found and need to migrate old request to new command
         migrateRequest();
       }
 
@@ -137,6 +139,9 @@ function CommandCreate({
     ) {
       findCommand();
     } else {
+      if (command !== null && !showCommand) {
+        setShowCommand(true);
+      }
       // Event from Request or Command
       if (callback) {
         callback();
