@@ -174,6 +174,16 @@ function RequestViewCard({
       requestId.current = padItem?.values?.requestId
         ? padItem.values.requestId
         : null;
+
+      if (
+        request &&
+        request.status &&
+        ["CREATED", "IN_PROGRESS"].includes(request.status)
+      ) {
+        // First load, force a refresh of data to ensure latest is rendered in case the completed
+        // event has already been received before the listener was registered
+        setRequest(null);
+      }
     }
 
     if (!request && requestId.current) {

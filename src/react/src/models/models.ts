@@ -31,3 +31,11 @@ export interface ScratchPadValue {
   padType: string | null;
   values: any;
 }
+
+export interface RequestCommand {
+  namespace: string | null;
+  systemName: string | null;
+  version: string | null;
+  instance: string | null;
+  command: string | null;
+}
