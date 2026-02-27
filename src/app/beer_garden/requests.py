@@ -575,16 +575,6 @@ class RequestValidator(object):
             )
 
 
-def get_request_children(request):
-
-    request.children = db.query(Request, filter_params={"parent": request})
-
-    if request.children:
-        for child in request.children:
-            child = get_request_children(child)
-    return request
-
-
 def get_request(request_id: str = None, request: Request = None) -> Request:
     """Retrieve an individual Request
 
@@ -597,8 +587,7 @@ def get_request(request_id: str = None, request: Request = None) -> Request:
 
     """
     request = request or db.query_unique(Request, id=request_id, raise_missing=True)
-    get_request_children(request)
-    # request.children = db.query(Request, filter_params={"parent": request})
+    request.children = db.query(Request, filter_params={"parent": request})
 
     return request
 
