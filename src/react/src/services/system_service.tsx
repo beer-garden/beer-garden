@@ -1,4 +1,4 @@
-import { compare } from "compare-versions";
+import { compare, validate } from "compare-versions";
 
 import { Garden, System } from "../models/brewtils-types";
 
@@ -122,11 +122,34 @@ export const DetermineLatestSystemVersion = (
     })
     .reduce((latestSystem, currentSystem) => {
       if (currentSystem.version && latestSystem.version) {
-        return compare(
-          currentSystem.version.replace(".dev", "-dev"),
-          latestSystem.version.replace(".dev", "-dev"),
-          ">",
-        )
+        const currentValid = validate(currentSystem.version)
+          ? currentSystem.version
+          : validate(currentSystem.version.replace(".dev", "-dev"))
+            ? currentSystem.version.replace(".dev", "-dev")
+            : null;
+        const latestValid = validate(latestSystem.version)
+          ? latestSystem.version
+          : validate(latestSystem.version.replace(".dev", "-dev"))
+            ? latestSystem.version.replace(".dev", "-dev")
+            : null;
+
+        if (currentValid === null && latestValid === null) {
+          if (currentSystem.version.localeCompare(latestSystem.version) > 0) {
+            return currentSystem;
+          } else {
+            return latestSystem;
+          }
+        }
+
+        if (currentValid === null) {
+          return latestSystem;
+        }
+
+        if (latestValid === null) {
+          return currentSystem;
+        }
+
+        return compare(currentValid, latestValid, ">")
           ? currentSystem
           : latestSystem;
       }

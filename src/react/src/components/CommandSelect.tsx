@@ -1,5 +1,7 @@
+import { validate as validateVersion } from "compare-versions";
 import { Dropdown } from "primereact/dropdown";
 import { useEffect, useState } from "react";
+import { validate } from "uuid";
 
 import { Command, Instance, System } from "../models/brewtils-types";
 import { DetermineLatestSystemVersion } from "../services/system_service";
@@ -115,7 +117,15 @@ function CommandSelect({
       if (systemVersionList.includes("latest")) {
         setVersions(systemVersionList);
       } else {
-        setVersions([...systemVersionList, "latest"]);
+        if (
+          systemVersionList.some(
+            (version) =>
+              validateVersion(version) ||
+              validateVersion(version.replace(".dev", "-dev")),
+          )
+        ) {
+          setVersions([...systemVersionList, "latest"]);
+        }
       }
     }
 
