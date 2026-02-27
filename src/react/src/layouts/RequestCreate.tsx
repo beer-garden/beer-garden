@@ -20,7 +20,11 @@ function RequestCreate() {
   const { requestId } = useParams<{ requestId: string }>();
   const { jobId } = useParams<{ jobId: string }>();
   const { defaultType } = useParams<{ defaultType: string }>();
-
+  const { paramNamespace } = useParams<{ paramNamespace: string }>();
+  const { paramSystem } = useParams<{ paramSystem: string }>();
+  const { paramVersion } = useParams<{ paramVersion: string }>();
+  const { paramInstance } = useParams<{ paramInstance: string }>();
+  const { paramCommand } = useParams<{ paramCommand: string }>();
   const stepperRef = useRef<null | any>(null);
 
   const scheduleHeader = "Schedule";
@@ -40,11 +44,11 @@ function RequestCreate() {
 
   // Create Request Panel
   const [requestCommand, setRequestCommand] = useState<RequestCommand>({
-    namespace: null,
-    systemName: null,
-    version: null,
-    instance: null,
-    command: null,
+    namespace: paramNamespace ?? null,
+    systemName: paramSystem ?? null,
+    version: paramVersion ?? null,
+    instance: paramInstance ?? null,
+    command: paramCommand ?? null,
   });
 
   const [showCreateRequest, setShowCreateRequest] = useState<boolean>(
@@ -314,7 +318,10 @@ print(request)
                   }}
                   style={{ width: "50vw" }}
                 >
-                  <div>Bytes and Base64 parameters are not supported in code examples.</div>
+                  <div>
+                    Bytes and Base64 parameters are not supported in code
+                    examples.
+                  </div>
                   {CodeBlock("Python")}
 
                   {CodeBlock("cURL")}

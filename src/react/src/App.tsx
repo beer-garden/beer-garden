@@ -103,7 +103,7 @@ function App() {
                   setReloadScratchPad={setReloadScratchPadTrigger}
                 />
               </Route>
-              <Route path="/create/:defaultType">
+              <Route path="/create/:defaultType/:paramNamespace?/:paramSystem?/:paramVersion?/:paramInstance?/:paramCommand?">
                 <RequestCreate />
               </Route>
               <Route path="/recreate/:requestId">
