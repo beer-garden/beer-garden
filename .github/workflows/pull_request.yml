@@ -80,6 +80,9 @@ jobs:
           default-value: "develop"
           tag-position: -1
 
+      - name: Install Setup Tools
+        run: python -m pip install --upgrade pip setuptools
+
       # Used the hashtag here instead of slash allow for branches to have slashes in them
       - name: Update Brewtils Branch
         run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements-dev.txt
