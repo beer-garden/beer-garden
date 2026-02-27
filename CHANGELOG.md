@@ -3,7 +3,7 @@
 # 
 TBD
 
-- Fixed CSS issue with Raw Output limiting the height of output
+- Fixed CSS issue with Raw Output limiting the height of output (#2064)
 
 # 3.31.1
 
