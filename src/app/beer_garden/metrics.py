@@ -215,6 +215,9 @@ def extract_custom_context(result) -> None:
 
     if elasticapm.get_trace_parent_header():
 
+        if hasattr(result, "metadata") and result.metadata:
+            elasticapm.label(**result.metadata)
+
         if isinstance(result, Operation):
             return extract_custom_context(result.model)
         if isinstance(result, Event):
@@ -223,26 +226,9 @@ def extract_custom_context(result) -> None:
 
             if hasattr(result, "payload"):
                 return extract_custom_context(result.payload)
-        elif isinstance(result, Request):
-            if result.metadata:
-                elasticapm.label(**result.metadata)
-
-            # Helpful for trending sizes, but can be expensive to calculate
-            if logger.level == logging.DEBUG:
-                elasticapm.label(request_size=_calculate_size(result))
-                if hasattr(result, "parameters"):
-                    elasticapm.label(
-                        request_parameter_size=_calculate_size(result.parameters)
-                    )
-                if hasattr(result, "output"):
-                    elasticapm.label(request_output_size=_calculate_size(result.output))
 
         if hasattr(result, "id") and result.id:
             elasticapm.label(mongo_id=result.id)
-
-        # Helpful for trending sizes, but can be expensive to calculate
-        if logger.level == logging.DEBUG:
-            elasticapm.label(result_size=_calculate_size(result))
 
         elasticapm.label(result_type=str(type(result)))
 

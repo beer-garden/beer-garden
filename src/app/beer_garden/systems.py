@@ -27,7 +27,7 @@ import beer_garden.db.api as db
 import beer_garden.local_plugins.manager as lpm
 import beer_garden.queue.api as queue
 from beer_garden.errors import NotFoundException, NotUniqueException
-from beer_garden.events import publish_event
+from beer_garden.events import publish, publish_event
 from beer_garden.plugin import publish_stop
 
 REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
@@ -497,6 +497,34 @@ def remove_instance(
     db.modify(system, pull__instances=instance)
 
     return instance
+
+
+def check_dead_runners() -> None:
+    runners = lpm.runners()
+    for runner in runners:
+        if runner.dead:
+            system = db.query_unique(
+                System,
+                instances__match={
+                    "metadata__runner_id": runner.id,
+                    "status__ne": "ERROR",
+                },
+            )
+            if system:
+                system = db.modify(
+                    system,
+                    query={"instances__metadata__runner_id": runner.id},
+                    **{
+                        "set__instances__S__status": "ERROR",
+                    },
+                )
+                publish(
+                    Event(
+                        name=Events.SYSTEM_UPDATED.name,
+                        payload=system,
+                        payload_type="System",
+                    )
+                )
 
 
 def handle_event(event: Event) -> None:

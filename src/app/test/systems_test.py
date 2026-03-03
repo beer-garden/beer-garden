@@ -7,7 +7,12 @@ from brewtils.models import System as BrewtilsSystem
 
 from beer_garden import config
 from beer_garden.db.mongo.models import Garden, System, Topic
-from beer_garden.systems import create_system, get_systems, update_system
+from beer_garden.systems import (
+    create_system,
+    determine_latest,
+    get_systems,
+    update_system,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -93,6 +98,28 @@ def system5():
         BrewtilsSystem(
             name="default",
             version="v0.0.1",
+            namespace="beer_garden",
+            garden_name="default",
+            local=True,
+            commands=[BrewtilsCommand(name="default")],
+            instances=[
+                BrewtilsInstance(
+                    name="instance1",
+                    status="STOPPED",
+                )
+            ],
+        )
+    )
+
+    System.drop_collection()
+
+
+@pytest.fixture
+def system6():
+    yield create_system(
+        BrewtilsSystem(
+            name="default",
+            version="2.0.1rc2-git",
             namespace="beer_garden",
             garden_name="default",
             local=True,
@@ -262,3 +289,22 @@ class TestSystem:
         assert not system_3_found
         assert not system_4_found
         assert system_5_found
+
+    def test_determine_latest(self, system, system2, system3, system4, system5):
+        """Choose latest from multiple versions"""
+        assert (
+            determine_latest([system, system2, system3, system4, system5]).version
+            == system2.version
+        )
+
+    def test_determine_latest_mixed(self, system, system6):
+        """Choose parseable version over invalid version"""
+        assert determine_latest([system, system6]).version == system.version
+
+    def test_determine_latest_legacy(self, system6):
+        """Choose invalid version if no other options"""
+        assert determine_latest([system6]).version == system6.version
+
+    def test_determine_latest_no_systems(self):
+        """Return none if no matching systems"""
+        assert determine_latest([]) is None

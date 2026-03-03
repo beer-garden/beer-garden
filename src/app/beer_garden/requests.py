@@ -6,6 +6,7 @@ The request service is responsible for:
 * Validating requests
 * Request completion notification
 """
+
 import base64
 import datetime
 import gzip
@@ -630,20 +631,23 @@ def determine_latest_system_version(request: Request):
         filter_params=filter_criteria,
     )
 
-    running = []
-    not_running = []
+    if systems:
+        running = []
+        not_running = []
 
-    for system in systems:
-        if system.instances and any(
-            "RUNNING" == instance.status for instance in system.instances
-        ):
-            running.append(system)
-        else:
-            not_running.append(system)
+        for system in systems:
+            if system.instances and any(
+                "RUNNING" == instance.status for instance in system.instances
+            ):
+                running.append(system)
+            else:
+                not_running.append(system)
 
-    eligible_versions = running if running else not_running
+        eligible_versions = running if running else not_running
 
-    request.system_version = determine_latest(eligible_versions).version
+        latest_system_found = determine_latest(eligible_versions)
+        if latest_system_found:
+            request.system_version = latest_system_found.version
 
     return request
 

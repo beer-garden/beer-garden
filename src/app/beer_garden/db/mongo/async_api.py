@@ -26,6 +26,7 @@ def create_connection(db_config: Box = None) -> None:
         username=config.get("connection.username", db_config),
         password=config.get("connection.password", db_config),
         authSource=config.get("connection.authentication_source", db_config),
+        tz_aware=True,
     )
     async_db = async_conn[config.get("name", db_config)]
 

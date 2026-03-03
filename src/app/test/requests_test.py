@@ -1203,6 +1203,13 @@ class TestLatestRequest(object):
 
         assert latest_request.system_version == system_v2.version
 
+    def test_no_system_request(self):
+        latest_request = determine_latest_system_version(
+            Request(system="test", namespace="beer_garden", system_version="latest")
+        )
+
+        assert latest_request.system_version == "latest"
+
     def test_latest_request(self, system_v1, system_v2):
         latest_request = determine_latest_system_version(
             Request(system="original", namespace="beer_garden", system_version="latest")

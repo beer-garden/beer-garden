@@ -54,7 +54,6 @@ from beer_garden.errors import (
     UnknownGardenException,
 )
 from beer_garden.garden import get_garden, get_gardens, update_garden
-from beer_garden.metrics import CollectMetrics
 from beer_garden.requests import complete_request, create_request
 
 logger = logging.getLogger(__name__)
@@ -208,50 +207,50 @@ def route(operation: Operation):
     Returns:
 
     """
-    with CollectMetrics("ROUTER", f"ROUTER::{operation.operation_type}"):
-        logger.debug(f"Routing {operation!r}")
 
-        if not operation.operation_type:
-            raise RoutingRequestException("Missing operation type")
+    logger.debug(f"Routing {operation!r}")
 
-        operation = _pre_route(operation)
+    if not operation.operation_type:
+        raise RoutingRequestException("Missing operation type")
 
-        if operation.operation_type not in route_functions.keys():
-            raise RoutingRequestException(
-                f"Unknown operation type '{operation.operation_type}'"
+    operation = _pre_route(operation)
+
+    if operation.operation_type not in route_functions.keys():
+        raise RoutingRequestException(
+            f"Unknown operation type '{operation.operation_type}'"
+        )
+
+    update_api_heartbeat(operation)
+
+    if invalid_source_check(operation):
+        raise RoutingRequestException(
+            f"Garden '{operation.source_garden_name}' {operation.source_api} is disabled"
+        )
+
+    # Determine which garden the operation is targeting
+    operation.target_garden_name = _determine_target(operation)
+
+    # If it's targeted at THIS garden, execute
+    if operation.target_garden_name == config.get("garden.name"):
+        result = execute_local(operation)
+    else:
+        loop = None
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            pass
+        if loop:
+            result = loop.run_in_executor(
+                t_pool,
+                partial(
+                    initiate_forward,
+                    operation,
+                ),
             )
-
-        update_api_heartbeat(operation)
-
-        if invalid_source_check(operation):
-            raise RoutingRequestException(
-                f"Garden '{operation.source_garden_name}' {operation.source_api} is disabled"
-            )
-
-        # Determine which garden the operation is targeting
-        operation.target_garden_name = _determine_target(operation)
-
-        # If it's targeted at THIS garden, execute
-        if operation.target_garden_name == config.get("garden.name"):
-            result = execute_local(operation)
         else:
-            loop = None
-            try:
-                loop = asyncio.get_event_loop()
-            except RuntimeError:
-                pass
-            if loop:
-                result = loop.run_in_executor(
-                    t_pool,
-                    partial(
-                        initiate_forward,
-                        operation,
-                    ),
-                )
-            else:
-                result = initiate_forward(operation)
+            result = initiate_forward(operation)
 
-        return filter_result(result)
+    return filter_result(result)
 
 
 def filter_result(result: [brewtils.models.BaseModel, list]):
