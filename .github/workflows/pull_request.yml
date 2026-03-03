@@ -91,6 +91,7 @@ jobs:
       # Allows for brewtils to upgrade deps that don't match with current released version of brewtils 
       - name: Remove Brewtils from requirements.txt
         run: sed -i '/brewtils/d' requirements.txt
+        working-directory: ./src/app
 
       # Need to update if we support other OS's
       - name: Cache PIP Install
@@ -150,6 +151,7 @@ jobs:
       # Allows for brewtils to upgrade deps that don't match with current released version of brewtils 
       - name: Remove Brewtils from requirements.txt
         run: sed -i '/brewtils/d' requirements.txt
+        working-directory: ./src/app
 
       # Need to update if we support other OS's
       - name: Cache PIP Install
@@ -260,6 +262,7 @@ jobs:
       # Allows for brewtils to upgrade deps that don't match with current released version of brewtils 
       - name: Remove Brewtils from requirements.txt
         run: sed -i '/brewtils/d' requirements.txt
+        working-directory: ./src/app
 
       - name: Build Local Beer Garden Docker
         run: |
@@ -392,6 +395,7 @@ jobs:
       # Allows for brewtils to upgrade deps that don't match with current released version of brewtils 
       - name: Remove Brewtils from requirements.txt
         run: sed -i '/brewtils/d' requirements.txt
+        working-directory: ./src/app
 
       - name: Build Beer Garden Docker
         run: |
@@ -575,6 +579,7 @@ jobs:
       # Allows for brewtils to upgrade deps that don't match with current released version of brewtils 
       - name: Remove Brewtils from requirements.txt
         run: sed -i '/brewtils/d' requirements.txt
+        working-directory: ./src/app
 
       - name: Build Local Beer Garden Docker
         run: |
@@ -840,6 +845,7 @@ jobs:
       # Allows for brewtils to upgrade deps that don't match with current released version of brewtils 
       - name: Remove Brewtils from requirements.txt
         run: sed -i '/brewtils/d' requirements.txt
+        working-directory: ./src/app
 
       - name: Build Local Beer Garden Docker
         run: |
@@ -959,6 +965,7 @@ jobs:
       # Allows for brewtils to upgrade deps that don't match with current released version of brewtils 
       - name: Remove Brewtils from requirements.txt
         run: sed -i '/brewtils/d' requirements.txt
+        working-directory: ./src/app
 
       - name: Build Beer Garden Docker
         run: |
