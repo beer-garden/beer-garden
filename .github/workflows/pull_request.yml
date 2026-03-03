@@ -80,6 +80,10 @@ jobs:
           default-value: "develop"
           tag-position: -1
 
+      # Something happened with setuptools 82.0.0 that causes pip install to fail, so we are downgrading to 81 for now until we can figure out the issue
+      - name: Downgrade Setup Tools
+        run: python -m pip install --upgrade pip setuptools==81
+
       # Used the hashtag here instead of slash allow for branches to have slashes in them
       - name: Update Brewtils Branch
         run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements-dev.txt
