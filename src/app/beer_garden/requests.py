@@ -6,6 +6,7 @@ The request service is responsible for:
 * Validating requests
 * Request completion notification
 """
+
 import base64
 import datetime
 import gzip
