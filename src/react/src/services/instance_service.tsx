@@ -51,3 +51,33 @@ export const StopInstance = async (
     throw new Error(`HTTP error: Status ${response.status}`);
   }
 };
+
+export const GetInstanceLogs = async (
+  instance: Instance,
+  timeout: number,
+  startLine: number,
+  endLine: number | null,
+): Promise<Instance> => {
+  try {
+    const params = new URLSearchParams({
+      start_line: startLine.toString(),
+      timeout: timeout.toString(),
+    })
+    if (endLine != null) {
+      params.append("end_line", endLine.toString())
+    }
+
+    const response = await fetch(`api/v1/instances/${instance.id}/logs/?${params.toString()}`);
+    if (!response.ok) {
+      // Handle non-OK responses (e.g., 404, 500)
+      throw new Error(`HTTP error: Status ${response.status}`);
+    }
+    const data = (await response.json()) as Instance;
+
+    return data;
+  } catch (error) {
+    // Handle network errors or the error thrown above
+    console.error("Error fetching Requests:", error);
+    throw error; // Re-throw to be handled by the component/hook
+  }
+};

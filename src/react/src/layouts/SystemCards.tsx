@@ -7,20 +7,20 @@ import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { DataView } from "primereact/dataview";
 import { Dialog } from "primereact/dialog";
 import { Menu } from "primereact/menu";
-import { Message } from "primereact/message";
+import { Messages } from "primereact/messages";
 import { Panel } from "primereact/panel";
 import { Toast } from "primereact/toast";
 import { classNames } from "primereact/utils";
 import { useEffect, useRef, useState } from "react";
 
 import { Instance, Queue, Request, System } from "../models/brewtils-types";
-import { StartInstance, StopInstance } from "../services/instance_service";
+import { GetInstanceLogs, StartInstance, StopInstance } from "../services/instance_service";
 import {
   ClearAllQueues,
   ClearQueue,
   GetInstanceQueues,
 } from "../services/queue_service";
-import { GetRequestList } from "../services/request_service";
+import { DeleteRequests,GetRequestList } from "../services/request_service";
 import {
   DeleteSystem,
   GetSystemList,
@@ -320,18 +320,114 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
       const [cancelDeleteVisible, setCancelDeleteVisible] = useState(false);
 
       const statusSeverity = getSeverity(instance?.status);
+      const msgs = useRef<Messages>(null)
 
-      const all_count = useRef<number>(0);
-      const success_count = useRef<number>(0);
-      const cancelled_count = useRef<number>(0);
-      const error_count = useRef<number>(0);
-      const created_count = useRef<number>(0);
-      const received_count = useRef<number>(0);
-      const in_progress_count = useRef<number>(0);
+      const tailStart = useRef<number>(-20);
+      const tailLine = useRef<number>(20)
+      const waitTimeout = useRef<number>(30);
+      const stopTailing = useRef<boolean>(false);
+      const [logs, setLogs] = useState<Array<string> | undefined>(undefined)
+      const [displayLogs, setDisplayLogs] = useState<string | undefined>(undefined);
+      const [loadingLogs, setLoadingLogs] = useState<boolean>(false);
+      const downloadHref = useRef<string>(undefined);
 
-      function showLogs(system: System, instance: Instance) {
+      const [allCount, setAllCount] = useState<number>(0);
+      const [successCount, setSuccessCount] = useState<number>(0);
+      const [canceledCount, setCanceledCount] = useState<number>(0);
+      const [errorCount, setErrorCount] = useState<number>(0);
+      const [createdCount, setCreatedCount] = useState<number>(0);
+      const [receivedCount, setReceivedCount] = useState<number>(0);
+      const [inProgressCount, setInProgressCount] = useState<number>(0);
+
+      function showLogs() {
         setLogsVisible(true);
       }
+
+      const updateTailLineStart = (event: any) => {
+        if (event.target.value > 0){
+          tailStart.current = event.target.value * -1;
+        } else {
+          tailStart.current = event.target.value;
+        }
+      }
+
+      function successTailLogs(response: any) {
+        setLoadingLogs(false);
+        //let appendLogs = true;
+    
+        if (displayLogs === undefined){
+          setDisplayLogs('');
+          setLogs([]);
+          //appendLogs = false;
+        } 
+    
+        const requestId = response.headers('request_id');
+        downloadHref.current = 'api/v1/requests/output/' + requestId;
+    
+        let response_logs = null;
+    
+        if (typeof response.data === 'string'){
+          // Legacy support for log only responses
+          response_logs = response.data;
+    
+          if (response_logs !== null && response_logs.length > 0){
+            tailStart.current = tailStart.current + response.data.match(/\n/g).length + 1;    
+          }
+    
+        } else {
+          // New log response structure
+          response_logs = response.data.logs;
+          
+          if (response_logs !== null && response_logs.length > 0){
+            tailStart.current = response.data.end_line + 1;
+          }
+        }
+    
+        for (let i = 0; i < response_logs.length; i++) {
+          setDisplayLogs(displayLogs!.concat(response_logs[i]));
+        }
+    
+        // Sleep so you don't spam the server
+        if ((response_logs !== null && response_logs.length == 0) || response_logs.match(/\n/g).length < tailLine.current){
+          setTimeout(() => {getLogsTailLoop();}, 10000); // Sleep Ten seconds
+        } else {
+          setTimeout(() => {getLogsTailLoop();}, 1000); // Sleep One Second
+        }
+      }
+
+      function addErrorAlert() {
+        setLoadingLogs(false);
+        msgs.current?.show({severity: "error", detail: "Something went wrong on the backend: Error attempting to retrieve logs - unable to determine log filename. Please verify that the plugin is writing to a log file.", sticky: true})
+      }
+
+      function getLogsTail(instance: Instance) {
+        setLoadingLogs(true);
+        setDisplayLogs(undefined);
+        stopTailing.current = false;
+    
+        GetInstanceLogs(
+            instance,
+            waitTimeout.current,
+            tailStart.current,
+            null,
+        ).then(successTailLogs, addErrorAlert);
+      };
+
+      function stopLogsTail() {
+        stopTailing.current = true;
+      }
+
+      function getLogsTailLoop() {
+        if (stopTailing.current) {
+          return;
+        }
+        GetInstanceLogs(
+            instance,
+            waitTimeout.current,
+            tailStart.current,
+            tailLine.current + tailStart.current,
+        ).then((response) => successTailLogs(response), addErrorAlert);
+      };
 
       function manageQueue(system: System, instance: Instance) {
         GetInstanceQueues(instance.id)
@@ -344,8 +440,11 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
           });
       }
 
-      function clearQueue(queueName: string) {
+      function clearQueue(queueName: string | undefined) {
         const accept = () => {
+          if (!queueName) {
+            return;
+          }
           ClearQueue(queueName)
             .then(() => {
               //QUEUE_CLEARED events do not have name to indicate the queue
@@ -441,13 +540,15 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
       }
 
       function loadRequests() {
+        setAllCount(0);
         GetRequestList(buildFilter("SUCCESS")).then(
           (data: [Array<Request>, Headers]) => {
             const headers = data[1];
-            success_count.current = parseInt(
+            const count = parseInt(
               headers.get("recordsFiltered") ?? "0",
-            );
-            all_count.current += success_count.current;
+            )
+            setSuccessCount(count);
+            setAllCount(prevCount => prevCount + count);
           },
           (response) => {
             let msg =
@@ -456,20 +557,18 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
               msg += response.data;
             }
             console.log(msg);
-            // $scope.alerts.push({
-            //   type: 'danger',
-            //   msg: msg,
-            // });
+            msgs.current?.show({severity: "error", detail: msg, sticky: true})
           },
         );
 
         GetRequestList(buildFilter("CANCELED")).then(
           (data: [Array<Request>, Headers]) => {
             const headers = data[1];
-            cancelled_count.current = parseInt(
+            const count = parseInt(
               headers.get("recordsFiltered") ?? "0",
-            );
-            all_count.current += cancelled_count.current;
+            )
+            setCanceledCount(count);
+            setAllCount(prevCount => prevCount + count);
           },
           (response) => {
             let msg =
@@ -478,20 +577,18 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
               msg += response.data;
             }
             console.log(msg);
-            // $scope.alerts.push({
-            //   type: 'danger',
-            //   msg: msg,
-            // });
+            msgs.current?.show({severity: "error", detail: msg, sticky: true})
           },
         );
 
         GetRequestList(buildFilter("ERROR")).then(
           (data: [Array<Request>, Headers]) => {
             const headers = data[1];
-            error_count.current = parseInt(
+            const count = parseInt(
               headers.get("recordsFiltered") ?? "0",
-            );
-            all_count.current += error_count.current;
+            )
+            setErrorCount(count);
+            setAllCount(prevCount => prevCount + count);
           },
           (response) => {
             let msg =
@@ -500,20 +597,18 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
               msg += response.data;
             }
             console.log(msg);
-            // $scope.alerts.push({
-            //   type: 'danger',
-            //   msg: msg,
-            // });
+            msgs.current?.show({severity: "error", detail: msg, sticky: true})
           },
         );
 
         GetRequestList(buildFilter("CREATED")).then(
           (data: [Array<Request>, Headers]) => {
             const headers = data[1];
-            created_count.current = parseInt(
+            const count = parseInt(
               headers.get("recordsFiltered") ?? "0",
             );
-            all_count.current += created_count.current;
+            setCreatedCount(count);
+            setAllCount(prevCount => prevCount + count);
           },
           (response) => {
             let msg =
@@ -522,20 +617,18 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
               msg += response.data;
             }
             console.log(msg);
-            // $scope.alerts.push({
-            //   type: 'danger',
-            //   msg: msg,
-            // });
+            msgs.current?.show({severity: "error", detail: msg, sticky: true})
           },
         );
 
         GetRequestList(buildFilter("RECEIVED")).then(
           (data: [Array<Request>, Headers]) => {
             const headers = data[1];
-            received_count.current = parseInt(
+            const count = parseInt(
               headers.get("recordsFiltered") ?? "0",
-            );
-            all_count.current += received_count.current;
+            )
+            setReceivedCount(count);
+            setAllCount(prevCount => prevCount + count);
           },
           (response) => {
             let msg =
@@ -544,20 +637,18 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
               msg += response.data;
             }
             console.log(msg);
-            // $scope.alerts.push({
-            //   type: 'danger',
-            //   msg: msg,
-            // });
+            msgs.current?.show({severity: "error", detail: msg, sticky: true})
           },
         );
 
         GetRequestList(buildFilter("IN_PROGRESS")).then(
           (data: [Array<Request>, Headers]) => {
             const headers = data[1];
-            in_progress_count.current = parseInt(
+            const count = parseInt(
               headers.get("recordsFiltered") ?? "0",
-            );
-            all_count.current += in_progress_count.current;
+            )
+            setInProgressCount(count);
+            setAllCount(prevCount => prevCount + count);
           },
           (response) => {
             let msg =
@@ -566,21 +657,26 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
               msg += response.data;
             }
             console.log(msg);
-            // $scope.alerts.push({
-            //   type: 'danger',
-            //   msg: msg,
-            // });
+            msgs.current?.show({severity: "error", detail: msg, sticky: true})
           },
         );
       }
 
-      function cancelDeleteRequests(system: System, instance: Instance) {
+      function cancelDeleteRequests() {
         loadRequests();
         setCancelDeleteVisible(true);
       }
 
-      function deleteRequests(status: string, is_cancel: boolean = false) {
-        const deleteParams = {
+      function addSuccessAlert() {
+        msgs.current?.show({severity: "info", detail: "Success! Requests have been deleted.", sticky: true})
+      }
+
+      function addDeleteErrorAlert() {
+        msgs.current?.show({severity: "error", detail: "Uh oh! It looks like there was a problem deleting the Requests.", sticky: true})
+      }
+
+      function deleteRequests(status: string, msg: string, is_cancel: boolean = false) {
+        const deleteParams: Record<string, any> = {
           namespace: system.namespace,
           system: system.name,
           system_version: system.version,
@@ -595,11 +691,31 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
           deleteParams["status"] = status;
         }
 
-        // DeleteRequests(deleteParams)
-        //   .then(addSuccessAlert, addDeleteErrorAlert)
-        //   .catch((error) => {
-        //     console.error("Error fetching queues:", error);
-        //   });
+        const accept = () => {
+          DeleteRequests(deleteParams)
+            .then(() => {           
+              loadRequests();
+              addSuccessAlert()
+            }, addDeleteErrorAlert)
+            .catch((error) => {
+              console.error("Error fetching queues:", error);
+            });
+        };
+    
+        const reject = () => {};
+
+        const confirm = () => {
+          confirmDialog({
+            message: msg,
+            header: "Confirmation",
+            icon: "pi pi-exclamation-triangle",
+            defaultFocus: "accept",
+            accept,
+            reject,
+          });
+        };
+
+        confirm();
       }
 
       const instanceMenuItems = [
@@ -665,43 +781,68 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
                     }
                     visible={logsVisible}
                     style={{ width: "50vw" }}
+                    onShow={() => {
+                      msgs.current?.show({severity: "info", detail: "Plugin must be listening to the Admin Queue and logging to File for logs to be returned. This will only return information from the log file being actively written to.", sticky: true})
+                    }}
                     onHide={() => {
                       if (!logsVisible) return;
                       setLogsVisible(false);
                     }}
                   >
-                    <Message text="Plugin must be listening to the Admin Queue and logging to File for logs to be returned. This will only return information from the log file being actively written to." />
+                    <Messages ref={msgs} />
                     <div>
-                      <form>
-                        <input
-                          type="submit"
+                      <div>
+                        <Button
                           name="start"
                           value="Get Tail Logs"
-                          onClick={() => getLogsTail()}
-                        />
-                        <input
-                          type="submit"
+                          onClick={() => getLogsTail(instance)}
+                        >Get Tail Logs</Button>
+                        <Button
                           name="stop"
                           value="Stop Tail Logs"
                           onClick={() => stopLogsTail()}
-                        />
+                        >Stop Tail Logs</Button>
                         <label htmlFor="tail_line_start">Tail Lines</label>
                         <input
                           type="number"
                           id="tail_line_start"
                           min="0"
+                          defaultValue={20}
                           name="tail_line_start"
-                          // ng-model="tail_line_start"
+                          onChange={updateTailLineStart}
                         />
-                      </form>
-                    </div>
-                    <div>
-                      <a
-                        href={`api/v1/instances/${instance.id}/logs/?logs_only=true`}
-                        download={filename}
-                      >
-                        <button>Get Full Logs</button>
-                      </a>
+                      </div>
+                      <div>
+                        <a
+                          href={`api/v1/instances/${instance.id}/logs/?logs_only=true`}
+                          download={filename}
+                        >
+                          <Button>Get Full Logs</Button>
+                        </a>
+                      </div>
+                      { loadingLogs &&
+                        <div id="loading" className="col-md-12 text-center">
+                          <h1>
+                            <div>Loading...</div>
+                            <div><i className="fa fa-spinner fa-pulse fa-2x"></i></div>
+                          </h1>
+                        </div>
+                      }
+                      { logs !== undefined && 
+                        <div className="container-fluid animate-if">
+                          <br />
+                          { displayLogs !== undefined &&
+                           <>
+                            <a
+                                className="fa fa-download pull-right"
+                                href={downloadHref.current}
+                                download={filename}
+                              >Download</a>
+                              <pre id="rawOutput" ng-show="displayLogs !== undefined">{displayLogs}</pre>
+                           </>
+                          }
+                        </div>
+                      }
                     </div>
                   </Dialog>
                   <Dialog
@@ -733,7 +874,7 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
                             <td>{queue.size}</td>
                             <td>
                               <ConfirmDialog message="Are you sure you want to clear the Queue?" />
-                              <Button onClick={() => clearQueue(queue.name)} disabled={true ? queue.size < 1 : false}>
+                              <Button onClick={() => clearQueue(queue.name)}>
                                 Clear Queue
                               </Button>
                             </td>
@@ -756,16 +897,15 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
                       setCancelDeleteVisible(false);
                     }}
                   >
+                    <Messages ref={msgs} />
                     <div>
-                      Currently {all_count.current} Requests present in the
+                      Currently {allCount} Requests present in the
                       database
                     </div>
                     <br />
                     <table
                       id="requestDeleteCancelTable"
-                      // dt-options="dtOptions"
-                      // dt-columns="dtColumns"
-                      // className="table table-striped table-bordered w-100"
+                      className="table table-striped table-bordered w-100"
                     >
                       <tbody>
                         <tr>
@@ -775,75 +915,87 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
                         </tr>
                         <tr>
                           <td>SUCCESS</td>
-                          <td>{success_count.current}</td>
+                          <td>{successCount}</td>
                           <td>
-                            <Button onClick={() => deleteRequests("SUCCESS")}>
-                              {/* confirm="Are you sure you want to delete Requests with status SUCCESS?"> */}
+                            <Button onClick={() => deleteRequests(
+                              "SUCCESS",
+                              "Are you sure you want to delete Requests with status SUCCESS?"
+                            )}>
                               Delete SUCCESS
                             </Button>
                           </td>
                         </tr>
                         <tr>
                           <td>CANCELED</td>
-                          <td>{cancelled_count.current}</td>
+                          <td>{canceledCount}</td>
                           <td>
-                            <Button onClick={() => deleteRequests("CANCELED")}>
-                              {/* confirm="Are you sure you want to delete Requests with status CANCELED?" */}
+                            <Button onClick={() => deleteRequests(
+                              "CANCELED",
+                              "Are you sure you want to delete Requests with status CANCELED?",
+                              )}>
                               Delete CANCELED
                             </Button>
                           </td>
                         </tr>
                         <tr>
                           <td>ERROR</td>
-                          <td>{error_count.current}</td>
+                          <td>{errorCount}</td>
                           <td>
-                            <Button onClick={() => deleteRequests("ERROR")}>
-                              {/* confirm="Are you sure you want to delete Requests with status ERROR?" */}
+                            <Button onClick={() => deleteRequests(
+                              "ERROR",
+                              "Are you sure you want to delete Requests with status ERROR?",
+                              )}>
                               Delete ERROR
                             </Button>
                           </td>
                         </tr>
                         <tr>
                           <td>IN PROGRESS</td>
-                          <td>{in_progress_count.current}</td>
+                          <td>{inProgressCount}</td>
                           <td>
                             <Button
                               onClick={() =>
                                 deleteRequests(
                                   "IN PROGRESS",
-                                  (is_cancel = true),
+                                  "Are you sure you want to cancel Requests with status IN PROGRESS? There may be a plugin already running the request.",
+                                  true,
                                 )
                               }
                             >
-                              {/* confirm="Are you sure you want to cancel Requests with status IN PROGRESS? There may be a plugin already running the request." */}
                               Cancel IN PROGRESS
                             </Button>
                           </td>
                         </tr>
                         <tr>
                           <td>RECEIVED</td>
-                          <td>{received_count.current}</td>
+                          <td>{receivedCount}</td>
                           <td>
                             <Button
                               onClick={() =>
-                                deleteRequests("RECEIVED", (is_cancel = true))
+                                deleteRequests(
+                                  "RECEIVED",
+                                  "Are you sure you want to cancel Requests with status RECEIVED?",
+                                  true,
+                                )
                               }
                             >
-                              {/* confirm="Are you sure you want to cancel Requests with status RECEIVED?"> */}
                               Cancel RECEIVED
                             </Button>
                           </td>
                         </tr>
                         <tr>
                           <td>CREATED</td>
-                          <td>{created_count.current}</td>
+                          <td>{createdCount}</td>
                           <td>
                             <Button
                               onClick={() =>
-                                deleteRequests("CREATED", (is_cancel = true))
+                                deleteRequests(
+                                  "CREATED",
+                                  "Are you sure you want to cancel Requests with status CREATED? Recommend clearing topics as well.",
+                                  true,
+                                )
                               }
                             >
-                              {/* confirm="Are you sure you want to cancel Requests with status CREATED? Recommend clearing topics as well."> */}
                               Cancel CREATED
                             </Button>
                           </td>
@@ -851,27 +1003,32 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
                         <tr>
                           <td>Non-Completed (CREATED/RECEIVED/IN PROGRESS)</td>
                           <td>
-                            {in_progress_count.current +
-                              received_count.current +
-                              created_count.current}
+                            {inProgressCount +
+                              receivedCount +
+                              createdCount}
                           </td>
                           <td>
                             <Button
                               onClick={() =>
-                                deleteRequests("ALL", (is_cancel = true))
+                                deleteRequests(
+                                  "ALL",
+                                  "Are you sure you want to cancel all non-completed Requests?", 
+                                  true
+                                )
                               }
                             >
-                              {/* confirm="Are you sure you want to cancel all non-completed Requests?"> */}
                               Cancel Non-Completed
                             </Button>
                           </td>
                         </tr>
                         <tr>
                           <td>ALL</td>
-                          <td>{all_count.current}</td>
+                          <td>{allCount}</td>
                           <td>
-                            <Button onClick={() => deleteRequests("ALL")}>
-                              {/* confirm="Are you sure you want to delete all the Requests?"> */}
+                            <Button onClick={() => deleteRequests(
+                              "ALL",
+                              "Are you sure you want to delete all the Requests?",
+                              )}>
                               Delete All
                             </Button>
                           </td>
