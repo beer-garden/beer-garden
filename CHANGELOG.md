@@ -1,9 +1,9 @@
 # Beer Garden Changelog
 
 # 3.32.0
-
 TBD
 
+- Fixed CSS issue with Raw Output limiting the height of output (#2064)
 
 # 3.31.1
 
