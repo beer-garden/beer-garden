@@ -63,6 +63,7 @@ routable_operations = [
     "INSTANCE_START",
     "INSTANCE_STOP",
     "REQUEST_CREATE",
+    "REQUEST_REFRESH",
     "SYSTEM_DELETE",
     "RUNNER_RESCAN",
     "GARDEN_RESCAN",
@@ -112,6 +113,7 @@ route_functions = {
     "REQUEST_DELETE": beer_garden.requests.delete_requests,
     "REQUEST_CANCEL": beer_garden.requests.cancel_requests,
     "REQUEST_UPDATE": beer_garden.requests.update_request,
+    "REQUEST_REBROADCAST": beer_garden.requests.rebroadcast,
     "COMMAND_READ": beer_garden.commands.get_command,
     "COMMAND_READ_ALL": beer_garden.commands.get_commands,
     "INSTANCE_READ": beer_garden.systems.get_instance,
@@ -940,6 +942,10 @@ def _target_from_type(operation: Operation) -> str:
             version=operation.model.system_version,
         )
         return _system_name_lookup(target_system)
+
+    if operation.operation_type == "REQUEST_REBROADCAST":
+        request = beer_garden.requests.get_request(request_id=operation.args[0])
+        return request.target_garden
 
     if operation.operation_type == "SYSTEM_DELETE":
         # Force deletes get routed to local garden
