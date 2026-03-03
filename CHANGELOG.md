@@ -1,6 +1,7 @@
 # Beer Garden Changelog
 
 - Update Yapconf library (#2036)
+- Update MongoDB Testing utilizing TestContainers (#2037)
 
 # 3.31.0
 
