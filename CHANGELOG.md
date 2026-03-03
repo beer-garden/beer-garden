@@ -1,11 +1,24 @@
 # Beer Garden Changelog
 
-# TDB
+# 3.32.0
+TBD
 
-TDB
-
+- Fixed CSS issue with Raw Output limiting the height of output (#2064)
+- Fixed UI bug where Pour Again failed to render if a parameter value is `null` (#2050)
+- Fixed Target-Garden header mapping to handle special character exceptions (#2045)
+- Added scheduled job to check if runner is dead and update associated instance to ERROR (#2043)
+- Fixed the old APM code from performance testing, now APM tracks HTTP/STOMP/Queue Depth (#2039)
 - Added Refresh feature for Requests that will push a Request Update event from Downstream Gardens
-  back to local garden, used for if a Request was lost in transit. (#) 
+  back to local garden, used for if a Request was lost in transit. (#2033) 
+
+# 3.31.1
+
+1/7/2026
+
+- Fixed when latest is used for system version but there are no systems with that name (#2032)
+- Fixed UI Request Create with unicode garden names not supported via headers (#2035) 
+- Fixed error comparing timezone-aware and timezone-naive datetimes. (#2038)
+- Fixed Migration script logic for MongoDB (#2034)
 
 # 3.31.0
 

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Package containing the Stomp entry point"""
+
 import logging
 import threading
 import types
