@@ -747,7 +747,9 @@ def ensure_model_migration():
         )
 
         # After the 3.30.0 migration, we can start parsing each version incrementally
-        if Version(beer_garden.__version__) < Version("3.30.0"):
+        if not previous_config or Version(previous_config.get("version")) < Version(
+            "3.30.0"
+        ):
             ensure_v2_to_v3_model_migration()
             ensure_v3_24_model_migration()
             ensure_v3_27_model_migration()

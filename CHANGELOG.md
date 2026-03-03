@@ -1,6 +1,19 @@
 # Beer Garden Changelog
 
+# 3.32.0
+TBD
+
+- Fixed CSS issue with Raw Output limiting the height of output (#2064)
 - Update Yapconf library (#2036)
+
+# 3.31.1
+
+1/7/2026
+
+- Fixed when latest is used for system version but there are no systems with that name (#2032)
+- Fixed UI Request Create with unicode garden names not supported via headers (#2035) 
+- Fixed error comparing timezone-aware and timezone-naive datetimes. (#2038)
+- Fixed Migration script logic for MongoDB (#2034)
 
 # 3.31.0
 
