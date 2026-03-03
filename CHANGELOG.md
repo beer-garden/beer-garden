@@ -5,6 +5,7 @@ TBD
 
 - Fixed CSS issue with Raw Output limiting the height of output (#2064)
 - Update Yapconf library (#2036)
+- Update MongoDB Testing utilizing TestContainers (#2037)
 - Fixed UI bug where Pour Again failed to render if a parameter value is `null` (#2050)
 - Fixed Target-Garden header mapping to handle special character exceptions (#2045)
 - Added scheduled job to check if runner is dead and update associated instance to ERROR (#2043)

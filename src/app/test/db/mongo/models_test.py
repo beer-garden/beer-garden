@@ -3,14 +3,12 @@ import copy
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
-import mongomock
 import pytest
 from brewtils.errors import ModelValidationError, RequestStatusTransitionError
 from brewtils.schemas import RequestTemplateSchema
 from bson.objectid import ObjectId
 from mock import Mock
-from mongoengine import NotUniqueError, connect
-from mongomock.gridfs import enable_gridfs_integration
+from mongoengine import NotUniqueError
 
 import beer_garden.db.api as db
 import beer_garden.db.mongo.models
@@ -32,8 +30,6 @@ from beer_garden.db.mongo.models import (
     User,
     UserToken,
 )
-
-enable_gridfs_integration()
 
 
 class TestCommand(object):
@@ -598,13 +594,6 @@ class TestRole:
 
 
 class TestUser:
-    @classmethod
-    def setup_class(cls):
-        connect(
-            "beer_garden",
-            host="mongodb://localhost",
-            mongo_client_class=mongomock.MongoClient,
-        )
 
     @pytest.fixture()
     def role(self):
@@ -673,11 +662,6 @@ class TestGarden:
 
     @classmethod
     def setup_class(cls):
-        connect(
-            "beer_garden",
-            host="mongodb://localhost",
-            mongo_client_class=mongomock.MongoClient,
-        )
         Garden.drop_collection()
         Garden.ensure_indexes()
 
@@ -1024,11 +1008,10 @@ class TestFileUpdates:
         self, request_model, request_local_system
     ):
 
-        request_model.parameters = {"message": "a" * (16 * 1024 * 1024)}
+        request_model.parameters = {"large_message": "a" * (16 * 1024 * 1024)}
         request_model.save()
 
-        # TODO: Determine how to get this to trigger
-        # request_model.parameters_gridfs.put.assert_called_once()
+        request_model.parameters_gridfs.put.assert_called_once()
 
     def test_save_retains_if_under_maxsize(
         self, request_model, request_local_system, max_size

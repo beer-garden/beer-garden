@@ -58,7 +58,7 @@ pyasn1==0.6.1
     # via ldap3
 pyjwt==2.10.1
     # via beer_garden (setup.py)
-pymongo==4.10.1
+pymongo==4.15.5
     # via
     #   beer_garden (setup.py)
     #   mongoengine

@@ -54,7 +54,7 @@ setup(
         # Pymongo needs 4.9 for Async features from motor
         # Pymongo needs mockmongo to fix issue #912 before we can go past
         # pymongo 4.11
-        "pymongo>=4.9,<4.11", # Latest 4.15.1
+        "pymongo<4.16", # Latest 4.15.1
         "mongoengine>=0.29.1", # Latest 0.29.1
         
         # YAPCONF drives python-box/ruamel.yaml
