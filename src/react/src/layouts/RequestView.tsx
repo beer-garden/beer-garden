@@ -2,6 +2,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { BreadCrumb } from "primereact/breadcrumb";
 import { MenuItem } from "primereact/menuitem";
 import { Message } from "primereact/message";
+import { Skeleton } from "primereact/skeleton";
 import { SplitButton } from "primereact/splitbutton";
 import { Stepper } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
@@ -131,6 +132,7 @@ function RequestView({ listeners }: { listeners: Record<string, any> }) {
   const [system, setSystem] = useState<System | null>(null);
   const [command, setCommand] = useState<any>(null);
   const [rootRequest, setRootRequest] = useState<Request | null>(null);
+  const [showCommandForm, setShowCommandForm] = useState(false);
 
   const rootRequestId = useRef<string | null>(null);
 
@@ -223,16 +225,20 @@ function RequestView({ listeners }: { listeners: Record<string, any> }) {
           .then((data) => {
             if (data.length > 0) {
               setSystem(data[0]);
+            } else {
+              setShowCommandForm(true);
             }
           })
           .catch((error) => {
             console.error("Error fetching system list:", error);
+            setShowCommandForm(true);
           });
       } else if (system.commands) {
         const commandData = system.commands.find(
           (cmd) => cmd.name === request.command,
         );
         setCommand(commandData);
+        setShowCommandForm(true);
       }
     }
 
@@ -267,7 +273,8 @@ function RequestView({ listeners }: { listeners: Record<string, any> }) {
         >
           <StepperPanel header="Request Parameters">
             <RequestOptions {...request} />
-            {command && (
+            {!showCommandForm && <Skeleton width="100%" height="10rem" />}
+            {showCommandForm && command && (
               <CommandForm
                 {...{
                   command: command,
@@ -276,7 +283,7 @@ function RequestView({ listeners }: { listeners: Record<string, any> }) {
                 }}
               />
             )}
-            {!command && <UnformattedInput {...request} />}
+            {showCommandForm && !command && <UnformattedInput {...request} />}
           </StepperPanel>
           <StepperPanel header="Request Output">
             {request && <RequestOptions {...request} />}

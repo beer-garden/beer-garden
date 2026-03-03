@@ -3,6 +3,7 @@ import { Card } from "primereact/card";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Message } from "primereact/message";
+import { Skeleton } from "primereact/skeleton";
 import { SplitButton } from "primereact/splitbutton";
 import { Stepper } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
@@ -46,6 +47,8 @@ function RequestViewCard({
   const toast = useRef(null as null | any);
 
   const [command, setCommand] = useState<Command | any>(null);
+
+  const [showCommandForm, setShowCommandForm] = useState(false);
 
   const SeverityCheck = (status?: string) => {
     if (!status) {
@@ -239,10 +242,13 @@ function RequestViewCard({
         .then((data) => {
           if (data.length > 0) {
             setSystem(data[0]);
+          } else {
+            setShowCommandForm(true);
           }
         })
         .catch((error) => {
           console.error("Error fetching system list:", error);
+          setShowCommandForm(true);
         });
     }
 
@@ -252,6 +258,7 @@ function RequestViewCard({
           (cmd) => cmd.name === request.command,
         );
         setCommand(commandData);
+        setShowCommandForm(true);
       }
     }
 
@@ -280,7 +287,8 @@ function RequestViewCard({
             style={{ flexBasis: "50rem" }}
           >
             <StepperPanel header="Parameters">
-              {command && (
+              {!showCommandForm && <Skeleton width="100%" height="10rem" />}
+              {showCommandForm && command && (
                 <CommandForm
                   {...{
                     command: command,
@@ -289,7 +297,7 @@ function RequestViewCard({
                   }}
                 />
               )}
-              {!command && <UnformattedInput {...request} />}
+              {showCommandForm && !command && <UnformattedInput {...request} />}
             </StepperPanel>
             <StepperPanel header="Hide" />
             <StepperPanel header="Output">
