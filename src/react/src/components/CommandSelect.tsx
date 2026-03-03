@@ -1,7 +1,10 @@
+import { validate as validateVersion } from "compare-versions";
 import { Dropdown } from "primereact/dropdown";
 import { useEffect, useState } from "react";
+import { validate } from "uuid";
 
 import { Command, Instance, System } from "../models/brewtils-types";
+import { DetermineLatestSystemVersion } from "../services/system_service";
 import { CompareObjects } from "../services/util_service";
 
 interface RequestCommand {
@@ -71,7 +74,16 @@ function CommandSelect({
               systemVersionList.push(system.version as string);
             }
 
-            if (system.version === selectedVersion) {
+            if (
+              system.version === selectedVersion ||
+              (selectedVersion?.toLowerCase() === "latest" &&
+                DetermineLatestSystemVersion(
+                  systems,
+                  selectedSystemName,
+                  selectedNamespace,
+                  selectedVersion,
+                ).version === system.version)
+            ) {
               if (system.instances) {
                 system.instances.forEach((instance: Instance) => {
                   if (instance.name && !instanceList.includes(instance.name)) {
@@ -102,7 +114,19 @@ function CommandSelect({
     }
 
     if (!CompareObjects(versions, systemVersionList)) {
-      setVersions(systemVersionList);
+      if (systemVersionList.includes("latest")) {
+        setVersions(systemVersionList);
+      } else {
+        if (
+          systemVersionList.some(
+            (version) =>
+              validateVersion(version) ||
+              validateVersion(version.replace(".dev", "-dev")),
+          )
+        ) {
+          setVersions([...systemVersionList, "latest"]);
+        }
+      }
     }
 
     if (!CompareObjects(instances, instanceList)) {
@@ -137,13 +161,16 @@ function CommandSelect({
     }
 
     if (
-      systemVersionList.length === 1 &&
-      selectedVersion !== systemVersionList[0]
+      selectedVersion !== "latest" &&
+      selectedVersion !== null &&
+      !systemVersionList.includes(selectedVersion) &&
+      ((systemVersionList.length === 2 && systemVersionList[1] === "latest") ||
+        systemVersionList.length === 1)
     ) {
       setSelectedVersion(systemVersionList[0]);
     } else if (
-      systemVersionList.length > 0 &&
       selectedVersion !== null &&
+      selectedVersion !== "latest" &&
       !systemVersionList.includes(selectedVersion)
     ) {
       setSelectedVersion(null);
@@ -258,6 +285,7 @@ function CommandSelect({
         value={selectedNamespace}
         onChange={(e) => setSelectedNamespace(e.value)}
         options={namespaces}
+        filter
         optionLabel="Namespace"
         placeholder="Select Namespace"
       />
@@ -265,6 +293,7 @@ function CommandSelect({
         value={selectedSystemName}
         onChange={(e) => setSelectedSystemName(e.value)}
         options={systemNames}
+        filter
         optionLabel="System"
         placeholder="Select System"
       />
@@ -272,6 +301,7 @@ function CommandSelect({
         value={selectedVersion}
         onChange={(e) => setSelectedVersion(e.value)}
         options={versions}
+        filter
         optionLabel="Version"
         placeholder="Select Version"
       />
@@ -279,6 +309,7 @@ function CommandSelect({
         value={selectedInstance}
         onChange={(e) => setSelectedInstance(e.value)}
         options={instances}
+        filter
         optionLabel="Instance"
         placeholder="Select Instance"
       />
@@ -286,6 +317,7 @@ function CommandSelect({
         value={selectedCommand}
         onChange={(e) => setSelectedCommand(e.value)}
         options={commands}
+        filter
         optionLabel="Command"
         placeholder="Select Command"
       />

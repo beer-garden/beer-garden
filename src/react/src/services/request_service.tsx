@@ -90,8 +90,6 @@ export const PostRequest = async (
       headers.append(key, value as string);
     }
 
-    headers.append("Content-Type", "application/json");
-
     let sessionUUID = localStorage.getItem("sessionUUID");
     if (!sessionUUID) {
       sessionUUID = uuidv4();
@@ -106,12 +104,51 @@ export const PostRequest = async (
       waitForCompletion = false;
     }
 
+    // Check if any parameters are a file, then use FormData instead of JSON
+    const hasFileParameter = request.parameters
+      ? Object.values(request.parameters).some((param) => param instanceof File)
+      : false;
+
+    if (hasFileParameter) {
+      const formData = new FormData();
+
+      const copyRequest = { ...request };
+      const parametersWithoutFiles: any = {};
+
+      for (const [key, value] of Object.entries(request.parameters || {})) {
+        if (!(value instanceof File)) {
+          parametersWithoutFiles[key] = value;
+        }
+      }
+      copyRequest.parameters = parametersWithoutFiles;
+      formData.append("request", JSON.stringify(copyRequest));
+
+      for (const [key, value] of Object.entries(request.parameters || {})) {
+        if (value instanceof File) {
+          formData.append(key, value);
+        }
+      }
+
+      const response = await fetch(
+        "/api/v1/requests?blocking=" + waitForCompletion,
+        {
+          headers: headers,
+          method: "POST",
+          body: formData,
+        },
+      );
+      if (!response.ok) {
+        // Handle non-OK responses (e.g., 404, 500)
+        throw new Error(`HTTP error: Status ${response.status}`);
+      }
+      const data = (await response.json()) as Request;
+      return data;
+    }
+
+    headers.append("Content-Type", "application/json");
     const response = await fetch(
       "/api/v1/requests?blocking=" + waitForCompletion,
       {
-        // headers: {
-        //   'Content-Type': 'application/json' // *specify the content type
-        // },
         headers: headers,
         method: "POST",
         body: JSON.stringify(request),

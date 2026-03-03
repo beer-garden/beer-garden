@@ -1,4 +1,33 @@
+import { compare, validate } from "compare-versions";
+
 import { Garden, System } from "../models/brewtils-types";
+
+export const GetSystem = async (
+  systemId: string,
+  headerData: any,
+): Promise<System> => {
+  try {
+    const headers = new Headers();
+    for (const [key, value] of Object.entries(headerData)) {
+      headers.append(key, value as string);
+    }
+
+    const response = await fetch(`/api/v1/systems/${systemId}`, {
+      headers: headers,
+    });
+    if (!response.ok) {
+      // Handle non-OK responses (e.g., 404, 500)
+      throw new Error(`HTTP error: Status ${response.status}`);
+    }
+    const data = (await response.json()) as System;
+
+    return data;
+  } catch (error) {
+    // Handle network errors or the error thrown above
+    console.error("Error fetching System:", error);
+    throw error; // Re-throw to be handled by the component/hook
+  }
+};
 
 export const GetSystemList = async (
   queryData?: any,
@@ -154,4 +183,57 @@ export const ForceDeleteSystem = async (system: System): Promise<void> => {
     // Handle non-OK responses (e.g., 404, 500)
     throw new Error(`HTTP error: Status ${response.status}`);
   }
+};
+
+export const DetermineLatestSystemVersion = (
+  systems: System[],
+  systemName: string | null,
+  systemNameSpace: string | null,
+  systemVersion: string | null,
+): System => {
+  return systems
+    .filter((system) => {
+      return (
+        (system.namespace === systemNameSpace || systemNameSpace === null) &&
+        (system.name === systemName || systemName === null) &&
+        (system.version === systemVersion ||
+          systemVersion === null ||
+          systemVersion === "latest")
+      );
+    })
+    .reduce((latestSystem, currentSystem) => {
+      if (currentSystem.version && latestSystem.version) {
+        const currentValid = validate(currentSystem.version)
+          ? currentSystem.version
+          : validate(currentSystem.version.replace(".dev", "-dev"))
+            ? currentSystem.version.replace(".dev", "-dev")
+            : null;
+        const latestValid = validate(latestSystem.version)
+          ? latestSystem.version
+          : validate(latestSystem.version.replace(".dev", "-dev"))
+            ? latestSystem.version.replace(".dev", "-dev")
+            : null;
+
+        if (currentValid === null && latestValid === null) {
+          if (currentSystem.version.localeCompare(latestSystem.version) > 0) {
+            return currentSystem;
+          } else {
+            return latestSystem;
+          }
+        }
+
+        if (currentValid === null) {
+          return latestSystem;
+        }
+
+        if (latestValid === null) {
+          return currentSystem;
+        }
+
+        return compare(currentValid, latestValid, ">")
+          ? currentSystem
+          : latestSystem;
+      }
+      return latestSystem;
+    });
 };

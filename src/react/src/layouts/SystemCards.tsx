@@ -25,6 +25,7 @@ import {
   GetInstanceQueues,
 } from "../services/queue_service";
 import { DeleteRequests, GetRequestList } from "../services/request_service";
+import { PushToScratchPad } from "../services/scratchpad_service";
 import {
   DeleteSystem,
   GetSystemList,
@@ -32,7 +33,7 @@ import {
   Rescan,
 } from "../services/system_service";
 
-function SystemCards({ listeners }: { listeners: Record<string, any> }) {
+function SystemCards({ listeners, setReloadScratchPad }: { listeners: Record<string, any>, setReloadScratchPad: any }) {
   const [systems, setSystems] = useState<Array<System>>([]);
 
   const MonitorSystemEvents = (message: any) => {
@@ -241,6 +242,16 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
         });
     }
 
+    const PushToPad = (system: System) => {
+      if (system) {
+        PushToScratchPad("SYSTEM_VIEW", {
+          systemId: system.id,
+          system: system,
+        });
+        setReloadScratchPad(new Date());
+      }
+    };
+
     const headerTemplate = (options: any) => {
       const className = `${options.className} justify-content-space-between`;
       const systemConfigMenu = useRef<Menu>(null);
@@ -277,6 +288,15 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
             <label className="max-w-10rem">
               {system.name}/ {system.version}
             </label>
+            <Button
+              rounded
+              raised
+              link
+              onClick={() => PushToPad(system)}
+              tooltip={"Push to Pad " + system.name}
+            >
+              <FontAwesomeIcon icon="arrow-right-from-bracket" />{" "}
+            </Button>
 
             {Array.from(statusCounts, ([status, count]) => {
               if (count && count > 0) {
@@ -764,7 +784,7 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
       const instanceMenuItems = [
         {
           label: "Show Logs",
-          command: () => showLogs(system, instance),
+          command: () => showLogs(),
         },
         {
           label: "Manage Queue",
@@ -772,7 +792,7 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
         },
         {
           label: "Cancel/Delete Requests",
-          command: () => cancelDeleteRequests(system, instance),
+          command: () => cancelDeleteRequests(),
         },
       ];
 
