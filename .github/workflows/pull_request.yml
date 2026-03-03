@@ -80,6 +80,10 @@ jobs:
           default-value: "develop"
           tag-position: -1
 
+      # Allows for brewtils to upgrade deps that don't match with current released version of brewtils 
+      - name: Remove Brewtils from requirements.txt
+        run: sed '/brewtils/d' requirements.txt
+
       # Something happened with setuptools 82.0.0 that causes pip install to fail, so we are downgrading to 81 for now until we can figure out the issue
       - name: Downgrade Setup Tools
         run: python -m pip install --upgrade pip setuptools==81
