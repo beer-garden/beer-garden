@@ -1,6 +1,10 @@
 # Beer Garden Changelog
 
-# 3.32.0rc0
+# 3.33.0rc0
+
+TBD
+
+# ~~3.32.0rc0~~ (Pushed to 3.33.0rc0)
 
 12/17/2025
 
