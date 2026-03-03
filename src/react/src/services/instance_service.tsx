@@ -62,12 +62,14 @@ export const GetInstanceLogs = async (
     const params = new URLSearchParams({
       start_line: startLine.toString(),
       timeout: timeout.toString(),
-    })
+    });
     if (endLine != null) {
-      params.append("end_line", endLine.toString())
+      params.append("end_line", endLine.toString());
     }
 
-    const response = await fetch(`api/v1/instances/${instance.id}/logs/?${params.toString()}`);
+    const response = await fetch(
+      `api/v1/instances/${instance.id}/logs/?${params.toString()}`,
+    );
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);

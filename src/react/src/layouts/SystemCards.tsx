@@ -14,13 +14,17 @@ import { classNames } from "primereact/utils";
 import { useEffect, useRef, useState } from "react";
 
 import { Instance, Queue, Request, System } from "../models/brewtils-types";
-import { GetInstanceLogs, StartInstance, StopInstance } from "../services/instance_service";
+import {
+  GetInstanceLogs,
+  StartInstance,
+  StopInstance,
+} from "../services/instance_service";
 import {
   ClearAllQueues,
   ClearQueue,
   GetInstanceQueues,
 } from "../services/queue_service";
-import { DeleteRequests,GetRequestList } from "../services/request_service";
+import { DeleteRequests, GetRequestList } from "../services/request_service";
 import {
   DeleteSystem,
   GetSystemList,
@@ -320,14 +324,16 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
       const [cancelDeleteVisible, setCancelDeleteVisible] = useState(false);
 
       const statusSeverity = getSeverity(instance?.status);
-      const msgs = useRef<Messages>(null)
+      const msgs = useRef<Messages>(null);
 
       const tailStart = useRef<number>(-20);
-      const tailLine = useRef<number>(20)
+      const tailLine = useRef<number>(20);
       const waitTimeout = useRef<number>(30);
       const stopTailing = useRef<boolean>(false);
-      const [logs, setLogs] = useState<Array<string> | undefined>(undefined)
-      const [displayLogs, setDisplayLogs] = useState<string | undefined>(undefined);
+      const [logs, setLogs] = useState<Array<string> | undefined>(undefined);
+      const [displayLogs, setDisplayLogs] = useState<string | undefined>(
+        undefined,
+      );
       const [loadingLogs, setLoadingLogs] = useState<boolean>(false);
       const downloadHref = useRef<string>(undefined);
 
@@ -344,74 +350,86 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
       }
 
       const updateTailLineStart = (event: any) => {
-        if (event.target.value > 0){
+        if (event.target.value > 0) {
           tailStart.current = event.target.value * -1;
         } else {
           tailStart.current = event.target.value;
         }
-      }
+      };
 
       function successTailLogs(response: any) {
         setLoadingLogs(false);
         //let appendLogs = true;
-    
-        if (displayLogs === undefined){
-          setDisplayLogs('');
+
+        if (displayLogs === undefined) {
+          setDisplayLogs("");
           setLogs([]);
           //appendLogs = false;
-        } 
-    
-        const requestId = response.headers('request_id');
-        downloadHref.current = 'api/v1/requests/output/' + requestId;
-    
+        }
+
+        const requestId = response.headers("request_id");
+        downloadHref.current = "api/v1/requests/output/" + requestId;
+
         let response_logs = null;
-    
-        if (typeof response.data === 'string'){
+
+        if (typeof response.data === "string") {
           // Legacy support for log only responses
           response_logs = response.data;
-    
-          if (response_logs !== null && response_logs.length > 0){
-            tailStart.current = tailStart.current + response.data.match(/\n/g).length + 1;    
+
+          if (response_logs !== null && response_logs.length > 0) {
+            tailStart.current =
+              tailStart.current + response.data.match(/\n/g).length + 1;
           }
-    
         } else {
           // New log response structure
           response_logs = response.data.logs;
-          
-          if (response_logs !== null && response_logs.length > 0){
+
+          if (response_logs !== null && response_logs.length > 0) {
             tailStart.current = response.data.end_line + 1;
           }
         }
-    
+
         for (let i = 0; i < response_logs.length; i++) {
           setDisplayLogs(displayLogs!.concat(response_logs[i]));
         }
-    
+
         // Sleep so you don't spam the server
-        if ((response_logs !== null && response_logs.length == 0) || response_logs.match(/\n/g).length < tailLine.current){
-          setTimeout(() => {getLogsTailLoop();}, 10000); // Sleep Ten seconds
+        if (
+          (response_logs !== null && response_logs.length == 0) ||
+          response_logs.match(/\n/g).length < tailLine.current
+        ) {
+          setTimeout(() => {
+            getLogsTailLoop();
+          }, 10000); // Sleep Ten seconds
         } else {
-          setTimeout(() => {getLogsTailLoop();}, 1000); // Sleep One Second
+          setTimeout(() => {
+            getLogsTailLoop();
+          }, 1000); // Sleep One Second
         }
       }
 
       function addErrorAlert() {
         setLoadingLogs(false);
-        msgs.current?.show({severity: "error", detail: "Something went wrong on the backend: Error attempting to retrieve logs - unable to determine log filename. Please verify that the plugin is writing to a log file.", sticky: true})
+        msgs.current?.show({
+          severity: "error",
+          detail:
+            "Something went wrong on the backend: Error attempting to retrieve logs - unable to determine log filename. Please verify that the plugin is writing to a log file.",
+          sticky: true,
+        });
       }
 
       function getLogsTail(instance: Instance) {
         setLoadingLogs(true);
         setDisplayLogs(undefined);
         stopTailing.current = false;
-    
+
         GetInstanceLogs(
-            instance,
-            waitTimeout.current,
-            tailStart.current,
-            null,
+          instance,
+          waitTimeout.current,
+          tailStart.current,
+          null,
         ).then(successTailLogs, addErrorAlert);
-      };
+      }
 
       function stopLogsTail() {
         stopTailing.current = true;
@@ -422,12 +440,12 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
           return;
         }
         GetInstanceLogs(
-            instance,
-            waitTimeout.current,
-            tailStart.current,
-            tailLine.current + tailStart.current,
+          instance,
+          waitTimeout.current,
+          tailStart.current,
+          tailLine.current + tailStart.current,
         ).then((response) => successTailLogs(response), addErrorAlert);
-      };
+      }
 
       function manageQueue(system: System, instance: Instance) {
         GetInstanceQueues(instance.id)
@@ -449,7 +467,7 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
             .then(() => {
               //QUEUE_CLEARED events do not have name to indicate the queue
               // Set to 0 on success code
-              setQueues(prevQueues => {
+              setQueues((prevQueues) => {
                 const newQueues = prevQueues.map((queue) => {
                   if (queue.name == queueName) {
                     queue.size = 0;
@@ -457,7 +475,7 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
                   return { ...queue };
                 });
                 return newQueues;
-              })
+              });
             })
             .catch((error) => {
               console.error("Error starting system:", error);
@@ -544,11 +562,9 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
         GetRequestList(buildFilter("SUCCESS")).then(
           (data: [Array<Request>, Headers]) => {
             const headers = data[1];
-            const count = parseInt(
-              headers.get("recordsFiltered") ?? "0",
-            )
+            const count = parseInt(headers.get("recordsFiltered") ?? "0");
             setSuccessCount(count);
-            setAllCount(prevCount => prevCount + count);
+            setAllCount((prevCount) => prevCount + count);
           },
           (response) => {
             let msg =
@@ -557,18 +573,20 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
               msg += response.data;
             }
             console.log(msg);
-            msgs.current?.show({severity: "error", detail: msg, sticky: true})
+            msgs.current?.show({
+              severity: "error",
+              detail: msg,
+              sticky: true,
+            });
           },
         );
 
         GetRequestList(buildFilter("CANCELED")).then(
           (data: [Array<Request>, Headers]) => {
             const headers = data[1];
-            const count = parseInt(
-              headers.get("recordsFiltered") ?? "0",
-            )
+            const count = parseInt(headers.get("recordsFiltered") ?? "0");
             setCanceledCount(count);
-            setAllCount(prevCount => prevCount + count);
+            setAllCount((prevCount) => prevCount + count);
           },
           (response) => {
             let msg =
@@ -577,18 +595,20 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
               msg += response.data;
             }
             console.log(msg);
-            msgs.current?.show({severity: "error", detail: msg, sticky: true})
+            msgs.current?.show({
+              severity: "error",
+              detail: msg,
+              sticky: true,
+            });
           },
         );
 
         GetRequestList(buildFilter("ERROR")).then(
           (data: [Array<Request>, Headers]) => {
             const headers = data[1];
-            const count = parseInt(
-              headers.get("recordsFiltered") ?? "0",
-            )
+            const count = parseInt(headers.get("recordsFiltered") ?? "0");
             setErrorCount(count);
-            setAllCount(prevCount => prevCount + count);
+            setAllCount((prevCount) => prevCount + count);
           },
           (response) => {
             let msg =
@@ -597,18 +617,20 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
               msg += response.data;
             }
             console.log(msg);
-            msgs.current?.show({severity: "error", detail: msg, sticky: true})
+            msgs.current?.show({
+              severity: "error",
+              detail: msg,
+              sticky: true,
+            });
           },
         );
 
         GetRequestList(buildFilter("CREATED")).then(
           (data: [Array<Request>, Headers]) => {
             const headers = data[1];
-            const count = parseInt(
-              headers.get("recordsFiltered") ?? "0",
-            );
+            const count = parseInt(headers.get("recordsFiltered") ?? "0");
             setCreatedCount(count);
-            setAllCount(prevCount => prevCount + count);
+            setAllCount((prevCount) => prevCount + count);
           },
           (response) => {
             let msg =
@@ -617,18 +639,20 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
               msg += response.data;
             }
             console.log(msg);
-            msgs.current?.show({severity: "error", detail: msg, sticky: true})
+            msgs.current?.show({
+              severity: "error",
+              detail: msg,
+              sticky: true,
+            });
           },
         );
 
         GetRequestList(buildFilter("RECEIVED")).then(
           (data: [Array<Request>, Headers]) => {
             const headers = data[1];
-            const count = parseInt(
-              headers.get("recordsFiltered") ?? "0",
-            )
+            const count = parseInt(headers.get("recordsFiltered") ?? "0");
             setReceivedCount(count);
-            setAllCount(prevCount => prevCount + count);
+            setAllCount((prevCount) => prevCount + count);
           },
           (response) => {
             let msg =
@@ -637,18 +661,20 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
               msg += response.data;
             }
             console.log(msg);
-            msgs.current?.show({severity: "error", detail: msg, sticky: true})
+            msgs.current?.show({
+              severity: "error",
+              detail: msg,
+              sticky: true,
+            });
           },
         );
 
         GetRequestList(buildFilter("IN_PROGRESS")).then(
           (data: [Array<Request>, Headers]) => {
             const headers = data[1];
-            const count = parseInt(
-              headers.get("recordsFiltered") ?? "0",
-            )
+            const count = parseInt(headers.get("recordsFiltered") ?? "0");
             setInProgressCount(count);
-            setAllCount(prevCount => prevCount + count);
+            setAllCount((prevCount) => prevCount + count);
           },
           (response) => {
             let msg =
@@ -657,7 +683,11 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
               msg += response.data;
             }
             console.log(msg);
-            msgs.current?.show({severity: "error", detail: msg, sticky: true})
+            msgs.current?.show({
+              severity: "error",
+              detail: msg,
+              sticky: true,
+            });
           },
         );
       }
@@ -668,14 +698,27 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
       }
 
       function addSuccessAlert() {
-        msgs.current?.show({severity: "info", detail: "Success! Requests have been deleted.", sticky: true})
+        msgs.current?.show({
+          severity: "info",
+          detail: "Success! Requests have been deleted.",
+          sticky: true,
+        });
       }
 
       function addDeleteErrorAlert() {
-        msgs.current?.show({severity: "error", detail: "Uh oh! It looks like there was a problem deleting the Requests.", sticky: true})
+        msgs.current?.show({
+          severity: "error",
+          detail:
+            "Uh oh! It looks like there was a problem deleting the Requests.",
+          sticky: true,
+        });
       }
 
-      function deleteRequests(status: string, msg: string, is_cancel: boolean = false) {
+      function deleteRequests(
+        status: string,
+        msg: string,
+        is_cancel: boolean = false,
+      ) {
         const deleteParams: Record<string, any> = {
           namespace: system.namespace,
           system: system.name,
@@ -693,15 +736,15 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
 
         const accept = () => {
           DeleteRequests(deleteParams)
-            .then(() => {           
+            .then(() => {
               loadRequests();
-              addSuccessAlert()
+              addSuccessAlert();
             }, addDeleteErrorAlert)
             .catch((error) => {
               console.error("Error fetching queues:", error);
             });
         };
-    
+
         const reject = () => {};
 
         const confirm = () => {
@@ -782,7 +825,12 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
                     visible={logsVisible}
                     style={{ width: "50vw" }}
                     onShow={() => {
-                      msgs.current?.show({severity: "info", detail: "Plugin must be listening to the Admin Queue and logging to File for logs to be returned. This will only return information from the log file being actively written to.", sticky: true})
+                      msgs.current?.show({
+                        severity: "info",
+                        detail:
+                          "Plugin must be listening to the Admin Queue and logging to File for logs to be returned. This will only return information from the log file being actively written to.",
+                        sticky: true,
+                      });
                     }}
                     onHide={() => {
                       if (!logsVisible) return;
@@ -796,12 +844,16 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
                           name="start"
                           value="Get Tail Logs"
                           onClick={() => getLogsTail(instance)}
-                        >Get Tail Logs</Button>
+                        >
+                          Get Tail Logs
+                        </Button>
                         <Button
                           name="stop"
                           value="Stop Tail Logs"
                           onClick={() => stopLogsTail()}
-                        >Stop Tail Logs</Button>
+                        >
+                          Stop Tail Logs
+                        </Button>
                         <label htmlFor="tail_line_start">Tail Lines</label>
                         <input
                           type="number"
@@ -820,29 +872,38 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
                           <Button>Get Full Logs</Button>
                         </a>
                       </div>
-                      { loadingLogs &&
+                      {loadingLogs && (
                         <div id="loading" className="col-md-12 text-center">
                           <h1>
                             <div>Loading...</div>
-                            <div><i className="fa fa-spinner fa-pulse fa-2x"></i></div>
+                            <div>
+                              <i className="fa fa-spinner fa-pulse fa-2x"></i>
+                            </div>
                           </h1>
                         </div>
-                      }
-                      { logs !== undefined && 
+                      )}
+                      {logs !== undefined && (
                         <div className="container-fluid animate-if">
                           <br />
-                          { displayLogs !== undefined &&
-                           <>
-                            <a
+                          {displayLogs !== undefined && (
+                            <>
+                              <a
                                 className="fa fa-download pull-right"
                                 href={downloadHref.current}
                                 download={filename}
-                              >Download</a>
-                              <pre id="rawOutput" ng-show="displayLogs !== undefined">{displayLogs}</pre>
-                           </>
-                          }
+                              >
+                                Download
+                              </a>
+                              <pre
+                                id="rawOutput"
+                                ng-show="displayLogs !== undefined"
+                              >
+                                {displayLogs}
+                              </pre>
+                            </>
+                          )}
                         </div>
-                      }
+                      )}
                     </div>
                   </Dialog>
                   <Dialog
@@ -899,8 +960,7 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
                   >
                     <Messages ref={msgs} />
                     <div>
-                      Currently {allCount} Requests present in the
-                      database
+                      Currently {allCount} Requests present in the database
                     </div>
                     <br />
                     <table
@@ -917,10 +977,14 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
                           <td>SUCCESS</td>
                           <td>{successCount}</td>
                           <td>
-                            <Button onClick={() => deleteRequests(
-                              "SUCCESS",
-                              "Are you sure you want to delete Requests with status SUCCESS?"
-                            )}>
+                            <Button
+                              onClick={() =>
+                                deleteRequests(
+                                  "SUCCESS",
+                                  "Are you sure you want to delete Requests with status SUCCESS?",
+                                )
+                              }
+                            >
                               Delete SUCCESS
                             </Button>
                           </td>
@@ -929,10 +993,14 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
                           <td>CANCELED</td>
                           <td>{canceledCount}</td>
                           <td>
-                            <Button onClick={() => deleteRequests(
-                              "CANCELED",
-                              "Are you sure you want to delete Requests with status CANCELED?",
-                              )}>
+                            <Button
+                              onClick={() =>
+                                deleteRequests(
+                                  "CANCELED",
+                                  "Are you sure you want to delete Requests with status CANCELED?",
+                                )
+                              }
+                            >
                               Delete CANCELED
                             </Button>
                           </td>
@@ -941,10 +1009,14 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
                           <td>ERROR</td>
                           <td>{errorCount}</td>
                           <td>
-                            <Button onClick={() => deleteRequests(
-                              "ERROR",
-                              "Are you sure you want to delete Requests with status ERROR?",
-                              )}>
+                            <Button
+                              onClick={() =>
+                                deleteRequests(
+                                  "ERROR",
+                                  "Are you sure you want to delete Requests with status ERROR?",
+                                )
+                              }
+                            >
                               Delete ERROR
                             </Button>
                           </td>
@@ -1003,17 +1075,15 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
                         <tr>
                           <td>Non-Completed (CREATED/RECEIVED/IN PROGRESS)</td>
                           <td>
-                            {inProgressCount +
-                              receivedCount +
-                              createdCount}
+                            {inProgressCount + receivedCount + createdCount}
                           </td>
                           <td>
                             <Button
                               onClick={() =>
                                 deleteRequests(
                                   "ALL",
-                                  "Are you sure you want to cancel all non-completed Requests?", 
-                                  true
+                                  "Are you sure you want to cancel all non-completed Requests?",
+                                  true,
                                 )
                               }
                             >
@@ -1025,10 +1095,14 @@ function SystemCards({ listeners }: { listeners: Record<string, any> }) {
                           <td>ALL</td>
                           <td>{allCount}</td>
                           <td>
-                            <Button onClick={() => deleteRequests(
-                              "ALL",
-                              "Are you sure you want to delete all the Requests?",
-                              )}>
+                            <Button
+                              onClick={() =>
+                                deleteRequests(
+                                  "ALL",
+                                  "Are you sure you want to delete all the Requests?",
+                                )
+                              }
+                            >
                               Delete All
                             </Button>
                           </td>
