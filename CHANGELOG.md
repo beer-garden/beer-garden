@@ -4,6 +4,15 @@
 
 TBD
 
+# 3.31.1
+
+1/7/2026
+
+- Fixed when latest is used for system version but there are no systems with that name (#2032)
+- Fixed UI Request Create with unicode garden names not supported via headers (#2035) 
+- Fixed error comparing timezone-aware and timezone-naive datetimes. (#2038)
+- Fixed Migration script logic for MongoDB (#2034)
+
 # ~~3.32.0rc0~~ (Pushed to 3.33.0rc0)
 
 12/17/2025

@@ -31,7 +31,7 @@ setup(
     license="MIT",
     keywords="beer beer-garden beergarden",
     install_requires=[
-        "brewtils>=3.32.0rc0",
+        "brewtils>=3.33.0rc0",
 
         # Using Latest Version   
         "apispec>=6.7,<7", # Latest 6.8.4
@@ -61,7 +61,7 @@ setup(
         "python-box<4", # Latest 7.3.2     
         # Can't go to 18 after yapconf migrates away from _safe functions
         "ruamel.yaml<0.18", # Latest 0.18.5
-        "yapconf<1.0", # Latest 0.4.0
+        "yapconf<0.5", # Latest 0.4.0
 
         # Brewtils drives marshmallow version
         "marshmallow<4.1,>=4.0", # Latest 4.0.1
