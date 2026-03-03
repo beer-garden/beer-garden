@@ -5,6 +5,7 @@ TBD
 
 - Fixed CSS issue with Raw Output limiting the height of output (#2064)
 - Fixed UI bug where Pour Again failed to render if a parameter value is `null` (#2050)
+- Fixed Target-Garden header mapping to handle special character exceptions (#2045)
 
 # 3.31.1
 
