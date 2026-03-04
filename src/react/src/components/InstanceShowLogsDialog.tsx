@@ -3,7 +3,7 @@ import { Dialog } from "primereact/dialog";
 import { Messages } from "primereact/messages";
 import { useRef, useState } from "react";
 
-import { Instance, Queue,System } from "../models/brewtils-types";
+import { Instance, System } from "../models/brewtils-types";
 import { GetInstanceLogs } from "../services/instance_service";
 
 interface InstanceShowLogsDialogProps {
