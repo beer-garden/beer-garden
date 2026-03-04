@@ -5,26 +5,18 @@ import { Badge } from "primereact/badge";
 import { Button } from "primereact/button";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { DataView } from "primereact/dataview";
-import { Dialog } from "primereact/dialog";
 import { Menu } from "primereact/menu";
-import { Messages } from "primereact/messages";
 import { Panel } from "primereact/panel";
 import { Toast } from "primereact/toast";
 import { classNames } from "primereact/utils";
 import { useEffect, useRef, useState } from "react";
 
-import { Instance, Queue, Request, System } from "../models/brewtils-types";
-import {
-  GetInstanceLogs,
-  StartInstance,
-  StopInstance,
-} from "../services/instance_service";
-import {
-  ClearAllQueues,
-  ClearQueue,
-  GetInstanceQueues,
-} from "../services/queue_service";
-import { DeleteRequests, GetRequestList } from "../services/request_service";
+import InstanceCancelDeleteDialog from "../components/InstanceCancelDeleteRequestsDialog";
+import InstanceManageQueueDialog from "../components/InstanceManageQueueDialog";
+import InstanceShowLogsDialog from "../components/InstanceShowLogsDialog";
+import { Instance, System } from "../models/brewtils-types";
+import { StartInstance, StopInstance } from "../services/instance_service";
+import { ClearAllQueues } from "../services/queue_service";
 import { PushToScratchPad } from "../services/scratchpad_service";
 import {
   DeleteSystem,
@@ -33,7 +25,13 @@ import {
   Rescan,
 } from "../services/system_service";
 
-function SystemCards({ listeners, setReloadScratchPad }: { listeners: Record<string, any>, setReloadScratchPad: any }) {
+function SystemCards({
+  listeners,
+  setReloadScratchPad,
+}: {
+  listeners: Record<string, any>;
+  setReloadScratchPad: any;
+}) {
   const [systems, setSystems] = useState<Array<System>>([]);
 
   const MonitorSystemEvents = (message: any) => {
@@ -338,466 +336,30 @@ function SystemCards({ listeners, setReloadScratchPad }: { listeners: Record<str
       index: number,
     ) => {
       const instanceConfigMenu = useRef<Menu>(null);
+
       const [logsVisible, setLogsVisible] = useState(false);
+      const closeLogsDialog = () => setLogsVisible(false);
       const [queueVisible, setQueueVisible] = useState(false);
-      const [queues, setQueues] = useState<Array<Queue>>([]);
+      const closeQueueDialog = () => setQueueVisible(false);
       const [cancelDeleteVisible, setCancelDeleteVisible] = useState(false);
+      const closeCancelDeleteDialog = () => setCancelDeleteVisible(false);
 
       const statusSeverity = getSeverity(instance?.status);
-      const msgs = useRef<Messages>(null);
-
-      const tailStart = useRef<number>(-20);
-      const tailLine = useRef<number>(20);
-      const waitTimeout = useRef<number>(30);
-      const stopTailing = useRef<boolean>(false);
-      const [logs, setLogs] = useState<Array<string> | undefined>(undefined);
-      const [displayLogs, setDisplayLogs] = useState<string | undefined>(
-        undefined,
-      );
-      const [loadingLogs, setLoadingLogs] = useState<boolean>(false);
-      const downloadHref = useRef<string>(undefined);
-
-      const [allCount, setAllCount] = useState<number>(0);
-      const [successCount, setSuccessCount] = useState<number>(0);
-      const [canceledCount, setCanceledCount] = useState<number>(0);
-      const [errorCount, setErrorCount] = useState<number>(0);
-      const [createdCount, setCreatedCount] = useState<number>(0);
-      const [receivedCount, setReceivedCount] = useState<number>(0);
-      const [inProgressCount, setInProgressCount] = useState<number>(0);
-
-      function showLogs() {
-        setLogsVisible(true);
-      }
-
-      const updateTailLineStart = (event: any) => {
-        if (event.target.value > 0) {
-          tailStart.current = event.target.value * -1;
-        } else {
-          tailStart.current = event.target.value;
-        }
-      };
-
-      function successTailLogs(response: any) {
-        setLoadingLogs(false);
-        //let appendLogs = true;
-
-        if (displayLogs === undefined) {
-          setDisplayLogs("");
-          setLogs([]);
-          //appendLogs = false;
-        }
-
-        const requestId = response.headers("request_id");
-        downloadHref.current = "api/v1/requests/output/" + requestId;
-
-        let response_logs = null;
-
-        if (typeof response.data === "string") {
-          // Legacy support for log only responses
-          response_logs = response.data;
-
-          if (response_logs !== null && response_logs.length > 0) {
-            tailStart.current =
-              tailStart.current + response.data.match(/\n/g).length + 1;
-          }
-        } else {
-          // New log response structure
-          response_logs = response.data.logs;
-
-          if (response_logs !== null && response_logs.length > 0) {
-            tailStart.current = response.data.end_line + 1;
-          }
-        }
-
-        for (let i = 0; i < response_logs.length; i++) {
-          setDisplayLogs(displayLogs!.concat(response_logs[i]));
-        }
-
-        // Sleep so you don't spam the server
-        if (
-          (response_logs !== null && response_logs.length == 0) ||
-          response_logs.match(/\n/g).length < tailLine.current
-        ) {
-          setTimeout(() => {
-            getLogsTailLoop();
-          }, 10000); // Sleep Ten seconds
-        } else {
-          setTimeout(() => {
-            getLogsTailLoop();
-          }, 1000); // Sleep One Second
-        }
-      }
-
-      function addErrorAlert() {
-        setLoadingLogs(false);
-        msgs.current?.show({
-          severity: "error",
-          detail:
-            "Something went wrong on the backend: Error attempting to retrieve logs - unable to determine log filename. Please verify that the plugin is writing to a log file.",
-          sticky: true,
-        });
-      }
-
-      function getLogsTail(instance: Instance) {
-        setLoadingLogs(true);
-        setDisplayLogs(undefined);
-        stopTailing.current = false;
-
-        GetInstanceLogs(
-          instance,
-          waitTimeout.current,
-          tailStart.current,
-          null,
-        ).then(successTailLogs, addErrorAlert);
-      }
-
-      function stopLogsTail() {
-        stopTailing.current = true;
-      }
-
-      function getLogsTailLoop() {
-        if (stopTailing.current) {
-          return;
-        }
-        GetInstanceLogs(
-          instance,
-          waitTimeout.current,
-          tailStart.current,
-          tailLine.current + tailStart.current,
-        ).then((response) => successTailLogs(response), addErrorAlert);
-      }
-
-      function manageQueue(system: System, instance: Instance) {
-        GetInstanceQueues(instance.id)
-          .then((data: Array<Queue>) => {
-            setQueues(data);
-            setQueueVisible(true);
-          })
-          .catch((error) => {
-            console.error("Error fetching queues:", error);
-          });
-      }
-
-      function clearQueue(queueName: string | undefined) {
-        const accept = () => {
-          if (!queueName) {
-            return;
-          }
-          ClearQueue(queueName)
-            .then(() => {
-              //QUEUE_CLEARED events do not have name to indicate the queue
-              // Set to 0 on success code
-              setQueues((prevQueues) => {
-                const newQueues = prevQueues.map((queue) => {
-                  if (queue.name == queueName) {
-                    queue.size = 0;
-                  }
-                  return { ...queue };
-                });
-                return newQueues;
-              });
-            })
-            .catch((error) => {
-              console.error("Error starting system:", error);
-            });
-        };
-
-        const reject = () => {};
-
-        const confirm = () => {
-          confirmDialog({
-            message: "Are you sure you want to clear the Queue?",
-            header: "Confirm",
-            icon: <FontAwesomeIcon icon="exclamation" />,
-            defaultFocus: "accept",
-            accept,
-            reject,
-          });
-        };
-
-        confirm();
-      }
-
-      function buildFilter(status: string) {
-        return {
-          include_children: true,
-          length: 1,
-          columns: [
-            {
-              data: "namespace__exact",
-              name: "",
-              searchable: true,
-              orderable: true,
-              search: {
-                value: system.namespace,
-                regex: false,
-              },
-            },
-            {
-              data: "system__exact",
-              name: "",
-              searchable: true,
-              orderable: true,
-              search: {
-                value: system.name,
-                regex: false,
-              },
-            },
-            {
-              data: "system_version__exact",
-              name: "",
-              searchable: true,
-              orderable: true,
-              search: {
-                value: system.version,
-                regex: false,
-              },
-            },
-            {
-              data: "instance_name__exact",
-              name: "",
-              searchable: true,
-              orderable: true,
-              search: {
-                value: instance.name,
-                regex: false,
-              },
-            },
-            {
-              data: "status",
-              name: "",
-              searchable: true,
-              orderable: true,
-              search: {
-                value: status == "ALL" ? "" : status,
-                regex: false,
-              },
-            },
-          ],
-        };
-      }
-
-      function loadRequests() {
-        setAllCount(0);
-        GetRequestList(buildFilter("SUCCESS")).then(
-          (data: [Array<Request>, Headers]) => {
-            const headers = data[1];
-            const count = parseInt(headers.get("recordsFiltered") ?? "0");
-            setSuccessCount(count);
-            setAllCount((prevCount) => prevCount + count);
-          },
-          (response) => {
-            let msg =
-              "Uh oh! It looks like there was a problem counting the SUCCESS Requests.\n";
-            if (response.data !== undefined && response.data !== null) {
-              msg += response.data;
-            }
-            console.log(msg);
-            msgs.current?.show({
-              severity: "error",
-              detail: msg,
-              sticky: true,
-            });
-          },
-        );
-
-        GetRequestList(buildFilter("CANCELED")).then(
-          (data: [Array<Request>, Headers]) => {
-            const headers = data[1];
-            const count = parseInt(headers.get("recordsFiltered") ?? "0");
-            setCanceledCount(count);
-            setAllCount((prevCount) => prevCount + count);
-          },
-          (response) => {
-            let msg =
-              "Uh oh! It looks like there was a problem counting the CANCELED Requests.\n";
-            if (response.data !== undefined && response.data !== null) {
-              msg += response.data;
-            }
-            console.log(msg);
-            msgs.current?.show({
-              severity: "error",
-              detail: msg,
-              sticky: true,
-            });
-          },
-        );
-
-        GetRequestList(buildFilter("ERROR")).then(
-          (data: [Array<Request>, Headers]) => {
-            const headers = data[1];
-            const count = parseInt(headers.get("recordsFiltered") ?? "0");
-            setErrorCount(count);
-            setAllCount((prevCount) => prevCount + count);
-          },
-          (response) => {
-            let msg =
-              "Uh oh! It looks like there was a problem counting the ERROR Requests.\n";
-            if (response.data !== undefined && response.data !== null) {
-              msg += response.data;
-            }
-            console.log(msg);
-            msgs.current?.show({
-              severity: "error",
-              detail: msg,
-              sticky: true,
-            });
-          },
-        );
-
-        GetRequestList(buildFilter("CREATED")).then(
-          (data: [Array<Request>, Headers]) => {
-            const headers = data[1];
-            const count = parseInt(headers.get("recordsFiltered") ?? "0");
-            setCreatedCount(count);
-            setAllCount((prevCount) => prevCount + count);
-          },
-          (response) => {
-            let msg =
-              "Uh oh! It looks like there was a problem counting the CREATED Requests.\n";
-            if (response.data !== undefined && response.data !== null) {
-              msg += response.data;
-            }
-            console.log(msg);
-            msgs.current?.show({
-              severity: "error",
-              detail: msg,
-              sticky: true,
-            });
-          },
-        );
-
-        GetRequestList(buildFilter("RECEIVED")).then(
-          (data: [Array<Request>, Headers]) => {
-            const headers = data[1];
-            const count = parseInt(headers.get("recordsFiltered") ?? "0");
-            setReceivedCount(count);
-            setAllCount((prevCount) => prevCount + count);
-          },
-          (response) => {
-            let msg =
-              "Uh oh! It looks like there was a problem counting the RECEIVED Requests.\n";
-            if (response.data !== undefined && response.data !== null) {
-              msg += response.data;
-            }
-            console.log(msg);
-            msgs.current?.show({
-              severity: "error",
-              detail: msg,
-              sticky: true,
-            });
-          },
-        );
-
-        GetRequestList(buildFilter("IN_PROGRESS")).then(
-          (data: [Array<Request>, Headers]) => {
-            const headers = data[1];
-            const count = parseInt(headers.get("recordsFiltered") ?? "0");
-            setInProgressCount(count);
-            setAllCount((prevCount) => prevCount + count);
-          },
-          (response) => {
-            let msg =
-              "Uh oh! It looks like there was a problem counting the IN PROGRESS Requests.\n";
-            if (response.data !== undefined && response.data !== null) {
-              msg += response.data;
-            }
-            console.log(msg);
-            msgs.current?.show({
-              severity: "error",
-              detail: msg,
-              sticky: true,
-            });
-          },
-        );
-      }
-
-      function cancelDeleteRequests() {
-        loadRequests();
-        setCancelDeleteVisible(true);
-      }
-
-      function addSuccessAlert() {
-        msgs.current?.show({
-          severity: "info",
-          detail: "Success! Requests have been deleted.",
-          sticky: true,
-        });
-      }
-
-      function addDeleteErrorAlert() {
-        msgs.current?.show({
-          severity: "error",
-          detail:
-            "Uh oh! It looks like there was a problem deleting the Requests.",
-          sticky: true,
-        });
-      }
-
-      function deleteRequests(
-        status: string,
-        msg: string,
-        is_cancel: boolean = false,
-      ) {
-        const deleteParams: Record<string, any> = {
-          namespace: system.namespace,
-          system: system.name,
-          system_version: system.version,
-          instance_name: instance.name,
-        };
-
-        if (is_cancel) {
-          deleteParams["is_cancel"] = true;
-        }
-
-        if (status != "ALL") {
-          deleteParams["status"] = status;
-        }
-
-        const accept = () => {
-          DeleteRequests(deleteParams)
-            .then(() => {
-              loadRequests();
-              addSuccessAlert();
-            }, addDeleteErrorAlert)
-            .catch((error) => {
-              console.error("Error fetching queues:", error);
-            });
-        };
-
-        const reject = () => {};
-
-        const confirm = () => {
-          confirmDialog({
-            message: msg,
-            header: "Confirmation",
-            icon: "pi pi-exclamation-triangle",
-            defaultFocus: "accept",
-            accept,
-            reject,
-          });
-        };
-
-        confirm();
-      }
 
       const instanceMenuItems = [
         {
           label: "Show Logs",
-          command: () => showLogs(),
+          command: () => setLogsVisible(true),
         },
         {
           label: "Manage Queue",
-          command: () => manageQueue(system, instance),
+          command: () => setQueueVisible(true),
         },
         {
           label: "Cancel/Delete Requests",
-          command: () => cancelDeleteRequests(),
+          command: () => setCancelDeleteVisible(true),
         },
       ];
-
-      const filename =
-        system.name + "[" + system.version + "]-" + instance.name + ".log";
 
       return (
         <div className="col-12" key={instance.id}>
@@ -835,301 +397,24 @@ function SystemCards({ listeners, setReloadScratchPad }: { listeners: Record<str
                     ref={instanceConfigMenu}
                     id="instance_menu"
                   />
-                  <Dialog
-                    header={`Log File: ${system.name}[${system.version}]-${instance.name}`}
-                    footer={
-                      <Button onClick={() => setLogsVisible(false)}>
-                        Close Logs
-                      </Button>
-                    }
-                    visible={logsVisible}
-                    style={{ width: "50vw" }}
-                    onShow={() => {
-                      msgs.current?.show({
-                        severity: "info",
-                        detail:
-                          "Plugin must be listening to the Admin Queue and logging to File for logs to be returned. This will only return information from the log file being actively written to.",
-                        sticky: true,
-                      });
-                    }}
-                    onHide={() => {
-                      if (!logsVisible) return;
-                      setLogsVisible(false);
-                    }}
-                  >
-                    <Messages ref={msgs} />
-                    <div>
-                      <div>
-                        <Button
-                          name="start"
-                          value="Get Tail Logs"
-                          onClick={() => getLogsTail(instance)}
-                        >
-                          Get Tail Logs
-                        </Button>
-                        <Button
-                          name="stop"
-                          value="Stop Tail Logs"
-                          onClick={() => stopLogsTail()}
-                        >
-                          Stop Tail Logs
-                        </Button>
-                        <label htmlFor="tail_line_start">Tail Lines</label>
-                        <input
-                          type="number"
-                          id="tail_line_start"
-                          min="0"
-                          defaultValue={20}
-                          name="tail_line_start"
-                          onChange={updateTailLineStart}
-                        />
-                      </div>
-                      <div>
-                        <a
-                          href={`api/v1/instances/${instance.id}/logs/?logs_only=true`}
-                          download={filename}
-                        >
-                          <Button>Get Full Logs</Button>
-                        </a>
-                      </div>
-                      {loadingLogs && (
-                        <div id="loading" className="col-md-12 text-center">
-                          <h1>
-                            <div>Loading...</div>
-                            <div>
-                              <i className="fa fa-spinner fa-pulse fa-2x"></i>
-                            </div>
-                          </h1>
-                        </div>
-                      )}
-                      {logs !== undefined && (
-                        <div className="container-fluid animate-if">
-                          <br />
-                          {displayLogs !== undefined && (
-                            <>
-                              <a
-                                className="fa fa-download pull-right"
-                                href={downloadHref.current}
-                                download={filename}
-                              >
-                                Download
-                              </a>
-                              <pre
-                                id="rawOutput"
-                                ng-show="displayLogs !== undefined"
-                              >
-                                {displayLogs}
-                              </pre>
-                            </>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </Dialog>
-                  <Dialog
-                    header={`Queue Manager: ${system.name}[${system.version}]-${instance.name}`}
-                    footer={
-                      <Button onClick={() => setQueueVisible(false)}>
-                        Close
-                      </Button>
-                    }
-                    visible={queueVisible}
-                    style={{ width: "50vw" }}
-                    onHide={() => {
-                      if (!queueVisible) return;
-                      setQueueVisible(false);
-                    }}
-                  >
-                    <table className="table">
-                      <thead>
-                        <tr>
-                          <th scope="col">Name</th>
-                          <th scope="col">Message Size</th>
-                          <th scope="col"></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {queues.map((queue, index) => (
-                          <tr key={index}>
-                            <td>{queue.name}</td>
-                            <td>{queue.size}</td>
-                            <td>
-                              <ConfirmDialog message="Are you sure you want to clear the Queue?" />
-                              <Button onClick={() => clearQueue(queue.name)}>
-                                Clear Queue
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </Dialog>
-                  <Dialog
-                    header={`Cancel/Delete Requests: ${system.name}[${system.version}]-${instance.name}`}
-                    footer={
-                      <Button onClick={() => setCancelDeleteVisible(false)}>
-                        Close
-                      </Button>
-                    }
-                    visible={cancelDeleteVisible}
-                    style={{ width: "50vw" }}
-                    onHide={() => {
-                      if (!cancelDeleteVisible) return;
-                      setCancelDeleteVisible(false);
-                    }}
-                  >
-                    <Messages ref={msgs} />
-                    <div>
-                      Currently {allCount} Requests present in the database
-                    </div>
-                    <br />
-                    <table
-                      id="requestDeleteCancelTable"
-                      className="table table-striped table-bordered w-100"
-                    >
-                      <tbody>
-                        <tr>
-                          <th>Status</th>
-                          <th>Count</th>
-                          <th>Action</th>
-                        </tr>
-                        <tr>
-                          <td>SUCCESS</td>
-                          <td>{successCount}</td>
-                          <td>
-                            <Button
-                              onClick={() =>
-                                deleteRequests(
-                                  "SUCCESS",
-                                  "Are you sure you want to delete Requests with status SUCCESS?",
-                                )
-                              }
-                            >
-                              Delete SUCCESS
-                            </Button>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>CANCELED</td>
-                          <td>{canceledCount}</td>
-                          <td>
-                            <Button
-                              onClick={() =>
-                                deleteRequests(
-                                  "CANCELED",
-                                  "Are you sure you want to delete Requests with status CANCELED?",
-                                )
-                              }
-                            >
-                              Delete CANCELED
-                            </Button>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>ERROR</td>
-                          <td>{errorCount}</td>
-                          <td>
-                            <Button
-                              onClick={() =>
-                                deleteRequests(
-                                  "ERROR",
-                                  "Are you sure you want to delete Requests with status ERROR?",
-                                )
-                              }
-                            >
-                              Delete ERROR
-                            </Button>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>IN PROGRESS</td>
-                          <td>{inProgressCount}</td>
-                          <td>
-                            <Button
-                              onClick={() =>
-                                deleteRequests(
-                                  "IN PROGRESS",
-                                  "Are you sure you want to cancel Requests with status IN PROGRESS? There may be a plugin already running the request.",
-                                  true,
-                                )
-                              }
-                            >
-                              Cancel IN PROGRESS
-                            </Button>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>RECEIVED</td>
-                          <td>{receivedCount}</td>
-                          <td>
-                            <Button
-                              onClick={() =>
-                                deleteRequests(
-                                  "RECEIVED",
-                                  "Are you sure you want to cancel Requests with status RECEIVED?",
-                                  true,
-                                )
-                              }
-                            >
-                              Cancel RECEIVED
-                            </Button>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>CREATED</td>
-                          <td>{createdCount}</td>
-                          <td>
-                            <Button
-                              onClick={() =>
-                                deleteRequests(
-                                  "CREATED",
-                                  "Are you sure you want to cancel Requests with status CREATED? Recommend clearing topics as well.",
-                                  true,
-                                )
-                              }
-                            >
-                              Cancel CREATED
-                            </Button>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>Non-Completed (CREATED/RECEIVED/IN PROGRESS)</td>
-                          <td>
-                            {inProgressCount + receivedCount + createdCount}
-                          </td>
-                          <td>
-                            <Button
-                              onClick={() =>
-                                deleteRequests(
-                                  "ALL",
-                                  "Are you sure you want to cancel all non-completed Requests?",
-                                  true,
-                                )
-                              }
-                            >
-                              Cancel Non-Completed
-                            </Button>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>ALL</td>
-                          <td>{allCount}</td>
-                          <td>
-                            <Button
-                              onClick={() =>
-                                deleteRequests(
-                                  "ALL",
-                                  "Are you sure you want to delete all the Requests?",
-                                )
-                              }
-                            >
-                              Delete All
-                            </Button>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </Dialog>
+                  <InstanceShowLogsDialog
+                    instance={instance}
+                    system={system}
+                    isVisible={logsVisible}
+                    onClose={closeLogsDialog}
+                  />
+                  <InstanceManageQueueDialog
+                    instance={instance}
+                    system={system}
+                    isVisible={queueVisible}
+                    onClose={closeQueueDialog}
+                  />
+                  <InstanceCancelDeleteDialog
+                    instance={instance}
+                    system={system}
+                    isVisible={cancelDeleteVisible}
+                    onClose={closeCancelDeleteDialog}
+                  />
                   <Button
                     className="mr-2"
                     title={`Admin Tools for ${instance.name}`}
