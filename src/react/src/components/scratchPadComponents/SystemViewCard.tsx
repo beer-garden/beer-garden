@@ -273,7 +273,7 @@ function SystemViewCard({
             if (count && count > 0) {
               const statusSeverity = getSeverity(status);
               return (
-                <Badge value={count} severity={statusSeverity} title={status} />
+                <Badge value={count} severity={statusSeverity} key={status} title={status} />
               );
             }
             return null;
