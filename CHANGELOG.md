@@ -1,7 +1,7 @@
 # Beer Garden Changelog
 
 # 3.32.0
-TBD
+3/4/2026
 
 - Fixed CSS issue with Raw Output limiting the height of output (#2064)
 - Update Yapconf library (#2036)
