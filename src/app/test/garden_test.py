@@ -3,14 +3,13 @@ import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-import mongomock
 import pytest
 from brewtils.models import Connection as BrewtilsConnection
 from brewtils.models import Event, Events
 from brewtils.models import Garden as BrewtilsGarden
 from brewtils.models import System as BrewtilsSystem
 from mock import Mock
-from mongoengine import DoesNotExist, connect
+from mongoengine import DoesNotExist
 
 import beer_garden
 from beer_garden import config
@@ -82,11 +81,6 @@ def remotegarden():
 class TestGarden:
     @classmethod
     def setup_class(cls):
-        connect(
-            "beer_garden",
-            host="mongodb://localhost",
-            mongo_client_class=mongomock.MongoClient,
-        )
         config._CONFIG = {"garden": {"name": "localgarden"}}
 
     def test_get_garden(self, localgarden):

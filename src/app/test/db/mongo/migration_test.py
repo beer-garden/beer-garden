@@ -7,7 +7,6 @@ import pytest
 from bson.dbref import DBRef
 from mock import Mock, patch
 from mongoengine.connection import get_db
-from mongomock.gridfs import enable_gridfs_integration
 
 from beer_garden import config
 from beer_garden.db.mongo.migration import (  # ensure_roles,; ensure_users,
@@ -15,8 +14,6 @@ from beer_garden.db.mongo.migration import (  # ensure_roles,; ensure_users,
     ensure_v3_29_model_migration,
     ensure_v3_30_model_migration,
 )
-
-enable_gridfs_integration()
 
 
 @pytest.fixture(autouse=True)

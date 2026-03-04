@@ -4,6 +4,7 @@
 This is the core library for Beer-Garden. Anything that is spawned by the Main Process
 in Beer-Garden will be initialized within this class.
 """
+
 import logging
 import os
 import signal
@@ -439,26 +440,26 @@ class Application(StoppableThread):
 
         # Set up parent connection
         cfg = config.get("parent.http")
-        if cfg.enabled:
+        if config.get("enabled", cfg):
 
             def reconnect_action():
                 beer_garden.garden.publish_garden()
 
             easy_client = EasyClient(
-                bg_host=cfg.host,
-                bg_port=cfg.port,
-                bg_url_prefix=cfg.url_prefix,
-                access_token=cfg.access_token,
-                api_version=cfg.api_version,
-                client_timeout=cfg.client_timeout,
-                password=cfg.password,
-                refresh_token=cfg.password,
-                username=cfg.username,
-                ssl_enabled=cfg.ssl.enabled,
-                ca_cert=cfg.ssl.ca_cert,
-                ca_verify=cfg.ssl.ca_verify,
-                client_cert=cfg.ssl.client_cert,
-                client_key=cfg.ssl.client_key,
+                bg_host=config.get("host", cfg),
+                bg_port=config.get("port", cfg),
+                bg_url_prefix=config.get("url_prefix", cfg),
+                access_token=config.get("access_token", cfg),
+                api_version=config.get("api_version", cfg),
+                client_timeout=config.get("client_timeout", cfg),
+                password=config.get("password", cfg),
+                refresh_token=config.get("refresh_token", cfg),
+                username=config.get("username", cfg),
+                ssl_enabled=config.get("ssl.enabled", cfg),
+                ca_cert=config.get("ssl.ca_cert", cfg),
+                ca_verify=config.get("ssl.ca_verify", cfg),
+                client_cert=config.get("ssl.client_cert", cfg),
+                client_key=config.get("ssl.client_key", cfg),
             )
 
             event_manager.register(
