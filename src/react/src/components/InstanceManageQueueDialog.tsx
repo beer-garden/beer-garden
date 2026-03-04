@@ -4,7 +4,7 @@ import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Dialog } from "primereact/dialog";
 import { useEffect, useRef, useState } from "react";
 
-import { Instance, Queue,System } from "../models/brewtils-types";
+import { Instance, Queue, System } from "../models/brewtils-types";
 import { ClearQueue, GetInstanceQueues } from "../services/queue_service";
 
 interface InstanceManageQueueDialogProps {

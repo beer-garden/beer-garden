@@ -39,8 +39,17 @@ function SystemCards({
       setSystems((prevSystems) => {
         return prevSystems.filter((s) => s.id != message.payload.id);
       });
-    }
-    if (
+      const sessSystems = sessionStorage.getItem("systems");
+      if (sessSystems) {
+        const jsonSystems = JSON.parse(sessSystems);
+        sessionStorage.setItem(
+          "systems",
+          JSON.stringify(
+            jsonSystems.filter((s: System) => s.id != message.payload.id),
+          ),
+        );
+      }
+    } else if (
       message.name == "INSTANCE_STARTED" ||
       message.name == "INSTANCE_STOPPED" ||
       message.name == "INSTANCE_UPDATED" ||
@@ -57,6 +66,19 @@ function SystemCards({
         });
         return newSystems;
       });
+      const sessSystems = sessionStorage.getItem("systems");
+      if (sessSystems) {
+        const jsonSystems = JSON.parse(sessSystems);
+        const newSessSystems = jsonSystems.map((system: System) => {
+          system.instances?.map((instance: Instance) => {
+            if (instance.id == message.payload.id) {
+              instance.status = message.payload.status;
+            }
+          });
+          return { ...system };
+        });
+        sessionStorage.setItem("systems", JSON.stringify(newSessSystems));
+      }
     }
   };
 

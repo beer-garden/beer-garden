@@ -4,7 +4,7 @@ import { Dialog } from "primereact/dialog";
 import { Messages } from "primereact/messages";
 import { useEffect, useRef, useState } from "react";
 
-import { Instance, Request,System } from "../models/brewtils-types";
+import { Instance, Request, System } from "../models/brewtils-types";
 import { DeleteRequests, GetRequestList } from "../services/request_service";
 
 interface InstanceCancelDeleteRequestsProps {

@@ -33,16 +33,16 @@ export const GetSystemList = async (
   queryData?: any,
   headerData?: any,
 ): Promise<System[]> => {
-  // if (
-  //   (queryData === null || queryData === undefined) &&
-  //   (headerData === null || headerData === undefined)
-  // ) {
-  //   const storedValue = sessionStorage.getItem("systems");
+  if (
+    (queryData === null || queryData === undefined) &&
+    (headerData === null || headerData === undefined)
+  ) {
+    const storedValue = sessionStorage.getItem("systems");
 
-  //   if (storedValue !== null) {
-  //     return JSON.parse(storedValue) as Array<System>;
-  //   }
-  // }
+    if (storedValue !== null) {
+      return JSON.parse(storedValue) as Array<System>;
+    }
+  }
   try {
     const headers = new Headers();
     if (headerData) {
