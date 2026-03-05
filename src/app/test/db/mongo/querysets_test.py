@@ -2,13 +2,10 @@
 import pytest
 from mock import Mock
 from mongoengine import Document, GridFSProxy, fields
-from mongomock.gridfs import enable_gridfs_integration
 
 from beer_garden.db.mongo.querysets import FileFieldHandlingQuerySet
 
 FILE_COUNT = 3
-
-enable_gridfs_integration()
 
 
 class ModelWithFileField(Document):

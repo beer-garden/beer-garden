@@ -5,7 +5,6 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from mongoengine.connection import get_db
-from mongomock.gridfs import enable_gridfs_integration
 
 import beer_garden
 from beer_garden import config
@@ -27,8 +26,6 @@ from beer_garden.db.mongo.models import (
     Request,
     RequestTemplate,
 )
-
-enable_gridfs_integration()
 
 FAKE_TIME = datetime.datetime.now(timezone.utc) + timedelta(minutes=60)
 

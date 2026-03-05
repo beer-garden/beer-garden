@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 from pathlib import Path
 
-import mongomock
 import pytest
 from box import Box
 from brewtils.errors import ModelValidationError
 from brewtils.models import Role
-from mongoengine import DoesNotExist, connect
+from mongoengine import DoesNotExist
 
 from beer_garden import config
 from beer_garden.db.mongo.models import Role as DB_Role
@@ -91,13 +90,6 @@ def user(role):
 
 
 class TestRole:
-    @classmethod
-    def setup_class(cls):
-        connect(
-            "beer_garden",
-            host="mongodb://localhost",
-            mongo_client_class=mongomock.MongoClient,
-        )
 
     @pytest.mark.parametrize(
         "permission", ["READ_ONLY", "OPERATOR", "PLUGIN_ADMIN", "GARDEN_ADMIN"]
