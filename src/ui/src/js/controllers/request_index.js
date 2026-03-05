@@ -4,7 +4,7 @@ requestIndexController.$inject = [
   '$rootScope',
   '$scope',
   '$compile',
-  'localStorageService',
+  'storageService',
   'DTOptionsBuilder',
   'DTColumnBuilder',
   'RequestService',
@@ -16,7 +16,7 @@ requestIndexController.$inject = [
  * @param  {Object} $rootScope        Angular's $rootScope object.
  * @param  {Object} $scope            Angular's $scope object.
  * @param  {Object} $compile          Angular's $compile object.
- * @param  {Object} localStorageService  Storage service
+ * @param  {Object} storageService  Storage service
  * @param  {Object} DTOptionsBuilder  Data-tables' options builder object.
  * @param  {Object} DTColumnBuilder   Data-tables' column builder object.
  * @param  {Object} RequestService    Beer-Garden Request Service.
@@ -26,7 +26,7 @@ export default function requestIndexController(
     $rootScope,
     $scope,
     $compile,
-    localStorageService,
+    storageService,
     DTOptionsBuilder,
     DTColumnBuilder,
     RequestService,
@@ -40,7 +40,7 @@ export default function requestIndexController(
       .withOption('autoWidth', false)
       .withOption(
           'pageLength',
-          localStorageService.get('_request_index_length') || 10,
+          storageService.get('_request_index_length', 10),
       )
       .withOption('ajax', function(data, callback, settings) {
       // Need to also request ID for the href
@@ -175,7 +175,7 @@ export default function requestIndexController(
     $scope.dtInstance = _instance;
 
     $('#requestIndexTable').on('length.dt', (event, settings, len) => {
-      localStorageService.set('_request_index_length', len);
+      storageService.set('_request_index_length', len);
     });
 
     let filtering = null;

@@ -15,7 +15,11 @@
   </span>
 </h1>
 
-<fetch-data response="response"></fetch-data>
+<fetch-data response="response" ng-if="hasPermission('READ_ONLY')"></fetch-data>
+
+<div ng-if="!hasPermission('READ_ONLY')">
+  <unauthorized-message/>
+</div>
 
 <div
   uib-alert
@@ -28,7 +32,7 @@
 
 <div
   class="panel-container animate-if"
-  ng-if="responseState(response) === 'success' || responseState(runnerResponse) === 'success'"
+  ng-if="hasPermission('READ_ONLY') && (responseState(response) === 'success' || responseState(runnerResponse) === 'success')"
 >
   <div
     class="container-item panel panel-danger"

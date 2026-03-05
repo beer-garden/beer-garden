@@ -76,6 +76,7 @@ import {compilerConfig} from './js/configs/compiler_config.js';
 import fetchDataDirective from './js/directives/fetch_data.js';
 import bgStatusDirective from './js/directives/system_status.js';
 import customOnChangeDirective from './js/directives/custom_on_change.js';
+import unauthorizedDirective from './js/directives/unauthorized_message.js';
 
 import commandService from './js/services/command_service.js';
 import instanceService from './js/services/instance_service.js';
@@ -94,6 +95,7 @@ import eventService from './js/services/event_service.js';
 import namespaceService from './js/services/namespace_service.js';
 import gardenService from './js/services/garden_service.js';
 import runnerService from './js/services//runner_service.js';
+import storageService from './js/services/storage_service.js';
 
 import aboutController from './js/controllers/about.js';
 import adminQueueController from './js/controllers/admin_queue.js';
@@ -188,6 +190,7 @@ angular
     .animation('.slide', slideAnimation)
 
     .directive('fetchData', fetchDataDirective)
+    .directive('unauthorizedMessage', unauthorizedDirective)
     .directive('bgStatus', bgStatusDirective)
     .directive('customOnChange', customOnChangeDirective)
 
@@ -207,6 +210,7 @@ angular
     .factory('NamespaceService', namespaceService)
     .factory('GardenService', gardenService)
     .factory('RunnerService', runnerService)
+    .factory('storageService', storageService)
 
     .controller('AboutController', aboutController)
     .controller('AdminQueueController', adminQueueController)

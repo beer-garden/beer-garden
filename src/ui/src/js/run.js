@@ -18,7 +18,7 @@ appRun.$inject = [
   '$uibModal',
   '$transitions',
   '$interval',
-  'localStorageService',
+  'storageService',
   'UtilityService',
   'PermissionService',
   'SystemService',
@@ -40,7 +40,7 @@ appRun.$inject = [
  * @param  {Object} $uibModal            Angular UI's $uibModal object.
  * @param  {Object} $transitions         Angular's $transitions object.
  * @param  {Object} $interval            Angular's $interval object.
- * @param  {Object} localStorageService  Storage service
+ * @param  {Object} storageService       Service for Storage
  * @param  {Object} UtilityService       Service for configuration/icons.
  * @param  {Object} PermissionService    Service for filtering user accesses.
  * @param  {Object} SystemService        Service for System information.
@@ -60,7 +60,7 @@ export default function appRun(
     $uibModal,
     $transitions,
     $interval,
-    localStorageService,
+    storageService,
     UtilityService,
     PermissionService,
     SystemService,
@@ -104,23 +104,38 @@ export default function appRun(
   $rootScope.getIcon = UtilityService.getIcon;
   $rootScope.hasPermission = PermissionService.hasPermission;
 
+  storageService.setPrefix();
+  
   $rootScope.loadUser = function(token) {
     $rootScope.userPromise = UserService.loadUser(token).then(
         (response) => {
-        // Angular doesn't do a deep watch here, so make sure we calculate
-        // and set the permissions before setting $rootScope.user
+          // Angular doesn't do a deep watch here, so make sure we calculate
+          // and set the permissions before setting $rootScope.user
           const user = response.data;
 
+          // If user is logged in, change to their default theme/home selection
           let theme;
-          // Currently prefences don't exist on user, so always use local storage
-          // until it is added back to the user model
+          let defaultHome = 'base.systems()';
+          let defaultHomePage = 'base.systems';
+          let defaultHomeParameters = {};
 
-          // If user is logged in, change to their default theme selection
-          // if (user.id) {
-          //   theme = _.get(user, 'preferences.theme', 'default');
-          // } else {
-            theme = localStorageService.get('currentTheme') || 'default';
-          // }
+          if (user.id) {
+            theme = _.get(user, 'preferences.theme', 'default');
+
+            if (_.get(user, 'preferences.home', null) !== null) {
+              defaultHome = _.get(user, 'preferences.home.defaultHome', defaultHome);
+              defaultHomePage = _.get(user, 'preferences.home.defaultHomePage', defaultHomePage);
+              defaultHomeParameters = _.get(user, 'preferences.home.defaultHomeParameters', defaultHomeParameters);
+            }
+
+          } else {
+            theme = storageService.get('currentTheme', 'default');
+            defaultHome = storageService.get('defaultHome', defaultHome);
+            defaultHomePage = storageService.get('defaultHomePage', defaultHomePage);
+            defaultHomeParameters = storageService.get('defaultHomeParameters', defaultHomeParameters);
+          }
+
+          $rootScope.setHome(defaultHome, defaultHomePage, defaultHomeParameters, false);
           $rootScope.changeTheme(theme, false);
 
           $rootScope.user = user;
@@ -157,6 +172,20 @@ export default function appRun(
 
     UtilityService.getConfig().then((response) => {
       angular.extend($rootScope.config, camelCaseKeys(response.data));
+
+      storageService.setPrefix();
+
+      // Check if we are utilizing Auth Headers
+      if ($rootScope.config.trustedHeaderAuthEnabled){
+        if (TokenService.getToken() === null){
+          TokenService.doLogin(null, null).then(()=>{
+            $rootScope.changeUser(TokenService.getToken());
+          });
+        } else {
+          $rootScope.changeUser(TokenService.getToken());
+        }
+      }
+
       $rootScope.reloadWindowTitle();
     });
 
@@ -165,12 +194,10 @@ export default function appRun(
 
     // Load theme from local storage
     // REMOVE THIS ONCE THE rootScope.loadUser CALL BELOW IS ENABLED
-    const theme = localStorageService.get('currentTheme') || 'default';
+    const theme = storageService.get('currentTheme', 'default');
     $rootScope.changeTheme(theme, false);
 
-    $rootScope.config.defaultHome = localStorageService.get('defaultHome') || 'base.systems()';
-    $rootScope.config.defaultHomePage = localStorageService.get('defaultHomePage') || 'base.systems';
-    $rootScope.config.defaultHomeParameters = localStorageService.get('defaultHomeParameters') || {};
+    storageService.reloadDefaults();
 
     // $rootScope.loadUser(token).catch(
     //   // This prevents the situation where the user needs to logout but the
@@ -230,17 +257,14 @@ export default function appRun(
   };
 
   $rootScope.changeTheme = function(theme, sendUpdate) {
-    localStorageService.set('currentTheme', theme);
+    storageService.set('currentTheme', theme);
     for (const key of Object.keys($rootScope.themes)) {
       $rootScope.themes[key] = key == theme;
     }
 
-    // Currently prefences don't exist on user, so always use local storage
-    // until it is added back to the user model
-    
-    // if ($rootScope.isUser($rootScope.user) && sendUpdate) {
-    //   UserService.setTheme($rootScope.user.id, theme);
-    // }
+    if ($rootScope.isUser($rootScope.user) && sendUpdate) {
+      UserService.setTheme($rootScope.user.username, theme);
+    }
   };
 
   $rootScope.setHomeToCurrent = function() {
@@ -264,15 +288,31 @@ export default function appRun(
       newHomePage = `${page}(${paramsString})`;
     }
 
-    localStorageService.set('defaultHome', newHomePage);
-    localStorageService.set('defaultHomePage', page);
-    localStorageService.set('defaultHomeParameters', homeParameters);
+    $rootScope.setHome(newHomePage, page, homeParameters, true);
 
-    $rootScope.config.defaultHome = newHomePage;
-    $rootScope.config.defaultHomePage = page;
-    $rootScope.config.defaultHomeParameters = homeParameters;
+  }
 
-    location.reload();
+  $rootScope.setHome = function(defaultHome, defaultHomePage, defaultHomeParameters, sendUpdate) {
+    storageService.set('defaultHome', defaultHome);
+    storageService.set('defaultHomePage', defaultHomePage);
+    storageService.set('defaultHomeParameters', defaultHomeParameters);
+
+    if ($rootScope.isUser($rootScope.user) && sendUpdate) {
+      UserService.setHome($rootScope.user.username, 
+        { 'defaultHome': defaultHome, 
+          'defaultHomePage': defaultHomePage, 
+          'defaultHomeParameters': defaultHomeParameters });
+    }
+
+    if ($rootScope.config.defaultHome !== defaultHome ||
+        $rootScope.config.defaultHomePage !== defaultHomePage ||
+        !_.isEqual($rootScope.config.defaultHomeParameters, defaultHomeParameters)) {
+          $rootScope.config.defaultHome = defaultHome;
+          $rootScope.config.defaultHomePage = defaultHomePage;
+          $rootScope.config.defaultHomeParameters = defaultHomeParameters;
+
+          location.reload();
+        }
   }
 
   $rootScope.convertDictToJson = function(dictObject) {
@@ -397,6 +437,8 @@ export default function appRun(
     if ($rootScope.config.gardenName === undefined) {
       UtilityService.getConfig().then((response) => {
         angular.extend($rootScope.config, camelCaseKeys(response.data));
+        storageService.setPrefix();
+        
         return $rootScope.getLocalGarden(callback);
       });
     } else {
@@ -409,7 +451,9 @@ export default function appRun(
       $rootScope.garden = response.data;
       $rootScope.gardensResponse = response;
       $rootScope.systems = [];
-      updateGardenSystems();
+      if ($rootScope.garden !== undefined && $rootScope.garden !== null) {
+        updateGardenSystems();
+      }
       if (callback !== undefined){
         return callback();
       }
@@ -451,64 +495,11 @@ export default function appRun(
     return systems;
   }
 
-  $rootScope.isSystemRoutable = function(system){
-    // Check Local First
-    if ($rootScope.garden.systems !== undefined && $rootScope.garden.systems !== null) {
-      for (let i = 0; i < $rootScope.garden.systems.length; i++){
-        if (system.id == $rootScope.garden.systems[i].id){
-          return true;
-        }
-      }
-    }
-    // Check children
-    if ($rootScope.garden.children !== undefined && $rootScope.garden.children !== null) {
-      for (let i = 0; i < $rootScope.garden.children.length; i++){
-        if ($rootScope.isRemoteSystemRoutable(system, $rootScope.garden.children[i])){
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  $rootScope.isRemoteSystemRoutable = function(system, garden){
-    let routable = false;
-
-    if (garden.publishing_connections !== undefined && garden.publishing_connections !== null){
-      for (let i = 0; i < garden.publishing_connections.length; i++){
-        if (["PUBLISHING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN"].includes(garden.publishing_connections[i].status)){
-          routable = true;
-        }
-      }
-    }
-
-    if (!routable){
-      return false;
-    }
-    if (garden.systems !== undefined || garden.systems !== null){
-      for (let i = 0; i < garden.systems.length; i++){
-        if (system.id == garden.systems[i].id){
-          return true;
-        }
-      }
-    }
-
-    if (garden.children !== undefined && garden.children !== null){
-      for (let i = 0; i < garden.children.length; i++){
-        if ($rootScope.isRemoteSystemRoutable(system, garden.children[i])){
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
   $rootScope.extractGardenChildren = function(gardens) {
     let results = []
     if (gardens !== undefined && gardens !== null) {
       for (let i = 0; i < gardens.length; i++){
-        if (gardens[i]["connection_type"] == "LOCAL"){
+        if (gardens[i] !== undefined && gardens[i] !== null && gardens[i]["connection_type"] == "LOCAL"){
           results.push(gardens[i]);
           $rootScope.extractGardenChildrenLoop(results, gardens[i], true);
         }
@@ -528,30 +519,22 @@ export default function appRun(
   }
 
   function upsertGardenSystems(garden, seenIndexes, hideRunners = false){
-    let routable = (garden.connection_type == "LOCAL");
-    if (garden.publishing_connections !== undefined && garden.publishing_connections !== null) {
-      for (let i = 0; i < garden.publishing_connections.length; i++){
-        if (["PUBLISHING","UNREACHABLE","UNRESPONSIVE","ERROR","UNKNOWN"].includes(garden.publishing_connections[i].status)){
-          routable = true;
-        }
+
+    if (garden.systems !== undefined && garden.systems !== null) {
+      for (let i = 0; i < garden.systems.length; i++){
+        seenIndexes.push(upsertSystem(garden.systems[i], hideRunners));
       }
     }
-    if (routable) {
-      if (garden.systems !== undefined && garden.systems !== null) {
-        for (let i = 0; i < garden.systems.length; i++){
-          seenIndexes.push(upsertSystem(garden.systems[i], hideRunners));
-        }
-      }
-      if (garden.children !== undefined && garden.children !== null) {
-        for (let i = 0; i < garden.children.length; i++){
-          upsertGardenSystems(garden.children[i], seenIndexes, true);
-        }
+    if (garden.children !== undefined && garden.children !== null) {
+      for (let i = 0; i < garden.children.length; i++){
+        upsertGardenSystems(garden.children[i], seenIndexes, true);
       }
     }
+    
   }
 
   function updateGardenSystems(){
-    if ($rootScope.garden !== undefined) {
+    if ($rootScope.garden !== undefined && $rootScope.garden !== null) {
       let seenIndexes = [];
       upsertGardenSystems($rootScope.garden, seenIndexes);
       // Loop through seen indexes and remove everything not seen starting at the end

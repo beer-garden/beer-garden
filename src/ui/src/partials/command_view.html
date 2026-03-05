@@ -1,9 +1,9 @@
 
-<div ng-show="(responseState(response) === 'success') && template">
+<div ng-show="hasPermission('READ_ONLY') && (responseState(response) === 'success') && template">
   <div ng-bind-html="template"></div>
 </div>
 
-<div ng-show="!template">
+<div ng-show="hasPermission('READ_ONLY') && !template">
   <h1 class="page-header" ng-show="responseState(response) !== 'success'">Make Request</h1>
 
   <div ng-show="(responseState(response) === 'success')">
@@ -41,7 +41,11 @@
 
 <fetch-data response="response"></fetch-data>
 
-<div ng-show="(responseState(response) === 'success') && !template">
+<div ng-if="!hasPermission('READ_ONLY')">
+  <unauthorized-message/>
+</div>
+
+<div ng-show="hasPermission('READ_ONLY') && (responseState(response) === 'success') && !template">
 
   <fetch-data response="createResponse" hide="loading,empty" closeable="true"></fetch-data>
 
