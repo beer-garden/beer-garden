@@ -35,7 +35,17 @@ function SystemCards({
   const [systems, setSystems] = useState<Array<System>>([]);
 
   const MonitorSystemEvents = (message: any) => {
-    if (message.name == "SYSTEM_REMOVED") {
+    if (message.name == "SYSTEM_CREATED") {
+      setSystems((prevSystems) => {
+        return [...prevSystems, message.payload];
+      });
+      const sessSystems = sessionStorage.getItem("systems");
+      if (sessSystems) {
+        const jsonSystems = JSON.parse(sessSystems);
+        const newSystems = [...jsonSystems, message.payload];
+        sessionStorage.setItem("systems", JSON.stringify(newSystems));
+      }
+    } else if (message.name == "SYSTEM_REMOVED") {
       setSystems((prevSystems) => {
         return prevSystems.filter((s) => s.id != message.payload.id);
       });

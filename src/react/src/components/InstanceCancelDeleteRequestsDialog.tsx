@@ -20,8 +20,6 @@ function InstanceCancelDeleteRequestsDialog({
   isVisible,
   onClose,
 }: InstanceCancelDeleteRequestsProps) {
-  const loaded = useRef<boolean>(false);
-
   const [allCount, setAllCount] = useState<number>(0);
   const [successCount, setSuccessCount] = useState<number>(0);
   const [canceledCount, setCanceledCount] = useState<number>(0);
@@ -34,7 +32,7 @@ function InstanceCancelDeleteRequestsDialog({
 
   useEffect(() => {
     loadRequests();
-  }, []);
+  }, [isVisible]);
 
   function buildFilter(status: string) {
     return {
@@ -96,140 +94,138 @@ function InstanceCancelDeleteRequestsDialog({
   }
 
   function loadRequests() {
-    if (!loaded.current) {
-      GetRequestList(buildFilter("SUCCESS")).then(
-        (data: [Array<Request>, Headers]) => {
-          const headers = data[1];
-          const count = parseInt(headers.get("recordsFiltered") ?? "0");
-          setSuccessCount(count);
-          setAllCount((prevCount) => prevCount + count);
-        },
-        (response) => {
-          let msg =
-            "Uh oh! It looks like there was a problem counting the SUCCESS Requests.\n";
-          if (response.data !== undefined && response.data !== null) {
-            msg += response.data;
-          }
-          console.log(msg);
-          msgs.current?.show({
-            severity: "error",
-            detail: msg,
-            sticky: true,
-          });
-        },
-      );
+    setAllCount(0);
+    GetRequestList(buildFilter("SUCCESS")).then(
+      (data: [Array<Request>, Headers]) => {
+        const headers = data[1];
+        const count = parseInt(headers.get("recordsFiltered") ?? "0");
+        setSuccessCount(count);
+        setAllCount((prevCount) => prevCount + count);
+      },
+      (response) => {
+        let msg =
+          "Uh oh! It looks like there was a problem counting the SUCCESS Requests.\n";
+        if (response.data !== undefined && response.data !== null) {
+          msg += response.data;
+        }
+        console.log(msg);
+        msgs.current?.show({
+          severity: "error",
+          detail: msg,
+          sticky: true,
+        });
+      },
+    );
 
-      GetRequestList(buildFilter("CANCELED")).then(
-        (data: [Array<Request>, Headers]) => {
-          const headers = data[1];
-          const count = parseInt(headers.get("recordsFiltered") ?? "0");
-          setCanceledCount(count);
-          setAllCount((prevCount) => prevCount + count);
-        },
-        (response) => {
-          let msg =
-            "Uh oh! It looks like there was a problem counting the CANCELED Requests.\n";
-          if (response.data !== undefined && response.data !== null) {
-            msg += response.data;
-          }
-          console.log(msg);
-          msgs.current?.show({
-            severity: "error",
-            detail: msg,
-            sticky: true,
-          });
-        },
-      );
+    GetRequestList(buildFilter("CANCELED")).then(
+      (data: [Array<Request>, Headers]) => {
+        const headers = data[1];
+        const count = parseInt(headers.get("recordsFiltered") ?? "0");
+        setCanceledCount(count);
+        setAllCount((prevCount) => prevCount + count);
+      },
+      (response) => {
+        let msg =
+          "Uh oh! It looks like there was a problem counting the CANCELED Requests.\n";
+        if (response.data !== undefined && response.data !== null) {
+          msg += response.data;
+        }
+        console.log(msg);
+        msgs.current?.show({
+          severity: "error",
+          detail: msg,
+          sticky: true,
+        });
+      },
+    );
 
-      GetRequestList(buildFilter("ERROR")).then(
-        (data: [Array<Request>, Headers]) => {
-          const headers = data[1];
-          const count = parseInt(headers.get("recordsFiltered") ?? "0");
-          setErrorCount(count);
-          setAllCount((prevCount) => prevCount + count);
-        },
-        (response) => {
-          let msg =
-            "Uh oh! It looks like there was a problem counting the ERROR Requests.\n";
-          if (response.data !== undefined && response.data !== null) {
-            msg += response.data;
-          }
-          console.log(msg);
-          msgs.current?.show({
-            severity: "error",
-            detail: msg,
-            sticky: true,
-          });
-        },
-      );
+    GetRequestList(buildFilter("ERROR")).then(
+      (data: [Array<Request>, Headers]) => {
+        const headers = data[1];
+        const count = parseInt(headers.get("recordsFiltered") ?? "0");
+        setErrorCount(count);
+        setAllCount((prevCount) => prevCount + count);
+      },
+      (response) => {
+        let msg =
+          "Uh oh! It looks like there was a problem counting the ERROR Requests.\n";
+        if (response.data !== undefined && response.data !== null) {
+          msg += response.data;
+        }
+        console.log(msg);
+        msgs.current?.show({
+          severity: "error",
+          detail: msg,
+          sticky: true,
+        });
+      },
+    );
 
-      GetRequestList(buildFilter("CREATED")).then(
-        (data: [Array<Request>, Headers]) => {
-          const headers = data[1];
-          const count = parseInt(headers.get("recordsFiltered") ?? "0");
-          setCreatedCount(count);
-          setAllCount((prevCount) => prevCount + count);
-        },
-        (response) => {
-          let msg =
-            "Uh oh! It looks like there was a problem counting the CREATED Requests.\n";
-          if (response.data !== undefined && response.data !== null) {
-            msg += response.data;
-          }
-          console.log(msg);
-          msgs.current?.show({
-            severity: "error",
-            detail: msg,
-            sticky: true,
-          });
-        },
-      );
+    GetRequestList(buildFilter("CREATED")).then(
+      (data: [Array<Request>, Headers]) => {
+        const headers = data[1];
+        const count = parseInt(headers.get("recordsFiltered") ?? "0");
+        setCreatedCount(count);
+        setAllCount((prevCount) => prevCount + count);
+      },
+      (response) => {
+        let msg =
+          "Uh oh! It looks like there was a problem counting the CREATED Requests.\n";
+        if (response.data !== undefined && response.data !== null) {
+          msg += response.data;
+        }
+        console.log(msg);
+        msgs.current?.show({
+          severity: "error",
+          detail: msg,
+          sticky: true,
+        });
+      },
+    );
 
-      GetRequestList(buildFilter("RECEIVED")).then(
-        (data: [Array<Request>, Headers]) => {
-          const headers = data[1];
-          const count = parseInt(headers.get("recordsFiltered") ?? "0");
-          setReceivedCount(count);
-          setAllCount((prevCount) => prevCount + count);
-        },
-        (response) => {
-          let msg =
-            "Uh oh! It looks like there was a problem counting the RECEIVED Requests.\n";
-          if (response.data !== undefined && response.data !== null) {
-            msg += response.data;
-          }
-          console.log(msg);
-          msgs.current?.show({
-            severity: "error",
-            detail: msg,
-            sticky: true,
-          });
-        },
-      );
+    GetRequestList(buildFilter("RECEIVED")).then(
+      (data: [Array<Request>, Headers]) => {
+        const headers = data[1];
+        const count = parseInt(headers.get("recordsFiltered") ?? "0");
+        setReceivedCount(count);
+        setAllCount((prevCount) => prevCount + count);
+      },
+      (response) => {
+        let msg =
+          "Uh oh! It looks like there was a problem counting the RECEIVED Requests.\n";
+        if (response.data !== undefined && response.data !== null) {
+          msg += response.data;
+        }
+        console.log(msg);
+        msgs.current?.show({
+          severity: "error",
+          detail: msg,
+          sticky: true,
+        });
+      },
+    );
 
-      GetRequestList(buildFilter("IN_PROGRESS")).then(
-        (data: [Array<Request>, Headers]) => {
-          const headers = data[1];
-          const count = parseInt(headers.get("recordsFiltered") ?? "0");
-          setInProgressCount(count);
-          setAllCount((prevCount) => prevCount + count);
-        },
-        (response) => {
-          let msg =
-            "Uh oh! It looks like there was a problem counting the IN PROGRESS Requests.\n";
-          if (response.data !== undefined && response.data !== null) {
-            msg += response.data;
-          }
-          console.log(msg);
-          msgs.current?.show({
-            severity: "error",
-            detail: msg,
-            sticky: true,
-          });
-        },
-      );
-    }
-    loaded.current = true;
+    GetRequestList(buildFilter("IN_PROGRESS")).then(
+      (data: [Array<Request>, Headers]) => {
+        const headers = data[1];
+        const count = parseInt(headers.get("recordsFiltered") ?? "0");
+        setInProgressCount(count);
+        setAllCount((prevCount) => prevCount + count);
+      },
+      (response) => {
+        let msg =
+          "Uh oh! It looks like there was a problem counting the IN PROGRESS Requests.\n";
+        if (response.data !== undefined && response.data !== null) {
+          msg += response.data;
+        }
+        console.log(msg);
+        msgs.current?.show({
+          severity: "error",
+          detail: msg,
+          sticky: true,
+        });
+      },
+    );
   }
 
   function addSuccessAlert() {
@@ -271,7 +267,6 @@ function InstanceCancelDeleteRequestsDialog({
     const accept = () => {
       DeleteRequests(deleteParams)
         .then(() => {
-          loaded.current = false;
           loadRequests();
           addSuccessAlert();
         }, addDeleteErrorAlert)
