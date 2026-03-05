@@ -243,6 +243,11 @@ print(request)
       if (codeType === "Wget") {
         return wgetCode();
       }
+
+      if (codeType === "JSON") {
+        return JSON.stringify(request, null, 2);
+      }
+
       return "";
     };
     const copyToClipboard = () => {
@@ -327,6 +332,8 @@ print(request)
                   {CodeBlock("cURL")}
 
                   {CodeBlock("Wget")}
+
+                  {CodeBlock("JSON")}
                 </Dialog>
                 <SplitButton
                   label="Submit"
