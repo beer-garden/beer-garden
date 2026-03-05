@@ -15,6 +15,7 @@ import RequestTreeChart from "../components/RequestTreeChart";
 import { Request, System } from "../models/brewtils-types";
 import { DeleteRequest, GetRequest } from "../services/request_service";
 import { GetSystemList } from "../services/system_service";
+import { GetBaseURL } from "../services/util_service";
 
 function UnformattedInput(request: Request) {
   return (
@@ -53,7 +54,7 @@ function RequestOptions(request: Request) {
       command: () => {
         DeleteRequest(request)
           .then(() => {
-            window.open("/requests", "_self");
+            window.open(`${GetBaseURL()}/requests`, "_self");
           })
           .catch((error) => {
             console.error("Error deleting request:", error);
@@ -63,7 +64,7 @@ function RequestOptions(request: Request) {
   }
 
   const pourAgain = (request: Request) => {
-    window.open("/recreate/" + request.id, "_self");
+    window.open(`${GetBaseURL()}/recreate/${request.id}`, "_self");
   };
 
   return (

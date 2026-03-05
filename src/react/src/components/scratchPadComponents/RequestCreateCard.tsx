@@ -9,6 +9,7 @@ import { ScratchPadValue } from "../../models/models";
 import { RequestCommand } from "../../models/models";
 import { PostRequest } from "../../services/request_service";
 import { PushToScratchPad } from "../../services/scratchpad_service";
+import { GetBaseURL } from "../../services/util_service";
 
 function RequestCreateCard({
   padItem,
@@ -61,7 +62,10 @@ function RequestCreateCard({
               });
               reloadScratchPad();
             } else {
-              window.open("/request/" + response_request.id, "_self");
+              window.open(
+                `${GetBaseURL()}/request/${response_request.id}`,
+                "_self",
+              );
             }
           } else {
             toast?.current?.show({
