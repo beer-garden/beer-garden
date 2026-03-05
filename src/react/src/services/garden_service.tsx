@@ -1,5 +1,6 @@
 import { Garden } from "../models/brewtils-types";
 import { Config } from "../models/models";
+import { GetBaseURL } from "./util_service";
 
 export const GetGarden = async (
   garden_name: string,
@@ -13,9 +14,12 @@ export const GetGarden = async (
       }
     }
 
-    const response = await fetch(`api/v1/gardens/${garden_name}`, {
-      headers: headers,
-    });
+    const response = await fetch(
+      `${GetBaseURL()}/api/v1/gardens/${garden_name}`,
+      {
+        headers: headers,
+      },
+    );
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);
@@ -47,7 +51,9 @@ export const GetGardenList = async (
       }
     }
 
-    const response = await fetch(`api/v1/gardens/`, { headers: headers });
+    const response = await fetch(`${GetBaseURL()}/api/v1/gardens/`, {
+      headers: headers,
+    });
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);

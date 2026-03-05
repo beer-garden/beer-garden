@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 
 import { Request } from "../models/brewtils-types";
+import { GetBaseURL } from "./util_service";
 
 export const GetRequestList = async (
   headerData?: any,
@@ -33,7 +34,9 @@ export const GetRequestList = async (
       queryString = searchParams.toString();
     }
 
-    const response = await fetch(`/api/v1/requests?${queryString}`);
+    const response = await fetch(
+      `${GetBaseURL()}/api/v1/requests?${queryString}`,
+    );
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);
@@ -57,9 +60,12 @@ export const GetRequest = async (
       headers.append(key, value as string);
     }
 
-    const response = await fetch(`/api/v1/requests/${requestId}`, {
-      headers: headers,
-    });
+    const response = await fetch(
+      `${GetBaseURL()}/api/v1/requests/${requestId}`,
+      {
+        headers: headers,
+      },
+    );
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);
@@ -126,7 +132,7 @@ export const PostRequest = async (
       }
 
       const response = await fetch(
-        "/api/v1/requests?blocking=" + waitForCompletion,
+        `${GetBaseURL()}/api/v1/requests?blocking=${waitForCompletion}`,
         {
           headers: headers,
           method: "POST",
@@ -143,7 +149,7 @@ export const PostRequest = async (
 
     headers.append("Content-Type", "application/json");
     const response = await fetch(
-      "/api/v1/requests?blocking=" + waitForCompletion,
+      `${GetBaseURL()}/api/v1/requests?blocking=${waitForCompletion}`,
       {
         headers: headers,
         method: "POST",
@@ -182,10 +188,13 @@ export const DeleteRequest = async (request: Request, headerData?: any) => {
       headers.append(key, value as string);
     }
 
-    const response = await fetch("/api/v1/requests?id=" + request.id, {
-      headers: headers,
-      method: "DELETE",
-    });
+    const response = await fetch(
+      `${GetBaseURL()}/api/v1/requests?id=${request.id}`,
+      {
+        headers: headers,
+        method: "DELETE",
+      },
+    );
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);
