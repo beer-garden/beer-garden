@@ -132,7 +132,9 @@ class RequestAPI(AuthorizationHandler):
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
         for op in patch:
-            if op.operation == "replace":
+            if op.operation == "rebroadcast":
+                operation.operation_type = "REQUEST_REBROADCAST"
+            elif op.operation == "replace":
                 if op.path == "/status":
                     # If we get a start just assume there's no other op in patch
                     if op.value.upper() == "IN_PROGRESS":

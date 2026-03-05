@@ -11,14 +11,14 @@ export default function instanceService($http) {
       return $http.patch('api/v1/instances/' + instance.id, {
         operation: 'start',
       },{
-        headers: {'Target-Garden': system.garden_name},
+        headers: {'Target-Garden': encodeURI(system.garden_name) == system.garden_name ? system.garden_name : undefined},
       });
     },
     stopInstance: (instance, system) => {
       return $http.patch('api/v1/instances/' + instance.id, {
         operation: 'stop',
       },{
-        headers: {'Target-Garden': system.garden_name},
+        headers: {'Target-Garden': encodeURI(system.garden_name) == system.garden_name ? system.garden_name : undefined},
       });
     },
     getInstance: (instanceId) => {

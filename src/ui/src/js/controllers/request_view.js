@@ -301,6 +301,10 @@ export default function requestViewController(
     RequestService.deleteRequests({"id":request.id})
   }
 
+  $scope.refreshRequest = function(request) {
+    RequestService.refreshRequest(request.id)
+  }
+
   $scope.redoRequest = function(request) {
     const newRequest = {
       system: request.system,

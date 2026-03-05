@@ -16,7 +16,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.11.11"]
+        python-version: ["3.11.13"]
         os: ["ubuntu-latest"]
 
     name: Linting OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
@@ -27,6 +27,24 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+
+      # Custom tag extractor to find Brewtils Branch
+      - name: Find Brewtils Branch
+        uses: TheBurchLog/body-env-tag-action@1.0
+        with:
+          tag: "brewtils:"
+          env-variable: "brewtils"
+          default-value: "develop"
+          tag-position: -1
+
+      # Used the hashtag here instead of slash allow for branches to have slashes in them
+      - name: Update Brewtils Branch
+        run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements-dev.txt
+
+      # Allows for brewtils to upgrade deps that don't match with current released version of brewtils 
+      - name: Remove Brewtils from requirements.txt
+        run: sed -i '/brewtils/d' requirements.txt
+        working-directory: ./src/app
 
       # Need to update if we support other OS's
       - name: Cache PIP Install
@@ -59,10 +77,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11.11","3.12","3.13", "3.14"]
+        python-version: ["3.11.13","3.12","3.13", "3.14"]
         os: ["ubuntu-latest"]
 
-    name: PyTests OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
+    name: PyTests Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v3
 
@@ -80,9 +98,87 @@ jobs:
           default-value: "develop"
           tag-position: -1
 
+      # Something happened with setuptools 82.0.0 that causes pip install to fail, so we are downgrading to 81 for now until we can figure out the issue
+      - name: Downgrade Setup Tools
+        run: python -m pip install --upgrade pip setuptools==81
+
       # Used the hashtag here instead of slash allow for branches to have slashes in them
       - name: Update Brewtils Branch
         run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements-dev.txt
+
+      # Allows for brewtils to upgrade deps that don't match with current released version of brewtils 
+      - name: Remove Brewtils from requirements.txt
+        run: sed -i '/brewtils/d' requirements.txt
+        working-directory: ./src/app
+
+      # Need to update if we support other OS's
+      - name: Cache PIP Install
+        uses: actions/cache@v4
+        if: env.brewtils == 'develop'
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-${{ matrix.python-version }}-pip-install-${{ hashFiles('**/setup.py') }}-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.python-version }}-pip-install-
+
+      - name: Make Deps
+        run: make deps
+
+      - name: Run Tests
+        run: make test
+
+  PyTest-Mongodb:
+    runs-on: ${{ matrix.os }}
+    needs: PyTest
+
+    env:
+      brewtils: "develop"
+
+    defaults:
+      run:
+        working-directory: ./src/app
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12"]
+        os: ["ubuntu-latest"]
+        mongodb-version: ["4.2", "5.0", "6.0", "7.0","8.0", "8.2", "latest"]
+
+    name: PyTests Python ${{ matrix.python-version }} - Mongodb ${{ matrix.mongodb-version }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set Mongodb ENV Version
+        run: echo "MONGODB_VERSION=${{ matrix.mongodb-version }}" >> $GITHUB_ENV  
+        shell: bash
+
+      # Custom tag extractor to find Brewtils Branch
+      - name: Find Brewtils Branch
+        uses: TheBurchLog/body-env-tag-action@1.0
+        with:
+          tag: "brewtils:"
+          env-variable: "brewtils"
+          default-value: "develop"
+          tag-position: -1
+
+      # Used the hashtag here instead of slash allow for branches to have slashes in them
+      - name: Update Brewtils Branch
+        run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements-dev.txt
+
+      # Allows for brewtils to upgrade deps that don't match with current released version of brewtils 
+      - name: Remove Brewtils from requirements.txt
+        run: sed -i '/brewtils/d' requirements.txt
+        working-directory: ./src/app
+
+      # Something happened with setuptools 82.0.0 that causes pip install to fail, so we are downgrading to 81 for now until we can figure out the issue
+      - name: Downgrade Setup Tools
+        run: python -m pip install --upgrade pip setuptools==81
 
       # Need to update if we support other OS's
       - name: Cache PIP Install
@@ -138,6 +234,11 @@ jobs:
       # Used the hashtag here instead of slash allow for branches to have slashes in them
       - name: Update Brewtils Branch
         run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements-dev.txt
+
+      # Allows for brewtils to upgrade deps that don't match with current released version of brewtils 
+      - name: Remove Brewtils from requirements.txt
+        run: sed -i '/brewtils/d' requirements.txt
+        working-directory: ./src/app
 
       # Need to update if we support other OS's
       - name: Cache PIP Install
@@ -218,7 +319,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.11.11","3.12","3.13", "3.14"]
+        python-version: ["3.11.13","3.12","3.13", "3.14"]
         os: ["ubuntu-latest"]
       fail-fast: false
 
@@ -243,6 +344,11 @@ jobs:
       # Used the hashtag here instead of slash allow for branches to have slashes in them
       - name: Update Brewtils Branch
         run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements-dev.txt
+        working-directory: ./src/app
+
+      # Allows for brewtils to upgrade deps that don't match with current released version of brewtils 
+      - name: Remove Brewtils from requirements.txt
+        run: sed -i '/brewtils/d' requirements.txt
         working-directory: ./src/app
 
       - name: Build Local Beer Garden Docker
@@ -371,6 +477,11 @@ jobs:
       # Used the hashtag here instead of slash allow for branches to have slashes in them
       - name: Update Brewtils Branch
         run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements-dev.txt
+        working-directory: ./src/app
+
+      # Allows for brewtils to upgrade deps that don't match with current released version of brewtils 
+      - name: Remove Brewtils from requirements.txt
+        run: sed -i '/brewtils/d' requirements.txt
         working-directory: ./src/app
 
       - name: Build Beer Garden Docker
@@ -550,6 +661,11 @@ jobs:
       # Used the hashtag here instead of slash allow for branches to have slashes in them
       - name: Update Brewtils Branch
         run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements-dev.txt
+        working-directory: ./src/app
+
+      # Allows for brewtils to upgrade deps that don't match with current released version of brewtils 
+      - name: Remove Brewtils from requirements.txt
+        run: sed -i '/brewtils/d' requirements.txt
         working-directory: ./src/app
 
       - name: Build Local Beer Garden Docker
@@ -751,7 +867,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.11.11"]
+        python-version: ["3.11.13"]
         os: ["ubuntu-latest"]
         previous:
           - "unstable"
@@ -811,6 +927,11 @@ jobs:
       # Used the hashtag here instead of slash allow for branches to have slashes in them
       - name: Update Brewtils Branch
         run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements-dev.txt
+        working-directory: ./src/app
+
+      # Allows for brewtils to upgrade deps that don't match with current released version of brewtils 
+      - name: Remove Brewtils from requirements.txt
+        run: sed -i '/brewtils/d' requirements.txt
         working-directory: ./src/app
 
       - name: Build Local Beer Garden Docker
@@ -926,6 +1047,11 @@ jobs:
       # Used the hashtag here instead of slash allow for branches to have slashes in them
       - name: Update Brewtils Branch
         run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements-dev.txt
+        working-directory: ./src/app
+
+      # Allows for brewtils to upgrade deps that don't match with current released version of brewtils 
+      - name: Remove Brewtils from requirements.txt
+        run: sed -i '/brewtils/d' requirements.txt
         working-directory: ./src/app
 
       - name: Build Beer Garden Docker

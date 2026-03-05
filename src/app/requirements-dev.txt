@@ -36,6 +36,12 @@ coverage==7.13.0
     # via
     #   -r requirements-dev.in
     #   codecov
+dnspython==2.8.0
+    # via
+    #   -c requirements.txt
+    #   pymongo
+docker==7.1.0
+    # via testcontainers
 docutils==0.16
     # via
     #   sphinx
@@ -72,8 +78,6 @@ mccabe==0.7.0
     # via flake8
 mock==5.2.0
     # via -r requirements-dev.in
-mongomock==4.3.0
-    # via -r requirements-dev.in
 mypy-extensions==1.1.0
     # via black
 packaging==25.0
@@ -81,7 +85,6 @@ packaging==25.0
     #   -c requirements.txt
     #   black
     #   brewtils
-    #   mongomock
     #   pytest
     #   sphinx
 pathspec==0.12.1
@@ -102,6 +105,10 @@ pygments==2.19.2
     # via
     #   pytest
     #   sphinx
+pymongo==4.15.5
+    # via
+    #   -c requirements.txt
+    #   testcontainers
 pytest==9.0.2
     # via
     #   -r requirements-dev.in
@@ -114,31 +121,27 @@ pytest-mock==3.15.1
     # via -r requirements-dev.in
 pytest-tornado==0.8.1
     # via -r requirements-dev.in
-python-box==3.4.6
+python-box==7.3.2
     # via
     #   -c requirements.txt
     #   yapconf
+python-dotenv==1.2.1
+    # via testcontainers
 pytokens==0.3.0
     # via black
-pytz==2025.2
-    # via mongomock
 requests==2.32.5
     # via
     #   -c requirements.txt
     #   brewtils
     #   codecov
+    #   docker
     #   sphinx
-sentinels==1.1.1
-    # via mongomock
 simplejson==3.20.2
     # via
     #   -c requirements.txt
     #   brewtils
 six==1.17.0
-    # via
-    #   -c requirements.txt
-    #   sphinx
-    #   yapconf
+    # via sphinx
 snowballstemmer==3.0.1
     # via sphinx
 sphinx==1.8.6
@@ -151,14 +154,20 @@ sphinxcontrib-serializinghtml==2.0.0
     # via sphinxcontrib-websupport
 sphinxcontrib-websupport==1.2.4
     # via sphinx
-tornado==6.5.3
+testcontainers[mongodb]==4.13.3
+    # via -r requirements-dev.in
+tornado==6.5.4
     # via
     #   -c requirements.txt
     #   pytest-tornado
+typing-extensions==4.15.0
+    # via testcontainers
 urllib3==2.6.2
     # via
     #   -c requirements.txt
+    #   docker
     #   requests
+    #   testcontainers
 watchdog==6.0.0
     # via
     #   -c requirements.txt
@@ -169,7 +178,7 @@ wrapt==2.0.1
     # via
     #   -c requirements.txt
     #   brewtils
-yapconf==0.4.0
+yapconf==0.5.0
     # via
     #   -c requirements.txt
     #   brewtils
