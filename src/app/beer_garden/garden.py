@@ -9,6 +9,7 @@ The garden service is responsible for:
 * Responding to `Garden` sync requests and forwarding request to children
 * Handling `Garden` events
 """
+
 import copy
 import json
 import logging

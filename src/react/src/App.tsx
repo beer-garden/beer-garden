@@ -131,7 +131,10 @@ function App() {
                   />
                   <Route path="/jobs" element={<JobIndex />} />
                   <Route path="/job/:jobId" element={<RequestCreate />} />
-                  <Route path="/garden" element={<GardenIndex />} />
+                  <Route
+                    path="/garden"
+                    element={<GardenIndex listeners={listeners} />}
+                  />
 
                   <Route path="/about" element={<AboutIndex />} />
                   <Route

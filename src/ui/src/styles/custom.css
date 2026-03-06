@@ -13,8 +13,6 @@
 
 pre {
   font-size: 14px;
-  overflow-y: auto; /* Adds vertical scrollbar when content overflows vertically */
-  max-height: 200px; /* Essential for vertical scrolling */
 }
 
 /* This is in Bootstrap 4 so remove after upgrading */

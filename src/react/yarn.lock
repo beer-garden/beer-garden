@@ -1230,6 +1230,15 @@
     "@types/babel__core" "^7.20.5"
     react-refresh "^0.18.0"
 
+"@vitest/browser-playwright@^4.0.18", "@vitest/browser-playwright@4.0.18":
+  version "4.0.18"
+  resolved "https://registry.npmjs.org/@vitest/browser-playwright/-/browser-playwright-4.0.18.tgz"
+  integrity sha512-gfajTHVCiwpxRj1qh0Sh/5bbGLG4F/ZH/V9xvFVoFddpITfMta9YGow0W6ZpTTORv2vdJuz9TnrNSmjKvpOf4g==
+  dependencies:
+    "@vitest/browser" "4.0.18"
+    "@vitest/mocker" "4.0.18"
+    tinyrainbow "^3.0.3"
+
 "@vitest/browser-preview@^4.0.18", "@vitest/browser-preview@4.0.18":
   version "4.0.18"
   resolved "https://registry.npmjs.org/@vitest/browser-preview/-/browser-preview-4.0.18.tgz"
@@ -1239,7 +1248,7 @@
     "@testing-library/user-event" "^14.6.1"
     "@vitest/browser" "4.0.18"
 
-"@vitest/browser-webdriverio@^4.0.18", "@vitest/browser-webdriverio@4.0.18":
+"@vitest/browser-webdriverio@4.0.18":
   version "4.0.18"
   resolved "https://registry.npmjs.org/@vitest/browser-webdriverio/-/browser-webdriverio-4.0.18.tgz"
   integrity sha512-dKn4kBq6gFk+wT5DMjPTvivXptz9MaN7CONoP+bA0bZxWofNsZtf9R4oPwQakuB95WBQ3j5kZ/9SXvB9i+XYQw==
@@ -3706,6 +3715,20 @@ pixelmatch@7.1.0:
   integrity sha512-1wrVzJ2STrpmONHKBy228LM1b84msXDUoAzVEl0R8Mz4Ce6EPr+IVtxm8+yvrqLYMHswREkjYFaMxnyGnaY3Ng==
   dependencies:
     pngjs "^7.0.0"
+
+playwright-core@1.58.2:
+  version "1.58.2"
+  resolved "https://registry.npmjs.org/playwright-core/-/playwright-core-1.58.2.tgz"
+  integrity sha512-yZkEtftgwS8CsfYo7nm0KE8jsvm6i/PTgVtB8DL726wNf6H2IMsDuxCpJj59KDaxCtSnrWan2AeDqM7JBaultg==
+
+playwright@*:
+  version "1.58.2"
+  resolved "https://registry.npmjs.org/playwright/-/playwright-1.58.2.tgz"
+  integrity sha512-vA30H8Nvkq/cPBnNw4Q8TWz1EJyqgpuinBcHET0YVJVFldr8JDNiU9LaWAE1KqSkRYazuaBhTpB5ZzShOezQ6A==
+  dependencies:
+    playwright-core "1.58.2"
+  optionalDependencies:
+    fsevents "2.3.2"
 
 pngjs@^7.0.0:
   version "7.0.0"

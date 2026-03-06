@@ -3,12 +3,9 @@
 import pytest
 from mock import MagicMock, Mock, patch
 from mongoengine.errors import FieldDoesNotExist
-from mongomock.gridfs import enable_gridfs_integration
 
 import beer_garden.db.mongo.indexes
 from beer_garden.errors import IndexOperationError
-
-enable_gridfs_integration()
 
 
 @pytest.fixture
