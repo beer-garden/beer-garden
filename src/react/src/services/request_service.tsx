@@ -221,7 +221,7 @@ export const CancelRequest = async (
       headers.append(key, value as string);
     }
 
-    const response = await fetch("/api/v1/requests/" + request.id, {
+    const response = await fetch(`${GetBaseURL()}/api/v1/requests/${request.id}`, {
       headers: headers,
       method: "PATCH",
       body: JSON.stringify({

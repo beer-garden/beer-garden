@@ -32,7 +32,7 @@ function UnformattedInput(request: Request) {
 
 const handleDownload = (request: Request) => {
   // Example: fetch a file from a URL
-  const fileUrl = `/api/v1/requests/output/${request.id}`;
+  const fileUrl = `${GetBaseURL()}/api/v1/requests/output/${request.id}`;
   let filename = `${request.id}.txt`;
   if (request.output_type == "HTML") {
     filename = `${request.id}.html`;
