@@ -232,20 +232,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
-
-      - name: Check Firefox version
-        run: firefox --version
-
-      - name: Install Dependencies
-        run: npm install
+      - name: Build Docker Image
+        run: make test_docker_image
         working-directory: ./src/react
-
+      
       - name: Run Tests
-        run: npm test
+        run: make test
         working-directory: ./src/react
 
   CodeCoverage:

@@ -5,6 +5,7 @@ import { TreeTable } from "primereact/treetable";
 
 import { Request } from "../models/brewtils-types";
 import { DeleteRequest } from "../services/request_service";
+import { GetBaseURL } from "../services/util_service";
 
 function parseRequest(request: Request) {
   const item = {
@@ -68,7 +69,9 @@ function RequestTreeChart(props: RequestTreeChartProps) {
           rounded
           raised
           link
-          onClick={() => window.open("/request/" + node.data.id, "_self")}
+          onClick={() =>
+            window.open(`${GetBaseURL()}/request/${node.data.id}`, "_self")
+          }
           title="Open"
         >
           <FontAwesomeIcon icon="arrow-up-right-from-square" />{" "}
@@ -104,7 +107,9 @@ function RequestTreeChart(props: RequestTreeChartProps) {
             rounded
             raised
             link
-            onClick={() => window.open("/recreate/" + node.data.id, "_self")}
+            onClick={() =>
+              window.open(`${GetBaseURL()}/recreate/${node.data.id}`, "_self")
+            }
             title="Pour Again"
           >
             <FontAwesomeIcon icon="rotate" />{" "}

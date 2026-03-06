@@ -15,6 +15,7 @@ import { RequestCommand } from "../models/models";
 import { CreateJob, GetJob, UpdateJob } from "../services/job_service";
 import { GetRequest } from "../services/request_service";
 import { PostRequest } from "../services/request_service";
+import { GetBaseURL } from "../services/util_service";
 
 function RequestCreate() {
   const { requestId } = useParams<{ requestId: string }>();
@@ -70,7 +71,10 @@ function RequestCreate() {
     if (request) {
       PostRequest(request)
         .then((response_request) => {
-          window.open("/request/" + response_request.id, "_self");
+          window.open(
+            `${GetBaseURL()}/request/${response_request.id}`,
+            "_self",
+          );
         })
         .catch((error) => {
           console.error("Error creating request:", error);
@@ -82,7 +86,7 @@ function RequestCreate() {
     if (job && request) {
       CreateJob({ ...job, ...{ request_template: request } })
         .then(() => {
-          window.open("/jobs/", "_self");
+          window.open(`${GetBaseURL()}/jobs/`, "_self");
         })
         .catch((error) => {
           console.error("Error creating job:", error);
@@ -94,7 +98,7 @@ function RequestCreate() {
     if (job && request) {
       UpdateJob({ ...job, ...{ request_template: request } })
         .then(() => {
-          window.open("/jobs/", "_self");
+          window.open(`${GetBaseURL()}/jobs/`, "_self");
         })
         .catch((error) => {
           console.error("Error updating job:", error);
