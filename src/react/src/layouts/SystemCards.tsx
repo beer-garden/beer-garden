@@ -45,6 +45,27 @@ function SystemCards({
         const newSystems = [...jsonSystems, message.payload];
         sessionStorage.setItem("systems", JSON.stringify(newSystems));
       }
+    } else if (message.name == "SYSTEM_UPDATED") {
+      setSystems((prevSystems) => {
+        const newSystems = prevSystems.map((system) => {
+          if (system.id == message.payload.id) {
+            system = message.payload;
+          }
+          return { ...system };
+        });
+        return newSystems;
+      });
+      const sessSystems = sessionStorage.getItem("systems");
+      if (sessSystems) {
+        const jsonSystems = JSON.parse(sessSystems);
+        const newSessSystems = jsonSystems.map((system: System) => {
+          if (system.id == message.payload.id) {
+            system = message.payload;
+          }
+          return { ...system };
+        });
+        sessionStorage.setItem("systems", JSON.stringify(newSessSystems));
+      }
     } else if (message.name == "SYSTEM_REMOVED") {
       setSystems((prevSystems) => {
         return prevSystems.filter((s) => s.id != message.payload.id);
