@@ -8,6 +8,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { Request } from "../models/brewtils-types";
 import { DeleteRequest, GetRequestList } from "../services/request_service";
+import { GetBaseURL } from "../services/util_service";
 
 function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
   const [currentRequests, setCurrentRequests] = useState<Array<Request>>([]);
@@ -131,7 +132,9 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
           rounded
           raised
           link
-          onClick={() => window.open("/request/" + request.id, "_self")}
+          onClick={() =>
+            window.open(`${GetBaseURL()}/request/${request.id}`, "_self")
+          }
         >
           <FontAwesomeIcon icon="arrow-up-right-from-square" />
         </Button>

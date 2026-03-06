@@ -1,5 +1,7 @@
 import * as SparkMD5 from "spark-md5";
 
+import { GetBaseURL } from "./util_service";
+
 const chunkSize = 255 * 1024;
 
 export const calculateMD5 = async (file: File): Promise<string | null> => {
@@ -45,7 +47,7 @@ export const uploadFile = async (
 
   const md5_sum = await calculateMD5(file);
   const response = await fetch(
-    `/api/vbeta/chunks/id/?file_name=${encodeURIComponent(file.name)}&file_size=${file.size}&chunk_size=${chunkSize}&md5_sum=${md5_sum}`,
+    `${GetBaseURL()}/api/vbeta/chunks/id/?file_name=${encodeURIComponent(file.name)}&file_size=${file.size}&chunk_size=${chunkSize}&md5_sum=${md5_sum}`,
     {
       headers: headers,
     },
@@ -95,7 +97,7 @@ export const uploadChunk = async (
         const headers = new Headers();
         headers.append("Content-Type", "application/json");
 
-        fetch(`/api/vbeta/chunks/?file_id=${fileId}`, {
+        fetch(`${GetBaseURL()}/api/vbeta/chunks/?file_id=${fileId}`, {
           method: "POST",
           headers: headers,
           body: JSON.stringify({ data: result.split(",")[1], offset: offset }),
@@ -122,7 +124,7 @@ export const uploadChunk = async (
 
 export const verifyFile = async (fileId: string) => {
   const response = await fetch(
-    `/api/vbeta/chunks?file_id=${fileId}&verify=true`,
+    `${GetBaseURL()}/api/vbeta/chunks?file_id=${fileId}&verify=true`,
   );
   if (!response.ok) {
     // Handle non-OK responses (e.g., 404, 500)
@@ -134,9 +136,12 @@ export const verifyFile = async (fileId: string) => {
 };
 
 export const removeFile = async (fileId: string) => {
-  const response = await fetch(`/api/vbeta/chunks/?file_id=${fileId}`, {
-    method: "DELETE",
-  });
+  const response = await fetch(
+    `${GetBaseURL()}/api/vbeta/chunks/?file_id=${fileId}`,
+    {
+      method: "DELETE",
+    },
+  );
   if (!response.ok) {
     // Handle non-OK responses (e.g., 404, 500)
     throw new Error(`HTTP error: Status ${response.status}`);

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 import { Job } from "../models/brewtils-types";
 import { GetJobList } from "../services/job_service";
+import { GetBaseURL } from "../services/util_service";
 
 function JobIndex() {
   const [jobs, setJobs] = useState<Array<Job>>([]);
@@ -39,7 +40,7 @@ function JobIndex() {
           rounded
           raised
           link
-          onClick={() => window.open("/job/" + job.id, "_self")}
+          onClick={() => window.open(`${GetBaseURL()}/job/${job.id}`, "_self")}
           title={"Update Job " + job.name}
         >
           <FontAwesomeIcon icon="arrow-up-right-from-square" />
@@ -50,7 +51,7 @@ function JobIndex() {
   };
 
   const createJob = () => {
-    window.open("/create/job", "_self");
+    window.open(`${GetBaseURL()}/create/job`, "_self");
   };
 
   const header = (
