@@ -112,30 +112,28 @@ function CommandSelect({
       setSystemNames(systemNameList);
     }
 
-    if (
-      !CompareObjects(
-        versions,
-        systemVersionList.some(
+    const generateLatestSystemVersions = (
+      versions: Array<string>,
+    ): Array<string> => {
+      if (
+        versions.some(
           (version) =>
             validateVersion(version) ||
             validateVersion(version.replace(".dev", "-dev")),
         )
-          ? [...systemVersionList, "latest"]
-          : systemVersionList,
-      )
+      ) {
+        return [...systemVersionList, "latest"];
+      }
+      return versions;
+    };
+
+    if (
+      !CompareObjects(versions, generateLatestSystemVersions(systemVersionList))
     ) {
       if (systemVersionList.includes("latest")) {
         setVersions(systemVersionList);
       } else {
-        if (
-          systemVersionList.some(
-            (version) =>
-              validateVersion(version) ||
-              validateVersion(version.replace(".dev", "-dev")),
-          )
-        ) {
-          setVersions([...systemVersionList, "latest"]);
-        }
+        setVersions(generateLatestSystemVersions(systemVersionList));
       }
     }
 
