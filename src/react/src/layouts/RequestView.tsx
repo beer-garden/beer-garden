@@ -13,7 +13,11 @@ import CommandForm from "../components/CommandForm";
 import RequestOutput from "../components/RequestOutput";
 import RequestTreeChart from "../components/RequestTreeChart";
 import { Request, System } from "../models/brewtils-types";
-import { DeleteRequest, GetRequest } from "../services/request_service";
+import {
+  CancelRequest,
+  DeleteRequest,
+  GetRequest,
+} from "../services/request_service";
 import { GetSystemList } from "../services/system_service";
 import { GetBaseURL } from "../services/util_service";
 
@@ -26,6 +30,34 @@ function UnformattedInput(request: Request) {
   );
 }
 
+const handleDownload = (request: Request) => {
+  // Example: fetch a file from a URL
+  const fileUrl = `${GetBaseURL()}/api/v1/requests/output/${request.id}`;
+  let filename = `${request.id}.txt`;
+  if (request.output_type == "HTML") {
+    filename = `${request.id}.html`;
+  } else if (request.output_type == "JSON") {
+    filename = `${request.id}.json`;
+  }
+
+  fetch(fileUrl)
+    .then((response) => response.blob())
+    .then((blob) => {
+      // Create blob link to download
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", filename); // Set the custom download name
+      document.body.appendChild(link);
+      link.click(); // Trigger the download
+      link?.parentNode?.removeChild(link); // Clean up the link
+      window.URL.revokeObjectURL(url); // Free up the memory
+    })
+    .catch((error) => {
+      console.error("Error fetching the file:", error);
+    });
+};
+
 function RequestOptions(request: Request) {
   const items: MenuItem[] = [];
 
@@ -37,7 +69,9 @@ function RequestOptions(request: Request) {
       label: "Cancel Request",
       icon: <FontAwesomeIcon icon="xmark" />,
       command: () => {
-        //
+        CancelRequest(request).catch((error) => {
+          console.error("Error canceling request:", error);
+        });
       },
     });
   } else {
@@ -45,9 +79,10 @@ function RequestOptions(request: Request) {
       label: "Download Output",
       icon: <FontAwesomeIcon icon="download" />,
       command: () => {
-        //
+        handleDownload(request);
       },
     });
+
     items.push({
       label: "Delete Request",
       icon: <FontAwesomeIcon icon="xmark" />,
