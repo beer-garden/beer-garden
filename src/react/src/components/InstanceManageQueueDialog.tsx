@@ -4,22 +4,16 @@ import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Dialog } from "primereact/dialog";
 import { useEffect, useRef, useState } from "react";
 
-import { Instance, Queue, System } from "../models/brewtils-types";
+import { Queue } from "../models/brewtils-types";
+import { InstanceDialogProps } from "../models/models";
 import { ClearQueue, GetInstanceQueues } from "../services/queue_service";
-
-interface InstanceManageQueueDialogProps {
-  instance: Instance;
-  system: System;
-  isVisible: boolean;
-  onClose: any;
-}
 
 function InstanceManageQueueDialog({
   instance,
   system,
   isVisible,
   onClose,
-}: InstanceManageQueueDialogProps) {
+}: InstanceDialogProps) {
   const loaded = useRef<boolean>(false);
   const [queues, setQueues] = useState<Array<Queue>>([]);
 

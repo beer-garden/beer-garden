@@ -4,22 +4,16 @@ import { Dialog } from "primereact/dialog";
 import { Messages } from "primereact/messages";
 import { useEffect, useRef, useState } from "react";
 
-import { Instance, Request, System } from "../models/brewtils-types";
+import { Request } from "../models/brewtils-types";
+import { InstanceDialogProps } from "../models/models";
 import { DeleteRequests, GetRequestList } from "../services/request_service";
-
-interface InstanceCancelDeleteRequestsProps {
-  instance: Instance;
-  system: System;
-  isVisible: boolean;
-  onClose: any;
-}
 
 function InstanceCancelDeleteRequestsDialog({
   instance,
   system,
   isVisible,
   onClose,
-}: InstanceCancelDeleteRequestsProps) {
+}: InstanceDialogProps) {
   const [allCount, setAllCount] = useState<number>(0);
   const [successCount, setSuccessCount] = useState<number>(0);
   const [canceledCount, setCanceledCount] = useState<number>(0);

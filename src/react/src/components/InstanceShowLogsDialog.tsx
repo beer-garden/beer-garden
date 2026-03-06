@@ -3,22 +3,16 @@ import { Dialog } from "primereact/dialog";
 import { Messages } from "primereact/messages";
 import { useRef, useState } from "react";
 
-import { Instance, System } from "../models/brewtils-types";
+import { Instance } from "../models/brewtils-types";
+import { InstanceDialogProps } from "../models/models";
 import { GetInstanceLogs } from "../services/instance_service";
-
-interface InstanceShowLogsDialogProps {
-  instance: Instance;
-  system: System;
-  isVisible: boolean;
-  onClose: any;
-}
 
 function InstanceShowLogsDialog({
   instance,
   system,
   isVisible,
   onClose,
-}: InstanceShowLogsDialogProps) {
+}: InstanceDialogProps) {
   const msgs = useRef<Messages>(null);
 
   const tailStart = useRef<number>(-20);
