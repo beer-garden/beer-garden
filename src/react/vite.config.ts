@@ -1,9 +1,16 @@
 import { defineConfig } from 'vitest/config'
+import { loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { playwright } from '@vitest/browser-playwright'
 
-export default defineConfig({
+export default defineConfig(({mode}) => {
+  const env = loadEnv(mode, process.cwd(), '');
+
+  const baseURL = env.VITE_BASE_URL === "/" ? "" : env.VITE_BASE_URL || "";
+
+  return {
   plugins: [react()],
+  base: baseURL,
   test: {
     browser: {
       enabled: true,
@@ -14,22 +21,26 @@ export default defineConfig({
   server: {
     port: 3002,
     proxy: {
-      '/api': {
+      [`${baseURL}/api`]: {
         target: 'http://localhost:2337',
         changeOrigin: true,
+        rewrite: (path) => path.replace(new RegExp(`^${baseURL}`), '')
       },
-      '/api/v1/socket/events': {
+      [`${baseURL}/api/v1/socket/events`]: {
         target: 'ws://localhost:2337',
         changeOrigin: true,
-        ws: true
+        ws: true,
+        rewrite: (path) => path.replace(new RegExp(`^${baseURL}`), '')
       },
-      '/config': {
+      [`${baseURL}/config`]: {
         target: 'http://localhost:2337',
         changeOrigin: true,
+        rewrite: (path) => path.replace(new RegExp(`^${baseURL}`), '')
       },
-      '/version': {
+      [`${baseURL}/version`]: {
         target: 'http://localhost:2337',
         changeOrigin: true,
+        rewrite: (path) => path.replace(new RegExp(`^${baseURL}`), '')
       },
     }
   },
@@ -38,4 +49,4 @@ export default defineConfig({
     sourcemap: true,
   },
   
-})
+}})

@@ -1,4 +1,5 @@
 import { Job } from "../models/brewtils-types";
+import { GetBaseURL } from "./util_service";
 
 export const GetJobList = async (
   headerData?: any,
@@ -11,7 +12,7 @@ export const GetJobList = async (
       }
     }
 
-    const response = await fetch(`/api/v1/jobs`, {
+    const response = await fetch(`${GetBaseURL()}/api/v1/jobs`, {
       headers: headers,
     });
     if (!response.ok) {
@@ -35,7 +36,7 @@ export const GetJob = async (jobId: string, headerData: any): Promise<Job> => {
       headers.append(key, value as string);
     }
 
-    const response = await fetch(`/api/v1/jobs/${jobId}`, {
+    const response = await fetch(`${GetBaseURL()}/api/v1/jobs/${jobId}`, {
       headers: headers,
     });
     if (!response.ok) {
@@ -65,7 +66,7 @@ export const CreateJob = async (
 
     headers.append("Content-Type", "application/json");
 
-    const response = await fetch("/api/v1/jobs/", {
+    const response = await fetch(`${GetBaseURL()}/api/v1/jobs/`, {
       headers: headers,
       method: "POST",
       body: JSON.stringify(job),
@@ -97,7 +98,7 @@ export const UpdateJob = async (
 
     headers.append("Content-Type", "application/json");
 
-    const response = await fetch("/api/v1/jobs/" + job.id, {
+    const response = await fetch(`${GetBaseURL()}/api/v1/jobs/${job.id}`, {
       headers: headers,
       method: "PATCH",
       body: JSON.stringify({

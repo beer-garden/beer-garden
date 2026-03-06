@@ -1,5 +1,6 @@
 import { Garden, Patch } from "../models/brewtils-types";
 import { Config } from "../models/models";
+import { GetBaseURL } from "./util_service";
 
 export const GetGarden = async (
   garden_name: string,
@@ -14,7 +15,7 @@ export const GetGarden = async (
     }
 
     const response = await fetch(
-      `api/v1/gardens/${encodeURIComponent(garden_name)}`,
+      `${GetBaseURL()}/api/v1/gardens/${encodeURIComponent(garden_name)}`,
       {
         headers: headers,
       },
@@ -47,7 +48,7 @@ export const PatchGarden = async (
     }
 
     const response = await fetch(
-      `api/v1/gardens${garden_name ? "/" + encodeURIComponent(garden_name) : ""}`,
+      `${GetBaseURL()}/api/v1/gardens${garden_name ? "/" + encodeURIComponent(garden_name) : ""}`,
       {
         headers: headers,
         body: JSON.stringify(patch),
@@ -80,7 +81,7 @@ export const DeleteGarden = async (
     }
 
     const response = await fetch(
-      `api/v1/gardens/${encodeURIComponent(garden_name)}`,
+      `${GetBaseURL()}/api/v1/gardens/${encodeURIComponent(garden_name)}`,
       {
         headers: headers,
         method: "DELETE",
@@ -117,7 +118,9 @@ export const GetGardenList = async (
       }
     }
 
-    const response = await fetch(`api/v1/gardens/`, { headers: headers });
+    const response = await fetch(`${GetBaseURL()}/api/v1/gardens/`, {
+      headers: headers,
+    });
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);
