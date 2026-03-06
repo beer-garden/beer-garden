@@ -68,12 +68,9 @@ function RequestOptions(request: Request) {
       label: "Cancel Request",
       icon: <FontAwesomeIcon icon="xmark" />,
       command: () => {
-        CancelRequest(request).then(() => {
-            // window.open("/requests", "_self");
-          })
-          .catch((error) => {
-            console.error("Error canceling request:", error);
-          });
+        CancelRequest(request).catch((error) => {
+          console.error("Error canceling request:", error);
+        });
       },
     });
   } else {
