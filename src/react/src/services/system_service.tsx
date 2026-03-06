@@ -1,6 +1,7 @@
 import { compare, validate } from "compare-versions";
 
 import { Garden, System } from "../models/brewtils-types";
+import { GetBaseURL } from "./util_service";
 
 export const GetSystem = async (
   systemId: string,
@@ -12,7 +13,7 @@ export const GetSystem = async (
       headers.append(key, value as string);
     }
 
-    const response = await fetch(`/api/v1/systems/${systemId}`, {
+    const response = await fetch(`${GetBaseURL()}/api/v1/systems/${systemId}`, {
       headers: headers,
     });
     if (!response.ok) {
@@ -67,9 +68,12 @@ export const GetSystemList = async (
       queryString = searchParams.toString();
     }
 
-    const response = await fetch(`/api/v1/systems?${queryString}`, {
-      headers: headers,
-    });
+    const response = await fetch(
+      `${GetBaseURL()}/api/v1/systems?${queryString}`,
+      {
+        headers: headers,
+      },
+    );
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);

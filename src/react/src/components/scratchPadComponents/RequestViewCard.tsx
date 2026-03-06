@@ -16,6 +16,7 @@ import { ScratchPadValue } from "../../models/models";
 import { GetRequest, PostRequest } from "../../services/request_service";
 import { PushToScratchPad } from "../../services/scratchpad_service";
 import { GetSystemList } from "../../services/system_service";
+import { GetBaseURL } from "../../services/util_service";
 import RequestOutput from "../RequestOutput";
 
 function UnformattedInput(request: Request) {
@@ -109,7 +110,10 @@ function RequestViewCard({
               });
               reloadScratchPad();
             } else {
-              window.open("/request/" + response_request.id, "_self");
+              window.open(
+                `${GetBaseURL()}/request/${response_request.id}`,
+                "_self",
+              );
             }
           } else {
             toast?.current?.show({
@@ -309,7 +313,7 @@ function RequestViewCard({
             label="Open"
             icon="pi pi-plus"
             onClick={() => {
-              window.open("/request/" + request.id, "_self");
+              window.open(`${GetBaseURL()}/request/${request.id}`, "_self");
             }}
             model={[
               {
@@ -330,7 +334,10 @@ function RequestViewCard({
                 label: "Clone Request and Open",
                 // icon: <FontAwesomeIcon icon="arrow-up-from-bracket" />,
                 command: () => {
-                  window.open("/recreate/" + request.id, "_self");
+                  window.open(
+                    `${GetBaseURL()}/recreate/${request.id}`,
+                    "_self",
+                  );
                 },
               },
               {

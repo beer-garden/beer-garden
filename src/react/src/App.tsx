@@ -6,7 +6,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
 import { Divider } from "primereact/divider";
 import { useEffect, useRef, useState } from "react";
-import { BrowserRouter, Route, Switch } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import ScratchPad from "./components/ScratchPad";
 import AboutIndex from "./layouts/AboutIndex";
@@ -77,75 +77,97 @@ function App() {
     };
   }, []);
 
+  const baseURL =
+    import.meta.env.VITE_BASE_URL === "/"
+      ? undefined
+      : import.meta.env.VITE_BASE_URL || undefined;
+
   return (
     <div>
-      <NavigationMenu listeners={listeners} />
       <div className="flex">
         <div className={showMainApp ? "flex-grow-1" : "hidden"}>
-          <BrowserRouter>
-            <Switch>
-              <Route path="/systems">
-                {/* <SystemIndex /> */}
-                <SystemCards setReloadScratchPad={setReloadScratchPadTrigger} />
-              </Route>
-              <Route path="/systemtable">
-                <SystemTable />
-              </Route>
-              <Route path="/systemcard">
-                <SystemCards setReloadScratchPad={setReloadScratchPadTrigger} />
-              </Route>
-              <Route path="/request/:requestId">
-                <RequestView listeners={listeners} />
-              </Route>
-              <Route path="/requests">
-                <RequestIndex
+          <BrowserRouter basename={baseURL}>
+            <NavigationMenu listeners={listeners} />
+            <div className="flex">
+              <div className={showMainApp ? "flex-grow-1" : "hidden"}>
+                <Routes>
+                  <Route
+                    path="/systems"
+                    element={
+                      <SystemCards
+                        setReloadScratchPad={setReloadScratchPadTrigger}
+                      />
+                    }
+                  />
+                  <Route path="/systemtable" element={<SystemTable />} />
+                  <Route
+                    path="/systemcard"
+                    element={
+                      <SystemCards
+                        setReloadScratchPad={setReloadScratchPadTrigger}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/request/:requestId"
+                    element={<RequestView listeners={listeners} />}
+                  />
+                  <Route
+                    path="/requests"
+                    element={
+                      <RequestIndex
+                        listeners={listeners}
+                        setReloadScratchPad={setReloadScratchPadTrigger}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/create/:defaultType/:paramNamespace?/:paramSystem?/:paramVersion?/:paramInstance?/:paramCommand?"
+                    element={<RequestCreate />}
+                  />
+                  <Route
+                    path="/recreate/:requestId"
+                    element={<RequestCreate />}
+                  />
+                  <Route path="/jobs" element={<JobIndex />} />
+                  <Route path="/job/:jobId" element={<RequestCreate />} />
+                  <Route
+                    path="/garden"
+                    element={<GardenIndex listeners={listeners} />}
+                  />
+
+                  <Route path="/about" element={<AboutIndex />} />
+                  <Route
+                    path="/"
+                    element={
+                      <SystemCards
+                        setReloadScratchPad={setReloadScratchPadTrigger}
+                      />
+                    }
+                  />
+                </Routes>
+              </div>
+              <Divider layout="vertical">
+                {showScratchPad && (
+                  <Button onClick={() => nagivateRight()}>
+                    <FontAwesomeIcon icon="angles-right" />
+                  </Button>
+                )}
+
+                {showMainApp && (
+                  <Button onClick={() => nagivateLeft()}>
+                    <FontAwesomeIcon icon="angles-left" />
+                  </Button>
+                )}
+              </Divider>
+              <div className={showScratchPad ? "flex-grow-1" : "hidden"}>
+                <ScratchPad
                   listeners={listeners}
-                  setReloadScratchPad={setReloadScratchPadTrigger}
+                  reloadTrigger={reloadScratchPadTrigger}
                 />
-              </Route>
-              <Route path="/create/:defaultType/:paramNamespace?/:paramSystem?/:paramVersion?/:paramInstance?/:paramCommand?">
-                <RequestCreate />
-              </Route>
-              <Route path="/recreate/:requestId">
-                <RequestCreate />
-              </Route>
-              <Route path="/jobs">
-                <JobIndex />
-              </Route>
-              <Route path="/job/:jobId">
-                <RequestCreate />
-              </Route>
-              <Route path="/garden">
-                <GardenIndex />
-              </Route>
-              <Route path="/about">
-                <AboutIndex />
-              </Route>
-
-              <Route path="/">
-                <SystemCards setReloadScratchPad={setReloadScratchPadTrigger} />
-              </Route>
-            </Switch>
+              </div>
+            </div>
           </BrowserRouter>
-        </div>
-        <Divider layout="vertical">
-          {showScratchPad && (
-            <Button onClick={() => nagivateRight()}>
-              <FontAwesomeIcon icon="angles-right" />
-            </Button>
-          )}
-
-          {showMainApp && (
-            <Button onClick={() => nagivateLeft()}>
-              <FontAwesomeIcon icon="angles-left" />
-            </Button>
-          )}
-        </Divider>
-        <div className={showScratchPad ? "flex-grow-1" : "hidden"}>
-          <ScratchPad
-            listeners={listeners}
-            reloadTrigger={reloadScratchPadTrigger}
-          />
         </div>
       </div>
     </div>
