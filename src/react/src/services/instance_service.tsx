@@ -6,7 +6,10 @@ export const StartInstance = async (
 ): Promise<void> => {
   const headers = new Headers();
   headers.append("Content-Type", "application/json");
-  if (system.garden_name) {
+  if (
+    system.garden_name &&
+    encodeURIComponent(system.garden_name) === system.garden_name
+  ) {
     headers.append("Target-Garden", system.garden_name);
   }
   const response = await fetch("api/v1/instances/" + instance.id, {
@@ -32,7 +35,10 @@ export const StopInstance = async (
 ): Promise<void> => {
   const headers = new Headers();
   headers.append("Content-Type", "application/json");
-  if (system.garden_name) {
+  if (
+    system.garden_name &&
+    encodeURIComponent(system.garden_name) === system.garden_name
+  ) {
     headers.append("Target-Garden", system.garden_name);
   }
   const response = await fetch("api/v1/instances/" + instance.id, {

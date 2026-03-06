@@ -5,8 +5,10 @@ export const ClearAllQueues = async (gardenName?: string): Promise<void> => {
   headers.append("Content-Type", "application/json");
   let fetch_url = "api/v1/queues";
   if (gardenName) {
-    headers.append("Target-Garden", gardenName);
     fetch_url = "api/v1/queues?garden_name=" + encodeURIComponent(gardenName);
+    if (encodeURIComponent(gardenName) === gardenName) {
+      headers.append("Target-Garden", gardenName);
+    }
   }
   const response = await fetch(fetch_url, {
     headers: headers,

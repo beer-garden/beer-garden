@@ -107,7 +107,10 @@ export const ExtractSystemsFromGardens = (
 export const ReloadSystem = async (system: System): Promise<void> => {
   const headers = new Headers();
   headers.append("Content-Type", "application/json");
-  if (system.garden_name !== undefined) {
+  if (
+    system.garden_name !== undefined &&
+    encodeURIComponent(system.garden_name) === system.garden_name
+  ) {
     headers.append("Target-Garden", system.garden_name);
   }
   const response = await fetch("api/v1/systems/" + system.id, {
@@ -132,8 +135,10 @@ export const Rescan = async (gardenName?: string): Promise<void> => {
   headers.append("Content-Type", "application/json");
   let fetch_url = "api/v1/systems";
   if (gardenName) {
-    headers.append("Target-Garden", gardenName);
     fetch_url = "api/v1/systems?garden_name=" + encodeURIComponent(gardenName);
+    if (encodeURIComponent(gardenName) === gardenName) {
+      headers.append("Target-Garden", gardenName);
+    }
   }
   const response = await fetch(fetch_url, {
     headers: headers,
@@ -155,7 +160,10 @@ export const Rescan = async (gardenName?: string): Promise<void> => {
 export const DeleteSystem = async (system: System): Promise<void> => {
   const headers = new Headers();
   headers.append("Content-Type", "application/json");
-  if (system.garden_name !== undefined) {
+  if (
+    system.garden_name !== undefined &&
+    encodeURIComponent(system.garden_name) === system.garden_name
+  ) {
     headers.append("Target-Garden", system.garden_name);
   }
   const response = await fetch("api/v1/systems/" + system.id, {
@@ -171,7 +179,10 @@ export const DeleteSystem = async (system: System): Promise<void> => {
 export const ForceDeleteSystem = async (system: System): Promise<void> => {
   const headers = new Headers();
   headers.append("Content-Type", "application/json");
-  if (system.garden_name !== undefined) {
+  if (
+    system.garden_name !== undefined &&
+    encodeURIComponent(system.garden_name) === system.garden_name
+  ) {
     headers.append("Target-Garden", system.garden_name);
   }
   const params = new URLSearchParams({ force: "true" }).toString();
