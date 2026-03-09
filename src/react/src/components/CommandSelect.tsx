@@ -1,7 +1,6 @@
 import { validate as validateVersion } from "compare-versions";
 import { Dropdown } from "primereact/dropdown";
 import { useEffect, useState } from "react";
-import { validate } from "uuid";
 
 import { Command, Instance, System } from "../models/brewtils-types";
 import { DetermineLatestSystemVersion } from "../services/system_service";

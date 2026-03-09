@@ -221,15 +221,18 @@ export const CancelRequest = async (
       headers.append(key, value as string);
     }
 
-    const response = await fetch(`${GetBaseURL()}/api/v1/requests/${request.id}`, {
-      headers: headers,
-      method: "PATCH",
-      body: JSON.stringify({
-        operation: "replace",
-        path: "/status",
-        value: "CANCELED",
-      }),
-    });
+    const response = await fetch(
+      `${GetBaseURL()}/api/v1/requests/${request.id}`,
+      {
+        headers: headers,
+        method: "PATCH",
+        body: JSON.stringify({
+          operation: "replace",
+          path: "/status",
+          value: "CANCELED",
+        }),
+      },
+    );
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);
