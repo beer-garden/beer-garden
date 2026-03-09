@@ -30,7 +30,17 @@ function formattedOutputData(request: Request) {
       parsed_output = { error: "Failed to parse JSON output" };
     }
 
-    return <pre>{JSON.stringify(parsed_output, null, 2)}</pre>;
+    return (
+      <pre
+        style={{
+          whiteSpace: "pre-wrap",
+          overflowWrap: "break-word",
+          overflowX: "auto",
+        }}
+      >
+        {JSON.stringify(parsed_output, null, 2)}
+      </pre>
+    );
   }
 
   if (request.output_type === "HTML") {
