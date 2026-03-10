@@ -5,20 +5,12 @@ import { useState } from "react";
 import { Request } from "../models/brewtils-types";
 
 function largeOutputCheck(request: Request): boolean {
-  if (request.output_type === "JSON") {
-    try {
-      if (Object.keys(JSON.parse(request.output || "{}")).length > 1000) {
-        return false;
-      }
-    } catch {
-      // Pass
-    }
-  }
-  if (new Blob([request.output ?? ""]).size > 5000000) {
-    return false;
+  const blob = new Blob([request.output ?? ""]);
+  if (blob.size > 5000000) {
+    return true;
   }
 
-  return true;
+  return false;
 }
 
 function formattedOutputData(request: Request) {
@@ -64,11 +56,11 @@ function formattedOutputData(request: Request) {
 }
 
 function displayOutput(request: Request) {
-  const [showOutput, setShowOutput] = useState(largeOutputCheck(request));
+  const [hideOutput, setHideOutput] = useState(largeOutputCheck(request));
 
   return (
     <div>
-      {!showOutput && (
+      {hideOutput && (
         <div>
           <div>Output is too large</div>
           <Button
@@ -77,11 +69,11 @@ function displayOutput(request: Request) {
             icon="pi pi-arrow-right"
             iconPos="right"
             data-testid="request-show-output"
-            onClick={() => setShowOutput(true)}
+            onClick={() => setHideOutput(false)}
           />
         </div>
       )}
-      {showOutput && formattedOutputData(request)}
+      {!hideOutput && formattedOutputData(request)}
     </div>
   );
 }

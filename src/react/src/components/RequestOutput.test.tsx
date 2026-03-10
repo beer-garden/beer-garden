@@ -1,6 +1,6 @@
 import { cleanup, render, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import RequestOutput from "./RequestOutput";
 
@@ -115,9 +115,19 @@ describe("RequestOutput", () => {
 
   test("renders Large JSON Output with warning", async () => {
     const jsonOutput = {} as any;
-    for (let i = 0; i < 1001; i++) {
-      jsonOutput[i] = i;
+
+    class MockBlobClass {
+      data: Array<any>;
+      size: number;
+
+      constructor(data: []) {
+        this.data = data;
+        this.size = 50000001;
+      }
     }
+
+    vi.stubGlobal("Blob", MockBlobClass);
+
     const page = render(
       <RequestOutput
         id="123"
@@ -134,9 +144,17 @@ describe("RequestOutput", () => {
 
   test("renders Large String Output show Output", async () => {
     const jsonOutput = { key: "example" } as any;
-    for (let i = 0; i < 1001; i++) {
-      jsonOutput[i] = i;
+    class MockBlobClass {
+      data: Array<any>;
+      size: number;
+
+      constructor(data: []) {
+        this.data = data;
+        this.size = 50000001;
+      }
     }
+
+    vi.stubGlobal("Blob", MockBlobClass);
     const page = render(
       <RequestOutput
         id="123"
