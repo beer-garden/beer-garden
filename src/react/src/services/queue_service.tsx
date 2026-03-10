@@ -42,10 +42,13 @@ export const GetInstanceQueues = async (
   }
   const headers = new Headers();
   headers.append("Content-Type", "application/json");
-  const response = await fetch(`${GetBaseURL()}/api/v1/instances/${instanceId}/queues`, {
-    headers: headers,
-    method: "GET",
-  });
+  const response = await fetch(
+    `${GetBaseURL()}/api/v1/instances/${instanceId}/queues`,
+    {
+      headers: headers,
+      method: "GET",
+    },
+  );
   if (!response.ok) {
     // Handle non-OK responses (e.g., 404, 500)
     throw new Error(`HTTP error: Status ${response.status}`);

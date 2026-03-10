@@ -190,10 +190,13 @@ export const ForceDeleteSystem = async (system: System): Promise<void> => {
     headers.append("Target-Garden", system.garden_name);
   }
   const params = new URLSearchParams({ force: "true" }).toString();
-  const response = await fetch(`${GetBaseURL()}/api/v1/systems/${system.id}?${params}`, {
-    headers: headers,
-    method: "DELETE",
-  });
+  const response = await fetch(
+    `${GetBaseURL()}/api/v1/systems/${system.id}?${params}`,
+    {
+      headers: headers,
+      method: "DELETE",
+    },
+  );
   if (!response.ok) {
     // Handle non-OK responses (e.g., 404, 500)
     throw new Error(`HTTP error: Status ${response.status}`);

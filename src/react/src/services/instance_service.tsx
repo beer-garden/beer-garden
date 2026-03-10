@@ -13,17 +13,20 @@ export const StartInstance = async (
   ) {
     headers.append("Target-Garden", system.garden_name);
   }
-  const response = await fetch(`${GetBaseURL()}/api/v1/instances/${instance.id}`, {
-    headers: headers,
-    method: "PATCH",
-    body: JSON.stringify({
-      operations: [
-        {
-          operation: "start",
-        },
-      ],
-    }),
-  });
+  const response = await fetch(
+    `${GetBaseURL()}/api/v1/instances/${instance.id}`,
+    {
+      headers: headers,
+      method: "PATCH",
+      body: JSON.stringify({
+        operations: [
+          {
+            operation: "start",
+          },
+        ],
+      }),
+    },
+  );
   if (!response.ok) {
     // Handle non-OK responses (e.g., 404, 500)
     throw new Error(`HTTP error: Status ${response.status}`);
@@ -42,17 +45,20 @@ export const StopInstance = async (
   ) {
     headers.append("Target-Garden", system.garden_name);
   }
-  const response = await fetch(`${GetBaseURL()}/api/v1/instances/${instance.id}`, {
-    headers: headers,
-    method: "PATCH",
-    body: JSON.stringify({
-      operations: [
-        {
-          operation: "stop",
-        },
-      ],
-    }),
-  });
+  const response = await fetch(
+    `${GetBaseURL()}/api/v1/instances/${instance.id}`,
+    {
+      headers: headers,
+      method: "PATCH",
+      body: JSON.stringify({
+        operations: [
+          {
+            operation: "stop",
+          },
+        ],
+      }),
+    },
+  );
   if (!response.ok) {
     // Handle non-OK responses (e.g., 404, 500)
     throw new Error(`HTTP error: Status ${response.status}`);

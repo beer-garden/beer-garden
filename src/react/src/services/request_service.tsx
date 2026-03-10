@@ -234,10 +234,12 @@ export const DeleteRequests = async (deleteParams?: any) => {
     queryString = searchParams.toString();
 
     const response = await fetch(
-      `${GetBaseURL()}/api/v1/requests?${queryString}`, {
-      headers: headers,
-      method: "DELETE",
-    });
+      `${GetBaseURL()}/api/v1/requests?${queryString}`,
+      {
+        headers: headers,
+        method: "DELETE",
+      },
+    );
 
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
