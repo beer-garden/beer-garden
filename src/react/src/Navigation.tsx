@@ -2,11 +2,26 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
 import { MegaMenu } from "primereact/megamenu";
 import { Ripple } from "primereact/ripple";
+import { useEffect,useState } from "react";
 import { Link } from "react-router-dom";
 
 import CurrentRequestsTemplate from "./components/CurrentRequestsTemplate";
+import { Config } from "./models/models";
+import { GetConfig } from "./services/config_service";
 
 function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
+  const [config, setConfig] = useState<Config | null>(null);
+
+  useEffect(() => {
+    GetConfig()
+      .then((config) => {
+        setConfig(config);
+      })
+      .catch((error) => {
+        console.error("Error fetching the config:", error);
+      });
+  }, []);
+
   const itemRenderer = (item: any) => {
     if (item.root) {
       return (
@@ -126,7 +141,16 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
     },
   ];
 
-  const start = <FontAwesomeIcon icon="beer-mug-empty" />;
+  const start = (
+    <div className="flex">
+      {config && (<div className="mr-2">
+        <FontAwesomeIcon icon={config.icon_default ?? "beer-mug-empty"} />
+      </div>)}
+      {config && <div className="mr-2">{config.garden_name}</div>}
+    </div>
+  );
+
+  
 
   return (
     <div className="card">
