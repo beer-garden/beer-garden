@@ -1,6 +1,7 @@
 import { compare, validate } from "compare-versions";
 
 import { Garden, System } from "../models/brewtils-types";
+import { GetBaseURL } from "./util_service";
 
 export const GetSystem = async (
   systemId: string,
@@ -12,7 +13,7 @@ export const GetSystem = async (
       headers.append(key, value as string);
     }
 
-    const response = await fetch(`/api/v1/systems/${systemId}`, {
+    const response = await fetch(`${GetBaseURL()}/api/v1/systems/${systemId}`, {
       headers: headers,
     });
     if (!response.ok) {
@@ -67,9 +68,12 @@ export const GetSystemList = async (
       queryString = searchParams.toString();
     }
 
-    const response = await fetch(`/api/v1/systems?${queryString}`, {
-      headers: headers,
-    });
+    const response = await fetch(
+      `${GetBaseURL()}/api/v1/systems?${queryString}`,
+      {
+        headers: headers,
+      },
+    );
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);
@@ -113,7 +117,7 @@ export const ReloadSystem = async (system: System): Promise<void> => {
   ) {
     headers.append("Target-Garden", system.garden_name);
   }
-  const response = await fetch("api/v1/systems/" + system.id, {
+  const response = await fetch(`${GetBaseURL()}/api/v1/systems/${system.id}`, {
     headers: headers,
     method: "PATCH",
     body: JSON.stringify({
@@ -133,9 +137,9 @@ export const ReloadSystem = async (system: System): Promise<void> => {
 export const Rescan = async (gardenName?: string): Promise<void> => {
   const headers = new Headers();
   headers.append("Content-Type", "application/json");
-  let fetch_url = "api/v1/systems";
+  let fetch_url = `${GetBaseURL()}api/v1/systems`;
   if (gardenName) {
-    fetch_url = "api/v1/systems?garden_name=" + encodeURIComponent(gardenName);
+    fetch_url = `${GetBaseURL()}/api/v1/systems?garden_name=${encodeURIComponent(gardenName)}`;
     if (encodeURIComponent(gardenName) === gardenName) {
       headers.append("Target-Garden", gardenName);
     }
@@ -166,7 +170,7 @@ export const DeleteSystem = async (system: System): Promise<void> => {
   ) {
     headers.append("Target-Garden", system.garden_name);
   }
-  const response = await fetch("api/v1/systems/" + system.id, {
+  const response = await fetch(`${GetBaseURL()}/api/v1/systems/${system.id}`, {
     headers: headers,
     method: "DELETE",
   });
@@ -186,7 +190,7 @@ export const ForceDeleteSystem = async (system: System): Promise<void> => {
     headers.append("Target-Garden", system.garden_name);
   }
   const params = new URLSearchParams({ force: "true" }).toString();
-  const response = await fetch(`api/v1/systems/${system.id}?${params}`, {
+  const response = await fetch(`${GetBaseURL()}/api/v1/systems/${system.id}?${params}`, {
     headers: headers,
     method: "DELETE",
   });

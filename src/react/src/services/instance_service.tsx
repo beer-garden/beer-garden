@@ -1,4 +1,5 @@
 import { Instance, System } from "../models/brewtils-types";
+import { GetBaseURL } from "./util_service";
 
 export const StartInstance = async (
   instance: Instance,
@@ -12,7 +13,7 @@ export const StartInstance = async (
   ) {
     headers.append("Target-Garden", system.garden_name);
   }
-  const response = await fetch("api/v1/instances/" + instance.id, {
+  const response = await fetch(`${GetBaseURL()}/api/v1/instances/${instance.id}`, {
     headers: headers,
     method: "PATCH",
     body: JSON.stringify({
@@ -41,7 +42,7 @@ export const StopInstance = async (
   ) {
     headers.append("Target-Garden", system.garden_name);
   }
-  const response = await fetch("api/v1/instances/" + instance.id, {
+  const response = await fetch(`${GetBaseURL()}/api/v1/instances/${instance.id}`, {
     headers: headers,
     method: "PATCH",
     body: JSON.stringify({
@@ -74,7 +75,7 @@ export const GetInstanceLogs = async (
     }
 
     const response = await fetch(
-      `api/v1/instances/${instance.id}/logs/?${params.toString()}`,
+      `${GetBaseURL()}/api/v1/instances/${instance.id}/logs/?${params.toString()}`,
     );
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)

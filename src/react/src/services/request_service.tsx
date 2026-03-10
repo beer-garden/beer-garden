@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 
 import { Request } from "../models/brewtils-types";
+import { GetBaseURL } from "./util_service";
 
 export const GetRequestList = async (
   headerData?: any,
@@ -37,7 +38,9 @@ export const GetRequestList = async (
       queryString = searchParams.toString();
     }
 
-    const response = await fetch(`/api/v1/requests?${queryString}`);
+    const response = await fetch(
+      `${GetBaseURL()}/api/v1/requests?${queryString}`,
+    );
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);
@@ -61,9 +64,12 @@ export const GetRequest = async (
       headers.append(key, value as string);
     }
 
-    const response = await fetch(`/api/v1/requests/${requestId}`, {
-      headers: headers,
-    });
+    const response = await fetch(
+      `${GetBaseURL()}/api/v1/requests/${requestId}`,
+      {
+        headers: headers,
+      },
+    );
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);
@@ -130,7 +136,7 @@ export const PostRequest = async (
       }
 
       const response = await fetch(
-        "/api/v1/requests?blocking=" + waitForCompletion,
+        `${GetBaseURL()}/api/v1/requests?blocking=${waitForCompletion}`,
         {
           headers: headers,
           method: "POST",
@@ -147,7 +153,7 @@ export const PostRequest = async (
 
     headers.append("Content-Type", "application/json");
     const response = await fetch(
-      "/api/v1/requests?blocking=" + waitForCompletion,
+      `${GetBaseURL()}/api/v1/requests?blocking=${waitForCompletion}`,
       {
         headers: headers,
         method: "POST",
@@ -186,10 +192,13 @@ export const DeleteRequest = async (request: Request, headerData?: any) => {
       headers.append(key, value as string);
     }
 
-    const response = await fetch("/api/v1/requests?id=" + request.id, {
-      headers: headers,
-      method: "DELETE",
-    });
+    const response = await fetch(
+      `${GetBaseURL()}/api/v1/requests?id=${request.id}`,
+      {
+        headers: headers,
+        method: "DELETE",
+      },
+    );
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);
@@ -224,16 +233,57 @@ export const DeleteRequests = async (deleteParams?: any) => {
 
     queryString = searchParams.toString();
 
-    const response = await fetch(`/api/v1/requests?${queryString}`, {
+    const response = await fetch(
+      `${GetBaseURL()}/api/v1/requests?${queryString}`, {
       headers: headers,
       method: "DELETE",
     });
+
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);
     }
 
     return;
+  } catch (error) {
+    // Handle network errors or the error thrown above
+    console.error("Error fetching Requests:", error);
+    throw error; // Re-throw to be handled by the component/hook
+  }
+};
+
+export const CancelRequest = async (
+  request: Request,
+  headerData?: any,
+): Promise<Request> => {
+  try {
+    const headers = new Headers();
+
+    headers.append("Content-Type", "application/json");
+
+    for (const [key, value] of Object.entries(headerData || {})) {
+      headers.append(key, value as string);
+    }
+
+    const response = await fetch(
+      `${GetBaseURL()}/api/v1/requests/${request.id}`,
+      {
+        headers: headers,
+        method: "PATCH",
+        body: JSON.stringify({
+          operation: "replace",
+          path: "/status",
+          value: "CANCELED",
+        }),
+      },
+    );
+    if (!response.ok) {
+      // Handle non-OK responses (e.g., 404, 500)
+      throw new Error(`HTTP error: Status ${response.status}`);
+    }
+
+    const data = (await response.json()) as Request;
+    return data;
   } catch (error) {
     // Handle network errors or the error thrown above
     console.error("Error fetching Requests:", error);

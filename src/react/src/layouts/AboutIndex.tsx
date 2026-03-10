@@ -17,7 +17,7 @@ function AboutIndex() {
         setConfig(config);
       })
       .catch((error) => {
-        console.error("Error fetching config:", error);
+        console.error("Error fetching the config:", error);
       });
   }, []);
 
@@ -27,7 +27,7 @@ function AboutIndex() {
         setVersion(version);
       })
       .catch((error) => {
-        console.error("Error fetching version:", error);
+        console.error("Error fetching the version:", error);
       });
   }, []);
 

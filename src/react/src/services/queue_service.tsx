@@ -1,11 +1,12 @@
 import { Queue } from "../models/brewtils-types";
+import { GetBaseURL } from "./util_service";
 
 export const ClearAllQueues = async (gardenName?: string): Promise<void> => {
   const headers = new Headers();
   headers.append("Content-Type", "application/json");
-  let fetch_url = "api/v1/queues";
+  let fetch_url = `${GetBaseURL()}/api/v1/queues`;
   if (gardenName) {
-    fetch_url = "api/v1/queues?garden_name=" + encodeURIComponent(gardenName);
+    fetch_url = `${GetBaseURL()}/api/v1/queues?garden_name=${encodeURIComponent(gardenName)}`;
     if (encodeURIComponent(gardenName) === gardenName) {
       headers.append("Target-Garden", gardenName);
     }
@@ -23,7 +24,7 @@ export const ClearAllQueues = async (gardenName?: string): Promise<void> => {
 export const ClearQueue = async (queueName: string): Promise<void> => {
   const headers = new Headers();
   headers.append("Content-Type", "application/json");
-  const response = await fetch("api/v1/queues/" + queueName, {
+  const response = await fetch(`${GetBaseURL()}/api/v1/queues/${queueName}`, {
     headers: headers,
     method: "DELETE",
   });
@@ -41,7 +42,7 @@ export const GetInstanceQueues = async (
   }
   const headers = new Headers();
   headers.append("Content-Type", "application/json");
-  const response = await fetch("api/v1/instances/" + instanceId + "/queues", {
+  const response = await fetch(`${GetBaseURL()}/api/v1/instances/${instanceId}/queues`, {
     headers: headers,
     method: "GET",
   });
