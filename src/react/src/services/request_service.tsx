@@ -24,7 +24,11 @@ export const GetRequestList = async (
       for (const [key, value] of Object.entries(headerData)) {
         if (Array.isArray(value)) {
           for (const item of value) {
-            searchParams.append(key, item as string);
+            if (typeof item == "object" && item !== null) {
+              searchParams.append(key, JSON.stringify(item));
+            } else {
+              searchParams.append(key, item as string);
+            }
           }
         } else {
           searchParams.append(key, value as string);
@@ -195,6 +199,48 @@ export const DeleteRequest = async (request: Request, headerData?: any) => {
         method: "DELETE",
       },
     );
+    if (!response.ok) {
+      // Handle non-OK responses (e.g., 404, 500)
+      throw new Error(`HTTP error: Status ${response.status}`);
+    }
+
+    return;
+  } catch (error) {
+    // Handle network errors or the error thrown above
+    console.error("Error fetching Requests:", error);
+    throw error; // Re-throw to be handled by the component/hook
+  }
+};
+
+export const DeleteRequests = async (deleteParams?: any) => {
+  try {
+    let queryString = "";
+    const headers = new Headers();
+    const searchParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(deleteParams)) {
+      if (Array.isArray(value)) {
+        for (const item of value) {
+          if (typeof item == "object" && item !== null) {
+            searchParams.append(key, JSON.stringify(item));
+          } else {
+            searchParams.append(key, item as string);
+          }
+        }
+      } else {
+        searchParams.append(key, value as string);
+      }
+    }
+
+    queryString = searchParams.toString();
+
+    const response = await fetch(
+      `${GetBaseURL()}/api/v1/requests?${queryString}`,
+      {
+        headers: headers,
+        method: "DELETE",
+      },
+    );
+
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);

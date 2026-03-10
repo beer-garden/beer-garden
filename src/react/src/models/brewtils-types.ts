@@ -411,6 +411,7 @@ export interface System {
   prefix_topic?: string;
   requires?: string[];
   requires_timeout?: number;
+  garden_name?: string;
 }
 
 export interface Topic {

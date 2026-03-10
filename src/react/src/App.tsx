@@ -95,6 +95,7 @@ function App() {
                     path="/systems"
                     element={
                       <SystemCards
+                        listeners={listeners}
                         setReloadScratchPad={setReloadScratchPadTrigger}
                       />
                     }
@@ -104,6 +105,7 @@ function App() {
                     path="/systemcard"
                     element={
                       <SystemCards
+                        listeners={listeners}
                         setReloadScratchPad={setReloadScratchPadTrigger}
                       />
                     }
@@ -141,6 +143,7 @@ function App() {
                     path="/"
                     element={
                       <SystemCards
+                        listeners={listeners}
                         setReloadScratchPad={setReloadScratchPadTrigger}
                       />
                     }

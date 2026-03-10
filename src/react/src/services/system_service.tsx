@@ -108,6 +108,101 @@ export const ExtractSystemsFromGardens = (
   return systems;
 };
 
+export const ReloadSystem = async (system: System): Promise<void> => {
+  const headers = new Headers();
+  headers.append("Content-Type", "application/json");
+  if (
+    system.garden_name !== undefined &&
+    encodeURIComponent(system.garden_name) === system.garden_name
+  ) {
+    headers.append("Target-Garden", system.garden_name);
+  }
+  const response = await fetch(`${GetBaseURL()}/api/v1/systems/${system.id}`, {
+    headers: headers,
+    method: "PATCH",
+    body: JSON.stringify({
+      operations: [
+        {
+          operation: "reload",
+        },
+      ],
+    }),
+  });
+  if (!response.ok) {
+    // Handle non-OK responses (e.g., 404, 500)
+    throw new Error(`HTTP error: Status ${response.status}`);
+  }
+};
+
+export const Rescan = async (gardenName?: string): Promise<void> => {
+  const headers = new Headers();
+  headers.append("Content-Type", "application/json");
+  let fetch_url = `${GetBaseURL()}api/v1/systems`;
+  if (gardenName) {
+    fetch_url = `${GetBaseURL()}/api/v1/systems?garden_name=${encodeURIComponent(gardenName)}`;
+    if (encodeURIComponent(gardenName) === gardenName) {
+      headers.append("Target-Garden", gardenName);
+    }
+  }
+  const response = await fetch(fetch_url, {
+    headers: headers,
+    method: "PATCH",
+    body: JSON.stringify({
+      operations: [
+        {
+          operation: "rescan",
+        },
+      ],
+    }),
+  });
+  if (!response.ok) {
+    // Handle non-OK responses (e.g., 404, 500)
+    throw new Error(`HTTP error: Status ${response.status}`);
+  }
+};
+
+export const DeleteSystem = async (system: System): Promise<void> => {
+  const headers = new Headers();
+  headers.append("Content-Type", "application/json");
+  if (
+    system.garden_name !== undefined &&
+    encodeURIComponent(system.garden_name) === system.garden_name
+  ) {
+    headers.append("Target-Garden", system.garden_name);
+  }
+  const response = await fetch(`${GetBaseURL()}/api/v1/systems/${system.id}`, {
+    headers: headers,
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    // Handle non-OK responses (e.g., 404, 500)
+    throw new Error(`HTTP error: Status ${response.status}`);
+  }
+};
+
+export const ForceDeleteSystem = async (system: System): Promise<void> => {
+  const headers = new Headers();
+  headers.append("Content-Type", "application/json");
+  if (
+    system.garden_name !== undefined &&
+    encodeURIComponent(system.garden_name) === system.garden_name
+  ) {
+    headers.append("Target-Garden", system.garden_name);
+  }
+  const params = new URLSearchParams({ force: "true" }).toString();
+  const response = await fetch(
+    `${GetBaseURL()}/api/v1/systems/${system.id}?${params}`,
+    {
+      headers: headers,
+      method: "DELETE",
+    },
+  );
+  if (!response.ok) {
+    // Handle non-OK responses (e.g., 404, 500)
+    throw new Error(`HTTP error: Status ${response.status}`);
+  }
+};
+
 export const DetermineLatestSystemVersion = (
   systems: System[],
   systemName: string | null,

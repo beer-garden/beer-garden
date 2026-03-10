@@ -33,9 +33,9 @@ function AboutIndex() {
 
   function AboutHeader({ config }: { config: Config | null }) {
     return (
-      <h1 className="ml-2 page-header">
-        About {config ? config.application_name : ""}
-      </h1>
+      <div className="flex ml-2 page-header">
+        <h1 className="al">About {config ? config.application_name : ""}</h1>
+      </div>
     );
   }
 
