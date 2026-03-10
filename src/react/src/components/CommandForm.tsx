@@ -12,7 +12,6 @@ import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
 import { MultiSelect } from "primereact/multiselect";
 import { ProgressBar } from "primereact/progressbar";
-import { SplitButton } from "primereact/splitbutton";
 import { TriStateCheckbox } from "primereact/tristatecheckbox";
 import { classNames } from "primereact/utils";
 import { useEffect, useRef, useState } from "react";
@@ -891,7 +890,15 @@ function CommandForm({
           <FontAwesomeIcon icon="copy" />
         </Button>
         <pre>
-          <code>{code()}</code>
+          <code
+            style={{
+              whiteSpace: "pre-wrap",
+              overflowWrap: "break-word",
+              overflowX: "auto",
+            }}
+          >
+            {code()}
+          </code>
         </pre>
       </div>
     );
@@ -928,20 +935,17 @@ function CommandForm({
 
         {CodeBlock("JSON")}
       </Dialog>
-      <SplitButton
+      <Button
         label="Reset Form"
         severity="warning"
         icon="pi pi-arrow-right"
         onClick={resetRequest}
-        model={[
-          {
-            label: "Code Examples",
-            // icon: <FontAwesomeIcon icon="arrow-up-right-from-square" />,
-            command: () => {
-              setVisibleCodeExample(true);
-            },
-          },
-        ]}
+      />
+      <Button
+        label="Code Examples"
+        severity="info"
+        icon="pi pi-arrow-right"
+        onClick={() => setVisibleCodeExample(true)}
       />
     </div>
   );
