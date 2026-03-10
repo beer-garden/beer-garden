@@ -88,35 +88,28 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
               {
                 label: "About",
                 icon: "info",
-                subtext: "Subtext of item",
                 template: itemRenderer,
                 route: "/about",
               },
               {
                 label: "Garden",
                 icon: "globe",
-                subtext: "Subtext of item",
                 template: itemRenderer,
-                command: () => {
-                  window.open("/garden", "_self");
-                },
+                route: "/garden",
               },
               {
                 label: "Topics",
                 icon: "envelope",
-                subtext: "Subtext of item",
                 template: itemRenderer,
               },
               {
                 label: "Users",
                 icon: "user",
-                subtext: "Subtext of item",
                 template: itemRenderer,
               },
               {
                 label: "Roles",
                 icon: "users",
-                subtext: "Subtext of item",
                 template: itemRenderer,
               },
             ],
