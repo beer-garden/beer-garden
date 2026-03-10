@@ -112,19 +112,28 @@ function CommandSelect({
       setSystemNames(systemNameList);
     }
 
-    if (!CompareObjects(versions, systemVersionList)) {
+    const generateLatestSystemVersions = (
+      versions: Array<string>,
+    ): Array<string> => {
+      if (
+        versions.some(
+          (version) =>
+            validateVersion(version) ||
+            validateVersion(version.replace(".dev", "-dev")),
+        )
+      ) {
+        return [...systemVersionList, "latest"];
+      }
+      return versions;
+    };
+
+    if (
+      !CompareObjects(versions, generateLatestSystemVersions(systemVersionList))
+    ) {
       if (systemVersionList.includes("latest")) {
         setVersions(systemVersionList);
       } else {
-        if (
-          systemVersionList.some(
-            (version) =>
-              validateVersion(version) ||
-              validateVersion(version.replace(".dev", "-dev")),
-          )
-        ) {
-          setVersions([...systemVersionList, "latest"]);
-        }
+        setVersions(generateLatestSystemVersions(systemVersionList));
       }
     }
 
@@ -161,8 +170,8 @@ function CommandSelect({
 
     if (
       selectedVersion !== "latest" &&
-      selectedVersion !== null &&
-      !systemVersionList.includes(selectedVersion) &&
+      (selectedVersion === null ||
+        !systemVersionList.includes(selectedVersion)) &&
       ((systemVersionList.length === 2 && systemVersionList[1] === "latest") ||
         systemVersionList.length === 1)
     ) {
