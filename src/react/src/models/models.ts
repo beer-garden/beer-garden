@@ -1,3 +1,5 @@
+import { Instance, System } from "../models/brewtils-types";
+
 export interface Config {
   application_name: string;
   auth_enabled: string;
@@ -30,4 +32,19 @@ export interface ScratchPadValue {
   padId: string;
   padType: string | null;
   values: any;
+}
+
+export interface RequestCommand {
+  namespace: string | null;
+  systemName: string | null;
+  version: string | null;
+  instance: string | null;
+  command: string | null;
+}
+
+export interface InstanceDialogProps {
+  instance: Instance;
+  system: System;
+  isVisible: boolean;
+  onClose: any;
 }

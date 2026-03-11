@@ -57,7 +57,7 @@ export default function gardenService($rootScope, $http) {
       path: '',
       value: '',
     },{
-      headers: {'Target-Garden': name}
+      headers: {'Target-Garden': encodeURI(name) == name ? name : undefined}
     });
   };
 
@@ -67,7 +67,7 @@ export default function gardenService($rootScope, $http) {
       path: '',
       value: '',
     },{
-      headers: {'Target-Garden': name}
+      headers: {'Target-Garden': encodeURI(name) == name ? name : undefined}
     });
   };
 

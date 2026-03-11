@@ -1,20 +1,24 @@
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
 import { Calendar } from "primereact/calendar";
 import { Checkbox } from "primereact/checkbox";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
+import { Dialog } from "primereact/dialog";
 import { Dropdown } from "primereact/dropdown";
-import { FileUpload } from "primereact/fileupload";
+import { FileUpload, FileUploadFile } from "primereact/fileupload";
 import { InputNumber } from "primereact/inputnumber";
 import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
 import { MultiSelect } from "primereact/multiselect";
+import { ProgressBar } from "primereact/progressbar";
 import { TriStateCheckbox } from "primereact/tristatecheckbox";
 import { classNames } from "primereact/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Command, Parameter } from "../models/brewtils-types"; // Assuming this is the correct path
 import { Request } from "../models/brewtils-types";
+import { uploadFile } from "../services/file_service";
 
 interface CommandFormProps {
   command: Command | null;
@@ -34,74 +38,86 @@ function CommandForm({
     isInvalid: boolean;
   }
 
-  // const command = commandFormProps.command;
+  const [visibleCodeExample, setVisibleCodeExample] = useState<boolean>(false);
+
   disabled = disabled === undefined ? true : disabled;
-  // const request = commandFormProps.request;
 
-  const prepareDefaultValues = Array<InputParam>();
+  const buildDefaults = (mapRequest = true): Array<InputParam> => {
+    const prepareDefaultValues = Array<InputParam>();
 
-  if (command !== null) {
-    for (const param of command.parameters || []) {
-      const newParam = { ...param } as InputParam;
-      if (
-        request &&
-        request.parameters &&
-        param.key &&
-        param.key in request.parameters
-      ) {
-        newParam.value = request.parameters[param.key];
-      } else {
-        newParam.value = param.default;
-      }
-
-      newParam.isInvalid =
-        newParam.value !== undefined ||
-        param.optional === undefined ||
-        param.optional;
-
-      if (
-        (newParam.value === undefined || newParam.value === null) &&
-        param.multi
-      ) {
-        newParam.value = [null];
-      } else if (param.multi && !Array.isArray(newParam.value)) {
-        newParam.value = [newParam.value];
-      }
-
-      if (param.type === "Dictionary") {
-        if (param.multi) {
-          newParam.value = (newParam.value as Array<any>).map((value) => {
-            return JSON.stringify(value);
-          });
+    if (command !== null) {
+      for (const param of command.parameters || []) {
+        const newParam = { ...param } as InputParam;
+        if (
+          mapRequest &&
+          request &&
+          request.parameters &&
+          param.key &&
+          param.key in request.parameters
+        ) {
+          newParam.value = request.parameters[param.key];
         } else {
-          newParam.value = JSON.stringify(newParam.value);
+          newParam.value = param.default;
         }
-      }
 
-      if (param.type === "DateTime") {
-        if (param.multi) {
-          newParam.value = (newParam.value as Array<any>).map((value) => {
-            return new Date(value);
-          });
-        } else {
-          newParam.value = new Date(newParam.value);
+        newParam.isInvalid =
+          newParam.value !== undefined ||
+          param.optional === undefined ||
+          param.optional;
+
+        if (
+          (newParam.value === undefined || newParam.value === null) &&
+          param.multi
+        ) {
+          newParam.value = [null];
+        } else if (param.multi && !Array.isArray(newParam.value)) {
+          newParam.value = [newParam.value];
         }
-      }
 
-      if (param.type === "Date") {
-        if (param.multi) {
-          newParam.value = (newParam.value as Array<any>).map((value) => {
-            return new Date(value);
-          });
-        } else {
-          newParam.value = new Date(newParam.value);
+        if (param.type === "Dictionary") {
+          if (param.multi) {
+            newParam.value = (newParam.value as Array<any>).map((value) => {
+              return JSON.stringify(value);
+            });
+          } else {
+            newParam.value = JSON.stringify(newParam.value);
+          }
         }
-      }
 
-      prepareDefaultValues.push(newParam);
+        if (param.type === "DateTime") {
+          if (param.multi) {
+            newParam.value = (newParam.value as Array<any>).map((value) => {
+              return new Date(value);
+            });
+          } else {
+            newParam.value = new Date(newParam.value);
+          }
+        }
+
+        if (param.type === "Date") {
+          if (param.multi) {
+            newParam.value = (newParam.value as Array<any>).map((value) => {
+              return new Date(value);
+            });
+          } else {
+            newParam.value = new Date(newParam.value);
+          }
+        }
+
+        prepareDefaultValues.push(newParam);
+      }
     }
-  }
-  const [parametersFields, setParameterFields] = useState(prepareDefaultValues);
+    return prepareDefaultValues;
+  };
+  const [parametersFields, setParameterFields] = useState(buildDefaults());
+
+  const [resetForm, setResetForm] = useState(false);
+
+  const resetRequest = () => {
+    // Doesn't matter the value, just invert it to trigger the useEffect
+    setResetForm(!resetForm);
+    setParameterFields(buildDefaults(false));
+  };
 
   useEffect(() => {
     let updated = false;
@@ -666,71 +682,272 @@ function CommandForm({
             />
           </div>
         );
-      case "Bytes":
-        const customBytesUploader = async (event: any) => {
-          // convert file to bytes encoded
+      case "Bytes": {
+        const customBytesUploader = (event: any) => {
           const file = event.files[0];
-          const reader = new FileReader();
-          const blob = await fetch(file.objectURL).then((r) => r.blob()); //blob:url
-
-          reader.readAsDataURL(blob);
-
-          reader.onloadend = function () {
-            const base64data = reader.result;
-            // Run Upload
-          };
+          handleChange(parameter.key, file as FileUploadFile);
         };
+        const bytesUploadRef = useRef<FileUpload>(null);
+
+        useEffect(() => {
+          if (bytesUploadRef && bytesUploadRef.current) {
+            bytesUploadRef.current.clear();
+          }
+        }, [resetForm]);
         return (
           <div key={parameter.key} className="p-field">
             <FileUpload
+              ref={bytesUploadRef}
               id={parameter.key}
               mode="basic"
               customUpload
-              uploadHandler={customBytesUploader}
+              onSelect={customBytesUploader}
               disabled={disabled}
             />
           </div>
         );
-      case "Base64":
+      }
+      case "Base64": {
+        const [uploadPercentage, setUploadPercentage] = useState(0);
+        const fileUploadRef = useRef<FileUpload>(null);
+
         const customBase64Uploader = async (event: any) => {
-          // convert file to base64 encoded
+          if (fileUploadRef && fileUploadRef.current) {
+            fileUploadRef.current.setUploadedFiles([]);
+          }
           const file = event.files[0];
-          const reader = new FileReader();
-          const blob = await fetch(file.objectURL).then((r) => r.blob()); //blob:url
 
-          reader.readAsDataURL(blob);
+          const fileUploadResult = await uploadFile(file, setUploadPercentage);
 
-          reader.onloadend = function () {
-            const base64data = reader.result;
-            // Run Upload
-          };
+          handleChange(parameter.key, fileUploadResult);
+          if (fileUploadRef && fileUploadRef.current) {
+            fileUploadRef.current.clear();
+            fileUploadRef.current.setUploadedFiles([file]);
+          }
+          setUploadPercentage(100);
         };
+
+        const removeFile = () => {
+          handleChange(parameter.key, null);
+          setUploadPercentage(0);
+          if (fileUploadRef && fileUploadRef.current) {
+            fileUploadRef.current.clear();
+          }
+        };
+
+        useEffect(() => {
+          setUploadPercentage(0);
+          if (fileUploadRef && fileUploadRef.current) {
+            fileUploadRef.current.clear();
+          }
+        }, [resetForm]);
+
         return (
           <div key={parameter.key} className="p-field">
             <FileUpload
+              ref={fileUploadRef}
               id={parameter.key}
-              mode="basic"
+              // mode="basic"
               customUpload
+              auto
               uploadHandler={customBase64Uploader}
+              onRemove={removeFile}
               disabled={disabled}
+              progressBarTemplate={
+                <ProgressBar
+                  value={uploadPercentage}
+                  displayValueTemplate={() => `${uploadPercentage}%`}
+                />
+              }
             />
           </div>
         );
+      }
       default:
         return null;
     }
   };
 
+  const CodeBlock = (codeType: string) => {
+    const getHostName = () => {
+      return window.location.hostname;
+    };
+
+    const getPort = () => {
+      return window.location.port;
+    };
+
+    const getPrefix = () => {
+      const path = window.location.pathname;
+
+      for (const knownPaths of ["/create", "/recreate"]) {
+        const index = path.indexOf(knownPaths);
+        if (index > 0) {
+          return path.slice(1, index) + "/";
+        }
+      }
+
+      return "";
+    };
+
+    const getSslEnabled = () => {
+      return window.location.protocol === "https:" ? "True" : "False";
+    };
+
+    const wgetCode = () => {
+      return `
+  wget --method=POST -O- \\
+    --body-data='${JSON.stringify(request)}' \\
+    --header=Content-Type:application/json \\
+    ${getHostName()}:${getPort()}${getPrefix()}/api/v1/requests?blocking=true
+  `;
+    };
+
+    const curlCode = () => {
+      return `
+  curl -X POST ${getHostName()}:${getPort()}${getPrefix()}/api/v1/requests?blocking=true \\
+    -H "Content-Type: application/json" \\
+    -d '${JSON.stringify(request)}'
+  `;
+    };
+
+    const pythonCode = () => {
+      const generateParams = () => {
+        if (request?.parameters) {
+          const printParams = [] as Array<string>;
+
+          for (const [key, value] of Object.entries(
+            request?.parameters || {},
+          )) {
+            if (value && value !== undefined && value !== null) {
+              if (typeof value === "string") {
+                printParams.push(key + '="' + value + '"');
+              } else if (typeof value === "boolean") {
+                printParams.push(key + "=" + (value ? "True" : "False"));
+              } else {
+                printParams.push(key + "=" + value);
+              }
+            }
+          }
+
+          return printParams.join(", ");
+        }
+        return "";
+      };
+
+      return `
+  from brewtils import SystemClient
+  
+  request = SystemClient(
+    system_name = '${request?.system}',
+    system_namespace = '${request?.namespace}',
+    version_constraint = '${request?.system_version}',
+    default_instance = '${request?.instance_name}',
+    bg_host = '${getHostName()}',
+    bg_url_prefix = '${getPrefix()}',
+    bg_port = ${getPort()},
+    blocking = True,
+    ssl_enabled = ${getSslEnabled()},
+    ca_cert = None,
+    ca_verify = None,
+    client_cert = None).${request?.command ? request?.command : "command"}(${generateParams()})
+  
+  print(request)
+  `;
+    };
+
+    const code = () => {
+      if (codeType === "Python") {
+        return pythonCode();
+      }
+      if (codeType === "cURL") {
+        return curlCode();
+      }
+      if (codeType === "Wget") {
+        return wgetCode();
+      }
+
+      if (codeType === "JSON") {
+        return JSON.stringify(request, null, 2);
+      }
+
+      return "";
+    };
+    const copyToClipboard = () => {
+      navigator.clipboard.writeText(code()).catch((error) => {
+        console.error("Error copying to clipboard:", error);
+      });
+    };
+
+    return (
+      <div style={{ position: "relative" }}>
+        <h3>{codeType}</h3>
+        <Button
+          className="p-button-rounded p-button-text"
+          onClick={copyToClipboard}
+          style={{ position: "absolute", top: "0.5rem", right: "0.5rem" }}
+        >
+          <FontAwesomeIcon icon="copy" />
+        </Button>
+        <pre>
+          <code
+            style={{
+              whiteSpace: "pre-wrap",
+              overflowWrap: "break-word",
+              overflowX: "auto",
+            }}
+          >
+            {code()}
+          </code>
+        </pre>
+      </div>
+    );
+  };
+
   return (
-    <DataTable
-      value={parametersFields}
-      showHeaders={false}
-      tableStyle={{ minWidth: "60rem" }}
-    >
-      <Column header="Field" body={renderInputLabel}></Column>
-      <Column header="Value" body={renderInputField}></Column>
-      <Column header="Description" field="description"></Column>
-    </DataTable>
+    <div>
+      <DataTable
+        value={parametersFields}
+        showHeaders={false}
+        tableStyle={{ minWidth: "60rem" }}
+      >
+        <Column header="Field" body={renderInputLabel}></Column>
+        <Column header="Value" body={renderInputField}></Column>
+        <Column header="Description" field="description"></Column>
+      </DataTable>
+      <Dialog
+        header={"Code Examples"}
+        visible={visibleCodeExample}
+        onHide={() => {
+          if (!visibleCodeExample) return;
+          setVisibleCodeExample(false);
+        }}
+        style={{ width: "50vw" }}
+      >
+        <div>
+          Bytes and Base64 parameters are not supported in code examples.
+        </div>
+        {CodeBlock("Python")}
+
+        {CodeBlock("cURL")}
+
+        {CodeBlock("Wget")}
+
+        {CodeBlock("JSON")}
+      </Dialog>
+      <Button
+        label="Reset Form"
+        severity="warning"
+        icon="pi pi-arrow-right"
+        onClick={resetRequest}
+      />
+      <Button
+        label="Code Examples"
+        severity="info"
+        icon="pi pi-arrow-right"
+        onClick={() => setVisibleCodeExample(true)}
+      />
+    </div>
   );
 }
 

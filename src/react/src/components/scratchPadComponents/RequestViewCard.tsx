@@ -3,6 +3,7 @@ import { Card } from "primereact/card";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Message } from "primereact/message";
+import { Skeleton } from "primereact/skeleton";
 import { SplitButton } from "primereact/splitbutton";
 import { Stepper } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
@@ -15,6 +16,7 @@ import { ScratchPadValue } from "../../models/models";
 import { GetRequest, PostRequest } from "../../services/request_service";
 import { PushToScratchPad } from "../../services/scratchpad_service";
 import { GetSystemList } from "../../services/system_service";
+import { GetBaseURL } from "../../services/util_service";
 import RequestOutput from "../RequestOutput";
 
 function UnformattedInput(request: Request) {
@@ -46,6 +48,8 @@ function RequestViewCard({
   const toast = useRef(null as null | any);
 
   const [command, setCommand] = useState<Command | any>(null);
+
+  const [showCommandForm, setShowCommandForm] = useState(false);
 
   const SeverityCheck = (status?: string) => {
     if (!status) {
@@ -106,7 +110,10 @@ function RequestViewCard({
               });
               reloadScratchPad();
             } else {
-              window.open("/request/" + response_request.id, "_self");
+              window.open(
+                `${GetBaseURL()}/request/${response_request.id}`,
+                "_self",
+              );
             }
           } else {
             toast?.current?.show({
@@ -174,6 +181,16 @@ function RequestViewCard({
       requestId.current = padItem?.values?.requestId
         ? padItem.values.requestId
         : null;
+
+      if (
+        request &&
+        request.status &&
+        ["CREATED", "IN_PROGRESS"].includes(request.status)
+      ) {
+        // First load, force a refresh of data to ensure latest is rendered in case the completed
+        // event has already been received before the listener was registered
+        setRequest(null);
+      }
     }
 
     if (!request && requestId.current) {
@@ -229,10 +246,13 @@ function RequestViewCard({
         .then((data) => {
           if (data.length > 0) {
             setSystem(data[0]);
+          } else {
+            setShowCommandForm(true);
           }
         })
         .catch((error) => {
           console.error("Error fetching system list:", error);
+          setShowCommandForm(true);
         });
     }
 
@@ -242,6 +262,7 @@ function RequestViewCard({
           (cmd) => cmd.name === request.command,
         );
         setCommand(commandData);
+        setShowCommandForm(true);
       }
     }
 
@@ -270,7 +291,8 @@ function RequestViewCard({
             style={{ flexBasis: "50rem" }}
           >
             <StepperPanel header="Parameters">
-              {command && (
+              {!showCommandForm && <Skeleton width="100%" height="10rem" />}
+              {showCommandForm && command && (
                 <CommandForm
                   {...{
                     command: command,
@@ -279,7 +301,7 @@ function RequestViewCard({
                   }}
                 />
               )}
-              {!command && <UnformattedInput {...request} />}
+              {showCommandForm && !command && <UnformattedInput {...request} />}
             </StepperPanel>
             <StepperPanel header="Hide" />
             <StepperPanel header="Output">
@@ -291,7 +313,7 @@ function RequestViewCard({
             label="Open"
             icon="pi pi-plus"
             onClick={() => {
-              window.open("/request/" + request.id, "_self");
+              window.open(`${GetBaseURL()}/request/${request.id}`, "_self");
             }}
             model={[
               {
@@ -312,7 +334,10 @@ function RequestViewCard({
                 label: "Clone Request and Open",
                 // icon: <FontAwesomeIcon icon="arrow-up-from-bracket" />,
                 command: () => {
-                  window.open("/recreate/" + request.id, "_self");
+                  window.open(
+                    `${GetBaseURL()}/recreate/${request.id}`,
+                    "_self",
+                  );
                 },
               },
               {
