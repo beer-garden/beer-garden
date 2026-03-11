@@ -3,6 +3,7 @@ import "primereact/resources/primereact.min.css"; // Core CSS
 import "primereact/resources/themes/bootstrap4-light-blue/theme.css";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { PrimeReactProvider } from "primereact/api";
 import { Button } from "primereact/button";
 import { Divider } from "primereact/divider";
 import { useEffect, useRef, useState } from "react";
@@ -54,6 +55,10 @@ function App() {
     }
   };
 
+  const primeValue = {
+    hideOverlaysOnDocumentScrolling: true,
+  };
+
   useEffect(() => {
     // Create WebSocket connection when component mounts
     socketRef.current = new WebSocket("/api/v1/socket/events/");
@@ -83,7 +88,7 @@ function App() {
       : import.meta.env.VITE_BASE_URL || undefined;
 
   return (
-    <div>
+    <PrimeReactProvider value={primeValue}>
       <div className="flex">
         <div className={showMainApp ? "flex-grow-1" : "hidden"}>
           <BrowserRouter basename={baseURL}>
@@ -173,7 +178,7 @@ function App() {
           </BrowserRouter>
         </div>
       </div>
-    </div>
+    </PrimeReactProvider>
   );
 }
 
