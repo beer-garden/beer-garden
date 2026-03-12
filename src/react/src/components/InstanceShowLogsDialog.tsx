@@ -127,6 +127,7 @@ function InstanceShowLogsDialog({
 
   return (
     <Dialog
+      data-testid="instance-show-logs-dialog"
       header={`Log File: ${system.name}[${system.version}]-${instance.name}`}
       footer={<Button onClick={onClose}>Close Logs</Button>}
       visible={isVisible}

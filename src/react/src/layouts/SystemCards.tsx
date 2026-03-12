@@ -10,6 +10,7 @@ import { Panel } from "primereact/panel";
 import { Toast } from "primereact/toast";
 import { classNames } from "primereact/utils";
 import { useEffect, useRef, useState } from "react";
+import { MenuPassThroughMethodOptions } from "primereact/menu";
 
 import InstanceCancelDeleteDialog from "../components/InstanceCancelDeleteRequestsDialog";
 import InstanceManageQueueDialog from "../components/InstanceManageQueueDialog";
@@ -333,6 +334,9 @@ function SystemCards({
         },
       ];
 
+      console.log(options.togglerElement)
+      const toggleIcon = collapsed ? <FontAwesomeIcon icon="plus" /> : <FontAwesomeIcon icon="minus" />;
+
       return (
         <div className={className}>
           <div className="flex align-items-center gap-2">
@@ -370,14 +374,31 @@ function SystemCards({
               popup
               ref={systemConfigMenu}
               id="config_menu"
+              data-testid={`system-menu-${system.name}`}
+              pt={{
+                menuitem: ({context}: MenuPassThroughMethodOptions) => ({
+                  'data-testid': `system-menu-item-${system.name}-${context.item.label}`
+                }),
+                action: ({context}: MenuPassThroughMethodOptions) => ({
+                  'data-testid': `system-menu-item-action-${system.name}-${context.item.label}`
+                })
+              }}
             />
             <button
               className="p-panel-header-icon p-link mr-2"
+              data-testid={`system-menu-${system.name}-button`}
               onClick={(e) => systemConfigMenu?.current?.toggle(e)}
             >
               <FontAwesomeIcon icon="cog" />
             </button>
-            {options.togglerElement}
+            <Button 
+              icon={toggleIcon} 
+              className="p-panel-header-icon p-panel-toggler p-link" 
+              onClick={togglePanel} 
+              aria-label="Toggle Panel"
+              data-testid={`panel-toggler-${system.name}-button`}
+            />
+            {/* {options.togglerElement} */}
           </div>
         </div>
       );
@@ -415,7 +436,7 @@ function SystemCards({
       ];
 
       return (
-        <div className="col-12" key={instance.id}>
+        <div className="col-12" key={instance.id} data-testid={`instance-template-${system.name}`}>
           <div
             className={classNames(
               "flex flex-column xl:flex-row xl:align-items-start p-4 ",
@@ -449,6 +470,7 @@ function SystemCards({
                     popup
                     ref={instanceConfigMenu}
                     id="instance_menu"
+                    data-testid={`instance-menu-${instance.name}`}
                   />
                   <InstanceShowLogsDialog
                     instance={instance}
@@ -493,14 +515,21 @@ function SystemCards({
       return <div className="grid grid-nogutter">{list}</div>;
     };
 
+    const [collapsed, setCollapsed] = useState(true);
+
+      const togglePanel = () => {
+          setCollapsed(!collapsed);
+      };
+
     return (
       <Panel
         headerTemplate={headerTemplate}
         key={system.id}
         className="m-2"
         style={{ width: "20%" }}
+        collapsed={collapsed} 
+        onToggle={(e) => setCollapsed(e.value)} // Keep onToggle for internal panel logic/accessibility
         toggleable
-        collapsed
       >
         <p className="m-0">{system.description}</p>
         <DataView

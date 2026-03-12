@@ -73,6 +73,7 @@ function InstanceManageQueueDialog({
 
   return (
     <Dialog
+      data-testid="instance-manage-queue-dialog"
       header={`Queue Manager: ${system.name}[${system.version}]-${instance.name}`}
       footer={<Button onClick={onClose}>Close</Button>}
       visible={isVisible}
