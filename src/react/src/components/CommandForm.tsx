@@ -46,7 +46,6 @@ function CommandForm({
     parameter: InputParam,
     lookupParameters: Array<InputParam>,
   ) => {
-    
     const timestamp = Date.now();
 
     const resolveOptions = (
@@ -368,10 +367,17 @@ function CommandForm({
             const shouldUpdate = changedFields.some((field) =>
               updatedKeys.includes(field),
             );
+            // Update if input value changed
+            // Skip load if parameters is undefined but currently being loading
             if (
               !updatedKeys.includes(parameter.key) &&
-              (shouldUpdate || parameter.options === undefined)
+              (shouldUpdate ||
+                (parameter.options === undefined &&
+                  !altLoadingChoices.current.some(
+                    (loading) => loading.key === parameter.key,
+                  )))
             ) {
+
               generateChoices(parameter, parametersFields);
             }
           }
