@@ -7,10 +7,24 @@ import { Link } from "react-router-dom";
 
 import CurrentRequestsTemplate from "./components/CurrentRequestsTemplate";
 import UserLogin from "./components/UserLogin";
+import { Config } from "./models/models";
+import { GetConfig } from "./services/config_service";
 import { ClearRefresh, ClearToken, GetToken } from "./services/token_service";
 import { GetCurrentUser } from "./services/user_service";
 
 function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
+  const [config, setConfig] = useState<Config | null>(null);
+
+  useEffect(() => {
+    GetConfig()
+      .then((config) => {
+        setConfig(config);
+      })
+      .catch((error) => {
+        console.error("Error fetching the config:", error);
+      });
+  }, []);
+
   const itemRenderer = (item: any) => {
     if (item.root) {
       return (
@@ -123,12 +137,23 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
     },
   ];
 
-  const start = <FontAwesomeIcon icon="beer-mug-empty" />;
+  const start = (
+    <div className="flex">
+      {config && (
+        <div className="mr-2">
+          <FontAwesomeIcon icon={config.icon_default ?? "beer-mug-empty"} />
+        </div>
+      )}
+      {config && <div className="mr-2">{config.application_name}</div>}
+    </div>
+  );
 
   const getUserName = () => {
-    const token = GetToken();
-    if (token !== null) {
-      return GetCurrentUser(token);
+    if (config && config?.auth_enabled === true) {
+      const token = GetToken();
+      if (token !== null) {
+        return GetCurrentUser(token);
+      }
     }
     return undefined;
   };
@@ -141,42 +166,46 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
     if (!loginVisible) {
       setUserName(getUserName());
     }
-  }, [loginVisible]);
+  }, [loginVisible, config]);
 
   const end = (
     <div className="flex">
-      {username === undefined && (
+      {config && config?.auth_enabled === true && (
         <div>
-          <Button
-            rounded
-            className="mr-2"
-            onClick={() => setLoginVisible(true)}
-          >
-            Login
-          </Button>
-          <UserLogin visible={loginVisible} setVisible={setLoginVisible} />
-        </div>
-      )}
-      {username !== undefined && (
-        <div>
-          <span className="font-bold mr-2">Welcome {username}!</span>
+          {username === undefined && (
+            <div>
+              <Button
+                rounded
+                className="mr-2"
+                onClick={() => setLoginVisible(true)}
+              >
+                Login
+              </Button>
+              <UserLogin visible={loginVisible} setVisible={setLoginVisible} />
+            </div>
+          )}
+          {username !== undefined && (
+            <div>
+              <span className="font-bold mr-2">Welcome {username}!</span>
 
-          <Button
-            rounded
-            className="mr-2"
-            onClick={() => {
-              ClearToken();
-              ClearRefresh()
-                .finally(() => {
-                  setUserName(undefined);
-                })
-                .catch((error) => {
-                  console.error("Error clearing Refresh Token:", error);
-                });
-            }}
-          >
-            Logout
-          </Button>
+              <Button
+                rounded
+                className="mr-2"
+                onClick={() => {
+                  ClearToken();
+                  ClearRefresh()
+                    .finally(() => {
+                      setUserName(undefined);
+                    })
+                    .catch((error) => {
+                      console.error("Error clearing Refresh Token:", error);
+                    });
+                }}
+              >
+                Logout
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
