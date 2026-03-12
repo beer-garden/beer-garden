@@ -334,7 +334,6 @@ function SystemCards({
         },
       ];
 
-      console.log(options.togglerElement);
       const toggleIcon = collapsed ? (
         <FontAwesomeIcon icon="plus" />
       ) : (
