@@ -1,3 +1,4 @@
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { AutoComplete } from "primereact/autocomplete";
 import { Button } from "primereact/button";
 import { Calendar } from "primereact/calendar";
@@ -13,13 +14,7 @@ import { TriStateCheckbox } from "primereact/tristatecheckbox";
 import { classNames } from "primereact/utils";
 import { useState } from "react";
 
-import { Parameter } from "../models/brewtils-types"; // Assuming this is the correct path
-
-interface InputParam extends Parameter {
-  value?: any;
-  isInvalid: boolean;
-  options: Array<{ label: string; value: any }> | undefined;
-}
+import { InputParam } from "../models/models";
 
 interface CommandFormFieldParams {
   parameter: InputParam;
@@ -107,13 +102,20 @@ function CommandFormField({
               disabled ||
               parameter.options === undefined ||
               parameter.options.length === 0 ||
-              loadingChoices.some((loading) => loading.key === parameter.key)
+              loadingChoices.some((loading) => loading.key === parameter.key) ||
+              parameter.error
             }
           />
           {loadingChoices &&
             loadingChoices.some((loading) => loading.key === parameter.key) && (
               <ProgressSpinner style={{ width: "34px", height: "34px" }} />
             )}
+          {parameter.error && (
+            <FontAwesomeIcon
+              icon="triangle-exclamation"
+              title={parameter.errorMsg ?? "ERROR"}
+            />
+          )}
         </div>
       );
     }
@@ -137,6 +139,12 @@ function CommandFormField({
           loadingChoices.some((loading) => loading.key === parameter.key) && (
             <ProgressSpinner style={{ width: "34px", height: "34px" }} />
           )}
+        {parameter.error && (
+          <FontAwesomeIcon
+            icon="triangle-exclamation"
+            title={parameter.errorMsg ?? "ERROR"}
+          />
+        )}
       </div>
     );
   } else if (parameter.choices && parameter.choices?.display === "typeahead") {
@@ -170,6 +178,12 @@ function CommandFormField({
           loadingChoices.some((loading) => loading.key === parameter.key) && (
             <ProgressSpinner style={{ width: "34px", height: "34px" }} />
           )}
+        {parameter.error && (
+          <FontAwesomeIcon
+            icon="triangle-exclamation"
+            title={parameter.errorMsg ?? "ERROR"}
+          />
+        )}
       </div>
     );
   }

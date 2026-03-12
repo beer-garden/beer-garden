@@ -1,3 +1,5 @@
+import { Parameter } from "./brewtils-types";
+
 export interface Config {
   application_name: string;
   auth_enabled: string;
@@ -38,4 +40,12 @@ export interface RequestCommand {
   version: string | null;
   instance: string | null;
   command: string | null;
+}
+
+export interface InputParam extends Parameter {
+  value?: any;
+  isInvalid: boolean;
+  options: Array<{ label: string; value: any }> | undefined;
+  error: boolean;
+  errorMsg?: string;
 }

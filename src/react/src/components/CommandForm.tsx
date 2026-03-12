@@ -3,8 +3,8 @@ import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { useEffect, useRef, useState } from "react";
 
-import { ChoicesValue, Command, Parameter } from "../models/brewtils-types"; // Assuming this is the correct path
-import { Request } from "../models/brewtils-types";
+import { ChoicesValue, Command, Request } from "../models/brewtils-types";
+import { InputParam } from "../models/models";
 import { PostRequest } from "../services/request_service";
 import CommandFormField from "./CommandFormField";
 
@@ -21,12 +21,6 @@ function CommandForm({
   request,
   setRequest,
 }: CommandFormProps) {
-  interface InputParam extends Parameter {
-    value?: any;
-    isInvalid: boolean;
-    options: Array<{ label: string; value: any }> | undefined;
-  }
-
   disabled = disabled === undefined ? true : disabled;
   const [parametersFields, setParameterFields] = useState(
     [] as Array<InputParam>,
@@ -50,6 +44,7 @@ function CommandForm({
 
     const resolveOptions = (
       options: Array<{ label: string; value: any }> | undefined,
+      errorMsd?: string,
     ) => {
       if (
         parameter.key &&
@@ -72,6 +67,8 @@ function CommandForm({
             (p) => {
               if (p.key === parameter.key) {
                 p.options = options;
+                p.error = errorMsd !== undefined;
+                p.errorMsg = errorMsd;
               }
               return p;
             },
@@ -119,7 +116,7 @@ function CommandForm({
       Object.keys(parameterArgs).length !==
         parameter.choices.details.args.length
     ) {
-      resolveOptions(undefined);
+      resolveOptions([], "Unable to find all Dynamic Arg Values");
       return;
     }
 
@@ -148,7 +145,7 @@ function CommandForm({
         })
         .catch((error) => {
           console.error("Error fetching choices:", error);
-          resolveOptions(undefined);
+          resolveOptions([], `Error fetching choices: ${error}`);
         });
     } else if (
       parameter.choices &&
@@ -207,7 +204,7 @@ function CommandForm({
         })
         .catch((error) => {
           console.error("Error fetching choices:", error);
-          resolveOptions(undefined);
+          resolveOptions([], `Error fetching choices: ${error}`);
         });
     }
   };
@@ -377,7 +374,6 @@ function CommandForm({
                     (loading) => loading.key === parameter.key,
                   )))
             ) {
-
               generateChoices(parameter, parametersFields);
             }
           }
