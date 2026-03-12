@@ -18,6 +18,8 @@ import {
   SyncUsersGarden,
   UpdateApiGarden,
 } from "../services/garden_service";
+import { ClearAllQueues } from "../services/queue_service";
+import { Rescan } from "../services/system_service";
 
 function GardenTable({ listeners }: { listeners: Record<string, any> }) {
   const gardenRef = useRef<Garden | null>(null);
@@ -300,7 +302,11 @@ function GardenTable({ listeners }: { listeners: Record<string, any> }) {
     items.push({
       label: "Rescan Plugins",
       icon: <FontAwesomeIcon className="mr-2" icon="magnifying-glass" />,
-      command: () => {},
+      command: () => {
+        Rescan(node.data.name).catch((error) => {
+          console.error("Error Rescanning Garden Plugin Dir:", error);
+        });
+      },
     });
 
     items.push({
@@ -316,7 +322,11 @@ function GardenTable({ listeners }: { listeners: Record<string, any> }) {
     items.push({
       label: "Clear Plugin Queues",
       icon: <FontAwesomeIcon className="mr-2" icon="eraser" />,
-      command: () => {},
+      command: () => {
+        ClearAllQueues(node.data.name).catch((error) => {
+          console.error("Error clearing Plugin Queue:", error);
+        });
+      },
     });
 
     items.push({
