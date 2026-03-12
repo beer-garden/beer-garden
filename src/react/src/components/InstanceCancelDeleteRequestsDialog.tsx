@@ -287,7 +287,7 @@ function InstanceCancelDeleteRequestsDialog({
 
   return (
     <Dialog
-    data-testid="instance-cancel-delete-requests-dialog"
+      data-testid="instance-cancel-delete-requests-dialog"
       header={`Cancel/Delete Requests: ${system.name}[${system.version}]-${instance.name}`}
       footer={<Button onClick={onClose}>Close</Button>}
       visible={isVisible}
