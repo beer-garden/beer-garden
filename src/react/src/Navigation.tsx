@@ -146,7 +146,7 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
       {config && (<div className="mr-2">
         <FontAwesomeIcon icon={config.icon_default ?? "beer-mug-empty"} />
       </div>)}
-      {config && <div className="mr-2">{config.garden_name}</div>}
+      {config && <div className="mr-2">{config.application_name}</div>}
     </div>
   );
 
