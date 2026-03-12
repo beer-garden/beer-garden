@@ -1,17 +1,10 @@
-import {
-  cleanup,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { BrowserRouter } from "react-router-dom";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-
-import * as userService from "./services/user_service";
-import * as tokenService from "./services/token_service";
 import Navigation from "./Navigation";
+import * as tokenService from "./services/token_service";
+import * as userService from "./services/user_service";
 
 vi.mock("./services/user_service");
 vi.mock("./services/token_service");
@@ -23,15 +16,32 @@ describe("Navigation", () => {
   });
 
   test("show username", async () => {
-    vi.mocked(tokenService.GetToken).mockResolvedValue("data");
-    vi.mocked(userService.GetCurrentUser).mockResolvedValue("username123");
+    vi.mocked(tokenService.GetToken).mockReturnValue("token");
+    vi.mocked(userService.GetCurrentUser).mockReturnValue("username123");
 
-    render(<Navigation listeners={{}}/>);
+    render(
+      <BrowserRouter basename="/">
+        <Navigation listeners={{}} />
+      </BrowserRouter>,
+    );
 
     await waitFor(() => {
-          expect(screen.getByText("username123")).toBeVisible();
-        });
-
+      expect(screen.getByText("Logout")).toBeVisible();
+      expect(screen.getByText("Welcome username123!")).toBeVisible();
+    });
   });
 
+  test("show login", async () => {
+    vi.mocked(tokenService.GetToken).mockReturnValue(null);
+
+    render(
+      <BrowserRouter basename="/">
+        <Navigation listeners={{}} />
+      </BrowserRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Login")).toBeVisible();
+    });
+  });
 });

@@ -4,7 +4,7 @@ import { MegaMenu } from "primereact/megamenu";
 import { Ripple } from "primereact/ripple";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Avatar } from 'primereact/avatar';
+
 import CurrentRequestsTemplate from "./components/CurrentRequestsTemplate";
 import UserLogin from "./components/UserLogin";
 import { ClearRefresh, ClearToken, GetToken } from "./services/token_service";
@@ -125,16 +125,21 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
 
   const start = <FontAwesomeIcon icon="beer-mug-empty" />;
 
+  const getUserName = () => {
+    const token = GetToken();
+    if (token !== null) {
+      return GetCurrentUser(token);
+    }
+    return undefined;
+  };
+
   const [loginVisible, setLoginVisible] = useState(false);
 
-  const [username, setUserName] = useState<string | undefined>(undefined);
+  const [username, setUserName] = useState<string | undefined>(getUserName());
 
   useEffect(() => {
     if (!loginVisible) {
-      const token = GetToken();
-      if (token) {
-        setUserName(GetCurrentUser(token));
-      }
+      setUserName(getUserName());
     }
   }, [loginVisible]);
 
@@ -142,7 +147,11 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
     <div className="flex">
       {username === undefined && (
         <div>
-          <Button rounded className="mr-2" onClick={() => setLoginVisible(true)}>
+          <Button
+            rounded
+            className="mr-2"
+            onClick={() => setLoginVisible(true)}
+          >
             Login
           </Button>
           <UserLogin visible={loginVisible} setVisible={setLoginVisible} />
@@ -151,7 +160,7 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
       {username !== undefined && (
         <div>
           <span className="font-bold mr-2">Welcome {username}!</span>
-          
+
           <Button
             rounded
             className="mr-2"

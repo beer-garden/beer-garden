@@ -143,7 +143,7 @@ const SetToken = (token: string) => {
   localStorage.setItem("token", token);
 };
 
-export const GetToken = () => {
+export const GetToken = (): string | null => {
   return localStorage.getItem("token");
 };
 

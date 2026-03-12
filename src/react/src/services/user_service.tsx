@@ -6,7 +6,7 @@ interface CustomJwtPayload extends JwtPayload {
 }
 
 export const GetCurrentUser = (token: string) => {
-  if (token) {
+  if (token !== null) {
     const decode = jwtDecode<CustomJwtPayload>(token);
     if (decode.username) {
       return decode.username;
@@ -16,7 +16,7 @@ export const GetCurrentUser = (token: string) => {
 };
 
 export const GetCurrentRoles = (token: string) => {
-  if (token) {
+  if (token !== null) {
     const decode = jwtDecode<CustomJwtPayload>(token);
     if (decode.roles) {
       return decode.roles;
