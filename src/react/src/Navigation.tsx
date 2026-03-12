@@ -2,9 +2,13 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
 import { MegaMenu } from "primereact/megamenu";
 import { Ripple } from "primereact/ripple";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-
+import { Avatar } from 'primereact/avatar';
 import CurrentRequestsTemplate from "./components/CurrentRequestsTemplate";
+import UserLogin from "./components/UserLogin";
+import { ClearRefresh, ClearToken, GetToken } from "./services/token_service";
+import { GetCurrentUser } from "./services/user_service";
 
 function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
   const itemRenderer = (item: any) => {
@@ -121,13 +125,63 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
 
   const start = <FontAwesomeIcon icon="beer-mug-empty" />;
 
+  const [loginVisible, setLoginVisible] = useState(false);
+
+  const [username, setUserName] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!loginVisible) {
+      const token = GetToken();
+      if (token) {
+        setUserName(GetCurrentUser(token));
+      }
+    }
+  }, [loginVisible]);
+
+  const end = (
+    <div className="flex">
+      {username === undefined && (
+        <div>
+          <Button rounded className="mr-2" onClick={() => setLoginVisible(true)}>
+            Login
+          </Button>
+          <UserLogin visible={loginVisible} setVisible={setLoginVisible} />
+        </div>
+      )}
+      {username !== undefined && (
+        <div>
+          <span className="font-bold mr-2">Welcome {username}!</span>
+          
+          <Button
+            rounded
+            className="mr-2"
+            onClick={() => {
+              ClearToken();
+              ClearRefresh()
+                .finally(() => {
+                  setUserName(undefined);
+                })
+                .catch((error) => {
+                  console.error("Error clearing Refresh Token:", error);
+                });
+            }}
+          >
+            Logout
+          </Button>
+        </div>
+      )}
+
+      <CurrentRequestsTemplate listeners={listeners} />
+    </div>
+  );
+
   return (
     <div className="card">
       <MegaMenu
         model={items}
         orientation="horizontal"
         start={start}
-        end={<CurrentRequestsTemplate listeners={listeners} />}
+        end={end}
         breakpoint="960px"
         className="p-3 surface-0 shadow-2"
         style={{ borderRadius: "3rem" }}

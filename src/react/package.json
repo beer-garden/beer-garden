@@ -13,6 +13,7 @@
     "@types/react-router-dom": "^5.3.3",
     "compare-versions": "^6.1.1",
     "http-proxy-middleware": "^3.0.5",
+    "jwt-decode": "^4.0.0",
     "primeflex": "^4.0.0",
     "primereact": "^10.9.7",
     "react": "19.2.1",
