@@ -205,7 +205,9 @@ function CommandForm({
     parameter?.choices?.details?.args?.forEach((arg) => {
       if (arg[1] === parameter.key) {
         // Parameter cannot depend on itself, don't load request response
-        removeLoadingChoice(parameter.key, timestamp);
+        // removeLoadingChoice(parameter.key, timestamp);
+        console.error(`Parameters can not self reference`);
+        resolveOptions([], `Parameters can not self reference`);
         return;
       }
       const paramField =
