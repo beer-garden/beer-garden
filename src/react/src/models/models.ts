@@ -48,3 +48,20 @@ export interface InstanceDialogProps {
   isVisible: boolean;
   onClose: any;
 }
+
+export interface PermissionCheck {
+  global?: boolean;
+  gardenName?: string;
+  namespace?: string;
+  systemName?: string;
+  systemVersion?: string;
+  commandName?: string;
+  instanceName?: string;
+}
+
+export interface HasAccessProps {
+  permission: string;
+  check: PermissionCheck;
+  isLoading?: React.ReactElement;
+  renderAuthFailed?: React.ReactElement;
+}
