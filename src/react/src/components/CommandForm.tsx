@@ -183,11 +183,7 @@ function CommandForm({
       addLoadingChoice(parameter.key, timestamp);
     }
 
-    if (
-      parameter.choices &&
-      parameter.choices.type === "static"
-      // Array.isArray(parameter.choices.value)
-    ) {
+    if (parameter.choices && parameter.choices.type === "static") {
       mapChoices(
         parameter.choices.value as
           | Array<{ text: string; value: string } | string>
@@ -203,13 +199,6 @@ function CommandForm({
     const parameterArgs = {} as any;
 
     parameter?.choices?.details?.args?.forEach((arg) => {
-      if (arg[1] === parameter.key) {
-        // Parameter cannot depend on itself, don't load request response
-        // removeLoadingChoice(parameter.key, timestamp);
-        console.error(`Parameters can not self reference`);
-        resolveOptions([], `Parameters can not self reference`);
-        return;
-      }
       const paramField =
         lookupParameters.find((p) => p.key === arg[1])?.value || null;
       if (paramField !== null && paramField !== undefined) {
@@ -222,7 +211,16 @@ function CommandForm({
       Object.keys(parameterArgs).length !==
         parameter.choices.details.args.length
     ) {
-      resolveOptions([], "Unable to find all Dynamic Arg Values");
+      const missingArgs = [] as Array<string>;
+      parameter?.choices?.details?.args?.forEach((arg) => {
+        if (!Object.keys(parameterArgs).includes(arg[0])) {
+          missingArgs.push(arg[1]);
+        }
+      });
+      resolveOptions(
+        [],
+        `Unable to find all Dynamic Arg Values, unpopulated or missing fields: ${missingArgs.toString()}`,
+      );
       return;
     }
 
@@ -492,12 +490,11 @@ function CommandForm({
             // Update if input value changed
             // Skip load if parameters is undefined but currently being loading
             if (
-              !updatedKeys.includes(parameter.key) &&
-              (shouldUpdate ||
-                (parameter.options === undefined &&
-                  !altLoadingChoices.current.some(
-                    (loading) => loading.key === parameter.key,
-                  )))
+              shouldUpdate ||
+              (parameter.options === undefined &&
+                !altLoadingChoices.current.some(
+                  (loading) => loading.key === parameter.key,
+                ))
             ) {
               generateChoices(parameter, parametersFields);
             }
