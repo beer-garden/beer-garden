@@ -1,52 +1,45 @@
 # -*- coding: utf-8 -*-
+import os
+
 import brewtils.test
-import mongomock
 import pytest
 from box import Box
-from mongoengine import connect
+from mongoengine import Document, connect, disconnect_all
+from mongoengine.connection import get_db
+from testcontainers.mongodb import MongoDbContainer
 
 import beer_garden
 import beer_garden.config as config
+import beer_garden.db.mongo.models
 import beer_garden.events
-from beer_garden.db.mongo.models import (
-    Event,
-    File,
-    Garden,
-    Job,
-    RawFile,
-    Request,
-    Role,
-    System,
-    User,
-    UserToken,
-)
 
 pytest_plugins = ["brewtils.test.fixtures"]
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 def mongo_conn():
-    connect(
-        "beer_garden",
-        host="mongodb://localhost",
-        mongo_client_class=mongomock.MongoClient,
-    )
+    """A MongoDB connection for the duration of the test session."""
+    mongo_version = os.getenv("MONGODB_VERSION", "6.0")
+    with MongoDbContainer(f"mongo:{mongo_version}") as mongo_container:
+        connect(
+            "beer_garden",
+            host=mongo_container.get_connection_url(),
+        )
+        yield
+        disconnect_all()
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="function", autouse=True)
 def data_cleanup():
     """Cleanup all data between test modules to ensure each one is independent"""
     yield
-    Event.drop_collection()
-    File.drop_collection()
-    Garden.drop_collection()
-    Job.drop_collection()
-    RawFile.drop_collection()
-    Request.drop_collection()
-    Role.drop_collection()
-    System.drop_collection()
-    User.drop_collection()
-    UserToken.drop_collection()
+    db = get_db()
+    db.get_collection("fs.files").drop()
+    db.get_collection("fs.chunks").drop()
+    for model_name in beer_garden.db.mongo.models.__all__:
+        mongo_class = getattr(beer_garden.db.mongo.models, model_name)
+        if isinstance(mongo_class, Document):
+            mongo_class.objects.delete()
 
 
 @pytest.fixture(scope="module")

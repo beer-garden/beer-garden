@@ -43,3 +43,9 @@ export const GetVersion = async (): Promise<Version> => {
     throw error; // Re-throw to be handled by the component/hook
   }
 };
+
+export const GetBaseURL = (): string => {
+  return import.meta.env.VITE_BASE_URL === "/"
+    ? ""
+    : import.meta.env.VITE_BASE_URL || "";
+};

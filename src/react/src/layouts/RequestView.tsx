@@ -2,6 +2,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { BreadCrumb } from "primereact/breadcrumb";
 import { MenuItem } from "primereact/menuitem";
 import { Message } from "primereact/message";
+import { Skeleton } from "primereact/skeleton";
 import { SplitButton } from "primereact/splitbutton";
 import { Stepper } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
@@ -12,8 +13,13 @@ import CommandForm from "../components/CommandForm";
 import RequestOutput from "../components/RequestOutput";
 import RequestTreeChart from "../components/RequestTreeChart";
 import { Request, System } from "../models/brewtils-types";
-import { DeleteRequest, GetRequest } from "../services/request_service";
+import {
+  CancelRequest,
+  DeleteRequest,
+  GetRequest,
+} from "../services/request_service";
 import { GetSystemList } from "../services/system_service";
+import { GetBaseURL } from "../services/util_service";
 
 function UnformattedInput(request: Request) {
   return (
@@ -23,6 +29,34 @@ function UnformattedInput(request: Request) {
     </div>
   );
 }
+
+const handleDownload = (request: Request) => {
+  // Example: fetch a file from a URL
+  const fileUrl = `${GetBaseURL()}/api/v1/requests/output/${request.id}`;
+  let filename = `${request.id}.txt`;
+  if (request.output_type == "HTML") {
+    filename = `${request.id}.html`;
+  } else if (request.output_type == "JSON") {
+    filename = `${request.id}.json`;
+  }
+
+  fetch(fileUrl)
+    .then((response) => response.blob())
+    .then((blob) => {
+      // Create blob link to download
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", filename); // Set the custom download name
+      document.body.appendChild(link);
+      link.click(); // Trigger the download
+      link?.parentNode?.removeChild(link); // Clean up the link
+      window.URL.revokeObjectURL(url); // Free up the memory
+    })
+    .catch((error) => {
+      console.error("Error fetching the file:", error);
+    });
+};
 
 function RequestOptions(request: Request) {
   const items: MenuItem[] = [];
@@ -35,7 +69,9 @@ function RequestOptions(request: Request) {
       label: "Cancel Request",
       icon: <FontAwesomeIcon icon="xmark" />,
       command: () => {
-        //
+        CancelRequest(request).catch((error) => {
+          console.error("Error canceling request:", error);
+        });
       },
     });
   } else {
@@ -43,16 +79,17 @@ function RequestOptions(request: Request) {
       label: "Download Output",
       icon: <FontAwesomeIcon icon="download" />,
       command: () => {
-        //
+        handleDownload(request);
       },
     });
+
     items.push({
       label: "Delete Request",
       icon: <FontAwesomeIcon icon="xmark" />,
       command: () => {
         DeleteRequest(request)
           .then(() => {
-            window.open("/requests", "_self");
+            window.open(`${GetBaseURL()}/requests`, "_self");
           })
           .catch((error) => {
             console.error("Error deleting request:", error);
@@ -62,7 +99,7 @@ function RequestOptions(request: Request) {
   }
 
   const pourAgain = (request: Request) => {
-    window.open("/recreate/" + request.id, "_self");
+    window.open(`${GetBaseURL()}/recreate/${request.id}`, "_self");
   };
 
   return (
@@ -131,6 +168,7 @@ function RequestView({ listeners }: { listeners: Record<string, any> }) {
   const [system, setSystem] = useState<System | null>(null);
   const [command, setCommand] = useState<any>(null);
   const [rootRequest, setRootRequest] = useState<Request | null>(null);
+  const [showCommandForm, setShowCommandForm] = useState(false);
 
   const rootRequestId = useRef<string | null>(null);
 
@@ -223,16 +261,20 @@ function RequestView({ listeners }: { listeners: Record<string, any> }) {
           .then((data) => {
             if (data.length > 0) {
               setSystem(data[0]);
+            } else {
+              setShowCommandForm(true);
             }
           })
           .catch((error) => {
             console.error("Error fetching system list:", error);
+            setShowCommandForm(true);
           });
       } else if (system.commands) {
         const commandData = system.commands.find(
           (cmd) => cmd.name === request.command,
         );
         setCommand(commandData);
+        setShowCommandForm(true);
       }
     }
 
@@ -267,7 +309,8 @@ function RequestView({ listeners }: { listeners: Record<string, any> }) {
         >
           <StepperPanel header="Request Parameters">
             <RequestOptions {...request} />
-            {command && (
+            {!showCommandForm && <Skeleton width="100%" height="10rem" />}
+            {showCommandForm && command && (
               <CommandForm
                 {...{
                   command: command,
@@ -276,7 +319,7 @@ function RequestView({ listeners }: { listeners: Record<string, any> }) {
                 }}
               />
             )}
-            {!command && <UnformattedInput {...request} />}
+            {showCommandForm && !command && <UnformattedInput {...request} />}
           </StepperPanel>
           <StepperPanel header="Request Output">
             {request && <RequestOptions {...request} />}

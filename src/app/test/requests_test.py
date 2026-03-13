@@ -11,7 +11,6 @@ from brewtils.models import Instance, Parameter
 from brewtils.models import Request as BrewtilsRequest
 from brewtils.models import System
 from mock import Mock, call, patch
-from mongomock.gridfs import enable_gridfs_integration
 
 import beer_garden.config
 import beer_garden.requests
@@ -23,10 +22,9 @@ from beer_garden.requests import (
     create_request,
     determine_latest_system_version,
     get_request,
+    rebroadcast,
 )
 from beer_garden.systems import create_system
-
-enable_gridfs_integration()
 
 
 @pytest.fixture(autouse=True)
@@ -1333,6 +1331,41 @@ class TestCancelRequest(object):
         cancel_request_children(request)
 
         cancel_mock.assert_called_once()
+
+
+class TestRebroadcastRequest(object):
+
+    @pytest.fixture(autouse=True)
+    def drop(self):
+        yield
+        Request.drop_collection()
+
+    @pytest.fixture
+    def test_request(self):
+        request = Request(
+            namespace="parent",
+            system="testsystem",
+            system_version="1.0.0",
+            instance_name="instance1",
+            command="somecommand",
+            parameters={},
+            status="SUCCESS",
+        )
+        request.save()
+
+        yield request
+
+    def test_rebroadcast_request(self, test_request, monkeypatch):
+        handle_event_rebroadcast_mock = Mock()
+        monkeypatch.setattr(
+            beer_garden.requests,
+            "handle_event_rebroadcast",
+            handle_event_rebroadcast_mock,
+        )
+
+        rebroadcast(test_request.id)
+
+        handle_event_rebroadcast_mock.assert_called_once()
 
 
 class TestCreateRequest(object):

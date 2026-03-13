@@ -17,6 +17,7 @@ import {
 import { Request } from "../models/brewtils-types";
 import { GetRequestList } from "../services/request_service";
 import { PushToScratchPad } from "../services/scratchpad_service";
+import { GetBaseURL } from "../services/util_service";
 
 function RequestIndex({
   listeners,
@@ -268,7 +269,9 @@ function RequestIndex({
           rounded
           raised
           link
-          onClick={() => window.open("/request/" + request.id, "_self")}
+          onClick={() =>
+            window.open(`${GetBaseURL()}/request/${request.id}`, "_self")
+          }
           tooltip={"Open Request " + request.command_display_name}
         >
           <FontAwesomeIcon icon="arrow-up-right-from-square" />{" "}

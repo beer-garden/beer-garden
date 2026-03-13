@@ -2,28 +2,44 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
 import { MegaMenu } from "primereact/megamenu";
 import { Ripple } from "primereact/ripple";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import CurrentRequestsTemplate from "./components/CurrentRequestsTemplate";
+import { Config } from "./models/models";
+import { GetConfig } from "./services/config_service";
 
 function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
-  const itemRenderer = (item: any, options: any) => {
+  const [config, setConfig] = useState<Config | null>(null);
+
+  useEffect(() => {
+    GetConfig()
+      .then((config) => {
+        setConfig(config);
+      })
+      .catch((error) => {
+        console.error("Error fetching the config:", error);
+      });
+  }, []);
+
+  const itemRenderer = (item: any) => {
     if (item.root) {
       return (
-        <a
+        <Link
           className="flex align-items-center cursor-pointer px-3 py-2 overflow-hidden relative font-semibold text-lg uppercase p-ripple hover:surface-ground"
           style={{ borderRadius: "2rem" }}
-          onClick={(e) => options.onClick(e)}
+          to={item.route}
         >
           {/* <FontAwesomeIcon icon={item.icon} /> */}
           <span className="ml-2">{item.label}</span>
           <Ripple />
-        </a>
+        </Link>
       );
     } else if (!item.image) {
       return (
-        <a
+        <Link
           className="flex align-items-center p-3 cursor-pointer mb-2 gap-2 "
-          onClick={options.onClick}
+          to={item.route}
         >
           <span className="inline-flex align-items-center justify-content-center border-circle bg-primary w-3rem h-3rem">
             <FontAwesomeIcon icon={item.icon} />
@@ -32,13 +48,13 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
             <span className="font-medium text-lg text-900">{item.label}</span>
             <span className="white-space-nowrap">{item.subtext}</span>
           </span>
-        </a>
+        </Link>
       );
     } else {
       return (
-        <div
+        <Link
           className="flex flex-column align-items-start gap-3"
-          onClick={options.onClick}
+          to={item.route}
         >
           <img alt="megamenu-demo" src={item.image} className="w-full" />
           <span>{item.subtext}</span>
@@ -46,7 +62,7 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
             className="p-button p-component p-button-outlined"
             label={item.label}
           />
-        </div>
+        </Link>
       );
     }
   };
@@ -56,33 +72,25 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
       label: "Systems",
       root: true,
       template: itemRenderer,
-      command: () => {
-        window.open("/systems", "_self");
-      },
+      route: "/systems",
     },
     {
       label: "Requests",
       root: true,
       template: itemRenderer,
-      command: () => {
-        window.open("/requests", "_self");
-      },
+      route: "/requests",
     },
     {
       label: "Scheduler",
       root: true,
       template: itemRenderer,
-      command: () => {
-        window.open("/jobs", "_self");
-      },
+      route: "/jobs",
     },
     {
       label: "Create Request",
       root: true,
       template: itemRenderer,
-      command: () => {
-        window.open("/create/request", "_self");
-      },
+      route: "/create/request",
     },
     {
       label: "Admin",
@@ -95,34 +103,28 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
               {
                 label: "About",
                 icon: "info",
-                subtext: "Subtext of item",
                 template: itemRenderer,
-                command: () => {
-                  window.open("/about", "_self");
-                },
+                route: "/about",
               },
               {
                 label: "Garden",
                 icon: "globe",
-                subtext: "Subtext of item",
                 template: itemRenderer,
+                route: "/garden",
               },
               {
                 label: "Topics",
                 icon: "envelope",
-                subtext: "Subtext of item",
                 template: itemRenderer,
               },
               {
                 label: "Users",
                 icon: "user",
-                subtext: "Subtext of item",
                 template: itemRenderer,
               },
               {
                 label: "Roles",
                 icon: "users",
-                subtext: "Subtext of item",
                 template: itemRenderer,
               },
             ],
@@ -132,7 +134,16 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
     },
   ];
 
-  const start = <FontAwesomeIcon icon="beer-mug-empty" />;
+  const start = (
+    <div className="flex">
+      {config && (
+        <div className="mr-2">
+          <FontAwesomeIcon icon={config.icon_default ?? "beer-mug-empty"} />
+        </div>
+      )}
+      {config && <div className="mr-2">{config.application_name}</div>}
+    </div>
+  );
 
   return (
     <div className="card">

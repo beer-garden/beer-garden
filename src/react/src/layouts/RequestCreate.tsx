@@ -15,12 +15,17 @@ import { RequestCommand } from "../models/models";
 import { CreateJob, GetJob, UpdateJob } from "../services/job_service";
 import { GetRequest } from "../services/request_service";
 import { PostRequest } from "../services/request_service";
+import { GetBaseURL } from "../services/util_service";
 
 function RequestCreate() {
   const { requestId } = useParams<{ requestId: string }>();
   const { jobId } = useParams<{ jobId: string }>();
   const { defaultType } = useParams<{ defaultType: string }>();
-
+  const { paramNamespace } = useParams<{ paramNamespace: string }>();
+  const { paramSystem } = useParams<{ paramSystem: string }>();
+  const { paramVersion } = useParams<{ paramVersion: string }>();
+  const { paramInstance } = useParams<{ paramInstance: string }>();
+  const { paramCommand } = useParams<{ paramCommand: string }>();
   const stepperRef = useRef<null | any>(null);
 
   const scheduleHeader = "Schedule";
@@ -40,19 +45,18 @@ function RequestCreate() {
 
   // Create Request Panel
   const [requestCommand, setRequestCommand] = useState<RequestCommand>({
-    namespace: null,
-    systemName: null,
-    version: null,
-    instance: null,
-    command: null,
+    namespace: paramNamespace ?? null,
+    systemName: paramSystem ?? null,
+    version: paramVersion ?? null,
+    instance: paramInstance ?? null,
+    command: paramCommand ?? null,
   });
-  
+
+  const [visibleCodeExample, setVisibleCodeExample] = useState<boolean>(false);
   const [showCreateRequest, setShowCreateRequest] = useState<boolean>(
     (requestId === undefined || requestId === null) &&
       (jobId === undefined || jobId === null),
   );
-
-  const [visibleCodeExample, setVisibleCodeExample] = useState<boolean>(false);
 
   const nextStep = () => {
     stepperRef.current?.nextCallback();
@@ -66,7 +70,10 @@ function RequestCreate() {
     if (request) {
       PostRequest(request)
         .then((response_request) => {
-          window.open("/request/" + response_request.id, "_self");
+          window.open(
+            `${GetBaseURL()}/request/${response_request.id}`,
+            "_self",
+          );
         })
         .catch((error) => {
           console.error("Error creating request:", error);
@@ -78,7 +85,7 @@ function RequestCreate() {
     if (job && request) {
       CreateJob({ ...job, ...{ request_template: request } })
         .then(() => {
-          window.open("/jobs/", "_self");
+          window.open(`${GetBaseURL()}/jobs/`, "_self");
         })
         .catch((error) => {
           console.error("Error creating job:", error);
@@ -90,7 +97,7 @@ function RequestCreate() {
     if (job && request) {
       UpdateJob({ ...job, ...{ request_template: request } })
         .then(() => {
-          window.open("/jobs/", "_self");
+          window.open(`${GetBaseURL()}/jobs/`, "_self");
         })
         .catch((error) => {
           console.error("Error updating job:", error);
@@ -141,129 +148,6 @@ function RequestCreate() {
     }
   }, [jobId, requestId]);
 
-  const CodeBlock = (codeType: string) => {
-    const getHostName = () => {
-      return window.location.hostname;
-    };
-
-    const getPort = () => {
-      return window.location.port;
-    };
-
-    const getPrefix = () => {
-      const path = window.location.pathname;
-
-      for (const knownPaths of ["/create", "/recreate"]) {
-        const index = path.indexOf(knownPaths);
-        if (index > 0) {
-          return path.slice(1, index) + "/";
-        }
-      }
-
-      return "";
-    };
-
-    const getSslEnabled = () => {
-      return window.location.protocol === "https:" ? "True" : "False";
-    };
-
-    const wgetCode = () => {
-      return `
-wget --method=POST -O- \\
-  --body-data='${JSON.stringify(request)}' \\
-  --header=Content-Type:application/json \\
-  ${getHostName()}:${getPort()}${getPrefix()}/api/v1/requests?blocking=true
-`;
-    };
-
-    const curlCode = () => {
-      return `
-curl -X POST ${getHostName()}:${getPort()}${getPrefix()}/api/v1/requests?blocking=true \\
-  -H "Content-Type: application/json" \\
-  -d '${JSON.stringify(request)}'
-`;
-    };
-
-    const pythonCode = () => {
-      const generateParams = () => {
-        if (request?.parameters) {
-          const printParams = [] as Array<string>;
-
-          for (const [key, value] of Object.entries(
-            request?.parameters || {},
-          )) {
-            if (value && value !== undefined && value !== null) {
-              if (typeof value === "string") {
-                printParams.push(key + '="' + value + '"');
-              } else if (typeof value === "boolean") {
-                printParams.push(key + "=" + (value ? "True" : "False"));
-              } else {
-                printParams.push(key + "=" + value);
-              }
-            }
-          }
-
-          return printParams.join(", ");
-        }
-        return "";
-      };
-
-      return `
-from brewtils import SystemClient
-
-request = SystemClient(
-  system_name='${request?.system}',
-	system_namespace='${request?.namespace}',
-	version_constraint='${request?.system_version}',
-	default_instance='${request?.instance_name}',
-	bg_host='${getHostName()}',
-	bg_url_prefix='${getPrefix()}',
-	bg_port=${getPort()},
-	blocking=True,
-	ssl_enabled=${getSslEnabled()},
-	ca_cert=None,
-	ca_verify=None
-	client_cert=None).command(${generateParams()})
-
-print(request)
-`;
-    };
-
-    const code = () => {
-      if (codeType === "Python") {
-        return pythonCode();
-      }
-      if (codeType === "cURL") {
-        return curlCode();
-      }
-      if (codeType === "Wget") {
-        return wgetCode();
-      }
-      return "";
-    };
-    const copyToClipboard = () => {
-      navigator.clipboard.writeText(code()).catch((error) => {
-        console.error("Error copying to clipboard:", error);
-      });
-    };
-
-    return (
-      <div style={{ position: "relative" }}>
-        <h3>{codeType}</h3>
-        <Button
-          className="p-button-rounded p-button-text"
-          onClick={copyToClipboard}
-          style={{ position: "absolute", top: "0.5rem", right: "0.5rem" }}
-        >
-          <FontAwesomeIcon icon="copy" />
-        </Button>
-        <pre>
-          <code>{code()}</code>
-        </pre>
-      </div>
-    );
-  };
-
   return (
     <div className="card flex justify-content-center">
       <Stepper
@@ -305,36 +189,12 @@ print(request)
 
             {runState === runOptions[0] && (
               <div>
-                <Dialog
-                  header={"Code Examples"}
-                  visible={visibleCodeExample}
-                  onHide={() => {
-                    if (!visibleCodeExample) return;
-                    setVisibleCodeExample(false);
-                  }}
-                  style={{ width: "50vw" }}
-                >
-                  {CodeBlock("Python")}
-
-                  {CodeBlock("cURL")}
-
-                  {CodeBlock("Wget")}
-                </Dialog>
-                <SplitButton
+                <Button
                   label="Submit"
                   icon="pi pi-arrow-right"
                   onClick={() => {
                     submitRequest();
                   }}
-                  model={[
-                    {
-                      label: "Code Examples",
-                      // icon: <FontAwesomeIcon icon="arrow-up-right-from-square" />,
-                      command: () => {
-                        setVisibleCodeExample(true);
-                      },
-                    },
-                  ]}
                 />
               </div>
             )}

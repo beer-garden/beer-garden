@@ -4,17 +4,19 @@ import { Button } from "primereact/button";
 import { Calendar } from "primereact/calendar";
 import { Checkbox } from "primereact/checkbox";
 import { Dropdown } from "primereact/dropdown";
-import { FileUpload } from "primereact/fileupload";
+import { FileUpload, FileUploadFile } from "primereact/fileupload";
 import { InputNumber } from "primereact/inputnumber";
 import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
 import { MultiSelect } from "primereact/multiselect";
+import { ProgressBar } from "primereact/progressbar";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { TriStateCheckbox } from "primereact/tristatecheckbox";
 import { classNames } from "primereact/utils";
-import { useState } from "react";
+import { useEffect,useRef, useState } from "react";
 
 import { InputParam } from "../models/models";
+import { uploadFile } from "../services/file_service";
 
 interface CommandFormFieldParams {
   parameter: InputParam;
@@ -22,6 +24,7 @@ interface CommandFormFieldParams {
   handleChange: (name: any, value: any) => void;
   parametersFields: Array<InputParam>;
   loadingChoices: Array<{ key: string; timestamp: number }>;
+  resetForm: boolean;
 }
 
 function CommandFormField({
@@ -30,6 +33,7 @@ function CommandFormField({
   handleChange,
   parametersFields,
   loadingChoices,
+  resetForm,
 }: CommandFormFieldParams) {
   const handleMultiChange = (key: any, value: any, index?: number) => {
     parametersFields.forEach((param: InputParam) => {
@@ -589,52 +593,81 @@ function CommandFormField({
         </div>
       );
     case "Bytes":
-      const customBytesUploader = async (event: any) => {
-        // convert file to bytes encoded
+      const customBytesUploader = (event: any) => {
         const file = event.files[0];
-        const reader = new FileReader();
-        const blob = await fetch(file.objectURL).then((r) => r.blob()); //blob:url
-
-        reader.readAsDataURL(blob);
-
-        reader.onloadend = function () {
-          const base64data = reader.result;
-          // Run Upload
-        };
+        handleChange(parameter.key, file as FileUploadFile);
       };
+      const bytesUploadRef = useRef<FileUpload>(null);
+
+      useEffect(() => {
+        if (bytesUploadRef && bytesUploadRef.current) {
+          bytesUploadRef.current.clear();
+        }
+      }, [resetForm]);
       return (
         <div key={parameter.key} className="p-field">
           <FileUpload
+            ref={bytesUploadRef}
             id={parameter.key}
             mode="basic"
             customUpload
-            uploadHandler={customBytesUploader}
+            onSelect={customBytesUploader}
             disabled={disabled}
           />
         </div>
       );
     case "Base64":
+      const [uploadPercentage, setUploadPercentage] = useState(0);
+      const fileUploadRef = useRef<FileUpload>(null);
+
       const customBase64Uploader = async (event: any) => {
-        // convert file to base64 encoded
+        if (fileUploadRef && fileUploadRef.current) {
+          fileUploadRef.current.setUploadedFiles([]);
+        }
         const file = event.files[0];
-        const reader = new FileReader();
-        const blob = await fetch(file.objectURL).then((r) => r.blob()); //blob:url
 
-        reader.readAsDataURL(blob);
+        const fileUploadResult = await uploadFile(file, setUploadPercentage);
 
-        reader.onloadend = function () {
-          const base64data = reader.result;
-          // Run Upload
-        };
+        handleChange(parameter.key, fileUploadResult);
+        if (fileUploadRef && fileUploadRef.current) {
+          fileUploadRef.current.clear();
+          fileUploadRef.current.setUploadedFiles([file]);
+        }
+        setUploadPercentage(100);
       };
+
+      const removeFile = () => {
+        handleChange(parameter.key, null);
+        setUploadPercentage(0);
+        if (fileUploadRef && fileUploadRef.current) {
+          fileUploadRef.current.clear();
+        }
+      };
+
+      useEffect(() => {
+        setUploadPercentage(0);
+        if (fileUploadRef && fileUploadRef.current) {
+          fileUploadRef.current.clear();
+        }
+      }, [resetForm]);
+
       return (
         <div key={parameter.key} className="p-field">
           <FileUpload
+            ref={fileUploadRef}
             id={parameter.key}
-            mode="basic"
+            // mode="basic"
             customUpload
+            auto
             uploadHandler={customBase64Uploader}
+            onRemove={removeFile}
             disabled={disabled}
+            progressBarTemplate={
+              <ProgressBar
+                value={uploadPercentage}
+                displayValueTemplate={() => `${uploadPercentage}%`}
+              />
+            }
           />
         </div>
       );

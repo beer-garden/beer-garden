@@ -74,13 +74,13 @@ export default function systemService($rootScope, $http) {
     },
     deleteSystem: (system) => {
       return $http.delete('api/v1/systems/' + system.id, {
-        headers: {'Target-Garden': system.garden_name},
+        headers: {'Target-Garden': encodeURI(system.garden_name) == system.garden_name ? system.garden_name : undefined},
       });
     },
     forceDeleteSystem: (system) => {
       return $http.delete('api/v1/systems/' + system.id, {
         params: {force: true},
-        headers: {target_garden: system.garden_name},
+        headers: {'Target-Garden': encodeURI(system.garden_name) == system.garden_name ? system.garden_name : undefined},
       });
     },
     reloadSystem: (system) => {
@@ -88,7 +88,7 @@ export default function systemService($rootScope, $http) {
         operation: 'reload',
         path: '',
         value: '',
-        headers: {target_garden: system.garden_name},
+        headers: {'Target-Garden': encodeURI(system.garden_name) == system.garden_name ? system.garden_name : undefined},
       });
     },
     rescan: (gardenName) => {
@@ -96,7 +96,7 @@ export default function systemService($rootScope, $http) {
         return $http.patch(
           'api/v1/systems?garden_name=' + encodeURIComponent(gardenName),
           {operation: 'rescan'},
-          {headers: {'Target-Garden': gardenName}
+          {headers: {'Target-Garden': encodeURI(gardenName) == gardenName ? gardenName : undefined}
         });
       } else {
         return $http.patch('api/v1/systems', {operation: 'rescan'});

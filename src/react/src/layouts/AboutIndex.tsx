@@ -12,22 +12,30 @@ function AboutIndex() {
   const [version, setVersion] = useState<Version | null>(null);
 
   useEffect(() => {
-    GetConfig().then((config) => {
-      setConfig(config);
-    });
+    GetConfig()
+      .then((config) => {
+        setConfig(config);
+      })
+      .catch((error) => {
+        console.error("Error fetching the config:", error);
+      });
   }, []);
 
   useEffect(() => {
-    GetVersion().then((version) => {
-      setVersion(version);
-    });
+    GetVersion()
+      .then((version) => {
+        setVersion(version);
+      })
+      .catch((error) => {
+        console.error("Error fetching the version:", error);
+      });
   }, []);
 
   function AboutHeader({ config }: { config: Config | null }) {
     return (
-      <h1 className="ml-2 page-header">
-        About {config ? config.application_name : ""}
-      </h1>
+      <div className="flex ml-2 page-header">
+        <h1 className="al">About {config ? config.application_name : ""}</h1>
+      </div>
     );
   }
 

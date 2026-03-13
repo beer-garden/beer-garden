@@ -6,7 +6,10 @@ import CommandForm from "../components/CommandForm";
 import CommandSelect from "../components/CommandSelect";
 import { Command, Request, System } from "../models/brewtils-types";
 import { RequestCommand } from "../models/models";
-import { GetSystemList } from "../services/system_service";
+import {
+  DetermineLatestSystemVersion,
+  GetSystemList,
+} from "../services/system_service";
 
 function CommandCreate({
   request,
@@ -41,34 +44,32 @@ function CommandCreate({
   }, []);
 
   useEffect(() => {
-    function findCommand() {
+    const findCommand = () => {
       setShowCommand(false);
       if (systems && systems.length > 0) {
-        systems.forEach((system) => {
-          if (
-            system.namespace === requestCommand?.namespace &&
-            system.name === requestCommand?.systemName &&
-            system.version === requestCommand?.version
-          ) {
-            if (system.instances) {
-              system.instances.forEach((instance) => {
-                if (instance.name === requestCommand?.instance) {
-                  if (system.commands) {
-                    system.commands.forEach((command) => {
-                      if (command.name === requestCommand?.command) {
-                        setCommand(command);
-                        setShowCommand(true);
-                        return;
-                      }
-                    });
+        const latestSystem = DetermineLatestSystemVersion(
+          systems,
+          requestCommand?.systemName,
+          requestCommand?.namespace,
+          requestCommand?.version,
+        );
+
+        if (latestSystem && latestSystem.instances) {
+          latestSystem.instances.forEach((instance) => {
+            if (instance.name === requestCommand?.instance) {
+              if (latestSystem.commands) {
+                latestSystem.commands.forEach((command) => {
+                  if (command.name === requestCommand?.command) {
+                    setCommand(command);
+                    return;
                   }
-                }
-              });
+                });
+              }
             }
-          }
-        });
+          });
+        }
       }
-    }
+    };
 
     const migrateRequest = () => {
       const updatedRequest: Request = {
@@ -90,6 +91,7 @@ function CommandCreate({
         }
       }
       setRequest(updatedRequest);
+      setShowCommand(true);
       if (callback) {
         callback();
       }
@@ -97,6 +99,7 @@ function CommandCreate({
 
     // Target Command Changed, need to update
     if (
+      command !== null &&
       requestCommand?.namespace &&
       requestCommand?.systemName &&
       requestCommand?.version &&
@@ -108,8 +111,16 @@ function CommandCreate({
         requestCommand.instance !== request?.instance_name ||
         requestCommand.command !== request?.command)
     ) {
-      migrateRequest();
-      findCommand();
+      // These all have to be different loops to allow for React to Render changes
+      if (showCommand) {
+        // Selected Command changed via dropdown and new command needs to be found
+        setCommand(null);
+        setShowCommand(false);
+      } else {
+        // New Command found and need to migrate old request to new command
+        migrateRequest();
+      }
+
       if (callback) {
         callback();
       }
@@ -119,7 +130,7 @@ function CommandCreate({
     else if (
       systems &&
       systems.length > 0 &&
-      !command &&
+      command === null &&
       requestCommand?.namespace &&
       requestCommand?.systemName &&
       requestCommand?.version &&
@@ -128,12 +139,25 @@ function CommandCreate({
     ) {
       findCommand();
     } else {
+      if (command !== null && !showCommand) {
+        setShowCommand(true);
+      }
       // Event from Request or Command
       if (callback) {
         callback();
       }
     }
-  }, [systems, requestCommand, request, command]);
+  }, [
+    systems,
+    requestCommand,
+    request,
+    command,
+    showCommand,
+    setRequest,
+    setShowCommand,
+    setCommand,
+    callback,
+  ]);
 
   return (
     <div>
@@ -147,7 +171,7 @@ function CommandCreate({
           setValidCommand={() => {}}
         />
       )}
-      {showCommand && request && (
+      {showCommand && (
         <div>
           <CommandForm
             command={command}

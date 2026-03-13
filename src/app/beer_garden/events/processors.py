@@ -10,13 +10,11 @@ from copy import deepcopy
 from multiprocessing import Queue
 from queue import Empty
 
-import elasticapm
 from brewtils.models import Event, Events, Request
 from brewtils.schema_parser import SchemaParser
 from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden.config as config
-from beer_garden.metrics import CollectMetrics, extract_custom_context
 from beer_garden.queue.rabbit import put_event
 
 logger = logging.getLogger(__name__)
@@ -275,23 +273,10 @@ class InternalQueueListener(DequeSetListener):
         self.allow_api_only = allow_api_only
 
     def handle_event(self, event):
-        trace_parent_header = None
-        if config.get("metrics.elastic.enabled"):
-            if hasattr(event, "metadata") and "_trace_parent" in event.metadata:
-                trace_parent_header = event.metadata["_trace_parent"]
-            elif elasticapm.get_trace_parent_header() is not None:
-                trace_parent_header = elasticapm.get_trace_parent_header()
 
         try:
-            with CollectMetrics(
-                "Queue_Event",
-                f"QUEUE_POP::{self._handler_tag}",
-                trace_parent_header=trace_parent_header,
-            ):
-                if config.get("metrics.elastic.enabled"):
-                    extract_custom_context(event)
 
-                self._handler(event)
+            self._handler(event)
         except Exception as ex:
             _, _, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -333,24 +318,8 @@ class InternalQueueListener(DequeSetListener):
         """
 
         if not self.filter_event(event):
-            trace_parent_header = None
-            if config.get("metrics.elastic.enabled"):
-                if hasattr(event, "metadata") and "_trace_parent" in event.metadata:
-                    trace_parent_header = event.metadata["_trace_parent"]
-                elif elasticapm.get_trace_parent_header() is not None:
-                    trace_parent_header = elasticapm.get_trace_parent_header()
 
-                if hasattr(event, "metadata") and "_trace_parent" not in event.metadata:
-                    event.metadata["_trace_parent"] = trace_parent_header
-
-            with CollectMetrics(
-                "Queue_Event",
-                f"QUEUE_PUT::{self._name}",
-                trace_parent_header=trace_parent_header,
-            ):
-                if config.get("metrics.elastic.enabled"):
-                    extract_custom_context(event)
-                super().put(self.clone(event))
+            super().put(self.clone(event))
 
 
 class DelayListener(QueueListener):

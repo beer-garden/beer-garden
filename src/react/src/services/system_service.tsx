@@ -1,4 +1,34 @@
+import { compare, validate } from "compare-versions";
+
 import { Garden, System } from "../models/brewtils-types";
+import { GetBaseURL } from "./util_service";
+
+export const GetSystem = async (
+  systemId: string,
+  headerData: any,
+): Promise<System> => {
+  try {
+    const headers = new Headers();
+    for (const [key, value] of Object.entries(headerData)) {
+      headers.append(key, value as string);
+    }
+
+    const response = await fetch(`${GetBaseURL()}/api/v1/systems/${systemId}`, {
+      headers: headers,
+    });
+    if (!response.ok) {
+      // Handle non-OK responses (e.g., 404, 500)
+      throw new Error(`HTTP error: Status ${response.status}`);
+    }
+    const data = (await response.json()) as System;
+
+    return data;
+  } catch (error) {
+    // Handle network errors or the error thrown above
+    console.error("Error fetching System:", error);
+    throw error; // Re-throw to be handled by the component/hook
+  }
+};
 
 export const GetSystemList = async (
   queryData?: any,
@@ -38,9 +68,12 @@ export const GetSystemList = async (
       queryString = searchParams.toString();
     }
 
-    const response = await fetch(`/api/v1/systems?${queryString}`, {
-      headers: headers,
-    });
+    const response = await fetch(
+      `${GetBaseURL()}/api/v1/systems?${queryString}`,
+      {
+        headers: headers,
+      },
+    );
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);
@@ -73,4 +106,152 @@ export const ExtractSystemsFromGardens = (
   });
 
   return systems;
+};
+
+export const ReloadSystem = async (system: System): Promise<void> => {
+  const headers = new Headers();
+  headers.append("Content-Type", "application/json");
+  if (
+    system.garden_name !== undefined &&
+    encodeURIComponent(system.garden_name) === system.garden_name
+  ) {
+    headers.append("Target-Garden", system.garden_name);
+  }
+  const response = await fetch(`${GetBaseURL()}/api/v1/systems/${system.id}`, {
+    headers: headers,
+    method: "PATCH",
+    body: JSON.stringify({
+      operations: [
+        {
+          operation: "reload",
+        },
+      ],
+    }),
+  });
+  if (!response.ok) {
+    // Handle non-OK responses (e.g., 404, 500)
+    throw new Error(`HTTP error: Status ${response.status}`);
+  }
+};
+
+export const Rescan = async (gardenName?: string): Promise<void> => {
+  const headers = new Headers();
+  headers.append("Content-Type", "application/json");
+  let fetch_url = `${GetBaseURL()}api/v1/systems`;
+  if (gardenName) {
+    fetch_url = `${GetBaseURL()}/api/v1/systems?garden_name=${encodeURIComponent(gardenName)}`;
+    if (encodeURIComponent(gardenName) === gardenName) {
+      headers.append("Target-Garden", gardenName);
+    }
+  }
+  const response = await fetch(fetch_url, {
+    headers: headers,
+    method: "PATCH",
+    body: JSON.stringify({
+      operations: [
+        {
+          operation: "rescan",
+        },
+      ],
+    }),
+  });
+  if (!response.ok) {
+    // Handle non-OK responses (e.g., 404, 500)
+    throw new Error(`HTTP error: Status ${response.status}`);
+  }
+};
+
+export const DeleteSystem = async (system: System): Promise<void> => {
+  const headers = new Headers();
+  headers.append("Content-Type", "application/json");
+  if (
+    system.garden_name !== undefined &&
+    encodeURIComponent(system.garden_name) === system.garden_name
+  ) {
+    headers.append("Target-Garden", system.garden_name);
+  }
+  const response = await fetch(`${GetBaseURL()}/api/v1/systems/${system.id}`, {
+    headers: headers,
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    // Handle non-OK responses (e.g., 404, 500)
+    throw new Error(`HTTP error: Status ${response.status}`);
+  }
+};
+
+export const ForceDeleteSystem = async (system: System): Promise<void> => {
+  const headers = new Headers();
+  headers.append("Content-Type", "application/json");
+  if (
+    system.garden_name !== undefined &&
+    encodeURIComponent(system.garden_name) === system.garden_name
+  ) {
+    headers.append("Target-Garden", system.garden_name);
+  }
+  const params = new URLSearchParams({ force: "true" }).toString();
+  const response = await fetch(
+    `${GetBaseURL()}/api/v1/systems/${system.id}?${params}`,
+    {
+      headers: headers,
+      method: "DELETE",
+    },
+  );
+  if (!response.ok) {
+    // Handle non-OK responses (e.g., 404, 500)
+    throw new Error(`HTTP error: Status ${response.status}`);
+  }
+};
+
+export const DetermineLatestSystemVersion = (
+  systems: System[],
+  systemName: string | null,
+  systemNameSpace: string | null,
+  systemVersion: string | null,
+): System => {
+  return systems
+    .filter((system) => {
+      return (
+        (system.namespace === systemNameSpace || systemNameSpace === null) &&
+        (system.name === systemName || systemName === null) &&
+        (system.version === systemVersion ||
+          systemVersion === null ||
+          systemVersion === "latest")
+      );
+    })
+    .reduce((latestSystem, currentSystem) => {
+      if (currentSystem.version && latestSystem.version) {
+        const currentValid = validate(currentSystem.version)
+          ? currentSystem.version
+          : validate(currentSystem.version.replace(".dev", "-dev"))
+            ? currentSystem.version.replace(".dev", "-dev")
+            : null;
+        const latestValid = validate(latestSystem.version)
+          ? latestSystem.version
+          : validate(latestSystem.version.replace(".dev", "-dev"))
+            ? latestSystem.version.replace(".dev", "-dev")
+            : null;
+
+        if (currentValid === null && latestValid === null) {
+          if (currentSystem.version.localeCompare(latestSystem.version) > 0) {
+            return currentSystem;
+          } else {
+            return latestSystem;
+          }
+        }
+
+        if (currentValid === null) {
+          return latestSystem;
+        }
+
+        if (latestValid === null) {
+          return currentSystem;
+        }
+
+        return compare(currentValid, latestValid, ">")
+          ? currentSystem
+          : latestSystem;
+      }
+      return latestSystem;
+    });
 };

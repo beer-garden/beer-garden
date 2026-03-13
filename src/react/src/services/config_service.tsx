@@ -1,8 +1,9 @@
 import { Config } from "../models/models";
+import { GetBaseURL } from "./util_service";
 
 export const GetConfig = async (): Promise<Config> => {
   try {
-    const response = await fetch(`/config`);
+    const response = await fetch(`${GetBaseURL()}/config`);
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);
