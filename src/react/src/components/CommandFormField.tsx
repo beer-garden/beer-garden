@@ -13,7 +13,7 @@ import { ProgressBar } from "primereact/progressbar";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { TriStateCheckbox } from "primereact/tristatecheckbox";
 import { classNames } from "primereact/utils";
-import { useEffect,useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { InputParam } from "../models/models";
 import { uploadFile } from "../services/file_service";
@@ -193,7 +193,7 @@ function CommandFormField({
   }
 
   switch (parameter.type) {
-    case "String":
+    case "String": {
       if (parameter.multi) {
         return (
           <div key={parameter.key} className="p-field">
@@ -237,7 +237,8 @@ function CommandFormField({
           />
         </div>
       );
-    case "Dictionary":
+    }
+    case "Dictionary": {
       if (parameter.multi) {
         return (
           <div key={parameter.key} className="p-field">
@@ -282,7 +283,8 @@ function CommandFormField({
           />
         </div>
       );
-    case "Integer":
+    }
+    case "Integer": {
       if (parameter.multi) {
         return (
           <div key={parameter.key} className="p-field">
@@ -342,7 +344,8 @@ function CommandFormField({
           />
         </div>
       );
-    case "Float":
+    }
+    case "Float": {
       if (parameter.multi) {
         return (
           <div key={parameter.key} className="p-field">
@@ -404,7 +407,8 @@ function CommandFormField({
           />
         </div>
       );
-    case "Boolean":
+    }
+    case "Boolean": {
       if (parameter.multi) {
         if (parameter.nullable) {
           return (
@@ -498,7 +502,8 @@ function CommandFormField({
           />
         </div>
       );
-    case "Date":
+    }
+    case "Date": {
       if (parameter.multi) {
         return (
           <div key={parameter.key} className="p-field">
@@ -544,7 +549,8 @@ function CommandFormField({
           />
         </div>
       );
-    case "DateTime":
+    }
+    case "DateTime": {
       if (parameter.multi) {
         return (
           <div key={parameter.key} className="p-field">
@@ -592,7 +598,8 @@ function CommandFormField({
           />
         </div>
       );
-    case "Bytes":
+    }
+    case "Bytes": {
       const customBytesUploader = (event: any) => {
         const file = event.files[0];
         handleChange(parameter.key, file as FileUploadFile);
@@ -604,6 +611,7 @@ function CommandFormField({
           bytesUploadRef.current.clear();
         }
       }, [resetForm]);
+
       return (
         <div key={parameter.key} className="p-field">
           <FileUpload
@@ -616,7 +624,8 @@ function CommandFormField({
           />
         </div>
       );
-    case "Base64":
+    }
+    case "Base64": {
       const [uploadPercentage, setUploadPercentage] = useState(0);
       const fileUploadRef = useRef<FileUpload>(null);
 
@@ -671,8 +680,10 @@ function CommandFormField({
           />
         </div>
       );
-    default:
+    }
+    default: {
       return null;
+    }
   }
 }
 

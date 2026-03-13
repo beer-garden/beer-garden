@@ -1,8 +1,5 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
 import { Skeleton } from "primereact/skeleton";
-import { SplitButton } from "primereact/splitbutton";
 import { Stepper } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
 import { useEffect, useRef, useState } from "react";
@@ -52,7 +49,6 @@ function RequestCreate() {
     command: paramCommand ?? null,
   });
 
-  const [visibleCodeExample, setVisibleCodeExample] = useState<boolean>(false);
   const [showCreateRequest, setShowCreateRequest] = useState<boolean>(
     (requestId === undefined || requestId === null) &&
       (jobId === undefined || jobId === null),

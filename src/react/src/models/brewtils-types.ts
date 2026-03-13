@@ -20,7 +20,11 @@ export interface AliasUserMap {
 export interface Choices {
   type?: string;
   display?: string;
-  value?: any[] | ChoicesValue | string;
+  value?:
+    | Array<{ text: string; value: string } | string>
+    | { [key: string]: Array<{ text: string; value: string } | string> }
+    | ChoicesValue
+    | string;
   strict?: boolean;
   details?: Details;
 }

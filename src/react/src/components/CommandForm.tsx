@@ -46,6 +46,98 @@ function CommandForm({
   ) => {
     const timestamp = Date.now();
 
+    const mapChoices = (
+      values:
+        | Array<{ text: string; value: string } | string>
+        | { [key: string]: Array<{ text: string; value: string } | string> },
+    ): Promise<Array<{ label: string; value: string }>> => {
+      return new Promise((resolve, reject) => {
+        if (values === null || values === undefined) {
+          resolve([]);
+        }
+
+        if (Array.isArray(values)) {
+          if (values.length === 0) {
+            resolve([]);
+          }
+          resolve(values.map((choice) => mapChoice(choice)));
+        }
+
+        if (parameter?.choices?.details?.key_reference) {
+          for (const populatedField of lookupParameters) {
+            if (
+              populatedField.key === parameter.choices?.details?.key_reference
+            ) {
+              if (
+                // Not Defined Yet
+                populatedField.value === null ||
+                populatedField.value === undefined ||
+                // Selected Null but it wasn't defined as an input
+                (typeof populatedField.value !== "string" &&
+                  "value" in populatedField.value &&
+                  (populatedField.value.value === null ||
+                    populatedField.value.value === undefined))
+              ) {
+                if ("null" in values) {
+                  resolve(values["null"].map((choice) => mapChoice(choice)));
+                }
+                reject(
+                  Error(`Dependant Key ${populatedField.key} is not populated`),
+                );
+              }
+              if (
+                typeof populatedField.value === "string" &&
+                populatedField.value in values
+              ) {
+                resolve(
+                  (
+                    values as {
+                      [key: string]: Array<
+                        { text: string; value: string } | string
+                      >;
+                    }
+                  )[populatedField.value].map((choice) => mapChoice(choice)),
+                );
+              }
+              reject(
+                Error(
+                  `Dependant Key ${populatedField.key} does not have mapping values`,
+                ),
+              );
+            }
+          }
+          reject(
+            Error(
+              `Dependant Key ${parameter.choices?.details?.key_reference} is not found in form`,
+            ),
+          );
+        }
+
+        resolve([]);
+      });
+    };
+
+    const mapChoice = (
+      choice: string | { text: string; value: string },
+    ): { label: string; value: string } => {
+      if (
+        choice !== null &&
+        choice !== undefined &&
+        typeof choice !== "string" &&
+        "text" in choice &&
+        "value" in choice
+      ) {
+        return {
+          label: choice.text,
+          value: choice.value,
+        };
+      }
+      return {
+        label: choice,
+        value: choice,
+      };
+    };
+
     const resolveOptions = (
       options: Array<{ label: string; value: any }> | undefined,
       errorMsd?: string,
@@ -80,24 +172,32 @@ function CommandForm({
 
           altParametersFields.current = updatedParameterFields;
           setParameterFields([...altParametersFields.current]);
+          removeLoadingChoice(parameter.key);
+        } else {
+          removeLoadingChoice(parameter.key, timestamp);
         }
-        removeLoadingChoice(parameter.key, timestamp);
       }
     };
+
     if (parameter.key) {
       addLoadingChoice(parameter.key, timestamp);
     }
 
     if (
       parameter.choices &&
-      parameter.choices.type === "static" &&
-      Array.isArray(parameter.choices.value)
+      parameter.choices.type === "static"
+      // Array.isArray(parameter.choices.value)
     ) {
-      const options = parameter.choices.value.map((choice) => ({
-        label: choice,
-        value: choice,
-      }));
-      resolveOptions(options);
+      mapChoices(
+        parameter.choices.value as
+          | Array<{ text: string; value: string } | string>
+          | { [key: string]: Array<{ text: string; value: string } | string> },
+      )
+        .then((options) => resolveOptions(options))
+        .catch((error) => {
+          console.error("Error fetching choices:", error);
+          resolveOptions([], `Error fetching choices: ${error}`);
+        });
     }
 
     const parameterArgs = {} as any;
@@ -141,11 +241,12 @@ function CommandForm({
           return response.json();
         })
         .then((data) => {
-          const choices = data.map((item: any) => ({
-            label: item,
-            value: item,
-          }));
-          resolveOptions(choices);
+          mapChoices(data)
+            .then((choices) => resolveOptions(choices))
+            .catch((error) => {
+              console.error("Error fetching choices:", error);
+              resolveOptions([], `Error fetching choices: ${error}`);
+            });
         })
         .catch((error) => {
           console.error("Error fetching choices:", error);
@@ -197,11 +298,12 @@ function CommandForm({
         .then((response) => {
           if (response.output) {
             const parsedOutput = JSON.parse(response.output);
-            const choices = parsedOutput.map((item: any) => ({
-              label: item,
-              value: item,
-            }));
-            resolveOptions(choices);
+            mapChoices(parsedOutput)
+              .then((choices) => resolveOptions(choices))
+              .catch((error) => {
+                console.error("Error fetching choices:", error);
+                resolveOptions([], `Error fetching choices: ${error}`);
+              });
           } else {
             resolveOptions([]);
           }
@@ -299,11 +401,16 @@ function CommandForm({
     setLoadingChoices([...altLoadingChoices.current]);
   };
 
-  const removeLoadingChoice = (removeKey: string, timestamp: number) => {
-    const newLoadingChoices = altLoadingChoices.current.filter(
-      (keyObject) =>
-        keyObject.key !== removeKey && keyObject.timestamp !== timestamp,
-    );
+  const removeLoadingChoice = (removeKey: string, timestamp?: number) => {
+    const newLoadingChoices = [] as Array<{ key: string; timestamp: number }>;
+
+    for (const keyObject of altLoadingChoices.current) {
+      if (removeKey !== keyObject.key) {
+        newLoadingChoices.push(keyObject);
+      } else if (timestamp && keyObject.timestamp !== timestamp) {
+        newLoadingChoices.push(keyObject);
+      }
+    }
 
     altLoadingChoices.current = newLoadingChoices;
     setLoadingChoices([...altLoadingChoices.current]);
@@ -344,6 +451,9 @@ function CommandForm({
         request.parameters = {};
         updated = true;
       }
+      if (inputParameter.value === null || inputParameter.value === undefined) {
+        return;
+      }
       if (request && request.parameters) {
         if (
           inputParameter.key in request.parameters &&
@@ -362,10 +472,18 @@ function CommandForm({
       // Update dynamic options
       parametersFields.forEach((parameter: InputParam) => {
         if (parameter?.key && parameter.choices) {
+          const updatedKeys = [] as Array<string>;
+
           if (parameter.choices?.details?.args) {
-            const updatedKeys = parameter.choices.details.args.map(
-              (arg) => arg[1],
-            );
+            for (const arg of parameter.choices.details.args) {
+              updatedKeys.push(arg[1]);
+            }
+          }
+
+          if (parameter.choices?.details?.key_reference) {
+            updatedKeys.push(parameter.choices?.details?.key_reference);
+          }
+          if (updatedKeys.length > 0) {
             const shouldUpdate = changedFields.some((field) =>
               updatedKeys.includes(field),
             );
