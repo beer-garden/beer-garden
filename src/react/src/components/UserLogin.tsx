@@ -14,7 +14,6 @@ const LoginDialog = ({
   visible: boolean;
   setVisible: any;
 }) => {
-  // const [visible, setVisible] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
@@ -44,9 +43,6 @@ const LoginDialog = ({
   );
 
   return (
-    // <div className="card flex justify-content-center">
-    // <Button label="Show Login" icon="pi pi-external-link" onClick={() => setVisible(true)} />
-
     <Dialog
       header="Login"
       visible={visible}
@@ -65,7 +61,6 @@ const LoginDialog = ({
             className={classNames({ "p-invalid": !username && visible })} // Example validation styling
             aria-describedby="username-help"
           />
-          {/* <small id="username-help">Enter your username.</small> */}
         </div>
         <div className="flex flex-column gap-2">
           <label htmlFor="password">Password</label>
