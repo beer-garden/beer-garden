@@ -20,6 +20,7 @@ import SystemCards from "./layouts/SystemCards";
 import SystemTable from "./layouts/SystemTable";
 import { Listener } from "./models/models";
 import NavigationMenu from "./Navigation";
+import GardenDashboard from "./layouts/Dashboard";
 
 function App() {
   const [showScratchPad, setShowScratchPad] = useState<boolean>(false);
@@ -105,7 +106,7 @@ function App() {
                       />
                     }
                   />
-                  <Route path="/systemtable" element={<SystemTable />} />
+                  <Route path="/dashboard" element={<GardenDashboard />} />
                   <Route
                     path="/systemcard"
                     element={
