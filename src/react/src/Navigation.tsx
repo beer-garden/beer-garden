@@ -15,16 +15,6 @@ import { GetCurrentUser } from "./services/user_service";
 function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
   const [config, setConfig] = useState<Config | null>(null);
 
-  useEffect(() => {
-    GetConfig()
-      .then((config) => {
-        setConfig(config);
-      })
-      .catch((error) => {
-        console.error("Error fetching the config:", error);
-      });
-  }, []);
-
   const itemRenderer = (item: any) => {
     if (item.root) {
       return (
@@ -163,10 +153,28 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
   const [username, setUserName] = useState<string | undefined>(getUserName());
 
   useEffect(() => {
-    if (!loginVisible) {
-      setUserName(getUserName());
+    if (config === null) {
+      GetConfig()
+        .then((configValue) => {
+          setConfig(configValue);
+        })
+        .catch((error) => {
+          console.error("Error fetching the config:", error);
+        });
+    } else if (
+      config !== null &&
+      !loginVisible &&
+      config?.auth_enabled &&
+      username === undefined
+    ) {
+      const userNameValue = getUserName();
+      if (userNameValue === undefined || userNameValue === null) {
+        setLoginVisible(true);
+      } else {
+        setUserName(userNameValue);
+      }
     }
-  }, [loginVisible, config]);
+  }, [config]);
 
   const end = (
     <div className="flex">
@@ -181,7 +189,11 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
               >
                 Login
               </Button>
-              <UserLogin visible={loginVisible} setVisible={setLoginVisible} />
+              <UserLogin
+                visible={loginVisible}
+                setVisible={setLoginVisible}
+                setUsernameDisplay={setUserName}
+              />
             </div>
           )}
           {username !== undefined && (

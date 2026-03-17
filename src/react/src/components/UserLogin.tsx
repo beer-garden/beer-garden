@@ -10,9 +10,11 @@ import { UserLogin } from "../services/token_service";
 const LoginDialog = ({
   visible,
   setVisible,
+  setUsernameDisplay,
 }: {
   visible: boolean;
   setVisible: any;
+  setUsernameDisplay: any;
 }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -21,6 +23,7 @@ const LoginDialog = ({
     UserLogin(username, password)
       .then(() => {
         setVisible(false);
+        setUsernameDisplay(username);
         setUsername("");
         setPassword("");
       })
