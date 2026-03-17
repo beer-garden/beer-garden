@@ -11,6 +11,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import ScratchPad from "./components/ScratchPad";
 import AboutIndex from "./layouts/AboutIndex";
+import GardenDashboard from "./layouts/Dashboard";
 import GardenIndex from "./layouts/GardenIndex";
 import JobIndex from "./layouts/JobIndex";
 import RequestCreate from "./layouts/RequestCreate";
@@ -20,7 +21,6 @@ import SystemCards from "./layouts/SystemCards";
 import SystemTable from "./layouts/SystemTable";
 import { Listener } from "./models/models";
 import NavigationMenu from "./Navigation";
-import GardenDashboard from "./layouts/Dashboard";
 
 function App() {
   const [showScratchPad, setShowScratchPad] = useState<boolean>(false);
