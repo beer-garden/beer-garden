@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import CommandCreate from "../components/CommandCreate";
+import HasAccess from "../components/HasAccess";
 import SchedulerForm from "../components/SchedulerForm";
 import { Job, Request } from "../models/brewtils-types";
 import { RequestCommand } from "../models/models";
@@ -195,13 +196,15 @@ function RequestCreate() {
               </div>
             )}
             {runState === runOptions[1] && !jobId && (
-              <Button
-                label="Submit Job"
-                severity="success"
-                icon="pi pi-arrow-right"
-                iconPos="right"
-                onClick={submitJob}
-              />
+              <HasAccess permission="OPERATOR">
+                <Button
+                  label="Submit Job"
+                  severity="success"
+                  icon="pi pi-arrow-right"
+                  iconPos="right"
+                  onClick={submitJob}
+                />
+              </HasAccess>
             )}
             {runState === runOptions[1] && jobId && (
               <Button

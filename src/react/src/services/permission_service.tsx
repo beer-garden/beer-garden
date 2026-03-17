@@ -1,4 +1,4 @@
-import { Role,User } from "../models/brewtils-types";
+import { Role, User } from "../models/brewtils-types";
 import { PermissionCheck } from "../models/models";
 //context
 

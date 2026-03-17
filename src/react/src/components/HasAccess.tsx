@@ -1,11 +1,17 @@
 import { PropsWithChildren, useEffect, useState } from "react";
 
-import { HasAccessProps } from "../models/models";
+import { HasAccessProps, PermissionCheck } from "../models/models";
 import { checkPermission } from "../services/permission_service";
 
 const HasAccess = ({
   permission,
-  check,
+  isGlobal,
+  hasGardenName,
+  hasNamespace,
+  hasSystemName,
+  hasSystemVersion,
+  hasCommandName,
+  hasInstanceName,
   isLoading,
   renderAuthFailed,
   children,
@@ -16,20 +22,36 @@ const HasAccess = ({
   useEffect(() => {
     setChecking(true);
 
+    const check = {
+      global: isGlobal,
+      gardenName: hasGardenName,
+      namespace: hasNamespace,
+      systemName: hasSystemName,
+      systemVersion: hasSystemVersion,
+      commandName: hasCommandName,
+      instanceName: hasInstanceName,
+    } as PermissionCheck;
+
     setHasAccess(checkPermission(permission, check));
 
     setChecking(false);
-  }, [permission, check]);
+  }, [
+    permission,
+    isGlobal,
+    hasGardenName,
+    hasNamespace,
+    hasSystemName,
+    hasSystemVersion,
+    hasCommandName,
+    hasInstanceName,
+  ]);
 
   if (!hasAccess && checking) {
     return isLoading;
   }
 
   if (hasAccess) {
-    return (
-      // children is of type ReactNode which already includes ReactFragment
-      { children }
-    );
+    return children;
   }
 
   if (renderAuthFailed) {

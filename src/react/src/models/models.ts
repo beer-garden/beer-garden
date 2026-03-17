@@ -61,7 +61,13 @@ export interface PermissionCheck {
 
 export interface HasAccessProps {
   permission: string;
-  check: PermissionCheck;
+  isGlobal?: boolean;
+  hasGardenName?: string;
+  hasNamespace?: string;
+  hasSystemName?: string;
+  hasSystemVersion?: string;
+  hasCommandName?: string;
+  hasInstanceName?: string;
   isLoading?: React.ReactElement;
   renderAuthFailed?: React.ReactElement;
 }
