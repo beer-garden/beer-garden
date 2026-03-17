@@ -193,6 +193,7 @@ function CommandFormField({
   }
 
   switch (parameter.type) {
+    case "Any":
     case "String": {
       if (parameter.multi) {
         return (
