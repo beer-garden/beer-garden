@@ -35,11 +35,11 @@ export interface ScratchPadValue {
 }
 
 export interface RequestCommand {
-  namespace: string | null;
-  systemName: string | null;
-  version: string | null;
-  instance: string | null;
-  command: string | null;
+  namespace?: string;
+  systemName?: string;
+  version?: string;
+  instance?: string;
+  command?: string;
 }
 
 export interface InstanceDialogProps {

@@ -43,11 +43,11 @@ function RequestCreate() {
 
   // Create Request Panel
   const [requestCommand, setRequestCommand] = useState<RequestCommand>({
-    namespace: paramNamespace ?? null,
-    systemName: paramSystem ?? null,
-    version: paramVersion ?? null,
-    instance: paramInstance ?? null,
-    command: paramCommand ?? null,
+    namespace: paramNamespace ?? undefined,
+    systemName: paramSystem ?? undefined,
+    version: paramVersion ?? undefined,
+    instance: paramInstance ?? undefined,
+    command: paramCommand ?? undefined,
   });
 
   const [showCreateRequest, setShowCreateRequest] = useState<boolean>(
@@ -115,11 +115,11 @@ function RequestCreate() {
             parameters: responseRequest.parameters,
           });
           setRequestCommand({
-            namespace: responseRequest?.namespace ?? null,
-            systemName: responseRequest?.system ?? null,
-            version: responseRequest?.system_version ?? null,
-            instance: responseRequest?.instance_name ?? null,
-            command: responseRequest?.command ?? null,
+            namespace: responseRequest?.namespace,
+            systemName: responseRequest?.system,
+            version: responseRequest?.system_version,
+            instance: responseRequest?.instance_name,
+            command: responseRequest?.command,
           });
           setShowCreateRequest(true);
         })
@@ -196,7 +196,11 @@ function RequestCreate() {
               </div>
             )}
             {runState === runOptions[1] && !jobId && (
-              <HasAccess permission="OPERATOR">
+              <HasAccess permission="OPERATOR"
+              hasNamespace={requestCommand.namespace}
+              hasSystemName={requestCommand.systemName}
+              hasInstanceName={requestCommand.instance}
+              hasCommandName={requestCommand.command}>
                 <Button
                   label="Submit Job"
                   severity="success"
