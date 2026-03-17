@@ -186,21 +186,33 @@ function RequestCreate() {
 
             {runState === runOptions[0] && (
               <div>
-                <Button
-                  label="Submit"
-                  icon="pi pi-arrow-right"
-                  onClick={() => {
-                    submitRequest();
-                  }}
-                />
+                <HasAccess
+                  permission="OPERATOR"
+                  hasNamespace={requestCommand.namespace}
+                  hasSystemName={requestCommand.systemName}
+                  hasInstanceName={requestCommand.instance}
+                  hasSystemVersion={requestCommand.version}
+                  hasCommandName={requestCommand.command}
+                >
+                  <Button
+                    label="Submit"
+                    icon="pi pi-arrow-right"
+                    onClick={() => {
+                      submitRequest();
+                    }}
+                  />
+                </HasAccess>
               </div>
             )}
             {runState === runOptions[1] && !jobId && (
-              <HasAccess permission="OPERATOR"
-              hasNamespace={requestCommand.namespace}
-              hasSystemName={requestCommand.systemName}
-              hasInstanceName={requestCommand.instance}
-              hasCommandName={requestCommand.command}>
+              <HasAccess
+                permission="OPERATOR"
+                hasNamespace={requestCommand.namespace}
+                hasSystemName={requestCommand.systemName}
+                hasInstanceName={requestCommand.instance}
+                hasSystemVersion={requestCommand.version}
+                hasCommandName={requestCommand.command}
+              >
                 <Button
                   label="Submit Job"
                   severity="success"
