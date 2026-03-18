@@ -106,11 +106,15 @@ const CheckRole = (
     target: string | undefined,
     scopes: Array<string> | undefined,
   ) => {
-    if (target && scopes && scopes.length > 0 && !scopes.includes(target)) {
-      return false;
+    if (target === undefined) {
+      return true;
     }
-    return true;
+    if (scopes === undefined || scopes.length === 0) {
+      return true;
+    }
+    return scopes.includes(target);
   };
+
   if (!checkAccess(check.gardenName, role.scopeGardens)) {
     return false;
   }
