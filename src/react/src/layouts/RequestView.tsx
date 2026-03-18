@@ -10,6 +10,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import CommandForm from "../components/CommandForm";
+import HasAccess from "../components/HasAccess";
 import RequestOutput from "../components/RequestOutput";
 import RequestTreeChart from "../components/RequestTreeChart";
 import { Request, System } from "../models/brewtils-types";
@@ -308,7 +309,17 @@ function RequestView({ listeners }: { listeners: Record<string, any> }) {
           style={{ flexBasis: "50rem" }}
         >
           <StepperPanel header="Request Parameters">
-            <RequestOptions {...request} />
+            {/* Need to determine if Read Only can still download values */}
+            <HasAccess
+              permission="Operator"
+              hasNamespace={request.namespace}
+              hasSystemName={request.system}
+              hasInstanceName={request.instance_name}
+              hasSystemVersion={request.system_version}
+              hasCommandName={request.command}
+            >
+              <RequestOptions {...request} />
+            </HasAccess>
             {!showCommandForm && <Skeleton width="100%" height="10rem" />}
             {showCommandForm && command && (
               <CommandForm

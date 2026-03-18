@@ -3,6 +3,7 @@ import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { TreeTable } from "primereact/treetable";
 
+import HasAccess from "../components/HasAccess";
 import { Request } from "../models/brewtils-types";
 import { DeleteRequest } from "../services/request_service";
 import { GetBaseURL } from "../services/util_service";
@@ -79,41 +80,68 @@ function RequestTreeChart(props: RequestTreeChartProps) {
         {!["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(
           node.data.status,
         ) && (
-          <Button rounded raised link onClick={() => {}} title="Cancel">
-            <FontAwesomeIcon icon="ban" />{" "}
-          </Button>
+          <HasAccess
+            permission="Operator"
+            hasNamespace={node.data.namespace}
+            hasSystemName={node.data.systemName}
+            hasInstanceName={node.data.instance}
+            hasSystemVersion={node.data.version}
+            hasCommandName={node.data.command}
+          >
+            <Button rounded raised link onClick={() => {}} title="Cancel">
+              <FontAwesomeIcon icon="ban" />{" "}
+            </Button>
+          </HasAccess>
         )}
         {["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(
           node.data.status,
         ) && (
-          <Button
-            rounded
-            raised
-            link
-            onClick={() =>
-              DeleteRequest(node.data).catch((error) => {
-                console.error("Error deleting request:", error);
-              })
-            }
-            title="Delete"
+          <HasAccess
+            permission="Admin"
+            hasNamespace={node.data.namespace}
+            hasSystemName={node.data.systemName}
+            hasInstanceName={node.data.instance}
+            hasSystemVersion={node.data.version}
+            hasCommandName={node.data.command}
           >
-            <FontAwesomeIcon icon="trash" />{" "}
-          </Button>
+            <Button
+              rounded
+              raised
+              link
+              onClick={() =>
+                DeleteRequest(node.data).catch((error) => {
+                  console.error("Error deleting request:", error);
+                })
+              }
+              title="Delete"
+            >
+              <FontAwesomeIcon icon="trash" />{" "}
+            </Button>
+          </HasAccess>
         )}
         {["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(
           node.data.status,
         ) && (
-          <Button
-            rounded
-            raised
-            link
-            onClick={() =>
-              window.open(`${GetBaseURL()}/recreate/${node.data.id}`, "_self")
-            }
-            title="Pour Again"
+          <HasAccess
+            permission="OPERATOR"
+            hasNamespace={node.data.namespace}
+            hasSystemName={node.data.systemName}
+            hasInstanceName={node.data.instance}
+            hasSystemVersion={node.data.version}
+            hasCommandName={node.data.command}
           >
-            <FontAwesomeIcon icon="rotate" />{" "}
-          </Button>
+            <Button
+              rounded
+              raised
+              link
+              onClick={() =>
+                window.open(`${GetBaseURL()}/recreate/${node.data.id}`, "_self")
+              }
+              title="Pour Again"
+            >
+              <FontAwesomeIcon icon="rotate" />{" "}
+            </Button>
+          </HasAccess>
         )}
       </div>
     );
