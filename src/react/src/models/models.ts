@@ -1,4 +1,4 @@
-import { Instance, System } from "../models/brewtils-types";
+import { Instance, Parameter, System } from "../models/brewtils-types";
 
 export interface Config {
   application_name: string;
@@ -40,6 +40,14 @@ export interface RequestCommand {
   version: string | null;
   instance: string | null;
   command: string | null;
+}
+
+export interface InputParam extends Parameter {
+  value?: any;
+  isInvalid: boolean;
+  options: Array<{ label: string; value: any }> | undefined;
+  error: boolean;
+  errorMsg?: string;
 }
 
 export interface InstanceDialogProps {

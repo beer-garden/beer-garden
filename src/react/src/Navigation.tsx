@@ -2,7 +2,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
 import { MegaMenu } from "primereact/megamenu";
 import { Ripple } from "primereact/ripple";
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import CurrentRequestsTemplate from "./components/CurrentRequestsTemplate";
@@ -136,14 +136,14 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
 
   const start = (
     <div className="flex">
-      {config && (<div className="mr-2">
-        <FontAwesomeIcon icon={config.icon_default ?? "beer-mug-empty"} />
-      </div>)}
+      {config && (
+        <div className="mr-2">
+          <FontAwesomeIcon icon={config.icon_default ?? "beer-mug-empty"} />
+        </div>
+      )}
       {config && <div className="mr-2">{config.application_name}</div>}
     </div>
   );
-
-  
 
   return (
     <div className="card">
