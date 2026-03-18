@@ -1,24 +1,14 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
-import { Calendar } from "primereact/calendar";
-import { Checkbox } from "primereact/checkbox";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
-import { Dropdown } from "primereact/dropdown";
-import { FileUpload, FileUploadFile } from "primereact/fileupload";
-import { InputNumber } from "primereact/inputnumber";
-import { InputText } from "primereact/inputtext";
-import { InputTextarea } from "primereact/inputtextarea";
-import { MultiSelect } from "primereact/multiselect";
-import { ProgressBar } from "primereact/progressbar";
-import { TriStateCheckbox } from "primereact/tristatecheckbox";
-import { classNames } from "primereact/utils";
 import { useEffect, useRef, useState } from "react";
 
-import { Command, Parameter } from "../models/brewtils-types"; // Assuming this is the correct path
-import { Request } from "../models/brewtils-types";
-import { uploadFile } from "../services/file_service";
+import { ChoicesValue, Command, Request } from "../models/brewtils-types";
+import { InputParam } from "../models/models";
+import { PostRequest } from "../services/request_service";
+import CommandFormField from "./CommandFormField";
 
 interface CommandFormProps {
   command: Command | null;
@@ -33,16 +23,299 @@ function CommandForm({
   request,
   setRequest,
 }: CommandFormProps) {
-  interface InputParam extends Parameter {
-    value?: any;
-    isInvalid: boolean;
-  }
-
-  const [visibleCodeExample, setVisibleCodeExample] = useState<boolean>(false);
-
   disabled = disabled === undefined ? true : disabled;
+  const [parametersFields, setParameterFields] = useState(
+    [] as Array<InputParam>,
+  );
+  const altParametersFields = useRef<Array<InputParam>>([]);
 
-  const buildDefaults = (mapRequest = true): Array<InputParam> => {
+  const [initialized, setInitialized] = useState(false);
+
+  const [loadingChoices, setLoadingChoices] = useState(
+    [] as Array<{ key: string; timestamp: number }>,
+  );
+  const altLoadingChoices = useRef<Array<{ key: string; timestamp: number }>>(
+    [],
+  );
+  const [visibleCodeExample, setVisibleCodeExample] = useState<boolean>(false);
+  const [resetForm, setResetForm] = useState(false);
+
+  const generateChoices = (
+    parameter: InputParam,
+    lookupParameters: Array<InputParam>,
+  ) => {
+    const timestamp = Date.now();
+
+    const mapChoices = (
+      values:
+        | Array<{ text: string; value: string } | string>
+        | { [key: string]: Array<{ text: string; value: string } | string> },
+    ): Promise<Array<{ label: string; value: string }>> => {
+      return new Promise((resolve, reject) => {
+        if (values === null || values === undefined) {
+          resolve([]);
+        }
+
+        if (Array.isArray(values)) {
+          if (values.length === 0) {
+            resolve([]);
+          }
+          resolve(values.map((choice) => mapChoice(choice)));
+        }
+
+        if (parameter?.choices?.details?.key_reference) {
+          for (const populatedField of lookupParameters) {
+            if (
+              populatedField.key === parameter.choices?.details?.key_reference
+            ) {
+              if (
+                // Not Defined Yet
+                populatedField.value === null ||
+                populatedField.value === undefined ||
+                // Selected Null but it wasn't defined as an input
+                (typeof populatedField.value !== "string" &&
+                  "value" in populatedField.value &&
+                  (populatedField.value.value === null ||
+                    populatedField.value.value === undefined))
+              ) {
+                if ("null" in values) {
+                  resolve(values["null"].map((choice) => mapChoice(choice)));
+                }
+                reject(
+                  Error(`Dependant Key ${populatedField.key} is not populated`),
+                );
+              }
+              if (
+                typeof populatedField.value === "string" &&
+                populatedField.value in values
+              ) {
+                resolve(
+                  (
+                    values as {
+                      [key: string]: Array<
+                        { text: string; value: string } | string
+                      >;
+                    }
+                  )[populatedField.value].map((choice) => mapChoice(choice)),
+                );
+              }
+              reject(
+                Error(
+                  `Dependant Key ${populatedField.key} does not have mapping values`,
+                ),
+              );
+            }
+          }
+          reject(
+            Error(
+              `Dependant Key ${parameter.choices?.details?.key_reference} is not found in form`,
+            ),
+          );
+        }
+
+        resolve([]);
+      });
+    };
+
+    const mapChoice = (
+      choice: string | { text: string; value: string },
+    ): { label: string; value: string } => {
+      if (
+        choice !== null &&
+        choice !== undefined &&
+        typeof choice !== "string" &&
+        "text" in choice &&
+        "value" in choice
+      ) {
+        return {
+          label: choice.text,
+          value: choice.value,
+        };
+      }
+      return {
+        label: choice,
+        value: choice,
+      };
+    };
+
+    const resolveOptions = (
+      options: Array<{ label: string; value: any }> | undefined,
+      errorMsd?: string,
+    ) => {
+      if (
+        parameter.key &&
+        altLoadingChoices.current.some(
+          (loading) =>
+            loading.key === parameter.key && loading.timestamp === timestamp,
+        )
+      ) {
+        const matchingLoading = altLoadingChoices.current.filter(
+          (loading) => loading.key === parameter.key,
+        );
+
+        if (
+          matchingLoading.reduce(
+            (max, item) => (item.timestamp > max.timestamp ? item : max),
+            matchingLoading[0],
+          ).timestamp === timestamp
+        ) {
+          const updatedParameterFields = altParametersFields.current.map(
+            (p) => {
+              if (p.key === parameter.key) {
+                p.options = options;
+                p.error = errorMsd !== undefined;
+                p.errorMsg = errorMsd;
+              }
+              return p;
+            },
+          );
+
+          altParametersFields.current = updatedParameterFields;
+          setParameterFields([...altParametersFields.current]);
+          removeLoadingChoice(parameter.key);
+        } else {
+          removeLoadingChoice(parameter.key, timestamp);
+        }
+      }
+    };
+
+    if (parameter.key) {
+      addLoadingChoice(parameter.key, timestamp);
+    }
+
+    if (parameter.choices && parameter.choices.type === "static") {
+      mapChoices(
+        parameter.choices.value as
+          | Array<{ text: string; value: string } | string>
+          | { [key: string]: Array<{ text: string; value: string } | string> },
+      )
+        .then((options) => resolveOptions(options))
+        .catch((error) => {
+          console.error("Error fetching choices:", error);
+          resolveOptions([], `Error fetching choices: ${error}`);
+        });
+    }
+
+    const parameterArgs = {} as any;
+
+    parameter?.choices?.details?.args?.forEach((arg) => {
+      const paramField =
+        lookupParameters.find((p) => p.key === arg[1])?.value || null;
+      if (paramField !== null && paramField !== undefined) {
+        parameterArgs[arg[0]] = paramField;
+      }
+    });
+
+    if (
+      parameter?.choices?.details?.args &&
+      Object.keys(parameterArgs).length !==
+        parameter.choices.details.args.length
+    ) {
+      const missingArgs = [] as Array<string>;
+      parameter?.choices?.details?.args?.forEach((arg) => {
+        if (!Object.keys(parameterArgs).includes(arg[0])) {
+          missingArgs.push(arg[1]);
+        }
+      });
+      resolveOptions(
+        [],
+        `Unable to find all Dynamic Arg Values, unpopulated or missing fields: ${missingArgs.toString()}`,
+      );
+      return;
+    }
+
+    if (
+      parameter.choices &&
+      parameter.choices.type === "url" &&
+      parameter.choices.details &&
+      parameter.choices.details.address
+    ) {
+      const url = new URL(parameter.choices.details.address);
+      url.search = new URLSearchParams(parameterArgs).toString();
+
+      fetch(url)
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          mapChoices(data)
+            .then((choices) => resolveOptions(choices))
+            .catch((error) => {
+              console.error("Error fetching choices:", error);
+              resolveOptions([], `Error fetching choices: ${error}`);
+            });
+        })
+        .catch((error) => {
+          console.error("Error fetching choices:", error);
+          resolveOptions([], `Error fetching choices: ${error}`);
+        });
+    } else if (
+      parameter.choices &&
+      parameter.choices.type === "command" &&
+      parameter.choices.details &&
+      parameter.choices.details.name
+    ) {
+      const paramRequest = {
+        command: parameter.choices.details.name,
+        parameters: parameterArgs,
+        namespace: request?.namespace,
+        system: request?.system,
+        system_version: request?.system_version,
+        instance_name: request?.instance_name,
+      } as Request;
+
+      if (
+        parameter.choices.value !== null &&
+        parameter.choices.value !== undefined &&
+        typeof parameter.choices.value === "object"
+      ) {
+        if ((parameter.choices.value as ChoicesValue).namespace) {
+          paramRequest.namespace = (
+            parameter.choices.value as ChoicesValue
+          ).namespace;
+        }
+        if ((parameter.choices.value as ChoicesValue).instance_name) {
+          paramRequest.instance_name = (
+            parameter.choices.value as ChoicesValue
+          ).instance_name;
+        }
+        if ((parameter.choices.value as ChoicesValue).system_version) {
+          paramRequest.system_version = (
+            parameter.choices.value as ChoicesValue
+          ).system_version;
+        }
+        if ((parameter.choices.value as ChoicesValue).system) {
+          paramRequest.system = (
+            parameter.choices.value as ChoicesValue
+          ).system;
+        }
+      }
+
+      PostRequest(paramRequest, {}, true)
+        .then((response) => {
+          if (response.output) {
+            const parsedOutput = JSON.parse(response.output);
+            mapChoices(parsedOutput)
+              .then((choices) => resolveOptions(choices))
+              .catch((error) => {
+                console.error("Error fetching choices:", error);
+                resolveOptions([], `Error fetching choices: ${error}`);
+              });
+          } else {
+            resolveOptions([]);
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching choices:", error);
+          resolveOptions([], `Error fetching choices: ${error}`);
+        });
+    }
+  };
+
+  const buildDefaults = (mapRequest = true) => {
     const prepareDefaultValues = Array<InputParam>();
 
     if (command !== null) {
@@ -107,20 +380,54 @@ function CommandForm({
         prepareDefaultValues.push(newParam);
       }
     }
-    return prepareDefaultValues;
-  };
-  const [parametersFields, setParameterFields] = useState(buildDefaults());
+    altParametersFields.current = prepareDefaultValues;
+    setParameterFields([...altParametersFields.current]);
+    setInitialized(true);
+    altLoadingChoices.current = [];
+    setLoadingChoices([]);
 
-  const [resetForm, setResetForm] = useState(false);
+    for (const param of prepareDefaultValues || []) {
+      generateChoices(param, prepareDefaultValues);
+    }
+  };
+
+  const addLoadingChoice = (addKey: string, timestamp: number) => {
+    const newLoadingChoices = [
+      ...altLoadingChoices.current,
+      { key: addKey, timestamp: timestamp },
+    ];
+
+    altLoadingChoices.current = newLoadingChoices;
+    setLoadingChoices([...altLoadingChoices.current]);
+  };
+
+  const removeLoadingChoice = (removeKey: string, timestamp?: number) => {
+    const newLoadingChoices = [] as Array<{ key: string; timestamp: number }>;
+
+    for (const keyObject of altLoadingChoices.current) {
+      if (removeKey !== keyObject.key) {
+        newLoadingChoices.push(keyObject);
+      } else if (timestamp && keyObject.timestamp !== timestamp) {
+        newLoadingChoices.push(keyObject);
+      }
+    }
+
+    altLoadingChoices.current = newLoadingChoices;
+    setLoadingChoices([...altLoadingChoices.current]);
+  };
 
   const resetRequest = () => {
-    // Doesn't matter the value, just invert it to trigger the useEffect
     setResetForm(!resetForm);
-    setParameterFields(buildDefaults(false));
+    buildDefaults(false);
   };
 
   useEffect(() => {
+    if (!initialized) {
+      buildDefaults();
+      return;
+    }
     let updated = false;
+    const changedFields = [] as Array<string>;
     parametersFields.forEach((inputParameter) => {
       if (inputParameter.key === null || inputParameter.key === undefined) {
         return;
@@ -136,12 +443,16 @@ function CommandForm({
         ) {
           delete request.parameters[inputParameter.key];
           updated = true;
+          changedFields.push(inputParameter.key);
           return;
         }
       }
       if (request && !request.parameters) {
         request.parameters = {};
         updated = true;
+      }
+      if (inputParameter.value === null || inputParameter.value === undefined) {
+        return;
       }
       if (request && request.parameters) {
         if (
@@ -153,619 +464,55 @@ function CommandForm({
 
         request.parameters[inputParameter.key] = inputParameter.value;
         updated = true;
+        changedFields.push(inputParameter.key);
       }
     });
     if (updated) {
       setRequest({ ...request });
+      // Update dynamic options
+      parametersFields.forEach((parameter: InputParam) => {
+        if (parameter?.key && parameter.choices) {
+          const updatedKeys = [] as Array<string>;
+
+          if (parameter.choices?.details?.args) {
+            for (const arg of parameter.choices.details.args) {
+              updatedKeys.push(arg[1]);
+            }
+          }
+
+          if (parameter.choices?.details?.key_reference) {
+            updatedKeys.push(parameter.choices?.details?.key_reference);
+          }
+          if (updatedKeys.length > 0) {
+            const shouldUpdate = changedFields.some((field) =>
+              updatedKeys.includes(field),
+            );
+            // Update if input value changed
+            // Skip load if parameters is undefined but currently being loading
+            if (
+              shouldUpdate ||
+              (parameter.options === undefined &&
+                !altLoadingChoices.current.some(
+                  (loading) => loading.key === parameter.key,
+                ))
+            ) {
+              generateChoices(parameter, parametersFields);
+            }
+          }
+        }
+      });
     }
   }, [parametersFields]);
 
   const handleChange = (name: any, value: any) => {
-    setParameterFields((prevParams) =>
-      prevParams.map((param) =>
-        param.key === name ? { ...param, value: value } : param,
-      ),
+    altParametersFields.current = altParametersFields.current.map((param) =>
+      param.key === name ? { ...param, value: value } : param,
     );
-  };
-
-  const handleMultiChange = (key: any, index: number, value: any) => {
-    parametersFields.forEach((param: InputParam) => {
-      if (param.key === key) {
-        param.value[index] = value;
-        handleChange(key, param.value);
-      }
-    });
-  };
-
-  const removeMultiItem = (key: any, index: any) => {
-    parametersFields.forEach((param: InputParam) => {
-      if (param.key === key) {
-        const newItems: any[] = [];
-        param.value.forEach((param_value: any, param_index: any) => {
-          if (param_index !== index) {
-            newItems.push(param_value);
-          }
-        });
-        handleChange(key, newItems);
-      }
-    });
-  };
-
-  const addMultiItem = (key: any, param_default: any) => {
-    parametersFields.forEach((param: InputParam) => {
-      if (param.key === key) {
-        const newItems: any[] = [];
-        param.value.forEach((param_value: any) => {
-          newItems.push(param_value);
-        });
-        newItems.push(param_default || null);
-        handleChange(key, newItems);
-      }
-    });
+    setParameterFields([...altParametersFields.current]);
   };
 
   const renderInputLabel = (parameter: InputParam) => {
     return <label htmlFor={parameter.key}>{parameter.key}</label>;
-  };
-
-  const renderInputField = (parameter: InputParam) => {
-    if (!parameter.key) return null;
-
-    if (parameter.multi && !Array.isArray(parameter.default)) {
-      parameter.default = [parameter.default];
-    }
-
-    if (parameter.multi && !Array.isArray(parameter.value)) {
-      parameter.value = [parameter.value];
-    }
-
-    if (
-      parameter.choices &&
-      parameter.choices.type === "static" &&
-      parameter.choices.strict &&
-      Array.isArray(parameter.choices.value)
-    ) {
-      const options = parameter.choices.value.map((choice) => ({
-        label: choice,
-        value: choice,
-      }));
-      if (parameter.multi) {
-        return (
-          <div key={parameter.key} className="p-field">
-            <MultiSelect
-              id={parameter.key}
-              value={parameter.value}
-              options={options || []}
-              invalid={(!disabled && parameter.optional) || undefined}
-              onChange={(e) => handleChange(e.target.id, e.value)}
-              placeholder={`Select ${parameter.key}`}
-              disabled={disabled}
-            />
-          </div>
-        );
-      }
-      return (
-        <div key={parameter.key} className="p-field">
-          <Dropdown
-            id={parameter.key}
-            value={parameter.value}
-            options={options || []}
-            invalid={(!disabled && parameter.optional) || undefined}
-            onChange={(e) => handleChange(e.target.id, e.value)}
-            placeholder={`Select ${parameter.key}`}
-            disabled={disabled}
-          />
-        </div>
-      );
-    }
-
-    switch (parameter.type) {
-      case "String":
-        if (parameter.multi) {
-          return (
-            <div key={parameter.key} className="p-field">
-              <div className="container">
-                {parameter.value?.map((item: any, index: any) => (
-                  <div
-                    key={`${parameter.key}-${index}`}
-                    className="dynamic-item"
-                  >
-                    <InputText
-                      id={`${parameter.key}-${index}`}
-                      value={item ?? ""}
-                      invalid={(!disabled && parameter.optional) || undefined}
-                      onChange={(e) =>
-                        handleMultiChange(parameter.key, index, e.target.value)
-                      }
-                      disabled={disabled}
-                    />
-                    <Button
-                      label="Remove"
-                      severity="danger"
-                      onClick={() => removeMultiItem(parameter.key, index)}
-                      disabled={disabled}
-                    />
-                  </div>
-                ))}
-                <Button
-                  label="Add"
-                  onClick={() => addMultiItem(parameter.key, parameter.default)}
-                  disabled={disabled}
-                />
-              </div>
-            </div>
-          );
-        }
-        return (
-          <div key={parameter.key} className="p-field">
-            <InputText
-              id={parameter.key}
-              value={parameter.value}
-              invalid={(!disabled && parameter.optional) || undefined}
-              onChange={(e) => handleChange(e.target.id, e.target.value)}
-              disabled={disabled}
-            />
-          </div>
-        );
-      case "Dictionary":
-        if (parameter.multi) {
-          return (
-            <div key={parameter.key} className="p-field">
-              <div className="container">
-                {parameter.value?.map((item: any, index: any) => (
-                  <div
-                    key={`${parameter.key}-${index}`}
-                    className="dynamic-item"
-                  >
-                    <InputTextarea
-                      id={`${parameter.key}-${index}`}
-                      value={item ?? ""}
-                      invalid={(!disabled && parameter.optional) || undefined}
-                      onChange={(e) =>
-                        handleMultiChange(parameter.key, index, e.target.value)
-                      }
-                      disabled={disabled}
-                    />
-                    <Button
-                      label="Remove"
-                      severity="danger"
-                      onClick={() => removeMultiItem(parameter.key, index)}
-                      disabled={disabled}
-                    />
-                  </div>
-                ))}
-                <Button
-                  label="Add"
-                  onClick={() => addMultiItem(parameter.key, parameter.default)}
-                  disabled={disabled}
-                />
-              </div>
-            </div>
-          );
-        }
-        return (
-          <div key={parameter.key} className="p-field">
-            <InputTextarea
-              id={parameter.key}
-              value={parameter.value}
-              invalid={(!disabled && parameter.optional) || undefined}
-              onChange={(e) => handleChange(e.target.id, e.target.value)}
-              disabled={disabled}
-              className={classNames({ "p-invalid": parameter.isInvalid })}
-            />
-          </div>
-        );
-      case "Integer":
-        if (parameter.multi) {
-          return (
-            <div key={parameter.key} className="p-field">
-              <div className="container">
-                {parameter.value?.map((item: any, index: any) => (
-                  <div
-                    key={`${parameter.key}-${index}`}
-                    className="dynamic-item"
-                  >
-                    <InputNumber
-                      id={`${parameter.key}-${index}`}
-                      value={item ?? parameter.default}
-                      invalid={(!disabled && parameter.optional) || undefined}
-                      max={
-                        parameter.maximum !== undefined
-                          ? parameter.maximum
-                          : undefined
-                      }
-                      min={
-                        parameter.minimum !== undefined
-                          ? parameter.minimum
-                          : undefined
-                      }
-                      onChange={(e) =>
-                        handleMultiChange(parameter.key, index, e.value)
-                      }
-                      disabled={disabled}
-                    />
-                    <Button
-                      label="Remove"
-                      severity="danger"
-                      onClick={() => removeMultiItem(parameter.key, index)}
-                      disabled={disabled}
-                    />
-                  </div>
-                ))}
-                <Button
-                  label="Add"
-                  onClick={() => addMultiItem(parameter.key, parameter.default)}
-                  disabled={disabled}
-                />
-              </div>
-            </div>
-          );
-        }
-        return (
-          <div key={parameter.key} className="p-field">
-            <InputNumber
-              id={parameter.key}
-              value={parameter.value}
-              invalid={(!disabled && parameter.optional) || undefined}
-              max={
-                parameter.maximum !== undefined ? parameter.maximum : undefined
-              }
-              min={
-                parameter.minimum !== undefined ? parameter.minimum : undefined
-              }
-              onValueChange={(e) => handleChange(e.target.id, e.target.value)}
-              disabled={disabled}
-            />
-          </div>
-        );
-      case "Float":
-        if (parameter.multi) {
-          return (
-            <div key={parameter.key} className="p-field">
-              <div className="container">
-                {parameter.value?.map((item: any, index: any) => (
-                  <div
-                    key={`${parameter.key}-${index}`}
-                    className="dynamic-item"
-                  >
-                    <InputNumber
-                      id={`${parameter.key}-${index}`}
-                      value={item ?? parameter.default}
-                      invalid={(!disabled && parameter.optional) || undefined}
-                      max={
-                        parameter.maximum !== undefined
-                          ? parameter.maximum
-                          : undefined
-                      }
-                      min={
-                        parameter.minimum !== undefined
-                          ? parameter.minimum
-                          : undefined
-                      }
-                      minFractionDigits={2}
-                      onChange={(e) =>
-                        handleMultiChange(parameter.key, index, e.value)
-                      }
-                      disabled={disabled}
-                    />
-                    <Button
-                      label="Remove"
-                      severity="danger"
-                      onClick={() => removeMultiItem(parameter.key, index)}
-                      disabled={disabled}
-                    />
-                  </div>
-                ))}
-                <Button
-                  label="Add"
-                  onClick={() => addMultiItem(parameter.key, parameter.default)}
-                  disabled={disabled}
-                />
-              </div>
-            </div>
-          );
-        }
-        return (
-          <div key={parameter.key} className="p-field">
-            <InputNumber
-              id={parameter.key}
-              value={parameter.value}
-              invalid={(!disabled && parameter.optional) || undefined}
-              max={
-                parameter.maximum !== undefined ? parameter.maximum : undefined
-              }
-              min={
-                parameter.minimum !== undefined ? parameter.minimum : undefined
-              }
-              minFractionDigits={2}
-              onValueChange={(e) => handleChange(e.target.id, e.target.value)}
-              disabled={disabled}
-            />
-          </div>
-        );
-      case "Boolean":
-        if (parameter.multi) {
-          if (parameter.nullable) {
-            return (
-              <div key={parameter.key} className="p-field">
-                <div className="container">
-                  {parameter.value?.map((item: any, index: any) => (
-                    <div
-                      key={`${parameter.key}-${index}`}
-                      className="dynamic-item"
-                    >
-                      <TriStateCheckbox
-                        id={`${parameter.key}-${index}`}
-                        invalid={(!disabled && parameter.optional) || undefined}
-                        value={item}
-                        onChange={(e) =>
-                          handleMultiChange(parameter.key, index, e.value)
-                        }
-                        disabled={disabled}
-                      />
-
-                      <Button
-                        label="Remove"
-                        severity="danger"
-                        onClick={() => removeMultiItem(parameter.key, index)}
-                        disabled={disabled}
-                      />
-                    </div>
-                  ))}
-                  <Button
-                    label="Add"
-                    onClick={() =>
-                      addMultiItem(parameter.key, parameter.default)
-                    }
-                    disabled={disabled}
-                  />
-                </div>
-              </div>
-            );
-          }
-          return (
-            <div key={parameter.key} className="p-field">
-              <div className="container">
-                {parameter.value?.map((item: any, index: any) => (
-                  <div
-                    key={`${parameter.key}-${index}`}
-                    className="dynamic-item"
-                  >
-                    <Checkbox
-                      id={`${parameter.key}-${index}`}
-                      invalid={(!disabled && parameter.optional) || undefined}
-                      checked={item}
-                      onChange={(e) =>
-                        handleMultiChange(parameter.key, index, e.checked)
-                      }
-                      disabled={disabled}
-                    />
-
-                    <Button
-                      label="Remove"
-                      severity="danger"
-                      onClick={() => removeMultiItem(parameter.key, index)}
-                      disabled={disabled}
-                    />
-                  </div>
-                ))}
-                <Button
-                  label="Add"
-                  onClick={() => addMultiItem(parameter.key, parameter.default)}
-                  disabled={disabled}
-                />
-              </div>
-            </div>
-          );
-        }
-        if (parameter.nullable) {
-          return (
-            <div key={parameter.key} className="p-field-checkbox">
-              <TriStateCheckbox
-                id={parameter.key}
-                invalid={(!disabled && parameter.optional) || undefined}
-                value={parameter.value}
-                onChange={(e) => handleChange(e.target.id, e.value)}
-                disabled={disabled}
-              />
-            </div>
-          );
-        }
-        return (
-          <div key={parameter.key} className="p-field-checkbox">
-            <Checkbox
-              id={parameter.key}
-              invalid={(!disabled && parameter.optional) || undefined}
-              checked={parameter.value}
-              onChange={(e) => handleChange(e.target.id, e.checked)}
-              disabled={disabled}
-            />
-          </div>
-        );
-      case "Date":
-        if (parameter.multi) {
-          return (
-            <div key={parameter.key} className="p-field">
-              <div className="container">
-                {parameter.value?.map((item: any, index: any) => (
-                  <div
-                    key={`${parameter.key}-${index}`}
-                    className="dynamic-item"
-                  >
-                    <Calendar
-                      id={`${parameter.key}-${index}`}
-                      value={item}
-                      invalid={(!disabled && parameter.optional) || undefined}
-                      hourFormat="24"
-                      onChange={(e) =>
-                        handleMultiChange(parameter.key, index, e.value)
-                      }
-                      disabled={disabled}
-                    />
-                    <Button
-                      label="Remove"
-                      severity="danger"
-                      onClick={() => removeMultiItem(parameter.key, index)}
-                      disabled={disabled}
-                    />
-                  </div>
-                ))}
-                <Button
-                  label="Add"
-                  onClick={() => addMultiItem(parameter.key, parameter.default)}
-                  disabled={disabled}
-                />
-              </div>
-            </div>
-          );
-        }
-        return (
-          <div key={parameter.key} className="p-field">
-            <Calendar
-              id={parameter.key}
-              value={parameter.value || ""}
-              invalid={(!disabled && parameter.optional) || undefined}
-              hourFormat="24"
-              onChange={(e: any) => handleChange(e.target.id, e.value)}
-              disabled={disabled}
-            />
-          </div>
-        );
-      case "DateTime":
-        if (parameter.multi) {
-          return (
-            <div key={parameter.key} className="p-field">
-              <div className="container">
-                {parameter.value?.map((item: any, index: any) => (
-                  <div
-                    key={`${parameter.key}-${index}`}
-                    className="dynamic-item"
-                  >
-                    <Calendar
-                      id={`${parameter.key}-${index}`}
-                      value={item ?? parameter.default}
-                      invalid={(!disabled && parameter.optional) || undefined}
-                      showTime
-                      hourFormat="24"
-                      onChange={(e) =>
-                        handleMultiChange(parameter.key, index, e.value)
-                      }
-                      disabled={disabled}
-                    />
-                    <Button
-                      label="Remove"
-                      severity="danger"
-                      onClick={() => removeMultiItem(parameter.key, index)}
-                      disabled={disabled}
-                    />
-                  </div>
-                ))}
-                <Button
-                  label="Add"
-                  onClick={() => addMultiItem(parameter.key, parameter.default)}
-                  disabled={disabled}
-                />
-              </div>
-            </div>
-          );
-        }
-        return (
-          <div key={parameter.key} className="p-field">
-            <Calendar
-              id={parameter.key}
-              value={parameter.value}
-              showTime
-              hourFormat="24"
-              invalid={(!disabled && parameter.optional) || undefined}
-              onChange={(e: any) => handleChange(e.target.id, e.value)}
-              disabled={disabled}
-            />
-          </div>
-        );
-      case "Bytes": {
-        const customBytesUploader = (event: any) => {
-          const file = event.files[0];
-          handleChange(parameter.key, file as FileUploadFile);
-        };
-        const bytesUploadRef = useRef<FileUpload>(null);
-
-        useEffect(() => {
-          if (bytesUploadRef && bytesUploadRef.current) {
-            bytesUploadRef.current.clear();
-          }
-        }, [resetForm]);
-        return (
-          <div key={parameter.key} className="p-field">
-            <FileUpload
-              ref={bytesUploadRef}
-              id={parameter.key}
-              mode="basic"
-              customUpload
-              onSelect={customBytesUploader}
-              disabled={disabled}
-            />
-          </div>
-        );
-      }
-      case "Base64": {
-        const [uploadPercentage, setUploadPercentage] = useState(0);
-        const fileUploadRef = useRef<FileUpload>(null);
-
-        const customBase64Uploader = async (event: any) => {
-          if (fileUploadRef && fileUploadRef.current) {
-            fileUploadRef.current.setUploadedFiles([]);
-          }
-          const file = event.files[0];
-
-          const fileUploadResult = await uploadFile(file, setUploadPercentage);
-
-          handleChange(parameter.key, fileUploadResult);
-          if (fileUploadRef && fileUploadRef.current) {
-            fileUploadRef.current.clear();
-            fileUploadRef.current.setUploadedFiles([file]);
-          }
-          setUploadPercentage(100);
-        };
-
-        const removeFile = () => {
-          handleChange(parameter.key, null);
-          setUploadPercentage(0);
-          if (fileUploadRef && fileUploadRef.current) {
-            fileUploadRef.current.clear();
-          }
-        };
-
-        useEffect(() => {
-          setUploadPercentage(0);
-          if (fileUploadRef && fileUploadRef.current) {
-            fileUploadRef.current.clear();
-          }
-        }, [resetForm]);
-
-        return (
-          <div key={parameter.key} className="p-field">
-            <FileUpload
-              ref={fileUploadRef}
-              id={parameter.key}
-              // mode="basic"
-              customUpload
-              auto
-              uploadHandler={customBase64Uploader}
-              onRemove={removeFile}
-              disabled={disabled}
-              progressBarTemplate={
-                <ProgressBar
-                  value={uploadPercentage}
-                  displayValueTemplate={() => `${uploadPercentage}%`}
-                />
-              }
-            />
-          </div>
-        );
-      }
-      default:
-        return null;
-    }
   };
 
   const CodeBlock = (codeType: string) => {
@@ -904,17 +651,35 @@ function CommandForm({
     );
   };
 
+  // Need to find a better way to handle states of dynamic options loading instead of
+  // checking if loading choices has items and rendering two tables
   return (
     <div>
-      <DataTable
-        value={parametersFields}
-        showHeaders={false}
-        tableStyle={{ minWidth: "60rem" }}
-      >
-        <Column header="Field" body={renderInputLabel}></Column>
-        <Column header="Value" body={renderInputField}></Column>
-        <Column header="Description" field="description"></Column>
-      </DataTable>
+      {parametersFields && (
+        <div key={loadingChoices.length}>
+          <DataTable
+            value={parametersFields}
+            showHeaders={false}
+            tableStyle={{ minWidth: "60rem" }}
+          >
+            <Column header="Field" body={renderInputLabel}></Column>
+            <Column
+              header="Value"
+              body={(parameter) =>
+                CommandFormField({
+                  parameter: parameter,
+                  disabled: disabled,
+                  parametersFields: parametersFields,
+                  loadingChoices: loadingChoices,
+                  handleChange: handleChange,
+                  resetForm: resetForm,
+                })
+              }
+            ></Column>
+            <Column header="Description" field="description"></Column>
+          </DataTable>
+        </div>
+      )}
       <Dialog
         header={"Code Examples"}
         visible={visibleCodeExample}

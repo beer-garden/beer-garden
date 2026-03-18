@@ -91,7 +91,7 @@ function App() {
   return (
     <PrimeReactProvider value={primeValue}>
       <div className="flex">
-        <div className={showMainApp ? "flex-grow-1" : "hidden"}>
+        <div className="flex-grow-1">
           <BrowserRouter basename={baseURL}>
             <NavigationMenu listeners={listeners} />
             <div className="flex">
