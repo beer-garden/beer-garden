@@ -10,7 +10,7 @@ import { Tag } from "primereact/tag";
 import { Tree } from "primereact/tree";
 import React, { Children, useEffect, useRef, useState } from "react";
 
-import { Connection, Garden,Instance, System } from "../models/brewtils-types";
+import { Connection, Garden, Instance, System } from "../models/brewtils-types";
 import { GetConfig } from "../services/config_service";
 import {
   DeleteGarden,
@@ -21,6 +21,7 @@ import {
   SyncUsersGarden,
   UpdateApiGarden,
 } from "../services/garden_service";
+import SystemIndex from "./SystemIndex";
 
 function GardenDashboard() {
   const gardenRef = useRef<Garden>(null);
@@ -28,6 +29,34 @@ function GardenDashboard() {
   const [selectedGarden, setSelectedGarden] = useState<Garden>();
 
   const [gardenMenu, setGardenMenu] = useState<Array<any>>();
+
+  const sortSystems = (garden: Garden) => {
+    if (garden.systems && garden.systems.length > 0){
+            garden.systems = [...garden.systems.sort((a: System, b: System) => {
+              if (a?.name && b?.name){
+                const nameComparison = a.name.localeCompare(b.name);
+
+                if (nameComparison !== 0){
+                  return nameComparison;
+                }
+
+                if (a?.version && b?.version){
+                  return a.version.localeCompare(b.version);
+                }
+                if (a?.version){
+                  return -1
+                }
+                return 1;
+              }
+
+              if (a?.name){
+                return -1;
+              }
+              return 1;
+            })];
+          }
+    return garden;
+  }
 
   const findSelectedGarden = (garden_id: string, gardens?: Array<Garden>) => {
     if (gardens === undefined || gardens === null) {
@@ -38,7 +67,8 @@ function GardenDashboard() {
     if (gardens !== undefined) {
       for (const garden of gardens) {
         if (garden.id === garden_id) {
-          setSelectedGarden(garden);
+          
+          setSelectedGarden(sortSystems(garden));
           return;
         } else if (garden?.children && garden.children.length > 0) {
           findSelectedGarden(garden_id, garden?.children);
@@ -231,7 +261,7 @@ function GardenDashboard() {
           GetRootGarden(config, {})
             .then((response_garden: Garden) => {
               gardenRef.current = response_garden;
-              setSelectedGarden({ ...gardenRef.current });
+              setSelectedGarden(sortSystems({ ...gardenRef.current }));
               setGardenMenu([generateMenu(response_garden)]);
             })
             .catch((error) => {
@@ -318,18 +348,18 @@ function GardenDashboard() {
       {/* MAIN WORKSPACE */}
       <div className="col-9 p-4 overflow-auto">
         {/* Garden Summary */}
-        <Card
-          title={`Garden Summary: ${selectedGarden?.name}`}
-          className="mb-4"
-        >
-          <div className="flex gap-2">
-            <Button label="Rescan Plugins" icon="pi pi-refresh" />
-            <Button label="Sync" icon="pi pi-sync" />
-            <Button
-              label="Delete Garden"
-              icon="pi pi-trash"
-              severity="danger"
-            />
+        <Card className="mb-4">
+          <div className="flex items-end ml-2 page-header">
+            <h2 className="flex-1">{`Garden Summary: ${selectedGarden?.name}`}</h2>
+            <div>
+              <Button label="Rescan Plugins" icon="pi pi-refresh" />
+              <Button label="Sync" icon="pi pi-sync" />
+              <Button
+                label="Delete Garden"
+                icon="pi pi-trash"
+                severity="danger"
+              />
+            </div>
           </div>
           <div className="grid">
             <div className="col-3">
@@ -343,7 +373,7 @@ function GardenDashboard() {
             {selectedGarden?.children &&
               selectedGarden?.children.length > 0 && (
                 <div className="col-3">
-                  <h4>Children</h4>
+                  <h4>Downstream</h4>
 
                   {selectedGarden?.children &&
                     selectedGarden?.children.length > 0 && (
@@ -451,20 +481,25 @@ function GardenDashboard() {
           {selectedGarden?.systems?.map((system: System) => (
             <Panel
               key={system.id}
-              header={`${system.name} (${system.version})`}
+              header={`${selectedGarden.name === system.namespace ? "" : `${system.namespace} / `}${system.name} (${system.version})`}
               className="mb-4"
               toggleable
               style={{ width: "33%" }}
             >
-              <Button
-                label="Delete System"
-                icon="pi pi-trash"
-                severity="danger"
-                size="small"
-              />
               <div className="flex justify-content-between mb-3">
-                <div style={{ overflowWrap: "break-word", width: "80%" }}>
+                <div
+                  className="flex-1"
+                  style={{ overflowWrap: "break-word", width: "80%" }}
+                >
                   {system.description}
+                </div>
+                <div>
+                  <Button severity="warning" size="small">
+                    <FontAwesomeIcon icon="refresh" />
+                  </Button>
+                  <Button severity="danger" size="small">
+                    <FontAwesomeIcon icon="trash" />
+                  </Button>
                 </div>
               </div>
 
