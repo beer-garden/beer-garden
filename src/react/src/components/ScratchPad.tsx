@@ -121,7 +121,6 @@ function ScratchPad({
 
   return (
     <div>
-      <h2>Scratch Pad</h2>
       <Button onClick={() => addRequest()}>
         <FontAwesomeIcon icon="file-pen" />
       </Button>

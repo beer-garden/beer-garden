@@ -4,8 +4,8 @@ import "primereact/resources/themes/bootstrap4-light-blue/theme.css";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { PrimeReactProvider } from "primereact/api";
-import { Button } from "primereact/button";
-import { Divider } from "primereact/divider";
+import { Dialog } from "primereact/dialog";
+import { Dock } from "primereact/dock";
 import { useEffect, useRef, useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
@@ -23,37 +23,10 @@ import NavigationMenu from "./Navigation";
 
 function App() {
   const [showScratchPad, setShowScratchPad] = useState<boolean>(false);
-  const [showMainApp, setShowMainApp] = useState<boolean>(true);
   const socketRef = useRef(null as null | any);
   const listeners = useRef<Record<string, Listener>>({});
 
   const [reloadScratchPadTrigger, setReloadScratchPadTrigger] = useState(0);
-
-  const nagivateLeft = () => {
-    if (showScratchPad && showMainApp) {
-      setShowMainApp(false);
-    } else if (showScratchPad && !showMainApp) {
-      // Do Nothing
-    } else if (!showScratchPad && showMainApp) {
-      setShowScratchPad(true);
-    } else if (!showScratchPad && !showMainApp) {
-      // Bad State, show scratch pad
-      setShowScratchPad(true);
-    }
-  };
-
-  const nagivateRight = () => {
-    if (showScratchPad && showMainApp) {
-      setShowScratchPad(false);
-    } else if (showScratchPad && !showMainApp) {
-      setShowMainApp(true);
-    } else if (!showScratchPad && showMainApp) {
-      // Do Nothing
-    } else if (!showScratchPad && !showMainApp) {
-      // Bad State, show scratch pad
-      setShowMainApp(true);
-    }
-  };
 
   const primeValue = {
     hideOverlaysOnDocumentScrolling: true,
@@ -93,8 +66,45 @@ function App() {
         <div className="flex-grow-1">
           <BrowserRouter basename={baseURL}>
             <NavigationMenu listeners={listeners} />
+            <div
+              style={{
+                position: "fixed",
+                bottom: 0,
+                right: 0,
+                padding: "3rem",
+                zIndex: "1000",
+              }}
+            >
+              <Dock
+                model={[
+                  {
+                    label: "Scratch Pad",
+                    icon: () => <FontAwesomeIcon icon="file-pen" size="2x" />,
+                    command: () => {
+                      setShowScratchPad(!showScratchPad);
+                    },
+                  },
+                ]}
+                position="right"
+              />
+            </div>
+            <Dialog
+              header="ScratchPad"
+              visible={showScratchPad}
+              modal={false}
+              style={{ width: "50vw" }}
+              onHide={() => {
+                if (!showScratchPad) return;
+                setShowScratchPad(false);
+              }}
+            >
+              <ScratchPad
+                listeners={listeners}
+                reloadTrigger={reloadScratchPadTrigger}
+              />
+            </Dialog>
             <div className="flex">
-              <div className={showMainApp ? "flex-grow-1" : "hidden"}>
+              <div className="flex-grow-1">
                 <Routes>
                   <Route
                     path="/systems"
@@ -154,25 +164,6 @@ function App() {
                     }
                   />
                 </Routes>
-              </div>
-              <Divider layout="vertical">
-                {showScratchPad && (
-                  <Button onClick={() => nagivateRight()}>
-                    <FontAwesomeIcon icon="angles-right" />
-                  </Button>
-                )}
-
-                {showMainApp && (
-                  <Button onClick={() => nagivateLeft()}>
-                    <FontAwesomeIcon icon="angles-left" />
-                  </Button>
-                )}
-              </Divider>
-              <div className={showScratchPad ? "flex-grow-1" : "hidden"}>
-                <ScratchPad
-                  listeners={listeners}
-                  reloadTrigger={reloadScratchPadTrigger}
-                />
               </div>
             </div>
           </BrowserRouter>
