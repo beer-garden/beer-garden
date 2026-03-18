@@ -138,7 +138,7 @@ const CheckRole = (
   return true;
 };
 
-const CheckUserHasRoles = (
+export const CheckUserHasRoles = (
   storedUser: User,
   permission: string,
   check: PermissionCheck,
