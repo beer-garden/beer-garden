@@ -37,10 +37,9 @@ function CommandFormField({
 }: CommandFormFieldParams) {
   //AutoComplete Objects
   const [items, setItems] = useState<Array<string>>([]);
+  
   //Base64 Stateful Objects
   const [uploadPercentage, setUploadPercentage] = useState(0);
-
-  //Base64 Stateful Objects
   const fileUploadRef = useRef<FileUpload>(null);
 
   // Bytes Stateful Objects
