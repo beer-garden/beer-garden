@@ -49,3 +49,32 @@ export const GetBaseURL = (): string => {
     ? ""
     : import.meta.env.VITE_BASE_URL || "";
 };
+
+export const GetSeverity = (
+  status?: string,
+): "warning" | "success" | "info" | "danger" | "secondary" | "contrast" => {
+  switch (status?.toUpperCase()) {
+    case undefined:
+    case "RUNNING":
+    case "OPERATIONAL":
+    case "HEALTHY":
+    case "PUBLISHING":
+      return "success";
+    case "PAUSED":
+    case "STOPPED":
+      return "info";
+    case "INITIALIZING":
+    case "STARTING":
+    case "STOPPING":
+    case "AWAITING_SYSTEM":
+    case "DISABLED":
+      return "warning";
+    case "DEAD":
+    case "UNRESPONSIVE":
+    case "UNKNOWN":
+    case "ERROR":
+      return "danger";
+    default:
+      return "danger";
+  }
+};

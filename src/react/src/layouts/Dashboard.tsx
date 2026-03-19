@@ -1,7 +1,6 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Badge } from "primereact/badge";
 import { Button } from "primereact/button";
-import { Card } from "primereact/card";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Divider } from "primereact/divider";
@@ -10,18 +9,11 @@ import { Tag } from "primereact/tag";
 import { Tree } from "primereact/tree";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { Connection, Garden, Instance, System } from "../models/brewtils-types";
+import GardenSummary from "../components/GardenSummary";
+import { Garden, Instance, System } from "../models/brewtils-types";
 import { GetConfig } from "../services/config_service";
-import {
-  DeleteGarden,
-  GetRootGarden,
-  RescanGarden,
-  SyncGarden,
-  SyncUsersGarden,
-  UpdateApiGarden,
-} from "../services/garden_service";
-import { ClearAllQueues } from "../services/queue_service";
-import { Rescan } from "../services/system_service";
+import { GetRootGarden } from "../services/garden_service";
+import { GetSeverity } from "../services/util_service";
 
 function GardenDashboard({
   listeners,
@@ -181,59 +173,6 @@ function GardenDashboard({
     };
   };
 
-  const getSeverity = (
-    status?: string,
-  ):
-    | "warning"
-    | "success"
-    | "info"
-    | "danger"
-    | "secondary"
-    | "contrast"
-    | null
-    | undefined => {
-    if (status === "INITIALIZING") {
-      return "warning";
-    }
-    if (status === "RUNNING") {
-      return "success";
-    }
-    if (status === "PAUSED") {
-      return "info";
-    }
-    if (status === "STOPPED") {
-      return "info";
-    }
-    if (status === "DEAD") {
-      return "danger";
-    }
-    if (status === "UNRESPONSIVE") {
-      return "danger";
-    }
-    if (status === "STARTING") {
-      return "warning";
-    }
-    if (status === "STOPPING") {
-      return "warning";
-    }
-    if (status === "UNKNOWN") {
-      return "danger";
-    }
-    if (status === "AWAITING_SYSTEM") {
-      return "warning";
-    }
-    if (status === "ERROR") {
-      return "danger";
-    }
-    if (status === "DISABLED") {
-      return "warning";
-    }
-    if (status === "OPERATIONAL") {
-      return "success";
-    }
-    return "danger";
-  };
-
   const generateConnectionStatus = (garden: Garden) => {
     const statusCounts = new Map();
 
@@ -268,19 +207,9 @@ function GardenDashboard({
       return undefined;
     }
 
-    const getConnectionSeverity = (status: string) => {
-      if (status === "HEALTHY") {
-        return "success";
-      }
-      if (status === "DISABLED") {
-        return "warning";
-      }
-      return "danger";
-    };
-
     return Array.from(statusCounts, ([status, count]) => {
       if (count && count > 0) {
-        const statusSeverity = getConnectionSeverity(status);
+        const statusSeverity = GetSeverity(status);
         return (
           <Badge
             value={count}
@@ -316,7 +245,7 @@ function GardenDashboard({
 
     return Array.from(statusCounts, ([status, count]) => {
       if (count && count > 0) {
-        const statusSeverity = getSeverity(status);
+        const statusSeverity = GetSeverity(status);
         return (
           <Badge
             value={count}
@@ -358,12 +287,7 @@ function GardenDashboard({
   }, [MonitorGardenEvents, listeners]);
 
   const statusTemplate = (row: any) => {
-    const severity =
-      row.status === "Running"
-        ? "success"
-        : row.status === "Stopped"
-          ? "warning"
-          : "info";
+    const severity = GetSeverity(row.status);
 
     return <Tag value={row.status} severity={severity} />;
   };
@@ -374,41 +298,6 @@ function GardenDashboard({
         <FontAwesomeIcon icon="play" />
       </Button>
       <Button rounded severity="warning">
-        <FontAwesomeIcon icon="stop" />
-      </Button>
-    </div>
-  );
-
-  const connectionActions = (node: Connection, type: string) => (
-    <div className="flex gap-2">
-      <Button
-        onClick={() => {
-          if (selectedGarden?.name && node?.status && node?.api) {
-            UpdateApiGarden(selectedGarden.name, type, node.api, type).catch(
-              (error) => {
-                console.error("Error Updating Garden API Connection:", error);
-              },
-            );
-          }
-        }}
-      >
-        <FontAwesomeIcon icon="play" />
-      </Button>
-      <Button
-        severity="warning"
-        onClick={() => {
-          if (selectedGarden?.name && node?.status && node?.api) {
-            UpdateApiGarden(
-              selectedGarden.name,
-              "DISABLED",
-              node.api,
-              type,
-            ).catch((error) => {
-              console.error("Error Updating Garden API Connection:", error);
-            });
-          }
-        }}
-      >
         <FontAwesomeIcon icon="stop" />
       </Button>
     </div>
@@ -460,199 +349,12 @@ function GardenDashboard({
         }}
       >
         {/* Garden Summary */}
-        <Card className="mb-4" style={{ width: "100%" }}>
-          <div className="flex ml-2 page-header">
-            <h2 className="flex-1">{`Garden Summary: ${selectedGarden?.name}`}</h2>
-            <div>
-              <Button
-                label="Rescan Plugins"
-                className="mr-2"
-                onClick={() => {
-                  if (selectedGarden?.name) {
-                    Rescan(selectedGarden.name).catch((error) => {
-                      console.error(
-                        "Error Rescanning Garden Plugin Dir:",
-                        error,
-                      );
-                    });
-                  }
-                }}
-              />
-              <Button
-                label="Rescan Downstream"
-                className="mr-2"
-                onClick={() => {
-                  if (selectedGarden?.name) {
-                    RescanGarden(selectedGarden.name).catch((error) => {
-                      console.error("Error Rescanning Garden:", error);
-                    });
-                  }
-                }}
-              />
-              <Button
-                label="Clear Plugin Queues"
-                className="mr-2"
-                severity="warning"
-                onClick={() => {
-                  if (selectedGarden?.name) {
-                    ClearAllQueues(selectedGarden.name).catch((error) => {
-                      console.error("Error clearing Plugin Queue:", error);
-                    });
-                  }
-                }}
-              />
-              {gardenRef.current &&
-                gardenRef.current.name !== selectedGarden?.name && (
-                  <Button
-                    label="Sync"
-                    className="mr-2"
-                    onClick={() => {
-                      if (selectedGarden?.name) {
-                        SyncGarden(selectedGarden.name).catch((error) => {
-                          console.error("Error Syncing Garden:", error);
-                        });
-                      }
-                    }}
-                  />
-                )}
-              {gardenRef.current &&
-                gardenRef.current.name === selectedGarden?.name && (
-                  <Button
-                    label="Sync All"
-                    className="mr-2"
-                    onClick={() => {
-                      SyncGarden().catch((error) => {
-                        console.error("Error Syncing Garden:", error);
-                      });
-                    }}
-                  />
-                )}
-              {gardenRef.current &&
-                gardenRef.current.name !== selectedGarden?.name && (
-                  <Button
-                    label="Sync Users"
-                    className="mr-2"
-                    onClick={() => {
-                      if (selectedGarden?.name) {
-                        SyncUsersGarden(selectedGarden.name).catch((error) => {
-                          console.error(
-                            "Error Syncing Users in Garden:",
-                            error,
-                          );
-                        });
-                      }
-                    }}
-                  />
-                )}
-              {gardenRef.current &&
-                gardenRef.current.name !== selectedGarden?.name && (
-                  <Button
-                    label="Delete Garden"
-                    severity="danger"
-                    className="mr-2"
-                    onClick={() => {
-                      if (selectedGarden?.name) {
-                        DeleteGarden(selectedGarden.name).catch((error) => {
-                          console.error("Error Deleting Garden:", error);
-                        });
-                      }
-                    }}
-                  />
-                )}
-            </div>
-          </div>
-          <div className="grid">
-            <div className="col-3">
-              <h4>Version</h4>
-              <p>{selectedGarden?.version}</p>
-            </div>
-            <div className="col-3">
-              <h4>Systems</h4>
-              {generateStatusCounts(selectedGarden ?? {})}
-            </div>
-            {selectedGarden?.children &&
-              selectedGarden?.children.length > 0 && (
-                <div className="col-3">
-                  <h4>Downstream</h4>
-
-                  {selectedGarden?.children &&
-                    selectedGarden?.children.length > 0 && (
-                      <ul>
-                        {" "}
-                        {Array.from(
-                          selectedGarden.children ?? [],
-                          (child: Garden) => {
-                            return <li key={child.name}>{child.name}</li>;
-                          },
-                        )}
-                      </ul>
-                    )}
-                </div>
-              )}
-            {selectedGarden?.parent && (
-              <div className="col-3">
-                <h4>Upstream</h4>
-                <ul>
-                  <li>{selectedGarden?.parent}</li>
-                </ul>
-              </div>
-            )}
-            {selectedGarden?.receiving_connections &&
-              selectedGarden?.receiving_connections.length > 0 && (
-                <div className="col-4">
-                  <h4>Receiving</h4>
-
-                  <DataTable
-                    value={[
-                      ...(selectedGarden?.receiving_connections.filter(
-                        (connection: Connection) =>
-                          connection.status !== "NOT_CONFIGURED",
-                      ) || []),
-                    ]}
-                  >
-                    <Column field="api" header="API" />
-                    <Column
-                      field="status"
-                      header="Status"
-                      body={statusTemplate}
-                    />
-                    <Column
-                      header="Actions"
-                      body={(node: any) => connectionActions(node, "RECEIVING")}
-                    />
-                  </DataTable>
-                </div>
-              )}
-            {selectedGarden?.publishing_connections &&
-              selectedGarden?.publishing_connections.length > 0 && (
-                <div className="col-4">
-                  <h4>Publishing</h4>
-                  <DataTable
-                    value={[
-                      ...(selectedGarden?.publishing_connections.filter(
-                        (connection: Connection) =>
-                          connection.status !== "NOT_CONFIGURED",
-                      ) || []),
-                    ]}
-                  >
-                    <Column field="api" header="API" />
-                    <Column
-                      field="status"
-                      header="Status"
-                      body={statusTemplate}
-                    />
-                    <Column
-                      header="Actions"
-                      body={(node: any) =>
-                        connectionActions(node, "PUBLISHING")
-                      }
-                    />
-                  </DataTable>
-                </div>
-              )}
-          </div>
-        </Card>
-
+        {selectedGarden && (
+          <GardenSummary
+            gardenRef={gardenRef}
+            selectedGarden={selectedGarden}
+          />
+        )}
         {selectedGarden?.systems?.map((system: System) => (
           <Panel
             key={system.id}
