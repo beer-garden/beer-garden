@@ -20,6 +20,7 @@ import RequestIndex from "./layouts/RequestIndex";
 import RequestView from "./layouts/RequestView";
 import { Listener } from "./models/models";
 import NavigationMenu from "./Navigation";
+import { preemptiveRefresh } from "./services/token_service";
 
 function App() {
   const [showScratchPad, setShowScratchPad] = useState<boolean>(false);
@@ -58,6 +59,13 @@ function App() {
   const primeValue = {
     hideOverlaysOnDocumentScrolling: true,
   };
+
+  useEffect(() => {
+    const interval = setInterval(preemptiveRefresh, 30000);
+
+    // Cleanup function to clear the interval when the component unmounts
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     // Create WebSocket connection when component mounts

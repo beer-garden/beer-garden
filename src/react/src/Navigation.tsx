@@ -5,21 +5,14 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import CurrentRequestsTemplate from "./components/CurrentRequestsTemplate";
+import UserLogin from "./components/UserLogin";
 import { Config } from "./models/models";
 import { GetConfig } from "./services/config_service";
+import { ClearRefresh, ClearToken, GetToken } from "./services/token_service";
+import { GetCurrentUser } from "./services/user_service";
 
 function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
   const [config, setConfig] = useState<Config | null>(null);
-
-  useEffect(() => {
-    GetConfig()
-      .then((config) => {
-        setConfig(config);
-      })
-      .catch((error) => {
-        console.error("Error fetching the config:", error);
-      });
-  }, []);
 
   const itemRenderer = (item: any) => {
     return (
@@ -96,13 +89,100 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
     </Link>
   );
 
+  const getUserName = () => {
+    if (config && config?.auth_enabled === true) {
+      const token = GetToken();
+      if (token !== null) {
+        return GetCurrentUser(token);
+      }
+    }
+    return undefined;
+  };
+
+  const [loginVisible, setLoginVisible] = useState(false);
+
+  const [username, setUserName] = useState<string | undefined>(getUserName());
+
+  useEffect(() => {
+    if (config === null) {
+      GetConfig()
+        .then((configValue) => {
+          setConfig(configValue);
+        })
+        .catch((error) => {
+          console.error("Error fetching the config:", error);
+        });
+    } else if (
+      config !== null &&
+      !loginVisible &&
+      config?.auth_enabled &&
+      username === undefined
+    ) {
+      const userNameValue = getUserName();
+      if (userNameValue === undefined || userNameValue === null) {
+        setLoginVisible(true);
+      } else {
+        setUserName(userNameValue);
+      }
+    }
+  }, [config]);
+
+  const end = (
+    <div className="flex">
+      {config && config?.auth_enabled === true && (
+        <div>
+          {username === undefined && (
+            <div>
+              <Button
+                rounded
+                className="mr-2"
+                onClick={() => setLoginVisible(true)}
+              >
+                Login
+              </Button>
+              <UserLogin
+                visible={loginVisible}
+                setVisible={setLoginVisible}
+                setUsernameDisplay={setUserName}
+              />
+            </div>
+          )}
+          {username !== undefined && (
+            <div>
+              <span className="font-bold mr-2">Welcome {username}!</span>
+
+              <Button
+                rounded
+                className="mr-2"
+                onClick={() => {
+                  ClearToken();
+                  ClearRefresh()
+                    .finally(() => {
+                      setUserName(undefined);
+                    })
+                    .catch((error) => {
+                      console.error("Error clearing Refresh Token:", error);
+                    });
+                }}
+              >
+                Logout
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
+      <CurrentRequestsTemplate listeners={listeners} />
+    </div>
+  );
+
   return (
     <div className="card">
       <MegaMenu
         model={items}
         orientation="horizontal"
         start={start}
-        end={<CurrentRequestsTemplate listeners={listeners} />}
+        end={end}
         breakpoint="960px"
         className="p-3 surface-0 shadow-2"
         style={{ borderRadius: "3rem" }}
