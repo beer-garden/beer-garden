@@ -75,7 +75,7 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
 
   const start = (
     <Link
-      className="flex align-items-center p-3 cursor-pointer mb-2 gap-2 "
+      className="flex align-items-center cursor-pointer px-3 py-2 overflow-hidden relative font-semibold text-lg uppercase p-ripple hover:surface-ground"
       to="/"
     >
       <div className="flex">
