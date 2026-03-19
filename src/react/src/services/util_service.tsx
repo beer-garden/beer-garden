@@ -54,26 +54,31 @@ export const GetSeverity = (
   status?: string,
 ): "warning" | "success" | "info" | "danger" | "secondary" | "contrast" => {
   switch (status?.toUpperCase()) {
-    case undefined:
-    case "RUNNING":
-    case "OPERATIONAL":
-    case "HEALTHY":
-    case "PUBLISHING":
-    case "RECEIVING":
+    case "RUNNING": // Instance
+    case "HEALTHY": // Connection (Summary)
+    case "PUBLISHING": // Connection
+    case "RECEIVING": // Connection
+    case "SUCCESS": // Request
       return "success";
-    case "PAUSED":
-    case "STOPPED":
+    case "PAUSED": // Instance
+    case "STOPPED": // Instance
       return "info";
-    case "INITIALIZING":
-    case "STARTING":
-    case "STOPPING":
-    case "AWAITING_SYSTEM":
-    case "DISABLED":
+    case "INITIALIZING": // Instance
+    case "STARTING": // Instance
+    case "STOPPING": // Instance
+    case "AWAITING_SYSTEM": // Instance
+    case "DISABLED": // Connection
       return "warning";
-    case "DEAD":
-    case "UNRESPONSIVE":
-    case "UNKNOWN":
-    case "ERROR":
+    case "DEAD": // Instance
+    case "UNRESPONSIVE": // Connection, Instance
+    case "UNKNOWN": // Connection, Instance
+    case "ERROR": // Connection, Instance, Request
+    case "CANCELED": // Request
+    case "INVALID": // Request
+    case "NOT_CONFIGURED": // Connection
+    case "MISSING_CONFIGURATION": // Connection
+    case "CONFIGURATION_ERROR": // Connection
+    case "UNREACHABLE": // Connection
       return "danger";
     default:
       return "danger";
