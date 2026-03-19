@@ -16,6 +16,7 @@ import JobIndex from "./layouts/JobIndex";
 import RequestCreate from "./layouts/RequestCreate";
 import RequestIndex from "./layouts/RequestIndex";
 import RequestView from "./layouts/RequestView";
+import RoleIndex from "./layouts/RoleIndex";
 import SystemCards from "./layouts/SystemCards";
 import SystemTable from "./layouts/SystemTable";
 import { Listener } from "./models/models";
@@ -144,6 +145,7 @@ function App() {
                   />
 
                   <Route path="/about" element={<AboutIndex />} />
+                  <Route path="/roles" element={<RoleIndex />} />
                   <Route
                     path="/"
                     element={

@@ -126,6 +126,7 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
                 label: "Roles",
                 icon: "users",
                 template: itemRenderer,
+                route: "/roles",
               },
             ],
           },
