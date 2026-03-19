@@ -5,7 +5,7 @@ import { Card } from "primereact/card";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Tag } from "primereact/tag";
-import { RefObject } from "react";
+import { RefObject, useEffect, useState } from "react";
 
 import { Connection, Garden, Instance } from "../models/brewtils-types";
 import {
@@ -26,11 +26,40 @@ function GardenSummary({
   gardenRef: RefObject<Garden | null>;
   selectedGarden: Garden;
 }) {
-  const generateStatusCounts = (garden: Garden) => {
+  const [publishingConnections, setPublishingConnections] = useState<
+    Array<Connection>
+  >([]);
+  const [receivingConnections, setReceivingonnections] = useState<
+    Array<Connection>
+  >([]);
+  const [systemCounts, setSystemCounts] = useState<Map<string, number>>(
+    new Map(),
+  );
+
+  useEffect(() => {
+    if (selectedGarden.publishing_connections) {
+      setPublishingConnections(
+        selectedGarden.publishing_connections.filter(
+          (connection: Connection) => connection.status !== "NOT_CONFIGURED",
+        ),
+      );
+    } else {
+      setPublishingConnections([]);
+    }
+    if (selectedGarden.receiving_connections) {
+      setReceivingonnections(
+        selectedGarden.receiving_connections.filter(
+          (connection: Connection) => connection.status !== "NOT_CONFIGURED",
+        ),
+      );
+    } else {
+      setReceivingonnections([]);
+    }
+
     const statusCounts = new Map();
 
-    if (garden?.systems && garden.systems.length > 0) {
-      for (const system of garden.systems) {
+    if (selectedGarden?.systems && selectedGarden.systems.length > 0) {
+      for (const system of selectedGarden.systems) {
         system?.instances?.forEach((instance: Instance) => {
           if (instance.status) {
             statusCounts.set(
@@ -41,26 +70,8 @@ function GardenSummary({
         });
       }
     }
-
-    if (statusCounts.size === 0) {
-      return undefined;
-    }
-
-    return Array.from(statusCounts, ([status, count]) => {
-      if (count && count > 0) {
-        const statusSeverity = GetSeverity(status);
-        return (
-          <Badge
-            value={count}
-            severity={statusSeverity}
-            key={status}
-            title={status}
-          />
-        );
-      }
-      return null;
-    });
-  };
+    setSystemCounts(statusCounts);
+  }, [selectedGarden]);
 
   const statusTemplate = (row: any) => {
     const severity = GetSeverity(row.status);
@@ -206,7 +217,20 @@ function GardenSummary({
         </div>
         <div className="col-3">
           <h4>Systems</h4>
-          {generateStatusCounts(selectedGarden ?? {})}
+          {Array.from(systemCounts, ([status, count]) => {
+            if (count && count > 0) {
+              const statusSeverity = GetSeverity(status);
+              return (
+                <Badge
+                  value={count}
+                  severity={statusSeverity}
+                  key={status}
+                  title={status}
+                />
+              );
+            }
+            return null;
+          })}
         </div>
         {selectedGarden?.children && selectedGarden?.children.length > 0 && (
           <div className="col-3">
@@ -234,49 +258,36 @@ function GardenSummary({
             </ul>
           </div>
         )}
-        {selectedGarden?.receiving_connections &&
-          selectedGarden?.receiving_connections.length > 0 && (
-            <div className="col-4">
-              <h4>Receiving</h4>
+      </div>
+      <div className="grid">
+        {receivingConnections && receivingConnections.length > 0 && (
+          <div className="col-4">
+            <h4>Receiving</h4>
 
-              <DataTable
-                value={[
-                  ...(selectedGarden?.receiving_connections.filter(
-                    (connection: Connection) =>
-                      connection.status !== "NOT_CONFIGURED",
-                  ) || []),
-                ]}
-              >
-                <Column field="api" header="API" />
-                <Column field="status" header="Status" body={statusTemplate} />
-                <Column
-                  header="Actions"
-                  body={(node: any) => connectionActions(node, "RECEIVING")}
-                />
-              </DataTable>
-            </div>
-          )}
-        {selectedGarden?.publishing_connections &&
-          selectedGarden?.publishing_connections.length > 0 && (
-            <div className="col-4">
-              <h4>Publishing</h4>
-              <DataTable
-                value={[
-                  ...(selectedGarden?.publishing_connections.filter(
-                    (connection: Connection) =>
-                      connection.status !== "NOT_CONFIGURED",
-                  ) || []),
-                ]}
-              >
-                <Column field="api" header="API" />
-                <Column field="status" header="Status" body={statusTemplate} />
-                <Column
-                  header="Actions"
-                  body={(node: any) => connectionActions(node, "PUBLISHING")}
-                />
-              </DataTable>
-            </div>
-          )}
+            <DataTable value={receivingConnections}>
+              <Column field="api" header="API" />
+              <Column field="status" header="Status" body={statusTemplate} />
+              <Column
+                header="Actions"
+                body={(node: any) => connectionActions(node, "RECEIVING")}
+              />
+            </DataTable>
+          </div>
+        )}
+
+        {publishingConnections && publishingConnections.length > 0 && (
+          <div className="col-4">
+            <h4>Publishing</h4>
+            <DataTable value={publishingConnections}>
+              <Column field="api" header="API" />
+              <Column field="status" header="Status" body={statusTemplate} />
+              <Column
+                header="Actions"
+                body={(node: any) => connectionActions(node, "PUBLISHING")}
+              />
+            </DataTable>
+          </div>
+        )}
       </div>
     </Card>
   );

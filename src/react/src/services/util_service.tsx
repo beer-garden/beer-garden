@@ -59,6 +59,7 @@ export const GetSeverity = (
     case "OPERATIONAL":
     case "HEALTHY":
     case "PUBLISHING":
+    case "RECEIVING":
       return "success";
     case "PAUSED":
     case "STOPPED":

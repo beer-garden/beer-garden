@@ -23,10 +23,21 @@ function GardenDashboard({
   setReloadScratchPad: any;
 }) {
   const gardenRef = useRef<Garden>(null);
+  const selectedGardenRef = useRef<Garden>(null);
 
   const [selectedGarden, setSelectedGarden] = useState<Garden>();
 
   const [gardenMenu, setGardenMenu] = useState<Array<any>>();
+
+  const updateSelectedGarden = (garden?: Garden) => {
+    if (garden) {
+      selectedGardenRef.current = { ...sortSystems(garden) };
+      setSelectedGarden({ ...selectedGardenRef.current });
+    } else {
+      selectedGardenRef.current = null;
+      setSelectedGarden(undefined);
+    }
+  };
 
   const MonitorGardenEvents = useCallback(
     (message: any) => {
@@ -47,6 +58,9 @@ function GardenDashboard({
           }
           return compareGarden;
         };
+        if (message.payload.id === selectedGardenRef.current?.id) {
+          updateSelectedGarden();
+        }
         gardenRef.current = removeGarden(
           message.payload.id,
           gardenRef.current as Garden,
@@ -93,6 +107,9 @@ function GardenDashboard({
           message.payload,
           gardenRef.current as Garden,
         );
+        if (message.payload.id === selectedGardenRef.current?.id) {
+          updateSelectedGarden(message.payload);
+        }
         updatedRef = true;
       }
 
@@ -101,9 +118,6 @@ function GardenDashboard({
           setGardenMenu([generateMenu(gardenRef.current)]);
         } else {
           setGardenMenu([]);
-        }
-        if (selectedGarden?.id) {
-          findSelectedGarden(selectedGarden.id);
         }
       }
     },
@@ -149,7 +163,7 @@ function GardenDashboard({
     if (gardens !== undefined) {
       for (const garden of gardens) {
         if (garden.id === garden_id) {
-          setSelectedGarden(sortSystems(garden));
+          updateSelectedGarden(garden);
           return;
         } else if (garden?.children && garden.children.length > 0) {
           findSelectedGarden(garden_id, garden?.children);
@@ -266,7 +280,7 @@ function GardenDashboard({
           GetRootGarden(config, {})
             .then((response_garden: Garden) => {
               gardenRef.current = response_garden;
-              setSelectedGarden(sortSystems({ ...gardenRef.current }));
+              updateSelectedGarden(gardenRef.current);
               setGardenMenu([generateMenu(response_garden)]);
               listeners["DASHBOARD"] = {
                 listener: MonitorGardenEvents,
