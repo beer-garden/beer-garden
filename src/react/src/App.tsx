@@ -96,7 +96,10 @@ function App() {
             <div className="flex">
               <div className={showMainApp ? "flex-grow-1" : "hidden"}>
                 <Routes>
-                  <Route path="/dashboard" element={<GardenDashboard listeners={listeners} />} />
+                  <Route
+                    path="/dashboard"
+                    element={<GardenDashboard listeners={listeners} />}
+                  />
                   <Route
                     path="/request/:requestId"
                     element={<RequestView listeners={listeners} />}
@@ -123,9 +126,7 @@ function App() {
                   <Route path="/about" element={<AboutIndex />} />
                   <Route
                     path="/"
-                    element={
-                      <GardenDashboard listeners={listeners} />
-                    }
+                    element={<GardenDashboard listeners={listeners} />}
                   />
                 </Routes>
               </div>

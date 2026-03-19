@@ -1,5 +1,4 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "primereact/button";
 import { MegaMenu } from "primereact/megamenu";
 import { Ripple } from "primereact/ripple";
 import { useEffect, useState } from "react";
@@ -23,26 +22,20 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
   }, []);
 
   const itemRenderer = (item: any) => {
-    
-      return (
-        <Link
-          className="flex align-items-center cursor-pointer px-3 py-2 overflow-hidden relative font-semibold text-lg uppercase p-ripple hover:surface-ground"
-          style={{ borderRadius: "2rem" }}
-          to={item.route}
-        >
-          {item.icon && (
-            <FontAwesomeIcon icon={item.icon} />
-          )}
-          <span className="inline-flex flex-column gap-1">
+    return (
+      <Link
+        className="flex align-items-center cursor-pointer px-3 py-2 overflow-hidden relative font-semibold text-lg uppercase p-ripple hover:surface-ground"
+        style={{ borderRadius: "2rem" }}
+        to={item.route}
+      >
+        {item.icon && <FontAwesomeIcon icon={item.icon} />}
+        <span className="inline-flex flex-column gap-1">
           <span className="ml-2">{item.label}</span>
-          {item.subtext && (
-            <span>{item.subtext}</span>
-          )}
-          </span>
-          <Ripple />
-        </Link>
-      );
-    
+          {item.subtext && <span>{item.subtext}</span>}
+        </span>
+        <Ripple />
+      </Link>
+    );
   };
 
   const items = [

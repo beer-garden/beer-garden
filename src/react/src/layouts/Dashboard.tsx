@@ -23,7 +23,13 @@ import {
 import { ClearAllQueues } from "../services/queue_service";
 import { Rescan } from "../services/system_service";
 
-function GardenDashboard({ listeners, setReloadScratchPad }: { listeners: Record<string, any>; setReloadScratchPad: any; }) {
+function GardenDashboard({
+  listeners,
+  setReloadScratchPad,
+}: {
+  listeners: Record<string, any>;
+  setReloadScratchPad: any;
+}) {
   const gardenRef = useRef<Garden>(null);
 
   const [selectedGarden, setSelectedGarden] = useState<Garden>();
