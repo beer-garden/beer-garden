@@ -1,6 +1,8 @@
 import "primereact/resources/themes/lara-light-blue/theme.css"; // Theme
 import "primereact/resources/primereact.min.css"; // Core CSS
 import "primereact/resources/themes/bootstrap4-light-blue/theme.css";
+import "primeflex/primeflex.css";
+import "./App.css";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { PrimeReactProvider } from "primereact/api";
@@ -12,13 +14,10 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import ScratchPad from "./components/ScratchPad";
 import AboutIndex from "./layouts/AboutIndex";
 import GardenDashboard from "./layouts/Dashboard";
-import GardenIndex from "./layouts/GardenIndex";
 import JobIndex from "./layouts/JobIndex";
 import RequestCreate from "./layouts/RequestCreate";
 import RequestIndex from "./layouts/RequestIndex";
 import RequestView from "./layouts/RequestView";
-import SystemCards from "./layouts/SystemCards";
-import SystemTable from "./layouts/SystemTable";
 import { Listener } from "./models/models";
 import NavigationMenu from "./Navigation";
 
@@ -97,25 +96,7 @@ function App() {
             <div className="flex">
               <div className={showMainApp ? "flex-grow-1" : "hidden"}>
                 <Routes>
-                  <Route
-                    path="/systems"
-                    element={
-                      <SystemCards
-                        listeners={listeners}
-                        setReloadScratchPad={setReloadScratchPadTrigger}
-                      />
-                    }
-                  />
-                  <Route path="/dashboard" element={<GardenDashboard />} />
-                  <Route
-                    path="/systemcard"
-                    element={
-                      <SystemCards
-                        listeners={listeners}
-                        setReloadScratchPad={setReloadScratchPadTrigger}
-                      />
-                    }
-                  />
+                  <Route path="/dashboard" element={<GardenDashboard listeners={listeners} />} />
                   <Route
                     path="/request/:requestId"
                     element={<RequestView listeners={listeners} />}
@@ -139,19 +120,11 @@ function App() {
                   />
                   <Route path="/jobs" element={<JobIndex />} />
                   <Route path="/job/:jobId" element={<RequestCreate />} />
-                  <Route
-                    path="/garden"
-                    element={<GardenIndex listeners={listeners} />}
-                  />
-
                   <Route path="/about" element={<AboutIndex />} />
                   <Route
                     path="/"
                     element={
-                      <SystemCards
-                        listeners={listeners}
-                        setReloadScratchPad={setReloadScratchPadTrigger}
-                      />
+                      <GardenDashboard listeners={listeners} />
                     }
                   />
                 </Routes>
