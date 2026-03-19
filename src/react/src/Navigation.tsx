@@ -15,46 +15,35 @@ import { GetCurrentUser } from "./services/user_service";
 function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
   const [config, setConfig] = useState<Config | null>(null);
 
+  const linkClassName = "align-items-center no-underline ";
+
   const itemRenderer = (item: any) => {
     if (item.root) {
       return (
         <Link
-          className="flex align-items-center cursor-pointer px-3 py-2 overflow-hidden relative font-semibold text-lg uppercase p-ripple hover:surface-ground"
+          className={linkClassName}
           style={{ borderRadius: "2rem" }}
           to={item.route}
         >
           {/* <FontAwesomeIcon icon={item.icon} /> */}
-          <span className="ml-2">{item.label}</span>
+          <Button className="mr-2" text raised rounded>
+            <span className="ml-2">{item.label}</span>
+          </Button>
           <Ripple />
-        </Link>
-      );
-    } else if (!item.image) {
-      return (
-        <Link
-          className="flex align-items-center p-3 cursor-pointer mb-2 gap-2 "
-          to={item.route}
-        >
-          <span className="inline-flex align-items-center justify-content-center border-circle bg-primary w-3rem h-3rem">
-            <FontAwesomeIcon icon={item.icon} />
-          </span>
-          <span className="inline-flex flex-column gap-1">
-            <span className="font-medium text-lg text-900">{item.label}</span>
-            <span className="white-space-nowrap">{item.subtext}</span>
-          </span>
         </Link>
       );
     } else {
       return (
-        <Link
-          className="flex flex-column align-items-start gap-3"
-          to={item.route}
-        >
-          <img alt="megamenu-demo" src={item.image} className="w-full" />
-          <span>{item.subtext}</span>
-          <Button
-            className="p-button p-component p-button-outlined"
-            label={item.label}
-          />
+        <Link className={linkClassName} to={item.route}>
+          <Button className="mr-2" text raised rounded>
+            <span className="inline-flex align-items-center justify-content-center border-circle bg-primary w-3rem h-3rem">
+              <FontAwesomeIcon icon={item.icon} />
+            </span>
+            <span className="inline-flex flex-column gap-1">
+              <span className="font-medium text-lg text-900">{item.label}</span>
+              <span className="white-space-nowrap">{item.subtext}</span>
+            </span>
+          </Button>
         </Link>
       );
     }
@@ -128,14 +117,16 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
   ];
 
   const start = (
-    <div className="flex">
-      {config && (
-        <div className="mr-2">
-          <FontAwesomeIcon icon={config.icon_default ?? "beer-mug-empty"} />
-        </div>
-      )}
-      {config && <div className="mr-2">{config.application_name}</div>}
-    </div>
+    <Link className={linkClassName} to="/">
+      <Button className="mr-2" text raised rounded>
+        {config && (
+          <div className="mr-2">
+            <FontAwesomeIcon icon={config.icon_default ?? "beer-mug-empty"} />
+          </div>
+        )}
+        {config && <div className="mr-2">{config.application_name}</div>}
+      </Button>
+    </Link>
   );
 
   const getUserName = () => {

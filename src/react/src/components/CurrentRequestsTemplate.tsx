@@ -170,7 +170,7 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
   };
 
   return (
-    <div>
+    <div className="align-items-center mr-2">
       <ConfirmPopup
         dismissable={true}
         content={({ acceptBtnRef, hide }: { acceptBtnRef: any; hide: any }) => (
@@ -201,7 +201,13 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
           </div>
         )}
       />
-      <button className="fa-layers fa-fw fa-2x" onClick={confirm}>
+      <Button
+        className="fa-layers fa-fw fa-2x"
+        onClick={confirm}
+        size="large"
+        rounded
+        raised
+      >
         <FontAwesomeIcon
           icon="envelope"
           className={currentRequests.length > 0 ? "fa-shake" : ""}
@@ -212,7 +218,7 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
             {currentRequests.length}
           </span>
         )}
-      </button>
+      </Button>
     </div>
   );
 }

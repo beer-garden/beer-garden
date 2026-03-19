@@ -1,5 +1,3 @@
-import "primeflex/primeflex.css";
-
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Badge } from "primereact/badge";
 import { Button } from "primereact/button";
