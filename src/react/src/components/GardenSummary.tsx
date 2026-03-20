@@ -26,36 +26,27 @@ function GardenSummary({
   gardenRef: RefObject<Garden | null>;
   selectedGarden: Garden;
 }) {
-  const [publishingConnections, setPublishingConnections] = useState<
-    Array<Connection>
-  >([]);
-  const [receivingConnections, setReceivingonnections] = useState<
-    Array<Connection>
-  >([]);
-  const [systemCounts, setSystemCounts] = useState<Map<string, number>>(
-    new Map(),
-  );
-
-  useEffect(() => {
+  const getPublishingConnections = () => {
     if (selectedGarden.publishing_connections) {
-      setPublishingConnections(
-        selectedGarden.publishing_connections.filter(
-          (connection: Connection) => connection.status !== "NOT_CONFIGURED",
-        ),
+      return selectedGarden.publishing_connections.filter(
+        (connection: Connection) => connection.status !== "NOT_CONFIGURED",
       );
     } else {
-      setPublishingConnections([]);
+      return [];
     }
-    if (selectedGarden.receiving_connections) {
-      setReceivingonnections(
-        selectedGarden.receiving_connections.filter(
-          (connection: Connection) => connection.status !== "NOT_CONFIGURED",
-        ),
-      );
-    } else {
-      setReceivingonnections([]);
-    }
+  };
 
+  const getReceivingConnections = () => {
+    if (selectedGarden.receiving_connections) {
+      return selectedGarden.receiving_connections.filter(
+        (connection: Connection) => connection.status !== "NOT_CONFIGURED",
+      );
+    } else {
+      return [];
+    }
+  };
+
+  const getSystemCounts = () => {
     const statusCounts = new Map();
 
     if (selectedGarden?.systems && selectedGarden.systems.length > 0) {
@@ -70,7 +61,23 @@ function GardenSummary({
         });
       }
     }
-    setSystemCounts(statusCounts);
+
+    return statusCounts;
+  };
+
+  const [publishingConnections, setPublishingConnections] = useState<
+    Array<Connection>
+  >(getPublishingConnections());
+  const [receivingConnections, setReceivingonnections] = useState<
+    Array<Connection>
+  >(getReceivingConnections());
+  const [systemCounts, setSystemCounts] =
+    useState<Map<string, number>>(getSystemCounts());
+
+  useEffect(() => {
+    setPublishingConnections(getPublishingConnections());
+    setReceivingonnections(getReceivingConnections());
+    setSystemCounts(getSystemCounts());
   }, [selectedGarden]);
 
   const statusTemplate = (row: any) => {
@@ -82,6 +89,7 @@ function GardenSummary({
   const connectionActions = (node: Connection, type: string) => (
     <div className="flex gap-2">
       <Button
+        data-testid={type + "_" + node?.api + "_START"}
         onClick={() => {
           if (selectedGarden?.name && node?.status && node?.api) {
             UpdateApiGarden(selectedGarden.name, type, node.api, type).catch(
@@ -89,6 +97,8 @@ function GardenSummary({
                 console.error("Error Updating Garden API Connection:", error);
               },
             );
+          } else if (node?.api === null || node?.api === undefined) {
+            throw Error(`Error missing ${JSON.stringify(node)}`);
           }
         }}
       >
@@ -96,6 +106,7 @@ function GardenSummary({
       </Button>
       <Button
         severity="warning"
+        data-testid={type + "_" + node?.api + "_STOP"}
         onClick={() => {
           if (selectedGarden?.name && node?.status && node?.api) {
             UpdateApiGarden(
@@ -121,6 +132,7 @@ function GardenSummary({
         <div>
           <Button
             label="Rescan Plugins"
+            data-testid={"RESCAN_PLUGINS"}
             className="mr-2"
             onClick={() => {
               if (selectedGarden?.name) {
@@ -132,6 +144,7 @@ function GardenSummary({
           />
           <Button
             label="Rescan Downstream"
+            data-testid={"RESCAN_DOWNSTREAM"}
             className="mr-2"
             onClick={() => {
               if (selectedGarden?.name) {
@@ -143,6 +156,7 @@ function GardenSummary({
           />
           <Button
             label="Clear Plugin Queues"
+            data-testid={"CLEAR_PLUGIN_QUEUES"}
             className="mr-2"
             severity="warning"
             onClick={() => {
@@ -157,6 +171,7 @@ function GardenSummary({
             gardenRef.current.name !== selectedGarden?.name && (
               <Button
                 label="Sync"
+                data-testid={"SYNC_GARDEN"}
                 className="mr-2"
                 onClick={() => {
                   if (selectedGarden?.name) {
@@ -171,6 +186,7 @@ function GardenSummary({
             gardenRef.current.name === selectedGarden?.name && (
               <Button
                 label="Sync All"
+                data-testid={"SYNC_ALL"}
                 className="mr-2"
                 onClick={() => {
                   SyncGarden().catch((error) => {
@@ -183,6 +199,7 @@ function GardenSummary({
             gardenRef.current.name !== selectedGarden?.name && (
               <Button
                 label="Sync Users"
+                data-testid={"SYNC_USERS"}
                 className="mr-2"
                 onClick={() => {
                   if (selectedGarden?.name) {
@@ -197,6 +214,7 @@ function GardenSummary({
             gardenRef.current.name !== selectedGarden?.name && (
               <Button
                 label="Delete Garden"
+                data-testid={"DELETE_GARDEN"}
                 severity="danger"
                 className="mr-2"
                 onClick={() => {
@@ -222,6 +240,7 @@ function GardenSummary({
               const statusSeverity = GetSeverity(status);
               return (
                 <Badge
+                  data-testid={`${status}_severity_system_summary`}
                   value={count}
                   severity={statusSeverity}
                   key={status}
