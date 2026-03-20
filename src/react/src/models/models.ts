@@ -1,19 +1,19 @@
-import { Instance, System } from "../models/brewtils-types";
+import { Instance, Parameter, System } from "../models/brewtils-types";
 
 export interface Config {
-  application_name: string;
-  auth_enabled: string;
-  trusted_header_auth_enabled: string;
-  icon_default: string;
-  debug_mode: string;
-  execute_javascript: string;
-  auto_refresh: string;
-  search_delay: string;
-  garden_name: string;
-  metrics_url: string;
-  url_prefix: string;
-  action_ttl: number;
-  info_ttl: number;
+  application_name?: string;
+  auth_enabled?: boolean;
+  trusted_header_auth_enabled?: boolean;
+  icon_default?: string;
+  debug_mode?: boolean;
+  execute_javascript?: boolean;
+  auto_refresh?: boolean;
+  search_delay?: string;
+  garden_name?: string;
+  metrics_url?: string;
+  url_prefix?: string;
+  action_ttl?: number;
+  info_ttl?: number;
 }
 
 export interface Version {
@@ -40,6 +40,14 @@ export interface RequestCommand {
   version?: string;
   instance?: string;
   command?: string;
+}
+
+export interface InputParam extends Parameter {
+  value?: any;
+  isInvalid: boolean;
+  options: Array<{ label: string; value: any }> | undefined;
+  error: boolean;
+  errorMsg?: string;
 }
 
 export interface InstanceDialogProps {

@@ -20,6 +20,7 @@ import SystemCards from "./layouts/SystemCards";
 import SystemTable from "./layouts/SystemTable";
 import { Listener } from "./models/models";
 import NavigationMenu from "./Navigation";
+import { preemptiveRefresh } from "./services/token_service";
 
 function App() {
   const [showScratchPad, setShowScratchPad] = useState<boolean>(false);
@@ -60,6 +61,13 @@ function App() {
   };
 
   useEffect(() => {
+    const interval = setInterval(preemptiveRefresh, 30000);
+
+    // Cleanup function to clear the interval when the component unmounts
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
     // Create WebSocket connection when component mounts
     socketRef.current = new WebSocket("/api/v1/socket/events/");
     const handleMessage = (event: any) => {
@@ -90,7 +98,7 @@ function App() {
   return (
     <PrimeReactProvider value={primeValue}>
       <div className="flex">
-        <div className={showMainApp ? "flex-grow-1" : "hidden"}>
+        <div className="flex-grow-1">
           <BrowserRouter basename={baseURL}>
             <NavigationMenu listeners={listeners} />
             <div className="flex">
