@@ -54,9 +54,9 @@ class AuthorizationHandler(BaseHandler):
 
     async def process_operation(self, operation: Operation, **kwargs):
         # Inject target garden if provided in headers
-        if self.get_header("Target-Garden") != None:
+        if self.get_header("Target-Garden") is not None:
             operation.target_garden_name = self.get_header("Target-Garden")
-        if self.get_header("Source-Garden") != None:
+        if self.get_header("Source-Garden") is not None:
             operation.source_garden_name = self.get_header("Source-Garden")
 
         return await self.client(
