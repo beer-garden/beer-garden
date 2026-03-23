@@ -25,7 +25,7 @@ function NavigationMenu({
     config?.application_name,
   );
   const [authEnabled, setAuthEnabled] = useState<boolean | undefined>(
-    undefined,
+    config?.auth_enabled,
   );
 
   const itemRenderer = (item: any) => {
@@ -200,6 +200,7 @@ function NavigationMenu({
                 rounded
                 className="mr-2"
                 onClick={() => setLoginVisible(true)}
+                data-testid="user-login"
               >
                 Login
               </Button>
@@ -227,6 +228,7 @@ function NavigationMenu({
                       console.error("Error clearing Refresh Token:", error);
                     });
                 }}
+                data-testid="user-logout"
               >
                 Logout
               </Button>

@@ -9,14 +9,12 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { Config } from "../models/models";
-import * as configService from "../services/config_service";
 import * as gardenService from "../services/garden_service";
 import * as queueService from "../services/queue_service";
 import * as systemService from "../services/system_service";
 import GardenTable from "./GardenIndex";
 
 vi.mock("../services/garden_service");
-vi.mock("../services/config_service");
 vi.mock("../services/system_service");
 vi.mock("../services/queue_service");
 
@@ -37,10 +35,9 @@ describe("GardenTable", () => {
       publishing_connections: [],
     };
 
-    vi.mocked(configService.GetConfig).mockResolvedValue(mockConfig);
     vi.mocked(gardenService.GetRootGarden).mockResolvedValue(mockGarden);
 
-    render(<GardenTable listeners={{}} />);
+    render(<GardenTable listeners={{}} config={mockConfig} />);
 
     await waitFor(() => {
       expect(screen.getByText("Sync All")).toBeInTheDocument();
@@ -58,13 +55,11 @@ describe("GardenTable", () => {
       publishing_connections: [],
     };
 
-    vi.mocked(configService.GetConfig).mockResolvedValue(mockConfig);
     vi.mocked(gardenService.GetRootGarden).mockResolvedValue(mockGarden);
 
-    render(<GardenTable listeners={{}} />);
+    render(<GardenTable listeners={{}} config={mockConfig} />);
 
     await waitFor(() => {
-      expect(configService.GetConfig).toHaveBeenCalled();
       expect(gardenService.GetRootGarden).toHaveBeenCalledWith(mockConfig, {});
     });
   });
@@ -80,11 +75,10 @@ describe("GardenTable", () => {
       publishing_connections: [],
     };
 
-    vi.mocked(configService.GetConfig).mockResolvedValue(mockConfig);
     vi.mocked(gardenService.GetRootGarden).mockResolvedValue(mockGarden);
     vi.mocked(gardenService.SyncGarden).mockResolvedValue(mockGarden);
 
-    render(<GardenTable listeners={{}} />);
+    render(<GardenTable listeners={{}} config={mockConfig} />);
 
     const syncButton = await screen.findByText("Sync All");
     await userEvent.click(syncButton);
@@ -105,11 +99,10 @@ describe("GardenTable", () => {
       publishing_connections: [],
     };
 
-    vi.mocked(configService.GetConfig).mockResolvedValue(mockConfig);
     vi.mocked(gardenService.GetRootGarden).mockResolvedValue(mockGarden);
     vi.mocked(gardenService.RescanGarden).mockResolvedValue(mockGarden);
 
-    render(<GardenTable listeners={{}} />);
+    render(<GardenTable listeners={{}} config={mockConfig} />);
 
     const rescanButton = await screen.findByText(
       "Rescan Downstream Configurations",
@@ -141,10 +134,9 @@ describe("GardenTable", () => {
       publishing_connections: [],
     };
 
-    vi.mocked(configService.GetConfig).mockResolvedValue(mockConfig);
     vi.mocked(gardenService.GetRootGarden).mockResolvedValue(mockGarden);
 
-    render(<GardenTable listeners={{}} />);
+    render(<GardenTable listeners={{}} config={mockConfig} />);
 
     await waitFor(() => {
       expect(screen.getByText("Child Garden")).toBeInTheDocument();
@@ -175,10 +167,9 @@ describe("GardenTable", () => {
       publishing_connections: [],
     };
 
-    vi.mocked(configService.GetConfig).mockResolvedValue(mockConfig);
     vi.mocked(gardenService.GetRootGarden).mockResolvedValue(mockGarden);
 
-    render(<GardenTable listeners={{}} />);
+    render(<GardenTable listeners={{}} config={mockConfig} />);
 
     await waitFor(() => {
       expect(screen.getByText("RECEIVING")).toBeInTheDocument();
@@ -210,10 +201,9 @@ describe("GardenTable", () => {
       publishing_connections: [],
     };
 
-    vi.mocked(configService.GetConfig).mockResolvedValue(mockConfig);
     vi.mocked(gardenService.GetRootGarden).mockResolvedValue(mockGarden);
 
-    render(<GardenTable listeners={{}} />);
+    render(<GardenTable listeners={{}} config={mockConfig} />);
 
     await waitFor(() => {
       expect(screen.getByTestId("2_http_publishing_START")).toBeInTheDocument();
@@ -247,11 +237,10 @@ describe("GardenTable", () => {
       publishing_connections: [],
     };
 
-    vi.mocked(configService.GetConfig).mockResolvedValue(mockConfig);
     vi.mocked(gardenService.GetRootGarden).mockResolvedValue(mockGarden);
     vi.mocked(gardenService.UpdateApiGarden).mockResolvedValue(mockGarden);
 
-    render(<GardenTable listeners={{}} />);
+    render(<GardenTable listeners={{}} config={mockConfig} />);
 
     const httpReceivingStartButton = await screen.findByTestId(
       "2_http_receiving_START",
@@ -292,11 +281,10 @@ describe("GardenTable", () => {
       publishing_connections: [],
     };
 
-    vi.mocked(configService.GetConfig).mockResolvedValue(mockConfig);
     vi.mocked(gardenService.GetRootGarden).mockResolvedValue(mockGarden);
     vi.mocked(gardenService.UpdateApiGarden).mockResolvedValue(mockGarden);
 
-    render(<GardenTable listeners={{}} />);
+    render(<GardenTable listeners={{}} config={mockConfig} />);
 
     const httpReceivingStopButton = await screen.findByTestId(
       "2_http_receiving_STOP",
@@ -337,11 +325,10 @@ describe("GardenTable", () => {
       publishing_connections: [],
     };
 
-    vi.mocked(configService.GetConfig).mockResolvedValue(mockConfig);
     vi.mocked(gardenService.GetRootGarden).mockResolvedValue(mockGarden);
     vi.mocked(gardenService.UpdateApiGarden).mockResolvedValue(mockGarden);
 
-    render(<GardenTable listeners={{}} />);
+    render(<GardenTable listeners={{}} config={mockConfig} />);
 
     const httpPublishingStartButton = await screen.findByTestId(
       "2_http_publishing_START",
@@ -382,11 +369,10 @@ describe("GardenTable", () => {
       publishing_connections: [],
     };
 
-    vi.mocked(configService.GetConfig).mockResolvedValue(mockConfig);
     vi.mocked(gardenService.GetRootGarden).mockResolvedValue(mockGarden);
     vi.mocked(gardenService.UpdateApiGarden).mockResolvedValue(mockGarden);
 
-    render(<GardenTable listeners={{}} />);
+    render(<GardenTable listeners={{}} config={mockConfig} />);
 
     const httpPublishingStopButton = await screen.findByTestId(
       "2_http_publishing_STOP",
@@ -427,11 +413,10 @@ describe("GardenTable", () => {
       publishing_connections: [],
     };
 
-    vi.mocked(configService.GetConfig).mockResolvedValue(mockConfig);
     vi.mocked(gardenService.GetRootGarden).mockResolvedValue(mockGarden);
     vi.mocked(gardenService.SyncGarden).mockResolvedValue(mockGarden);
 
-    render(<GardenTable listeners={{}} />);
+    render(<GardenTable listeners={{}} config={mockConfig} />);
 
     const syncGardenActionButton = await screen.findByTestId("2_ACTIONS");
     expect(syncGardenActionButton).toBeInTheDocument();
@@ -469,11 +454,10 @@ describe("GardenTable", () => {
       publishing_connections: [],
     };
 
-    vi.mocked(configService.GetConfig).mockResolvedValue(mockConfig);
     vi.mocked(gardenService.GetRootGarden).mockResolvedValue(mockGarden);
     vi.mocked(gardenService.DeleteGarden).mockResolvedValue(mockGarden);
 
-    render(<GardenTable listeners={{}} />);
+    render(<GardenTable listeners={{}} config={mockConfig} />);
 
     const syncGardenActionButton = await screen.findByTestId("2_ACTIONS");
 
@@ -516,11 +500,10 @@ describe("GardenTable", () => {
       publishing_connections: [],
     };
 
-    vi.mocked(configService.GetConfig).mockResolvedValue(mockConfig);
     vi.mocked(gardenService.GetRootGarden).mockResolvedValue(mockGarden);
     vi.mocked(systemService.Rescan);
 
-    render(<GardenTable listeners={{}} />);
+    render(<GardenTable listeners={{}} config={mockConfig} />);
 
     const syncGardenActionButton = await screen.findByTestId("2_ACTIONS");
 
@@ -563,11 +546,10 @@ describe("GardenTable", () => {
       publishing_connections: [],
     };
 
-    vi.mocked(configService.GetConfig).mockResolvedValue(mockConfig);
     vi.mocked(gardenService.GetRootGarden).mockResolvedValue(mockGarden);
     vi.mocked(gardenService.RescanGarden).mockResolvedValue(mockGarden);
 
-    render(<GardenTable listeners={{}} />);
+    render(<GardenTable listeners={{}} config={mockConfig} />);
 
     const syncGardenActionButton = await screen.findByTestId("2_ACTIONS");
 
@@ -610,11 +592,10 @@ describe("GardenTable", () => {
       publishing_connections: [],
     };
 
-    vi.mocked(configService.GetConfig).mockResolvedValue(mockConfig);
     vi.mocked(gardenService.GetRootGarden).mockResolvedValue(mockGarden);
     vi.mocked(gardenService.RescanGarden).mockResolvedValue(mockGarden);
 
-    render(<GardenTable listeners={{}} />);
+    render(<GardenTable listeners={{}} config={mockConfig} />);
 
     const syncGardenActionButton = await screen.findByTestId("2_ACTIONS");
 
@@ -658,11 +639,10 @@ describe("GardenTable", () => {
       publishing_connections: [],
     };
 
-    vi.mocked(configService.GetConfig).mockResolvedValue(mockConfig);
     vi.mocked(gardenService.GetRootGarden).mockResolvedValue(mockGarden);
     vi.mocked(gardenService.SyncUsersGarden).mockResolvedValue(mockGarden);
 
-    render(<GardenTable listeners={{}} />);
+    render(<GardenTable listeners={{}} config={mockConfig} />);
 
     const syncGardenActionButton = await screen.findByTestId("2_ACTIONS");
 
