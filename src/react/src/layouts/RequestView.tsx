@@ -14,6 +14,7 @@ import HasAccess from "../components/HasAccess";
 import RequestOutput from "../components/RequestOutput";
 import RequestTreeChart from "../components/RequestTreeChart";
 import { Request, System } from "../models/brewtils-types";
+import { Config } from "../models/models";
 import {
   CancelRequest,
   DeleteRequest,
@@ -163,7 +164,13 @@ function RequestHeader(request: Request) {
   return <BreadCrumb model={items} />;
 }
 
-function RequestView({ listeners }: { listeners: Record<string, any> }) {
+function RequestView({
+  listeners,
+  config,
+}: {
+  listeners: Record<string, any>;
+  config: Config;
+}) {
   const { requestId } = useParams<{ requestId: string }>();
   const [request, setRequest] = useState<Request | null>(null);
   const [system, setSystem] = useState<System | null>(null);
@@ -197,23 +204,25 @@ function RequestView({ listeners }: { listeners: Record<string, any> }) {
 
   useEffect(() => {
     if (!request) {
-      GetRequest(requestId, {})
-        .then((data: Request) => {
-          setRequest(data);
+      if (requestId !== undefined) {
+        GetRequest(requestId, {})
+          .then((data: Request) => {
+            setRequest(data);
 
-          if (
-            !(requestId in listeners) &&
-            data.status &&
-            ["CREATED", "IN_PROGRESS"].includes(data.status)
-          ) {
-            listeners[requestId] = {
-              listener: MonitorRequestId,
-            };
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching request:", error);
-        });
+            if (
+              !(requestId in listeners) &&
+              data.status &&
+              ["CREATED", "IN_PROGRESS"].includes(data.status)
+            ) {
+              listeners[requestId] = {
+                listener: MonitorRequestId,
+              };
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching request:", error);
+          });
+      }
     } else {
       if (
         request.status &&
@@ -221,7 +230,7 @@ function RequestView({ listeners }: { listeners: Record<string, any> }) {
       ) {
         setActiveIndex(1);
 
-        if (requestId in listeners) {
+        if (requestId && requestId in listeners) {
           delete listeners[requestId];
         }
       }
@@ -298,7 +307,11 @@ function RequestView({ listeners }: { listeners: Record<string, any> }) {
 
       {rootRequest && (
         <RequestTreeChart
-          {...{ rootRequest: rootRequest, currentRequestId: requestId }}
+          {...{
+            rootRequest: rootRequest,
+            currentRequestId: requestId,
+            config: config,
+          }}
         />
       )}
 
@@ -311,6 +324,7 @@ function RequestView({ listeners }: { listeners: Record<string, any> }) {
           <StepperPanel header="Request Parameters">
             {/* Need to determine if Read Only can still download values */}
             <HasAccess
+              config={config}
               permission="Operator"
               hasNamespace={request.namespace}
               hasSystemName={request.system}

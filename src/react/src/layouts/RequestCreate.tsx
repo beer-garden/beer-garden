@@ -9,13 +9,13 @@ import CommandCreate from "../components/CommandCreate";
 import HasAccess from "../components/HasAccess";
 import SchedulerForm from "../components/SchedulerForm";
 import { Job, Request } from "../models/brewtils-types";
-import { RequestCommand } from "../models/models";
+import { Config, RequestCommand } from "../models/models";
 import { CreateJob, GetJob, UpdateJob } from "../services/job_service";
 import { GetRequest } from "../services/request_service";
 import { PostRequest } from "../services/request_service";
 import { GetBaseURL } from "../services/util_service";
 
-function RequestCreate() {
+function RequestCreate({ config }: { config: Config }) {
   const { requestId } = useParams<{ requestId: string }>();
   const { jobId } = useParams<{ jobId: string }>();
   const { defaultType } = useParams<{ defaultType: string }>();
@@ -187,6 +187,7 @@ function RequestCreate() {
             {runState === runOptions[0] && (
               <div>
                 <HasAccess
+                  config={config}
                   permission="OPERATOR"
                   hasNamespace={requestCommand.namespace}
                   hasSystemName={requestCommand.systemName}
@@ -206,6 +207,7 @@ function RequestCreate() {
             )}
             {runState === runOptions[1] && !jobId && (
               <HasAccess
+                config={config}
                 permission="OPERATOR"
                 hasNamespace={requestCommand.namespace}
                 hasSystemName={requestCommand.systemName}

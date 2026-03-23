@@ -8,12 +8,25 @@ import { Link } from "react-router-dom";
 import CurrentRequestsTemplate from "./components/CurrentRequestsTemplate";
 import UserLogin from "./components/UserLogin";
 import { Config } from "./models/models";
-import { GetConfig } from "./services/config_service";
-import { ClearRefresh, ClearToken, GetToken } from "./services/token_service";
+import { ClearRefresh, ClearToken } from "./services/token_service";
 import { GetCurrentUser } from "./services/user_service";
 
-function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
-  const [config, setConfig] = useState<Config | null>(null);
+function NavigationMenu({
+  listeners,
+  config,
+}: {
+  listeners: Record<string, any>;
+  config: Config;
+}) {
+  const [iconDefault, setIconDefault] = useState<string>(
+    config?.icon_default ?? "beer-mug-empty",
+  );
+  const [applicationName, setApplicationName] = useState<string | undefined>(
+    config?.application_name,
+  );
+  const [authEnabled, setAuthEnabled] = useState<boolean | undefined>(
+    undefined,
+  );
 
   const itemRenderer = (item: any) => {
     if (item.root) {
@@ -129,21 +142,17 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
 
   const start = (
     <div className="flex">
-      {config && (
-        <div className="mr-2">
-          <FontAwesomeIcon icon={config.icon_default ?? "beer-mug-empty"} />
-        </div>
-      )}
-      {config && <div className="mr-2">{config.application_name}</div>}
+      <div className="mr-2">
+        <FontAwesomeIcon icon={iconDefault} />
+      </div>
+
+      {applicationName && <div className="mr-2">{applicationName}</div>}
     </div>
   );
 
   const getUserName = () => {
-    if (config && config?.auth_enabled === true) {
-      const token = GetToken();
-      if (token !== null) {
-        return GetCurrentUser(token);
-      }
+    if (authEnabled === true) {
+      return GetCurrentUser();
     }
     return undefined;
   };
@@ -153,20 +162,7 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
   const [username, setUserName] = useState<string | undefined>(getUserName());
 
   useEffect(() => {
-    if (config === null) {
-      GetConfig()
-        .then((configValue) => {
-          setConfig(configValue);
-        })
-        .catch((error) => {
-          console.error("Error fetching the config:", error);
-        });
-    } else if (
-      config !== null &&
-      !loginVisible &&
-      config?.auth_enabled &&
-      username === undefined
-    ) {
+    if (!loginVisible && authEnabled && username === undefined) {
       const userNameValue = getUserName();
       if (userNameValue === undefined || userNameValue === null) {
         setLoginVisible(true);
@@ -174,11 +170,29 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
         setUserName(userNameValue);
       }
     }
-  }, [config]);
+
+    if (config?.icon_default && config.icon_default !== iconDefault) {
+      setIconDefault(config.icon_default);
+    }
+
+    if (
+      config?.application_name &&
+      config.application_name !== applicationName
+    ) {
+      setApplicationName(config.application_name);
+    }
+
+    if (
+      config?.auth_enabled !== undefined &&
+      config.auth_enabled !== authEnabled
+    ) {
+      setAuthEnabled(config.auth_enabled);
+    }
+  }, [config, authEnabled, loginVisible, username]);
 
   const end = (
     <div className="flex">
-      {config && config?.auth_enabled === true && (
+      {authEnabled === true && (
         <div>
           {username === undefined && (
             <div>

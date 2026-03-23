@@ -18,8 +18,9 @@ import RequestIndex from "./layouts/RequestIndex";
 import RequestView from "./layouts/RequestView";
 import SystemCards from "./layouts/SystemCards";
 import SystemTable from "./layouts/SystemTable";
-import { Listener } from "./models/models";
+import { Config, Listener } from "./models/models";
 import NavigationMenu from "./Navigation";
+import { GetConfig } from "./services/config_service";
 import { preemptiveRefresh } from "./services/token_service";
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
   const [showMainApp, setShowMainApp] = useState<boolean>(true);
   const socketRef = useRef(null as null | any);
   const listeners = useRef<Record<string, Listener>>({});
+  const [config, setConfig] = useState<Config>({});
 
   const [reloadScratchPadTrigger, setReloadScratchPadTrigger] = useState(0);
 
@@ -61,6 +63,14 @@ function App() {
   };
 
   useEffect(() => {
+    GetConfig()
+      .then((config) => {
+        setConfig(config);
+      })
+      .catch((error) => {
+        console.log("Unable to retrieve configuration", error);
+      });
+
     const interval = setInterval(preemptiveRefresh, 30000);
 
     // Cleanup function to clear the interval when the component unmounts
@@ -100,7 +110,7 @@ function App() {
       <div className="flex">
         <div className="flex-grow-1">
           <BrowserRouter basename={baseURL}>
-            <NavigationMenu listeners={listeners} />
+            <NavigationMenu listeners={listeners} config={config} />
             <div className="flex">
               <div className={showMainApp ? "flex-grow-1" : "hidden"}>
                 <Routes>
@@ -125,7 +135,9 @@ function App() {
                   />
                   <Route
                     path="/request/:requestId"
-                    element={<RequestView listeners={listeners} />}
+                    element={
+                      <RequestView listeners={listeners} config={config} />
+                    }
                   />
                   <Route
                     path="/requests"
@@ -138,20 +150,28 @@ function App() {
                   />
                   <Route
                     path="/create/:defaultType/:paramNamespace?/:paramSystem?/:paramVersion?/:paramInstance?/:paramCommand?"
-                    element={<RequestCreate />}
+                    element={<RequestCreate config={config} />}
                   />
                   <Route
                     path="/recreate/:requestId"
-                    element={<RequestCreate />}
+                    element={<RequestCreate config={config} />}
                   />
                   <Route path="/jobs" element={<JobIndex />} />
-                  <Route path="/job/:jobId" element={<RequestCreate />} />
+                  <Route
+                    path="/job/:jobId"
+                    element={<RequestCreate config={config} />}
+                  />
                   <Route
                     path="/garden"
-                    element={<GardenIndex listeners={listeners} />}
+                    element={
+                      <GardenIndex listeners={listeners} config={config} />
+                    }
                   />
 
-                  <Route path="/about" element={<AboutIndex />} />
+                  <Route
+                    path="/about"
+                    element={<AboutIndex config={config} />}
+                  />
                   <Route
                     path="/"
                     element={

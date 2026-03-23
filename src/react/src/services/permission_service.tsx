@@ -1,39 +1,6 @@
-import { Role, User } from "../models/brewtils-types";
-import { PermissionCheck } from "../models/models";
-//context
-
-const LOCAL_STORAGE_KEY_USER = "__permissionUser";
-const LOCAL_STORAGE_KEY_AUTH_ENABLED = "__permissionAuthEnabled";
-
-export const updateUser = (newUser: User | undefined) => {
-  if (newUser === undefined) {
-    localStorage.removeItem(LOCAL_STORAGE_KEY_USER);
-  } else {
-    localStorage.setItem(LOCAL_STORAGE_KEY_USER, JSON.stringify(newUser));
-  }
-};
-
-export const setAuthEnabled = (authEnabled: boolean) => {
-  localStorage.setItem(
-    LOCAL_STORAGE_KEY_AUTH_ENABLED,
-    authEnabled ? "true" : "false",
-  );
-};
-
-// MOVE to User Service
-const getUser = () => {
-  return localStorage.getItem(LOCAL_STORAGE_KEY_USER)
-    ? JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_USER) ?? "")
-    : undefined;
-};
-
-// Move somewhere else
-const getAuthEnabled = () => {
-  return (
-    localStorage.getItem(LOCAL_STORAGE_KEY_AUTH_ENABLED) !== null &&
-    localStorage.getItem(LOCAL_STORAGE_KEY_AUTH_ENABLED) === "true"
-  );
-};
+import { Role } from "../models/brewtils-types";
+import { Config, PermissionCheck } from "../models/models";
+import { GetCurrentRoles } from "../services/user_service";
 
 const GetPermissions = (permission: string): Array<string> => {
   switch (permission) {
@@ -143,19 +110,11 @@ const CheckRole = (
 };
 
 export const CheckUserHasRoles = (
-  storedUser: User,
+  roles: Array<Role>,
   permission: string,
   check: PermissionCheck,
 ): boolean => {
-  if (
-    storedUser.localRoles?.some((role) => CheckRole(role, permission, check))
-  ) {
-    return true;
-  }
-
-  if (
-    storedUser.upstreamRoles?.some((role) => CheckRole(role, permission, check))
-  ) {
+  if (roles?.some((role) => CheckRole(role, permission, check))) {
     return true;
   }
 
@@ -163,19 +122,20 @@ export const CheckUserHasRoles = (
 };
 
 export const checkPermission = (
+  config: Config,
   permission: string,
   check: PermissionCheck,
 ): boolean => {
-  if (!getAuthEnabled()) {
+  if (config.auth_enabled === undefined || config.auth_enabled === false) {
     return true;
   }
 
-  const storedUser = getUser();
+  const storedRoles = GetCurrentRoles();
 
-  if (!storedUser) {
+  if (!storedRoles) {
     console.log("No user logged in");
     return false;
   }
 
-  return CheckUserHasRoles(storedUser, permission, check);
+  return CheckUserHasRoles(storedRoles, permission, check);
 };

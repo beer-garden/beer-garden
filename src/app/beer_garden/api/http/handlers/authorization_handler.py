@@ -54,10 +54,10 @@ class AuthorizationHandler(BaseHandler):
 
     async def process_operation(self, operation: Operation, **kwargs):
         # Inject target garden if provided in headers
-        if self.request.headers.get("Target-Garden"):
-            operation.target_garden_name = self.request.headers.get("Target-Garden")
-        if self.request.headers.get("Source-Garden"):
-            operation.source_garden_name = self.request.headers.get("Source-Garden")
+        if self.get_header("Target-Garden") != None:
+            operation.target_garden_name = self.get_header("Target-Garden")
+        if self.get_header("Source-Garden") != None:
+            operation.source_garden_name = self.get_header("Source-Garden")
 
         return await self.client(
             operation,
@@ -245,7 +245,8 @@ class AuthorizationHandler(BaseHandler):
             AuthorizationRequired: The token is not present
             InvalidToken: The supplied token was invalid
         """
-        auth_header = self.request.headers.get("Authorization")
+
+        auth_header = self.get_header("Authorization")
 
         if not auth_header or not auth_header.startswith("Bearer "):
             raise AuthorizationRequired(reason="No authorization token provided")

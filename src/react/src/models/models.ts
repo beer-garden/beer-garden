@@ -68,6 +68,7 @@ export interface PermissionCheck {
 }
 
 export interface HasAccessProps {
+  config: Config;
   permission: string;
   isGlobal?: boolean;
   hasGardenName?: string;

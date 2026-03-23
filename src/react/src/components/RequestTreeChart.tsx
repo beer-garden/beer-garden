@@ -5,10 +5,11 @@ import { TreeTable } from "primereact/treetable";
 
 import HasAccess from "../components/HasAccess";
 import { Request } from "../models/brewtils-types";
+import { Config } from "../models/models";
 import { DeleteRequest } from "../services/request_service";
 import { GetBaseURL } from "../services/util_service";
 
-function parseRequest(request: Request) {
+function parseRequest(request: Request, config: Config) {
   const item = {
     key: request.id,
     data: {
@@ -36,7 +37,7 @@ function parseRequest(request: Request) {
     request.children.length > 0
   ) {
     request.children.forEach((childRequest: Request) => {
-      const child_item = parseRequest(childRequest);
+      const child_item = parseRequest(childRequest, config);
       child_item.key = item.key + "-" + child_item.key;
       item.children.push(child_item);
     });
@@ -48,19 +49,20 @@ function parseRequest(request: Request) {
 interface RequestTreeChartProps {
   rootRequest?: Request;
   currentRequestId?: string;
+  config: Config;
 }
 
 function RequestTreeChart(props: RequestTreeChartProps) {
   let node = {};
   if (props.rootRequest !== undefined && props.rootRequest !== null) {
-    node = parseRequest(props.rootRequest);
+    node = parseRequest(props.rootRequest, props.config);
   }
 
   const rowClassName = (node: any) => {
     return { "p-highlight": node.data.id === props.currentRequestId };
   };
 
-  const actionTemplate = (node: any) => {
+  const actionTemplate = (node: any, config: Config) => {
     if (node.data.id === props.currentRequestId) {
       return;
     }
@@ -81,6 +83,7 @@ function RequestTreeChart(props: RequestTreeChartProps) {
           node.data.status,
         ) && (
           <HasAccess
+            config={config}
             permission="Operator"
             hasNamespace={node.data.namespace}
             hasSystemName={node.data.systemName}
@@ -97,6 +100,7 @@ function RequestTreeChart(props: RequestTreeChartProps) {
           node.data.status,
         ) && (
           <HasAccess
+            config={config}
             permission="Admin"
             hasNamespace={node.data.namespace}
             hasSystemName={node.data.systemName}
@@ -123,6 +127,7 @@ function RequestTreeChart(props: RequestTreeChartProps) {
           node.data.status,
         ) && (
           <HasAccess
+            config={config}
             permission="OPERATOR"
             hasNamespace={node.data.namespace}
             hasSystemName={node.data.systemName}
@@ -165,7 +170,7 @@ function RequestTreeChart(props: RequestTreeChartProps) {
         <Column field="status_updated_at" header="Status Updated"></Column>
         <Column field="updated_at" header="Updated"></Column>
         <Column field="comment" header="Comment"></Column>
-        <Column body={actionTemplate}> </Column>
+        <Column body={(node) => actionTemplate(node, props.config)}> </Column>
       </TreeTable>
     )
   );

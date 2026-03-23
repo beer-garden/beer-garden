@@ -4,6 +4,7 @@ import { HasAccessProps, PermissionCheck } from "../models/models";
 import { checkPermission } from "../services/permission_service";
 
 const HasAccess = ({
+  config,
   permission,
   isGlobal,
   hasGardenName,
@@ -32,7 +33,7 @@ const HasAccess = ({
       instanceName: hasInstanceName,
     } as PermissionCheck;
 
-    setHasAccess(checkPermission(permission, check));
+    setHasAccess(checkPermission(config, permission, check));
 
     setChecking(false);
   }, [
