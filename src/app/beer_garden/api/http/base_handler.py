@@ -114,7 +114,7 @@ class BaseHandler(RequestHandler):
     def get_header(self, header, default=None):
         # Headers are case insensitive
         for key in self.request.headers.keys():
-            if key.lower() == header.lower:
+            if key.lower() == header.lower():
                 return self.request.headers.get(key)
 
         return default
