@@ -20,8 +20,8 @@ import {
 import { CompareObjects } from "../services/util_service";
 
 interface SchedulerFormProps {
-  scheduledJob: Job | null;
-  setScheduledJob: (job: Job) => void;
+  scheduledJob: Job | undefined;
+  setScheduledJob: (job: Job | undefined) => void;
 }
 
 interface LayoutProps {

@@ -21,6 +21,7 @@ import SystemTable from "./layouts/SystemTable";
 import { Listener } from "./models/models";
 import NavigationMenu from "./Navigation";
 import { preemptiveRefresh } from "./services/token_service";
+import Workspace from "./layouts/Workspace";
 
 function App() {
   const [showScratchPad, setShowScratchPad] = useState<boolean>(false);
@@ -144,6 +145,7 @@ function App() {
                     path="/recreate/:requestId"
                     element={<RequestCreate />}
                   />
+                  <Route path="/workspace" element={<Workspace />} />
                   <Route path="/jobs" element={<JobIndex />} />
                   <Route path="/job/:jobId" element={<RequestCreate />} />
                   <Route

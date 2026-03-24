@@ -1,4 +1,4 @@
-import { Instance, Parameter, System } from "../models/brewtils-types";
+import { Instance, Parameter, System, Job, Request } from "../models/brewtils-types";
 
 export interface Config {
   application_name?: string;
@@ -40,6 +40,19 @@ export interface RequestCommand {
   version: string | null;
   instance: string | null;
   command: string | null;
+}
+
+export interface RequestItem {
+  requestId?: string;
+  request?: Request;
+  requestCommandInput?: RequestCommand;
+
+  jobId?: string;
+  job?: Job;
+
+  itemId: string;
+  type: string;
+  itemPos: number;
 }
 
 export interface InputParam extends Parameter {
