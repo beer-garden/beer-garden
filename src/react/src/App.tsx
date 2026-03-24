@@ -32,6 +32,11 @@ function App() {
   const [config, setConfig] = useState<Config>({});
 
   const [reloadScratchPadTrigger, setReloadScratchPadTrigger] = useState(0);
+  const [reloadUI, setReloadUI] = useState(0);
+
+  const runReloadUI = () => {
+    setReloadUI((prev) => prev + 1);
+  };
 
   const nagivateLeft = () => {
     if (showScratchPad && showMainApp) {
@@ -119,8 +124,12 @@ function App() {
       <div className="flex">
         <div className="flex-grow-1">
           <BrowserRouter basename={baseURL}>
-            <NavigationMenu listeners={listeners} config={config} />
-            <div className="flex">
+            <NavigationMenu
+              listeners={listeners}
+              config={config}
+              runReloadUI={runReloadUI}
+            />
+            <div className="flex" key={reloadUI}>
               <div className={showMainApp ? "flex-grow-1" : "hidden"}>
                 <Routes>
                   <Route

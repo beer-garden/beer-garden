@@ -14,9 +14,11 @@ import { GetCurrentUser } from "./services/user_service";
 function NavigationMenu({
   listeners,
   config,
+  runReloadUI,
 }: {
   listeners: Record<string, any>;
   config: Config;
+  runReloadUI: () => void;
 }) {
   const [iconDefault, setIconDefault] = useState<string>(
     config?.icon_default ?? "beer-mug-empty",
@@ -157,20 +159,15 @@ function NavigationMenu({
     return undefined;
   };
 
+  const [username, setUserName] = useState<string | undefined>(getUserName());
   const [loginVisible, setLoginVisible] = useState(false);
 
-  const [username, setUserName] = useState<string | undefined>(getUserName());
+  const updateUserName = (username: string | undefined) => {
+    setUserName(username);
+    runReloadUI();
+  };
 
   useEffect(() => {
-    if (!loginVisible && authEnabled && username === undefined) {
-      const userNameValue = getUserName();
-      if (userNameValue === undefined || userNameValue === null) {
-        setLoginVisible(true);
-      } else {
-        setUserName(userNameValue);
-      }
-    }
-
     if (config?.icon_default && config.icon_default !== iconDefault) {
       setIconDefault(config.icon_default);
     }
@@ -187,8 +184,11 @@ function NavigationMenu({
       config.auth_enabled !== authEnabled
     ) {
       setAuthEnabled(config.auth_enabled);
+      if (config.auth_enabled && username === undefined) {
+        setLoginVisible(true);
+      }
     }
-  }, [config, authEnabled, loginVisible, username]);
+  }, [config, authEnabled, username, iconDefault, applicationName]);
 
   const end = (
     <div className="flex">
@@ -207,7 +207,7 @@ function NavigationMenu({
               <UserLogin
                 visible={loginVisible}
                 setVisible={setLoginVisible}
-                setUsernameDisplay={setUserName}
+                setUsernameDisplay={updateUserName}
               />
             </div>
           )}
@@ -222,7 +222,7 @@ function NavigationMenu({
                   ClearToken();
                   ClearRefresh()
                     .finally(() => {
-                      setUserName(undefined);
+                      updateUserName(undefined);
                     })
                     .catch((error) => {
                       console.error("Error clearing Refresh Token:", error);
