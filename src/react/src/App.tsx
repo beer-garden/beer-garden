@@ -22,6 +22,7 @@ import { Config, Listener } from "./models/models";
 import NavigationMenu from "./Navigation";
 import { GetConfig } from "./services/config_service";
 import { preemptiveRefresh } from "./services/token_service";
+import { GetToken } from "./services/token_service";
 
 function App() {
   const [showScratchPad, setShowScratchPad] = useState<boolean>(false);
@@ -82,11 +83,19 @@ function App() {
     socketRef.current = new WebSocket("/api/v1/socket/events/");
     const handleMessage = (event: any) => {
       // Update React state with new message
+
       if (event.data) {
-        for (const [key, listener] of Object.entries(listeners)) {
-          if (key && listener && listener.listener) {
-            listener.listener(JSON.parse(event.data));
-            console.log("Message from server for listener", key, event.data);
+        const eventData = JSON.parse(event.data);
+        if (eventData?.name === "AUTHORIZATION_REQUIRED") {
+          socketRef.current.send(
+            JSON.stringify({ name: "UPDATE_TOKEN", payload: GetToken() }),
+          );
+        } else {
+          for (const [key, listener] of Object.entries(listeners)) {
+            if (key && listener && listener.listener) {
+              listener.listener(eventData);
+              console.log("Message from server for listener", key, event.data);
+            }
           }
         }
       }

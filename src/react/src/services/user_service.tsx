@@ -26,7 +26,12 @@ export const GetCurrentRoles = (): Array<Role> | undefined => {
     if (decode.roles) {
       const userRoles = [] as Array<Role>;
       for (const role of decode.roles) {
-        userRoles.push(JSON.parse(role) as Role);
+        // The role can be a string or an object depending on how the token was generated
+        if (typeof role === "string") {
+          userRoles.push(JSON.parse(role) as Role);
+        } else {
+          userRoles.push(role as Role);
+        }
       }
       return userRoles;
     }
