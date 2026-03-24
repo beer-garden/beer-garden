@@ -1,3 +1,5 @@
+import "react-js-cron/dist/styles.css";
+
 import { Calendar } from "primereact/calendar";
 import { Checkbox } from "primereact/checkbox";
 import { Dropdown } from "primereact/dropdown";
@@ -20,17 +22,21 @@ import { CompareObjects } from "../services/util_service";
 interface SchedulerFormProps {
   scheduledJob: Job | null;
   setScheduledJob: (job: Job) => void;
-  runState: string;
-  setRunState: (value: string) => void;
-  runOptions: Array<string>;
+}
+
+interface LayoutProps {
+  labelWidth: string;
+  valueWidth: string;
 }
 
 function FileForm({
   fileTrigger,
   setFileTrigger,
+  layoutProps,
 }: {
   fileTrigger: FileTrigger | null;
   setFileTrigger: (trigger: FileTrigger) => void;
+  layoutProps: LayoutProps;
 }) {
   const CREATE = "Create";
   const MODIFY = "Modify";
@@ -97,56 +103,68 @@ function FileForm({
   if (fileTrigger === null) {
     setFileTrigger({});
   }
+
   return (
     <div>
-      <div className="p-field">
-        <label className="ml-2" htmlFor="path">
-          Path
-        </label>
-        <InputText
-          id="path"
-          value={fileTrigger?.path}
-          onChange={(e) => {
-            setFileTrigger({ ...fileTrigger, ...{ path: e.target.value } });
-          }}
-        />
+      <div className="flex ml-2 mb-2">
+        <div style={{ width: layoutProps.labelWidth }}>
+          <label htmlFor="path">Path</label>
+        </div>
+        <div style={{ width: layoutProps.valueWidth }}>
+          <InputText
+            id="path"
+            value={fileTrigger?.path}
+            onChange={(e) => {
+              setFileTrigger({ ...fileTrigger, ...{ path: e.target.value } });
+            }}
+          />
+        </div>
       </div>
-      <div className="p-field">
-        <label className="ml-2" htmlFor="pattern">
-          Pattern
-        </label>
-        <InputText
-          id="pattern"
-          value={fileTrigger?.pattern}
-          onChange={(e) => {
-            setFileTrigger({ ...fileTrigger, ...{ pattern: e.target.value } });
-          }}
-        />
+      <div className="flex ml-2 mb-2">
+        <div style={{ width: layoutProps.labelWidth }}>
+          <label htmlFor="pattern">Pattern</label>
+        </div>
+        <div style={{ width: layoutProps.valueWidth }}>
+          <InputText
+            id="pattern"
+            value={fileTrigger?.pattern}
+            onChange={(e) => {
+              setFileTrigger({
+                ...fileTrigger,
+                ...{ pattern: e.target.value },
+              });
+            }}
+          />
+        </div>
       </div>
-      <div className="p-field">
-        <label className="ml-2" htmlFor="recursive">
-          Recursive
-        </label>
-        <Checkbox
-          onChange={(e) => {
-            setFileTrigger({
-              ...fileTrigger,
-              ...{ recursive: e.target.value },
-            });
-          }}
-          checked={fileTrigger?.recursive === true}
-        ></Checkbox>
+      <div className="flex ml-2 mb-2">
+        <div style={{ width: layoutProps.labelWidth }}>
+          <label htmlFor="recursive">Recursive</label>
+        </div>
+        <div style={{ width: layoutProps.valueWidth }}>
+          <Checkbox
+            onChange={(e) => {
+              setFileTrigger({
+                ...fileTrigger,
+                ...{ recursive: e.target.value },
+              });
+            }}
+            checked={fileTrigger?.recursive === true}
+          ></Checkbox>
+        </div>
       </div>
-      <div className="p-field">
-        <label className="ml-2" htmlFor="eventTypes">
-          Event Types
-        </label>
-        <MultiSelect
-          value={selectedTypes}
-          onChange={(e) => setSelectedTypes(e.value)}
-          options={typeOptions}
-          placeholder="Select Event Type"
-        />
+      <div className="flex ml-2 mb-2">
+        <div style={{ width: layoutProps.labelWidth }}>
+          <label htmlFor="eventTypes">Event Types</label>
+        </div>
+        <div style={{ width: layoutProps.valueWidth }}>
+          <MultiSelect
+            value={selectedTypes}
+            onChange={(e) => setSelectedTypes(e.value)}
+            options={typeOptions}
+            placeholder="Select Event Type"
+          />
+        </div>
       </div>
     </div>
   );
@@ -155,9 +173,11 @@ function FileForm({
 function DateForm({
   dateTrigger,
   setDateTrigger,
+  layoutProps,
 }: {
   dateTrigger: DateTrigger | null;
   setDateTrigger: (trigger: DateTrigger) => void;
+  layoutProps: LayoutProps;
 }) {
   const [runDate, setRunDate] = useState(
     typeof dateTrigger?.runDate === "string"
@@ -173,27 +193,34 @@ function DateForm({
 
   return (
     <div>
-      <div className="p-field">
-        <label className="ml-2" htmlFor="runDate">
-          Run Date
-        </label>
-        <Calendar
-          value={runDate}
-          showTime
-          hourFormat="24"
-          onChange={(e: any) => setRunDate(e.value)}
-        />
+      <div className="flex ml-2 mb-2">
+        <div style={{ width: layoutProps.labelWidth }}>
+          <label htmlFor="runDate">Run Date</label>
+        </div>
+        <div style={{ width: layoutProps.valueWidth }}>
+          <Calendar
+            value={runDate}
+            showTime
+            hourFormat="24"
+            onChange={(e: any) => setRunDate(e.value)}
+          />
+        </div>
       </div>
-      <div className="p-field">
-        <label className="ml-2" htmlFor="timezone">
-          Timezone
-        </label>
-        <InputText
-          value={dateTrigger?.timezone}
-          onChange={(e) => {
-            setDateTrigger({ ...dateTrigger, ...{ timezone: e.target.value } });
-          }}
-        />
+      <div className="flex ml-2 mb-2">
+        <div style={{ width: layoutProps.labelWidth }}>
+          <label htmlFor="timezone">Timezone</label>
+        </div>
+        <div style={{ width: layoutProps.valueWidth }}>
+          <InputText
+            value={dateTrigger?.timezone}
+            onChange={(e) => {
+              setDateTrigger({
+                ...dateTrigger,
+                ...{ timezone: e.target.value },
+              });
+            }}
+          />
+        </div>
       </div>
     </div>
   );
@@ -202,9 +229,11 @@ function DateForm({
 function IntervalForm({
   intervalTrigger,
   setIntervalTrigger,
+  layoutProps,
 }: {
   intervalTrigger: IntervalTrigger | null;
   setIntervalTrigger: (trigger: IntervalTrigger) => void;
+  layoutProps: LayoutProps;
 }) {
   const typeOptions = ["seconds", "minutes", "hours", "days", "weeks"];
 
@@ -308,66 +337,76 @@ function IntervalForm({
 
   return (
     <div>
-      <div className="p-field">
-        <label className="ml-2" htmlFor="intervalNumber">
-          Interval Number
-        </label>
-        <InputNumber
-          id="intervalNumber"
-          value={intervalNumber}
-          onChange={(e) => setIntervalNumber(e.value)}
-          min={1}
-        />
+      <div className="flex ml-2 mb-2">
+        <div style={{ width: layoutProps.labelWidth }}>
+          <label htmlFor="intervalNumber">Interval Number</label>
+        </div>
+        <div style={{ width: layoutProps.valueWidth }}>
+          <InputNumber
+            id="intervalNumber"
+            value={intervalNumber}
+            onChange={(e) => setIntervalNumber(e.value)}
+            min={1}
+          />
+        </div>
       </div>
-      <div className="p-field">
-        <label className="ml-2" htmlFor="intervalType">
-          Interval Type
-        </label>
-        <Dropdown
-          id="intervalType"
-          options={typeOptions || []}
-          value={intervalType}
-          onChange={(e) => setIntervalType(e.value)}
-        />
+      <div className="flex ml-2 mb-2">
+        <div style={{ width: layoutProps.labelWidth }}>
+          <label htmlFor="intervalType">Interval Type</label>
+        </div>
+        <div style={{ width: layoutProps.valueWidth }}>
+          <Dropdown
+            id="intervalType"
+            options={typeOptions || []}
+            value={intervalType}
+            onChange={(e) => setIntervalType(e.value)}
+          />
+        </div>
       </div>
-      <div className="p-field">
-        <label className="ml-2" htmlFor="startDate">
-          Start Date
-        </label>
-        <Calendar
-          id="startDate"
-          value={startDate}
-          showTime
-          hourFormat="24"
-          onChange={(e: any) => setStartDate(e.value)}
-        />
+      <div className="flex ml-2 mb-2">
+        <div style={{ width: layoutProps.labelWidth }}>
+          <label htmlFor="startDate">Start Date</label>
+        </div>
+        <div style={{ width: layoutProps.valueWidth }}>
+          <Calendar
+            id="startDate"
+            value={startDate}
+            showTime
+            hourFormat="24"
+            onChange={(e: any) => setStartDate(e.value)}
+          />
+        </div>
       </div>
-      <div className="p-field">
-        <label className="ml-2" htmlFor="endDate">
-          End Date
-        </label>
-        <Calendar
-          id="endDate"
-          value={endDate}
-          showTime
-          hourFormat="24"
-          onChange={(e: any) => setEndDate(e.value)}
-        />
+      <div className="flex ml-2 mb-2">
+        <div style={{ width: layoutProps.labelWidth }}>
+          <label htmlFor="endDate">End Date</label>
+        </div>
+        <div style={{ width: layoutProps.valueWidth }}>
+          <Calendar
+            id="endDate"
+            value={endDate}
+            showTime
+            hourFormat="24"
+            onChange={(e: any) => setEndDate(e.value)}
+          />
+        </div>
       </div>
-      <div className="p-field">
-        <label className="ml-2" htmlFor="timezone">
-          Timezone
-        </label>
-        <InputText
-          id="timezone"
-          value={intervalTrigger?.timezone}
-          onChange={(e) => {
-            setIntervalTrigger({
-              ...intervalTrigger,
-              ...{ timezone: e.target.value },
-            });
-          }}
-        />
+      <div className="flex ml-2 mb-2">
+        <div style={{ width: layoutProps.labelWidth }}>
+          <label htmlFor="timezone">Timezone</label>
+        </div>
+        <div style={{ width: layoutProps.valueWidth }}>
+          <InputText
+            id="timezone"
+            value={intervalTrigger?.timezone}
+            onChange={(e) => {
+              setIntervalTrigger({
+                ...intervalTrigger,
+                ...{ timezone: e.target.value },
+              });
+            }}
+          />
+        </div>
       </div>
     </div>
   );
@@ -376,9 +415,11 @@ function IntervalForm({
 function CronForm({
   cronTrigger,
   setCronTrigger,
+  layoutProps,
 }: {
   cronTrigger: CronTrigger | null;
   setCronTrigger: (trigger: CronTrigger) => void;
+  layoutProps: LayoutProps;
 }) {
   const defaultCronValue =
     (cronTrigger?.minute ? cronTrigger.minute : "*") +
@@ -464,74 +505,84 @@ function CronForm({
 
   return (
     <div>
-      <div className="p-field">
-        <Cron
-          value={cronValue}
-          setValue={setCronValue}
-          clockFormat="24-hour-clock"
-        />
+      <div className="flex ml-2 mb-2">
+        <div style={{ width: layoutProps.labelWidth }}>
+          <label htmlFor="cron">CRON</label>
+        </div>
+        <div style={{ width: layoutProps.valueWidth }}>
+          <Cron
+            value={cronValue}
+            setValue={setCronValue}
+            clockFormat="24-hour-clock"
+          />
+        </div>
       </div>
 
-      <div className="p-field">
-        <label className="ml-2" htmlFor="cronJitter">
-          CRON Jitter
-        </label>
-        <InputNumber
-          id="cronJitter"
-          value={cronTrigger?.jitter}
-          onValueChange={(e) => {
-            setCronTrigger({ ...cronTrigger, ...{ jitter: e.target.value } });
-          }}
-          min={0}
-        />
+      <div className="flex ml-2 mb-2">
+        <div style={{ width: layoutProps.labelWidth }}>
+          <label htmlFor="cronJitter">CRON Jitter</label>
+        </div>
+        <div style={{ width: layoutProps.valueWidth }}>
+          <InputNumber
+            id="cronJitter"
+            value={cronTrigger?.jitter}
+            onValueChange={(e) => {
+              setCronTrigger({ ...cronTrigger, ...{ jitter: e.target.value } });
+            }}
+            min={0}
+          />
+        </div>
       </div>
-      <div className="p-field">
-        <label className="ml-2" htmlFor="startDate">
-          Start Date
-        </label>
-        <Calendar
-          id="startDate"
-          value={startDate}
-          showTime
-          hourFormat="24"
-          onChange={(e: any) => setStartDate(e.value)}
-        />
+      <div className="flex ml-2 mb-2">
+        <div style={{ width: layoutProps.labelWidth }}>
+          <label htmlFor="startDate">Start Date</label>
+        </div>
+        <div style={{ width: layoutProps.valueWidth }}>
+          <Calendar
+            id="startDate"
+            value={startDate}
+            showTime
+            hourFormat="24"
+            onChange={(e: any) => setStartDate(e.value)}
+          />
+        </div>
       </div>
-      <div className="p-field">
-        <label className="ml-2" htmlFor="endDate">
-          End Date
-        </label>
-        <Calendar
-          id="endDate"
-          value={endDate}
-          showTime
-          hourFormat="24"
-          onChange={(e: any) => setEndDate(e.value)}
-        />
+      <div className="flex ml-2 mb-2">
+        <div style={{ width: layoutProps.labelWidth }}>
+          <label htmlFor="endDate">End Date</label>
+        </div>
+        <div style={{ width: layoutProps.valueWidth }}>
+          <Calendar
+            id="endDate"
+            value={endDate}
+            showTime
+            hourFormat="24"
+            onChange={(e: any) => setEndDate(e.value)}
+          />
+        </div>
       </div>
-      <div className="p-field">
-        <label className="ml-2" htmlFor="timezone">
-          Timezone
-        </label>
-        <InputText
-          id="timezone"
-          value={cronTrigger?.timezone}
-          onChange={(e) => {
-            setCronTrigger({ ...cronTrigger, ...{ timezone: e.target.value } });
-          }}
-        />
+      <div className="flex ml-2 mb-2">
+        <div style={{ width: layoutProps.labelWidth }}>
+          <label htmlFor="timezone">Timezone</label>
+        </div>
+        <div style={{ width: layoutProps.valueWidth }}>
+          <InputText
+            id="timezone"
+            value={cronTrigger?.timezone}
+            onChange={(e) => {
+              setCronTrigger({
+                ...cronTrigger,
+                ...{ timezone: e.target.value },
+              });
+            }}
+          />
+        </div>
       </div>
     </div>
   );
 }
 
-function SchedulerForm({
-  scheduledJob,
-  setScheduledJob,
-  runState,
-  setRunState,
-  runOptions,
-}: SchedulerFormProps) {
+function SchedulerForm({ scheduledJob, setScheduledJob }: SchedulerFormProps) {
   const jobOptions = ["CRON", "Interval", "Date", "File"];
   let defaultJobOption = "CRON";
 
@@ -593,126 +644,144 @@ function SchedulerForm({
     setScheduledJob,
   ]);
 
+  const layoutProps = {
+    valueWidth: "70%",
+    labelWidth: "30%",
+  } as LayoutProps;
+
   return (
     <div>
-      <div className="card flex justify-content-center">
+      <div className="card flex justify-content-center mb-4">
         <SelectButton
-          value={runState}
-          onChange={(e) => e.value && setRunState(e.value)}
-          options={runOptions}
+          value={jobState}
+          onChange={(e) => e.value && setJobState(e.value)}
+          options={jobOptions}
         />
       </div>
-      {runState === runOptions[1] && (
-        <div className="card flex flex-column align-items-center gap-3 ">
-          <div className="p-field">
-            <label className="ml-2" htmlFor="jobName">
-              Job Name
-            </label>
-            <InputText
-              id="jobName"
-              value={scheduledJob?.name}
-              onChange={(e) => {
-                setScheduledJob({
-                  ...scheduledJob,
-                  ...{ name: e.target.value },
-                });
-              }}
-            />
+
+      <div className="card flex justify-content-center ">
+        <div>
+          <div className="flex ml-2 mb-2">
+            <div style={{ width: layoutProps.labelWidth }}>
+              <label htmlFor="jobName">Job Name</label>
+            </div>
+            <div style={{ width: layoutProps.valueWidth }}>
+              <InputText
+                id="jobName"
+                value={scheduledJob?.name}
+                onChange={(e) => {
+                  setScheduledJob({
+                    ...scheduledJob,
+                    ...{ name: e.target.value },
+                  });
+                }}
+              />
+            </div>
           </div>
 
-          <div className="p-field">
-            <label className="ml-2" htmlFor="coalesce">
-              Coalesce
-            </label>
-            <Checkbox
-              id="coalesce"
-              onChange={(e) => {
-                setScheduledJob({ ...scheduledJob, ...{ coalesce: e.value } });
-              }}
-              checked={scheduledJob?.coalesce === true}
-            ></Checkbox>
+          <div className="flex ml-2 mb-2">
+            <div style={{ width: layoutProps.labelWidth }}>
+              <label htmlFor="coalesce">Coalesce</label>
+            </div>
+            <div style={{ width: layoutProps.valueWidth }}>
+              <Checkbox
+                id="coalesce"
+                onChange={(e) => {
+                  setScheduledJob({
+                    ...scheduledJob,
+                    ...{ coalesce: e.value },
+                  });
+                }}
+                checked={scheduledJob?.coalesce === true}
+              ></Checkbox>
+            </div>
           </div>
-          <div className="p-field">
-            <label className="ml-2" htmlFor="misfireGraceTime">
-              Misfire Grace Time
-            </label>
-            <InputNumber
-              id="misfireGraceTime"
-              value={scheduledJob?.misfire_grace_time}
-              onValueChange={(e) => {
-                setScheduledJob({
-                  ...scheduledJob,
-                  ...{ misfire_grace_time: e.value },
-                });
-              }}
-              showButtons
-              min={0}
-            />
+          <div className="flex ml-2 mb-2">
+            <div style={{ width: layoutProps.labelWidth }}>
+              <label htmlFor="misfireGraceTime">Misfire Grace Time</label>
+            </div>
+            <div style={{ width: layoutProps.valueWidth }}>
+              <InputNumber
+                id="misfireGraceTime"
+                value={scheduledJob?.misfire_grace_time}
+                onValueChange={(e) => {
+                  setScheduledJob({
+                    ...scheduledJob,
+                    ...{ misfire_grace_time: e.value },
+                  });
+                }}
+                showButtons
+                min={0}
+              />
+            </div>
           </div>
-          <div className="p-field">
-            <label className="ml-2" htmlFor="maxInstances">
-              Max Instances
-            </label>
-            <InputNumber
-              id="maxInstances"
-              value={scheduledJob?.max_instances}
-              onValueChange={(e) => {
-                setScheduledJob({
-                  ...scheduledJob,
-                  ...{ max_instances: e.value },
-                });
-              }}
-              showButtons
-              min={1}
-            />
+          <div className="flex ml-2 mb-2">
+            <div style={{ width: layoutProps.labelWidth }}>
+              <label htmlFor="maxInstances">Max Instances</label>
+            </div>
+            <div style={{ width: layoutProps.valueWidth }}>
+              <InputNumber
+                id="maxInstances"
+                value={scheduledJob?.max_instances}
+                onValueChange={(e) => {
+                  setScheduledJob({
+                    ...scheduledJob,
+                    ...{ max_instances: e.value },
+                  });
+                }}
+                showButtons
+                min={1}
+              />
+            </div>
           </div>
-          <div className="p-field">
-            <label className="ml-2" htmlFor="timeout">
-              Timeout
-            </label>
-            <InputNumber
-              id="timeout"
-              value={scheduledJob?.timeout}
-              onValueChange={(e) => {
-                setScheduledJob({ ...scheduledJob, ...{ timeout: e.value } });
-              }}
-              showButtons
-              min={0}
-            />
+          <div className="flex ml-2 mb-2">
+            <div style={{ width: layoutProps.labelWidth }}>
+              <label htmlFor="timeout">Timeout</label>
+            </div>
+            <div style={{ width: layoutProps.valueWidth }}>
+              <InputNumber
+                id="timeout"
+                value={scheduledJob?.timeout}
+                onValueChange={(e) => {
+                  setScheduledJob({ ...scheduledJob, ...{ timeout: e.value } });
+                }}
+                showButtons
+                min={0}
+              />
+            </div>
           </div>
-          <div className="p-field">
-            <SelectButton
-              value={jobState}
-              onChange={(e) => e.value && setJobState(e.value)}
-              options={jobOptions}
-            />
-          </div>
+        </div>
+        <div>
           {jobState === "CRON" && (
             <CronForm
               cronTrigger={cronTrigger}
               setCronTrigger={setCronTrigger}
+              layoutProps={layoutProps}
             />
           )}
           {jobState === "Interval" && (
             <IntervalForm
               intervalTrigger={intervalTrigger}
               setIntervalTrigger={setIntervalTrigger}
+              layoutProps={layoutProps}
             />
           )}
           {jobState === "Date" && (
             <DateForm
               dateTrigger={dateTrigger}
               setDateTrigger={setDateTrigger}
+              layoutProps={layoutProps}
             />
           )}
           {jobState === "File" && (
             <FileForm
               fileTrigger={fileTrigger}
               setFileTrigger={setFileTrigger}
+              layoutProps={layoutProps}
             />
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

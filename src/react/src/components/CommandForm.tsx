@@ -1,6 +1,3 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
 import { useEffect, useRef, useState } from "react";
 
 import { ChoicesValue, Command, Request } from "../models/brewtils-types";
@@ -13,6 +10,8 @@ interface CommandFormProps {
   disabled?: boolean;
   request?: Request | null | undefined;
   setRequest: (request: Request) => void;
+  resetForm: boolean;
+  setResetForm: (reset: boolean) => void;
 }
 
 function CommandForm({
@@ -20,6 +19,8 @@ function CommandForm({
   disabled,
   request,
   setRequest,
+  resetForm,
+  setResetForm,
 }: CommandFormProps) {
   disabled = disabled === undefined ? true : disabled;
   const [parametersFields, setParameterFields] = useState(
@@ -35,8 +36,6 @@ function CommandForm({
   const altLoadingChoices = useRef<Array<{ key: string; timestamp: number }>>(
     [],
   );
-  const [visibleCodeExample, setVisibleCodeExample] = useState<boolean>(false);
-  const [resetForm, setResetForm] = useState(false);
 
   const generateChoices = (
     parameter: InputParam,
@@ -414,14 +413,14 @@ function CommandForm({
     setLoadingChoices([...altLoadingChoices.current]);
   };
 
-  const resetRequest = () => {
-    setResetForm(!resetForm);
-    buildDefaults(false);
-  };
-
   useEffect(() => {
     if (!initialized) {
       buildDefaults();
+      return;
+    }
+    if (resetForm) {
+      setResetForm(false);
+      buildDefaults(false);
       return;
     }
     let updated = false;
@@ -500,7 +499,7 @@ function CommandForm({
         }
       });
     }
-  }, [parametersFields, initialized, request, setRequest]);
+  }, [parametersFields, initialized, request, setRequest, resetForm]);
 
   const handleChange = (name: any, value: any) => {
     altParametersFields.current = altParametersFields.current.map((param) =>
@@ -511,142 +510,6 @@ function CommandForm({
 
   const renderInputLabel = (parameter: InputParam) => {
     return <label htmlFor={parameter.key}>{parameter.key}</label>;
-  };
-
-  const CodeBlock = (codeType: string) => {
-    const getHostName = () => {
-      return window.location.hostname;
-    };
-
-    const getPort = () => {
-      return window.location.port;
-    };
-
-    const getPrefix = () => {
-      const path = window.location.pathname;
-
-      for (const knownPaths of ["/create", "/recreate"]) {
-        const index = path.indexOf(knownPaths);
-        if (index > 0) {
-          return path.slice(1, index) + "/";
-        }
-      }
-
-      return "";
-    };
-
-    const getSslEnabled = () => {
-      return window.location.protocol === "https:" ? "True" : "False";
-    };
-
-    const wgetCode = () => {
-      return `
-  wget --method=POST -O- \\
-    --body-data='${JSON.stringify(request)}' \\
-    --header=Content-Type:application/json \\
-    ${getHostName()}:${getPort()}${getPrefix()}/api/v1/requests?blocking=true
-  `;
-    };
-
-    const curlCode = () => {
-      return `
-  curl -X POST ${getHostName()}:${getPort()}${getPrefix()}/api/v1/requests?blocking=true \\
-    -H "Content-Type: application/json" \\
-    -d '${JSON.stringify(request)}'
-  `;
-    };
-
-    const pythonCode = () => {
-      const generateParams = () => {
-        if (request?.parameters) {
-          const printParams = [] as Array<string>;
-
-          for (const [key, value] of Object.entries(
-            request?.parameters || {},
-          )) {
-            if (value && value !== undefined && value !== null) {
-              if (typeof value === "string") {
-                printParams.push(key + '="' + value + '"');
-              } else if (typeof value === "boolean") {
-                printParams.push(key + "=" + (value ? "True" : "False"));
-              } else {
-                printParams.push(key + "=" + value);
-              }
-            }
-          }
-
-          return printParams.join(", ");
-        }
-        return "";
-      };
-
-      return `
-  from brewtils import SystemClient
-  
-  request = SystemClient(
-    system_name = '${request?.system}',
-    system_namespace = '${request?.namespace}',
-    version_constraint = '${request?.system_version}',
-    default_instance = '${request?.instance_name}',
-    bg_host = '${getHostName()}',
-    bg_url_prefix = '${getPrefix()}',
-    bg_port = ${getPort()},
-    blocking = True,
-    ssl_enabled = ${getSslEnabled()},
-    ca_cert = None,
-    ca_verify = None,
-    client_cert = None).${request?.command ? request?.command : "command"}(${generateParams()})
-  
-  print(request)
-  `;
-    };
-
-    const code = () => {
-      if (codeType === "Python") {
-        return pythonCode();
-      }
-      if (codeType === "cURL") {
-        return curlCode();
-      }
-      if (codeType === "Wget") {
-        return wgetCode();
-      }
-
-      if (codeType === "JSON") {
-        return JSON.stringify(request, null, 2);
-      }
-
-      return "";
-    };
-    const copyToClipboard = () => {
-      navigator.clipboard.writeText(code()).catch((error) => {
-        console.error("Error copying to clipboard:", error);
-      });
-    };
-
-    return (
-      <div style={{ position: "relative" }}>
-        <h3>{codeType}</h3>
-        <Button
-          className="p-button-rounded p-button-text"
-          onClick={copyToClipboard}
-          style={{ position: "absolute", top: "0.5rem", right: "0.5rem" }}
-        >
-          <FontAwesomeIcon icon="copy" />
-        </Button>
-        <pre>
-          <code
-            style={{
-              whiteSpace: "pre-wrap",
-              overflowWrap: "break-word",
-              overflowX: "auto",
-            }}
-          >
-            {code()}
-          </code>
-        </pre>
-      </div>
-    );
   };
 
   // Need to find a better way to handle states of dynamic options loading instead of
@@ -680,41 +543,6 @@ function CommandForm({
             </div>
           ))}
       </div>
-
-      <Dialog
-        header={"Code Examples"}
-        visible={visibleCodeExample}
-        onHide={() => {
-          if (!visibleCodeExample) return;
-          setVisibleCodeExample(false);
-        }}
-        style={{ width: "50vw" }}
-      >
-        <div>
-          Bytes and Base64 parameters are not supported in code examples.
-        </div>
-        {CodeBlock("Python")}
-
-        {CodeBlock("cURL")}
-
-        {CodeBlock("Wget")}
-
-        {CodeBlock("JSON")}
-      </Dialog>
-      <Button
-        label="Reset Form"
-        severity="warning"
-        icon="pi pi-arrow-right"
-        onClick={resetRequest}
-        className="mr-2"
-      />
-      <Button
-        label="Code Examples"
-        severity="info"
-        icon="pi pi-arrow-right"
-        onClick={() => setVisibleCodeExample(true)}
-        className="mr-2"
-      />
     </div>
   );
 }

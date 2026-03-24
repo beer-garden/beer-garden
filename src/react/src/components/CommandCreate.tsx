@@ -16,12 +16,16 @@ function CommandCreate({
   setRequest,
   requestCommand,
   setRequestCommand,
+  resetForm,
+  setResetForm,
   callback,
 }: {
   request?: Request;
   setRequest: (request: Request) => void;
   requestCommand: RequestCommand;
   setRequestCommand: (requestCommand: RequestCommand) => void;
+  resetForm: boolean;
+  setResetForm: (reset: boolean) => void;
   callback?: () => void;
 }) {
   const toast = useRef(null as null | any);
@@ -178,6 +182,8 @@ function CommandCreate({
             disabled={false}
             request={request}
             setRequest={setRequest}
+            resetForm={resetForm}
+            setResetForm={setResetForm}
           />
         </div>
       )}
