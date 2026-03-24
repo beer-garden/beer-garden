@@ -4,6 +4,10 @@ import { Garden, System } from "../models/brewtils-types";
 import { GetAuthHeaders } from "./token_service";
 import { GetBaseURL } from "./util_service";
 
+export const ClearSystemsCache = (): void => {
+  sessionStorage.removeItem("systems");
+};
+
 export const GetSystem = async (
   systemId: string,
   headerData: any,

@@ -21,6 +21,7 @@ import SystemTable from "./layouts/SystemTable";
 import { Config, Listener } from "./models/models";
 import NavigationMenu from "./Navigation";
 import { GetConfig } from "./services/config_service";
+import { ClearSystemsCache } from "./services/system_service";
 import { preemptiveRefresh } from "./services/token_service";
 import { GetToken } from "./services/token_service";
 
@@ -35,6 +36,7 @@ function App() {
   const [reloadUI, setReloadUI] = useState(0);
 
   const runReloadUI = () => {
+    ClearSystemsCache();
     setReloadUI((prev) => prev + 1);
   };
 
