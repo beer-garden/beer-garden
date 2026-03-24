@@ -1,7 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
 import { Column } from "primereact/column";
-import { DataTable } from "primereact/datatable";
+import { DataTable, SortOrder } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
 import { Dropdown } from "primereact/dropdown";
 import { InputText } from "primereact/inputtext";
@@ -33,8 +33,8 @@ function RoleIndex() {
   const [loading, setLoading] = useState(false);
   const [first, setFirst] = useState<number>(0);
   const [rows, setRows] = useState<number>(10);
-  const [sortField, setSortField] = useState<string | null>(null);
-  const [sortOrder, setSortOrder] = useState<number | null>(null);
+  const [sortField, setSortField] = useState<string | undefined>(undefined);
+  const [sortOrder, setSortOrder] = useState<SortOrder>(undefined);
 
   const [dialogVisible, setDialogVisible] = useState(false);
   const isEdit = useRef<boolean>(false);
@@ -192,8 +192,16 @@ function RoleIndex() {
       <div className="flex items-end ml-2 page-header">
         <h1 className="flex-1">Role Management</h1>
         <div>
-          <Button onClick={handleRescan} label="Rescan Roles" />
-          <Button onClick={openRoleDialog} label="Create Role" />
+          <Button
+            onClick={handleRescan}
+            label="Rescan Roles"
+            data-testid="rescan-btn"
+          />
+          <Button
+            onClick={openRoleDialog}
+            label="Create Role"
+            data-testid="create-btn"
+          />
         </div>
       </div>
     );
@@ -264,18 +272,27 @@ function RoleIndex() {
       return (
         <div className="flex">
           <Button
+            data-testid={`duplicate-btn-${role.name}`}
             tooltip="Duplicate"
             onClick={() => handleLoadRole(role, true)}
           >
             <FontAwesomeIcon icon="clone" />
           </Button>
           {!role.file_generated && !role.protected && (
-            <Button tooltip="Edit" onClick={() => handleLoadRole(role, false)}>
+            <Button
+              data-testid={`edit-btn-${role.name}`}
+              tooltip="Edit"
+              onClick={() => handleLoadRole(role, false)}
+            >
               <FontAwesomeIcon icon="pencil" />
             </Button>
           )}
           {!role.file_generated && !role.protected && (
-            <Button tooltip="Delete" onClick={() => handleDeleteRole(role)}>
+            <Button
+              data-testid={`delete-btn-${role.name}`}
+              tooltip="Delete"
+              onClick={() => handleDeleteRole(role)}
+            >
               <FontAwesomeIcon icon="trash-can" />
             </Button>
           )}
@@ -292,6 +309,7 @@ function RoleIndex() {
           administator to enable this feature."
         />
         <DataTable
+          data-testid="role-datatable"
           value={roles}
           loading={loading}
           paginator
@@ -330,12 +348,17 @@ function RoleIndex() {
     <div>
       <Toast ref={toast} />
       <Dialog
+        data-testid="role-dialog"
         appendTo={"self"}
         header={isEdit.current ? "Edit Role" : "Create Role"}
         footer={
           <>
             <Button onClick={handleDialogClose}>Close</Button>
-            <Button severity="danger" onClick={handleDialogSubmit}>
+            <Button
+              data-testid={`submit-btn-dialog`}
+              severity="danger"
+              onClick={handleDialogSubmit}
+            >
               Submit
             </Button>
           </>
