@@ -2,6 +2,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { TreeTable } from "primereact/treetable";
+import { useNavigate } from "react-router-dom";
 
 import { Request } from "../models/brewtils-types";
 import { DeleteRequest } from "../services/request_service";
@@ -50,6 +51,8 @@ interface RequestTreeChartProps {
 }
 
 function RequestTreeChart(props: RequestTreeChartProps) {
+  const navigate = useNavigate();
+
   let node = {};
   if (props.rootRequest !== undefined && props.rootRequest !== null) {
     node = parseRequest(props.rootRequest);
@@ -69,9 +72,7 @@ function RequestTreeChart(props: RequestTreeChartProps) {
           rounded
           raised
           link
-          onClick={() =>
-            window.open(`${GetBaseURL()}/request/${node.data.id}`, "_self")
-          }
+          onClick={() => navigate(`${GetBaseURL()}/request/${node.data.id}`)}
           title="Open"
         >
           <FontAwesomeIcon icon="arrow-up-right-from-square" />{" "}
@@ -107,9 +108,7 @@ function RequestTreeChart(props: RequestTreeChartProps) {
             rounded
             raised
             link
-            onClick={() =>
-              window.open(`${GetBaseURL()}/recreate/${node.data.id}`, "_self")
-            }
+            onClick={() => navigate(`${GetBaseURL()}/recreate/${node.data.id}`)}
             title="Pour Again"
           >
             <FontAwesomeIcon icon="rotate" />{" "}

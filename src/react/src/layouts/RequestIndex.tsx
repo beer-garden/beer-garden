@@ -13,6 +13,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { Request } from "../models/brewtils-types";
 import { GetRequestList } from "../services/request_service";
@@ -26,6 +27,7 @@ function RequestIndex({
   listeners: Record<string, any>;
   setReloadScratchPad: any;
 }) {
+  const navigate = useNavigate();
   const [requests, setRequests] = useState<Array<Request>>([]);
   const altRequests = useRef<Array<Request>>([]);
   const [loading, setLoading] = useState(false);
@@ -269,9 +271,7 @@ function RequestIndex({
           rounded
           raised
           link
-          onClick={() =>
-            window.open(`${GetBaseURL()}/request/${request.id}`, "_self")
-          }
+          onClick={() => navigate(`${GetBaseURL()}/request/${request.id}`)}
           tooltip={"Open Request " + request.command_display_name}
         >
           <FontAwesomeIcon icon="arrow-up-right-from-square" />{" "}

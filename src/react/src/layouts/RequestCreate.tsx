@@ -3,7 +3,7 @@ import { Skeleton } from "primereact/skeleton";
 import { Stepper } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import CommandCreate from "../components/CommandCreate";
 import SchedulerForm from "../components/SchedulerForm";
@@ -15,6 +15,7 @@ import { PostRequest } from "../services/request_service";
 import { GetBaseURL } from "../services/util_service";
 
 function RequestCreate() {
+  const navigate = useNavigate();
   const { requestId } = useParams<{ requestId: string }>();
   const { jobId } = useParams<{ jobId: string }>();
   const { defaultType } = useParams<{ defaultType: string }>();
@@ -66,10 +67,7 @@ function RequestCreate() {
     if (request) {
       PostRequest(request)
         .then((response_request) => {
-          window.open(
-            `${GetBaseURL()}/request/${response_request.id}`,
-            "_self",
-          );
+          navigate(`${GetBaseURL()}/request/${response_request.id}`);
         })
         .catch((error) => {
           console.error("Error creating request:", error);
@@ -81,7 +79,7 @@ function RequestCreate() {
     if (job && request) {
       CreateJob({ ...job, ...{ request_template: request } })
         .then(() => {
-          window.open(`${GetBaseURL()}/jobs/`, "_self");
+          navigate(`${GetBaseURL()}/jobs/`);
         })
         .catch((error) => {
           console.error("Error creating job:", error);
@@ -93,7 +91,7 @@ function RequestCreate() {
     if (job && request) {
       UpdateJob({ ...job, ...{ request_template: request } })
         .then(() => {
-          window.open(`${GetBaseURL()}/jobs/`, "_self");
+          navigate(`${GetBaseURL()}/jobs/`);
         })
         .catch((error) => {
           console.error("Error updating job:", error);

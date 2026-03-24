@@ -5,12 +5,14 @@ import { Column } from "primereact/column";
 import { ConfirmPopup, confirmPopup } from "primereact/confirmpopup";
 import { DataTable } from "primereact/datatable";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { Request } from "../models/brewtils-types";
 import { DeleteRequest, GetRequestList } from "../services/request_service";
 import { GetBaseURL } from "../services/util_service";
 
 function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
+  const navigate = useNavigate();
   const [currentRequests, setCurrentRequests] = useState<Array<Request>>([]);
   const altRequests = useRef<Array<Request>>([]);
 
@@ -132,9 +134,7 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
           rounded
           raised
           link
-          onClick={() =>
-            window.open(`${GetBaseURL()}/request/${request.id}`, "_self")
-          }
+          onClick={() => navigate(`${GetBaseURL()}/request/${request.id}`)}
         >
           <FontAwesomeIcon icon="arrow-up-right-from-square" />
         </Button>

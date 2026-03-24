@@ -3,12 +3,14 @@ import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { Job } from "../models/brewtils-types";
 import { GetJobList } from "../services/job_service";
 import { GetBaseURL } from "../services/util_service";
 
 function JobIndex() {
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState<Array<Job>>([]);
 
   useEffect(() => {
@@ -40,7 +42,7 @@ function JobIndex() {
           rounded
           raised
           link
-          onClick={() => window.open(`${GetBaseURL()}/job/${job.id}`, "_self")}
+          onClick={() => navigate(`${GetBaseURL()}/job/${job.id}`)}
           title={"Update Job " + job.name}
         >
           <FontAwesomeIcon icon="arrow-up-right-from-square" />
@@ -51,7 +53,7 @@ function JobIndex() {
   };
 
   const createJob = () => {
-    window.open(`${GetBaseURL()}/create/job`, "_self");
+    navigate(`${GetBaseURL()}/create/job`);
   };
 
   const header = (

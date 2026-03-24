@@ -9,6 +9,7 @@ import { Stepper } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
 import { Toast } from "primereact/toast";
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import CommandForm from "../../components/CommandForm";
 import { Command, Request, System } from "../../models/brewtils-types";
@@ -39,6 +40,7 @@ function RequestViewCard({
   reloadScratchPad: () => void;
   listeners: Record<string, any>;
 }) {
+  const navigate = useNavigate();
   const requestId = useRef<string | null | undefined>(null);
   const [request, setRequest] = useState<Request | null>(
     padItem?.values?.request ? padItem.values.request : null,
@@ -110,10 +112,7 @@ function RequestViewCard({
               });
               reloadScratchPad();
             } else {
-              window.open(
-                `${GetBaseURL()}/request/${response_request.id}`,
-                "_self",
-              );
+              navigate(`${GetBaseURL()}/request/${response_request.id}`);
             }
           } else {
             toast?.current?.show({
@@ -313,7 +312,7 @@ function RequestViewCard({
             label="Open"
             icon="pi pi-plus"
             onClick={() => {
-              window.open(`${GetBaseURL()}/request/${request.id}`, "_self");
+              navigate(`${GetBaseURL()}/request/${request.id}`);
             }}
             model={[
               {
@@ -334,10 +333,7 @@ function RequestViewCard({
                 label: "Clone Request and Open",
                 // icon: <FontAwesomeIcon icon="arrow-up-from-bracket" />,
                 command: () => {
-                  window.open(
-                    `${GetBaseURL()}/recreate/${request.id}`,
-                    "_self",
-                  );
+                  navigate(`${GetBaseURL()}/recreate/${request.id}`);
                 },
               },
               {
