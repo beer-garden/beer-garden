@@ -9,7 +9,7 @@ import { TreeTable } from "primereact/treetable";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Connection, Garden } from "../models/brewtils-types";
-import { GetConfig } from "../services/config_service";
+import { Config } from "../models/models";
 import {
   DeleteGarden,
   GetRootGarden,
@@ -21,7 +21,13 @@ import {
 import { ClearAllQueues } from "../services/queue_service";
 import { Rescan } from "../services/system_service";
 
-function GardenTable({ listeners }: { listeners: Record<string, any> }) {
+function GardenTable({
+  listeners,
+  config,
+}: {
+  listeners: Record<string, any>;
+  config: Config;
+}) {
   const gardenRef = useRef<Garden | null>(null);
   const [rootGarden, setRootGarden] = useState<Garden | null>(null);
   const [gardenNode, setGardenNode] = useState<any>([{}]);
@@ -186,25 +192,19 @@ function GardenTable({ listeners }: { listeners: Record<string, any> }) {
         setGardenNode([]);
         setExpandedKeys({});
       }
-    } else {
-      GetConfig()
-        .then((config) => {
-          GetRootGarden(config, {})
-            .then((response_garden: Garden) => {
-              setGarden(response_garden);
-              listeners["GARDEN_EVENTS"] = {
-                listener: MonitorGardenEvents,
-              };
-            })
-            .catch((error) => {
-              console.error("Error fetching root garden:", error);
-            });
+    } else if (config?.garden_name) {
+      GetRootGarden(config, {})
+        .then((response_garden: Garden) => {
+          setGarden(response_garden);
+          listeners["GARDEN_EVENTS"] = {
+            listener: MonitorGardenEvents,
+          };
         })
         .catch((error) => {
           console.error("Error fetching root garden:", error);
         });
     }
-  }, [rootGarden, MonitorGardenEvents, listeners]);
+  }, [rootGarden, MonitorGardenEvents, listeners, config]);
 
   const connectionTemplate = (node: any, field: string) => {
     if (node.data[field]) {

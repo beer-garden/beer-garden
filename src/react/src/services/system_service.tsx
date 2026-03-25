@@ -1,14 +1,19 @@
 import { compare, validate } from "compare-versions";
 
 import { Garden, System } from "../models/brewtils-types";
+import { GetAuthHeaders } from "./token_service";
 import { GetBaseURL } from "./util_service";
+
+export const ClearSystemsCache = (): void => {
+  sessionStorage.removeItem("systems");
+};
 
 export const GetSystem = async (
   systemId: string,
   headerData: any,
 ): Promise<System> => {
   try {
-    const headers = new Headers();
+    const headers = GetAuthHeaders();
     for (const [key, value] of Object.entries(headerData)) {
       headers.append(key, value as string);
     }
@@ -45,7 +50,7 @@ export const GetSystemList = async (
     }
   }
   try {
-    const headers = new Headers();
+    const headers = GetAuthHeaders();
     if (headerData) {
       for (const [key, value] of Object.entries(headerData)) {
         headers.append(key, value as string);
@@ -109,7 +114,7 @@ export const ExtractSystemsFromGardens = (
 };
 
 export const ReloadSystem = async (system: System): Promise<void> => {
-  const headers = new Headers();
+  const headers = GetAuthHeaders();
   headers.append("Content-Type", "application/json");
   if (
     system.garden_name !== undefined &&
@@ -135,7 +140,7 @@ export const ReloadSystem = async (system: System): Promise<void> => {
 };
 
 export const Rescan = async (gardenName?: string): Promise<void> => {
-  const headers = new Headers();
+  const headers = GetAuthHeaders();
   headers.append("Content-Type", "application/json");
   let fetch_url = `${GetBaseURL()}api/v1/systems`;
   if (gardenName) {
@@ -162,7 +167,7 @@ export const Rescan = async (gardenName?: string): Promise<void> => {
 };
 
 export const DeleteSystem = async (system: System): Promise<void> => {
-  const headers = new Headers();
+  const headers = GetAuthHeaders();
   headers.append("Content-Type", "application/json");
   if (
     system.garden_name !== undefined &&
@@ -181,7 +186,7 @@ export const DeleteSystem = async (system: System): Promise<void> => {
 };
 
 export const ForceDeleteSystem = async (system: System): Promise<void> => {
-  const headers = new Headers();
+  const headers = GetAuthHeaders();
   headers.append("Content-Type", "application/json");
   if (
     system.garden_name !== undefined &&

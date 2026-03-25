@@ -6,14 +6,16 @@ import { useParams } from "react-router-dom";
 
 import CodeExample from "../components/CodeExample";
 import CommandCreate from "../components/CommandCreate";
+import HasAccess from "../components/HasAccess";
 import SchedulerForm from "../components/SchedulerForm";
 import { Job, Request } from "../models/brewtils-types";
-import { RequestCommand } from "../models/models";
+import { Config, RequestCommand } from "../models/models";
 import { CreateJob, GetJob, UpdateJob } from "../services/job_service";
 import { GetRequest } from "../services/request_service";
 import { PostRequest } from "../services/request_service";
 import { GetBaseURL } from "../services/util_service";
-function RequestCreate() {
+
+function RequestCreate({ config }: { config: Config }) {
   const { requestId } = useParams<{ requestId: string }>();
   const { jobId } = useParams<{ jobId: string }>();
 
@@ -27,18 +29,18 @@ function RequestCreate() {
   const [request, setRequest] = useState<Request | undefined>(undefined);
 
   // Job Panel
-  const [job, setJob] = useState<Job | null>(null);
+  const [job, setJob] = useState<Job | undefined>(undefined);
   const [showScheduleJob, setShowScheduleJob] = useState(
     jobId !== undefined && jobId !== null,
   );
 
   // Create Request Panel
   const [requestCommand, setRequestCommand] = useState<RequestCommand>({
-    namespace: paramNamespace ?? null,
-    systemName: paramSystem ?? null,
-    version: paramVersion ?? null,
-    instance: paramInstance ?? null,
-    command: paramCommand ?? null,
+    namespace: paramNamespace ?? undefined,
+    systemName: paramSystem ?? undefined,
+    version: paramVersion ?? undefined,
+    instance: paramInstance ?? undefined,
+    command: paramCommand ?? undefined,
   });
   const [visibleCodeExample, setVisibleCodeExample] = useState<boolean>(false);
   const [resetForm, setResetForm] = useState<boolean>(false);
@@ -100,11 +102,11 @@ function RequestCreate() {
             parameters: responseRequest.parameters,
           });
           setRequestCommand({
-            namespace: responseRequest?.namespace ?? null,
-            systemName: responseRequest?.system ?? null,
-            version: responseRequest?.system_version ?? null,
-            instance: responseRequest?.instance_name ?? null,
-            command: responseRequest?.command ?? null,
+            namespace: responseRequest?.namespace,
+            systemName: responseRequest?.system,
+            version: responseRequest?.system_version,
+            instance: responseRequest?.instance_name,
+            command: responseRequest?.command,
           });
           setShowCreateRequest(true);
         })
@@ -185,6 +187,15 @@ function RequestCreate() {
               />
             </div>
             <div style={{ marginLeft: "auto" }}>
+              <HasAccess
+                  config={config}
+                  permission="OPERATOR"
+                  hasNamespace={requestCommand.namespace}
+                  hasSystemName={requestCommand.systemName}
+                  hasInstanceName={requestCommand.instance}
+                  hasSystemVersion={requestCommand.version}
+                  hasCommandName={requestCommand.command}
+                >
               {!showScheduleJob && (
                 <Button
                   label="Submit"
@@ -212,6 +223,7 @@ function RequestCreate() {
                   onClick={updateJob}
                 />
               )}
+              </HasAccess>
             </div>
           </div>
         )}

@@ -3,11 +3,13 @@ import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { TreeTable } from "primereact/treetable";
 
+import HasAccess from "../components/HasAccess";
 import { Request } from "../models/brewtils-types";
+import { Config } from "../models/models";
 import { DeleteRequest } from "../services/request_service";
 import { GetBaseURL } from "../services/util_service";
 
-function parseRequest(request: Request) {
+function parseRequest(request: Request, config: Config) {
   const item = {
     key: request.id,
     data: {
@@ -35,7 +37,7 @@ function parseRequest(request: Request) {
     request.children.length > 0
   ) {
     request.children.forEach((childRequest: Request) => {
-      const child_item = parseRequest(childRequest);
+      const child_item = parseRequest(childRequest, config);
       child_item.key = item.key + "-" + child_item.key;
       item.children.push(child_item);
     });
@@ -47,19 +49,20 @@ function parseRequest(request: Request) {
 interface RequestTreeChartProps {
   rootRequest?: Request;
   currentRequestId?: string;
+  config: Config;
 }
 
 function RequestTreeChart(props: RequestTreeChartProps) {
   let node = {};
   if (props.rootRequest !== undefined && props.rootRequest !== null) {
-    node = parseRequest(props.rootRequest);
+    node = parseRequest(props.rootRequest, props.config);
   }
 
   const rowClassName = (node: any) => {
     return { "p-highlight": node.data.id === props.currentRequestId };
   };
 
-  const actionTemplate = (node: any) => {
+  const actionTemplate = (node: any, config: Config) => {
     if (node.data.id === props.currentRequestId) {
       return;
     }
@@ -79,41 +82,71 @@ function RequestTreeChart(props: RequestTreeChartProps) {
         {!["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(
           node.data.status,
         ) && (
-          <Button rounded raised link onClick={() => {}} title="Cancel">
-            <FontAwesomeIcon icon="ban" />{" "}
-          </Button>
+          <HasAccess
+            config={config}
+            permission="OPERATOR"
+            hasNamespace={node.data.namespace}
+            hasSystemName={node.data.systemName}
+            hasInstanceName={node.data.instance}
+            hasSystemVersion={node.data.version}
+            hasCommandName={node.data.command}
+          >
+            <Button rounded raised link onClick={() => {}} title="Cancel">
+              <FontAwesomeIcon icon="ban" />{" "}
+            </Button>
+          </HasAccess>
         )}
         {["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(
           node.data.status,
         ) && (
-          <Button
-            rounded
-            raised
-            link
-            onClick={() =>
-              DeleteRequest(node.data).catch((error) => {
-                console.error("Error deleting request:", error);
-              })
-            }
-            title="Delete"
+          <HasAccess
+            config={config}
+            permission="PLUGIN_ADMIN"
+            hasNamespace={node.data.namespace}
+            hasSystemName={node.data.systemName}
+            hasInstanceName={node.data.instance}
+            hasSystemVersion={node.data.version}
+            hasCommandName={node.data.command}
           >
-            <FontAwesomeIcon icon="trash" />{" "}
-          </Button>
+            <Button
+              rounded
+              raised
+              link
+              onClick={() =>
+                DeleteRequest(node.data).catch((error) => {
+                  console.error("Error deleting request:", error);
+                })
+              }
+              title="Delete"
+            >
+              <FontAwesomeIcon icon="trash" />{" "}
+            </Button>
+          </HasAccess>
         )}
         {["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(
           node.data.status,
         ) && (
-          <Button
-            rounded
-            raised
-            link
-            onClick={() =>
-              window.open(`${GetBaseURL()}/recreate/${node.data.id}`, "_self")
-            }
-            title="Pour Again"
+          <HasAccess
+            config={config}
+            permission="OPERATOR"
+            hasNamespace={node.data.namespace}
+            hasSystemName={node.data.systemName}
+            hasInstanceName={node.data.instance}
+            hasSystemVersion={node.data.version}
+            hasCommandName={node.data.command}
           >
-            <FontAwesomeIcon icon="rotate" />{" "}
-          </Button>
+            <Button
+              rounded
+              raised
+              link
+              onClick={() =>
+                window.open(`${GetBaseURL()}/recreate/${node.data.id}`, "_self")
+              }
+              title="Pour Again"
+            >
+              <FontAwesomeIcon icon="rotate" />{" "}
+            </Button>
+          </HasAccess>
         )}
       </div>
     );
@@ -137,7 +170,7 @@ function RequestTreeChart(props: RequestTreeChartProps) {
         <Column field="status_updated_at" header="Status Updated"></Column>
         <Column field="updated_at" header="Updated"></Column>
         <Column field="comment" header="Comment"></Column>
-        <Column body={actionTemplate}> </Column>
+        <Column body={(node) => actionTemplate(node, props.config)}> </Column>
       </TreeTable>
     )
   );

@@ -41,11 +41,11 @@ export interface ScratchPadValue {
 }
 
 export interface RequestCommand {
-  namespace: string | null;
-  systemName: string | null;
-  version: string | null;
-  instance: string | null;
-  command: string | null;
+  namespace?: string;
+  systemName?: string;
+  version?: string;
+  instance?: string;
+  command?: string;
 }
 
 export interface RequestItem {
@@ -74,4 +74,28 @@ export interface InstanceDialogProps {
   system: System;
   isVisible: boolean;
   onClose: any;
+}
+
+export interface PermissionCheck {
+  global?: boolean;
+  gardenName?: string;
+  namespace?: string;
+  systemName?: string;
+  systemVersion?: string;
+  commandName?: string;
+  instanceName?: string;
+}
+
+export interface HasAccessProps {
+  config: Config;
+  permission: "READ_ONLY" | "OPERATOR" | "PLUGIN_ADMIN" | "GARDEN_ADMIN";
+  isGlobal?: boolean;
+  hasGardenName?: string;
+  hasNamespace?: string;
+  hasSystemName?: string;
+  hasSystemVersion?: string;
+  hasCommandName?: string;
+  hasInstanceName?: string;
+  isLoading?: React.ReactElement;
+  renderAuthFailed?: React.ReactElement;
 }

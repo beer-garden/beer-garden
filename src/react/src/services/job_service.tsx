@@ -1,11 +1,12 @@
 import { Job } from "../models/brewtils-types";
+import { GetAuthHeaders } from "./token_service";
 import { GetBaseURL } from "./util_service";
 
 export const GetJobList = async (
   headerData?: any,
 ): Promise<[Job[], Headers]> => {
   try {
-    const headers = new Headers();
+    const headers = GetAuthHeaders();
     if (headerData) {
       for (const [key, value] of Object.entries(headerData)) {
         headers.append(key, value as string);
@@ -31,7 +32,7 @@ export const GetJobList = async (
 
 export const GetJob = async (jobId: string, headerData: any): Promise<Job> => {
   try {
-    const headers = new Headers();
+    const headers = GetAuthHeaders();
     for (const [key, value] of Object.entries(headerData)) {
       headers.append(key, value as string);
     }
@@ -58,7 +59,7 @@ export const CreateJob = async (
   headerData?: any,
 ): Promise<Request> => {
   try {
-    const headers = new Headers();
+    const headers = GetAuthHeaders();
 
     for (const [key, value] of Object.entries(headerData || {})) {
       headers.append(key, value as string);
@@ -90,7 +91,7 @@ export const UpdateJob = async (
   headerData?: any,
 ): Promise<Request> => {
   try {
-    const headers = new Headers();
+    const headers = GetAuthHeaders();
 
     for (const [key, value] of Object.entries(headerData || {})) {
       headers.append(key, value as string);

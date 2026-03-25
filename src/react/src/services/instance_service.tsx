@@ -1,11 +1,12 @@
 import { Instance, System } from "../models/brewtils-types";
+import { GetAuthHeaders } from "./token_service";
 import { GetBaseURL } from "./util_service";
 
 export const StartInstance = async (
   instance: Instance,
   system: System,
 ): Promise<void> => {
-  const headers = new Headers();
+  const headers = GetAuthHeaders();
   headers.append("Content-Type", "application/json");
   if (
     system.garden_name &&
@@ -37,7 +38,7 @@ export const StopInstance = async (
   instance: Instance,
   system: System,
 ): Promise<void> => {
-  const headers = new Headers();
+  const headers = GetAuthHeaders();
   headers.append("Content-Type", "application/json");
   if (
     system.garden_name &&
