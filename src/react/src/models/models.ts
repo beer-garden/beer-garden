@@ -2,7 +2,7 @@ import { Instance, Parameter, System } from "../models/brewtils-types";
 
 export interface Config {
   application_name: string;
-  auth_enabled: string;
+  auth_enabled: boolean;
   trusted_header_auth_enabled: string;
   icon_default: string;
   debug_mode: string;

@@ -12,6 +12,8 @@ import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 
 import RoleScopeCard from "../components/RoleScopeCard";
 import { Role } from "../models/brewtils-types";
+import { Config } from "../models/models";
+import { GetConfig } from "../services/config_service";
 import {
   CreateRole,
   DeleteRole,
@@ -28,6 +30,7 @@ const permissions = [
 ];
 
 function RoleIndex() {
+  const [config, setConfig] = useState<Config | null>(null);
   const toast = useRef<Toast>(null);
   const [roles, setRoles] = useState<Array<Role>>([]);
   const [loading, setLoading] = useState(false);
@@ -70,6 +73,13 @@ function RoleIndex() {
 
   useEffect(() => {
     loadRoles();
+    GetConfig()
+      .then((config) => {
+        setConfig(config);
+      })
+      .catch((error) => {
+        console.error("Error fetching the config:", error);
+      });
   }, []);
 
   function handleDialogClose() {
@@ -302,12 +312,15 @@ function RoleIndex() {
 
     return (
       <div>
-        <Message
-          severity="error"
-          text="Warning - Beergarden authorization is currently disabled. Changes made here
-          will be persisted, but permissions will not be enforced. Contact your
-          administator to enable this feature."
-        />
+        {config?.auth_enabled == false && (
+          <Message
+            className="mx-2 mb-2"
+            severity="error"
+            text="Warning - Beergarden authorization is currently disabled. Changes made here
+            will be persisted, but permissions will not be enforced. Contact your
+            administator to enable this feature."
+          />
+        )}
         <DataTable
           data-testid="role-datatable"
           value={roles}
@@ -403,7 +416,6 @@ function RoleIndex() {
             optionLabel="label"
             placeholder="Select One"
             onChange={(e) => {
-              // e.originalEvent?.stopPropagation();
               setRolePermission(e.value);
             }}
           />
