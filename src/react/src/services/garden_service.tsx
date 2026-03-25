@@ -1,13 +1,13 @@
 import { Garden, Patch } from "../models/brewtils-types";
 import { Config } from "../models/models";
+import { GetAuthHeaders } from "./token_service";
 import { GetBaseURL } from "./util_service";
-
 export const GetGarden = async (
   garden_name: string,
   headerData?: any,
 ): Promise<Garden> => {
   try {
-    const headers = new Headers();
+    const headers = GetAuthHeaders();
     if (headerData) {
       for (const [key, value] of Object.entries(headerData)) {
         headers.append(key, value as string);
@@ -39,7 +39,7 @@ export const PatchGarden = async (
   headerData?: any,
 ): Promise<any> => {
   try {
-    const headers = new Headers();
+    const headers = GetAuthHeaders();
     headers.append("Content-Type", "application/json");
     if (headerData) {
       for (const [key, value] of Object.entries(headerData)) {
@@ -73,7 +73,7 @@ export const DeleteGarden = async (
   headerData?: any,
 ): Promise<any> => {
   try {
-    const headers = new Headers();
+    const headers = GetAuthHeaders();
     if (headerData) {
       for (const [key, value] of Object.entries(headerData)) {
         headers.append(key, value as string);
@@ -111,7 +111,7 @@ export const GetGardenList = async (
   headerData?: any,
 ): Promise<Array<Garden>> => {
   try {
-    const headers = new Headers();
+    const headers = GetAuthHeaders();
     if (headerData) {
       for (const [key, value] of Object.entries(headerData)) {
         headers.append(key, value as string);
