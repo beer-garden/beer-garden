@@ -84,7 +84,7 @@ function RequestTreeChart(props: RequestTreeChartProps) {
         ) && (
           <HasAccess
             config={config}
-            permission="Operator"
+            permission="OPERATOR"
             hasNamespace={node.data.namespace}
             hasSystemName={node.data.systemName}
             hasInstanceName={node.data.instance}
@@ -101,7 +101,7 @@ function RequestTreeChart(props: RequestTreeChartProps) {
         ) && (
           <HasAccess
             config={config}
-            permission="Admin"
+            permission="PLUGIN_ADMIN"
             hasNamespace={node.data.namespace}
             hasSystemName={node.data.systemName}
             hasInstanceName={node.data.instance}

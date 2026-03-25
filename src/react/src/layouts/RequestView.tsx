@@ -325,7 +325,7 @@ function RequestView({
             {/* Need to determine if Read Only can still download values */}
             <HasAccess
               config={config}
-              permission="Operator"
+              permission="OPERATOR"
               hasNamespace={request.namespace}
               hasSystemName={request.system}
               hasInstanceName={request.instance_name}
