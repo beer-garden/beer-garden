@@ -289,6 +289,7 @@ function CommandSelect({
 
   return (
     <div className="border-2 border-dashed surface-border border-round surface-ground flex-auto flex justify-content-center align-items-center font-medium">
+      <div>
       <Dropdown
         value={selectedNamespace}
         onChange={(e) => setSelectedNamespace(e.value)}
@@ -296,7 +297,7 @@ function CommandSelect({
         filter
         optionLabel="Namespace"
         placeholder="Select Namespace"
-      />
+      />  
       <Dropdown
         value={selectedSystemName}
         onChange={(e) => setSelectedSystemName(e.value)}
@@ -329,6 +330,7 @@ function CommandSelect({
         optionLabel="Command"
         placeholder="Select Command"
       />
+      </div>
     </div>
   );
 }

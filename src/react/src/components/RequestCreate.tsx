@@ -1,4 +1,5 @@
 import { Button } from "primereact/button";
+import { Card } from "primereact/card";
 import { InputSwitch } from "primereact/inputswitch";
 import { Skeleton } from "primereact/skeleton";
 import { useEffect, useState } from "react";
@@ -13,12 +14,16 @@ import { CreateJob, GetJob, UpdateJob } from "../services/job_service";
 import { GetRequest } from "../services/request_service";
 import { PostRequest } from "../services/request_service";
 import { GetBaseURL } from "../services/util_service";
-import { Card } from "primereact/card";
+import { ScrollPanel } from "primereact/scrollpanel";
 
-
-function RequestCreate({requestItem, updateRequestItem}: {requestItem: RequestItem, updateRequestItem: (item: RequestItem) => void}) {
-
-    const [cardKey, setCardKey] = useState(0);
+function RequestCreate({
+  requestItem,
+  updateRequestItem,
+}: {
+  requestItem: RequestItem;
+  updateRequestItem: (item: RequestItem) => void;
+}) {
+  const [cardKey, setCardKey] = useState(0);
   // Input Request
   const [request, setRequest] = useState<Request | undefined>(undefined);
   const updateRequestValue = (requestValue: Request | undefined) => {
@@ -27,35 +32,39 @@ function RequestCreate({requestItem, updateRequestItem}: {requestItem: RequestIt
       ...requestItem,
       request: requestValue,
     });
-    setCardKey(prev => prev + 1);
-  }
+    setCardKey((prev) => prev + 1);
+  };
 
   // Job Panel
-  const [job, setJob] = useState<Job | undefined>(requestItem?.job ?? undefined);
+  const [job, setJob] = useState<Job | undefined>(
+    requestItem?.job ?? undefined,
+  );
 
   const updateJobValue = (jobValue: Job | undefined) => {
     setJob(jobValue);
     updateRequestItem({
       ...requestItem,
-      job: jobValue
+      job: jobValue,
     });
-  }
+  };
 
   // Create Request Panel
-  const [requestCommand, setRequestCommand] = useState<RequestCommand>(requestItem?.requestCommandInput ?? {
-    namespace: null,
-    systemName: null,
-    version: null,
-    instance: null,
-    command: null,
-  });
+  const [requestCommand, setRequestCommand] = useState<RequestCommand>(
+    requestItem?.requestCommandInput ?? {
+      namespace: null,
+      systemName: null,
+      version: null,
+      instance: null,
+      command: null,
+    },
+  );
   const updateRequestCommand = (requestCommand: RequestCommand) => {
     setRequestCommand(requestCommand);
     updateRequestItem({
       ...requestItem,
       requestCommandInput: requestCommand,
     });
-  }
+  };
 
   const [showScheduleJob, setShowScheduleJob] = useState(
     requestItem?.jobId !== undefined && requestItem?.jobId !== null,
@@ -108,7 +117,10 @@ function RequestCreate({requestItem, updateRequestItem}: {requestItem: RequestIt
   };
 
   useEffect(() => {
-    if (requestItem?.requestId !== null && requestItem?.requestId !== undefined) {
+    if (
+      requestItem?.requestId !== null &&
+      requestItem?.requestId !== undefined
+    ) {
       GetRequest(requestItem.requestId, {})
         .then((responseRequest) => {
           updateRequestValue({
@@ -131,7 +143,10 @@ function RequestCreate({requestItem, updateRequestItem}: {requestItem: RequestIt
         .catch((error) => {
           console.error("Error fetching request:", error);
         });
-    } else if (requestItem?.jobId !== null && requestItem?.jobId !== undefined) {
+    } else if (
+      requestItem?.jobId !== null &&
+      requestItem?.jobId !== undefined
+    ) {
       GetJob(requestItem.jobId, {})
         .then((responseJob) => {
           updateJobValue(responseJob);
@@ -151,7 +166,11 @@ function RequestCreate({requestItem, updateRequestItem}: {requestItem: RequestIt
   }, [requestItem]);
 
   return (
-    <Card className="justify-content-center" style={{ minHeight: "auto" }} key={cardKey}>
+    <div
+      className="justify-content-center"
+      style={{ minHeight: "auto" }}
+      key={cardKey}
+    >
       <div>
         <div className="flex pt-4 justify-content-between">
           <div className="flex">
@@ -166,6 +185,7 @@ function RequestCreate({requestItem, updateRequestItem}: {requestItem: RequestIt
         </div>
       </div>
       <div className="flex flex-column h-12rem">
+        
         {showScheduleJob && (
           <SchedulerForm scheduledJob={job} setScheduledJob={updateJobValue} />
         )}
@@ -179,7 +199,8 @@ function RequestCreate({requestItem, updateRequestItem}: {requestItem: RequestIt
             setResetForm={setResetForm}
           />
         )}
-        {showCreateRequest && (
+        
+        {/* {showCreateRequest && (
           <div className="flex">
             <div>
               <Button
@@ -234,12 +255,12 @@ function RequestCreate({requestItem, updateRequestItem}: {requestItem: RequestIt
               )}
             </div>
           </div>
-        )}
+        )} */}
         {!showCreateRequest && (
           <Skeleton width="100%" height="150px"></Skeleton>
         )}
       </div>
-    </Card>
+    </div>
   );
 }
 

@@ -1,4 +1,10 @@
-import { Instance, Parameter, System, Job, Request } from "../models/brewtils-types";
+import {
+  Instance,
+  Job,
+  Parameter,
+  Request,
+  System,
+} from "../models/brewtils-types";
 
 export interface Config {
   application_name?: string;

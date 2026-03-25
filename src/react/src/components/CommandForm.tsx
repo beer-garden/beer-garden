@@ -515,7 +515,7 @@ function CommandForm({
   // Need to find a better way to handle states of dynamic options loading instead of
   // checking if loading choices has items and rendering two tables
   return (
-    <div>
+    // <div>
       <div
         key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}`}
         className="mt-4 mb-4"
@@ -543,7 +543,7 @@ function CommandForm({
             </div>
           ))}
       </div>
-    </div>
+    // </div>
   );
 }
 

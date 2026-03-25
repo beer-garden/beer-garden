@@ -10,6 +10,7 @@ import {
   DetermineLatestSystemVersion,
   GetSystemList,
 } from "../services/system_service";
+import { ScrollPanel } from "primereact/scrollpanel";
 
 function CommandCreate({
   request,
@@ -176,7 +177,7 @@ function CommandCreate({
         />
       )}
       {showCommand && (
-        <div>
+        <ScrollPanel style={{ width: "100%", height: "80%" }}>
           <CommandForm
             command={command}
             disabled={false}
@@ -185,7 +186,7 @@ function CommandCreate({
             resetForm={resetForm}
             setResetForm={setResetForm}
           />
-        </div>
+        </ScrollPanel>
       )}
       {(!systems || systems.length === 0 || !showCommand) && (
         <Skeleton width="100%" height="150px"></Skeleton>

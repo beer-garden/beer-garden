@@ -18,10 +18,10 @@ import RequestIndex from "./layouts/RequestIndex";
 import RequestView from "./layouts/RequestView";
 import SystemCards from "./layouts/SystemCards";
 import SystemTable from "./layouts/SystemTable";
+import Workspace from "./layouts/Workspace";
 import { Listener } from "./models/models";
 import NavigationMenu from "./Navigation";
 import { preemptiveRefresh } from "./services/token_service";
-import Workspace from "./layouts/Workspace";
 
 function App() {
   const [showScratchPad, setShowScratchPad] = useState<boolean>(false);
@@ -102,8 +102,8 @@ function App() {
         <div className="flex-grow-1">
           <BrowserRouter basename={baseURL}>
             <NavigationMenu listeners={listeners} />
-            <div className="flex">
-              <div className={showMainApp ? "flex-grow-1" : "hidden"}>
+            <div className="flex-grow-1">
+              
                 <Routes>
                   <Route
                     path="/systems"
@@ -164,26 +164,8 @@ function App() {
                     }
                   />
                 </Routes>
-              </div>
-              <Divider layout="vertical">
-                {showScratchPad && (
-                  <Button onClick={() => nagivateRight()}>
-                    <FontAwesomeIcon icon="angles-right" />
-                  </Button>
-                )}
-
-                {showMainApp && (
-                  <Button onClick={() => nagivateLeft()}>
-                    <FontAwesomeIcon icon="angles-left" />
-                  </Button>
-                )}
-              </Divider>
-              <div className={showScratchPad ? "flex-grow-1" : "hidden"}>
-                <ScratchPad
-                  listeners={listeners}
-                  reloadTrigger={reloadScratchPadTrigger}
-                />
-              </div>
+              
+              
             </div>
           </BrowserRouter>
         </div>
