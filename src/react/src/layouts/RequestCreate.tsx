@@ -67,7 +67,7 @@ function RequestCreate() {
     if (request) {
       PostRequest(request)
         .then((response_request) => {
-          navigate(`${GetBaseURL()}/request/${response_request.id}`);
+          void navigate(`${GetBaseURL()}/request/${response_request.id}`);
         })
         .catch((error) => {
           console.error("Error creating request:", error);
@@ -79,7 +79,7 @@ function RequestCreate() {
     if (job && request) {
       CreateJob({ ...job, ...{ request_template: request } })
         .then(() => {
-          navigate(`${GetBaseURL()}/jobs/`);
+          void navigate(`${GetBaseURL()}/jobs/`);
         })
         .catch((error) => {
           console.error("Error creating job:", error);
@@ -91,7 +91,7 @@ function RequestCreate() {
     if (job && request) {
       UpdateJob({ ...job, ...{ request_template: request } })
         .then(() => {
-          navigate(`${GetBaseURL()}/jobs/`);
+          void navigate(`${GetBaseURL()}/jobs/`);
         })
         .catch((error) => {
           console.error("Error updating job:", error);

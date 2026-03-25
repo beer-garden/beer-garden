@@ -9,7 +9,7 @@ import { Stepper } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
 import { Toast } from "primereact/toast";
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import CommandForm from "../../components/CommandForm";
 import { Command, Request, System } from "../../models/brewtils-types";
@@ -112,7 +112,7 @@ function RequestViewCard({
               });
               reloadScratchPad();
             } else {
-              navigate(`${GetBaseURL()}/request/${response_request.id}`);
+              void navigate(`${GetBaseURL()}/request/${response_request.id}`);
             }
           } else {
             toast?.current?.show({
@@ -308,43 +308,42 @@ function RequestViewCard({
             </StepperPanel>
           </Stepper>
 
-          <SplitButton
-            label="Open"
-            icon="pi pi-plus"
-            onClick={() => {
-              navigate(`${GetBaseURL()}/request/${request.id}`);
-            }}
-            model={[
-              {
-                label: "Run Again",
-                // icon: <FontAwesomeIcon icon="arrow-up-right-from-square" />,
-                command: () => {
-                  submitRequest(false);
+          <Link to={`${GetBaseURL()}/request/${request.id}`}>
+            <SplitButton
+              label="Open"
+              icon="pi pi-plus"
+              model={[
+                {
+                  label: "Run Again",
+                  // icon: <FontAwesomeIcon icon="arrow-up-right-from-square" />,
+                  command: () => {
+                    submitRequest(false);
+                  },
                 },
-              },
-              {
-                label: "Run Again and Add to Scratch Pad",
-                // icon: <FontAwesomeIcon icon="arrow-up-from-bracket" />,
-                command: () => {
-                  submitRequest(true, true);
+                {
+                  label: "Run Again and Add to Scratch Pad",
+                  // icon: <FontAwesomeIcon icon="arrow-up-from-bracket" />,
+                  command: () => {
+                    submitRequest(true, true);
+                  },
                 },
-              },
-              {
-                label: "Clone Request and Open",
-                // icon: <FontAwesomeIcon icon="arrow-up-from-bracket" />,
-                command: () => {
-                  navigate(`${GetBaseURL()}/recreate/${request.id}`);
+                {
+                  label: "Clone Request and Open",
+                  // icon: <FontAwesomeIcon icon="arrow-up-from-bracket" />,
+                  command: () => {
+                    void navigate(`${GetBaseURL()}/recreate/${request.id}`);
+                  },
                 },
-              },
-              {
-                label: "Clone Request and Add to Scratch Pad",
-                // icon: <FontAwesomeIcon icon="arrow-up-from-bracket" />,
-                command: () => {
-                  cloneAndPushToScratchPad();
+                {
+                  label: "Clone Request and Add to Scratch Pad",
+                  // icon: <FontAwesomeIcon icon="arrow-up-from-bracket" />,
+                  command: () => {
+                    cloneAndPushToScratchPad();
+                  },
                 },
-              },
-            ]}
-          />
+              ]}
+            />
+          </Link>
         </div>
       )}
     </Card>

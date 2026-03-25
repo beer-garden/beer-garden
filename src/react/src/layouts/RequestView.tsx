@@ -90,7 +90,7 @@ function RequestOptions(request: Request) {
       command: () => {
         DeleteRequest(request)
           .then(() => {
-            navigate(`${GetBaseURL()}/requests`);
+            void navigate(`${GetBaseURL()}/requests`);
           })
           .catch((error) => {
             console.error("Error deleting request:", error);
@@ -100,7 +100,7 @@ function RequestOptions(request: Request) {
   }
 
   const pourAgain = (request: Request) => {
-    navigate(`${GetBaseURL()}/recreate/${request.id}`);
+    void navigate(`${GetBaseURL()}/recreate/${request.id}`);
   };
 
   return (

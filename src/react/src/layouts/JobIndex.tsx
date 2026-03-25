@@ -3,7 +3,7 @@ import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { Job } from "../models/brewtils-types";
 import { GetJobList } from "../services/job_service";
@@ -38,22 +38,18 @@ function JobIndex() {
   const nameTemplate = (job: Job) => {
     return (
       <div>
-        <Button
-          rounded
-          raised
-          link
-          onClick={() => navigate(`${GetBaseURL()}/job/${job.id}`)}
-          title={"Update Job " + job.name}
-        >
-          <FontAwesomeIcon icon="arrow-up-right-from-square" />
-        </Button>
+        <Link to={`${GetBaseURL()}/job/${job.id}`}>
+          <Button rounded raised link title={"Update Job " + job.name}>
+            <FontAwesomeIcon icon="arrow-up-right-from-square" />
+          </Button>
+        </Link>
         {job.name}
       </div>
     );
   };
 
   const createJob = () => {
-    navigate(`${GetBaseURL()}/create/job`);
+    void navigate(`${GetBaseURL()}/create/job`);
   };
 
   const header = (

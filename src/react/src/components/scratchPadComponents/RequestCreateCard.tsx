@@ -64,7 +64,7 @@ function RequestCreateCard({
               });
               reloadScratchPad();
             } else {
-              navigate(`${GetBaseURL()}/request/${response_request.id}`);
+              void navigate(`${GetBaseURL()}/request/${response_request.id}`);
             }
           } else {
             toast?.current?.show({
