@@ -619,19 +619,31 @@ function SchedulerForm({ scheduledJob, setScheduledJob }: SchedulerFormProps) {
   useEffect(() => {
     if (jobState === "Date") {
       if (!CompareObjects(scheduledJob?.trigger, dateTrigger)) {
-        setScheduledJob({ ...scheduledJob, ...{ trigger: dateTrigger } });
+        setScheduledJob({
+          ...scheduledJob,
+          ...{ trigger_type: "date", trigger: dateTrigger },
+        });
       }
     } else if (jobState === "Interval") {
       if (!CompareObjects(scheduledJob?.trigger, intervalTrigger)) {
-        setScheduledJob({ ...scheduledJob, ...{ trigger: intervalTrigger } });
+        setScheduledJob({
+          ...scheduledJob,
+          ...{ trigger_type: "interval", trigger: intervalTrigger },
+        });
       }
     } else if (jobState === "File") {
       if (!CompareObjects(scheduledJob?.trigger, fileTrigger)) {
-        setScheduledJob({ ...scheduledJob, ...{ trigger: fileTrigger } });
+        setScheduledJob({
+          ...scheduledJob,
+          ...{ trigger_type: "file", trigger: fileTrigger },
+        });
       }
     } else if (jobState === "CRON") {
       if (!CompareObjects(scheduledJob?.trigger, cronTrigger)) {
-        setScheduledJob({ ...scheduledJob, ...{ trigger: cronTrigger } });
+        setScheduledJob({
+          ...scheduledJob,
+          ...{ trigger_type: "cron", trigger: cronTrigger },
+        });
       }
     }
   }, [

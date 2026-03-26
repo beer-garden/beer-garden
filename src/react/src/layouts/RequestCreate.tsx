@@ -188,41 +188,41 @@ function RequestCreate({ config }: { config: Config }) {
             </div>
             <div style={{ marginLeft: "auto" }}>
               <HasAccess
-                  config={config}
-                  permission="OPERATOR"
-                  hasNamespace={requestCommand.namespace}
-                  hasSystemName={requestCommand.systemName}
-                  hasInstanceName={requestCommand.instance}
-                  hasSystemVersion={requestCommand.version}
-                  hasCommandName={requestCommand.command}
-                >
-              {!showScheduleJob && (
-                <Button
-                  label="Submit"
-                  icon="pi pi-arrow-right"
-                  onClick={() => {
-                    submitRequest();
-                  }}
-                />
-              )}
-              {showScheduleJob && !jobId && (
-                <Button
-                  label="Submit Job"
-                  severity="success"
-                  icon="pi pi-arrow-right"
-                  iconPos="right"
-                  onClick={submitJob}
-                />
-              )}
-              {showScheduleJob && jobId && (
-                <Button
-                  label="Update Job"
-                  severity="success"
-                  icon="pi pi-arrow-right"
-                  iconPos="right"
-                  onClick={updateJob}
-                />
-              )}
+                config={config}
+                permission="OPERATOR"
+                hasNamespace={requestCommand.namespace}
+                hasSystemName={requestCommand.systemName}
+                hasInstanceName={requestCommand.instance}
+                hasSystemVersion={requestCommand.version}
+                hasCommandName={requestCommand.command}
+              >
+                {!showScheduleJob && (
+                  <Button
+                    label="Submit"
+                    icon="pi pi-arrow-right"
+                    onClick={() => {
+                      submitRequest();
+                    }}
+                  />
+                )}
+                {showScheduleJob && !jobId && (
+                  <Button
+                    label="Submit Job"
+                    severity="success"
+                    icon="pi pi-arrow-right"
+                    iconPos="right"
+                    onClick={submitJob}
+                  />
+                )}
+                {showScheduleJob && jobId && (
+                  <Button
+                    label="Update Job"
+                    severity="success"
+                    icon="pi pi-arrow-right"
+                    iconPos="right"
+                    onClick={updateJob}
+                  />
+                )}
               </HasAccess>
             </div>
           </div>

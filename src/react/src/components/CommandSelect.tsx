@@ -3,21 +3,14 @@ import { Dropdown } from "primereact/dropdown";
 import { useEffect, useState } from "react";
 
 import { Command, Instance, System } from "../models/brewtils-types";
+import { RequestCommand } from "../models/models";
 import { DetermineLatestSystemVersion } from "../services/system_service";
 import { CompareObjects } from "../services/util_service";
 
-interface RequestCommand {
-  namespace: string | null;
-  systemName: string | null;
-  version: string | null;
-  instance: string | null;
-  command: string | null;
-}
-
 interface CommandSelectProps {
   systems: Array<System> | null;
-  requestCommand: RequestCommand | null;
-  setRequestCommand: (request: RequestCommand) => void;
+  requestCommand: RequestCommand | undefined;
+  setRequestCommand: (requestCommand: RequestCommand) => void;
   validCommand: boolean;
   setValidCommand: (valid: boolean) => void;
 }
@@ -35,20 +28,20 @@ function CommandSelect({
   const [instances, setInstances] = useState<Array<string>>([]);
   const [commands, setCommands] = useState<Array<string>>([]);
 
-  const [selectedNamespace, setSelectedNamespace] = useState<string | null>(
-    requestCommand?.namespace ?? null,
+  const [selectedNamespace, setSelectedNamespace] = useState<
+    string | undefined
+  >(requestCommand?.namespace ?? undefined);
+  const [selectedSystemName, setSelectedSystemName] = useState<
+    string | undefined
+  >(requestCommand?.systemName ?? undefined);
+  const [selectedVersion, setSelectedVersion] = useState<string | undefined>(
+    requestCommand?.version ?? undefined,
   );
-  const [selectedSystemName, setSelectedSystemName] = useState<string | null>(
-    requestCommand?.systemName ?? null,
+  const [selectedInstance, setSelectedInstance] = useState<string | undefined>(
+    requestCommand?.instance ?? undefined,
   );
-  const [selectedVersion, setSelectedVersion] = useState<string | null>(
-    requestCommand?.version ?? null,
-  );
-  const [selectedInstance, setSelectedInstance] = useState<string | null>(
-    requestCommand?.instance ?? null,
-  );
-  const [selectedCommand, setSelectedCommand] = useState<string | null>(
-    requestCommand?.command ?? null,
+  const [selectedCommand, setSelectedCommand] = useState<string | undefined>(
+    requestCommand?.command ?? undefined,
   );
 
   useEffect(() => {
@@ -149,10 +142,10 @@ function CommandSelect({
       setSelectedNamespace(namespaceList[0]);
     } else if (
       namespaceList.length > 0 &&
-      selectedNamespace !== null &&
+      selectedNamespace !== undefined &&
       !namespaceList.includes(selectedNamespace)
     ) {
-      setSelectedNamespace(null);
+      setSelectedNamespace(undefined);
     }
 
     if (
@@ -162,46 +155,46 @@ function CommandSelect({
       setSelectedSystemName(systemNameList[0]);
     } else if (
       systemNameList.length > 0 &&
-      selectedSystemName !== null &&
+      selectedSystemName !== undefined &&
       !systemNameList.includes(selectedSystemName)
     ) {
-      setSelectedSystemName(null);
+      setSelectedSystemName(undefined);
     }
 
     if (
       selectedVersion !== "latest" &&
-      (selectedVersion === null ||
+      (selectedVersion === undefined ||
         !systemVersionList.includes(selectedVersion)) &&
       ((systemVersionList.length === 2 && systemVersionList[1] === "latest") ||
         systemVersionList.length === 1)
     ) {
       setSelectedVersion(systemVersionList[0]);
     } else if (
-      selectedVersion !== null &&
+      selectedVersion !== undefined &&
       selectedVersion !== "latest" &&
       !systemVersionList.includes(selectedVersion)
     ) {
-      setSelectedVersion(null);
+      setSelectedVersion(undefined);
     }
 
     if (instanceList.length === 1 && selectedInstance !== instanceList[0]) {
       setSelectedInstance(instanceList[0]);
     } else if (
       instanceList.length > 0 &&
-      selectedInstance !== null &&
+      selectedInstance !== undefined &&
       !instanceList.includes(selectedInstance)
     ) {
-      setSelectedInstance(null);
+      setSelectedInstance(undefined);
     }
 
     if (commandList.length === 1 && selectedCommand !== commandList[0]) {
       setSelectedCommand(commandList[0]);
     } else if (
       commandList.length > 0 &&
-      selectedCommand !== null &&
+      selectedCommand !== undefined &&
       !commandList.includes(selectedCommand)
     ) {
-      setSelectedCommand(null);
+      setSelectedCommand(undefined);
     }
 
     if (
@@ -290,46 +283,56 @@ function CommandSelect({
   return (
     <div className="border-2 border-dashed surface-border border-round surface-ground flex-auto flex justify-content-center align-items-center font-medium">
       <div>
-      <Dropdown
-        value={selectedNamespace}
-        onChange={(e) => setSelectedNamespace(e.value)}
-        options={namespaces}
-        filter
-        optionLabel="Namespace"
-        placeholder="Select Namespace"
-      />  
-      <Dropdown
-        value={selectedSystemName}
-        onChange={(e) => setSelectedSystemName(e.value)}
-        options={systemNames}
-        filter
-        optionLabel="System"
-        placeholder="Select System"
-      />
-      <Dropdown
-        value={selectedVersion}
-        onChange={(e) => setSelectedVersion(e.value)}
-        options={versions}
-        filter
-        optionLabel="Version"
-        placeholder="Select Version"
-      />
-      <Dropdown
-        value={selectedInstance}
-        onChange={(e) => setSelectedInstance(e.value)}
-        options={instances}
-        filter
-        optionLabel="Instance"
-        placeholder="Select Instance"
-      />
-      <Dropdown
-        value={selectedCommand}
-        onChange={(e) => setSelectedCommand(e.value)}
-        options={commands}
-        filter
-        optionLabel="Command"
-        placeholder="Select Command"
-      />
+        <Dropdown
+          value={selectedNamespace}
+          onChange={(e) => {
+            setSelectedNamespace(e.value);
+          }}
+          options={namespaces}
+          filter
+          optionLabel="Namespace"
+          placeholder="Select Namespace"
+        />
+        <Dropdown
+          value={selectedSystemName}
+          onChange={(e) => {
+            setSelectedSystemName(e.value);
+          }}
+          options={systemNames}
+          filter
+          optionLabel="System"
+          placeholder="Select System"
+        />
+        <Dropdown
+          value={selectedVersion}
+          onChange={(e) => {
+            setSelectedVersion(e.value);
+          }}
+          options={versions}
+          filter
+          optionLabel="Version"
+          placeholder="Select Version"
+        />
+        <Dropdown
+          value={selectedInstance}
+          onChange={(e) => {
+            setSelectedInstance(e.value);
+          }}
+          options={instances}
+          filter
+          optionLabel="Instance"
+          placeholder="Select Instance"
+        />
+        <Dropdown
+          value={selectedCommand}
+          onChange={(e) => {
+            setSelectedCommand(e.value);
+          }}
+          options={commands}
+          filter
+          optionLabel="Command"
+          placeholder="Select Command"
+        />
       </div>
     </div>
   );

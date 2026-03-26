@@ -1,3 +1,4 @@
+import { ScrollPanel } from "primereact/scrollpanel";
 import { Skeleton } from "primereact/skeleton";
 import { Toast } from "primereact/toast";
 import { useEffect, useRef, useState } from "react";
@@ -10,7 +11,6 @@ import {
   DetermineLatestSystemVersion,
   GetSystemList,
 } from "../services/system_service";
-import { ScrollPanel } from "primereact/scrollpanel";
 
 function CommandCreate({
   request,
@@ -51,7 +51,13 @@ function CommandCreate({
   useEffect(() => {
     const findCommand = () => {
       setShowCommand(false);
-      if (systems && systems.length > 0) {
+      if (
+        systems &&
+        systems.length > 0 &&
+        requestCommand?.systemName &&
+        requestCommand?.namespace &&
+        requestCommand?.version
+      ) {
         const latestSystem = DetermineLatestSystemVersion(
           systems,
           requestCommand?.systemName,
@@ -83,7 +89,6 @@ function CommandCreate({
         system_version: requestCommand?.version || undefined,
         instance_name: requestCommand?.instance || undefined,
         command: requestCommand?.command || undefined,
-        parameters: {},
       };
 
       for (const [key, value] of Object.entries(request?.parameters || {})) {

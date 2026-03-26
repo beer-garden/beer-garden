@@ -1,18 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 
-import { ChoicesValue, Command, Request } from "../models/brewtils-types";
-import { InputParam } from "../models/models";
+import { ChoicesValue, Request } from "../models/brewtils-types";
+import { CommandFormProps, InputParam } from "../models/models";
 import { PostRequest } from "../services/request_service";
 import CommandFormField from "./CommandFormField";
-
-interface CommandFormProps {
-  command: Command | null;
-  disabled?: boolean;
-  request?: Request | null | undefined;
-  setRequest: (request: Request) => void;
-  resetForm: boolean;
-  setResetForm: (reset: boolean) => void;
-}
 
 function CommandForm({
   command,
@@ -516,33 +507,33 @@ function CommandForm({
   // checking if loading choices has items and rendering two tables
   return (
     // <div>
-      <div
-        key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}`}
-        className="mt-4 mb-4"
-      >
-        {parametersFields &&
-          parametersFields?.map((parameter: InputParam) => (
-            <div
-              className="flex justify-content-between mb-3"
-              key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}.${parameter.key}`}
-            >
-              <div style={{ width: "20%" }}>{renderInputLabel(parameter)}</div>
-              <div style={{ width: "60%" }}>
-                <CommandFormField
-                  parameter={parameter}
-                  disabled={disabled}
-                  parametersFields={parametersFields}
-                  loadingChoices={loadingChoices}
-                  handleChange={handleChange}
-                  resetForm={resetForm}
-                />
-              </div>
-              <div style={{ overflowWrap: "break-word", width: "20%" }}>
-                {parameter.description}
-              </div>
+    <div
+      key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}`}
+      className="mt-4 mb-4"
+    >
+      {parametersFields &&
+        parametersFields?.map((parameter: InputParam) => (
+          <div
+            className="flex justify-content-between mb-3"
+            key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}.${parameter.key}`}
+          >
+            <div style={{ width: "20%" }}>{renderInputLabel(parameter)}</div>
+            <div style={{ width: "60%" }}>
+              <CommandFormField
+                parameter={parameter}
+                disabled={disabled}
+                parametersFields={parametersFields}
+                loadingChoices={loadingChoices}
+                handleChange={handleChange}
+                resetForm={resetForm}
+              />
             </div>
-          ))}
-      </div>
+            <div style={{ overflowWrap: "break-word", width: "20%" }}>
+              {parameter.description}
+            </div>
+          </div>
+        ))}
+    </div>
     // </div>
   );
 }

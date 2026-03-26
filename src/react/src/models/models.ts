@@ -1,4 +1,5 @@
 import {
+  Command,
   Instance,
   Job,
   Parameter,
@@ -53,12 +54,12 @@ export interface RequestItem {
   request?: Request;
   requestCommandInput?: RequestCommand;
 
+  showSchedule?: boolean;
   jobId?: string;
   job?: Job;
 
   itemId: string;
   type: string;
-  itemPos: number;
 }
 
 export interface InputParam extends Parameter {
@@ -98,4 +99,13 @@ export interface HasAccessProps {
   hasInstanceName?: string;
   isLoading?: React.ReactElement;
   renderAuthFailed?: React.ReactElement;
+}
+
+export interface CommandFormProps {
+  command: Command | null;
+  disabled?: boolean;
+  request?: Request | null | undefined;
+  setRequest: (request: Request) => void;
+  resetForm: boolean;
+  setResetForm: (reset: boolean) => void;
 }

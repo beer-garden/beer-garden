@@ -1,162 +1,178 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
 import { DataView } from "primereact/dataview";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
-import { Card } from "primereact/card";
-import RequestCreate from "../components/RequestCreate";
-import { RequestCommand, RequestItem } from "../models/models";
 
-function Workspace() {
-  const [items, setItems] = useState<RequestItem[]>(() => {
-    const saved = localStorage.getItem("requestItems");
-    return saved ? JSON.parse(saved) : [];
-  });
+import RequestCreateCard from "../components/RequestCreateCard";
+import RequestViewCard from "../components/RequestViewCard";
+import { RequestItem } from "../models/models";
 
-  const [sortAsc, setSortAsc] = useState(true);
+function Workspace({ listeners }: { listeners: Record<string, any> }) {
+  const { requestId } = useParams<{ requestId: string }>();
+  const { jobId } = useParams<{ jobId: string }>();
+  const { display } = useParams<{ display: string }>();
 
-  const [dataViewKey, setDataViewKey] = useState(0);
+  const { paramNamespace } = useParams<{ paramNamespace: string }>();
+  const { paramSystem } = useParams<{ paramSystem: string }>();
+  const { paramVersion } = useParams<{ paramVersion: string }>();
+  const { paramInstance } = useParams<{ paramInstance: string }>();
+  const { paramCommand } = useParams<{ paramCommand: string }>();
+
+  const [items, setItems] = useState<RequestItem[] | undefined>(undefined);
+  const requestItemsRef = useRef<RequestItem[] | undefined>(undefined);
+
+  const [requestItemsKey, setRequestItemsKey] = useState("0");
 
   useEffect(() => {
-    localStorage.setItem("requestItems", JSON.stringify(items));
-    setDataViewKey((prev) => prev + 1);
-  }, [items]);
+    if (requestItemsRef.current === undefined) {
+      const saved = localStorage.getItem("requestItems");
 
-  const sortedItems = [...items].sort((a, b) =>
-    sortAsc ? a.itemPos - b.itemPos : b.itemPos - a.itemPos,
-  );
+      const loadedItems = [] as RequestItem[];
+      if (requestId) {
+        loadedItems.push({
+          itemId: uuidv4(),
+          type: display ? "VIEW_REQUEST" : "REQUEST",
+          requestId: requestId,
+        });
+      } else if (jobId) {
+        loadedItems.push({
+          itemId: uuidv4(),
 
-  const addItem = () => {
-    const newItem: RequestItem = {
-      itemId: uuidv4(),
-      itemPos: items.length + 1,
-      type: "REQUEST",
-    };
-    setItems([...items, newItem]);
-  };
+          type: "REQUEST",
+          jobId: jobId,
+          showSchedule: true,
+        });
+      } else if (
+        paramNamespace ||
+        paramSystem ||
+        paramVersion ||
+        paramInstance ||
+        paramCommand
+      ) {
+        loadedItems.push({
+          itemId: uuidv4(),
 
-  const updateItem = (updated: RequestItem) => {
-    setItems(
-      items.map((item) => (item.itemId === updated.itemId ? updated : item)),
+          type: "REQUEST",
+          requestCommandInput: {
+            namespace: paramNamespace,
+            systemName: paramSystem,
+            version: paramVersion,
+            instance: paramInstance,
+            command: paramCommand,
+          },
+        });
+      }
+
+      if (saved) {
+        updateItems([...loadedItems, ...JSON.parse(saved)]);
+      } else {
+        updateItems(loadedItems);
+      }
+    }
+  });
+
+  const updateItems = (updatedItems: RequestItem[]) => {
+    requestItemsRef.current = updatedItems;
+    setItems(requestItemsRef.current);
+    localStorage.setItem(
+      "requestItems",
+      JSON.stringify(requestItemsRef.current),
     );
   };
 
-  const deleteItem = (id: string) => {
-    setItems(items.filter((item) => item.itemId !== id));
+  const addItem = (itemParams?: Partial<RequestItem>) => {
+    const newItem: RequestItem = {
+      itemId: uuidv4(),
+      type: "REQUEST",
+      ...itemParams,
+    };
+    if (requestItemsRef.current) {
+      updateItems([...requestItemsRef.current, newItem]);
+    } else {
+      updateItems([newItem]);
+    }
   };
 
-  const listTemplate = (item: RequestItem[]) => {
+  const updateItem = (updated: RequestItem) => {
+    if (requestItemsRef.current) {
+      updateItems(
+        requestItemsRef.current.map((item) =>
+          item.itemId === updated.itemId ? updated : item,
+        ),
+      );
+    }
+  };
+
+  const deleteItem = (id: string) => {
+    if (requestItemsRef.current) {
+      // Need to determine if the item is the last item, if not then we need to redraw the entire list
+      const lastIndex =
+        requestItemsRef.current.findIndex((item) => item.itemId === id) ===
+        requestItemsRef.current.length - 1;
+      updateItems(requestItemsRef.current.filter((item) => item.itemId !== id));
+
+      if (!lastIndex) {
+        setRequestItemsKey(
+          JSON.stringify(requestItemsRef.current.map((item) => item.itemId)),
+        );
+      }
+    }
+  };
+
+  const listTemplate = () => {
     if (!items || items.length === 0) return null;
 
     const list = [] as Array<any>;
 
     items.forEach((value: RequestItem) => {
       if (value !== null && value !== undefined) {
-        list.push(
-          <Card
-            key={value.itemId}
-            className="flex mr-2 mb-2 mt-2"
-            style={{ width: "45%"}}
-            header={(<Button
-              onClick={() => {
-                deleteItem(value.itemId);
-              }}
-            >
-              <FontAwesomeIcon icon="minus" />
-            </Button>)}
-            footer={(<div className="flex">
-            <div>
-              <Button
-                label="Reset Form"
-                severity="warning"
-                icon="pi pi-arrow-right"
-                //onClick={() => setResetForm(true)}
-                className="mr-2"
-              />
-            </div>
-            <div>
-              {/* <CodeExample
-                visibleCodeExample={visibleCodeExample}
-                setVisibleCodeExample={setVisibleCodeExample}
-                request={request}
-              /> */}
-              <Button
-                label="Code Examples"
-                severity="info"
-                icon="pi pi-arrow-right"
-                //onClick={() => setVisibleCodeExample(true)}
-                className="mr-2"
-              />
-            </div>
-            <div style={{ marginLeft: "auto" }}>
-              
-                <Button
-                  label="Submit"
-                  icon="pi pi-arrow-right"
-                  onClick={() => {
-                    //submitRequest();
-                  }}
-                />
-              
-              
-            </div>
-          </div>)}
-          >
-            
-            
-            {value.type === "REQUEST" && (
-              <RequestCreate
-                requestItem={value}
-                updateRequestItem={updateItem}
-              />
-            )}
-            
-          </Card>,
-        );
+        if (value.type === "REQUEST") {
+          list.push(
+            <RequestCreateCard
+              requestItem={value}
+              updateRequestItem={updateItem}
+              removeItem={deleteItem}
+            />,
+          );
+        } else if (value.type === "VIEW_REQUEST") {
+          list.push(
+            <RequestViewCard
+              requestItem={value}
+              updateRequestItem={updateItem}
+              removeItem={deleteItem}
+              listeners={listeners}
+              addItem={addItem}
+            />,
+          );
+        }
       }
     });
 
-    return (<div className="flex grid grid-nogutter">{list}</div>);
+    return (
+      <div className="flex-grow-1 flex-wrap grid grid-nogutter">{list}</div>
+    );
   };
 
-  
   return (
     <div>
       <h1>Workspace</h1>
       <Button onClick={() => addItem()}>
         <FontAwesomeIcon icon="file-pen" />
       </Button>
-      {/* <ListTemplate items={items} /> */}
-       <DataView  value={items} listTemplate={listTemplate} layout="grid" style={{height:"100%"}} /> 
-    {/* <ReactGridLayout
-      className="layout"
-      layout={items.map((item, index) => ({
-        x: (index % 2) * 6,
-        y: Math.floor(index / 2) * 4,
-        w: 6,
-        h: 4,
-        i: item.itemId,
-      }))}
-      // cols={12}
-      // rowHeight={60}
-      width={width}
-    >
-      {sortedItems.map((item) => (
-        <div key={item.itemId} className="mb-2">
-      <Card>
-        <Button onClick={() => deleteItem(item.itemId)}>
-          <FontAwesomeIcon icon="minus" />
-        </Button>
-        {item.type === "REQUEST" && (
-          <RequestCreate
-        requestItem={item}
-        updateRequestItem={updateItem}
-          />
-        )}
-      </Card>
-        </div>
-      ))}
-    </ReactGridLayout> */}
+
+      <DataView
+        value={items}
+        listTemplate={listTemplate}
+        layout="grid"
+        key={requestItemsKey}
+        style={{
+          height: "auto", // Adjust height to auto
+          width: "auto", // Adjust width to auto
+          overflow: "visible", // Allow overflow to be visible
+        }}
+      />
     </div>
   );
 }
