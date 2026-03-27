@@ -4,22 +4,10 @@ import { Panel } from "primereact/panel";
 import { useEffect, useState } from "react";
 
 import { Config, Version } from "../models/models";
-import { GetConfig } from "../services/config_service";
 import { GetVersion } from "../services/util_service";
 
-function AboutIndex() {
-  const [config, setConfig] = useState<Config | null>(null);
+function AboutIndex({ config }: { config: Config }) {
   const [version, setVersion] = useState<Version | null>(null);
-
-  useEffect(() => {
-    GetConfig()
-      .then((config) => {
-        setConfig(config);
-      })
-      .catch((error) => {
-        console.error("Error fetching the config:", error);
-      });
-  }, []);
 
   useEffect(() => {
     GetVersion()

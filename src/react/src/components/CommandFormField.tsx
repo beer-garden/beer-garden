@@ -35,6 +35,30 @@ function CommandFormField({
   loadingChoices,
   resetForm,
 }: CommandFormFieldParams) {
+  //AutoComplete Objects
+  const [items, setItems] = useState<Array<string>>([]);
+  
+  //Base64 Stateful Objects
+  const [uploadPercentage, setUploadPercentage] = useState(0);
+  const fileUploadRef = useRef<FileUpload>(null);
+
+  // Bytes Stateful Objects
+  const bytesUploadRef = useRef<FileUpload>(null);
+
+  // Bytes and Base64 Triggers
+  useEffect(() => {
+    if (bytesUploadRef && bytesUploadRef.current) {
+      bytesUploadRef.current.clear();
+    }
+
+    if (uploadPercentage !== 0) {
+      setUploadPercentage(0);
+    }
+    if (fileUploadRef && fileUploadRef.current) {
+      fileUploadRef.current.clear();
+    }
+  }, [resetForm]);
+
   const handleMultiChange = (key: any, value: any, index?: number) => {
     parametersFields.forEach((param: InputParam) => {
       if (param.key === key) {
@@ -152,7 +176,6 @@ function CommandFormField({
       </div>
     );
   } else if (parameter.choices && parameter.choices?.display === "typeahead") {
-    const [items, setItems] = useState([] as Array<string>);
     const searchItems = (event: any) => {
       if (parameter.options) {
         const filteredItems = parameter.options.filter((option) =>
@@ -171,10 +194,7 @@ function CommandFormField({
           completeMethod={searchItems}
           invalid={(!disabled && parameter.optional) || undefined}
           onChange={(e) => handleChange(e.target.id, e.target.value)}
-          disabled={
-            disabled ||
-            loadingChoices.some((loading) => loading.key === parameter.key)
-          }
+          disabled={disabled}
           multiple={parameter.multi}
           dropdown
         />
@@ -605,13 +625,6 @@ function CommandFormField({
         const file = event.files[0];
         handleChange(parameter.key, file as FileUploadFile);
       };
-      const bytesUploadRef = useRef<FileUpload>(null);
-
-      useEffect(() => {
-        if (bytesUploadRef && bytesUploadRef.current) {
-          bytesUploadRef.current.clear();
-        }
-      }, [resetForm]);
 
       return (
         <div key={parameter.key} className="p-field">
@@ -627,9 +640,6 @@ function CommandFormField({
       );
     }
     case "Base64": {
-      const [uploadPercentage, setUploadPercentage] = useState(0);
-      const fileUploadRef = useRef<FileUpload>(null);
-
       const customBase64Uploader = async (event: any) => {
         if (fileUploadRef && fileUploadRef.current) {
           fileUploadRef.current.setUploadedFiles([]);
@@ -653,13 +663,6 @@ function CommandFormField({
           fileUploadRef.current.clear();
         }
       };
-
-      useEffect(() => {
-        setUploadPercentage(0);
-        if (fileUploadRef && fileUploadRef.current) {
-          fileUploadRef.current.clear();
-        }
-      }, [resetForm]);
 
       return (
         <div key={parameter.key} className="p-field">

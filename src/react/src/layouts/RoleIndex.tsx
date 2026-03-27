@@ -13,7 +13,6 @@ import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import RoleScopeCard from "../components/RoleScopeCard";
 import { Role } from "../models/brewtils-types";
 import { Config } from "../models/models";
-import { GetConfig } from "../services/config_service";
 import {
   CreateRole,
   DeleteRole,
@@ -29,8 +28,7 @@ const permissions = [
   { label: "READ_ONLY", value: "READ_ONLY" },
 ];
 
-function RoleIndex() {
-  const [config, setConfig] = useState<Config | null>(null);
+function RoleIndex({ config }: { config: Config }) {
   const toast = useRef<Toast>(null);
   const [roles, setRoles] = useState<Array<Role>>([]);
   const [loading, setLoading] = useState(false);
@@ -73,13 +71,6 @@ function RoleIndex() {
 
   useEffect(() => {
     loadRoles();
-    GetConfig()
-      .then((config) => {
-        setConfig(config);
-      })
-      .catch((error) => {
-        console.error("Error fetching the config:", error);
-      });
   }, []);
 
   function handleDialogClose() {

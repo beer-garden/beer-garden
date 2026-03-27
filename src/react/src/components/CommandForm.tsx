@@ -1,7 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
-import { Column } from "primereact/column";
-import { DataTable } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
 import { useEffect, useRef, useState } from "react";
 
@@ -502,7 +500,7 @@ function CommandForm({
         }
       });
     }
-  }, [parametersFields]);
+  }, [parametersFields, initialized, request, setRequest]);
 
   const handleChange = (name: any, value: any) => {
     altParametersFields.current = altParametersFields.current.map((param) =>
@@ -655,31 +653,34 @@ function CommandForm({
   // checking if loading choices has items and rendering two tables
   return (
     <div>
-      {parametersFields && (
-        <div key={loadingChoices.length}>
-          <DataTable
-            value={parametersFields}
-            showHeaders={false}
-            tableStyle={{ minWidth: "60rem" }}
-          >
-            <Column header="Field" body={renderInputLabel}></Column>
-            <Column
-              header="Value"
-              body={(parameter) =>
-                CommandFormField({
-                  parameter: parameter,
-                  disabled: disabled,
-                  parametersFields: parametersFields,
-                  loadingChoices: loadingChoices,
-                  handleChange: handleChange,
-                  resetForm: resetForm,
-                })
-              }
-            ></Column>
-            <Column header="Description" field="description"></Column>
-          </DataTable>
-        </div>
-      )}
+      <div
+        key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}`}
+        className="mt-4 mb-4"
+      >
+        {parametersFields &&
+          parametersFields?.map((parameter: InputParam) => (
+            <div
+              className="flex justify-content-between mb-3"
+              key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}.${parameter.key}`}
+            >
+              <div style={{ width: "20%" }}>{renderInputLabel(parameter)}</div>
+              <div style={{ width: "60%" }}>
+                <CommandFormField
+                  parameter={parameter}
+                  disabled={disabled}
+                  parametersFields={parametersFields}
+                  loadingChoices={loadingChoices}
+                  handleChange={handleChange}
+                  resetForm={resetForm}
+                />
+              </div>
+              <div style={{ overflowWrap: "break-word", width: "20%" }}>
+                {parameter.description}
+              </div>
+            </div>
+          ))}
+      </div>
+
       <Dialog
         header={"Code Examples"}
         visible={visibleCodeExample}
@@ -705,12 +706,14 @@ function CommandForm({
         severity="warning"
         icon="pi pi-arrow-right"
         onClick={resetRequest}
+        className="mr-2"
       />
       <Button
         label="Code Examples"
         severity="info"
         icon="pi pi-arrow-right"
         onClick={() => setVisibleCodeExample(true)}
+        className="mr-2"
       />
     </div>
   );

@@ -1,19 +1,19 @@
 import { Instance, Parameter, System } from "../models/brewtils-types";
 
 export interface Config {
-  application_name: string;
-  auth_enabled: boolean;
-  trusted_header_auth_enabled: string;
-  icon_default: string;
-  debug_mode: string;
-  execute_javascript: string;
-  auto_refresh: string;
-  search_delay: string;
-  garden_name: string;
-  metrics_url: string;
-  url_prefix: string;
-  action_ttl: number;
-  info_ttl: number;
+  application_name?: string;
+  auth_enabled?: boolean;
+  trusted_header_auth_enabled?: boolean;
+  icon_default?: string;
+  debug_mode?: boolean;
+  execute_javascript?: boolean;
+  auto_refresh?: boolean;
+  search_delay?: string;
+  garden_name?: string;
+  metrics_url?: string;
+  url_prefix?: string;
+  action_ttl?: number;
+  info_ttl?: number;
 }
 
 export interface Version {
@@ -35,11 +35,11 @@ export interface ScratchPadValue {
 }
 
 export interface RequestCommand {
-  namespace: string | null;
-  systemName: string | null;
-  version: string | null;
-  instance: string | null;
-  command: string | null;
+  namespace?: string;
+  systemName?: string;
+  version?: string;
+  instance?: string;
+  command?: string;
 }
 
 export interface InputParam extends Parameter {
@@ -55,4 +55,28 @@ export interface InstanceDialogProps {
   system: System;
   isVisible: boolean;
   onClose: any;
+}
+
+export interface PermissionCheck {
+  global?: boolean;
+  gardenName?: string;
+  namespace?: string;
+  systemName?: string;
+  systemVersion?: string;
+  commandName?: string;
+  instanceName?: string;
+}
+
+export interface HasAccessProps {
+  config: Config;
+  permission: "READ_ONLY" | "OPERATOR" | "PLUGIN_ADMIN" | "GARDEN_ADMIN";
+  isGlobal?: boolean;
+  hasGardenName?: string;
+  hasNamespace?: string;
+  hasSystemName?: string;
+  hasSystemVersion?: string;
+  hasCommandName?: string;
+  hasInstanceName?: string;
+  isLoading?: React.ReactElement;
+  renderAuthFailed?: React.ReactElement;
 }

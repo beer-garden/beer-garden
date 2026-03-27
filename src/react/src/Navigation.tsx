@@ -6,21 +6,29 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import CurrentRequestsTemplate from "./components/CurrentRequestsTemplate";
+import UserLogin from "./components/UserLogin";
 import { Config } from "./models/models";
-import { GetConfig } from "./services/config_service";
+import { ClearRefresh, ClearToken } from "./services/token_service";
+import { GetCurrentUser } from "./services/user_service";
 
-function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
-  const [config, setConfig] = useState<Config | null>(null);
-
-  useEffect(() => {
-    GetConfig()
-      .then((config) => {
-        setConfig(config);
-      })
-      .catch((error) => {
-        console.error("Error fetching the config:", error);
-      });
-  }, []);
+function NavigationMenu({
+  listeners,
+  config,
+  runReloadUI,
+}: {
+  listeners: Record<string, any>;
+  config: Config;
+  runReloadUI: () => void;
+}) {
+  const [iconDefault, setIconDefault] = useState<string>(
+    config?.icon_default ?? "beer-mug-empty",
+  );
+  const [applicationName, setApplicationName] = useState<string | undefined>(
+    config?.application_name,
+  );
+  const [authEnabled, setAuthEnabled] = useState<boolean | undefined>(
+    config?.auth_enabled,
+  );
 
   const itemRenderer = (item: any) => {
     if (item.root) {
@@ -137,12 +145,100 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
 
   const start = (
     <div className="flex">
-      {config && (
-        <div className="mr-2">
-          <FontAwesomeIcon icon={config.icon_default ?? "beer-mug-empty"} />
+      <div className="mr-2">
+        <FontAwesomeIcon icon={iconDefault} />
+      </div>
+
+      {applicationName && <div className="mr-2">{applicationName}</div>}
+    </div>
+  );
+
+  const getUserName = () => {
+    if (authEnabled === true) {
+      return GetCurrentUser();
+    }
+    return undefined;
+  };
+
+  const [username, setUserName] = useState<string | undefined>(getUserName());
+  const [loginVisible, setLoginVisible] = useState(false);
+
+  const updateUserName = (username: string | undefined) => {
+    setUserName(username);
+    runReloadUI();
+  };
+
+  useEffect(() => {
+    if (config?.icon_default && config.icon_default !== iconDefault) {
+      setIconDefault(config.icon_default);
+    }
+
+    if (
+      config?.application_name &&
+      config.application_name !== applicationName
+    ) {
+      setApplicationName(config.application_name);
+    }
+
+    if (
+      config?.auth_enabled !== undefined &&
+      config.auth_enabled !== authEnabled
+    ) {
+      setAuthEnabled(config.auth_enabled);
+      if (config.auth_enabled && username === undefined) {
+        setLoginVisible(true);
+      }
+    }
+  }, [config, authEnabled, username, iconDefault, applicationName]);
+
+  const end = (
+    <div className="flex">
+      {authEnabled === true && (
+        <div>
+          {username === undefined && (
+            <div>
+              <Button
+                rounded
+                className="mr-2"
+                onClick={() => setLoginVisible(true)}
+                data-testid="user-login"
+              >
+                Login
+              </Button>
+              <UserLogin
+                visible={loginVisible}
+                setVisible={setLoginVisible}
+                setUsernameDisplay={updateUserName}
+              />
+            </div>
+          )}
+          {username !== undefined && (
+            <div>
+              <span className="font-bold mr-2">Welcome {username}!</span>
+
+              <Button
+                rounded
+                className="mr-2"
+                onClick={() => {
+                  ClearToken();
+                  ClearRefresh()
+                    .finally(() => {
+                      updateUserName(undefined);
+                    })
+                    .catch((error) => {
+                      console.error("Error clearing Refresh Token:", error);
+                    });
+                }}
+                data-testid="user-logout"
+              >
+                Logout
+              </Button>
+            </div>
+          )}
         </div>
       )}
-      {config && <div className="mr-2">{config.application_name}</div>}
+
+      <CurrentRequestsTemplate listeners={listeners} />
     </div>
   );
 
@@ -152,7 +248,7 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
         model={items}
         orientation="horizontal"
         start={start}
-        end={<CurrentRequestsTemplate listeners={listeners} />}
+        end={end}
         breakpoint="960px"
         className="p-3 surface-0 shadow-2"
         style={{ borderRadius: "3rem" }}
