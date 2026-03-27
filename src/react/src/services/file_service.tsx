@@ -1,5 +1,6 @@
 import * as SparkMD5 from "spark-md5";
 
+import { GetAuthHeaders } from "./token_service";
 import { GetBaseURL } from "./util_service";
 
 const chunkSize = 255 * 1024;
@@ -37,7 +38,7 @@ export const uploadFile = async (
   setPercentage: (percentage: number) => void,
   headerData?: any,
 ) => {
-  const headers = new Headers();
+  const headers = GetAuthHeaders();
 
   for (const [key, value] of Object.entries(headerData || {})) {
     headers.append(key, value as string);
@@ -94,7 +95,7 @@ export const uploadChunk = async (
         reject(new Error("Failed to read file chunk"));
       } else {
         const result = e.target.result as string;
-        const headers = new Headers();
+        const headers = GetAuthHeaders();
         headers.append("Content-Type", "application/json");
 
         fetch(`${GetBaseURL()}/api/vbeta/chunks/?file_id=${fileId}`, {

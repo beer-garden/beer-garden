@@ -1,16 +1,17 @@
 import { v4 as uuidv4 } from "uuid";
 
 import { Request } from "../models/brewtils-types";
+import { GetAuthHeaders } from "./token_service";
 import { GetBaseURL } from "./util_service";
 
 export const GetRequestList = async (
   headerData?: any,
 ): Promise<[Request[], Headers]> => {
   try {
-    const fetchHeaders = new Headers();
+    const headers = GetAuthHeaders();
     if (headerData) {
       for (const [key, value] of Object.entries(headerData)) {
-        fetchHeaders.append(key, value as string);
+        headers.append(key, value as string);
       }
     } else {
       headerData = {};
@@ -40,6 +41,9 @@ export const GetRequestList = async (
 
     const response = await fetch(
       `${GetBaseURL()}/api/v1/requests?${queryString}`,
+      {
+        headers: headers,
+      },
     );
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
@@ -59,7 +63,7 @@ export const GetRequest = async (
   headerData: any,
 ): Promise<Request> => {
   try {
-    const headers = new Headers();
+    const headers = GetAuthHeaders();
     for (const [key, value] of Object.entries(headerData)) {
       headers.append(key, value as string);
     }
@@ -90,7 +94,7 @@ export const PostRequest = async (
   waitForCompletion?: boolean,
 ): Promise<Request> => {
   try {
-    const headers = new Headers();
+    const headers = GetAuthHeaders();
 
     for (const [key, value] of Object.entries(headerData || {})) {
       headers.append(key, value as string);
@@ -186,7 +190,7 @@ export const PostRequest = async (
 
 export const DeleteRequest = async (request: Request, headerData?: any) => {
   try {
-    const headers = new Headers();
+    const headers = GetAuthHeaders();
 
     for (const [key, value] of Object.entries(headerData || {})) {
       headers.append(key, value as string);
@@ -215,7 +219,7 @@ export const DeleteRequest = async (request: Request, headerData?: any) => {
 export const DeleteRequests = async (deleteParams?: any) => {
   try {
     let queryString = "";
-    const headers = new Headers();
+    const headers = GetAuthHeaders();
     const searchParams = new URLSearchParams();
     for (const [key, value] of Object.entries(deleteParams)) {
       if (Array.isArray(value)) {
@@ -259,7 +263,7 @@ export const CancelRequest = async (
   headerData?: any,
 ): Promise<Request> => {
   try {
-    const headers = new Headers();
+    const headers = GetAuthHeaders();
 
     headers.append("Content-Type", "application/json");
 

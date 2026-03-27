@@ -6,16 +6,16 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import CommandCreate from "../components/CommandCreate";
+import HasAccess from "../components/HasAccess";
 import SchedulerForm from "../components/SchedulerForm";
 import { Job, Request } from "../models/brewtils-types";
-import { RequestCommand } from "../models/models";
+import { Config, RequestCommand } from "../models/models";
 import { CreateJob, GetJob, UpdateJob } from "../services/job_service";
 import { GetRequest } from "../services/request_service";
 import { PostRequest } from "../services/request_service";
 import { GetBaseURL } from "../services/util_service";
 
-function RequestCreate() {
-  const navigate = useNavigate();
+function RequestCreate({ config }: { config: Config }) {
   const { requestId } = useParams<{ requestId: string }>();
   const { jobId } = useParams<{ jobId: string }>();
   const { defaultType } = useParams<{ defaultType: string }>();
@@ -25,6 +25,7 @@ function RequestCreate() {
   const { paramInstance } = useParams<{ paramInstance: string }>();
   const { paramCommand } = useParams<{ paramCommand: string }>();
   const stepperRef = useRef<null | any>(null);
+  const navigate = useNavigate();
 
   const scheduleHeader = "Schedule";
   const createRequestHeader = "Create Request";
@@ -43,11 +44,11 @@ function RequestCreate() {
 
   // Create Request Panel
   const [requestCommand, setRequestCommand] = useState<RequestCommand>({
-    namespace: paramNamespace ?? null,
-    systemName: paramSystem ?? null,
-    version: paramVersion ?? null,
-    instance: paramInstance ?? null,
-    command: paramCommand ?? null,
+    namespace: paramNamespace ?? undefined,
+    systemName: paramSystem ?? undefined,
+    version: paramVersion ?? undefined,
+    instance: paramInstance ?? undefined,
+    command: paramCommand ?? undefined,
   });
 
   const [showCreateRequest, setShowCreateRequest] = useState<boolean>(
@@ -112,11 +113,11 @@ function RequestCreate() {
             parameters: responseRequest.parameters,
           });
           setRequestCommand({
-            namespace: responseRequest?.namespace ?? null,
-            systemName: responseRequest?.system ?? null,
-            version: responseRequest?.system_version ?? null,
-            instance: responseRequest?.instance_name ?? null,
-            command: responseRequest?.command ?? null,
+            namespace: responseRequest?.namespace,
+            systemName: responseRequest?.system,
+            version: responseRequest?.system_version,
+            instance: responseRequest?.instance_name,
+            command: responseRequest?.command,
           });
           setShowCreateRequest(true);
         })
@@ -183,23 +184,43 @@ function RequestCreate() {
 
             {runState === runOptions[0] && (
               <div>
-                <Button
-                  label="Submit"
-                  icon="pi pi-arrow-right"
-                  onClick={() => {
-                    submitRequest();
-                  }}
-                />
+                <HasAccess
+                  config={config}
+                  permission="OPERATOR"
+                  hasNamespace={requestCommand.namespace}
+                  hasSystemName={requestCommand.systemName}
+                  hasInstanceName={requestCommand.instance}
+                  hasSystemVersion={requestCommand.version}
+                  hasCommandName={requestCommand.command}
+                >
+                  <Button
+                    label="Submit"
+                    icon="pi pi-arrow-right"
+                    onClick={() => {
+                      submitRequest();
+                    }}
+                  />
+                </HasAccess>
               </div>
             )}
             {runState === runOptions[1] && !jobId && (
-              <Button
-                label="Submit Job"
-                severity="success"
-                icon="pi pi-arrow-right"
-                iconPos="right"
-                onClick={submitJob}
-              />
+              <HasAccess
+                config={config}
+                permission="OPERATOR"
+                hasNamespace={requestCommand.namespace}
+                hasSystemName={requestCommand.systemName}
+                hasInstanceName={requestCommand.instance}
+                hasSystemVersion={requestCommand.version}
+                hasCommandName={requestCommand.command}
+              >
+                <Button
+                  label="Submit Job"
+                  severity="success"
+                  icon="pi pi-arrow-right"
+                  iconPos="right"
+                  onClick={submitJob}
+                />
+              </HasAccess>
             )}
             {runState === runOptions[1] && jobId && (
               <Button
