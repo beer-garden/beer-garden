@@ -95,14 +95,13 @@ function NavigationMenu({
       to="/"
     >
       <div className="flex">
-      <div className="mr-2">
-        <FontAwesomeIcon icon={iconDefault} />
+        <div className="mr-2">
+          <FontAwesomeIcon icon={iconDefault} />
+        </div>
+
+        {applicationName && <div className="mr-2">{applicationName}</div>}
       </div>
-
-      {applicationName && <div className="mr-2">{applicationName}</div>}
-    </div>
     </Link>
-
   );
 
   const getUserName = () => {

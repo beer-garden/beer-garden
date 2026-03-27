@@ -17,8 +17,6 @@ import JobIndex from "./layouts/JobIndex";
 import RequestCreate from "./layouts/RequestCreate";
 import RequestIndex from "./layouts/RequestIndex";
 import RequestView from "./layouts/RequestView";
-import SystemCards from "./layouts/SystemCards";
-import SystemTable from "./layouts/SystemTable";
 import { Config, Listener } from "./models/models";
 import NavigationMenu from "./Navigation";
 import { GetConfig } from "./services/config_service";
@@ -163,8 +161,14 @@ function App() {
                     element={<RequestCreate config={config} />}
                   />
                   <Route path="/jobs" element={<JobIndex />} />
-                  <Route path="/job/:jobId" element={<RequestCreate config={config} />} />
-                  <Route path="/about" element={<AboutIndex  config={config} />} />
+                  <Route
+                    path="/job/:jobId"
+                    element={<RequestCreate config={config} />}
+                  />
+                  <Route
+                    path="/about"
+                    element={<AboutIndex config={config} />}
+                  />
                   <Route
                     path="/"
                     element={<GardenDashboard listeners={listeners} />}

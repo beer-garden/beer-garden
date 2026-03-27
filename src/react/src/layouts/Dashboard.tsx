@@ -15,11 +15,7 @@ import { GetConfig } from "../services/config_service";
 import { GetRootGarden } from "../services/garden_service";
 import { GetSeverity } from "../services/util_service";
 
-function GardenDashboard({
-  listeners,
-}: {
-  listeners: Record<string, any>;
-}) {
+function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
   const gardenRef = useRef<Garden>(null);
   const selectedGardenRef = useRef<Garden>(null);
 
