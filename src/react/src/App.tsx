@@ -17,17 +17,29 @@ import JobIndex from "./layouts/JobIndex";
 import RequestCreate from "./layouts/RequestCreate";
 import RequestIndex from "./layouts/RequestIndex";
 import RequestView from "./layouts/RequestView";
-import { Listener } from "./models/models";
+import SystemCards from "./layouts/SystemCards";
+import SystemTable from "./layouts/SystemTable";
+import { Config, Listener } from "./models/models";
 import NavigationMenu from "./Navigation";
+import { GetConfig } from "./services/config_service";
+import { ClearSystemsCache } from "./services/system_service";
 import { preemptiveRefresh } from "./services/token_service";
+import { GetToken } from "./services/token_service";
 
 function App() {
   const [showScratchPad, setShowScratchPad] = useState<boolean>(false);
   const [showMainApp, setShowMainApp] = useState<boolean>(true);
   const socketRef = useRef(null as null | any);
   const listeners = useRef<Record<string, Listener>>({});
+  const [config, setConfig] = useState<Config>({});
 
   const [reloadScratchPadTrigger, setReloadScratchPadTrigger] = useState(0);
+  const [reloadUI, setReloadUI] = useState(0);
+
+  const runReloadUI = () => {
+    ClearSystemsCache();
+    setReloadUI((prev) => prev + 1);
+  };
 
   const nagivateLeft = () => {
     if (showScratchPad && showMainApp) {
@@ -60,6 +72,14 @@ function App() {
   };
 
   useEffect(() => {
+    GetConfig()
+      .then((config) => {
+        setConfig(config);
+      })
+      .catch((error) => {
+        console.log("Unable to retrieve configuration", error);
+      });
+
     const interval = setInterval(preemptiveRefresh, 30000);
 
     // Cleanup function to clear the interval when the component unmounts
@@ -71,11 +91,19 @@ function App() {
     socketRef.current = new WebSocket("/api/v1/socket/events/");
     const handleMessage = (event: any) => {
       // Update React state with new message
+
       if (event.data) {
-        for (const [key, listener] of Object.entries(listeners)) {
-          if (key && listener && listener.listener) {
-            listener.listener(JSON.parse(event.data));
-            console.log("Message from server for listener", key, event.data);
+        const eventData = JSON.parse(event.data);
+        if (eventData?.name === "AUTHORIZATION_REQUIRED") {
+          socketRef.current.send(
+            JSON.stringify({ name: "UPDATE_TOKEN", payload: GetToken() }),
+          );
+        } else {
+          for (const [key, listener] of Object.entries(listeners)) {
+            if (key && listener && listener.listener) {
+              listener.listener(eventData);
+              console.log("Message from server for listener", key, event.data);
+            }
           }
         }
       }
@@ -99,8 +127,12 @@ function App() {
       <div className="flex">
         <div className="flex-grow-1">
           <BrowserRouter basename={baseURL}>
-            <NavigationMenu listeners={listeners} />
-            <div className="flex">
+            <NavigationMenu
+              listeners={listeners}
+              config={config}
+              runReloadUI={runReloadUI}
+            />
+            <div className="flex" key={reloadUI}>
               <div className={showMainApp ? "flex-grow-1" : "hidden"}>
                 <Routes>
                   <Route
@@ -109,7 +141,9 @@ function App() {
                   />
                   <Route
                     path="/request/:requestId"
-                    element={<RequestView listeners={listeners} />}
+                    element={
+                      <RequestView listeners={listeners} config={config} />
+                    }
                   />
                   <Route
                     path="/requests"
@@ -122,15 +156,15 @@ function App() {
                   />
                   <Route
                     path="/create/:defaultType/:paramNamespace?/:paramSystem?/:paramVersion?/:paramInstance?/:paramCommand?"
-                    element={<RequestCreate />}
+                    element={<RequestCreate config={config} />}
                   />
                   <Route
                     path="/recreate/:requestId"
-                    element={<RequestCreate />}
+                    element={<RequestCreate config={config} />}
                   />
                   <Route path="/jobs" element={<JobIndex />} />
-                  <Route path="/job/:jobId" element={<RequestCreate />} />
-                  <Route path="/about" element={<AboutIndex />} />
+                  <Route path="/job/:jobId" element={<RequestCreate config={config} />} />
+                  <Route path="/about" element={<AboutIndex  config={config} />} />
                   <Route
                     path="/"
                     element={<GardenDashboard listeners={listeners} />}

@@ -1,8 +1,9 @@
 import { Queue } from "../models/brewtils-types";
+import { GetAuthHeaders } from "./token_service";
 import { GetBaseURL } from "./util_service";
 
 export const ClearAllQueues = async (gardenName?: string): Promise<void> => {
-  const headers = new Headers();
+  const headers = GetAuthHeaders();
   headers.append("Content-Type", "application/json");
   let fetch_url = `${GetBaseURL()}/api/v1/queues`;
   if (gardenName) {
@@ -22,7 +23,7 @@ export const ClearAllQueues = async (gardenName?: string): Promise<void> => {
 };
 
 export const ClearQueue = async (queueName: string): Promise<void> => {
-  const headers = new Headers();
+  const headers = GetAuthHeaders();
   headers.append("Content-Type", "application/json");
   const response = await fetch(`${GetBaseURL()}/api/v1/queues/${queueName}`, {
     headers: headers,
@@ -40,7 +41,7 @@ export const GetInstanceQueues = async (
   if (!instanceId) {
     return [] as Queue[];
   }
-  const headers = new Headers();
+  const headers = GetAuthHeaders();
   headers.append("Content-Type", "application/json");
   const response = await fetch(
     `${GetBaseURL()}/api/v1/instances/${instanceId}/queues`,

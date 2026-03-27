@@ -45,15 +45,13 @@ export const UserLogin = async (
 
 export const DoRefresh = async (headerData?: any) => {
   try {
-    const headers = new Headers();
+    const headers = GetAuthHeaders();
 
     headers.append("Content-Type", "application/json");
 
     for (const [key, value] of Object.entries(headerData || {})) {
       headers.append(key, value as string);
     }
-
-    AddAuthToken(headers);
 
     const response = await fetch(`${GetBaseURL()}/api/v1/token/refresh`, {
       headers: headers,
@@ -96,10 +94,9 @@ export const ClearRefresh = async () => {
   if (refresh) {
     localStorage.removeItem("refresh");
 
-    const headers = new Headers();
+    const headers = GetAuthHeaders();
 
     headers.append("Content-Type", "application/json");
-    AddAuthToken(headers);
 
     const response = await fetch(`${GetBaseURL()}/api/v1/token/revoke`, {
       headers: headers,
@@ -151,9 +148,11 @@ export const ClearToken = () => {
   localStorage.removeItem("token");
 };
 
-export const AddAuthToken = (headers: Headers) => {
+export const GetAuthHeaders = () => {
+  const headers = new Headers();
   const token = GetToken();
   if (token) {
     headers.append("Authorization", `Bearer ${token}`);
   }
+  return headers;
 };

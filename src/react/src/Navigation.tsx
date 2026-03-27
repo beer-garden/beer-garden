@@ -8,12 +8,27 @@ import { Link } from "react-router-dom";
 import CurrentRequestsTemplate from "./components/CurrentRequestsTemplate";
 import UserLogin from "./components/UserLogin";
 import { Config } from "./models/models";
-import { GetConfig } from "./services/config_service";
-import { ClearRefresh, ClearToken, GetToken } from "./services/token_service";
+import { ClearRefresh, ClearToken } from "./services/token_service";
 import { GetCurrentUser } from "./services/user_service";
 
-function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
-  const [config, setConfig] = useState<Config | null>(null);
+function NavigationMenu({
+  listeners,
+  config,
+  runReloadUI,
+}: {
+  listeners: Record<string, any>;
+  config: Config;
+  runReloadUI: () => void;
+}) {
+  const [iconDefault, setIconDefault] = useState<string>(
+    config?.icon_default ?? "beer-mug-empty",
+  );
+  const [applicationName, setApplicationName] = useState<string | undefined>(
+    config?.application_name,
+  );
+  const [authEnabled, setAuthEnabled] = useState<boolean | undefined>(
+    config?.auth_enabled,
+  );
 
   const itemRenderer = (item: any) => {
     return (
@@ -80,57 +95,57 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
       to="/"
     >
       <div className="flex">
-        {config && (
-          <div className="mr-2">
-            <FontAwesomeIcon icon={config.icon_default ?? "beer-mug-empty"} />
-          </div>
-        )}
-        {config && <div className="mr-2">{config.application_name}</div>}
+      <div className="mr-2">
+        <FontAwesomeIcon icon={iconDefault} />
       </div>
+
+      {applicationName && <div className="mr-2">{applicationName}</div>}
+    </div>
     </Link>
+
   );
 
   const getUserName = () => {
-    if (config && config?.auth_enabled === true) {
-      const token = GetToken();
-      if (token !== null) {
-        return GetCurrentUser(token);
-      }
+    if (authEnabled === true) {
+      return GetCurrentUser();
     }
     return undefined;
   };
 
+  const [username, setUserName] = useState<string | undefined>(getUserName());
   const [loginVisible, setLoginVisible] = useState(false);
 
-  const [username, setUserName] = useState<string | undefined>(getUserName());
+  const updateUserName = (username: string | undefined) => {
+    setUserName(username);
+    runReloadUI();
+  };
 
   useEffect(() => {
-    if (config === null) {
-      GetConfig()
-        .then((configValue) => {
-          setConfig(configValue);
-        })
-        .catch((error) => {
-          console.error("Error fetching the config:", error);
-        });
-    } else if (
-      config !== null &&
-      !loginVisible &&
-      config?.auth_enabled &&
-      username === undefined
+    if (config?.icon_default && config.icon_default !== iconDefault) {
+      setIconDefault(config.icon_default);
+    }
+
+    if (
+      config?.application_name &&
+      config.application_name !== applicationName
     ) {
-      const userNameValue = getUserName();
-      if (userNameValue === undefined || userNameValue === null) {
+      setApplicationName(config.application_name);
+    }
+
+    if (
+      config?.auth_enabled !== undefined &&
+      config.auth_enabled !== authEnabled
+    ) {
+      setAuthEnabled(config.auth_enabled);
+      if (config.auth_enabled && username === undefined) {
         setLoginVisible(true);
-      } else {
-        setUserName(userNameValue);
       }
     }
-  }, [config]);
+  }, [config, authEnabled, username, iconDefault, applicationName]);
 
   const end = (
     <div className="flex">
-      {config && config?.auth_enabled === true && (
+      {authEnabled === true && (
         <div>
           {username === undefined && (
             <div>
@@ -138,13 +153,14 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
                 rounded
                 className="mr-2"
                 onClick={() => setLoginVisible(true)}
+                data-testid="user-login"
               >
                 Login
               </Button>
               <UserLogin
                 visible={loginVisible}
                 setVisible={setLoginVisible}
-                setUsernameDisplay={setUserName}
+                setUsernameDisplay={updateUserName}
               />
             </div>
           )}
@@ -159,12 +175,13 @@ function NavigationMenu({ listeners }: { listeners: Record<string, any> }) {
                   ClearToken();
                   ClearRefresh()
                     .finally(() => {
-                      setUserName(undefined);
+                      updateUserName(undefined);
                     })
                     .catch((error) => {
                       console.error("Error clearing Refresh Token:", error);
                     });
                 }}
+                data-testid="user-logout"
               >
                 Logout
               </Button>
