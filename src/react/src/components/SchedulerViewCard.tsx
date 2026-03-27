@@ -13,16 +13,27 @@ import {
   Job,
   Request,
 } from "../models/brewtils-types";
-import { GetJob } from "../services/job_service";
+import {
+  GetJob,
+  PauseJob,
+  ResumeJob,
+  RunAdhocJob,
+} from "../services/job_service";
 import { GetRequestList } from "../services/request_service";
 import { GetBaseURL } from "../services/util_service";
 
 function SchedulerViewCard({
   jobId,
   listeners,
+  removeItem,
+  editJob,
+  deleteJob,
 }: {
   jobId: string;
   listeners: Record<string, any>;
+  removeItem: (id: string) => void;
+  editJob: () => void;
+  deleteJob: () => void;
 }) {
   const [job, setJob] = useState<Job | undefined>(undefined);
 
@@ -128,10 +139,6 @@ function SchedulerViewCard({
     altRequests.current = requests;
   };
 
-  const editJob = () => {
-    window.open(`${GetBaseURL()}/job/${jobId}`, "_self");
-  };
-
   const queryJobRequests = () => {
     setLoading(true);
 
@@ -224,14 +231,103 @@ function SchedulerViewCard({
   return (
     <Card
       className="justify-content-center mr-2 mb-2 mt-2"
+      style={{ maxHeight: "80vh", overflowY: "auto" }}
+      header={
+        <Button
+          onClick={() => {
+            removeItem(jobId);
+          }}
+          className="mr-2 ml-2 mt-2"
+          title={"Close Job " + job?.name}
+        >
+          <FontAwesomeIcon icon="minus" />
+        </Button>
+      }
       title={
         <div className="flex">
-          <div>{job ? job.name : "Loading..."}</div>
-          <div style={{ marginLeft: "auto" }}>
-            <Button onClick={editJob}>
-              <FontAwesomeIcon icon="edit" />
+          <div className="flex-1 flex">
+            <div className="mr-2">{job ? job.name : "Loading..."}</div>
+          </div>
+
+          <Button
+            rounded
+            raised
+            link
+            onClick={() => {
+              if (job?.id) {
+                RunAdhocJob(job.id).catch((error) => {
+                  console.error("Error running job:", error);
+                });
+              }
+            }}
+            title={"Run Now " + job?.name}
+            className="mr-2"
+          >
+            <FontAwesomeIcon icon="forward" />
+          </Button>
+
+          <Button
+            rounded
+            raised
+            link
+            onClick={() => {
+              editJob();
+            }}
+            title={"Update Job " + job?.name}
+            className="mr-2"
+          >
+            <FontAwesomeIcon icon="edit" />
+          </Button>
+          {job?.status === "RUNNING" && (
+            <Button
+              rounded
+              raised
+              link
+              onClick={() => {
+                PauseJob(job)
+                  .then((updatedJob) => {
+                    setJob(updatedJob);
+                  })
+                  .catch((error) => {
+                    console.error("Error pausing job:", error);
+                  });
+              }}
+              title={"Pause Job " + job?.name}
+              className="mr-2"
+            >
+              <FontAwesomeIcon icon="pause" />
             </Button>
-          </div>{" "}
+          )}
+          {job?.status === "PAUSED" && (
+            <Button
+              rounded
+              raised
+              link
+              onClick={() => {
+                ResumeJob(job)
+                  .then((updatedJob) => {
+                    setJob(updatedJob);
+                  })
+                  .catch((error) => {
+                    console.error("Error resuming job:", error);
+                  });
+              }}
+              title={"Resume Job " + job?.name}
+              className="mr-2"
+            >
+              <FontAwesomeIcon icon="play" />
+            </Button>
+          )}
+          <Button
+            rounded
+            raised
+            link
+            onClick={() => deleteJob()}
+            title={"Delete Job " + job?.name}
+            className="mr-2"
+          >
+            <FontAwesomeIcon icon="trash" />
+          </Button>
         </div>
       }
     >
@@ -241,25 +337,33 @@ function SchedulerViewCard({
           {job ? (
             <div>
               <p>
-                <strong>Coalesce:</strong> {job.coalesce ? "True" : "False"}
+                <strong className="mr-2">Status:</strong>
+                {job.status}
               </p>
               <p>
-                <strong>Misfire Grace Time:</strong>{" "}
+                <strong className="mr-2">Coalesce:</strong>
+                {job.coalesce ? "True" : "False"}
+              </p>
+              <p>
+                <strong className="mr-2">Misfire Grace Time:</strong>
                 {job.misfire_grace_time ?? "N/A"}
               </p>
               <p>
-                <strong>Max Instances:</strong> {job.max_instances ?? "N/A"}
+                <strong className="mr-2">Max Instances:</strong>
+                {job.max_instances ?? "N/A"}
               </p>
               <p>
-                <strong>Timeout:</strong> {job.timeout ?? "N/A"}
+                <strong className="mr-2">Timeout:</strong>
+                {job.timeout ?? "N/A"}
               </p>
               <p>
-                <strong>Trigger Type:</strong> {job.trigger_type?.toUpperCase()}
+                <strong className="mr-2">Trigger Type:</strong>
+                {job.trigger_type?.toUpperCase()}
               </p>
               {job.trigger_type === "cron" && job.trigger && (
                 <div>
                   <p>
-                    <strong>Cron Expression:</strong>{" "}
+                    <strong className="mr-2">Cron Expression:</strong>
                     {(job.trigger as CronTrigger).second ?? "*"}{" "}
                     {(job.trigger as CronTrigger).minute ?? "*"}{" "}
                     {(job.trigger as CronTrigger).hour ?? "*"}{" "}
@@ -269,19 +373,19 @@ function SchedulerViewCard({
                     {(job.trigger as CronTrigger).year ?? "*"}
                   </p>
                   <p>
-                    <strong>Start Date:</strong>{" "}
+                    <strong className="mr-2">Start Date:</strong>
                     {formatDate((job.trigger as CronTrigger).startDate)}
                   </p>
                   <p>
-                    <strong>End Date:</strong>{" "}
+                    <strong className="mr-2">End Date:</strong>
                     {formatDate((job.trigger as CronTrigger).endDate)}
                   </p>
                   <p>
-                    <strong>Timezone:</strong>{" "}
-                    {(job.trigger as CronTrigger).timezone}
+                    <strong className="mr-2">Timezone:</strong>
+                    {(job.trigger as CronTrigger).timezone ?? "N/A"}
                   </p>
                   <p>
-                    <strong>Jitter:</strong>{" "}
+                    <strong className="mr-2">Jitter:</strong>
                     {(job.trigger as CronTrigger).jitter ?? "N/A"}
                   </p>
                 </div>
@@ -289,19 +393,19 @@ function SchedulerViewCard({
               {job.trigger_type === "date" && job.trigger && (
                 <div>
                   <p>
-                    <strong>Run Date:</strong>{" "}
+                    <strong className="mr-2">Run Date:</strong>
                     {formatDate((job.trigger as DateTrigger).runDate)}
                   </p>
                   <p>
-                    <strong>Timezone:</strong>{" "}
-                    {(job.trigger as DateTrigger).timezone}
+                    <strong className="mr-2">Timezone:</strong>
+                    {(job.trigger as DateTrigger).timezone ?? "N/A"}
                   </p>
                 </div>
               )}
               {job.trigger_type === "interval" && job.trigger && (
                 <div>
                   <p>
-                    <strong>Interval:</strong>{" "}
+                    <strong className="mr-2">Interval:</strong>
                     {(job.trigger as IntervalTrigger).weeks !== undefined &&
                       (job.trigger as IntervalTrigger).weeks !== 0 &&
                       "Every " +
@@ -329,23 +433,23 @@ function SchedulerViewCard({
                         " Seconds"}
                   </p>
                   <p>
-                    <strong>Start Date:</strong>{" "}
+                    <strong className="mr-2">Start Date:</strong>
                     {formatDate((job.trigger as IntervalTrigger).startDate)}
                   </p>
                   <p>
-                    <strong>End Date:</strong>{" "}
+                    <strong className="mr-2">End Date:</strong>
                     {formatDate((job.trigger as IntervalTrigger).endDate)}
                   </p>
                   <p>
-                    <strong>Timezone:</strong>{" "}
-                    {(job.trigger as IntervalTrigger).timezone}
+                    <strong className="mr-2">Timezone:</strong>
+                    {(job.trigger as IntervalTrigger).timezone ?? "N/A"}
                   </p>
                   <p>
-                    <strong>Jitter:</strong>{" "}
+                    <strong className="mr-2">Jitter:</strong>
                     {(job.trigger as IntervalTrigger).jitter ?? "N/A"}
                   </p>
                   <p>
-                    <strong>Reschedule On Finish:</strong>{" "}
+                    <strong className="mr-2">Reschedule On Finish:</strong>
                     {(job.trigger as IntervalTrigger).rescheduleOnFinish
                       ? "True"
                       : "False"}
@@ -355,30 +459,31 @@ function SchedulerViewCard({
               {job.trigger_type === "file" && job.trigger && (
                 <div>
                   <p>
-                    <strong>Path:</strong> {(job.trigger as FileTrigger).path}
+                    <strong className="mr-2">Path:</strong>
+                    {(job.trigger as FileTrigger).path}
                   </p>
                   <p>
-                    <strong>Pattern:</strong>{" "}
+                    <strong className="mr-2">Pattern:</strong>
                     {(job.trigger as FileTrigger).pattern}
                   </p>
                   <p>
-                    <strong>Recursive:</strong>{" "}
+                    <strong className="mr-2">Recursive:</strong>
                     {(job.trigger as FileTrigger).recursive ? "True" : "False"}
                   </p>
                   <p>
-                    <strong>Create:</strong>{" "}
+                    <strong className="mr-2">Create:</strong>
                     {(job.trigger as FileTrigger).create ? "True" : "False"}
                   </p>
                   <p>
-                    <strong>Modify:</strong>{" "}
+                    <strong className="mr-2">Modify:</strong>
                     {(job.trigger as FileTrigger).modify ? "True" : "False"}
                   </p>
                   <p>
-                    <strong>Delete:</strong>{" "}
+                    <strong className="mr-2">Delete:</strong>
                     {(job.trigger as FileTrigger).delete ? "True" : "False"}
                   </p>
                   <p>
-                    <strong>Move:</strong>{" "}
+                    <strong className="mr-2">Move:</strong>
                     {(job.trigger as FileTrigger).move ? "True" : "False"}
                   </p>
                 </div>
@@ -388,7 +493,7 @@ function SchedulerViewCard({
             <p>Loading job details...</p>
           )}
         </div>
-        <div>
+        <div style={{ flexGrow: "1" }}>
           {requests ? (
             <DataTable
               value={requests}

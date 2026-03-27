@@ -54,6 +54,36 @@ export const GetJob = async (jobId: string, headerData: any): Promise<Job> => {
   }
 };
 
+export const RunAdhocJob = async (
+  jobId: string,
+  headerData?: any,
+): Promise<void> => {
+  try {
+    const headers = GetAuthHeaders();
+
+    for (const [key, value] of Object.entries(headerData || {})) {
+      headers.append(key, value as string);
+    }
+
+    const response = await fetch(
+      `${GetBaseURL()}/api/v1/jobs/${jobId}/execute`,
+      {
+        headers: headers,
+        method: "POST",
+      },
+    );
+    if (!response.ok) {
+      // Handle non-OK responses (e.g., 404, 500)
+      throw new Error(`HTTP error: Status ${response.status}`);
+    }
+    return;
+  } catch (error) {
+    // Handle network errors or the error thrown above
+    console.error("Error fetching Requests:", error);
+    throw error; // Re-throw to be handled by the component/hook
+  }
+};
+
 export const CreateJob = async (job: Job, headerData?: any): Promise<Job> => {
   try {
     const headers = GetAuthHeaders();

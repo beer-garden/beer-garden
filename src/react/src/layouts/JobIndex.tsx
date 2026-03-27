@@ -12,6 +12,7 @@ import {
   GetJobList,
   PauseJob,
   ResumeJob,
+  RunAdhocJob,
 } from "../services/job_service";
 import { GetBaseURL } from "../services/util_service";
 
@@ -70,9 +71,29 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
     return job.next_run_time;
   };
 
-  const nameTemplate = (job: Job) => {
+  const editJob = (jobId: string) => {
+    window.open(`${GetBaseURL()}/job/${jobId}`, "_self");
+  };
+
+  const actionTemplate = (job: Job) => {
     return (
       <div>
+        <Button
+          rounded
+          raised
+          link
+          onClick={() => {
+            if (job.id) {
+              RunAdhocJob(job.id).catch((error) => {
+                console.error("Error running job:", error);
+              });
+            }
+          }}
+          title={"Run Now " + job.name}
+          className="mr-2"
+        >
+          <FontAwesomeIcon icon="forward" />
+        </Button>
         <Button
           rounded
           raised
@@ -87,7 +108,11 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
           rounded
           raised
           link
-          onClick={() => window.open(`${GetBaseURL()}/job/${job.id}`, "_self")}
+          onClick={() => {
+            if (job.id) {
+              editJob(job.id);
+            }
+          }}
           title={"Update Job " + job.name}
           className="mr-2"
         >
@@ -159,7 +184,6 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
         >
           <FontAwesomeIcon icon="trash" />
         </Button>
-        {job.name}
       </div>
     );
   };
@@ -190,15 +214,44 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
       <Dialog
         visible={selectedJob !== undefined}
         style={{ width: "50vw" }}
+        modal
         onHide={() => {
           if (!selectedJob) return;
           setSelectedJob(undefined);
         }}
-      >
-        {selectedJob && selectedJob.id && (
-          <SchedulerViewCard jobId={selectedJob.id} listeners={listeners} />
+        content={() => (
+          <div>
+            {selectedJob && selectedJob.id && (
+              <SchedulerViewCard
+                jobId={selectedJob.id}
+                listeners={listeners}
+                removeItem={() => {
+                  if (!selectedJob) return;
+                  setSelectedJob(undefined);
+                }}
+                editJob={() => {
+                  if (selectedJob && selectedJob.id) {
+                    editJob(selectedJob.id);
+                  }
+                }}
+                deleteJob={() => {
+                  if (selectedJob && selectedJob.id) {
+                    DeleteJob(selectedJob)
+                      .then(() => {
+                        if (!selectedJob) return;
+                        setSelectedJob(undefined);
+                      })
+                      .catch((error) => {
+                        console.error("Error deleting job:", error);
+                      });
+                  }
+                }}
+              />
+            )}
+          </div>
         )}
-      </Dialog>
+      />
+
       <DataTable
         value={jobs}
         header={header}
@@ -207,7 +260,8 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
         rowsPerPageOptions={[5, 10, 25, 50]}
         tableStyle={{ minWidth: "50rem" }}
       >
-        <Column field="name" header="Name" body={nameTemplate}></Column>
+        <Column field="name" header="Actions" body={actionTemplate}></Column>
+        <Column field="name" header="Name"></Column>
         <Column field="status" header="Status"></Column>
         <Column field="request_template.system" header="System"></Column>
         <Column
