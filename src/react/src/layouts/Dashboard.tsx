@@ -17,10 +17,8 @@ import { GetSeverity } from "../services/util_service";
 
 function GardenDashboard({
   listeners,
-  setReloadScratchPad,
 }: {
   listeners: Record<string, any>;
-  setReloadScratchPad: any;
 }) {
   const gardenRef = useRef<Garden>(null);
   const selectedGardenRef = useRef<Garden>(null);
