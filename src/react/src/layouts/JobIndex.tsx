@@ -2,14 +2,51 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
+import { Dialog } from "primereact/dialog";
 import { useEffect, useState } from "react";
 
+import SchedulerViewCard from "../components/SchedulerViewCard";
 import { Job } from "../models/brewtils-types";
-import { GetJobList } from "../services/job_service";
+import {
+  DeleteJob,
+  GetJobList,
+  PauseJob,
+  ResumeJob,
+} from "../services/job_service";
 import { GetBaseURL } from "../services/util_service";
 
-function JobIndex() {
+function JobIndex({ listeners }: { listeners: Record<string, any> }) {
   const [jobs, setJobs] = useState<Array<Job>>([]);
+  const [selectedJob, setSelectedJob] = useState<Job | undefined>(undefined);
+
+  useEffect(() => {
+    const MonitorJobs = (message: any) => {
+      if (message.payload_type === "Job") {
+        let updateList = false;
+        const updatedJobs = [] as Array<Job>;
+
+        for (const job of jobs) {
+          if (message.payload.id === job.id) {
+            updateList = true;
+            updatedJobs.push(message.payload);
+          } else {
+            updatedJobs.push(job);
+          }
+        }
+
+        if (updateList) {
+          setJobs(updatedJobs);
+        }
+      }
+    };
+
+    listeners["JobIndex"] = { listener: MonitorJobs };
+
+    return () => {
+      // Cleanup function for when component unmounts
+      delete listeners["JobIndex"];
+    };
+  }, [listeners]);
 
   useEffect(() => {
     GetJobList()
@@ -40,10 +77,87 @@ function JobIndex() {
           rounded
           raised
           link
-          onClick={() => window.open(`${GetBaseURL()}/job/${job.id}`, "_self")}
-          title={"Update Job " + job.name}
+          onClick={() => setSelectedJob(job)}
+          title={"View Job " + job.name}
+          className="mr-2"
         >
           <FontAwesomeIcon icon="arrow-up-right-from-square" />
+        </Button>
+        <Button
+          rounded
+          raised
+          link
+          onClick={() => window.open(`${GetBaseURL()}/job/${job.id}`, "_self")}
+          title={"Update Job " + job.name}
+          className="mr-2"
+        >
+          <FontAwesomeIcon icon="edit" />
+        </Button>
+        {job.status === "RUNNING" && (
+          <Button
+            rounded
+            raised
+            link
+            onClick={() => {
+              PauseJob(job)
+                .then((updatedJob) => {
+                  setJobs((prevJobs) =>
+                    prevJobs.map((j) =>
+                      j.id === updatedJob.id ? updatedJob : j,
+                    ),
+                  );
+                })
+                .catch((error) => {
+                  console.error("Error pausing job:", error);
+                });
+            }}
+            title={"Pause Job " + job.name}
+            className="mr-2"
+          >
+            <FontAwesomeIcon icon="pause" />
+          </Button>
+        )}
+        {job.status === "PAUSED" && (
+          <Button
+            rounded
+            raised
+            link
+            onClick={() => {
+              ResumeJob(job)
+                .then((updatedJob) => {
+                  setJobs((prevJobs) =>
+                    prevJobs.map((j) =>
+                      j.id === updatedJob.id ? updatedJob : j,
+                    ),
+                  );
+                })
+                .catch((error) => {
+                  console.error("Error resuming job:", error);
+                });
+            }}
+            title={"Resume Job " + job.name}
+            className="mr-2"
+          >
+            <FontAwesomeIcon icon="play" />
+          </Button>
+        )}
+        <Button
+          rounded
+          raised
+          link
+          onClick={() => {
+            DeleteJob(job)
+              .then(() => {
+                setJobs((prevJobs) => prevJobs.filter((j) => j.id !== job.id));
+              })
+              .catch((error) => {
+                console.error("Error deleting job:", error);
+              });
+          }}
+          title={"Delete Job " + job.name}
+          className="mr-2"
+        >
+          <FontAwesomeIcon icon="trash" />
         </Button>
         {job.name}
       </div>
@@ -73,6 +187,18 @@ function JobIndex() {
 
   return (
     <div>
+      <Dialog
+        visible={selectedJob !== undefined}
+        style={{ width: "50vw" }}
+        onHide={() => {
+          if (!selectedJob) return;
+          setSelectedJob(undefined);
+        }}
+      >
+        {selectedJob && selectedJob.id && (
+          <SchedulerViewCard jobId={selectedJob.id} listeners={listeners} />
+        )}
+      </Dialog>
       <DataTable
         value={jobs}
         header={header}

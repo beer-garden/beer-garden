@@ -1,4 +1,4 @@
-import { Job } from "../models/brewtils-types";
+import { Job, Operation } from "../models/brewtils-types";
 import { GetAuthHeaders } from "./token_service";
 import { GetBaseURL } from "./util_service";
 
@@ -54,10 +54,7 @@ export const GetJob = async (jobId: string, headerData: any): Promise<Job> => {
   }
 };
 
-export const CreateJob = async (
-  job: Job,
-  headerData?: any,
-): Promise<Request> => {
+export const CreateJob = async (job: Job, headerData?: any): Promise<Job> => {
   try {
     const headers = GetAuthHeaders();
 
@@ -76,7 +73,7 @@ export const CreateJob = async (
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);
     }
-    const data = (await response.json()) as Request;
+    const data = (await response.json()) as Job;
 
     return data;
   } catch (error) {
@@ -86,10 +83,47 @@ export const CreateJob = async (
   }
 };
 
-export const UpdateJob = async (
+export const UpdateJob = async (job: Job, headerData?: any): Promise<Job> => {
+  return PatchJob(
+    job,
+    {
+      operation: "update",
+      path: "/job",
+      value: job,
+    } as Operation,
+    headerData,
+  );
+};
+
+export const PauseJob = async (job: Job, headerData?: any): Promise<Job> => {
+  return PatchJob(
+    job,
+    {
+      operation: "update",
+      path: "/status",
+      value: "PAUSED",
+    } as Operation,
+    headerData,
+  );
+};
+
+export const ResumeJob = async (job: Job, headerData?: any): Promise<Job> => {
+  return PatchJob(
+    job,
+    {
+      operation: "update",
+      path: "/status",
+      value: "RUNNING",
+    } as Operation,
+    headerData,
+  );
+};
+
+export const PatchJob = async (
   job: Job,
+  operation: Operation,
   headerData?: any,
-): Promise<Request> => {
+): Promise<Job> => {
   try {
     const headers = GetAuthHeaders();
 
@@ -103,22 +137,41 @@ export const UpdateJob = async (
       headers: headers,
       method: "PATCH",
       body: JSON.stringify({
-        operations: [
-          {
-            operation: "update",
-            path: "/job",
-            value: job,
-          },
-        ],
+        operations: [operation],
       }),
     });
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);
     }
-    const data = (await response.json()) as Request;
+    const data = (await response.json()) as Job;
 
     return data;
+  } catch (error) {
+    // Handle network errors or the error thrown above
+    console.error("Error fetching Requests:", error);
+    throw error; // Re-throw to be handled by the component/hook
+  }
+};
+
+export const DeleteJob = async (job: Job, headerData?: any) => {
+  try {
+    const headers = GetAuthHeaders();
+
+    for (const [key, value] of Object.entries(headerData || {})) {
+      headers.append(key, value as string);
+    }
+
+    const response = await fetch(`${GetBaseURL()}/api/v1/jobs/${job.id}`, {
+      headers: headers,
+      method: "DELETE",
+    });
+    if (!response.ok) {
+      // Handle non-OK responses (e.g., 404, 500)
+      throw new Error(`HTTP error: Status ${response.status}`);
+    }
+
+    return;
   } catch (error) {
     // Handle network errors or the error thrown above
     console.error("Error fetching Requests:", error);

@@ -176,7 +176,10 @@ function App() {
                     path="/recreate/:requestId"
                     element={<RequestCreate config={config} />}
                   />
-                  <Route path="/jobs" element={<JobIndex />} />
+                  <Route
+                    path="/jobs"
+                    element={<JobIndex listeners={listeners} />}
+                  />
                   <Route
                     path="/job/:jobId"
                     element={<RequestCreate config={config} />}
