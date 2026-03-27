@@ -277,6 +277,43 @@ function RoleIndex() {
       setDialogVisible(true);
     }
 
+    function roleNameTemplate(role: Role) {
+      if (role.protected) {
+        return (
+          <div className="flex">
+            <FontAwesomeIcon
+              icon="user-shield"
+              title="Protected Role"
+              className="mr-1"
+            />
+            {role.name}
+          </div>
+        );
+      } else if (role.file_generated) {
+        return (
+          <div className="flex">
+            <FontAwesomeIcon
+              icon="user-tag"
+              title="File Generated Role"
+              className="mr-1"
+            />
+            {role.name}
+          </div>
+        );
+      } else {
+        return (
+          <div className="flex">
+            <FontAwesomeIcon
+              icon="user-gear"
+              title="Unprotected Role"
+              className="mr-1"
+            />
+            {role.name}
+          </div>
+        );
+      }
+    }
+
     function roleButtonTemplate(role: Role) {
       // Show delete
       return (
@@ -342,7 +379,7 @@ function RoleIndex() {
           }}
           dataKey="id"
         >
-          <Column field="name" sortable header="Role" />
+          <Column field="name" sortable header="Role" body={roleNameTemplate} />
           <Column field="permission" sortable header="Permission" />
           <Column field="description" sortable header="Description" />
           <Column field="scope_gardens" sortable header="Garden Scope" />
