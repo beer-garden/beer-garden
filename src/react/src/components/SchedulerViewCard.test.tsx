@@ -1,10 +1,4 @@
-import {
-  cleanup,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, test, vi } from "vitest";
 
@@ -14,11 +8,10 @@ import {
   FileTrigger,
   IntervalTrigger,
   Job,
+  Request,
 } from "../models/brewtils-types";
-import { Config } from "../models/models";
 import * as jobService from "../services/job_service";
 import * as requestService from "../services/request_service";
-import * as utilService from "../services/util_service";
 import SchedulerViewCard from "./SchedulerViewCard";
 
 vi.mock("../services/job_service");
@@ -551,7 +544,329 @@ describe("SchedulerViewCard", () => {
     });
   });
 
-  // TODO Request Population Testing
-
   // Button Clicking
+  test("Pause Button", async () => {
+    const mockJob = {
+      id: "1",
+      name: "example_job",
+      trigger_type: "cron",
+      trigger: {
+        year: "*",
+        month: "*",
+        day: "*",
+        week: "*",
+        dayOfWeek: "*",
+        hour: "*",
+        minute: "*",
+        second: "*",
+      } as CronTrigger,
+      coalesce: false,
+      misfire_grace_time: 1,
+      next_run_time: null,
+      status: "RUNNING",
+      max_instances: 1,
+      timeout: 5,
+    } as Job;
+
+    vi.mocked(jobService.GetJob).mockResolvedValue(mockJob);
+    vi.mocked(requestService.GetRequestList).mockResolvedValue([
+      [],
+      new Headers(),
+    ]);
+
+    vi.mocked(jobService.PauseJob).mockResolvedValue({
+      ...mockJob,
+      status: "PAUSED",
+    } as Job);
+
+    render(
+      <SchedulerViewCard
+        listeners={{}}
+        jobId="1"
+        editJob={() => {}}
+        deleteJob={() => {}}
+        removeItem={() => {}}
+      />,
+    );
+
+    const pauseButton = await screen.findByTitle("Pause Job " + mockJob?.name);
+    await userEvent.click(pauseButton);
+
+    await waitFor(() => {
+      expect(screen.getByText("example_job")).toBeInTheDocument();
+      expect(jobService.PauseJob).toHaveBeenCalled();
+      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent(
+        "Status:PAUSED",
+      );
+    });
+  });
+
+  test("Resume Button", async () => {
+    const mockJob = {
+      id: "1",
+      name: "example_job",
+      trigger_type: "cron",
+      trigger: {
+        year: "*",
+        month: "*",
+        day: "*",
+        week: "*",
+        dayOfWeek: "*",
+        hour: "*",
+        minute: "*",
+        second: "*",
+      } as CronTrigger,
+      coalesce: false,
+      misfire_grace_time: 1,
+      next_run_time: null,
+      status: "PAUSED",
+      max_instances: 1,
+      timeout: 5,
+    } as Job;
+
+    vi.mocked(jobService.GetJob).mockResolvedValue(mockJob);
+    vi.mocked(requestService.GetRequestList).mockResolvedValue([
+      [],
+      new Headers(),
+    ]);
+
+    vi.mocked(jobService.ResumeJob).mockResolvedValue({
+      ...mockJob,
+      status: "RUNNING",
+    } as Job);
+
+    render(
+      <SchedulerViewCard
+        listeners={{}}
+        jobId="1"
+        editJob={() => {}}
+        deleteJob={() => {}}
+        removeItem={() => {}}
+      />,
+    );
+
+    const resumeButton = await screen.findByTitle(
+      "Resume Job " + mockJob?.name,
+    );
+    await userEvent.click(resumeButton);
+
+    await waitFor(() => {
+      expect(screen.getByText("example_job")).toBeInTheDocument();
+      expect(jobService.ResumeJob).toHaveBeenCalled();
+      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent(
+        "Status:RUNNING",
+      );
+    });
+  });
+
+  test("Delete Button", async () => {
+    const mockJob = {
+      id: "1",
+      name: "example_job",
+      trigger_type: "cron",
+      trigger: {
+        year: "*",
+        month: "*",
+        day: "*",
+        week: "*",
+        dayOfWeek: "*",
+        hour: "*",
+        minute: "*",
+        second: "*",
+      } as CronTrigger,
+      coalesce: false,
+      misfire_grace_time: 1,
+      next_run_time: null,
+      status: "PAUSED",
+      max_instances: 1,
+      timeout: 5,
+    } as Job;
+
+    vi.mocked(jobService.GetJob).mockResolvedValue(mockJob);
+    vi.mocked(requestService.GetRequestList).mockResolvedValue([
+      [],
+      new Headers(),
+    ]);
+
+    const deleteJobMock = vi.fn().mockResolvedValue({} as Job);
+
+    render(
+      <SchedulerViewCard
+        listeners={{}}
+        jobId="1"
+        editJob={() => {}}
+        deleteJob={deleteJobMock}
+        removeItem={() => {}}
+      />,
+    );
+
+    const deleteButton = await screen.findByTitle(
+      "Delete Job " + mockJob?.name,
+    );
+    await userEvent.click(deleteButton);
+
+    await waitFor(() => {
+      expect(screen.getByText("example_job")).toBeInTheDocument();
+      expect(deleteJobMock).toHaveBeenCalled();
+    });
+  });
+
+  test("Run Now Button", async () => {
+    const mockJob = {
+      id: "1",
+      name: "example_job",
+      trigger_type: "cron",
+      trigger: {
+        year: "*",
+        month: "*",
+        day: "*",
+        week: "*",
+        dayOfWeek: "*",
+        hour: "*",
+        minute: "*",
+        second: "*",
+      } as CronTrigger,
+      coalesce: false,
+      misfire_grace_time: 1,
+      next_run_time: null,
+      status: "PAUSED",
+      max_instances: 1,
+      timeout: 5,
+    } as Job;
+
+    vi.mocked(jobService.GetJob).mockResolvedValue(mockJob);
+    vi.mocked(requestService.GetRequestList).mockResolvedValue([
+      [],
+      new Headers(),
+    ]);
+
+    vi.mocked(jobService.RunAdhocJob);
+
+    render(
+      <SchedulerViewCard
+        listeners={{}}
+        jobId="1"
+        editJob={() => {}}
+        deleteJob={() => {}}
+        removeItem={() => {}}
+      />,
+    );
+
+    const runNowButton = await screen.findByTitle("Run Now " + mockJob?.name);
+    await userEvent.click(runNowButton);
+
+    await waitFor(() => {
+      expect(screen.getByText("example_job")).toBeInTheDocument();
+      expect(jobService.RunAdhocJob).toHaveBeenCalled();
+    });
+  });
+
+  test("Close Job Button", async () => {
+    const mockJob = {
+      id: "1",
+      name: "example_job",
+      trigger_type: "cron",
+      trigger: {
+        year: "*",
+        month: "*",
+        day: "*",
+        week: "*",
+        dayOfWeek: "*",
+        hour: "*",
+        minute: "*",
+        second: "*",
+      } as CronTrigger,
+      coalesce: false,
+      misfire_grace_time: 1,
+      next_run_time: null,
+      status: "PAUSED",
+      max_instances: 1,
+      timeout: 5,
+    } as Job;
+
+    vi.mocked(jobService.GetJob).mockResolvedValue(mockJob);
+    vi.mocked(requestService.GetRequestList).mockResolvedValue([
+      [],
+      new Headers(),
+    ]);
+
+    const closeJobMock = vi.fn().mockResolvedValue({} as Job);
+
+    render(
+      <SchedulerViewCard
+        listeners={{}}
+        jobId="1"
+        editJob={() => {}}
+        deleteJob={() => {}}
+        removeItem={closeJobMock}
+      />,
+    );
+
+    const closeButton = await screen.findByTitle("Close Job " + mockJob?.name);
+    await userEvent.click(closeButton);
+
+    await waitFor(() => {
+      expect(screen.getByText("example_job")).toBeInTheDocument();
+      expect(closeJobMock).toHaveBeenCalled();
+    });
+  });
+
+  // Request Population Testing
+
+  test("View Requests", async () => {
+    const mockJob = {
+      id: "1",
+      name: "example_job",
+      trigger_type: "cron",
+      trigger: {
+        year: "*",
+        month: "*",
+        day: "*",
+        week: "*",
+        dayOfWeek: "*",
+        hour: "*",
+        minute: "*",
+        second: "*",
+      } as CronTrigger,
+      coalesce: false,
+      misfire_grace_time: 1,
+      next_run_time: null,
+      status: "PAUSED",
+      max_instances: 1,
+      timeout: 5,
+    } as Job;
+
+    const mockRequest = {
+      id: "1",
+      command: "example_command",
+      arguments: {},
+      status: "SUCCESS",
+      created_at: "0",
+    } as Request;
+
+    vi.mocked(jobService.GetJob).mockResolvedValue(mockJob);
+    vi.mocked(requestService.GetRequestList).mockResolvedValue([
+      [mockRequest],
+      new Headers(),
+    ]);
+
+    render(
+      <SchedulerViewCard
+        listeners={{}}
+        jobId="1"
+        editJob={() => {}}
+        deleteJob={() => {}}
+        removeItem={() => {}}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("example_job")).toBeInTheDocument();
+      expect(screen.getByText("example_command")).toBeInTheDocument();
+      expect(screen.getByText("SUCCESS")).toBeInTheDocument();
+      expect(
+        screen.getByTitle("Open Request " + mockRequest.command),
+      ).toBeInTheDocument();
+    });
+  });
 });

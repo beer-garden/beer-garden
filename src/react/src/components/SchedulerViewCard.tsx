@@ -200,7 +200,7 @@ function SchedulerViewCard({
           onClick={() =>
             window.open(`${GetBaseURL()}/request/${request.id}`, "_self")
           }
-          tooltip={
+          title={
             "Open Request " +
             (request.command_display_name ?? request.command ?? request.id)
           }
