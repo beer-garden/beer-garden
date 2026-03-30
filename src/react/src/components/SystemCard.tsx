@@ -1,12 +1,12 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Badge } from "primereact/badge";
 import { Button } from "primereact/button";
+import { Column } from "primereact/column";
 import { confirmDialog } from "primereact/confirmdialog";
-import { DataView } from "primereact/dataview";
+import { DataTable } from "primereact/datatable";
 import { Menu } from "primereact/menu";
 import { Panel } from "primereact/panel";
+import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
-import { classNames } from "primereact/utils";
 import { RefObject, useRef, useState } from "react";
 
 import InstanceCancelDeleteDialog from "../components/InstanceCancelDeleteRequestsDialog";
@@ -18,11 +18,17 @@ import { DeleteSystem, ReloadSystem } from "../services/system_service";
 
 interface SystemCardProps {
   system: System;
+  selectedGarden?: string;
   toast?: RefObject<Toast | null>;
   PushToPad?: any;
 }
 
-function SystemCard({ system, toast, PushToPad }: SystemCardProps) {
+function SystemCard({
+  system,
+  selectedGarden = "default",
+  toast,
+  PushToPad,
+}: SystemCardProps) {
   const getSeverity = (
     status?: string,
   ):
@@ -190,93 +196,13 @@ function SystemCard({ system, toast, PushToPad }: SystemCardProps) {
       });
   }
 
-  const headerTemplate = (options: any) => {
-    const className = `${options.className} justify-content-space-between`;
-    const systemConfigMenu = useRef<Menu>(null);
+  function statusTemplate(instance: Instance) {
+    const statusSeverity = getSeverity(instance.status);
 
-    const systemMenuItems = [
-      {
-        label: "Start",
-        icon: <FontAwesomeIcon icon="play" />,
-        command: () => startSystem(system),
-      },
-      {
-        label: "Stop",
-        icon: <FontAwesomeIcon icon="stop" />,
-        command: () => stopSystem(system),
-      },
-      {
-        label: "Restart",
-        icon: <FontAwesomeIcon icon="refresh" />,
-        command: () => reloadSystem(system),
-      },
-      {
-        separator: true,
-      },
-      {
-        label: "Delete",
-        icon: <FontAwesomeIcon icon="trash" />,
-        command: () => deleteSystem(system),
-      },
-    ];
+    return <Tag value={instance.status} severity={statusSeverity} />;
+  }
 
-    return (
-      <div className={className}>
-        <div className="flex align-items-center gap-2">
-          <label className="max-w-10rem">
-            {system.name}/ {system.version}
-          </label>
-          {PushToPad && (
-            <Button
-              rounded
-              raised
-              link
-              onClick={() => PushToPad(system)}
-              tooltip={"Push to Pad " + system.name}
-            >
-              <FontAwesomeIcon icon="arrow-right-from-bracket" />{" "}
-            </Button>
-          )}
-
-          {Array.from(statusCounts, ([status, count]) => {
-            if (count && count > 0) {
-              const statusSeverity = getSeverity(status);
-              return (
-                <Badge
-                  value={count}
-                  severity={statusSeverity}
-                  key={status}
-                  title={status}
-                />
-              );
-            }
-            return null;
-          })}
-        </div>
-        <div>
-          <Menu
-            model={systemMenuItems}
-            popup
-            ref={systemConfigMenu}
-            id="config_menu"
-          />
-          <button
-            className="p-panel-header-icon p-link mr-2"
-            onClick={(e) => systemConfigMenu?.current?.toggle(e)}
-          >
-            <FontAwesomeIcon icon="cog" />
-          </button>
-          {options.togglerElement}
-        </div>
-      </div>
-    );
-  };
-
-  const instanceTemplate = (
-    system: System,
-    instance: Instance,
-    index: number,
-  ) => {
+  const instanceActions = (instance: Instance) => {
     const instanceConfigMenu = useRef<Menu>(null);
 
     const [logsVisible, setLogsVisible] = useState(false);
@@ -285,8 +211,6 @@ function SystemCard({ system, toast, PushToPad }: SystemCardProps) {
     const closeQueueDialog = () => setQueueVisible(false);
     const [cancelDeleteVisible, setCancelDeleteVisible] = useState(false);
     const closeCancelDeleteDialog = () => setCancelDeleteVisible(false);
-
-    const statusSeverity = getSeverity(instance?.status);
 
     const instanceMenuItems = [
       {
@@ -304,98 +228,168 @@ function SystemCard({ system, toast, PushToPad }: SystemCardProps) {
     ];
 
     return (
-      <div className="col-12" key={instance.id}>
-        <div
-          className={classNames(
-            "flex flex-column xl:flex-row xl:align-items-start p-4 ",
-            { "border-top-1 surface-border": index !== 0 },
-          )}
+      <div>
+        <Button
+          severity="success"
+          size="small"
+          onClick={() => handleStartInstance(instance, system)}
         >
-          <div className="mt-4">
-            <div>
-              <FontAwesomeIcon icon="folder" />
-              <label>{instance.name}</label>
-              <Badge value={instance.status} severity={statusSeverity} />
-            </div>
-            <div>
-              <Button
-                className="mr-2"
-                title={`Start Instance ${instance.name}`}
-                onClick={() => handleStartInstance(instance, system)}
-              >
-                <FontAwesomeIcon icon="play" />
-              </Button>
-              <Button
-                className="mr-2"
-                title={`Stop Instance ${instance.name}`}
-                onClick={() => handleStopInstance(instance, system)}
-              >
-                <FontAwesomeIcon icon="stop" />
-              </Button>
-              <>
-                <Menu
-                  model={instanceMenuItems}
-                  popup
-                  ref={instanceConfigMenu}
-                  id="instance_menu"
-                />
-                <InstanceShowLogsDialog
-                  instance={instance}
-                  system={system}
-                  isVisible={logsVisible}
-                  onClose={closeLogsDialog}
-                />
-                <InstanceManageQueueDialog
-                  instance={instance}
-                  system={system}
-                  isVisible={queueVisible}
-                  onClose={closeQueueDialog}
-                />
-                <InstanceCancelDeleteDialog
-                  instance={instance}
-                  system={system}
-                  isVisible={cancelDeleteVisible}
-                  onClose={closeCancelDeleteDialog}
-                />
-                <Button
-                  className="mr-2"
-                  title={`Admin Tools for ${instance.name}`}
-                  onClick={(e) => instanceConfigMenu?.current?.toggle(e)}
-                >
-                  <FontAwesomeIcon icon="bars" />
-                </Button>
-              </>
-            </div>
-          </div>
+          <FontAwesomeIcon icon="play" />
+        </Button>
+        <Button
+          severity="warning"
+          size="small"
+          onClick={() => handleStopInstance(instance, system)}
+        >
+          <FontAwesomeIcon icon="stop" />
+        </Button>
+        <>
+          <Menu
+            model={instanceMenuItems}
+            popup
+            ref={instanceConfigMenu}
+            id="instance_menu"
+          />
+          <InstanceShowLogsDialog
+            instance={instance}
+            system={system}
+            isVisible={logsVisible}
+            onClose={closeLogsDialog}
+          />
+          <InstanceManageQueueDialog
+            instance={instance}
+            system={system}
+            isVisible={queueVisible}
+            onClose={closeQueueDialog}
+          />
+          <InstanceCancelDeleteDialog
+            instance={instance}
+            system={system}
+            isVisible={cancelDeleteVisible}
+            onClose={closeCancelDeleteDialog}
+          />
+          <Button
+            severity="info"
+            size="small"
+            title={`Admin Tools for ${instance.name}`}
+            onClick={(e) => instanceConfigMenu?.current?.toggle(e)}
+          >
+            <FontAwesomeIcon icon="bars" />
+          </Button>
+        </>
+      </div>
+    );
+  };
+
+  const headerTemplate = (options: any) => {
+    const className = `${options.className} justify-content-space-between`;
+
+    return (
+      <div className={className}>
+        <div className="flex align-items-center gap-2">
+          <label className="max-w-15rem">
+            {selectedGarden === system.namespace
+              ? ""
+              : `${system.namespace} / `}
+            {system.name} ({system.version})
+          </label>
+          {PushToPad && (
+            <Button
+              rounded
+              raised
+              link
+              onClick={() => PushToPad(system)}
+              tooltip={"Push to Pad " + system.name}
+            >
+              <FontAwesomeIcon icon="arrow-right-from-bracket" />{" "}
+            </Button>
+          )}
         </div>
       </div>
     );
   };
 
-  const instanceListTemplate = (instances: Instance[]) => {
-    if (!instances || instances.length === 0) return null;
-
-    const list = instances.map((instance: Instance, index: number) => {
-      return instanceTemplate(system, instance, index);
-    });
-
-    return <div className="grid grid-nogutter">{list}</div>;
-  };
-
   return (
     <>
       <Panel
+        key={system.id}
         headerTemplate={headerTemplate}
-        key={system?.id}
-        className="flex-1 m-2"
-        toggleable
-        collapsed
+        className="mb-4"
+        style={{ width: "33%" }}
       >
-        <p className="m-0">{system?.description}</p>
-        <DataView
-          value={system?.instances}
-          listTemplate={instanceListTemplate}
-        />
+        <div className="flex justify-content-between mb-3">
+          <div
+            className="flex-1 mr-2"
+            style={{ overflowWrap: "break-word", width: "80%" }}
+          >
+            {system.description}
+          </div>
+          <div>
+            <Button
+              severity="success"
+              size="small"
+              title="Start"
+              onClick={() => startSystem(system)}
+            >
+              <FontAwesomeIcon icon="play" />
+            </Button>
+            <Button
+              severity="warning"
+              size="small"
+              title="Stop"
+              onClick={() => stopSystem(system)}
+            >
+              <FontAwesomeIcon icon="stop" />
+            </Button>
+            <Button
+              severity="info"
+              size="small"
+              title="Refresh"
+              onClick={() => reloadSystem(system)}
+              className="mr-2"
+            >
+              <FontAwesomeIcon icon="refresh" />
+            </Button>
+            <Button
+              severity="danger"
+              size="small"
+              title="Delete"
+              onClick={() => deleteSystem(system)}
+            >
+              <FontAwesomeIcon icon="trash" />
+            </Button>
+          </div>
+        </div>
+        <DataTable
+          value={system.instances}
+          key={JSON.stringify(system.instances)}
+          size="small"
+          className="flex-1"
+        >
+          <Column
+            field="icon"
+            header="Icon"
+            headerStyle={{ display: "none" }}
+            body={<FontAwesomeIcon icon="folder" />}
+          />
+          <Column
+            field="status"
+            header="Status"
+            headerStyle={{ display: "none" }}
+            body={statusTemplate}
+          />
+          <Column
+            field="name"
+            header="Instance"
+            headerStyle={{ display: "none" }}
+          />
+          <Column
+            header="Actions"
+            headerStyle={{ display: "none" }}
+            style={{ textAlign: "right" }}
+            body={instanceActions}
+          />
+        </DataTable>
       </Panel>
     </>
   );
