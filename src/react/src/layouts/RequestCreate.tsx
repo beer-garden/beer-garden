@@ -3,6 +3,7 @@ import { InputSwitch } from "primereact/inputswitch";
 import { Skeleton } from "primereact/skeleton";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import CodeExample from "../components/CodeExample";
 import CommandCreate from "../components/CommandCreate";
@@ -24,6 +25,8 @@ function RequestCreate({ config }: { config: Config }) {
   const { paramVersion } = useParams<{ paramVersion: string }>();
   const { paramInstance } = useParams<{ paramInstance: string }>();
   const { paramCommand } = useParams<{ paramCommand: string }>();
+
+  const navigate = useNavigate();
 
   // Input Request
   const [request, setRequest] = useState<Request | undefined>(undefined);
@@ -54,10 +57,7 @@ function RequestCreate({ config }: { config: Config }) {
     if (request) {
       PostRequest(request)
         .then((response_request) => {
-          window.open(
-            `${GetBaseURL()}/request/${response_request.id}`,
-            "_self",
-          );
+          void navigate(`${GetBaseURL()}/request/${response_request.id}`);
         })
         .catch((error) => {
           console.error("Error creating request:", error);
@@ -69,7 +69,7 @@ function RequestCreate({ config }: { config: Config }) {
     if (job && request) {
       CreateJob({ ...job, ...{ request_template: request } })
         .then(() => {
-          window.open(`${GetBaseURL()}/jobs/`, "_self");
+          void navigate(`${GetBaseURL()}/jobs/`);
         })
         .catch((error) => {
           console.error("Error creating job:", error);
@@ -81,7 +81,7 @@ function RequestCreate({ config }: { config: Config }) {
     if (job && request) {
       UpdateJob({ ...job, ...{ request_template: request } })
         .then(() => {
-          window.open(`${GetBaseURL()}/jobs/`, "_self");
+          void navigate(`${GetBaseURL()}/jobs/`);
         })
         .catch((error) => {
           console.error("Error updating job:", error);

@@ -7,7 +7,7 @@ import { SplitButton } from "primereact/splitbutton";
 import { Stepper } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import CommandForm from "../components/CommandForm";
 import HasAccess from "../components/HasAccess";
@@ -61,6 +61,7 @@ const handleDownload = (request: Request) => {
 };
 
 function RequestOptions(request: Request) {
+  const navigate = useNavigate();
   const items: MenuItem[] = [];
 
   if (
@@ -91,7 +92,7 @@ function RequestOptions(request: Request) {
       command: () => {
         DeleteRequest(request)
           .then(() => {
-            window.open(`${GetBaseURL()}/requests`, "_self");
+            void navigate(`${GetBaseURL()}/requests`);
           })
           .catch((error) => {
             console.error("Error deleting request:", error);
@@ -101,7 +102,7 @@ function RequestOptions(request: Request) {
   }
 
   const pourAgain = (request: Request) => {
-    window.open(`${GetBaseURL()}/recreate/${request.id}`, "_self");
+    void navigate(`${GetBaseURL()}/recreate/${request.id}`);
   };
 
   return (

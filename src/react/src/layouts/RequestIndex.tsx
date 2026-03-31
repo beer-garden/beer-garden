@@ -13,7 +13,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { Request } from "../models/brewtils-types";
 import { GetRequestList } from "../services/request_service";
@@ -260,17 +260,20 @@ function RequestIndex({ listeners }: { listeners: Record<string, any> }) {
   const commandNameTemplate = (request: Request) => {
     return (
       <div>
-        <Button
-          rounded
-          raised
-          link
-          onClick={() =>
-            window.open(`${GetBaseURL()}/request/${request.id}`, "_self")
-          }
-          tooltip={"Open Request " + request.command_display_name}
-        >
-          <FontAwesomeIcon icon="arrow-up-right-from-square" />{" "}
-        </Button>{" "}
+        <Link to={`${GetBaseURL()}/request/${request.id}`}>
+          <Button
+            rounded
+            raised
+            link
+            tooltip={"Open Request " + request.command_display_name}
+            className="mr-2"
+          >
+            <FontAwesomeIcon
+              icon="arrow-up-right-from-square"
+              className="mx-2"
+            />
+          </Button>
+        </Link>
         <Button
           rounded
           raised
