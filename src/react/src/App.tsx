@@ -141,6 +141,7 @@ function App() {
                       <SystemCards
                         listeners={listeners}
                         setReloadScratchPad={setReloadScratchPadTrigger}
+                        config={config}
                       />
                     }
                   />
@@ -151,6 +152,7 @@ function App() {
                       <SystemCards
                         listeners={listeners}
                         setReloadScratchPad={setReloadScratchPadTrigger}
+                        config={config}
                       />
                     }
                   />
@@ -206,6 +208,7 @@ function App() {
                       <SystemCards
                         listeners={listeners}
                         setReloadScratchPad={setReloadScratchPadTrigger}
+                        config={config}
                       />
                     }
                   />
