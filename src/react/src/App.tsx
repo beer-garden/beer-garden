@@ -103,22 +103,12 @@ function App() {
               <Routes>
                 <Route
                   path="/systems"
-                  element={
-                    <SystemCards
-                      listeners={listeners}
-                      setReloadScratchPad={() => {}}
-                    />
-                  }
+                  element={<SystemCards listeners={listeners} />}
                 />
                 <Route path="/systemtable" element={<SystemTable />} />
                 <Route
                   path="/systemcard"
-                  element={
-                    <SystemCards
-                      listeners={listeners}
-                      setReloadScratchPad={() => {}}
-                    />
-                  }
+                  element={<SystemCards listeners={listeners} />}
                 />
                 <Route
                   path="/request/:requestId"
@@ -128,12 +118,7 @@ function App() {
                 />
                 <Route
                   path="/requests"
-                  element={
-                    <RequestIndex
-                      listeners={listeners}
-                      setReloadScratchPad={() => {}}
-                    />
-                  }
+                  element={<RequestIndex listeners={listeners} />}
                 />
                 <Route
                   path="/create/:defaultType/:paramNamespace?/:paramSystem?/:paramVersion?/:paramInstance?/:paramCommand?"
@@ -141,16 +126,27 @@ function App() {
                 />
                 <Route
                   path="/recreate/:requestId"
-                  element={<Workspace listeners={listeners} />}
+                  element={<Workspace listeners={listeners} display={false} />}
                 />
                 <Route
                   path="/workspace"
                   element={<Workspace listeners={listeners} />}
                 />
-                <Route path="/jobs" element={<JobIndex listeners={listeners}/>} />
+                <Route
+                  path="/workspace/request/:requestId"
+                  element={<Workspace listeners={listeners} display={true} />}
+                />
+                <Route
+                  path="/workspace/job/:jobId"
+                  element={<Workspace listeners={listeners} display={true} />}
+                />
+                <Route
+                  path="/jobs"
+                  element={<JobIndex listeners={listeners} />}
+                />
                 <Route
                   path="/job/:jobId"
-                  element={<RequestCreate config={config} />}
+                  element={<Workspace listeners={listeners} display={false} />}
                 />
                 <Route
                   path="/garden"
@@ -162,12 +158,7 @@ function App() {
                 <Route path="/about" element={<AboutIndex config={config} />} />
                 <Route
                   path="/"
-                  element={
-                    <SystemCards
-                      listeners={listeners}
-                      setReloadScratchPad={() => {}}
-                    />
-                  }
+                  element={<SystemCards listeners={listeners} />}
                 />
               </Routes>
             </div>

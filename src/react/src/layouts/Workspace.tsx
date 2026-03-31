@@ -7,12 +7,19 @@ import { v4 as uuidv4 } from "uuid";
 
 import RequestCreateCard from "../components/RequestCreateCard";
 import RequestViewCard from "../components/RequestViewCard";
+import SchedulerViewCard from "../components/SchedulerViewCard";
 import { RequestItem } from "../models/models";
+import { DeleteJob } from "../services/job_service";
 
-function Workspace({ listeners }: { listeners: Record<string, any> }) {
+function Workspace({
+  listeners,
+  display,
+}: {
+  listeners: Record<string, any>;
+  display?: boolean;
+}) {
   const { requestId } = useParams<{ requestId: string }>();
   const { jobId } = useParams<{ jobId: string }>();
-  const { display } = useParams<{ display: string }>();
 
   const { paramNamespace } = useParams<{ paramNamespace: string }>();
   const { paramSystem } = useParams<{ paramSystem: string }>();
@@ -40,7 +47,7 @@ function Workspace({ listeners }: { listeners: Record<string, any> }) {
         loadedItems.push({
           itemId: uuidv4(),
 
-          type: "REQUEST",
+          type: display ? "VIEW_JOB" : "REQUEST",
           jobId: jobId,
           showSchedule: true,
         });
@@ -130,21 +137,52 @@ function Workspace({ listeners }: { listeners: Record<string, any> }) {
       if (value !== null && value !== undefined) {
         if (value.type === "REQUEST") {
           list.push(
-            <RequestCreateCard
-              requestItem={value}
-              updateRequestItem={updateItem}
-              removeItem={deleteItem}
-            />,
+            <div className="mr-2 mb-2 mt-2" style={{ minWidth: "49%" }}>
+              <RequestCreateCard
+                requestItem={value}
+                updateRequestItem={updateItem}
+                removeItem={deleteItem}
+              />
+            </div>,
           );
         } else if (value.type === "VIEW_REQUEST") {
           list.push(
-            <RequestViewCard
-              requestItem={value}
-              updateRequestItem={updateItem}
-              removeItem={deleteItem}
-              listeners={listeners}
-              addItem={addItem}
-            />,
+            <div className="mr-2 mb-2 mt-2" style={{ minWidth: "49%" }}>
+              <RequestViewCard
+                requestItem={value}
+                updateRequestItem={updateItem}
+                removeItem={deleteItem}
+                listeners={listeners}
+                addItem={addItem}
+              />
+            </div>,
+          );
+        } else if (value.type === "VIEW_JOB" && value?.jobId !== undefined) {
+          list.push(
+            <div className="mr-2 mb-2 mt-2" style={{ minWidth: "49%" }}>
+              <SchedulerViewCard
+                jobId={value.jobId}
+                removeItem={deleteItem}
+                listeners={listeners}
+                editJob={() => {
+                  updateItem({
+                    ...value,
+                    type: "REQUEST",
+                  });
+                }}
+                deleteJob={() => {
+                  if (value.jobId) {
+                    DeleteJob({ id: value.jobId } as any)
+                      .then(() => {
+                        deleteItem(value.itemId);
+                      })
+                      .catch((error) => {
+                        console.error("Error deleting job:", error);
+                      });
+                  }
+                }}
+              />
+            </div>,
           );
         }
       }

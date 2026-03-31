@@ -125,9 +125,15 @@ function RequestCreateCard({
   const submitJob = () => {
     if (job && request) {
       CreateJob({ ...job, ...{ request_template: request } })
-        .then(() => {
-          removeItem(requestItem.itemId);
-          window.open(`${GetBaseURL()}/jobs/`, "_self");
+        .then((createdJob) => {
+          updateRequestItem({
+            ...requestItem,
+            ...{
+              job: createdJob,
+              jobId: createdJob.id,
+              type: "VIEW_JOB",
+            },
+          });
         })
         .catch((error) => {
           console.error("Error creating job:", error);
@@ -138,9 +144,15 @@ function RequestCreateCard({
   const updateJob = () => {
     if (job && request) {
       UpdateJob({ ...job, ...{ request_template: request } })
-        .then(() => {
-          removeItem(requestItem.itemId);
-          window.open(`${GetBaseURL()}/jobs/`, "_self");
+        .then((updatedJob) => {
+          updateRequestItem({
+            ...requestItem,
+            ...{
+              job: updatedJob,
+              jobId: updatedJob.id,
+              type: "VIEW_JOB",
+            },
+          });
         })
         .catch((error) => {
           console.error("Error updating job:", error);
@@ -196,13 +208,14 @@ function RequestCreateCard({
         .catch((error) => {
           console.error("Error fetching job:", error);
         });
+    } else {
+      setShowCreateRequest(true);
     }
   }, []);
 
   return (
     <Card
-      className="justify-content-center mr-2 mb-2 mt-2"
-      style={{ minWidth: "49%" }}
+      className="justify-content-center"
       header={
         <div className="flex">
           <Button

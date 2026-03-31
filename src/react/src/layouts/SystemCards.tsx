@@ -11,16 +11,9 @@ import { useEffect, useRef, useState } from "react";
 import SystemCard from "../components/SystemCard";
 import { Instance, System } from "../models/brewtils-types";
 import { ClearAllQueues } from "../services/queue_service";
-import { PushToScratchPad } from "../services/scratchpad_service";
 import { GetSystemList, Rescan } from "../services/system_service";
 
-function SystemCards({
-  listeners,
-  setReloadScratchPad,
-}: {
-  listeners: Record<string, any>;
-  setReloadScratchPad: any;
-}) {
+function SystemCards({ listeners }: { listeners: Record<string, any> }) {
   const [systems, setSystems] = useState<Array<System>>([]);
 
   const MonitorSystemEvents = (message: any) => {
@@ -181,24 +174,7 @@ function SystemCards({
       return;
     }
 
-    const PushToPad = (system: System) => {
-      if (system) {
-        PushToScratchPad("SYSTEM_VIEW", {
-          systemId: system.id,
-          system: system,
-        });
-        setReloadScratchPad(new Date());
-      }
-    };
-
-    return (
-      <SystemCard
-        key={system.id}
-        system={system}
-        toast={toast}
-        PushToPad={PushToPad}
-      />
-    );
+    return <SystemCard key={system.id} system={system} toast={toast} />;
   };
 
   const systemListTemplate = (systems: System[]) => {

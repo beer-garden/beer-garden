@@ -13,19 +13,13 @@ import {
   useRef,
   useState,
 } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { Request } from "../models/brewtils-types";
 import { GetRequestList } from "../services/request_service";
-import { PushToScratchPad } from "../services/scratchpad_service";
 import { GetBaseURL } from "../services/util_service";
 
-function RequestIndex({
-  listeners,
-  setReloadScratchPad,
-}: {
-  listeners: Record<string, any>;
-  setReloadScratchPad: any;
-}) {
+function RequestIndex({ listeners }: { listeners: Record<string, any> }) {
   const [requests, setRequests] = useState<Array<Request>>([]);
   const altRequests = useRef<Array<Request>>([]);
   const [loading, setLoading] = useState(false);
@@ -47,6 +41,8 @@ function RequestIndex({
     created_at: { value: null, matchMode: FilterMatchMode.DATE_IS },
     comment: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
   });
+
+  const navigate = useNavigate();
 
   const setDisplayRequests = (requests: Array<Request>) => {
     setRequests(requests);
@@ -255,10 +251,9 @@ function RequestIndex({
     </div>
   );
 
-  const PushToPad = (request: Request) => {
+  const PushToWorkspace = (request: Request) => {
     if (request.id) {
-      PushToScratchPad("REQUEST_VIEW", { requestId: request.id });
-      setReloadScratchPad(new Date());
+      void navigate(`${GetBaseURL()}/workspace/request/${request.id}`);
     }
   };
 
@@ -280,8 +275,8 @@ function RequestIndex({
           rounded
           raised
           link
-          onClick={() => PushToPad(request)}
-          tooltip={"Push to Pad " + request.command_display_name}
+          onClick={() => PushToWorkspace(request)}
+          tooltip={"Push to Workspace " + request.command_display_name}
         >
           <FontAwesomeIcon icon="arrow-right-from-bracket" />{" "}
         </Button>

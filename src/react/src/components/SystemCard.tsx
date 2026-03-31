@@ -19,10 +19,9 @@ import { DeleteSystem, ReloadSystem } from "../services/system_service";
 interface SystemCardProps {
   system: System;
   toast?: RefObject<Toast | null>;
-  PushToPad?: any;
 }
 
-function SystemCard({ system, toast, PushToPad }: SystemCardProps) {
+function SystemCard({ system, toast }: SystemCardProps) {
   const getSeverity = (
     status?: string,
   ):
@@ -226,17 +225,6 @@ function SystemCard({ system, toast, PushToPad }: SystemCardProps) {
           <label className="max-w-10rem">
             {system.name}/ {system.version}
           </label>
-          {PushToPad && (
-            <Button
-              rounded
-              raised
-              link
-              onClick={() => PushToPad(system)}
-              tooltip={"Push to Pad " + system.name}
-            >
-              <FontAwesomeIcon icon="arrow-right-from-bracket" />{" "}
-            </Button>
-          )}
 
           {Array.from(statusCounts, ([status, count]) => {
             if (count && count > 0) {
