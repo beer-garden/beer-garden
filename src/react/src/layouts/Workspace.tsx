@@ -96,7 +96,7 @@ function Workspace({
       ...itemParams,
     };
     if (requestItemsRef.current) {
-      updateItems([...requestItemsRef.current, newItem]);
+      updateItems([newItem, ...requestItemsRef.current]);
     } else {
       updateItems([newItem]);
     }
