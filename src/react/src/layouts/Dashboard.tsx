@@ -1,15 +1,10 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Badge } from "primereact/badge";
-import { Button } from "primereact/button";
-import { Column } from "primereact/column";
-import { DataTable } from "primereact/datatable";
-import { Divider } from "primereact/divider";
-import { Panel } from "primereact/panel";
-import { Tag } from "primereact/tag";
+import { Toast } from "primereact/toast";
 import { Tree } from "primereact/tree";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import GardenSummary from "../components/GardenSummary";
+import SystemCard from "../components/SystemCard";
 import { Garden, Instance, System } from "../models/brewtils-types";
 import { GetConfig } from "../services/config_service";
 import { GetRootGarden } from "../services/garden_service";
@@ -22,6 +17,7 @@ function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
   const [selectedGarden, setSelectedGarden] = useState<Garden>();
 
   const [gardenMenu, setGardenMenu] = useState<Array<any>>();
+  const toast = useRef<Toast>(null);
 
   const updateSelectedGarden = (garden?: Garden) => {
     if (garden) {
@@ -294,23 +290,6 @@ function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
     }
   }, [MonitorGardenEvents, listeners]);
 
-  const statusTemplate = (row: any) => {
-    const severity = GetSeverity(row.status);
-
-    return <Tag value={row.status} severity={severity} />;
-  };
-
-  const instanceActions = () => (
-    <div className="flex gap-2">
-      <Button rounded severity="success">
-        <FontAwesomeIcon icon="play" />
-      </Button>
-      <Button rounded severity="warning">
-        <FontAwesomeIcon icon="stop" />
-      </Button>
-    </div>
-  );
-
   const [selectedKey, setSelectedKey] = useState<any | null>("");
 
   const gardenTreeNode = (node: any, options: any) => {
@@ -332,6 +311,7 @@ function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
 
   return (
     <div className="grid h-screen">
+      <Toast ref={toast} />
       {/* LEFT NAV TREE */}
       <div className="col-3 surface-border p-3">
         <h3>Select Garden</h3>
@@ -364,38 +344,13 @@ function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
           />
         )}
         {selectedGarden?.systems?.map((system: System) => (
-          <Panel
-            key={system.id}
-            header={`${selectedGarden.name === system.namespace ? "" : `${system.namespace} / `}${system.name} (${system.version})`}
-            className="mb-4"
-            toggleable
-            style={{ width: "33%" }}
-          >
-            <div className="flex justify-content-between mb-3">
-              <div
-                className="flex-1"
-                style={{ overflowWrap: "break-word", width: "80%" }}
-              >
-                {system.description}
-              </div>
-              <div>
-                <Button severity="warning" size="small">
-                  <FontAwesomeIcon icon="refresh" />
-                </Button>
-                <Button severity="danger" size="small">
-                  <FontAwesomeIcon icon="trash" />
-                </Button>
-              </div>
-            </div>
-
-            <Divider />
-
-            <DataTable value={system.instances}>
-              <Column field="name" header="Instance" />
-              <Column field="status" header="Status" body={statusTemplate} />
-              <Column header="Actions" body={instanceActions} />
-            </DataTable>
-          </Panel>
+          <div className="mb-4 mr-2" style={{ width: "32%" }}>
+            <SystemCard
+              system={system}
+              toast={toast}
+              selectedGarden={selectedGarden.name}
+            />
+          </div>
         ))}
       </div>
     </div>
