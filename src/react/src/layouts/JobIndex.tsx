@@ -4,6 +4,7 @@ import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import SchedulerViewCard from "../components/SchedulerViewCard";
 import { Job } from "../models/brewtils-types";
@@ -19,6 +20,7 @@ import { GetBaseURL } from "../services/util_service";
 function JobIndex({ listeners }: { listeners: Record<string, any> }) {
   const [jobs, setJobs] = useState<Array<Job>>([]);
   const [selectedJob, setSelectedJob] = useState<Job | undefined>(undefined);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const MonitorJobs = (message: any) => {
@@ -72,7 +74,7 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
   };
 
   const editJob = (jobId: string) => {
-    window.open(`${GetBaseURL()}/job/${jobId}`, "_self");
+    void navigate(`${GetBaseURL()}/job/${jobId}`);
   };
 
   const actionTemplate = (job: Job) => {
@@ -189,7 +191,7 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
   };
 
   const createJob = () => {
-    window.open(`${GetBaseURL()}/create/job`, "_self");
+    void navigate(`${GetBaseURL()}/create/job`);
   };
 
   const header = (
