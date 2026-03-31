@@ -2,6 +2,7 @@ import { Card } from "primereact/card";
 import { SplitButton } from "primereact/splitbutton";
 import { Toast } from "primereact/toast";
 import { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import CommandCreate from "../../components/CommandCreate";
 import { Request } from "../../models/brewtils-types";
@@ -20,6 +21,7 @@ function RequestCreateCard({
   updatePadItem: (padItem: ScratchPadValue) => void;
   reloadScratchPad: () => void;
 }) {
+  const navigate = useNavigate();
   const [request, setRequest] = useState<Request | undefined>(
     padItem?.values?.request ? padItem.values.request : undefined,
   );
@@ -62,10 +64,7 @@ function RequestCreateCard({
               });
               reloadScratchPad();
             } else {
-              window.open(
-                `${GetBaseURL()}/request/${response_request.id}`,
-                "_self",
-              );
+              void navigate(`${GetBaseURL()}/request/${response_request.id}`);
             }
           } else {
             toast?.current?.show({

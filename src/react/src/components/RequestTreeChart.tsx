@@ -2,6 +2,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { TreeTable } from "primereact/treetable";
+import { Link } from "react-router-dom";
 
 import HasAccess from "../components/HasAccess";
 import { Request } from "../models/brewtils-types";
@@ -68,17 +69,11 @@ function RequestTreeChart(props: RequestTreeChartProps) {
     }
     return (
       <div>
-        <Button
-          rounded
-          raised
-          link
-          onClick={() =>
-            window.open(`${GetBaseURL()}/request/${node.data.id}`, "_self")
-          }
-          title="Open"
-        >
-          <FontAwesomeIcon icon="arrow-up-right-from-square" />{" "}
-        </Button>
+        <Link to={`${GetBaseURL()}/request/${node.data.id}`}>
+          <Button rounded raised link title="Open">
+            <FontAwesomeIcon icon="arrow-up-right-from-square" />{" "}
+          </Button>
+        </Link>
         {!["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(
           node.data.status,
         ) && (
@@ -135,17 +130,11 @@ function RequestTreeChart(props: RequestTreeChartProps) {
             hasSystemVersion={node.data.version}
             hasCommandName={node.data.command}
           >
-            <Button
-              rounded
-              raised
-              link
-              onClick={() =>
-                window.open(`${GetBaseURL()}/recreate/${node.data.id}`, "_self")
-              }
-              title="Pour Again"
-            >
-              <FontAwesomeIcon icon="rotate" />{" "}
-            </Button>
+            <Link to={`${GetBaseURL()}/recreate/${node.data.id}`}>
+              <Button rounded raised link title="Pour Again">
+                <FontAwesomeIcon icon="rotate" />{" "}
+              </Button>
+            </Link>
           </HasAccess>
         )}
       </div>
