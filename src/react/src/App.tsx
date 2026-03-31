@@ -147,7 +147,7 @@ function App() {
                   path="/workspace"
                   element={<Workspace listeners={listeners} />}
                 />
-                <Route path="/jobs" element={<JobIndex />} />
+                <Route path="/jobs" element={<JobIndex listeners={listeners}/>} />
                 <Route
                   path="/job/:jobId"
                   element={<RequestCreate config={config} />}
