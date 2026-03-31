@@ -17,6 +17,7 @@ import RequestCreate from "./layouts/RequestCreate";
 import RequestIndex from "./layouts/RequestIndex";
 import RequestView from "./layouts/RequestView";
 import RoleIndex from "./layouts/RoleIndex";
+import Swagger from "./layouts/Swagger";
 import SystemCards from "./layouts/SystemCards";
 import SystemTable from "./layouts/SystemTable";
 import { Config, Listener } from "./models/models";
@@ -202,6 +203,7 @@ function App() {
                     path="/roles"
                     element={<RoleIndex config={config} />}
                   />
+                  <Route path="/swagger" element={<Swagger />} />
                   <Route
                     path="/"
                     element={

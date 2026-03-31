@@ -2,10 +2,10 @@ import "../App.css";
 
 import { Panel } from "primereact/panel";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { Config, Version } from "../models/models";
-import { GetVersion } from "../services/util_service";
-
+import { GetBaseURL, GetVersion } from "../services/util_service";
 function AboutIndex({ config }: { config: Config }) {
   const [version, setVersion] = useState<Version | null>(null);
 
@@ -32,14 +32,8 @@ function AboutIndex({ config }: { config: Config }) {
     return (
       <ul>
         <li>
-          <a
-            href={`${config.url_prefix}swagger/index.html?config=${config.url_prefix}config/swagger`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Open API documentation
-          </a>
-          - {config.application_name} uses OpenAPI Documentation for our ReST
+          <Link to={`${GetBaseURL()}/swagger`}>Open API documentation</Link>-{" "}
+          {config.application_name} uses OpenAPI Documentation for our ReST
           Interface.
         </li>
         {config.metrics_url && (
