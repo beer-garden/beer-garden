@@ -232,7 +232,7 @@ export interface Job {
   id?: string;
   name?: string;
   trigger_type?: string;
-  trigger?: any;
+  trigger?: CronTrigger | DateTrigger | IntervalTrigger | FileTrigger;
   request_template?: any;
   misfire_grace_time?: number | null;
   coalesce?: boolean;
