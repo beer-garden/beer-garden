@@ -15,11 +15,11 @@ function InstanceShowLogsDialog({
 }: InstanceDialogProps) {
   const msgs = useRef<Messages>(null);
 
+  const tailLineStart = useRef<number>(20);
   const tailStart = useRef<number>(-20);
   const tailLine = useRef<number>(20);
   const waitTimeout = useRef<number>(30);
   const stopTailing = useRef<boolean>(false);
-  const [logs, setLogs] = useState<Array<string> | undefined>(undefined);
   const [displayLogs, setDisplayLogs] = useState<string | undefined>(undefined);
   const [loadingLogs, setLoadingLogs] = useState<boolean>(false);
   const downloadHref = useRef<string>(undefined);
@@ -29,47 +29,47 @@ function InstanceShowLogsDialog({
 
   const updateTailLineStart = (event: any) => {
     if (event.target.value > 0) {
-      tailStart.current = event.target.value * -1;
+      tailLineStart.current = event.target.value * -1;
     } else {
-      tailStart.current = event.target.value;
+      tailLineStart.current = event.target.value;
     }
   };
 
-  function successTailLogs(response: any) {
+  function successTailLogs(response: [any, any]) {
+    const data = response[0];
+    const headers = response[1];
+
     setLoadingLogs(false);
-    //let appendLogs = true;
 
-    if (displayLogs === undefined) {
-      setDisplayLogs("");
-      setLogs([]);
-      //appendLogs = false;
-    }
-
-    const requestId = response.headers("request_id");
+    const requestId = headers.get("request_id");
     downloadHref.current = "api/v1/requests/output/" + requestId;
 
     let response_logs = null;
 
-    if (typeof response.data === "string") {
+    if (typeof data === "string") {
       // Legacy support for log only responses
-      response_logs = response.data;
+      response_logs = data;
 
       if (response_logs !== null && response_logs.length > 0) {
         tailStart.current =
-          tailStart.current + response.data.match(/\n/g).length + 1;
+          tailStart.current + (data.match(/\n/g) ?? "").length + 1;
       }
     } else {
       // New log response structure
-      response_logs = response.data.logs;
+      response_logs = data.logs;
 
       if (response_logs !== null && response_logs.length > 0) {
-        tailStart.current = response.data.end_line + 1;
+        tailStart.current = data.end_line + 1;
       }
     }
 
-    for (let i = 0; i < response_logs.length; i++) {
-      setDisplayLogs(displayLogs!.concat(response_logs[i]));
-    }
+    setDisplayLogs((prevDisplayLogs) => {
+      if (prevDisplayLogs !== undefined) {
+        return prevDisplayLogs.concat(response_logs);
+      } else {
+        return "".concat(response_logs);
+      }
+    });
 
     // Sleep so you don't spam the server
     if (
@@ -99,6 +99,13 @@ function InstanceShowLogsDialog({
   function getLogsTail(instance: Instance) {
     setLoadingLogs(true);
     setDisplayLogs(undefined);
+
+    if (tailLineStart.current > 0) {
+      tailStart.current = tailLineStart.current * -1;
+    } else {
+      tailStart.current = tailLineStart.current;
+    }
+
     stopTailing.current = false;
 
     GetInstanceLogs(
@@ -186,23 +193,19 @@ function InstanceShowLogsDialog({
             </h1>
           </div>
         )}
-        {logs !== undefined && (
+        {displayLogs !== undefined && (
           <div className="container-fluid animate-if">
             <br />
-            {displayLogs !== undefined && (
-              <>
-                <a
-                  className="fa fa-download pull-right"
-                  href={downloadHref.current}
-                  download={filename}
-                >
-                  Download
-                </a>
-                <pre id="rawOutput" ng-show="displayLogs !== undefined">
-                  {displayLogs}
-                </pre>
-              </>
-            )}
+            <>
+              <a
+                className="fa fa-download pull-right"
+                href={downloadHref.current}
+                download={filename}
+              >
+                Download
+              </a>
+              <pre id="rawOutput">{displayLogs}</pre>
+            </>
           </div>
         )}
       </div>

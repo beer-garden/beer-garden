@@ -232,7 +232,7 @@ export interface Job {
   id?: string;
   name?: string;
   trigger_type?: string;
-  trigger?: any;
+  trigger?: CronTrigger | DateTrigger | IntervalTrigger | FileTrigger;
   request_template?: any;
   misfire_grace_time?: number | null;
   coalesce?: boolean;
@@ -365,14 +365,14 @@ export interface Role {
   description?: string;
   id?: string;
   name?: string;
-  scopeGardens?: any[];
-  scopeNamespaces?: any[];
-  scopeSystems?: any[];
-  scopeInstances?: any[];
-  scopeVersions?: any[];
-  scopeCommands?: any[];
+  scope_gardens?: any[];
+  scope_namespaces?: any[];
+  scope_systems?: any[];
+  scope_instances?: any[];
+  scope_versions?: any[];
+  scope_commands?: any[];
   protected?: boolean;
-  fileGenerated?: boolean;
+  file_generated?: boolean;
 }
 
 export interface Runner {
@@ -445,14 +445,14 @@ export interface UpstreamRole {
   description?: string;
   id?: string;
   name?: string;
-  scopeGardens?: any[];
-  scopeNamespaces?: any[];
-  scopeSystems?: any[];
-  scopeInstances?: any[];
-  scopeVersions?: any[];
-  scopeCommands?: any[];
+  scope_gardens?: any[];
+  scope_namespaces?: any[];
+  scope_systems?: any[];
+  scope_instances?: any[];
+  scope_versions?: any[];
+  scope_commands?: any[];
   protected?: boolean;
-  fileGenerated?: boolean;
+  file_generated?: boolean;
 }
 
 export interface User {

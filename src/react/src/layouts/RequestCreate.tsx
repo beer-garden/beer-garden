@@ -3,7 +3,7 @@ import { Skeleton } from "primereact/skeleton";
 import { Stepper } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import CommandCreate from "../components/CommandCreate";
 import HasAccess from "../components/HasAccess";
@@ -25,6 +25,7 @@ function RequestCreate({ config }: { config: Config }) {
   const { paramInstance } = useParams<{ paramInstance: string }>();
   const { paramCommand } = useParams<{ paramCommand: string }>();
   const stepperRef = useRef<null | any>(null);
+  const navigate = useNavigate();
 
   const scheduleHeader = "Schedule";
   const createRequestHeader = "Create Request";
@@ -67,10 +68,7 @@ function RequestCreate({ config }: { config: Config }) {
     if (request) {
       PostRequest(request)
         .then((response_request) => {
-          window.open(
-            `${GetBaseURL()}/request/${response_request.id}`,
-            "_self",
-          );
+          void navigate(`${GetBaseURL()}/request/${response_request.id}`);
         })
         .catch((error) => {
           console.error("Error creating request:", error);
@@ -82,7 +80,7 @@ function RequestCreate({ config }: { config: Config }) {
     if (job && request) {
       CreateJob({ ...job, ...{ request_template: request } })
         .then(() => {
-          window.open(`${GetBaseURL()}/jobs/`, "_self");
+          void navigate(`${GetBaseURL()}/jobs/`);
         })
         .catch((error) => {
           console.error("Error creating job:", error);
@@ -94,7 +92,7 @@ function RequestCreate({ config }: { config: Config }) {
     if (job && request) {
       UpdateJob({ ...job, ...{ request_template: request } })
         .then(() => {
-          window.open(`${GetBaseURL()}/jobs/`, "_self");
+          void navigate(`${GetBaseURL()}/jobs/`);
         })
         .catch((error) => {
           console.error("Error updating job:", error);

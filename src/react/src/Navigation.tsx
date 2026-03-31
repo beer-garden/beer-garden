@@ -80,6 +80,7 @@ function NavigationMenu({
       label: "Roles",
       root: true,
       template: itemRenderer,
+      route: "/roles",
     },
     {
       label: "About",

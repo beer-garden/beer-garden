@@ -17,6 +17,7 @@ import JobIndex from "./layouts/JobIndex";
 import RequestCreate from "./layouts/RequestCreate";
 import RequestIndex from "./layouts/RequestIndex";
 import RequestView from "./layouts/RequestView";
+import RoleIndex from "./layouts/RoleIndex";
 import { Config, Listener } from "./models/models";
 import NavigationMenu from "./Navigation";
 import { GetConfig } from "./services/config_service";
@@ -160,7 +161,10 @@ function App() {
                     path="/recreate/:requestId"
                     element={<RequestCreate config={config} />}
                   />
-                  <Route path="/jobs" element={<JobIndex />} />
+                  <Route
+                    path="/jobs"
+                    element={<JobIndex listeners={listeners} />}
+                  />
                   <Route
                     path="/job/:jobId"
                     element={<RequestCreate config={config} />}
@@ -168,6 +172,10 @@ function App() {
                   <Route
                     path="/about"
                     element={<AboutIndex config={config} />}
+                  />
+                  <Route
+                    path="/roles"
+                    element={<RoleIndex config={config} />}
                   />
                   <Route
                     path="/"
