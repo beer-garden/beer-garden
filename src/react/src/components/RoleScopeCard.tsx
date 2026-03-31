@@ -124,17 +124,19 @@ function RoleScopeCard({
 
   return (
     <div className="flex flex-column gap-2">
-      <label htmlFor={`${scopeName}Scopes`}>
+      <label className="font-bold" htmlFor={`${scopeName}Scopes`}>
         {scopeName.charAt(0).toUpperCase() + scopeName.slice(1)} Scopes
       </label>
       <div className="card" id={`${scopeName}Scopes`}>
         {scopeList.map((item, index) => (
           <Card
             key={index}
-            className="card flex flex-column gap-2"
+            className="card flex flex-column gap-2 border-1"
             header={() => header(index)}
           >
-            <label htmlFor={`${scopeName}Scope-${index}`}>Scope</label>
+            <label className="font-bold" htmlFor={`${scopeName}Scope-${index}`}>
+              Scope
+            </label>
             <AutoComplete
               dropdown
               id={`${scopeName}Scope-${index}`}
@@ -145,7 +147,13 @@ function RoleScopeCard({
             />
           </Card>
         ))}
-        <Button label="Add" onClick={handleAddScope} />
+        <div className="flex">
+          <Button
+            className="mt-1 mb-3"
+            label={`Add ${scopeName}`}
+            onClick={handleAddScope}
+          />
+        </div>
       </div>
     </div>
   );

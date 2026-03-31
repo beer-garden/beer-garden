@@ -3,6 +3,7 @@ import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { DataTable, SortOrder } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
+import { Divider } from "primereact/divider";
 import { Dropdown } from "primereact/dropdown";
 import { InputText } from "primereact/inputtext";
 import { Message } from "primereact/message";
@@ -412,11 +413,14 @@ function RoleIndex({ config }: { config: Config }) {
       >
         <Messages ref={msgs} />
         <div className="flex flex-column gap-2">
-          <label htmlFor="roleName">Name</label>
+          <label htmlFor="roleName" className="font-bold">
+            Name
+          </label>
           <InputText
             required
             id="roleName"
             type="text"
+            className="mb-2"
             value={roleName}
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               setRoleName(e.target.value)
@@ -424,10 +428,13 @@ function RoleIndex({ config }: { config: Config }) {
           />
         </div>
         <div className="flex flex-column gap-2">
-          <label htmlFor="roleDescription">Description</label>
+          <label htmlFor="roleDescription" className="font-bold">
+            Description
+          </label>
           <InputText
             id="roleDescription"
             type="text"
+            className="mb-2"
             value={roleDescription}
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               setRoleDescription(e.target.value)
@@ -435,10 +442,13 @@ function RoleIndex({ config }: { config: Config }) {
           />
         </div>
         <div className="flex flex-column gap-2">
-          <label htmlFor="rolePermission">Permission</label>
+          <label htmlFor="rolePermission" className="font-bold">
+            Permission
+          </label>
           <Dropdown
             required
             id="rolePermission"
+            className="mb-2"
             options={permissions}
             value={rolePermission}
             optionLabel="label"
@@ -448,6 +458,7 @@ function RoleIndex({ config }: { config: Config }) {
             }}
           />
         </div>
+        <Divider />
         <RoleScopeCard
           scopeName="garden"
           scopeList={gardenScopeList}
