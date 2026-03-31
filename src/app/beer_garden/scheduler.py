@@ -543,7 +543,7 @@ def run_job(job_id, request_template, **kwargs):
     """
     import beer_garden.router
 
-    request_template.metadata["_bg_job_id"] = job_id
+    request_template.metadata["bg_job_id"] = job_id
 
     # Attempt to inject information into the request template
     if "event" in kwargs and kwargs["event"] is not None:
