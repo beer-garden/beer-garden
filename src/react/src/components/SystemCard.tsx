@@ -25,7 +25,7 @@ interface SystemCardProps {
 
 function SystemCard({
   system,
-  selectedGarden = "default",
+  selectedGarden,
   toast,
   PushToPad,
 }: SystemCardProps) {
@@ -287,7 +287,7 @@ function SystemCard({
     return (
       <div className={className}>
         <div className="flex align-items-center gap-2">
-          <label className="max-w-15rem">
+          <label className="max-w-20rem font-semibold">
             {selectedGarden === system.namespace
               ? ""
               : `${system.namespace} / `}
