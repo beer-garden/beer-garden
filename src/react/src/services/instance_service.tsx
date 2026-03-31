@@ -71,7 +71,7 @@ export const GetInstanceLogs = async (
   timeout: number,
   startLine: number,
   endLine: number | null,
-): Promise<Instance> => {
+): Promise<[Instance, Headers]> => {
   try {
     const params = new URLSearchParams({
       start_line: startLine.toString(),
@@ -89,8 +89,9 @@ export const GetInstanceLogs = async (
       throw new Error(`HTTP error: Status ${response.status}`);
     }
     const data = (await response.json()) as Instance;
+    const responseHeaders = response.headers;
 
-    return data;
+    return [data, responseHeaders];
   } catch (error) {
     // Handle network errors or the error thrown above
     console.error("Error fetching Requests:", error);
