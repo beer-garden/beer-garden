@@ -21,6 +21,8 @@ import { GetConfig } from "./services/config_service";
 import { ClearSystemsCache } from "./services/system_service";
 import { preemptiveRefresh } from "./services/token_service";
 import { GetToken } from "./services/token_service";
+import { Garden, System } from "./models/brewtils-types";
+import { GetGarden, GetRootGarden } from "./services/garden_service";
 
 function App() {
   const socketRef = useRef(null as null | any);
@@ -28,6 +30,12 @@ function App() {
   const [config, setConfig] = useState<Config>({});
 
   const [reloadUI, setReloadUI] = useState(0);
+
+  const rootGardenRef = useRef<Garden | undefined>(sessionStorage.getItem("rootGarden") ? JSON.parse(sessionStorage.getItem("rootGarden") || "") : undefined);
+  const [rootGarden, setRootGarden] = useState<Garden | undefined>(rootGardenRef.current);
+
+  const systemsRef = useRef<System[] | undefined>(sessionStorage.getItem("systems") ? JSON.parse(sessionStorage.getItem("systems") || "") : undefined);
+  const [systems, setSystems] = useState<System[] | undefined>(systemsRef.current);
 
   const runReloadUI = () => {
     ClearSystemsCache();
@@ -42,10 +50,48 @@ function App() {
     GetConfig()
       .then((config) => {
         setConfig(config);
+        GetRootGarden(config).then((garden) => {
+          const extractSystems = (garden: Garden): System[] => {
+            let systems: System[] = [];
+            if (garden.systems) {
+              garden.systems.forEach((system: System) => {
+                system.garden_name = garden.name;
+                systems.push(system);
+              });
+            }
+            if (garden.children) {
+              for (const subGarden of garden.children) {
+                systems = systems.concat(extractSystems(subGarden));
+              }
+            }
+            return systems;
+          };
+
+          systemsRef.current = extractSystems(garden);
+          setSystems(systemsRef.current);
+          sessionStorage.setItem("systems", JSON.stringify(systemsRef.current));
+
+          const removeSystems = (garden: Garden) => {
+            if (garden.children) {
+              garden.children = garden.children.map((child: Garden) => {              
+                return removeSystems(child);
+              });
+            }
+            return {systems, ...garden};
+          }
+
+          rootGardenRef.current = removeSystems(garden);
+          setRootGarden(rootGardenRef.current);
+          sessionStorage.setItem("rootGarden", JSON.stringify(rootGardenRef.current));
+
+        }).catch((error) => {
+          console.log("Unable to retrieve root garden", error);
+        });
       })
       .catch((error) => {
         console.log("Unable to retrieve configuration", error);
       });
+
 
     const interval = setInterval(preemptiveRefresh, 30000);
 
