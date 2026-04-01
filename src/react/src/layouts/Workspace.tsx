@@ -21,6 +21,8 @@ function Workspace({
   const { requestId } = useParams<{ requestId: string }>();
   const { jobId } = useParams<{ jobId: string }>();
 
+  const { defaultType } = useParams<{ defaultType: string }>();
+
   const { paramNamespace } = useParams<{ paramNamespace: string }>();
   const { paramSystem } = useParams<{ paramSystem: string }>();
   const { paramVersion } = useParams<{ paramVersion: string }>();
@@ -52,6 +54,7 @@ function Workspace({
           showSchedule: true,
         });
       } else if (
+        defaultType ||
         paramNamespace ||
         paramSystem ||
         paramVersion ||
@@ -60,7 +63,9 @@ function Workspace({
       ) {
         loadedItems.push({
           itemId: uuidv4(),
-
+          showSchedule:
+            defaultType !== undefined &&
+            defaultType.toLocaleLowerCase() === "job",
           type: "REQUEST",
           requestCommandInput: {
             namespace: paramNamespace,

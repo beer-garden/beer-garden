@@ -9,7 +9,6 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import AboutIndex from "./layouts/AboutIndex";
 import GardenIndex from "./layouts/GardenIndex";
 import JobIndex from "./layouts/JobIndex";
-import RequestCreate from "./layouts/RequestCreate";
 import RequestIndex from "./layouts/RequestIndex";
 import RequestView from "./layouts/RequestView";
 import SystemCards from "./layouts/SystemCards";
@@ -122,7 +121,7 @@ function App() {
                 />
                 <Route
                   path="/create/:defaultType/:paramNamespace?/:paramSystem?/:paramVersion?/:paramInstance?/:paramCommand?"
-                  element={<RequestCreate config={config} />}
+                  element={<Workspace listeners={listeners} display={false} />}
                 />
                 <Route
                   path="/recreate/:requestId"
