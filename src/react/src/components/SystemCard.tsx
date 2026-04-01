@@ -294,12 +294,7 @@ function SystemCard({ system, selectedGarden, toast }: SystemCardProps) {
 
   return (
     <>
-      <Panel
-        key={system.id}
-        headerTemplate={headerTemplate}
-        className="mb-4"
-        style={{ width: "33%" }}
-      >
+      <Panel key={system.id} headerTemplate={headerTemplate}>
         <div className="flex justify-content-between mb-3">
           <div
             className="flex-1 mr-2"

@@ -1,5 +1,3 @@
-import "../App.css";
-
 import { Panel } from "primereact/panel";
 import { useEffect, useState } from "react";
 

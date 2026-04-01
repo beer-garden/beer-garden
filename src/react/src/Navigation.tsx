@@ -31,57 +31,23 @@ function NavigationMenu({
   );
 
   const itemRenderer = (item: any) => {
-    if (item.root) {
-      return (
-        <Link
-          className="flex align-items-center cursor-pointer px-3 py-2 overflow-hidden relative font-semibold text-lg uppercase p-ripple hover:surface-ground"
-          style={{ borderRadius: "2rem" }}
-          to={item.route}
-        >
-          {/* <FontAwesomeIcon icon={item.icon} /> */}
+    return (
+      <Link
+        className="flex align-items-center cursor-pointer px-3 py-2 overflow-hidden relative font-semibold text-lg uppercase p-ripple hover:surface-ground"
+        style={{ borderRadius: "2rem" }}
+        to={item.route}
+      >
+        {item.icon && <FontAwesomeIcon icon={item.icon} />}
+        <span className="inline-flex flex-column gap-1">
           <span className="ml-2">{item.label}</span>
-          <Ripple />
-        </Link>
-      );
-    } else if (!item.image) {
-      return (
-        <Link
-          className="flex align-items-center p-3 cursor-pointer mb-2 gap-2 "
-          to={item.route}
-        >
-          <span className="inline-flex align-items-center justify-content-center border-circle bg-primary w-3rem h-3rem">
-            <FontAwesomeIcon icon={item.icon} />
-          </span>
-          <span className="inline-flex flex-column gap-1">
-            <span className="font-medium text-lg text-900">{item.label}</span>
-            <span className="white-space-nowrap">{item.subtext}</span>
-          </span>
-        </Link>
-      );
-    } else {
-      return (
-        <Link
-          className="flex flex-column align-items-start gap-3"
-          to={item.route}
-        >
-          <img alt="megamenu-demo" src={item.image} className="w-full" />
-          <span>{item.subtext}</span>
-          <Button
-            className="p-button p-component p-button-outlined"
-            label={item.label}
-          />
-        </Link>
-      );
-    }
+          {item.subtext && <span>{item.subtext}</span>}
+        </span>
+        <Ripple />
+      </Link>
+    );
   };
 
   const items = [
-    {
-      label: "Systems",
-      root: true,
-      template: itemRenderer,
-      route: "/systems",
-    },
     {
       label: "Requests",
       root: true,
@@ -101,56 +67,42 @@ function NavigationMenu({
       route: "/workspace",
     },
     {
-      label: "Admin",
+      label: "Topics",
       root: true,
       template: itemRenderer,
-      items: [
-        [
-          {
-            items: [
-              {
-                label: "About",
-                icon: "info",
-                template: itemRenderer,
-                route: "/about",
-              },
-              {
-                label: "Garden",
-                icon: "globe",
-                template: itemRenderer,
-                route: "/garden",
-              },
-              {
-                label: "Topics",
-                icon: "envelope",
-                template: itemRenderer,
-              },
-              {
-                label: "Users",
-                icon: "user",
-                template: itemRenderer,
-              },
-              {
-                label: "Roles",
-                icon: "users",
-                template: itemRenderer,
-                route: "/roles",
-              },
-            ],
-          },
-        ],
-      ],
+    },
+    {
+      label: "Users",
+      root: true,
+      template: itemRenderer,
+    },
+    {
+      label: "Roles",
+      root: true,
+      template: itemRenderer,
+      route: "/roles",
+    },
+    {
+      label: "About",
+      root: true,
+      template: itemRenderer,
+      route: "/about",
     },
   ];
 
   const start = (
-    <div className="flex">
-      <div className="mr-2">
-        <FontAwesomeIcon icon={iconDefault} />
-      </div>
+    <Link
+      className="flex align-items-center cursor-pointer px-3 py-2 overflow-hidden relative font-semibold text-lg uppercase p-ripple hover:surface-ground"
+      to="/"
+    >
+      <div className="flex">
+        <div className="mr-2">
+          <FontAwesomeIcon icon={iconDefault} />
+        </div>
 
-      {applicationName && <div className="mr-2">{applicationName}</div>}
-    </div>
+        {applicationName && <div className="mr-2">{applicationName}</div>}
+      </div>
+    </Link>
   );
 
   const getUserName = () => {

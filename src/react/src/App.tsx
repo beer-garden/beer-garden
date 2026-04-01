@@ -1,19 +1,18 @@
 import "primereact/resources/themes/lara-light-blue/theme.css"; // Theme
 import "primereact/resources/primereact.min.css"; // Core CSS
-import "primereact/resources/themes/bootstrap4-light-blue/theme.css";
+import "primeflex/primeflex.css";
+import "./App.css";
 
 import { PrimeReactProvider } from "primereact/api";
 import { useEffect, useRef, useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import AboutIndex from "./layouts/AboutIndex";
-import GardenIndex from "./layouts/GardenIndex";
+import GardenDashboard from "./layouts/Dashboard";
 import JobIndex from "./layouts/JobIndex";
 import RequestIndex from "./layouts/RequestIndex";
 import RequestView from "./layouts/RequestView";
 import RoleIndex from "./layouts/RoleIndex";
-import SystemCards from "./layouts/SystemCards";
-import SystemTable from "./layouts/SystemTable";
 import Workspace from "./layouts/Workspace";
 import { Config, Listener } from "./models/models";
 import NavigationMenu from "./Navigation";
@@ -102,13 +101,8 @@ function App() {
             <div className="flex-grow-1">
               <Routes>
                 <Route
-                  path="/systems"
-                  element={<SystemCards listeners={listeners} />}
-                />
-                <Route path="/systemtable" element={<SystemTable />} />
-                <Route
-                  path="/systemcard"
-                  element={<SystemCards listeners={listeners} />}
+                  path="/dashboard"
+                  element={<GardenDashboard listeners={listeners} />}
                 />
                 <Route
                   path="/request/:requestId"
@@ -148,17 +142,11 @@ function App() {
                   path="/job/:jobId"
                   element={<Workspace listeners={listeners} display={false} />}
                 />
-                <Route
-                  path="/garden"
-                  element={
-                    <GardenIndex listeners={listeners} config={config} />
-                  }
-                />
                 <Route path="/about" element={<AboutIndex config={config} />} />
                 <Route path="/roles" element={<RoleIndex config={config} />} />
                 <Route
                   path="/"
-                  element={<SystemCards listeners={listeners} />}
+                  element={<GardenDashboard listeners={listeners} />}
                 />
               </Routes>
             </div>
