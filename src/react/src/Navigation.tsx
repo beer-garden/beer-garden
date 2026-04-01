@@ -139,6 +139,11 @@ function NavigationMenu({
       setAuthEnabled(config.auth_enabled);
       if (config.auth_enabled && username === undefined) {
         setLoginVisible(true);
+      } else if (!config.auth_enabled) {
+        ClearToken();
+        ClearRefresh().catch((error) => {
+          console.error("Error Clearing Refresh Token:", error);
+        });
       }
     }
   }, [config, authEnabled, username, iconDefault, applicationName]);
