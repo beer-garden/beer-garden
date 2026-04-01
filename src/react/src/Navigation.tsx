@@ -61,10 +61,10 @@ function NavigationMenu({
       route: "/jobs",
     },
     {
-      label: "Create Request",
+      label: "Workspace",
       root: true,
       template: itemRenderer,
-      route: "/create/request",
+      route: "/workspace",
     },
     {
       label: "Topics",

@@ -1,4 +1,11 @@
-import { Instance, Parameter, System } from "../models/brewtils-types";
+import {
+  Command,
+  Instance,
+  Job,
+  Parameter,
+  Request,
+  System,
+} from "../models/brewtils-types";
 
 export interface Config {
   application_name?: string;
@@ -42,6 +49,19 @@ export interface RequestCommand {
   command?: string;
 }
 
+export interface RequestItem {
+  requestId?: string;
+  request?: Request;
+  requestCommandInput?: RequestCommand;
+
+  showSchedule?: boolean;
+  jobId?: string;
+  job?: Job;
+
+  itemId: string;
+  type: string;
+}
+
 export interface InputParam extends Parameter {
   value?: any;
   isInvalid: boolean;
@@ -79,4 +99,13 @@ export interface HasAccessProps {
   hasInstanceName?: string;
   isLoading?: React.ReactElement;
   renderAuthFailed?: React.ReactElement;
+}
+
+export interface CommandFormProps {
+  command: Command | null;
+  disabled?: boolean;
+  request?: Request | null | undefined;
+  setRequest: (request: Request) => void;
+  resetForm: boolean;
+  setResetForm: (reset: boolean) => void;
 }

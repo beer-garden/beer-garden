@@ -1,3 +1,4 @@
+import { ScrollPanel } from "primereact/scrollpanel";
 import { Skeleton } from "primereact/skeleton";
 import { Toast } from "primereact/toast";
 import { useEffect, useRef, useState } from "react";
@@ -16,12 +17,16 @@ function CommandCreate({
   setRequest,
   requestCommand,
   setRequestCommand,
+  resetForm,
+  setResetForm,
   callback,
 }: {
   request?: Request;
   setRequest: (request: Request) => void;
   requestCommand: RequestCommand;
   setRequestCommand: (requestCommand: RequestCommand) => void;
+  resetForm: boolean;
+  setResetForm: (reset: boolean) => void;
   callback?: () => void;
 }) {
   const toast = useRef(null as null | any);
@@ -46,7 +51,13 @@ function CommandCreate({
   useEffect(() => {
     const findCommand = () => {
       setShowCommand(false);
-      if (systems && systems.length > 0) {
+      if (
+        systems &&
+        systems.length > 0 &&
+        requestCommand?.systemName &&
+        requestCommand?.namespace &&
+        requestCommand?.version
+      ) {
         const latestSystem = DetermineLatestSystemVersion(
           systems,
           requestCommand?.systemName,
@@ -78,7 +89,6 @@ function CommandCreate({
         system_version: requestCommand?.version || undefined,
         instance_name: requestCommand?.instance || undefined,
         command: requestCommand?.command || undefined,
-        parameters: {},
       };
 
       for (const [key, value] of Object.entries(request?.parameters || {})) {
@@ -172,14 +182,16 @@ function CommandCreate({
         />
       )}
       {showCommand && (
-        <div>
+        <ScrollPanel style={{ width: "100%", height: "80%" }}>
           <CommandForm
             command={command}
             disabled={false}
             request={request}
             setRequest={setRequest}
+            resetForm={resetForm}
+            setResetForm={setResetForm}
           />
-        </div>
+        </ScrollPanel>
       )}
       {(!systems || systems.length === 0 || !showCommand) && (
         <Skeleton width="100%" height="150px"></Skeleton>
