@@ -155,10 +155,7 @@ function App() {
                   }
                 />
                 <Route path="/about" element={<AboutIndex config={config} />} />
-                <Route
-                    path="/roles"
-                    element={<RoleIndex config={config} />}
-                  />
+                <Route path="/roles" element={<RoleIndex config={config} />} />
                 <Route
                   path="/"
                   element={<SystemCards listeners={listeners} />}
