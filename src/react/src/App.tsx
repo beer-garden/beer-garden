@@ -154,8 +154,11 @@ function App() {
                     <GardenIndex listeners={listeners} config={config} />
                   }
                 />
-
                 <Route path="/about" element={<AboutIndex config={config} />} />
+                <Route
+                    path="/roles"
+                    element={<RoleIndex config={config} />}
+                  />
                 <Route
                   path="/"
                   element={<SystemCards listeners={listeners} />}

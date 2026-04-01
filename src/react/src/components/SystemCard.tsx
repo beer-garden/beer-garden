@@ -22,11 +22,7 @@ interface SystemCardProps {
   toast?: RefObject<Toast | null>;
 }
 
-function SystemCard({
-  system,
-  selectedGarden,
-  toast,
-}: SystemCardProps) {
+function SystemCard({ system, selectedGarden, toast }: SystemCardProps) {
   const getSeverity = (
     status?: string,
   ):
