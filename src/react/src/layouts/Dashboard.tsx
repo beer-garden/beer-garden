@@ -1,4 +1,5 @@
 import { Badge } from "primereact/badge";
+import { ConfirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
 import { Tree } from "primereact/tree";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -101,6 +102,174 @@ function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
           updateSelectedGarden(message.payload);
         }
         updatedRef = true;
+      } else if (
+        ["SYSTEM_CREATED", "SYSTEM_UPDATED", "SYSTEM_REMOVED"].includes(
+          message.name,
+        )
+      ) {
+        let matchedGarden = undefined;
+
+        if (message.name === "SYSTEM_REMOVED") {
+          const removeSystem = (systemId: string, garden: Garden): Garden => {
+            if (
+              garden.systems &&
+              garden.systems.some((system: System) => system.id === systemId)
+            ) {
+              garden.systems = garden.systems.filter(
+                (system: System) => system.id !== systemId,
+              );
+              matchedGarden = garden;
+              return garden;
+            }
+            if (garden.children) {
+              garden.children = garden.children.map((child: Garden) =>
+                removeSystem(systemId, child),
+              );
+            }
+            return garden;
+          };
+          gardenRef.current = removeSystem(
+            message.payload.id,
+            gardenRef.current as Garden,
+          );
+        } else if (message.name === "SYSTEM_UPDATED") {
+          const updateSystem = (
+            updatedSystem: System,
+            garden: Garden,
+          ): Garden => {
+            if (
+              garden.systems &&
+              garden.systems.some(
+                (system: System) => system.id === updatedSystem.id,
+              )
+            ) {
+              garden.systems = garden.systems.map((system: System) => {
+                if (system.id === updatedSystem.id) {
+                  return updatedSystem;
+                }
+                return system;
+              });
+              matchedGarden = garden;
+              return garden;
+            }
+            if (garden.children) {
+              garden.children = garden.children.map((child: Garden) =>
+                updateSystem(updatedSystem, child),
+              );
+            }
+            return garden;
+          };
+          gardenRef.current = updateSystem(
+            message.payload,
+            gardenRef.current as Garden,
+          );
+        } else if (message.name === "SYSTEM_CREATED") {
+          const addSystem = (newSystem: System, garden: Garden): Garden => {
+            if (
+              garden.name === newSystem.garden_name ||
+              (newSystem.garden_name === undefined &&
+                garden.name === newSystem.namespace)
+            ) {
+              if (garden.systems) {
+                if (
+                  !garden.systems.some(
+                    (system: System) => system.id === newSystem.id,
+                  )
+                ) {
+                  garden.systems.push(newSystem);
+                } else {
+                  garden.systems = garden.systems.map((system: System) => {
+                    if (system.id === newSystem.id) {
+                      return newSystem;
+                    }
+                    return system;
+                  });
+                }
+              } else {
+                garden.systems = [newSystem];
+              }
+              matchedGarden = garden;
+              return garden;
+            }
+            if (garden.children) {
+              garden.children = garden.children.map((child: Garden) =>
+                addSystem(newSystem, child),
+              );
+            }
+            return garden;
+          };
+          gardenRef.current = addSystem(
+            message.payload,
+            gardenRef.current as Garden,
+          );
+        }
+
+        if (matchedGarden !== undefined) {
+          updateSelectedGarden(matchedGarden);
+          updatedRef = true;
+        }
+      } else if (
+        [
+          "INSTANCE_STARTED",
+          "INSTANCE_STOPPED",
+          "INSTANCE_UPDATED",
+          "INSTANCE_INITIALIZED",
+        ].includes(message.name)
+      ) {
+        let matchedGarden = undefined;
+        const updateInstance = (
+          updatedInstance: Instance,
+          garden: Garden,
+        ): Garden => {
+          if (
+            garden.systems &&
+            garden.systems.some((system: System) =>
+              system.instances?.some(
+                (instance: Instance) => instance.id === updatedInstance.id,
+              ),
+            )
+          ) {
+            garden.systems = garden.systems.map((system: System) => {
+              if (
+                system.instances &&
+                system.instances.some(
+                  (instance: Instance) => instance.id === updatedInstance.id,
+                )
+              ) {
+                system.instances = system.instances.map(
+                  (instance: Instance) => {
+                    if (instance.id === updatedInstance.id) {
+                      return {
+                        ...instance,
+                        ...{ status: updatedInstance.status },
+                      };
+                    }
+                    return instance;
+                  },
+                );
+              }
+              return system;
+            });
+            matchedGarden = garden;
+            return garden;
+          }
+          if (garden.children) {
+            garden.children = garden.children.map((child: Garden) =>
+              updateInstance(updatedInstance, child),
+            );
+          }
+          return garden;
+        };
+
+        gardenRef.current = updateInstance(
+          message.payload,
+          gardenRef.current as Garden,
+        );
+
+        if (matchedGarden !== undefined) {
+          updateSelectedGarden(matchedGarden);
+          updatedRef = true;
+        }
       }
 
       if (updatedRef) {
@@ -312,6 +481,7 @@ function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
   return (
     <div className="grid h-screen">
       <Toast ref={toast} />
+      <ConfirmDialog />
       {/* LEFT NAV TREE */}
       <div className="col-3 surface-border p-3">
         <h3>Select Garden</h3>
@@ -344,7 +514,7 @@ function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
           />
         )}
         {selectedGarden?.systems?.map((system: System) => (
-          <div className="mb-4 mr-2" style={{ width: "32%" }}>
+          <div key={system.id} className="mb-4 mr-2" style={{ width: "32%" }}>
             <SystemCard
               system={system}
               toast={toast}
