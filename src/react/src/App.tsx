@@ -11,6 +11,7 @@ import GardenIndex from "./layouts/GardenIndex";
 import JobIndex from "./layouts/JobIndex";
 import RequestIndex from "./layouts/RequestIndex";
 import RequestView from "./layouts/RequestView";
+import RoleIndex from "./layouts/RoleIndex";
 import SystemCards from "./layouts/SystemCards";
 import SystemTable from "./layouts/SystemTable";
 import Workspace from "./layouts/Workspace";

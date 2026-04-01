@@ -134,6 +134,7 @@ function NavigationMenu({
                 label: "Roles",
                 icon: "users",
                 template: itemRenderer,
+                route: "/roles",
               },
             ],
           },
