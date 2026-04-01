@@ -20,15 +20,9 @@ interface SystemCardProps {
   system: System;
   selectedGarden?: string;
   toast?: RefObject<Toast | null>;
-  PushToPad?: any;
 }
 
-function SystemCard({
-  system,
-  selectedGarden,
-  toast,
-  PushToPad,
-}: SystemCardProps) {
+function SystemCard({ system, selectedGarden, toast }: SystemCardProps) {
   const getSeverity = (
     status?: string,
   ):
@@ -293,17 +287,6 @@ function SystemCard({
               : `${system.namespace} / `}
             {system.name} ({system.version})
           </label>
-          {PushToPad && (
-            <Button
-              rounded
-              raised
-              link
-              onClick={() => PushToPad(system)}
-              tooltip={"Push to Pad " + system.name}
-            >
-              <FontAwesomeIcon icon="arrow-right-from-bracket" />{" "}
-            </Button>
-          )}
         </div>
       </div>
     );

@@ -1,10 +1,11 @@
 import { Button } from "primereact/button";
+import { InputSwitch } from "primereact/inputswitch";
 import { Skeleton } from "primereact/skeleton";
-import { Stepper } from "primereact/stepper";
-import { StepperPanel } from "primereact/stepperpanel";
-import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
+import CodeExample from "../components/CodeExample";
 import CommandCreate from "../components/CommandCreate";
 import HasAccess from "../components/HasAccess";
 import SchedulerForm from "../components/SchedulerForm";
@@ -18,28 +19,22 @@ import { GetBaseURL } from "../services/util_service";
 function RequestCreate({ config }: { config: Config }) {
   const { requestId } = useParams<{ requestId: string }>();
   const { jobId } = useParams<{ jobId: string }>();
-  const { defaultType } = useParams<{ defaultType: string }>();
+
   const { paramNamespace } = useParams<{ paramNamespace: string }>();
   const { paramSystem } = useParams<{ paramSystem: string }>();
   const { paramVersion } = useParams<{ paramVersion: string }>();
   const { paramInstance } = useParams<{ paramInstance: string }>();
   const { paramCommand } = useParams<{ paramCommand: string }>();
-  const stepperRef = useRef<null | any>(null);
+
   const navigate = useNavigate();
-
-  const scheduleHeader = "Schedule";
-  const createRequestHeader = "Create Request";
-
-  const defaultStepperStep = jobId || defaultType === "job" ? 0 : 1;
 
   // Input Request
   const [request, setRequest] = useState<Request | undefined>(undefined);
 
   // Job Panel
-  const [job, setJob] = useState<Job | null>(null);
-  const runOptions = ["Run Now", "Schedule Job"];
-  const [runState, setRunState] = useState(
-    jobId || defaultType === "job" ? runOptions[1] : runOptions[0],
+  const [job, setJob] = useState<Job | undefined>(undefined);
+  const [showScheduleJob, setShowScheduleJob] = useState(
+    jobId !== undefined && jobId !== null,
   );
 
   // Create Request Panel
@@ -50,19 +45,13 @@ function RequestCreate({ config }: { config: Config }) {
     instance: paramInstance ?? undefined,
     command: paramCommand ?? undefined,
   });
+  const [visibleCodeExample, setVisibleCodeExample] = useState<boolean>(false);
+  const [resetForm, setResetForm] = useState<boolean>(false);
 
   const [showCreateRequest, setShowCreateRequest] = useState<boolean>(
     (requestId === undefined || requestId === null) &&
       (jobId === undefined || jobId === null),
   );
-
-  const nextStep = () => {
-    stepperRef.current?.nextCallback();
-  };
-
-  const prevStep = () => {
-    stepperRef.current?.prevCallback();
-  };
 
   const submitRequest = () => {
     if (request) {
@@ -144,66 +133,60 @@ function RequestCreate({ config }: { config: Config }) {
   }, [jobId, requestId]);
 
   return (
-    <div className="card flex justify-content-center">
-      <Stepper
-        ref={stepperRef}
-        style={{ flexBasis: "50rem" }}
-        linear={true}
-        activeStep={defaultStepperStep}
-      >
-        <StepperPanel header={scheduleHeader}>
-          <div className="flex pt-4 justify-content-end">
-            <Button
-              label="Next"
-              icon="pi pi-arrow-right"
-              iconPos="right"
-              onClick={() => nextStep()}
-            />
+    <div className="card justify-content-center">
+      <div>
+        <div className="flex pt-4 justify-content-between">
+          <div className="flex">
+            <div className="flex mr-2">
+              <div className="mr-2">Scheduled:</div>
+              <InputSwitch
+                checked={showScheduleJob}
+                onChange={(e) => setShowScheduleJob(e.value)}
+              ></InputSwitch>
+            </div>
           </div>
-          <div className="flex flex-column h-12rem">
-            {(!jobId || job) && (
-              <SchedulerForm
-                scheduledJob={job}
-                setScheduledJob={setJob}
-                runOptions={runOptions}
-                runState={runState}
-                setRunState={setRunState}
+        </div>
+      </div>
+      <div className="flex flex-column h-12rem">
+        {showScheduleJob && (
+          <SchedulerForm scheduledJob={job} setScheduledJob={setJob} />
+        )}
+        {showCreateRequest && (
+          <CommandCreate
+            request={request}
+            setRequest={setRequest}
+            requestCommand={requestCommand}
+            setRequestCommand={setRequestCommand}
+            resetForm={resetForm}
+            setResetForm={setResetForm}
+          />
+        )}
+        {showCreateRequest && (
+          <div className="flex pt-4 ">
+            <div>
+              <Button
+                label="Reset Form"
+                severity="warning"
+                icon="pi pi-arrow-right"
+                onClick={() => setResetForm(true)}
+                className="mr-2"
               />
-            )}
-            {jobId && !job && <Skeleton width="100%" height="150px"></Skeleton>}
-          </div>
-        </StepperPanel>
-        <StepperPanel header={createRequestHeader}>
-          <div className="flex pt-4 justify-content-between">
-            <Button
-              label="Back"
-              severity="secondary"
-              icon="pi pi-arrow-left"
-              onClick={() => prevStep()}
-            />
-
-            {runState === runOptions[0] && (
-              <div>
-                <HasAccess
-                  config={config}
-                  permission="OPERATOR"
-                  hasNamespace={requestCommand.namespace}
-                  hasSystemName={requestCommand.systemName}
-                  hasInstanceName={requestCommand.instance}
-                  hasSystemVersion={requestCommand.version}
-                  hasCommandName={requestCommand.command}
-                >
-                  <Button
-                    label="Submit"
-                    icon="pi pi-arrow-right"
-                    onClick={() => {
-                      submitRequest();
-                    }}
-                  />
-                </HasAccess>
-              </div>
-            )}
-            {runState === runOptions[1] && !jobId && (
+            </div>
+            <div>
+              <CodeExample
+                visibleCodeExample={visibleCodeExample}
+                setVisibleCodeExample={setVisibleCodeExample}
+                request={request}
+              />
+              <Button
+                label="Code Examples"
+                severity="info"
+                icon="pi pi-arrow-right"
+                onClick={() => setVisibleCodeExample(true)}
+                className="mr-2"
+              />
+            </div>
+            <div style={{ marginLeft: "auto" }}>
               <HasAccess
                 config={config}
                 permission="OPERATOR"
@@ -213,40 +196,41 @@ function RequestCreate({ config }: { config: Config }) {
                 hasSystemVersion={requestCommand.version}
                 hasCommandName={requestCommand.command}
               >
-                <Button
-                  label="Submit Job"
-                  severity="success"
-                  icon="pi pi-arrow-right"
-                  iconPos="right"
-                  onClick={submitJob}
-                />
+                {!showScheduleJob && (
+                  <Button
+                    label="Submit"
+                    icon="pi pi-arrow-right"
+                    onClick={() => {
+                      submitRequest();
+                    }}
+                  />
+                )}
+                {showScheduleJob && !jobId && (
+                  <Button
+                    label="Submit Job"
+                    severity="success"
+                    icon="pi pi-arrow-right"
+                    iconPos="right"
+                    onClick={submitJob}
+                  />
+                )}
+                {showScheduleJob && jobId && (
+                  <Button
+                    label="Update Job"
+                    severity="success"
+                    icon="pi pi-arrow-right"
+                    iconPos="right"
+                    onClick={updateJob}
+                  />
+                )}
               </HasAccess>
-            )}
-            {runState === runOptions[1] && jobId && (
-              <Button
-                label="Update Job"
-                severity="success"
-                icon="pi pi-arrow-right"
-                iconPos="right"
-                onClick={updateJob}
-              />
-            )}
+            </div>
           </div>
-          <div className="flex flex-column h-12rem">
-            {showCreateRequest && (
-              <CommandCreate
-                request={request}
-                setRequest={setRequest}
-                requestCommand={requestCommand}
-                setRequestCommand={setRequestCommand}
-              />
-            )}
-            {!showCreateRequest && (
-              <Skeleton width="100%" height="150px"></Skeleton>
-            )}
-          </div>
-        </StepperPanel>
-      </Stepper>
+        )}
+        {!showCreateRequest && (
+          <Skeleton width="100%" height="150px"></Skeleton>
+        )}
+      </div>
     </div>
   );
 }
