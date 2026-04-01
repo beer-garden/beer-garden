@@ -1,5 +1,3 @@
-import "primeflex/primeflex.css";
-
 import { Column } from "primereact/column";
 import { TreeTable, TreeTableSelectionEvent } from "primereact/treetable";
 import { useEffect, useState } from "react";
