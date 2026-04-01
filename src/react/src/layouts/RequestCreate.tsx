@@ -137,7 +137,7 @@ function RequestCreate({ config }: { config: Config }) {
       <div>
         <div className="flex pt-4 justify-content-between">
           <div className="flex">
-            <div className=" flex mr-2">
+            <div className="flex mr-2">
               <div className="mr-2">Scheduled:</div>
               <InputSwitch
                 checked={showScheduleJob}
