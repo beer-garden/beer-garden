@@ -7,6 +7,7 @@ import { PrimeReactProvider } from "primereact/api";
 import { useEffect, useRef, useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
+import NavigationMenu from "./components/NavigationMenu";
 import AboutIndex from "./layouts/AboutIndex";
 import GardenDashboard from "./layouts/Dashboard";
 import JobIndex from "./layouts/JobIndex";
@@ -15,7 +16,6 @@ import RequestView from "./layouts/RequestView";
 import RoleIndex from "./layouts/RoleIndex";
 import Workspace from "./layouts/Workspace";
 import { Config, Listener } from "./models/models";
-import NavigationMenu from "./Navigation";
 import { GetConfig } from "./services/config_service";
 import { ClearSystemsCache } from "./services/system_service";
 import { preemptiveRefresh } from "./services/token_service";
