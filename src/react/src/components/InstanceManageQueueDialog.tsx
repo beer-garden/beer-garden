@@ -2,7 +2,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Dialog } from "primereact/dialog";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Queue } from "../models/brewtils-types";
 import { InstanceDialogProps } from "../models/models";
@@ -14,22 +14,19 @@ function InstanceManageQueueDialog({
   isVisible,
   onClose,
 }: InstanceDialogProps) {
-  const loaded = useRef<boolean>(false);
   const [queues, setQueues] = useState<Array<Queue>>([]);
 
   useEffect(() => {
-    if (!loaded.current) {
+    if (isVisible) {
       GetInstanceQueues(instance.id)
         .then((data: Array<Queue>) => {
           setQueues(data);
-          // setQueueVisible(true);
         })
         .catch((error) => {
           console.error("Error fetching queues:", error);
         });
     }
-    loaded.current = true;
-  }, []);
+  }, [isVisible]);
 
   function clearQueue(queueName: string | undefined) {
     const accept = () => {

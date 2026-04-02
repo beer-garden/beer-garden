@@ -25,7 +25,9 @@ function InstanceCancelDeleteRequestsDialog({
   const msgs = useRef<Messages>(null);
 
   useEffect(() => {
-    loadRequests();
+    if (isVisible) {
+      loadRequests();
+    }
   }, [isVisible]);
 
   function buildFilter(status: string) {
