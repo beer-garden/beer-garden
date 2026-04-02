@@ -223,7 +223,7 @@ function RequestCreateCard({
               removeItem(requestItem.itemId);
             }}
           >
-            <FontAwesomeIcon icon="minus" />
+            <FontAwesomeIcon icon="x" />
           </Button>
           <div className="ml-4 mr-2 align-self-center">Scheduled</div>
           <InputSwitch

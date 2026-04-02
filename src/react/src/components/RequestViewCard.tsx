@@ -254,7 +254,7 @@ function RequestViewCard({
             removeItem(requestItem.itemId);
           }}
         >
-          <FontAwesomeIcon icon="minus" />
+          <FontAwesomeIcon icon="x" />
         </Button>
       }
     >

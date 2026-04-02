@@ -167,7 +167,7 @@ function Workspace({
             <div className="mr-2 mb-2 mt-2" style={{ minWidth: "49%" }}>
               <SchedulerViewCard
                 jobId={value.jobId}
-                removeItem={deleteItem}
+                removeItem={() => deleteItem(value.itemId)}
                 listeners={listeners}
                 editJob={() => {
                   updateItem({
