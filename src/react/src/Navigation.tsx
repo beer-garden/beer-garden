@@ -15,10 +15,12 @@ function NavigationMenu({
   listeners,
   config,
   runReloadUI,
+  toggleRunTour,
 }: {
   listeners: Record<string, any>;
   config: Config;
   runReloadUI: () => void;
+  toggleRunTour: () => void;
 }) {
   const [iconDefault, setIconDefault] = useState<string>(
     config?.icon_default ?? "beer-mug-empty",
@@ -194,6 +196,12 @@ function NavigationMenu({
           )}
         </div>
       )}
+      <FontAwesomeIcon
+        className="mr-2 fa-2x"
+        icon="compass"
+        onClick={toggleRunTour}
+        title="Start Tour"
+      />
 
       <CurrentRequestsTemplate listeners={listeners} />
     </div>

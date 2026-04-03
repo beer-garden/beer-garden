@@ -109,3 +109,10 @@ export interface CommandFormProps {
   resetForm: boolean;
   setResetForm: (reset: boolean) => void;
 }
+
+export interface TourStepProps {
+  content: string;
+  prefix: string;
+  uuid?: string;
+  label: string;
+}

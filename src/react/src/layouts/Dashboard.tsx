@@ -2,16 +2,26 @@ import { Badge } from "primereact/badge";
 import { ConfirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
 import { Tree } from "primereact/tree";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { RefObject,useCallback, useEffect, useRef, useState } from "react";
 
 import GardenSummary from "../components/GardenSummary";
 import SystemCard from "../components/SystemCard";
 import { Garden, Instance, System } from "../models/brewtils-types";
+import { TourStepProps } from "../models/models";
 import { GetConfig } from "../services/config_service";
 import { GetRootGarden } from "../services/garden_service";
+import { ClearTourSteps, GenerateTourProps } from "../services/tour_service";
 import { GetSeverity } from "../services/util_service";
 
-function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
+function GardenDashboard({
+  listeners,
+  tourStepsRef,
+}: {
+  listeners: Record<string, any>;
+  tourStepsRef: RefObject<Array<TourStepProps>>;
+}) {
+  const tourUuid = "garden_dashboard_tour";
+  const tourPrefix = "garden_dashboard";
   const gardenRef = useRef<Garden>(null);
   const selectedGardenRef = useRef<Garden>(null);
 
@@ -457,6 +467,9 @@ function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
         delete listeners["DASHBOARD"];
       };
     }
+    return () => {
+      ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+    };
   }, [MonitorGardenEvents, listeners]);
 
   const [selectedKey, setSelectedKey] = useState<any | null>("");
@@ -486,6 +499,13 @@ function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
       <div className="col-3 surface-border p-3">
         <h3>Select Garden</h3>
         <Tree
+          {...GenerateTourProps(tourStepsRef, {
+            prefix: tourPrefix,
+            uuid: tourUuid,
+            label: "Garden Tree Menu",
+            content:
+              "Select a Garden to view its Status, Systems and Instances",
+          })}
           value={gardenMenu}
           nodeTemplate={gardenTreeNode}
           selectionMode="single"
@@ -511,6 +531,7 @@ function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
           <GardenSummary
             gardenRef={gardenRef}
             selectedGarden={selectedGarden}
+            tourStepsRef={tourStepsRef}
           />
         )}
         {selectedGarden?.systems?.map((system: System) => (
@@ -519,6 +540,7 @@ function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
               system={system}
               toast={toast}
               selectedGarden={selectedGarden.name}
+              tourStepsRef={tourStepsRef}
             />
           </div>
         ))}

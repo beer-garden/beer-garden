@@ -7,22 +7,39 @@ import { Menu } from "primereact/menu";
 import { Panel } from "primereact/panel";
 import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
-import { RefObject, useRef, useState } from "react";
+import { RefObject, useEffect, useRef, useState } from "react";
 
 import InstanceCancelDeleteDialog from "../components/InstanceCancelDeleteRequestsDialog";
 import InstanceManageQueueDialog from "../components/InstanceManageQueueDialog";
 import InstanceShowLogsDialog from "../components/InstanceShowLogsDialog";
 import { Instance, System } from "../models/brewtils-types";
+import { TourStepProps } from "../models/models";
 import { StartInstance, StopInstance } from "../services/instance_service";
 import { DeleteSystem, ReloadSystem } from "../services/system_service";
+import { ClearTourSteps, GenerateTourProps } from "../services/tour_service";
 
 interface SystemCardProps {
   system: System;
   selectedGarden?: string;
   toast?: RefObject<Toast | null>;
+  tourStepsRef: RefObject<Array<TourStepProps>>;
 }
 
-function SystemCard({ system, selectedGarden, toast }: SystemCardProps) {
+function SystemCard({
+  system,
+  selectedGarden,
+  toast,
+  tourStepsRef,
+}: SystemCardProps) {
+  const tourUuid = system.id;
+  const tourPrefix = "system_summary";
+
+  useEffect(() => {
+    return () => {
+      ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+    };
+  }, []);
+
   const getSeverity = (
     status?: string,
   ):
@@ -308,6 +325,12 @@ function SystemCard({ system, selectedGarden, toast }: SystemCardProps) {
               size="small"
               title="Start"
               onClick={() => startSystem(system)}
+              {...GenerateTourProps(tourStepsRef, {
+                prefix: tourPrefix,
+                uuid: tourUuid,
+                label: "Start All Instances",
+                content: "Start all instances for the selected system",
+              })}
             >
               <FontAwesomeIcon icon="play" />
             </Button>
@@ -316,6 +339,12 @@ function SystemCard({ system, selectedGarden, toast }: SystemCardProps) {
               size="small"
               title="Stop"
               onClick={() => stopSystem(system)}
+              {...GenerateTourProps(tourStepsRef, {
+                prefix: tourPrefix,
+                uuid: tourUuid,
+                label: "Stop All Instances",
+                content: "Stop all instances for the selected system",
+              })}
             >
               <FontAwesomeIcon icon="stop" />
             </Button>
@@ -325,6 +354,12 @@ function SystemCard({ system, selectedGarden, toast }: SystemCardProps) {
               title="Refresh"
               onClick={() => reloadSystem(system)}
               className="mr-2"
+              {...GenerateTourProps(tourStepsRef, {
+                prefix: tourPrefix,
+                uuid: tourUuid,
+                label: "Restart System",
+                content: "Restart the selected system",
+              })}
             >
               <FontAwesomeIcon icon="refresh" />
             </Button>
@@ -333,6 +368,12 @@ function SystemCard({ system, selectedGarden, toast }: SystemCardProps) {
               size="small"
               title="Delete"
               onClick={() => deleteSystem(system)}
+              {...GenerateTourProps(tourStepsRef, {
+                prefix: tourPrefix,
+                uuid: tourUuid,
+                label: "Delete System",
+                content: "Delete the selected system",
+              })}
             >
               <FontAwesomeIcon icon="trash" />
             </Button>

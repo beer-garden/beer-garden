@@ -5,6 +5,13 @@ import "./App.css";
 
 import { PrimeReactProvider } from "primereact/api";
 import { useEffect, useRef, useState } from "react";
+import {
+  ACTIONS,
+  type EventData,
+  Joyride,
+  ORIGIN,
+  STATUS,
+} from "react-joyride";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import AboutIndex from "./layouts/AboutIndex";
@@ -14,12 +21,13 @@ import RequestIndex from "./layouts/RequestIndex";
 import RequestView from "./layouts/RequestView";
 import RoleIndex from "./layouts/RoleIndex";
 import Workspace from "./layouts/Workspace";
-import { Config, Listener } from "./models/models";
+import { Config, Listener, TourStepProps } from "./models/models";
 import NavigationMenu from "./Navigation";
 import { GetConfig } from "./services/config_service";
 import { ClearSystemsCache } from "./services/system_service";
 import { preemptiveRefresh } from "./services/token_service";
 import { GetToken } from "./services/token_service";
+import { ConvertToTourStepProps } from "./services/tour_service";
 
 function App() {
   const socketRef = useRef(null as null | any);
@@ -27,6 +35,15 @@ function App() {
   const [config, setConfig] = useState<Config>({});
 
   const [reloadUI, setReloadUI] = useState(0);
+
+  const tourStepsRef = useRef<Array<TourStepProps>>([]);
+
+  const [runTour, setRunTour] = useState(false);
+  const runTourRef = useRef(runTour);
+  const toggleRunTour = () => {
+    runTourRef.current = !runTourRef.current;
+    setRunTour(runTourRef.current);
+  };
 
   const runReloadUI = () => {
     ClearSystemsCache();
@@ -88,21 +105,45 @@ function App() {
       ? undefined
       : import.meta.env.VITE_BASE_URL || undefined;
 
+  const handleJoyrideEvent = (data: EventData) => {
+    const { action, origin, status } = data;
+
+    if (action === ACTIONS.CLOSE && origin === ORIGIN.KEYBOARD) {
+      setRunTour(false);
+    } else if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
+      setRunTour(false);
+    }
+  };
+
   return (
     <PrimeReactProvider value={primeValue}>
       <div className="flex">
         <div className="flex-grow-1">
           <BrowserRouter basename={baseURL}>
+            {runTour && (
+              <Joyride
+                onEvent={handleJoyrideEvent}
+                continuous
+                run={true}
+                steps={ConvertToTourStepProps(tourStepsRef.current)}
+              />
+            )}
             <NavigationMenu
               listeners={listeners}
               config={config}
               runReloadUI={runReloadUI}
+              toggleRunTour={toggleRunTour}
             />
             <div className="flex-grow-1">
               <Routes>
                 <Route
                   path="/dashboard"
-                  element={<GardenDashboard listeners={listeners} />}
+                  element={
+                    <GardenDashboard
+                      listeners={listeners}
+                      tourStepsRef={tourStepsRef}
+                    />
+                  }
                 />
                 <Route
                   path="/request/:requestId"
@@ -146,7 +187,12 @@ function App() {
                 <Route path="/roles" element={<RoleIndex config={config} />} />
                 <Route
                   path="/"
-                  element={<GardenDashboard listeners={listeners} />}
+                  element={
+                    <GardenDashboard
+                      listeners={listeners}
+                      tourStepsRef={tourStepsRef}
+                    />
+                  }
                 />
               </Routes>
             </div>
