@@ -152,6 +152,10 @@ function App() {
           return compareGarden;
         };
 
+        if (!rootGardenRef.current) {
+          return;
+        }
+
         updateRootGarden(
           removeGarden(message.payload.id, rootGardenRef.current as Garden),
         );
@@ -251,21 +255,19 @@ function App() {
           }),
         );
       } else if (message.name === "SYSTEM_CREATED") {
-        if (message.payload.garden_name) {
-          const newSystems = { ...message.payload };
-          if (!newSystems.garden_name) {
-            newSystems.garden_name = message.payload.namespace;
-          }
-          if (!newSystems.garden_name) {
-            newSystems.garden_name = message.garden;
-          }
-
-          updateSystems(
-            systemsRef.current
-              ?.filter((system: System) => system.id !== message.payload.id)
-              .concat(newSystems),
-          );
+        const newSystems = { ...message.payload };
+        if (!newSystems.garden_name) {
+          newSystems.garden_name = message.payload.namespace;
         }
+        if (!newSystems.garden_name) {
+          newSystems.garden_name = message.garden;
+        }
+
+        updateSystems(
+          systemsRef.current
+            ?.filter((system: System) => system.id !== message.payload.id)
+            .concat(newSystems),
+        );
       } else if (
         [
           "INSTANCE_STARTED",
@@ -353,10 +355,9 @@ function App() {
     };
     // Add event listeners to the socket instance
     socketRef.current.addEventListener("message", handleMessage);
-    listeners.current = {
-      ...listeners.current,
-      ...{ root_app: { listener: MonitorGardenSystemEvents } as Listener },
-    };
+    listeners.current.root_app = {
+      listener: MonitorGardenSystemEvents,
+    } as Listener;
 
     // Cleanup function to run when the component unmounts or dependencies change
     return () => {
@@ -379,7 +380,7 @@ function App() {
               config={config}
               runReloadUI={runReloadUI}
             />
-            <div className="flex-grow-1">
+            <div className="flex-grow-1" key={reloadUI}>
               <Routes>
                 <Route
                   path="/dashboard"

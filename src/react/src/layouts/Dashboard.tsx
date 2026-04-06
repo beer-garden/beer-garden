@@ -33,9 +33,11 @@ function GardenDashboard({
       const matchedSystems = getSelectedSystems(garden);
       setSelectedSystems(matchedSystems);
       setSelectedGarden({ ...garden });
+      selectedGardenRef.current = { ...garden };
     } else {
       selectedGardenRef.current = undefined;
       setSelectedGarden(undefined);
+      setSelectedSystems([]);
     }
   };
 

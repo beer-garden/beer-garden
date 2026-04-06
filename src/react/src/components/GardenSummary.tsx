@@ -7,7 +7,7 @@ import { DataTable } from "primereact/datatable";
 import { Tag } from "primereact/tag";
 import { RefObject, useEffect, useState } from "react";
 
-import { Connection, Garden, Instance } from "../models/brewtils-types";
+import { Connection, Garden, Instance, System } from "../models/brewtils-types";
 import {
   DeleteGarden,
   RescanGarden,
@@ -26,7 +26,7 @@ function GardenSummary({
 }: {
   gardenRef: RefObject<Garden | undefined>;
   selectedGarden: Garden | undefined;
-  selectedSystems: Array<any> | undefined;
+  selectedSystems: System[] | undefined;
 }) {
   const getPublishingConnections = () => {
     if (selectedGarden?.publishing_connections) {
