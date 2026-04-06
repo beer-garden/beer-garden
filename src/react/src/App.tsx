@@ -13,6 +13,9 @@ import JobIndex from "./layouts/JobIndex";
 import RequestIndex from "./layouts/RequestIndex";
 import RequestView from "./layouts/RequestView";
 import RoleIndex from "./layouts/RoleIndex";
+import Swagger from "./layouts/Swagger";
+import SystemCards from "./layouts/SystemCards";
+import SystemTable from "./layouts/SystemTable";
 import Workspace from "./layouts/Workspace";
 import { Config, Listener } from "./models/models";
 import NavigationMenu from "./Navigation";
@@ -144,6 +147,7 @@ function App() {
                 />
                 <Route path="/about" element={<AboutIndex config={config} />} />
                 <Route path="/roles" element={<RoleIndex config={config} />} />
+                <Route path="/swagger" element={<Swagger />} />
                 <Route
                   path="/"
                   element={<GardenDashboard listeners={listeners} />}
