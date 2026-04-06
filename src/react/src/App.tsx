@@ -1,25 +1,22 @@
 import "primereact/resources/themes/lara-light-blue/theme.css"; // Theme
 import "primereact/resources/primereact.min.css"; // Core CSS
-import "primereact/resources/themes/bootstrap4-light-blue/theme.css";
+import "primeflex/primeflex.css";
+import "./App.css";
 
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { PrimeReactProvider } from "primereact/api";
-import { Button } from "primereact/button";
-import { Divider } from "primereact/divider";
 import { useEffect, useRef, useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
-import ScratchPad from "./components/ScratchPad";
 import AboutIndex from "./layouts/AboutIndex";
-import GardenIndex from "./layouts/GardenIndex";
+import GardenDashboard from "./layouts/Dashboard";
 import JobIndex from "./layouts/JobIndex";
-import RequestCreate from "./layouts/RequestCreate";
 import RequestIndex from "./layouts/RequestIndex";
 import RequestView from "./layouts/RequestView";
 import RoleIndex from "./layouts/RoleIndex";
 import Swagger from "./layouts/Swagger";
 import SystemCards from "./layouts/SystemCards";
 import SystemTable from "./layouts/SystemTable";
+import Workspace from "./layouts/Workspace";
 import { Config, Listener } from "./models/models";
 import NavigationMenu from "./Navigation";
 import { GetConfig } from "./services/config_service";
@@ -28,44 +25,15 @@ import { preemptiveRefresh } from "./services/token_service";
 import { GetToken } from "./services/token_service";
 
 function App() {
-  const [showScratchPad, setShowScratchPad] = useState<boolean>(false);
-  const [showMainApp, setShowMainApp] = useState<boolean>(true);
   const socketRef = useRef(null as null | any);
   const listeners = useRef<Record<string, Listener>>({});
   const [config, setConfig] = useState<Config>({});
 
-  const [reloadScratchPadTrigger, setReloadScratchPadTrigger] = useState(0);
   const [reloadUI, setReloadUI] = useState(0);
 
   const runReloadUI = () => {
     ClearSystemsCache();
-    setReloadUI((prev) => prev + 1);
-  };
-
-  const nagivateLeft = () => {
-    if (showScratchPad && showMainApp) {
-      setShowMainApp(false);
-    } else if (showScratchPad && !showMainApp) {
-      // Do Nothing
-    } else if (!showScratchPad && showMainApp) {
-      setShowScratchPad(true);
-    } else if (!showScratchPad && !showMainApp) {
-      // Bad State, show scratch pad
-      setShowScratchPad(true);
-    }
-  };
-
-  const nagivateRight = () => {
-    if (showScratchPad && showMainApp) {
-      setShowScratchPad(false);
-    } else if (showScratchPad && !showMainApp) {
-      setShowMainApp(true);
-    } else if (!showScratchPad && showMainApp) {
-      // Do Nothing
-    } else if (!showScratchPad && !showMainApp) {
-      // Bad State, show scratch pad
-      setShowMainApp(true);
-    }
+    setReloadUI(reloadUI + 1);
   };
 
   const primeValue = {
@@ -133,108 +101,58 @@ function App() {
               config={config}
               runReloadUI={runReloadUI}
             />
-            <div className="flex" key={reloadUI}>
-              <div className={showMainApp ? "flex-grow-1" : "hidden"}>
-                <Routes>
-                  <Route
-                    path="/systems"
-                    element={
-                      <SystemCards
-                        listeners={listeners}
-                        setReloadScratchPad={setReloadScratchPadTrigger}
-                        config={config}
-                      />
-                    }
-                  />
-                  <Route path="/systemtable" element={<SystemTable />} />
-                  <Route
-                    path="/systemcard"
-                    element={
-                      <SystemCards
-                        listeners={listeners}
-                        setReloadScratchPad={setReloadScratchPadTrigger}
-                        config={config}
-                      />
-                    }
-                  />
-                  <Route
-                    path="/request/:requestId"
-                    element={
-                      <RequestView listeners={listeners} config={config} />
-                    }
-                  />
-                  <Route
-                    path="/requests"
-                    element={
-                      <RequestIndex
-                        listeners={listeners}
-                        setReloadScratchPad={setReloadScratchPadTrigger}
-                      />
-                    }
-                  />
-                  <Route
-                    path="/create/:defaultType/:paramNamespace?/:paramSystem?/:paramVersion?/:paramInstance?/:paramCommand?"
-                    element={<RequestCreate config={config} />}
-                  />
-                  <Route
-                    path="/recreate/:requestId"
-                    element={<RequestCreate config={config} />}
-                  />
-                  <Route
-                    path="/jobs"
-                    element={<JobIndex listeners={listeners} />}
-                  />
-                  <Route
-                    path="/job/:jobId"
-                    element={<RequestCreate config={config} />}
-                  />
-                  <Route
-                    path="/garden"
-                    element={
-                      <GardenIndex listeners={listeners} config={config} />
-                    }
-                  />
-
-                  <Route
-                    path="/about"
-                    element={<AboutIndex config={config} />}
-                  />
-                  <Route
-                    path="/roles"
-                    element={<RoleIndex config={config} />}
-                  />
-                  <Route path="/swagger" element={<Swagger />} />
-                  <Route
-                    path="/"
-                    element={
-                      <SystemCards
-                        listeners={listeners}
-                        setReloadScratchPad={setReloadScratchPadTrigger}
-                        config={config}
-                      />
-                    }
-                  />
-                </Routes>
-              </div>
-              <Divider layout="vertical">
-                {showScratchPad && (
-                  <Button onClick={() => nagivateRight()}>
-                    <FontAwesomeIcon icon="angles-right" />
-                  </Button>
-                )}
-
-                {showMainApp && (
-                  <Button onClick={() => nagivateLeft()}>
-                    <FontAwesomeIcon icon="angles-left" />
-                  </Button>
-                )}
-              </Divider>
-              <div className={showScratchPad ? "flex-grow-1" : "hidden"}>
-                <ScratchPad
-                  listeners={listeners}
-                  reloadTrigger={reloadScratchPadTrigger}
+            <div className="flex-grow-1">
+              <Routes>
+                <Route
+                  path="/dashboard"
+                  element={<GardenDashboard listeners={listeners} />}
                 />
-              </div>
+                <Route
+                  path="/request/:requestId"
+                  element={
+                    <RequestView listeners={listeners} config={config} />
+                  }
+                />
+                <Route
+                  path="/requests"
+                  element={<RequestIndex listeners={listeners} />}
+                />
+                <Route
+                  path="/create/:defaultType/:paramNamespace?/:paramSystem?/:paramVersion?/:paramInstance?/:paramCommand?"
+                  element={<Workspace listeners={listeners} display={false} />}
+                />
+                <Route
+                  path="/recreate/:requestId"
+                  element={<Workspace listeners={listeners} display={false} />}
+                />
+                <Route
+                  path="/workspace"
+                  element={<Workspace listeners={listeners} />}
+                />
+                <Route
+                  path="/workspace/request/:requestId"
+                  element={<Workspace listeners={listeners} display={true} />}
+                />
+                <Route
+                  path="/workspace/job/:jobId"
+                  element={<Workspace listeners={listeners} display={true} />}
+                />
+                <Route
+                  path="/jobs"
+                  element={<JobIndex listeners={listeners} />}
+                />
+                <Route
+                  path="/job/:jobId"
+                  element={<Workspace listeners={listeners} display={false} />}
+                />
+                <Route path="/about" element={<AboutIndex config={config} />} />
+                <Route path="/roles" element={<RoleIndex config={config} />} />
+                <Route path="/swagger" element={<Swagger />} />
+                <Route
+                  path="/"
+                  element={<GardenDashboard listeners={listeners} />}
+                />
+              </Routes>
             </div>
           </BrowserRouter>
         </div>

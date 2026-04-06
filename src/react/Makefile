@@ -41,7 +41,7 @@ deps: ## install javascript dependencies
 build-models:
 	pip install py
 
-start:
+start: deps
 	npm start
 
 chromium_test:
