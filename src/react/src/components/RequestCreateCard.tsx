@@ -82,6 +82,7 @@ function RequestCreateCard({
 
   const [visibleCodeExample, setVisibleCodeExample] = useState<boolean>(false);
   const [resetForm, setResetForm] = useState<boolean>(false);
+  const [isFormValid, setIsFormValid] = useState<boolean>(false);
 
   const [showCreateRequest, setShowCreateRequest] = useState<boolean>(
     (requestItem?.requestId === undefined || requestItem?.requestId === null) &&
@@ -264,6 +265,7 @@ function RequestCreateCard({
               <Button
                 label="Submit"
                 icon="pi pi-arrow-right"
+                disabled={!isFormValid}
                 onMouseDown={(event) => {
                   if (event.button === 1) {
                     // Middle mouse button click
@@ -278,6 +280,7 @@ function RequestCreateCard({
               <Button
                 label="Submit Job"
                 severity="success"
+                disabled={!isFormValid}
                 icon="pi pi-arrow-right"
                 iconPos="right"
                 onClick={submitJob}
@@ -287,6 +290,7 @@ function RequestCreateCard({
               <Button
                 label="Update Job"
                 severity="success"
+                disabled={!isFormValid}
                 icon="pi pi-arrow-right"
                 iconPos="right"
                 onClick={updateJob}
@@ -313,6 +317,7 @@ function RequestCreateCard({
                 setRequestCommand={updateRequestCommand}
                 resetForm={resetForm}
                 setResetForm={setResetForm}
+                setIsFormValid={setIsFormValid}
               />
             )}
             {!showCreateRequest && (

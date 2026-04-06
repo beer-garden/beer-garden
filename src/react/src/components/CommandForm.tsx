@@ -12,6 +12,7 @@ function CommandForm({
   setRequest,
   resetForm,
   setResetForm,
+  setIsFormValid,
 }: CommandFormProps) {
   disabled = disabled === undefined ? true : disabled;
   const [parametersFields, setParameterFields] = useState(
@@ -404,6 +405,22 @@ function CommandForm({
     setLoadingChoices([...altLoadingChoices.current]);
   };
 
+  const validateForm = () => {
+    let valid = true;
+    for (const parameter of altParametersFields.current) {
+      if (
+        (parameter.value === null ||
+          parameter.value === undefined ||
+          parameter.value === "") &&
+        (parameter.optional === undefined || !parameter.optional)
+      ) {
+        valid = false;
+        break;
+      }
+    }
+    setIsFormValid(valid);
+  };
+
   useEffect(() => {
     if (!initialized) {
       buildDefaults();
@@ -490,6 +507,8 @@ function CommandForm({
         }
       });
     }
+
+    validateForm();
   }, [parametersFields, initialized, request, setRequest, resetForm]);
 
   const handleChange = (name: any, value: any) => {

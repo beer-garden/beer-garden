@@ -108,4 +108,5 @@ export interface CommandFormProps {
   setRequest: (request: Request) => void;
   resetForm: boolean;
   setResetForm: (reset: boolean) => void;
+  setIsFormValid: (isValid: boolean) => void;
 }
