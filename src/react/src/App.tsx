@@ -157,7 +157,7 @@ function App() {
         }
 
         updateRootGarden(
-          removeGarden(message.payload.id, rootGardenRef.current as Garden),
+          removeGarden(message.payload.id, rootGardenRef.current),
         );
         if (
           systemsRef.current?.some(
