@@ -259,12 +259,13 @@ export const ExportJobs = async (headerData?: any): Promise<Blob> => {
     const blob = await response.blob();
 
     const url = window.URL.createObjectURL(blob);
+    const sanitizedTimestamp = new Date()
+      .toISOString()
+      .split(".")[0]
+      .replace(/:/g, "-");
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute(
-      "download",
-      `JobExport_${new Date().toISOString().split(".")[0]}.json`,
-    );
+    link.setAttribute("download", `JobExport_${sanitizedTimestamp}.json`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -273,7 +274,7 @@ export const ExportJobs = async (headerData?: any): Promise<Blob> => {
     return blob;
   } catch (error) {
     // Handle network errors or the error thrown above
-    console.error("Error fetching Requests:", error);
+    console.error("Error fetching Jobs:", error);
     throw error; // Re-throw to be handled by the component/hook
   }
 };

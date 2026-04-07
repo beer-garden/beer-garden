@@ -199,7 +199,17 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
   };
 
   const customJobImporter = (event: any) => {
-    const file = event.files[0];
+    const file = event?.files?.[0];
+
+    if (!file) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Error",
+        detail: "No file selected for import",
+        life: 3000,
+      });
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = async (e) => {
