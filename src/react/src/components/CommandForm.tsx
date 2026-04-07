@@ -405,13 +405,23 @@ function CommandForm({
     setLoadingChoices([...altLoadingChoices.current]);
   };
 
+  const isMissingValue = (value: any) => {
+    if (Array.isArray(value)) {
+      return (
+        value.length === 0 ||
+        value.some(
+          (entry) => entry === null || entry === undefined || entry === "",
+        )
+      );
+    }
+    return value === null || value === undefined || value === "";
+  };
+
   const validateForm = () => {
     let valid = true;
     for (const parameter of altParametersFields.current) {
       if (
-        (parameter.value === null ||
-          parameter.value === undefined ||
-          parameter.value === "") &&
+        isMissingValue(parameter.value) &&
         (parameter.optional === undefined || !parameter.optional)
       ) {
         valid = false;
