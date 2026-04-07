@@ -2,7 +2,7 @@ import { Badge } from "primereact/badge";
 import { ConfirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
 import { Tree } from "primereact/tree";
-import { RefObject,useCallback, useEffect, useRef, useState } from "react";
+import { RefObject, useCallback, useEffect, useRef, useState } from "react";
 
 import GardenSummary from "../components/GardenSummary";
 import SystemCard from "../components/SystemCard";
@@ -462,13 +462,10 @@ function GardenDashboard({
         .catch((error) => {
           console.error("Error fetching root garden:", error);
         });
-      return () => {
-        // Cleanup function for when component unmounts
-        delete listeners["DASHBOARD"];
-      };
     }
     return () => {
       ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+      delete listeners["DASHBOARD"];
     };
   }, [MonitorGardenEvents, listeners]);
 

@@ -26,6 +26,8 @@ describe("Navigation", () => {
           config={{
             auth_enabled: true,
           }}
+          runReloadUI={() => {}}
+          toggleRunTour={() => {}}
         />
       </BrowserRouter>,
     );
@@ -42,7 +44,12 @@ describe("Navigation", () => {
 
     render(
       <BrowserRouter basename="/">
-        <Navigation listeners={{}} config={{ auth_enabled: true }} />
+        <Navigation
+          listeners={{}}
+          config={{ auth_enabled: true }}
+          runReloadUI={() => {}}
+          toggleRunTour={() => {}}
+        />
       </BrowserRouter>,
     );
 
@@ -61,6 +68,8 @@ describe("Navigation", () => {
           config={{
             auth_enabled: false,
           }}
+          runReloadUI={() => {}}
+          toggleRunTour={() => {}}
         />
       </BrowserRouter>,
     );

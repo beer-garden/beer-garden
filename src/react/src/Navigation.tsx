@@ -196,12 +196,17 @@ function NavigationMenu({
           )}
         </div>
       )}
-      <FontAwesomeIcon
-        className="mr-2 fa-2x"
-        icon="compass"
+      <Button
+        rounded
+        text
+        className="mr-2"
         onClick={toggleRunTour}
+        aria-label="Start Tour"
         title="Start Tour"
-      />
+        data-testid="start-tour"
+      >
+        <FontAwesomeIcon className="fa-2x" icon="compass" />
+      </Button>
 
       <CurrentRequestsTemplate listeners={listeners} />
     </div>
