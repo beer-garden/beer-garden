@@ -10,7 +10,11 @@ import { Garden, Instance, System } from "../models/brewtils-types";
 import { TourStepProps } from "../models/models";
 import { GetConfig } from "../services/config_service";
 import { GetRootGarden } from "../services/garden_service";
-import { ClearTourSteps, GenerateTourProps } from "../services/tour_service";
+import {
+  AddTourStep,
+  ClearTourSteps,
+  GenerateTourProps,
+} from "../services/tour_service";
 import { GetSeverity } from "../services/util_service";
 
 function GardenDashboard({
@@ -442,6 +446,13 @@ function GardenDashboard({
     });
   };
 
+  const gardenTreeTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Garden Tree Menu",
+    content: "Select a Garden to view its Status, Systems and Instances",
+  };
+
   useEffect(() => {
     if (gardenRef.current === null || gardenRef.current === undefined) {
       GetConfig()
@@ -463,6 +474,7 @@ function GardenDashboard({
           console.error("Error fetching root garden:", error);
         });
     }
+    AddTourStep(tourStepsRef, gardenTreeTourStep);
     return () => {
       ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
       delete listeners["DASHBOARD"];
@@ -496,13 +508,7 @@ function GardenDashboard({
       <div className="col-3 surface-border p-3">
         <h3>Select Garden</h3>
         <Tree
-          {...GenerateTourProps(tourStepsRef, {
-            prefix: tourPrefix,
-            uuid: tourUuid,
-            label: "Garden Tree Menu",
-            content:
-              "Select a Garden to view its Status, Systems and Instances",
-          })}
+          {...GenerateTourProps(gardenTreeTourStep)}
           value={gardenMenu}
           nodeTemplate={gardenTreeNode}
           selectionMode="single"

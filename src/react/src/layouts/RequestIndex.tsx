@@ -7,6 +7,7 @@ import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { MultiSelect } from "primereact/multiselect";
 import {
+  RefObject,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -16,10 +17,22 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 
 import { Request } from "../models/brewtils-types";
+import { TourStepProps } from "../models/models";
 import { GetRequestList } from "../services/request_service";
+import {
+  AddTourStep,
+  ClearTourSteps,
+  GenerateTourProps,
+} from "../services/tour_service";
 import { GetBaseURL } from "../services/util_service";
 
-function RequestIndex({ listeners }: { listeners: Record<string, any> }) {
+function RequestIndex({
+  listeners,
+  tourStepsRef,
+}: {
+  listeners: Record<string, any>;
+  tourStepsRef: RefObject<Array<TourStepProps>>;
+}) {
   const [requests, setRequests] = useState<Array<Request>>([]);
   const altRequests = useRef<Array<Request>>([]);
   const [loading, setLoading] = useState(false);
@@ -47,6 +60,39 @@ function RequestIndex({ listeners }: { listeners: Record<string, any> }) {
   const setDisplayRequests = (requests: Array<Request>) => {
     setRequests(requests);
     altRequests.current = requests;
+  };
+
+  const tourPrefix = "request-index";
+  const tourUUID = "main-table";
+
+  const RefreshTableTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUUID,
+    label: "Refresh Table",
+    content:
+      "Clicking this button will refresh the table with the latest data.",
+  };
+
+  const AutoRefreshTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUUID,
+    label: "Auto Refresh",
+    content:
+      "Toggling this option will automatically refresh the table when new updates are available.",
+  };
+
+  const OpenRequestTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUUID,
+    label: `Open Request`,
+    content: `View details about this request on View Request Page`,
+  };
+
+  const OpenRequestWorkspaceTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUUID,
+    label: `Push to Workspace`,
+    content: `Open this request in the Workspace to interact with it.`,
   };
 
   const lazyLoadData = useCallback(() => {
@@ -236,6 +282,7 @@ function RequestIndex({ listeners }: { listeners: Record<string, any> }) {
           onChange={handleChange}
           checked={autoRefresh}
           className="mr-2"
+          {...GenerateTourProps(AutoRefreshTourStep)}
         />
         Auto Refresh
       </div>
@@ -244,6 +291,7 @@ function RequestIndex({ listeners }: { listeners: Record<string, any> }) {
         raised
         onClick={lazyLoadData}
         tooltip={recordsUpdated ? "New updates available" : "Refresh"}
+        {...GenerateTourProps(RefreshTableTourStep)}
       >
         {recordsUpdated && <FontAwesomeIcon icon={"circle-exclamation"} />}
         <FontAwesomeIcon icon="refresh" />
@@ -267,6 +315,7 @@ function RequestIndex({ listeners }: { listeners: Record<string, any> }) {
             link
             tooltip={"Open Request " + request.command_display_name}
             className="mr-2"
+            {...GenerateTourProps(OpenRequestTourStep)}
           >
             <FontAwesomeIcon
               icon="arrow-up-right-from-square"
@@ -280,6 +329,7 @@ function RequestIndex({ listeners }: { listeners: Record<string, any> }) {
           link
           onClick={() => PushToWorkspace(request)}
           tooltip={"Push to Workspace " + request.command_display_name}
+          {...GenerateTourProps(OpenRequestWorkspaceTourStep)}
         >
           <FontAwesomeIcon icon="arrow-right-from-bracket" />{" "}
         </Button>
@@ -353,6 +403,20 @@ function RequestIndex({ listeners }: { listeners: Record<string, any> }) {
       };
     }
   }, [listeners]);
+
+  useEffect(() => {
+    ClearTourSteps(tourStepsRef, tourPrefix, tourUUID);
+    AddTourStep(tourStepsRef, AutoRefreshTourStep);
+    AddTourStep(tourStepsRef, RefreshTableTourStep);
+    if (requests && requests.length > 0) {
+      AddTourStep(tourStepsRef, OpenRequestTourStep);
+      AddTourStep(tourStepsRef, OpenRequestWorkspaceTourStep);
+    }
+
+    return () => {
+      ClearTourSteps(tourStepsRef, tourPrefix, tourUUID);
+    };
+  }, [requests]);
 
   return (
     <div>

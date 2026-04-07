@@ -16,7 +16,11 @@ import { Instance, System } from "../models/brewtils-types";
 import { TourStepProps } from "../models/models";
 import { StartInstance, StopInstance } from "../services/instance_service";
 import { DeleteSystem, ReloadSystem } from "../services/system_service";
-import { ClearTourSteps, GenerateTourProps } from "../services/tour_service";
+import {
+  AddTourStep,
+  ClearTourSteps,
+  GenerateTourProps,
+} from "../services/tour_service";
 
 interface SystemCardProps {
   system: System;
@@ -34,9 +38,80 @@ function SystemCard({
   const tourUuid = system.id;
   const tourPrefix = "system_summary";
 
+  const startInstancesTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Start All Instances",
+    content: "Start all instances for the selected system",
+  };
+
+  const stopInstancesTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Stop All Instances",
+    content: "Stop all instances for the selected system",
+  };
+
+  const restartSystemTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Restart System",
+    content: "Restart the selected system",
+  };
+
+  const deleteSystemTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Delete System",
+    content: "Delete the selected system",
+  };
+
+  const startInstanceTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: `Instance Start`,
+    content: `Start individual instance`,
+  };
+  const stopInstanceTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: `Instance Stop`,
+    content: `Stop individual instance`,
+  };
+
+  const statusInstanceTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: `Instance Status`,
+    content: `Status of individual instance`,
+  };
+
+  const nameInstanceTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: `Instance Name`,
+    content: `Name of individual instance`,
+  };
+
   useEffect(() => {
+    AddTourStep(tourStepsRef, startInstancesTourStep);
+    AddTourStep(tourStepsRef, stopInstancesTourStep);
+    AddTourStep(tourStepsRef, restartSystemTourStep);
+    AddTourStep(tourStepsRef, deleteSystemTourStep);
+
+    if (system?.instances && system.instances.length > 0) {
+      AddTourStep(tourStepsRef, statusInstanceTourStep);
+      AddTourStep(tourStepsRef, nameInstanceTourStep);
+      AddTourStep(tourStepsRef, startInstanceTourStep);
+      AddTourStep(tourStepsRef, stopInstanceTourStep);
+    }
     return () => {
       ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+      if (system?.instances) {
+        system.instances.forEach((instance) => {
+          ClearTourSteps(tourStepsRef, tourPrefix, instance.id);
+        });
+      }
     };
   }, []);
 
@@ -210,9 +285,25 @@ function SystemCard({
   function statusTemplate(instance: Instance) {
     const statusSeverity = getSeverity(instance.status);
 
-    return <Tag value={instance.status} severity={statusSeverity} />;
+    return (
+      <Tag
+        value={instance.status}
+        severity={statusSeverity}
+        {...GenerateTourProps(statusInstanceTourStep)}
+      />
+    );
   }
 
+  function instanceNameTemplate(instance: Instance) {
+    return (
+      <div
+        style={{ overflowWrap: "break-word", width: "100%" }}
+        {...GenerateTourProps(nameInstanceTourStep)}
+      >
+        {instance.name}
+      </div>
+    );
+  }
   const instanceActions = (instance: Instance) => {
     const instanceConfigMenu = useRef<Menu>(null);
 
@@ -244,6 +335,7 @@ function SystemCard({
           severity="success"
           size="small"
           onClick={() => handleStartInstance(instance, system)}
+          {...GenerateTourProps(startInstanceTourStep)}
         >
           <FontAwesomeIcon icon="play" />
         </Button>
@@ -251,6 +343,7 @@ function SystemCard({
           severity="warning"
           size="small"
           onClick={() => handleStopInstance(instance, system)}
+          {...GenerateTourProps(stopInstanceTourStep)}
         >
           <FontAwesomeIcon icon="stop" />
         </Button>
@@ -325,12 +418,7 @@ function SystemCard({
               size="small"
               title="Start"
               onClick={() => startSystem(system)}
-              {...GenerateTourProps(tourStepsRef, {
-                prefix: tourPrefix,
-                uuid: tourUuid,
-                label: "Start All Instances",
-                content: "Start all instances for the selected system",
-              })}
+              {...GenerateTourProps(startInstancesTourStep)}
             >
               <FontAwesomeIcon icon="play" />
             </Button>
@@ -339,12 +427,7 @@ function SystemCard({
               size="small"
               title="Stop"
               onClick={() => stopSystem(system)}
-              {...GenerateTourProps(tourStepsRef, {
-                prefix: tourPrefix,
-                uuid: tourUuid,
-                label: "Stop All Instances",
-                content: "Stop all instances for the selected system",
-              })}
+              {...GenerateTourProps(stopInstancesTourStep)}
             >
               <FontAwesomeIcon icon="stop" />
             </Button>
@@ -354,12 +437,7 @@ function SystemCard({
               title="Refresh"
               onClick={() => reloadSystem(system)}
               className="mr-2"
-              {...GenerateTourProps(tourStepsRef, {
-                prefix: tourPrefix,
-                uuid: tourUuid,
-                label: "Restart System",
-                content: "Restart the selected system",
-              })}
+              {...GenerateTourProps(restartSystemTourStep)}
             >
               <FontAwesomeIcon icon="refresh" />
             </Button>
@@ -368,12 +446,7 @@ function SystemCard({
               size="small"
               title="Delete"
               onClick={() => deleteSystem(system)}
-              {...GenerateTourProps(tourStepsRef, {
-                prefix: tourPrefix,
-                uuid: tourUuid,
-                label: "Delete System",
-                content: "Delete the selected system",
-              })}
+              {...GenerateTourProps(deleteSystemTourStep)}
             >
               <FontAwesomeIcon icon="trash" />
             </Button>
@@ -400,6 +473,7 @@ function SystemCard({
           <Column
             field="name"
             header="Instance"
+            body={instanceNameTemplate}
             headerStyle={{ display: "none" }}
           />
           <Column

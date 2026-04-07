@@ -5,13 +5,7 @@ import "./App.css";
 
 import { PrimeReactProvider } from "primereact/api";
 import { useEffect, useRef, useState } from "react";
-import {
-  ACTIONS,
-  type EventData,
-  Joyride,
-  ORIGIN,
-  STATUS,
-} from "react-joyride";
+import { ACTIONS, type EventData, Joyride, STATUS } from "react-joyride";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import AboutIndex from "./layouts/AboutIndex";
@@ -106,11 +100,13 @@ function App() {
       : import.meta.env.VITE_BASE_URL || undefined;
 
   const handleJoyrideEvent = (data: EventData) => {
-    const { action, origin, status } = data;
+    const { action, status } = data;
 
-    if (action === ACTIONS.CLOSE && origin === ORIGIN.KEYBOARD) {
+    if (action === ACTIONS.CLOSE) {
+      runTourRef.current = false;
       setRunTour(false);
     } else if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
+      runTourRef.current = false;
       setRunTour(false);
     }
   };
@@ -153,7 +149,12 @@ function App() {
                 />
                 <Route
                   path="/requests"
-                  element={<RequestIndex listeners={listeners} />}
+                  element={
+                    <RequestIndex
+                      listeners={listeners}
+                      tourStepsRef={tourStepsRef}
+                    />
+                  }
                 />
                 <Route
                   path="/create/:defaultType/:paramNamespace?/:paramSystem?/:paramVersion?/:paramInstance?/:paramCommand?"

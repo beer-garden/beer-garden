@@ -11,13 +11,25 @@ export const ConvertToTourStepProps = (steps: Array<TourStepProps>): any => {
   });
 };
 
-export const GenerateTourProps = (
+export const GenerateTourProps = (tourStep: Partial<TourStepProps>) => {
+  if (!tourStep.prefix || !tourStep.uuid || !tourStep.label) {
+    throw new Error(
+      "TourStepProps must have prefix, uuid, and label to generate tour props",
+    );
+  }
+  return {
+    "data-step": `${tourStep.prefix}-${tourStep.uuid}-${tourStep.label}`,
+  };
+};
+
+export const AddTourStep = (
   tourStepsRef: RefObject<Array<TourStepProps>>,
   tourStep: TourStepProps,
 ) => {
   if (tourStep.uuid === undefined || tourStepsRef.current === undefined) {
-    return {};
+    return;
   }
+
   // either don't know about the prefix/label combo or
   // we already know about the combo with the UUID (indicating a re-write of the UI)
   if (
@@ -44,12 +56,23 @@ export const GenerateTourProps = (
     ) {
       tourStepsRef.current.push(tourStep);
     }
-    return {
-      "data-step": `${tourStep.prefix}-${tourStep.uuid}-${tourStep.label}`,
-    };
   }
+};
 
-  return {};
+export const RemoveTourStep = (
+  tourStepsRef: RefObject<Array<TourStepProps>>,
+  tourStep: TourStepProps,
+) => {
+  if (tourStep.uuid && tourStepsRef.current) {
+    tourStepsRef.current = tourStepsRef.current.filter(
+      (step) =>
+        !(
+          step.prefix === tourStep.prefix &&
+          step.label === tourStep.label &&
+          step.uuid === tourStep.uuid
+        ),
+    );
+  }
 };
 
 export const ClearTourSteps = (
