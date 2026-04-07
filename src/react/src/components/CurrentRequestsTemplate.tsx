@@ -143,6 +143,7 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
               console.error("Error deleting request:", error);
             });
           }}
+          tooltip={`Delete Request for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
         >
           <FontAwesomeIcon icon="xmark" />
         </Button>
