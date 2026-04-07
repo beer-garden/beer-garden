@@ -44,7 +44,7 @@ function NavigationMenu({
       label: "Scheduler",
       template: (item: any) => {
         return (
-          <NavLink to="/scheduler" className="p-menuitem-link">
+          <NavLink to="/jobs" className="p-menuitem-link">
             <span>{item.label}</span>
           </NavLink>
         );
