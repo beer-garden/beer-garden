@@ -253,8 +253,9 @@ function RequestViewCard({
           onClick={() => {
             removeItem(requestItem.itemId);
           }}
+          tooltip={`Close Request View for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
         >
-          <FontAwesomeIcon icon="x" />
+          <FontAwesomeIcon icon="xmark" />
         </Button>
       }
     >
