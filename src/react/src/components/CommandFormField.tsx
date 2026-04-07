@@ -123,7 +123,14 @@ function CommandFormField({
             id={parameter.key}
             value={parameter.value}
             options={parameter.options}
-            invalid={(!disabled && !parameter.optional) || undefined}
+            invalid={
+              (!disabled &&
+                !parameter.optional &&
+                (parameter.value === undefined ||
+                  parameter.value === null ||
+                  parameter.value === "")) ||
+              undefined
+            }
             onChange={(e) => handleChange(e.target.id, e.value)}
             placeholder={`Select ${parameter.key}`}
             disabled={
@@ -153,7 +160,14 @@ function CommandFormField({
           id={parameter.key}
           value={parameter.value}
           options={parameter.options}
-          invalid={(!disabled && !parameter.optional) || undefined}
+          invalid={
+            (!disabled &&
+              !parameter.optional &&
+              (parameter.value === undefined ||
+                parameter.value === null ||
+                parameter.value === "")) ||
+            undefined
+          }
           onChange={(e) => handleChange(e.target.id, e.value)}
           placeholder={`Select ${parameter.key}`}
           disabled={
@@ -192,7 +206,14 @@ function CommandFormField({
           value={parameter.value}
           suggestions={items}
           completeMethod={searchItems}
-          invalid={(!disabled && !parameter.optional) || undefined}
+          invalid={
+            (!disabled &&
+              !parameter.optional &&
+              (parameter.value === undefined ||
+                parameter.value === null ||
+                parameter.value === "")) ||
+            undefined
+          }
           onChange={(e) => handleChange(e.target.id, e.target.value)}
           disabled={disabled}
           multiple={parameter.multi}
@@ -224,7 +245,12 @@ function CommandFormField({
                   <InputText
                     id={`${parameter.key}-${index}`}
                     value={item ?? ""}
-                    invalid={(!disabled && !parameter.optional) || undefined}
+                    invalid={
+                      (!disabled &&
+                        !parameter.optional &&
+                        (item === undefined || item === null || item === "")) ||
+                      undefined
+                    }
                     onChange={(e) =>
                       handleMultiChange(parameter.key, e.target.value, index)
                     }
@@ -252,7 +278,14 @@ function CommandFormField({
           <InputText
             id={parameter.key}
             value={parameter.value}
-            invalid={(!disabled && !parameter.optional) || undefined}
+            invalid={
+              (!disabled &&
+                !parameter.optional &&
+                (parameter.value === undefined ||
+                  parameter.value === null ||
+                  parameter.value === "")) ||
+              undefined
+            }
             onChange={(e) => handleChange(e.target.id, e.target.value)}
             disabled={disabled}
           />
@@ -269,7 +302,12 @@ function CommandFormField({
                   <InputTextarea
                     id={`${parameter.key}-${index}`}
                     value={item ?? ""}
-                    invalid={(!disabled && !parameter.optional) || undefined}
+                    invalid={
+                      (!disabled &&
+                        !parameter.optional &&
+                        (item === undefined || item === null || item === "")) ||
+                      undefined
+                    }
                     onChange={(e) =>
                       handleMultiChange(parameter.key, e.target.value, index)
                     }
@@ -297,7 +335,14 @@ function CommandFormField({
           <InputTextarea
             id={parameter.key}
             value={parameter.value}
-            invalid={(!disabled && !parameter.optional) || undefined}
+            invalid={
+              (!disabled &&
+                !parameter.optional &&
+                (parameter.value === undefined ||
+                  parameter.value === null ||
+                  parameter.value === "")) ||
+              undefined
+            }
             onChange={(e) => handleChange(e.target.id, e.target.value)}
             disabled={disabled}
             className={classNames({ "p-invalid": parameter.isInvalid })}
@@ -315,7 +360,12 @@ function CommandFormField({
                   <InputNumber
                     id={`${parameter.key}-${index}`}
                     value={item ?? parameter.default}
-                    invalid={(!disabled && !parameter.optional) || undefined}
+                    invalid={
+                      (!disabled &&
+                        !parameter.optional &&
+                        (item === undefined || item === null || item === "")) ||
+                      undefined
+                    }
                     max={
                       parameter.maximum !== undefined
                         ? parameter.maximum
@@ -353,7 +403,14 @@ function CommandFormField({
           <InputNumber
             id={parameter.key}
             value={parameter.value}
-            invalid={(!disabled && !parameter.optional) || undefined}
+            invalid={
+              (!disabled &&
+                !parameter.optional &&
+                (parameter.value === undefined ||
+                  parameter.value === null ||
+                  parameter.value === "")) ||
+              undefined
+            }
             max={
               parameter.maximum !== undefined ? parameter.maximum : undefined
             }
@@ -376,7 +433,12 @@ function CommandFormField({
                   <InputNumber
                     id={`${parameter.key}-${index}`}
                     value={item ?? parameter.default}
-                    invalid={(!disabled && !parameter.optional) || undefined}
+                    invalid={
+                      (!disabled &&
+                        !parameter.optional &&
+                        (item === undefined || item === null || item === "")) ||
+                      undefined
+                    }
                     max={
                       parameter.maximum !== undefined
                         ? parameter.maximum
@@ -415,7 +477,14 @@ function CommandFormField({
           <InputNumber
             id={parameter.key}
             value={parameter.value}
-            invalid={(!disabled && !parameter.optional) || undefined}
+            invalid={
+              (!disabled &&
+                !parameter.optional &&
+                (parameter.value === undefined ||
+                  parameter.value === null ||
+                  parameter.value === "")) ||
+              undefined
+            }
             max={
               parameter.maximum !== undefined ? parameter.maximum : undefined
             }
@@ -442,7 +511,14 @@ function CommandFormField({
                   >
                     <TriStateCheckbox
                       id={`${parameter.key}-${index}`}
-                      invalid={(!disabled && !parameter.optional) || undefined}
+                      invalid={
+                        (!disabled &&
+                          !parameter.optional &&
+                          (item === undefined ||
+                            item === null ||
+                            item === "")) ||
+                        undefined
+                      }
                       value={item}
                       onChange={(e) =>
                         handleMultiChange(parameter.key, e.value, index)
@@ -474,7 +550,12 @@ function CommandFormField({
                 <div key={`${parameter.key}-${index}`} className="dynamic-item">
                   <Checkbox
                     id={`${parameter.key}-${index}`}
-                    invalid={(!disabled && !parameter.optional) || undefined}
+                    invalid={
+                      (!disabled &&
+                        !parameter.optional &&
+                        (item === undefined || item === null || item === "")) ||
+                      undefined
+                    }
                     checked={item}
                     onChange={(e) =>
                       handleMultiChange(parameter.key, e.checked, index)
@@ -504,7 +585,14 @@ function CommandFormField({
           <div key={parameter.key} className="p-field-checkbox">
             <TriStateCheckbox
               id={parameter.key}
-              invalid={(!disabled && !parameter.optional) || undefined}
+              invalid={
+                (!disabled &&
+                  !parameter.optional &&
+                  (parameter.value === undefined ||
+                    parameter.value === null ||
+                    parameter.value === "")) ||
+                undefined
+              }
               value={parameter.value}
               onChange={(e) => handleChange(e.target.id, e.value)}
               disabled={disabled}
@@ -516,7 +604,14 @@ function CommandFormField({
         <div key={parameter.key} className="p-field-checkbox">
           <Checkbox
             id={parameter.key}
-            invalid={(!disabled && !parameter.optional) || undefined}
+            invalid={
+              (!disabled &&
+                !parameter.optional &&
+                (parameter.value === undefined ||
+                  parameter.value === null ||
+                  parameter.value === "")) ||
+              undefined
+            }
             checked={parameter.value}
             onChange={(e) => handleChange(e.target.id, e.checked)}
             disabled={disabled}
@@ -534,7 +629,12 @@ function CommandFormField({
                   <Calendar
                     id={`${parameter.key}-${index}`}
                     value={item}
-                    invalid={(!disabled && !parameter.optional) || undefined}
+                    invalid={
+                      (!disabled &&
+                        !parameter.optional &&
+                        (item === undefined || item === null || item === "")) ||
+                      undefined
+                    }
                     hourFormat="24"
                     onChange={(e) =>
                       handleMultiChange(parameter.key, e.value, index)
@@ -563,7 +663,14 @@ function CommandFormField({
           <Calendar
             id={parameter.key}
             value={parameter.value || ""}
-            invalid={(!disabled && !parameter.optional) || undefined}
+            invalid={
+              (!disabled &&
+                !parameter.optional &&
+                (parameter.value === undefined ||
+                  parameter.value === null ||
+                  parameter.value === "")) ||
+              undefined
+            }
             hourFormat="24"
             onChange={(e: any) => handleChange(e.target.id, e.value)}
             disabled={disabled}
@@ -581,7 +688,12 @@ function CommandFormField({
                   <Calendar
                     id={`${parameter.key}-${index}`}
                     value={item ?? parameter.default}
-                    invalid={(!disabled && !parameter.optional) || undefined}
+                    invalid={
+                      (!disabled &&
+                        !parameter.optional &&
+                        (item === undefined || item === null || item === "")) ||
+                      undefined
+                    }
                     showTime
                     hourFormat="24"
                     onChange={(e) =>
@@ -613,7 +725,14 @@ function CommandFormField({
             value={parameter.value}
             showTime
             hourFormat="24"
-            invalid={(!disabled && !parameter.optional) || undefined}
+            invalid={
+              (!disabled &&
+                !parameter.optional &&
+                (parameter.value === undefined ||
+                  parameter.value === null ||
+                  parameter.value === "")) ||
+              undefined
+            }
             onChange={(e: any) => handleChange(e.target.id, e.value)}
             disabled={disabled}
           />
