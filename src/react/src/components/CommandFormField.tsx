@@ -255,16 +255,7 @@ function CommandFormField({
             invalid={(!disabled && !parameter.optional) || undefined}
             onChange={(e) => handleChange(e.target.id, e.target.value)}
             disabled={disabled}
-            aria-describedby={`${parameter.key}-help`}
           />
-          {parameter.optional === true && (
-            <small
-              id={`${parameter.key}-help`}
-              className="p-d-block p-mt-2 ml-1"
-            >
-              optional
-            </small>
-          )}
         </div>
       );
     }
