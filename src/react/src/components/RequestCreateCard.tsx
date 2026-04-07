@@ -222,8 +222,9 @@ function RequestCreateCard({
             onClick={() => {
               removeItem(requestItem.itemId);
             }}
+            tooltip={`Close Request Creation for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
           >
-            <FontAwesomeIcon icon="minus" />
+            <FontAwesomeIcon icon="xmark" />
           </Button>
           <div className="ml-4 mr-2 align-self-center">Scheduled</div>
           <InputSwitch

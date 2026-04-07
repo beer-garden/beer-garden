@@ -238,9 +238,9 @@ function SchedulerViewCard({
             removeItem(jobId);
           }}
           className="mr-2 ml-2 mt-2"
-          title={"Close Job " + job?.name}
+          tooltip={"Close Job " + job?.name}
         >
-          <FontAwesomeIcon icon="minus" />
+          <FontAwesomeIcon icon="xmark" />
         </Button>
       }
       title={
