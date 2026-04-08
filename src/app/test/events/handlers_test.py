@@ -8,6 +8,7 @@ from brewtils.models import Events, Request
 from beer_garden import config
 from beer_garden.events.handlers import add_internal_events_handler
 from beer_garden.events.processors import FanoutProcessor
+import beer_garden
 
 
 class TestHandlers:
@@ -108,6 +109,7 @@ class TestHandlers:
         bg_event.name = Events.REQUEST_COMPLETED.name
         bg_event.payload = bg_request
         bg_event.payload_type = "Request"
+        beer_garden.requests.request_map = {bg_request.id: bg_request}
         for success_status in Request.COMPLETED_STATUSES:
             bg_event.garden = "localgarden"
             bg_request.status = success_status
@@ -126,6 +128,7 @@ class TestHandlers:
 
         bg_event.garden = "localgarden"
         bg_request.status = "CANCELED"
+        beer_garden.requests.request_map = {bg_request.id: bg_request}
 
         self.run_event_handler_test(
             bg_event, ["Requests wait events", "Requests"], monkeypatch
