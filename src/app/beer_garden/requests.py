@@ -946,6 +946,7 @@ def complete_request(
 
     # Metrics
     request_completed(request)
+    fulfill_wait_event(request)
 
     return request
 
@@ -991,6 +992,7 @@ def cancel_request(request_id: str = None, request: Request = None) -> Request:
 
     request.status = "CANCELED"
     request = db.update(request)
+    fulfill_wait_event(request)
 
     # TODO - Metrics here?
 
@@ -1007,7 +1009,10 @@ def invalid_request(request: Request = None):
 def update_request(request: Request):
     if request.id:
         try:
-            return db.update(request)
+            request = db.update(request)
+            if request.status in Request.COMPLETED_STATUSES:
+                fulfill_wait_event(request)
+            return request
         except DoesNotExist:
             logger.warning(
                 f"Failed to update request {request.id}. Creating new request instead."
@@ -1065,28 +1070,34 @@ def handle_wait_event_filter(event):
         event.name.startswith("REQUEST_")
         and event.garden == config.get("garden.name")
         and event.payload.status in Request.COMPLETED_STATUSES
+        and event.payload.id in request_map
     ):
         return False
     return True
 
 
+def fulfill_wait_event(request, runDelay=False):
+    completion_event = request_map.pop(request.id, None)
+    if completion_event:
+        # Async events return the result object
+        if type(completion_event) is Future:
+            if not completion_event.done():
+                completion_event.set_result(request)
+        else:
+            if runDelay:
+                time.sleep(0.1)
+            # Threading events must retrieve the results in a seperate call
+            completion_event.set()
+
+
 def handle_wait_events(event):
     # Whenever a request is completed check to see if this process is waiting for it
-    if not event.error and event.name in [
-        Events.REQUEST_COMPLETED.name,
-        Events.REQUEST_CANCELED.name,
-    ]:
-        completion_event = request_map.pop(event.payload.id, None)
-        if completion_event:
-            # Async events return the result object
-            if type(completion_event) is Future:
-                if not completion_event.done():
-                    completion_event.set_result(event.payload)
-            # Threading events must retrieve the results in a seperate call
-            else:
-                if event.garden != config.get("garden.name"):
-                    time.sleep(0.1)
-                completion_event.set()
+    if (
+        not event.error
+        and event.name.startswith("REQUEST_")
+        and event.payload.status in Request.COMPLETED_STATUSES
+    ):
+        fulfill_wait_event(event.payload, event.garden != config.get("garden.name"))
 
     # Only care about local garden
     if event.garden == config.get("garden.name"):
@@ -1096,7 +1107,7 @@ def handle_wait_events(event):
             # returned the current status of the Request.
             for request_event in request_map:
                 if type(request_map[request_event]) is Future:
-                    completion_event.set_exception(
+                    request_map[request_event].set_exception(
                         ShutdownError("Shutting down, cancelling all request waits")
                     )
                 else:
