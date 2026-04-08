@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 
 import SchedulerViewCard from "../components/SchedulerViewCard";
 import { Job } from "../models/brewtils-types";
+import { TourStepProps } from "../models/models";
 import {
   DeleteJob,
   GetJobList,
@@ -15,13 +16,12 @@ import {
   ResumeJob,
   RunAdhocJob,
 } from "../services/job_service";
-import { GetBaseURL } from "../services/util_service";
 import {
   AddTourStep,
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
-import { TourStepProps } from "../models/models";
+import { GetBaseURL } from "../services/util_service";
 
 function JobIndex({
   listeners,
