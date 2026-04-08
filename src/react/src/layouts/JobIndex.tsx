@@ -3,7 +3,7 @@ import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
-import { useEffect, useState } from "react";
+import { RefObject, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import SchedulerViewCard from "../components/SchedulerViewCard";
@@ -16,11 +16,101 @@ import {
   RunAdhocJob,
 } from "../services/job_service";
 import { GetBaseURL } from "../services/util_service";
+import {
+  AddTourStep,
+  ClearTourSteps,
+  GenerateTourProps,
+} from "../services/tour_service";
+import { TourStepProps } from "../models/models";
 
-function JobIndex({ listeners }: { listeners: Record<string, any> }) {
+function JobIndex({
+  listeners,
+  tourStepsRef,
+}: {
+  listeners: Record<string, any>;
+  tourStepsRef: RefObject<Array<TourStepProps>>;
+}) {
   const [jobs, setJobs] = useState<Array<Job>>([]);
   const [selectedJob, setSelectedJob] = useState<Job | undefined>(undefined);
   const navigate = useNavigate();
+  const tourUuid = "job_index_tour";
+  const tourPrefix = "job_index";
+
+  const createJobTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Create Job",
+    content: "Create a new scheduled job to run requests on a schedule.",
+  };
+
+  const importJobTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Import Jobs",
+    content: "Import jobs from a file.",
+  };
+
+  const exportJobTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Export Jobs",
+    content: "Export jobs to a file.",
+  };
+
+  const runNowTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Run Now",
+    content: "Run the job immediately.",
+  };
+
+  const viewJobTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "View Job",
+    content: "View details about the job and see past runs.",
+  };
+
+  const editJobTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Edit Job",
+    content: "Edit the job's schedule and request template.",
+  };
+
+  const pauseResumeJobTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Pause/Resume Job",
+    content:
+      "Pause a running job or resume a paused job to control when it runs.",
+  };
+
+  const deleteJobTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Delete Job",
+    content: "Delete a job that is no longer needed.",
+  };
+
+  useEffect(() => {
+    ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+    AddTourStep(tourStepsRef, createJobTourStep);
+    AddTourStep(tourStepsRef, importJobTourStep);
+    AddTourStep(tourStepsRef, exportJobTourStep);
+
+    if (jobs.length > 0) {
+      AddTourStep(tourStepsRef, runNowTourStep);
+      AddTourStep(tourStepsRef, viewJobTourStep);
+      AddTourStep(tourStepsRef, editJobTourStep);
+      AddTourStep(tourStepsRef, pauseResumeJobTourStep);
+      AddTourStep(tourStepsRef, deleteJobTourStep);
+    }
+
+    return () => {
+      ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+    };
+  }, [jobs]);
 
   useEffect(() => {
     const MonitorJobs = (message: any) => {
@@ -93,6 +183,7 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
           }}
           title={"Run Now " + job.name}
           className="mr-2"
+          {...GenerateTourProps(runNowTourStep)}
         >
           <FontAwesomeIcon icon="forward" />
         </Button>
@@ -103,6 +194,7 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
           onClick={() => setSelectedJob(job)}
           title={"View Job " + job.name}
           className="mr-2"
+          {...GenerateTourProps(viewJobTourStep)}
         >
           <FontAwesomeIcon icon="arrow-up-right-from-square" />
         </Button>
@@ -117,6 +209,7 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
           }}
           title={"Update Job " + job.name}
           className="mr-2"
+          {...GenerateTourProps(editJobTourStep)}
         >
           <FontAwesomeIcon icon="edit" />
         </Button>
@@ -140,6 +233,7 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
             }}
             title={"Pause Job " + job.name}
             className="mr-2"
+            {...GenerateTourProps(pauseResumeJobTourStep)}
           >
             <FontAwesomeIcon icon="pause" />
           </Button>
@@ -164,6 +258,7 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
             }}
             title={"Resume Job " + job.name}
             className="mr-2"
+            {...GenerateTourProps(pauseResumeJobTourStep)}
           >
             <FontAwesomeIcon icon="play" />
           </Button>
@@ -183,6 +278,7 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
           }}
           title={"Delete Job " + job.name}
           className="mr-2"
+          {...GenerateTourProps(deleteJobTourStep)}
         >
           <FontAwesomeIcon icon="trash" />
         </Button>
@@ -198,13 +294,31 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
     <div className="flex flex-wrap align-items-center justify-content-between gap-2">
       <span className="text-xl text-900 font-bold">Requests Scheduler</span>
       <div>
-        <Button rounded raised onClick={createJob}>
+        <Button
+          rounded
+          raised
+          onClick={createJob}
+          className="mr-2"
+          {...GenerateTourProps(createJobTourStep)}
+        >
           Create Job
         </Button>
-        <Button rounded raised onClick={createJob}>
+        <Button
+          rounded
+          raised
+          onClick={createJob}
+          className="mr-2"
+          {...GenerateTourProps(importJobTourStep)}
+        >
           Import Jobs
         </Button>
-        <Button rounded raised onClick={createJob}>
+        <Button
+          rounded
+          raised
+          onClick={createJob}
+          className="mr-2"
+          {...GenerateTourProps(exportJobTourStep)}
+        >
           Export Jobs
         </Button>
       </div>

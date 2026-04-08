@@ -181,7 +181,12 @@ function App() {
                 />
                 <Route
                   path="/jobs"
-                  element={<JobIndex listeners={listeners} />}
+                  element={
+                    <JobIndex
+                      listeners={listeners}
+                      tourStepsRef={tourStepsRef}
+                    />
+                  }
                 />
                 <Route
                   path="/job/:jobId"
