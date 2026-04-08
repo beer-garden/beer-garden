@@ -4,7 +4,7 @@
 TBD
 
 - Fixed Request Wait Events to support returning back results if within the same thread without waiting for
-  eventing to process the data (#)
+  eventing to process the data (#2108)
 
 # 3.32.0
 3/4/2026
