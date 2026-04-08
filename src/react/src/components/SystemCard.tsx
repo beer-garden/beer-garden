@@ -94,6 +94,8 @@ function SystemCard({
   };
 
   useEffect(() => {
+    ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+
     AddTourStep(tourStepsRef, startInstancesTourStep);
     AddTourStep(tourStepsRef, stopInstancesTourStep);
     AddTourStep(tourStepsRef, restartSystemTourStep);
@@ -107,13 +109,8 @@ function SystemCard({
     }
     return () => {
       ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
-      if (system?.instances) {
-        system.instances.forEach((instance) => {
-          ClearTourSteps(tourStepsRef, tourPrefix, instance.id);
-        });
-      }
     };
-  }, []);
+  }, [system]);
 
   const getSeverity = (
     status?: string,
