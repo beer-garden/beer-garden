@@ -1,9 +1,8 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
-import { MegaMenu } from "primereact/megamenu";
-import { Ripple } from "primereact/ripple";
+import { Menubar } from "primereact/menubar";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 import CurrentRequestsTemplate from "./components/CurrentRequestsTemplate";
 import UserLogin from "./components/UserLogin";
@@ -30,69 +29,82 @@ function NavigationMenu({
     config?.auth_enabled,
   );
 
-  const itemRenderer = (item: any) => {
-    return (
-      <Link
-        className="flex align-items-center cursor-pointer px-3 py-2 overflow-hidden relative font-semibold text-lg uppercase p-ripple hover:surface-ground"
-        style={{ borderRadius: "2rem" }}
-        to={item.route}
-      >
-        {item.icon && <FontAwesomeIcon icon={item.icon} />}
-        <span className="inline-flex flex-column gap-1">
-          <span className="ml-2">{item.label}</span>
-          {item.subtext && <span>{item.subtext}</span>}
-        </span>
-        <Ripple />
-      </Link>
-    );
-  };
-
   const items = [
     {
       label: "Requests",
-      root: true,
-      template: itemRenderer,
-      route: "/requests",
+      template: (item: any) => {
+        return (
+          <NavLink to="/requests" className="p-menuitem-link">
+            <span>{item.label}</span>
+          </NavLink>
+        );
+      },
     },
     {
       label: "Scheduler",
-      root: true,
-      template: itemRenderer,
-      route: "/jobs",
+      template: (item: any) => {
+        return (
+          <NavLink to="/jobs" className="p-menuitem-link">
+            <span>{item.label}</span>
+          </NavLink>
+        );
+      },
     },
     {
       label: "Workspace",
-      root: true,
-      template: itemRenderer,
-      route: "/workspace",
+      template: (item: any) => {
+        return (
+          <NavLink to="/workspace" className="p-menuitem-link">
+            <span>{item.label}</span>
+          </NavLink>
+        );
+      },
     },
     {
       label: "Topics",
-      root: true,
-      template: itemRenderer,
+      template: (item: any) => {
+        return (
+          <NavLink to="/topics" className="p-menuitem-link">
+            <span>{item.label}</span>
+          </NavLink>
+        );
+      },
     },
     {
       label: "Users",
-      root: true,
-      template: itemRenderer,
+      template: (item: any) => {
+        return (
+          <NavLink to="/" className="p-menuitem-link">
+            <span>{item.label}</span>
+          </NavLink>
+        );
+      },
     },
     {
       label: "Roles",
-      root: true,
-      template: itemRenderer,
-      route: "/roles",
+      template: (item: any) => {
+        return (
+          <NavLink to="/roles" className="p-menuitem-link">
+            <span>{item.label}</span>
+          </NavLink>
+        );
+      },
     },
     {
       label: "About",
-      root: true,
-      template: itemRenderer,
-      route: "/about",
+      template: (item: any) => {
+        return (
+          <NavLink to="/about" className="p-menuitem-link">
+            <span>{item.label}</span>
+          </NavLink>
+        );
+      },
     },
   ];
 
   const start = (
-    <Link
-      className="flex align-items-center cursor-pointer px-3 py-2 overflow-hidden relative font-semibold text-lg uppercase p-ripple hover:surface-ground"
+    <NavLink
+      className="p-menuitem-link text-primary cursor-pointer px-3 py-2 overflow-hidden relative font-semibold text-lg uppercase p-ripple hover:surface-ground"
       to="/"
     >
       <div className="flex">
@@ -102,7 +114,7 @@ function NavigationMenu({
 
         {applicationName && <div className="mr-2">{applicationName}</div>}
       </div>
-    </Link>
+    </NavLink>
   );
 
   const getUserName = () => {
@@ -200,17 +212,11 @@ function NavigationMenu({
   );
 
   return (
-    <div className="card">
-      <MegaMenu
-        model={items}
-        orientation="horizontal"
-        start={start}
-        end={end}
-        breakpoint="960px"
-        className="p-3 surface-0 shadow-2"
-        style={{ borderRadius: "3rem" }}
-      />
-    </div>
+    <>
+      <div className="card">
+        <Menubar model={items} start={start} end={end} />
+      </div>
+    </>
   );
 }
 
