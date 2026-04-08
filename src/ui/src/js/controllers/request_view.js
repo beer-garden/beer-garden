@@ -398,20 +398,17 @@ export default function requestViewController(
       if (event.payload.id == $stateParams.requestId) {       
         $scope.successCallback(event.payload);        
       } else if (_.get(event, 'payload.parent.id') == $stateParams.requestId) {       
-        if (event.name == 'REQUEST_CREATED') {
+        const child = _.find($scope.children, {id: event.payload.id});
+
+        if (!child) {
+          // If we missed the REQUEST_CREATED just push this one in there
           $scope.children.push(event.payload);
         } else {
-          const child = _.find($scope.children, {id: event.payload.id});
-
-          if (!child) {
-            // If we missed the REQUEST_CREATED just push this one in there
-            $scope.children.push(event.payload);
-          } else {
-            child.status = event.payload.status;
-            child.updated_at = event.payload.updated_at;
-            child.error_class = event.payload.error_class;
-          }
-        }        
+          child.status = event.payload.status;
+          child.updated_at = event.payload.updated_at;
+          child.status_updated_at = event.payload.status_updated_at;
+          child.error_class = event.payload.error_class;
+        }      
 
         if (!$scope.childrenCollapsed) {
           $scope.childrenDisplay = $scope.children;
