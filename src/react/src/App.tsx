@@ -229,7 +229,12 @@ function App() {
                   }
                 />
                 <Route path="/about" element={<AboutIndex config={config} />} />
-                <Route path="/roles" element={<RoleIndex config={config} />} />
+                <Route
+                  path="/roles"
+                  element={
+                    <RoleIndex config={config} tourStepsRef={tourStepsRef} />
+                  }
+                />
                 <Route path="/swagger" element={<Swagger />} />
                 <Route
                   path="/"

@@ -7,6 +7,7 @@ export const ConvertToTourStepProps = (steps: Array<TourStepProps>): any => {
     return {
       content: step.content,
       target: `[data-step="${step.prefix}-${step.uuid}-${step.label}"]`,
+      title: step.label,
     };
   });
 };

@@ -32,7 +32,7 @@ function GardenSummary({
 }: {
   gardenRef: RefObject<Garden | null>;
   selectedGarden: Garden;
-  tourStepsRef: RefObject<Array<TourStepProps>>;
+  tourStepsRef?: RefObject<Array<TourStepProps>>;
 }) {
   const tourUuid = selectedGarden.id;
   const tourPrefix = "garden_summary";
@@ -137,65 +137,69 @@ function GardenSummary({
     setReceivingonnections(getReceivingConnections());
     setSystemCounts(getSystemCounts());
 
-    ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
-
-    AddTourStep(tourStepsRef, rescanPluginTourStep);
-    AddTourStep(tourStepsRef, rescanDownstreamTourStep);
-    AddTourStep(tourStepsRef, clearPluginsQueuesTourStep);
-
-    if (gardenRef.current) {
-      if (gardenRef.current.name === selectedGarden?.name) {
-        AddTourStep(tourStepsRef, syncAllTourStep);
-      } else {
-        AddTourStep(tourStepsRef, syncGardenTourStep);
-        AddTourStep(tourStepsRef, syncUsersTourStep);
-        AddTourStep(tourStepsRef, deleteGardenTourStep);
-      }
-    }
-
-    if (selectedGarden?.receiving_connections) {
-      selectedGarden.receiving_connections.forEach((connection: Connection) => {
-        if (connection.status !== "NOT_CONFIGURED") {
-          AddTourStep(tourStepsRef, {
-            prefix: tourPrefix,
-            uuid: tourUuid,
-            label: `RECEIVING START ${connection.api}`,
-            content: `Start receiving connection for ${connection.api}`,
-          });
-          AddTourStep(tourStepsRef, {
-            prefix: tourPrefix,
-            uuid: tourUuid,
-            label: `RECEIVING STOP ${connection.api}`,
-            content: `Stop receiving connection for ${connection.api}`,
-          });
-        }
-      });
-    }
-
-    if (selectedGarden?.publishing_connections) {
-      selectedGarden.publishing_connections.forEach(
-        (connection: Connection) => {
-          if (connection.status !== "NOT_CONFIGURED") {
-            AddTourStep(tourStepsRef, {
-              prefix: tourPrefix,
-              uuid: tourUuid,
-              label: `PUBLISHING START ${connection.api}`,
-              content: `Start publishing connection for ${connection.api}`,
-            });
-            AddTourStep(tourStepsRef, {
-              prefix: tourPrefix,
-              uuid: tourUuid,
-              label: `PUBLISHING STOP ${connection.api}`,
-              content: `Stop publishing connection for ${connection.api}`,
-            });
-          }
-        },
-      );
-    }
-
-    return () => {
+    if (tourStepsRef !== undefined) {
       ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
-    };
+
+      AddTourStep(tourStepsRef, rescanPluginTourStep);
+      AddTourStep(tourStepsRef, rescanDownstreamTourStep);
+      AddTourStep(tourStepsRef, clearPluginsQueuesTourStep);
+
+      if (gardenRef.current) {
+        if (gardenRef.current.name === selectedGarden?.name) {
+          AddTourStep(tourStepsRef, syncAllTourStep);
+        } else {
+          AddTourStep(tourStepsRef, syncGardenTourStep);
+          AddTourStep(tourStepsRef, syncUsersTourStep);
+          AddTourStep(tourStepsRef, deleteGardenTourStep);
+        }
+      }
+
+      if (selectedGarden?.receiving_connections) {
+        selectedGarden.receiving_connections.forEach(
+          (connection: Connection) => {
+            if (connection.status !== "NOT_CONFIGURED") {
+              AddTourStep(tourStepsRef, {
+                prefix: tourPrefix,
+                uuid: tourUuid,
+                label: `RECEIVING START ${connection.api}`,
+                content: `Start receiving connection for ${connection.api}`,
+              });
+              AddTourStep(tourStepsRef, {
+                prefix: tourPrefix,
+                uuid: tourUuid,
+                label: `RECEIVING STOP ${connection.api}`,
+                content: `Stop receiving connection for ${connection.api}`,
+              });
+            }
+          },
+        );
+      }
+
+      if (selectedGarden?.publishing_connections) {
+        selectedGarden.publishing_connections.forEach(
+          (connection: Connection) => {
+            if (connection.status !== "NOT_CONFIGURED") {
+              AddTourStep(tourStepsRef, {
+                prefix: tourPrefix,
+                uuid: tourUuid,
+                label: `PUBLISHING START ${connection.api}`,
+                content: `Start publishing connection for ${connection.api}`,
+              });
+              AddTourStep(tourStepsRef, {
+                prefix: tourPrefix,
+                uuid: tourUuid,
+                label: `PUBLISHING STOP ${connection.api}`,
+                content: `Stop publishing connection for ${connection.api}`,
+              });
+            }
+          },
+        );
+      }
+
+      return () => {
+        ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+      };
+    }
   }, [selectedGarden]);
 
   const statusTemplate = (row: any) => {

@@ -1,7 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
 import { Menubar } from "primereact/menubar";
-import { RefObject,useEffect, useState } from "react";
+import { RefObject, useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 
 import CurrentRequestsTemplate from "./components/CurrentRequestsTemplate";

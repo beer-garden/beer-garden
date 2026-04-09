@@ -26,7 +26,7 @@ interface SystemCardProps {
   system: System;
   selectedGarden?: string;
   toast?: RefObject<Toast | null>;
-  tourStepsRef: RefObject<Array<TourStepProps>>;
+  tourStepsRef?: RefObject<Array<TourStepProps>>;
 }
 
 function SystemCard({
@@ -94,6 +94,9 @@ function SystemCard({
   };
 
   useEffect(() => {
+    if (tourStepsRef === undefined) {
+      return;
+    }
     ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
 
     AddTourStep(tourStepsRef, startInstancesTourStep);
