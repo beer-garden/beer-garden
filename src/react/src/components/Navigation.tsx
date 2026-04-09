@@ -4,11 +4,11 @@ import { Menubar } from "primereact/menubar";
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 
-import CurrentRequestsTemplate from "./components/CurrentRequestsTemplate";
-import UserLogin from "./components/UserLogin";
-import { Config } from "./models/models";
-import { ClearRefresh, ClearToken } from "./services/token_service";
-import { GetCurrentUser } from "./services/user_service";
+import { Config } from "../models/models";
+import { ClearRefresh, ClearToken } from "../services/token_service";
+import { GetCurrentUser } from "../services/user_service";
+import CurrentRequestsTemplate from "./CurrentRequestsTemplate";
+import UserLogin from "./UserLogin";
 
 function NavigationMenu({
   listeners,

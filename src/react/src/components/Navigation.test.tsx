@@ -2,12 +2,12 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
+import * as tokenService from "../services/token_service";
+import * as userService from "../services/user_service";
 import Navigation from "./Navigation";
-import * as tokenService from "./services/token_service";
-import * as userService from "./services/user_service";
 
-vi.mock("./services/user_service");
-vi.mock("./services/token_service");
+vi.mock("../services/user_service");
+vi.mock("../services/token_service");
 
 describe("Navigation", () => {
   beforeEach(() => {
