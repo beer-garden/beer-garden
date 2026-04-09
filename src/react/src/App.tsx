@@ -132,6 +132,7 @@ function App() {
               config={config}
               runReloadUI={runReloadUI}
               toggleRunTour={toggleRunTour}
+              tourStepsRef={tourStepsRef}
             />
             <div className="flex-grow-1">
               <Routes>
@@ -161,23 +162,52 @@ function App() {
                 />
                 <Route
                   path="/create/:defaultType/:paramNamespace?/:paramSystem?/:paramVersion?/:paramInstance?/:paramCommand?"
-                  element={<Workspace listeners={listeners} display={false} />}
+                  element={
+                    <Workspace
+                      listeners={listeners}
+                      display={false}
+                      tourStepsRef={tourStepsRef}
+                    />
+                  }
                 />
                 <Route
                   path="/recreate/:requestId"
-                  element={<Workspace listeners={listeners} display={false} />}
+                  element={
+                    <Workspace
+                      listeners={listeners}
+                      display={false}
+                      tourStepsRef={tourStepsRef}
+                    />
+                  }
                 />
                 <Route
                   path="/workspace"
-                  element={<Workspace listeners={listeners} />}
+                  element={
+                    <Workspace
+                      listeners={listeners}
+                      tourStepsRef={tourStepsRef}
+                    />
+                  }
                 />
                 <Route
                   path="/workspace/request/:requestId"
-                  element={<Workspace listeners={listeners} display={true} />}
+                  element={
+                    <Workspace
+                      listeners={listeners}
+                      display={true}
+                      tourStepsRef={tourStepsRef}
+                    />
+                  }
                 />
                 <Route
                   path="/workspace/job/:jobId"
-                  element={<Workspace listeners={listeners} display={true} />}
+                  element={
+                    <Workspace
+                      listeners={listeners}
+                      display={true}
+                      tourStepsRef={tourStepsRef}
+                    />
+                  }
                 />
                 <Route
                   path="/jobs"
@@ -190,7 +220,13 @@ function App() {
                 />
                 <Route
                   path="/job/:jobId"
-                  element={<Workspace listeners={listeners} display={false} />}
+                  element={
+                    <Workspace
+                      listeners={listeners}
+                      display={false}
+                      tourStepsRef={tourStepsRef}
+                    />
+                  }
                 />
                 <Route path="/about" element={<AboutIndex config={config} />} />
                 <Route path="/roles" element={<RoleIndex config={config} />} />
