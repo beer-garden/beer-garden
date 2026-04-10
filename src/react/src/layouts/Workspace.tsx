@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import RequestCreateCard from "../components/RequestCreateCard";
 import RequestViewCard from "../components/RequestViewCard";
+import RequestWizard from "../components/RequestWizard";
 import SchedulerViewCard from "../components/SchedulerViewCard";
 import { RequestItem } from "../models/models";
 import { DeleteJob } from "../services/job_service";
@@ -18,6 +19,8 @@ function Workspace({
   listeners: Record<string, any>;
   display?: boolean;
 }) {
+  const [useWizard] = useState<boolean>(true);
+
   const { requestId } = useParams<{ requestId: string }>();
   const { jobId } = useParams<{ jobId: string }>();
 
@@ -143,11 +146,19 @@ function Workspace({
         if (value.type === "REQUEST") {
           list.push(
             <div className="mr-2 mb-2 mt-2" style={{ minWidth: "49%" }}>
-              <RequestCreateCard
-                requestItem={value}
-                updateRequestItem={updateItem}
-                removeItem={deleteItem}
-              />
+              {useWizard ? (
+                <RequestWizard
+                  requestItem={value}
+                  updateRequestItem={updateItem}
+                  removeItem={deleteItem}
+                />
+              ) : (
+                <RequestCreateCard
+                  requestItem={value}
+                  updateRequestItem={updateItem}
+                  removeItem={deleteItem}
+                />
+              )}
             </div>,
           );
         } else if (value.type === "VIEW_REQUEST") {
