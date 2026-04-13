@@ -1,30 +1,26 @@
+import { FilterMatchMode } from "primereact/api";
 import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Dropdown } from "primereact/dropdown";
-import { Stepper } from "primereact/stepper";
-import { RefObject, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Command, Instance, System } from "../models/brewtils-types";
 
 function CommandList({
-  stepperRef,
   selectedSystem,
-  setSelectedCommand,
+  commandListButtonClick,
   instances,
   selectedInstance,
   setSelectedInstance,
 }: {
-  stepperRef: RefObject<Stepper | null>;
   selectedSystem?: System;
-  setSelectedCommand: any;
+  commandListButtonClick: any;
   instances: Array<Record<string, any>>;
   selectedInstance: Instance;
   setSelectedInstance: any;
 }) {
   const [commands, setCommands] = useState<Command[]>([]);
-  // const [instances, setInstances] = useState<Array<Instance>>();
-  // const instanceList: Array<any> = [];
   const commandList: Array<Command> = [];
   const buttonsDisabled = useRef<any>(
     selectedInstance &&
@@ -34,6 +30,13 @@ function CommandList({
       ? false
       : true,
   );
+  const [filters, setFilters] = useState({
+    name: {
+      value: null,
+      matchMode: FilterMatchMode.CONTAINS,
+    },
+    description: { value: null, matchMode: FilterMatchMode.CONTAINS },
+  });
 
   useEffect(() => {
     if (
@@ -69,11 +72,10 @@ function CommandList({
       <Button
         disabled={buttonsDisabled.current}
         onClick={() => {
-          setSelectedCommand(command);
-          stepperRef.current?.nextCallback();
+          commandListButtonClick(command);
         }}
       >
-        Make It So!
+        Select
       </Button>
     );
   }
@@ -101,9 +103,12 @@ function CommandList({
         value={commands}
         paginator
         rows={10}
+        filterDisplay="row"
+        filters={filters}
+        onFilter={(e) => setFilters(e.filters as typeof filters)}
       >
-        <Column field="name" header="Command" />
-        <Column field="description" header="Description" />
+        <Column field="name" header="Command" filter />
+        <Column field="description" header="Description" filter />
         <Column header="Actions" body={actionTemplate} />
       </DataTable>
     </>

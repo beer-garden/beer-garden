@@ -1,21 +1,30 @@
+import { FilterMatchMode } from "primereact/api";
 import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
-import { Stepper } from "primereact/stepper";
-import { RefObject, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { System } from "../models/brewtils-types";
 import { GetSystemList } from "../services/system_service";
 
-function SystemList({
-  stepperRef,
-  setSelectedSystem,
-}: {
-  stepperRef: RefObject<Stepper | null>;
-  setSelectedSystem: any;
-}) {
+function SystemList({ systemListButtonClick }: { systemListButtonClick: any }) {
   const [systems, setSystems] = useState<System[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [filters, setFilters] = useState({
+    namespace: {
+      value: null,
+      matchMode: FilterMatchMode.CONTAINS,
+    },
+    name: {
+      value: null,
+      matchMode: FilterMatchMode.CONTAINS,
+    },
+    description: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    version: {
+      value: null,
+      matchMode: FilterMatchMode.CONTAINS,
+    },
+  });
 
   useEffect(() => {
     GetSystemList()
@@ -38,8 +47,7 @@ function SystemList({
     return (
       <Button
         onClick={() => {
-          setSelectedSystem(system);
-          stepperRef.current?.nextCallback();
+          systemListButtonClick(system);
         }}
       >
         Select
@@ -49,11 +57,19 @@ function SystemList({
 
   //Get a list of systems and output them to a table
   return (
-    <DataTable value={systems} loading={loading} paginator rows={10}>
-      <Column field="namespace" header="Namespace" sortable />
-      <Column field="name" header="System Name" sortable />
-      <Column field="description" header="Description" sortable />
-      <Column field="version" header="Version" sortable />
+    <DataTable
+      value={systems}
+      loading={loading}
+      paginator
+      rows={10}
+      filterDisplay="row"
+      filters={filters}
+      onFilter={(e) => setFilters(e.filters as typeof filters)}
+    >
+      <Column field="namespace" header="Namespace" sortable filter />
+      <Column field="name" header="System Name" sortable filter />
+      <Column field="description" header="Description" sortable filter />
+      <Column field="version" header="Version" sortable filter />
       <Column header="Actions" body={actionTemplate} />
     </DataTable>
   );
