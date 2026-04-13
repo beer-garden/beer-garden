@@ -401,7 +401,6 @@ export default function requestViewController(
         const child = _.find($scope.children, {id: event.payload.id});
 
         if (!child) {
-          // If we missed the REQUEST_CREATED just push this one in there
           $scope.children.push(event.payload);
         } else {
           child.status = event.payload.status;
