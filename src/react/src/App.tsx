@@ -16,6 +16,7 @@ import RoleIndex from "./layouts/RoleIndex";
 import Swagger from "./layouts/Swagger";
 import SystemCards from "./layouts/SystemCards";
 import SystemTable from "./layouts/SystemTable";
+import UserIndex from "./layouts/UserIndex";
 import Workspace from "./layouts/Workspace";
 import { Config, Listener } from "./models/models";
 import NavigationMenu from "./Navigation";
@@ -71,7 +72,11 @@ function App() {
           for (const [key, listener] of Object.entries(listeners)) {
             if (key && listener && listener.listener) {
               listener.listener(eventData);
-              console.log("Message from server for listener", key, event.data);
+              console.debug(
+                "Message from server for listener",
+                key,
+                event.data,
+              );
             }
           }
         }
@@ -147,6 +152,7 @@ function App() {
                 />
                 <Route path="/about" element={<AboutIndex config={config} />} />
                 <Route path="/roles" element={<RoleIndex config={config} />} />
+                <Route path="/users" element={<UserIndex config={config} />} />
                 <Route path="/swagger" element={<Swagger />} />
                 <Route
                   path="/"

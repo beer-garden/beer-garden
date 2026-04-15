@@ -156,3 +156,17 @@ export const GetAuthHeaders = () => {
   }
   return headers;
 };
+
+export const RevokeToken = async (username: string) => {
+  const headers = GetAuthHeaders();
+
+  const response = await fetch(`${GetBaseURL()}/api/v1/token/'${username}`, {
+    headers: headers,
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    // Handle non-OK responses (e.g., 404, 500)
+    throw new Error(`HTTP error: Status ${response.status}`);
+  }
+};

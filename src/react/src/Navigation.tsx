@@ -74,7 +74,7 @@ function NavigationMenu({
       label: "Users",
       template: (item: any) => {
         return (
-          <NavLink to="/" className="p-menuitem-link">
+          <NavLink to="/users" className="p-menuitem-link">
             <span>{item.label}</span>
           </NavLink>
         );
