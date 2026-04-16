@@ -26,6 +26,8 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
   const [selectedJob, setSelectedJob] = useState<Job | undefined>(undefined);
   const navigate = useNavigate();
   const toast = useRef(null as null | Toast);
+  const jobImportFileRef = useRef<FileUpload | null>(null);
+
   useEffect(() => {
     const MonitorJobs = (message: any) => {
       if (message.payload_type === "Job") {
@@ -223,6 +225,11 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
             detail: "Jobs imported successfully",
             life: 3000,
           });
+
+          if (jobImportFileRef.current) {
+            jobImportFileRef.current.clear();
+          }
+
           // Refresh the job list after successful import
           GetJobList()
             .then((data: [Array<Job>, Headers]) => {
@@ -256,6 +263,7 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
         </Button>
 
         <FileUpload
+          ref={jobImportFileRef}
           className="mr-2"
           mode="basic"
           name="file"
