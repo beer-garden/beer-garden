@@ -3,6 +3,8 @@ import { ConfirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
 import { Tree } from "primereact/tree";
 import { useCallback, useEffect, useRef, useState } from "react";
+import HttpError from "../types/errors";
+import ErrorPage from "./ErrorPage";
 
 import GardenSummary from "../components/GardenSummary";
 import SystemCard from "../components/SystemCard";
@@ -12,6 +14,7 @@ import { GetRootGarden } from "../services/garden_service";
 import { GetSeverity } from "../services/util_service";
 
 function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
+  const [error, setError] = useState<HttpError>();
   const gardenRef = useRef<Garden>(null);
   const selectedGardenRef = useRef<Garden>(null);
 
@@ -447,6 +450,7 @@ function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
             })
             .catch((error) => {
               console.error("Error fetching root garden:", error);
+              setError(error);
             });
         })
         .catch((error) => {
@@ -479,6 +483,9 @@ function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
   };
 
   return (
+    <>
+    {error ? (<ErrorPage errorNum={error?.code} />):
+    (
     <div className="grid h-screen">
       <Toast ref={toast} />
       <ConfirmDialog />
@@ -524,6 +531,8 @@ function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
         ))}
       </div>
     </div>
+    )}
+    </>
   );
 }
 

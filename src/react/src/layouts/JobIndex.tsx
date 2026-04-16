@@ -5,6 +5,8 @@ import { DataTable } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import HttpError from "../types/errors";
+import ErrorPage from "./ErrorPage";
 
 import SchedulerViewCard from "../components/SchedulerViewCard";
 import { Job } from "../models/brewtils-types";
@@ -18,6 +20,7 @@ import {
 import { GetBaseURL } from "../services/util_service";
 
 function JobIndex({ listeners }: { listeners: Record<string, any> }) {
+  const [error, setError] = useState<HttpError>();
   const [jobs, setJobs] = useState<Array<Job>>([]);
   const [selectedJob, setSelectedJob] = useState<Job | undefined>(undefined);
   const navigate = useNavigate();
@@ -59,6 +62,7 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
       })
       .catch((error) => {
         console.error("Error fetching jobs:", error);
+        setError(error);
       });
   }, []);
 
@@ -212,6 +216,9 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
   );
 
   return (
+    <>
+    {error ? (<ErrorPage errorNum={error?.code} />):
+      (
     <div>
       <Dialog
         visible={selectedJob !== undefined}
@@ -282,6 +289,8 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
         <Column field="skip_count" header="Skip Count"></Column>
       </DataTable>
     </div>
+      )}
+      </>
   );
 }
 

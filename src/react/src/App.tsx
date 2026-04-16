@@ -23,6 +23,8 @@ import { GetConfig } from "./services/config_service";
 import { ClearSystemsCache } from "./services/system_service";
 import { preemptiveRefresh } from "./services/token_service";
 import { GetToken } from "./services/token_service";
+import ErrorPage from "./layouts/ErrorPage";
+import { ErrorBoundary } from "react-error-boundary";
 
 function App() {
   const socketRef = useRef(null as null | any);
@@ -110,7 +112,9 @@ function App() {
                 <Route
                   path="/request/:requestId"
                   element={
-                    <RequestView listeners={listeners} config={config} />
+                    <ErrorBoundary fallback="Error">
+                      <RequestView listeners={listeners} config={config} />
+                    </ErrorBoundary>
                   }
                 />
                 <Route
@@ -151,6 +155,10 @@ function App() {
                 <Route
                   path="/"
                   element={<GardenDashboard listeners={listeners} />}
+                />
+                <Route
+                  path="*"
+                  element={<ErrorPage errorNum={404} />}
                 />
               </Routes>
             </div>

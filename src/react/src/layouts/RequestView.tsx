@@ -22,6 +22,8 @@ import {
 } from "../services/request_service";
 import { GetSystemList } from "../services/system_service";
 import { GetBaseURL } from "../services/util_service";
+import HttpError from "../types/errors";
+import ErrorPage from "./ErrorPage";
 
 function UnformattedInput(request: Request) {
   return (
@@ -172,6 +174,7 @@ function RequestView({
   listeners: Record<string, any>;
   config: Config;
 }) {
+  const [error, setError] = useState<HttpError>();
   const { requestId } = useParams<{ requestId: string }>();
   const [request, setRequest] = useState<Request | null>(null);
   const [system, setSystem] = useState<System | null>(null);
@@ -222,6 +225,7 @@ function RequestView({
           })
           .catch((error) => {
             console.error("Error fetching request:", error);
+            setError(error);
           });
       }
     } else {
@@ -248,6 +252,7 @@ function RequestView({
             })
             .catch((error) => {
               console.error("Error fetching parent request:", error);
+              setError(error);
             });
         } else {
           setRootRequest(check_request);
@@ -303,6 +308,9 @@ function RequestView({
   const [activeIndex, setActiveIndex] = useState(0);
 
   return (
+    <>
+    {error ? (<ErrorPage errorNum={error?.code} />):
+    (
     <div>
       {request && <RequestHeader {...request} />}
 
@@ -354,6 +362,8 @@ function RequestView({
         </Stepper>
       )}
     </div>
+    )}
+    </>
   );
 }
 

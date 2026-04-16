@@ -10,6 +10,8 @@ import { Message } from "primereact/message";
 import { Messages } from "primereact/messages";
 import { Toast } from "primereact/toast";
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
+import HttpError from "../types/errors";
+import ErrorPage from "./ErrorPage";
 
 import RoleScopeCard from "../components/RoleScopeCard";
 import { Role } from "../models/brewtils-types";
@@ -30,6 +32,7 @@ const permissions = [
 ];
 
 function RoleIndex({ config }: { config: Config }) {
+  const [error, setError] = useState<HttpError>();
   const toast = useRef<Toast>(null);
   const [roles, setRoles] = useState<Array<Role>>([]);
   const [loading, setLoading] = useState(false);
@@ -67,6 +70,7 @@ function RoleIndex({ config }: { config: Config }) {
       .catch((error) => {
         console.error("Error fetching roles:", error);
         setLoading(false);
+        setError(error);
       });
   }, [roles]);
 
@@ -387,6 +391,9 @@ function RoleIndex({ config }: { config: Config }) {
   }
 
   return (
+    <>
+      {error ? (<ErrorPage errorNum={error?.code} />):
+      (
     <div>
       <Toast ref={toast} />
       <Dialog
@@ -493,6 +500,8 @@ function RoleIndex({ config }: { config: Config }) {
       <RoleHeader />
       <RoleTable />
     </div>
+      )}
+      </>
   );
 }
 

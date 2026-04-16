@@ -2,6 +2,8 @@ import { Garden, Patch } from "../models/brewtils-types";
 import { Config } from "../models/models";
 import { GetAuthHeaders } from "./token_service";
 import { GetBaseURL } from "./util_service";
+import HttpError from "../types/errors"
+
 export const GetGarden = async (
   garden_name: string,
   headerData?: any,
@@ -22,7 +24,7 @@ export const GetGarden = async (
     );
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
-      throw new Error(`HTTP error: Status ${response.status}`);
+      throw new HttpError(`HTTP error: Status ${response.status}`, response.status);
     }
     const data = (await response.json()) as Garden;
     return data;
@@ -57,7 +59,7 @@ export const PatchGarden = async (
     );
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
-      throw new Error(`HTTP error: Status ${response.status}`);
+      throw new HttpError(`HTTP error: Status ${response.status}`, response.status);
     }
     const data = await response.json();
     return data;
@@ -89,7 +91,7 @@ export const DeleteGarden = async (
     );
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
-      throw new Error(`HTTP error: Status ${response.status}`);
+      throw new HttpError(`HTTP error: Status ${response.status}`, response.status);
     }
     const data = await response.json();
     return data;
@@ -123,7 +125,7 @@ export const GetGardenList = async (
     });
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
-      throw new Error(`HTTP error: Status ${response.status}`);
+      throw new HttpError(`HTTP error: Status ${response.status}`, response.status);
     }
     const data = (await response.json()) as Array<Garden>;
     return data;

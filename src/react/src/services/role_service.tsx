@@ -1,6 +1,7 @@
 import { Role } from "../models/brewtils-types";
 import { GetAuthHeaders } from "./token_service";
 import { GetBaseURL } from "./util_service";
+import HttpError from "../types/errors"
 
 export const GetRole = async (roleId: string): Promise<void> => {
   const headers = GetAuthHeaders();
@@ -12,7 +13,7 @@ export const GetRole = async (roleId: string): Promise<void> => {
   });
   if (!response.ok) {
     // Handle non-OK responses (e.g., 404, 500)
-    throw new Error(`HTTP error: Status ${response.status}`);
+    throw new HttpError(`HTTP error: Status ${response.status}`, response.status);
   }
 };
 
@@ -26,7 +27,7 @@ export const DeleteRole = async (roleId: string): Promise<void> => {
   });
   if (!response.ok) {
     // Handle non-OK responses (e.g., 404, 500)
-    throw new Error(`HTTP error: Status ${response.status}`);
+    throw new HttpError(`HTTP error: Status ${response.status}`, response.status);
   }
 };
 
@@ -49,7 +50,7 @@ export const EditRole = async (role: Role): Promise<Role> => {
   });
   if (!response.ok) {
     // Handle non-OK responses (e.g., 404, 500)
-    throw new Error(`HTTP error: Status ${response.status}`);
+    throw new HttpError(`HTTP error: Status ${response.status}`, response.status);
   }
   const data = (await response.json()) as Role;
   return data;
@@ -65,7 +66,7 @@ export const GetRoles = async (): Promise<Role[]> => {
   });
   if (!response.ok) {
     // Handle non-OK responses (e.g., 404, 500)
-    throw new Error(`HTTP error: Status ${response.status}`);
+    throw new HttpError(`HTTP error: Status ${response.status}`, response.status);
   }
   const data = (await response.json()) as Role[];
   return data;
@@ -87,7 +88,7 @@ export const Rescan = async (): Promise<void> => {
   });
   if (!response.ok) {
     // Handle non-OK responses (e.g., 404, 500)
-    throw new Error(`HTTP error: Status ${response.status}`);
+    throw new HttpError(`HTTP error: Status ${response.status}`, response.status);
   }
 };
 
@@ -101,7 +102,7 @@ export const CreateRole = async (newRole: Role): Promise<Role> => {
   });
   if (!response.ok) {
     // Handle non-OK responses (e.g., 404, 500)
-    throw new Error(`HTTP error: Status ${response.status}`);
+    throw new HttpError(`HTTP error: Status ${response.status}`, response.status);
   }
   const data = (await response.json()) as Role;
   return data;

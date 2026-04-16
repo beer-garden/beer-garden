@@ -14,12 +14,15 @@ import {
   useState,
 } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import HttpError from "../types/errors";
+import ErrorPage from "./ErrorPage";
 
 import { Request } from "../models/brewtils-types";
 import { GetRequestList } from "../services/request_service";
 import { GetBaseURL } from "../services/util_service";
 
 function RequestIndex({ listeners }: { listeners: Record<string, any> }) {
+  const [error, setError] = useState<HttpError>();
   const [requests, setRequests] = useState<Array<Request>>([]);
   const altRequests = useRef<Array<Request>>([]);
   const [loading, setLoading] = useState(false);
@@ -169,6 +172,7 @@ function RequestIndex({ listeners }: { listeners: Record<string, any> }) {
       .catch((error) => {
         console.error("Error fetching request list:", error);
         setLoading(false);
+        setError(error);
       });
   }, [lazyParams, filters]);
 
@@ -355,6 +359,9 @@ function RequestIndex({ listeners }: { listeners: Record<string, any> }) {
   }, [listeners]);
 
   return (
+    <>
+    {error ? (<ErrorPage errorNum={error?.code} />):
+    (
     <div>
       <DataTable
         value={requests}
@@ -401,6 +408,8 @@ function RequestIndex({ listeners }: { listeners: Record<string, any> }) {
         <Column field="comment" filter header="Comment" />
       </DataTable>
     </div>
+    )}
+    </>
   );
 }
 
