@@ -89,12 +89,16 @@ function GardenSummary({
     uuid: tourUuid,
     label: "Rescan Plugins",
     content: "Rescan the plugins for the selected garden",
+    layer: "COMPONENT",
+    pos: 0,
   };
   const rescanDownstreamTourStep: TourStepProps = {
     prefix: tourPrefix,
     uuid: tourUuid,
     label: "Rescan Downstream",
     content: "Rescan the downstream connections for the selected garden",
+    layer: "COMPONENT",
+    pos: 1,
   };
 
   const clearPluginsQueuesTourStep: TourStepProps = {
@@ -102,6 +106,8 @@ function GardenSummary({
     uuid: tourUuid,
     label: "Clear Plugin Queues",
     content: "Clear all plugin queues for the selected garden",
+    layer: "COMPONENT",
+    pos: 2,
   };
 
   const syncGardenTourStep: TourStepProps = {
@@ -109,6 +115,8 @@ function GardenSummary({
     uuid: tourUuid,
     label: "Sync",
     content: "Sync the selected garden with its upstream gardens",
+    layer: "COMPONENT",
+    pos: 3,
   };
 
   const syncAllTourStep: TourStepProps = {
@@ -116,6 +124,8 @@ function GardenSummary({
     uuid: tourUuid,
     label: "Sync All",
     content: "Sync all gardens with their upstream gardens",
+    layer: "COMPONENT",
+    pos: 4,
   };
 
   const syncUsersTourStep: TourStepProps = {
@@ -123,6 +133,8 @@ function GardenSummary({
     uuid: tourUuid,
     label: "Sync Users",
     content: "Sync users in the selected garden with its upstream garden",
+    layer: "COMPONENT",
+    pos: 5,
   };
 
   const deleteGardenTourStep: TourStepProps = {
@@ -130,6 +142,8 @@ function GardenSummary({
     uuid: tourUuid,
     label: "Delete Garden",
     content: "Delete the selected garden. This action is irreversible.",
+    layer: "COMPONENT",
+    pos: 6,
   };
 
   useEffect(() => {
@@ -163,12 +177,16 @@ function GardenSummary({
                 uuid: tourUuid,
                 label: `RECEIVING START ${connection.api}`,
                 content: `Start receiving connection for ${connection.api}`,
+                layer: "COMPONENT",
+                pos: 7,
               });
               AddTourStep(tourStepsRef, {
                 prefix: tourPrefix,
                 uuid: tourUuid,
                 label: `RECEIVING STOP ${connection.api}`,
                 content: `Stop receiving connection for ${connection.api}`,
+                layer: "COMPONENT",
+                pos: 8,
               });
             }
           },
@@ -184,12 +202,16 @@ function GardenSummary({
                 uuid: tourUuid,
                 label: `PUBLISHING START ${connection.api}`,
                 content: `Start publishing connection for ${connection.api}`,
+                layer: "COMPONENT",
+                pos: 9,
               });
               AddTourStep(tourStepsRef, {
                 prefix: tourPrefix,
                 uuid: tourUuid,
                 label: `PUBLISHING STOP ${connection.api}`,
                 content: `Stop publishing connection for ${connection.api}`,
+                layer: "COMPONENT",
+                pos: 10,
               });
             }
           },

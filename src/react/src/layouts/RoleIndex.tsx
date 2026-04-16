@@ -83,6 +83,8 @@ function RoleIndex({
     label: "Rescan Roles",
     content:
       "Rescan the roles configuration file. This is required to pick up any changes made to the file outside of Beergarden.",
+    layer: "LAYOUT",
+    pos: 0,
   };
 
   const createRoleTourStep: TourStepProps = {
@@ -91,6 +93,8 @@ function RoleIndex({
     label: "Create Role",
     content:
       "Click here to create a new role. Roles define permissions for users and are required to use Beergarden when authentication is enabled.",
+    layer: "LAYOUT",
+    pos: 1,
   };
 
   const duplicateRoleTourStep: TourStepProps = {
@@ -99,6 +103,8 @@ function RoleIndex({
     label: "Duplicate Role",
     content:
       "Click here to duplicate an existing role. This will copy all of the settings of the existing role into a new role which can then be modified as needed.",
+    layer: "LAYOUT",
+    pos: 2,
   };
 
   const editRoleTourStep: TourStepProps = {
@@ -107,6 +113,8 @@ function RoleIndex({
     label: "Edit Role",
     content:
       "Click here to edit an existing role. This will allow you to modify the settings of the role.",
+    layer: "LAYOUT",
+    pos: 3,
   };
 
   const deleteRoleTourStep: TourStepProps = {
@@ -115,6 +123,8 @@ function RoleIndex({
     label: "Delete Role",
     content:
       "Click here to delete an existing role. This will permanently delete the role from Beergarden.",
+    layer: "LAYOUT",
+    pos: 4,
   };
 
   const loadRoles = useCallback(() => {

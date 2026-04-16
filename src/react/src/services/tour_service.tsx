@@ -3,13 +3,31 @@ import { RefObject } from "react";
 import { TourStepProps } from "../models/models";
 
 export const ConvertToTourStepProps = (steps: Array<TourStepProps>): any => {
-  return steps.map((step) => {
-    return {
-      content: step.content,
-      target: `[data-step="${step.prefix}-${step.uuid}-${step.label}"]`,
-      title: step.label,
-    };
-  });
+  const tourSteps = [] as Array<any>;
+
+  for (const layerType of ["NAVIGATION", "LAYOUT", "COMPONENT"]) {
+    for (const layerStep of steps
+      .filter((step) => step.layer === layerType)
+      .sort((stepA, stepB) => {
+        // Ensure components are grouped together
+        const prefixSort = stepA.prefix.localeCompare(stepB.prefix);
+        if (prefixSort !== 0) {
+          return prefixSort;
+        }
+
+        // Ensure we respect component ordering
+        return stepA.pos - stepB.pos;
+      })) {
+      tourSteps.push({
+        content: layerStep.content,
+        target: `[data-step="${layerStep.prefix}-${layerStep.uuid}-${layerStep.label}"]`,
+        title: layerStep.label,
+        beaconPlacement: "top",
+      });
+    }
+  }
+
+  return tourSteps;
 };
 
 export const GenerateTourProps = (tourStep: Partial<TourStepProps>) => {

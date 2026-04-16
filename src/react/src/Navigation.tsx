@@ -46,6 +46,8 @@ function NavigationMenu({
     uuid: tourUuid,
     label: "Home Link",
     content: "Navigate to the home page of the application.",
+    layer: "NAVIGATION",
+    pos: 0,
   };
 
   const requestTourStep: TourStepProps = {
@@ -53,6 +55,8 @@ function NavigationMenu({
     uuid: tourUuid,
     label: "Requests Link",
     content: "Navigate to the Request Page to see invoked requests.",
+    layer: "NAVIGATION",
+    pos: 1,
   };
 
   const schedulerTourStep: TourStepProps = {
@@ -60,6 +64,8 @@ function NavigationMenu({
     uuid: tourUuid,
     label: "Scheduler Link",
     content: "Navigate to the Scheduler Page to see scheduled jobs.",
+    layer: "NAVIGATION",
+    pos: 2,
   };
 
   const workspaceTourStep: TourStepProps = {
@@ -68,6 +74,8 @@ function NavigationMenu({
     label: "Workspace Link",
     content:
       "Navigate to the Workspace to see your current workbench of requests and scheduled jobs.",
+    layer: "NAVIGATION",
+    pos: 3,
   };
 
   const topicsTourStep: TourStepProps = {
@@ -76,6 +84,8 @@ function NavigationMenu({
     label: "Topics Link",
     content:
       "Navigate to the Topics Page to see the list of managed message bus topics.",
+    layer: "NAVIGATION",
+    pos: 4,
   };
 
   const usersTourStep: TourStepProps = {
@@ -83,6 +93,8 @@ function NavigationMenu({
     uuid: tourUuid,
     label: "Users Link",
     content: "Navigate to the Users Page to see the list of user accounts.",
+    layer: "NAVIGATION",
+    pos: 5,
   };
 
   const rolesTourStep: TourStepProps = {
@@ -90,6 +102,8 @@ function NavigationMenu({
     uuid: tourUuid,
     label: "Roles Link",
     content: "Navigate to the Roles Page to see the list of user roles.",
+    layer: "NAVIGATION",
+    pos: 6,
   };
 
   const aboutTourStep: TourStepProps = {
@@ -98,6 +112,8 @@ function NavigationMenu({
     label: "About Link",
     content:
       "Navigate to the About Page to see information about this application.",
+    layer: "NAVIGATION",
+    pos: 7,
   };
 
   const items = [
@@ -320,7 +336,6 @@ function NavigationMenu({
         </div>
       )}
       <Button
-        rounded
         text
         className="mr-2"
         onClick={toggleRunTour}

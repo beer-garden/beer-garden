@@ -43,6 +43,8 @@ function SystemCard({
     uuid: tourUuid,
     label: "Start All Instances",
     content: "Start all instances for the selected system",
+    layer: "COMPONENT",
+    pos: 0,
   };
 
   const stopInstancesTourStep: TourStepProps = {
@@ -50,6 +52,8 @@ function SystemCard({
     uuid: tourUuid,
     label: "Stop All Instances",
     content: "Stop all instances for the selected system",
+    layer: "COMPONENT",
+    pos: 1,
   };
 
   const restartSystemTourStep: TourStepProps = {
@@ -57,6 +61,8 @@ function SystemCard({
     uuid: tourUuid,
     label: "Restart System",
     content: "Restart the selected system",
+    layer: "COMPONENT",
+    pos: 2,
   };
 
   const deleteSystemTourStep: TourStepProps = {
@@ -64,19 +70,8 @@ function SystemCard({
     uuid: tourUuid,
     label: "Delete System",
     content: "Delete the selected system",
-  };
-
-  const startInstanceTourStep: TourStepProps = {
-    prefix: tourPrefix,
-    uuid: tourUuid,
-    label: `Instance Start`,
-    content: `Start individual instance`,
-  };
-  const stopInstanceTourStep: TourStepProps = {
-    prefix: tourPrefix,
-    uuid: tourUuid,
-    label: `Instance Stop`,
-    content: `Stop individual instance`,
+    layer: "COMPONENT",
+    pos: 3,
   };
 
   const statusInstanceTourStep: TourStepProps = {
@@ -84,6 +79,8 @@ function SystemCard({
     uuid: tourUuid,
     label: `Instance Status`,
     content: `Status of individual instance`,
+    layer: "COMPONENT",
+    pos: 4,
   };
 
   const nameInstanceTourStep: TourStepProps = {
@@ -91,6 +88,25 @@ function SystemCard({
     uuid: tourUuid,
     label: `Instance Name`,
     content: `Name of individual instance`,
+    layer: "COMPONENT",
+    pos: 5,
+  };
+
+  const startInstanceTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: `Instance Start`,
+    content: `Start individual instance`,
+    layer: "COMPONENT",
+    pos: 6,
+  };
+  const stopInstanceTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: `Instance Stop`,
+    content: `Stop individual instance`,
+    layer: "COMPONENT",
+    pos: 7,
   };
 
   useEffect(() => {

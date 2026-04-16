@@ -115,4 +115,6 @@ export interface TourStepProps {
   prefix: string;
   uuid?: string;
   label: string;
+  layer: "NAVIGATION" | "LAYOUT" | "COMPONENT";
+  pos: number;
 }

@@ -451,6 +451,8 @@ function GardenDashboard({
     uuid: tourUuid,
     label: "Garden Tree Menu",
     content: "Select a Garden to view its Status, Systems and Instances",
+    layer: "LAYOUT",
+    pos: 0,
   };
 
   useEffect(() => {

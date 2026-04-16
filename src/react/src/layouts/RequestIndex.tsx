@@ -71,6 +71,8 @@ function RequestIndex({
     label: "Refresh Table",
     content:
       "Clicking this button will refresh the table with the latest data.",
+    layer: "LAYOUT",
+    pos: 0,
   };
 
   const AutoRefreshTourStep: TourStepProps = {
@@ -79,6 +81,8 @@ function RequestIndex({
     label: "Auto Refresh",
     content:
       "Toggling this option will automatically refresh the table when new updates are available.",
+    layer: "LAYOUT",
+    pos: 1,
   };
 
   const OpenRequestTourStep: TourStepProps = {
@@ -86,6 +90,8 @@ function RequestIndex({
     uuid: tourUUID,
     label: `Open Request`,
     content: `View details about this request on View Request Page`,
+    layer: "LAYOUT",
+    pos: 2,
   };
 
   const OpenRequestWorkspaceTourStep: TourStepProps = {
@@ -93,6 +99,8 @@ function RequestIndex({
     uuid: tourUUID,
     label: `Push to Workspace`,
     content: `Open this request in the Workspace to interact with it.`,
+    layer: "LAYOUT",
+    pos: 3,
   };
 
   const lazyLoadData = useCallback(() => {

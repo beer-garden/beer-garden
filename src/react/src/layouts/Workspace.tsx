@@ -49,6 +49,8 @@ function Workspace({
     uuid: tourUuid,
     label: "Add Request",
     content: "Create a new scheduled job to run requests on a schedule.",
+    layer: "LAYOUT",
+    pos: 0,
   };
 
   useEffect(() => {

@@ -41,6 +41,8 @@ function JobIndex({
     uuid: tourUuid,
     label: "Create Job",
     content: "Create a new scheduled job to run requests on a schedule.",
+    layer: "LAYOUT",
+    pos: 0,
   };
 
   const importJobTourStep: TourStepProps = {
@@ -48,6 +50,8 @@ function JobIndex({
     uuid: tourUuid,
     label: "Import Jobs",
     content: "Import jobs from a file.",
+    layer: "LAYOUT",
+    pos: 1,
   };
 
   const exportJobTourStep: TourStepProps = {
@@ -55,6 +59,8 @@ function JobIndex({
     uuid: tourUuid,
     label: "Export Jobs",
     content: "Export jobs to a file.",
+    layer: "LAYOUT",
+    pos: 2,
   };
 
   const runNowTourStep: TourStepProps = {
@@ -62,6 +68,8 @@ function JobIndex({
     uuid: tourUuid,
     label: "Run Now",
     content: "Run the job immediately.",
+    layer: "LAYOUT",
+    pos: 3,
   };
 
   const viewJobTourStep: TourStepProps = {
@@ -69,6 +77,8 @@ function JobIndex({
     uuid: tourUuid,
     label: "View Job",
     content: "View details about the job and see past runs.",
+    layer: "LAYOUT",
+    pos: 4,
   };
 
   const editJobTourStep: TourStepProps = {
@@ -76,6 +86,8 @@ function JobIndex({
     uuid: tourUuid,
     label: "Edit Job",
     content: "Edit the job's schedule and request template.",
+    layer: "LAYOUT",
+    pos: 5,
   };
 
   const pauseResumeJobTourStep: TourStepProps = {
@@ -84,6 +96,8 @@ function JobIndex({
     label: "Pause/Resume Job",
     content:
       "Pause a running job or resume a paused job to control when it runs.",
+    layer: "LAYOUT",
+    pos: 6,
   };
 
   const deleteJobTourStep: TourStepProps = {
@@ -91,6 +105,8 @@ function JobIndex({
     uuid: tourUuid,
     label: "Delete Job",
     content: "Delete a job that is no longer needed.",
+    layer: "LAYOUT",
+    pos: 7,
   };
 
   useEffect(() => {
