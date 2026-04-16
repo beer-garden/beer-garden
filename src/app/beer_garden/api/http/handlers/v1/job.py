@@ -314,7 +314,7 @@ class JobImportAPI(AuthorizationHandler):
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/JobImport'
+                  $ref: '#/components/schemas/Job'
         responses:
           201:
             description: All new jobs have been created
