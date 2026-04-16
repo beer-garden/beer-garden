@@ -1,0 +1,155 @@
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+
+import { User } from "../models/brewtils-types";
+import { Config } from "../models/models";
+import * as tokenService from "../services/token_service";
+import * as userService from "../services/user_service";
+import UserIndex from "./UserIndex";
+
+vi.mock("../services/user_service");
+vi.mock("../services/token_service");
+
+const mockConfig: Config = { auth_enabled: true } as Config;
+
+const mockUsers: User[] = [
+  {
+    id: "1",
+    username: "admin",
+    protected: true,
+    file_generated: false,
+    local_roles: [{ id: "r1", name: "Admin", permission: "GARDEN_ADMIN" }],
+    upstream_roles: [],
+    user_alias_mapping: [],
+    metadata: { has_token: true, last_authentication: 1000000 },
+  } as User,
+  {
+    id: "2",
+    username: "operator",
+    protected: false,
+    file_generated: false,
+    local_roles: [{ id: "r2", name: "Operator", permission: "OPERATOR" }],
+    upstream_roles: [],
+    user_alias_mapping: [],
+    metadata: { has_token: false },
+  } as User,
+];
+
+describe("UserIndex", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    cleanup();
+    vi.mocked(userService.GetUsers).mockResolvedValue(mockUsers);
+    vi.mocked(userService.DeleteUser).mockResolvedValue();
+    vi.mocked(userService.RescanUsers).mockResolvedValue();
+    vi.mocked(tokenService.RevokeToken).mockResolvedValue();
+  });
+
+  test("should render user management page", async () => {
+    render(<UserIndex config={mockConfig} />);
+    expect(screen.getByText("User Management")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId("user-datatable")).toBeInTheDocument();
+    });
+  });
+
+  test("should load users on mount", async () => {
+    render(<UserIndex config={mockConfig} />);
+    await waitFor(() => {
+      expect(userService.GetUsers).toHaveBeenCalled();
+    });
+  });
+
+  test("should display users in datatable", async () => {
+    render(<UserIndex config={mockConfig} />);
+    await waitFor(() => {
+      expect(screen.getByText("admin")).toBeInTheDocument();
+      expect(screen.getByText("operator")).toBeInTheDocument();
+    });
+  });
+
+  test("should show rescan button", () => {
+    render(<UserIndex config={mockConfig} />);
+    expect(screen.getByTestId("rescan-btn")).toBeInTheDocument();
+  });
+
+  test("should show create user button", () => {
+    render(<UserIndex config={mockConfig} />);
+    expect(screen.getByTestId("create-btn")).toBeInTheDocument();
+  });
+
+  test("should handle rescan users", async () => {
+    render(<UserIndex config={mockConfig} />);
+    const rescanBtn = screen.getByTestId("rescan-btn");
+    fireEvent.click(rescanBtn);
+    await waitFor(() => {
+      expect(userService.RescanUsers).toHaveBeenCalled();
+    });
+  });
+
+  test("should revoke user token", async () => {
+    render(<UserIndex config={mockConfig} />);
+    await waitFor(() => {
+      expect(screen.getByTestId("revoke-user-1")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId("revoke-user-1"));
+    await waitFor(() => {
+      expect(tokenService.RevokeToken).toHaveBeenCalledWith("admin");
+    });
+  });
+
+  test("should not show roles button for protected user", async () => {
+    render(<UserIndex config={mockConfig} />);
+    await waitFor(() => {
+      expect(screen.queryByTestId("roles-user-1")).not.toBeInTheDocument();
+    });
+  });
+
+  test("should show roles button for non-protected user", async () => {
+    render(<UserIndex config={mockConfig} />);
+    await waitFor(() => {
+      expect(screen.getByTestId("roles-user-2")).toBeInTheDocument();
+    });
+  });
+
+  test("should delete user", async () => {
+    render(<UserIndex config={mockConfig} />);
+    await waitFor(() => {
+      expect(screen.getByTestId("delete-user-2")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId("delete-user-2"));
+    await waitFor(() => {
+      expect(userService.DeleteUser).toHaveBeenCalledWith("operator");
+    });
+  });
+
+  test("should display auth disabled warning when auth is disabled", () => {
+    const disabledConfig: Config = { auth_enabled: false } as Config;
+    render(<UserIndex config={disabledConfig} />);
+    expect(
+      screen.getByText(/authorization is currently disabled/i),
+    ).toBeInTheDocument();
+  });
+
+  test("should show active tag for users with token", async () => {
+    render(<UserIndex config={mockConfig} />);
+    await waitFor(() => {
+      const activeTags = screen.getAllByText("Active");
+      expect(activeTags.length).toBeGreaterThan(0);
+    });
+  });
+
+  test("should show inactive tag for users without token", async () => {
+    render(<UserIndex config={mockConfig} />);
+    await waitFor(() => {
+      const inactiveTags = screen.getAllByText("Inactive");
+      expect(inactiveTags.length).toBeGreaterThan(0);
+    });
+  });
+});
