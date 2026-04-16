@@ -491,8 +491,10 @@ class RequestListAPI(AuthorizationHandler):
             in: query
             required: false
             type: boolean
-            default: true
-            description: Whether choice validation is enabled for the request.
+            description: |
+              Whether choice validation is enabled for the request. For root requests
+              choice validation is enabled by default. Child requests is disabled by 
+              default. This flag overrides the default validation logic
           - name: request
             in: formData
             required: false
