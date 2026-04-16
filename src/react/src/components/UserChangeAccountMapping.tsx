@@ -1,4 +1,3 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { Dialog } from "primereact/dialog";
@@ -26,6 +25,7 @@ function UserChangeAccountMapping({
   toast: RefObject<Toast | null>;
 }) {
   const [gardenAccounts, setGardenAccounts] = useState<Array<any>>([]);
+  const gardenAccountsRef = useRef<Array<any>>([]);
   const seenGardens = useRef<Set<string>>(new Set());
 
   function mapGardensToAccounts(
@@ -108,7 +108,9 @@ function UserChangeAccountMapping({
   }
 
   function updateAccounts() {
-    const newAliasMapping = extractAliasMappingFromAccounts(gardenAccounts);
+    const newAliasMapping = extractAliasMappingFromAccounts(
+      gardenAccountsRef.current,
+    );
     if (user.username) {
       UpdateUserAliasMapping(user.username, newAliasMapping)
         .then(() => {
@@ -126,9 +128,9 @@ function UserChangeAccountMapping({
     }
   }
 
-  const onEditorValueChange = (options: any, value: any) => {
-    const newNodes = JSON.parse(JSON.stringify(gardenAccounts));
-    const editedNode = findNodeByKey(newNodes, options.node.key);
+  const onEditorValueChange = (node: any, value: any) => {
+    const newNodes = JSON.parse(JSON.stringify(gardenAccountsRef.current));
+    const editedNode = findNodeByKey(newNodes, node.key);
 
     editedNode.data.username = value;
 
@@ -145,7 +147,8 @@ function UserChangeAccountMapping({
       }
     }
 
-    setGardenAccounts(newNodes);
+    gardenAccountsRef.current = newNodes;
+    setGardenAccounts(gardenAccountsRef.current);
   };
 
   const findNodeByKey = (nodes: Array<any>, key: string): any => {
@@ -164,14 +167,15 @@ function UserChangeAccountMapping({
     return undefined;
   };
 
-  const accountEditor = (options: any) => {
+  const accountEditorTemplate = (node: any) => {
     return (
       <InputText
         type="text"
-        placeholder={options.rowData.defaultUsername}
-        value={options.rowData[options.field]}
-        onChange={(e) => onEditorValueChange(options, e.target.value)}
+        placeholder={node.data.defaultUsername}
+        value={node.data.username}
+        onChange={(e) => onEditorValueChange(node, e.target.value)}
         onKeyDown={(e) => e.stopPropagation()}
+        data-testid={`edit-user-account-${node.data.garden}`}
       />
     );
   };
@@ -205,44 +209,13 @@ function UserChangeAccountMapping({
             });
           }
         }
-
-        setGardenAccounts(accountsTree);
+        gardenAccountsRef.current = accountsTree;
+        setGardenAccounts(gardenAccountsRef.current);
       })
       .catch((error) => {
         console.error("Error fetching root garden accounts:", error);
       });
   }, []);
-
-  function accountNameTemplate(rowData: any) {
-    const username = rowData.data.username;
-    const defaultUsername = rowData.data.defaultUsername;
-
-    if (username) {
-      return (
-        <div className="flex">
-          <FontAwesomeIcon
-            icon="user-gear"
-            title="Account Mapping"
-            className="mr-1"
-          />
-          {username}
-          <FontAwesomeIcon icon="pencil" title="Edit" className="ml-1" />
-        </div>
-      );
-    } else if (!username) {
-      return (
-        <div className="flex">
-          <FontAwesomeIcon
-            icon="user-slash"
-            title="No Account Mapping"
-            className="mr-1"
-          />
-          {defaultUsername}
-          <FontAwesomeIcon icon="pencil" title="Edit" className="ml-1" />
-        </div>
-      );
-    }
-  }
 
   return (
     <Dialog
@@ -270,8 +243,7 @@ function UserChangeAccountMapping({
         <Column
           field="username"
           header="Account Name (Editable)"
-          body={accountNameTemplate}
-          editor={accountEditor}
+          body={accountEditorTemplate}
         ></Column>
       </TreeTable>
     </Dialog>

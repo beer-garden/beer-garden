@@ -77,7 +77,7 @@ function UserIndex({ config }: { config: Config }) {
     }
 
     if (permissions.length === 0) {
-      return <span>READ_ONLY</span>;
+      return <span>None</span>;
     }
     if (permissions.includes("GARDEN_ADMIN")) {
       return <span>GARDEN_ADMIN</span>;
