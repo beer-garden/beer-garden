@@ -72,8 +72,8 @@ function App() {
   };
 
   const runReloadUI = () => {
-    sessionStorage.removeItem("rootGarden");
-    sessionStorage.removeItem("systems");
+    sessionStorage.clear()
+    localStorage.removeItem("requestItems");
     setReloadUI(reloadUI + 1);
   };
 
