@@ -145,6 +145,7 @@ function UserChangePassword({
             <Password
               toggleMask
               id="currentPassword"
+              data-testid="current-password"
               className="mb-2"
               value={currentPassword}
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
@@ -159,6 +160,7 @@ function UserChangePassword({
         <Password
           toggleMask
           id="newPassword"
+          data-testid="new-password"
           className="mb-2"
           value={newPassword}
           onChange={(e: ChangeEvent<HTMLInputElement>) =>
@@ -171,6 +173,7 @@ function UserChangePassword({
         <Password
           toggleMask
           id="confirmPassword"
+          data-testid="confirm-password"
           invalid={confirmPasswordInvalid}
           className="mb-2"
           value={confirmPassword}
