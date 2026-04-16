@@ -5,10 +5,12 @@ import "./App.css";
 
 import { PrimeReactProvider } from "primereact/api";
 import { useEffect, useRef, useState } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import AboutIndex from "./layouts/AboutIndex";
 import GardenDashboard from "./layouts/Dashboard";
+import ErrorPage from "./layouts/ErrorPage";
 import JobIndex from "./layouts/JobIndex";
 import RequestIndex from "./layouts/RequestIndex";
 import RequestView from "./layouts/RequestView";
@@ -23,8 +25,6 @@ import { GetConfig } from "./services/config_service";
 import { ClearSystemsCache } from "./services/system_service";
 import { preemptiveRefresh } from "./services/token_service";
 import { GetToken } from "./services/token_service";
-import ErrorPage from "./layouts/ErrorPage";
-import { ErrorBoundary } from "react-error-boundary";
 
 function App() {
   const socketRef = useRef(null as null | any);
@@ -156,10 +156,7 @@ function App() {
                   path="/"
                   element={<GardenDashboard listeners={listeners} />}
                 />
-                <Route
-                  path="*"
-                  element={<ErrorPage errorNum={404} />}
-                />
+                <Route path="*" element={<ErrorPage errorNum={404} />} />
               </Routes>
             </div>
           </BrowserRouter>

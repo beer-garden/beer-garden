@@ -10,8 +10,6 @@ import { Message } from "primereact/message";
 import { Messages } from "primereact/messages";
 import { Toast } from "primereact/toast";
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
-import HttpError from "../types/errors";
-import ErrorPage from "./ErrorPage";
 
 import RoleScopeCard from "../components/RoleScopeCard";
 import { Role } from "../models/brewtils-types";
@@ -23,6 +21,8 @@ import {
   GetRoles,
   Rescan,
 } from "../services/role_service";
+import HttpError from "../types/errors";
+import ErrorPage from "./ErrorPage";
 
 const permissions = [
   { label: "GARDEN_ADMIN", value: "GARDEN_ADMIN" },
@@ -392,116 +392,117 @@ function RoleIndex({ config }: { config: Config }) {
 
   return (
     <>
-      {error ? (<ErrorPage errorNum={error?.code} />):
-      (
-    <div>
-      <Toast ref={toast} />
-      <Dialog
-        data-testid="role-dialog"
-        appendTo={"self"}
-        header={isEdit.current ? "Edit Role" : "Create Role"}
-        footer={
-          <>
-            <Button onClick={handleDialogClose}>Close</Button>
-            <Button
-              data-testid={`submit-btn-dialog`}
-              severity="danger"
-              onClick={handleDialogSubmit}
-            >
-              Submit
-            </Button>
-          </>
-        }
-        visible={dialogVisible}
-        style={{ width: "50vw" }}
-        onHide={() => {
-          handleDialogClose();
-        }}
-      >
-        <Messages ref={msgs} />
-        <div className="flex flex-column gap-2">
-          <label htmlFor="roleName" className="font-bold">
-            Name
-          </label>
-          <InputText
-            required
-            id="roleName"
-            type="text"
-            className="mb-2"
-            value={roleName}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setRoleName(e.target.value)
+      {error ? (
+        <ErrorPage errorNum={error?.code} />
+      ) : (
+        <div>
+          <Toast ref={toast} />
+          <Dialog
+            data-testid="role-dialog"
+            appendTo={"self"}
+            header={isEdit.current ? "Edit Role" : "Create Role"}
+            footer={
+              <>
+                <Button onClick={handleDialogClose}>Close</Button>
+                <Button
+                  data-testid={`submit-btn-dialog`}
+                  severity="danger"
+                  onClick={handleDialogSubmit}
+                >
+                  Submit
+                </Button>
+              </>
             }
-          />
-        </div>
-        <div className="flex flex-column gap-2">
-          <label htmlFor="roleDescription" className="font-bold">
-            Description
-          </label>
-          <InputText
-            id="roleDescription"
-            type="text"
-            className="mb-2"
-            value={roleDescription}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setRoleDescription(e.target.value)
-            }
-          />
-        </div>
-        <div className="flex flex-column gap-2">
-          <label htmlFor="rolePermission" className="font-bold">
-            Permission
-          </label>
-          <Dropdown
-            required
-            id="rolePermission"
-            className="mb-2"
-            options={permissions}
-            value={rolePermission}
-            optionLabel="label"
-            placeholder="Select One"
-            onChange={(e) => {
-              setRolePermission(e.value);
+            visible={dialogVisible}
+            style={{ width: "50vw" }}
+            onHide={() => {
+              handleDialogClose();
             }}
-          />
+          >
+            <Messages ref={msgs} />
+            <div className="flex flex-column gap-2">
+              <label htmlFor="roleName" className="font-bold">
+                Name
+              </label>
+              <InputText
+                required
+                id="roleName"
+                type="text"
+                className="mb-2"
+                value={roleName}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setRoleName(e.target.value)
+                }
+              />
+            </div>
+            <div className="flex flex-column gap-2">
+              <label htmlFor="roleDescription" className="font-bold">
+                Description
+              </label>
+              <InputText
+                id="roleDescription"
+                type="text"
+                className="mb-2"
+                value={roleDescription}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setRoleDescription(e.target.value)
+                }
+              />
+            </div>
+            <div className="flex flex-column gap-2">
+              <label htmlFor="rolePermission" className="font-bold">
+                Permission
+              </label>
+              <Dropdown
+                required
+                id="rolePermission"
+                className="mb-2"
+                options={permissions}
+                value={rolePermission}
+                optionLabel="label"
+                placeholder="Select One"
+                onChange={(e) => {
+                  setRolePermission(e.value);
+                }}
+              />
+            </div>
+            <Divider />
+            <RoleScopeCard
+              scopeName="garden"
+              scopeList={gardenScopeList}
+              setScopeList={setGardenScopeList}
+            />
+            <RoleScopeCard
+              scopeName="namespace"
+              scopeList={namespaceScopeList}
+              setScopeList={setNamespaceScopeList}
+            />
+            <RoleScopeCard
+              scopeName="system"
+              scopeList={systemScopeList}
+              setScopeList={setSystemScopeList}
+            />
+            <RoleScopeCard
+              scopeName="version"
+              scopeList={versionScopeList}
+              setScopeList={setVersionScopeList}
+            />
+            <RoleScopeCard
+              scopeName="instance"
+              scopeList={instanceScopeList}
+              setScopeList={setInstanceScopeList}
+            />
+            <RoleScopeCard
+              scopeName="command"
+              scopeList={commandScopeList}
+              setScopeList={setCommandScopeList}
+            />
+          </Dialog>
+          <RoleHeader />
+          <RoleTable />
         </div>
-        <Divider />
-        <RoleScopeCard
-          scopeName="garden"
-          scopeList={gardenScopeList}
-          setScopeList={setGardenScopeList}
-        />
-        <RoleScopeCard
-          scopeName="namespace"
-          scopeList={namespaceScopeList}
-          setScopeList={setNamespaceScopeList}
-        />
-        <RoleScopeCard
-          scopeName="system"
-          scopeList={systemScopeList}
-          setScopeList={setSystemScopeList}
-        />
-        <RoleScopeCard
-          scopeName="version"
-          scopeList={versionScopeList}
-          setScopeList={setVersionScopeList}
-        />
-        <RoleScopeCard
-          scopeName="instance"
-          scopeList={instanceScopeList}
-          setScopeList={setInstanceScopeList}
-        />
-        <RoleScopeCard
-          scopeName="command"
-          scopeList={commandScopeList}
-          setScopeList={setCommandScopeList}
-        />
-      </Dialog>
-      <RoleHeader />
-      <RoleTable />
-    </div>
       )}
-      </>
+    </>
   );
 }
 

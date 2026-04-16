@@ -3,8 +3,6 @@ import { ConfirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
 import { Tree } from "primereact/tree";
 import { useCallback, useEffect, useRef, useState } from "react";
-import HttpError from "../types/errors";
-import ErrorPage from "./ErrorPage";
 
 import GardenSummary from "../components/GardenSummary";
 import SystemCard from "../components/SystemCard";
@@ -12,6 +10,8 @@ import { Garden, Instance, System } from "../models/brewtils-types";
 import { GetConfig } from "../services/config_service";
 import { GetRootGarden } from "../services/garden_service";
 import { GetSeverity } from "../services/util_service";
+import HttpError from "../types/errors";
+import ErrorPage from "./ErrorPage";
 
 function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
   const [error, setError] = useState<HttpError>();
@@ -484,54 +484,59 @@ function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
 
   return (
     <>
-    {error ? (<ErrorPage errorNum={error?.code} />):
-    (
-    <div className="grid h-screen">
-      <Toast ref={toast} />
-      <ConfirmDialog />
-      {/* LEFT NAV TREE */}
-      <div className="col-3 surface-border p-3">
-        <h3>Select Garden</h3>
-        <Tree
-          value={gardenMenu}
-          nodeTemplate={gardenTreeNode}
-          selectionMode="single"
-          selectionKeys={selectedKey}
-          onSelectionChange={(e) => {
-            setSelectedKey(e.value);
-            if (typeof e.value === "string") {
-              findSelectedGarden(e.value);
-            }
-          }}
-        />
-      </div>
-
-      {/* MAIN WORKSPACE */}
-      <div
-        className="col-9 p-4 grid grid-nogutter"
-        style={{
-          gridTemplateColumns: `repeat(auto-fit, minmax(250px, 1fr))`,
-        }}
-      >
-        {/* Garden Summary */}
-        {selectedGarden && (
-          <GardenSummary
-            gardenRef={gardenRef}
-            selectedGarden={selectedGarden}
-          />
-        )}
-        {selectedGarden?.systems?.map((system: System) => (
-          <div key={system.id} className="mb-4 mr-2" style={{ width: "32%" }}>
-            <SystemCard
-              system={system}
-              toast={toast}
-              selectedGarden={selectedGarden.name}
+      {error ? (
+        <ErrorPage errorNum={error?.code} />
+      ) : (
+        <div className="grid h-screen">
+          <Toast ref={toast} />
+          <ConfirmDialog />
+          {/* LEFT NAV TREE */}
+          <div className="col-3 surface-border p-3">
+            <h3>Select Garden</h3>
+            <Tree
+              value={gardenMenu}
+              nodeTemplate={gardenTreeNode}
+              selectionMode="single"
+              selectionKeys={selectedKey}
+              onSelectionChange={(e) => {
+                setSelectedKey(e.value);
+                if (typeof e.value === "string") {
+                  findSelectedGarden(e.value);
+                }
+              }}
             />
           </div>
-        ))}
-      </div>
-    </div>
-    )}
+
+          {/* MAIN WORKSPACE */}
+          <div
+            className="col-9 p-4 grid grid-nogutter"
+            style={{
+              gridTemplateColumns: `repeat(auto-fit, minmax(250px, 1fr))`,
+            }}
+          >
+            {/* Garden Summary */}
+            {selectedGarden && (
+              <GardenSummary
+                gardenRef={gardenRef}
+                selectedGarden={selectedGarden}
+              />
+            )}
+            {selectedGarden?.systems?.map((system: System) => (
+              <div
+                key={system.id}
+                className="mb-4 mr-2"
+                style={{ width: "32%" }}
+              >
+                <SystemCard
+                  system={system}
+                  toast={toast}
+                  selectedGarden={selectedGarden.name}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </>
   );
 }

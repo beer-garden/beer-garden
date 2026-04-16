@@ -1,17 +1,22 @@
 import { Panel } from "primereact/panel";
 
-function ErrorPage({ errorNum, errorMsg }: { errorNum?: number, errorMsg?: string }) {
-
+function ErrorPage({
+  errorNum,
+  errorMsg,
+}: {
+  errorNum?: number;
+  errorMsg?: string;
+}) {
   function errorType(errorNum?: number) {
-    switch(errorNum) {
+    switch (errorNum) {
       case 400:
-        return "Bad Request"
+        return "Bad Request";
       case 401:
-        return "Unauthorized"
+        return "Unauthorized";
       case 404:
-        return "Not Found"
+        return "Not Found";
       default:
-        return "Something went wrong"
+        return "Something went wrong";
     }
   }
 
@@ -22,8 +27,10 @@ function ErrorPage({ errorNum, errorMsg }: { errorNum?: number, errorMsg?: strin
         <Panel header="Details" className="m-2 flex-1">
           {errorMsg ? (
             <p>errorMsg</p>
-          ): (
-            <p className="al">This page isn't available. Please try something else.</p>
+          ) : (
+            <p className="al">
+              This page isn't available. Please try something else.
+            </p>
           )}
         </Panel>
       </div>

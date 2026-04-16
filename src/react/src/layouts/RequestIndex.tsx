@@ -14,12 +14,12 @@ import {
   useState,
 } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import HttpError from "../types/errors";
-import ErrorPage from "./ErrorPage";
 
 import { Request } from "../models/brewtils-types";
 import { GetRequestList } from "../services/request_service";
 import { GetBaseURL } from "../services/util_service";
+import HttpError from "../types/errors";
+import ErrorPage from "./ErrorPage";
 
 function RequestIndex({ listeners }: { listeners: Record<string, any> }) {
   const [error, setError] = useState<HttpError>();
@@ -360,55 +360,56 @@ function RequestIndex({ listeners }: { listeners: Record<string, any> }) {
 
   return (
     <>
-    {error ? (<ErrorPage errorNum={error?.code} />):
-    (
-    <div>
-      <DataTable
-        value={requests}
-        loading={loading}
-        lazy
-        paginator
-        header={header}
-        rows={lazyParams.rows}
-        first={lazyParams.first}
-        totalRecords={totalRecords}
-        onPage={onPage}
-        filters={filters}
-        onFilter={(e) => setFilters(e.filters as typeof filters)}
-        rowsPerPageOptions={[5, 10, 20, 50]}
-      >
-        <Column
-          field="command_display_name"
-          filter
-          header="Command"
-          body={commandNameTemplate}
-        />
-        <Column field="namespace" filter header="Namespace" />
-        <Column field="system" filter header="System" />
-        <Column field="system_version" filter header="Version" />
-        <Column field="instance_name" filter header="Instance" />
-        <Column
-          field="status"
-          filter
-          header="Status"
-          filterElement={statusFilterTemplate}
-          filterMatchModeOptions={[
-            { label: "In", value: FilterMatchMode.IN },
-            { label: "Not In", value: FilterMatchMode.NOT_IN },
-          ]}
-        />
-        <Column
-          field="created_at"
-          filter
-          dataType="date"
-          header="Created"
-          body={(rowData) => formatDate(rowData.created_at)}
-          filterElement={dateTimeFilterTemplate}
-        />
-        <Column field="comment" filter header="Comment" />
-      </DataTable>
-    </div>
-    )}
+      {error ? (
+        <ErrorPage errorNum={error?.code} />
+      ) : (
+        <div>
+          <DataTable
+            value={requests}
+            loading={loading}
+            lazy
+            paginator
+            header={header}
+            rows={lazyParams.rows}
+            first={lazyParams.first}
+            totalRecords={totalRecords}
+            onPage={onPage}
+            filters={filters}
+            onFilter={(e) => setFilters(e.filters as typeof filters)}
+            rowsPerPageOptions={[5, 10, 20, 50]}
+          >
+            <Column
+              field="command_display_name"
+              filter
+              header="Command"
+              body={commandNameTemplate}
+            />
+            <Column field="namespace" filter header="Namespace" />
+            <Column field="system" filter header="System" />
+            <Column field="system_version" filter header="Version" />
+            <Column field="instance_name" filter header="Instance" />
+            <Column
+              field="status"
+              filter
+              header="Status"
+              filterElement={statusFilterTemplate}
+              filterMatchModeOptions={[
+                { label: "In", value: FilterMatchMode.IN },
+                { label: "Not In", value: FilterMatchMode.NOT_IN },
+              ]}
+            />
+            <Column
+              field="created_at"
+              filter
+              dataType="date"
+              header="Created"
+              body={(rowData) => formatDate(rowData.created_at)}
+              filterElement={dateTimeFilterTemplate}
+            />
+            <Column field="comment" filter header="Comment" />
+          </DataTable>
+        </div>
+      )}
     </>
   );
 }

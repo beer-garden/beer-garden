@@ -5,8 +5,6 @@ import { DataTable } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import HttpError from "../types/errors";
-import ErrorPage from "./ErrorPage";
 
 import SchedulerViewCard from "../components/SchedulerViewCard";
 import { Job } from "../models/brewtils-types";
@@ -18,6 +16,8 @@ import {
   RunAdhocJob,
 } from "../services/job_service";
 import { GetBaseURL } from "../services/util_service";
+import HttpError from "../types/errors";
+import ErrorPage from "./ErrorPage";
 
 function JobIndex({ listeners }: { listeners: Record<string, any> }) {
   const [error, setError] = useState<HttpError>();
@@ -217,80 +217,85 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
 
   return (
     <>
-    {error ? (<ErrorPage errorNum={error?.code} />):
-      (
-    <div>
-      <Dialog
-        visible={selectedJob !== undefined}
-        style={{ width: "50vw" }}
-        modal
-        onHide={() => {
-          if (!selectedJob) return;
-          setSelectedJob(undefined);
-        }}
-        content={() => (
-          <div>
-            {selectedJob && selectedJob.id && (
-              <SchedulerViewCard
-                jobId={selectedJob.id}
-                listeners={listeners}
-                removeItem={() => {
-                  if (!selectedJob) return;
-                  setSelectedJob(undefined);
-                }}
-                editJob={() => {
-                  if (selectedJob && selectedJob.id) {
-                    editJob(selectedJob.id);
-                  }
-                }}
-                deleteJob={() => {
-                  if (selectedJob && selectedJob.id) {
-                    DeleteJob(selectedJob)
-                      .then(() => {
-                        if (!selectedJob) return;
-                        setSelectedJob(undefined);
-                      })
-                      .catch((error) => {
-                        console.error("Error deleting job:", error);
-                      });
-                  }
-                }}
-              />
+      {error ? (
+        <ErrorPage errorNum={error?.code} />
+      ) : (
+        <div>
+          <Dialog
+            visible={selectedJob !== undefined}
+            style={{ width: "50vw" }}
+            modal
+            onHide={() => {
+              if (!selectedJob) return;
+              setSelectedJob(undefined);
+            }}
+            content={() => (
+              <div>
+                {selectedJob && selectedJob.id && (
+                  <SchedulerViewCard
+                    jobId={selectedJob.id}
+                    listeners={listeners}
+                    removeItem={() => {
+                      if (!selectedJob) return;
+                      setSelectedJob(undefined);
+                    }}
+                    editJob={() => {
+                      if (selectedJob && selectedJob.id) {
+                        editJob(selectedJob.id);
+                      }
+                    }}
+                    deleteJob={() => {
+                      if (selectedJob && selectedJob.id) {
+                        DeleteJob(selectedJob)
+                          .then(() => {
+                            if (!selectedJob) return;
+                            setSelectedJob(undefined);
+                          })
+                          .catch((error) => {
+                            console.error("Error deleting job:", error);
+                          });
+                      }
+                    }}
+                  />
+                )}
+              </div>
             )}
-          </div>
-        )}
-      />
+          />
 
-      <DataTable
-        value={jobs}
-        header={header}
-        paginator
-        rows={5}
-        rowsPerPageOptions={[5, 10, 25, 50]}
-        tableStyle={{ minWidth: "50rem" }}
-      >
-        <Column field="name" header="Actions" body={actionTemplate}></Column>
-        <Column field="name" header="Name"></Column>
-        <Column field="status" header="Status"></Column>
-        <Column field="request_template.system" header="System"></Column>
-        <Column
-          field="request_template.instance_name"
-          header="Instance"
-        ></Column>
-        <Column field="request_template.command" header="Command"></Column>
-        <Column
-          field="next_run_time"
-          header="Next Run Time"
-          body={runTimeTemplate}
-        ></Column>
-        <Column field="success_count" header="Success Count"></Column>
-        <Column field="error_count" header="Error Count"></Column>
-        <Column field="canceled_count" header="Canceled Count"></Column>
-        <Column field="skip_count" header="Skip Count"></Column>
-      </DataTable>
-    </div>
+          <DataTable
+            value={jobs}
+            header={header}
+            paginator
+            rows={5}
+            rowsPerPageOptions={[5, 10, 25, 50]}
+            tableStyle={{ minWidth: "50rem" }}
+          >
+            <Column
+              field="name"
+              header="Actions"
+              body={actionTemplate}
+            ></Column>
+            <Column field="name" header="Name"></Column>
+            <Column field="status" header="Status"></Column>
+            <Column field="request_template.system" header="System"></Column>
+            <Column
+              field="request_template.instance_name"
+              header="Instance"
+            ></Column>
+            <Column field="request_template.command" header="Command"></Column>
+            <Column
+              field="next_run_time"
+              header="Next Run Time"
+              body={runTimeTemplate}
+            ></Column>
+            <Column field="success_count" header="Success Count"></Column>
+            <Column field="error_count" header="Error Count"></Column>
+            <Column field="canceled_count" header="Canceled Count"></Column>
+            <Column field="skip_count" header="Skip Count"></Column>
+          </DataTable>
+        </div>
       )}
-      </>
+    </>
   );
 }
 

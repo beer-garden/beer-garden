@@ -309,60 +309,63 @@ function RequestView({
 
   return (
     <>
-    {error ? (<ErrorPage errorNum={error?.code} />):
-    (
-    <div>
-      {request && <RequestHeader {...request} />}
+      {error ? (
+        <ErrorPage errorNum={error?.code} />
+      ) : (
+        <div>
+          {request && <RequestHeader {...request} />}
 
-      {rootRequest && (
-        <RequestTreeChart
-          {...{
-            rootRequest: rootRequest,
-            currentRequestId: requestId,
-            config: config,
-          }}
-        />
-      )}
+          {rootRequest && (
+            <RequestTreeChart
+              {...{
+                rootRequest: rootRequest,
+                currentRequestId: requestId,
+                config: config,
+              }}
+            />
+          )}
 
-      {request && (
-        <Stepper
-          ref={stepperRef}
-          activeStep={activeIndex}
-          style={{ flexBasis: "50rem" }}
-        >
-          <StepperPanel header="Request Parameters">
-            {/* Need to determine if Read Only can still download values */}
-            <HasAccess
-              config={config}
-              permission="OPERATOR"
-              hasNamespace={request.namespace}
-              hasSystemName={request.system}
-              hasInstanceName={request.instance_name}
-              hasSystemVersion={request.system_version}
-              hasCommandName={request.command}
+          {request && (
+            <Stepper
+              ref={stepperRef}
+              activeStep={activeIndex}
+              style={{ flexBasis: "50rem" }}
             >
-              <RequestOptions {...request} />
-            </HasAccess>
-            {!showCommandForm && <Skeleton width="100%" height="10rem" />}
-            {showCommandForm && command && (
-              <CommandForm
-                {...{
-                  command: command,
-                  request: request,
-                  setRequest: setRequest,
-                }}
-              />
-            )}
-            {showCommandForm && !command && <UnformattedInput {...request} />}
-          </StepperPanel>
-          <StepperPanel header="Request Output">
-            {request && <RequestOptions {...request} />}
-            {request && <RequestOutput {...request} />}
-          </StepperPanel>
-        </Stepper>
+              <StepperPanel header="Request Parameters">
+                {/* Need to determine if Read Only can still download values */}
+                <HasAccess
+                  config={config}
+                  permission="OPERATOR"
+                  hasNamespace={request.namespace}
+                  hasSystemName={request.system}
+                  hasInstanceName={request.instance_name}
+                  hasSystemVersion={request.system_version}
+                  hasCommandName={request.command}
+                >
+                  <RequestOptions {...request} />
+                </HasAccess>
+                {!showCommandForm && <Skeleton width="100%" height="10rem" />}
+                {showCommandForm && command && (
+                  <CommandForm
+                    {...{
+                      command: command,
+                      request: request,
+                      setRequest: setRequest,
+                    }}
+                  />
+                )}
+                {showCommandForm && !command && (
+                  <UnformattedInput {...request} />
+                )}
+              </StepperPanel>
+              <StepperPanel header="Request Output">
+                {request && <RequestOptions {...request} />}
+                {request && <RequestOutput {...request} />}
+              </StepperPanel>
+            </Stepper>
+          )}
+        </div>
       )}
-    </div>
-    )}
     </>
   );
 }
