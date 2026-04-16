@@ -242,7 +242,7 @@ function UserChangeAccountMapping({
         <Column field="garden" header="Garden" expander></Column>
         <Column
           field="username"
-          header="Account Name (Editable)"
+          header="Account Name"
           body={accountEditorTemplate}
         ></Column>
       </TreeTable>
