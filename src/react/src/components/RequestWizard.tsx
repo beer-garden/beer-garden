@@ -342,6 +342,43 @@ function RequestWizard({
         .catch((error) => {
           console.error("Error fetching job:", error);
         });
+    } else if (requestItem?.job !== undefined) {
+      const job = requestItem.job;
+      GetSystemList()
+        .then((responseSystems) => {
+          const chosenSystem = responseSystems.find(
+            (s) =>
+              s.namespace == job.request_template.namespace &&
+              s.name == job.request_template.system &&
+              s.version == job.request_template.system_version,
+          );
+          setSelectedSystem(chosenSystem);
+          setSelectedInstance(
+            chosenSystem?.instances?.find(
+              (i) => i.name == job.request_template.instance_name,
+            ),
+          );
+          setSelectedCommand(
+            chosenSystem?.commands?.find(
+              (c) =>
+                c.name == job.request_template.command &&
+                c.display_name == job.request_template.command_display_name,
+            ),
+          );
+        })
+        .catch((error) => {
+          console.error("Error fetching systems:", error);
+        });
+      updateJobValue(job);
+      updateRequestCommand({
+        namespace: job.request_template?.namespace ?? undefined,
+        systemName: job.request_template?.system ?? undefined,
+        version: job.request_template?.system_version ?? undefined,
+        instance: job.request_template?.instance_name ?? undefined,
+        command: job.request_template?.command ?? undefined,
+      });
+      setShowCreateRequest(true);
+      setActiveIndex(2);
     } else {
       setShowCreateRequest(true);
       setActiveIndex(0);
@@ -444,9 +481,7 @@ function RequestWizard({
         <StepperPanel header="Pick Command">
           <BreadCrumb model={breadcrumbs} className="mb-2" />
           <CommandList
-            stepperRef={stepperRef}
             selectedSystem={selectedSystem}
-            setSelectedCommand={setSelectedCommand}
             commandListButtonClick={commandListButtonClick}
             instances={instances?.map((instance) => ({
               name: instance.name,
