@@ -9,6 +9,8 @@ import { ClearRefresh, ClearToken } from "../services/token_service";
 import { GetCurrentUser } from "../services/user_service";
 import CurrentRequestsTemplate from "./CurrentRequestsTemplate";
 import UserLogin from "./UserLogin";
+import { Dialog } from "primereact/dialog";
+import RequestCreateCard from "./RequestCreateCard";
 
 function NavigationMenu({
   listeners,
@@ -29,12 +31,27 @@ function NavigationMenu({
     config?.auth_enabled,
   );
 
+  const [showCreateReqest, setShowCreateRequest] = useState<boolean>(false);
+
+
   const items = [
+    {
+      label: "Create Request",
+      template: (item: any) => {
+        return (
+          <NavLink to="/requests" onClick={(e) => {e.preventDefault(); setShowCreateRequest(true);}} className="p-menuitem-link">         
+            <FontAwesomeIcon className="mr-2" icon="pencil" />
+            <span>{item.label}</span>       
+          </NavLink>
+        );
+      },
+    },
     {
       label: "Requests",
       template: (item: any) => {
         return (
           <NavLink to="/requests" className="p-menuitem-link">
+            <FontAwesomeIcon className="mr-2" icon="file-lines" />
             <span>{item.label}</span>
           </NavLink>
         );
@@ -45,6 +62,7 @@ function NavigationMenu({
       template: (item: any) => {
         return (
           <NavLink to="/jobs" className="p-menuitem-link">
+            <FontAwesomeIcon className="mr-2" icon="clock" />
             <span>{item.label}</span>
           </NavLink>
         );
@@ -55,50 +73,62 @@ function NavigationMenu({
       template: (item: any) => {
         return (
           <NavLink to="/workspace" className="p-menuitem-link">
+            <FontAwesomeIcon className="mr-2" icon="toolbox" />
             <span>{item.label}</span>
           </NavLink>
         );
       },
     },
     {
-      label: "Topics",
-      template: (item: any) => {
-        return (
-          <NavLink to="/topics" className="p-menuitem-link">
-            <span>{item.label}</span>
-          </NavLink>
-        );
-      },
-    },
-    {
-      label: "Users",
-      template: (item: any) => {
-        return (
-          <NavLink to="/" className="p-menuitem-link">
-            <span>{item.label}</span>
-          </NavLink>
-        );
-      },
-    },
-    {
-      label: "Roles",
-      template: (item: any) => {
-        return (
-          <NavLink to="/roles" className="p-menuitem-link">
-            <span>{item.label}</span>
-          </NavLink>
-        );
-      },
-    },
-    {
-      label: "About",
-      template: (item: any) => {
-        return (
-          <NavLink to="/about" className="p-menuitem-link">
-            <span>{item.label}</span>
-          </NavLink>
-        );
-      },
+      label: "Admin",
+      icon: <FontAwesomeIcon className="mr-2" icon="bars" />,
+      items: [
+        {
+          label: "Topics",
+          template: (item: any) => {
+            return (
+              <NavLink to="/topics" className="p-menuitem-link">
+                <FontAwesomeIcon className="mr-2" icon="envelope" />
+                <span>{item.label}</span>
+              </NavLink>
+            );
+          },
+        },
+        {
+          label: "Users",
+          template: (item: any) => {
+            return (
+              <NavLink to="/" className="p-menuitem-link">
+                <FontAwesomeIcon className="mr-2" icon="users" />
+                <span>{item.label}</span>
+              </NavLink>
+            );
+          },
+        },
+        {
+          label: "Roles",
+          template: (item: any) => {
+            return (
+              <NavLink to="/roles" className="p-menuitem-link">
+                <FontAwesomeIcon className="mr-2" icon="user-gear" />
+                <span>{item.label}</span>
+              </NavLink>
+            );
+          },
+        },
+
+        {
+          label: "About",
+          template: (item: any) => {
+            return (
+              <NavLink to="/about" className="p-menuitem-link">
+                <FontAwesomeIcon className="mr-2" icon="info" />
+                <span>{item.label}</span>
+              </NavLink>
+            );
+          },
+        },
+      ],
     },
   ];
 
@@ -213,6 +243,29 @@ function NavigationMenu({
 
   return (
     <>
+      {showCreateReqest && (
+        <Dialog
+        visible={showCreateReqest}
+        style={{ width: "50vw" }}
+        modal
+        onHide={() => {
+          setShowCreateRequest(false);
+        }}
+        content={() => (
+          <div>
+
+              <RequestCreateCard
+                removeItem={() => {
+                  setShowCreateRequest(false);
+                }}
+                updateRequestItem={()=>{}}
+                requestItem={{itemId: 'test', type:"REQUEST"}}
+              />
+            
+          </div>
+        )}
+      />
+      )}
       <div className="card">
         <Menubar model={items} start={start} end={end} />
       </div>
