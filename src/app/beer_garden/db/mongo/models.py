@@ -506,7 +506,7 @@ class Request(MongoModel, Document):
         if status_key not in self.metadata:
             self.metadata[status_key] = int(get_current_time().timestamp() * 1000)
 
-        if self.has_parent:
+        if self.has_parent or self.parent is not None:
 
             try:
                 if self.parent is None:
