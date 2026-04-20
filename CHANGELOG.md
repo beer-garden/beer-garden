@@ -1,9 +1,9 @@
 # Beer Garden Changelog
 
-#TBD
+# 3.33.0
 TBD
 
-- Updated Request Output to format JSON output files (#)
+- Updated Request Output to format JSON output files (#2098)
 
 # 3.32.0
 3/4/2026
