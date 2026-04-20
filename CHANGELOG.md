@@ -3,6 +3,9 @@
 # 3.33.0
 TBD
 
+- Fixed issue where TEMP requests did not spawn TEMP children (#2115)
+- Fixed issue where root_command_type was not set properly (#2115)
+
 # 3.32.0
 3/4/2026
 
