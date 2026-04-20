@@ -1,6 +1,6 @@
 # Beer Garden Changelog
 
-#TBD
+# 3.33.0
 TBD
 
 - Fixed Request View issue where duplicate requests shown in Children Tree and Status_Updated_At 
