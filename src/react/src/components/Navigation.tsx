@@ -1,16 +1,17 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
+import { Dialog } from "primereact/dialog";
 import { Menubar } from "primereact/menubar";
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
+import { v4 as uuidv4 } from "uuid";
 
-import { Config } from "../models/models";
+import { Config, RequestItem } from "../models/models";
 import { ClearRefresh, ClearToken } from "../services/token_service";
 import { GetCurrentUser } from "../services/user_service";
 import CurrentRequestsTemplate from "./CurrentRequestsTemplate";
+import RequestItemCard from "./RequestItemCard";
 import UserLogin from "./UserLogin";
-import { Dialog } from "primereact/dialog";
-import RequestCreateCard from "./RequestCreateCard";
 
 function NavigationMenu({
   listeners,
@@ -31,17 +32,36 @@ function NavigationMenu({
     config?.auth_enabled,
   );
 
-  const [showCreateReqest, setShowCreateRequest] = useState<boolean>(false);
+  const [showCreateRequest, setShowCreateRequest] = useState<boolean>(false);
+  const [requestItem, setRequestItem] = useState<RequestItem | undefined>(
+    undefined,
+  );
 
+  const addRequestItem = (itemParams?: Partial<RequestItem>) => {
+    const newItem: RequestItem = {
+      itemId: uuidv4(),
+      type: "REQUEST",
+      ...itemParams,
+    };
+    setRequestItem(newItem);
+  };
 
   const items = [
     {
       label: "Create Request",
       template: (item: any) => {
         return (
-          <NavLink to="/requests" onClick={(e) => {e.preventDefault(); setShowCreateRequest(true);}} className="p-menuitem-link">         
+          <NavLink
+            to="/requests"
+            onClick={(e) => {
+              e.preventDefault();
+              addRequestItem();
+              setShowCreateRequest(true);
+            }}
+            className="p-menuitem-link"
+          >
             <FontAwesomeIcon className="mr-2" icon="pencil" />
-            <span>{item.label}</span>       
+            <span>{item.label}</span>
           </NavLink>
         );
       },
@@ -243,28 +263,30 @@ function NavigationMenu({
 
   return (
     <>
-      {showCreateReqest && (
+      {showCreateRequest && requestItem && (
         <Dialog
-        visible={showCreateReqest}
-        style={{ width: "50vw" }}
-        modal
-        onHide={() => {
-          setShowCreateRequest(false);
-        }}
-        content={() => (
-          <div>
-
-              <RequestCreateCard
+          visible={showCreateRequest}
+          style={{ width: "70%", overflowY: "auto" }}
+          modal
+          onHide={() => {
+            setShowCreateRequest(false);
+            setRequestItem(undefined);
+          }}
+          content={() => (
+            <div>
+              <RequestItemCard
                 removeItem={() => {
                   setShowCreateRequest(false);
+                  setRequestItem(undefined);
                 }}
-                updateRequestItem={()=>{}}
-                requestItem={{itemId: 'test', type:"REQUEST"}}
+                updateRequestItem={setRequestItem}
+                requestItem={requestItem}
+                listeners={listeners}
+                addItem={addRequestItem}
               />
-            
-          </div>
-        )}
-      />
+            </div>
+          )}
+        />
       )}
       <div className="card">
         <Menubar model={items} start={start} end={end} />

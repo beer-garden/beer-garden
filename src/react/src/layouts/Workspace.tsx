@@ -5,11 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
-import RequestCreateCard from "../components/RequestCreateCard";
-import RequestViewCard from "../components/RequestViewCard";
-import SchedulerViewCard from "../components/SchedulerViewCard";
+import RequestItemCard from "../components/RequestItemCard";
 import { RequestItem } from "../models/models";
-import { DeleteJob } from "../services/job_service";
 
 function Workspace({
   listeners,
@@ -139,58 +136,17 @@ function Workspace({
     const list = [] as Array<any>;
 
     items.forEach((value: RequestItem) => {
-      if (value !== null && value !== undefined) {
-        if (value.type === "REQUEST") {
-          list.push(
-            <div className="mr-2 mb-2 mt-2" style={{ minWidth: "49%" }}>
-              <RequestCreateCard
-                requestItem={value}
-                updateRequestItem={updateItem}
-                removeItem={deleteItem}
-              />
-            </div>,
-          );
-        } else if (value.type === "VIEW_REQUEST") {
-          list.push(
-            <div className="mr-2 mb-2 mt-2" style={{ minWidth: "49%" }}>
-              <RequestViewCard
-                requestItem={value}
-                updateRequestItem={updateItem}
-                removeItem={deleteItem}
-                listeners={listeners}
-                addItem={addItem}
-              />
-            </div>,
-          );
-        } else if (value.type === "VIEW_JOB" && value?.jobId !== undefined) {
-          list.push(
-            <div className="mr-2 mb-2 mt-2" style={{ minWidth: "49%" }}>
-              <SchedulerViewCard
-                jobId={value.jobId}
-                removeItem={() => deleteItem(value.itemId)}
-                listeners={listeners}
-                editJob={() => {
-                  updateItem({
-                    ...value,
-                    type: "REQUEST",
-                  });
-                }}
-                deleteJob={() => {
-                  if (value.jobId) {
-                    DeleteJob({ id: value.jobId } as any)
-                      .then(() => {
-                        deleteItem(value.itemId);
-                      })
-                      .catch((error) => {
-                        console.error("Error deleting job:", error);
-                      });
-                  }
-                }}
-              />
-            </div>,
-          );
-        }
-      }
+      list.push(
+        <div className="mr-2 mb-2 mt-2" style={{ minWidth: "49%" }}>
+          <RequestItemCard
+            removeItem={deleteItem}
+            updateRequestItem={updateItem}
+            requestItem={value}
+            listeners={listeners}
+            addItem={addItem}
+          />
+        </div>,
+      );
     });
 
     return (
