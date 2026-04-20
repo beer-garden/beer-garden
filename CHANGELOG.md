@@ -3,6 +3,8 @@
 # 3.33.0
 TBD
 
+- Fixed Request View issue where duplicate requests shown in Children Tree and Status_Updated_At 
+  not updating (#2109)
 - Fixed issue where TEMP requests did not spawn TEMP children (#2115)
 - Fixed issue where root_command_type was not set properly (#2115)
 
