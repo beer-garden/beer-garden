@@ -854,7 +854,7 @@ def create_request(request: Request) -> Request:
     if request.target_garden is None:
         request.target_garden = config.get("garden.name")
 
-    if request.has_parent:
+    if request.has_parent or request.parent is not None:
         if request.parent is None:
             request.has_parent = False
         else:
@@ -868,7 +868,7 @@ def create_request(request: Request) -> Request:
                 if parent.command_type == "TEMP":
                     request.command_type = "TEMP"
             except DoesNotExist:
-                request.has_parent = None
+                request.has_parent = False
                 request.parent = None
 
     if hasattr(request.metadata, "_topic") and request.source_garden == config.get(

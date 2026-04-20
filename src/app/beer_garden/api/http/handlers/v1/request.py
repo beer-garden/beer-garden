@@ -218,7 +218,13 @@ class RequestOutputAPI(AuthorizationHandler):
                 None: "text/plain; charset=UTF-8",
             }
             self.set_header("Content-Type", content_types[response["output_type"]])
-            self.write(response["output"])
+            if response["output_type"] == "JSON":
+              try:
+                self.write(json.dumps(json.loads(response["output"]), indent=4))
+              except json.JSONDecodeError:
+                self.write(response["output"])
+            else:
+              self.write(response["output"])
         else:
             self.set_status(204)
 
