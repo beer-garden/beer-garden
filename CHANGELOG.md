@@ -3,6 +3,7 @@
 # 3.33.0
 TBD
 
+- Updated Request Output to format JSON output files (#2098)
 - Updating NGINX config timeout for receiving Request responses to 10 minutes (#2099)
 - Fixed Request View issue where duplicate requests shown in Children Tree and Status_Updated_At 
   not updating (#2109)
