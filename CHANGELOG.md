@@ -1,6 +1,6 @@
 # Beer Garden Changelog
 
-# TBD
+# 3.33.0
 TBD
 
 - Added Choice Validation logic supported by Request Creation API calls. Default behavior is to skip
