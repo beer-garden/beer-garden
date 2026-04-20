@@ -1,6 +1,6 @@
 # Beer Garden Changelog
 
-# TBD
+# 3.33.0
 TBD
 
 - Updating NGINX config timeout for receiving Request responses to 10 minutes (#2099)
