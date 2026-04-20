@@ -219,12 +219,12 @@ class RequestOutputAPI(AuthorizationHandler):
             }
             self.set_header("Content-Type", content_types[response["output_type"]])
             if response["output_type"] == "JSON":
-              try:
-                self.write(json.dumps(json.loads(response["output"]), indent=4))
-              except json.JSONDecodeError:
-                self.write(response["output"])
+                try:
+                    self.write(json.dumps(json.loads(response["output"]), indent=4))
+                except json.JSONDecodeError:
+                    self.write(response["output"])
             else:
-              self.write(response["output"])
+                self.write(response["output"])
         else:
             self.set_status(204)
 
