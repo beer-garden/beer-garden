@@ -1,6 +1,6 @@
 # Beer Garden Changelog
 
-# TBD
+# 3.33.0
 TBD
 
 - Fixed issue where TEMP requests did not spawn TEMP children (#2115)
