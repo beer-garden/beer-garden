@@ -1,7 +1,7 @@
 # Beer Garden Changelog
 
 # 3.33.0
-TBD
+4/21/2026
 
 - Added Choice Validation logic supported by Request Creation API calls. Default behavior is to skip
   choice validation for child requests. (#2113)
