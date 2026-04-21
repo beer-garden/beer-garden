@@ -298,25 +298,38 @@ function RequestViewCard({
             onClick={() => {
               window.open(`${GetBaseURL()}/request/${request.id}`, "_self");
             }}
-            model={[
-              {
-                label: "Run Again Now",
-                // icon: <FontAwesomeIcon icon="arrow-up-right-from-square" />,
-                command: () => {
-                  submitRequest(false);
-                },
-              },
-              {
-                label: "Pour Again",
-                // icon: <FontAwesomeIcon icon="arrow-up-from-bracket" />,
-                command: () => {
-                  addItem({
-                    requestId: request.id,
-                    type: "REQUEST",
-                  } as RequestItem);
-                },
-              },
-            ]}
+            model={
+              request &&
+              request.status &&
+              !["CREATED", "IN_PROGRESS"].includes(request.status)
+                ? [
+                    {
+                      label: "Run Again Now",
+                      // icon: <FontAwesomeIcon icon="arrow-up-right-from-square" />,
+                      command: () => {
+                        submitRequest(false);
+                      },
+                    },
+                    {
+                      label: "Pour Again",
+                      // icon: <FontAwesomeIcon icon="arrow-up-from-bracket" />,
+                      command: () => {
+                        addItem({
+                          requestId: request.id,
+                          type: "REQUEST",
+                        } as RequestItem);
+                      },
+                    },
+                  ]
+                : [
+                    {
+                      label: "Reload Request",
+                      command: () => {
+                        setRequest(null);
+                      },
+                    },
+                  ]
+            }
           />
         </div>
       )}
