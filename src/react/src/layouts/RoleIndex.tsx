@@ -15,6 +15,7 @@ import HasAccess from "../components/HasAccess";
 import RoleScopeCard from "../components/RoleScopeCard";
 import { Role } from "../models/brewtils-types";
 import { Config } from "../models/models";
+import { checkPermission } from "../services/permission_service";
 import {
   CreateRole,
   DeleteRole,
@@ -22,7 +23,6 @@ import {
   GetRoles,
   Rescan,
 } from "../services/role_service";
-
 const permissions = [
   { label: "GARDEN_ADMIN", value: "GARDEN_ADMIN" },
   { label: "PLUGIN_ADMIN", value: "PLUGIN_ADMIN" },
@@ -311,36 +311,37 @@ function RoleIndex({ config }: { config: Config }) {
 
     function roleButtonTemplate(role: Role) {
       // Show delete
+      if (!checkPermission(config, "GARDEN_ADMIN", { global: true })) {
+        return <></>;
+      }
       return (
-        <HasAccess config={config} permission="GARDEN_ADMIN" isGlobal={true}>
-          <div className="flex">
+        <div className="flex">
+          <Button
+            data-testid={`duplicate-btn-${role.name}`}
+            tooltip="Duplicate"
+            onClick={() => handleLoadRole(role, true)}
+          >
+            <FontAwesomeIcon icon="clone" />
+          </Button>
+          {!role.file_generated && !role.protected && (
             <Button
-              data-testid={`duplicate-btn-${role.name}`}
-              tooltip="Duplicate"
-              onClick={() => handleLoadRole(role, true)}
+              data-testid={`edit-btn-${role.name}`}
+              tooltip="Edit"
+              onClick={() => handleLoadRole(role, false)}
             >
-              <FontAwesomeIcon icon="clone" />
+              <FontAwesomeIcon icon="pencil" />
             </Button>
-            {!role.file_generated && !role.protected && (
-              <Button
-                data-testid={`edit-btn-${role.name}`}
-                tooltip="Edit"
-                onClick={() => handleLoadRole(role, false)}
-              >
-                <FontAwesomeIcon icon="pencil" />
-              </Button>
-            )}
-            {!role.file_generated && !role.protected && (
-              <Button
-                data-testid={`delete-btn-${role.name}`}
-                tooltip="Delete"
-                onClick={() => handleDeleteRole(role)}
-              >
-                <FontAwesomeIcon icon="trash-can" />
-              </Button>
-            )}
-          </div>
-        </HasAccess>
+          )}
+          {!role.file_generated && !role.protected && (
+            <Button
+              data-testid={`delete-btn-${role.name}`}
+              tooltip="Delete"
+              onClick={() => handleDeleteRole(role)}
+            >
+              <FontAwesomeIcon icon="trash-can" />
+            </Button>
+          )}
+        </div>
       );
     }
 

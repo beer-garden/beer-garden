@@ -139,7 +139,7 @@ function App() {
                 />
                 <Route
                   path="/jobs"
-                  element={<JobIndex listeners={listeners} config={config}/>}
+                  element={<JobIndex listeners={listeners} config={config} />}
                 />
                 <Route
                   path="/job/:jobId"

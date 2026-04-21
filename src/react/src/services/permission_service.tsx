@@ -126,7 +126,7 @@ export const checkPermission = (
   permission: "READ_ONLY" | "OPERATOR" | "PLUGIN_ADMIN" | "GARDEN_ADMIN",
   check: PermissionCheck,
 ): boolean => {
-  if (config.auth_enabled === undefined || config.auth_enabled === false) {
+  if (config?.auth_enabled === undefined || config?.auth_enabled === false) {
     return true;
   }
 

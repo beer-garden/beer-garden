@@ -54,7 +54,7 @@ describe("RoleIndex", () => {
 
     vi.mocked(roleService.GetRoles).mockResolvedValue(mockRoles);
 
-    render(<RoleIndex />);
+    render(<RoleIndex config={{}} />);
 
     await waitFor(() => {
       expect(screen.getByText("Role Management")).toBeInTheDocument();
@@ -68,7 +68,7 @@ describe("RoleIndex", () => {
     vi.mocked(roleService.GetRoles).mockResolvedValue(mockRoles);
     vi.mocked(roleService.Rescan).mockResolvedValue();
 
-    render(<RoleIndex />);
+    render(<RoleIndex config={{}} />);
 
     await waitFor(() => {
       expect(screen.getByTestId("role-datatable")).toBeInTheDocument();
@@ -88,7 +88,7 @@ describe("RoleIndex", () => {
 
     vi.mocked(roleService.GetRoles).mockResolvedValue(mockRoles);
 
-    render(<RoleIndex />);
+    render(<RoleIndex config={{}} />);
 
     await waitFor(() => {
       expect(screen.getByTestId("role-datatable")).toBeInTheDocument();
@@ -104,7 +104,7 @@ describe("RoleIndex", () => {
   test("renders role page with 2 roles", async () => {
     vi.mocked(roleService.GetRoles).mockResolvedValue(mockRoles);
 
-    render(<RoleIndex />);
+    render(<RoleIndex config={{}} />);
 
     await waitFor(() => {
       expect(screen.getByTestId("role-datatable")).toBeInTheDocument();
@@ -119,7 +119,7 @@ describe("RoleIndex", () => {
   test("Test for row buttons", async () => {
     vi.mocked(roleService.GetRoles).mockResolvedValue(mockRoles);
 
-    render(<RoleIndex />);
+    render(<RoleIndex config={{}} />);
 
     await waitFor(() => {
       expect(screen.getByTestId("role-datatable")).toBeInTheDocument();
@@ -146,7 +146,7 @@ describe("RoleIndex", () => {
   test("Test duplicate button", async () => {
     vi.mocked(roleService.GetRoles).mockResolvedValue(mockRoles);
 
-    render(<RoleIndex />);
+    render(<RoleIndex config={{}} />);
 
     await waitFor(() => {
       expect(screen.getByTestId("role-datatable")).toBeInTheDocument();
@@ -175,7 +175,7 @@ describe("RoleIndex", () => {
   test("Test edit button", async () => {
     vi.mocked(roleService.GetRoles).mockResolvedValue(mockRoles);
 
-    render(<RoleIndex />);
+    render(<RoleIndex config={{}} />);
 
     await waitFor(() => {
       expect(screen.getByTestId("role-datatable")).toBeInTheDocument();
@@ -202,7 +202,7 @@ describe("RoleIndex", () => {
   test("Test delete button", async () => {
     vi.mocked(roleService.GetRoles).mockResolvedValue(mockRoles);
 
-    render(<RoleIndex />);
+    render(<RoleIndex config={{}} />);
 
     await waitFor(() => {
       expect(screen.getByTestId("role-datatable")).toBeInTheDocument();
