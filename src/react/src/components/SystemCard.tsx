@@ -13,16 +13,25 @@ import InstanceCancelDeleteDialog from "../components/InstanceCancelDeleteReques
 import InstanceManageQueueDialog from "../components/InstanceManageQueueDialog";
 import InstanceShowLogsDialog from "../components/InstanceShowLogsDialog";
 import { Instance, System } from "../models/brewtils-types";
+import { Config, PermissionCheck } from "../models/models";
 import { StartInstance, StopInstance } from "../services/instance_service";
+import { checkPermission } from "../services/permission_service";
 import { DeleteSystem, ReloadSystem } from "../services/system_service";
+import HasAccess from "./HasAccess";
 
 interface SystemCardProps {
   system: System;
   selectedGarden?: string;
   toast?: RefObject<Toast | null>;
+  config: Config;
 }
 
-function SystemCard({ system, selectedGarden, toast }: SystemCardProps) {
+function SystemCard({
+  system,
+  selectedGarden,
+  toast,
+  config,
+}: SystemCardProps) {
   const getSeverity = (
     status?: string,
   ):
@@ -197,6 +206,18 @@ function SystemCard({ system, selectedGarden, toast }: SystemCardProps) {
   }
 
   const instanceActions = (instance: Instance) => {
+    if (
+      !checkPermission(config, "PLUGIN_ADMIN", {
+        gardenName: system.garden_name,
+        namespace: system.namespace,
+        systemName: system.name,
+        systemVersion: system.version,
+        instanceName: instance.name,
+      } as PermissionCheck)
+    ) {
+      return <></>;
+    }
+
     const instanceConfigMenu = useRef<Menu>(null);
 
     const [logsVisible, setLogsVisible] = useState(false);
@@ -303,39 +324,48 @@ function SystemCard({ system, selectedGarden, toast }: SystemCardProps) {
             {system.description}
           </div>
           <div>
-            <Button
-              severity="success"
-              size="small"
-              title="Start"
-              onClick={() => startSystem(system)}
+            <HasAccess
+              config={config}
+              permission="PLUGIN_ADMIN"
+              hasGardenName={system.garden_name}
+              hasNamespace={system.namespace}
+              hasSystemName={system.name}
+              hasSystemVersion={system.version}
             >
-              <FontAwesomeIcon icon="play" />
-            </Button>
-            <Button
-              severity="warning"
-              size="small"
-              title="Stop"
-              onClick={() => stopSystem(system)}
-            >
-              <FontAwesomeIcon icon="stop" />
-            </Button>
-            <Button
-              severity="info"
-              size="small"
-              title="Refresh"
-              onClick={() => reloadSystem(system)}
-              className="mr-2"
-            >
-              <FontAwesomeIcon icon="refresh" />
-            </Button>
-            <Button
-              severity="danger"
-              size="small"
-              title="Delete"
-              onClick={() => deleteSystem(system)}
-            >
-              <FontAwesomeIcon icon="trash" />
-            </Button>
+              <Button
+                severity="success"
+                size="small"
+                title="Start"
+                onClick={() => startSystem(system)}
+              >
+                <FontAwesomeIcon icon="play" />
+              </Button>
+              <Button
+                severity="warning"
+                size="small"
+                title="Stop"
+                onClick={() => stopSystem(system)}
+              >
+                <FontAwesomeIcon icon="stop" />
+              </Button>
+              <Button
+                severity="info"
+                size="small"
+                title="Refresh"
+                onClick={() => reloadSystem(system)}
+                className="mr-2"
+              >
+                <FontAwesomeIcon icon="refresh" />
+              </Button>
+              <Button
+                severity="danger"
+                size="small"
+                title="Delete"
+                onClick={() => deleteSystem(system)}
+              >
+                <FontAwesomeIcon icon="trash" />
+              </Button>
+            </HasAccess>
           </div>
         </div>
         <DataTable

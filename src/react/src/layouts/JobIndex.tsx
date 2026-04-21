@@ -8,8 +8,10 @@ import { Toast } from "primereact/toast";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import HasAccess from "../components/HasAccess";
 import SchedulerViewCard from "../components/SchedulerViewCard";
 import { Job } from "../models/brewtils-types";
+import { Config } from "../models/models";
 import {
   DeleteJob,
   ExportJobs,
@@ -21,7 +23,13 @@ import {
 } from "../services/job_service";
 import { GetBaseURL } from "../services/util_service";
 
-function JobIndex({ listeners }: { listeners: Record<string, any> }) {
+function JobIndex({
+  listeners,
+  config,
+}: {
+  listeners: Record<string, any>;
+  config: Config;
+}) {
   const [jobs, setJobs] = useState<Array<Job>>([]);
   const [selectedJob, setSelectedJob] = useState<Job | undefined>(undefined);
   const navigate = useNavigate();
@@ -90,108 +98,122 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
           rounded
           raised
           link
-          onClick={() => {
-            if (job.id) {
-              RunAdhocJob(job.id).catch((error) => {
-                console.error("Error running job:", error);
-              });
-            }
-          }}
-          title={"Run Now " + job.name}
-          className="mr-2"
-        >
-          <FontAwesomeIcon icon="forward" />
-        </Button>
-        <Button
-          rounded
-          raised
-          link
           onClick={() => setSelectedJob(job)}
           title={"View Job " + job.name}
           className="mr-2"
         >
           <FontAwesomeIcon icon="arrow-up-right-from-square" />
         </Button>
-        <Button
-          rounded
-          raised
-          link
-          onClick={() => {
-            if (job.id) {
-              editJob(job.id);
-            }
-          }}
-          title={"Update Job " + job.name}
-          className="mr-2"
+        <HasAccess
+          config={config}
+          permission="OPERATOR"
+          hasGardenName={job.request_template.target_garden}
+          hasNamespace={job.request_template.namespace}
+          hasSystemName={job.request_template.system}
+          hasSystemVersion={job.request_template.system_version}
+          hasInstanceName={job.request_template.instance_name}
+          hasCommandName={job.request_template.command}
         >
-          <FontAwesomeIcon icon="edit" />
-        </Button>
-        {job.status === "RUNNING" && (
           <Button
             rounded
             raised
             link
             onClick={() => {
-              PauseJob(job)
-                .then((updatedJob) => {
-                  setJobs((prevJobs) =>
-                    prevJobs.map((j) =>
-                      j.id === updatedJob.id ? updatedJob : j,
-                    ),
-                  );
-                })
-                .catch((error) => {
-                  console.error("Error pausing job:", error);
+              if (job.id) {
+                RunAdhocJob(job.id).catch((error) => {
+                  console.error("Error running job:", error);
                 });
+              }
             }}
-            title={"Pause Job " + job.name}
+            title={"Run Now " + job.name}
             className="mr-2"
           >
-            <FontAwesomeIcon icon="pause" />
+            <FontAwesomeIcon icon="forward" />
           </Button>
-        )}
-        {job.status === "PAUSED" && (
+
           <Button
             rounded
             raised
             link
             onClick={() => {
-              ResumeJob(job)
-                .then((updatedJob) => {
+              if (job.id) {
+                editJob(job.id);
+              }
+            }}
+            title={"Update Job " + job.name}
+            className="mr-2"
+          >
+            <FontAwesomeIcon icon="edit" />
+          </Button>
+          {job.status === "RUNNING" && (
+            <Button
+              rounded
+              raised
+              link
+              onClick={() => {
+                PauseJob(job)
+                  .then((updatedJob) => {
+                    setJobs((prevJobs) =>
+                      prevJobs.map((j) =>
+                        j.id === updatedJob.id ? updatedJob : j,
+                      ),
+                    );
+                  })
+                  .catch((error) => {
+                    console.error("Error pausing job:", error);
+                  });
+              }}
+              title={"Pause Job " + job.name}
+              className="mr-2"
+            >
+              <FontAwesomeIcon icon="pause" />
+            </Button>
+          )}
+          {job.status === "PAUSED" && (
+            <Button
+              rounded
+              raised
+              link
+              onClick={() => {
+                ResumeJob(job)
+                  .then((updatedJob) => {
+                    setJobs((prevJobs) =>
+                      prevJobs.map((j) =>
+                        j.id === updatedJob.id ? updatedJob : j,
+                      ),
+                    );
+                  })
+                  .catch((error) => {
+                    console.error("Error resuming job:", error);
+                  });
+              }}
+              title={"Resume Job " + job.name}
+              className="mr-2"
+            >
+              <FontAwesomeIcon icon="play" />
+            </Button>
+          )}
+          <Button
+            rounded
+            raised
+            link
+            onClick={() => {
+              DeleteJob(job)
+                .then(() => {
                   setJobs((prevJobs) =>
-                    prevJobs.map((j) =>
-                      j.id === updatedJob.id ? updatedJob : j,
-                    ),
+                    prevJobs.filter((j) => j.id !== job.id),
                   );
                 })
                 .catch((error) => {
-                  console.error("Error resuming job:", error);
+                  console.error("Error deleting job:", error);
                 });
             }}
-            title={"Resume Job " + job.name}
+            title={"Delete Job " + job.name}
             className="mr-2"
           >
-            <FontAwesomeIcon icon="play" />
+            <FontAwesomeIcon icon="trash" />
           </Button>
-        )}
-        <Button
-          rounded
-          raised
-          link
-          onClick={() => {
-            DeleteJob(job)
-              .then(() => {
-                setJobs((prevJobs) => prevJobs.filter((j) => j.id !== job.id));
-              })
-              .catch((error) => {
-                console.error("Error deleting job:", error);
-              });
-          }}
-          title={"Delete Job " + job.name}
-          className="mr-2"
-        >
-          <FontAwesomeIcon icon="trash" />
-        </Button>
+        </HasAccess>
       </div>
     );
   };

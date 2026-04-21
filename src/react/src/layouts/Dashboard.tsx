@@ -7,11 +7,18 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import GardenSummary from "../components/GardenSummary";
 import SystemCard from "../components/SystemCard";
 import { Garden, Instance, System } from "../models/brewtils-types";
+import { Config } from "../models/models";
 import { GetConfig } from "../services/config_service";
 import { GetRootGarden } from "../services/garden_service";
 import { GetSeverity } from "../services/util_service";
 
-function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
+function GardenDashboard({
+  listeners,
+  config,
+}: {
+  listeners: Record<string, any>;
+  config: Config;
+}) {
   const gardenRef = useRef<Garden>(null);
   const selectedGardenRef = useRef<Garden>(null);
 
@@ -511,6 +518,7 @@ function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
           <GardenSummary
             gardenRef={gardenRef}
             selectedGarden={selectedGarden}
+            config={config}
           />
         )}
         {selectedGarden?.systems?.map((system: System) => (
@@ -519,6 +527,7 @@ function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
               system={system}
               toast={toast}
               selectedGarden={selectedGarden.name}
+              config={config}
             />
           </div>
         ))}

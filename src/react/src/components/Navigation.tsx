@@ -207,7 +207,7 @@ function NavigationMenu({
         </div>
       )}
 
-      <CurrentRequestsTemplate listeners={listeners} />
+      <CurrentRequestsTemplate listeners={listeners} config={config} />
     </div>
   );
 

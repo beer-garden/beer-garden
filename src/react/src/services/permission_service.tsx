@@ -33,37 +33,37 @@ const CheckRole = (
   if (check.global && check.global === true) {
     if (
       check.gardenName !== undefined ||
-      (role.scopeGardens && role.scopeGardens?.length > 0)
+      (role.scope_gardens && role.scope_gardens?.length > 0)
     ) {
       return false;
     }
     if (
       check.namespace !== undefined ||
-      (role.scopeNamespaces && role.scopeNamespaces?.length > 0)
+      (role.scope_namespaces && role.scope_namespaces?.length > 0)
     ) {
       return false;
     }
     if (
       check.systemName !== undefined ||
-      (role.scopeSystems && role.scopeSystems?.length > 0)
+      (role.scope_systems && role.scope_systems?.length > 0)
     ) {
       return false;
     }
     if (
       check.systemVersion !== undefined ||
-      (role.scopeVersions && role.scopeVersions?.length > 0)
+      (role.scope_versions && role.scope_versions?.length > 0)
     ) {
       return false;
     }
     if (
       check.instanceName !== undefined ||
-      (role.scopeInstances && role.scopeInstances?.length > 0)
+      (role.scope_instances && role.scope_instances?.length > 0)
     ) {
       return false;
     }
     if (
       check.commandName !== undefined ||
-      (role.scopeCommands && role.scopeCommands?.length > 0)
+      (role.scope_commands && role.scope_commands?.length > 0)
     ) {
       return false;
     }
@@ -82,27 +82,27 @@ const CheckRole = (
     return scopes.includes(target);
   };
 
-  if (!checkAccess(check.gardenName, role.scopeGardens)) {
+  if (!checkAccess(check.gardenName, role.scope_gardens)) {
     return false;
   }
 
-  if (!checkAccess(check.namespace, role.scopeNamespaces)) {
+  if (!checkAccess(check.namespace, role.scope_namespaces)) {
     return false;
   }
 
-  if (!checkAccess(check.systemName, role.scopeSystems)) {
+  if (!checkAccess(check.systemName, role.scope_systems)) {
     return false;
   }
 
-  if (!checkAccess(check.systemVersion, role.scopeVersions)) {
+  if (!checkAccess(check.systemVersion, role.scope_versions)) {
     return false;
   }
 
-  if (!checkAccess(check.instanceName, role.scopeInstances)) {
+  if (!checkAccess(check.instanceName, role.scope_instances)) {
     return false;
   }
 
-  if (!checkAccess(check.commandName, role.scopeCommands)) {
+  if (!checkAccess(check.commandName, role.scope_commands)) {
     return false;
   }
 
@@ -123,7 +123,7 @@ export const CheckUserHasRoles = (
 
 export const checkPermission = (
   config: Config,
-  permission: string,
+  permission: "READ_ONLY" | "OPERATOR" | "PLUGIN_ADMIN" | "GARDEN_ADMIN",
   check: PermissionCheck,
 ): boolean => {
   if (config.auth_enabled === undefined || config.auth_enabled === false) {

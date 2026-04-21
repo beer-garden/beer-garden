@@ -11,6 +11,7 @@ import { Messages } from "primereact/messages";
 import { Toast } from "primereact/toast";
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 
+import HasAccess from "../components/HasAccess";
 import RoleScopeCard from "../components/RoleScopeCard";
 import { Role } from "../models/brewtils-types";
 import { Config } from "../models/models";
@@ -193,18 +194,20 @@ function RoleIndex({ config }: { config: Config }) {
     return (
       <div className="flex items-end ml-2 page-header">
         <h1 className="flex-1">Role Management</h1>
-        <div>
-          <Button
-            onClick={handleRescan}
-            label="Rescan Roles"
-            data-testid="rescan-btn"
-          />
-          <Button
-            onClick={openRoleDialog}
-            label="Create Role"
-            data-testid="create-btn"
-          />
-        </div>
+        <HasAccess config={config} permission="GARDEN_ADMIN" isGlobal={true}>
+          <div>
+            <Button
+              onClick={handleRescan}
+              label="Rescan Roles"
+              data-testid="rescan-btn"
+            />
+            <Button
+              onClick={openRoleDialog}
+              label="Create Role"
+              data-testid="create-btn"
+            />
+          </div>
+        </HasAccess>
       </div>
     );
   }
@@ -309,33 +312,35 @@ function RoleIndex({ config }: { config: Config }) {
     function roleButtonTemplate(role: Role) {
       // Show delete
       return (
-        <div className="flex">
-          <Button
-            data-testid={`duplicate-btn-${role.name}`}
-            tooltip="Duplicate"
-            onClick={() => handleLoadRole(role, true)}
-          >
-            <FontAwesomeIcon icon="clone" />
-          </Button>
-          {!role.file_generated && !role.protected && (
+        <HasAccess config={config} permission="GARDEN_ADMIN" isGlobal={true}>
+          <div className="flex">
             <Button
-              data-testid={`edit-btn-${role.name}`}
-              tooltip="Edit"
-              onClick={() => handleLoadRole(role, false)}
+              data-testid={`duplicate-btn-${role.name}`}
+              tooltip="Duplicate"
+              onClick={() => handleLoadRole(role, true)}
             >
-              <FontAwesomeIcon icon="pencil" />
+              <FontAwesomeIcon icon="clone" />
             </Button>
-          )}
-          {!role.file_generated && !role.protected && (
-            <Button
-              data-testid={`delete-btn-${role.name}`}
-              tooltip="Delete"
-              onClick={() => handleDeleteRole(role)}
-            >
-              <FontAwesomeIcon icon="trash-can" />
-            </Button>
-          )}
-        </div>
+            {!role.file_generated && !role.protected && (
+              <Button
+                data-testid={`edit-btn-${role.name}`}
+                tooltip="Edit"
+                onClick={() => handleLoadRole(role, false)}
+              >
+                <FontAwesomeIcon icon="pencil" />
+              </Button>
+            )}
+            {!role.file_generated && !role.protected && (
+              <Button
+                data-testid={`delete-btn-${role.name}`}
+                tooltip="Delete"
+                onClick={() => handleDeleteRole(role)}
+              >
+                <FontAwesomeIcon icon="trash-can" />
+              </Button>
+            )}
+          </div>
+        </HasAccess>
       );
     }
 

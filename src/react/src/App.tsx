@@ -103,7 +103,9 @@ function App() {
               <Routes>
                 <Route
                   path="/dashboard"
-                  element={<GardenDashboard listeners={listeners} />}
+                  element={
+                    <GardenDashboard listeners={listeners} config={config} />
+                  }
                 />
                 <Route
                   path="/request/:requestId"
@@ -137,7 +139,7 @@ function App() {
                 />
                 <Route
                   path="/jobs"
-                  element={<JobIndex listeners={listeners} />}
+                  element={<JobIndex listeners={listeners} config={config}/>}
                 />
                 <Route
                   path="/job/:jobId"
@@ -148,7 +150,9 @@ function App() {
                 <Route path="/swagger" element={<Swagger />} />
                 <Route
                   path="/"
-                  element={<GardenDashboard listeners={listeners} />}
+                  element={
+                    <GardenDashboard listeners={listeners} config={config} />
+                  }
                 />
               </Routes>
             </div>

@@ -5,8 +5,9 @@ import { InputSwitch } from "primereact/inputswitch";
 import { Skeleton } from "primereact/skeleton";
 import { useEffect, useState } from "react";
 
+import HasAccess from "../components/HasAccess";
 import { Job, Request } from "../models/brewtils-types";
-import { RequestCommand, RequestItem } from "../models/models";
+import { Config, RequestCommand, RequestItem } from "../models/models";
 import { CreateJob, GetJob, UpdateJob } from "../services/job_service";
 import { GetRequest } from "../services/request_service";
 import { PostRequest } from "../services/request_service";
@@ -19,10 +20,12 @@ function RequestCreateCard({
   requestItem,
   updateRequestItem,
   removeItem,
+  config,
 }: {
   requestItem: RequestItem;
   updateRequestItem: (item: RequestItem) => void;
   removeItem: (id: string) => void;
+  config: Config;
 }) {
   // Input Request
   const [request, setRequest] = useState<Request | undefined>(
@@ -261,38 +264,49 @@ function RequestCreateCard({
             />
           </div>
           <div style={{ marginLeft: "auto" }}>
-            {showCreateRequest && !showScheduleJob && (
-              <Button
-                label="Submit"
-                icon="pi pi-arrow-right"
-                onMouseDown={(event) => {
-                  if (event.button === 1) {
-                    // Middle mouse button click
-                    submitRequestAndOpen();
-                  } else {
-                    submitRequest();
-                  }
-                }}
-              />
-            )}
-            {showCreateRequest && showScheduleJob && !requestItem?.jobId && (
-              <Button
-                label="Submit Job"
-                severity="success"
-                icon="pi pi-arrow-right"
-                iconPos="right"
-                onClick={submitJob}
-              />
-            )}
-            {showCreateRequest && showScheduleJob && requestItem?.jobId && (
-              <Button
-                label="Update Job"
-                severity="success"
-                icon="pi pi-arrow-right"
-                iconPos="right"
-                onClick={updateJob}
-              />
-            )}
+            <HasAccess
+              config={config}
+              permission="OPERATOR"
+              hasGardenName={request?.target_garden}
+              hasNamespace={request?.namespace}
+              hasSystemName={request?.system}
+              hasInstanceName={request?.instance_name}
+              hasSystemVersion={request?.system_version}
+              hasCommandName={request?.command}
+            >
+              {showCreateRequest && !showScheduleJob && (
+                <Button
+                  label="Submit"
+                  icon="pi pi-arrow-right"
+                  onMouseDown={(event) => {
+                    if (event.button === 1) {
+                      // Middle mouse button click
+                      submitRequestAndOpen();
+                    } else {
+                      submitRequest();
+                    }
+                  }}
+                />
+              )}
+              {showCreateRequest && showScheduleJob && !requestItem?.jobId && (
+                <Button
+                  label="Submit Job"
+                  severity="success"
+                  icon="pi pi-arrow-right"
+                  iconPos="right"
+                  onClick={submitJob}
+                />
+              )}
+              {showCreateRequest && showScheduleJob && requestItem?.jobId && (
+                <Button
+                  label="Update Job"
+                  severity="success"
+                  icon="pi pi-arrow-right"
+                  iconPos="right"
+                  onClick={updateJob}
+                />
+              )}
+            </HasAccess>
           </div>
         </div>
       }
