@@ -1,5 +1,17 @@
 # Beer Garden Changelog
 
+# 3.33.0
+TBD
+
+- Added Choice Validation logic supported by Request Creation API calls. Default behavior is to skip
+  choice validation for child requests. (#2113)
+- Updated Request Output to format JSON output files (#2098)
+- Updating NGINX config timeout for receiving Request responses to 10 minutes (#2099)
+- Fixed Request View issue where duplicate requests shown in Children Tree and Status_Updated_At 
+  not updating (#2109)
+- Fixed issue where TEMP requests did not spawn TEMP children (#2115)
+- Fixed issue where root_command_type was not set properly (#2115)
+
 # 3.32.0
 3/4/2026
 
