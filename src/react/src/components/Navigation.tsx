@@ -4,16 +4,16 @@ import { Menubar } from "primereact/menubar";
 import { RefObject, useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 
-import CurrentRequestsTemplate from "./components/CurrentRequestsTemplate";
-import UserLogin from "./components/UserLogin";
-import { Config, TourStepProps } from "./models/models";
-import { ClearRefresh, ClearToken } from "./services/token_service";
+import CurrentRequestsTemplate from "../components/CurrentRequestsTemplate";
+import UserLogin from "../components/UserLogin";
+import { Config, TourStepProps } from "../models/models";
+import { ClearRefresh, ClearToken } from "../services/token_service";
 import {
   AddTourStep,
   ClearTourSteps,
   GenerateTourProps,
-} from "./services/tour_service";
-import { GetCurrentUser } from "./services/user_service";
+} from "../services/tour_service";
+import { GetCurrentUser } from "../services/user_service";
 
 function NavigationMenu({
   listeners,

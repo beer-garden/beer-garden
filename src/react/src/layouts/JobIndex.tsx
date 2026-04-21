@@ -3,7 +3,9 @@ import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
-import { RefObject, useEffect, useState } from "react";
+import { FileUpload } from "primereact/fileupload";
+import { Toast } from "primereact/toast";
+import { RefObject, useEffect, useRef,useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import SchedulerViewCard from "../components/SchedulerViewCard";
@@ -11,7 +13,9 @@ import { Job } from "../models/brewtils-types";
 import { TourStepProps } from "../models/models";
 import {
   DeleteJob,
+  ExportJobs,
   GetJobList,
+  ImportJobs,
   PauseJob,
   ResumeJob,
   RunAdhocJob,
@@ -127,6 +131,8 @@ function JobIndex({
       ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
     };
   }, [jobs]);
+  const toast = useRef(null as null | Toast);
+  const jobImportFileRef = useRef<FileUpload | null>(null);
 
   useEffect(() => {
     const MonitorJobs = (message: any) => {
@@ -306,33 +312,95 @@ function JobIndex({
     void navigate(`${GetBaseURL()}/create/job`);
   };
 
+  const customJobImporter = (event: any) => {
+    const file = event?.files?.[0];
+
+    if (!file) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Error",
+        detail: "No file selected for import",
+        life: 3000,
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const contents = e.target?.result;
+      if (typeof contents === "string") {
+        try {
+          await ImportJobs(JSON.parse(contents));
+          toast.current?.show({
+            severity: "success",
+            summary: "Success",
+            detail: "Jobs imported successfully",
+            life: 3000,
+          });
+
+          if (jobImportFileRef.current) {
+            jobImportFileRef.current.clear();
+          }
+
+          // Refresh the job list after successful import
+          GetJobList()
+            .then((data: [Array<Job>, Headers]) => {
+              const [responseJobs] = data;
+              setJobs(responseJobs);
+            })
+            .catch((error) => {
+              console.error("Error fetching jobs:", error);
+            });
+        } catch (error) {
+          console.error("Error importing jobs:", error);
+          toast.current?.show({
+            severity: "error",
+            summary: "Error",
+            detail: "Failed to import jobs",
+            life: 3000,
+          });
+        }
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const header = (
     <div className="flex flex-wrap align-items-center justify-content-between gap-2">
       <span className="text-xl text-900 font-bold">Requests Scheduler</span>
-      <div>
+      <Toast ref={toast} />
+      <div className="flex">
         <Button
-          rounded
+          className="mr-2"
           raised
           onClick={createJob}
-          className="mr-2"
           {...GenerateTourProps(createJobTourStep)}
         >
           Create Job
         </Button>
-        <Button
-          rounded
-          raised
-          onClick={createJob}
+
+        <FileUpload
+          ref={jobImportFileRef}
           className="mr-2"
+          mode="basic"
+          name="file"
+          accept=".json"
+          maxFileSize={1000000}
+          chooseLabel="Import Jobs"
+          customUpload
+          auto
+          uploadHandler={customJobImporter}
           {...GenerateTourProps(importJobTourStep)}
-        >
-          Import Jobs
-        </Button>
+        />
+
         <Button
-          rounded
-          raised
-          onClick={createJob}
           className="mr-2"
+          raised
+          onClick={() =>
+            ExportJobs().catch((error) =>
+              console.error("Error exporting jobs:", error),
+            )
+          }
           {...GenerateTourProps(exportJobTourStep)}
         >
           Export Jobs
