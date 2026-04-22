@@ -4,8 +4,8 @@ import "primeflex/primeflex.css";
 import "./App.css";
 
 import { PrimeReactProvider } from "primereact/api";
-import { ACTIONS, type EventData, Joyride, STATUS } from "react-joyride";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ACTIONS, type EventData, Joyride, STATUS } from "react-joyride";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import NavigationMenu from "./components/Navigation";
@@ -17,8 +17,8 @@ import RequestView from "./layouts/RequestView";
 import RoleIndex from "./layouts/RoleIndex";
 import Swagger from "./layouts/Swagger";
 import Workspace from "./layouts/Workspace";
-import { Config, Listener, TourStepProps } from "./models/models";
 import { Garden, Instance, System } from "./models/brewtils-types";
+import { Config, Listener, TourStepProps } from "./models/models";
 import { GetConfig } from "./services/config_service";
 import { GetRootGarden } from "./services/garden_service";
 import { preemptiveRefresh } from "./services/token_service";
@@ -39,6 +39,7 @@ function App() {
   const toggleRunTour = () => {
     runTourRef.current = !runTourRef.current;
     setRunTour(runTourRef.current);
+  };
   const rootGardenRef = useRef<Garden | undefined>(undefined);
   const [gardenState, setGardenState] = useState<number>(0);
 
@@ -82,7 +83,7 @@ function App() {
   };
 
   const runReloadUI = () => {
-    sessionStorage.clear()
+    sessionStorage.clear();
     localStorage.removeItem("requestItems");
     setReloadUI(reloadUI + 1);
   };
@@ -437,44 +438,79 @@ function App() {
                 />
                 <Route
                   path="/requests"
-                  element={<RequestIndex listeners={listeners.current} tourStepsRef={tourStepsRef}/>}
+                  element={
+                    <RequestIndex
+                      listeners={listeners.current}
+                      tourStepsRef={tourStepsRef}
+                    />
+                  }
                 />
                 <Route
                   path="/create/:defaultType/:paramNamespace?/:paramSystem?/:paramVersion?/:paramInstance?/:paramCommand?"
                   element={
-                    <Workspace listeners={listeners.current} display={false} tourStepsRef={tourStepsRef}/>
+                    <Workspace
+                      listeners={listeners.current}
+                      display={false}
+                      tourStepsRef={tourStepsRef}
+                    />
                   }
                 />
                 <Route
                   path="/recreate/:requestId"
                   element={
-                    <Workspace listeners={listeners.current} display={false} tourStepsRef={tourStepsRef}/>
+                    <Workspace
+                      listeners={listeners.current}
+                      display={false}
+                      tourStepsRef={tourStepsRef}
+                    />
                   }
                 />
                 <Route
                   path="/workspace"
-                  element={<Workspace listeners={listeners.current} tourStepsRef={tourStepsRef}/>}
+                  element={
+                    <Workspace
+                      listeners={listeners.current}
+                      tourStepsRef={tourStepsRef}
+                    />
+                  }
                 />
                 <Route
                   path="/workspace/request/:requestId"
                   element={
-                    <Workspace listeners={listeners.current} display={true} tourStepsRef={tourStepsRef}/>
+                    <Workspace
+                      listeners={listeners.current}
+                      display={true}
+                      tourStepsRef={tourStepsRef}
+                    />
                   }
                 />
                 <Route
                   path="/workspace/job/:jobId"
                   element={
-                    <Workspace listeners={listeners.current} display={true} tourStepsRef={tourStepsRef}/>
+                    <Workspace
+                      listeners={listeners.current}
+                      display={true}
+                      tourStepsRef={tourStepsRef}
+                    />
                   }
                 />
                 <Route
                   path="/jobs"
-                  element={<JobIndex listeners={listeners.current} tourStepsRef={tourStepsRef}/>}
+                  element={
+                    <JobIndex
+                      listeners={listeners.current}
+                      tourStepsRef={tourStepsRef}
+                    />
+                  }
                 />
                 <Route
                   path="/job/:jobId"
                   element={
-                    <Workspace listeners={listeners.current} display={false} tourStepsRef={tourStepsRef}/>
+                    <Workspace
+                      listeners={listeners.current}
+                      display={false}
+                      tourStepsRef={tourStepsRef}
+                    />
                   }
                 />
                 <Route path="/about" element={<AboutIndex config={config} />} />
