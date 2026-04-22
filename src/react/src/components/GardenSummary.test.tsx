@@ -82,6 +82,7 @@ describe("GardenSummary", () => {
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
         tourStepsRef={mockTourSteps()}
+        selectedSystems={[]}
       />,
     );
 
@@ -106,6 +107,7 @@ describe("GardenSummary", () => {
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
         tourStepsRef={mockTourSteps()}
+        selectedSystems={[]}
       />,
     );
 
@@ -133,6 +135,7 @@ describe("GardenSummary", () => {
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
         tourStepsRef={mockTourSteps()}
+        selectedSystems={[]}
       />,
     );
 
@@ -163,6 +166,7 @@ describe("GardenSummary", () => {
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
         tourStepsRef={mockTourSteps()}
+        selectedSystems={[]}
       />,
     );
 
@@ -209,6 +213,7 @@ describe("GardenSummary", () => {
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
         tourStepsRef={mockTourSteps()}
+        selectedSystems={[]}
       />,
     );
 
@@ -234,6 +239,7 @@ describe("GardenSummary", () => {
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
         tourStepsRef={mockTourSteps()}
+        selectedSystems={[]}
       />,
     );
 
@@ -259,6 +265,7 @@ describe("GardenSummary", () => {
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
         tourStepsRef={mockTourSteps()}
+        selectedSystems={[]}
       />,
     );
 
@@ -284,6 +291,7 @@ describe("GardenSummary", () => {
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
         tourStepsRef={mockTourSteps()}
+        selectedSystems={[]}
       />,
     );
 
@@ -309,6 +317,7 @@ describe("GardenSummary", () => {
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
         tourStepsRef={mockTourSteps()}
+        selectedSystems={[]}
       />,
     );
 
@@ -334,6 +343,7 @@ describe("GardenSummary", () => {
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
         tourStepsRef={mockTourSteps()}
+        selectedSystems={[]}
       />,
     );
 
@@ -361,6 +371,7 @@ describe("GardenSummary", () => {
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
         tourStepsRef={mockTourSteps()}
+        selectedSystems={[]}
       />,
     );
 
@@ -386,6 +397,7 @@ describe("GardenSummary", () => {
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
         tourStepsRef={mockTourSteps()}
+        selectedSystems={[]}
       />,
     );
 
@@ -419,6 +431,7 @@ describe("GardenSummary", () => {
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
         tourStepsRef={mockTourSteps()}
+        selectedSystems={[]}
       />,
     );
 
@@ -451,6 +464,7 @@ describe("GardenSummary", () => {
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
         tourStepsRef={mockTourSteps()}
+        selectedSystems={[]}
       />,
     );
 
@@ -483,6 +497,7 @@ describe("GardenSummary", () => {
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
         tourStepsRef={mockTourSteps()}
+        selectedSystems={[]}
       />,
     );
 
@@ -537,6 +552,7 @@ describe("GardenSummary", () => {
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
         tourStepsRef={mockTourSteps()}
+        selectedSystems={mockGarden.systems}
       />,
     );
 

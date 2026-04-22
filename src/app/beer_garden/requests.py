@@ -82,16 +82,19 @@ class RequestValidator(object):
             cls._instance = cls(config.get("request_validation"))
         return cls._instance
 
-    def validate_request(self, request):
+    def validate_request(self, request, choice_validation_enabled: bool = True):
         """Validation to be called before you save a request from a user
 
         :param request: The request to validate
+        :param choice_validation_enabled: Whether choice validation is enabled
         """
         self.logger.debug("Validating request")
 
         system = self.get_and_validate_system(request)
         command = self.get_and_validate_command_for_system(request, system)
-        request.parameters = self.get_and_validate_parameters(request, command)
+        request.parameters = self.get_and_validate_parameters(
+            request, command, choice_validation_enabled=choice_validation_enabled
+        )
 
         self.validate_parent_status(request)
 
@@ -200,7 +203,12 @@ class RequestValidator(object):
         )
 
     def get_and_validate_parameters(
-        self, request, command=None, command_parameters=None, request_parameters=None
+        self,
+        request,
+        command=None,
+        command_parameters=None,
+        request_parameters=None,
+        choice_validation_enabled=True,
     ):
         """Validates all request parameters
 
@@ -214,6 +222,7 @@ class RequestValidator(object):
         :param command: The the Command for this request. Will attempt to discover if None.
         :param command_parameters:  The command parameters.
         :param request_parameters: The request parameters.
+        :param choice_validation_enabled: Whether choice validation is enabled
         :return: The updated Parameters, ready to be saved to the database
         """
         self.logger.debug("Updating and Validating Parameters")
@@ -239,9 +248,16 @@ class RequestValidator(object):
                 request, command_parameter, request_parameters
             )
             extracted_value = self._extract_parameter_value_from_request(
-                request, command_parameter, request_parameters, command
+                request,
+                command_parameter,
+                request_parameters,
+                command,
+                choice_validation_enabled,
             )
-            self._validate_value_in_choices(request, extracted_value, command_parameter)
+            if choice_validation_enabled:
+                self._validate_value_in_choices(
+                    request, extracted_value, command_parameter
+                )
             self._validate_maximum(extracted_value, command_parameter)
             self._validate_minimum(extracted_value, command_parameter)
             self._validate_regex(extracted_value, command_parameter)
@@ -455,7 +471,12 @@ class RequestValidator(object):
                     )
 
     def _extract_parameter_value_from_request(
-        self, request, command_parameter, request_parameters, command
+        self,
+        request,
+        command_parameter,
+        request_parameters,
+        command,
+        choice_validation_enabled,
     ):
         """Extracts the expected value based on the parameter in the database,
         uses the default and validates the type of the request parameter"""
@@ -478,12 +499,20 @@ class RequestValidator(object):
             for value in request_values:
                 value_to_return.append(
                     self._validate_parameter_based_on_type(
-                        value, command_parameter, command, request
+                        value,
+                        command_parameter,
+                        command,
+                        request,
+                        choice_validation_enabled,
                     )
                 )
         else:
             value_to_return = self._validate_parameter_based_on_type(
-                request_value, command_parameter, command, request
+                request_value,
+                command_parameter,
+                command,
+                request,
+                choice_validation_enabled,
             )
 
         return value_to_return
@@ -522,7 +551,9 @@ class RequestValidator(object):
                     % (key, valid_keys)
                 )
 
-    def _validate_parameter_based_on_type(self, value, parameter, command, request):
+    def _validate_parameter_based_on_type(
+        self, value, parameter, command, request, choice_validation_enabled
+    ):
         """Validates the value passed in, ensures the type matches.
         Recursive calls for dictionaries which also have nested parameters"""
 
@@ -553,7 +584,11 @@ class RequestValidator(object):
                 if parameter.parameters:
                     self.logger.debug("Found Nested Parameters.")
                     return self.get_and_validate_parameters(
-                        request, command, parameter.parameters, dict_value
+                        request,
+                        command,
+                        parameter.parameters,
+                        dict_value,
+                        choice_validation_enabled=choice_validation_enabled,
                     )
                 return dict_value
             elif parameter.type.upper() == "DATE":
@@ -579,6 +614,7 @@ class RequestValidator(object):
                 % (parameter.key, parameter.type)
             )
 
+
 def get_request_children(request):
 
     request.children = db.query(Request, filter_params={"parent": request})
@@ -587,6 +623,7 @@ def get_request_children(request):
         for child in request.children:
             child = get_request_children(child)
     return request
+
 
 def get_request(request_id: str = None, request: Request = None) -> Request:
     """Retrieve an individual Request
@@ -694,9 +731,15 @@ def _publish_request(request: Request, is_admin: bool, priority: int):
     )
 
 
-def _validate_request(request: Request):
+def _validate_request(
+    request: Request, choice_validation_enabled: bool = None
+) -> Request:
     """Validates a Request"""
-    return RequestValidator.instance().validate_request(request)
+    if choice_validation_enabled is None:
+        choice_validation_enabled = request.parent is None
+    return RequestValidator.instance().validate_request(
+        request, choice_validation_enabled=choice_validation_enabled
+    )
 
 
 def _is_local_request(request: Request) -> bool:
@@ -721,6 +764,7 @@ def process_request(
     wait_event: Union[Future, threading.Event] = None,
     is_admin: bool = False,
     priority: int = 0,
+    choice_validation_enabled: bool = True,
 ) -> Request:
     """Validates and publishes a Request.
 
@@ -730,6 +774,7 @@ def process_request(
         when the request completes.
         is_admin: Flag indicating this request should be published on the admin queue
         priority: Number between 0 and 1, inclusive. High numbers equal higher priority
+        choice_validation_enabled: Whether choice validation is enabled
 
     Returns:
         The processed Request
@@ -749,7 +794,7 @@ def process_request(
     # are hard coded to map Plugin functions
     if not is_admin:
         try:
-            request = _validate_request(request)
+            request = _validate_request(request, choice_validation_enabled)
         except ModelValidationError:
             invalid_request(request)
             raise
@@ -820,7 +865,7 @@ def create_request(request: Request) -> Request:
     if request.target_garden is None:
         request.target_garden = config.get("garden.name")
 
-    if request.has_parent:
+    if request.has_parent or request.parent is not None:
         if request.parent is None:
             request.has_parent = False
         else:
@@ -834,7 +879,7 @@ def create_request(request: Request) -> Request:
                 if parent.command_type == "TEMP":
                     request.command_type = "TEMP"
             except DoesNotExist:
-                request.has_parent = None
+                request.has_parent = False
                 request.parent = None
 
     if hasattr(request.metadata, "_topic") and request.source_garden == config.get(
