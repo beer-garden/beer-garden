@@ -802,7 +802,7 @@ describe("SchedulerViewCard", () => {
       />,
     );
 
-    const closeButton = await screen.findByTitle("Close Job " + mockJob?.name);
+    const closeButton = await screen.findByTestId("CLOSE_JOB_" + mockJob?.name);
     await userEvent.click(closeButton);
 
     await waitFor(() => {

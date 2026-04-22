@@ -5,7 +5,8 @@ import "./App.css";
 
 import { PrimeReactProvider } from "primereact/api";
 import { Dialog } from "primereact/dialog";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ACTIONS, type EventData, Joyride, STATUS } from "react-joyride";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
@@ -19,11 +20,13 @@ import RequestView from "./layouts/RequestView";
 import RoleIndex from "./layouts/RoleIndex";
 import Swagger from "./layouts/Swagger";
 import Workspace from "./layouts/Workspace";
-import { Config, Listener, RequestItem } from "./models/models";
+import { Garden, Instance, System } from "./models/brewtils-types";
+import { Config, Listener, RequestItem, TourStepProps } from "./models/models";
 import { GetConfig } from "./services/config_service";
-import { ClearSystemsCache } from "./services/system_service";
+import { GetRootGarden } from "./services/garden_service";
 import { preemptiveRefresh } from "./services/token_service";
 import { GetToken } from "./services/token_service";
+import { ConvertToTourStepProps } from "./services/tour_service";
 
 function App() {
   const socketRef = useRef(null as null | any);
@@ -44,8 +47,59 @@ function App() {
     setRequestItem(newItem);
   };
 
+  const tourStepsRef = useRef<Array<TourStepProps>>([]);
+
+  const [runTour, setRunTour] = useState(false);
+  const runTourRef = useRef(runTour);
+  const toggleRunTour = () => {
+    runTourRef.current = !runTourRef.current;
+    setRunTour(runTourRef.current);
+  };
+  const rootGardenRef = useRef<Garden | undefined>(undefined);
+  const [gardenState, setGardenState] = useState<number>(0);
+
+  const updateRootGarden = (garden?: Garden) => {
+    if (garden) {
+      const removeSystems = (garden: Garden) => {
+        if (garden.children) {
+          garden.children = garden.children.map((child: Garden) => {
+            return removeSystems(child);
+          });
+        }
+        const updated = { ...garden };
+        delete updated.systems;
+        return updated;
+      };
+      rootGardenRef.current = removeSystems(garden);
+      sessionStorage.setItem(
+        "rootGarden",
+        JSON.stringify(rootGardenRef.current),
+      );
+    } else {
+      rootGardenRef.current = undefined;
+      sessionStorage.removeItem("rootGarden");
+    }
+    setGardenState((prev) => prev + 1);
+  };
+
+  const systemsRef = useRef<System[] | undefined>(undefined);
+
+  const [systemState, setSystemState] = useState<number>(0);
+
+  const updateSystems = (systems?: System[]) => {
+    if (systems) {
+      systemsRef.current = systems;
+      sessionStorage.setItem("systems", JSON.stringify(systemsRef.current));
+    } else {
+      systemsRef.current = undefined;
+      sessionStorage.removeItem("systems");
+    }
+    setSystemState((prev) => prev + 1);
+  };
+
   const runReloadUI = () => {
-    ClearSystemsCache();
+    sessionStorage.clear();
+    localStorage.removeItem("requestItems");
     setReloadUI(reloadUI + 1);
   };
 
@@ -54,9 +108,46 @@ function App() {
   };
 
   useEffect(() => {
+    // might take a second to load in all of the data, so pushed it off to to allow for the page to load
+    updateRootGarden(
+      sessionStorage.getItem("rootGarden")
+        ? JSON.parse(sessionStorage.getItem("rootGarden") || "")
+        : undefined,
+    );
+
+    updateSystems(
+      sessionStorage.getItem("systems")
+        ? JSON.parse(sessionStorage.getItem("systems") || "")
+        : undefined,
+    );
+
     GetConfig()
       .then((config) => {
         setConfig(config);
+        GetRootGarden(config)
+          .then((garden) => {
+            const extractSystems = (garden: Garden): System[] => {
+              let systems: System[] = [];
+              if (garden.systems) {
+                garden.systems.forEach((system: System) => {
+                  system.garden_name = garden.name;
+                  systems.push(system);
+                });
+              }
+              if (garden.children) {
+                for (const subGarden of garden.children) {
+                  systems = systems.concat(extractSystems(subGarden));
+                }
+              }
+              return systems;
+            };
+
+            updateSystems(extractSystems(garden));
+            updateRootGarden(garden);
+          })
+          .catch((error) => {
+            console.log("Unable to retrieve root garden", error);
+          });
       })
       .catch((error) => {
         console.log("Unable to retrieve configuration", error);
@@ -67,6 +158,204 @@ function App() {
     // Cleanup function to clear the interval when the component unmounts
     return () => clearInterval(interval);
   }, []);
+
+  const MonitorGardenSystemEvents = useCallback(
+    (message: any) => {
+      if (message.name === "GARDEN_REMOVED") {
+        const removeGarden = (
+          gardenId: string,
+          compareGarden: Garden,
+        ): Garden | undefined => {
+          if (gardenId === compareGarden.id) {
+            return undefined;
+          } else {
+            compareGarden.children = compareGarden.children
+              .map((child: Garden) => removeGarden(gardenId, child))
+              .filter(
+                (child: Garden | undefined) => child !== undefined,
+              ) as Array<Garden>;
+          }
+          return compareGarden;
+        };
+
+        if (!rootGardenRef.current) {
+          return;
+        }
+
+        updateRootGarden(
+          removeGarden(message.payload.id, rootGardenRef.current),
+        );
+        if (
+          systemsRef.current?.some(
+            (system: System) => system.garden_name === message.payload.name,
+          )
+        ) {
+          updateSystems(
+            systemsRef.current?.filter(
+              (system: System) => system.garden_name !== message.payload.name,
+            ),
+          );
+        }
+      } else if (
+        ["GARDEN_CONFIGURED", "GARDEN_UPDATED", "GARDEN_CREATED"].includes(
+          message.name,
+        )
+      ) {
+        const upsertGarden = (
+          updatedGarden: Garden,
+          compareGarden: Garden,
+        ): Garden => {
+          if (updatedGarden.id === compareGarden.id) {
+            compareGarden = {
+              ...compareGarden,
+              receiving_connections: updatedGarden.receiving_connections,
+              publishing_connections: updatedGarden.publishing_connections,
+              metadata: updatedGarden.metadata,
+            };
+          } else {
+            compareGarden.children = compareGarden.children.map(
+              (child: Garden) => upsertGarden(updatedGarden, child),
+            );
+            // New one hop Garden
+            if (
+              !updatedGarden.has_parent &&
+              updatedGarden.connection_type === "Remote" &&
+              compareGarden.connection_type !== "Remote"
+            ) {
+              if (
+                !compareGarden.children.some(
+                  (child: Garden) => child.id === updatedGarden.id,
+                )
+              ) {
+                compareGarden.children.push(updatedGarden);
+              }
+            }
+          }
+          return compareGarden;
+        };
+
+        const upsertSystems = (
+          updatedGarden: Garden,
+          systems: System[] | undefined,
+        ): System[] | undefined => {
+          if (systems === undefined) {
+            return updatedGarden.systems;
+          }
+
+          if (updatedGarden.systems) {
+            systems = systems
+              .filter(
+                (system: System) => system.garden_name !== updatedGarden.name,
+              )
+              .concat(
+                updatedGarden.systems.map((system: System) => {
+                  system.garden_name = updatedGarden.name;
+                  return system;
+                }),
+              );
+          }
+          return systems;
+        };
+        if (message.payload.systems) {
+          updateSystems(upsertSystems(message.payload, systemsRef.current));
+        }
+        updateRootGarden(
+          upsertGarden(message.payload, rootGardenRef.current as Garden),
+        );
+      } else if (message.name === "SYSTEM_REMOVED") {
+        updateSystems(
+          systemsRef.current?.filter(
+            (system: System) => system.id !== message.payload.id,
+          ),
+        );
+      } else if (message.name === "SYSTEM_UPDATED") {
+        updateSystems(
+          systemsRef.current?.map((system: System) => {
+            if (system.id === message.payload.id) {
+              return {
+                ...system,
+                ...message.payload,
+              };
+            }
+            return system;
+          }),
+        );
+      } else if (message.name === "SYSTEM_CREATED") {
+        const newSystems = { ...message.payload };
+        if (!newSystems.garden_name) {
+          newSystems.garden_name = message.payload.namespace;
+        }
+        if (!newSystems.garden_name) {
+          newSystems.garden_name = message.garden;
+        }
+
+        updateSystems(
+          systemsRef.current
+            ?.filter((system: System) => system.id !== message.payload.id)
+            .concat(newSystems),
+        );
+      } else if (
+        [
+          "INSTANCE_STARTED",
+          "INSTANCE_STOPPED",
+          "INSTANCE_UPDATED",
+          "INSTANCE_INITIALIZED",
+        ].includes(message.name)
+      ) {
+        const updateInstance = (
+          updatedInstance: Instance,
+          checkSystems: System[] | undefined,
+        ): [System[] | undefined, boolean] => {
+          if (!checkSystems) {
+            return [undefined, false];
+          }
+
+          if (
+            checkSystems.some((system: System) =>
+              system.instances?.some(
+                (instance: Instance) => instance.id === updatedInstance.id,
+              ),
+            )
+          ) {
+            checkSystems = checkSystems.map((system: System) => {
+              if (
+                system.instances &&
+                system.instances.some(
+                  (instance: Instance) => instance.id === updatedInstance.id,
+                )
+              ) {
+                system.instances = system.instances.map(
+                  (instance: Instance) => {
+                    if (instance.id === updatedInstance.id) {
+                      return {
+                        ...instance,
+                        ...{ status: updatedInstance.status },
+                      };
+                    }
+                    return instance;
+                  },
+                );
+              }
+              return system;
+            });
+
+            return [checkSystems, true];
+          }
+
+          return [checkSystems, false];
+        };
+
+        const [updatedSystems, updated] = updateInstance(
+          message.payload,
+          systemsRef.current,
+        );
+        if (updated) {
+          updateSystems(updatedSystems);
+        }
+      }
+    },
+    [rootGardenRef, systemsRef],
+  );
 
   useEffect(() => {
     // Create WebSocket connection when component mounts
@@ -81,7 +370,7 @@ function App() {
             JSON.stringify({ name: "UPDATE_TOKEN", payload: GetToken() }),
           );
         } else {
-          for (const [key, listener] of Object.entries(listeners)) {
+          for (const [key, listener] of Object.entries(listeners.current)) {
             if (key && listener && listener.listener) {
               listener.listener(eventData);
               console.log("Message from server for listener", key, event.data);
@@ -92,6 +381,9 @@ function App() {
     };
     // Add event listeners to the socket instance
     socketRef.current.addEventListener("message", handleMessage);
+    listeners.current.root_app = {
+      listener: MonitorGardenSystemEvents,
+    } as Listener;
 
     // Cleanup function to run when the component unmounts or dependencies change
     return () => {
@@ -104,16 +396,38 @@ function App() {
       ? undefined
       : import.meta.env.VITE_BASE_URL || undefined;
 
+  const handleJoyrideEvent = (data: EventData) => {
+    const { action, status } = data;
+
+    if (action === ACTIONS.CLOSE) {
+      runTourRef.current = false;
+      setRunTour(false);
+    } else if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
+      runTourRef.current = false;
+      setRunTour(false);
+    }
+  };
+
   return (
     <PrimeReactProvider value={primeValue}>
       <div className="flex">
         <div className="flex-grow-1">
           <BrowserRouter basename={baseURL}>
+            {runTour && (
+              <Joyride
+                onEvent={handleJoyrideEvent}
+                continuous
+                run={true}
+                steps={ConvertToTourStepProps(tourStepsRef.current)}
+              />
+            )}
             <NavigationMenu
-              listeners={listeners}
+              listeners={listeners.current}
               config={config}
               runReloadUI={runReloadUI}
               addRequestItem={addRequestItem}
+              toggleRunTour={toggleRunTour}
+              tourStepsRef={tourStepsRef}
             />
             {requestItem && (
               <Dialog
@@ -149,13 +463,21 @@ function App() {
               <Routes>
                 <Route
                   path="/dashboard"
-                  element={<GardenDashboard listeners={listeners} />}
+                  element={
+                    <GardenDashboard
+                      tourStepsRef={tourStepsRef}
+                      gardenRef={rootGardenRef}
+                      systemsRef={systemsRef}
+                      gardenState={gardenState}
+                      systemState={systemState}
+                    />
+                  }
                 />
                 <Route
                   path="/request/:requestId"
                   element={
                     <RequestView
-                      listeners={listeners}
+                      listeners={listeners.current}
                       config={config}
                       addRequestItem={addRequestItem}
                     />
@@ -165,50 +487,100 @@ function App() {
                   path="/requests"
                   element={
                     <RequestIndex
-                      listeners={listeners}
+                      listeners={listeners.current}
+                      tourStepsRef={tourStepsRef}
                       addRequestItem={addRequestItem}
                     />
                   }
                 />
                 <Route
                   path="/create/:defaultType/:paramNamespace?/:paramSystem?/:paramVersion?/:paramInstance?/:paramCommand?"
-                  element={<Workspace listeners={listeners} display={false} />}
+                  element={
+                    <Workspace
+                      listeners={listeners.current}
+                      display={false}
+                      tourStepsRef={tourStepsRef}
+                    />
+                  }
                 />
                 <Route
                   path="/recreate/:requestId"
-                  element={<Workspace listeners={listeners} display={false} />}
+                  element={
+                    <Workspace
+                      listeners={listeners.current}
+                      display={false}
+                      tourStepsRef={tourStepsRef}
+                    />
+                  }
                 />
                 <Route
                   path="/workspace"
-                  element={<Workspace listeners={listeners} />}
+                  element={
+                    <Workspace
+                      listeners={listeners.current}
+                      tourStepsRef={tourStepsRef}
+                    />
+                  }
                 />
                 <Route
                   path="/workspace/request/:requestId"
-                  element={<Workspace listeners={listeners} display={true} />}
+                  element={
+                    <Workspace
+                      listeners={listeners.current}
+                      display={true}
+                      tourStepsRef={tourStepsRef}
+                    />
+                  }
                 />
                 <Route
                   path="/workspace/job/:jobId"
-                  element={<Workspace listeners={listeners} display={true} />}
+                  element={
+                    <Workspace
+                      listeners={listeners.current}
+                      display={true}
+                      tourStepsRef={tourStepsRef}
+                    />
+                  }
                 />
                 <Route
                   path="/jobs"
                   element={
                     <JobIndex
-                      listeners={listeners}
+                      listeners={listeners.current}
+                      tourStepsRef={tourStepsRef}
                       addRequestItem={addRequestItem}
                     />
                   }
                 />
                 <Route
                   path="/job/:jobId"
-                  element={<Workspace listeners={listeners} display={false} />}
+                  element={
+                    <Workspace
+                      listeners={listeners.current}
+                      display={false}
+                      tourStepsRef={tourStepsRef}
+                    />
+                  }
                 />
                 <Route path="/about" element={<AboutIndex config={config} />} />
-                <Route path="/roles" element={<RoleIndex config={config} />} />
+                <Route
+                  path="/roles"
+                  element={
+                    <RoleIndex config={config} tourStepsRef={tourStepsRef} />
+                  }
+                />
                 <Route path="/swagger" element={<Swagger />} />
                 <Route
                   path="/"
-                  element={<GardenDashboard listeners={listeners} />}
+                  element={
+                    <GardenDashboard
+                      tourStepsRef={tourStepsRef}
+                      gardenRef={rootGardenRef}
+                      systemsRef={systemsRef}
+                      gardenState={gardenState}
+                      systemState={systemState}
+                    />
+                  }
                 />
               </Routes>
             </div>

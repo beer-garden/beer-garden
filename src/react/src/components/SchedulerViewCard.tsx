@@ -243,6 +243,7 @@ function SchedulerViewCard({
             }}
             className="mr-2 ml-2 mt-2"
             tooltip={"Close Job " + job?.name}
+            data-testid={"CLOSE_JOB_" + job?.name}
           >
             <FontAwesomeIcon icon="xmark" />
           </Button>

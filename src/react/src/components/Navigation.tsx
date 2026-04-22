@@ -1,25 +1,34 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
 import { Menubar } from "primereact/menubar";
-import { useEffect, useState } from "react";
+import { RefObject, useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 
-import { Config, RequestItem } from "../models/models";
+import { Config, RequestItem, TourStepProps } from "../models/models";
+import CurrentRequestsTemplate from "../components/CurrentRequestsTemplate";
+import UserLogin from "../components/UserLogin";
 import { ClearRefresh, ClearToken } from "../services/token_service";
+import {
+  AddTourStep,
+  ClearTourSteps,
+  GenerateTourProps,
+} from "../services/tour_service";
 import { GetCurrentUser } from "../services/user_service";
-import CurrentRequestsTemplate from "./CurrentRequestsTemplate";
-import UserLogin from "./UserLogin";
 
 function NavigationMenu({
   listeners,
   config,
   runReloadUI,
   addRequestItem,
+  toggleRunTour,
+  tourStepsRef,
 }: {
   listeners: Record<string, any>;
   config: Config;
   runReloadUI: () => void;
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
+  toggleRunTour: () => void;
+  tourStepsRef: RefObject<Array<TourStepProps>>;
 }) {
   const [iconDefault, setIconDefault] = useState<string>(
     config?.icon_default ?? "beer-mug-empty",
@@ -30,6 +39,84 @@ function NavigationMenu({
   const [authEnabled, setAuthEnabled] = useState<boolean | undefined>(
     config?.auth_enabled,
   );
+
+  const tourUuid = "navigation_tour";
+  const tourPrefix = "navigation";
+
+  const homeLinkTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Home Link",
+    content: "Navigate to the home page of the application.",
+    layer: "NAVIGATION",
+    pos: 0,
+  };
+
+  const requestTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Requests Link",
+    content: "Navigate to the Request Page to see invoked requests.",
+    layer: "NAVIGATION",
+    pos: 1,
+  };
+
+  const schedulerTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Scheduler Link",
+    content: "Navigate to the Scheduler Page to see scheduled jobs.",
+    layer: "NAVIGATION",
+    pos: 2,
+  };
+
+  const workspaceTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Workspace Link",
+    content:
+      "Navigate to the Workspace to see your current workbench of requests and scheduled jobs.",
+    layer: "NAVIGATION",
+    pos: 3,
+  };
+
+  const topicsTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Topics Link",
+    content:
+      "Navigate to the Topics Page to see the list of managed message bus topics.",
+    layer: "NAVIGATION",
+    pos: 4,
+  };
+
+  const usersTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Users Link",
+    content: "Navigate to the Users Page to see the list of user accounts.",
+    layer: "NAVIGATION",
+    pos: 5,
+  };
+
+  const rolesTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Roles Link",
+    content: "Navigate to the Roles Page to see the list of user roles.",
+    layer: "NAVIGATION",
+    pos: 6,
+  };
+
+  const aboutTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "About Link",
+    content:
+      "Navigate to the About Page to see information about this application.",
+    layer: "NAVIGATION",
+    pos: 7,
+  };
 
   const items = [
     {
@@ -54,7 +141,11 @@ function NavigationMenu({
       label: "Requests",
       template: (item: any) => {
         return (
-          <NavLink to="/requests" className="p-menuitem-link">
+          <NavLink
+            to="/requests"
+            className="p-menuitem-link"
+            {...GenerateTourProps(requestTourStep)}
+          >
             <FontAwesomeIcon className="mr-2" icon="file-lines" />
             <span>{item.label}</span>
           </NavLink>
@@ -65,7 +156,11 @@ function NavigationMenu({
       label: "Scheduler",
       template: (item: any) => {
         return (
-          <NavLink to="/jobs" className="p-menuitem-link">
+          <NavLink
+            to="/jobs"
+            className="p-menuitem-link"
+            {...GenerateTourProps(schedulerTourStep)}
+          >
             <FontAwesomeIcon className="mr-2" icon="clock" />
             <span>{item.label}</span>
           </NavLink>
@@ -76,7 +171,11 @@ function NavigationMenu({
       label: "Workspace",
       template: (item: any) => {
         return (
-          <NavLink to="/workspace" className="p-menuitem-link">
+          <NavLink
+            to="/workspace"
+            className="p-menuitem-link"
+            {...GenerateTourProps(workspaceTourStep)}
+          >
             <FontAwesomeIcon className="mr-2" icon="toolbox" />
             <span>{item.label}</span>
           </NavLink>
@@ -91,7 +190,7 @@ function NavigationMenu({
           label: "Topics",
           template: (item: any) => {
             return (
-              <NavLink to="/topics" className="p-menuitem-link">
+              <NavLink to="/topics" className="p-menuitem-link" {...GenerateTourProps(topicsTourStep)}>
                 <FontAwesomeIcon className="mr-2" icon="envelope" />
                 <span>{item.label}</span>
               </NavLink>
@@ -102,7 +201,7 @@ function NavigationMenu({
           label: "Users",
           template: (item: any) => {
             return (
-              <NavLink to="/" className="p-menuitem-link">
+              <NavLink to="/" className="p-menuitem-link" {...GenerateTourProps(usersTourStep)}>
                 <FontAwesomeIcon className="mr-2" icon="users" />
                 <span>{item.label}</span>
               </NavLink>
@@ -113,7 +212,7 @@ function NavigationMenu({
           label: "Roles",
           template: (item: any) => {
             return (
-              <NavLink to="/roles" className="p-menuitem-link">
+              <NavLink to="/roles" className="p-menuitem-link" {...GenerateTourProps(rolesTourStep)}>
                 <FontAwesomeIcon className="mr-2" icon="user-gear" />
                 <span>{item.label}</span>
               </NavLink>
@@ -125,7 +224,7 @@ function NavigationMenu({
           label: "About",
           template: (item: any) => {
             return (
-              <NavLink to="/about" className="p-menuitem-link">
+              <NavLink to="/about" className="p-menuitem-link" {...GenerateTourProps(aboutTourStep)}>
                 <FontAwesomeIcon className="mr-2" icon="circle-info" />
                 <span>{item.label}</span>
               </NavLink>
@@ -140,6 +239,7 @@ function NavigationMenu({
     <NavLink
       className="p-menuitem-link text-primary cursor-pointer px-3 py-2 overflow-hidden relative font-semibold text-lg uppercase p-ripple hover:surface-ground"
       to="/"
+      {...GenerateTourProps(homeLinkTourStep)}
     >
       <div className="flex">
         <div className="mr-2">
@@ -192,6 +292,19 @@ function NavigationMenu({
         });
       }
     }
+
+    AddTourStep(tourStepsRef, homeLinkTourStep);
+    AddTourStep(tourStepsRef, requestTourStep);
+    AddTourStep(tourStepsRef, schedulerTourStep);
+    AddTourStep(tourStepsRef, workspaceTourStep);
+    AddTourStep(tourStepsRef, topicsTourStep);
+    AddTourStep(tourStepsRef, usersTourStep);
+    AddTourStep(tourStepsRef, rolesTourStep);
+    AddTourStep(tourStepsRef, aboutTourStep);
+
+    return () => {
+      ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+    };
   }, [config, authEnabled, username, iconDefault, applicationName]);
 
   const end = (
@@ -240,6 +353,16 @@ function NavigationMenu({
           )}
         </div>
       )}
+      <Button
+        text
+        className="mr-2"
+        onClick={toggleRunTour}
+        aria-label="Start Tour"
+        title="Start Tour"
+        data-testid="start-tour"
+      >
+        <FontAwesomeIcon className="fa-2x" icon="compass" />
+      </Button>
 
       <CurrentRequestsTemplate listeners={listeners} />
     </div>

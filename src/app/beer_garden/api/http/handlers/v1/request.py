@@ -218,7 +218,13 @@ class RequestOutputAPI(AuthorizationHandler):
                 None: "text/plain; charset=UTF-8",
             }
             self.set_header("Content-Type", content_types[response["output_type"]])
-            self.write(response["output"])
+            if response["output_type"] == "JSON":
+                try:
+                    self.write(json.dumps(json.loads(response["output"]), indent=4))
+                except json.JSONDecodeError:
+                    self.write(response["output"])
+            else:
+                self.write(response["output"])
         else:
             self.set_status(204)
 
@@ -447,7 +453,9 @@ class RequestListAPI(AuthorizationHandler):
             query_args["q_filter"] = q_filter
 
         if query_args.get("filter_params"):
-            query_args["filter_params"]  = query_args["filter_params"] | self._parse_query_object()
+            query_args["filter_params"] = (
+                query_args["filter_params"] | self._parse_query_object()
+            )
         else:
             query_args["filter_params"] = self._parse_query_object()
 
@@ -455,8 +463,6 @@ class RequestListAPI(AuthorizationHandler):
             query_args["include_fields"].extend(self.get_arguments("include"))
         else:
             query_args["include_fields"] = self.get_arguments("include")
-
-            
 
         # There are also some sane parameters
         query_args["start"] = self.get_argument("start", default="0")
@@ -519,6 +525,14 @@ class RequestListAPI(AuthorizationHandler):
             description: Max seconds to wait for request completion. (-1 = wait forever)
             type: float
             default: -1
+          - name: choice_validation_enabled
+            in: query
+            required: false
+            type: boolean
+            description: |
+              Whether choice validation is enabled for the request. For root requests
+              choice validation is enabled by default. Child requests are disabled by
+              default. This flag overrides the default validation logic
           - name: request
             in: formData
             required: false
@@ -594,6 +608,9 @@ class RequestListAPI(AuthorizationHandler):
         ):
             request_model.requester = self.current_user.username
 
+        choice_validation_enabled = self.get_argument(
+            "choice_validation_enabled", default=None
+        )
         wait_future = None
         if self.get_argument("blocking", default="").lower() == "true":
             wait_future = Future()
@@ -607,7 +624,10 @@ class RequestListAPI(AuthorizationHandler):
                     operation_type="REQUEST_CREATE",
                     model=request_model,
                     model_type="Request",
-                    kwargs={"wait_event": wait_future},
+                    kwargs={
+                        "wait_event": wait_future,
+                        "choice_validation_enabled": choice_validation_enabled,
+                    },
                     target_garden_name=request_model.target_garden,
                     source_garden_name=request_model.source_garden,
                 ),
@@ -920,17 +940,23 @@ class RequestListAPI(AuthorizationHandler):
                 args[key] = decoded_param
 
         return Request(**args)
-    
+
     def _parse_query_object(self) -> dict:
-        
+
         filter_params = {}
-        
+
         for query in self.get_query_arguments("query"):
             query_obj = json.loads(query)
-            filter_params[f"{query_obj['field_name']}__{query_obj['modifier']}" if (query_obj['modifier'] and query_obj['modifier'] is not '') else query_obj['field_name']] = query_obj['value']
+            filter_params[
+                (
+                    f"{query_obj['field_name']}__{query_obj['modifier']}"
+                    if (query_obj["modifier"] and query_obj["modifier"] != "")
+                    else query_obj["field_name"]
+                )
+            ] = query_obj["value"]
 
         return filter_params
-    
+
     def _parse_datatables_parameters(self) -> dict:
         """Parse the HTTP request's datatables query parameters
 

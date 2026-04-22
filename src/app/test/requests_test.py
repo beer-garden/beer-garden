@@ -145,7 +145,10 @@ class TestSessionConfig(object):
 class TestValidateRequest(object):
     def test_success(self, validator, system_find, bg_system, bg_request):
         system_find.return_value = bg_system
-        assert validator.validate_request(bg_request) == bg_request
+        assert (
+            validator.validate_request(bg_request, choice_validation_enabled=True)
+            == bg_request
+        )
 
 
 class TestGetAndValidateSystem(object):
@@ -269,10 +272,12 @@ class TestGetAndValidateParameters(object):
         )
         command_parameter = Mock(key="key1", multi=False)
         command = Mock(parameters=[command_parameter])
-        validate_mock.side_effect = lambda w, x, y, z: w
+        validate_mock.side_effect = lambda w, x, y, z, choice_validation_enabled: w
 
         validator.get_and_validate_parameters(req, command)
-        validate_mock.assert_called_once_with("value1", command_parameter, command, req)
+        validate_mock.assert_called_once_with(
+            "value1", command_parameter, command, req, True
+        )
 
     @patch("beer_garden.requests.RequestValidator._validate_parameter_based_on_type")
     def test_extract_parameter_non_multi_calls_with_default(
@@ -281,11 +286,11 @@ class TestGetAndValidateParameters(object):
         req = BrewtilsRequest(system="foo", command="command1", parameters={})
         command_parameter = Mock(key="key1", multi=False, default="default_value")
         command = Mock(parameters=[command_parameter])
-        validate_mock.side_effect = lambda w, x, y, z: w
+        validate_mock.side_effect = lambda w, x, y, z, choice_validation_enabled: w
 
         validator.get_and_validate_parameters(req, command)
         validate_mock.assert_called_once_with(
-            "default_value", command_parameter, command, req
+            "default_value", command_parameter, command, req, True
         )
 
     @patch("beer_garden.requests.RequestValidator._validate_parameter_based_on_type")
@@ -297,13 +302,13 @@ class TestGetAndValidateParameters(object):
         )
         command_parameter = Mock(key="key1", multi=True)
         command = Mock(parameters=[command_parameter])
-        validate_mock.side_effect = lambda w, x, y, z: w
+        validate_mock.side_effect = lambda w, x, y, z, choice_validation_enabled: w
 
         validator.get_and_validate_parameters(req, command)
         validate_mock.assert_has_calls(
             [
-                call(1, command_parameter, command, req),
-                call(2, command_parameter, command, req),
+                call(1, command_parameter, command, req, True),
+                call(2, command_parameter, command, req, True),
             ],
             any_order=True,
         )
@@ -944,6 +949,47 @@ class TestValidateChoices(object):
         assert choices_request.namespace == "default"
         assert choices_request.system_version == "0.0.1"
         assert choices_request.instance_name == "default"
+
+    def test_validate_command_choices_dict_value_skip_choice_validation(
+        self, monkeypatch, validator
+    ):
+        process_mock = _process_mock(monkeypatch, return_value='["value"]')
+
+        request = BrewtilsRequest(
+            system="foo",
+            command="command1",
+            parameters={"key1": "value"},
+            system_version="0.0.1",
+            namespace="default",
+            instance_name="instance_name",
+        )
+        choices_value = {
+            "command": "command_name",
+            "system": "foo",
+            "namespace": "default",
+            "version": "0.0.1",
+            "instance_name": "default",
+        }
+        command = Mock(
+            parameters=[
+                Parameter(
+                    key="key1",
+                    type="String",
+                    optional=False,
+                    choices=Choices(
+                        type="command",
+                        value=choices_value,
+                        strict=True,
+                    ),
+                )
+            ]
+        )
+
+        validator.get_and_validate_parameters(
+            request, command, choice_validation_enabled=False
+        )
+
+        process_mock.assert_not_called()
 
     def test_validate_command_choices_bad_value_type(self, monkeypatch, validator):
         _process_mock(monkeypatch, return_value='["value"]')

@@ -167,7 +167,7 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
   };
 
   return (
-    <div>
+    <div className="flex align-items-center mr-2">
       <ConfirmPopup
         dismissable={true}
         content={({ acceptBtnRef, hide }: { acceptBtnRef: any; hide: any }) => (
