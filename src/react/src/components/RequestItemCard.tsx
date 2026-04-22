@@ -1,7 +1,10 @@
+import { useState } from "react";
+
 import { RequestItem } from "../models/models";
 import { DeleteJob } from "../services/job_service";
 import RequestCreateCard from "./RequestCreateCard";
 import RequestViewCard from "./RequestViewCard";
+import RequestWizard from "./RequestWizard";
 import SchedulerViewCard from "./SchedulerViewCard";
 
 function RequestItemCard({
@@ -19,9 +22,19 @@ function RequestItemCard({
   addItem: (itemParams?: Partial<RequestItem>) => void;
   isDialog: boolean;
 }) {
+  const [useWizard] = useState<boolean>(true);
+
   return (
     <>
-      {requestItem?.type === "REQUEST" && (
+      {requestItem?.type === "REQUEST" && useWizard && (
+        <RequestWizard
+          requestItem={requestItem}
+          updateRequestItem={updateRequestItem}
+          removeItem={removeItem}
+          isDialog={isDialog}
+        />
+      )}
+      {requestItem?.type === "REQUEST" && !useWizard && (
         <RequestCreateCard
           requestItem={requestItem}
           updateRequestItem={updateRequestItem}

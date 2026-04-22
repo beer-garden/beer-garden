@@ -373,7 +373,11 @@ function App() {
           for (const [key, listener] of Object.entries(listeners.current)) {
             if (key && listener && listener.listener) {
               listener.listener(eventData);
-              console.log("Message from server for listener", key, event.data);
+              console.debug(
+                "Message from server for listener",
+                key,
+                event.data,
+              );
             }
           }
         }

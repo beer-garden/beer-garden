@@ -5,7 +5,6 @@ import { DataTable } from "primereact/datatable";
 import { FileUpload } from "primereact/fileupload";
 import { Toast } from "primereact/toast";
 import { RefObject, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 import { Job } from "../models/brewtils-types";
 import { RequestItem } from "../models/models";
@@ -28,15 +27,13 @@ import {
 function JobIndex({
   listeners,
   tourStepsRef,
-  addRequestItem
+  addRequestItem,
 }: {
   listeners: Record<string, any>;
   tourStepsRef: RefObject<Array<TourStepProps>>;
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
 }) {
   const [jobs, setJobs] = useState<Array<Job>>([]);
-  const [selectedJob, setSelectedJob] = useState<Job | undefined>(undefined);
-  const navigate = useNavigate();
   const tourUuid = "job_index_tour";
   const tourPrefix = "job_index";
 

@@ -66,22 +66,22 @@ function RequestIndex({
   const tourPrefix = "request-index";
   const tourUUID = "main-table";
 
-  const RefreshTableTourStep: TourStepProps = {
-    prefix: tourPrefix,
-    uuid: tourUUID,
-    label: "Refresh Table",
-    content:
-      "Clicking this button will refresh the table with the latest data.",
-    layer: "LAYOUT",
-    pos: 0,
-  };
-
   const AutoRefreshTourStep: TourStepProps = {
     prefix: tourPrefix,
     uuid: tourUUID,
     label: "Auto Refresh",
     content:
       "Toggling this option will automatically refresh the table when new updates are available.",
+    layer: "LAYOUT",
+    pos: 0,
+  };
+
+  const RefreshTableTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUUID,
+    label: "Refresh Table",
+    content:
+      "Clicking this button will refresh the table with the latest data.",
     layer: "LAYOUT",
     pos: 1,
   };
@@ -343,7 +343,8 @@ function RequestIndex({
           onClick={() => PeekRequestView(request)}
           tooltip={"View " + request.command_display_name}
           className="mr-2"
-          {...GenerateTourProps(ViewRequestTourStep)}>
+          {...GenerateTourProps(ViewRequestTourStep)}
+        >
           <FontAwesomeIcon icon="eye" />
         </Button>
       </div>

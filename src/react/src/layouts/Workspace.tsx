@@ -6,13 +6,7 @@ import { useParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
 import RequestItemCard from "../components/RequestItemCard";
-
-import RequestCreateCard from "../components/RequestCreateCard";
-import RequestViewCard from "../components/RequestViewCard";
-import RequestWizard from "../components/RequestWizard";
-import SchedulerViewCard from "../components/SchedulerViewCard";
 import { RequestItem, TourStepProps } from "../models/models";
-import { DeleteJob } from "../services/job_service";
 import {
   AddTourStep,
   ClearTourSteps,
@@ -28,8 +22,6 @@ function Workspace({
   display?: boolean;
   tourStepsRef: RefObject<Array<TourStepProps>>;
 }) {
-  const [useWizard] = useState<boolean>(true);
-
   const { requestId } = useParams<{ requestId: string }>();
   const { jobId } = useParams<{ jobId: string }>();
 

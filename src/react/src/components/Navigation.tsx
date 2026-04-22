@@ -4,9 +4,9 @@ import { Menubar } from "primereact/menubar";
 import { RefObject, useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 
-import { Config, RequestItem, TourStepProps } from "../models/models";
 import CurrentRequestsTemplate from "../components/CurrentRequestsTemplate";
 import UserLogin from "../components/UserLogin";
+import { Config, RequestItem, TourStepProps } from "../models/models";
 import { ClearRefresh, ClearToken } from "../services/token_service";
 import {
   AddTourStep,
@@ -52,13 +52,22 @@ function NavigationMenu({
     pos: 0,
   };
 
+  const createRequestTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Create Request Link",
+    content: "Open popup to create a new request.",
+    layer: "NAVIGATION",
+    pos: 1,
+  };
+
   const requestTourStep: TourStepProps = {
     prefix: tourPrefix,
     uuid: tourUuid,
     label: "Requests Link",
     content: "Navigate to the Request Page to see invoked requests.",
     layer: "NAVIGATION",
-    pos: 1,
+    pos: 2,
   };
 
   const schedulerTourStep: TourStepProps = {
@@ -67,7 +76,7 @@ function NavigationMenu({
     label: "Scheduler Link",
     content: "Navigate to the Scheduler Page to see scheduled jobs.",
     layer: "NAVIGATION",
-    pos: 2,
+    pos: 3,
   };
 
   const workspaceTourStep: TourStepProps = {
@@ -77,45 +86,7 @@ function NavigationMenu({
     content:
       "Navigate to the Workspace to see your current workbench of requests and scheduled jobs.",
     layer: "NAVIGATION",
-    pos: 3,
-  };
-
-  const topicsTourStep: TourStepProps = {
-    prefix: tourPrefix,
-    uuid: tourUuid,
-    label: "Topics Link",
-    content:
-      "Navigate to the Topics Page to see the list of managed message bus topics.",
-    layer: "NAVIGATION",
     pos: 4,
-  };
-
-  const usersTourStep: TourStepProps = {
-    prefix: tourPrefix,
-    uuid: tourUuid,
-    label: "Users Link",
-    content: "Navigate to the Users Page to see the list of user accounts.",
-    layer: "NAVIGATION",
-    pos: 5,
-  };
-
-  const rolesTourStep: TourStepProps = {
-    prefix: tourPrefix,
-    uuid: tourUuid,
-    label: "Roles Link",
-    content: "Navigate to the Roles Page to see the list of user roles.",
-    layer: "NAVIGATION",
-    pos: 6,
-  };
-
-  const aboutTourStep: TourStepProps = {
-    prefix: tourPrefix,
-    uuid: tourUuid,
-    label: "About Link",
-    content:
-      "Navigate to the About Page to see information about this application.",
-    layer: "NAVIGATION",
-    pos: 7,
   };
 
   const items = [
@@ -130,6 +101,7 @@ function NavigationMenu({
               addRequestItem();
             }}
             className="p-menuitem-link"
+            {...GenerateTourProps(createRequestTourStep)}
           >
             <FontAwesomeIcon className="mr-2" icon="pencil" />
             <span>{item.label}</span>
@@ -188,9 +160,10 @@ function NavigationMenu({
       items: [
         {
           label: "Topics",
+
           template: (item: any) => {
             return (
-              <NavLink to="/topics" className="p-menuitem-link" {...GenerateTourProps(topicsTourStep)}>
+              <NavLink to="/topics" className="p-menuitem-link">
                 <FontAwesomeIcon className="mr-2" icon="envelope" />
                 <span>{item.label}</span>
               </NavLink>
@@ -201,7 +174,7 @@ function NavigationMenu({
           label: "Users",
           template: (item: any) => {
             return (
-              <NavLink to="/" className="p-menuitem-link" {...GenerateTourProps(usersTourStep)}>
+              <NavLink to="/" className="p-menuitem-link">
                 <FontAwesomeIcon className="mr-2" icon="users" />
                 <span>{item.label}</span>
               </NavLink>
@@ -212,7 +185,7 @@ function NavigationMenu({
           label: "Roles",
           template: (item: any) => {
             return (
-              <NavLink to="/roles" className="p-menuitem-link" {...GenerateTourProps(rolesTourStep)}>
+              <NavLink to="/roles" className="p-menuitem-link">
                 <FontAwesomeIcon className="mr-2" icon="user-gear" />
                 <span>{item.label}</span>
               </NavLink>
@@ -224,7 +197,7 @@ function NavigationMenu({
           label: "About",
           template: (item: any) => {
             return (
-              <NavLink to="/about" className="p-menuitem-link" {...GenerateTourProps(aboutTourStep)}>
+              <NavLink to="/about" className="p-menuitem-link">
                 <FontAwesomeIcon className="mr-2" icon="circle-info" />
                 <span>{item.label}</span>
               </NavLink>
@@ -294,13 +267,10 @@ function NavigationMenu({
     }
 
     AddTourStep(tourStepsRef, homeLinkTourStep);
+    AddTourStep(tourStepsRef, createRequestTourStep);
     AddTourStep(tourStepsRef, requestTourStep);
     AddTourStep(tourStepsRef, schedulerTourStep);
     AddTourStep(tourStepsRef, workspaceTourStep);
-    AddTourStep(tourStepsRef, topicsTourStep);
-    AddTourStep(tourStepsRef, usersTourStep);
-    AddTourStep(tourStepsRef, rolesTourStep);
-    AddTourStep(tourStepsRef, aboutTourStep);
 
     return () => {
       ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
