@@ -19,6 +19,7 @@ function CommandCreate({
   setRequestCommand,
   resetForm,
   setResetForm,
+  setIsFormValid,
   callback,
 }: {
   request?: Request;
@@ -27,6 +28,7 @@ function CommandCreate({
   setRequestCommand: (requestCommand: RequestCommand) => void;
   resetForm: boolean;
   setResetForm: (reset: boolean) => void;
+  setIsFormValid: (isValid: boolean) => void;
   callback?: () => void;
 }) {
   const toast = useRef(null as null | any);
@@ -190,6 +192,7 @@ function CommandCreate({
             setRequest={setRequest}
             resetForm={resetForm}
             setResetForm={setResetForm}
+            setIsFormValid={setIsFormValid}
           />
         </ScrollPanel>
       )}
