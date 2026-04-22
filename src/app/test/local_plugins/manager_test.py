@@ -45,7 +45,8 @@ def config_all():
 
 @pytest.fixture
 def config_all_serialized():
-    return textwrap.dedent("""
+    return textwrap.dedent(
+        """
             NAME='foo'
             VERSION='1.0'
             PLUGIN_ENTRY='entry.py'
@@ -66,7 +67,8 @@ def config_all_serialized():
             CLIENT_STARTUP_FUNCTIONS=['startup_two','startup_three']
             CLIENT_SHUTDOWN_FUNCTION='shutdown_one'
             CLIENT_SHUTDOWN_FUNCTIONS=['shutdown_two','shutdown_three']
-        """)
+        """
+    )
 
 
 @pytest.fixture
@@ -169,10 +171,12 @@ class TestLoadNew(object):
 
         write_file(
             plugin_path,
-            textwrap.dedent("""
+            textwrap.dedent(
+                """
                 PLUGIN_ENTRY='entry.py'
                 INSTANCES=['a', 'b']
-            """),
+            """
+            ),
         )
 
         manager.scan_path([plugin_path])
@@ -268,12 +272,14 @@ class TestLoadPlugin(object):
 
         write_file(
             plugin,
-            textwrap.dedent("""
+            textwrap.dedent(
+                """
                 NAME='foo'
                 VERSION='1.0'
                 PLUGIN_ENTRY='entry.py'
                 INSTANCES=["instance1", "instance2"]
-            """),
+            """
+            ),
         )
 
         plugin_runners = loader.load_plugin(plugin)
@@ -333,12 +339,14 @@ class TestLoadPlugin(object):
 
         write_file(
             plugin,
-            textwrap.dedent("""
+            textwrap.dedent(
+                """
                 NAME='foo'
                 VERSION='1.0'
                 PLUGIN_ENTRY='entry.py'
                 INSTANCES=["instance2", "instance3"]
-            """),
+            """
+            ),
         )
 
         plugin_runners = loader.load_plugin(plugin)
@@ -389,11 +397,13 @@ class TestLoadConfig(object):
     def test_required_attributes(self, tmp_path, config_all):
         write_file(
             tmp_path,
-            textwrap.dedent("""
+            textwrap.dedent(
+                """
                 NAME='foo'
                 VERSION='1.0'
                 PLUGIN_ENTRY='entry.py'
-            """),
+            """
+            ),
         )
 
         assert ConfigLoader.load(tmp_path / CONFIG_NAME) == config_all
@@ -401,13 +411,15 @@ class TestLoadConfig(object):
     def test_instances_no_plugin_args(self, tmp_path):
         write_file(
             tmp_path,
-            textwrap.dedent("""
+            textwrap.dedent(
+                """
                 NAME='foo'
                 VERSION='1.0'
                 PLUGIN_ENTRY='entry.py'
                 INSTANCES=["instance1", "instance2"]
                 PLUGIN_ARGS=None
-            """),
+            """
+            ),
         )
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
@@ -418,13 +430,15 @@ class TestLoadConfig(object):
     def test_plugin_args_list_no_instances(self, tmp_path):
         write_file(
             tmp_path,
-            textwrap.dedent("""
+            textwrap.dedent(
+                """
                 NAME='foo'
                 VERSION='1.0'
                 PLUGIN_ENTRY='entry.py'
                 INSTANCES=None
                 PLUGIN_ARGS=["arg1"]
-            """),
+            """
+            ),
         )
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
@@ -435,13 +449,15 @@ class TestLoadConfig(object):
     def test_plugin_args_dict_no_instances(self, tmp_path):
         write_file(
             tmp_path,
-            textwrap.dedent("""
+            textwrap.dedent(
+                """
                 NAME='foo'
                 VERSION='1.0'
                 PLUGIN_ENTRY='entry.py'
                 INSTANCES=None
                 PLUGIN_ARGS={"foo": ["arg1"], "bar": ["arg2"]}
-            """),
+            """
+            ),
         )
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
@@ -452,13 +468,15 @@ class TestLoadConfig(object):
     def test_instance_and_args_list(self, tmp_path):
         write_file(
             tmp_path,
-            textwrap.dedent("""
+            textwrap.dedent(
+                """
                 NAME='foo'
                 VERSION='1.0'
                 PLUGIN_ENTRY='entry.py'
                 INSTANCES=["foo", "bar"]
                 PLUGIN_ARGS=["arg1"]
-            """),
+            """
+            ),
         )
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
@@ -469,13 +487,15 @@ class TestLoadConfig(object):
     def test_explicit_max_instances(self, tmp_path):
         write_file(
             tmp_path,
-            textwrap.dedent("""
+            textwrap.dedent(
+                """
                 NAME='foo'
                 VERSION='1.0'
                 PLUGIN_ENTRY='entry.py'
                 INSTANCES=["foo", "bar"]
                 MAX_INSTANCES=-1
-            """),
+            """
+            ),
         )
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
@@ -485,12 +505,14 @@ class TestLoadConfig(object):
     def test_invalid_args(self, tmp_path):
         write_file(
             tmp_path,
-            textwrap.dedent("""
+            textwrap.dedent(
+                """
                 NAME='foo'
                 VERSION='1.0'
                 PLUGIN_ENTRY='entry.py'
                 PLUGIN_ARGS="invalid"
-            """),
+            """
+            ),
         )
 
         with pytest.raises(PluginValidationError):
@@ -499,14 +521,16 @@ class TestLoadConfig(object):
     def test_auto_brew_global_args(self, tmp_path):
         write_file(
             tmp_path,
-            textwrap.dedent("""
+            textwrap.dedent(
+                """
                 NAME='foo'
                 VERSION='1.0'
                 AUTO_BREW_MODULE="autobrew.autobrew"
                 AUTO_BREW_CLASS="AutoBrewClient"
                 AUTO_BREW_ARGS=["foo", "bar"]
                 PLUGIN_ARGS=["baz","zoo"]
-            """),
+            """
+            ),
         )
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
@@ -518,14 +542,16 @@ class TestLoadConfig(object):
     def test_auto_brew_global_args_with_instances(self, tmp_path):
         write_file(
             tmp_path,
-            textwrap.dedent("""
+            textwrap.dedent(
+                """
                 NAME='foo'
                 VERSION='1.0'
                 AUTO_BREW_MODULE="autobrew.autobrew"
                 AUTO_BREW_CLASS="AutoBrewClient"
                 AUTO_BREW_ARGS=["foo", "bar"]
                 INSTANCES=["a", "b"]
-            """),
+            """
+            ),
         )
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
@@ -542,13 +568,15 @@ class TestLoadConfig(object):
     def test_auto_brew_instance_based_args(self, tmp_path):
         write_file(
             tmp_path,
-            textwrap.dedent("""
+            textwrap.dedent(
+                """
                 NAME='foo'
                 VERSION='1.0'
                 AUTO_BREW_MODULE="autobrew.autobrew"
                 AUTO_BREW_CLASS="AutoBrewClient"
                 AUTO_BREW_ARGS={"a":["foo"],"b":["bar"]}
-            """),
+            """
+            ),
         )
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
@@ -560,14 +588,16 @@ class TestLoadConfig(object):
     def test_auto_brew_instance_based_args_with_instances(self, tmp_path):
         write_file(
             tmp_path,
-            textwrap.dedent("""
+            textwrap.dedent(
+                """
                 NAME='foo'
                 VERSION='1.0'
                 AUTO_BREW_MODULE="autobrew.autobrew"
                 AUTO_BREW_CLASS="AutoBrewClient"
                 AUTO_BREW_ARGS={"a":["foo"],"b":["bar"]}
                 INSTANCES=["a", "b"]
-            """),
+            """
+            ),
         )
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
@@ -579,14 +609,16 @@ class TestLoadConfig(object):
     def test_auto_brew_instance_based_args_with_instances_mismatch(self, tmp_path):
         write_file(
             tmp_path,
-            textwrap.dedent("""
+            textwrap.dedent(
+                """
                 NAME='foo'
                 VERSION='1.0'
                 AUTO_BREW_MODULE="autobrew.autobrew"
                 AUTO_BREW_CLASS="AutoBrewClient"
                 AUTO_BREW_ARGS={"a":["foo"],"b":["bar"]}
                 INSTANCES=["a"]
-            """),
+            """
+            ),
         )
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
@@ -598,13 +630,15 @@ class TestLoadConfig(object):
     def test_auto_brew_global_kwargs(self, tmp_path):
         write_file(
             tmp_path,
-            textwrap.dedent("""
+            textwrap.dedent(
+                """
                 NAME='foo'
                 VERSION='1.0'
                 AUTO_BREW_MODULE="autobrew.autobrew"
                 AUTO_BREW_CLASS="AutoBrewClient"
                 AUTO_BREW_KWARGS={"foo":"bar", "bar": "baz"}
-            """),
+            """
+            ),
         )
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
@@ -616,14 +650,16 @@ class TestLoadConfig(object):
     def test_auto_brew_global_kwargs_with_instances(self, tmp_path):
         write_file(
             tmp_path,
-            textwrap.dedent("""
+            textwrap.dedent(
+                """
                 NAME='foo'
                 VERSION='1.0'
                 AUTO_BREW_MODULE="autobrew.autobrew"
                 AUTO_BREW_CLASS="AutoBrewClient"
                 AUTO_BREW_KWARGS={"foo":"bar"}
                 INSTANCES=["a", "b"]
-            """),
+            """
+            ),
         )
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
@@ -635,13 +671,15 @@ class TestLoadConfig(object):
     def test_auto_brew_instance_kwargs(self, tmp_path):
         write_file(
             tmp_path,
-            textwrap.dedent("""
+            textwrap.dedent(
+                """
                 NAME='foo'
                 VERSION='1.0'
                 AUTO_BREW_MODULE="autobrew.autobrew"
                 AUTO_BREW_CLASS="AutoBrewClient"
                 AUTO_BREW_KWARGS={"a":{"foo":"bar"}, "b":{"foo":"zed"}}
-            """),
+            """
+            ),
         )
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
@@ -653,14 +691,16 @@ class TestLoadConfig(object):
     def test_auto_brew_instance_kwargs_with_instances(self, tmp_path):
         write_file(
             tmp_path,
-            textwrap.dedent("""
+            textwrap.dedent(
+                """
                 NAME='foo'
                 VERSION='1.0'
                 AUTO_BREW_MODULE="autobrew.autobrew"
                 AUTO_BREW_CLASS="AutoBrewClient"
                 AUTO_BREW_KWARGS={"a":{"foo":"bar"}, "b":{"foo":"zed"}}
                 INSTANCES=["a","b"]
-            """),
+            """
+            ),
         )
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
@@ -672,14 +712,16 @@ class TestLoadConfig(object):
     def test_auto_brew_instance_kwargs_with_instances_mismatch(self, tmp_path):
         write_file(
             tmp_path,
-            textwrap.dedent("""
+            textwrap.dedent(
+                """
                 NAME='foo'
                 VERSION='1.0'
                 AUTO_BREW_MODULE="autobrew.autobrew"
                 AUTO_BREW_CLASS="AutoBrewClient"
                 AUTO_BREW_KWARGS={"a":{"foo":"bar"}, "b":{"foo":"zed"}}
                 INSTANCES=["b"]
-            """),
+            """
+            ),
         )
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
@@ -691,7 +733,8 @@ class TestLoadConfig(object):
     def test_auto_brew_instance_args_and_kwargs_with_instances(self, tmp_path):
         write_file(
             tmp_path,
-            textwrap.dedent("""
+            textwrap.dedent(
+                """
                 NAME='foo'
                 VERSION='1.0'
                 AUTO_BREW_MODULE="autobrew.autobrew"
@@ -699,7 +742,8 @@ class TestLoadConfig(object):
                 AUTO_BREW_KWARGS={"a":{"foo":"bar"}, "b":{"foo":"zed"}}
                 AUTO_BREW_ARGS={"a":["foo"],"c":["bar"]}
                 INSTANCES=["a"]
-            """),
+            """
+            ),
         )
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
@@ -721,14 +765,16 @@ class TestLoadConfig(object):
     def test_auto_brew_instance_args_and_kwargs_with_no_instances(self, tmp_path):
         write_file(
             tmp_path,
-            textwrap.dedent("""
+            textwrap.dedent(
+                """
                 NAME='foo'
                 VERSION='1.0'
                 AUTO_BREW_MODULE="autobrew.autobrew"
                 AUTO_BREW_CLASS="AutoBrewClient"
                 AUTO_BREW_KWARGS={"a":{"foo":"bar"}, "b":{"foo":"zed"}}
                 AUTO_BREW_ARGS=["alpha"]
-            """),
+            """
+            ),
         )
 
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
