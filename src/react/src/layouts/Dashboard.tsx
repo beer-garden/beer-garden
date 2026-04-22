@@ -7,6 +7,12 @@ import { RefObject, useEffect, useRef, useState } from "react";
 import GardenSummary from "../components/GardenSummary";
 import SystemCard from "../components/SystemCard";
 import { Garden, Instance, System } from "../models/brewtils-types";
+import { TourStepProps } from "../models/models";
+import {
+  AddTourStep,
+  ClearTourSteps,
+  GenerateTourProps,
+} from "../services/tour_service";
 import { GetSeverity } from "../services/util_service";
 
 function GardenDashboard({
@@ -14,12 +20,16 @@ function GardenDashboard({
   systemsRef,
   gardenState,
   systemState,
+  tourStepsRef,
 }: {
   gardenRef: RefObject<Garden | undefined>;
   systemsRef: RefObject<System[] | undefined>;
   gardenState: number;
   systemState: number;
+  tourStepsRef: RefObject<Array<TourStepProps>>;
 }) {
+  const tourUuid = "garden_dashboard_tour";
+  const tourPrefix = "garden_dashboard";
   const selectedGardenRef = useRef<Garden | undefined>(undefined);
 
   const [selectedGarden, setSelectedGarden] = useState<Garden | undefined>();
@@ -230,6 +240,22 @@ function GardenDashboard({
     });
   };
 
+  const gardenTreeTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Garden Tree Menu",
+    content: "Select a Garden to view its Status, Systems and Instances",
+    layer: "LAYOUT",
+    pos: 0,
+  };
+
+  useEffect(() => {
+    AddTourStep(tourStepsRef, gardenTreeTourStep);
+    return () => {
+      ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+    };
+  }, []);
+
   const [selectedKey, setSelectedKey] = useState<any | null>("");
 
   const gardenTreeNode = (node: any, options: any) => {
@@ -257,6 +283,7 @@ function GardenDashboard({
       <div className="col-3 surface-border p-3">
         <h3>Select Garden</h3>
         <Tree
+          {...GenerateTourProps(gardenTreeTourStep)}
           value={gardenMenu}
           nodeTemplate={gardenTreeNode}
           selectionMode="single"
@@ -282,6 +309,7 @@ function GardenDashboard({
           <GardenSummary
             gardenRef={gardenRef}
             selectedGarden={selectedGarden}
+            tourStepsRef={tourStepsRef}
             selectedSystems={selectedSystems}
           />
         )}
@@ -290,6 +318,7 @@ function GardenDashboard({
             <SystemCard
               system={system}
               toast={toast}
+              tourStepsRef={tourStepsRef}
               selectedGarden={selectedGarden?.name}
             />
           </div>

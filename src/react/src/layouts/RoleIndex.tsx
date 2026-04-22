@@ -9,11 +9,18 @@ import { InputText } from "primereact/inputtext";
 import { Message } from "primereact/message";
 import { Messages } from "primereact/messages";
 import { Toast } from "primereact/toast";
-import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
+import {
+  ChangeEvent,
+  RefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import RoleScopeCard from "../components/RoleScopeCard";
 import { Role } from "../models/brewtils-types";
-import { Config } from "../models/models";
+import { Config, TourStepProps } from "../models/models";
 import {
   CreateRole,
   DeleteRole,
@@ -21,6 +28,11 @@ import {
   GetRoles,
   Rescan,
 } from "../services/role_service";
+import {
+  AddTourStep,
+  ClearTourSteps,
+  GenerateTourProps,
+} from "../services/tour_service";
 
 const permissions = [
   { label: "GARDEN_ADMIN", value: "GARDEN_ADMIN" },
@@ -29,7 +41,13 @@ const permissions = [
   { label: "READ_ONLY", value: "READ_ONLY" },
 ];
 
-function RoleIndex({ config }: { config: Config }) {
+function RoleIndex({
+  config,
+  tourStepsRef,
+}: {
+  config: Config;
+  tourStepsRef: RefObject<Array<TourStepProps>>;
+}) {
   const toast = useRef<Toast>(null);
   const [roles, setRoles] = useState<Array<Role>>([]);
   const [loading, setLoading] = useState(false);
@@ -56,6 +74,59 @@ function RoleIndex({ config }: { config: Config }) {
   const [commandScopeList, setCommandScopeList] = useState<Array<string>>([""]);
   const msgs = useRef<Messages>(null);
 
+  const tourUuid = "role_index_tour";
+  const tourPrefix = "role_index";
+
+  const rescanRolesTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Rescan Roles",
+    content:
+      "Rescan the roles configuration file. This is required to pick up any changes made to the file outside of Beergarden.",
+    layer: "LAYOUT",
+    pos: 0,
+  };
+
+  const createRoleTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Create Role",
+    content:
+      "Click here to create a new role. Roles define permissions for users and are required to use Beergarden when authentication is enabled.",
+    layer: "LAYOUT",
+    pos: 1,
+  };
+
+  const duplicateRoleTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Duplicate Role",
+    content:
+      "Click here to duplicate an existing role. This will copy all of the settings of the existing role into a new role which can then be modified as needed.",
+    layer: "LAYOUT",
+    pos: 2,
+  };
+
+  const editRoleTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Edit Role",
+    content:
+      "Click here to edit an existing role. This will allow you to modify the settings of the role.",
+    layer: "LAYOUT",
+    pos: 3,
+  };
+
+  const deleteRoleTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Delete Role",
+    content:
+      "Click here to delete an existing role. This will permanently delete the role from Beergarden.",
+    layer: "LAYOUT",
+    pos: 4,
+  };
+
   const loadRoles = useCallback(() => {
     setLoading(true);
 
@@ -73,6 +144,24 @@ function RoleIndex({ config }: { config: Config }) {
   useEffect(() => {
     loadRoles();
   }, []);
+
+  useEffect(() => {
+    ClearTourSteps(tourStepsRef, tourUuid);
+
+    AddTourStep(tourStepsRef, rescanRolesTourStep);
+    AddTourStep(tourStepsRef, createRoleTourStep);
+    if (roles && roles.length > 0) {
+      AddTourStep(tourStepsRef, duplicateRoleTourStep);
+      if (roles.some((r) => !r.protected && !r.file_generated)) {
+        AddTourStep(tourStepsRef, editRoleTourStep);
+        AddTourStep(tourStepsRef, deleteRoleTourStep);
+      }
+    }
+
+    return () => {
+      ClearTourSteps(tourStepsRef, tourUuid);
+    };
+  }, [roles]);
 
   function handleDialogClose() {
     //Dismiss dialog
@@ -198,11 +287,13 @@ function RoleIndex({ config }: { config: Config }) {
             onClick={handleRescan}
             label="Rescan Roles"
             data-testid="rescan-btn"
+            {...GenerateTourProps(rescanRolesTourStep)}
           />
           <Button
             onClick={openRoleDialog}
             label="Create Role"
             data-testid="create-btn"
+            {...GenerateTourProps(createRoleTourStep)}
           />
         </div>
       </div>
@@ -314,6 +405,7 @@ function RoleIndex({ config }: { config: Config }) {
             data-testid={`duplicate-btn-${role.name}`}
             tooltip="Duplicate"
             onClick={() => handleLoadRole(role, true)}
+            {...GenerateTourProps(duplicateRoleTourStep)}
           >
             <FontAwesomeIcon icon="clone" />
           </Button>
@@ -322,6 +414,7 @@ function RoleIndex({ config }: { config: Config }) {
               data-testid={`edit-btn-${role.name}`}
               tooltip="Edit"
               onClick={() => handleLoadRole(role, false)}
+              {...GenerateTourProps(editRoleTourStep)}
             >
               <FontAwesomeIcon icon="pencil" />
             </Button>
@@ -331,6 +424,7 @@ function RoleIndex({ config }: { config: Config }) {
               data-testid={`delete-btn-${role.name}`}
               tooltip="Delete"
               onClick={() => handleDeleteRole(role)}
+              {...GenerateTourProps(deleteRoleTourStep)}
             >
               <FontAwesomeIcon icon="trash-can" />
             </Button>

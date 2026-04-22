@@ -5,11 +5,12 @@ import { DataTable } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
 import { FileUpload } from "primereact/fileupload";
 import { Toast } from "primereact/toast";
-import { useEffect, useRef, useState } from "react";
+import { RefObject, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import SchedulerViewCard from "../components/SchedulerViewCard";
 import { Job } from "../models/brewtils-types";
+import { TourStepProps } from "../models/models";
 import {
   DeleteJob,
   ExportJobs,
@@ -19,12 +20,117 @@ import {
   ResumeJob,
   RunAdhocJob,
 } from "../services/job_service";
+import {
+  AddTourStep,
+  ClearTourSteps,
+  GenerateTourProps,
+} from "../services/tour_service";
 import { GetBaseURL } from "../services/util_service";
 
-function JobIndex({ listeners }: { listeners: Record<string, any> }) {
+function JobIndex({
+  listeners,
+  tourStepsRef,
+}: {
+  listeners: Record<string, any>;
+  tourStepsRef: RefObject<Array<TourStepProps>>;
+}) {
   const [jobs, setJobs] = useState<Array<Job>>([]);
   const [selectedJob, setSelectedJob] = useState<Job | undefined>(undefined);
   const navigate = useNavigate();
+  const tourUuid = "job_index_tour";
+  const tourPrefix = "job_index";
+
+  const createJobTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Create Job",
+    content: "Create a new scheduled job to run requests on a schedule.",
+    layer: "LAYOUT",
+    pos: 0,
+  };
+
+  const importJobTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Import Jobs",
+    content: "Import jobs from a file.",
+    layer: "LAYOUT",
+    pos: 1,
+  };
+
+  const exportJobTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Export Jobs",
+    content: "Export jobs to a file.",
+    layer: "LAYOUT",
+    pos: 2,
+  };
+
+  const runNowTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Run Now",
+    content: "Run the job immediately.",
+    layer: "LAYOUT",
+    pos: 3,
+  };
+
+  const viewJobTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "View Job",
+    content: "View details about the job and see past runs.",
+    layer: "LAYOUT",
+    pos: 4,
+  };
+
+  const editJobTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Edit Job",
+    content: "Edit the job's schedule and request template.",
+    layer: "LAYOUT",
+    pos: 5,
+  };
+
+  const pauseResumeJobTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Pause/Resume Job",
+    content:
+      "Pause a running job or resume a paused job to control when it runs.",
+    layer: "LAYOUT",
+    pos: 6,
+  };
+
+  const deleteJobTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Delete Job",
+    content: "Delete a job that is no longer needed.",
+    layer: "LAYOUT",
+    pos: 7,
+  };
+
+  useEffect(() => {
+    ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+    AddTourStep(tourStepsRef, createJobTourStep);
+    AddTourStep(tourStepsRef, importJobTourStep);
+    AddTourStep(tourStepsRef, exportJobTourStep);
+
+    if (jobs.length > 0) {
+      AddTourStep(tourStepsRef, runNowTourStep);
+      AddTourStep(tourStepsRef, viewJobTourStep);
+      AddTourStep(tourStepsRef, editJobTourStep);
+      AddTourStep(tourStepsRef, pauseResumeJobTourStep);
+      AddTourStep(tourStepsRef, deleteJobTourStep);
+    }
+
+    return () => {
+      ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+    };
+  }, [jobs]);
   const toast = useRef(null as null | Toast);
   const jobImportFileRef = useRef<FileUpload | null>(null);
 
@@ -99,6 +205,7 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
           }}
           title={"Run Now " + job.name}
           className="mr-2"
+          {...GenerateTourProps(runNowTourStep)}
         >
           <FontAwesomeIcon icon="forward" />
         </Button>
@@ -109,6 +216,7 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
           onClick={() => setSelectedJob(job)}
           title={"View Job " + job.name}
           className="mr-2"
+          {...GenerateTourProps(viewJobTourStep)}
         >
           <FontAwesomeIcon icon="arrow-up-right-from-square" />
         </Button>
@@ -123,6 +231,7 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
           }}
           title={"Update Job " + job.name}
           className="mr-2"
+          {...GenerateTourProps(editJobTourStep)}
         >
           <FontAwesomeIcon icon="edit" />
         </Button>
@@ -146,6 +255,7 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
             }}
             title={"Pause Job " + job.name}
             className="mr-2"
+            {...GenerateTourProps(pauseResumeJobTourStep)}
           >
             <FontAwesomeIcon icon="pause" />
           </Button>
@@ -170,6 +280,7 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
             }}
             title={"Resume Job " + job.name}
             className="mr-2"
+            {...GenerateTourProps(pauseResumeJobTourStep)}
           >
             <FontAwesomeIcon icon="play" />
           </Button>
@@ -189,6 +300,7 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
           }}
           title={"Delete Job " + job.name}
           className="mr-2"
+          {...GenerateTourProps(deleteJobTourStep)}
         >
           <FontAwesomeIcon icon="trash" />
         </Button>
@@ -258,7 +370,12 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
       <span className="text-xl text-900 font-bold">Requests Scheduler</span>
       <Toast ref={toast} />
       <div className="flex">
-        <Button className="mr-2" raised onClick={createJob}>
+        <Button
+          className="mr-2"
+          raised
+          onClick={createJob}
+          {...GenerateTourProps(createJobTourStep)}
+        >
           Create Job
         </Button>
 
@@ -273,6 +390,7 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
           customUpload
           auto
           uploadHandler={customJobImporter}
+          {...GenerateTourProps(importJobTourStep)}
         />
 
         <Button
@@ -283,6 +401,7 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
               console.error("Error exporting jobs:", error),
             )
           }
+          {...GenerateTourProps(exportJobTourStep)}
         >
           Export Jobs
         </Button>

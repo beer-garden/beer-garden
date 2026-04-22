@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, test, vi } from "vitest";
 
 import { Connection, Garden, Instance, System } from "../models/brewtils-types";
+import { TourStepProps } from "../models/models";
 import * as gardenService from "../services/garden_service";
 import * as queueService from "../services/queue_service";
 import * as systemService from "../services/system_service";
@@ -11,6 +12,13 @@ import GardenSummary from "./GardenSummary";
 vi.mock("../services/garden_service");
 vi.mock("../services/system_service");
 vi.mock("../services/queue_service");
+
+const mockTourSteps = () => {
+  const mockRef = {
+    current: [] as TourStepProps[], // Mocking the value property
+  };
+  return mockRef as React.RefObject<TourStepProps[]>;
+};
 
 describe("GardenSummary", () => {
   beforeEach(() => {
@@ -73,6 +81,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
     );
@@ -97,6 +106,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
     );
@@ -124,6 +134,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
     );
@@ -154,6 +165,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
     );
@@ -200,6 +212,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
     );
@@ -225,6 +238,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
     );
@@ -250,6 +264,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
     );
@@ -275,6 +290,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
     );
@@ -300,6 +316,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
     );
@@ -325,6 +342,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
     );
@@ -352,6 +370,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
     );
@@ -377,6 +396,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
     );
@@ -410,6 +430,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
     );
@@ -442,6 +463,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
     );
@@ -474,6 +496,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
     );
@@ -528,6 +551,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        tourStepsRef={mockTourSteps()}
         selectedSystems={mockGarden.systems}
       />,
     );
