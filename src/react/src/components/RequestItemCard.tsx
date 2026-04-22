@@ -10,12 +10,14 @@ function RequestItemCard({
   updateRequestItem,
   removeItem,
   addItem,
+  isDialog,
 }: {
   requestItem: RequestItem;
   listeners: Record<string, any>;
   updateRequestItem: (item: RequestItem) => void;
   removeItem: (id: string) => void;
   addItem: (itemParams?: Partial<RequestItem>) => void;
+  isDialog: boolean;
 }) {
   return (
     <>
@@ -24,6 +26,7 @@ function RequestItemCard({
           requestItem={requestItem}
           updateRequestItem={updateRequestItem}
           removeItem={removeItem}
+          isDialog={isDialog}
         />
       )}
       {requestItem?.type === "VIEW_REQUEST" && (
@@ -33,6 +36,7 @@ function RequestItemCard({
           removeItem={removeItem}
           listeners={listeners}
           addItem={addItem}
+          isDialog={isDialog}
         />
       )}
 
@@ -41,6 +45,7 @@ function RequestItemCard({
           jobId={requestItem.jobId}
           removeItem={removeItem}
           listeners={listeners}
+          isDialog={isDialog}
           editJob={() => {
             updateRequestItem({
               ...requestItem,

@@ -28,12 +28,14 @@ function SchedulerViewCard({
   removeItem,
   editJob,
   deleteJob,
+  isDialog,
 }: {
   jobId: string;
   listeners: Record<string, any>;
   removeItem: (id: string) => void;
   editJob: () => void;
   deleteJob: () => void;
+  isDialog: boolean;
 }) {
   const [job, setJob] = useState<Job | undefined>(undefined);
 
@@ -230,21 +232,24 @@ function SchedulerViewCard({
 
   return (
     <Card
-      className="justify-content-center mr-2 mb-2 mt-2"
+      className="justify-content-center"
+      unstyled={isDialog}
       style={{ maxHeight: "80vh", overflowY: "auto" }}
       header={
-        <Button
-          onClick={() => {
-            removeItem(jobId);
-          }}
-          className="mr-2 ml-2 mt-2"
-          tooltip={"Close Job " + job?.name}
-        >
-          <FontAwesomeIcon icon="xmark" />
-        </Button>
+        !isDialog && (
+          <Button
+            onClick={() => {
+              removeItem(jobId);
+            }}
+            className="mr-2 ml-2 mt-2"
+            tooltip={"Close Job " + job?.name}
+          >
+            <FontAwesomeIcon icon="xmark" />
+          </Button>
+        )
       }
       title={
-        <div className="flex">
+        <div className="flex mb-2">
           <div className="flex-1 flex">
             <div className="mr-2">{job ? job.name : "Loading..."}</div>
           </div>

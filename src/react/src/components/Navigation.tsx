@@ -1,26 +1,25 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
 import { Menubar } from "primereact/menubar";
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
 
 import { Config, RequestItem } from "../models/models";
 import { ClearRefresh, ClearToken } from "../services/token_service";
 import { GetCurrentUser } from "../services/user_service";
 import CurrentRequestsTemplate from "./CurrentRequestsTemplate";
-import RequestItemCard from "./RequestItemCard";
 import UserLogin from "./UserLogin";
 
 function NavigationMenu({
   listeners,
   config,
   runReloadUI,
+  addRequestItem,
 }: {
   listeners: Record<string, any>;
   config: Config;
   runReloadUI: () => void;
+  addRequestItem: (itemParams?: Partial<RequestItem>) => void;
 }) {
   const [iconDefault, setIconDefault] = useState<string>(
     config?.icon_default ?? "beer-mug-empty",
@@ -32,20 +31,6 @@ function NavigationMenu({
     config?.auth_enabled,
   );
 
-  const [showCreateRequest, setShowCreateRequest] = useState<boolean>(false);
-  const [requestItem, setRequestItem] = useState<RequestItem | undefined>(
-    undefined,
-  );
-
-  const addRequestItem = (itemParams?: Partial<RequestItem>) => {
-    const newItem: RequestItem = {
-      itemId: uuidv4(),
-      type: "REQUEST",
-      ...itemParams,
-    };
-    setRequestItem(newItem);
-  };
-
   const items = [
     {
       label: "Create Request",
@@ -56,7 +41,6 @@ function NavigationMenu({
             onClick={(e) => {
               e.preventDefault();
               addRequestItem();
-              setShowCreateRequest(true);
             }}
             className="p-menuitem-link"
           >
@@ -262,36 +246,9 @@ function NavigationMenu({
   );
 
   return (
-    <>
-      {showCreateRequest && requestItem && (
-        <Dialog
-          visible={showCreateRequest}
-          style={{ width: "70%", overflowY: "auto" }}
-          modal
-          onHide={() => {
-            setShowCreateRequest(false);
-            setRequestItem(undefined);
-          }}
-          content={() => (
-            <div>
-              <RequestItemCard
-                removeItem={() => {
-                  setShowCreateRequest(false);
-                  setRequestItem(undefined);
-                }}
-                updateRequestItem={setRequestItem}
-                requestItem={requestItem}
-                listeners={listeners}
-                addItem={addRequestItem}
-              />
-            </div>
-          )}
-        />
-      )}
-      <div className="card">
-        <Menubar model={items} start={start} end={end} />
-      </div>
-    </>
+    <div className="card">
+      <Menubar model={items} start={start} end={end} />
+    </div>
   );
 }
 

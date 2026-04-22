@@ -4,10 +4,13 @@ import "primeflex/primeflex.css";
 import "./App.css";
 
 import { PrimeReactProvider } from "primereact/api";
+import { Dialog } from "primereact/dialog";
 import { useEffect, useRef, useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { v4 as uuidv4 } from "uuid";
 
 import NavigationMenu from "./components/Navigation";
+import RequestItemCard from "./components/RequestItemCard";
 import AboutIndex from "./layouts/AboutIndex";
 import GardenDashboard from "./layouts/Dashboard";
 import JobIndex from "./layouts/JobIndex";
@@ -16,7 +19,7 @@ import RequestView from "./layouts/RequestView";
 import RoleIndex from "./layouts/RoleIndex";
 import Swagger from "./layouts/Swagger";
 import Workspace from "./layouts/Workspace";
-import { Config, Listener } from "./models/models";
+import { Config, Listener, RequestItem } from "./models/models";
 import { GetConfig } from "./services/config_service";
 import { ClearSystemsCache } from "./services/system_service";
 import { preemptiveRefresh } from "./services/token_service";
@@ -28,6 +31,18 @@ function App() {
   const [config, setConfig] = useState<Config>({});
 
   const [reloadUI, setReloadUI] = useState(0);
+  const [requestItem, setRequestItem] = useState<RequestItem | undefined>(
+    undefined,
+  );
+
+  const addRequestItem = (itemParams?: Partial<RequestItem>) => {
+    const newItem: RequestItem = {
+      itemId: uuidv4(),
+      type: "REQUEST",
+      ...itemParams,
+    };
+    setRequestItem(newItem);
+  };
 
   const runReloadUI = () => {
     ClearSystemsCache();
@@ -98,7 +113,38 @@ function App() {
               listeners={listeners}
               config={config}
               runReloadUI={runReloadUI}
+              addRequestItem={addRequestItem}
             />
+            {requestItem && (
+              <Dialog
+                visible={requestItem !== undefined}
+                style={{ width: "70%", overflowY: "auto" }}
+                modal
+                onHide={() => {
+                  setRequestItem(undefined);
+                }}
+                header={
+                  requestItem.type === "REQUEST"
+                    ? "Create Request"
+                    : requestItem.type === "VIEW_REQUEST"
+                      ? `View Request: ${requestItem?.requestId}`
+                      : `View Scheduled Job: ${requestItem?.jobId}`
+                }
+              >
+                <>
+                  <RequestItemCard
+                    removeItem={() => {
+                      setRequestItem(undefined);
+                    }}
+                    updateRequestItem={setRequestItem}
+                    requestItem={requestItem}
+                    listeners={listeners}
+                    addItem={addRequestItem}
+                    isDialog={true}
+                  />
+                </>
+              </Dialog>
+            )}
             <div className="flex-grow-1">
               <Routes>
                 <Route
@@ -108,12 +154,21 @@ function App() {
                 <Route
                   path="/request/:requestId"
                   element={
-                    <RequestView listeners={listeners} config={config} />
+                    <RequestView
+                      listeners={listeners}
+                      config={config}
+                      addRequestItem={addRequestItem}
+                    />
                   }
                 />
                 <Route
                   path="/requests"
-                  element={<RequestIndex listeners={listeners} />}
+                  element={
+                    <RequestIndex
+                      listeners={listeners}
+                      addRequestItem={addRequestItem}
+                    />
+                  }
                 />
                 <Route
                   path="/create/:defaultType/:paramNamespace?/:paramSystem?/:paramVersion?/:paramInstance?/:paramCommand?"
@@ -137,7 +192,12 @@ function App() {
                 />
                 <Route
                   path="/jobs"
-                  element={<JobIndex listeners={listeners} />}
+                  element={
+                    <JobIndex
+                      listeners={listeners}
+                      addRequestItem={addRequestItem}
+                    />
+                  }
                 />
                 <Route
                   path="/job/:jobId"

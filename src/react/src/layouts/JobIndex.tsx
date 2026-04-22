@@ -2,14 +2,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
-import { Dialog } from "primereact/dialog";
 import { FileUpload } from "primereact/fileupload";
 import { Toast } from "primereact/toast";
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
-import SchedulerViewCard from "../components/SchedulerViewCard";
 import { Job } from "../models/brewtils-types";
+import { RequestItem } from "../models/models";
 import {
   DeleteJob,
   ExportJobs,
@@ -19,12 +17,16 @@ import {
   ResumeJob,
   RunAdhocJob,
 } from "../services/job_service";
-import { GetBaseURL } from "../services/util_service";
 
-function JobIndex({ listeners }: { listeners: Record<string, any> }) {
+function JobIndex({
+  listeners,
+  addRequestItem,
+}: {
+  listeners: Record<string, any>;
+  addRequestItem: (itemParams?: Partial<RequestItem>) => void;
+}) {
   const [jobs, setJobs] = useState<Array<Job>>([]);
-  const [selectedJob, setSelectedJob] = useState<Job | undefined>(undefined);
-  const navigate = useNavigate();
+
   const toast = useRef(null as null | Toast);
   const jobImportFileRef = useRef<FileUpload | null>(null);
 
@@ -80,7 +82,7 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
   };
 
   const editJob = (jobId: string) => {
-    void navigate(`${GetBaseURL()}/job/${jobId}`);
+    addRequestItem({ jobId: jobId, type: "REQUEST" });
   };
 
   const actionTemplate = (job: Job) => {
@@ -106,7 +108,9 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
           rounded
           raised
           link
-          onClick={() => setSelectedJob(job)}
+          onClick={() =>
+            addRequestItem({ jobId: job.id, type: "VIEW_SCHEDULED_JOB" })
+          }
           title={"View Job " + job.name}
           className="mr-2"
         >
@@ -197,7 +201,7 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
   };
 
   const createJob = () => {
-    void navigate(`${GetBaseURL()}/create/job`);
+    addRequestItem({ type: "REQUEST", showSchedule: true });
   };
 
   const customJobImporter = (event: any) => {
@@ -292,47 +296,6 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
 
   return (
     <div>
-      <Dialog
-        visible={selectedJob !== undefined}
-        style={{ width: "50vw" }}
-        modal
-        onHide={() => {
-          if (!selectedJob) return;
-          setSelectedJob(undefined);
-        }}
-        content={() => (
-          <div>
-            {selectedJob && selectedJob.id && (
-              <SchedulerViewCard
-                jobId={selectedJob.id}
-                listeners={listeners}
-                removeItem={() => {
-                  if (!selectedJob) return;
-                  setSelectedJob(undefined);
-                }}
-                editJob={() => {
-                  if (selectedJob && selectedJob.id) {
-                    editJob(selectedJob.id);
-                  }
-                }}
-                deleteJob={() => {
-                  if (selectedJob && selectedJob.id) {
-                    DeleteJob(selectedJob)
-                      .then(() => {
-                        if (!selectedJob) return;
-                        setSelectedJob(undefined);
-                      })
-                      .catch((error) => {
-                        console.error("Error deleting job:", error);
-                      });
-                  }
-                }}
-              />
-            )}
-          </div>
-        )}
-      />
-
       <DataTable
         value={jobs}
         header={header}
