@@ -73,6 +73,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        selectedSystems={[]}
       />,
     );
 
@@ -96,6 +97,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        selectedSystems={[]}
       />,
     );
 
@@ -122,6 +124,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        selectedSystems={[]}
       />,
     );
 
@@ -151,6 +154,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        selectedSystems={[]}
       />,
     );
 
@@ -196,6 +200,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        selectedSystems={[]}
       />,
     );
 
@@ -220,6 +225,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        selectedSystems={[]}
       />,
     );
 
@@ -244,6 +250,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        selectedSystems={[]}
       />,
     );
 
@@ -268,6 +275,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        selectedSystems={[]}
       />,
     );
 
@@ -292,6 +300,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        selectedSystems={[]}
       />,
     );
 
@@ -316,6 +325,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        selectedSystems={[]}
       />,
     );
 
@@ -342,6 +352,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        selectedSystems={[]}
       />,
     );
 
@@ -366,6 +377,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        selectedSystems={[]}
       />,
     );
 
@@ -398,6 +410,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        selectedSystems={[]}
       />,
     );
 
@@ -429,6 +442,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        selectedSystems={[]}
       />,
     );
 
@@ -460,6 +474,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        selectedSystems={[]}
       />,
     );
 
@@ -513,6 +528,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        selectedSystems={mockGarden.systems}
       />,
     );
 
