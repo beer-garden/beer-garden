@@ -142,7 +142,7 @@ function NavigationMenu({
           template: (item: any) => {
             return (
               <NavLink to="/about" className="p-menuitem-link">
-                <FontAwesomeIcon className="mr-2" icon="info" />
+                <FontAwesomeIcon className="mr-2" icon="circle-info" />
                 <span>{item.label}</span>
               </NavLink>
             );
