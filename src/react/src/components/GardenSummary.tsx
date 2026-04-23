@@ -7,7 +7,8 @@ import { DataTable } from "primereact/datatable";
 import { Tag } from "primereact/tag";
 import { RefObject, useEffect, useState } from "react";
 
-import { Connection, Garden, Instance } from "../models/brewtils-types";
+import { Connection, Garden, Instance, System } from "../models/brewtils-types";
+import { TourStepProps } from "../models/models";
 import {
   DeleteGarden,
   RescanGarden,
@@ -17,17 +18,28 @@ import {
 } from "../services/garden_service";
 import { ClearAllQueues } from "../services/queue_service";
 import { Rescan } from "../services/system_service";
+import {
+  AddTourStep,
+  ClearTourSteps,
+  GenerateTourProps,
+} from "../services/tour_service";
 import { GetSeverity } from "../services/util_service";
 
 function GardenSummary({
   gardenRef,
   selectedGarden,
+  selectedSystems,
+  tourStepsRef,
 }: {
-  gardenRef: RefObject<Garden | null>;
-  selectedGarden: Garden;
+  gardenRef: RefObject<Garden | undefined>;
+  selectedGarden: Garden | undefined;
+  selectedSystems: System[] | undefined;
+  tourStepsRef?: RefObject<Array<TourStepProps>>;
 }) {
+  const tourUuid = selectedGarden?.id;
+  const tourPrefix = "garden_summary";
   const getPublishingConnections = () => {
-    if (selectedGarden.publishing_connections) {
+    if (selectedGarden?.publishing_connections) {
       return selectedGarden.publishing_connections.filter(
         (connection: Connection) => connection.status !== "NOT_CONFIGURED",
       );
@@ -37,7 +49,7 @@ function GardenSummary({
   };
 
   const getReceivingConnections = () => {
-    if (selectedGarden.receiving_connections) {
+    if (selectedGarden?.receiving_connections) {
       return selectedGarden.receiving_connections.filter(
         (connection: Connection) => connection.status !== "NOT_CONFIGURED",
       );
@@ -49,8 +61,8 @@ function GardenSummary({
   const getSystemCounts = () => {
     const statusCounts = new Map();
 
-    if (selectedGarden?.systems && selectedGarden.systems.length > 0) {
-      for (const system of selectedGarden.systems) {
+    if (selectedSystems && selectedSystems.length > 0) {
+      for (const system of selectedSystems) {
         system?.instances?.forEach((instance: Instance) => {
           if (instance.status) {
             statusCounts.set(
@@ -74,11 +86,145 @@ function GardenSummary({
   const [systemCounts, setSystemCounts] =
     useState<Map<string, number>>(getSystemCounts());
 
+  const rescanPluginTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Rescan Plugins",
+    content: "Rescan the plugins for the selected garden",
+    layer: "COMPONENT",
+    pos: 0,
+  };
+  const rescanDownstreamTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Rescan Downstream",
+    content: "Rescan the downstream connections for the selected garden",
+    layer: "COMPONENT",
+    pos: 1,
+  };
+
+  const clearPluginsQueuesTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Clear Plugin Queues",
+    content: "Clear all plugin queues for the selected garden",
+    layer: "COMPONENT",
+    pos: 2,
+  };
+
+  const syncGardenTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Sync",
+    content: "Sync the selected garden with its upstream gardens",
+    layer: "COMPONENT",
+    pos: 3,
+  };
+
+  const syncAllTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Sync All",
+    content: "Sync all gardens with their upstream gardens",
+    layer: "COMPONENT",
+    pos: 4,
+  };
+
+  const syncUsersTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Sync Users",
+    content: "Sync users in the selected garden with its upstream garden",
+    layer: "COMPONENT",
+    pos: 5,
+  };
+
+  const deleteGardenTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Delete Garden",
+    content: "Delete the selected garden. This action is irreversible.",
+    layer: "COMPONENT",
+    pos: 6,
+  };
+
   useEffect(() => {
     setPublishingConnections(getPublishingConnections());
     setReceivingonnections(getReceivingConnections());
     setSystemCounts(getSystemCounts());
-  }, [selectedGarden]);
+
+    if (tourStepsRef !== undefined) {
+      ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+
+      AddTourStep(tourStepsRef, rescanPluginTourStep);
+      AddTourStep(tourStepsRef, rescanDownstreamTourStep);
+      AddTourStep(tourStepsRef, clearPluginsQueuesTourStep);
+
+      if (gardenRef.current) {
+        if (gardenRef.current.name === selectedGarden?.name) {
+          AddTourStep(tourStepsRef, syncAllTourStep);
+        } else {
+          AddTourStep(tourStepsRef, syncGardenTourStep);
+          AddTourStep(tourStepsRef, syncUsersTourStep);
+          AddTourStep(tourStepsRef, deleteGardenTourStep);
+        }
+      }
+
+      if (selectedGarden?.receiving_connections) {
+        selectedGarden.receiving_connections.forEach(
+          (connection: Connection) => {
+            if (connection.status !== "NOT_CONFIGURED") {
+              AddTourStep(tourStepsRef, {
+                prefix: tourPrefix,
+                uuid: tourUuid,
+                label: `RECEIVING START ${connection.api}`,
+                content: `Start receiving connection for ${connection.api}`,
+                layer: "COMPONENT",
+                pos: 7,
+              });
+              AddTourStep(tourStepsRef, {
+                prefix: tourPrefix,
+                uuid: tourUuid,
+                label: `RECEIVING STOP ${connection.api}`,
+                content: `Stop receiving connection for ${connection.api}`,
+                layer: "COMPONENT",
+                pos: 8,
+              });
+            }
+          },
+        );
+      }
+
+      if (selectedGarden?.publishing_connections) {
+        selectedGarden.publishing_connections.forEach(
+          (connection: Connection) => {
+            if (connection.status !== "NOT_CONFIGURED") {
+              AddTourStep(tourStepsRef, {
+                prefix: tourPrefix,
+                uuid: tourUuid,
+                label: `PUBLISHING START ${connection.api}`,
+                content: `Start publishing connection for ${connection.api}`,
+                layer: "COMPONENT",
+                pos: 9,
+              });
+              AddTourStep(tourStepsRef, {
+                prefix: tourPrefix,
+                uuid: tourUuid,
+                label: `PUBLISHING STOP ${connection.api}`,
+                content: `Stop publishing connection for ${connection.api}`,
+                layer: "COMPONENT",
+                pos: 10,
+              });
+            }
+          },
+        );
+      }
+
+      return () => {
+        ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+      };
+    }
+  }, [selectedGarden, selectedSystems]);
 
   const statusTemplate = (row: any) => {
     const severity = GetSeverity(row.status);
@@ -90,6 +236,11 @@ function GardenSummary({
     <div className="flex gap-2">
       <Button
         data-testid={type + "_" + node?.api + "_START"}
+        {...GenerateTourProps({
+          prefix: tourPrefix,
+          uuid: tourUuid,
+          label: `${type} START ${node?.api}`,
+        })}
         onClick={() => {
           if (selectedGarden?.name && node?.status && node?.api) {
             UpdateApiGarden(selectedGarden.name, type, node.api, type).catch(
@@ -107,6 +258,11 @@ function GardenSummary({
       <Button
         severity="warning"
         data-testid={type + "_" + node?.api + "_STOP"}
+        {...GenerateTourProps({
+          prefix: tourPrefix,
+          uuid: tourUuid,
+          label: `${type} STOP ${node?.api}`,
+        })}
         onClick={() => {
           if (selectedGarden?.name && node?.status && node?.api) {
             UpdateApiGarden(
@@ -131,6 +287,7 @@ function GardenSummary({
         <h2 className="flex-1">{`Garden Summary: ${selectedGarden?.name}`}</h2>
         <div>
           <Button
+            {...GenerateTourProps(rescanPluginTourStep)}
             label="Rescan Plugins"
             data-testid={"RESCAN_PLUGINS"}
             className="mr-2"
@@ -144,6 +301,7 @@ function GardenSummary({
           />
           <Button
             label="Rescan Downstream"
+            {...GenerateTourProps(rescanDownstreamTourStep)}
             data-testid={"RESCAN_DOWNSTREAM"}
             className="mr-2"
             onClick={() => {
@@ -156,6 +314,7 @@ function GardenSummary({
           />
           <Button
             label="Clear Plugin Queues"
+            {...GenerateTourProps(clearPluginsQueuesTourStep)}
             data-testid={"CLEAR_PLUGIN_QUEUES"}
             className="mr-2"
             severity="warning"
@@ -171,6 +330,7 @@ function GardenSummary({
             gardenRef.current.name !== selectedGarden?.name && (
               <Button
                 label="Sync"
+                {...GenerateTourProps(syncGardenTourStep)}
                 data-testid={"SYNC_GARDEN"}
                 className="mr-2"
                 onClick={() => {
@@ -186,6 +346,7 @@ function GardenSummary({
             gardenRef.current.name === selectedGarden?.name && (
               <Button
                 label="Sync All"
+                {...GenerateTourProps(syncAllTourStep)}
                 data-testid={"SYNC_ALL"}
                 className="mr-2"
                 onClick={() => {
@@ -199,6 +360,7 @@ function GardenSummary({
             gardenRef.current.name !== selectedGarden?.name && (
               <Button
                 label="Sync Users"
+                {...GenerateTourProps(syncUsersTourStep)}
                 data-testid={"SYNC_USERS"}
                 className="mr-2"
                 onClick={() => {
@@ -214,6 +376,7 @@ function GardenSummary({
             gardenRef.current.name !== selectedGarden?.name && (
               <Button
                 label="Delete Garden"
+                {...GenerateTourProps(deleteGardenTourStep)}
                 data-testid={"DELETE_GARDEN"}
                 severity="danger"
                 className="mr-2"
