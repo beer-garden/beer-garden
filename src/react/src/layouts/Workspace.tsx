@@ -26,7 +26,7 @@ function Workspace({
   display?: boolean;
   tourStepsRef: RefObject<Array<TourStepProps>>;
 }) {
-  const [useWizard] = useState<boolean>(true);
+  const [useWizard] = useState<boolean>(false);
 
   const { requestId } = useParams<{ requestId: string }>();
   const { jobId } = useParams<{ jobId: string }>();
