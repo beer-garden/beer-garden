@@ -4,6 +4,8 @@ from brewtils.models import Operation
 from brewtils.models import Subscriber as BrewtilsSubscriber
 from brewtils.schema_parser import SchemaParser
 
+from mongoengine import Q
+
 from beer_garden.api.http.base_handler import BaseHandler
 
 
@@ -366,6 +368,12 @@ class TopicListAPI(BaseHandler):
         """
         ---
         summary: Retrieve topics
+        parameters:
+          - name: include_generated
+            in: path
+            required: false
+            description: Include topics containing only GENERATED subscribers
+            type: boolean
         responses:
           200:
             description: List of topics
@@ -393,7 +401,20 @@ class TopicListAPI(BaseHandler):
           - Topics
         """
 
-        response = await self.client(Operation(operation_type="TOPIC_READ_ALL"))
+        include_generated = self.get_query_argument("include_generated", None)
+        if include_generated is None:
+            include_generated = False
+        else:
+            include_generated = bool(include_generated.lower() == "true")
+
+        q_filter = Q()
+        if not include_generated:
+            q_filter = q_filter & (
+                Q(**{"subscribers__subscriber_type__in": ["ANNOTATED", "DYNAMIC"]})
+                | Q(**{"subscribers__size": 0})
+            )
+
+        response = await self.client(Operation(operation_type="TOPIC_READ_ALL", kwargs={"q_filter": q_filter}))
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

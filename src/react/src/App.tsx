@@ -15,6 +15,7 @@ import RequestIndex from "./layouts/RequestIndex";
 import RequestView from "./layouts/RequestView";
 import RoleIndex from "./layouts/RoleIndex";
 import Swagger from "./layouts/Swagger";
+import TopicIndex from "./layouts/TopicIndex";
 import Workspace from "./layouts/Workspace";
 import { Config, Listener } from "./models/models";
 import { GetConfig } from "./services/config_service";
@@ -145,6 +146,10 @@ function App() {
                 />
                 <Route path="/about" element={<AboutIndex config={config} />} />
                 <Route path="/roles" element={<RoleIndex config={config} />} />
+                <Route
+                  path="/topics"
+                  element={<TopicIndex config={config} />}
+                />
                 <Route path="/swagger" element={<Swagger />} />
                 <Route
                   path="/"

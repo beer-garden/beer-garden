@@ -1,0 +1,332 @@
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { AutoComplete } from "primereact/autocomplete";
+import { Button } from "primereact/button";
+import { Card } from "primereact/card";
+import React, { useEffect, useRef, useState } from "react";
+
+import { Subscriber } from "../models/brewtils-types";
+import { GetSystemList } from "../services/system_service";
+
+interface SubscriberCardProps {
+  subscriberList: Array<Subscriber>;
+  setSubscriberList: React.Dispatch<React.SetStateAction<Array<Subscriber>>>;
+  isEdit: boolean;
+}
+
+function SubscriberCard({
+  subscriberList,
+  setSubscriberList,
+  isEdit,
+}: SubscriberCardProps) {
+  const [filteredGardenItems, setFilteredGardenItems] = useState(
+    [] as Array<string>,
+  );
+  const [filteredNamespaceItems, setFilteredNamespaceItems] = useState(
+    [] as Array<string>,
+  );
+  const [filteredSystemItems, setFilteredSystemItems] = useState(
+    [] as Array<string>,
+  );
+  const [filteredVersionItems, setFilteredVersionItems] = useState(
+    [] as Array<string>,
+  );
+  const [filteredInstanceItems, setFilteredInstanceItems] = useState(
+    [] as Array<string>,
+  );
+  const [filteredCommandItems, setFilteredCommandItems] = useState(
+    [] as Array<string>,
+  );
+  const gardenItems = useRef<Array<string>>([]);
+  const namespaceItems = useRef<Array<string>>([]);
+  const systemItems = useRef<Array<string>>([]);
+  const versionItems = useRef<Array<string>>([]);
+  const instanceItems = useRef<Array<string>>([]);
+  const commandItems = useRef<Array<string>>([]);
+
+  useEffect(() => {
+    GetSystemList()
+      .then((data) => {
+        //Gardens
+        const gardens = new Set(
+          data
+            .map((system) => system.garden_name)
+            .filter((item) => item !== undefined),
+        );
+        gardenItems.current = Array.from(gardens);
+        //Namespaces
+        const namespaces = new Set(
+          data
+            .map((system) => system.namespace)
+            .filter((item) => item !== undefined),
+        );
+        namespaceItems.current = Array.from(namespaces);
+        //Systems
+        const systems = new Set(
+          data
+            .map((system) => system.name)
+            .filter((item) => item !== undefined),
+        );
+        systemItems.current = Array.from(systems);
+        //Versions
+        const versions = new Set(
+          data
+            .map((system) => system.version)
+            .filter((item) => item !== undefined),
+        );
+        versionItems.current = Array.from(versions);
+        //Instance
+        const instances = new Set(
+          data
+            .map((system) => system.instances?.map((i) => i?.name))
+            .flat()
+            .filter((item) => item !== undefined),
+        );
+        instanceItems.current = Array.from(instances);
+        const commands = new Set(
+          data
+            .map((system) => system.commands?.map((i) => i?.name))
+            .flat()
+            .filter((item) => item !== undefined),
+        );
+        commandItems.current = Array.from(commands);
+      })
+      .catch((error) => {
+        console.error("Error fetching system list:", error);
+      });
+  }, []);
+
+  function header(index: number) {
+    return (
+      <div className="flex justify-content-between p-3 pb-0 items-end">
+        <div className="flex flex-1"></div>
+        {!isEdit && (
+          <Button tooltip="Remove" onClick={() => handleClose(index)}>
+            <FontAwesomeIcon icon="close" />
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  function handleClose(indexToRemove: number) {
+    setSubscriberList((currentList) => {
+      return [
+        ...currentList.slice(0, indexToRemove),
+        ...currentList.slice(indexToRemove + 1),
+      ];
+    });
+  }
+
+  function handleAddSubscriber() {
+    setSubscriberList([
+      ...subscriberList,
+      {
+        namespace: "",
+        garden: "",
+        system: "",
+        version: "",
+        instance: "",
+        command: "",
+      } as Subscriber,
+    ]);
+  }
+
+  function handleUpdateSubscriber(
+    inputKey: "namespace" | "garden" | "system" | "version" | "instance",
+    inputValue: any,
+    inputIndex: number,
+  ) {
+    if (inputValue.trim()) {
+      setSubscriberList((currentList) => {
+        const newList = currentList.map((subscriber, index) => {
+          if (index == inputIndex) {
+            subscriber[inputKey] = inputValue;
+          }
+          return subscriber;
+        });
+        return newList;
+      });
+    }
+  }
+
+  const searchGardenItems = (event: any) => {
+    if (gardenItems.current) {
+      const query = event.query.toLowerCase();
+      const filtered = gardenItems.current.filter((item) =>
+        item.toLowerCase().includes(query),
+      );
+      setFilteredGardenItems(filtered);
+    }
+  };
+
+  const searchNamespaceItems = (event: any) => {
+    if (namespaceItems.current) {
+      const query = event.query.toLowerCase();
+      const filtered = namespaceItems.current.filter((item) =>
+        item.toLowerCase().includes(query),
+      );
+      setFilteredNamespaceItems(filtered);
+    }
+  };
+
+  const searchSystemItems = (event: any) => {
+    if (systemItems.current) {
+      const query = event.query.toLowerCase();
+      const filtered = systemItems.current.filter((item) =>
+        item.toLowerCase().includes(query),
+      );
+      setFilteredSystemItems(filtered);
+    }
+  };
+
+  const searchVersionItems = (event: any) => {
+    if (systemItems.current) {
+      const query = event.query.toLowerCase();
+      const filtered = versionItems.current.filter((item) =>
+        item.toLowerCase().includes(query),
+      );
+      setFilteredVersionItems(filtered);
+    }
+  };
+
+  const searchInstanceItems = (event: any) => {
+    if (instanceItems.current) {
+      const query = event.query.toLowerCase();
+      const filtered = instanceItems.current.filter((item) =>
+        item.toLowerCase().includes(query),
+      );
+      setFilteredInstanceItems(filtered);
+    }
+  };
+
+  const searchCommandItems = (event: any) => {
+    if (commandItems.current) {
+      const query = event.query.toLowerCase();
+      const filtered = commandItems.current.filter((item) =>
+        item.toLowerCase().includes(query),
+      );
+      setFilteredCommandItems(filtered);
+    }
+  };
+
+  return (
+    <div className="flex flex-column gap-2">
+      {!isEdit && (
+        <label className="font-bold" htmlFor="subscribers">
+          Subscribers
+        </label>
+      )}
+      <div className="card" id="subscribers">
+        {subscriberList.map((subscriber, index) => (
+          <Card
+            key={index}
+            className="card flex flex-column gap-2 border-1"
+            header={() => header(index)}
+          >
+            <div className="mb-2">
+              <label className="font-bold flex" htmlFor={`namepace-${index}`}>
+                Namespace
+              </label>
+              <AutoComplete
+                dropdown
+                id={`namespace-${index}`}
+                value={subscriber.namespace}
+                suggestions={filteredNamespaceItems}
+                completeMethod={searchNamespaceItems}
+                onChange={(e) =>
+                  handleUpdateSubscriber("namespace", e.target.value, index)
+                }
+              />
+            </div>
+            <div className="mb-2">
+              <label className="font-bold flex" htmlFor={`garden-${index}`}>
+                Garden
+              </label>
+              <AutoComplete
+                dropdown
+                id={`garden-${index}`}
+                value={subscriber.garden}
+                suggestions={filteredGardenItems}
+                completeMethod={searchGardenItems}
+                onChange={(e) =>
+                  handleUpdateSubscriber("garden", e.target.value, index)
+                }
+              />
+            </div>
+            <div className="mb-2">
+              <label className="font-bold flex" htmlFor={`system-${index}`}>
+                System
+              </label>
+              <AutoComplete
+                dropdown
+                id={`system-${index}`}
+                value={subscriber.system}
+                suggestions={filteredSystemItems}
+                completeMethod={searchSystemItems}
+                onChange={(e) =>
+                  handleUpdateSubscriber("system", e.target.value, index)
+                }
+              />
+            </div>
+            <div className="mb-2">
+              <label className="font-bold flex" htmlFor={`system-${index}`}>
+                Version
+              </label>
+              <AutoComplete
+                dropdown
+                id={`version-${index}`}
+                value={subscriber.version}
+                suggestions={filteredVersionItems}
+                completeMethod={searchVersionItems}
+                onChange={(e) =>
+                  handleUpdateSubscriber("version", e.target.value, index)
+                }
+              />
+            </div>
+            <div className="mb-2">
+              <label className="font-bold flex" htmlFor={`system-${index}`}>
+                Instance
+              </label>
+              <AutoComplete
+                dropdown
+                id={`instance-${index}`}
+                value={subscriber.instance}
+                suggestions={filteredInstanceItems}
+                completeMethod={searchInstanceItems}
+                onChange={(e) =>
+                  handleUpdateSubscriber("instance", e.target.value, index)
+                }
+              />
+            </div>
+            <div className="mb-2">
+              <label className="font-bold flex" htmlFor={`system-${index}`}>
+                Command
+              </label>
+              <AutoComplete
+                dropdown
+                id={`command-${index}`}
+                value={subscriber.command}
+                suggestions={filteredCommandItems}
+                completeMethod={searchCommandItems}
+                onChange={(e) =>
+                  handleUpdateSubscriber("command", e.target.value, index)
+                }
+              />
+            </div>
+          </Card>
+        ))}
+        {!isEdit && (
+          <div className="flex">
+            <Button
+              className="mt-1 mb-3"
+              label={"Add subscriber"}
+              onClick={handleAddSubscriber}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default SubscriberCard;
