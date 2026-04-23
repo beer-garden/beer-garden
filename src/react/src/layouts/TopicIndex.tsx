@@ -1,5 +1,6 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { FilterMatchMode } from "primereact/api";
+import { FilterService } from "primereact/api";
 import { Button } from "primereact/button";
 import { Checkbox } from "primereact/checkbox";
 import { Column } from "primereact/column";
@@ -23,8 +24,23 @@ import {
   ResetCount,
   SyncTopics,
 } from "../services/topic_service";
-
 function TopicIndex() {
+  FilterService.register(
+    "custom-subscriber-search",
+    (subscribers: Subscriber[], filter: any) => {
+      if (!filter || filter.trim() === "") {
+        return true; // If filter is empty, include all topics
+      }
+
+      for (const subscriber of subscribers || []) {
+        if (subscriber.system?.toLowerCase().includes(filter.toLowerCase())) {
+          return true;
+        }
+      }
+      return false;
+    },
+  );
+
   const toast = useRef<Toast>(null);
   const [topics, setTopics] = useState<Array<Topic>>([]);
   const [loading, setLoading] = useState(false);
@@ -36,7 +52,7 @@ function TopicIndex() {
       matchMode: FilterMatchMode.CONTAINS,
     },
     publisherCount: { value: null, matchMode: FilterMatchMode.EQUALS },
-    subscribers: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    subscribers: { value: null, matchMode: "custom-subscriber-search" },
   });
   const [sortField, setSortField] = useState<string | undefined>(undefined);
   const [sortOrder, setSortOrder] = useState<SortOrder>(undefined);
@@ -463,6 +479,8 @@ function TopicIndex() {
             field="subscribers"
             sortable
             filter
+            filterMatchMode="custom-subscriber-search"
+            showFilterMenu={false}
             header="Subscribers"
             body={subscribersTemplate}
           />
