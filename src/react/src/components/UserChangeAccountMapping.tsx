@@ -17,12 +17,14 @@ function UserChangeAccountMapping({
   showAccountMappingDialog,
   setShowAccountMappingDialog,
   toast,
+  callback,
 }: {
   user: User;
   config: Config;
   showAccountMappingDialog: boolean;
   setShowAccountMappingDialog: (show: boolean) => void;
   toast: RefObject<Toast | null>;
+  callback?: () => void;
 }) {
   const [gardenAccounts, setGardenAccounts] = useState<Array<any>>([]);
   const gardenAccountsRef = useRef<Array<any>>([]);
@@ -114,6 +116,9 @@ function UserChangeAccountMapping({
     if (user.username) {
       UpdateUserAliasMapping(user.username, newAliasMapping)
         .then(() => {
+          if (callback) {
+            callback();
+          }
           handleAccountMappingDialogClose();
         })
         .catch((error) => {

@@ -2,6 +2,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
 import { Chip } from "primereact/chip";
 import { Column } from "primereact/column";
+import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { DataTable, SortOrder } from "primereact/datatable";
 import { Message } from "primereact/message";
 import { Tag } from "primereact/tag";
@@ -194,12 +195,35 @@ function UserIndex({ config }: { config: Config }) {
         {(rowData.protected === undefined || rowData.protected === false) && (
           <Button
             onClick={() => {
+              const accept = () => {
+                if (rowData.username) {
+                  DeleteUser(rowData.username)
+                    .then(() => {
+                      toast.current?.show({
+                        severity: "info",
+                        summary: "Delete User",
+                        detail: `Delete ${rowData.username} complete`,
+                        life: 3000,
+                      });
+                      loadUsers();
+                    })
+                    .catch((error) =>
+                      console.error("Error attempting to delete user", error),
+                    );
+                }
+              };
+
+              const reject = () => {};
+
               if (rowData.username) {
-                DeleteUser(rowData.username)
-                  .then(() => loadUsers())
-                  .catch((error) =>
-                    console.error("Error attempting to delete user", error),
-                  );
+                confirmDialog({
+                  message: `Are you sure you want to delete user ${rowData.username}?`,
+                  header: "Confirmation",
+                  icon: "pi pi-exclamation-triangle",
+                  defaultFocus: "accept",
+                  accept,
+                  reject,
+                });
               }
             }}
             tooltip={`Delete User ${rowData.username}`}
@@ -251,18 +275,13 @@ function UserIndex({ config }: { config: Config }) {
   }, [users]);
 
   useEffect(() => {
-    if (
-      !showAccountMappingDialog &&
-      !showRolesDialog &&
-      !showCreateUserDialog
-    ) {
-      loadUsers();
-    }
-  }, [showAccountMappingDialog, showRolesDialog, showCreateUserDialog]);
+    loadUsers();
+  }, []);
 
   return (
     <div>
       <Toast ref={toast} />
+      <ConfirmDialog />
       <div className="flex items-end ml-2 page-header">
         <h1 className="flex-1">User Management</h1>
         <div>
@@ -298,6 +317,7 @@ function UserIndex({ config }: { config: Config }) {
           showPasswordDialog={showPasswordDialog}
           setShowPasswordDialog={setShowPasswordDialog}
           toast={toast}
+          callback={loadUsers}
         />
       )}
       {showRolesDialog && rolesUser && (
@@ -306,6 +326,7 @@ function UserIndex({ config }: { config: Config }) {
           showRolesDialog={showRolesDialog}
           setShowRolesDialog={setShowRolesDialog}
           toast={toast}
+          callback={loadUsers}
         />
       )}
 
@@ -316,6 +337,7 @@ function UserIndex({ config }: { config: Config }) {
           showAccountMappingDialog={showAccountMappingDialog}
           setShowAccountMappingDialog={setShowAccountMappingDialog}
           toast={toast}
+          callback={loadUsers}
         />
       )}
 
@@ -324,6 +346,7 @@ function UserIndex({ config }: { config: Config }) {
           showCreateUserDialog={showCreateUserDialog}
           setShowCreateUserDialog={setShowCreateUserDialog}
           toast={toast}
+          callback={loadUsers}
         />
       )}
 

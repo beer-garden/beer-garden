@@ -11,10 +11,12 @@ function UserCreate({
   showCreateUserDialog,
   setShowCreateUserDialog,
   toast,
+  callback,
 }: {
   showCreateUserDialog: boolean;
   setShowCreateUserDialog: (show: boolean) => void;
   toast: RefObject<Toast | null>;
+  callback?: () => void;
 }) {
   const [username, setUsername] = useState<string | undefined>(undefined);
   const [newPassword, setNewPassword] = useState<string | undefined>(undefined);
@@ -55,6 +57,9 @@ function UserCreate({
             detail: `Created Account for ${username}`,
             life: 3000,
           });
+          if (callback) {
+            callback();
+          }
           handleUserCreateDialogClose();
         })
         .catch((error) => console.error("Failed creating user", error));

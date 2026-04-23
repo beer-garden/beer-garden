@@ -15,12 +15,14 @@ function UserChangePassword({
   showPasswordDialog,
   setShowPasswordDialog,
   toast,
+  callback,
 }: {
   username: string;
   isAdmin: boolean;
   showPasswordDialog: boolean;
   setShowPasswordDialog: (show: boolean) => void;
   toast: RefObject<Toast | null>;
+  callback?: () => void;
 }) {
   const [currentPassword, setCurrentPassword] = useState<string | undefined>(
     undefined,
@@ -59,6 +61,9 @@ function UserChangePassword({
             detail: `Password updated for user ${username}`,
             life: 3000,
           });
+          if (callback) {
+            callback();
+          }
           handleUserPasswordDialogClose();
         })
         .catch((error) => {
@@ -92,6 +97,9 @@ function UserChangePassword({
             detail: `Password updated for user ${username}`,
             life: 3000,
           });
+          if (callback) {
+            callback();
+          }
           handleUserPasswordDialogClose();
         })
         .catch((error) => {

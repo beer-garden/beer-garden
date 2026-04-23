@@ -15,11 +15,13 @@ function UserChangeRoles({
   showRolesDialog,
   setShowRolesDialog,
   toast,
+  callback,
 }: {
   user: User;
   showRolesDialog: boolean;
   setShowRolesDialog: (show: boolean) => void;
   toast: RefObject<Toast | null>;
+  callback?: () => void;
 }) {
   const [roles, setRoles] = useState<Array<Role> | undefined>(undefined);
   const [selectedRoles, setSelectedRoles] = useState<Array<Role>>([]);
@@ -75,6 +77,9 @@ function UserChangeRoles({
       }
       UpdateUserRoles(user.username, selectedRoleNames)
         .then(() => {
+          if (callback) {
+            callback();
+          }
           handleUserRolesDialogClose();
         })
         .catch((error) => {
