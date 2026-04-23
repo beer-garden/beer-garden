@@ -308,14 +308,12 @@ function RequestViewCard({
                 ? [
                     {
                       label: "Run Again Now",
-                      // icon: <FontAwesomeIcon icon="arrow-up-right-from-square" />,
                       command: () => {
                         submitRequest(false);
                       },
                     },
                     {
                       label: "Pour Again",
-                      // icon: <FontAwesomeIcon icon="arrow-up-from-bracket" />,
                       command: () => {
                         addItem({
                           requestId: request.id,
