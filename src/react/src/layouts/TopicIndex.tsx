@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { FilterMatchMode } from "primereact/api";
+import { FilterMatchMode, FilterService } from "primereact/api";
 import { Button } from "primereact/button";
 import { Checkbox } from "primereact/checkbox";
 import { Column } from "primereact/column";
@@ -7,6 +7,7 @@ import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { DataTable, SortOrder } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
 import { Divider } from "primereact/divider";
+import { InputNumber } from "primereact/inputnumber";
 import { InputText } from "primereact/inputtext";
 import { Messages } from "primereact/messages";
 import { Toast } from "primereact/toast";
@@ -24,19 +25,59 @@ import {
   SyncTopics,
 } from "../services/topic_service";
 
+FilterService.register(
+  "custom_subscribers",
+  (subscribers: Subscriber[], filter: any) => {
+    if (!filter || filter.trim() === "") {
+      return true; // If filter is empty, include all topics
+    }
+
+    for (const subscriber of subscribers) {
+      if (subscriber.namespace?.toLowerCase().includes(filter.toLowerCase())) {
+        return true;
+      }
+      if (subscriber.garden?.toLowerCase().includes(filter.toLowerCase())) {
+        return true;
+      }
+      if (subscriber.system?.toLowerCase().includes(filter.toLowerCase())) {
+        return true;
+      }
+      if (subscriber.version?.toLowerCase().includes(filter.toLowerCase())) {
+        return true;
+      }
+      if (subscriber.instance?.toLowerCase().includes(filter.toLowerCase())) {
+        return true;
+      }
+      if (subscriber.command?.toLowerCase().includes(filter.toLowerCase())) {
+        return true;
+      }
+      if (subscriber.consumer_count == filter.toLowerCase()) {
+        return true;
+      }
+      if (
+        subscriber.subscriber_type?.toLowerCase().includes(filter.toLowerCase())
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  },
+);
+
 function TopicIndex() {
   const toast = useRef<Toast>(null);
   const [topics, setTopics] = useState<Array<Topic>>([]);
   const [loading, setLoading] = useState(false);
   const [first, setFirst] = useState<number>(0);
   const [rows, setRows] = useState<number>(10);
-  const [filters, setFilters] = useState({
+  const [filters] = useState({
     name: {
       value: null,
       matchMode: FilterMatchMode.CONTAINS,
     },
     publisherCount: { value: null, matchMode: FilterMatchMode.EQUALS },
-    subscribers: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    subscribers: { value: null, matchMode: FilterMatchMode.CUSTOM },
   });
   const [sortField, setSortField] = useState<string | undefined>(undefined);
   const [sortOrder, setSortOrder] = useState<SortOrder>(undefined);
@@ -213,13 +254,15 @@ function TopicIndex() {
       return (
         <div className="flex align-items-center gap-2">
           <span>{topic.publisher_count}</span>
-          <Button
-            size="small"
-            tooltip="Clear count"
-            onClick={() => clearCount(topic)}
-          >
-            <FontAwesomeIcon icon="0" />
-          </Button>
+          {(topic.publisher_count || 0) > 0 && (
+            <Button
+              size="small"
+              tooltip="Clear count"
+              onClick={() => clearCount(topic)}
+            >
+              <FontAwesomeIcon icon="0" />
+            </Button>
+          )}
         </div>
       );
     }
@@ -280,7 +323,7 @@ function TopicIndex() {
                     <td className="border border-1 px-2">
                       <div className="flex align-items-center gap-2">
                         <span>{subscriber.consumer_count}</span>
-                        {subscriber.consumer_count > -1 && (
+                        {subscriber.consumer_count > 0 && (
                           <Button
                             size="small"
                             className="ml-2"
@@ -389,7 +432,7 @@ function TopicIndex() {
             </Button>
           )}
           <Button onClick={() => addSubscriber(topic)} tooltip="Add Subscriber">
-            <FontAwesomeIcon icon="pencil" />
+            <FontAwesomeIcon icon="square-plus" />
           </Button>
         </>
       );
@@ -428,7 +471,6 @@ function TopicIndex() {
           first={first}
           filterDisplay="row"
           filters={filters}
-          onFilter={(e) => setFilters(e.filters as typeof filters)}
           sortField={sortField}
           sortOrder={sortOrder}
           rowsPerPageOptions={[10, 25, 50]}
@@ -458,6 +500,8 @@ function TopicIndex() {
             body={publisherCountTemplate}
             showFilterMenu={false}
             style={{ width: "7%" }}
+            dataType="numeric"
+            filterElement={<InputNumber />}
           />
           <Column
             field="subscribers"

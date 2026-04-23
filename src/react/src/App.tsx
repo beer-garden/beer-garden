@@ -521,9 +521,7 @@ function App() {
                     <RoleIndex config={config} tourStepsRef={tourStepsRef} />
                   }
                 />
-                <Route
-                  path="/topics"
-                  element={<TopicIndex />} />
+                <Route path="/topics" element={<TopicIndex />} />
                 <Route path="/swagger" element={<Swagger />} />
                 <Route
                   path="/"
