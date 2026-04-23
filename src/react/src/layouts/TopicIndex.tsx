@@ -415,16 +415,7 @@ function TopicIndex() {
       </div>
     );
 
-    function myFilterFunction(subscribers: Subscriber[], filter: any) {
-      console.log(subscribers);
-      console.log(filter);
-    }
-
     return (
-      // Add generated checkbox and set to true
-      // http://localhost:8080/api/v1/topics?columns=%7B%22data%22:%22name%22,%22name%22:%22%22,%22searchable%22:true,%22orderable%22:true,%22search%22:%7B%22value%22:%22%22,%22regex%22:false%7D%7D&columns=%7B%22data%22:%22publisher_count%22,%22name%22:%22%22,%22searchable%22:true,%22orderable%22:true,%22search%22:%7B%22value%22:%22%22,%22regex%22:false%7D%7D&columns=%7B%22data%22:%22subscribers%22,%22name%22:%22%22,%22searchable%22:true,%22orderable%22:true,%22search%22:%7B%22value%22:%22%22,%22regex%22:false%7D%7D&columns=%7B%22data%22:null,%22name%22:%22%22,%22searchable%22:true,%22orderable%22:false,%22search%22:%7B%22value%22:%22%22,%22regex%22:false%7D%7D&columns=%7B%22data%22:%22id%22%7D&draw=5&length=100&order=%7B%22column%22:0,%22dir%22:%22asc%22%7D&search=%7B%22value%22:%22%22,%22regex%22:false%7D&start=0
-      // http://localhost:8080/api/v1/topics?columns=%7B%22data%22:%22name%22,%22name%22:%22%22,%22searchable%22:true,%22orderable%22:true,%22search%22:%7B%22value%22:%22%22,%22regex%22:false%7D%7D&columns=%7B%22data%22:%22publisher_count%22,%22name%22:%22%22,%22searchable%22:true,%22orderable%22:true,%22search%22:%7B%22value%22:%22%22,%22regex%22:false%7D%7D&columns=%7B%22data%22:%22subscribers%22,%22name%22:%22%22,%22searchable%22:true,%22orderable%22:true,%22search%22:%7B%22value%22:%22%22,%22regex%22:false%7D%7D&columns=%7B%22data%22:null,%22name%22:%22%22,%22searchable%22:true,%22orderable%22:false,%22search%22:%7B%22value%22:%22%22,%22regex%22:false%7D%7D&columns=%7B%22data%22:%22id%22%7D&draw=4&include_generated=true&length=100&order=%7B%22column%22:0,%22dir%22:%22asc%22%7D&search=%7B%22value%22:%22%22,%22regex%22:false%7D&start=0
-
       <>
         <ConfirmDialog />
         <DataTable
@@ -474,8 +465,6 @@ function TopicIndex() {
             filter
             header="Subscribers"
             body={subscribersTemplate}
-            filterMatchMode="custom"
-            filterFunction={myFilterFunction}
           />
           <Column
             header=""
