@@ -581,18 +581,20 @@ class RequestListAPI(AuthorizationHandler):
         choice_validation_enabled = self.get_argument(
             "choice_validation_enabled", default=None
         )
-        
+
         if choice_validation_enabled is not None:
             if isinstance(choice_validation_enabled, str):
                 choice_validation_enabled = choice_validation_enabled.lower() == "true"
             operation_kwargs["choice_validation_enabled"] = choice_validation_enabled
 
-        operation_kwargs["wait_event"] = None
+        wait_future = None
         if self.get_argument("blocking", default="").lower() == "true":
-            operation_kwargs["wait_event"] = Future()
+            wait_future = Future()
 
             # Also don't publish latency measurements
             self.request.ignore_latency = True
+
+        operation_kwargs["wait_event"] = wait_future
 
         try:
             created_request = await self.process_operation(
