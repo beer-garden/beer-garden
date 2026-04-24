@@ -3,7 +3,7 @@
 # 3.33.1
 TBD
 
-- Fixed bug where Choice Validation was added to Forward Operation when set to None (#)
+- Fixed bug where Choice Validation was added to Forward Operation when set to None (#2126)
 
 # 3.33.0
 4/21/2026
