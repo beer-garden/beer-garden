@@ -102,7 +102,7 @@ export interface HasAccessProps {
 }
 
 export interface CommandFormProps {
-  command: Command | null;
+  command: Command | null | undefined;
   disabled?: boolean;
   request?: Request | null | undefined;
   setRequest: (request: Request) => void;

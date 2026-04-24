@@ -16,7 +16,7 @@ import HasAccess from "../components/HasAccess";
 import RequestOutput from "../components/RequestOutput";
 import RequestTreeChart from "../components/RequestTreeChart";
 import { Request, System } from "../models/brewtils-types";
-import { Config, RequestCommand } from "../models/models";
+import { Config, RequestCommand, RequestItem } from "../models/models";
 import {
   CancelRequest,
   DeleteRequest,
@@ -69,12 +69,14 @@ function RequestOptions({
   requestProjectionSelected,
   setRequestProjectionSelected,
   requestProjectionSelectedRef,
+  addRequestItem,
 }: {
   request: Request;
   requestProjections?: RequestCommand[];
   requestProjectionSelected?: RequestCommand;
   setRequestProjectionSelected: (value: RequestCommand | undefined) => void;
   requestProjectionSelectedRef: React.RefObject<RequestCommand | undefined>;
+  addRequestItem: (itemParams?: Partial<RequestItem>) => void;
 }) {
   const navigate = useNavigate();
   const items: MenuItem[] = [];
@@ -117,7 +119,7 @@ function RequestOptions({
   }
 
   const pourAgain = (request: Request) => {
-    void navigate(`${GetBaseURL()}/recreate/${request.id}`);
+    addRequestItem({ requestId: request.id, type: "REQUEST" });
   };
 
   const commandTemplate = (requestCommand: RequestCommand) => {
@@ -231,9 +233,11 @@ function RequestHeader(request: Request) {
 function RequestView({
   listeners,
   config,
+  addRequestItem,
 }: {
   listeners: Record<string, any>;
   config: Config;
+  addRequestItem: (itemParams?: Partial<RequestItem>) => void;
 }) {
   const { requestId } = useParams<{ requestId: string }>();
   const [request, setRequest] = useState<Request | null>(null);
@@ -419,6 +423,7 @@ function RequestView({
                 requestProjectionSelected={requestProjectionSelected}
                 setRequestProjectionSelected={setRequestProjectionSelected}
                 requestProjectionSelectedRef={requestProjectionSelectedRef}
+                addRequestItem={addRequestItem}
               />
             </HasAccess>
             {!showCommandForm && <Skeleton width="100%" height="10rem" />}
@@ -428,6 +433,8 @@ function RequestView({
                   command: command,
                   request: request,
                   setRequest: setRequest,
+                  resetForm: false,
+                  setResetForm: () => {},
                 }}
               />
             )}
@@ -440,6 +447,7 @@ function RequestView({
                 <div style={{ marginLeft: "auto" }}>
                   <RequestOptions
                     request={request}
+                    addRequestItem={addRequestItem}
                     requestProjections={requestProjections}
                     requestProjectionSelected={requestProjectionSelected}
                     setRequestProjectionSelected={setRequestProjectionSelected}

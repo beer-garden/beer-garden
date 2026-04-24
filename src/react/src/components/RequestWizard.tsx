@@ -6,7 +6,6 @@ import { InputSwitch } from "primereact/inputswitch";
 import { Stepper } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
 
 import {
   Command,
@@ -31,10 +30,12 @@ function RequestWizard({
   requestItem,
   updateRequestItem,
   removeItem,
+  isDialog,
 }: {
   requestItem: RequestItem;
   updateRequestItem: (item: RequestItem) => void;
   removeItem: (id: string) => void;
+  isDialog: boolean;
 }) {
   const stepperRef = useRef<Stepper>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -46,29 +47,19 @@ function RequestWizard({
     Record<string, any> | undefined
   >(undefined);
   const [selectedCommand, setSelectedCommand] = useState<Command | undefined>(
-    null,
+    undefined,
   );
   const [instances, setInstances] = useState<Array<Instance>>();
   const instanceList: Array<any> = [];
   const [resetForm, setResetForm] = useState<boolean>(false);
   const [visibleCodeExample, setVisibleCodeExample] = useState<boolean>(false);
-  const { paramNamespace } = useParams<{ paramNamespace: string }>();
-  const { paramSystem } = useParams<{ paramSystem: string }>();
-  const { paramVersion } = useParams<{ paramVersion: string }>();
-  const { paramInstance } = useParams<{ paramInstance: string }>();
-  const { paramCommand } = useParams<{ paramCommand: string }>();
-  const [requestCommand, setRequestCommand] = useState<RequestCommand>({
-    namespace: paramNamespace ?? undefined,
-    systemName: paramSystem ?? undefined,
-    version: paramVersion ?? undefined,
-    instance: paramInstance ?? undefined,
-    command: paramCommand ?? undefined,
-  });
 
   const [showCreateRequest, setShowCreateRequest] = useState<boolean>(
     (requestItem?.requestId === undefined || requestItem?.requestId === null) &&
       (requestItem?.jobId === undefined || requestItem?.jobId === null),
   );
+
+  const [isFormValid, setIsFormValid] = useState<boolean>(false);
 
   // Input Request
   const [request, setRequest] = useState<Request | undefined>(
@@ -182,7 +173,6 @@ function RequestWizard({
 
   // Create Request Panel
   const updateRequestCommand = (requestCommand: RequestCommand) => {
-    setRequestCommand(requestCommand);
     updateRequestItem({
       ...requestItem,
       requestCommandInput: requestCommand,
@@ -455,17 +445,20 @@ function RequestWizard({
   return (
     <Card
       className="justify-content-center"
+      unstyled={isDialog}
       header={
-        <div className="flex">
-          <Button
-            onClick={() => {
-              removeItem(requestItem.itemId);
-            }}
-            tooltip={`Close Request Creation for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
-          >
-            <FontAwesomeIcon icon="xmark" />
-          </Button>
-        </div>
+        !isDialog && (
+          <div className="flex">
+            <Button
+              onClick={() => {
+                removeItem(requestItem.itemId);
+              }}
+              tooltip={`Close Request Creation for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
+            >
+              <FontAwesomeIcon icon="xmark" />
+            </Button>
+          </div>
+        )
       }
       key={requestItem.itemId}
     >
@@ -483,10 +476,14 @@ function RequestWizard({
           <CommandList
             selectedSystem={selectedSystem}
             commandListButtonClick={commandListButtonClick}
-            instances={instances?.map((instance) => ({
-              name: instance.name,
-              label: instance.name,
-            }))}
+            instances={
+              instances
+                ? instances.map((instance) => ({
+                    name: instance.name,
+                    label: instance.name,
+                  }))
+                : []
+            }
             selectedInstance={selectedInstance}
             setSelectedInstance={setSelectedInstance}
           />
@@ -521,10 +518,9 @@ function RequestWizard({
             disabled={false}
             request={request}
             setRequest={setRequest}
-            requestCommand={requestCommand}
-            setRequestCommand={setRequestCommand}
             resetForm={resetForm}
             setResetForm={setResetForm}
+            setIsFormValid={setIsFormValid}
           />
           <div className="flex pt-4 justify-content-between">
             <Button
@@ -562,6 +558,7 @@ function RequestWizard({
               <Button
                 label="Submit"
                 icon="pi pi-arrow-right"
+                disabled={!isFormValid}
                 onMouseDown={(event) => {
                   if (event.button === 1) {
                     // Middle mouse button click
@@ -577,6 +574,7 @@ function RequestWizard({
                 label="Submit Job"
                 severity="success"
                 icon="pi pi-arrow-right"
+                disabled={!isFormValid}
                 iconPos="right"
                 onClick={submitJob}
               />
@@ -586,6 +584,7 @@ function RequestWizard({
                 label="Update Job"
                 severity="success"
                 icon="pi pi-arrow-right"
+                disabled={!isFormValid}
                 iconPos="right"
                 onClick={updateJob}
               />
