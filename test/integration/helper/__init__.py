@@ -19,6 +19,7 @@ PLUGIN_MAP = {
 
 class RequestGenerator(object):
     def __init__(self, **kwargs):
+        self.default_namespace = kwargs.get("namespace", None)
         self.default_system = kwargs.get("system", None)
         self.default_system_version = kwargs.get("system_version", None)
         self.default_command = kwargs.get("command", None)
@@ -34,6 +35,7 @@ class RequestGenerator(object):
         return value
 
     def generate_request(self, **kwargs):
+        namespace = self.get_or_raise(kwargs, "namespace", default=self.default_namespace, required=False)
         system = self.get_or_raise(kwargs, "system", default=self.default_system)
         system_version = self.get_or_raise(
             kwargs, "system_version", default=self.default_system_version
@@ -48,6 +50,7 @@ class RequestGenerator(object):
         )
 
         return {
+            "namespace": namespace,
             "system": system,
             "system_version": system_version,
             "command": command,
