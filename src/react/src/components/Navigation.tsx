@@ -1,9 +1,11 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
+import { Dialog } from "primereact/dialog";
 import { Menubar } from "primereact/menubar";
 import { RefObject, useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 
+import ChangeThemeDialog from "../components/ChangeThemeDialog";
 import CurrentRequestsTemplate from "../components/CurrentRequestsTemplate";
 import UserLogin from "../components/UserLogin";
 import { Config, TourStepProps } from "../models/models";
@@ -37,6 +39,8 @@ function NavigationMenu({
   const [authEnabled, setAuthEnabled] = useState<boolean | undefined>(
     config?.auth_enabled,
   );
+
+  const [openThemeDialog, setOpenThemeDialog] = useState(false);
 
   const tourUuid = "navigation_tour";
   const tourPrefix = "navigation";
@@ -347,12 +351,28 @@ function NavigationMenu({
       </Button>
 
       <CurrentRequestsTemplate listeners={listeners} />
+      <Button
+        text
+        onClick={() => setOpenThemeDialog(true)}
+        tooltip="Change Theme"
+        data-testid="change-theme"
+      >
+        <FontAwesomeIcon className="fa-2x" icon="palette" />
+      </Button>
     </div>
   );
 
   return (
     <>
       <div className="card">
+        <Dialog
+          header="Change Theme"
+          visible={openThemeDialog}
+          onHide={() => setOpenThemeDialog(false)}
+          style={{ width: "50vw" }}
+        >
+          <ChangeThemeDialog />
+        </Dialog>
         <Menubar model={items} start={start} end={end} />
       </div>
     </>

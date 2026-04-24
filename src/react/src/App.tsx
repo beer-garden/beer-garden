@@ -1,4 +1,3 @@
-import "primereact/resources/themes/lara-light-blue/theme.css"; // Theme
 import "primereact/resources/primereact.min.css"; // Core CSS
 import "primeflex/primeflex.css";
 import "./App.css";
@@ -24,6 +23,7 @@ import { GetRootGarden } from "./services/garden_service";
 import { preemptiveRefresh } from "./services/token_service";
 import { GetToken } from "./services/token_service";
 import { ConvertToTourStepProps } from "./services/tour_service";
+import { ChangeTheme } from "./services/util_service";
 
 function App() {
   const socketRef = useRef(null as null | any);
@@ -94,6 +94,7 @@ function App() {
 
   useEffect(() => {
     // might take a second to load in all of the data, so pushed it off to to allow for the page to load
+    ChangeTheme();
     updateRootGarden(
       sessionStorage.getItem("rootGarden")
         ? JSON.parse(sessionStorage.getItem("rootGarden") || "")
