@@ -136,7 +136,7 @@ function RequestOptions({
 
   return (
     <div className="card justify-content-end">
-      <div>
+      <div className="flex flex-end">
         <SplitButton
           label="Pour Again"
           icon={<FontAwesomeIcon icon="plus" />}
@@ -144,42 +144,36 @@ function RequestOptions({
           className="p-button-secondary"
           onClick={() => pourAgain(request)}
           severity="success"
+          style={{ marginLeft: "auto" }}
         />
-        {requestProjections && requestProjections.length > 0 && (
-          <div className="card">
-            <h5>Run Next</h5>
-            <Dropdown
-              value={requestProjectionSelected}
-              options={requestProjections}
-              valueTemplate={commandTemplate}
-              itemTemplate={commandTemplate}
-              onChange={(e) => {
-                requestProjectionSelectedRef.current = e.value;
-                setRequestProjectionSelected(e.value);
-              }}
-              placeholder="Select a command to run next"
-            />
-            <Button
-              label="Run"
-              onClick={() => {
-                if (requestProjectionSelectedRef.current) {
-                  const targetRequest = {
-                    command: requestProjectionSelectedRef.current.command,
-                    instance_name:
-                      requestProjectionSelectedRef.current.instance,
-                    system: requestProjectionSelectedRef.current.systemName,
-                    system_version:
-                      requestProjectionSelectedRef.current.version,
-                    namespace: requestProjectionSelectedRef.current.namespace,
-                  } as Request;
-
-                  //TODO: Push to Modal
-                }
-              }}
-            />
-          </div>
-        )}
       </div>
+      {requestProjections && requestProjections.length > 0 && (
+        <div className="card">
+          <h5>Run Next</h5>
+          <Dropdown
+            value={requestProjectionSelected}
+            options={requestProjections}
+            valueTemplate={commandTemplate}
+            itemTemplate={commandTemplate}
+            onChange={(e) => {
+              requestProjectionSelectedRef.current = e.value;
+              setRequestProjectionSelected(e.value);
+            }}
+            placeholder="Select a command to run next"
+          />
+          <Button
+            label="Run"
+            onClick={() => {
+              if (requestProjectionSelectedRef.current) {
+                addRequestItem({
+                  type: "REQUEST",
+                  requestCommandInput: requestProjectionSelectedRef.current,
+                });
+              }
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -305,6 +299,7 @@ function RequestView({
         .then((projections) => {
           setRequestProjections(projections);
           setRequestProjectionSelected(projections[0]);
+          requestProjectionSelectedRef.current = projections[0];
         })
         .catch((error) => {
           console.error("Error fetching request projections:", error);

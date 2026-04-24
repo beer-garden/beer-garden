@@ -3,6 +3,7 @@ import { BreadCrumb } from "primereact/breadcrumb";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { InputSwitch } from "primereact/inputswitch";
+import { Skeleton } from "primereact/skeleton";
 import { Stepper } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
 import { useEffect, useRef, useState } from "react";
@@ -60,6 +61,8 @@ function RequestWizard({
   );
 
   const [isFormValid, setIsFormValid] = useState<boolean>(false);
+
+  const [showStepper, setShowStepper] = useState<boolean>(false);
 
   // Input Request
   const [request, setRequest] = useState<Request | undefined>(
@@ -179,6 +182,51 @@ function RequestWizard({
     });
   };
 
+  const findSelectedSystem = (
+    namespace?: string,
+    system?: string,
+    system_version?: string,
+    instance_name?: string,
+    command?: string,
+    command_display_name?: string,
+  ) => {
+    GetSystemList()
+      .then((responseSystems) => {
+        const chosenSystem = responseSystems.find(
+          (s) =>
+            s.namespace == namespace &&
+            s.name == system &&
+            s.version == system_version,
+        );
+        setSelectedSystem(chosenSystem);
+        if (instance_name) {
+          setSelectedInstance(
+            chosenSystem?.instances?.find((i) => i.name == instance_name),
+          );
+          if (command || command_display_name) {
+            setSelectedCommand(
+              chosenSystem?.commands?.find(
+                (c) =>
+                  (command && c.name == command) ||
+                  (command_display_name &&
+                    c.display_name == command_display_name),
+              ),
+            );
+            setActiveIndex(2);
+            setShowCreateRequest(true);
+          } else {
+            setActiveIndex(1);
+          }
+        } else {
+          setActiveIndex(0);
+        }
+        setShowStepper(true);
+      })
+      .catch((error) => {
+        console.error("Error fetching systems:", error);
+      });
+  };
+
   useEffect(() => {
     if (selectedSystem) {
       setRequest((prevReq) => ({
@@ -230,31 +278,15 @@ function RequestWizard({
     ) {
       GetRequest(requestItem.requestId, {})
         .then((responseRequest) => {
-          GetSystemList()
-            .then((responseSystems) => {
-              const chosenSystem = responseSystems.find(
-                (s) =>
-                  s.namespace == responseRequest.namespace &&
-                  s.name == responseRequest.system &&
-                  s.version == responseRequest.system_version,
-              );
-              setSelectedSystem(chosenSystem);
-              setSelectedInstance(
-                chosenSystem?.instances?.find(
-                  (i) => i.name == responseRequest.instance_name,
-                ),
-              );
-              setSelectedCommand(
-                chosenSystem?.commands?.find(
-                  (c) =>
-                    c.name == responseRequest.command &&
-                    c.display_name == responseRequest.command_display_name,
-                ),
-              );
-            })
-            .catch((error) => {
-              console.error("Error fetching systems:", error);
-            });
+          findSelectedSystem(
+            responseRequest.namespace,
+            responseRequest.system,
+            responseRequest.system_version,
+            responseRequest.instance_name,
+            responseRequest.command,
+            responseRequest.command_display_name,
+          );
+
           setRequest((prevReq) => ({
             ...prevReq,
             namespace: responseRequest.namespace,
@@ -279,8 +311,6 @@ function RequestWizard({
             instance: responseRequest?.instance_name ?? undefined,
             command: responseRequest?.command ?? undefined,
           });
-          setShowCreateRequest(true);
-          setActiveIndex(2);
         })
         .catch((error) => {
           console.error("Error fetching request:", error);
@@ -292,32 +322,15 @@ function RequestWizard({
     ) {
       GetJob(requestItem.jobId, {})
         .then((responseJob) => {
-          GetSystemList()
-            .then((responseSystems) => {
-              const chosenSystem = responseSystems.find(
-                (s) =>
-                  s.namespace == responseJob.request_template.namespace &&
-                  s.name == responseJob.request_template.system &&
-                  s.version == responseJob.request_template.system_version,
-              );
-              setSelectedSystem(chosenSystem);
-              setSelectedInstance(
-                chosenSystem?.instances?.find(
-                  (i) => i.name == responseJob.request_template.instance_name,
-                ),
-              );
-              setSelectedCommand(
-                chosenSystem?.commands?.find(
-                  (c) =>
-                    c.name == responseJob.request_template.command &&
-                    c.display_name ==
-                      responseJob.request_template.command_display_name,
-                ),
-              );
-            })
-            .catch((error) => {
-              console.error("Error fetching systems:", error);
-            });
+          findSelectedSystem(
+            responseJob.request_template.namespace,
+            responseJob.request_template.system,
+            responseJob.request_template.system_version,
+            responseJob.request_template.instance_name,
+            responseJob.request_template.command,
+            responseJob.request_template.command_display_name,
+          );
+
           updateJobValue(responseJob);
           updateRequestCommand({
             namespace: responseJob?.request_template?.namespace ?? undefined,
@@ -326,39 +339,20 @@ function RequestWizard({
             instance: responseJob?.request_template?.instance_name ?? undefined,
             command: responseJob?.request_template?.command ?? undefined,
           });
-          setShowCreateRequest(true);
-          setActiveIndex(2);
         })
         .catch((error) => {
           console.error("Error fetching job:", error);
         });
     } else if (requestItem?.job !== undefined) {
       const job = requestItem.job;
-      GetSystemList()
-        .then((responseSystems) => {
-          const chosenSystem = responseSystems.find(
-            (s) =>
-              s.namespace == job.request_template.namespace &&
-              s.name == job.request_template.system &&
-              s.version == job.request_template.system_version,
-          );
-          setSelectedSystem(chosenSystem);
-          setSelectedInstance(
-            chosenSystem?.instances?.find(
-              (i) => i.name == job.request_template.instance_name,
-            ),
-          );
-          setSelectedCommand(
-            chosenSystem?.commands?.find(
-              (c) =>
-                c.name == job.request_template.command &&
-                c.display_name == job.request_template.command_display_name,
-            ),
-          );
-        })
-        .catch((error) => {
-          console.error("Error fetching systems:", error);
-        });
+      findSelectedSystem(
+        job.request_template.namespace,
+        job.request_template.system,
+        job.request_template.system_version,
+        job.request_template.instance_name,
+        job.request_template.command,
+        job.request_template.command_display_name,
+      );
       updateJobValue(job);
       updateRequestCommand({
         namespace: job.request_template?.namespace ?? undefined,
@@ -367,11 +361,32 @@ function RequestWizard({
         instance: job.request_template?.instance_name ?? undefined,
         command: job.request_template?.command ?? undefined,
       });
-      setShowCreateRequest(true);
-      setActiveIndex(2);
+    } else if (requestItem?.requestCommandInput !== undefined) {
+      findSelectedSystem(
+        requestItem.requestCommandInput.namespace,
+        requestItem.requestCommandInput.systemName,
+        requestItem.requestCommandInput.version,
+        requestItem.requestCommandInput.instance,
+        requestItem.requestCommandInput.command,
+      );
+    } else if (requestItem?.request !== undefined) {
+      findSelectedSystem(
+        requestItem.request.namespace,
+        requestItem.request.system,
+        requestItem.request.system_version,
+        requestItem.request.instance_name,
+        requestItem.request.command,
+      );
+      updateRequestCommand({
+        namespace: requestItem.request?.namespace ?? undefined,
+        systemName: requestItem.request?.system ?? undefined,
+        version: requestItem.request?.system_version ?? undefined,
+        instance: requestItem.request?.instance_name ?? undefined,
+        command: requestItem.request?.command ?? undefined,
+      });
     } else {
-      setShowCreateRequest(true);
       setActiveIndex(0);
+      setShowStepper(true);
     }
   }, []);
 
@@ -462,136 +477,139 @@ function RequestWizard({
       }
       key={requestItem.itemId}
     >
-      <Stepper
-        ref={stepperRef}
-        activeStep={activeIndex}
-        style={{ flexBasis: "50rem" }}
-        linear
-      >
-        <StepperPanel header="Pick System">
-          <SystemList systemListButtonClick={systemListButtonClick} />
-        </StepperPanel>
-        <StepperPanel header="Pick Command">
-          <BreadCrumb model={breadcrumbs} className="mb-2" />
-          <CommandList
-            selectedSystem={selectedSystem}
-            commandListButtonClick={commandListButtonClick}
-            instances={
-              instances
-                ? instances.map((instance) => ({
-                    name: instance.name,
-                    label: instance.name,
-                  }))
-                : []
-            }
-            selectedInstance={selectedInstance}
-            setSelectedInstance={setSelectedInstance}
-          />
-          <div className="flex pt-4 justify-content-between">
-            <Button
-              label="Back"
-              severity="secondary"
-              onClick={() => {
-                setSelectedInstance(undefined);
-                stepperRef.current?.prevCallback();
-              }}
+      {!showStepper && <Skeleton width="100%" height="150px"></Skeleton>}
+      {showStepper && (
+        <Stepper
+          ref={stepperRef}
+          activeStep={activeIndex}
+          style={{ flexBasis: "50rem" }}
+          linear
+        >
+          <StepperPanel header="Pick System">
+            <SystemList systemListButtonClick={systemListButtonClick} />
+          </StepperPanel>
+          <StepperPanel header="Pick Command">
+            <BreadCrumb model={breadcrumbs} className="mb-2" />
+            <CommandList
+              selectedSystem={selectedSystem}
+              commandListButtonClick={commandListButtonClick}
+              instances={
+                instances
+                  ? instances.map((instance) => ({
+                      name: instance.name,
+                      label: instance.name,
+                    }))
+                  : []
+              }
+              selectedInstance={selectedInstance}
+              setSelectedInstance={setSelectedInstance}
             />
-          </div>
-        </StepperPanel>
-        <StepperPanel header="Form">
-          <BreadCrumb model={commandBreadcrumbs} className="mb-2" />
-          <div className="flex ml-4">
-            <span className="mr-2 align-self-center">Scheduled</span>
-            <InputSwitch
-              checked={showScheduleJob}
-              onChange={(e) => updateShowScheduleJob(e.value)}
-            />
-          </div>
-          {showScheduleJob && (
-            <SchedulerForm
-              scheduledJob={job}
-              setScheduledJob={updateJobValue}
-            />
-          )}
-          <CommandForm
-            command={selectedCommand}
-            disabled={false}
-            request={request}
-            setRequest={setRequest}
-            resetForm={resetForm}
-            setResetForm={setResetForm}
-            setIsFormValid={setIsFormValid}
-          />
-          <div className="flex pt-4 justify-content-between">
-            <Button
-              label="Back"
-              severity="secondary"
-              onClick={() => {
-                if (request?.parameters) {
-                  const newRequest = { ...request };
-                  delete newRequest.parameters;
-                  setRequest(newRequest);
-                }
-                stepperRef.current?.prevCallback();
-              }}
-            />
-            <Button
-              label="Reset Form"
-              severity="warning"
-              onClick={() => setResetForm(true)}
-              className="ml-2"
-            />
-            <div>
-              <CodeExample
-                visibleCodeExample={visibleCodeExample}
-                setVisibleCodeExample={setVisibleCodeExample}
-                request={request}
-              />
+            <div className="flex pt-4 justify-content-between">
               <Button
-                label="Code Examples"
-                severity="info"
-                onClick={() => setVisibleCodeExample(true)}
-                className="mr-2"
-              />
-            </div>
-            {showCreateRequest && !showScheduleJob && (
-              <Button
-                label="Submit"
-                icon="pi pi-arrow-right"
-                disabled={!isFormValid}
-                onMouseDown={(event) => {
-                  if (event.button === 1) {
-                    // Middle mouse button click
-                    submitRequestAndOpen();
-                  } else {
-                    submitRequest();
-                  }
+                label="Back"
+                severity="secondary"
+                onClick={() => {
+                  setSelectedInstance(undefined);
+                  stepperRef.current?.prevCallback();
                 }}
               />
-            )}
-            {showCreateRequest && showScheduleJob && !requestItem?.jobId && (
-              <Button
-                label="Submit Job"
-                severity="success"
-                icon="pi pi-arrow-right"
-                disabled={!isFormValid}
-                iconPos="right"
-                onClick={submitJob}
+            </div>
+          </StepperPanel>
+          <StepperPanel header="Form">
+            <BreadCrumb model={commandBreadcrumbs} className="mb-2" />
+            <div className="flex ml-4">
+              <span className="mr-2 align-self-center">Scheduled</span>
+              <InputSwitch
+                checked={showScheduleJob}
+                onChange={(e) => updateShowScheduleJob(e.value)}
+              />
+            </div>
+            {showScheduleJob && (
+              <SchedulerForm
+                scheduledJob={job}
+                setScheduledJob={updateJobValue}
               />
             )}
-            {showCreateRequest && showScheduleJob && requestItem?.jobId && (
+            <CommandForm
+              command={selectedCommand}
+              disabled={false}
+              request={request}
+              setRequest={setRequest}
+              resetForm={resetForm}
+              setResetForm={setResetForm}
+              setIsFormValid={setIsFormValid}
+            />
+            <div className="flex pt-4 justify-content-between">
               <Button
-                label="Update Job"
-                severity="success"
-                icon="pi pi-arrow-right"
-                disabled={!isFormValid}
-                iconPos="right"
-                onClick={updateJob}
+                label="Back"
+                severity="secondary"
+                onClick={() => {
+                  if (request?.parameters) {
+                    const newRequest = { ...request };
+                    delete newRequest.parameters;
+                    setRequest(newRequest);
+                  }
+                  stepperRef.current?.prevCallback();
+                }}
               />
-            )}
-          </div>
-        </StepperPanel>
-      </Stepper>
+              <Button
+                label="Reset Form"
+                severity="warning"
+                onClick={() => setResetForm(true)}
+                className="ml-2"
+              />
+              <div>
+                <CodeExample
+                  visibleCodeExample={visibleCodeExample}
+                  setVisibleCodeExample={setVisibleCodeExample}
+                  request={request}
+                />
+                <Button
+                  label="Code Examples"
+                  severity="info"
+                  onClick={() => setVisibleCodeExample(true)}
+                  className="mr-2"
+                />
+              </div>
+              {showCreateRequest && !showScheduleJob && (
+                <Button
+                  label="Submit"
+                  icon="pi pi-arrow-right"
+                  disabled={!isFormValid}
+                  onMouseDown={(event) => {
+                    if (event.button === 1) {
+                      // Middle mouse button click
+                      submitRequestAndOpen();
+                    } else {
+                      submitRequest();
+                    }
+                  }}
+                />
+              )}
+              {showCreateRequest && showScheduleJob && !requestItem?.jobId && (
+                <Button
+                  label="Submit Job"
+                  severity="success"
+                  icon="pi pi-arrow-right"
+                  disabled={!isFormValid}
+                  iconPos="right"
+                  onClick={submitJob}
+                />
+              )}
+              {showCreateRequest && showScheduleJob && requestItem?.jobId && (
+                <Button
+                  label="Update Job"
+                  severity="success"
+                  icon="pi pi-arrow-right"
+                  disabled={!isFormValid}
+                  iconPos="right"
+                  onClick={updateJob}
+                />
+              )}
+            </div>
+          </StepperPanel>
+        </Stepper>
+      )}
     </Card>
   );
 }
