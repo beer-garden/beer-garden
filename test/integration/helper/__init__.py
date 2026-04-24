@@ -100,7 +100,7 @@ def wait_for_response(client, request, timeout=1, max_delay=1):
     total_wait_time = 0
     while request.status not in COMPLETED_STATUSES:
         if timeout and total_wait_time > timeout:
-            raise TimeoutError("Timed out waiting for request to complete")
+            raise TimeoutError(f"Timed out waiting for request to complete: {request}")
 
         time.sleep(delay_time)
         total_wait_time += delay_time

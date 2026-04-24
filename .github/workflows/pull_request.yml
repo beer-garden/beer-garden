@@ -432,7 +432,7 @@ jobs:
 
   Grandchild-Testing:
     runs-on: ${{ matrix.os }}
-    needs: PyTest
+    # needs: PyTest
 
     strategy:
       matrix:
@@ -629,6 +629,21 @@ jobs:
       - name: Print Child Garden Database
         if: always()
         run: docker exec $(docker ps --filter "name=mongodb" --format "{{.Names}}") mongosh --eval "db.getSiblingDB('child').garden.find({})"
+        shell: bash
+
+      - name: Print Grandparent Request Database
+        if: always()
+        run: docker exec $(docker ps --filter "name=mongodb" --format "{{.Names}}") mongosh --eval "db.getSiblingDB('grandparent').request.find({})"
+        shell: bash
+
+      - name: Print Parent Request Database
+        if: always()
+        run: docker exec $(docker ps --filter "name=mongodb" --format "{{.Names}}") mongosh --eval "db.getSiblingDB('parent').request.find({})"
+        shell: bash
+
+      - name: Print Child Request Database
+        if: always()
+        run: docker exec $(docker ps --filter "name=mongodb" --format "{{.Names}}") mongosh --eval "db.getSiblingDB('child').request.find({})"
         shell: bash
 
 
