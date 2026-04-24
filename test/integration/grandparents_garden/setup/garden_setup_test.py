@@ -208,7 +208,7 @@ class TestGardenSetup(object):
             parameters={"message": "test_string", "loud": True},
             namespace="child"
         )
-        response = wait_for_response(self.grand_parent_easy_client, request)
+        response = wait_for_response(self.grand_parent_easy_client, request, timeout=30)
         assert_successful_request(response, output="test_string!!!!!!!!!")
 
     def test_parent_request_from_grandparent(self):
@@ -216,7 +216,7 @@ class TestGardenSetup(object):
             parameters={"message": "test_string", "loud": True},
             namespace="parent"
         )
-        response = wait_for_response(self.grand_parent_easy_client, request)
+        response = wait_for_response(self.grand_parent_easy_client, request, timeout=30)
         assert_successful_request(response, output="test_string!!!!!!!!!")
 
     # def test_update_garden_connection_info(self):
