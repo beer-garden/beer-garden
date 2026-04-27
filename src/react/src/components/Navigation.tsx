@@ -1,8 +1,10 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Avatar } from "primereact/avatar";
 import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { Menubar } from "primereact/menubar";
-import { RefObject, useEffect, useState } from "react";
+import { OverlayPanel } from "primereact/overlaypanel";
+import { RefObject, useEffect, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
 
 import ChangeThemeDialog from "../components/ChangeThemeDialog";
@@ -16,6 +18,7 @@ import {
   GenerateTourProps,
 } from "../services/tour_service";
 import { GetCurrentUser } from "../services/user_service";
+import UserOverlay from "./UserOverlay";
 
 function NavigationMenu({
   listeners,
@@ -41,6 +44,20 @@ function NavigationMenu({
   );
 
   const [openThemeDialog, setOpenThemeDialog] = useState(false);
+  const op = useRef(null);
+
+  const onLogout = () => {
+    ClearToken();
+    ClearRefresh()
+      .finally(() => {
+        updateUserName(undefined);
+      })
+      .catch((error) => {
+        console.error("Error clearing Refresh Token:", error);
+      });
+
+    op.current.hide();
+  };
 
   const tourUuid = "navigation_tour";
   const tourPrefix = "navigation";
@@ -321,16 +338,7 @@ function NavigationMenu({
               <Button
                 rounded
                 className="mr-2"
-                onClick={() => {
-                  ClearToken();
-                  ClearRefresh()
-                    .finally(() => {
-                      updateUserName(undefined);
-                    })
-                    .catch((error) => {
-                      console.error("Error clearing Refresh Token:", error);
-                    });
-                }}
+                onClick={onLogout}
                 data-testid="user-logout"
               >
                 Logout
@@ -359,6 +367,16 @@ function NavigationMenu({
       >
         <FontAwesomeIcon className="fa-2x" icon="palette" />
       </Button>
+      <Button onClick={(e) => op.current.toggle(e)} text className="ml-2">
+        {username !== undefined ? (
+          <Avatar size="large" label={username.charAt(0).toUpperCase()} />
+        ) : (
+          <FontAwesomeIcon icon="user" />
+        )}
+      </Button>
+      <OverlayPanel ref={op} style={{ width: "400px" }}>
+        <UserOverlay username={username} onLogout={onLogout} />
+      </OverlayPanel>
     </div>
   );
 
