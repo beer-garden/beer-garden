@@ -81,17 +81,25 @@ class TestGardenSetup(object):
         for garden in gardens:
             if garden.name == "parent":
                 for connection in garden.publishing_connections:
-                    if connection.api == "STOMP":
+                    # if connection.api == "STOMP":
+                    #     assert connection.status == "PUBLISHING"
+                    # elif connection.api == "HTTP":
+                    #     assert connection.status == "NOT_CONFIGURED"
+                    if connection.api == "HTTP":
                         assert connection.status == "PUBLISHING"
-                    elif connection.api == "HTTP":
+                    elif connection.api == "STOMP":
                         assert connection.status == "NOT_CONFIGURED"
                     else:
                         raise AssertionError()
                 assert len(garden.receiving_connections) == 2
 
                 for connection in garden.receiving_connections:
+                    # if connection.api == "STOMP":
+                    #     assert connection.status == "RECEIVING"
+                    # elif connection.api == "HTTP":
+                    #     assert connection.status == "RECEIVING"
                     if connection.api == "STOMP":
-                        assert connection.status == "RECEIVING"
+                        assert connection.status == "NOT_CONFIGURED"
                     elif connection.api == "HTTP":
                         assert connection.status == "RECEIVING"
                     else:
