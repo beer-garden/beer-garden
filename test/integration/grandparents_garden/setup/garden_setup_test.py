@@ -205,16 +205,14 @@ class TestGardenSetup(object):
 
     def test_child_request_from_grandparent(self):
         request = self.request_generator.generate_request(
-            parameters={"message": "test_string", "loud": True},
-            namespace="child"
+            parameters={"message": "test_string", "loud": True}, namespace="child"
         )
         response = wait_for_response(self.grand_parent_easy_client, request, timeout=30)
         assert_successful_request(response, output="test_string!!!!!!!!!")
 
     def test_parent_request_from_grandparent(self):
         request = self.request_generator.generate_request(
-            parameters={"message": "test_string", "loud": True},
-            namespace="parent"
+            parameters={"message": "test_string", "loud": True}, namespace="parent"
         )
         response = wait_for_response(self.grand_parent_easy_client, request, timeout=30)
         assert_successful_request(response, output="test_string!!!!!!!!!")

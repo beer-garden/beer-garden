@@ -36,10 +36,7 @@ class RequestGenerator(object):
 
     def generate_request(self, **kwargs):
         namespace = self.get_or_raise(
-            kwargs, 
-            "namespace", 
-            default=self.default_namespace, 
-            required=False
+            kwargs, "namespace", default=self.default_namespace, required=False
         )
         system = self.get_or_raise(kwargs, "system", default=self.default_system)
         system_version = self.get_or_raise(
