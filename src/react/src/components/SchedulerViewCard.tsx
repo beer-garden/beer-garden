@@ -4,6 +4,7 @@ import { Card } from "primereact/card";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import {
   CronTrigger,
@@ -20,7 +21,6 @@ import {
   RunAdhocJob,
 } from "../services/job_service";
 import { GetRequestList } from "../services/request_service";
-import { GetBaseURL } from "../services/util_service";
 
 function SchedulerViewCard({
   jobId,
@@ -45,6 +45,8 @@ function SchedulerViewCard({
   const [totalRecords, setTotalRecords] = useState(0);
   const [lazyParams, setLazyParams] = useState({ first: 0, rows: 5, page: 0 });
   const [recordsUpdated, setRecordsUpdated] = useState(false);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (job === undefined && jobId !== undefined) {
@@ -197,9 +199,7 @@ function SchedulerViewCard({
           rounded
           raised
           link
-          onClick={() =>
-            window.open(`${GetBaseURL()}/request/${request.id}`, "_self")
-          }
+          onClick={() => void navigate(`/request/${request.id}`)}
           title={
             "Open Request " +
             (request.command_display_name ?? request.command ?? request.id)

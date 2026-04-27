@@ -14,7 +14,6 @@ import { Config, RequestCommand } from "../models/models";
 import { CreateJob, GetJob, UpdateJob } from "../services/job_service";
 import { GetRequest } from "../services/request_service";
 import { PostRequest } from "../services/request_service";
-import { GetBaseURL } from "../services/util_service";
 
 function RequestCreate({ config }: { config: Config }) {
   const { requestId } = useParams<{ requestId: string }>();
@@ -57,7 +56,7 @@ function RequestCreate({ config }: { config: Config }) {
     if (request) {
       PostRequest(request)
         .then((response_request) => {
-          void navigate(`${GetBaseURL()}/request/${response_request.id}`);
+          void navigate(`/request/${response_request.id}`);
         })
         .catch((error) => {
           console.error("Error creating request:", error);
@@ -69,7 +68,7 @@ function RequestCreate({ config }: { config: Config }) {
     if (job && request) {
       CreateJob({ ...job, ...{ request_template: request } })
         .then(() => {
-          void navigate(`${GetBaseURL()}/jobs/`);
+          void navigate(`/jobs/`);
         })
         .catch((error) => {
           console.error("Error creating job:", error);
@@ -81,7 +80,7 @@ function RequestCreate({ config }: { config: Config }) {
     if (job && request) {
       UpdateJob({ ...job, ...{ request_template: request } })
         .then(() => {
-          void navigate(`${GetBaseURL()}/jobs/`);
+          void navigate(`/jobs/`);
         })
         .catch((error) => {
           console.error("Error updating job:", error);

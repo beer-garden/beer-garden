@@ -25,7 +25,6 @@ import {
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
-import { GetBaseURL } from "../services/util_service";
 
 function JobIndex({
   listeners,
@@ -186,7 +185,7 @@ function JobIndex({
   };
 
   const editJob = (jobId: string) => {
-    void navigate(`${GetBaseURL()}/job/${jobId}`);
+    void navigate(`/job/${jobId}`);
   };
 
   const actionTemplate = (job: Job) => {
@@ -309,7 +308,7 @@ function JobIndex({
   };
 
   const createJob = () => {
-    void navigate(`${GetBaseURL()}/create/job`);
+    void navigate(`/create/job`);
   };
 
   const customJobImporter = (event: any) => {
