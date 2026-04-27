@@ -366,6 +366,19 @@ function CommandForm({
           }
         }
 
+        if (param.type === "Boolean" && !param.nullable && !param.optional) {
+          if (param.multi) {
+            newParam.value = (newParam.value as Array<any>).map((value) => {
+              return value === undefined || value === null ? false : value;
+            });
+          } else {
+            newParam.value =
+              newParam.value === undefined || newParam.value === null
+                ? false
+                : newParam.value;
+          }
+        }
+
         prepareDefaultValues.push(newParam);
       }
     }

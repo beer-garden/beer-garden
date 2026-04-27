@@ -500,7 +500,7 @@ function CommandFormField({
     }
     case "Boolean": {
       if (parameter.multi) {
-        if (parameter.nullable) {
+        if (parameter.nullable || parameter.optional) {
           return (
             <div key={parameter.key} className="p-field">
               <div className="container">
@@ -511,6 +511,7 @@ function CommandFormField({
                   >
                     <TriStateCheckbox
                       id={`${parameter.key}-${index}`}
+                      variant="filled"
                       invalid={
                         (!disabled &&
                           !parameter.optional &&
@@ -550,6 +551,7 @@ function CommandFormField({
                 <div key={`${parameter.key}-${index}`} className="dynamic-item">
                   <Checkbox
                     id={`${parameter.key}-${index}`}
+                    variant="filled"
                     invalid={
                       (!disabled &&
                         !parameter.optional &&
@@ -580,11 +582,12 @@ function CommandFormField({
           </div>
         );
       }
-      if (parameter.nullable) {
+      if (parameter.nullable || parameter.optional) {
         return (
           <div key={parameter.key} className="p-field-checkbox">
             <TriStateCheckbox
               id={parameter.key}
+              variant="filled"
               invalid={
                 (!disabled &&
                   !parameter.optional &&
@@ -604,6 +607,7 @@ function CommandFormField({
         <div key={parameter.key} className="p-field-checkbox">
           <Checkbox
             id={parameter.key}
+            variant="filled"
             invalid={
               (!disabled &&
                 !parameter.optional &&
