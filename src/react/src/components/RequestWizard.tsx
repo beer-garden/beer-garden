@@ -51,6 +51,7 @@ function RequestWizard({
   const [instances, setInstances] = useState<Array<Instance>>();
   const instanceList: Array<any> = [];
   const [resetForm, setResetForm] = useState<boolean>(false);
+  const [isFormValid, setIsFormValid] = useState<boolean>(false);
   const [visibleCodeExample, setVisibleCodeExample] = useState<boolean>(false);
   const { paramNamespace } = useParams<{ paramNamespace: string }>();
   const { paramSystem } = useParams<{ paramSystem: string }>();
@@ -525,6 +526,7 @@ function RequestWizard({
             setRequestCommand={setRequestCommand}
             resetForm={resetForm}
             setResetForm={setResetForm}
+            setIsFormValid={setIsFormValid}
           />
           <div className="flex pt-4 justify-content-between">
             <Button
@@ -560,6 +562,7 @@ function RequestWizard({
             </div>
             {showCreateRequest && !showScheduleJob && (
               <Button
+                disabled={!isFormValid}
                 label="Submit"
                 icon="pi pi-arrow-right"
                 onMouseDown={(event) => {
@@ -579,6 +582,7 @@ function RequestWizard({
                 icon="pi pi-arrow-right"
                 iconPos="right"
                 onClick={submitJob}
+                disabled={!isFormValid}
               />
             )}
             {showCreateRequest && showScheduleJob && requestItem?.jobId && (
