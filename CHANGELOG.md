@@ -1,7 +1,7 @@
 # Beer Garden Changelog
 
 # 3.33.1
-TBD
+4/27/2026
 
 - Fixed bug where Choice Validation was added to Forward Operation when set to None (#2126)
 
