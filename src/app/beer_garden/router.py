@@ -870,7 +870,7 @@ def _pre_forward(operation: Operation) -> Operation:
                 or gardens[operation.model.target_garden].version is None
                 or gardens[operation.model.target_garden].version.upper() == "UNKNOWN"
                 or parse(gardens[operation.model.target_garden].version)
-                < parse("3.33.0")
+                < parse("3.33.1")
             ):
                 operation.kwargs.pop("choice_validation_enabled", None)
         except InvalidVersion:
