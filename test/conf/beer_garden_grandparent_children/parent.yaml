@@ -4,7 +4,7 @@ http:
   access_token: null
   api_version: 1
   client_timeout: -1
-  enabled: false
+  enabled: true
   host: beer-garden-parent
   password: null
   port: 2337
@@ -22,7 +22,7 @@ http:
   url_prefix: /
   username: null
 stomp:
-  enabled: true
+  enabled: false
   headers: []
   host: activemq
   password: password
