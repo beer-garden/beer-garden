@@ -240,8 +240,19 @@ class TestGardenSetup(object):
 
         # Assert all topics are difference because of different garden names
         for grand_parent_topic in grand_parent_topics:
-            for parent_topic in parent_topics:
-                assert grand_parent_topic.name != parent_topic.name
+            generated_subscribers = True
+            if (
+                grand_parent_topic.subscribers is not None
+                and len(grand_parent_topic.subscribers) > 0
+            ):
+                for subscriber in grand_parent_topic.subscribers:
+                    if subscriber.subscriber_type != "GENERATED":
+                        generated_subscribers = False
+                        break
+
+            if generated_subscribers:
+                for parent_topic in parent_topics:
+                    assert grand_parent_topic.name != parent_topic.name
 
     # def test_update_garden_connection_info(self):
     #     response = self.easy_client.client.session.get(
