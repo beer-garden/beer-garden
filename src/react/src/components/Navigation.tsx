@@ -328,20 +328,6 @@ function NavigationMenu({
               />
             </div>
           )}
-          {username !== undefined && (
-            <div>
-              <span className="font-bold mr-2">Welcome {username}!</span>
-
-              <Button
-                rounded
-                className="mr-2"
-                onClick={onLogout}
-                data-testid="user-logout"
-              >
-                Logout
-              </Button>
-            </div>
-          )}
         </div>
       )}
       <Button
@@ -356,9 +342,13 @@ function NavigationMenu({
       </Button>
 
       <CurrentRequestsTemplate listeners={listeners} />
-      <Button onClick={(e) => op.current?.toggle(e)} text className="ml-2">
+      <Button onClick={(e) => op.current?.toggle(e)} text>
         {username !== undefined ? (
-          <Avatar size="large" label={username.charAt(0).toUpperCase()} />
+          <Avatar
+            size="large"
+            label={username.charAt(0).toUpperCase()}
+            style={{ width: "32px", height: "32px" }}
+          />
         ) : (
           <FontAwesomeIcon icon="user" />
         )}

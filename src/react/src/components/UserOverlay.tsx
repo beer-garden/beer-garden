@@ -4,9 +4,11 @@ import { Button } from "primereact/button";
 import { Divider } from "primereact/divider";
 import { Dropdown } from "primereact/dropdown";
 import { InputSwitch } from "primereact/inputswitch";
-import { useEffect, useState } from "react";
+import { Toast } from "primereact/toast";
+import { useEffect, useRef, useState } from "react";
 
 import { ChangeTheme, ThemeOptions } from "../services/util_service";
+import UserChangePassword from "./UserChangePassword";
 
 function UserOverlay({
   username,
@@ -25,17 +27,45 @@ function UserOverlay({
     localStorage.getItem("user_advanced") === "true" || false,
   );
 
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const toast = useRef<Toast>(null);
+
   useEffect(() => {
     ChangeTheme(color, dark);
   }, [color, dark]);
 
   return (
     <>
+      <Toast ref={toast} />
+      {username && showPasswordDialog && (
+        <UserChangePassword
+          username={username}
+          isAdmin={false}
+          showPasswordDialog={showPasswordDialog}
+          setShowPasswordDialog={setShowPasswordDialog}
+          toast={toast}
+          callback={() => setShowPasswordDialog(false)}
+        />
+      )}
       <div>
         {username && (
           <div>
-            <Avatar label={username.charAt(0).toUpperCase()} className="mr-2" />
-            <span>{username}</span>
+            <div className="flex align-items-center gap-2">
+              <Avatar
+                label={username.charAt(0).toUpperCase()}
+                className="mr-2"
+              />
+              <span>{username}</span>
+              <Button
+                style={{ marginLeft: "auto" }}
+                size="small"
+                onClick={() => setShowPasswordDialog(true)}
+                data-testid="user-password-overlay"
+              >
+                <FontAwesomeIcon className="mr-2" icon="key" />
+                <span>Change Password</span>
+              </Button>
+            </div>
             <Divider />
           </div>
         )}
@@ -83,6 +113,7 @@ function UserOverlay({
         <div>
           <Divider />
           <Button
+            size="small"
             className="mr-2"
             onClick={onLogout}
             data-testid="user-logout-overlay"
