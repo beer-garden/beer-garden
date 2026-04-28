@@ -1,13 +1,11 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Avatar } from "primereact/avatar";
 import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
 import { Menubar } from "primereact/menubar";
 import { OverlayPanel } from "primereact/overlaypanel";
 import { RefObject, useEffect, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
 
-import ChangeThemeDialog from "../components/ChangeThemeDialog";
 import CurrentRequestsTemplate from "../components/CurrentRequestsTemplate";
 import UserLogin from "../components/UserLogin";
 import { Config, TourStepProps } from "../models/models";
@@ -43,8 +41,7 @@ function NavigationMenu({
     config?.auth_enabled,
   );
 
-  const [openThemeDialog, setOpenThemeDialog] = useState(false);
-  const op = useRef(null);
+  const op = useRef<OverlayPanel>(null);
 
   const onLogout = () => {
     ClearToken();
@@ -56,7 +53,7 @@ function NavigationMenu({
         console.error("Error clearing Refresh Token:", error);
       });
 
-    op.current.hide();
+    op.current?.hide();
   };
 
   const tourUuid = "navigation_tour";
@@ -359,15 +356,7 @@ function NavigationMenu({
       </Button>
 
       <CurrentRequestsTemplate listeners={listeners} />
-      <Button
-        text
-        onClick={() => setOpenThemeDialog(true)}
-        tooltip="Change Theme"
-        data-testid="change-theme"
-      >
-        <FontAwesomeIcon className="fa-2x" icon="palette" />
-      </Button>
-      <Button onClick={(e) => op.current.toggle(e)} text className="ml-2">
+      <Button onClick={(e) => op.current?.toggle(e)} text className="ml-2">
         {username !== undefined ? (
           <Avatar size="large" label={username.charAt(0).toUpperCase()} />
         ) : (
@@ -383,14 +372,6 @@ function NavigationMenu({
   return (
     <>
       <div className="card">
-        <Dialog
-          header="Change Theme"
-          visible={openThemeDialog}
-          onHide={() => setOpenThemeDialog(false)}
-          style={{ width: "50vw" }}
-        >
-          <ChangeThemeDialog />
-        </Dialog>
         <Menubar model={items} start={start} end={end} />
       </div>
     </>
