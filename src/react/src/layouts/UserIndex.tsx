@@ -202,7 +202,7 @@ function UserIndex({ config }: { config: Config }) {
                       toast.current?.show({
                         severity: "info",
                         summary: "Delete User",
-                        detail: `Delete ${rowData.username} complete`,
+                        detail: `Successfully deleted ${rowData.username}`,
                         life: 3000,
                       });
                       loadUsers();
