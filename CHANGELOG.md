@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+#TBD
+TBD
+
+- Fixed bug where Beer Garden creates "Generated/Annotated" topics for downstream systems locally. Causing
+  downstream systems to be triggered by topics that they don't have the scope for. (#2133)
+
 # 3.33.1
 4/27/2026
 
