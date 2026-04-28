@@ -334,35 +334,38 @@ function UserIndex({
       <div className="flex flex-row gap-2">
         <Button
           onClick={() => {
-            if (rowData.metadata?.has_token) {
-              if (rowData.username) {
-                RevokeToken(rowData.username)
-                  .then(() => {
-                    loadUsers();
-                    toast.current?.show({
-                      severity: "info",
-                      summary: "Revoke Token",
-                      detail: `Successfully revoked token for ${rowData.username}`,
-                      life: 3000,
-                    });
-                  })
-                  .catch((error) => {
-                    console.error("Error Revoking Token", error);
-                    toast.current?.show({
-                      severity: "error",
-                      summary: "Revoke Token",
-                      detail: `Error revoking token for ${rowData.username}`,
-                      life: 3000,
-                    });
-                  });
+            if (rowData.username) {
+              if (
+                rowData.metadata?.has_token === undefined ||
+                rowData.metadata?.has_token === false
+              ) {
+                toast.current?.show({
+                  severity: "warn",
+                  summary: "Revoke Token",
+                  detail: `No active token to revoke for ${rowData?.username}`,
+                  life: 3000,
+                });
               }
-            } else {
-              toast.current?.show({
-                severity: "warn",
-                summary: "Revoke Token",
-                detail: `No active token to revoke for ${rowData?.username}`,
-                life: 3000,
-              });
+
+              RevokeToken(rowData.username)
+                .then(() => {
+                  loadUsers();
+                  toast.current?.show({
+                    severity: "info",
+                    summary: "Revoke Token",
+                    detail: `Successfully revoked token for ${rowData.username}`,
+                    life: 3000,
+                  });
+                })
+                .catch((error) => {
+                  console.error("Error Revoking Token", error);
+                  toast.current?.show({
+                    severity: "error",
+                    summary: "Revoke Token",
+                    detail: `Error revoking token for ${rowData.username}`,
+                    life: 3000,
+                  });
+                });
             }
           }}
           tooltip={`Revoke Token for User ${rowData.username}`}
