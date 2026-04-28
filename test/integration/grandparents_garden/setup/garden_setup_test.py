@@ -225,7 +225,7 @@ class TestGardenSetup(object):
         assert_successful_request(response, output="test_string!!!!!!!!!")
 
     def test_local_topic_generation(self):
-        # Only test Parent/Grandparent since Child may not 
+        # Only test Parent/Grandparent since Child may not
         # have any local topics if it is a older garden
 
         grand_parent_topics = self.grand_parent_easy_client.get_topics()
