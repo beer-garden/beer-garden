@@ -525,7 +525,12 @@ function App() {
                     <RoleIndex config={config} tourStepsRef={tourStepsRef} />
                   }
                 />
-                <Route path="/users" element={<UserIndex config={config} />} />
+                <Route
+                  path="/users"
+                  element={
+                    <UserIndex config={config} tourStepsRef={tourStepsRef} />
+                  }
+                />
                 <Route path="/swagger" element={<Swagger />} />
                 <Route
                   path="/"

@@ -7,18 +7,29 @@ import { DataTable, SortOrder } from "primereact/datatable";
 import { Message } from "primereact/message";
 import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { RefObject, useCallback, useEffect, useRef, useState } from "react";
 
 import UserChangeAccountMapping from "../components/UserChangeAccountMapping";
 import UserChangePassword from "../components/UserChangePassword";
 import UserChangeRoles from "../components/UserChangeRoles";
 import UserCreate from "../components/UserCreate";
 import { Role, User } from "../models/brewtils-types";
-import { Config } from "../models/models";
+import { Config, TourStepProps } from "../models/models";
 import { RevokeToken } from "../services/token_service";
+import {
+  AddTourStep,
+  ClearTourSteps,
+  GenerateTourProps,
+} from "../services/tour_service";
 import { DeleteUser, GetUsers, RescanUsers } from "../services/user_service";
 
-function UserIndex({ config }: { config: Config }) {
+function UserIndex({
+  config,
+  tourStepsRef,
+}: {
+  config: Config;
+  tourStepsRef: RefObject<Array<TourStepProps>>;
+}) {
   const toast = useRef<Toast>(null);
   const [users, setUsers] = useState<Array<User>>([]);
   const [loading, setLoading] = useState(false);
@@ -43,10 +54,165 @@ function UserIndex({ config }: { config: Config }) {
 
   const [showCreateUserDialog, setShowCreateUserDialog] = useState(false);
 
+  const tourUuid = "users_tour";
+  const tourPrefix = "user_index";
+
+  const rescanUserTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Rescan Users",
+    content: "Refresh the list of users from configuration file.",
+    layer: "LAYOUT",
+    pos: 0,
+  };
+
+  const createUserTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Create User",
+    content: "Create a new user account.",
+    layer: "LAYOUT",
+    pos: 1,
+  };
+
+  const protectedUserTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Protected User",
+    content:
+      "View information about a protected user. These users are required by Beer-Garden and cannot be deleted or modified.",
+    layer: "COMPONENT",
+    pos: 0,
+  };
+
+  const fileGeneratedUserTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "File Generated User",
+    content:
+      "View information about a file generated user. These users are generated from an external file and reset to defaults on Rescan/Restart.",
+    layer: "COMPONENT",
+    pos: 1,
+  };
+
+  const userUserTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "User",
+    content: "View information about a user.",
+    layer: "COMPONENT",
+    pos: 2,
+  };
+
+  const maxPermissionUserTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Max Permission",
+    content:
+      "The maximum permission level for this user based on their assigned roles.",
+    layer: "COMPONENT",
+    pos: 3,
+  };
+
+  const lastAuthenticatedUserTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Last Authenticated",
+    content: "The last time this user was authenticated.",
+    layer: "COMPONENT",
+    pos: 4,
+  };
+
+  const localRolesUserTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Local Roles",
+    content:
+      "The roles assigned to this user within the local garden. Tool Tip of role chip shows permission associated with that role.",
+    layer: "COMPONENT",
+    pos: 4,
+  };
+
+  const upstreamRolesUserTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Upstream Roles",
+    content:
+      "The roles assigned to this user from an upstream source. Tool Tip of role chip shows permission associated with that role.",
+    layer: "COMPONENT",
+    pos: 5,
+  };
+
+  const aliasGardenAccountsUserTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Alias Garden Accounts",
+    content: "The accounts in other gardens that are mapped to this user.",
+    layer: "COMPONENT",
+    pos: 6,
+  };
+
+  const activeTokenUserTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Active Token",
+    content: "Indicates whether this user has an active token.",
+    layer: "COMPONENT",
+    pos: 7,
+  };
+
+  const revokeTokenUserTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Revoke Token",
+    content:
+      "Revoke the active token for this user, forcing them to re-authenticate to get a new token.",
+    layer: "COMPONENT",
+    pos: 8,
+  };
+
+  const mapAccountsUserTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Map Downstream Accounts",
+    content:
+      "Map this user to accounts in other gardens for their alias accounts. This allows the user to switch between accounts when they have access to multiple gardens.",
+    layer: "COMPONENT",
+    pos: 9,
+  };
+
+  const addRemoveRolesUserTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Add/Remove Roles",
+    content:
+      "Add or remove roles from this user. Roles determine the permissions available to the user.",
+    layer: "COMPONENT",
+    pos: 10,
+  };
+
+  const changePasswordUserTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Change Password",
+    content: "Change the password for this user.",
+    layer: "COMPONENT",
+    pos: 11,
+  };
+
+  const deleteUserTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Delete User",
+    content: "Delete this user from the Garden.",
+    layer: "COMPONENT",
+    pos: 11,
+  };
+
   function userNameTemplate(rowData: User) {
     if (rowData.protected) {
       return (
-        <span>
+        <span {...GenerateTourProps(protectedUserTourStep)}>
           <FontAwesomeIcon icon="user-shield" title="Protected User" />{" "}
           {rowData.username}
         </span>
@@ -54,14 +220,14 @@ function UserIndex({ config }: { config: Config }) {
     }
     if (rowData.file_generated) {
       return (
-        <span>
+        <span {...GenerateTourProps(fileGeneratedUserTourStep)}>
           <FontAwesomeIcon icon="user-tag" title="File Generated User" />{" "}
           {rowData.username}
         </span>
       );
     }
     return (
-      <span>
+      <span {...GenerateTourProps(userUserTourStep)}>
         <FontAwesomeIcon icon="user" title="Regular User" /> {rowData.username}
       </span>
     );
@@ -78,31 +244,51 @@ function UserIndex({ config }: { config: Config }) {
     }
 
     if (permissions.length === 0) {
-      return <span>None</span>;
+      return (
+        <span {...GenerateTourProps(maxPermissionUserTourStep)}>None</span>
+      );
     }
     if (permissions.includes("GARDEN_ADMIN")) {
-      return <span>GARDEN_ADMIN</span>;
+      return (
+        <span {...GenerateTourProps(maxPermissionUserTourStep)}>
+          GARDEN_ADMIN
+        </span>
+      );
     }
     if (permissions.includes("PLUGIN_ADMIN")) {
-      return <span>PLUGIN_ADMIN</span>;
+      return (
+        <span {...GenerateTourProps(maxPermissionUserTourStep)}>
+          PLUGIN_ADMIN
+        </span>
+      );
     }
     if (permissions.includes("OPERATOR")) {
-      return <span>OPERATOR</span>;
+      return (
+        <span {...GenerateTourProps(maxPermissionUserTourStep)}>OPERATOR</span>
+      );
     }
-    return <span>READ_ONLY</span>;
+    return (
+      <span {...GenerateTourProps(maxPermissionUserTourStep)}>READ_ONLY</span>
+    );
   }
 
   function lastAuthenticatedTemplate(rowData: User) {
     if (rowData?.metadata?.last_authentication) {
       const date = new Date(rowData.metadata.last_authentication * 1000);
-      return <span>{date.toUTCString()}</span>;
+      return (
+        <span {...GenerateTourProps(lastAuthenticatedUserTourStep)}>
+          {date.toUTCString()}
+        </span>
+      );
     }
-    return <span>Never</span>;
+    return (
+      <span {...GenerateTourProps(lastAuthenticatedUserTourStep)}>Never</span>
+    );
   }
 
   function localRolesTemplate(rowData: User) {
     return (
-      <div>
+      <div {...GenerateTourProps(localRolesUserTourStep)}>
         {rowData?.local_roles?.map((role: Role) => (
           <Chip key={role.id} label={role.name} title={role.permission} />
         ))}
@@ -112,7 +298,7 @@ function UserIndex({ config }: { config: Config }) {
 
   function upstreamRolesTemplate(rowData: User) {
     return (
-      <div>
+      <div {...GenerateTourProps(upstreamRolesUserTourStep)}>
         {rowData?.upstream_roles?.map((role: Role) => (
           <Chip key={role.id} label={role.name} title={role.permission} />
         ))}
@@ -125,10 +311,18 @@ function UserIndex({ config }: { config: Config }) {
       !rowData?.user_alias_mapping ||
       rowData.user_alias_mapping.length === 0
     ) {
-      return <span>None</span>;
+      return (
+        <span {...GenerateTourProps(aliasGardenAccountsUserTourStep)}>
+          None
+        </span>
+      );
     }
     return (
-      <DataTable value={rowData.user_alias_mapping} size="small">
+      <DataTable
+        value={rowData.user_alias_mapping}
+        size="small"
+        {...GenerateTourProps(aliasGardenAccountsUserTourStep)}
+      >
         <Column field="target_garden" header="Garden Name" />
         <Column field="username" header="Account Name" />
       </DataTable>
@@ -149,6 +343,7 @@ function UserIndex({ config }: { config: Config }) {
           tooltip={`Revoke Token for User ${rowData.username}`}
           data-testid={`revoke-user-${rowData.id}`}
           tooltipOptions={{ position: "bottom" }}
+          {...GenerateTourProps(revokeTokenUserTourStep)}
         >
           <FontAwesomeIcon icon="arrow-right-from-bracket" />
         </Button>
@@ -160,6 +355,7 @@ function UserIndex({ config }: { config: Config }) {
           tooltip={`Map Associated Accounts for ${rowData.username}`}
           tooltipOptions={{ position: "bottom" }}
           data-testid={`map-accounts-user-${rowData.id}`}
+          {...GenerateTourProps(mapAccountsUserTourStep)}
         >
           <FontAwesomeIcon icon="globe" />
         </Button>
@@ -172,6 +368,7 @@ function UserIndex({ config }: { config: Config }) {
             tooltip={`Add/Remove Roles for User ${rowData.username}`}
             data-testid={`roles-user-${rowData.id}`}
             tooltipOptions={{ position: "bottom" }}
+            {...GenerateTourProps(addRemoveRolesUserTourStep)}
           >
             <FontAwesomeIcon icon="user-plus" />
           </Button>
@@ -187,6 +384,7 @@ function UserIndex({ config }: { config: Config }) {
             tooltip={`Change Password for User ${rowData.username}`}
             tooltipOptions={{ position: "bottom" }}
             data-testid={`change-password-user-${rowData.id}`}
+            {...GenerateTourProps(changePasswordUserTourStep)}
           >
             <FontAwesomeIcon icon="key" />
           </Button>
@@ -229,6 +427,7 @@ function UserIndex({ config }: { config: Config }) {
             tooltip={`Delete User ${rowData.username}`}
             tooltipOptions={{ position: "bottom" }}
             data-testid={`delete-user-${rowData.id}`}
+            {...GenerateTourProps(deleteUserTourStep)}
           >
             <FontAwesomeIcon icon="trash" />
           </Button>
@@ -239,9 +438,21 @@ function UserIndex({ config }: { config: Config }) {
 
   function activeUserTemplate(rowData: User) {
     if (rowData.metadata?.has_token) {
-      return <Tag severity="success" value="Active" />;
+      return (
+        <Tag
+          severity="success"
+          value="Active"
+          {...GenerateTourProps(activeTokenUserTourStep)}
+        />
+      );
     }
-    return <Tag severity="danger" value="Inactive" />;
+    return (
+      <Tag
+        severity="danger"
+        value="Inactive"
+        {...GenerateTourProps(activeTokenUserTourStep)}
+      />
+    );
   }
 
   function handleRescan() {
@@ -278,6 +489,44 @@ function UserIndex({ config }: { config: Config }) {
     loadUsers();
   }, []);
 
+  useEffect(() => {
+    ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+    AddTourStep(tourStepsRef, rescanUserTourStep);
+    AddTourStep(tourStepsRef, createUserTourStep);
+
+    if (users.length > 0) {
+      // Always present for all users
+      AddTourStep(tourStepsRef, maxPermissionUserTourStep);
+      AddTourStep(tourStepsRef, lastAuthenticatedUserTourStep);
+      AddTourStep(tourStepsRef, localRolesUserTourStep);
+      AddTourStep(tourStepsRef, upstreamRolesUserTourStep);
+      AddTourStep(tourStepsRef, aliasGardenAccountsUserTourStep);
+      AddTourStep(tourStepsRef, activeTokenUserTourStep);
+      AddTourStep(tourStepsRef, revokeTokenUserTourStep);
+      AddTourStep(tourStepsRef, mapAccountsUserTourStep);
+
+      // Icons need to search
+      for (const user of users) {
+        if (user.protected) {
+          AddTourStep(tourStepsRef, protectedUserTourStep);
+        } else {
+          AddTourStep(tourStepsRef, addRemoveRolesUserTourStep);
+          AddTourStep(tourStepsRef, changePasswordUserTourStep);
+          AddTourStep(tourStepsRef, deleteUserTourStep);
+
+          if (user.file_generated) {
+            AddTourStep(tourStepsRef, fileGeneratedUserTourStep);
+          } else {
+            AddTourStep(tourStepsRef, userUserTourStep);
+          }
+        }
+      }
+    }
+    return () => {
+      ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+    };
+  }, [users]);
+
   return (
     <div>
       <Toast ref={toast} />
@@ -290,6 +539,7 @@ function UserIndex({ config }: { config: Config }) {
             label="Rescan Users"
             data-testid="rescan-btn"
             className="mr-2"
+            {...GenerateTourProps(rescanUserTourStep)}
           />
           <Button
             onClick={() => {
@@ -298,6 +548,7 @@ function UserIndex({ config }: { config: Config }) {
             label="Create User"
             data-testid="create-btn"
             className="mr-2"
+            {...GenerateTourProps(createUserTourStep)}
           />
         </div>
       </div>
