@@ -160,7 +160,7 @@ export const GetAuthHeaders = () => {
 export const RevokeToken = async (username: string) => {
   const headers = GetAuthHeaders();
 
-  const response = await fetch(`${GetBaseURL()}/api/v1/token/${username}`, {
+  const response = await fetch(`${GetBaseURL()}/api/v1/tokens/${username}`, {
     headers: headers,
     method: "DELETE",
   });
