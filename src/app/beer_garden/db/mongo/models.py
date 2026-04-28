@@ -970,6 +970,10 @@ class System(MongoModel, Document):
 
     def delete(self, **kwargs):
 
+        if not self.local:
+            # Skip topic cleanup for non-local systems, 
+            # as they won't have any topics to clean up
+            return
         try:
             if len(self.instances) > 0:
                 for command in self.commands:
@@ -1068,6 +1072,11 @@ class System(MongoModel, Document):
         return is_updated
 
     def save_topics(self):
+
+        if not self.local:
+            # Skip topic management for non-local systems, 
+            # as they won't have any topics to manage
+            return
 
         if len(self.instances) > 0:
             for command in self.commands:

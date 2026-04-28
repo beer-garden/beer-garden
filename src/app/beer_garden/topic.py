@@ -5,6 +5,7 @@ from typing import List
 from brewtils.errors import PluginError
 from brewtils.models import Event, Garden, Subscriber, System, Topic
 from mongoengine import DoesNotExist
+
 import beer_garden.config as config
 import beer_garden.db.api as db
 
