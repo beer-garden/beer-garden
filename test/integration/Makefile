@@ -26,6 +26,12 @@ lint: ## check style with flake8
 	flake8 --ignore=F824 
 	black --check --diff ./
 
+# Formatting
+format: ## Run black formatter in-line
+	black -t py311 -t py312 -t py313 ./
+	isort --thirdparty brewtils ./
+	$(MAKE) lint
+
 #test-config: ## run configuration integration tests
 #	pytest config/
 #

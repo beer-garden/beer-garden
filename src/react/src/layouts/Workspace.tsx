@@ -1,23 +1,33 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
 import { DataView } from "primereact/dataview";
-import { useEffect, useRef, useState } from "react";
+import { RefObject, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
 import RequestCreateCard from "../components/RequestCreateCard";
 import RequestViewCard from "../components/RequestViewCard";
+import RequestWizard from "../components/RequestWizard";
 import SchedulerViewCard from "../components/SchedulerViewCard";
-import { RequestItem } from "../models/models";
+import { RequestItem, TourStepProps } from "../models/models";
 import { DeleteJob } from "../services/job_service";
+import {
+  AddTourStep,
+  ClearTourSteps,
+  GenerateTourProps,
+} from "../services/tour_service";
 
 function Workspace({
   listeners,
   display,
+  tourStepsRef,
 }: {
   listeners: Record<string, any>;
   display?: boolean;
+  tourStepsRef: RefObject<Array<TourStepProps>>;
 }) {
+  const [useWizard] = useState<boolean>(true);
+
   const { requestId } = useParams<{ requestId: string }>();
   const { jobId } = useParams<{ jobId: string }>();
 
@@ -33,6 +43,18 @@ function Workspace({
   const requestItemsRef = useRef<RequestItem[] | undefined>(undefined);
 
   const [requestItemsKey, setRequestItemsKey] = useState("0");
+
+  const tourUuid = "workspace_tour";
+  const tourPrefix = "workspace";
+
+  const addRequestTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Add Request",
+    content: "Create a new scheduled job to run requests on a schedule.",
+    layer: "LAYOUT",
+    pos: 0,
+  };
 
   useEffect(() => {
     if (requestItemsRef.current === undefined) {
@@ -83,6 +105,12 @@ function Workspace({
         updateItems(loadedItems);
       }
     }
+
+    AddTourStep(tourStepsRef, addRequestTourStep);
+
+    return () => {
+      ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+    };
   });
 
   const updateItems = (updatedItems: RequestItem[]) => {
@@ -143,11 +171,19 @@ function Workspace({
         if (value.type === "REQUEST") {
           list.push(
             <div className="mr-2 mb-2 mt-2" style={{ minWidth: "49%" }}>
-              <RequestCreateCard
-                requestItem={value}
-                updateRequestItem={updateItem}
-                removeItem={deleteItem}
-              />
+              {useWizard ? (
+                <RequestWizard
+                  requestItem={value}
+                  updateRequestItem={updateItem}
+                  removeItem={deleteItem}
+                />
+              ) : (
+                <RequestCreateCard
+                  requestItem={value}
+                  updateRequestItem={updateItem}
+                  removeItem={deleteItem}
+                />
+              )}
             </div>,
           );
         } else if (value.type === "VIEW_REQUEST") {
@@ -201,7 +237,11 @@ function Workspace({
   return (
     <div>
       <h1>Workspace</h1>
-      <Button onClick={() => addItem()}>
+      <Button
+        onClick={() => addItem()}
+        tooltip="Add Request"
+        {...GenerateTourProps(addRequestTourStep)}
+      >
         <FontAwesomeIcon icon="file-pen" />
       </Button>
 
