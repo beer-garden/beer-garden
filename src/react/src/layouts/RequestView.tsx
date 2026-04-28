@@ -14,7 +14,7 @@ import HasAccess from "../components/HasAccess";
 import RequestOutput from "../components/RequestOutput";
 import RequestTreeChart from "../components/RequestTreeChart";
 import { Request, System } from "../models/brewtils-types";
-import { Config } from "../models/models";
+import { Config, RequestItem } from "../models/models";
 import {
   CancelRequest,
   DeleteRequest,
@@ -60,7 +60,13 @@ const handleDownload = (request: Request) => {
     });
 };
 
-function RequestOptions(request: Request) {
+function RequestOptions({
+  request,
+  addRequestItem,
+}: {
+  request: Request;
+  addRequestItem: (itemParams?: Partial<RequestItem>) => void;
+}) {
   const navigate = useNavigate();
   const items: MenuItem[] = [];
 
@@ -102,7 +108,7 @@ function RequestOptions(request: Request) {
   }
 
   const pourAgain = (request: Request) => {
-    void navigate(`${GetBaseURL()}/recreate/${request.id}`);
+    addRequestItem({ requestId: request.id, type: "REQUEST" });
   };
 
   return (
@@ -168,9 +174,11 @@ function RequestHeader(request: Request) {
 function RequestView({
   listeners,
   config,
+  addRequestItem,
 }: {
   listeners: Record<string, any>;
   config: Config;
+  addRequestItem: (itemParams?: Partial<RequestItem>) => void;
 }) {
   const { requestId } = useParams<{ requestId: string }>();
   const [request, setRequest] = useState<Request | null>(null);
@@ -333,7 +341,10 @@ function RequestView({
               hasSystemVersion={request.system_version}
               hasCommandName={request.command}
             >
-              <RequestOptions {...request} />
+              <RequestOptions
+                request={request}
+                addRequestItem={addRequestItem}
+              />
             </HasAccess>
             {!showCommandForm && <Skeleton width="100%" height="10rem" />}
             {showCommandForm && command && (
@@ -342,13 +353,20 @@ function RequestView({
                   command: command,
                   request: request,
                   setRequest: setRequest,
+                  resetForm: false,
+                  setResetForm: () => {},
                 }}
               />
             )}
             {showCommandForm && !command && <UnformattedInput {...request} />}
           </StepperPanel>
           <StepperPanel header="Request Output">
-            {request && <RequestOptions {...request} />}
+            {request && (
+              <RequestOptions
+                request={request}
+                addRequestItem={addRequestItem}
+              />
+            )}
             {request && <RequestOutput {...request} />}
           </StepperPanel>
         </Stepper>
