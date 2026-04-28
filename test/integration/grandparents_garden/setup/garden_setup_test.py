@@ -224,6 +224,17 @@ class TestGardenSetup(object):
         response = wait_for_response(self.grand_parent_easy_client, request, timeout=30)
         assert_successful_request(response, output="test_string!!!!!!!!!")
 
+    def test_local_topic_generation(self):
+        # Only test Parent/Grandparent since Child may not have any local topics if it is a older garden
+
+        grand_parent_topics = self.grand_parent_easy_client.find_topics()
+        parent_topics = self.parent_easy_client.find_topics()
+
+        assert len(grand_parent_topics) > 0
+        assert len(parent_topics) > 0
+
+        assert len(grand_parent_topics) == len(parent_topics)
+
     # def test_update_garden_connection_info(self):
     #     response = self.easy_client.client.session.get(
     #         self.easy_client.client.base_url + "api/v1/gardens/"
