@@ -99,7 +99,7 @@ export const ClearTourSteps = (
   prefix: string,
   uuid?: string,
 ) => {
-  if (uuid && tourStepsRef.current) {
+  if (uuid && tourStepsRef?.current) {
     tourStepsRef.current = tourStepsRef.current.filter(
       (step) => !(step.prefix === prefix && step.uuid === uuid),
     );
