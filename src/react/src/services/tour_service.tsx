@@ -45,7 +45,7 @@ export const AddTourStep = (
   tourStepsRef: RefObject<Array<TourStepProps>>,
   tourStep: TourStepProps,
 ) => {
-  if (tourStep.uuid === undefined || tourStepsRef.current === undefined) {
+  if (tourStep?.uuid === undefined || tourStepsRef?.current === undefined) {
     return;
   }
 
