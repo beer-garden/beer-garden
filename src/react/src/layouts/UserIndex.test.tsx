@@ -8,7 +8,7 @@ import {
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { User } from "../models/brewtils-types";
-import { Config } from "../models/models";
+import { Config, TourStepProps } from "../models/models";
 import * as tokenService from "../services/token_service";
 import * as userService from "../services/user_service";
 import UserIndex from "./UserIndex";
@@ -41,6 +41,13 @@ const mockUsers: User[] = [
   } as User,
 ];
 
+const mockTourSteps = () => {
+  const mockRef = {
+    current: [] as TourStepProps[], // Mocking the value property
+  };
+  return mockRef as React.RefObject<TourStepProps[]>;
+};
+
 describe("UserIndex", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -52,7 +59,7 @@ describe("UserIndex", () => {
   });
 
   test("should render user management page", async () => {
-    render(<UserIndex config={mockConfig} />);
+    render(<UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />);
     expect(screen.getByText("User Management")).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByTestId("user-datatable")).toBeInTheDocument();
@@ -60,14 +67,14 @@ describe("UserIndex", () => {
   });
 
   test("should load users on mount", async () => {
-    render(<UserIndex config={mockConfig} />);
+    render(<UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />);
     await waitFor(() => {
       expect(userService.GetUsers).toHaveBeenCalled();
     });
   });
 
   test("should display users in datatable", async () => {
-    render(<UserIndex config={mockConfig} />);
+    render(<UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />);
     await waitFor(() => {
       expect(screen.getByText("admin")).toBeInTheDocument();
       expect(screen.getByText("operator")).toBeInTheDocument();
@@ -75,17 +82,17 @@ describe("UserIndex", () => {
   });
 
   test("should show rescan button", () => {
-    render(<UserIndex config={mockConfig} />);
+    render(<UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />);
     expect(screen.getByTestId("rescan-btn")).toBeInTheDocument();
   });
 
   test("should show create user button", () => {
-    render(<UserIndex config={mockConfig} />);
+    render(<UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />);
     expect(screen.getByTestId("create-btn")).toBeInTheDocument();
   });
 
   test("should handle rescan users", async () => {
-    render(<UserIndex config={mockConfig} />);
+    render(<UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />);
     const rescanBtn = screen.getByTestId("rescan-btn");
     fireEvent.click(rescanBtn);
     await waitFor(() => {
@@ -94,7 +101,7 @@ describe("UserIndex", () => {
   });
 
   test("should revoke user token", async () => {
-    render(<UserIndex config={mockConfig} />);
+    render(<UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />);
     await waitFor(() => {
       expect(screen.getByTestId("revoke-user-1")).toBeInTheDocument();
     });
@@ -105,40 +112,51 @@ describe("UserIndex", () => {
   });
 
   test("should not show roles button for protected user", async () => {
-    render(<UserIndex config={mockConfig} />);
+    render(<UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />);
     await waitFor(() => {
       expect(screen.queryByTestId("roles-user-1")).not.toBeInTheDocument();
     });
   });
 
   test("should show roles button for non-protected user", async () => {
-    render(<UserIndex config={mockConfig} />);
+    render(<UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />);
     await waitFor(() => {
       expect(screen.getByTestId("roles-user-2")).toBeInTheDocument();
     });
   });
 
   test("should delete user", async () => {
-    render(<UserIndex config={mockConfig} />);
+    render(<UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />);
+    const userTwo = mockUsers[1];
+
     await waitFor(() => {
-      expect(screen.getByTestId("delete-user-2")).toBeInTheDocument();
+      expect(
+        screen.getByTestId(`delete-user-${userTwo.id}`),
+      ).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByTestId("delete-user-2"));
+
+    fireEvent.click(screen.getByTestId(`delete-user-${userTwo.id}`));
+    // Click Yes on modal
+    fireEvent.click(screen.getByRole("button", { name: /yes/i }));
+
     await waitFor(() => {
-      expect(userService.DeleteUser).toHaveBeenCalledWith("operator");
+      expect(userService.DeleteUser).toHaveBeenCalled();
+      expect(userService.DeleteUser).toHaveBeenCalledWith(userTwo.username);
     });
   });
 
   test("should display auth disabled warning when auth is disabled", () => {
     const disabledConfig: Config = { auth_enabled: false } as Config;
-    render(<UserIndex config={disabledConfig} />);
+    render(
+      <UserIndex config={disabledConfig} tourStepsRef={mockTourSteps()} />,
+    );
     expect(
       screen.getByText(/authorization is currently disabled/i),
     ).toBeInTheDocument();
   });
 
   test("should show active tag for users with token", async () => {
-    render(<UserIndex config={mockConfig} />);
+    render(<UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />);
     await waitFor(() => {
       const activeTags = screen.getAllByText("Active");
       expect(activeTags.length).toBeGreaterThan(0);
@@ -146,7 +164,7 @@ describe("UserIndex", () => {
   });
 
   test("should show inactive tag for users without token", async () => {
-    render(<UserIndex config={mockConfig} />);
+    render(<UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />);
     await waitFor(() => {
       const inactiveTags = screen.getAllByText("Inactive");
       expect(inactiveTags.length).toBeGreaterThan(0);
