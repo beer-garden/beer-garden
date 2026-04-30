@@ -110,6 +110,7 @@ class TopicAPI(BaseHandler):
           [
             { "operation": "add", "value": {subscriber} }
             { "operation": "remove", "value": {subscriber} }
+            { "operation": "reset_count", "value": {subscriber} }
           ]
           ```
         requestBody:
@@ -160,7 +161,7 @@ class TopicAPI(BaseHandler):
 
         for op in patch:
             operation = op.operation.lower()
-            subscriber = BrewtilsSubscriber(**op.value)
+            subscriber = BrewtilsSubscriber(**op.value) if op.value else None
 
             if operation == "add":
                 response = await self.client(
@@ -174,6 +175,14 @@ class TopicAPI(BaseHandler):
                 response = await self.client(
                     Operation(
                         operation_type="TOPIC_REMOVE_SUBSCRIBER",
+                        kwargs={"topic_id": topic_id, "subscriber": subscriber},
+                    )
+                )
+
+            elif operation == "reset_count":
+                response = await self.client(
+                    Operation(
+                        operation_type="TOPIC_RESET_COUNT",
                         kwargs={"topic_id": topic_id, "subscriber": subscriber},
                     )
                 )
@@ -369,10 +378,10 @@ class TopicListAPI(BaseHandler):
         ---
         summary: Retrieve topics
         parameters:
-          - name: include_generated
+          - name: hide_generated
             in: path
             required: false
-            description: Include topics containing only GENERATED subscribers
+            description: Hide topics containing only GENERATED subscribers
             type: boolean
         responses:
           200:
@@ -401,20 +410,21 @@ class TopicListAPI(BaseHandler):
           - Topics
         """
 
-        include_generated = self.get_query_argument("include_generated", None)
-        if include_generated is None:
-            include_generated = False
+        hide_generated = self.get_query_argument("hide_generated", None)
+        if hide_generated is None:
+            hide_generated = False
         else:
-            include_generated = bool(include_generated.lower() == "true")
+            hide_generated = bool(hide_generated.lower() == "true")
 
-        q_filter = Q()
-        if not include_generated:
-            q_filter = q_filter & (
-                Q(**{"subscribers__subscriber_type__in": ["ANNOTATED", "DYNAMIC"]})
-                | Q(**{"subscribers__size": 0})
-            )
-
-        response = await self.client(Operation(operation_type="TOPIC_READ_ALL", kwargs={"q_filter": q_filter}))
+        if hide_generated:
+          q_filter = Q()
+          q_filter = q_filter & (
+              Q(**{"subscribers__subscriber_type__in": ["ANNOTATED", "DYNAMIC"]})
+              | Q(**{"subscribers__size": 0})
+          )
+          response = await self.client(Operation(operation_type="TOPIC_READ_ALL", kwargs={"q_filter": q_filter}))
+        else:
+          response = await self.client(Operation(operation_type="TOPIC_READ_ALL"))
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

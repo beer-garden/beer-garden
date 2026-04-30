@@ -7,7 +7,6 @@ import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { DataTable, SortOrder } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
 import { Divider } from "primereact/divider";
-import { InputNumber } from "primereact/inputnumber";
 import { InputText } from "primereact/inputtext";
 import { Messages } from "primereact/messages";
 import { Toast } from "primereact/toast";
@@ -65,23 +64,47 @@ FilterService.register(
   },
 );
 
+interface TopicSubscriber {
+  topic?: Topic;
+  subscriber?: Subscriber;
+}
+
 function TopicIndex() {
   const toast = useRef<Toast>(null);
   const [topics, setTopics] = useState<Array<Topic>>([]);
+  const [topicSubscribers, setTopicSubscribers] = useState<
+    Array<TopicSubscriber>
+  >([]);
   const [loading, setLoading] = useState(false);
   const [first, setFirst] = useState<number>(0);
   const [rows, setRows] = useState<number>(10);
   const [filters] = useState({
-    name: {
+    "topic.name": {
       value: null,
       matchMode: FilterMatchMode.CONTAINS,
     },
-    publisherCount: { value: null, matchMode: FilterMatchMode.EQUALS },
-    subscribers: { value: null, matchMode: FilterMatchMode.CUSTOM },
+    "topic.publisher_count": { value: null, matchMode: FilterMatchMode.EQUALS },
+    "subscriber.namespace": {
+      value: null,
+      matchMode: FilterMatchMode.CONTAINS,
+    },
+    "subscriber.garden": { value: null, matchMode: FilterMatchMode.CONTAINS },
+    "subscriber.system": { value: null, matchMode: FilterMatchMode.CONTAINS },
+    "subscriber.version": { value: null, matchMode: FilterMatchMode.CONTAINS },
+    "subscriber.instance": { value: null, matchMode: FilterMatchMode.CONTAINS },
+    "subscriber.command": { value: null, matchMode: FilterMatchMode.CONTAINS },
+    "subscriber.consumer_count": {
+      value: null,
+      matchMode: FilterMatchMode.EQUALS,
+    },
+    "subscriber.subscriber_type": {
+      value: null,
+      matchMode: FilterMatchMode.CONTAINS,
+    },
   });
   const [sortField, setSortField] = useState<string | undefined>(undefined);
   const [sortOrder, setSortOrder] = useState<SortOrder>(undefined);
-  const [showGenerated, setShowGenerated] = useState<boolean>(false);
+  const [hideGenerated, setHideGenerated] = useState<boolean>(false);
   const generatedRef = useRef<boolean>(false);
 
   const [dialogVisible, setDialogVisible] = useState(false);
@@ -102,9 +125,19 @@ function TopicIndex() {
   const loadTopics = useCallback(() => {
     setLoading(true);
 
-    GetTopics({ include_generated: generatedRef.current })
+    GetTopics({ hide_generated: generatedRef.current })
       .then((topics: Array<Topic>) => {
         setTopics(topics);
+
+        const topicSubscribers: TopicSubscriber[] = topics.flatMap(
+          (topic: Topic) => {
+            const subscribers = topic.subscribers || [];
+            return subscribers.map((subscriber: Subscriber) => {
+              return { topic: topic, subscriber: subscriber };
+            });
+          },
+        );
+        setTopicSubscribers(topicSubscribers);
         setLoading(false);
       })
       .catch((error) => {
@@ -180,7 +213,44 @@ function TopicIndex() {
     function clearCount(topic: Topic, subscriber?: Subscriber) {
       const accept = () => {
         ResetCount(topic.id, subscriber)
-          .then(() => {
+          .then((updatedTopic: Topic) => {
+            if (subscriber) {
+              setTopicSubscribers((currTopicSubscribers: TopicSubscriber[]) => {
+                const subscribers = updatedTopic.subscribers || [];
+                const updatedSubscriber: Subscriber = subscribers.find(
+                  (s) =>
+                    s.command == subscriber.command &&
+                    s.instance == subscriber.instance &&
+                    s.version == subscriber.version &&
+                    s.system == subscriber.system &&
+                    s.garden == subscriber.garden &&
+                    s.namespace == subscriber.namespace,
+                );
+                const newTopicSubscribers = currTopicSubscribers.map(
+                  (topicSubscriber: TopicSubscriber) => {
+                    return topicSubscriber.topic?.id === topic.id
+                      ? {
+                          ...topicSubscriber,
+                          topic: updatedTopic,
+                          subscriber: updatedSubscriber,
+                        }
+                      : topicSubscriber;
+                  },
+                );
+                return newTopicSubscribers;
+              });
+            } else {
+              setTopicSubscribers((currTopicSubscribers: TopicSubscriber[]) => {
+                const newTopicSubscribers = currTopicSubscribers.map(
+                  (topicSubscriber: TopicSubscriber) => {
+                    return topicSubscriber.topic?.id === topic.id
+                      ? { ...topicSubscriber, topic: updatedTopic }
+                      : topicSubscriber;
+                  },
+                );
+                return newTopicSubscribers;
+              });
+            }
             if (toast && toast.current) {
               toast.current?.show({
                 severity: "info",
@@ -250,112 +320,20 @@ function TopicIndex() {
         });
     }
 
-    function publisherCountTemplate(topic: Topic) {
+    function publisherCountTemplate(topicSubscriber: TopicSubscriber) {
       return (
         <div className="flex align-items-center gap-2">
-          <span>{topic.publisher_count}</span>
-          {(topic.publisher_count || 0) > 0 && (
+          <span>{topicSubscriber.topic?.publisher_count}</span>
+          {((topicSubscriber.topic !== undefined &&
+            topicSubscriber.topic.publisher_count) ||
+            0) > -1 && (
             <Button
               size="small"
               tooltip="Clear count"
-              onClick={() => clearCount(topic)}
+              onClick={() => clearCount(topicSubscriber.topic as Topic)}
             >
               <FontAwesomeIcon icon="0" />
             </Button>
-          )}
-        </div>
-      );
-    }
-
-    function subscribersTemplate(topic: Topic) {
-      return (
-        <div style={{ overflowX: "auto" }}>
-          {topic.subscribers && topic.subscribers?.length > 0 ? (
-            <table
-              className="table-auto w-full gap-2"
-              style={{ borderCollapse: "collapse" }}
-            >
-              <thead className="border">
-                <tr>
-                  <th className="border border-1 px-2">Garden</th>
-                  <th className="border border-1 px-2">Namespace</th>
-                  <th className="border border-1 px-2">System</th>
-                  <th className="border border-1 px-2">Version</th>
-                  <th className="border border-1 px-2">Instance</th>
-                  <th className="border border-1 px-2">Command</th>
-                  <th
-                    className="border border-1 px-2"
-                    style={{ minWidth: "100px" }}
-                  >
-                    Consumer Count
-                  </th>
-                  <th
-                    className="border border-1 px-2"
-                    style={{ minWidth: "150px" }}
-                  >
-                    Type
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {topic.subscribers?.map((subscriber) => (
-                  <tr
-                    key={`${subscriber.garden}.${subscriber.namespace}.${subscriber.system}.${subscriber.version}.${subscriber.instance}.${subscriber.command}`}
-                  >
-                    <td className="border border-1 px-2">
-                      {subscriber.garden || "*"}
-                    </td>
-                    <td className="border border-1 px-2">
-                      {subscriber.namespace || "*"}
-                    </td>
-                    <td className="border border-1 px-2">
-                      {subscriber.system || "*"}
-                    </td>
-                    <td className="border border-1 px-2">
-                      {subscriber.version || "*"}
-                    </td>
-                    <td className="border border-1 px-2">
-                      {subscriber.instance || "*"}
-                    </td>
-                    <td className="border border-1 px-2">
-                      {subscriber.command || "*"}
-                    </td>
-                    <td className="border border-1 px-2">
-                      <div className="flex align-items-center gap-2">
-                        <span>{subscriber.consumer_count}</span>
-                        {subscriber.consumer_count > 0 && (
-                          <Button
-                            size="small"
-                            className="ml-2"
-                            tooltip="Clear count"
-                            onClick={() => clearCount(topic, subscriber)}
-                          >
-                            <FontAwesomeIcon icon="0" />
-                          </Button>
-                        )}
-                      </div>
-                    </td>
-                    <td className="border border-1 px-2">
-                      <div className="flex align-items-center gap-2">
-                        <span>{subscriber.subscriber_type}</span>
-                        {subscriber.subscriber_type == "DYNAMIC" && (
-                          <Button
-                            onClick={() => removeSubscriber(topic, subscriber)}
-                            size="small"
-                            className="ml-2"
-                            tooltip="Remove Subscriber"
-                          >
-                            <FontAwesomeIcon icon="xmark-square" />
-                          </Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p>No subscribers</p>
           )}
         </div>
       );
@@ -419,27 +397,107 @@ function TopicIndex() {
       openTopicDialog();
     }
 
-    function topicButtonTemplate(topic: Topic) {
-      const has_only_dynamic_subscribers = topic.subscribers?.every(
-        (subscriber) => subscriber.subscriber_type == "DYNAMIC",
+    function namespaceTemplate(topicSubscriber: TopicSubscriber) {
+      return topicSubscriber.subscriber?.namespace || "*"
+    }
+
+    function gardenTemplate(topicSubscriber: TopicSubscriber) {
+      return topicSubscriber.subscriber?.garden || "*"
+    }
+
+    function systemTemplate(topicSubscriber: TopicSubscriber) {
+      return topicSubscriber.subscriber?.system || "*"
+    }
+
+    function versionTemplate(topicSubscriber: TopicSubscriber) {
+      return topicSubscriber.subscriber?.version || "*"
+    }
+
+    function instanceTemplate(topicSubscriber: TopicSubscriber) {
+      return topicSubscriber.subscriber?.instance || "*"
+    }
+
+    function commandTemplate(topicSubscriber: TopicSubscriber) {
+      return topicSubscriber.subscriber?.command || "*"
+    }
+
+    function consumerCountTemplate(topicSubscriber: TopicSubscriber) {
+      return (
+        <div className="flex align-items-center gap-2">
+          <span>{topicSubscriber.subscriber?.consumer_count}</span>
+          {topicSubscriber.subscriber != undefined &&
+            topicSubscriber.subscriber.consumer_count != undefined &&
+            (topicSubscriber.subscriber.consumer_count || 0) > 0 && (
+              <Button
+                size="small"
+                className="ml-2"
+                tooltip="Clear count"
+                onClick={() =>
+                  clearCount(
+                    topicSubscriber.topic as Topic,
+                    topicSubscriber.subscriber as Subscriber,
+                  )
+                }
+              >
+                <FontAwesomeIcon icon="0" />
+              </Button>
+            )}
+        </div>
       );
+    }
+
+    function subscriberTypeTemplate(topicSubscriber: TopicSubscriber) {
+      return (
+        <div className="flex align-items-center gap-2">
+          <span>{topicSubscriber.subscriber?.subscriber_type}</span>
+          {topicSubscriber.subscriber !== undefined &&
+            topicSubscriber.subscriber.subscriber_type == "DYNAMIC" && (
+              <Button
+                onClick={() =>
+                  removeSubscriber(
+                    topicSubscriber.topic!,
+                    topicSubscriber.subscriber!,
+                  )
+                }
+                size="small"
+                className="ml-2"
+                tooltip="Remove Subscriber"
+              >
+                <FontAwesomeIcon icon="xmark-square" />
+              </Button>
+            )}
+        </div>
+      );
+    }
+
+    function topicButtonTemplate(topicSubscriber: TopicSubscriber) {
+      const has_only_dynamic_subscribers =
+        topicSubscriber.topic?.subscribers?.every(
+          (subscriber) => subscriber.subscriber_type == "DYNAMIC",
+        );
 
       return (
         <>
+          <Button
+            onClick={() => addSubscriber(topicSubscriber.topic!)}
+            tooltip="Add Subscriber"
+          >
+            <FontAwesomeIcon icon="square-plus" />
+          </Button>
           {has_only_dynamic_subscribers && (
-            <Button onClick={() => deleteTopic(topic)} tooltip="Delete Topic">
+            <Button
+              onClick={() => deleteTopic(topicSubscriber.topic!)}
+              tooltip="Delete Topic"
+            >
               <FontAwesomeIcon icon="trash" />
             </Button>
           )}
-          <Button onClick={() => addSubscriber(topic)} tooltip="Add Subscriber">
-            <FontAwesomeIcon icon="square-plus" />
-          </Button>
         </>
       );
     }
 
     const handleChange = (event: any) => {
-      setShowGenerated(event.checked);
+      setHideGenerated(event.checked);
       generatedRef.current = event.checked;
       loadTopics();
     };
@@ -447,13 +505,13 @@ function TopicIndex() {
     const header = (
       <div className="flex flex-wrap align-items-center justify-content-between gap-2">
         <span className="text-xl text-900 font-bold">Topics</span>
-        <div>
+        <div className="flex-1 text-center">
           <Checkbox
             onChange={handleChange}
-            checked={showGenerated}
+            checked={hideGenerated}
             className="mr-2"
           />
-          Show Generated
+          Hide Generated
         </div>
       </div>
     );
@@ -463,7 +521,7 @@ function TopicIndex() {
         <ConfirmDialog />
         <DataTable
           data-testid="topic-datatable"
-          value={topics}
+          value={topicSubscribers}
           loading={loading}
           header={header}
           paginator
@@ -471,6 +529,8 @@ function TopicIndex() {
           first={first}
           filterDisplay="row"
           filters={filters}
+          rowGroupMode="rowspan"
+          groupRowsBy="topic.name"
           sortField={sortField}
           sortOrder={sortOrder}
           rowsPerPageOptions={[10, 25, 50]}
@@ -483,37 +543,92 @@ function TopicIndex() {
             setSortOrder(e.sortOrder);
             setFirst(0);
           }}
-          dataKey="id"
         >
           <Column
-            field="name"
+            field="topic.name"
             sortable
             filter
             header="Topic"
-            style={{ width: "20%" }}
+            style={{ maxWidth: "350px", overflowWrap: "break-word" }}
+            showFilterMenu={false}
           />
           <Column
-            field="publisher_count"
+            field="topic.publisher_count"
             sortable
             filter
             header="Publisher Count"
             body={publisherCountTemplate}
             showFilterMenu={false}
-            style={{ width: "7%" }}
-            dataType="numeric"
-            filterElement={<InputNumber />}
           />
           <Column
-            field="subscribers"
+            field="subscriber.namespace"
             sortable
             filter
-            header="Subscribers"
-            body={subscribersTemplate}
+            header="Namespace"
+            body={namespaceTemplate}
+            showFilterMenu={false}
+          />
+          <Column
+            field="subscriber.garden"
+            sortable
+            filter
+            header="Garden"
+            body={gardenTemplate}
+            showFilterMenu={false}
+          />
+          <Column
+            field="subscriber.system"
+            sortable
+            filter
+            header="System"
+            body={systemTemplate}
+            showFilterMenu={false}
+          />
+          <Column
+            field="subscriber.version"
+            sortable
+            filter
+            header="Version"
+            body={versionTemplate}
+            showFilterMenu={false}
+          />
+          <Column
+            field="subscriber.instance"
+            sortable
+            filter
+            header="Instance"
+            body={instanceTemplate}
+            showFilterMenu={false}
+          />
+          <Column
+            field="subscriber.command"
+            sortable
+            filter
+            header="Command"
+            body={commandTemplate}
+            style={{ maxWidth: "300px", overflowWrap: "break-word" }}
+            showFilterMenu={false}
+          />
+          <Column
+            field="subscriber.consumer_count"
+            sortable
+            filter
+            header="Consumer Count"
+            body={consumerCountTemplate}
+            showFilterMenu={false}
+          />
+          <Column
+            field="subscriber.subscriber_type"
+            sortable
+            filter
+            header="Subscriber Type"
+            body={subscriberTypeTemplate}
+            showFilterMenu={false}
           />
           <Column
             header=""
             body={topicButtonTemplate}
-            style={{ minWidth: "150px", width: "10%" }}
+            style={{ width: "145px" }}
           />
         </DataTable>
       </>

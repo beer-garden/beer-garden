@@ -141,9 +141,6 @@ export const ResetCount = async (
   topicId: string | undefined,
   subscriber?: Subscriber,
 ) => {
-  if (!topicId) {
-    return;
-  }
   const headers = GetAuthHeaders();
   headers.append("Content-Type", "application/json");
   const fetch_url = `${GetBaseURL()}/api/v1/topics/${topicId}`;
@@ -155,7 +152,7 @@ export const ResetCount = async (
         {
           operation: "reset_count",
           path: "",
-          value: subscriber ? subscriber : "",
+          value: subscriber,
         },
       ],
     }),
@@ -164,6 +161,8 @@ export const ResetCount = async (
     // Handle non-OK responses (e.g., 404, 500)
     throw new Error(`HTTP error: Status ${response.status}`);
   }
+  const data = (await response.json()) as Topic;
+  return data;
 };
 
 export const GetTopics = async (queryData?: any): Promise<Topic[]> => {
