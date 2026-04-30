@@ -476,6 +476,7 @@ function App() {
                       systemsRef={systemsRef}
                       gardenState={gardenState}
                       systemState={systemState}
+                      addRequestItem={addRequestItem}
                     />
                   }
                 />
@@ -591,6 +592,7 @@ function App() {
                       systemsRef={systemsRef}
                       gardenState={gardenState}
                       systemState={systemState}
+                      addRequestItem={addRequestItem}
                     />
                   }
                 />
