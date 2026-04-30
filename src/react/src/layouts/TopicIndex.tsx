@@ -398,27 +398,27 @@ function TopicIndex() {
     }
 
     function namespaceTemplate(topicSubscriber: TopicSubscriber) {
-      return topicSubscriber.subscriber?.namespace || "*"
+      return topicSubscriber.subscriber?.namespace || "*";
     }
 
     function gardenTemplate(topicSubscriber: TopicSubscriber) {
-      return topicSubscriber.subscriber?.garden || "*"
+      return topicSubscriber.subscriber?.garden || "*";
     }
 
     function systemTemplate(topicSubscriber: TopicSubscriber) {
-      return topicSubscriber.subscriber?.system || "*"
+      return topicSubscriber.subscriber?.system || "*";
     }
 
     function versionTemplate(topicSubscriber: TopicSubscriber) {
-      return topicSubscriber.subscriber?.version || "*"
+      return topicSubscriber.subscriber?.version || "*";
     }
 
     function instanceTemplate(topicSubscriber: TopicSubscriber) {
-      return topicSubscriber.subscriber?.instance || "*"
+      return topicSubscriber.subscriber?.instance || "*";
     }
 
     function commandTemplate(topicSubscriber: TopicSubscriber) {
-      return topicSubscriber.subscriber?.command || "*"
+      return topicSubscriber.subscriber?.command || "*";
     }
 
     function consumerCountTemplate(topicSubscriber: TopicSubscriber) {
