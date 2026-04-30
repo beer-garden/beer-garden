@@ -84,3 +84,37 @@ export const GetSeverity = (
       return "danger";
   }
 };
+
+export const ThemeOptions = () => [
+  "amber",
+  "blue",
+  "cyan",
+  "green",
+  "indigo",
+  "pink",
+  "purple",
+];
+
+export const ChangeTheme = (color?: string, dark?: boolean) => {
+  if (color === undefined) {
+    color = localStorage.getItem("theme_color") || "blue";
+  } else {
+    localStorage.setItem("theme_color", color);
+  }
+
+  if (!ThemeOptions().includes(color)) {
+    color = "blue";
+    localStorage.setItem("theme_color", color);
+  }
+
+  if (dark === undefined) {
+    dark = localStorage.getItem("theme_dark") === "true";
+  } else {
+    localStorage.setItem("theme_dark", dark.toString());
+  }
+
+  const themeLink = document.getElementById("theme-link");
+  if (themeLink) {
+    themeLink.href = `/themes/lara-${dark ? "dark" : "light"}-${color}/theme.css`;
+  }
+};

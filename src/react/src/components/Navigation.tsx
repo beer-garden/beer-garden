@@ -1,7 +1,9 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Avatar } from "primereact/avatar";
 import { Button } from "primereact/button";
 import { Menubar } from "primereact/menubar";
-import { RefObject, useEffect, useState } from "react";
+import { OverlayPanel } from "primereact/overlaypanel";
+import { RefObject, useEffect, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
 
 import CurrentRequestsTemplate from "../components/CurrentRequestsTemplate";
@@ -14,6 +16,7 @@ import {
   GenerateTourProps,
 } from "../services/tour_service";
 import { GetCurrentUser } from "../services/user_service";
+import UserOverlay from "./UserOverlay";
 
 function NavigationMenu({
   listeners,
@@ -39,6 +42,21 @@ function NavigationMenu({
   const [authEnabled, setAuthEnabled] = useState<boolean | undefined>(
     config?.auth_enabled,
   );
+
+  const op = useRef<OverlayPanel>(null);
+
+  const onLogout = () => {
+    ClearToken();
+    ClearRefresh()
+      .finally(() => {
+        updateUserName(undefined);
+      })
+      .catch((error) => {
+        console.error("Error clearing Refresh Token:", error);
+      });
+
+    op.current?.hide();
+  };
 
   const tourUuid = "navigation_tour";
   const tourPrefix = "navigation";
@@ -298,29 +316,6 @@ function NavigationMenu({
               />
             </div>
           )}
-          {username !== undefined && (
-            <div>
-              <span className="font-bold mr-2">Welcome {username}!</span>
-
-              <Button
-                rounded
-                className="mr-2"
-                onClick={() => {
-                  ClearToken();
-                  ClearRefresh()
-                    .finally(() => {
-                      updateUserName(undefined);
-                    })
-                    .catch((error) => {
-                      console.error("Error clearing Refresh Token:", error);
-                    });
-                }}
-                data-testid="user-logout"
-              >
-                Logout
-              </Button>
-            </div>
-          )}
         </div>
       )}
       <Button
@@ -335,6 +330,20 @@ function NavigationMenu({
       </Button>
 
       <CurrentRequestsTemplate listeners={listeners} />
+      <Button onClick={(e) => op.current?.toggle(e)} text>
+        {username !== undefined ? (
+          <Avatar
+            size="large"
+            label={username.charAt(0).toUpperCase()}
+            style={{ width: "32px", height: "32px" }}
+          />
+        ) : (
+          <FontAwesomeIcon icon="user" />
+        )}
+      </Button>
+      <OverlayPanel ref={op} style={{ width: "400px" }}>
+        <UserOverlay username={username} onLogout={onLogout} />
+      </OverlayPanel>
     </div>
   );
 
