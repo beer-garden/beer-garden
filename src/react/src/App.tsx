@@ -19,6 +19,7 @@ import RequestIndex from "./layouts/RequestIndex";
 import RequestView from "./layouts/RequestView";
 import RoleIndex from "./layouts/RoleIndex";
 import Swagger from "./layouts/Swagger";
+import UserIndex from "./layouts/UserIndex";
 import Workspace from "./layouts/Workspace";
 import { Garden, Instance, System } from "./models/brewtils-types";
 import { Config, Listener, RequestItem, TourStepProps } from "./models/models";
@@ -571,6 +572,12 @@ function App() {
                   path="/roles"
                   element={
                     <RoleIndex config={config} tourStepsRef={tourStepsRef} />
+                  }
+                />
+                <Route
+                  path="/users"
+                  element={
+                    <UserIndex config={config} tourStepsRef={tourStepsRef} />
                   }
                 />
                 <Route path="/swagger" element={<Swagger />} />
