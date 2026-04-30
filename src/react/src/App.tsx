@@ -4,11 +4,14 @@ import "primeflex/primeflex.css";
 import "./App.css";
 
 import { PrimeReactProvider } from "primereact/api";
+import { Dialog } from "primereact/dialog";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ACTIONS, type EventData, Joyride, STATUS } from "react-joyride";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { v4 as uuidv4 } from "uuid";
 
 import NavigationMenu from "./components/Navigation";
+import RequestItemCard from "./components/RequestItemCard";
 import AboutIndex from "./layouts/AboutIndex";
 import GardenDashboard from "./layouts/Dashboard";
 import JobIndex from "./layouts/JobIndex";
@@ -19,7 +22,7 @@ import Swagger from "./layouts/Swagger";
 import UserIndex from "./layouts/UserIndex";
 import Workspace from "./layouts/Workspace";
 import { Garden, Instance, System } from "./models/brewtils-types";
-import { Config, Listener, TourStepProps } from "./models/models";
+import { Config, Listener, RequestItem, TourStepProps } from "./models/models";
 import { GetConfig } from "./services/config_service";
 import { GetRootGarden } from "./services/garden_service";
 import { preemptiveRefresh } from "./services/token_service";
@@ -32,6 +35,18 @@ function App() {
   const [config, setConfig] = useState<Config>({});
 
   const [reloadUI, setReloadUI] = useState(0);
+  const [requestItem, setRequestItem] = useState<RequestItem | undefined>(
+    undefined,
+  );
+
+  const addRequestItem = (itemParams?: Partial<RequestItem>) => {
+    const newItem: RequestItem = {
+      itemId: uuidv4(),
+      type: "REQUEST",
+      ...itemParams,
+    };
+    setRequestItem(newItem);
+  };
 
   const tourStepsRef = useRef<Array<TourStepProps>>([]);
 
@@ -415,10 +430,41 @@ function App() {
               listeners={listeners.current}
               config={config}
               runReloadUI={runReloadUI}
+              addRequestItem={addRequestItem}
               toggleRunTour={toggleRunTour}
               tourStepsRef={tourStepsRef}
             />
-            <div className="flex-grow-1" key={reloadUI}>
+            {requestItem && (
+              <Dialog
+                visible={requestItem !== undefined}
+                style={{ width: "70%", overflowY: "auto" }}
+                modal
+                onHide={() => {
+                  setRequestItem(undefined);
+                }}
+                header={
+                  requestItem.type === "REQUEST"
+                    ? "Create Request"
+                    : requestItem.type === "VIEW_REQUEST"
+                      ? `View Request: ${requestItem?.requestId}`
+                      : `View Scheduled Job: ${requestItem?.jobId}`
+                }
+              >
+                <>
+                  <RequestItemCard
+                    removeItem={() => {
+                      setRequestItem(undefined);
+                    }}
+                    updateRequestItem={setRequestItem}
+                    requestItem={requestItem}
+                    listeners={listeners}
+                    addItem={addRequestItem}
+                    isDialog={true}
+                  />
+                </>
+              </Dialog>
+            )}
+            <div className="flex-grow-1">
               <Routes>
                 <Route
                   path="/dashboard"
@@ -438,6 +484,7 @@ function App() {
                     <RequestView
                       listeners={listeners.current}
                       config={config}
+                      addRequestItem={addRequestItem}
                     />
                   }
                 />
@@ -447,6 +494,7 @@ function App() {
                     <RequestIndex
                       listeners={listeners.current}
                       tourStepsRef={tourStepsRef}
+                      addRequestItem={addRequestItem}
                     />
                   }
                 />
@@ -505,6 +553,7 @@ function App() {
                     <JobIndex
                       listeners={listeners.current}
                       tourStepsRef={tourStepsRef}
+                      addRequestItem={addRequestItem}
                     />
                   }
                 />
