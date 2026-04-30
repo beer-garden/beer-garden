@@ -22,7 +22,9 @@ function RequestItemCard({
   addItem: (itemParams?: Partial<RequestItem>) => void;
   isDialog: boolean;
 }) {
-  const [useWizard] = useState<boolean>(true);
+  const [useWizard] = useState<boolean>(
+    localStorage.getItem("user_advanced") === "true" ? false : true,
+  );
 
   return (
     <>
