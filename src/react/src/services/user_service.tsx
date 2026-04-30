@@ -1,7 +1,8 @@
 import { jwtDecode, JwtPayload } from "jwt-decode";
 
-import { Role } from "../models/brewtils-types";
-import { GetToken } from "./token_service";
+import { AliasUserMap, Role, User } from "../models/brewtils-types";
+import { GetAuthHeaders, GetToken } from "./token_service";
+import { GetBaseURL } from "./util_service";
 
 interface CustomJwtPayload extends JwtPayload {
   username?: string;
@@ -37,4 +38,163 @@ export const GetCurrentRoles = (): Array<Role> | undefined => {
     }
   }
   return undefined;
+};
+
+export const GetUsers = async (): Promise<Array<User>> => {
+  const headers = GetAuthHeaders();
+  headers.append("Content-Type", "application/json");
+  const fetch_url = `${GetBaseURL()}/api/v1/users/`;
+  const response = await fetch(fetch_url, {
+    headers: headers,
+    method: "GET",
+  });
+  if (!response.ok) {
+    // Handle non-OK responses (e.g., 404, 500)
+    throw new Error(`HTTP error: Status ${response.status}`);
+  }
+  const data = (await response.json()) as User[];
+  return data;
+};
+
+export const DeleteUser = async (username: string): Promise<void> => {
+  const headers = GetAuthHeaders();
+  headers.append("Content-Type", "application/json");
+  const fetch_url = `${GetBaseURL()}/api/v1/users/${username}`;
+  const response = await fetch(fetch_url, {
+    headers: headers,
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    // Handle non-OK responses (e.g., 404, 500)
+    throw new Error(`HTTP error: Status ${response.status}`);
+  }
+};
+
+export const AdminUpdatePassword = async (
+  username: string,
+  newPassword: string,
+): Promise<void> => {
+  const headers = GetAuthHeaders();
+  headers.append("Content-Type", "application/json");
+  const fetch_url = `${GetBaseURL()}/api/v1/users/${username}`;
+  const response = await fetch(fetch_url, {
+    headers: headers,
+    method: "PATCH",
+    body: JSON.stringify({
+      operation: "update_user_password",
+      path: "",
+      value: { password: newPassword },
+    }),
+  });
+  if (!response.ok) {
+    // Handle non-OK responses (e.g., 404, 500)
+    throw new Error(`HTTP error: Status ${response.status}`);
+  }
+};
+
+export const UserUpdatePassword = async (
+  newPassword: string,
+  currentPassword: string,
+): Promise<void> => {
+  const headers = GetAuthHeaders();
+  headers.append("Content-Type", "application/json");
+  const fetch_url = `${GetBaseURL()}/api/v1/password/change/`;
+  const response = await fetch(fetch_url, {
+    headers: headers,
+    method: "POST",
+    body: JSON.stringify({
+      current_password: currentPassword,
+      new_password: newPassword,
+    }),
+  });
+  if (!response.ok) {
+    // Handle non-OK responses (e.g., 404, 500)
+    throw new Error(`HTTP error: Status ${response.status}`);
+  }
+};
+
+export const UpdateUserRoles = async (
+  username: string,
+  roles: Array<string>,
+): Promise<User> => {
+  const headers = GetAuthHeaders();
+  headers.append("Content-Type", "application/json");
+  const fetch_url = `${GetBaseURL()}/api/v1/users/${username}`;
+  const response = await fetch(fetch_url, {
+    headers: headers,
+    method: "PATCH",
+    body: JSON.stringify({
+      operation: "update_roles",
+      path: "",
+      value: { roles: roles },
+    }),
+  });
+  if (!response.ok) {
+    // Handle non-OK responses (e.g., 404, 500)
+    throw new Error(`HTTP error: Status ${response.status}`);
+  }
+  const data = (await response.json()) as User;
+  return data;
+};
+
+export const UpdateUserAliasMapping = async (
+  username: string,
+  aliasMapping: Array<AliasUserMap>,
+): Promise<User> => {
+  const headers = GetAuthHeaders();
+  headers.append("Content-Type", "application/json");
+  const fetch_url = `${GetBaseURL()}/api/v1/users/${username}`;
+  const response = await fetch(fetch_url, {
+    headers: headers,
+    method: "PATCH",
+    body: JSON.stringify({
+      operation: "update_user_mappings",
+      path: "",
+      value: { user_alias_mapping: aliasMapping },
+    }),
+  });
+  if (!response.ok) {
+    // Handle non-OK responses (e.g., 404, 500)
+    throw new Error(`HTTP error: Status ${response.status}`);
+  }
+  const data = (await response.json()) as User;
+  return data;
+};
+
+export const RescanUsers = async (): Promise<void> => {
+  const headers = GetAuthHeaders();
+  headers.append("Content-Type", "application/json");
+  const fetch_url = `${GetBaseURL()}/api/v1/users/`;
+  const response = await fetch(fetch_url, {
+    headers: headers,
+    method: "PATCH",
+    body: JSON.stringify({
+      operation: "rescan",
+    }),
+  });
+  if (!response.ok) {
+    // Handle non-OK responses (e.g., 404, 500)
+    throw new Error(`HTTP error: Status ${response.status}`);
+  }
+};
+
+export const CreateUser = async (
+  username: string,
+  password: string,
+): Promise<void> => {
+  const headers = GetAuthHeaders();
+  headers.append("Content-Type", "application/json");
+  const fetch_url = `${GetBaseURL()}/api/v1/users/`;
+  const response = await fetch(fetch_url, {
+    headers: headers,
+    method: "POST",
+    body: JSON.stringify({
+      username: username,
+      password: password,
+    }),
+  });
+  if (!response.ok) {
+    // Handle non-OK responses (e.g., 404, 500)
+    throw new Error(`HTTP error: Status ${response.status}`);
+  }
 };

@@ -14,9 +14,10 @@ import {
   useRef,
   useState,
 } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import { Request } from "../models/brewtils-types";
+import { RequestItem } from "../models/models";
 import { TourStepProps } from "../models/models";
 import { GetRequestList } from "../services/request_service";
 import {
@@ -28,9 +29,11 @@ import {
 function RequestIndex({
   listeners,
   tourStepsRef,
+  addRequestItem,
 }: {
   listeners: Record<string, any>;
   tourStepsRef: RefObject<Array<TourStepProps>>;
+  addRequestItem: (itemParams?: Partial<RequestItem>) => void;
 }) {
   const [requests, setRequests] = useState<Array<Request>>([]);
   const altRequests = useRef<Array<Request>>([]);
@@ -54,8 +57,6 @@ function RequestIndex({
     comment: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
   });
 
-  const navigate = useNavigate();
-
   const setDisplayRequests = (requests: Array<Request>) => {
     setRequests(requests);
     altRequests.current = requests;
@@ -64,22 +65,22 @@ function RequestIndex({
   const tourPrefix = "request-index";
   const tourUUID = "main-table";
 
-  const RefreshTableTourStep: TourStepProps = {
-    prefix: tourPrefix,
-    uuid: tourUUID,
-    label: "Refresh Table",
-    content:
-      "Clicking this button will refresh the table with the latest data.",
-    layer: "LAYOUT",
-    pos: 0,
-  };
-
   const AutoRefreshTourStep: TourStepProps = {
     prefix: tourPrefix,
     uuid: tourUUID,
     label: "Auto Refresh",
     content:
       "Toggling this option will automatically refresh the table when new updates are available.",
+    layer: "LAYOUT",
+    pos: 0,
+  };
+
+  const RefreshTableTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUUID,
+    label: "Refresh Table",
+    content:
+      "Clicking this button will refresh the table with the latest data.",
     layer: "LAYOUT",
     pos: 1,
   };
@@ -93,11 +94,11 @@ function RequestIndex({
     pos: 2,
   };
 
-  const OpenRequestWorkspaceTourStep: TourStepProps = {
+  const ViewRequestTourStep: TourStepProps = {
     prefix: tourPrefix,
     uuid: tourUUID,
-    label: `Push to Workspace`,
-    content: `Open this request in the Workspace to interact with it.`,
+    label: `View Request`,
+    content: `View Request in popup modal.`,
     layer: "LAYOUT",
     pos: 3,
   };
@@ -306,13 +307,20 @@ function RequestIndex({
     </div>
   );
 
-  const PushToWorkspace = (request: Request) => {
+  const PeekRequestView = (request: Request) => {
     if (request.id) {
-      void navigate(`/workspace/request/${request.id}`);
+      addRequestItem({ requestId: request.id, type: "VIEW_REQUEST" });
     }
   };
 
   const commandNameTemplate = (request: Request) => {
+    if (request.command_display_name) {
+      return <span>{request.command_display_name}</span>;
+    }
+    return <span>{request.command}</span>;
+  };
+
+  const commandActionTemplate = (request: Request) => {
     return (
       <div>
         <Link to={`/request/${request.id}`}>
@@ -324,23 +332,20 @@ function RequestIndex({
             className="mr-2"
             {...GenerateTourProps(OpenRequestTourStep)}
           >
-            <FontAwesomeIcon
-              icon="arrow-up-right-from-square"
-              className="mx-2"
-            />
+            <FontAwesomeIcon icon="arrow-up-right-from-square" />
           </Button>
         </Link>
         <Button
           rounded
           raised
           link
-          onClick={() => PushToWorkspace(request)}
-          tooltip={"Push to Workspace " + request.command_display_name}
-          {...GenerateTourProps(OpenRequestWorkspaceTourStep)}
+          onClick={() => PeekRequestView(request)}
+          tooltip={"View " + request.command_display_name}
+          className="mr-2"
+          {...GenerateTourProps(ViewRequestTourStep)}
         >
-          <FontAwesomeIcon icon="arrow-right-from-bracket" />{" "}
+          <FontAwesomeIcon icon="eye" />
         </Button>
-        {request.command_display_name}
       </div>
     );
   };
@@ -417,7 +422,7 @@ function RequestIndex({
     AddTourStep(tourStepsRef, RefreshTableTourStep);
     if (requests && requests.length > 0) {
       AddTourStep(tourStepsRef, OpenRequestTourStep);
-      AddTourStep(tourStepsRef, OpenRequestWorkspaceTourStep);
+      AddTourStep(tourStepsRef, ViewRequestTourStep);
     }
 
     return () => {
@@ -441,6 +446,7 @@ function RequestIndex({
         onFilter={(e) => setFilters(e.filters as typeof filters)}
         rowsPerPageOptions={[5, 10, 20, 50]}
       >
+        <Column header="Actions" body={commandActionTemplate} />
         <Column
           field="command_display_name"
           filter

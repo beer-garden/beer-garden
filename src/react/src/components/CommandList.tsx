@@ -17,7 +17,7 @@ function CommandList({
   selectedSystem?: System;
   commandListButtonClick: any;
   instances: Array<Record<string, any>>;
-  selectedInstance: Instance;
+  selectedInstance: Instance | undefined;
   setSelectedInstance: any;
 }) {
   const [commands, setCommands] = useState<Command[]>([]);

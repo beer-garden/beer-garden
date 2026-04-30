@@ -585,6 +585,7 @@ function CronForm({
 function SchedulerForm({ scheduledJob, setScheduledJob }: SchedulerFormProps) {
   const jobOptions = ["CRON", "Interval", "Date", "File"];
   let defaultJobOption = "CRON";
+  const defaultTimeZone = "UTC";
 
   if (scheduledJob?.trigger_type === "interval") {
     defaultJobOption = "Interval";
@@ -598,25 +599,33 @@ function SchedulerForm({ scheduledJob, setScheduledJob }: SchedulerFormProps) {
   const [cronTrigger, setCronTrigger] = useState(
     scheduledJob?.trigger_type === "cron"
       ? (scheduledJob?.trigger as CronTrigger)
-      : {},
+      : { timezone: defaultTimeZone },
   );
   const [intervalTrigger, setIntervalTrigger] = useState(
     scheduledJob?.trigger_type === "interval"
       ? (scheduledJob?.trigger as IntervalTrigger)
-      : {},
+      : { hours: 1, timezone: defaultTimeZone },
   );
   const [dateTrigger, setDateTrigger] = useState(
     scheduledJob?.trigger_type === "date"
       ? (scheduledJob?.trigger as DateTrigger)
-      : {},
+      : { timezone: defaultTimeZone },
   );
   const [fileTrigger, setFileTrigger] = useState(
     scheduledJob?.trigger_type === "file"
       ? (scheduledJob?.trigger as FileTrigger)
-      : {},
+      : { pattern: ".*" },
   );
 
   useEffect(() => {
+    if (scheduledJob === undefined) {
+      setScheduledJob({
+        max_instances: 3,
+        misfire_grace_time: 5,
+        coalesce: true,
+      });
+      return;
+    }
     if (jobState === "Date") {
       if (!CompareObjects(scheduledJob?.trigger, dateTrigger)) {
         setScheduledJob({

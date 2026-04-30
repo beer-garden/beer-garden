@@ -2,14 +2,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
-import { Dialog } from "primereact/dialog";
 import { FileUpload } from "primereact/fileupload";
 import { Toast } from "primereact/toast";
 import { RefObject, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
-import SchedulerViewCard from "../components/SchedulerViewCard";
 import { Job } from "../models/brewtils-types";
+import { RequestItem } from "../models/models";
 import { TourStepProps } from "../models/models";
 import {
   DeleteJob,
@@ -29,13 +27,13 @@ import {
 function JobIndex({
   listeners,
   tourStepsRef,
+  addRequestItem,
 }: {
   listeners: Record<string, any>;
   tourStepsRef: RefObject<Array<TourStepProps>>;
+  addRequestItem: (itemParams?: Partial<RequestItem>) => void;
 }) {
   const [jobs, setJobs] = useState<Array<Job>>([]);
-  const [selectedJob, setSelectedJob] = useState<Job | undefined>(undefined);
-  const navigate = useNavigate();
   const tourUuid = "job_index_tour";
   const tourPrefix = "job_index";
 
@@ -185,7 +183,7 @@ function JobIndex({
   };
 
   const editJob = (jobId: string) => {
-    void navigate(`/job/${jobId}`);
+    addRequestItem({ jobId: jobId, type: "REQUEST" });
   };
 
   const actionTemplate = (job: Job) => {
@@ -212,7 +210,9 @@ function JobIndex({
           rounded
           raised
           link
-          onClick={() => setSelectedJob(job)}
+          onClick={() =>
+            addRequestItem({ jobId: job.id, type: "VIEW_SCHEDULED_JOB" })
+          }
           title={"View Job " + job.name}
           className="mr-2"
           {...GenerateTourProps(viewJobTourStep)}
@@ -308,7 +308,7 @@ function JobIndex({
   };
 
   const createJob = () => {
-    void navigate(`/create/job`);
+    addRequestItem({ type: "REQUEST", showSchedule: true });
   };
 
   const customJobImporter = (event: any) => {
@@ -410,47 +410,6 @@ function JobIndex({
 
   return (
     <div>
-      <Dialog
-        visible={selectedJob !== undefined}
-        style={{ width: "50vw" }}
-        modal
-        onHide={() => {
-          if (!selectedJob) return;
-          setSelectedJob(undefined);
-        }}
-        content={() => (
-          <div>
-            {selectedJob && selectedJob.id && (
-              <SchedulerViewCard
-                jobId={selectedJob.id}
-                listeners={listeners}
-                removeItem={() => {
-                  if (!selectedJob) return;
-                  setSelectedJob(undefined);
-                }}
-                editJob={() => {
-                  if (selectedJob && selectedJob.id) {
-                    editJob(selectedJob.id);
-                  }
-                }}
-                deleteJob={() => {
-                  if (selectedJob && selectedJob.id) {
-                    DeleteJob(selectedJob)
-                      .then(() => {
-                        if (!selectedJob) return;
-                        setSelectedJob(undefined);
-                      })
-                      .catch((error) => {
-                        console.error("Error deleting job:", error);
-                      });
-                  }
-                }}
-              />
-            )}
-          </div>
-        )}
-      />
-
       <DataTable
         value={jobs}
         header={header}
