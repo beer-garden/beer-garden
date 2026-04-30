@@ -764,7 +764,7 @@ def process_request(
     wait_event: Union[Future, threading.Event] = None,
     is_admin: bool = False,
     priority: int = 0,
-    choice_validation_enabled: bool = True,
+    choice_validation_enabled: bool = None,
 ) -> Request:
     """Validates and publishes a Request.
 
