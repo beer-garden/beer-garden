@@ -27,6 +27,7 @@ from brewtils import EasyClient
 from brewtils.models import Connection as BrewtilsConnection
 from brewtils.models import Events, Garden, Operation, System
 from mongoengine import DoesNotExist
+from packaging.version import InvalidVersion, parse
 
 # from packaging.version import parse
 from stomp.exception import ConnectFailedException
@@ -861,6 +862,19 @@ def _pre_forward(operation: Operation) -> Operation:
             operation.model.command_type = "INFO"
 
         beer_garden.files.forward_file(operation)
+
+        try:
+            # Removed non legacy support values
+            if (
+                operation.model.target_garden not in gardens
+                or gardens[operation.model.target_garden].version is None
+                or gardens[operation.model.target_garden].version.upper() == "UNKNOWN"
+                or parse(gardens[operation.model.target_garden].version)
+                < parse("3.33.1")
+            ):
+                operation.kwargs.pop("choice_validation_enabled", None)
+        except InvalidVersion:
+            operation.kwargs.pop("choice_validation_enabled", None)
 
         # Clear parent before forwarding so the child doesn't freak out about an
         # unknown request
