@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+# TBD
+TBD
+
+- Fixed issue where RPM install would override select configuration values. Going forward,
+  any CLI arguments provided to `migrate_config` will be treated as default values instead
+  of override values.
+
 # 3.33.1
 4/27/2026
 
