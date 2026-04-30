@@ -1,5 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { BreadCrumb } from "primereact/breadcrumb";
+import { Button } from "primereact/button";
+import { Dropdown } from "primereact/dropdown";
 import { MenuItem } from "primereact/menuitem";
 import { Message } from "primereact/message";
 import { Skeleton } from "primereact/skeleton";
@@ -14,11 +16,12 @@ import HasAccess from "../components/HasAccess";
 import RequestOutput from "../components/RequestOutput";
 import RequestTreeChart from "../components/RequestTreeChart";
 import { Request, System } from "../models/brewtils-types";
-import { Config, RequestItem } from "../models/models";
+import { Config, RequestCommand, RequestItem } from "../models/models";
 import {
   CancelRequest,
   DeleteRequest,
   GetRequest,
+  GetRequestProjections,
 } from "../services/request_service";
 import { GetSystemList } from "../services/system_service";
 import { GetBaseURL } from "../services/util_service";
@@ -62,9 +65,17 @@ const handleDownload = (request: Request) => {
 
 function RequestOptions({
   request,
+  requestProjections,
+  requestProjectionSelected,
+  setRequestProjectionSelected,
+  requestProjectionSelectedRef,
   addRequestItem,
 }: {
   request: Request;
+  requestProjections?: RequestCommand[];
+  requestProjectionSelected?: RequestCommand;
+  setRequestProjectionSelected: (value: RequestCommand | undefined) => void;
+  requestProjectionSelectedRef: React.RefObject<RequestCommand | undefined>;
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
 }) {
   const navigate = useNavigate();
@@ -111,16 +122,58 @@ function RequestOptions({
     addRequestItem({ requestId: request.id, type: "REQUEST" });
   };
 
+  const commandTemplate = (requestCommand: RequestCommand) => {
+    return (
+      <span>
+        {requestCommand?.namespace === request.namespace
+          ? null
+          : `${requestCommand?.namespace} / `}{" "}
+        {requestCommand?.systemName} / {requestCommand?.version} /{" "}
+        {requestCommand?.instance} / {requestCommand?.command}
+      </span>
+    );
+  };
+
   return (
-    <div className="card flex justify-content-end">
-      <SplitButton
-        label="Pour Again"
-        icon={<FontAwesomeIcon icon="plus" />}
-        model={items}
-        className="p-button-secondary"
-        onClick={() => pourAgain(request)}
-        severity="success"
-      />
+    <div className="card justify-content-end">
+      <div className="flex flex-end">
+        <SplitButton
+          label="Pour Again"
+          icon={<FontAwesomeIcon icon="plus" />}
+          model={items}
+          className="p-button-secondary"
+          onClick={() => pourAgain(request)}
+          severity="success"
+          style={{ marginLeft: "auto" }}
+        />
+      </div>
+      {requestProjections && requestProjections.length > 0 && (
+        <div className="card">
+          <h5>Run Next</h5>
+          <Dropdown
+            value={requestProjectionSelected}
+            options={requestProjections}
+            valueTemplate={commandTemplate}
+            itemTemplate={commandTemplate}
+            onChange={(e) => {
+              requestProjectionSelectedRef.current = e.value;
+              setRequestProjectionSelected(e.value);
+            }}
+            placeholder="Select a command to run next"
+          />
+          <Button
+            label="Run"
+            onClick={() => {
+              if (requestProjectionSelectedRef.current) {
+                addRequestItem({
+                  type: "REQUEST",
+                  requestCommandInput: requestProjectionSelectedRef.current,
+                });
+              }
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -188,6 +241,15 @@ function RequestView({
   const [showCommandForm, setShowCommandForm] = useState(false);
 
   const rootRequestId = useRef<string | null>(null);
+  const [requestProjections, setRequestProjections] = useState<
+    RequestCommand[] | undefined
+  >(undefined);
+  const [requestProjectionSelected, setRequestProjectionSelected] = useState<
+    RequestCommand | undefined
+  >(undefined);
+  const requestProjectionSelectedRef = useRef<RequestCommand | undefined>(
+    undefined,
+  );
 
   const MonitorRequestId = useCallback(
     (message: any) => {
@@ -233,6 +295,15 @@ function RequestView({
           });
       }
     } else {
+      GetRequestProjections(request)
+        .then((projections) => {
+          setRequestProjections(projections);
+          setRequestProjectionSelected(projections[0]);
+          requestProjectionSelectedRef.current = projections[0];
+        })
+        .catch((error) => {
+          console.error("Error fetching request projections:", error);
+        });
       if (
         request.status &&
         ["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(request.status)
@@ -343,6 +414,10 @@ function RequestView({
             >
               <RequestOptions
                 request={request}
+                requestProjections={requestProjections}
+                requestProjectionSelected={requestProjectionSelected}
+                setRequestProjectionSelected={setRequestProjectionSelected}
+                requestProjectionSelectedRef={requestProjectionSelectedRef}
                 addRequestItem={addRequestItem}
               />
             </HasAccess>
@@ -355,19 +430,28 @@ function RequestView({
                   setRequest: setRequest,
                   resetForm: false,
                   setResetForm: () => {},
+                  setIsFormValid: () => {},
                 }}
               />
             )}
             {showCommandForm && !command && <UnformattedInput {...request} />}
           </StepperPanel>
           <StepperPanel header="Request Output">
-            {request && (
-              <RequestOptions
-                request={request}
-                addRequestItem={addRequestItem}
-              />
-            )}
-            {request && <RequestOutput {...request} />}
+            <div className="flex">
+              {request && <RequestOutput {...request} />}
+              {request && (
+                <div style={{ marginLeft: "auto" }}>
+                  <RequestOptions
+                    request={request}
+                    addRequestItem={addRequestItem}
+                    requestProjections={requestProjections}
+                    requestProjectionSelected={requestProjectionSelected}
+                    setRequestProjectionSelected={setRequestProjectionSelected}
+                    requestProjectionSelectedRef={requestProjectionSelectedRef}
+                  />
+                </div>
+              )}
+            </div>
           </StepperPanel>
         </Stepper>
       )}
