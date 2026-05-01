@@ -12,7 +12,7 @@ import { Messages } from "primereact/messages";
 import { Toast } from "primereact/toast";
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 
-import SubscriberCard from "../components/SubscriberCard";
+import SubscriberItem from "../components/SubscriberItem";
 import { Subscriber, Topic } from "../models/brewtils-types";
 import {
   AddSubscriber,
@@ -693,10 +693,21 @@ function TopicIndex() {
             });
           });
       } else {
-        // Create new role
         CreateTopic(topicObj)
           .then((createdTopic: Topic) => {
-            setTopics([...topics, createdTopic]);
+            const subscribers = createdTopic.subscribers;
+            const newTopicSubscribers = subscribers?.map(
+              (subscriber: Subscriber) => {
+                return {
+                  topic: createdTopic,
+                  subscriber: subscriber,
+                } as TopicSubscriber;
+              },
+            );
+            setTopicSubscribers([
+              ...topicSubscribers,
+              ...(newTopicSubscribers || []),
+            ]);
             topicId.current = undefined;
             setDialogVisible(false);
             toast.current?.show({
@@ -771,7 +782,7 @@ function TopicIndex() {
           />
         </div>
         <Divider />
-        <SubscriberCard
+        <SubscriberItem
           subscriberList={subscriberList}
           setSubscriberList={setSubscriberList}
           isEdit={isEdit.current}

@@ -7,17 +7,17 @@ import React, { useEffect, useRef, useState } from "react";
 import { Subscriber } from "../models/brewtils-types";
 import { GetSystemList } from "../services/system_service";
 
-interface SubscriberCardProps {
+interface SubscriberItemProps {
   subscriberList: Array<Subscriber>;
   setSubscriberList: React.Dispatch<React.SetStateAction<Array<Subscriber>>>;
   isEdit: boolean;
 }
 
-function SubscriberCard({
+function SubscriberItem({
   subscriberList,
   setSubscriberList,
   isEdit,
-}: SubscriberCardProps) {
+}: SubscriberItemProps) {
   const [filteredGardenItems, setFilteredGardenItems] = useState(
     [] as Array<string>,
   );
@@ -329,4 +329,4 @@ function SubscriberCard({
   );
 }
 
-export default SubscriberCard;
+export default SubscriberItem;
