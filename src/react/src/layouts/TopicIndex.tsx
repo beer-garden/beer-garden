@@ -104,8 +104,8 @@ function TopicIndex() {
   });
   const [sortField, setSortField] = useState<string | undefined>(undefined);
   const [sortOrder, setSortOrder] = useState<SortOrder>(undefined);
-  const [hideGenerated, setHideGenerated] = useState<boolean>(false);
-  const generatedRef = useRef<boolean>(false);
+  const [hideGenerated, setHideGenerated] = useState<boolean>(true);
+  const generatedRef = useRef<boolean>(true);
 
   const [dialogVisible, setDialogVisible] = useState(false);
   const isEdit = useRef<boolean>(false);
@@ -141,8 +141,13 @@ function TopicIndex() {
         setLoading(false);
       })
       .catch((error) => {
-        console.error("Error fetching topics:", error);
         setLoading(false);
+        toast.current?.show({
+          severity: "error",
+          summary: "Error",
+          detail: `Error fetching topics: ${error}`,
+          life: 3000,
+        });
       });
   }, [topics]);
 
@@ -186,7 +191,12 @@ function TopicIndex() {
           });
         })
         .catch((error) => {
-          console.error("Error deleting system:", error);
+          toast.current?.show({
+            severity: "error",
+            summary: "Error",
+            detail: `Error syncing topics: ${error}`,
+            life: 3000,
+          });
         });
     }
 
@@ -261,7 +271,12 @@ function TopicIndex() {
             }
           })
           .catch((error) => {
-            console.error("Error clearing count:", error);
+            toast.current?.show({
+              severity: "error",
+              summary: "Error",
+              detail: `Error clearing count: ${error}`,
+              life: 3000,
+            });
           });
       };
       const reject = () => {};
@@ -316,7 +331,12 @@ function TopicIndex() {
           });
         })
         .catch((error) => {
-          console.error("Error removing subscriber:", error);
+          toast.current?.show({
+            severity: "error",
+            summary: "Error",
+            detail: `Error removing subscriber from topic ${topic.name}: ${error}`,
+            life: 3000,
+          });
         });
     }
 
@@ -326,7 +346,7 @@ function TopicIndex() {
           <span>{topicSubscriber.topic?.publisher_count}</span>
           {((topicSubscriber.topic !== undefined &&
             topicSubscriber.topic.publisher_count) ||
-            0) > -1 && (
+            0) > 0 && (
             <Button
               size="small"
               tooltip="Clear count"
@@ -360,7 +380,12 @@ function TopicIndex() {
             }
           })
           .catch((error) => {
-            console.error("Error deleting topic:", error);
+            toast.current?.show({
+              severity: "error",
+              summary: "Error",
+              detail: `Error deleting topic ${topic.name}: ${error}`,
+              life: 3000,
+            });
           });
       };
       const reject = () => {};
@@ -477,7 +502,7 @@ function TopicIndex() {
         );
 
       return (
-        <>
+        <div className="flex">
           <Button
             onClick={() => addSubscriber(topicSubscriber.topic!)}
             tooltip="Add Subscriber"
@@ -492,7 +517,7 @@ function TopicIndex() {
               <FontAwesomeIcon icon="trash" />
             </Button>
           )}
-        </>
+        </div>
       );
     }
 
@@ -549,9 +574,10 @@ function TopicIndex() {
             sortable
             filter
             header="Topic"
-            style={{ maxWidth: "350px", overflowWrap: "break-word" }}
+            style={{ maxWidth: "400px", overflowWrap: "break-word" }}
             showFilterMenu={false}
           />
+          <Column field="topic.name" header="" body={topicButtonTemplate} />
           <Column
             field="topic.publisher_count"
             sortable
@@ -625,11 +651,6 @@ function TopicIndex() {
             body={subscriberTypeTemplate}
             showFilterMenu={false}
           />
-          <Column
-            header=""
-            body={topicButtonTemplate}
-            style={{ width: "145px" }}
-          />
         </DataTable>
       </>
     );
@@ -664,7 +685,12 @@ function TopicIndex() {
             });
           })
           .catch((error) => {
-            console.error("Error editing the topic:", error);
+            toast.current?.show({
+              severity: "error",
+              summary: "Error",
+              detail: `Error updating topic ${topicObj.name}: ${error}`,
+              life: 3000,
+            });
           });
       } else {
         // Create new role
@@ -681,7 +707,12 @@ function TopicIndex() {
             });
           })
           .catch((error) => {
-            console.error("Error creating the topic:", error);
+            toast.current?.show({
+              severity: "error",
+              summary: "Error",
+              detail: `Error creating topic: ${error}`,
+              life: 3000,
+            });
           });
       }
     } else {
