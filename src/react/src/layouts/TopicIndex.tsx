@@ -71,7 +71,6 @@ interface TopicSubscriber {
 
 function TopicIndex() {
   const toast = useRef<Toast>(null);
-  const [topics, setTopics] = useState<Array<Topic>>([]);
   const [topicSubscribers, setTopicSubscribers] = useState<
     Array<TopicSubscriber>
   >([]);
@@ -127,8 +126,6 @@ function TopicIndex() {
 
     GetTopics({ hide_generated: generatedRef.current })
       .then((topics: Array<Topic>) => {
-        setTopics(topics);
-
         const topicSubscribers: TopicSubscriber[] = topics.flatMap(
           (topic: Topic) => {
             const subscribers = topic.subscribers || [];
@@ -149,7 +146,7 @@ function TopicIndex() {
           life: 3000,
         });
       });
-  }, [topics]);
+  }, [topicSubscribers]);
 
   useEffect(() => {
     loadTopics();
@@ -297,32 +294,17 @@ function TopicIndex() {
     function removeSubscriber(topic: Topic, subscriber: Subscriber) {
       RemoveSubscriber(topic.id!, subscriber)
         .then(() => {
-          // Remove subscriber from topic
-          const topicRemoveSubscriber = (
-            topic: Topic,
-            subscriber: Subscriber,
-          ): Topic => {
-            if (
-              topic.subscribers &&
-              topic.subscribers.some((s: Subscriber) => s === subscriber)
-            ) {
-              topic.subscribers = topic.subscribers.filter(
-                (s: Subscriber) => s !== subscriber,
-              );
-              return topic;
-            }
-            return topic;
-          };
-          // Map the updated topic to list of topics
-          const replaceTopic = (newTopic: Topic) => {
-            setTopics((prevTopics) => {
-              return prevTopics.map((topic) => {
-                return topic.id == newTopic.id ? newTopic : topic;
-              });
-            });
-          };
-          const updatedTopic = topicRemoveSubscriber(topic, subscriber);
-          replaceTopic(updatedTopic);
+          setTopicSubscribers((currentTopicSubscribers: TopicSubscriber[]) => {
+            const newTopicSubs = currentTopicSubscribers.filter(
+              (ts: TopicSubscriber) => {
+                return (
+                  ts.topic?.id !== topic.id ||
+                  (ts.topic?.id == topic.id && ts.subscriber !== subscriber)
+                );
+              },
+            );
+            return newTopicSubs;
+          });
           toast.current?.show({
             severity: "info",
             summary: "Removed Subscriber",
@@ -367,8 +349,10 @@ function TopicIndex() {
 
         DeleteTopic(topic.id)
           .then(() => {
-            setTopics((currentTopics) => {
-              return currentTopics.filter((t) => t.id !== topic.id);
+            setTopicSubscribers((currentTopicSubscribers) => {
+              return currentTopicSubscribers.filter(
+                (ts: TopicSubscriber) => ts.topic?.id !== topic.id,
+              );
             });
             if (toast && toast.current) {
               toast.current?.show({
