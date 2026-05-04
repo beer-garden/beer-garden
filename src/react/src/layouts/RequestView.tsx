@@ -403,38 +403,49 @@ function RequestView({
         >
           <StepperPanel header="Request Parameters">
             {/* Need to determine if Read Only can still download values */}
-            <HasAccess
-              config={config}
-              permission="OPERATOR"
-              hasNamespace={request.namespace}
-              hasSystemName={request.system}
-              hasInstanceName={request.instance_name}
-              hasSystemVersion={request.system_version}
-              hasCommandName={request.command}
-            >
-              <RequestOptions
-                request={request}
-                requestProjections={requestProjections}
-                requestProjectionSelected={requestProjectionSelected}
-                setRequestProjectionSelected={setRequestProjectionSelected}
-                requestProjectionSelectedRef={requestProjectionSelectedRef}
-                addRequestItem={addRequestItem}
-              />
-            </HasAccess>
-            {!showCommandForm && <Skeleton width="100%" height="10rem" />}
-            {showCommandForm && command && (
-              <CommandForm
-                {...{
-                  command: command,
-                  request: request,
-                  setRequest: setRequest,
-                  resetForm: false,
-                  setResetForm: () => {},
-                  setIsFormValid: () => {},
-                }}
-              />
-            )}
-            {showCommandForm && !command && <UnformattedInput {...request} />}
+            <div className="flex">
+              {!showCommandForm && <Skeleton width="100%" height="10rem" />}
+              {showCommandForm && command && (
+                <CommandForm
+                  {...{
+                    command: command,
+                    request: request,
+                    setRequest: setRequest,
+                    resetForm: false,
+                    setResetForm: () => {},
+                    setIsFormValid: () => {},
+                  }}
+                />
+              )}
+              {showCommandForm && !command && <UnformattedInput {...request} />}
+
+              {request && (
+                <div style={{ marginLeft: "auto" }}>
+                  <HasAccess
+                    config={config}
+                    permission="OPERATOR"
+                    hasNamespace={request.namespace}
+                    hasSystemName={request.system}
+                    hasInstanceName={request.instance_name}
+                    hasSystemVersion={request.system_version}
+                    hasCommandName={request.command}
+                  >
+                    <RequestOptions
+                      request={request}
+                      addRequestItem={addRequestItem}
+                      requestProjections={requestProjections}
+                      requestProjectionSelected={requestProjectionSelected}
+                      setRequestProjectionSelected={
+                        setRequestProjectionSelected
+                      }
+                      requestProjectionSelectedRef={
+                        requestProjectionSelectedRef
+                      }
+                    />
+                  </HasAccess>
+                </div>
+              )}
+            </div>
           </StepperPanel>
           <StepperPanel header="Request Output">
             <div className="flex">
