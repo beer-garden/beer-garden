@@ -61,8 +61,6 @@ function RequestWizard({
       (requestItem?.jobId === undefined || requestItem?.jobId === null),
   );
 
-  const [isFormValid, setIsFormValid] = useState<boolean>(false);
-
   const [showStepper, setShowStepper] = useState<boolean>(false);
 
   // Input Request

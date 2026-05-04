@@ -24,46 +24,6 @@ import {
   SyncTopics,
 } from "../services/topic_service";
 
-FilterService.register(
-  "custom_subscribers",
-  (subscribers: Subscriber[], filter: any) => {
-    if (!filter || filter.trim() === "") {
-      return true; // If filter is empty, include all topics
-    }
-
-    for (const subscriber of subscribers) {
-      if (subscriber.namespace?.toLowerCase().includes(filter.toLowerCase())) {
-        return true;
-      }
-      if (subscriber.garden?.toLowerCase().includes(filter.toLowerCase())) {
-        return true;
-      }
-      if (subscriber.system?.toLowerCase().includes(filter.toLowerCase())) {
-        return true;
-      }
-      if (subscriber.version?.toLowerCase().includes(filter.toLowerCase())) {
-        return true;
-      }
-      if (subscriber.instance?.toLowerCase().includes(filter.toLowerCase())) {
-        return true;
-      }
-      if (subscriber.command?.toLowerCase().includes(filter.toLowerCase())) {
-        return true;
-      }
-      if (subscriber.consumer_count == filter.toLowerCase()) {
-        return true;
-      }
-      if (
-        subscriber.subscriber_type?.toLowerCase().includes(filter.toLowerCase())
-      ) {
-        return true;
-      }
-    }
-
-    return false;
-  },
-);
-
 interface TopicSubscriber {
   topic?: Topic;
   subscriber?: Subscriber;
