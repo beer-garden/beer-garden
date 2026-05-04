@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { FilterMatchMode, FilterService } from "primereact/api";
+import { FilterMatchMode } from "primereact/api";
 import { Button } from "primereact/button";
 import { Checkbox } from "primereact/checkbox";
 import { Column } from "primereact/column";
@@ -366,12 +366,12 @@ function TopicIndex() {
       openTopicDialog();
     }
 
-    function namespaceTemplate(topicSubscriber: TopicSubscriber) {
-      return topicSubscriber.subscriber?.namespace || "*";
-    }
-
     function gardenTemplate(topicSubscriber: TopicSubscriber) {
       return topicSubscriber.subscriber?.garden || "*";
+    }
+
+    function namespaceTemplate(topicSubscriber: TopicSubscriber) {
+      return topicSubscriber.subscriber?.namespace || "*";
     }
 
     function systemTemplate(topicSubscriber: TopicSubscriber) {
@@ -531,19 +531,19 @@ function TopicIndex() {
             showFilterMenu={false}
           />
           <Column
-            field="subscriber.namespace"
-            sortable
-            filter
-            header="Namespace"
-            body={namespaceTemplate}
-            showFilterMenu={false}
-          />
-          <Column
             field="subscriber.garden"
             sortable
             filter
             header="Garden"
             body={gardenTemplate}
+            showFilterMenu={false}
+          />
+          <Column
+            field="subscriber.namespace"
+            sortable
+            filter
+            header="Namespace"
+            body={namespaceTemplate}
             showFilterMenu={false}
           />
           <Column

@@ -224,21 +224,6 @@ function SubscriberItem({
             header={() => header(index)}
           >
             <div className="mb-2">
-              <label className="font-bold flex" htmlFor={`namepace-${index}`}>
-                Namespace
-              </label>
-              <AutoComplete
-                dropdown
-                id={`namespace-${index}`}
-                value={subscriber.namespace}
-                suggestions={filteredNamespaceItems}
-                completeMethod={searchNamespaceItems}
-                onChange={(e) =>
-                  handleUpdateSubscriber("namespace", e.target.value, index)
-                }
-              />
-            </div>
-            <div className="mb-2">
               <label className="font-bold flex" htmlFor={`garden-${index}`}>
                 Garden
               </label>
@@ -250,6 +235,21 @@ function SubscriberItem({
                 completeMethod={searchGardenItems}
                 onChange={(e) =>
                   handleUpdateSubscriber("garden", e.target.value, index)
+                }
+              />
+            </div>
+            <div className="mb-2">
+              <label className="font-bold flex" htmlFor={`namepace-${index}`}>
+                Namespace
+              </label>
+              <AutoComplete
+                dropdown
+                id={`namespace-${index}`}
+                value={subscriber.namespace}
+                suggestions={filteredNamespaceItems}
+                completeMethod={searchNamespaceItems}
+                onChange={(e) =>
+                  handleUpdateSubscriber("namespace", e.target.value, index)
                 }
               />
             </div>
