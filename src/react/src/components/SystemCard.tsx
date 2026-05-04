@@ -13,7 +13,7 @@ import InstanceCancelDeleteDialog from "../components/InstanceCancelDeleteReques
 import InstanceManageQueueDialog from "../components/InstanceManageQueueDialog";
 import InstanceShowLogsDialog from "../components/InstanceShowLogsDialog";
 import { Instance, System } from "../models/brewtils-types";
-import { TourStepProps } from "../models/models";
+import { RequestCommand,RequestItem, TourStepProps } from "../models/models";
 import { StartInstance, StopInstance } from "../services/instance_service";
 import { DeleteSystem, ReloadSystem } from "../services/system_service";
 import {
@@ -27,6 +27,7 @@ interface SystemCardProps {
   selectedGarden?: string;
   toast?: RefObject<Toast | null>;
   tourStepsRef?: RefObject<Array<TourStepProps>>;
+  addRequestItem: (itemParams?: Partial<RequestItem>) => void;
 }
 
 function SystemCard({
@@ -34,6 +35,7 @@ function SystemCard({
   selectedGarden,
   toast,
   tourStepsRef,
+  addRequestItem,
 }: SystemCardProps) {
   const tourUuid = system.id;
   const tourPrefix = "system_summary";
@@ -331,6 +333,20 @@ function SystemCard({
     const closeCancelDeleteDialog = () => setCancelDeleteVisible(false);
 
     const instanceMenuItems = [
+      {
+        label: "Create Requests",
+        command: () => {
+          addRequestItem({
+            type: "REQUEST",
+            requestCommandInput: {
+              namespace: system.namespace,
+              systemName: system.name,
+              version: system.version,
+              instance: instance.name,
+            } as RequestCommand,
+          });
+        },
+      },
       {
         label: "Show Logs",
         command: () => setLogsVisible(true),

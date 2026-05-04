@@ -7,7 +7,7 @@ import { RefObject, useEffect, useRef, useState } from "react";
 import GardenSummary from "../components/GardenSummary";
 import SystemCard from "../components/SystemCard";
 import { Garden, Instance, System } from "../models/brewtils-types";
-import { TourStepProps } from "../models/models";
+import { RequestItem,TourStepProps } from "../models/models";
 import {
   AddTourStep,
   ClearTourSteps,
@@ -21,12 +21,14 @@ function GardenDashboard({
   gardenState,
   systemState,
   tourStepsRef,
+  addRequestItem,
 }: {
   gardenRef: RefObject<Garden | undefined>;
   systemsRef: RefObject<System[] | undefined>;
   gardenState: number;
   systemState: number;
   tourStepsRef: RefObject<Array<TourStepProps>>;
+  addRequestItem: (itemParams?: Partial<RequestItem>) => void;
 }) {
   const tourUuid = "garden_dashboard_tour";
   const tourPrefix = "garden_dashboard";
@@ -320,6 +322,7 @@ function GardenDashboard({
               toast={toast}
               tourStepsRef={tourStepsRef}
               selectedGarden={selectedGarden?.name}
+              addRequestItem={addRequestItem}
             />
           </div>
         ))}
