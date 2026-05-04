@@ -115,6 +115,6 @@ export const ChangeTheme = (color?: string, dark?: boolean) => {
 
   const themeLink = document.getElementById("theme-link");
   if (themeLink) {
-    themeLink.href = `/themes/lara-${dark ? "dark" : "light"}-${color}/theme.css`;
+    themeLink.href = `${GetBaseURL()}/themes/lara-${dark ? "dark" : "light"}-${color}/theme.css`;
   }
 };

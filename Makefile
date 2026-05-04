@@ -6,8 +6,8 @@ APP_DIR        = src/app
 UI_DIR         = src/ui
 
 VERSION          ?= 0.0.0
-PYTHON_VERSION   ?=3.7
-DIST             ?=centos7
+PYTHON_VERSION   ?=3.11
+DIST             ?=rocky9
 DATE             ?= $(shell date +%Y-%m-%dT%H)
 
 .PHONY: clean clean-build clean-test clean-pyc help test
