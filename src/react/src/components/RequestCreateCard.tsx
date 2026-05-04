@@ -19,10 +19,12 @@ function RequestCreateCard({
   requestItem,
   updateRequestItem,
   removeItem,
+  isDialog,
 }: {
   requestItem: RequestItem;
   updateRequestItem: (item: RequestItem) => void;
   removeItem: (id: string) => void;
+  isDialog: boolean;
 }) {
   // Input Request
   const [request, setRequest] = useState<Request | undefined>(
@@ -217,16 +219,19 @@ function RequestCreateCard({
   return (
     <Card
       className="justify-content-center"
+      unstyled={isDialog}
       header={
-        <div className="flex">
-          <Button
-            onClick={() => {
-              removeItem(requestItem.itemId);
-            }}
-            tooltip={`Close Request Creation for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
-          >
-            <FontAwesomeIcon icon="xmark" />
-          </Button>
+        <div className="flex mb-2">
+          {!isDialog && (
+            <Button
+              onClick={() => {
+                removeItem(requestItem.itemId);
+              }}
+              tooltip={`Close Request Creation for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
+            >
+              <FontAwesomeIcon icon="xmark" />
+            </Button>
+          )}
           <div className="ml-4 mr-2 align-self-center">Scheduled</div>
           <InputSwitch
             checked={showScheduleJob}
@@ -237,7 +242,7 @@ function RequestCreateCard({
       }
       key={requestItem.itemId}
       footer={
-        <div className="flex">
+        <div className="flex mt-2">
           <div>
             <Button
               label="Reset Form"

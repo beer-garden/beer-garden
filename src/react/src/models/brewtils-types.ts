@@ -13,7 +13,7 @@ type parameter_types =
 type output_types = "STRING" | "JSON" | "XML" | "HTML" | "JS" | "CSS";
 
 export interface AliasUserMap {
-  targetGarden?: string;
+  target_garden?: string;
   username?: string;
 }
 
@@ -455,18 +455,23 @@ export interface UpstreamRole {
   file_generated?: boolean;
 }
 
+export interface UserMetadata {
+  last_authentication?: any;
+  has_token?: boolean;
+}
+
 export interface User {
   id?: string;
   username?: string;
   password?: string;
-  roles?: any[];
-  localRoles?: any[];
-  upstreamRoles?: any[];
-  userAliasMapping?: any[];
-  isRemote?: boolean;
-  metadata?: object;
+  roles?: Role[];
+  local_roles?: Role[];
+  upstream_roles?: Role[];
+  user_alias_mapping?: AliasUserMap[];
+  is_remote?: boolean;
+  metadata?: UserMetadata;
   protected?: boolean;
-  fileGenerated?: boolean;
+  file_generated?: boolean;
 }
 
 export interface UserToken {

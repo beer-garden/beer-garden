@@ -173,7 +173,7 @@ class UserAPI(AuthorizationHandler):
                         operation_type="USER_UPDATE",
                         kwargs={
                             "username": username,
-                            "remote_user_mapping": SchemaParser.parse_alias_user_map(
+                            "user_alias_mapping": SchemaParser.parse_alias_user_map(
                                 op.value["user_alias_mapping"],
                                 from_string=False,
                                 many=True,

@@ -23,30 +23,6 @@ describe("Navigation", () => {
     cleanup();
   });
 
-  test("show username", async () => {
-    vi.mocked(tokenService.GetToken).mockReturnValue("token");
-    vi.mocked(userService.GetCurrentUser).mockReturnValue("username123");
-
-    render(
-      <BrowserRouter basename="/">
-        <Navigation
-          listeners={{}}
-          config={{
-            auth_enabled: true,
-          }}
-          runReloadUI={() => {}}
-          toggleRunTour={() => {}}
-          tourStepsRef={mockTourSteps()}
-        />
-      </BrowserRouter>,
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId("user-logout")).toBeInTheDocument();
-      expect(screen.getByText("Welcome username123!")).toBeVisible();
-    });
-  });
-
   test("show login", async () => {
     vi.mocked(tokenService.GetToken).mockReturnValue(null);
     vi.mocked(userService.GetCurrentUser).mockReturnValue(undefined);

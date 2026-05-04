@@ -35,12 +35,14 @@ function RequestViewCard({
   removeItem,
   addItem,
   listeners,
+  isDialog,
 }: {
   requestItem: RequestItem;
   updateRequestItem: (item: RequestItem) => void;
   removeItem: (id: string) => void;
   addItem: (itemParams?: Partial<RequestItem>) => void;
   listeners: Record<string, any>;
+  isDialog: boolean;
 }) {
   const requestId = useRef<string | null | undefined>(
     requestItem?.requestId ?? null,
@@ -246,17 +248,18 @@ function RequestViewCard({
   return (
     <Card
       title={CardTitle()}
-      className="mr-2 mb-2 mt-2"
-      style={{ minWidth: "49%" }}
+      unstyled={isDialog}
       header={
-        <Button
-          onClick={() => {
-            removeItem(requestItem.itemId);
-          }}
-          tooltip={`Close Request View for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
-        >
-          <FontAwesomeIcon icon="xmark" />
-        </Button>
+        !isDialog && (
+          <Button
+            onClick={() => {
+              removeItem(requestItem.itemId);
+            }}
+            tooltip={`Close Request View for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
+          >
+            <FontAwesomeIcon icon="xmark" />
+          </Button>
+        )
       }
     >
       <Toast ref={toast} />
@@ -298,25 +301,36 @@ function RequestViewCard({
             onClick={() => {
               window.open(`${GetBaseURL()}/request/${request.id}`, "_self");
             }}
-            model={[
-              {
-                label: "Run Again Now",
-                // icon: <FontAwesomeIcon icon="arrow-up-right-from-square" />,
-                command: () => {
-                  submitRequest(false);
-                },
-              },
-              {
-                label: "Pour Again",
-                // icon: <FontAwesomeIcon icon="arrow-up-from-bracket" />,
-                command: () => {
-                  addItem({
-                    requestId: request.id,
-                    type: "REQUEST",
-                  } as RequestItem);
-                },
-              },
-            ]}
+            model={
+              request &&
+              request.status &&
+              !["CREATED", "IN_PROGRESS"].includes(request.status)
+                ? [
+                    {
+                      label: "Run Again Now",
+                      command: () => {
+                        submitRequest(false);
+                      },
+                    },
+                    {
+                      label: "Pour Again",
+                      command: () => {
+                        addItem({
+                          requestId: request.id,
+                          type: "REQUEST",
+                        } as RequestItem);
+                      },
+                    },
+                  ]
+                : [
+                    {
+                      label: "Reload Request",
+                      command: () => {
+                        setRequest(null);
+                      },
+                    },
+                  ]
+            }
           />
         </div>
       )}

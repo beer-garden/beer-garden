@@ -307,7 +307,7 @@ function CommandForm({
   const buildDefaults = (mapRequest = true) => {
     const prepareDefaultValues = Array<InputParam>();
 
-    if (command !== null) {
+    if (command && command !== null) {
       for (const param of command.parameters || []) {
         const newParam = { ...param } as InputParam;
         if (
