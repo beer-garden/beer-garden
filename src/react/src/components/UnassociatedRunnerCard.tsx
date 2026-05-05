@@ -148,6 +148,7 @@ function UnassociatedRunnerCard({
           onClick={() => {
             startRunner(runner);
           }}
+          data-testid={`START_${runner.id}`}
         >
           <FontAwesomeIcon icon="play" />
         </Button>
@@ -158,6 +159,7 @@ function UnassociatedRunnerCard({
           onClick={() => {
             stopRunner(runner);
           }}
+          data-testid={`STOP_${runner.id}`}
         >
           <FontAwesomeIcon icon="stop" />
         </Button>
@@ -166,6 +168,7 @@ function UnassociatedRunnerCard({
           size="small"
           title={`Delete Runner ${runner.id}`}
           onClick={() => deleteRunner(runner)}
+          data-testid={`DELETE_${runner.id}`}
         >
           <FontAwesomeIcon icon="trash" />
         </Button>
@@ -189,6 +192,7 @@ function UnassociatedRunnerCard({
               size="small"
               title={`Start runners in ../${runnerGroup.path}`}
               onClick={() => startRunnerGroup()}
+              data-testid="START_GROUP"
             >
               <FontAwesomeIcon icon="play" />
             </Button>
@@ -197,6 +201,7 @@ function UnassociatedRunnerCard({
               size="small"
               title={`Stop runners in ../${runnerGroup.path}`}
               onClick={() => stopRunnerGroup()}
+              data-testid="STOP_GROUP"
             >
               <FontAwesomeIcon icon="stop" />
             </Button>
@@ -206,6 +211,7 @@ function UnassociatedRunnerCard({
               title={`Reload runners in ../${runnerGroup.path}`}
               onClick={() => reloadPath()}
               className="mr-2"
+              data-testid="RELOAD_GROUP"
             >
               <FontAwesomeIcon icon="refresh" />
             </Button>
@@ -214,6 +220,7 @@ function UnassociatedRunnerCard({
               size="small"
               title={`Delete runners in ../${runnerGroup.path}`}
               onClick={() => deleteRunnerGroup()}
+              data-testid="DELETE_GROUP"
             >
               <FontAwesomeIcon icon="trash" />
             </Button>
