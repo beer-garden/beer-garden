@@ -77,6 +77,15 @@ def build_rpms(version, iteration, cli_dist, cli_python, local, docker_envs):
     )
 
     subprocess.run(preview_ui_build_cmd).check_returncode()
+    
+    my_env = os.environ.copy()
+    USER = my_env.get("USER")
+    if USER is not None:
+        preview_ui_ownership_cmd = (["sudo", "chown", "-R", f"{USER}", f"{BASE_PATH}/src/react/build"])
+        subprocess.run(preview_ui_ownership_cmd).check_returncode()
+
+        preview_ui_permission_cmd = (["chmod", "744", "-R" ,f"{BASE_PATH}/src/react/build"])
+        subprocess.run(preview_ui_permission_cmd).check_returncode()
 
     for dist in build_dists:
         tag = f"{dist}-python{build_python}"
