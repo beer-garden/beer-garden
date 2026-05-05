@@ -22,6 +22,7 @@ function NavigationMenu({
   listeners,
   config,
   runReloadUI,
+  runRenderUi,
   addRequestItem,
   toggleRunTour,
   tourStepsRef,
@@ -29,6 +30,7 @@ function NavigationMenu({
   listeners: Record<string, any>;
   config: Config;
   runReloadUI: () => void;
+  runRenderUi: () => void;
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
   toggleRunTour: () => void;
   tourStepsRef: RefObject<Array<TourStepProps>>;
@@ -342,7 +344,11 @@ function NavigationMenu({
         )}
       </Button>
       <OverlayPanel ref={op} style={{ width: "400px" }}>
-        <UserOverlay username={username} onLogout={onLogout} />
+        <UserOverlay
+          username={username}
+          onLogout={onLogout}
+          runRenderUi={runRenderUi}
+        />
       </OverlayPanel>
     </div>
   );

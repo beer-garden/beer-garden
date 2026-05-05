@@ -186,7 +186,11 @@ export interface Instance {
   queueType?: string;
   queueInfo?: object;
   icon_name?: string;
-  metadata?: object;
+  metadata?: InstanceMetadata;
+}
+
+export interface InstanceMetadata {
+  runner_id?: string;
 }
 
 export interface IntervalTrigger {
@@ -379,7 +383,7 @@ export interface Runner {
   id?: string;
   name?: string;
   path?: string;
-  instanceId?: string;
+  instance_id?: string;
   stopped?: boolean;
   dead?: boolean;
   restart?: boolean;

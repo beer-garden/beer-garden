@@ -104,6 +104,10 @@ function App() {
     setReloadUI(reloadUI + 1);
   };
 
+  const runRenderUi = () => {
+    setReloadUI(reloadUI + 1);
+  };
+
   const primeValue = {
     hideOverlaysOnDocumentScrolling: true,
   };
@@ -431,6 +435,7 @@ function App() {
               listeners={listeners.current}
               config={config}
               runReloadUI={runReloadUI}
+              runRenderUi={runRenderUi}
               addRequestItem={addRequestItem}
               toggleRunTour={toggleRunTour}
               tourStepsRef={tourStepsRef}
@@ -465,7 +470,7 @@ function App() {
                 </>
               </Dialog>
             )}
-            <div className="flex-grow-1">
+            <div className="flex-grow-1" key={reloadUI}>
               <Routes>
                 <Route
                   path="/dashboard"
@@ -477,6 +482,7 @@ function App() {
                       gardenState={gardenState}
                       systemState={systemState}
                       addRequestItem={addRequestItem}
+                      listeners={listeners.current}
                     />
                   }
                 />
@@ -593,6 +599,7 @@ function App() {
                       gardenState={gardenState}
                       systemState={systemState}
                       addRequestItem={addRequestItem}
+                      listeners={listeners.current}
                     />
                   }
                 />

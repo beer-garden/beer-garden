@@ -13,7 +13,7 @@ import InstanceCancelDeleteDialog from "../components/InstanceCancelDeleteReques
 import InstanceManageQueueDialog from "../components/InstanceManageQueueDialog";
 import InstanceShowLogsDialog from "../components/InstanceShowLogsDialog";
 import { Instance, System } from "../models/brewtils-types";
-import { RequestCommand,RequestItem, TourStepProps } from "../models/models";
+import { RequestCommand, RequestItem, TourStepProps } from "../models/models";
 import { StartInstance, StopInstance } from "../services/instance_service";
 import { DeleteSystem, ReloadSystem } from "../services/system_service";
 import {
@@ -440,7 +440,7 @@ function SystemCard({
         <div className="flex justify-content-between mb-3">
           <div
             className="flex-1 mr-2"
-            style={{ overflowWrap: "break-word", width: "80%" }}
+            style={{ overflowWrap: "break-word", width: "10vw" }}
           >
             {system.description}
           </div>

@@ -13,9 +13,11 @@ import UserChangePassword from "./UserChangePassword";
 function UserOverlay({
   username,
   onLogout,
+  runRenderUi,
 }: {
   username: string | undefined;
   onLogout: any;
+  runRenderUi: () => void;
 }) {
   const [color, setColor] = useState<string>(
     localStorage.getItem("theme_color") || "blue",
@@ -31,7 +33,13 @@ function UserOverlay({
   const toast = useRef<Toast>(null);
 
   useEffect(() => {
-    ChangeTheme(color, dark);
+    if (
+      (localStorage.getItem("theme_dark") === "true") !== dark ||
+      localStorage.getItem("theme_color") !== color
+    ) {
+      ChangeTheme(color, dark);
+      runRenderUi();
+    }
   }, [color, dark]);
 
   return (
