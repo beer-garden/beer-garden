@@ -1,5 +1,6 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
+import { ButtonGroup } from "primereact/buttongroup";
 import { Column } from "primereact/column";
 import { confirmDialog } from "primereact/confirmdialog";
 import { DataTable } from "primereact/datatable";
@@ -13,7 +14,7 @@ import InstanceCancelDeleteDialog from "../components/InstanceCancelDeleteReques
 import InstanceManageQueueDialog from "../components/InstanceManageQueueDialog";
 import InstanceShowLogsDialog from "../components/InstanceShowLogsDialog";
 import { Instance, System } from "../models/brewtils-types";
-import { RequestCommand,RequestItem, TourStepProps } from "../models/models";
+import { RequestCommand, RequestItem, TourStepProps } from "../models/models";
 import { StartInstance, StopInstance } from "../services/instance_service";
 import { DeleteSystem, ReloadSystem } from "../services/system_service";
 import {
@@ -363,56 +364,58 @@ function SystemCard({
 
     return (
       <div>
-        <Button
-          severity="success"
-          size="small"
-          onClick={() => handleStartInstance(instance, system)}
-          {...GenerateTourProps(startInstanceTourStep)}
-        >
-          <FontAwesomeIcon icon="play" />
-        </Button>
-        <Button
-          severity="warning"
-          size="small"
-          onClick={() => handleStopInstance(instance, system)}
-          {...GenerateTourProps(stopInstanceTourStep)}
-        >
-          <FontAwesomeIcon icon="stop" />
-        </Button>
-        <>
-          <Menu
-            model={instanceMenuItems}
-            popup
-            ref={instanceConfigMenu}
-            id="instance_menu"
-          />
-          <InstanceShowLogsDialog
-            instance={instance}
-            system={system}
-            isVisible={logsVisible}
-            onClose={closeLogsDialog}
-          />
-          <InstanceManageQueueDialog
-            instance={instance}
-            system={system}
-            isVisible={queueVisible}
-            onClose={closeQueueDialog}
-          />
-          <InstanceCancelDeleteDialog
-            instance={instance}
-            system={system}
-            isVisible={cancelDeleteVisible}
-            onClose={closeCancelDeleteDialog}
-          />
+        <ButtonGroup>
           <Button
-            severity="info"
+            severity="success"
             size="small"
-            title={`Admin Tools for ${instance.name}`}
-            onClick={(e) => instanceConfigMenu?.current?.toggle(e)}
+            onClick={() => handleStartInstance(instance, system)}
+            {...GenerateTourProps(startInstanceTourStep)}
           >
-            <FontAwesomeIcon icon="bars" />
+            <FontAwesomeIcon icon="play" />
           </Button>
-        </>
+          <Button
+            severity="warning"
+            size="small"
+            onClick={() => handleStopInstance(instance, system)}
+            {...GenerateTourProps(stopInstanceTourStep)}
+          >
+            <FontAwesomeIcon icon="stop" />
+          </Button>
+          <>
+            <Menu
+              model={instanceMenuItems}
+              popup
+              ref={instanceConfigMenu}
+              id="instance_menu"
+            />
+            <InstanceShowLogsDialog
+              instance={instance}
+              system={system}
+              isVisible={logsVisible}
+              onClose={closeLogsDialog}
+            />
+            <InstanceManageQueueDialog
+              instance={instance}
+              system={system}
+              isVisible={queueVisible}
+              onClose={closeQueueDialog}
+            />
+            <InstanceCancelDeleteDialog
+              instance={instance}
+              system={system}
+              isVisible={cancelDeleteVisible}
+              onClose={closeCancelDeleteDialog}
+            />
+            <Button
+              severity="info"
+              size="small"
+              title={`Admin Tools for ${instance.name}`}
+              onClick={(e) => instanceConfigMenu?.current?.toggle(e)}
+            >
+              <FontAwesomeIcon icon="bars" />
+            </Button>
+          </>
+        </ButtonGroup>
       </div>
     );
   };
@@ -437,51 +440,59 @@ function SystemCard({
   return (
     <>
       <Panel key={system.id} headerTemplate={headerTemplate}>
-        <div className="flex justify-content-between mb-3">
+        <div className="flex flex-wrap mb-3">
           <div
             className="flex-1 mr-2"
-            style={{ overflowWrap: "break-word", width: "80%" }}
+            style={{
+              overflowWrap: "break-word",
+              width: "80%",
+              minWidth: "100px",
+            }}
           >
             {system.description}
           </div>
-          <div>
-            <Button
-              severity="success"
-              size="small"
-              title="Start"
-              onClick={() => startSystem(system)}
-              {...GenerateTourProps(startInstancesTourStep)}
-            >
-              <FontAwesomeIcon icon="play" />
-            </Button>
-            <Button
-              severity="warning"
-              size="small"
-              title="Stop"
-              onClick={() => stopSystem(system)}
-              {...GenerateTourProps(stopInstancesTourStep)}
-            >
-              <FontAwesomeIcon icon="stop" />
-            </Button>
-            <Button
-              severity="info"
-              size="small"
-              title="Refresh"
-              onClick={() => reloadSystem(system)}
-              className="mr-2"
-              {...GenerateTourProps(restartSystemTourStep)}
-            >
-              <FontAwesomeIcon icon="refresh" />
-            </Button>
-            <Button
-              severity="danger"
-              size="small"
-              title="Delete"
-              onClick={() => deleteSystem(system)}
-              {...GenerateTourProps(deleteSystemTourStep)}
-            >
-              <FontAwesomeIcon icon="trash" />
-            </Button>
+          <div className="flex-1" style={{ width: "205px", minWidth: "205px" }}>
+            <div className="text-right">
+              <ButtonGroup>
+                <Button
+                  severity="success"
+                  size="small"
+                  title="Start"
+                  onClick={() => startSystem(system)}
+                  {...GenerateTourProps(startInstancesTourStep)}
+                >
+                  <FontAwesomeIcon icon="play" />
+                </Button>
+                <Button
+                  severity="warning"
+                  size="small"
+                  title="Stop"
+                  onClick={() => stopSystem(system)}
+                  {...GenerateTourProps(stopInstancesTourStep)}
+                >
+                  <FontAwesomeIcon icon="stop" />
+                </Button>
+                <Button
+                  severity="info"
+                  size="small"
+                  title="Refresh"
+                  onClick={() => reloadSystem(system)}
+                  className="mr-2"
+                  {...GenerateTourProps(restartSystemTourStep)}
+                >
+                  <FontAwesomeIcon icon="refresh" />
+                </Button>
+              </ButtonGroup>
+              <Button
+                severity="danger"
+                size="small"
+                title="Delete"
+                onClick={() => deleteSystem(system)}
+                {...GenerateTourProps(deleteSystemTourStep)}
+              >
+                <FontAwesomeIcon icon="trash" />
+              </Button>
+            </div>
           </div>
         </div>
         <DataTable

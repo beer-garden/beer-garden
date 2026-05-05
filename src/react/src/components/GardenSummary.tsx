@@ -282,7 +282,12 @@ function GardenSummary({
   );
 
   return (
-    <Card className="mb-4" style={{ width: "100%" }} key={selectedGarden?.name}>
+    <Card
+      className="mb-4"
+      style={{ width: "100%" }}
+      unstyled
+      key={selectedGarden?.name}
+    >
       <div className="flex ml-2 page-header">
         <h2 className="flex-1">{`Garden Summary: ${selectedGarden?.name}`}</h2>
         <div>

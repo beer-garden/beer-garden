@@ -7,7 +7,7 @@ import { RefObject, useEffect, useRef, useState } from "react";
 import GardenSummary from "../components/GardenSummary";
 import SystemCard from "../components/SystemCard";
 import { Garden, Instance, System } from "../models/brewtils-types";
-import { RequestItem,TourStepProps } from "../models/models";
+import { RequestItem, TourStepProps } from "../models/models";
 import {
   AddTourStep,
   ClearTourSteps,
@@ -283,7 +283,6 @@ function GardenDashboard({
       <ConfirmDialog />
       {/* LEFT NAV TREE */}
       <div className="col-3 surface-border p-3">
-        <h3>Select Garden</h3>
         <Tree
           {...GenerateTourProps(gardenTreeTourStep)}
           value={gardenMenu}
@@ -300,12 +299,7 @@ function GardenDashboard({
       </div>
 
       {/* MAIN WORKSPACE */}
-      <div
-        className="col-9 p-4 grid grid-nogutter"
-        style={{
-          gridTemplateColumns: `repeat(auto-fit, minmax(250px, 1fr))`,
-        }}
-      >
+      <div className="col-9">
         {/* Garden Summary */}
         {selectedGarden && (
           <GardenSummary
@@ -315,17 +309,26 @@ function GardenDashboard({
             selectedSystems={selectedSystems}
           />
         )}
-        {selectedSystems?.map((system: System) => (
-          <div key={system.id} className="mb-4 mr-2" style={{ width: "32%" }}>
-            <SystemCard
-              system={system}
-              toast={toast}
-              tourStepsRef={tourStepsRef}
-              selectedGarden={selectedGarden?.name}
-              addRequestItem={addRequestItem}
-            />
+
+        <div className="flex justify-content-center">
+          <div className="grid grid-nogutter gap-2">
+            {selectedSystems?.map((system: System) => (
+              <div
+                key={system.id}
+                className="mr-2"
+                style={{ width: "32%", minWidth: "250px" }}
+              >
+                <SystemCard
+                  system={system}
+                  toast={toast}
+                  tourStepsRef={tourStepsRef}
+                  selectedGarden={selectedGarden?.name}
+                  addRequestItem={addRequestItem}
+                />
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
       </div>
     </div>
   );
