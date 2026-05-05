@@ -82,5 +82,5 @@ test: test_docker_image
 
 build_preview: deps
 	npm run build -- --mode preview
-	chmod 644 -R build/
+	chmod 744 -R build/
 
