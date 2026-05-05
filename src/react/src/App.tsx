@@ -101,7 +101,7 @@ function App() {
   const runReloadUI = () => {
     sessionStorage.clear();
     localStorage.removeItem("requestItems");
-    setReloadUI(reloadUI + 1);
+    runRenderUi();
   };
 
   const runRenderUi = () => {
