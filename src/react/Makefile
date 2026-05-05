@@ -1,8 +1,9 @@
 # Makefile for Beer-garden UI
 
-DOCKER_NAME    = bgio/ui
+DOCKER_NAME    = bgio/ui_react
 VERSION       ?= latest
 SHORT_VERSION  = $(shell echo $(VERSION) | head -c 1)
+DATE          ?= $(shell date +%Y-%m-%d)
 
 .PHONY: clean clean-build clean-test help test deps
 .DEFAULT_GOAL := help
@@ -75,8 +76,33 @@ lint:
 test_docker_image:
 	docker build . -t test_server
 
+package: deps
+	npm run build
+	chmod -R 755 build/
 
 TEST_FILE ?= 
 test: test_docker_image
 	docker run --rm test_server npx vitest $(TEST_FILE)
+
+# Docker
+docker-build: package ## build docker image
+	docker build -t $(DOCKER_NAME):latest .
+	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(VERSION)
+	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(SHORT_VERSION)
+
+docker-build-unstable: package ## build nightly docker image
+	docker build -t $(DOCKER_NAME):unstable .
+
+# Publishing
+publish-docker: docker-build ## push the docker image
+	docker push $(DOCKER_NAME):latest
+	docker push $(DOCKER_NAME):$(VERSION)
+	docker push $(DOCKER_NAME):$(SHORT_VERSION)
+
+publish-docker-unstable: docker-build-unstable ## push the unstable docker image
+	docker push $(DOCKER_NAME):unstable
+
+publish-branch-docker-unstable: package
+	docker build -t $(DOCKER_NAME):branch-unstable-${DATE} .
+	docker push $(DOCKER_NAME):branch-unstable-${DATE}
 

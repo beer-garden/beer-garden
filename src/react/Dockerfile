@@ -1,18 +1,15 @@
-# Use the official Node 20 image as the base
-FROM node:20-bookworm
+FROM nginx:1.27-alpine
 
-# Set the working directory
-WORKDIR /app
+# Defaults for the application proxy info
+ENV BEERGARDEN_HOST=localhost \
+    BEERGARDEN_PORT=2337
 
-# Copy package.json and package-lock.json to leverage Docker cache
-COPY package*.json ./
+# Remove default config template
+RUN rm /etc/nginx/conf.d/default.conf
 
-# Install application dependencies
-RUN npm install
+# Nginx configuration template
+ADD ./default.conf.template /etc/nginx/templates/
 
-# Install Playwright browsers and all their required system dependencies
-RUN npx playwright install --with-deps
-
-# Copy the rest of the application code
-COPY . .
+# Actual static resources
+COPY ./build /usr/share/nginx/html
 
