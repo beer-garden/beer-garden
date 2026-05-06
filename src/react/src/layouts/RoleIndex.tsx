@@ -21,8 +21,8 @@ import {
 import HasAccess from "../components/HasAccess";
 import RoleScopeCard from "../components/RoleScopeCard";
 import { Role } from "../models/brewtils-types";
-import { checkPermission } from "../services/permission_service";
 import { Config, TourStepProps } from "../models/models";
+import { checkPermission } from "../services/permission_service";
 import {
   CreateRole,
   DeleteRole,

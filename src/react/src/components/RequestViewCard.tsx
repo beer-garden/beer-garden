@@ -306,7 +306,6 @@ function RequestViewCard({
               window.open(`${GetBaseURL()}/request/${request.id}`, "_self");
             }}
             model={
-               
               request &&
               request.status &&
               !["CREATED", "IN_PROGRESS"].includes(request.status) &&

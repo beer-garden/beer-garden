@@ -8,8 +8,8 @@ import { Tag } from "primereact/tag";
 import { RefObject, useEffect, useState } from "react";
 
 import HasAccess from "../components/HasAccess";
-import { Config } from "../models/models";
 import { Connection, Garden, Instance, System } from "../models/brewtils-types";
+import { Config } from "../models/models";
 import { TourStepProps } from "../models/models";
 import {
   DeleteGarden,

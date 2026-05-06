@@ -14,16 +14,16 @@ import InstanceManageQueueDialog from "../components/InstanceManageQueueDialog";
 import InstanceShowLogsDialog from "../components/InstanceShowLogsDialog";
 import { Instance, System } from "../models/brewtils-types";
 import { Config, PermissionCheck } from "../models/models";
-import { RequestCommand,RequestItem, TourStepProps } from "../models/models";
+import { RequestCommand, RequestItem, TourStepProps } from "../models/models";
 import { StartInstance, StopInstance } from "../services/instance_service";
 import { checkPermission } from "../services/permission_service";
 import { DeleteSystem, ReloadSystem } from "../services/system_service";
-import HasAccess from "./HasAccess";
 import {
   AddTourStep,
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
+import HasAccess from "./HasAccess";
 
 interface SystemCardProps {
   system: System;

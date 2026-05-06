@@ -8,15 +8,15 @@ import GardenSummary from "../components/GardenSummary";
 import SystemCard from "../components/SystemCard";
 import { Garden, Instance, System } from "../models/brewtils-types";
 import { Config } from "../models/models";
+import { RequestItem, TourStepProps } from "../models/models";
 import { GetConfig } from "../services/config_service";
 import { GetRootGarden } from "../services/garden_service";
-import { GetSeverity } from "../services/util_service";
-import { RequestItem,TourStepProps } from "../models/models";
 import {
   AddTourStep,
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
+import { GetSeverity } from "../services/util_service";
 
 function GardenDashboard({
   gardenRef,
