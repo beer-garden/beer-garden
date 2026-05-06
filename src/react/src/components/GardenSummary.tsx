@@ -289,193 +289,216 @@ function GardenSummary({
       key={selectedGarden?.name}
     >
       <div className="flex ml-2 page-header">
-        <h2 className="flex-1">{`Garden Summary: ${selectedGarden?.name}`}</h2>
-        <div>
-          <Button
-            {...GenerateTourProps(rescanPluginTourStep)}
-            label="Rescan Plugins"
-            data-testid={"RESCAN_PLUGINS"}
-            className="mr-2"
-            onClick={() => {
-              if (selectedGarden?.name) {
-                Rescan(selectedGarden.name).catch((error) => {
-                  console.error("Error Rescanning Garden Plugin Dir:", error);
-                });
-              }
-            }}
-          />
-          <Button
-            label="Rescan Downstream"
-            {...GenerateTourProps(rescanDownstreamTourStep)}
-            data-testid={"RESCAN_DOWNSTREAM"}
-            className="mr-2"
-            onClick={() => {
-              if (selectedGarden?.name) {
-                RescanGarden(selectedGarden.name).catch((error) => {
-                  console.error("Error Rescanning Garden:", error);
-                });
-              }
-            }}
-          />
-          <Button
-            label="Clear Plugin Queues"
-            {...GenerateTourProps(clearPluginsQueuesTourStep)}
-            data-testid={"CLEAR_PLUGIN_QUEUES"}
-            className="mr-2"
-            severity="warning"
-            onClick={() => {
-              if (selectedGarden?.name) {
-                ClearAllQueues(selectedGarden.name).catch((error) => {
-                  console.error("Error clearing Plugin Queue:", error);
-                });
-              }
-            }}
-          />
-          {gardenRef.current &&
-            gardenRef.current.name !== selectedGarden?.name && (
-              <Button
-                label="Sync"
-                {...GenerateTourProps(syncGardenTourStep)}
-                data-testid={"SYNC_GARDEN"}
-                className="mr-2"
-                onClick={() => {
-                  if (selectedGarden?.name) {
-                    SyncGarden(selectedGarden.name).catch((error) => {
+        <h2 className="flex-1">
+          {selectedGarden?.name
+            ? `Garden Summary: ${selectedGarden?.name}`
+            : "Garden Summary"}
+        </h2>
+        {selectedGarden?.name && (
+          <div>
+            <Button
+              {...GenerateTourProps(rescanPluginTourStep)}
+              label="Rescan Plugins"
+              data-testid={"RESCAN_PLUGINS"}
+              className="mr-2"
+              onClick={() => {
+                if (selectedGarden?.name) {
+                  Rescan(selectedGarden.name).catch((error) => {
+                    console.error("Error Rescanning Garden Plugin Dir:", error);
+                  });
+                }
+              }}
+            />
+            <Button
+              label="Rescan Downstream"
+              {...GenerateTourProps(rescanDownstreamTourStep)}
+              data-testid={"RESCAN_DOWNSTREAM"}
+              className="mr-2"
+              onClick={() => {
+                if (selectedGarden?.name) {
+                  RescanGarden(selectedGarden.name).catch((error) => {
+                    console.error("Error Rescanning Garden:", error);
+                  });
+                }
+              }}
+            />
+            <Button
+              label="Clear Plugin Queues"
+              {...GenerateTourProps(clearPluginsQueuesTourStep)}
+              data-testid={"CLEAR_PLUGIN_QUEUES"}
+              className="mr-2"
+              severity="warning"
+              onClick={() => {
+                if (selectedGarden?.name) {
+                  ClearAllQueues(selectedGarden.name).catch((error) => {
+                    console.error("Error clearing Plugin Queue:", error);
+                  });
+                }
+              }}
+            />
+            {gardenRef.current &&
+              gardenRef.current.name !== selectedGarden?.name && (
+                <Button
+                  label="Sync"
+                  {...GenerateTourProps(syncGardenTourStep)}
+                  data-testid={"SYNC_GARDEN"}
+                  className="mr-2"
+                  onClick={() => {
+                    if (selectedGarden?.name) {
+                      SyncGarden(selectedGarden.name).catch((error) => {
+                        console.error("Error Syncing Garden:", error);
+                      });
+                    }
+                  }}
+                />
+              )}
+            {gardenRef.current &&
+              gardenRef.current.name === selectedGarden?.name && (
+                <Button
+                  label="Sync All"
+                  {...GenerateTourProps(syncAllTourStep)}
+                  data-testid={"SYNC_ALL"}
+                  className="mr-2"
+                  onClick={() => {
+                    SyncGarden().catch((error) => {
                       console.error("Error Syncing Garden:", error);
                     });
-                  }
-                }}
-              />
-            )}
-          {gardenRef.current &&
-            gardenRef.current.name === selectedGarden?.name && (
-              <Button
-                label="Sync All"
-                {...GenerateTourProps(syncAllTourStep)}
-                data-testid={"SYNC_ALL"}
-                className="mr-2"
-                onClick={() => {
-                  SyncGarden().catch((error) => {
-                    console.error("Error Syncing Garden:", error);
-                  });
-                }}
-              />
-            )}
-          {gardenRef.current &&
-            gardenRef.current.name !== selectedGarden?.name && (
-              <Button
-                label="Sync Users"
-                {...GenerateTourProps(syncUsersTourStep)}
-                data-testid={"SYNC_USERS"}
-                className="mr-2"
-                onClick={() => {
-                  if (selectedGarden?.name) {
-                    SyncUsersGarden(selectedGarden.name).catch((error) => {
-                      console.error("Error Syncing Users in Garden:", error);
-                    });
-                  }
-                }}
-              />
-            )}
-          {gardenRef.current &&
-            gardenRef.current.name !== selectedGarden?.name && (
-              <Button
-                label="Delete Garden"
-                {...GenerateTourProps(deleteGardenTourStep)}
-                data-testid={"DELETE_GARDEN"}
-                severity="danger"
-                className="mr-2"
-                onClick={() => {
-                  if (selectedGarden?.name) {
-                    DeleteGarden(selectedGarden.name).catch((error) => {
-                      console.error("Error Deleting Garden:", error);
-                    });
-                  }
-                }}
-              />
-            )}
-        </div>
-      </div>
-      <div className="grid">
-        <div className="col-3">
-          <h4>Version</h4>
-          <p>{selectedGarden?.version}</p>
-        </div>
-        <div className="col-3">
-          <h4>Systems</h4>
-          {Array.from(systemCounts, ([status, count]) => {
-            if (count && count > 0) {
-              const statusSeverity = GetSeverity(status);
-              return (
-                <Badge
-                  data-testid={`${status}_severity_system_summary`}
-                  value={count}
-                  severity={statusSeverity}
-                  key={status}
-                  title={status}
+                  }}
                 />
-              );
-            }
-            return null;
-          })}
-        </div>
-        {selectedGarden?.children && selectedGarden?.children.length > 0 && (
-          <div className="col-3">
-            <h4>Downstream</h4>
-
-            {selectedGarden?.children &&
-              selectedGarden?.children.length > 0 && (
-                <ul>
-                  {" "}
-                  {Array.from(
-                    selectedGarden.children ?? [],
-                    (child: Garden) => {
-                      return <li key={child.name}>{child.name}</li>;
-                    },
-                  )}
-                </ul>
+              )}
+            {gardenRef.current &&
+              gardenRef.current.name !== selectedGarden?.name && (
+                <Button
+                  label="Sync Users"
+                  {...GenerateTourProps(syncUsersTourStep)}
+                  data-testid={"SYNC_USERS"}
+                  className="mr-2"
+                  onClick={() => {
+                    if (selectedGarden?.name) {
+                      SyncUsersGarden(selectedGarden.name).catch((error) => {
+                        console.error("Error Syncing Users in Garden:", error);
+                      });
+                    }
+                  }}
+                />
+              )}
+            {gardenRef.current &&
+              gardenRef.current.name !== selectedGarden?.name && (
+                <Button
+                  label="Delete Garden"
+                  {...GenerateTourProps(deleteGardenTourStep)}
+                  data-testid={"DELETE_GARDEN"}
+                  severity="danger"
+                  className="mr-2"
+                  onClick={() => {
+                    if (selectedGarden?.name) {
+                      DeleteGarden(selectedGarden.name).catch((error) => {
+                        console.error("Error Deleting Garden:", error);
+                      });
+                    }
+                  }}
+                />
               )}
           </div>
         )}
-        {selectedGarden?.parent && (
-          <div className="col-3">
-            <h4>Upstream</h4>
-            <ul>
-              <li>{selectedGarden?.parent}</li>
-            </ul>
-          </div>
-        )}
       </div>
-      <div className="grid">
-        {receivingConnections && receivingConnections.length > 0 && (
-          <div className="col-4">
-            <h4>Receiving</h4>
+      {selectedGarden?.name ? (
+        <div>
+          <div className="grid">
+            <div className="col-3">
+              <h4>Version</h4>
+              <p>{selectedGarden?.version}</p>
+            </div>
+            <div className="col-3">
+              <h4>Systems</h4>
+              {Array.from(systemCounts, ([status, count]) => {
+                if (count && count > 0) {
+                  const statusSeverity = GetSeverity(status);
+                  return (
+                    <Badge
+                      data-testid={`${status}_severity_system_summary`}
+                      value={count}
+                      severity={statusSeverity}
+                      key={status}
+                      title={status}
+                    />
+                  );
+                }
+                return null;
+              })}
+            </div>
+            {selectedGarden?.children &&
+              selectedGarden?.children.length > 0 && (
+                <div className="col-3">
+                  <h4>Downstream</h4>
 
-            <DataTable value={receivingConnections}>
-              <Column field="api" header="API" />
-              <Column field="status" header="Status" body={statusTemplate} />
-              <Column
-                header="Actions"
-                body={(node: any) => connectionActions(node, "RECEIVING")}
-              />
-            </DataTable>
+                  {selectedGarden?.children &&
+                    selectedGarden?.children.length > 0 && (
+                      <ul>
+                        {" "}
+                        {Array.from(
+                          selectedGarden.children ?? [],
+                          (child: Garden) => {
+                            return <li key={child.name}>{child.name}</li>;
+                          },
+                        )}
+                      </ul>
+                    )}
+                </div>
+              )}
+            {selectedGarden?.parent && (
+              <div className="col-3">
+                <h4>Upstream</h4>
+                <ul>
+                  <li>{selectedGarden?.parent}</li>
+                </ul>
+              </div>
+            )}
           </div>
-        )}
+          <div className="grid">
+            {receivingConnections && receivingConnections.length > 0 && (
+              <div className="col-4">
+                <h4>Receiving</h4>
 
-        {publishingConnections && publishingConnections.length > 0 && (
-          <div className="col-4">
-            <h4>Publishing</h4>
-            <DataTable value={publishingConnections}>
-              <Column field="api" header="API" />
-              <Column field="status" header="Status" body={statusTemplate} />
-              <Column
-                header="Actions"
-                body={(node: any) => connectionActions(node, "PUBLISHING")}
-              />
-            </DataTable>
+                <DataTable value={receivingConnections}>
+                  <Column field="api" header="API" />
+                  <Column
+                    field="status"
+                    header="Status"
+                    body={statusTemplate}
+                  />
+                  <Column
+                    header="Actions"
+                    body={(node: any) => connectionActions(node, "RECEIVING")}
+                  />
+                </DataTable>
+              </div>
+            )}
+
+            {publishingConnections && publishingConnections.length > 0 && (
+              <div className="col-4">
+                <h4>Publishing</h4>
+                <DataTable value={publishingConnections}>
+                  <Column field="api" header="API" />
+                  <Column
+                    field="status"
+                    header="Status"
+                    body={statusTemplate}
+                  />
+                  <Column
+                    header="Actions"
+                    body={(node: any) => connectionActions(node, "PUBLISHING")}
+                  />
+                </DataTable>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <p>
+          Loading... <FontAwesomeIcon icon="spinner" spinPulse />
+        </p>
+      )}
     </Card>
   );
 }

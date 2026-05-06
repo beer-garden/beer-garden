@@ -40,6 +40,8 @@ function GardenDashboard({
   const [gardenMenu, setGardenMenu] = useState<Array<any>>();
   const toast = useRef<Toast>(null);
 
+  const [loading, setLoading] = useState<boolean>(true);
+
   const updateSelectedGarden = (garden?: Garden) => {
     if (garden) {
       const matchedSystems = getSelectedSystems(garden);
@@ -59,6 +61,7 @@ function GardenDashboard({
     } else {
       setGardenMenu([]);
     }
+    setLoading(false);
     if (selectedGardenRef.current?.id && gardenRef?.current) {
       const findSelectedGarden = (
         garden_id: string,
@@ -285,7 +288,9 @@ function GardenDashboard({
       <div className="col-3 surface-border p-3">
         <Tree
           {...GenerateTourProps(gardenTreeTourStep)}
+          loading={loading}
           value={gardenMenu}
+          emptyMessage={"No gardens found"}
           nodeTemplate={gardenTreeNode}
           selectionMode="single"
           selectionKeys={selectedKey}
@@ -301,14 +306,12 @@ function GardenDashboard({
       {/* MAIN WORKSPACE */}
       <div className="col-9">
         {/* Garden Summary */}
-        {selectedGarden && (
-          <GardenSummary
-            gardenRef={gardenRef}
-            selectedGarden={selectedGarden}
-            tourStepsRef={tourStepsRef}
-            selectedSystems={selectedSystems}
-          />
-        )}
+        <GardenSummary
+          gardenRef={gardenRef}
+          selectedGarden={selectedGarden}
+          tourStepsRef={tourStepsRef}
+          selectedSystems={selectedSystems}
+        />
 
         <div className="flex justify-content-center">
           <div className="grid grid-nogutter gap-2">
