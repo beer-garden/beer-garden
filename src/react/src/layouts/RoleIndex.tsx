@@ -284,20 +284,22 @@ function RoleIndex({
     return (
       <div className="flex items-end ml-2 page-header">
         <h1 className="flex-1">Role Management</h1>
-        <div>
-          <Button
-            onClick={handleRescan}
-            label="Rescan Roles"
-            data-testid="rescan-btn"
-            {...GenerateTourProps(rescanRolesTourStep)}
-          />
-          <Button
-            onClick={openRoleDialog}
-            label="Create Role"
-            data-testid="create-btn"
-            {...GenerateTourProps(createRoleTourStep)}
-          />
-        </div>
+        <HasAccess config={config} permission="GARDEN_ADMIN" isGlobal={true}>
+          <div>
+            <Button
+              onClick={handleRescan}
+              label="Rescan Roles"
+              data-testid="rescan-btn"
+              {...GenerateTourProps(rescanRolesTourStep)}
+            />
+            <Button
+              onClick={openRoleDialog}
+              label="Create Role"
+              data-testid="create-btn"
+              {...GenerateTourProps(createRoleTourStep)}
+            />
+          </div>
+        </HasAccess>
       </div>
     );
   }
@@ -405,36 +407,38 @@ function RoleIndex({
         return <></>;
       }
       return (
-        <div className="flex">
-          <Button
-            data-testid={`duplicate-btn-${role.name}`}
-            tooltip="Duplicate"
-            onClick={() => handleLoadRole(role, true)}
-            {...GenerateTourProps(duplicateRoleTourStep)}
-          >
-            <FontAwesomeIcon icon="clone" />
-          </Button>
-          {!role.file_generated && !role.protected && (
+        <HasAccess config={config} permission="GARDEN_ADMIN" isGlobal={true}>
+          <div className="flex">
             <Button
-              data-testid={`edit-btn-${role.name}`}
-              tooltip="Edit"
-              onClick={() => handleLoadRole(role, false)}
-              {...GenerateTourProps(editRoleTourStep)}
+              data-testid={`duplicate-btn-${role.name}`}
+              tooltip="Duplicate"
+              onClick={() => handleLoadRole(role, true)}
+              {...GenerateTourProps(duplicateRoleTourStep)}
             >
-              <FontAwesomeIcon icon="pencil" />
+              <FontAwesomeIcon icon="clone" />
             </Button>
-          )}
-          {!role.file_generated && !role.protected && (
-            <Button
-              data-testid={`delete-btn-${role.name}`}
-              tooltip="Delete"
-              onClick={() => handleDeleteRole(role)}
-              {...GenerateTourProps(deleteRoleTourStep)}
-            >
-              <FontAwesomeIcon icon="trash-can" />
-            </Button>
-          )}
-        </div>
+            {!role.file_generated && !role.protected && (
+              <Button
+                data-testid={`edit-btn-${role.name}`}
+                tooltip="Edit"
+                onClick={() => handleLoadRole(role, false)}
+                {...GenerateTourProps(editRoleTourStep)}
+              >
+                <FontAwesomeIcon icon="pencil" />
+              </Button>
+            )}
+            {!role.file_generated && !role.protected && (
+              <Button
+                data-testid={`delete-btn-${role.name}`}
+                tooltip="Delete"
+                onClick={() => handleDeleteRole(role)}
+                {...GenerateTourProps(deleteRoleTourStep)}
+              >
+                <FontAwesomeIcon icon="trash-can" />
+              </Button>
+            )}
+          </div>
+        </HasAccess>
       );
     }
 

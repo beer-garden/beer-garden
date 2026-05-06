@@ -558,6 +558,7 @@ function App() {
                       listeners={listeners.current}
                       tourStepsRef={tourStepsRef}
                       addRequestItem={addRequestItem}
+                      config={config}
                     />
                   }
                 />
@@ -578,7 +579,10 @@ function App() {
                     <RoleIndex config={config} tourStepsRef={tourStepsRef} />
                   }
                 />
-                <Route path="/topics" element={<TopicIndex />} />
+                <Route
+                  path="/topics"
+                  element={<TopicIndex config={config} />}
+                />
                 <Route
                   path="/users"
                   element={
