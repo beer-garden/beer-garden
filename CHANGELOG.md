@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# TBD
+TBD
+
+- Fixed bug where GARDEN_UPDATED event of local garden would not return children in 
+  websocket event objects (#)
+
 # 3.33.1
 4/27/2026
 
