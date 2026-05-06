@@ -7,19 +7,35 @@ import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { MultiSelect } from "primereact/multiselect";
 import {
+  RefObject,
   useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
   useState,
 } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import { Request } from "../models/brewtils-types";
+import { RequestItem } from "../models/models";
+import { TourStepProps } from "../models/models";
 import { GetRequestList } from "../services/request_service";
+import {
+  AddTourStep,
+  ClearTourSteps,
+  GenerateTourProps,
+} from "../services/tour_service";
 import { GetBaseURL } from "../services/util_service";
 
-function RequestIndex({ listeners }: { listeners: Record<string, any> }) {
+function RequestIndex({
+  listeners,
+  tourStepsRef,
+  addRequestItem,
+}: {
+  listeners: Record<string, any>;
+  tourStepsRef: RefObject<Array<TourStepProps>>;
+  addRequestItem: (itemParams?: Partial<RequestItem>) => void;
+}) {
   const [requests, setRequests] = useState<Array<Request>>([]);
   const altRequests = useRef<Array<Request>>([]);
   const [loading, setLoading] = useState(false);
@@ -42,11 +58,50 @@ function RequestIndex({ listeners }: { listeners: Record<string, any> }) {
     comment: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
   });
 
-  const navigate = useNavigate();
-
   const setDisplayRequests = (requests: Array<Request>) => {
     setRequests(requests);
     altRequests.current = requests;
+  };
+
+  const tourPrefix = "request-index";
+  const tourUUID = "main-table";
+
+  const AutoRefreshTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUUID,
+    label: "Auto Refresh",
+    content:
+      "Toggling this option will automatically refresh the table when new updates are available.",
+    layer: "LAYOUT",
+    pos: 0,
+  };
+
+  const RefreshTableTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUUID,
+    label: "Refresh Table",
+    content:
+      "Clicking this button will refresh the table with the latest data.",
+    layer: "LAYOUT",
+    pos: 1,
+  };
+
+  const OpenRequestTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUUID,
+    label: `Open Request`,
+    content: `View details about this request on View Request Page`,
+    layer: "LAYOUT",
+    pos: 2,
+  };
+
+  const ViewRequestTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUUID,
+    label: `View Request`,
+    content: `View Request in popup modal.`,
+    layer: "LAYOUT",
+    pos: 3,
   };
 
   const lazyLoadData = useCallback(() => {
@@ -236,6 +291,7 @@ function RequestIndex({ listeners }: { listeners: Record<string, any> }) {
           onChange={handleChange}
           checked={autoRefresh}
           className="mr-2"
+          {...GenerateTourProps(AutoRefreshTourStep)}
         />
         Auto Refresh
       </div>
@@ -244,6 +300,7 @@ function RequestIndex({ listeners }: { listeners: Record<string, any> }) {
         raised
         onClick={lazyLoadData}
         tooltip={recordsUpdated ? "New updates available" : "Refresh"}
+        {...GenerateTourProps(RefreshTableTourStep)}
       >
         {recordsUpdated && <FontAwesomeIcon icon={"circle-exclamation"} />}
         <FontAwesomeIcon icon="refresh" />
@@ -251,13 +308,20 @@ function RequestIndex({ listeners }: { listeners: Record<string, any> }) {
     </div>
   );
 
-  const PushToWorkspace = (request: Request) => {
+  const PeekRequestView = (request: Request) => {
     if (request.id) {
-      void navigate(`${GetBaseURL()}/workspace/request/${request.id}`);
+      addRequestItem({ requestId: request.id, type: "VIEW_REQUEST" });
     }
   };
 
   const commandNameTemplate = (request: Request) => {
+    if (request.command_display_name) {
+      return <span>{request.command_display_name}</span>;
+    }
+    return <span>{request.command}</span>;
+  };
+
+  const commandActionTemplate = (request: Request) => {
     return (
       <div>
         <Link to={`${GetBaseURL()}/request/${request.id}`}>
@@ -267,23 +331,22 @@ function RequestIndex({ listeners }: { listeners: Record<string, any> }) {
             link
             tooltip={"Open Request " + request.command_display_name}
             className="mr-2"
+            {...GenerateTourProps(OpenRequestTourStep)}
           >
-            <FontAwesomeIcon
-              icon="arrow-up-right-from-square"
-              className="mx-2"
-            />
+            <FontAwesomeIcon icon="arrow-up-right-from-square" />
           </Button>
         </Link>
         <Button
           rounded
           raised
           link
-          onClick={() => PushToWorkspace(request)}
-          tooltip={"Push to Workspace " + request.command_display_name}
+          onClick={() => PeekRequestView(request)}
+          tooltip={"View " + request.command_display_name}
+          className="mr-2"
+          {...GenerateTourProps(ViewRequestTourStep)}
         >
-          <FontAwesomeIcon icon="arrow-right-from-bracket" />{" "}
+          <FontAwesomeIcon icon="eye" />
         </Button>
-        {request.command_display_name}
       </div>
     );
   };
@@ -354,6 +417,20 @@ function RequestIndex({ listeners }: { listeners: Record<string, any> }) {
     }
   }, [listeners]);
 
+  useEffect(() => {
+    ClearTourSteps(tourStepsRef, tourPrefix, tourUUID);
+    AddTourStep(tourStepsRef, AutoRefreshTourStep);
+    AddTourStep(tourStepsRef, RefreshTableTourStep);
+    if (requests && requests.length > 0) {
+      AddTourStep(tourStepsRef, OpenRequestTourStep);
+      AddTourStep(tourStepsRef, ViewRequestTourStep);
+    }
+
+    return () => {
+      ClearTourSteps(tourStepsRef, tourPrefix, tourUUID);
+    };
+  }, [requests]);
+
   return (
     <div>
       <DataTable
@@ -370,6 +447,7 @@ function RequestIndex({ listeners }: { listeners: Record<string, any> }) {
         onFilter={(e) => setFilters(e.filters as typeof filters)}
         rowsPerPageOptions={[5, 10, 20, 50]}
       >
+        <Column header="Actions" body={commandActionTemplate} />
         <Column
           field="command_display_name"
           filter

@@ -7,23 +7,31 @@ import { Menu } from "primereact/menu";
 import { Panel } from "primereact/panel";
 import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
-import { RefObject, useRef, useState } from "react";
+import { RefObject, useEffect, useRef, useState } from "react";
 
 import InstanceCancelDeleteDialog from "../components/InstanceCancelDeleteRequestsDialog";
 import InstanceManageQueueDialog from "../components/InstanceManageQueueDialog";
 import InstanceShowLogsDialog from "../components/InstanceShowLogsDialog";
 import { Instance, System } from "../models/brewtils-types";
 import { Config, PermissionCheck } from "../models/models";
+import { RequestCommand,RequestItem, TourStepProps } from "../models/models";
 import { StartInstance, StopInstance } from "../services/instance_service";
 import { checkPermission } from "../services/permission_service";
 import { DeleteSystem, ReloadSystem } from "../services/system_service";
 import HasAccess from "./HasAccess";
+import {
+  AddTourStep,
+  ClearTourSteps,
+  GenerateTourProps,
+} from "../services/tour_service";
 
 interface SystemCardProps {
   system: System;
   selectedGarden?: string;
   toast?: RefObject<Toast | null>;
   config: Config;
+  tourStepsRef?: RefObject<Array<TourStepProps>>;
+  addRequestItem: (itemParams?: Partial<RequestItem>) => void;
 }
 
 function SystemCard({
@@ -31,7 +39,105 @@ function SystemCard({
   selectedGarden,
   toast,
   config,
+  tourStepsRef,
+  addRequestItem,
 }: SystemCardProps) {
+  const tourUuid = system.id;
+  const tourPrefix = "system_summary";
+
+  const startInstancesTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Start All Instances",
+    content: "Start all instances for the selected system",
+    layer: "COMPONENT",
+    pos: 0,
+  };
+
+  const stopInstancesTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Stop All Instances",
+    content: "Stop all instances for the selected system",
+    layer: "COMPONENT",
+    pos: 1,
+  };
+
+  const restartSystemTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Restart System",
+    content: "Restart the selected system",
+    layer: "COMPONENT",
+    pos: 2,
+  };
+
+  const deleteSystemTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Delete System",
+    content: "Delete the selected system",
+    layer: "COMPONENT",
+    pos: 3,
+  };
+
+  const statusInstanceTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: `Instance Status`,
+    content: `Status of individual instance`,
+    layer: "COMPONENT",
+    pos: 4,
+  };
+
+  const nameInstanceTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: `Instance Name`,
+    content: `Name of individual instance`,
+    layer: "COMPONENT",
+    pos: 5,
+  };
+
+  const startInstanceTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: `Instance Start`,
+    content: `Start individual instance`,
+    layer: "COMPONENT",
+    pos: 6,
+  };
+  const stopInstanceTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: `Instance Stop`,
+    content: `Stop individual instance`,
+    layer: "COMPONENT",
+    pos: 7,
+  };
+
+  useEffect(() => {
+    if (tourStepsRef === undefined) {
+      return;
+    }
+    ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+
+    AddTourStep(tourStepsRef, startInstancesTourStep);
+    AddTourStep(tourStepsRef, stopInstancesTourStep);
+    AddTourStep(tourStepsRef, restartSystemTourStep);
+    AddTourStep(tourStepsRef, deleteSystemTourStep);
+
+    if (system?.instances && system.instances.length > 0) {
+      AddTourStep(tourStepsRef, statusInstanceTourStep);
+      AddTourStep(tourStepsRef, nameInstanceTourStep);
+      AddTourStep(tourStepsRef, startInstanceTourStep);
+      AddTourStep(tourStepsRef, stopInstanceTourStep);
+    }
+    return () => {
+      ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+    };
+  }, [system]);
+
   const getSeverity = (
     status?: string,
   ):
@@ -202,9 +308,25 @@ function SystemCard({
   function statusTemplate(instance: Instance) {
     const statusSeverity = getSeverity(instance.status);
 
-    return <Tag value={instance.status} severity={statusSeverity} />;
+    return (
+      <Tag
+        value={instance.status}
+        severity={statusSeverity}
+        {...GenerateTourProps(statusInstanceTourStep)}
+      />
+    );
   }
 
+  function instanceNameTemplate(instance: Instance) {
+    return (
+      <div
+        style={{ overflowWrap: "break-word", width: "100%" }}
+        {...GenerateTourProps(nameInstanceTourStep)}
+      >
+        {instance.name}
+      </div>
+    );
+  }
   const instanceActions = (instance: Instance) => {
     if (
       !checkPermission(config, "PLUGIN_ADMIN", {
@@ -229,6 +351,20 @@ function SystemCard({
 
     const instanceMenuItems = [
       {
+        label: "Create Requests",
+        command: () => {
+          addRequestItem({
+            type: "REQUEST",
+            requestCommandInput: {
+              namespace: system.namespace,
+              systemName: system.name,
+              version: system.version,
+              instance: instance.name,
+            } as RequestCommand,
+          });
+        },
+      },
+      {
         label: "Show Logs",
         command: () => setLogsVisible(true),
       },
@@ -248,6 +384,7 @@ function SystemCard({
           severity="success"
           size="small"
           onClick={() => handleStartInstance(instance, system)}
+          {...GenerateTourProps(startInstanceTourStep)}
         >
           <FontAwesomeIcon icon="play" />
         </Button>
@@ -255,6 +392,7 @@ function SystemCard({
           severity="warning"
           size="small"
           onClick={() => handleStopInstance(instance, system)}
+          {...GenerateTourProps(stopInstanceTourStep)}
         >
           <FontAwesomeIcon icon="stop" />
         </Button>
@@ -324,48 +462,43 @@ function SystemCard({
             {system.description}
           </div>
           <div>
-            <HasAccess
-              config={config}
-              permission="PLUGIN_ADMIN"
-              hasGardenName={system.garden_name}
-              hasNamespace={system.namespace}
-              hasSystemName={system.name}
-              hasSystemVersion={system.version}
+            <Button
+              severity="success"
+              size="small"
+              title="Start"
+              onClick={() => startSystem(system)}
+              {...GenerateTourProps(startInstancesTourStep)}
             >
-              <Button
-                severity="success"
-                size="small"
-                title="Start"
-                onClick={() => startSystem(system)}
-              >
-                <FontAwesomeIcon icon="play" />
-              </Button>
-              <Button
-                severity="warning"
-                size="small"
-                title="Stop"
-                onClick={() => stopSystem(system)}
-              >
-                <FontAwesomeIcon icon="stop" />
-              </Button>
-              <Button
-                severity="info"
-                size="small"
-                title="Refresh"
-                onClick={() => reloadSystem(system)}
-                className="mr-2"
-              >
-                <FontAwesomeIcon icon="refresh" />
-              </Button>
-              <Button
-                severity="danger"
-                size="small"
-                title="Delete"
-                onClick={() => deleteSystem(system)}
-              >
-                <FontAwesomeIcon icon="trash" />
-              </Button>
-            </HasAccess>
+              <FontAwesomeIcon icon="play" />
+            </Button>
+            <Button
+              severity="warning"
+              size="small"
+              title="Stop"
+              onClick={() => stopSystem(system)}
+              {...GenerateTourProps(stopInstancesTourStep)}
+            >
+              <FontAwesomeIcon icon="stop" />
+            </Button>
+            <Button
+              severity="info"
+              size="small"
+              title="Refresh"
+              onClick={() => reloadSystem(system)}
+              className="mr-2"
+              {...GenerateTourProps(restartSystemTourStep)}
+            >
+              <FontAwesomeIcon icon="refresh" />
+            </Button>
+            <Button
+              severity="danger"
+              size="small"
+              title="Delete"
+              onClick={() => deleteSystem(system)}
+              {...GenerateTourProps(deleteSystemTourStep)}
+            >
+              <FontAwesomeIcon icon="trash" />
+            </Button>
           </div>
         </div>
         <DataTable
@@ -389,6 +522,7 @@ function SystemCard({
           <Column
             field="name"
             header="Instance"
+            body={instanceNameTemplate}
             headerStyle={{ display: "none" }}
           />
           <Column

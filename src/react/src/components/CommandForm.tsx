@@ -12,6 +12,7 @@ function CommandForm({
   setRequest,
   resetForm,
   setResetForm,
+  setIsFormValid,
 }: CommandFormProps) {
   disabled = disabled === undefined ? true : disabled;
   const [parametersFields, setParameterFields] = useState(
@@ -306,7 +307,7 @@ function CommandForm({
   const buildDefaults = (mapRequest = true) => {
     const prepareDefaultValues = Array<InputParam>();
 
-    if (command !== null) {
+    if (command && command !== null) {
       for (const param of command.parameters || []) {
         const newParam = { ...param } as InputParam;
         if (
@@ -404,6 +405,32 @@ function CommandForm({
     setLoadingChoices([...altLoadingChoices.current]);
   };
 
+  const isMissingValue = (value: any) => {
+    if (Array.isArray(value)) {
+      return (
+        value.length === 0 ||
+        value.some(
+          (entry) => entry === null || entry === undefined || entry === "",
+        )
+      );
+    }
+    return value === null || value === undefined || value === "";
+  };
+
+  const validateForm = () => {
+    let valid = true;
+    for (const parameter of altParametersFields.current) {
+      if (
+        isMissingValue(parameter.value) &&
+        (parameter.optional === undefined || !parameter.optional)
+      ) {
+        valid = false;
+        break;
+      }
+    }
+    setIsFormValid(valid);
+  };
+
   useEffect(() => {
     if (!initialized) {
       buildDefaults();
@@ -490,6 +517,8 @@ function CommandForm({
         }
       });
     }
+
+    validateForm();
   }, [parametersFields, initialized, request, setRequest, resetForm]);
 
   const handleChange = (name: any, value: any) => {

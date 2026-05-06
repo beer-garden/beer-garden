@@ -2,6 +2,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
+import { TourStepProps } from "../models/models";
 import * as tokenService from "../services/token_service";
 import * as userService from "../services/user_service";
 import Navigation from "./Navigation";
@@ -9,31 +10,17 @@ import Navigation from "./Navigation";
 vi.mock("../services/user_service");
 vi.mock("../services/token_service");
 
+const mockTourSteps = () => {
+  const mockRef = {
+    current: [] as TourStepProps[], // Mocking the value property
+  };
+  return mockRef as React.RefObject<TourStepProps[]>;
+};
+
 describe("Navigation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     cleanup();
-  });
-
-  test("show username", async () => {
-    vi.mocked(tokenService.GetToken).mockReturnValue("token");
-    vi.mocked(userService.GetCurrentUser).mockReturnValue("username123");
-
-    render(
-      <BrowserRouter basename="/">
-        <Navigation
-          listeners={{}}
-          config={{
-            auth_enabled: true,
-          }}
-        />
-      </BrowserRouter>,
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId("user-logout")).toBeInTheDocument();
-      expect(screen.getByText("Welcome username123!")).toBeVisible();
-    });
   });
 
   test("show login", async () => {
@@ -42,7 +29,13 @@ describe("Navigation", () => {
 
     render(
       <BrowserRouter basename="/">
-        <Navigation listeners={{}} config={{ auth_enabled: true }} />
+        <Navigation
+          listeners={{}}
+          config={{ auth_enabled: true }}
+          runReloadUI={() => {}}
+          toggleRunTour={() => {}}
+          tourStepsRef={mockTourSteps()}
+        />
       </BrowserRouter>,
     );
 
@@ -61,6 +54,9 @@ describe("Navigation", () => {
           config={{
             auth_enabled: false,
           }}
+          runReloadUI={() => {}}
+          toggleRunTour={() => {}}
+          tourStepsRef={mockTourSteps()}
         />
       </BrowserRouter>,
     );

@@ -186,7 +186,7 @@ function CurrentRequestsTemplate({
   };
 
   return (
-    <div>
+    <div className="flex align-items-center mr-2">
       <ConfirmPopup
         dismissable={true}
         content={({ acceptBtnRef, hide }: { acceptBtnRef: any; hide: any }) => (
@@ -217,7 +217,7 @@ function CurrentRequestsTemplate({
           </div>
         )}
       />
-      <button className="fa-layers fa-fw fa-2x" onClick={confirm}>
+      <Button className="fa-layers fa-fw fa-2x" onClick={confirm}>
         <FontAwesomeIcon
           icon="envelope"
           className={currentRequests.length > 0 ? "fa-shake" : ""}
@@ -228,7 +228,7 @@ function CurrentRequestsTemplate({
             {currentRequests.length}
           </span>
         )}
-      </button>
+      </Button>
     </div>
   );
 }

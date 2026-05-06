@@ -37,6 +37,7 @@ function RequestViewCard({
   addItem,
   listeners,
   config,
+  isDialog,
 }: {
   requestItem: RequestItem;
   updateRequestItem: (item: RequestItem) => void;
@@ -44,6 +45,7 @@ function RequestViewCard({
   addItem: (itemParams?: Partial<RequestItem>) => void;
   listeners: Record<string, any>;
   config: Config;
+  isDialog: boolean;
 }) {
   const requestId = useRef<string | null | undefined>(
     requestItem?.requestId ?? null,
@@ -249,17 +251,18 @@ function RequestViewCard({
   return (
     <Card
       title={CardTitle()}
-      className="mr-2 mb-2 mt-2"
-      style={{ minWidth: "49%" }}
+      unstyled={isDialog}
       header={
-        <Button
-          onClick={() => {
-            removeItem(requestItem.itemId);
-          }}
-          tooltip={`Close Request View for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
-        >
-          <FontAwesomeIcon icon="xmark" />
-        </Button>
+        !isDialog && (
+          <Button
+            onClick={() => {
+              removeItem(requestItem.itemId);
+            }}
+            tooltip={`Close Request View for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
+          >
+            <FontAwesomeIcon icon="xmark" />
+          </Button>
+        )
       }
     >
       <Toast ref={toast} />
@@ -284,6 +287,7 @@ function RequestViewCard({
                     setRequest: setRequest,
                     resetForm: false,
                     setResetForm: () => {},
+                    setIsFormValid: () => {},
                   }}
                 />
               )}
@@ -302,6 +306,10 @@ function RequestViewCard({
               window.open(`${GetBaseURL()}/request/${request.id}`, "_self");
             }}
             model={
+               
+              request &&
+              request.status &&
+              !["CREATED", "IN_PROGRESS"].includes(request.status) &&
               checkPermission(config, "OPERATOR", {
                 global: false,
                 gardenName: request?.target_garden,
@@ -328,7 +336,14 @@ function RequestViewCard({
                       },
                     },
                   ]
-                : []
+                : [
+                    {
+                      label: "Reload Request",
+                      command: () => {
+                        setRequest(null);
+                      },
+                    },
+                  ]
             }
           />
         </div>

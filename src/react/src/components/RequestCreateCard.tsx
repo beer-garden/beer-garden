@@ -21,11 +21,13 @@ function RequestCreateCard({
   updateRequestItem,
   removeItem,
   config,
+  isDialog,
 }: {
   requestItem: RequestItem;
   updateRequestItem: (item: RequestItem) => void;
   removeItem: (id: string) => void;
   config: Config;
+  isDialog: boolean;
 }) {
   // Input Request
   const [request, setRequest] = useState<Request | undefined>(
@@ -85,6 +87,7 @@ function RequestCreateCard({
 
   const [visibleCodeExample, setVisibleCodeExample] = useState<boolean>(false);
   const [resetForm, setResetForm] = useState<boolean>(false);
+  const [isFormValid, setIsFormValid] = useState<boolean>(false);
 
   const [showCreateRequest, setShowCreateRequest] = useState<boolean>(
     (requestItem?.requestId === undefined || requestItem?.requestId === null) &&
@@ -219,16 +222,19 @@ function RequestCreateCard({
   return (
     <Card
       className="justify-content-center"
+      unstyled={isDialog}
       header={
-        <div className="flex">
-          <Button
-            onClick={() => {
-              removeItem(requestItem.itemId);
-            }}
-            tooltip={`Close Request Creation for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
-          >
-            <FontAwesomeIcon icon="xmark" />
-          </Button>
+        <div className="flex mb-2">
+          {!isDialog && (
+            <Button
+              onClick={() => {
+                removeItem(requestItem.itemId);
+              }}
+              tooltip={`Close Request Creation for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
+            >
+              <FontAwesomeIcon icon="xmark" />
+            </Button>
+          )}
           <div className="ml-4 mr-2 align-self-center">Scheduled</div>
           <InputSwitch
             checked={showScheduleJob}
@@ -239,7 +245,7 @@ function RequestCreateCard({
       }
       key={requestItem.itemId}
       footer={
-        <div className="flex">
+        <div className="flex mt-2">
           <div>
             <Button
               label="Reset Form"
@@ -264,49 +270,41 @@ function RequestCreateCard({
             />
           </div>
           <div style={{ marginLeft: "auto" }}>
-            <HasAccess
-              config={config}
-              permission="OPERATOR"
-              hasGardenName={request?.target_garden}
-              hasNamespace={request?.namespace}
-              hasSystemName={request?.system}
-              hasInstanceName={request?.instance_name}
-              hasSystemVersion={request?.system_version}
-              hasCommandName={request?.command}
-            >
-              {showCreateRequest && !showScheduleJob && (
-                <Button
-                  label="Submit"
-                  icon="pi pi-arrow-right"
-                  onMouseDown={(event) => {
-                    if (event.button === 1) {
-                      // Middle mouse button click
-                      submitRequestAndOpen();
-                    } else {
-                      submitRequest();
-                    }
-                  }}
-                />
-              )}
-              {showCreateRequest && showScheduleJob && !requestItem?.jobId && (
-                <Button
-                  label="Submit Job"
-                  severity="success"
-                  icon="pi pi-arrow-right"
-                  iconPos="right"
-                  onClick={submitJob}
-                />
-              )}
-              {showCreateRequest && showScheduleJob && requestItem?.jobId && (
-                <Button
-                  label="Update Job"
-                  severity="success"
-                  icon="pi pi-arrow-right"
-                  iconPos="right"
-                  onClick={updateJob}
-                />
-              )}
-            </HasAccess>
+            {showCreateRequest && !showScheduleJob && (
+              <Button
+                label="Submit"
+                icon="pi pi-arrow-right"
+                disabled={!isFormValid}
+                onMouseDown={(event) => {
+                  if (event.button === 1) {
+                    // Middle mouse button click
+                    submitRequestAndOpen();
+                  } else {
+                    submitRequest();
+                  }
+                }}
+              />
+            )}
+            {showCreateRequest && showScheduleJob && !requestItem?.jobId && (
+              <Button
+                label="Submit Job"
+                severity="success"
+                disabled={!isFormValid}
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                onClick={submitJob}
+              />
+            )}
+            {showCreateRequest && showScheduleJob && requestItem?.jobId && (
+              <Button
+                label="Update Job"
+                severity="success"
+                disabled={!isFormValid}
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                onClick={updateJob}
+              />
+            )}
           </div>
         </div>
       }
@@ -328,6 +326,7 @@ function RequestCreateCard({
                 setRequestCommand={updateRequestCommand}
                 resetForm={resetForm}
                 setResetForm={setResetForm}
+                setIsFormValid={setIsFormValid}
               />
             )}
             {!showCreateRequest && (

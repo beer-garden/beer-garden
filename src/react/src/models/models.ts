@@ -102,10 +102,20 @@ export interface HasAccessProps {
 }
 
 export interface CommandFormProps {
-  command: Command | null;
+  command: Command | null | undefined;
   disabled?: boolean;
   request?: Request | null | undefined;
   setRequest: (request: Request) => void;
   resetForm: boolean;
   setResetForm: (reset: boolean) => void;
+  setIsFormValid: (isValid: boolean) => void;
+}
+
+export interface TourStepProps {
+  content: string;
+  prefix: string;
+  uuid?: string;
+  label: string;
+  layer: "NAVIGATION" | "LAYOUT" | "COMPONENT";
+  pos: number;
 }
