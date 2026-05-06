@@ -318,7 +318,7 @@ function GardenDashboard({
             {selectedSystems?.map((system: System) => (
               <div
                 key={system.id}
-                className="mr-2"
+                className="mr-2 mb-2"
                 style={{ width: "32%", minWidth: "250px" }}
               >
                 <SystemCard
