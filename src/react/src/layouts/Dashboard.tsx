@@ -9,8 +9,6 @@ import SystemCard from "../components/SystemCard";
 import { Garden, Instance, System } from "../models/brewtils-types";
 import { Config } from "../models/models";
 import { RequestItem, TourStepProps } from "../models/models";
-import { GetConfig } from "../services/config_service";
-import { GetRootGarden } from "../services/garden_service";
 import {
   AddTourStep,
   ClearTourSteps,

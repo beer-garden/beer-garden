@@ -118,11 +118,11 @@ function RequestCreate({ config }: { config: Config }) {
         .then((responseJob) => {
           setJob(responseJob);
           setRequestCommand({
-            namespace: responseJob?.request_template?.namespace ?? null,
-            systemName: responseJob?.request_template?.system ?? null,
-            version: responseJob?.request_template?.system_version ?? null,
-            instance: responseJob?.request_template?.instance_name ?? null,
-            command: responseJob?.request_template?.command ?? null,
+            namespace: responseJob?.request_template?.namespace,
+            systemName: responseJob?.request_template?.system,
+            version: responseJob?.request_template?.system_version,
+            instance: responseJob?.request_template?.instance_name,
+            command: responseJob?.request_template?.command,
           });
           setShowCreateRequest(true);
         })
