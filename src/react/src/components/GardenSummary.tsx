@@ -4,6 +4,7 @@ import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
+import { Skeleton } from "primereact/skeleton";
 import { Tag } from "primereact/tag";
 import { RefObject, useEffect, useState } from "react";
 
@@ -495,9 +496,10 @@ function GardenSummary({
           </div>
         </div>
       ) : (
-        <p>
-          Loading... <FontAwesomeIcon icon="spinner" spinPulse />
-        </p>
+        <>
+          <Skeleton width="100%" height="200px" className="mb-2"></Skeleton>
+          <Skeleton width="100%" height="300px"></Skeleton>
+        </>
       )}
     </Card>
   );
