@@ -53,14 +53,13 @@ function RequestWizard({
   const [instances, setInstances] = useState<Array<Instance>>();
   const instanceList: Array<any> = [];
   const [resetForm, setResetForm] = useState<boolean>(false);
+  const [isFormValid, setIsFormValid] = useState<boolean>(false);
   const [visibleCodeExample, setVisibleCodeExample] = useState<boolean>(false);
 
   const [showCreateRequest, setShowCreateRequest] = useState<boolean>(
     (requestItem?.requestId === undefined || requestItem?.requestId === null) &&
       (requestItem?.jobId === undefined || requestItem?.jobId === null),
   );
-
-  const [isFormValid, setIsFormValid] = useState<boolean>(false);
 
   const [showStepper, setShowStepper] = useState<boolean>(false);
 
