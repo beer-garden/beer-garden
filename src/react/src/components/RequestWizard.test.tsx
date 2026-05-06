@@ -29,6 +29,8 @@ describe("RequestWizard", () => {
         requestItem={newItem}
         updateRequestItem={() => {}}
         removeItem={() => {}}
+        config={{}}
+        isDialog={false}
       />,
     );
 

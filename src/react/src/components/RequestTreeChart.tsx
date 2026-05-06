@@ -80,11 +80,11 @@ function RequestTreeChart(props: RequestTreeChartProps) {
           <HasAccess
             config={config}
             permission="OPERATOR"
-            hasNamespace={node.data.namespace}
-            hasSystemName={node.data.systemName}
-            hasInstanceName={node.data.instance}
-            hasSystemVersion={node.data.version}
-            hasCommandName={node.data.command}
+            hasNamespace={props?.rootRequest?.namespace}
+            hasSystemName={props?.rootRequest?.system}
+            hasSystemVersion={props?.rootRequest?.system_version}
+            hasInstanceName={props?.rootRequest?.instance_name}
+            hasCommandName={props?.rootRequest?.command}
           >
             <Button rounded raised link onClick={() => {}} title="Cancel">
               <FontAwesomeIcon icon="ban" />{" "}
@@ -97,11 +97,11 @@ function RequestTreeChart(props: RequestTreeChartProps) {
           <HasAccess
             config={config}
             permission="PLUGIN_ADMIN"
-            hasNamespace={node.data.namespace}
-            hasSystemName={node.data.systemName}
-            hasInstanceName={node.data.instance}
-            hasSystemVersion={node.data.version}
-            hasCommandName={node.data.command}
+            hasNamespace={props?.rootRequest?.namespace}
+            hasSystemName={props?.rootRequest?.system}
+            hasSystemVersion={props?.rootRequest?.system_version}
+            hasInstanceName={props?.rootRequest?.instance_name}
+            hasCommandName={props?.rootRequest?.command}
           >
             <Button
               rounded
@@ -124,11 +124,11 @@ function RequestTreeChart(props: RequestTreeChartProps) {
           <HasAccess
             config={config}
             permission="OPERATOR"
-            hasNamespace={node.data.namespace}
-            hasSystemName={node.data.systemName}
-            hasInstanceName={node.data.instance}
-            hasSystemVersion={node.data.version}
-            hasCommandName={node.data.command}
+            hasNamespace={props?.rootRequest?.namespace}
+            hasSystemName={props?.rootRequest?.system}
+            hasSystemVersion={props?.rootRequest?.system_version}
+            hasInstanceName={props?.rootRequest?.instance_name}
+            hasCommandName={props?.rootRequest?.command}
           >
             <Link to={`${GetBaseURL()}/recreate/${node.data.id}`}>
               <Button rounded raised link title="Pour Again">

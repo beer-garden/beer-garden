@@ -461,6 +461,7 @@ function App() {
                     requestItem={requestItem}
                     listeners={listeners}
                     addItem={addRequestItem}
+                    config={config}
                     isDialog={true}
                   />
                 </>

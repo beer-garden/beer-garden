@@ -407,38 +407,36 @@ function RoleIndex({
         return <></>;
       }
       return (
-        <HasAccess config={config} permission="GARDEN_ADMIN" isGlobal={true}>
-          <div className="flex">
+        <div className="flex">
+          <Button
+            data-testid={`duplicate-btn-${role.name}`}
+            tooltip="Duplicate"
+            onClick={() => handleLoadRole(role, true)}
+            {...GenerateTourProps(duplicateRoleTourStep)}
+          >
+            <FontAwesomeIcon icon="clone" />
+          </Button>
+          {!role.file_generated && !role.protected && (
             <Button
-              data-testid={`duplicate-btn-${role.name}`}
-              tooltip="Duplicate"
-              onClick={() => handleLoadRole(role, true)}
-              {...GenerateTourProps(duplicateRoleTourStep)}
+              data-testid={`edit-btn-${role.name}`}
+              tooltip="Edit"
+              onClick={() => handleLoadRole(role, false)}
+              {...GenerateTourProps(editRoleTourStep)}
             >
-              <FontAwesomeIcon icon="clone" />
+              <FontAwesomeIcon icon="pencil" />
             </Button>
-            {!role.file_generated && !role.protected && (
-              <Button
-                data-testid={`edit-btn-${role.name}`}
-                tooltip="Edit"
-                onClick={() => handleLoadRole(role, false)}
-                {...GenerateTourProps(editRoleTourStep)}
-              >
-                <FontAwesomeIcon icon="pencil" />
-              </Button>
-            )}
-            {!role.file_generated && !role.protected && (
-              <Button
-                data-testid={`delete-btn-${role.name}`}
-                tooltip="Delete"
-                onClick={() => handleDeleteRole(role)}
-                {...GenerateTourProps(deleteRoleTourStep)}
-              >
-                <FontAwesomeIcon icon="trash-can" />
-              </Button>
-            )}
-          </div>
-        </HasAccess>
+          )}
+          {!role.file_generated && !role.protected && (
+            <Button
+              data-testid={`delete-btn-${role.name}`}
+              tooltip="Delete"
+              onClick={() => handleDeleteRole(role)}
+              {...GenerateTourProps(deleteRoleTourStep)}
+            >
+              <FontAwesomeIcon icon="trash-can" />
+            </Button>
+          )}
+        </div>
       );
     }
 

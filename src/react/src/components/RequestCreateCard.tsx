@@ -269,43 +269,53 @@ function RequestCreateCard({
               className="mr-2"
             />
           </div>
-          <div style={{ marginLeft: "auto" }}>
-            {showCreateRequest && !showScheduleJob && (
-              <Button
-                label="Submit"
-                icon="pi pi-arrow-right"
-                disabled={!isFormValid}
-                onMouseDown={(event) => {
-                  if (event.button === 1) {
-                    // Middle mouse button click
-                    submitRequestAndOpen();
-                  } else {
-                    submitRequest();
-                  }
-                }}
-              />
-            )}
-            {showCreateRequest && showScheduleJob && !requestItem?.jobId && (
-              <Button
-                label="Submit Job"
-                severity="success"
-                disabled={!isFormValid}
-                icon="pi pi-arrow-right"
-                iconPos="right"
-                onClick={submitJob}
-              />
-            )}
-            {showCreateRequest && showScheduleJob && requestItem?.jobId && (
-              <Button
-                label="Update Job"
-                severity="success"
-                disabled={!isFormValid}
-                icon="pi pi-arrow-right"
-                iconPos="right"
-                onClick={updateJob}
-              />
-            )}
-          </div>
+          <HasAccess
+            config={config}
+            permission="OPERATOR"
+            hasNamespace={requestItem.requestCommandInput?.namespace}
+            hasSystemName={requestItem.requestCommandInput?.systemName}
+            hasSystemVersion={requestItem.requestCommandInput?.version}
+            hasInstanceName={requestItem.requestCommandInput?.instance}
+            hasCommandName={requestItem.requestCommandInput?.command}
+          >
+            <div style={{ marginLeft: "auto" }}>
+              {showCreateRequest && !showScheduleJob && (
+                <Button
+                  label="Submit"
+                  icon="pi pi-arrow-right"
+                  disabled={!isFormValid}
+                  onMouseDown={(event) => {
+                    if (event.button === 1) {
+                      // Middle mouse button click
+                      submitRequestAndOpen();
+                    } else {
+                      submitRequest();
+                    }
+                  }}
+                />
+              )}
+              {showCreateRequest && showScheduleJob && !requestItem?.jobId && (
+                <Button
+                  label="Submit Job"
+                  severity="success"
+                  disabled={!isFormValid}
+                  icon="pi pi-arrow-right"
+                  iconPos="right"
+                  onClick={submitJob}
+                />
+              )}
+              {showCreateRequest && showScheduleJob && requestItem?.jobId && (
+                <Button
+                  label="Update Job"
+                  severity="success"
+                  disabled={!isFormValid}
+                  icon="pi pi-arrow-right"
+                  iconPos="right"
+                  onClick={updateJob}
+                />
+              )}
+            </div>
+          </HasAccess>
         </div>
       }
     >

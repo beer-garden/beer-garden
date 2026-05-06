@@ -35,6 +35,7 @@ describe("Navigation", () => {
           runReloadUI={() => {}}
           toggleRunTour={() => {}}
           tourStepsRef={mockTourSteps()}
+          addRequestItem={() => {}}
         />
       </BrowserRouter>,
     );
@@ -57,6 +58,7 @@ describe("Navigation", () => {
           runReloadUI={() => {}}
           toggleRunTour={() => {}}
           tourStepsRef={mockTourSteps()}
+          addRequestItem={() => {}}
         />
       </BrowserRouter>,
     );

@@ -329,7 +329,7 @@ function SystemCard({
   }
   const instanceActions = (instance: Instance) => {
     if (
-      !checkPermission(config, "PLUGIN_ADMIN", {
+      !checkPermission(config, "OPERATOR", {
         gardenName: system.garden_name,
         namespace: system.namespace,
         systemName: system.name,
@@ -364,39 +364,67 @@ function SystemCard({
           });
         },
       },
-      {
+    ];
+    if (
+      checkPermission(config, "PLUGIN_ADMIN", {
+        gardenName: system.garden_name,
+        namespace: system.namespace,
+        systemName: system.name,
+        systemVersion: system.version,
+        instanceName: instance.name,
+      } as PermissionCheck)
+    ) {
+      instanceMenuItems.push({
         label: "Show Logs",
         command: () => setLogsVisible(true),
-      },
-      {
+      });
+      instanceMenuItems.push({
         label: "Manage Queue",
         command: () => setQueueVisible(true),
-      },
-      {
+      });
+      instanceMenuItems.push({
         label: "Cancel/Delete Requests",
         command: () => setCancelDeleteVisible(true),
-      },
-    ];
+      });
+    }
 
     return (
       <div>
-        <Button
-          severity="success"
-          size="small"
-          onClick={() => handleStartInstance(instance, system)}
-          {...GenerateTourProps(startInstanceTourStep)}
+        <HasAccess
+          config={config}
+          permission="PLUGIN_ADMIN"
+          hasGardenName={system.garden_name}
+          hasSystemName={system.name}
+          hasSystemVersion={system.version}
+          hasNamespace={system.namespace}
+          hasInstanceName={instance.name}
         >
-          <FontAwesomeIcon icon="play" />
-        </Button>
-        <Button
-          severity="warning"
-          size="small"
-          onClick={() => handleStopInstance(instance, system)}
-          {...GenerateTourProps(stopInstanceTourStep)}
+          <Button
+            severity="success"
+            size="small"
+            onClick={() => handleStartInstance(instance, system)}
+            {...GenerateTourProps(startInstanceTourStep)}
+          >
+            <FontAwesomeIcon icon="play" />
+          </Button>
+          <Button
+            severity="warning"
+            size="small"
+            onClick={() => handleStopInstance(instance, system)}
+            {...GenerateTourProps(stopInstanceTourStep)}
+          >
+            <FontAwesomeIcon icon="stop" />
+          </Button>
+        </HasAccess>
+        <HasAccess
+          config={config}
+          permission="OPERATOR"
+          hasGardenName={system.garden_name}
+          hasSystemName={system.name}
+          hasSystemVersion={system.version}
+          hasNamespace={system.namespace}
+          hasInstanceName={instance.name}
         >
-          <FontAwesomeIcon icon="stop" />
-        </Button>
-        <>
           <Menu
             model={instanceMenuItems}
             popup
@@ -429,7 +457,7 @@ function SystemCard({
           >
             <FontAwesomeIcon icon="bars" />
           </Button>
-        </>
+        </HasAccess>
       </div>
     );
   };
@@ -461,45 +489,54 @@ function SystemCard({
           >
             {system.description}
           </div>
-          <div>
-            <Button
-              severity="success"
-              size="small"
-              title="Start"
-              onClick={() => startSystem(system)}
-              {...GenerateTourProps(startInstancesTourStep)}
-            >
-              <FontAwesomeIcon icon="play" />
-            </Button>
-            <Button
-              severity="warning"
-              size="small"
-              title="Stop"
-              onClick={() => stopSystem(system)}
-              {...GenerateTourProps(stopInstancesTourStep)}
-            >
-              <FontAwesomeIcon icon="stop" />
-            </Button>
-            <Button
-              severity="info"
-              size="small"
-              title="Refresh"
-              onClick={() => reloadSystem(system)}
-              className="mr-2"
-              {...GenerateTourProps(restartSystemTourStep)}
-            >
-              <FontAwesomeIcon icon="refresh" />
-            </Button>
-            <Button
-              severity="danger"
-              size="small"
-              title="Delete"
-              onClick={() => deleteSystem(system)}
-              {...GenerateTourProps(deleteSystemTourStep)}
-            >
-              <FontAwesomeIcon icon="trash" />
-            </Button>
-          </div>
+          <HasAccess
+            config={config}
+            permission="PLUGIN_ADMIN"
+            hasGardenName={system.garden_name}
+            hasSystemName={system.name}
+            hasSystemVersion={system.version}
+            hasNamespace={system.namespace}
+          >
+            <div>
+              <Button
+                severity="success"
+                size="small"
+                title="Start"
+                onClick={() => startSystem(system)}
+                {...GenerateTourProps(startInstancesTourStep)}
+              >
+                <FontAwesomeIcon icon="play" />
+              </Button>
+              <Button
+                severity="warning"
+                size="small"
+                title="Stop"
+                onClick={() => stopSystem(system)}
+                {...GenerateTourProps(stopInstancesTourStep)}
+              >
+                <FontAwesomeIcon icon="stop" />
+              </Button>
+              <Button
+                severity="info"
+                size="small"
+                title="Refresh"
+                onClick={() => reloadSystem(system)}
+                className="mr-2"
+                {...GenerateTourProps(restartSystemTourStep)}
+              >
+                <FontAwesomeIcon icon="refresh" />
+              </Button>
+              <Button
+                severity="danger"
+                size="small"
+                title="Delete"
+                onClick={() => deleteSystem(system)}
+                {...GenerateTourProps(deleteSystemTourStep)}
+              >
+                <FontAwesomeIcon icon="trash" />
+              </Button>
+            </div>
+          </HasAccess>
         </div>
         <DataTable
           value={system.instances}
