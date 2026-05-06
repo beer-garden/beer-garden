@@ -4,7 +4,7 @@
 TBD
 
 - Fixed bug where GARDEN_UPDATED event of local garden would not return children in 
-  websocket event objects (#)
+  websocket event objects (#2146)
 
 # 3.33.1
 4/27/2026
