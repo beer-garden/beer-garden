@@ -1,9 +1,8 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
 import { ButtonGroup } from "primereact/buttongroup";
-import { Column } from "primereact/column";
 import { confirmDialog } from "primereact/confirmdialog";
-import { DataTable } from "primereact/datatable";
+import { Divider } from "primereact/divider";
 import { Menu } from "primereact/menu";
 import { Panel } from "primereact/panel";
 import { Tag } from "primereact/tag";
@@ -495,37 +494,21 @@ function SystemCard({
             </div>
           </div>
         </div>
-        <DataTable
-          value={system.instances}
-          key={JSON.stringify(system.instances)}
-          size="small"
-          className="flex-1"
-        >
-          <Column
-            field="icon"
-            header="Icon"
-            headerStyle={{ display: "none" }}
-            body={<FontAwesomeIcon icon="folder" />}
-          />
-          <Column
-            field="status"
-            header="Status"
-            headerStyle={{ display: "none" }}
-            body={statusTemplate}
-          />
-          <Column
-            field="name"
-            header="Instance"
-            body={instanceNameTemplate}
-            headerStyle={{ display: "none" }}
-          />
-          <Column
-            header="Actions"
-            headerStyle={{ display: "none" }}
-            style={{ textAlign: "right" }}
-            body={instanceActions}
-          />
-        </DataTable>
+        {system.instances?.map((instance: Instance, index: number) => (
+          <div key={JSON.stringify(instance)}>
+            <div className="flex flex-wrap justify-content-between align-items-center">
+              <div>
+                <FontAwesomeIcon icon="folder" />
+              </div>
+              <div>{statusTemplate(instance)}</div>
+              <div>{instanceNameTemplate(instance)}</div>
+              <div>{instanceActions(instance)}</div>
+            </div>
+            {index < system.instances!.length - 1 && (
+              <Divider className="my-2" />
+            )}
+          </div>
+        ))}
       </Panel>
     </>
   );
