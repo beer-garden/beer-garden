@@ -439,60 +439,50 @@ function SystemCard({
   return (
     <>
       <Panel key={system.id} headerTemplate={headerTemplate}>
-        <div className="flex flex-wrap mb-3">
-          <div
-            className="flex-1 mr-2"
-            style={{
-              overflowWrap: "break-word",
-              width: "80%",
-              minWidth: "100px",
-            }}
-          >
-            {system.description}
-          </div>
-          <div className="flex-1" style={{ width: "205px", minWidth: "205px" }}>
-            <div className="text-right">
-              <ButtonGroup>
-                <Button
-                  severity="success"
-                  size="small"
-                  title="Start"
-                  onClick={() => startSystem(system)}
-                  {...GenerateTourProps(startInstancesTourStep)}
-                >
-                  <FontAwesomeIcon icon="play" />
-                </Button>
-                <Button
-                  severity="warning"
-                  size="small"
-                  title="Stop"
-                  onClick={() => stopSystem(system)}
-                  {...GenerateTourProps(stopInstancesTourStep)}
-                >
-                  <FontAwesomeIcon icon="stop" />
-                </Button>
-                <Button
-                  severity="info"
-                  size="small"
-                  title="Refresh"
-                  onClick={() => reloadSystem(system)}
-                  className="mr-2"
-                  {...GenerateTourProps(restartSystemTourStep)}
-                >
-                  <FontAwesomeIcon icon="refresh" />
-                </Button>
-              </ButtonGroup>
+        <div className="mb-3">
+          <div style={{ float: "right", marginLeft: "2px" }}>
+            <ButtonGroup>
               <Button
-                severity="danger"
+                severity="success"
                 size="small"
-                title="Delete"
-                onClick={() => deleteSystem(system)}
-                {...GenerateTourProps(deleteSystemTourStep)}
+                title="Start"
+                onClick={() => startSystem(system)}
+                {...GenerateTourProps(startInstancesTourStep)}
               >
-                <FontAwesomeIcon icon="trash" />
+                <FontAwesomeIcon icon="play" />
               </Button>
-            </div>
+              <Button
+                severity="warning"
+                size="small"
+                title="Stop"
+                onClick={() => stopSystem(system)}
+                {...GenerateTourProps(stopInstancesTourStep)}
+              >
+                <FontAwesomeIcon icon="stop" />
+              </Button>
+              <Button
+                severity="info"
+                size="small"
+                title="Refresh"
+                onClick={() => reloadSystem(system)}
+                className="mr-2"
+                {...GenerateTourProps(restartSystemTourStep)}
+              >
+                <FontAwesomeIcon icon="refresh" />
+              </Button>
+            </ButtonGroup>
+            <Button
+              severity="danger"
+              size="small"
+              title="Delete"
+              onClick={() => deleteSystem(system)}
+              {...GenerateTourProps(deleteSystemTourStep)}
+            >
+              <FontAwesomeIcon icon="trash" />
+            </Button>
           </div>
+          <div style={{ minHeight: "40px" }}>{system.description}</div>
+          <Divider className="my-2" style={{ clear: "right" }} />
         </div>
         {system.instances?.map((instance: Instance, index: number) => (
           <div key={JSON.stringify(instance)}>
