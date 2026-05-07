@@ -29,13 +29,13 @@ function GardenSummary({
   gardenRef,
   selectedGarden,
   selectedSystems,
-  assocaitedRunners,
+  associatedRunners,
   tourStepsRef,
 }: {
   gardenRef: RefObject<Garden | undefined>;
   selectedGarden: Garden | undefined;
   selectedSystems: System[] | undefined;
-  assocaitedRunners: RefObject<Runner[] | undefined>;
+  associatedRunners: RefObject<Runner[] | undefined>;
   tourStepsRef?: RefObject<Array<TourStepProps>>;
 }) {
   const tourUuid = selectedGarden?.id;
@@ -64,7 +64,7 @@ function GardenSummary({
     if (selectedGarden) {
       return GenerateStatusCounts(
         gardenRef,
-        assocaitedRunners,
+        associatedRunners,
         selectedGarden,
         selectedSystems,
       );

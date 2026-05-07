@@ -416,7 +416,7 @@ function GardenDashboard({
             gardenRef={gardenRef}
             selectedGarden={selectedGarden}
             tourStepsRef={tourStepsRef}
-            assocaitedRunners={associatedRunners}
+            associatedRunners={associatedRunners}
             selectedSystems={selectedSystems}
           />
         )}
