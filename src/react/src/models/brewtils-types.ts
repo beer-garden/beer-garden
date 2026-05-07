@@ -406,8 +406,8 @@ export interface Subscriber {
   version?: string;
   instance?: string;
   command?: string;
-  subscriberType?: string;
-  consumerCount?: number;
+  subscriber_type?: string;
+  consumer_count?: number;
 }
 
 export interface SystemDomainIdentifier {
@@ -441,7 +441,7 @@ export interface Topic {
   id?: string;
   name?: string;
   subscribers?: any[];
-  publisherCount?: number;
+  publisher_count?: number;
 }
 
 export interface UpstreamRole {

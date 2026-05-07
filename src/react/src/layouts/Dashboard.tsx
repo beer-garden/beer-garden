@@ -7,7 +7,7 @@ import { RefObject, useEffect, useRef, useState } from "react";
 import GardenSummary from "../components/GardenSummary";
 import SystemCard from "../components/SystemCard";
 import UnassociatedRunnerCard from "../components/UnassociatedRunnerCard";
-import { Garden, Instance, Runner, System } from "../models/brewtils-types";
+import { Garden, Runner, System } from "../models/brewtils-types";
 import { RequestItem, RunnerGroup, TourStepProps } from "../models/models";
 import { GetRunnerList } from "../services/runner_service";
 import {
@@ -15,7 +15,7 @@ import {
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
-import { GetSeverity } from "../services/util_service";
+import { GenerateStatusCounts, GetSeverity } from "../services/util_service";
 
 function GardenDashboard({
   gardenRef,
@@ -329,26 +329,12 @@ function GardenDashboard({
     garden: Garden,
     systems: System[] | undefined,
   ) => {
-    const statusCounts = new Map();
-
-    if (systems && systems.length > 0) {
-      for (const system of systems.filter(
-        (sys) => sys.garden_name === garden.name,
-      )) {
-        system?.instances?.forEach((instance: Instance) => {
-          if (instance.status) {
-            statusCounts.set(
-              instance.status,
-              (statusCounts.get(instance.status) || 0) + 1,
-            );
-          }
-        });
-      }
-    }
-
-    if (statusCounts.size === 0) {
-      return undefined;
-    }
+    const statusCounts = GenerateStatusCounts(
+      gardenRef,
+      associatedRunnersRef,
+      garden,
+      systems,
+    );
 
     return Array.from(statusCounts, ([status, count]) => {
       if (count && count > 0) {
@@ -436,6 +422,7 @@ function GardenDashboard({
             gardenRef={gardenRef}
             selectedGarden={selectedGarden}
             tourStepsRef={tourStepsRef}
+            associatedRunners={associatedRunnersRef}
             selectedSystems={selectedSystems}
           />
         )}
