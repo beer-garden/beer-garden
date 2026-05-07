@@ -423,6 +423,9 @@ function SystemCard({
     return (
       <div className={className}>
         <div className="flex align-items-center gap-2">
+          <FontAwesomeIcon
+            icon={system.icon_name ? system.icon_name : "gears"}
+          />
           <label className="max-w-20rem font-semibold">
             {selectedGarden === system.namespace
               ? ""
