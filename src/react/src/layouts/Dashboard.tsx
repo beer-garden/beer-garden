@@ -7,7 +7,7 @@ import { RefObject, useEffect, useRef, useState } from "react";
 import GardenSummary from "../components/GardenSummary";
 import SystemCard from "../components/SystemCard";
 import { Garden, Instance, System } from "../models/brewtils-types";
-import { RequestItem,TourStepProps } from "../models/models";
+import { RequestItem, TourStepProps } from "../models/models";
 import {
   AddTourStep,
   ClearTourSteps,

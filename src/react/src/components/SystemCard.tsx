@@ -13,7 +13,7 @@ import InstanceCancelDeleteDialog from "../components/InstanceCancelDeleteReques
 import InstanceManageQueueDialog from "../components/InstanceManageQueueDialog";
 import InstanceShowLogsDialog from "../components/InstanceShowLogsDialog";
 import { Instance, System } from "../models/brewtils-types";
-import { RequestCommand,RequestItem, TourStepProps } from "../models/models";
+import { RequestCommand, RequestItem, TourStepProps } from "../models/models";
 import { StartInstance, StopInstance } from "../services/instance_service";
 import { DeleteSystem, ReloadSystem } from "../services/system_service";
 import {
