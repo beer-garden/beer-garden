@@ -116,7 +116,6 @@ function GardenDashboard({
             associatedRunners.current = associatedRunners.current.filter(
               (runner) => runner.id !== message.payload.id,
             );
-            console.log(`Remove runner ${message.payload.id}`);
           }
         } else {
           if (associatedRunners.current) {
@@ -128,21 +127,18 @@ function GardenDashboard({
               associatedRunners.current = associatedRunners.current.map(
                 (runner) => {
                   if (runner.id === message.payload.id) {
-                    console.log(`Updated runner ${message.payload.id}`);
                     return message.payload;
                   }
                   return runner;
                 },
               );
             } else {
-              console.log(`Add runner ${message.payload.id}`);
               associatedRunners.current = [
                 ...associatedRunners.current,
                 message.payload,
               ];
             }
           } else {
-            console.log(`Add runner ${message.payload.id}`);
             associatedRunners.current = [message.payload];
           }
         }
