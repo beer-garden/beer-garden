@@ -31,7 +31,13 @@ function UserOverlay({
   const toast = useRef<Toast>(null);
 
   useEffect(() => {
-    ChangeTheme(color, dark);
+    if (
+      (localStorage.getItem("theme_dark") === "true") !== dark ||
+      localStorage.getItem("theme_color") !== color
+    ) {
+      ChangeTheme(color, dark);
+      window.dispatchEvent(new Event("storage"));
+    }
   }, [color, dark]);
 
   return (

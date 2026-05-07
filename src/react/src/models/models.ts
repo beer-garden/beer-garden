@@ -4,6 +4,7 @@ import {
   Job,
   Parameter,
   Request,
+  Runner,
   System,
 } from "../models/brewtils-types";
 
@@ -118,4 +119,9 @@ export interface TourStepProps {
   label: string;
   layer: "NAVIGATION" | "LAYOUT" | "COMPONENT";
   pos: number;
+}
+
+export interface RunnerGroup {
+  path: string;
+  runners: Runner[];
 }

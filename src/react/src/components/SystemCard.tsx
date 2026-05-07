@@ -443,7 +443,7 @@ function SystemCard({
         <div className="flex justify-content-between mb-3">
           <div
             className="flex-1 mr-2"
-            style={{ overflowWrap: "break-word", width: "80%" }}
+            style={{ overflowWrap: "break-word", width: "10vw" }}
           >
             {system.description}
           </div>
