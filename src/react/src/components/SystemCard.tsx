@@ -13,7 +13,7 @@ import InstanceCancelDeleteDialog from "../components/InstanceCancelDeleteReques
 import InstanceManageQueueDialog from "../components/InstanceManageQueueDialog";
 import InstanceShowLogsDialog from "../components/InstanceShowLogsDialog";
 import { Instance, System } from "../models/brewtils-types";
-import { RequestCommand,RequestItem, TourStepProps } from "../models/models";
+import { RequestCommand, RequestItem, TourStepProps } from "../models/models";
 import { StartInstance, StopInstance } from "../services/instance_service";
 import { DeleteSystem, ReloadSystem } from "../services/system_service";
 import {
@@ -423,6 +423,9 @@ function SystemCard({
     return (
       <div className={className}>
         <div className="flex align-items-center gap-2">
+          <FontAwesomeIcon
+            icon={system.icon_name ? system.icon_name : "gears"}
+          />
           <label className="max-w-20rem font-semibold">
             {selectedGarden === system.namespace
               ? ""
