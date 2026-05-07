@@ -13,11 +13,9 @@ import UserChangePassword from "./UserChangePassword";
 function UserOverlay({
   username,
   onLogout,
-  runRenderUi,
 }: {
   username: string | undefined;
   onLogout: any;
-  runRenderUi: () => void;
 }) {
   const [color, setColor] = useState<string>(
     localStorage.getItem("theme_color") || "blue",
@@ -38,7 +36,7 @@ function UserOverlay({
       localStorage.getItem("theme_color") !== color
     ) {
       ChangeTheme(color, dark);
-      runRenderUi();
+      window.dispatchEvent(new Event("storage"));
     }
   }, [color, dark]);
 

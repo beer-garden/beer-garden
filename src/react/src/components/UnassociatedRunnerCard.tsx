@@ -5,7 +5,7 @@ import { DataTable } from "primereact/datatable";
 import { Panel } from "primereact/panel";
 import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
-import { RefObject } from "react";
+import { RefObject, useEffect, useState } from "react";
 
 import { Runner } from "../models/brewtils-types";
 import { RunnerGroup } from "../models/models";
@@ -23,13 +23,27 @@ function UnassociatedRunnerCard({
   runnerGroup: RunnerGroup;
   toast?: RefObject<Toast | null>;
 }) {
+  const [darkMode, setDarkMode] = useState(
+    localStorage.getItem("theme_dark") === "true",
+  );
+  const [reloadUI, setReloadUI] = useState(0);
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const newDarkMode = localStorage.getItem("theme_dark") === "true";
+      if (newDarkMode !== darkMode) {
+        setDarkMode(newDarkMode);
+        setReloadUI(reloadUI + 1);
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
   const headerTemplate = (options: any) => {
     const className = `${options.className} justify-content-space-between`;
 
-    const backgroundColor =
-      localStorage.getItem("theme_dark") === "true"
-        ? "var(--red-900)"
-        : "var(--red-100)";
+    const backgroundColor = darkMode ? "var(--red-900)" : "var(--red-100)";
 
     return (
       <div
@@ -178,7 +192,7 @@ function UnassociatedRunnerCard({
 
   return (
     <>
-      <Panel headerTemplate={headerTemplate}>
+      <Panel headerTemplate={headerTemplate} key={reloadUI}>
         <div className="flex justify-content-between mb-3">
           <div
             className="flex-1 mr-2"

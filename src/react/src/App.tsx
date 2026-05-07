@@ -101,10 +101,6 @@ function App() {
   const runReloadUI = () => {
     sessionStorage.clear();
     localStorage.removeItem("requestItems");
-    runRenderUi();
-  };
-
-  const runRenderUi = () => {
     setReloadUI(reloadUI + 1);
   };
 
@@ -435,7 +431,6 @@ function App() {
               listeners={listeners.current}
               config={config}
               runReloadUI={runReloadUI}
-              runRenderUi={runRenderUi}
               addRequestItem={addRequestItem}
               toggleRunTour={toggleRunTour}
               tourStepsRef={tourStepsRef}
