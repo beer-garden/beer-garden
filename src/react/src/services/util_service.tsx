@@ -170,9 +170,9 @@ export const GenerateStatusCounts = (
   }
 
   if (
-    gardenRef.current &&
+    gardenRef?.current &&
     garden.name === gardenRef.current.name &&
-    associatedRunners.current &&
+    associatedRunners?.current &&
     associatedRunners.current.length > 0
   ) {
     for (const runner of associatedRunners.current) {
