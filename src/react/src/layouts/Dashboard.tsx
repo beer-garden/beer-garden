@@ -37,7 +37,8 @@ function GardenDashboard({
   const tourUuid = "garden_dashboard_tour";
   const tourPrefix = "garden_dashboard";
   const selectedGardenRef = useRef<Garden | undefined>(undefined);
-  const associatedRunners = useRef<Runner[] | undefined>(undefined);
+  const associatedRunnersRef = useRef<Runner[] | undefined>(undefined);
+  const [associatedRunners, setAssociatedRunners] = useState<Runner[]>([]);
 
   const [selectedGarden, setSelectedGarden] = useState<Garden | undefined>();
   const [selectedSystems, setSelectedSystems] = useState<System[]>([]);
@@ -84,9 +85,9 @@ function GardenDashboard({
 
     if (
       selectedGardenRef.current?.name === gardenRef.current?.name &&
-      associatedRunners.current
+      associatedRunnersRef.current
     ) {
-      const unassociated = associatedRunners.current.filter((runner) => {
+      const unassociated = associatedRunnersRef.current.filter((runner) => {
         return (
           runner.instance_id === undefined ||
           runner.instance_id === null ||
@@ -112,19 +113,20 @@ function GardenDashboard({
     const MonitorRunners = (message: any) => {
       if (message.payload_type === "Runner") {
         if (message.name === "RUNNER_REMOVED") {
-          if (associatedRunners.current) {
-            associatedRunners.current = associatedRunners.current.filter(
+          if (associatedRunnersRef.current) {
+            associatedRunnersRef.current = associatedRunnersRef.current.filter(
               (runner) => runner.id !== message.payload.id,
             );
+            setAssociatedRunners(associatedRunnersRef.current);
           }
         } else {
-          if (associatedRunners.current) {
+          if (associatedRunnersRef.current) {
             if (
-              associatedRunners.current.some(
+              associatedRunnersRef.current.some(
                 (runner) => runner.id === message.payload.id,
               )
             ) {
-              associatedRunners.current = associatedRunners.current.map(
+              associatedRunnersRef.current = associatedRunnersRef.current.map(
                 (runner) => {
                   if (runner.id === message.payload.id) {
                     return message.payload;
@@ -132,14 +134,17 @@ function GardenDashboard({
                   return runner;
                 },
               );
+              setAssociatedRunners(associatedRunnersRef.current);
             } else {
-              associatedRunners.current = [
-                ...associatedRunners.current,
+              associatedRunnersRef.current = [
+                ...associatedRunnersRef.current,
                 message.payload,
               ];
+              setAssociatedRunners(associatedRunnersRef.current);
             }
           } else {
-            associatedRunners.current = [message.payload];
+            associatedRunnersRef.current = [message.payload];
+            setAssociatedRunners(associatedRunnersRef.current);
           }
         }
       }
@@ -156,10 +161,11 @@ function GardenDashboard({
   });
 
   useEffect(() => {
-    if (associatedRunners.current === undefined) {
+    if (associatedRunnersRef.current === undefined) {
       GetRunnerList()
         .then((runners) => {
-          associatedRunners.current = runners;
+          associatedRunnersRef.current = runners;
+          setAssociatedRunners(associatedRunnersRef.current);
           setUnassociatedRunners(getUnassociatedRunners());
         })
         .catch((error) => console.error("Error loading runners", error));
@@ -325,7 +331,7 @@ function GardenDashboard({
   ) => {
     const statusCounts = GenerateStatusCounts(
       gardenRef,
-      associatedRunners,
+      associatedRunnersRef,
       garden,
       systems,
     );
@@ -416,7 +422,7 @@ function GardenDashboard({
             gardenRef={gardenRef}
             selectedGarden={selectedGarden}
             tourStepsRef={tourStepsRef}
-            associatedRunners={associatedRunners}
+            associatedRunners={associatedRunnersRef}
             selectedSystems={selectedSystems}
           />
         )}
@@ -435,6 +441,7 @@ function GardenDashboard({
               tourStepsRef={tourStepsRef}
               selectedGarden={selectedGarden?.name}
               addRequestItem={addRequestItem}
+              associatedRunners={associatedRunners}
             />
           </div>
         ))}
