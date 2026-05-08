@@ -136,20 +136,28 @@ function JobIndex({
   useEffect(() => {
     const MonitorJobs = (message: any) => {
       if (message.payload_type === "Job") {
-        let updateList = false;
-        const updatedJobs = [] as Array<Job>;
-
-        for (const job of jobs) {
-          if (message.payload.id === job.id) {
-            updateList = true;
-            updatedJobs.push(message.payload);
-          } else {
-            updatedJobs.push(job);
-          }
-        }
-
-        if (updateList) {
-          setJobs(updatedJobs);
+        if (message.name == "JOB_CREATED") {
+          setJobs((prevJobs: Job[]) => {
+            return [...prevJobs, message.payload];
+          });
+        } else if (message.name == "JOB_DELETED") {
+          setJobs((prevJobs: Job[]) => {
+            return prevJobs.filter((job: Job) => job.id != message.payload.id);
+          });
+        } else if (
+          ["JOB_UPDATED", "JOB_PAUSED", "JOB_RESUMED"].includes(message.name)
+        ) {
+          setJobs((prevJobs: Job[]) => {
+            return prevJobs.map((job: Job) => {
+              if (job.id === message.payload.id) {
+                return {
+                  ...job,
+                  ...message.payload,
+                };
+              }
+              return job;
+            });
+          });
         }
       }
     };

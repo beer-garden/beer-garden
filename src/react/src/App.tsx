@@ -467,7 +467,7 @@ function App() {
                 </>
               </Dialog>
             )}
-            <div className="flex-grow-1">
+            <div className="flex-grow-1" key={reloadUI}>
               <Routes>
                 <Route
                   path="/dashboard"
@@ -480,6 +480,7 @@ function App() {
                       systemState={systemState}
                       addRequestItem={addRequestItem}
                       config={config}
+                      listeners={listeners.current}
                     />
                   }
                 />
@@ -602,6 +603,7 @@ function App() {
                       systemState={systemState}
                       addRequestItem={addRequestItem}
                       config={config}
+                      listeners={listeners.current}
                     />
                   }
                 />

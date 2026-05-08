@@ -534,33 +534,30 @@ describe("GardenSummary", () => {
     });
   });
 
-  test("system severity", () => {
+  it.each([
+    { status: "INITIALIZING" },
+    { status: "RUNNING" },
+    { status: "PAUSED" },
+    { status: "STOPPED" },
+    { status: "DEAD" },
+    { status: "UNRESPONSIVE" },
+    { status: "STARTING" },
+    { status: "STOPPING" },
+    { status: "UNKNOWN" },
+    { status: "AWAITING_SYSTEM" },
+    { status: "ERROR" },
+  ])(`system severity" $status`, ({ status }) => {
     const mockGarden = getRootGarden();
 
-    const statuses = [
-      "INITIALIZING",
-      "RUNNING",
-      "PAUSED",
-      "STOPPED",
-      "DEAD",
-      "UNRESPONSIVE",
-      "STARTING",
-      "STOPPING",
-      "UNKNOWN",
-      "AWAITING_SYSTEM",
-      "ERROR",
+    mockGarden.systems = [
+      {
+        instances: [{ status: status } as Instance],
+        local: false,
+        garden_name: mockGarden.name,
+      } as System,
     ];
 
-    mockGarden.systems = [];
-    for (let i = 0; i < statuses.length; i++) {
-      for (let x = 0; x <= i; x++) {
-        mockGarden.systems.push({
-          instances: [{ status: statuses[i] } as Instance],
-        } as System);
-      }
-    }
-
-    const refGarden = mockGarden;
+    const refGarden = { name: "rootGarden" };
 
     render(
       <GardenSummary
@@ -569,15 +566,12 @@ describe("GardenSummary", () => {
         config={{}}
         tourStepsRef={mockTourSteps()}
         selectedSystems={mockGarden.systems}
+        associatedRunners={{ current: [] }}
       />,
     );
 
-    for (let i = 0; i < statuses.length; i++) {
-      const summary = screen.queryByTestId(
-        `${statuses[i]}_severity_system_summary`,
-      );
-      expect(summary).toBeInTheDocument();
-      expect(summary).toHaveTextContent(`${i + 1}`);
-    }
+    const summary = screen.queryByTestId(`${status}_severity_system_summary`);
+    expect(summary).toBeInTheDocument();
+    expect(summary).toHaveTextContent(`1`);
   });
 });

@@ -7,12 +7,13 @@ import { Menu } from "primereact/menu";
 import { Panel } from "primereact/panel";
 import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
+import { Tooltip } from "primereact/tooltip";
 import { RefObject, useEffect, useRef, useState } from "react";
 
 import InstanceCancelDeleteDialog from "../components/InstanceCancelDeleteRequestsDialog";
 import InstanceManageQueueDialog from "../components/InstanceManageQueueDialog";
 import InstanceShowLogsDialog from "../components/InstanceShowLogsDialog";
-import { Instance, System } from "../models/brewtils-types";
+import { Instance, Runner, System } from "../models/brewtils-types";
 import { Config, PermissionCheck } from "../models/models";
 import { RequestCommand, RequestItem, TourStepProps } from "../models/models";
 import { StartInstance, StopInstance } from "../services/instance_service";
@@ -32,6 +33,7 @@ interface SystemCardProps {
   config: Config;
   tourStepsRef?: RefObject<Array<TourStepProps>>;
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
+  associatedRunners: Runner[];
 }
 
 function SystemCard({
@@ -41,6 +43,7 @@ function SystemCard({
   config,
   tourStepsRef,
   addRequestItem,
+  associatedRunners,
 }: SystemCardProps) {
   const tourUuid = system.id;
   const tourPrefix = "system_summary";
@@ -327,6 +330,53 @@ function SystemCard({
       </div>
     );
   }
+
+  function instanceIconTemplate(instance: Instance) {
+    let label = undefined;
+    let icon = undefined;
+
+    if (
+      instance?.metadata?.runner_id &&
+      instance?.metadata?.runner_id.length > 0
+    ) {
+      for (const runner of associatedRunners) {
+        if (runner.id === instance?.metadata?.runner_id) {
+          label = `../${runner.path}`;
+          if (runner.dead) {
+            label = `Subprocess dead: ../${runner.path}`;
+            icon = "skull";
+          }
+        }
+      }
+      if (system.local && label === undefined) {
+        label = "Unable to find Local Runner";
+      }
+    }
+
+    if (label === undefined) {
+      label = "Externally Managed";
+    }
+
+    if (icon === undefined) {
+      if (instance.status == "UNRESPONSIVE") {
+        icon = "triangle-exclamation";
+      } else if (instance.status == "AWAITING_SYSTEM") {
+        icon = "hourglass";
+      } else if (system.local) {
+        icon = "folder-open";
+      } else {
+        icon = "rss";
+      }
+    }
+
+    return (
+      <>
+        {label && <Tooltip content={label} target={`#ICON_${instance.id}`} />}
+        {icon && <FontAwesomeIcon id={`ICON_${instance.id}`} icon={icon} />}
+      </>
+    );
+  }
+
   const instanceActions = (instance: Instance) => {
     if (
       !checkPermission(config, "OPERATOR", {
@@ -468,6 +518,9 @@ function SystemCard({
     return (
       <div className={className}>
         <div className="flex align-items-center gap-2">
+          <FontAwesomeIcon
+            icon={system.icon_name ? system.icon_name : "gears"}
+          />
           <label className="max-w-20rem font-semibold">
             {selectedGarden === system.namespace
               ? ""
@@ -485,7 +538,7 @@ function SystemCard({
         <div className="flex justify-content-between mb-3">
           <div
             className="flex-1 mr-2"
-            style={{ overflowWrap: "break-word", width: "80%" }}
+            style={{ overflowWrap: "break-word", width: "10vw" }}
           >
             {system.description}
           </div>
@@ -548,7 +601,7 @@ function SystemCard({
             field="icon"
             header="Icon"
             headerStyle={{ display: "none" }}
-            body={<FontAwesomeIcon icon="folder" />}
+            body={instanceIconTemplate}
           />
           <Column
             field="status"
