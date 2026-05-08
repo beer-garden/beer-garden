@@ -7,7 +7,7 @@ import { DataTable } from "primereact/datatable";
 import { Tag } from "primereact/tag";
 import { RefObject, useEffect, useState } from "react";
 
-import { Connection, Garden, Instance, System } from "../models/brewtils-types";
+import { Connection, Garden, Runner, System } from "../models/brewtils-types";
 import { TourStepProps } from "../models/models";
 import {
   DeleteGarden,
@@ -23,17 +23,19 @@ import {
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
-import { GetSeverity } from "../services/util_service";
+import { GenerateStatusCounts, GetSeverity } from "../services/util_service";
 
 function GardenSummary({
   gardenRef,
   selectedGarden,
   selectedSystems,
+  associatedRunners,
   tourStepsRef,
 }: {
   gardenRef: RefObject<Garden | undefined>;
   selectedGarden: Garden | undefined;
   selectedSystems: System[] | undefined;
+  associatedRunners: RefObject<Runner[] | undefined>;
   tourStepsRef?: RefObject<Array<TourStepProps>>;
 }) {
   const tourUuid = selectedGarden?.id;
@@ -59,22 +61,16 @@ function GardenSummary({
   };
 
   const getSystemCounts = () => {
-    const statusCounts = new Map();
-
-    if (selectedSystems && selectedSystems.length > 0) {
-      for (const system of selectedSystems) {
-        system?.instances?.forEach((instance: Instance) => {
-          if (instance.status) {
-            statusCounts.set(
-              instance.status,
-              (statusCounts.get(instance.status) || 0) + 1,
-            );
-          }
-        });
-      }
+    if (selectedGarden) {
+      return GenerateStatusCounts(
+        gardenRef,
+        associatedRunners,
+        selectedGarden,
+        selectedSystems,
+      );
     }
 
-    return statusCounts;
+    return new Map();
   };
 
   const [publishingConnections, setPublishingConnections] = useState<
