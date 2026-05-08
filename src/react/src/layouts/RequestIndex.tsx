@@ -2,7 +2,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { FilterMatchMode } from "primereact/api";
 import { Button } from "primereact/button";
 import { Calendar } from "primereact/calendar";
-import { Checkbox } from "primereact/checkbox";
+import { Checkbox, CheckboxChangeEvent } from "primereact/checkbox";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { MultiSelect } from "primereact/multiselect";
@@ -42,7 +42,9 @@ function RequestIndex({
   const [totalRecords, setTotalRecords] = useState(0);
   const [lazyParams, setLazyParams] = useState({ first: 0, rows: 10, page: 0 });
   const [recordsUpdated, setRecordsUpdated] = useState(false);
-  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState<boolean>(false);
+  const [showHidden, setShowHidden] = useState<boolean>(false);
+  const [showChildren, setShowChildren] = useState<boolean>(false);
 
   const [filters, setFilters] = useState({
     command_display_name: {
@@ -76,6 +78,24 @@ function RequestIndex({
     pos: 0,
   };
 
+  const ShowHiddenTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUUID,
+    label: "Show Hidden",
+    content: "Toggling this option will show hidden requests.",
+    layer: "LAYOUT",
+    pos: 1,
+  };
+
+  const ShowChildrenTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUUID,
+    label: "Show Children",
+    content: "Toggling this option will show child requests.",
+    layer: "LAYOUT",
+    pos: 2,
+  };
+
   const RefreshTableTourStep: TourStepProps = {
     prefix: tourPrefix,
     uuid: tourUUID,
@@ -83,7 +103,7 @@ function RequestIndex({
     content:
       "Clicking this button will refresh the table with the latest data.",
     layer: "LAYOUT",
-    pos: 1,
+    pos: 3,
   };
 
   const OpenRequestTourStep: TourStepProps = {
@@ -92,7 +112,7 @@ function RequestIndex({
     label: `Open Request`,
     content: `View details about this request on View Request Page`,
     layer: "LAYOUT",
-    pos: 2,
+    pos: 4,
   };
 
   const ViewRequestTourStep: TourStepProps = {
@@ -101,7 +121,7 @@ function RequestIndex({
     label: `View Request`,
     content: `View Request in popup modal.`,
     layer: "LAYOUT",
-    pos: 3,
+    pos: 5,
   };
 
   const lazyLoadData = useCallback(() => {
@@ -201,11 +221,20 @@ function RequestIndex({
       return filterQuery;
     };
 
-    const queryHeaders = {
+    const queryHeaders: Record<string, any> = {
       length: lazyParams.rows,
       start: lazyParams.first,
+      // include_hidden: showHidden,
+      // include_children: showChildren,
       ...generateFilterQuery(),
     };
+
+    if (showHidden) {
+      queryHeaders["include_hidden"] = true;
+    }
+    if (showChildren) {
+      queryHeaders["include_children"] = true;
+    }
 
     GetRequestList(queryHeaders)
       .then((data: [Array<Request>, Headers]) => {
@@ -225,7 +254,7 @@ function RequestIndex({
         console.error("Error fetching request list:", error);
         setLoading(false);
       });
-  }, [lazyParams, filters]);
+  }, [lazyParams, filters, showHidden, showChildren]);
 
   const onPage = (event: any) => {
     setLazyParams(event);
@@ -272,11 +301,6 @@ function RequestIndex({
       />
     );
   };
-
-  const handleChange = (event: any) => {
-    setAutoRefresh(event.checked);
-  };
-
   useLayoutEffect(() => {
     if (autoRefresh && recordsUpdated) {
       lazyLoadData();
@@ -288,12 +312,36 @@ function RequestIndex({
       <span className="text-xl text-900 font-bold">Requests</span>
       <div>
         <Checkbox
-          onChange={handleChange}
+          onChange={(e: CheckboxChangeEvent) =>
+            setAutoRefresh(e.target?.checked ?? false)
+          }
           checked={autoRefresh}
           className="mr-2"
           {...GenerateTourProps(AutoRefreshTourStep)}
         />
         Auto Refresh
+      </div>
+      <div>
+        <Checkbox
+          onChange={(e: CheckboxChangeEvent) =>
+            setShowHidden(e.target?.checked ?? false)
+          }
+          checked={showHidden}
+          className="mr-2"
+          {...GenerateTourProps(ShowHiddenTourStep)}
+        />
+        Show Hidden
+      </div>
+      <div>
+        <Checkbox
+          onChange={(e: CheckboxChangeEvent) =>
+            setShowChildren(e.target?.checked ?? false)
+          }
+          checked={showChildren}
+          className="mr-2"
+          {...GenerateTourProps(ShowChildrenTourStep)}
+        />
+        Show Children
       </div>
       <Button
         rounded
@@ -420,6 +468,8 @@ function RequestIndex({
   useEffect(() => {
     ClearTourSteps(tourStepsRef, tourPrefix, tourUUID);
     AddTourStep(tourStepsRef, AutoRefreshTourStep);
+    AddTourStep(tourStepsRef, ShowHiddenTourStep);
+    AddTourStep(tourStepsRef, ShowChildrenTourStep);
     AddTourStep(tourStepsRef, RefreshTableTourStep);
     if (requests && requests.length > 0) {
       AddTourStep(tourStepsRef, OpenRequestTourStep);
