@@ -14,7 +14,8 @@ import { useEffect, useRef, useState } from "react";
 
 import CommandForm from "../components/CommandForm";
 import { Command, Request, System } from "../models/brewtils-types";
-import { RequestItem } from "../models/models";
+import { Config, PermissionCheck, RequestItem } from "../models/models";
+import { checkPermission } from "../services/permission_service";
 import { GetRequest, PostRequest } from "../services/request_service";
 import { GetSystemList } from "../services/system_service";
 import { GetBaseURL } from "../services/util_service";
@@ -35,6 +36,7 @@ function RequestViewCard({
   removeItem,
   addItem,
   listeners,
+  config,
   isDialog,
 }: {
   requestItem: RequestItem;
@@ -42,6 +44,7 @@ function RequestViewCard({
   removeItem: (id: string) => void;
   addItem: (itemParams?: Partial<RequestItem>) => void;
   listeners: Record<string, any>;
+  config: Config;
   isDialog: boolean;
 }) {
   const requestId = useRef<string | null | undefined>(
@@ -305,7 +308,16 @@ function RequestViewCard({
             model={
               request &&
               request.status &&
-              !["CREATED", "IN_PROGRESS"].includes(request.status)
+              !["CREATED", "IN_PROGRESS"].includes(request.status) &&
+              checkPermission(config, "OPERATOR", {
+                global: false,
+                gardenName: request?.target_garden,
+                namespace: request?.namespace,
+                systemName: request?.system,
+                systemVersion: request?.system_version,
+                instanceName: request?.instance_name,
+                commandName: request?.command,
+              } as PermissionCheck)
                 ? [
                     {
                       label: "Run Again Now",

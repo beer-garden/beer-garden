@@ -9,10 +9,12 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { TourStepProps } from "../models/models";
+import * as permissionService from "../services/permission_service";
 import * as roleService from "../services/role_service";
 import RoleIndex from "./RoleIndex";
 
 vi.mock("../services/role_service");
+vi.mock("../services/permission_service");
 
 const mockTourSteps = () => {
   const mockRef = {
@@ -54,6 +56,7 @@ describe("RoleIndex", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     cleanup();
+    vi.mocked(permissionService.checkPermission).mockResolvedValue(true);
   });
 
   // Test role page render

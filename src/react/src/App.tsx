@@ -461,6 +461,7 @@ function App() {
                     requestItem={requestItem}
                     listeners={listeners}
                     addItem={addRequestItem}
+                    config={config}
                     isDialog={true}
                   />
                 </>
@@ -478,6 +479,7 @@ function App() {
                       gardenState={gardenState}
                       systemState={systemState}
                       addRequestItem={addRequestItem}
+                      config={config}
                       listeners={listeners.current}
                     />
                   }
@@ -558,6 +560,7 @@ function App() {
                       listeners={listeners.current}
                       tourStepsRef={tourStepsRef}
                       addRequestItem={addRequestItem}
+                      config={config}
                     />
                   }
                 />
@@ -578,7 +581,10 @@ function App() {
                     <RoleIndex config={config} tourStepsRef={tourStepsRef} />
                   }
                 />
-                <Route path="/topics" element={<TopicIndex />} />
+                <Route
+                  path="/topics"
+                  element={<TopicIndex config={config} />}
+                />
                 <Route
                   path="/users"
                   element={
@@ -596,6 +602,7 @@ function App() {
                       gardenState={gardenState}
                       systemState={systemState}
                       addRequestItem={addRequestItem}
+                      config={config}
                       listeners={listeners.current}
                     />
                   }

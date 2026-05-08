@@ -237,7 +237,7 @@ export interface Job {
   name?: string;
   trigger_type?: string;
   trigger?: CronTrigger | DateTrigger | IntervalTrigger | FileTrigger;
-  request_template?: any;
+  request_template?: RequestTemplate;
   misfire_grace_time?: number | null;
   coalesce?: boolean;
   next_run_time?: any;
@@ -345,16 +345,16 @@ export interface Request {
 
 export interface RequestTemplate {
   system?: string;
-  systemVersion?: string;
-  instanceName?: string;
+  system_version?: string;
+  instance_name?: string;
   namespace?: string;
   command?: string;
-  commandDisplayName?: string;
-  commandType?: string;
+  command_display_name?: string;
+  command_type?: string;
   parameters?: object;
   comment?: string;
   metadata?: object;
-  outputType?: string;
+  output_type?: string;
 }
 
 export interface Resolvable {

@@ -13,6 +13,7 @@ import {
   Job,
   Request,
 } from "../models/brewtils-types";
+import { Config } from "../models/models";
 import {
   GetJob,
   PauseJob,
@@ -21,6 +22,7 @@ import {
 } from "../services/job_service";
 import { GetRequestList } from "../services/request_service";
 import { GetBaseURL } from "../services/util_service";
+import HasAccess from "./HasAccess";
 
 function SchedulerViewCard({
   jobId,
@@ -29,6 +31,7 @@ function SchedulerViewCard({
   editJob,
   deleteJob,
   isDialog,
+  config,
 }: {
   jobId: string;
   listeners: Record<string, any>;
@@ -36,6 +39,7 @@ function SchedulerViewCard({
   editJob: () => void;
   deleteJob: () => void;
   isDialog: boolean;
+  config: Config;
 }) {
   const [job, setJob] = useState<Job | undefined>(undefined);
 
@@ -255,85 +259,95 @@ function SchedulerViewCard({
             <div className="mr-2">{job ? job.name : "Loading..."}</div>
           </div>
 
-          <Button
-            rounded
-            raised
-            link
-            onClick={() => {
-              if (job?.id) {
-                RunAdhocJob(job.id).catch((error) => {
-                  console.error("Error running job:", error);
-                });
-              }
-            }}
-            title={"Run Now " + job?.name}
-            className="mr-2"
+          <HasAccess
+            config={config}
+            permission="OPERATOR"
+            hasNamespace={job?.request_template?.namespace}
+            hasSystemName={job?.request_template?.system}
+            hasSystemVersion={job?.request_template?.system_version}
+            hasInstanceName={job?.request_template?.instance_name}
+            hasCommandName={job?.request_template?.command}
           >
-            <FontAwesomeIcon icon="forward" />
-          </Button>
+            <Button
+              rounded
+              raised
+              link
+              onClick={() => {
+                if (job?.id) {
+                  RunAdhocJob(job.id).catch((error) => {
+                    console.error("Error running job:", error);
+                  });
+                }
+              }}
+              title={"Run Now " + job?.name}
+              className="mr-2"
+            >
+              <FontAwesomeIcon icon="forward" />
+            </Button>
 
-          <Button
-            rounded
-            raised
-            link
-            onClick={() => {
-              editJob();
-            }}
-            title={"Update Job " + job?.name}
-            className="mr-2"
-          >
-            <FontAwesomeIcon icon="edit" />
-          </Button>
-          {job?.status === "RUNNING" && (
             <Button
               rounded
               raised
               link
               onClick={() => {
-                PauseJob(job)
-                  .then((updatedJob) => {
-                    setJob(updatedJob);
-                  })
-                  .catch((error) => {
-                    console.error("Error pausing job:", error);
-                  });
+                editJob();
               }}
-              title={"Pause Job " + job?.name}
+              title={"Update Job " + job?.name}
               className="mr-2"
             >
-              <FontAwesomeIcon icon="pause" />
+              <FontAwesomeIcon icon="edit" />
             </Button>
-          )}
-          {job?.status === "PAUSED" && (
+            {job?.status === "RUNNING" && (
+              <Button
+                rounded
+                raised
+                link
+                onClick={() => {
+                  PauseJob(job)
+                    .then((updatedJob) => {
+                      setJob(updatedJob);
+                    })
+                    .catch((error) => {
+                      console.error("Error pausing job:", error);
+                    });
+                }}
+                title={"Pause Job " + job?.name}
+                className="mr-2"
+              >
+                <FontAwesomeIcon icon="pause" />
+              </Button>
+            )}
+            {job?.status === "PAUSED" && (
+              <Button
+                rounded
+                raised
+                link
+                onClick={() => {
+                  ResumeJob(job)
+                    .then((updatedJob) => {
+                      setJob(updatedJob);
+                    })
+                    .catch((error) => {
+                      console.error("Error resuming job:", error);
+                    });
+                }}
+                title={"Resume Job " + job?.name}
+                className="mr-2"
+              >
+                <FontAwesomeIcon icon="play" />
+              </Button>
+            )}
             <Button
               rounded
               raised
               link
-              onClick={() => {
-                ResumeJob(job)
-                  .then((updatedJob) => {
-                    setJob(updatedJob);
-                  })
-                  .catch((error) => {
-                    console.error("Error resuming job:", error);
-                  });
-              }}
-              title={"Resume Job " + job?.name}
+              onClick={() => deleteJob()}
+              title={"Delete Job " + job?.name}
               className="mr-2"
             >
-              <FontAwesomeIcon icon="play" />
+              <FontAwesomeIcon icon="trash" />
             </Button>
-          )}
-          <Button
-            rounded
-            raised
-            link
-            onClick={() => deleteJob()}
-            title={"Delete Job " + job?.name}
-            className="mr-2"
-          >
-            <FontAwesomeIcon icon="trash" />
-          </Button>
+          </HasAccess>
         </div>
       }
     >

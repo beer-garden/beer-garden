@@ -12,8 +12,10 @@ import { Messages } from "primereact/messages";
 import { Toast } from "primereact/toast";
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 
+import HasAccess from "../components/HasAccess";
 import SubscriberItem from "../components/SubscriberItem";
 import { Subscriber, Topic } from "../models/brewtils-types";
+import { Config } from "../models/models";
 import {
   AddSubscriber,
   CreateTopic,
@@ -29,7 +31,7 @@ interface TopicSubscriber {
   subscriber?: Subscriber;
 }
 
-function TopicIndex() {
+function TopicIndex({ config }: { config: Config }) {
   const toast = useRef<Toast>(null);
   const [topicSubscribers, setTopicSubscribers] = useState<
     Array<TopicSubscriber>
@@ -160,18 +162,20 @@ function TopicIndex() {
     return (
       <div className="flex items-end ml-2 page-header">
         <h1 className="flex-1">Topic Management</h1>
-        <div>
-          <Button
-            onClick={handleSync}
-            label="Sync Topics"
-            data-testid="rescan-btn"
-          />
-          <Button
-            onClick={openTopicDialog}
-            label="Create Topic"
-            data-testid="create-btn"
-          />
-        </div>
+        <HasAccess config={config} permission="PLUGIN_ADMIN">
+          <div>
+            <Button
+              onClick={handleSync}
+              label="Sync Topics"
+              data-testid="rescan-btn"
+            />
+            <Button
+              onClick={openTopicDialog}
+              label="Create Topic"
+              data-testid="create-btn"
+            />
+          </div>
+        </HasAccess>
       </div>
     );
   }
@@ -286,17 +290,19 @@ function TopicIndex() {
       return (
         <div className="flex align-items-center gap-2">
           <span>{topicSubscriber.topic?.publisher_count}</span>
-          {((topicSubscriber.topic !== undefined &&
-            topicSubscriber.topic.publisher_count) ||
-            0) > 0 && (
-            <Button
-              size="small"
-              tooltip="Clear count"
-              onClick={() => clearCount(topicSubscriber.topic as Topic)}
-            >
-              <FontAwesomeIcon icon="0" />
-            </Button>
-          )}
+          <HasAccess config={config} permission="PLUGIN_ADMIN">
+            {((topicSubscriber.topic !== undefined &&
+              topicSubscriber.topic.publisher_count) ||
+              0) > 0 && (
+              <Button
+                size="small"
+                tooltip="Clear count"
+                onClick={() => clearCount(topicSubscriber.topic as Topic)}
+              >
+                <FontAwesomeIcon icon="0" />
+              </Button>
+            )}
+          </HasAccess>
         </div>
       );
     }
@@ -394,23 +400,25 @@ function TopicIndex() {
       return (
         <div className="flex align-items-center gap-2">
           <span>{topicSubscriber.subscriber?.consumer_count}</span>
-          {topicSubscriber.subscriber != undefined &&
-            topicSubscriber.subscriber.consumer_count != undefined &&
-            (topicSubscriber.subscriber.consumer_count || 0) > 0 && (
-              <Button
-                size="small"
-                className="ml-2"
-                tooltip="Clear count"
-                onClick={() =>
-                  clearCount(
-                    topicSubscriber.topic as Topic,
-                    topicSubscriber.subscriber as Subscriber,
-                  )
-                }
-              >
-                <FontAwesomeIcon icon="0" />
-              </Button>
-            )}
+          <HasAccess config={config} permission="PLUGIN_ADMIN">
+            {topicSubscriber.subscriber != undefined &&
+              topicSubscriber.subscriber.consumer_count != undefined &&
+              (topicSubscriber.subscriber.consumer_count || 0) > 0 && (
+                <Button
+                  size="small"
+                  className="ml-2"
+                  tooltip="Clear count"
+                  onClick={() =>
+                    clearCount(
+                      topicSubscriber.topic as Topic,
+                      topicSubscriber.subscriber as Subscriber,
+                    )
+                  }
+                >
+                  <FontAwesomeIcon icon="0" />
+                </Button>
+              )}
+          </HasAccess>
         </div>
       );
     }
@@ -419,22 +427,24 @@ function TopicIndex() {
       return (
         <div className="flex align-items-center gap-2">
           <span>{topicSubscriber.subscriber?.subscriber_type}</span>
-          {topicSubscriber.subscriber !== undefined &&
-            topicSubscriber.subscriber.subscriber_type == "DYNAMIC" && (
-              <Button
-                onClick={() =>
-                  removeSubscriber(
-                    topicSubscriber.topic!,
-                    topicSubscriber.subscriber!,
-                  )
-                }
-                size="small"
-                className="ml-2"
-                tooltip="Remove Subscriber"
-              >
-                <FontAwesomeIcon icon="xmark-square" />
-              </Button>
-            )}
+          <HasAccess config={config} permission="PLUGIN_ADMIN">
+            {topicSubscriber.subscriber !== undefined &&
+              topicSubscriber.subscriber.subscriber_type == "DYNAMIC" && (
+                <Button
+                  onClick={() =>
+                    removeSubscriber(
+                      topicSubscriber.topic!,
+                      topicSubscriber.subscriber!,
+                    )
+                  }
+                  size="small"
+                  className="ml-2"
+                  tooltip="Remove Subscriber"
+                >
+                  <FontAwesomeIcon icon="xmark-square" />
+                </Button>
+              )}
+          </HasAccess>
         </div>
       );
     }
@@ -446,22 +456,24 @@ function TopicIndex() {
         );
 
       return (
-        <div className="flex">
-          <Button
-            onClick={() => addSubscriber(topicSubscriber.topic!)}
-            tooltip="Add Subscriber"
-          >
-            <FontAwesomeIcon icon="square-plus" />
-          </Button>
-          {has_only_dynamic_subscribers && (
+        <HasAccess config={config} permission="PLUGIN_ADMIN">
+          <div className="flex">
             <Button
-              onClick={() => deleteTopic(topicSubscriber.topic!)}
-              tooltip="Delete Topic"
+              onClick={() => addSubscriber(topicSubscriber.topic!)}
+              tooltip="Add Subscriber"
             >
-              <FontAwesomeIcon icon="trash" />
+              <FontAwesomeIcon icon="square-plus" />
             </Button>
-          )}
-        </div>
+            {has_only_dynamic_subscribers && (
+              <Button
+                onClick={() => deleteTopic(topicSubscriber.topic!)}
+                tooltip="Delete Topic"
+              >
+                <FontAwesomeIcon icon="trash" />
+              </Button>
+            )}
+          </div>
+        </HasAccess>
       );
     }
 

@@ -81,6 +81,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        config={{}}
         tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
@@ -106,6 +107,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        config={{}}
         tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
@@ -134,6 +136,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        config={{}}
         tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
@@ -165,6 +168,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        config={{}}
         tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
@@ -212,6 +216,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        config={{}}
         tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
@@ -238,6 +243,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        config={{}}
         tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
@@ -264,6 +270,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        config={{}}
         tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
@@ -290,6 +297,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        config={{}}
         tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
@@ -316,6 +324,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        config={{}}
         tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
@@ -342,6 +351,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        config={{}}
         tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
@@ -370,6 +380,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        config={{}}
         tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
@@ -396,6 +407,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        config={{}}
         tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
@@ -430,6 +442,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        config={{}}
         tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
@@ -463,6 +476,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        config={{}}
         tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
@@ -496,6 +510,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        config={{}}
         tourStepsRef={mockTourSteps()}
         selectedSystems={[]}
       />,
@@ -548,6 +563,7 @@ describe("GardenSummary", () => {
       <GardenSummary
         gardenRef={{ current: refGarden }}
         selectedGarden={mockGarden}
+        config={{}}
         tourStepsRef={mockTourSteps()}
         selectedSystems={mockGarden.systems}
         associatedRunners={{ current: [] }}

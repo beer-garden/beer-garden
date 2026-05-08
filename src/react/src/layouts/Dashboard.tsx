@@ -8,6 +8,7 @@ import GardenSummary from "../components/GardenSummary";
 import SystemCard from "../components/SystemCard";
 import UnassociatedRunnerCard from "../components/UnassociatedRunnerCard";
 import { Garden, Runner, System } from "../models/brewtils-types";
+import { Config } from "../models/models";
 import { RequestItem, RunnerGroup, TourStepProps } from "../models/models";
 import { GetRunnerList } from "../services/runner_service";
 import {
@@ -24,6 +25,7 @@ function GardenDashboard({
   systemState,
   tourStepsRef,
   addRequestItem,
+  config,
   listeners,
 }: {
   gardenRef: RefObject<Garden | undefined>;
@@ -32,6 +34,7 @@ function GardenDashboard({
   systemState: number;
   tourStepsRef: RefObject<Array<TourStepProps>>;
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
+  config: Config;
   listeners: Record<string, any>;
 }) {
   const tourUuid = "garden_dashboard_tour";
@@ -421,6 +424,7 @@ function GardenDashboard({
           <GardenSummary
             gardenRef={gardenRef}
             selectedGarden={selectedGarden}
+            config={config}
             tourStepsRef={tourStepsRef}
             associatedRunners={associatedRunnersRef}
             selectedSystems={selectedSystems}
@@ -441,6 +445,7 @@ function GardenDashboard({
               tourStepsRef={tourStepsRef}
               selectedGarden={selectedGarden?.name}
               addRequestItem={addRequestItem}
+              config={config}
               associatedRunners={associatedRunners}
             />
           </div>
