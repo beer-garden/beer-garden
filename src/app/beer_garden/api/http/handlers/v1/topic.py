@@ -3,7 +3,6 @@ from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.models import Subscriber as BrewtilsSubscriber
 from brewtils.schema_parser import SchemaParser
-
 from mongoengine import Q
 
 from beer_garden.api.http.base_handler import BaseHandler
@@ -417,14 +416,18 @@ class TopicListAPI(BaseHandler):
             hide_generated = bool(hide_generated.lower() == "true")
 
         if hide_generated:
-          q_filter = Q()
-          q_filter = q_filter & (
-              Q(**{"subscribers__subscriber_type__in": ["ANNOTATED", "DYNAMIC"]})
-              | Q(**{"subscribers__size": 0})
-          )
-          response = await self.client(Operation(operation_type="TOPIC_READ_ALL", kwargs={"q_filter": q_filter}))
+            q_filter = Q()
+            q_filter = q_filter & (
+                Q(**{"subscribers__subscriber_type__in": ["ANNOTATED", "DYNAMIC"]})
+                | Q(**{"subscribers__size": 0})
+            )
+            response = await self.client(
+                Operation(
+                    operation_type="TOPIC_READ_ALL", kwargs={"q_filter": q_filter}
+                )
+            )
         else:
-          response = await self.client(Operation(operation_type="TOPIC_READ_ALL"))
+            response = await self.client(Operation(operation_type="TOPIC_READ_ALL"))
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
