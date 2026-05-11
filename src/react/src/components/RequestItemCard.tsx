@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { RequestItem } from "../models/models";
+import { Config, RequestItem } from "../models/models";
 import { DeleteJob } from "../services/job_service";
 import RequestCreateCard from "./RequestCreateCard";
 import RequestViewCard from "./RequestViewCard";
@@ -14,6 +14,7 @@ function RequestItemCard({
   removeItem,
   addItem,
   isDialog,
+  config,
 }: {
   requestItem: RequestItem;
   listeners: Record<string, any>;
@@ -21,6 +22,7 @@ function RequestItemCard({
   removeItem: (id: string) => void;
   addItem: (itemParams?: Partial<RequestItem>) => void;
   isDialog: boolean;
+  config: Config;
 }) {
   const [useWizard] = useState<boolean>(
     localStorage.getItem("user_advanced") === "true" ? false : true,
@@ -34,6 +36,7 @@ function RequestItemCard({
           updateRequestItem={updateRequestItem}
           removeItem={removeItem}
           isDialog={isDialog}
+          config={config}
         />
       )}
       {requestItem?.type === "REQUEST" && !useWizard && (
@@ -42,6 +45,7 @@ function RequestItemCard({
           updateRequestItem={updateRequestItem}
           removeItem={removeItem}
           isDialog={isDialog}
+          config={config}
         />
       )}
       {requestItem?.type === "VIEW_REQUEST" && (
@@ -52,6 +56,7 @@ function RequestItemCard({
           listeners={listeners}
           addItem={addItem}
           isDialog={isDialog}
+          config={config}
         />
       )}
 
@@ -61,6 +66,7 @@ function RequestItemCard({
           removeItem={removeItem}
           listeners={listeners}
           isDialog={isDialog}
+          config={config}
           editJob={() => {
             updateRequestItem({
               ...requestItem,

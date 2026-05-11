@@ -329,7 +329,7 @@ function NavigationMenu({
         <FontAwesomeIcon className="fa-2x" icon="compass" />
       </Button>
 
-      <CurrentRequestsTemplate listeners={listeners} />
+      <CurrentRequestsTemplate listeners={listeners} config={config} />
       <Button onClick={(e) => op.current?.toggle(e)} text>
         {username !== undefined ? (
           <Avatar

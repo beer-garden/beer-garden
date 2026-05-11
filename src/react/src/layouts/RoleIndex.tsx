@@ -18,9 +18,11 @@ import {
   useState,
 } from "react";
 
+import HasAccess from "../components/HasAccess";
 import RoleScopeCard from "../components/RoleScopeCard";
 import { Role } from "../models/brewtils-types";
 import { Config, TourStepProps } from "../models/models";
+import { checkPermission } from "../services/permission_service";
 import {
   CreateRole,
   DeleteRole,
@@ -282,20 +284,22 @@ function RoleIndex({
     return (
       <div className="flex items-end ml-2 page-header">
         <h1 className="flex-1">Role Management</h1>
-        <div>
-          <Button
-            onClick={handleRescan}
-            label="Rescan Roles"
-            data-testid="rescan-btn"
-            {...GenerateTourProps(rescanRolesTourStep)}
-          />
-          <Button
-            onClick={openRoleDialog}
-            label="Create Role"
-            data-testid="create-btn"
-            {...GenerateTourProps(createRoleTourStep)}
-          />
-        </div>
+        <HasAccess config={config} permission="GARDEN_ADMIN" isGlobal={true}>
+          <div>
+            <Button
+              onClick={handleRescan}
+              label="Rescan Roles"
+              data-testid="rescan-btn"
+              {...GenerateTourProps(rescanRolesTourStep)}
+            />
+            <Button
+              onClick={openRoleDialog}
+              label="Create Role"
+              data-testid="create-btn"
+              {...GenerateTourProps(createRoleTourStep)}
+            />
+          </div>
+        </HasAccess>
       </div>
     );
   }
@@ -399,6 +403,9 @@ function RoleIndex({
 
     function roleButtonTemplate(role: Role) {
       // Show delete
+      if (!checkPermission(config, "GARDEN_ADMIN", { global: true })) {
+        return <></>;
+      }
       return (
         <div className="flex">
           <Button

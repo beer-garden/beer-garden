@@ -41,7 +41,7 @@ describe("PermissionTesting", () => {
     `Garden Scope Test Access $checkValue -> $expected`,
     ({ checkValue, expected }) => {
       const roles = [
-        { permission: "READ_ONLY", scopeGardens: [checkValue] } as Role,
+        { permission: "READ_ONLY", scope_gardens: [checkValue] } as Role,
       ];
       expect(
         CheckUserHasRoles(roles, "READ_ONLY", {
@@ -58,7 +58,7 @@ describe("PermissionTesting", () => {
     `Namespace Scope Test Access $checkValue -> $expected`,
     ({ checkValue, expected }) => {
       const roles = [
-        { permission: "READ_ONLY", scopeNamespaces: [checkValue] } as Role,
+        { permission: "READ_ONLY", scope_namespaces: [checkValue] } as Role,
       ];
       expect(
         CheckUserHasRoles(roles, "READ_ONLY", {
@@ -75,7 +75,7 @@ describe("PermissionTesting", () => {
     `System Scope Test Access $checkValue -> $expected`,
     ({ checkValue, expected }) => {
       const roles = [
-        { permission: "READ_ONLY", scopeSystems: [checkValue] } as Role,
+        { permission: "READ_ONLY", scope_systems: [checkValue] } as Role,
       ];
       expect(
         CheckUserHasRoles(roles, "READ_ONLY", {
@@ -92,7 +92,7 @@ describe("PermissionTesting", () => {
     `System Version Scope Test Access $checkValue -> $expected`,
     ({ checkValue, expected }) => {
       const roles = [
-        { permission: "READ_ONLY", scopeVersions: [checkValue] } as Role,
+        { permission: "READ_ONLY", scope_versions: [checkValue] } as Role,
       ];
       expect(
         CheckUserHasRoles(roles, "READ_ONLY", {
@@ -109,7 +109,7 @@ describe("PermissionTesting", () => {
     `Instance Scope Test Access $checkValue -> $expected`,
     ({ checkValue, expected }) => {
       const roles = [
-        { permission: "READ_ONLY", scopeInstances: [checkValue] } as Role,
+        { permission: "READ_ONLY", scope_instances: [checkValue] } as Role,
       ];
       expect(
         CheckUserHasRoles(roles, "READ_ONLY", {
@@ -126,7 +126,7 @@ describe("PermissionTesting", () => {
     `System Scope Test Access $checkValue -> $expected`,
     ({ checkValue, expected }) => {
       const roles = [
-        { permission: "READ_ONLY", scopeCommands: [checkValue] } as Role,
+        { permission: "READ_ONLY", scope_commands: [checkValue] } as Role,
       ];
       expect(
         CheckUserHasRoles(roles, "READ_ONLY", {
@@ -190,33 +190,39 @@ describe("PermissionTesting", () => {
   it.each([
     { roleCheck: { permission: "READ_ONLY" } as Role, expected: true },
     {
-      roleCheck: { permission: "READ_ONLY", scopeGardens: ["failed"] } as Role,
+      roleCheck: { permission: "READ_ONLY", scope_gardens: ["failed"] } as Role,
       expected: false,
     },
     {
       roleCheck: {
         permission: "READ_ONLY",
-        scopeNamespaces: ["failed"],
+        scope_namespaces: ["failed"],
       } as Role,
       expected: false,
     },
     {
-      roleCheck: { permission: "READ_ONLY", scopeSystems: ["failed"] } as Role,
-      expected: false,
-    },
-    {
-      roleCheck: { permission: "READ_ONLY", scopeVersions: ["failed"] } as Role,
+      roleCheck: { permission: "READ_ONLY", scope_systems: ["failed"] } as Role,
       expected: false,
     },
     {
       roleCheck: {
         permission: "READ_ONLY",
-        scopeInstances: ["failed"],
+        scope_versions: ["failed"],
       } as Role,
       expected: false,
     },
     {
-      roleCheck: { permission: "READ_ONLY", scopeCommands: ["failed"] } as Role,
+      roleCheck: {
+        permission: "READ_ONLY",
+        scope_instances: ["failed"],
+      } as Role,
+      expected: false,
+    },
+    {
+      roleCheck: {
+        permission: "READ_ONLY",
+        scope_commands: ["failed"],
+      } as Role,
       expected: false,
     },
   ])(`Global Test Role $roleCheck -> $expected`, ({ roleCheck, expected }) => {
@@ -271,12 +277,12 @@ describe("PermissionTesting", () => {
 
   it.each(
     getAllCombinations([
-      "scopeGardens",
-      "scopeNamespaces",
-      "scopeSystems",
-      "scopeVersions",
-      "scopeInstances",
-      "scopeCommands",
+      "scope_gardens",
+      "scope_namespaces",
+      "scope_systems",
+      "scope_versions",
+      "scope_instances",
+      "scope_commands",
     ]),
   )(`Wildcard Role Support $scopes`, ({ role }) => {
     const roles = [role];

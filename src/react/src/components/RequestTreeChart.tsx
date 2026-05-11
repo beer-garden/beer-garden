@@ -8,7 +8,6 @@ import HasAccess from "../components/HasAccess";
 import { Request } from "../models/brewtils-types";
 import { Config } from "../models/models";
 import { DeleteRequest } from "../services/request_service";
-import { GetBaseURL } from "../services/util_service";
 
 function parseRequest(request: Request, config: Config) {
   const item = {
@@ -69,7 +68,7 @@ function RequestTreeChart(props: RequestTreeChartProps) {
     }
     return (
       <div>
-        <Link to={`${GetBaseURL()}/request/${node.data.id}`}>
+        <Link to={`/request/${node.data.id}`}>
           <Button rounded raised link title="Open">
             <FontAwesomeIcon icon="arrow-up-right-from-square" />{" "}
           </Button>
@@ -80,11 +79,11 @@ function RequestTreeChart(props: RequestTreeChartProps) {
           <HasAccess
             config={config}
             permission="OPERATOR"
-            hasNamespace={node.data.namespace}
-            hasSystemName={node.data.systemName}
-            hasInstanceName={node.data.instance}
-            hasSystemVersion={node.data.version}
-            hasCommandName={node.data.command}
+            hasNamespace={props?.rootRequest?.namespace}
+            hasSystemName={props?.rootRequest?.system}
+            hasSystemVersion={props?.rootRequest?.system_version}
+            hasInstanceName={props?.rootRequest?.instance_name}
+            hasCommandName={props?.rootRequest?.command}
           >
             <Button rounded raised link onClick={() => {}} title="Cancel">
               <FontAwesomeIcon icon="ban" />{" "}
@@ -97,11 +96,11 @@ function RequestTreeChart(props: RequestTreeChartProps) {
           <HasAccess
             config={config}
             permission="PLUGIN_ADMIN"
-            hasNamespace={node.data.namespace}
-            hasSystemName={node.data.systemName}
-            hasInstanceName={node.data.instance}
-            hasSystemVersion={node.data.version}
-            hasCommandName={node.data.command}
+            hasNamespace={props?.rootRequest?.namespace}
+            hasSystemName={props?.rootRequest?.system}
+            hasSystemVersion={props?.rootRequest?.system_version}
+            hasInstanceName={props?.rootRequest?.instance_name}
+            hasCommandName={props?.rootRequest?.command}
           >
             <Button
               rounded
@@ -124,13 +123,13 @@ function RequestTreeChart(props: RequestTreeChartProps) {
           <HasAccess
             config={config}
             permission="OPERATOR"
-            hasNamespace={node.data.namespace}
-            hasSystemName={node.data.systemName}
-            hasInstanceName={node.data.instance}
-            hasSystemVersion={node.data.version}
-            hasCommandName={node.data.command}
+            hasNamespace={props?.rootRequest?.namespace}
+            hasSystemName={props?.rootRequest?.system}
+            hasSystemVersion={props?.rootRequest?.system_version}
+            hasInstanceName={props?.rootRequest?.instance_name}
+            hasCommandName={props?.rootRequest?.command}
           >
-            <Link to={`${GetBaseURL()}/recreate/${node.data.id}`}>
+            <Link to={`/recreate/${node.data.id}`}>
               <Button rounded raised link title="Pour Again">
                 <FontAwesomeIcon icon="rotate" />{" "}
               </Button>

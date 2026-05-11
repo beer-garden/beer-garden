@@ -1,8 +1,9 @@
 import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
+import { Messages } from "primereact/messages";
 import { Password } from "primereact/password";
 import { Toast } from "primereact/toast";
-import { ChangeEvent, RefObject, useState } from "react";
+import { ChangeEvent, RefObject, useRef, useState } from "react";
 
 import {
   AdminUpdatePassword,
@@ -33,8 +34,10 @@ function UserChangePassword({
   );
   const [confirmPasswordInvalid, setConfirmPasswordInvalid] =
     useState<boolean>(true);
+  const msgs = useRef<Messages>(null);
 
   function setPassword() {
+    msgs.current?.clear();
     if (isAdmin) {
       setAdminUserPassword();
     } else {
@@ -45,34 +48,32 @@ function UserChangePassword({
   function setAdminUserPassword() {
     if (username && newPassword && confirmPassword) {
       if (newPassword !== confirmPassword) {
-        toast.current?.show({
+        msgs.current?.show({
           severity: "error",
-          summary: "Error",
           detail: "Passwords do not match",
-          life: 3000,
+          sticky: true,
         });
         return;
       }
       AdminUpdatePassword(username, newPassword)
         .then(() => {
+          if (callback) {
+            callback();
+          }
+          handleUserPasswordDialogClose();
           toast.current?.show({
             severity: "success",
             summary: "Success",
             detail: `Password updated for user ${username}`,
             life: 3000,
           });
-          if (callback) {
-            callback();
-          }
-          handleUserPasswordDialogClose();
         })
         .catch((error) => {
           console.error("Error updating password:", error);
-          toast.current?.show({
+          msgs.current?.show({
             severity: "error",
-            summary: "Error",
-            detail: `Failed to update password for user ${username}`,
-            life: 3000,
+            detail: `Failed to update password for ${username}`,
+            sticky: true,
           });
         });
     }
@@ -81,34 +82,32 @@ function UserChangePassword({
   function setUserPassword() {
     if (currentPassword && newPassword && confirmPassword) {
       if (newPassword !== confirmPassword) {
-        toast.current?.show({
+        msgs.current?.show({
           severity: "error",
-          summary: "Error",
           detail: "Passwords do not match",
-          life: 3000,
+          sticky: true,
         });
         return;
       }
       UserUpdatePassword(newPassword, currentPassword)
         .then(() => {
+          if (callback) {
+            callback();
+          }
+          handleUserPasswordDialogClose();
           toast.current?.show({
             severity: "success",
             summary: "Success",
             detail: `Password updated for user ${username}`,
             life: 3000,
           });
-          if (callback) {
-            callback();
-          }
-          handleUserPasswordDialogClose();
         })
         .catch((error) => {
           console.error("Error updating password:", error);
-          toast.current?.show({
+          msgs.current?.show({
             severity: "error",
-            summary: "Error",
-            detail: `Failed to update password for user ${username}`,
-            life: 3000,
+            detail: `Failed to update password for ${username}`,
+            sticky: true,
           });
         });
     }
@@ -144,6 +143,7 @@ function UserChangePassword({
         handleUserPasswordDialogClose();
       }}
     >
+      <Messages ref={msgs} />
       <div className="flex flex-column gap-2">
         {!isAdmin && (
           <>
