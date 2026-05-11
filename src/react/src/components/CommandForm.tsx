@@ -1,3 +1,4 @@
+import { InputTextarea } from "primereact/inputtextarea";
 import { useEffect, useRef, useState } from "react";
 
 import { ChoicesValue, Request } from "../models/brewtils-types";
@@ -574,6 +575,25 @@ function CommandForm({
             </div>
           </div>
         ))}
+      <div
+        className="flex justify-content-between mb-3"
+        key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMENT`}
+      >
+        <div style={{ width: "20%" }}>
+          <label htmlFor="COMMAND_COMMENT">Comment</label>
+        </div>
+        <div style={{ width: "80%" }}>
+          <InputTextarea
+            id="COMMAND_COMMENT"
+            value={request?.comment}
+            onChange={(e) =>
+              setRequest({ ...request, comment: e.target.value })
+            }
+            disabled={disabled}
+            style={{ maxWidth: "75%" }}
+          />
+        </div>
+      </div>
     </div>
   );
 }
