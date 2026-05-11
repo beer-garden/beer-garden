@@ -9,12 +9,14 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { User } from "../models/brewtils-types";
 import { Config, TourStepProps } from "../models/models";
+import * as permissionService from "../services/permission_service";
 import * as tokenService from "../services/token_service";
 import * as userService from "../services/user_service";
 import UserIndex from "./UserIndex";
 
 vi.mock("../services/user_service");
 vi.mock("../services/token_service");
+vi.mock("../services/permission_service");
 
 const mockConfig: Config = { auth_enabled: true } as Config;
 
@@ -56,6 +58,7 @@ describe("UserIndex", () => {
     vi.mocked(userService.DeleteUser).mockResolvedValue();
     vi.mocked(userService.RescanUsers).mockResolvedValue();
     vi.mocked(tokenService.RevokeToken).mockResolvedValue();
+    vi.mocked(permissionService.checkPermission).mockResolvedValue(true);
   });
 
   test("should render user management page", async () => {

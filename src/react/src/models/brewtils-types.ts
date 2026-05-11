@@ -186,7 +186,11 @@ export interface Instance {
   queueType?: string;
   queueInfo?: object;
   icon_name?: string;
-  metadata?: object;
+  metadata?: InstanceMetadata;
+}
+
+export interface InstanceMetadata {
+  runner_id?: string;
 }
 
 export interface IntervalTrigger {
@@ -233,7 +237,7 @@ export interface Job {
   name?: string;
   trigger_type?: string;
   trigger?: CronTrigger | DateTrigger | IntervalTrigger | FileTrigger;
-  request_template?: any;
+  request_template?: RequestTemplate;
   misfire_grace_time?: number | null;
   coalesce?: boolean;
   next_run_time?: any;
@@ -341,16 +345,16 @@ export interface Request {
 
 export interface RequestTemplate {
   system?: string;
-  systemVersion?: string;
-  instanceName?: string;
+  system_version?: string;
+  instance_name?: string;
   namespace?: string;
   command?: string;
-  commandDisplayName?: string;
-  commandType?: string;
+  command_display_name?: string;
+  command_type?: string;
   parameters?: object;
   comment?: string;
   metadata?: object;
-  outputType?: string;
+  output_type?: string;
 }
 
 export interface Resolvable {
@@ -379,7 +383,7 @@ export interface Runner {
   id?: string;
   name?: string;
   path?: string;
-  instanceId?: string;
+  instance_id?: string;
   stopped?: boolean;
   dead?: boolean;
   restart?: boolean;
@@ -402,8 +406,8 @@ export interface Subscriber {
   version?: string;
   instance?: string;
   command?: string;
-  subscriberType?: string;
-  consumerCount?: number;
+  subscriber_type?: string;
+  consumer_count?: number;
 }
 
 export interface SystemDomainIdentifier {
@@ -437,7 +441,7 @@ export interface Topic {
   id?: string;
   name?: string;
   subscribers?: any[];
-  publisherCount?: number;
+  publisher_count?: number;
 }
 
 export interface UpstreamRole {

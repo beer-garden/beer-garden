@@ -60,6 +60,8 @@ describe("SchedulerViewCard", () => {
         editJob={() => {}}
         deleteJob={() => {}}
         removeItem={() => {}}
+        config={{}}
+        isDialog={true}
       />,
     );
 
@@ -242,6 +244,8 @@ describe("SchedulerViewCard", () => {
         editJob={() => {}}
         deleteJob={() => {}}
         removeItem={() => {}}
+        config={{}}
+        isDialog={true}
       />,
     );
 
@@ -288,6 +292,8 @@ describe("SchedulerViewCard", () => {
         editJob={() => {}}
         deleteJob={() => {}}
         removeItem={() => {}}
+        config={{}}
+        isDialog={true}
       />,
     );
 
@@ -387,6 +393,8 @@ describe("SchedulerViewCard", () => {
         editJob={() => {}}
         deleteJob={() => {}}
         removeItem={() => {}}
+        config={{}}
+        isDialog={true}
       />,
     );
 
@@ -430,6 +438,8 @@ describe("SchedulerViewCard", () => {
         editJob={() => {}}
         deleteJob={() => {}}
         removeItem={() => {}}
+        config={{}}
+        isDialog={true}
       />,
     );
 
@@ -497,6 +507,8 @@ describe("SchedulerViewCard", () => {
         editJob={() => {}}
         deleteJob={() => {}}
         removeItem={() => {}}
+        config={{}}
+        isDialog={true}
       />,
     );
 
@@ -586,6 +598,8 @@ describe("SchedulerViewCard", () => {
         editJob={() => {}}
         deleteJob={() => {}}
         removeItem={() => {}}
+        config={{}}
+        isDialog={true}
       />,
     );
 
@@ -642,6 +656,8 @@ describe("SchedulerViewCard", () => {
         editJob={() => {}}
         deleteJob={() => {}}
         removeItem={() => {}}
+        config={{}}
+        isDialog={true}
       />,
     );
 
@@ -697,6 +713,8 @@ describe("SchedulerViewCard", () => {
         editJob={() => {}}
         deleteJob={deleteJobMock}
         removeItem={() => {}}
+        config={{}}
+        isDialog={true}
       />,
     );
 
@@ -749,6 +767,8 @@ describe("SchedulerViewCard", () => {
         editJob={() => {}}
         deleteJob={() => {}}
         removeItem={() => {}}
+        config={{}}
+        isDialog={true}
       />,
     );
 
@@ -799,6 +819,8 @@ describe("SchedulerViewCard", () => {
         editJob={() => {}}
         deleteJob={() => {}}
         removeItem={closeJobMock}
+        config={{}}
+        isDialog={false}
       />,
     );
 
@@ -857,6 +879,8 @@ describe("SchedulerViewCard", () => {
         editJob={() => {}}
         deleteJob={() => {}}
         removeItem={() => {}}
+        config={{}}
+        isDialog={true}
       />,
     );
 

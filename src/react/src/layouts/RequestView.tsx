@@ -12,11 +12,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import CommandForm from "../components/CommandForm";
-import HasAccess from "../components/HasAccess";
 import RequestOutput from "../components/RequestOutput";
 import RequestTreeChart from "../components/RequestTreeChart";
 import { Request, System } from "../models/brewtils-types";
-import { Config, RequestCommand, RequestItem } from "../models/models";
+import {
+  Config,
+  PermissionCheck,
+  RequestCommand,
+  RequestItem,
+} from "../models/models";
+import { checkPermission } from "../services/permission_service";
 import {
   CancelRequest,
   DeleteRequest,
@@ -70,6 +75,7 @@ function RequestOptions({
   setRequestProjectionSelected,
   requestProjectionSelectedRef,
   addRequestItem,
+  config,
 }: {
   request: Request;
   requestProjections?: RequestCommand[];
@@ -77,45 +83,58 @@ function RequestOptions({
   setRequestProjectionSelected: (value: RequestCommand | undefined) => void;
   requestProjectionSelectedRef: React.RefObject<RequestCommand | undefined>;
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
+  config: Config;
 }) {
   const navigate = useNavigate();
   const items: MenuItem[] = [];
 
-  if (
-    request.status &&
-    ["CREATED", "RECEIVED", "IN_PROGRESS"].includes(request.status)
-  ) {
-    items.push({
-      label: "Cancel Request",
-      icon: <FontAwesomeIcon icon="xmark" />,
-      command: () => {
-        CancelRequest(request).catch((error) => {
-          console.error("Error canceling request:", error);
-        });
-      },
-    });
-  } else {
-    items.push({
-      label: "Download Output",
-      icon: <FontAwesomeIcon icon="download" />,
-      command: () => {
-        handleDownload(request);
-      },
-    });
+  const execute_authority = checkPermission(config, "OPERATOR", {
+    gardenName: request?.target_garden,
+  } as PermissionCheck);
 
-    items.push({
-      label: "Delete Request",
-      icon: <FontAwesomeIcon icon="xmark" />,
-      command: () => {
-        DeleteRequest(request)
-          .then(() => {
-            void navigate(`/requests`);
-          })
-          .catch((error) => {
-            console.error("Error deleting request:", error);
+  if (execute_authority) {
+    if (
+      request.status &&
+      ["CREATED", "RECEIVED", "IN_PROGRESS"].includes(request.status)
+    ) {
+      items.push({
+        label: "Cancel Request",
+        icon: <FontAwesomeIcon icon="xmark" />,
+        command: () => {
+          CancelRequest(request).catch((error) => {
+            console.error("Error canceling request:", error);
           });
-      },
-    });
+        },
+      });
+    } else {
+      items.push({
+        label: "Download Output",
+        icon: <FontAwesomeIcon icon="download" />,
+        command: () => {
+          handleDownload(request);
+        },
+      });
+
+      if (
+        checkPermission(config, "GARDEN_ADMIN", {
+          gardenName: request?.target_garden,
+        } as PermissionCheck)
+      ) {
+        items.push({
+          label: "Delete Request",
+          icon: <FontAwesomeIcon icon="xmark" />,
+          command: () => {
+            DeleteRequest(request)
+              .then(() => {
+                void navigate(`/requests`);
+              })
+              .catch((error) => {
+                console.error("Error deleting request:", error);
+              });
+          },
+        });
+      }
+    }
   }
 
   const pourAgain = (request: Request) => {
@@ -137,43 +156,54 @@ function RequestOptions({
   return (
     <div className="card justify-content-end">
       <div className="flex flex-end">
-        <SplitButton
-          label="Pour Again"
-          icon={<FontAwesomeIcon icon="plus" />}
-          model={items}
-          className="p-button-secondary"
-          onClick={() => pourAgain(request)}
-          severity="success"
-          style={{ marginLeft: "auto" }}
-        />
-      </div>
-      {requestProjections && requestProjections.length > 0 && (
-        <div className="card">
-          <h5>Run Next</h5>
-          <Dropdown
-            value={requestProjectionSelected}
-            options={requestProjections}
-            valueTemplate={commandTemplate}
-            itemTemplate={commandTemplate}
-            onChange={(e) => {
-              requestProjectionSelectedRef.current = e.value;
-              setRequestProjectionSelected(e.value);
-            }}
-            placeholder="Select a command to run next"
+        {execute_authority && (
+          <SplitButton
+            label="Pour Again"
+            icon={<FontAwesomeIcon icon="plus" />}
+            model={items}
+            className="p-button-secondary"
+            onClick={() => pourAgain(request)}
+            severity="success"
+            style={{ marginLeft: "auto" }}
           />
+        )}
+        {!execute_authority && (
           <Button
-            label="Run"
-            onClick={() => {
-              if (requestProjectionSelectedRef.current) {
-                addRequestItem({
-                  type: "REQUEST",
-                  requestCommandInput: requestProjectionSelectedRef.current,
-                });
-              }
-            }}
+            icon={<FontAwesomeIcon icon="download" />}
+            label="Download Output"
+            onClick={() => handleDownload(request)}
           />
-        </div>
-      )}
+        )}
+      </div>
+      {execute_authority &&
+        requestProjections &&
+        requestProjections.length > 0 && (
+          <div className="card">
+            <h5>Run Next</h5>
+            <Dropdown
+              value={requestProjectionSelected}
+              options={requestProjections}
+              valueTemplate={commandTemplate}
+              itemTemplate={commandTemplate}
+              onChange={(e) => {
+                requestProjectionSelectedRef.current = e.value;
+                setRequestProjectionSelected(e.value);
+              }}
+              placeholder="Select a command to run next"
+            />
+            <Button
+              label="Run"
+              onClick={() => {
+                if (requestProjectionSelectedRef.current) {
+                  addRequestItem({
+                    type: "REQUEST",
+                    requestCommandInput: requestProjectionSelectedRef.current,
+                  });
+                }
+              }}
+            />
+          </div>
+        )}
     </div>
   );
 }
@@ -403,38 +433,36 @@ function RequestView({
         >
           <StepperPanel header="Request Parameters">
             {/* Need to determine if Read Only can still download values */}
-            <HasAccess
-              config={config}
-              permission="OPERATOR"
-              hasNamespace={request.namespace}
-              hasSystemName={request.system}
-              hasInstanceName={request.instance_name}
-              hasSystemVersion={request.system_version}
-              hasCommandName={request.command}
-            >
-              <RequestOptions
-                request={request}
-                requestProjections={requestProjections}
-                requestProjectionSelected={requestProjectionSelected}
-                setRequestProjectionSelected={setRequestProjectionSelected}
-                requestProjectionSelectedRef={requestProjectionSelectedRef}
-                addRequestItem={addRequestItem}
-              />
-            </HasAccess>
-            {!showCommandForm && <Skeleton width="100%" height="10rem" />}
-            {showCommandForm && command && (
-              <CommandForm
-                {...{
-                  command: command,
-                  request: request,
-                  setRequest: setRequest,
-                  resetForm: false,
-                  setResetForm: () => {},
-                  setIsFormValid: () => {},
-                }}
-              />
-            )}
-            {showCommandForm && !command && <UnformattedInput {...request} />}
+            <div className="flex">
+              {!showCommandForm && <Skeleton width="100%" height="10rem" />}
+              {showCommandForm && command && (
+                <CommandForm
+                  {...{
+                    command: command,
+                    request: request,
+                    setRequest: setRequest,
+                    resetForm: false,
+                    setResetForm: () => {},
+                    setIsFormValid: () => {},
+                  }}
+                />
+              )}
+              {showCommandForm && !command && <UnformattedInput {...request} />}
+
+              {request && (
+                <div style={{ marginLeft: "auto" }}>
+                  <RequestOptions
+                    request={request}
+                    config={config}
+                    addRequestItem={addRequestItem}
+                    requestProjections={requestProjections}
+                    requestProjectionSelected={requestProjectionSelected}
+                    setRequestProjectionSelected={setRequestProjectionSelected}
+                    requestProjectionSelectedRef={requestProjectionSelectedRef}
+                  />
+                </div>
+              )}
+            </div>
           </StepperPanel>
           <StepperPanel header="Request Output">
             <div className="flex">
@@ -443,6 +471,7 @@ function RequestView({
                 <div style={{ marginLeft: "auto" }}>
                   <RequestOptions
                     request={request}
+                    config={config}
                     addRequestItem={addRequestItem}
                     requestProjections={requestProjections}
                     requestProjectionSelected={requestProjectionSelected}

@@ -9,6 +9,7 @@ import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
 import { RefObject, useCallback, useEffect, useRef, useState } from "react";
 
+import HasAccess from "../components/HasAccess";
 import UserChangeAccountMapping from "../components/UserChangeAccountMapping";
 import UserChangePassword from "../components/UserChangePassword";
 import UserChangeRoles from "../components/UserChangeRoles";
@@ -331,136 +332,138 @@ function UserIndex({
 
   function userActionsTemplate(rowData: User) {
     return (
-      <div className="flex flex-row gap-2">
-        <Button
-          onClick={() => {
-            if (rowData.username) {
-              if (
-                rowData.metadata?.has_token === undefined ||
-                rowData.metadata?.has_token === false
-              ) {
-                toast.current?.show({
-                  severity: "warn",
-                  summary: "Revoke Token",
-                  detail: `No active token to revoke for ${rowData?.username}`,
-                  life: 3000,
-                });
-              }
-
-              RevokeToken(rowData.username)
-                .then(() => {
-                  loadUsers();
-                  toast.current?.show({
-                    severity: "info",
-                    summary: "Revoke Token",
-                    detail: `Successfully revoked token for ${rowData.username}`,
-                    life: 3000,
-                  });
-                })
-                .catch((error) => {
-                  console.error("Error Revoking Token", error);
-                  toast.current?.show({
-                    severity: "error",
-                    summary: "Revoke Token",
-                    detail: `Error revoking token for ${rowData.username}`,
-                    life: 3000,
-                  });
-                });
-            }
-          }}
-          tooltip={`Revoke Token for User ${rowData.username}`}
-          data-testid={`revoke-user-${rowData.id}`}
-          tooltipOptions={{ position: "bottom" }}
-          {...GenerateTourProps(revokeTokenUserTourStep)}
-        >
-          <FontAwesomeIcon icon="arrow-right-from-bracket" />
-        </Button>
-        <Button
-          onClick={() => {
-            setAccountMappingUser(rowData);
-            setShowAccountMappingDialog(true);
-          }}
-          tooltip={`Map Associated Accounts for ${rowData.username}`}
-          tooltipOptions={{ position: "bottom" }}
-          data-testid={`map-accounts-user-${rowData.id}`}
-          {...GenerateTourProps(mapAccountsUserTourStep)}
-        >
-          <FontAwesomeIcon icon="globe" />
-        </Button>
-        {(rowData.protected === undefined || rowData.protected === false) && (
-          <Button
-            onClick={() => {
-              setRolesUser(rowData);
-              setShowRolesDialog(true);
-            }}
-            tooltip={`Add/Remove Roles for User ${rowData.username}`}
-            data-testid={`roles-user-${rowData.id}`}
-            tooltipOptions={{ position: "bottom" }}
-            {...GenerateTourProps(addRemoveRolesUserTourStep)}
-          >
-            <FontAwesomeIcon icon="user-plus" />
-          </Button>
-        )}
-        {(rowData.protected === undefined || rowData.protected === false) && (
+      <HasAccess config={config} permission="GARDEN_ADMIN" isGlobal={true}>
+        <div className="flex flex-row gap-2">
           <Button
             onClick={() => {
               if (rowData.username) {
-                setPasswordUsername(rowData.username);
-                setShowPasswordDialog(true);
-              }
-            }}
-            tooltip={`Change Password for User ${rowData.username}`}
-            tooltipOptions={{ position: "bottom" }}
-            data-testid={`change-password-user-${rowData.id}`}
-            {...GenerateTourProps(changePasswordUserTourStep)}
-          >
-            <FontAwesomeIcon icon="key" />
-          </Button>
-        )}
-
-        {(rowData.protected === undefined || rowData.protected === false) && (
-          <Button
-            onClick={() => {
-              const accept = () => {
-                if (rowData.username) {
-                  DeleteUser(rowData.username)
-                    .then(() => {
-                      toast.current?.show({
-                        severity: "info",
-                        summary: "Delete User",
-                        detail: `Successfully deleted ${rowData.username}`,
-                        life: 3000,
-                      });
-                      loadUsers();
-                    })
-                    .catch((error) =>
-                      console.error("Error attempting to delete user", error),
-                    );
+                if (
+                  rowData.metadata?.has_token === undefined ||
+                  rowData.metadata?.has_token === false
+                ) {
+                  toast.current?.show({
+                    severity: "warn",
+                    summary: "Revoke Token",
+                    detail: `No active token to revoke for ${rowData?.username}`,
+                    life: 3000,
+                  });
                 }
-              };
 
-              const reject = () => {};
-
-              if (rowData.username) {
-                confirmDialog({
-                  message: `Are you sure you want to delete user ${rowData.username}?`,
-                  header: "Confirmation",
-                  icon: "pi pi-exclamation-triangle",
-                  defaultFocus: "accept",
-                  accept,
-                  reject,
-                });
+                RevokeToken(rowData.username)
+                  .then(() => {
+                    loadUsers();
+                    toast.current?.show({
+                      severity: "info",
+                      summary: "Revoke Token",
+                      detail: `Successfully revoked token for ${rowData.username}`,
+                      life: 3000,
+                    });
+                  })
+                  .catch((error) => {
+                    console.error("Error Revoking Token", error);
+                    toast.current?.show({
+                      severity: "error",
+                      summary: "Revoke Token",
+                      detail: `Error revoking token for ${rowData.username}`,
+                      life: 3000,
+                    });
+                  });
               }
             }}
-            tooltip={`Delete User ${rowData.username}`}
+            tooltip={`Revoke Token for User ${rowData.username}`}
+            data-testid={`revoke-user-${rowData.id}`}
             tooltipOptions={{ position: "bottom" }}
-            data-testid={`delete-user-${rowData.id}`}
-            {...GenerateTourProps(deleteUserTourStep)}
+            {...GenerateTourProps(revokeTokenUserTourStep)}
           >
-            <FontAwesomeIcon icon="trash" />
+            <FontAwesomeIcon icon="arrow-right-from-bracket" />
           </Button>
-        )}
-      </div>
+          <Button
+            onClick={() => {
+              setAccountMappingUser(rowData);
+              setShowAccountMappingDialog(true);
+            }}
+            tooltip={`Map Associated Accounts for ${rowData.username}`}
+            tooltipOptions={{ position: "bottom" }}
+            data-testid={`map-accounts-user-${rowData.id}`}
+            {...GenerateTourProps(mapAccountsUserTourStep)}
+          >
+            <FontAwesomeIcon icon="globe" />
+          </Button>
+          {(rowData.protected === undefined || rowData.protected === false) && (
+            <Button
+              onClick={() => {
+                setRolesUser(rowData);
+                setShowRolesDialog(true);
+              }}
+              tooltip={`Add/Remove Roles for User ${rowData.username}`}
+              data-testid={`roles-user-${rowData.id}`}
+              tooltipOptions={{ position: "bottom" }}
+              {...GenerateTourProps(addRemoveRolesUserTourStep)}
+            >
+              <FontAwesomeIcon icon="user-plus" />
+            </Button>
+          )}
+          {(rowData.protected === undefined || rowData.protected === false) && (
+            <Button
+              onClick={() => {
+                if (rowData.username) {
+                  setPasswordUsername(rowData.username);
+                  setShowPasswordDialog(true);
+                }
+              }}
+              tooltip={`Change Password for User ${rowData.username}`}
+              tooltipOptions={{ position: "bottom" }}
+              data-testid={`change-password-user-${rowData.id}`}
+              {...GenerateTourProps(changePasswordUserTourStep)}
+            >
+              <FontAwesomeIcon icon="key" />
+            </Button>
+          )}
+
+          {(rowData.protected === undefined || rowData.protected === false) && (
+            <Button
+              onClick={() => {
+                const accept = () => {
+                  if (rowData.username) {
+                    DeleteUser(rowData.username)
+                      .then(() => {
+                        toast.current?.show({
+                          severity: "info",
+                          summary: "Delete User",
+                          detail: `Successfully deleted ${rowData.username}`,
+                          life: 3000,
+                        });
+                        loadUsers();
+                      })
+                      .catch((error) =>
+                        console.error("Error attempting to delete user", error),
+                      );
+                  }
+                };
+
+                const reject = () => {};
+
+                if (rowData.username) {
+                  confirmDialog({
+                    message: `Are you sure you want to delete user ${rowData.username}?`,
+                    header: "Confirmation",
+                    icon: "pi pi-exclamation-triangle",
+                    defaultFocus: "accept",
+                    accept,
+                    reject,
+                  });
+                }
+              }}
+              tooltip={`Delete User ${rowData.username}`}
+              tooltipOptions={{ position: "bottom" }}
+              data-testid={`delete-user-${rowData.id}`}
+              {...GenerateTourProps(deleteUserTourStep)}
+            >
+              <FontAwesomeIcon icon="trash" />
+            </Button>
+          )}
+        </div>
+      </HasAccess>
     );
   }
 
@@ -561,24 +564,26 @@ function UserIndex({
       <ConfirmDialog />
       <div className="flex items-end ml-2 page-header">
         <h1 className="flex-1">User Management</h1>
-        <div>
-          <Button
-            onClick={handleRescan}
-            label="Rescan Users"
-            data-testid="rescan-btn"
-            className="mr-2"
-            {...GenerateTourProps(rescanUserTourStep)}
-          />
-          <Button
-            onClick={() => {
-              setShowCreateUserDialog(true);
-            }}
-            label="Create User"
-            data-testid="create-btn"
-            className="mr-2"
-            {...GenerateTourProps(createUserTourStep)}
-          />
-        </div>
+        <HasAccess config={config} permission="GARDEN_ADMIN" isGlobal={true}>
+          <div>
+            <Button
+              onClick={handleRescan}
+              label="Rescan Users"
+              data-testid="rescan-btn"
+              className="mr-2"
+              {...GenerateTourProps(rescanUserTourStep)}
+            />
+            <Button
+              onClick={() => {
+                setShowCreateUserDialog(true);
+              }}
+              label="Create User"
+              data-testid="create-btn"
+              className="mr-2"
+              {...GenerateTourProps(createUserTourStep)}
+            />
+          </div>
+        </HasAccess>
       </div>
       {config?.auth_enabled == false && (
         <Message

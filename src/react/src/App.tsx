@@ -18,6 +18,7 @@ import RequestIndex from "./layouts/RequestIndex";
 import RequestView from "./layouts/RequestView";
 import RoleIndex from "./layouts/RoleIndex";
 import Swagger from "./layouts/Swagger";
+import TopicIndex from "./layouts/TopicIndex";
 import UserIndex from "./layouts/UserIndex";
 import Workspace from "./layouts/Workspace";
 import { Garden, Instance, System } from "./models/brewtils-types";
@@ -460,12 +461,13 @@ function App() {
                     requestItem={requestItem}
                     listeners={listeners}
                     addItem={addRequestItem}
+                    config={config}
                     isDialog={true}
                   />
                 </>
               </Dialog>
             )}
-            <div className="flex-grow-1">
+            <div className="flex-grow-1" key={reloadUI}>
               <Routes>
                 <Route
                   path="/dashboard"
@@ -476,6 +478,9 @@ function App() {
                       systemsRef={systemsRef}
                       gardenState={gardenState}
                       systemState={systemState}
+                      addRequestItem={addRequestItem}
+                      config={config}
+                      listeners={listeners.current}
                     />
                   }
                 />
@@ -555,6 +560,7 @@ function App() {
                       listeners={listeners.current}
                       tourStepsRef={tourStepsRef}
                       addRequestItem={addRequestItem}
+                      config={config}
                     />
                   }
                 />
@@ -576,6 +582,10 @@ function App() {
                   }
                 />
                 <Route
+                  path="/topics"
+                  element={<TopicIndex config={config} />}
+                />
+                <Route
                   path="/users"
                   element={
                     <UserIndex config={config} tourStepsRef={tourStepsRef} />
@@ -591,6 +601,9 @@ function App() {
                       systemsRef={systemsRef}
                       gardenState={gardenState}
                       systemState={systemState}
+                      addRequestItem={addRequestItem}
+                      config={config}
+                      listeners={listeners.current}
                     />
                   }
                 />
