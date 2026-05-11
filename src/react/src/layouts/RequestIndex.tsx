@@ -224,8 +224,6 @@ function RequestIndex({
     const queryHeaders: Record<string, any> = {
       length: lazyParams.rows,
       start: lazyParams.first,
-      // include_hidden: showHidden,
-      // include_children: showChildren,
       ...generateFilterQuery(),
     };
 
