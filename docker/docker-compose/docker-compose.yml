@@ -75,7 +75,7 @@ services:
             - beer-garden
 
     ui-react:
-        image: bgio/ui_react:3
+        image: bgio/ui-react:3
         networks:
             - bg-network
         ports:
