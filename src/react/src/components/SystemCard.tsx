@@ -7,35 +7,43 @@ import { Menu } from "primereact/menu";
 import { Panel } from "primereact/panel";
 import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
+import { Tooltip } from "primereact/tooltip";
 import { RefObject, useEffect, useRef, useState } from "react";
 
 import InstanceCancelDeleteDialog from "../components/InstanceCancelDeleteRequestsDialog";
 import InstanceManageQueueDialog from "../components/InstanceManageQueueDialog";
 import InstanceShowLogsDialog from "../components/InstanceShowLogsDialog";
-import { Instance, System } from "../models/brewtils-types";
+import { Instance, Runner, System } from "../models/brewtils-types";
+import { Config, PermissionCheck } from "../models/models";
 import { RequestCommand, RequestItem, TourStepProps } from "../models/models";
 import { StartInstance, StopInstance } from "../services/instance_service";
+import { checkPermission } from "../services/permission_service";
 import { DeleteSystem, ReloadSystem } from "../services/system_service";
 import {
   AddTourStep,
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
+import HasAccess from "./HasAccess";
 
 interface SystemCardProps {
   system: System;
   selectedGarden?: string;
   toast?: RefObject<Toast | null>;
+  config: Config;
   tourStepsRef?: RefObject<Array<TourStepProps>>;
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
+  associatedRunners: Runner[];
 }
 
 function SystemCard({
   system,
   selectedGarden,
   toast,
+  config,
   tourStepsRef,
   addRequestItem,
+  associatedRunners,
 }: SystemCardProps) {
   const tourUuid = system.id;
   const tourPrefix = "system_summary";
@@ -322,7 +330,66 @@ function SystemCard({
       </div>
     );
   }
+
+  function instanceIconTemplate(instance: Instance) {
+    let label = undefined;
+    let icon = undefined;
+
+    if (
+      instance?.metadata?.runner_id &&
+      instance?.metadata?.runner_id.length > 0
+    ) {
+      for (const runner of associatedRunners) {
+        if (runner.id === instance?.metadata?.runner_id) {
+          label = `../${runner.path}`;
+          if (runner.dead) {
+            label = `Subprocess dead: ../${runner.path}`;
+            icon = "skull";
+          }
+        }
+      }
+      if (system.local && label === undefined) {
+        label = "Unable to find Local Runner";
+      }
+    }
+
+    if (label === undefined) {
+      label = "Externally Managed";
+    }
+
+    if (icon === undefined) {
+      if (instance.status == "UNRESPONSIVE") {
+        icon = "triangle-exclamation";
+      } else if (instance.status == "AWAITING_SYSTEM") {
+        icon = "hourglass";
+      } else if (system.local) {
+        icon = "folder-open";
+      } else {
+        icon = "rss";
+      }
+    }
+
+    return (
+      <>
+        {label && <Tooltip content={label} target={`#ICON_${instance.id}`} />}
+        {icon && <FontAwesomeIcon id={`ICON_${instance.id}`} icon={icon} />}
+      </>
+    );
+  }
+
   const instanceActions = (instance: Instance) => {
+    if (
+      !checkPermission(config, "OPERATOR", {
+        gardenName: system.garden_name,
+        namespace: system.namespace,
+        systemName: system.name,
+        systemVersion: system.version,
+        instanceName: instance.name,
+      } as PermissionCheck)
+    ) {
+      return <></>;
+    }
+
     const instanceConfigMenu = useRef<Menu>(null);
 
     const [logsVisible, setLogsVisible] = useState(false);
@@ -347,39 +414,67 @@ function SystemCard({
           });
         },
       },
-      {
+    ];
+    if (
+      checkPermission(config, "PLUGIN_ADMIN", {
+        gardenName: system.garden_name,
+        namespace: system.namespace,
+        systemName: system.name,
+        systemVersion: system.version,
+        instanceName: instance.name,
+      } as PermissionCheck)
+    ) {
+      instanceMenuItems.push({
         label: "Show Logs",
         command: () => setLogsVisible(true),
-      },
-      {
+      });
+      instanceMenuItems.push({
         label: "Manage Queue",
         command: () => setQueueVisible(true),
-      },
-      {
+      });
+      instanceMenuItems.push({
         label: "Cancel/Delete Requests",
         command: () => setCancelDeleteVisible(true),
-      },
-    ];
+      });
+    }
 
     return (
       <div>
-        <Button
-          severity="success"
-          size="small"
-          onClick={() => handleStartInstance(instance, system)}
-          {...GenerateTourProps(startInstanceTourStep)}
+        <HasAccess
+          config={config}
+          permission="PLUGIN_ADMIN"
+          hasGardenName={system.garden_name}
+          hasSystemName={system.name}
+          hasSystemVersion={system.version}
+          hasNamespace={system.namespace}
+          hasInstanceName={instance.name}
         >
-          <FontAwesomeIcon icon="play" />
-        </Button>
-        <Button
-          severity="warning"
-          size="small"
-          onClick={() => handleStopInstance(instance, system)}
-          {...GenerateTourProps(stopInstanceTourStep)}
+          <Button
+            severity="success"
+            size="small"
+            onClick={() => handleStartInstance(instance, system)}
+            {...GenerateTourProps(startInstanceTourStep)}
+          >
+            <FontAwesomeIcon icon="play" />
+          </Button>
+          <Button
+            severity="warning"
+            size="small"
+            onClick={() => handleStopInstance(instance, system)}
+            {...GenerateTourProps(stopInstanceTourStep)}
+          >
+            <FontAwesomeIcon icon="stop" />
+          </Button>
+        </HasAccess>
+        <HasAccess
+          config={config}
+          permission="OPERATOR"
+          hasGardenName={system.garden_name}
+          hasSystemName={system.name}
+          hasSystemVersion={system.version}
+          hasNamespace={system.namespace}
+          hasInstanceName={instance.name}
         >
-          <FontAwesomeIcon icon="stop" />
-        </Button>
-        <>
           <Menu
             model={instanceMenuItems}
             popup
@@ -412,7 +507,7 @@ function SystemCard({
           >
             <FontAwesomeIcon icon="bars" />
           </Button>
-        </>
+        </HasAccess>
       </div>
     );
   };
@@ -423,6 +518,9 @@ function SystemCard({
     return (
       <div className={className}>
         <div className="flex align-items-center gap-2">
+          <FontAwesomeIcon
+            icon={system.icon_name ? system.icon_name : "gears"}
+          />
           <label className="max-w-20rem font-semibold">
             {selectedGarden === system.namespace
               ? ""
@@ -440,49 +538,58 @@ function SystemCard({
         <div className="flex justify-content-between mb-3">
           <div
             className="flex-1 mr-2"
-            style={{ overflowWrap: "break-word", width: "80%" }}
+            style={{ overflowWrap: "break-word", width: "10vw" }}
           >
             {system.description}
           </div>
-          <div>
-            <Button
-              severity="success"
-              size="small"
-              title="Start"
-              onClick={() => startSystem(system)}
-              {...GenerateTourProps(startInstancesTourStep)}
-            >
-              <FontAwesomeIcon icon="play" />
-            </Button>
-            <Button
-              severity="warning"
-              size="small"
-              title="Stop"
-              onClick={() => stopSystem(system)}
-              {...GenerateTourProps(stopInstancesTourStep)}
-            >
-              <FontAwesomeIcon icon="stop" />
-            </Button>
-            <Button
-              severity="info"
-              size="small"
-              title="Refresh"
-              onClick={() => reloadSystem(system)}
-              className="mr-2"
-              {...GenerateTourProps(restartSystemTourStep)}
-            >
-              <FontAwesomeIcon icon="refresh" />
-            </Button>
-            <Button
-              severity="danger"
-              size="small"
-              title="Delete"
-              onClick={() => deleteSystem(system)}
-              {...GenerateTourProps(deleteSystemTourStep)}
-            >
-              <FontAwesomeIcon icon="trash" />
-            </Button>
-          </div>
+          <HasAccess
+            config={config}
+            permission="PLUGIN_ADMIN"
+            hasGardenName={system.garden_name}
+            hasSystemName={system.name}
+            hasSystemVersion={system.version}
+            hasNamespace={system.namespace}
+          >
+            <div>
+              <Button
+                severity="success"
+                size="small"
+                title="Start"
+                onClick={() => startSystem(system)}
+                {...GenerateTourProps(startInstancesTourStep)}
+              >
+                <FontAwesomeIcon icon="play" />
+              </Button>
+              <Button
+                severity="warning"
+                size="small"
+                title="Stop"
+                onClick={() => stopSystem(system)}
+                {...GenerateTourProps(stopInstancesTourStep)}
+              >
+                <FontAwesomeIcon icon="stop" />
+              </Button>
+              <Button
+                severity="info"
+                size="small"
+                title="Refresh"
+                onClick={() => reloadSystem(system)}
+                className="mr-2"
+                {...GenerateTourProps(restartSystemTourStep)}
+              >
+                <FontAwesomeIcon icon="refresh" />
+              </Button>
+              <Button
+                severity="danger"
+                size="small"
+                title="Delete"
+                onClick={() => deleteSystem(system)}
+                {...GenerateTourProps(deleteSystemTourStep)}
+              >
+                <FontAwesomeIcon icon="trash" />
+              </Button>
+            </div>
+          </HasAccess>
         </div>
         <DataTable
           value={system.instances}
@@ -494,7 +601,7 @@ function SystemCard({
             field="icon"
             header="Icon"
             headerStyle={{ display: "none" }}
-            body={<FontAwesomeIcon icon="folder" />}
+            body={instanceIconTemplate}
           />
           <Column
             field="status"

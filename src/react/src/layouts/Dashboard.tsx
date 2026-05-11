@@ -6,14 +6,17 @@ import { RefObject, useEffect, useRef, useState } from "react";
 
 import GardenSummary from "../components/GardenSummary";
 import SystemCard from "../components/SystemCard";
-import { Garden, Instance, System } from "../models/brewtils-types";
-import { RequestItem, TourStepProps } from "../models/models";
+import UnassociatedRunnerCard from "../components/UnassociatedRunnerCard";
+import { Garden, Runner, System } from "../models/brewtils-types";
+import { Config } from "../models/models";
+import { RequestItem, RunnerGroup, TourStepProps } from "../models/models";
+import { GetRunnerList } from "../services/runner_service";
 import {
   AddTourStep,
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
-import { GetSeverity } from "../services/util_service";
+import { GenerateStatusCounts, GetSeverity } from "../services/util_service";
 
 function GardenDashboard({
   gardenRef,
@@ -22,6 +25,8 @@ function GardenDashboard({
   systemState,
   tourStepsRef,
   addRequestItem,
+  config,
+  listeners,
 }: {
   gardenRef: RefObject<Garden | undefined>;
   systemsRef: RefObject<System[] | undefined>;
@@ -29,13 +34,20 @@ function GardenDashboard({
   systemState: number;
   tourStepsRef: RefObject<Array<TourStepProps>>;
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
+  config: Config;
+  listeners: Record<string, any>;
 }) {
   const tourUuid = "garden_dashboard_tour";
   const tourPrefix = "garden_dashboard";
   const selectedGardenRef = useRef<Garden | undefined>(undefined);
+  const associatedRunnersRef = useRef<Runner[] | undefined>(undefined);
+  const [associatedRunners, setAssociatedRunners] = useState<Runner[]>([]);
 
   const [selectedGarden, setSelectedGarden] = useState<Garden | undefined>();
   const [selectedSystems, setSelectedSystems] = useState<System[]>([]);
+  const [unassociatedRunners, setUnassociatedRunners] = useState<RunnerGroup[]>(
+    [],
+  );
 
   const [gardenMenu, setGardenMenu] = useState<Array<any>>();
   const toast = useRef<Toast>(null);
@@ -46,6 +58,7 @@ function GardenDashboard({
       setSelectedSystems(matchedSystems);
       setSelectedGarden({ ...garden });
       selectedGardenRef.current = { ...garden };
+      setUnassociatedRunners(getUnassociatedRunners());
     } else {
       selectedGardenRef.current = undefined;
       setSelectedGarden(undefined);
@@ -53,12 +66,124 @@ function GardenDashboard({
     }
   };
 
+  const getUnassociatedRunners = (): RunnerGroup[] => {
+    const instanceMissingCheck = (runner: Runner): boolean => {
+      if (selectedGardenRef.current && systemsRef.current) {
+        for (const system of systemsRef.current) {
+          if (
+            system?.garden_name === selectedGardenRef.current?.name &&
+            system.instances
+          ) {
+            for (const instance of system.instances) {
+              if (instance?.metadata?.runner_id === runner.id) {
+                return false;
+              }
+            }
+          }
+        }
+      }
+
+      return true;
+    };
+
+    if (
+      selectedGardenRef.current?.name === gardenRef.current?.name &&
+      associatedRunnersRef.current
+    ) {
+      const unassociated = associatedRunnersRef.current.filter((runner) => {
+        return (
+          runner.instance_id === undefined ||
+          runner.instance_id === null ||
+          runner.instance_id.length === 0 ||
+          instanceMissingCheck(runner)
+        );
+      });
+
+      const grouped = Object.groupBy(
+        unassociated,
+        (item) => item.path ?? "unknown",
+      );
+
+      return Object.keys(grouped).map(
+        (key) => ({ path: key, runners: grouped[key] }) as RunnerGroup,
+      );
+    }
+
+    return [];
+  };
+
+  useEffect(() => {
+    const MonitorRunners = (message: any) => {
+      if (message.payload_type === "Runner") {
+        if (message.name === "RUNNER_REMOVED") {
+          if (associatedRunnersRef.current) {
+            associatedRunnersRef.current = associatedRunnersRef.current.filter(
+              (runner) => runner.id !== message.payload.id,
+            );
+            setAssociatedRunners(associatedRunnersRef.current);
+          }
+        } else {
+          if (associatedRunnersRef.current) {
+            if (
+              associatedRunnersRef.current.some(
+                (runner) => runner.id === message.payload.id,
+              )
+            ) {
+              associatedRunnersRef.current = associatedRunnersRef.current.map(
+                (runner) => {
+                  if (runner.id === message.payload.id) {
+                    return message.payload;
+                  }
+                  return runner;
+                },
+              );
+              setAssociatedRunners(associatedRunnersRef.current);
+            } else {
+              associatedRunnersRef.current = [
+                ...associatedRunnersRef.current,
+                message.payload,
+              ];
+              setAssociatedRunners(associatedRunnersRef.current);
+            }
+          } else {
+            associatedRunnersRef.current = [message.payload];
+            setAssociatedRunners(associatedRunnersRef.current);
+          }
+        }
+      }
+      getUnassociatedRunners();
+    };
+
+    listeners["dashboard"] = {
+      listener: MonitorRunners,
+    };
+
+    return () => {
+      delete listeners["dashboard"];
+    };
+  });
+
+  useEffect(() => {
+    if (associatedRunnersRef.current === undefined) {
+      GetRunnerList()
+        .then((runners) => {
+          associatedRunnersRef.current = runners;
+          setAssociatedRunners(associatedRunnersRef.current);
+          setUnassociatedRunners(getUnassociatedRunners());
+        })
+        .catch((error) => console.error("Error loading runners", error));
+    } else {
+      getUnassociatedRunners();
+    }
+  }, [selectedSystems]);
+
   useEffect(() => {
     if (gardenRef?.current) {
       setGardenMenu([generateMenu(gardenRef.current, systemsRef.current)]);
     } else {
       setGardenMenu([]);
     }
+
     if (selectedGardenRef.current?.id && gardenRef?.current) {
       const findSelectedGarden = (
         garden_id: string,
@@ -86,6 +211,8 @@ function GardenDashboard({
     } else {
       updateSelectedGarden(undefined);
     }
+
+    getUnassociatedRunners();
   }, [gardenState, systemState]);
 
   const getSelectedSystems = (garden: Garden): System[] => {
@@ -205,26 +332,12 @@ function GardenDashboard({
     garden: Garden,
     systems: System[] | undefined,
   ) => {
-    const statusCounts = new Map();
-
-    if (systems && systems.length > 0) {
-      for (const system of systems.filter(
-        (sys) => sys.garden_name === garden.name,
-      )) {
-        system?.instances?.forEach((instance: Instance) => {
-          if (instance.status) {
-            statusCounts.set(
-              instance.status,
-              (statusCounts.get(instance.status) || 0) + 1,
-            );
-          }
-        });
-      }
-    }
-
-    if (statusCounts.size === 0) {
-      return undefined;
-    }
+    const statusCounts = GenerateStatusCounts(
+      gardenRef,
+      associatedRunnersRef,
+      garden,
+      systems,
+    );
 
     return Array.from(statusCounts, ([status, count]) => {
       if (count && count > 0) {
@@ -311,18 +424,29 @@ function GardenDashboard({
           <GardenSummary
             gardenRef={gardenRef}
             selectedGarden={selectedGarden}
+            config={config}
             tourStepsRef={tourStepsRef}
+            associatedRunners={associatedRunnersRef}
             selectedSystems={selectedSystems}
           />
         )}
+
+        {unassociatedRunners?.map((runnerGroup: RunnerGroup) => (
+          <div key={runnerGroup.path} className="mb-4 mr-2">
+            <UnassociatedRunnerCard runnerGroup={runnerGroup} toast={toast} />
+          </div>
+        ))}
+
         {selectedSystems?.map((system: System) => (
-          <div key={system.id} className="mb-4 mr-2" style={{ width: "32%" }}>
+          <div key={system.id} className="mb-4 mr-2">
             <SystemCard
               system={system}
               toast={toast}
               tourStepsRef={tourStepsRef}
               selectedGarden={selectedGarden?.name}
               addRequestItem={addRequestItem}
+              config={config}
+              associatedRunners={associatedRunners}
             />
           </div>
         ))}

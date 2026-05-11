@@ -8,6 +8,7 @@ import { Stepper } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
 import { useEffect, useRef, useState } from "react";
 
+import HasAccess from "../components/HasAccess";
 import {
   Command,
   Instance,
@@ -15,7 +16,7 @@ import {
   Request,
   System,
 } from "../models/brewtils-types";
-import { RequestCommand, RequestItem } from "../models/models";
+import { Config, RequestCommand, RequestItem } from "../models/models";
 import { CreateJob, GetJob, UpdateJob } from "../services/job_service";
 import { GetRequest } from "../services/request_service";
 import { PostRequest } from "../services/request_service";
@@ -32,11 +33,13 @@ function RequestWizard({
   updateRequestItem,
   removeItem,
   isDialog,
+  config,
 }: {
   requestItem: RequestItem;
   updateRequestItem: (item: RequestItem) => void;
   removeItem: (id: string) => void;
   isDialog: boolean;
+  config: Config;
 }) {
   const stepperRef = useRef<Stepper>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -53,14 +56,13 @@ function RequestWizard({
   const [instances, setInstances] = useState<Array<Instance>>();
   const instanceList: Array<any> = [];
   const [resetForm, setResetForm] = useState<boolean>(false);
+  const [isFormValid, setIsFormValid] = useState<boolean>(false);
   const [visibleCodeExample, setVisibleCodeExample] = useState<boolean>(false);
 
   const [showCreateRequest, setShowCreateRequest] = useState<boolean>(
     (requestItem?.requestId === undefined || requestItem?.requestId === null) &&
       (requestItem?.jobId === undefined || requestItem?.jobId === null),
   );
-
-  const [isFormValid, setIsFormValid] = useState<boolean>(false);
 
   const [showStepper, setShowStepper] = useState<boolean>(false);
 
@@ -200,9 +202,13 @@ function RequestWizard({
         );
         setSelectedSystem(chosenSystem);
         if (instance_name) {
-          setSelectedInstance(
-            chosenSystem?.instances?.find((i) => i.name == instance_name),
-          );
+          if (chosenSystem?.instances?.find((i) => i.name == instance_name)) {
+            setSelectedInstance({
+              name: instance_name,
+              label: instance_name,
+            });
+          }
+
           if (command || command_display_name) {
             setSelectedCommand(
               chosenSystem?.commands?.find(
@@ -323,12 +329,12 @@ function RequestWizard({
       GetJob(requestItem.jobId, {})
         .then((responseJob) => {
           findSelectedSystem(
-            responseJob.request_template.namespace,
-            responseJob.request_template.system,
-            responseJob.request_template.system_version,
-            responseJob.request_template.instance_name,
-            responseJob.request_template.command,
-            responseJob.request_template.command_display_name,
+            responseJob.request_template?.namespace,
+            responseJob.request_template?.system,
+            responseJob.request_template?.system_version,
+            responseJob.request_template?.instance_name,
+            responseJob.request_template?.command,
+            responseJob.request_template?.command_display_name,
           );
 
           updateJobValue(responseJob);
@@ -346,12 +352,12 @@ function RequestWizard({
     } else if (requestItem?.job !== undefined) {
       const job = requestItem.job;
       findSelectedSystem(
-        job.request_template.namespace,
-        job.request_template.system,
-        job.request_template.system_version,
-        job.request_template.instance_name,
-        job.request_template.command,
-        job.request_template.command_display_name,
+        job.request_template?.namespace,
+        job.request_template?.system,
+        job.request_template?.system_version,
+        job.request_template?.instance_name,
+        job.request_template?.command,
+        job.request_template?.command_display_name,
       );
       updateJobValue(job);
       updateRequestCommand({
@@ -571,41 +577,53 @@ function RequestWizard({
                   className="mr-2"
                 />
               </div>
-              {showCreateRequest && !showScheduleJob && (
-                <Button
-                  label="Submit"
-                  icon="pi pi-arrow-right"
-                  disabled={!isFormValid}
-                  onMouseDown={(event) => {
-                    if (event.button === 1) {
-                      // Middle mouse button click
-                      submitRequestAndOpen();
-                    } else {
-                      submitRequest();
-                    }
-                  }}
-                />
-              )}
-              {showCreateRequest && showScheduleJob && !requestItem?.jobId && (
-                <Button
-                  label="Submit Job"
-                  severity="success"
-                  icon="pi pi-arrow-right"
-                  disabled={!isFormValid}
-                  iconPos="right"
-                  onClick={submitJob}
-                />
-              )}
-              {showCreateRequest && showScheduleJob && requestItem?.jobId && (
-                <Button
-                  label="Update Job"
-                  severity="success"
-                  icon="pi pi-arrow-right"
-                  disabled={!isFormValid}
-                  iconPos="right"
-                  onClick={updateJob}
-                />
-              )}
+              <HasAccess
+                config={config}
+                permission="OPERATOR"
+                hasNamespace={requestItem.requestCommandInput?.namespace}
+                hasSystemName={requestItem.requestCommandInput?.systemName}
+                hasSystemVersion={requestItem.requestCommandInput?.version}
+                hasInstanceName={requestItem.requestCommandInput?.instance}
+                hasCommandName={requestItem.requestCommandInput?.command}
+              >
+                {showCreateRequest && !showScheduleJob && (
+                  <Button
+                    label="Submit"
+                    icon="pi pi-arrow-right"
+                    disabled={!isFormValid}
+                    onMouseDown={(event) => {
+                      if (event.button === 1) {
+                        // Middle mouse button click
+                        submitRequestAndOpen();
+                      } else {
+                        submitRequest();
+                      }
+                    }}
+                  />
+                )}
+                {showCreateRequest &&
+                  showScheduleJob &&
+                  !requestItem?.jobId && (
+                    <Button
+                      label="Submit Job"
+                      severity="success"
+                      icon="pi pi-arrow-right"
+                      disabled={!isFormValid}
+                      iconPos="right"
+                      onClick={submitJob}
+                    />
+                  )}
+                {showCreateRequest && showScheduleJob && requestItem?.jobId && (
+                  <Button
+                    label="Update Job"
+                    severity="success"
+                    icon="pi pi-arrow-right"
+                    disabled={!isFormValid}
+                    iconPos="right"
+                    onClick={updateJob}
+                  />
+                )}
+              </HasAccess>
             </div>
           </StepperPanel>
         </Stepper>

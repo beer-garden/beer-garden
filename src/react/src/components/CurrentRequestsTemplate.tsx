@@ -8,10 +8,17 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { Request } from "../models/brewtils-types";
+import { Config } from "../models/models";
 import { DeleteRequest, GetRequestList } from "../services/request_service";
-import { GetBaseURL } from "../services/util_service";
+import HasAccess from "./HasAccess";
 
-function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
+function CurrentRequestsTemplate({
+  listeners,
+  config,
+}: {
+  listeners: any;
+  config: Config;
+}) {
   const [currentRequests, setCurrentRequests] = useState<Array<Request>>([]);
   const altRequests = useRef<Array<Request>>([]);
 
@@ -129,24 +136,35 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
   const optionsTemplate = (request: Request) => {
     return (
       <div>
-        <Link to={`${GetBaseURL()}/request/${request.id}`}>
+        <Link to={`/request/${request.id}`}>
           <Button rounded raised link>
             <FontAwesomeIcon icon="arrow-up-right-from-square" />
           </Button>
         </Link>
-        <Button
-          rounded
-          raised
-          link
-          onClick={() => {
-            DeleteRequest(request).catch((error) => {
-              console.error("Error deleting request:", error);
-            });
-          }}
-          tooltip={`Delete Request for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
+        <HasAccess
+          config={config}
+          permission="PLUGIN_ADMIN"
+          hasGardenName={request?.target_garden}
+          hasNamespace={request?.namespace}
+          hasSystemName={request?.system}
+          hasInstanceName={request?.instance_name}
+          hasSystemVersion={request?.system_version}
+          hasCommandName={request?.command}
         >
-          <FontAwesomeIcon icon="xmark" />
-        </Button>
+          <Button
+            rounded
+            raised
+            link
+            onClick={() => {
+              DeleteRequest(request).catch((error) => {
+                console.error("Error deleting request:", error);
+              });
+            }}
+            tooltip={`Delete Request for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
+          >
+            <FontAwesomeIcon icon="xmark" />
+          </Button>
+        </HasAccess>
       </div>
     );
   };
