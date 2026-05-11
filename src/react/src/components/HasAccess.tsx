@@ -17,25 +17,29 @@ const HasAccess = ({
   renderAuthFailed,
   children,
 }: PropsWithChildren<HasAccessProps>) => {
-  const [hasAccess, setHasAccess] = useState(false);
+  const [hasAccess, setHasAccess] = useState(
+    config?.auth_enabled === undefined || config?.auth_enabled === false,
+  );
   const [checking, setChecking] = useState(false);
 
   useEffect(() => {
-    setChecking(true);
+    if (!hasAccess) {
+      setChecking(true);
 
-    const check = {
-      global: isGlobal,
-      gardenName: hasGardenName,
-      namespace: hasNamespace,
-      systemName: hasSystemName,
-      systemVersion: hasSystemVersion,
-      commandName: hasCommandName,
-      instanceName: hasInstanceName,
-    } as PermissionCheck;
+      const check = {
+        global: isGlobal,
+        gardenName: hasGardenName,
+        namespace: hasNamespace,
+        systemName: hasSystemName,
+        systemVersion: hasSystemVersion,
+        commandName: hasCommandName,
+        instanceName: hasInstanceName,
+      } as PermissionCheck;
 
-    setHasAccess(checkPermission(config, permission, check));
+      setHasAccess(checkPermission(config, permission, check));
 
-    setChecking(false);
+      setChecking(false);
+    }
   }, [
     permission,
     isGlobal,
