@@ -1,8 +1,8 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
-import { Column } from "primereact/column";
+import { ButtonGroup } from "primereact/buttongroup";
 import { confirmDialog } from "primereact/confirmdialog";
-import { DataTable } from "primereact/datatable";
+import { Divider } from "primereact/divider";
 import { Menu } from "primereact/menu";
 import { Panel } from "primereact/panel";
 import { Tag } from "primereact/tag";
@@ -440,74 +440,76 @@ function SystemCard({
 
     return (
       <div>
-        <HasAccess
-          config={config}
-          permission="PLUGIN_ADMIN"
-          hasGardenName={system.garden_name}
-          hasSystemName={system.name}
-          hasSystemVersion={system.version}
-          hasNamespace={system.namespace}
-          hasInstanceName={instance.name}
-        >
-          <Button
-            severity="success"
-            size="small"
-            onClick={() => handleStartInstance(instance, system)}
-            {...GenerateTourProps(startInstanceTourStep)}
+        <ButtonGroup>
+          <HasAccess
+            config={config}
+            permission="PLUGIN_ADMIN"
+            hasGardenName={system.garden_name}
+            hasSystemName={system.name}
+            hasSystemVersion={system.version}
+            hasNamespace={system.namespace}
+            hasInstanceName={instance.name}
           >
-            <FontAwesomeIcon icon="play" />
-          </Button>
-          <Button
-            severity="warning"
-            size="small"
-            onClick={() => handleStopInstance(instance, system)}
-            {...GenerateTourProps(stopInstanceTourStep)}
+            <Button
+              severity="success"
+              size="small"
+              onClick={() => handleStartInstance(instance, system)}
+              {...GenerateTourProps(startInstanceTourStep)}
+            >
+              <FontAwesomeIcon icon="play" />
+            </Button>
+            <Button
+              severity="warning"
+              size="small"
+              onClick={() => handleStopInstance(instance, system)}
+              {...GenerateTourProps(stopInstanceTourStep)}
+            >
+              <FontAwesomeIcon icon="stop" />
+            </Button>
+          </HasAccess>
+          <HasAccess
+            config={config}
+            permission="OPERATOR"
+            hasGardenName={system.garden_name}
+            hasSystemName={system.name}
+            hasSystemVersion={system.version}
+            hasNamespace={system.namespace}
+            hasInstanceName={instance.name}
           >
-            <FontAwesomeIcon icon="stop" />
-          </Button>
-        </HasAccess>
-        <HasAccess
-          config={config}
-          permission="OPERATOR"
-          hasGardenName={system.garden_name}
-          hasSystemName={system.name}
-          hasSystemVersion={system.version}
-          hasNamespace={system.namespace}
-          hasInstanceName={instance.name}
-        >
-          <Menu
-            model={instanceMenuItems}
-            popup
-            ref={instanceConfigMenu}
-            id="instance_menu"
-          />
-          <InstanceShowLogsDialog
-            instance={instance}
-            system={system}
-            isVisible={logsVisible}
-            onClose={closeLogsDialog}
-          />
-          <InstanceManageQueueDialog
-            instance={instance}
-            system={system}
-            isVisible={queueVisible}
-            onClose={closeQueueDialog}
-          />
-          <InstanceCancelDeleteDialog
-            instance={instance}
-            system={system}
-            isVisible={cancelDeleteVisible}
-            onClose={closeCancelDeleteDialog}
-          />
-          <Button
-            severity="info"
-            size="small"
-            title={`Admin Tools for ${instance.name}`}
-            onClick={(e) => instanceConfigMenu?.current?.toggle(e)}
-          >
-            <FontAwesomeIcon icon="bars" />
-          </Button>
-        </HasAccess>
+            <Menu
+              model={instanceMenuItems}
+              popup
+              ref={instanceConfigMenu}
+              id="instance_menu"
+            />
+            <InstanceShowLogsDialog
+              instance={instance}
+              system={system}
+              isVisible={logsVisible}
+              onClose={closeLogsDialog}
+            />
+            <InstanceManageQueueDialog
+              instance={instance}
+              system={system}
+              isVisible={queueVisible}
+              onClose={closeQueueDialog}
+            />
+            <InstanceCancelDeleteDialog
+              instance={instance}
+              system={system}
+              isVisible={cancelDeleteVisible}
+              onClose={closeCancelDeleteDialog}
+            />
+            <Button
+              severity="info"
+              size="small"
+              title={`Admin Tools for ${instance.name}`}
+              onClick={(e) => instanceConfigMenu?.current?.toggle(e)}
+            >
+              <FontAwesomeIcon icon="bars" />
+            </Button>
+          </HasAccess>
+        </ButtonGroup>
       </div>
     );
   };
@@ -535,13 +537,7 @@ function SystemCard({
   return (
     <>
       <Panel key={system.id} headerTemplate={headerTemplate}>
-        <div className="flex justify-content-between mb-3">
-          <div
-            className="flex-1 mr-2"
-            style={{ overflowWrap: "break-word", width: "10vw" }}
-          >
-            {system.description}
-          </div>
+        <div className="mb-3">
           <HasAccess
             config={config}
             permission="PLUGIN_ADMIN"
@@ -550,35 +546,37 @@ function SystemCard({
             hasSystemVersion={system.version}
             hasNamespace={system.namespace}
           >
-            <div>
-              <Button
-                severity="success"
-                size="small"
-                title="Start"
-                onClick={() => startSystem(system)}
-                {...GenerateTourProps(startInstancesTourStep)}
-              >
-                <FontAwesomeIcon icon="play" />
-              </Button>
-              <Button
-                severity="warning"
-                size="small"
-                title="Stop"
-                onClick={() => stopSystem(system)}
-                {...GenerateTourProps(stopInstancesTourStep)}
-              >
-                <FontAwesomeIcon icon="stop" />
-              </Button>
-              <Button
-                severity="info"
-                size="small"
-                title="Refresh"
-                onClick={() => reloadSystem(system)}
-                className="mr-2"
-                {...GenerateTourProps(restartSystemTourStep)}
-              >
-                <FontAwesomeIcon icon="refresh" />
-              </Button>
+            <div style={{ float: "right", marginLeft: "2px" }}>
+              <ButtonGroup>
+                <Button
+                  severity="success"
+                  size="small"
+                  title="Start"
+                  onClick={() => startSystem(system)}
+                  {...GenerateTourProps(startInstancesTourStep)}
+                >
+                  <FontAwesomeIcon icon="play" />
+                </Button>
+                <Button
+                  severity="warning"
+                  size="small"
+                  title="Stop"
+                  onClick={() => stopSystem(system)}
+                  {...GenerateTourProps(stopInstancesTourStep)}
+                >
+                  <FontAwesomeIcon icon="stop" />
+                </Button>
+                <Button
+                  severity="info"
+                  size="small"
+                  title="Refresh"
+                  onClick={() => reloadSystem(system)}
+                  className="mr-2"
+                  {...GenerateTourProps(restartSystemTourStep)}
+                >
+                  <FontAwesomeIcon icon="refresh" />
+                </Button>
+              </ButtonGroup>
               <Button
                 severity="danger"
                 size="small"
@@ -590,38 +588,22 @@ function SystemCard({
               </Button>
             </div>
           </HasAccess>
+          <div style={{ minHeight: "40px" }}>{system.description}</div>
+          <Divider className="my-2" style={{ clear: "right" }} />
         </div>
-        <DataTable
-          value={system.instances}
-          key={JSON.stringify(system.instances)}
-          size="small"
-          className="flex-1"
-        >
-          <Column
-            field="icon"
-            header="Icon"
-            headerStyle={{ display: "none" }}
-            body={instanceIconTemplate}
-          />
-          <Column
-            field="status"
-            header="Status"
-            headerStyle={{ display: "none" }}
-            body={statusTemplate}
-          />
-          <Column
-            field="name"
-            header="Instance"
-            body={instanceNameTemplate}
-            headerStyle={{ display: "none" }}
-          />
-          <Column
-            header="Actions"
-            headerStyle={{ display: "none" }}
-            style={{ textAlign: "right" }}
-            body={instanceActions}
-          />
-        </DataTable>
+        {system.instances?.map((instance: Instance, index: number) => (
+          <div key={JSON.stringify(instance)}>
+            <div className="flex flex-wrap justify-content-between align-items-center">
+              <div>{instanceIconTemplate(instance)}</div>
+              <div>{statusTemplate(instance)}</div>
+              <div>{instanceNameTemplate(instance)}</div>
+              <div>{instanceActions(instance)}</div>
+            </div>
+            {index < system.instances!.length - 1 && (
+              <Divider className="my-2" />
+            )}
+          </div>
+        ))}
       </Panel>
     </>
   );
