@@ -80,3 +80,6 @@ TEST_FILE ?=
 test: test_docker_image
 	docker run --rm test_server npx vitest $(TEST_FILE)
 
+build_preview: deps
+	npm run build -- --mode preview
+

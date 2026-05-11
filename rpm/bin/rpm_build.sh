@@ -117,6 +117,7 @@ install_apps() {
 
     mkdir -p "$UI_PATH"
     cp -r "$SRC_PATH/ui/dist" "$UI_PATH/dist"
+    cp -r "$SRC_PATH/react/build" "$UI_PATH/preview"
 
     mkdir -p "$UI_PATH/conf/conf.d"
     cp "$SHARED_RESOURCES/nginx/upstream.conf" "$UI_PATH/conf/conf.d/"
