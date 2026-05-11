@@ -4,7 +4,7 @@ PYTHON         = python
 MODULE_NAME    = beer_garden
 APP_DIR        = src/app
 UI_DIR         = src/ui
-REACT_DIR         = src/react
+REACT_DIR      = src/react
 
 VERSION          ?= 0.0.0
 PYTHON_VERSION   ?=3.11
