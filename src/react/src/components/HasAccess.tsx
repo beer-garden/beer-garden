@@ -20,12 +20,13 @@ const HasAccess = ({
   const [hasAccess, setHasAccess] = useState(
     config?.auth_enabled === undefined || config?.auth_enabled === false,
   );
-  const [checking, setChecking] = useState(false);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     if (!hasAccess) {
       setChecking(true);
-
+    }
+    if (checking) {
       const check = {
         global: isGlobal,
         gardenName: hasGardenName,
@@ -37,10 +38,10 @@ const HasAccess = ({
       } as PermissionCheck;
 
       setHasAccess(checkPermission(config, permission, check));
-
       setChecking(false);
     }
   }, [
+    checking,
     permission,
     isGlobal,
     hasGardenName,
@@ -51,19 +52,13 @@ const HasAccess = ({
     hasInstanceName,
   ]);
 
-  if (!hasAccess && checking) {
-    return isLoading;
-  }
-
-  if (hasAccess) {
-    return children;
-  }
-
-  if (renderAuthFailed) {
-    return renderAuthFailed;
-  }
-
-  return null;
+  return (
+    <>
+      {!hasAccess && checking && isLoading}
+      {hasAccess && children}
+      {!hasAccess && !checking && renderAuthFailed}
+    </>
+  );
 };
 
 export default HasAccess;
