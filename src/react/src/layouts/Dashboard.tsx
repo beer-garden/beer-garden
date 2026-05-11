@@ -428,14 +428,20 @@ function GardenDashboard({
           selectedSystems={selectedSystems}
         />
 
-        {unassociatedRunners?.map((runnerGroup: RunnerGroup) => (
-          <div key={runnerGroup.path} className="mb-4 mr-2">
-            <UnassociatedRunnerCard runnerGroup={runnerGroup} toast={toast} />
-          </div>
-        ))}
-
         <div className="flex justify-content-center">
           <div className="grid grid-nogutter gap-2">
+            {unassociatedRunners?.map((runnerGroup: RunnerGroup) => (
+              <div
+                key={runnerGroup.path}
+                className="mb-4 mr-2"
+                style={{ width: "32%", minWidth: "250px" }}
+              >
+                <UnassociatedRunnerCard
+                  runnerGroup={runnerGroup}
+                  toast={toast}
+                />
+              </div>
+            ))}
             {selectedSystems?.map((system: System) => (
               <div
                 key={system.id}

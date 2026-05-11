@@ -1,7 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
-import { Column } from "primereact/column";
-import { DataTable } from "primereact/datatable";
+import { ButtonGroup } from "primereact/buttongroup";
+import { Divider } from "primereact/divider";
 import { Panel } from "primereact/panel";
 import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
@@ -155,37 +155,39 @@ function UnassociatedRunnerCard({
   const runnerActions = (runner: Runner) => {
     return (
       <div className="flex">
-        <Button
-          severity="success"
-          size="small"
-          title={`Start Runner ${runner.id}`}
-          onClick={() => {
-            startRunner(runner);
-          }}
-          data-testid={`START_${runner.id}`}
-        >
-          <FontAwesomeIcon icon="play" />
-        </Button>
-        <Button
-          severity="warning"
-          size="small"
-          title={`Stop Runner ${runner.id}`}
-          onClick={() => {
-            stopRunner(runner);
-          }}
-          data-testid={`STOP_${runner.id}`}
-        >
-          <FontAwesomeIcon icon="stop" />
-        </Button>
-        <Button
-          severity="danger"
-          size="small"
-          title={`Delete Runner ${runner.id}`}
-          onClick={() => deleteRunner(runner)}
-          data-testid={`DELETE_${runner.id}`}
-        >
-          <FontAwesomeIcon icon="trash" />
-        </Button>
+        <ButtonGroup>
+          <Button
+            severity="success"
+            size="small"
+            title={`Start Runner ${runner.id}`}
+            onClick={() => {
+              startRunner(runner);
+            }}
+            data-testid={`START_${runner.id}`}
+          >
+            <FontAwesomeIcon icon="play" />
+          </Button>
+          <Button
+            severity="warning"
+            size="small"
+            title={`Stop Runner ${runner.id}`}
+            onClick={() => {
+              stopRunner(runner);
+            }}
+            data-testid={`STOP_${runner.id}`}
+          >
+            <FontAwesomeIcon icon="stop" />
+          </Button>
+          <Button
+            severity="danger"
+            size="small"
+            title={`Delete Runner ${runner.id}`}
+            onClick={() => deleteRunner(runner)}
+            data-testid={`DELETE_${runner.id}`}
+          >
+            <FontAwesomeIcon icon="trash" />
+          </Button>
+        </ButtonGroup>
       </div>
     );
   };
@@ -193,42 +195,38 @@ function UnassociatedRunnerCard({
   return (
     <>
       <Panel headerTemplate={headerTemplate} key={reloadUI}>
-        <div className="flex justify-content-between mb-3">
-          <div
-            className="flex-1 mr-2"
-            style={{ overflowWrap: "break-word", width: "10vw" }}
-          >
-            ../{runnerGroup.path}
-          </div>
-          <div>
-            <Button
-              severity="success"
-              size="small"
-              title={`Start runners in ../${runnerGroup.path}`}
-              onClick={() => startRunnerGroup()}
-              data-testid="START_GROUP"
-            >
-              <FontAwesomeIcon icon="play" />
-            </Button>
-            <Button
-              severity="warning"
-              size="small"
-              title={`Stop runners in ../${runnerGroup.path}`}
-              onClick={() => stopRunnerGroup()}
-              data-testid="STOP_GROUP"
-            >
-              <FontAwesomeIcon icon="stop" />
-            </Button>
-            <Button
-              severity="info"
-              size="small"
-              title={`Reload runners in ../${runnerGroup.path}`}
-              onClick={() => reloadPath()}
-              className="mr-2"
-              data-testid="RELOAD_GROUP"
-            >
-              <FontAwesomeIcon icon="refresh" />
-            </Button>
+        <div className="mb-3">
+          <div style={{ float: "right", marginLeft: "2px" }}>
+            <ButtonGroup>
+              <Button
+                severity="success"
+                size="small"
+                title={`Start runners in ../${runnerGroup.path}`}
+                onClick={() => startRunnerGroup()}
+                data-testid="START_GROUP"
+              >
+                <FontAwesomeIcon icon="play" />
+              </Button>
+              <Button
+                severity="warning"
+                size="small"
+                title={`Stop runners in ../${runnerGroup.path}`}
+                onClick={() => stopRunnerGroup()}
+                data-testid="STOP_GROUP"
+              >
+                <FontAwesomeIcon icon="stop" />
+              </Button>
+              <Button
+                severity="info"
+                size="small"
+                title={`Reload runners in ../${runnerGroup.path}`}
+                onClick={() => reloadPath()}
+                className="mr-2"
+                data-testid="RELOAD_GROUP"
+              >
+                <FontAwesomeIcon icon="refresh" />
+              </Button>
+            </ButtonGroup>
             <Button
               severity="danger"
               size="small"
@@ -239,25 +237,21 @@ function UnassociatedRunnerCard({
               <FontAwesomeIcon icon="trash" />
             </Button>
           </div>
+          <div style={{ minHeight: "40px" }}>../{runnerGroup.path}</div>
+          <Divider className="my-2" style={{ clear: "right" }} />
         </div>
-        <DataTable value={runnerGroup.runners} size="small" className="flex-1">
-          <Column
-            header="Status"
-            headerStyle={{ display: "none" }}
-            body={statusTemplate}
-          />
-          <Column
-            field="id"
-            header="Instance"
-            headerStyle={{ display: "none" }}
-          />
-          <Column
-            header="Actions"
-            headerStyle={{ display: "none" }}
-            style={{ textAlign: "right" }}
-            body={runnerActions}
-          />
-        </DataTable>
+        {runnerGroup.runners?.map((runner: Runner, index: number) => (
+          <div key={JSON.stringify(runner)}>
+            <div className="flex flex-wrap justify-content-between align-items-center">
+              <div>{statusTemplate(runner)}</div>
+              <div>{runner.id}</div>
+              <div>{runnerActions(runner)}</div>
+            </div>
+            {index < runnerGroup.runners.length - 1 && (
+              <Divider className="my-2" />
+            )}
+          </div>
+        ))}
       </Panel>
     </>
   );
