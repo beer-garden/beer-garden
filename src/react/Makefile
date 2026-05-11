@@ -105,4 +105,7 @@ publish-docker-unstable: docker-build-unstable ## push the unstable docker image
 publish-branch-docker-unstable: package
 	docker build -t $(DOCKER_NAME):branch-unstable-${DATE} .
 	docker push $(DOCKER_NAME):branch-unstable-${DATE}
+	
+build_preview: deps
+	npm run build -- --mode preview
 

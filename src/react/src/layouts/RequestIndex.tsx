@@ -25,7 +25,6 @@ import {
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
-import { GetBaseURL } from "../services/util_service";
 
 function RequestIndex({
   listeners,
@@ -324,7 +323,7 @@ function RequestIndex({
   const commandActionTemplate = (request: Request) => {
     return (
       <div>
-        <Link to={`${GetBaseURL()}/request/${request.id}`}>
+        <Link to={`/request/${request.id}`}>
           <Button
             rounded
             raised

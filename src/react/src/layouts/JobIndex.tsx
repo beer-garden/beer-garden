@@ -6,9 +6,9 @@ import { FileUpload } from "primereact/fileupload";
 import { Toast } from "primereact/toast";
 import { RefObject, useEffect, useRef, useState } from "react";
 
+import HasAccess from "../components/HasAccess";
 import { Job } from "../models/brewtils-types";
-import { RequestItem } from "../models/models";
-import { TourStepProps } from "../models/models";
+import { Config, RequestItem, TourStepProps } from "../models/models";
 import {
   DeleteJob,
   ExportJobs,
@@ -28,10 +28,12 @@ function JobIndex({
   listeners,
   tourStepsRef,
   addRequestItem,
+  config,
 }: {
   listeners: Record<string, any>;
   tourStepsRef: RefObject<Array<TourStepProps>>;
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
+  config: Config;
 }) {
   const [jobs, setJobs] = useState<Array<Job>>([]);
   const tourUuid = "job_index_tour";
@@ -134,20 +136,28 @@ function JobIndex({
   useEffect(() => {
     const MonitorJobs = (message: any) => {
       if (message.payload_type === "Job") {
-        let updateList = false;
-        const updatedJobs = [] as Array<Job>;
-
-        for (const job of jobs) {
-          if (message.payload.id === job.id) {
-            updateList = true;
-            updatedJobs.push(message.payload);
-          } else {
-            updatedJobs.push(job);
-          }
-        }
-
-        if (updateList) {
-          setJobs(updatedJobs);
+        if (message.name == "JOB_CREATED") {
+          setJobs((prevJobs: Job[]) => {
+            return [...prevJobs, message.payload];
+          });
+        } else if (message.name == "JOB_DELETED") {
+          setJobs((prevJobs: Job[]) => {
+            return prevJobs.filter((job: Job) => job.id != message.payload.id);
+          });
+        } else if (
+          ["JOB_UPDATED", "JOB_PAUSED", "JOB_RESUMED"].includes(message.name)
+        ) {
+          setJobs((prevJobs: Job[]) => {
+            return prevJobs.map((job: Job) => {
+              if (job.id === message.payload.id) {
+                return {
+                  ...job,
+                  ...message.payload,
+                };
+              }
+              return job;
+            });
+          });
         }
       }
     };
@@ -193,23 +203,6 @@ function JobIndex({
           rounded
           raised
           link
-          onClick={() => {
-            if (job.id) {
-              RunAdhocJob(job.id).catch((error) => {
-                console.error("Error running job:", error);
-              });
-            }
-          }}
-          title={"Run Now " + job.name}
-          className="mr-2"
-          {...GenerateTourProps(runNowTourStep)}
-        >
-          <FontAwesomeIcon icon="forward" />
-        </Button>
-        <Button
-          rounded
-          raised
-          link
           onClick={() =>
             addRequestItem({ jobId: job.id, type: "VIEW_SCHEDULED_JOB" })
           }
@@ -219,90 +212,122 @@ function JobIndex({
         >
           <FontAwesomeIcon icon="arrow-up-right-from-square" />
         </Button>
-        <Button
-          rounded
-          raised
-          link
-          onClick={() => {
-            if (job.id) {
-              editJob(job.id);
-            }
-          }}
-          title={"Update Job " + job.name}
-          className="mr-2"
-          {...GenerateTourProps(editJobTourStep)}
+        <HasAccess
+          config={config}
+          permission="OPERATOR"
+          hasNamespace={job.request_template?.namespace}
+          hasSystemName={job.request_template?.system}
+          hasInstanceName={job.request_template?.instance_name}
+          hasSystemVersion={job.request_template?.system_version}
+          hasCommandName={job.request_template?.command}
         >
-          <FontAwesomeIcon icon="edit" />
-        </Button>
-        {job.status === "RUNNING" && (
-          <Button
-            rounded
-            raised
-            link
-            onClick={() => {
-              PauseJob(job)
-                .then((updatedJob) => {
-                  setJobs((prevJobs) =>
-                    prevJobs.map((j) =>
-                      j.id === updatedJob.id ? updatedJob : j,
-                    ),
-                  );
-                })
-                .catch((error) => {
-                  console.error("Error pausing job:", error);
-                });
-            }}
-            title={"Pause Job " + job.name}
-            className="mr-2"
-            {...GenerateTourProps(pauseResumeJobTourStep)}
-          >
-            <FontAwesomeIcon icon="pause" />
-          </Button>
-        )}
-        {job.status === "PAUSED" && (
-          <Button
-            rounded
-            raised
-            link
-            onClick={() => {
-              ResumeJob(job)
-                .then((updatedJob) => {
-                  setJobs((prevJobs) =>
-                    prevJobs.map((j) =>
-                      j.id === updatedJob.id ? updatedJob : j,
-                    ),
-                  );
-                })
-                .catch((error) => {
-                  console.error("Error resuming job:", error);
-                });
-            }}
-            title={"Resume Job " + job.name}
-            className="mr-2"
-            {...GenerateTourProps(pauseResumeJobTourStep)}
-          >
-            <FontAwesomeIcon icon="play" />
-          </Button>
-        )}
-        <Button
-          rounded
-          raised
-          link
-          onClick={() => {
-            DeleteJob(job)
-              .then(() => {
-                setJobs((prevJobs) => prevJobs.filter((j) => j.id !== job.id));
-              })
-              .catch((error) => {
-                console.error("Error deleting job:", error);
-              });
-          }}
-          title={"Delete Job " + job.name}
-          className="mr-2"
-          {...GenerateTourProps(deleteJobTourStep)}
-        >
-          <FontAwesomeIcon icon="trash" />
-        </Button>
+          <>
+            <Button
+              rounded
+              raised
+              link
+              onClick={() => {
+                if (job.id) {
+                  RunAdhocJob(job.id).catch((error) => {
+                    console.error("Error running job:", error);
+                  });
+                }
+              }}
+              title={"Run Now " + job.name}
+              className="mr-2"
+              {...GenerateTourProps(runNowTourStep)}
+            >
+              <FontAwesomeIcon icon="forward" />
+            </Button>
+
+            <Button
+              rounded
+              raised
+              link
+              onClick={() => {
+                if (job.id) {
+                  editJob(job.id);
+                }
+              }}
+              title={"Update Job " + job.name}
+              className="mr-2"
+              {...GenerateTourProps(editJobTourStep)}
+            >
+              <FontAwesomeIcon icon="edit" />
+            </Button>
+            {job.status === "RUNNING" && (
+              <Button
+                rounded
+                raised
+                link
+                onClick={() => {
+                  PauseJob(job)
+                    .then((updatedJob) => {
+                      setJobs((prevJobs) =>
+                        prevJobs.map((j) =>
+                          j.id === updatedJob.id ? updatedJob : j,
+                        ),
+                      );
+                    })
+                    .catch((error) => {
+                      console.error("Error pausing job:", error);
+                    });
+                }}
+                title={"Pause Job " + job.name}
+                className="mr-2"
+                {...GenerateTourProps(pauseResumeJobTourStep)}
+              >
+                <FontAwesomeIcon icon="pause" />
+              </Button>
+            )}
+            {job.status === "PAUSED" && (
+              <Button
+                rounded
+                raised
+                link
+                onClick={() => {
+                  ResumeJob(job)
+                    .then((updatedJob) => {
+                      setJobs((prevJobs) =>
+                        prevJobs.map((j) =>
+                          j.id === updatedJob.id ? updatedJob : j,
+                        ),
+                      );
+                    })
+                    .catch((error) => {
+                      console.error("Error resuming job:", error);
+                    });
+                }}
+                title={"Resume Job " + job.name}
+                className="mr-2"
+                {...GenerateTourProps(pauseResumeJobTourStep)}
+              >
+                <FontAwesomeIcon icon="play" />
+              </Button>
+            )}
+            <Button
+              rounded
+              raised
+              link
+              onClick={() => {
+                DeleteJob(job)
+                  .then(() => {
+                    setJobs((prevJobs) =>
+                      prevJobs.filter((j) => j.id !== job.id),
+                    );
+                  })
+                  .catch((error) => {
+                    console.error("Error deleting job:", error);
+                  });
+              }}
+              title={"Delete Job " + job.name}
+              className="mr-2"
+              {...GenerateTourProps(deleteJobTourStep)}
+            >
+              <FontAwesomeIcon icon="trash" />
+            </Button>
+          </>
+        </HasAccess>
       </div>
     );
   };
@@ -368,43 +393,45 @@ function JobIndex({
     <div className="flex flex-wrap align-items-center justify-content-between gap-2">
       <span className="text-xl text-900 font-bold">Requests Scheduler</span>
       <Toast ref={toast} />
-      <div className="flex">
-        <Button
-          className="mr-2"
-          raised
-          onClick={createJob}
-          {...GenerateTourProps(createJobTourStep)}
-        >
-          Create Job
-        </Button>
+      <HasAccess config={config} permission="OPERATOR">
+        <div className="flex">
+          <Button
+            className="mr-2"
+            raised
+            onClick={createJob}
+            {...GenerateTourProps(createJobTourStep)}
+          >
+            Create Job
+          </Button>
 
-        <FileUpload
-          ref={jobImportFileRef}
-          className="mr-2"
-          mode="basic"
-          name="file"
-          accept=".json"
-          maxFileSize={1000000}
-          chooseLabel="Import Jobs"
-          customUpload
-          auto
-          uploadHandler={customJobImporter}
-          {...GenerateTourProps(importJobTourStep)}
-        />
+          <FileUpload
+            ref={jobImportFileRef}
+            className="mr-2"
+            mode="basic"
+            name="file"
+            accept=".json"
+            maxFileSize={1000000}
+            chooseLabel="Import Jobs"
+            customUpload
+            auto
+            uploadHandler={customJobImporter}
+            {...GenerateTourProps(importJobTourStep)}
+          />
 
-        <Button
-          className="mr-2"
-          raised
-          onClick={() =>
-            ExportJobs().catch((error) =>
-              console.error("Error exporting jobs:", error),
-            )
-          }
-          {...GenerateTourProps(exportJobTourStep)}
-        >
-          Export Jobs
-        </Button>
-      </div>
+          <Button
+            className="mr-2"
+            raised
+            onClick={() =>
+              ExportJobs().catch((error) =>
+                console.error("Error exporting jobs:", error),
+              )
+            }
+            {...GenerateTourProps(exportJobTourStep)}
+          >
+            Export Jobs
+          </Button>
+        </div>
+      </HasAccess>
     </div>
   );
 

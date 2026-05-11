@@ -11,13 +11,14 @@ import { Stepper } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
 import { Toast } from "primereact/toast";
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import CommandForm from "../components/CommandForm";
 import { Command, Request, System } from "../models/brewtils-types";
-import { RequestItem } from "../models/models";
+import { Config, PermissionCheck, RequestItem } from "../models/models";
+import { checkPermission } from "../services/permission_service";
 import { GetRequest, PostRequest } from "../services/request_service";
 import { GetSystemList } from "../services/system_service";
-import { GetBaseURL } from "../services/util_service";
 import RequestOutput from "./RequestOutput";
 
 function UnformattedInput(request: Request) {
@@ -35,6 +36,7 @@ function RequestViewCard({
   removeItem,
   addItem,
   listeners,
+  config,
   isDialog,
 }: {
   requestItem: RequestItem;
@@ -42,6 +44,7 @@ function RequestViewCard({
   removeItem: (id: string) => void;
   addItem: (itemParams?: Partial<RequestItem>) => void;
   listeners: Record<string, any>;
+  config: Config;
   isDialog: boolean;
 }) {
   const requestId = useRef<string | null | undefined>(
@@ -57,6 +60,8 @@ function RequestViewCard({
   const [command, setCommand] = useState<Command | any>(null);
 
   const [showCommandForm, setShowCommandForm] = useState(false);
+
+  const navigate = useNavigate();
 
   const SeverityCheck = (status?: string) => {
     if (!status) {
@@ -110,10 +115,7 @@ function RequestViewCard({
       } as Request)
         .then((response_request: any) => {
           if (openRequest) {
-            window.open(
-              `${GetBaseURL()}/request/${response_request.id}`,
-              "_self",
-            );
+            void navigate(`/request/${response_request.id}`);
           } else {
             toast?.current?.show({
               severity: "info",
@@ -300,12 +302,21 @@ function RequestViewCard({
             label="Open"
             icon="pi pi-plus"
             onClick={() => {
-              window.open(`${GetBaseURL()}/request/${request.id}`, "_self");
+              void navigate(`/request/${request.id}`);
             }}
             model={
               request &&
               request.status &&
-              !["CREATED", "IN_PROGRESS"].includes(request.status)
+              !["CREATED", "IN_PROGRESS"].includes(request.status) &&
+              checkPermission(config, "OPERATOR", {
+                global: false,
+                gardenName: request?.target_garden,
+                namespace: request?.namespace,
+                systemName: request?.system,
+                systemVersion: request?.system_version,
+                instanceName: request?.instance_name,
+                commandName: request?.command,
+              } as PermissionCheck)
                 ? [
                     {
                       label: "Run Again Now",

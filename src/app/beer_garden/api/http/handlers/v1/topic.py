@@ -3,6 +3,7 @@ from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.models import Subscriber as BrewtilsSubscriber
 from brewtils.schema_parser import SchemaParser
+from mongoengine import Q
 
 from beer_garden.api.http.base_handler import BaseHandler
 
@@ -108,6 +109,7 @@ class TopicAPI(BaseHandler):
           [
             { "operation": "add", "value": {subscriber} }
             { "operation": "remove", "value": {subscriber} }
+            { "operation": "reset_count", "value": {subscriber} }
           ]
           ```
         requestBody:
@@ -158,7 +160,7 @@ class TopicAPI(BaseHandler):
 
         for op in patch:
             operation = op.operation.lower()
-            subscriber = BrewtilsSubscriber(**op.value)
+            subscriber = BrewtilsSubscriber(**op.value) if op.value else None
 
             if operation == "add":
                 response = await self.client(
@@ -172,6 +174,14 @@ class TopicAPI(BaseHandler):
                 response = await self.client(
                     Operation(
                         operation_type="TOPIC_REMOVE_SUBSCRIBER",
+                        kwargs={"topic_id": topic_id, "subscriber": subscriber},
+                    )
+                )
+
+            elif operation == "reset_count":
+                response = await self.client(
+                    Operation(
+                        operation_type="TOPIC_RESET_COUNT",
                         kwargs={"topic_id": topic_id, "subscriber": subscriber},
                     )
                 )
@@ -366,6 +376,12 @@ class TopicListAPI(BaseHandler):
         """
         ---
         summary: Retrieve topics
+        parameters:
+          - name: hide_generated
+            in: path
+            required: false
+            description: Hide topics containing only GENERATED subscribers
+            type: boolean
         responses:
           200:
             description: List of topics
@@ -393,7 +409,25 @@ class TopicListAPI(BaseHandler):
           - Topics
         """
 
-        response = await self.client(Operation(operation_type="TOPIC_READ_ALL"))
+        hide_generated = self.get_query_argument("hide_generated", None)
+        if hide_generated is None:
+            hide_generated = False
+        else:
+            hide_generated = bool(hide_generated.lower() == "true")
+
+        if hide_generated:
+            q_filter = Q()
+            q_filter = q_filter & (
+                Q(**{"subscribers__subscriber_type__in": ["ANNOTATED", "DYNAMIC"]})
+                | Q(**{"subscribers__size": 0})
+            )
+            response = await self.client(
+                Operation(
+                    operation_type="TOPIC_READ_ALL", kwargs={"q_filter": q_filter}
+                )
+            )
+        else:
+            response = await self.client(Operation(operation_type="TOPIC_READ_ALL"))
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

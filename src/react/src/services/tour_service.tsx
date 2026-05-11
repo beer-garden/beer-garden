@@ -31,14 +31,18 @@ export const ConvertToTourStepProps = (steps: Array<TourStepProps>): any => {
 };
 
 export const GenerateTourProps = (tourStep: Partial<TourStepProps>) => {
-  if (!tourStep.prefix || !tourStep.uuid || !tourStep.label) {
-    throw new Error(
-      "TourStepProps must have prefix, uuid, and label to generate tour props",
-    );
+  try {
+    if (!tourStep.prefix || !tourStep.uuid || !tourStep.label) {
+      throw new Error(
+        "TourStepProps must have prefix, uuid, and label to generate tour props",
+      );
+    }
+    return {
+      "data-step": `${tourStep.prefix}-${tourStep.uuid}-${tourStep.label}`,
+    };
+  } catch (error) {
+    console.error("Error adding tour step:", error);
   }
-  return {
-    "data-step": `${tourStep.prefix}-${tourStep.uuid}-${tourStep.label}`,
-  };
 };
 
 export const AddTourStep = (

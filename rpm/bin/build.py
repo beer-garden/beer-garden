@@ -9,8 +9,11 @@ import subprocess
 import sys
 import tarfile
 
+from pathlib import Path
+
 BUILD_IMAGE = "bgio/build"
 NODE_IMAGE = "node:18"
+PREVIEW_NODE_IMAGE = "node:23"
 SUPPORTED_DISTRIBUTIONS = ["centos7", "rocky9"]
 SUPPORTED_PYTHONS = ["3.7","3.8","3.9","3.10","3.11","3.12","3.13","3.14"]
 BUILD_TYPES = ["rpm"]
@@ -64,8 +67,25 @@ def build_rpms(version, iteration, cli_dist, cli_python, local, docker_envs):
         + env_vars
         + [NODE_IMAGE, "make", "-C", "/src/ui", "deps", "package"]
     )
-
+  
     subprocess.run(ui_build_cmd).check_returncode()
+    
+    preview_ui_build_cmd = (
+        ["docker", "run", "--rm", "-v", f"{BASE_PATH}/src:/src"]
+        + env_vars
+        + [PREVIEW_NODE_IMAGE, "make", "-C", "/src/react", "deps", "build_preview"]
+    )
+
+    subprocess.run(preview_ui_build_cmd).check_returncode()
+    
+    my_env = os.environ.copy()
+    USER = my_env.get("USER")
+    if USER is not None:
+        preview_ui_ownership_cmd = (["sudo", "chown", "-R", f"{USER}", f"{BASE_PATH}/src/react/build"])
+        subprocess.run(preview_ui_ownership_cmd).check_returncode()
+
+        preview_ui_permission_cmd = (["chmod", "744", "-R" ,f"{BASE_PATH}/src/react/build"])
+        subprocess.run(preview_ui_permission_cmd).check_returncode()
 
     for dist in build_dists:
         tag = f"{dist}-python{build_python}"
@@ -100,6 +120,13 @@ def build_rpms(version, iteration, cli_dist, cli_python, local, docker_envs):
 
         if local:
             cmd.append("--local")
+            path = Path(f"{BASE_PATH}/src/brewtils")
+            if not path.is_dir():
+                print(f"Cloning Brewtils to {BASE_PATH}/src/brewtils")
+                clone_brewtils_cmd = ["git","clone","https://github.com/beer-garden/brewtils.git",f"{BASE_PATH}/src/brewtils"]
+                subprocess.run(clone_brewtils_cmd).check_returncode()
+            else:
+                print(f"Brewtils Exist: {BASE_PATH}/src/brewtils")
 
         subprocess.run(cmd).check_returncode()
 
