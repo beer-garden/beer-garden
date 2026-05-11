@@ -22,6 +22,14 @@ describe("SchedulerViewCard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     cleanup();
+
+    vi.mock("react-router-dom", async () => {
+      const actual = await vi.importActual("react-router-dom");
+      return {
+        ...actual,
+        useNavigate: () => vi.fn(),
+      };
+    });
   });
 
   test("renders Cron Scheduler View Card", async () => {

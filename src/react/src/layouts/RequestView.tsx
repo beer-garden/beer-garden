@@ -126,7 +126,7 @@ function RequestOptions({
           command: () => {
             DeleteRequest(request)
               .then(() => {
-                void navigate(`${GetBaseURL()}/requests`);
+                void navigate(`/requests`);
               })
               .catch((error) => {
                 console.error("Error deleting request:", error);

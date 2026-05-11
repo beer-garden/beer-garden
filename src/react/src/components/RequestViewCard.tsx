@@ -11,6 +11,7 @@ import { Stepper } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
 import { Toast } from "primereact/toast";
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import CommandForm from "../components/CommandForm";
 import { Command, Request, System } from "../models/brewtils-types";
@@ -18,7 +19,6 @@ import { Config, PermissionCheck, RequestItem } from "../models/models";
 import { checkPermission } from "../services/permission_service";
 import { GetRequest, PostRequest } from "../services/request_service";
 import { GetSystemList } from "../services/system_service";
-import { GetBaseURL } from "../services/util_service";
 import RequestOutput from "./RequestOutput";
 
 function UnformattedInput(request: Request) {
@@ -60,6 +60,8 @@ function RequestViewCard({
   const [command, setCommand] = useState<Command | any>(null);
 
   const [showCommandForm, setShowCommandForm] = useState(false);
+
+  const navigate = useNavigate();
 
   const SeverityCheck = (status?: string) => {
     if (!status) {
@@ -113,10 +115,7 @@ function RequestViewCard({
       } as Request)
         .then((response_request: any) => {
           if (openRequest) {
-            window.open(
-              `${GetBaseURL()}/request/${response_request.id}`,
-              "_self",
-            );
+            void navigate(`/request/${response_request.id}`);
           } else {
             toast?.current?.show({
               severity: "info",
@@ -303,7 +302,7 @@ function RequestViewCard({
             label="Open"
             icon="pi pi-plus"
             onClick={() => {
-              window.open(`${GetBaseURL()}/request/${request.id}`, "_self");
+              void navigate(`/request/${request.id}`);
             }}
             model={
               request &&

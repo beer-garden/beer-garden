@@ -10,7 +10,6 @@ import { Link } from "react-router-dom";
 import { Request } from "../models/brewtils-types";
 import { Config } from "../models/models";
 import { DeleteRequest, GetRequestList } from "../services/request_service";
-import { GetBaseURL } from "../services/util_service";
 import HasAccess from "./HasAccess";
 
 function CurrentRequestsTemplate({
@@ -137,7 +136,7 @@ function CurrentRequestsTemplate({
   const optionsTemplate = (request: Request) => {
     return (
       <div>
-        <Link to={`${GetBaseURL()}/request/${request.id}`}>
+        <Link to={`/request/${request.id}`}>
           <Button rounded raised link>
             <FontAwesomeIcon icon="arrow-up-right-from-square" />
           </Button>

@@ -8,7 +8,6 @@ import HasAccess from "../components/HasAccess";
 import { Request } from "../models/brewtils-types";
 import { Config } from "../models/models";
 import { DeleteRequest } from "../services/request_service";
-import { GetBaseURL } from "../services/util_service";
 
 function parseRequest(request: Request, config: Config) {
   const item = {
@@ -69,7 +68,7 @@ function RequestTreeChart(props: RequestTreeChartProps) {
     }
     return (
       <div>
-        <Link to={`${GetBaseURL()}/request/${node.data.id}`}>
+        <Link to={`/request/${node.data.id}`}>
           <Button rounded raised link title="Open">
             <FontAwesomeIcon icon="arrow-up-right-from-square" />{" "}
           </Button>
@@ -130,7 +129,7 @@ function RequestTreeChart(props: RequestTreeChartProps) {
             hasInstanceName={props?.rootRequest?.instance_name}
             hasCommandName={props?.rootRequest?.command}
           >
-            <Link to={`${GetBaseURL()}/recreate/${node.data.id}`}>
+            <Link to={`/recreate/${node.data.id}`}>
               <Button rounded raised link title="Pour Again">
                 <FontAwesomeIcon icon="rotate" />{" "}
               </Button>
