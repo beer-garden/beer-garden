@@ -202,9 +202,13 @@ function RequestWizard({
         );
         setSelectedSystem(chosenSystem);
         if (instance_name) {
-          setSelectedInstance(
-            chosenSystem?.instances?.find((i) => i.name == instance_name),
-          );
+          if (chosenSystem?.instances?.find((i) => i.name == instance_name)) {
+            setSelectedInstance({
+              name: instance_name,
+              label: instance_name,
+            });
+          }
+
           if (command || command_display_name) {
             setSelectedCommand(
               chosenSystem?.commands?.find(
