@@ -74,7 +74,7 @@ lint:
 	npx eslint src/ 
 
 test_docker_image:
-	docker build . -t test_server
+	docker build -f Dockerfile.vitest -t test_server .
 
 package: deps
 	npm run build
