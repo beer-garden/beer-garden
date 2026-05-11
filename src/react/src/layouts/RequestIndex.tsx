@@ -310,49 +310,56 @@ function RequestIndex({
   const header = (
     <div className="flex flex-wrap align-items-center justify-content-between gap-2">
       <span className="text-xl text-900 font-bold">Requests</span>
-      <div>
-        <Checkbox
-          onChange={(e: CheckboxChangeEvent) =>
-            setAutoRefresh(e.target?.checked ?? false)
-          }
-          checked={autoRefresh}
-          className="mr-2"
-          {...GenerateTourProps(AutoRefreshTourStep)}
-        />
-        Auto Refresh
+      <div className="flex align-items-center">
+        <label htmlFor="autoRefreshButton">
+          <Checkbox
+            id="autoRefreshButton"
+            onChange={(e: CheckboxChangeEvent) =>
+              setAutoRefresh(e.target?.checked ?? false)
+            }
+            checked={autoRefresh}
+            className="mr-2"
+            {...GenerateTourProps(AutoRefreshTourStep)}
+          />
+          Auto Refresh
+        </label>
       </div>
-      <div>
-        <Checkbox
-          onChange={(e: CheckboxChangeEvent) =>
-            setShowHidden(e.target?.checked ?? false)
-          }
-          checked={showHidden}
-          className="mr-2"
-          {...GenerateTourProps(ShowHiddenTourStep)}
-        />
-        Show Hidden
+      <div className="flex align-items-center">
+        <label className="mr-2" htmlFor="showHiddenButton">
+          <Checkbox
+            id="showHiddenButton"
+            onChange={(e: CheckboxChangeEvent) =>
+              setShowHidden(e.target?.checked ?? false)
+            }
+            checked={showHidden}
+            className="mr-2"
+            {...GenerateTourProps(ShowHiddenTourStep)}
+          />
+          Show Hidden
+        </label>
+        <label className="mr-2" htmlFor="showChildrenButton">
+          <Checkbox
+            id="showChildrenButton"
+            onChange={(e: CheckboxChangeEvent) =>
+              setShowChildren(e.target?.checked ?? false)
+            }
+            checked={showChildren}
+            className="mr-2"
+            {...GenerateTourProps(ShowChildrenTourStep)}
+          />
+          Show Children
+        </label>
+        <Button
+          rounded
+          raised
+          onClick={lazyLoadData}
+          tooltip={recordsUpdated ? "New updates available" : "Refresh"}
+          {...GenerateTourProps(RefreshTableTourStep)}
+        >
+          {recordsUpdated && <FontAwesomeIcon icon={"circle-exclamation"} />}
+          <FontAwesomeIcon icon="refresh" />
+        </Button>
       </div>
-      <div>
-        <Checkbox
-          onChange={(e: CheckboxChangeEvent) =>
-            setShowChildren(e.target?.checked ?? false)
-          }
-          checked={showChildren}
-          className="mr-2"
-          {...GenerateTourProps(ShowChildrenTourStep)}
-        />
-        Show Children
-      </div>
-      <Button
-        rounded
-        raised
-        onClick={lazyLoadData}
-        tooltip={recordsUpdated ? "New updates available" : "Refresh"}
-        {...GenerateTourProps(RefreshTableTourStep)}
-      >
-        {recordsUpdated && <FontAwesomeIcon icon={"circle-exclamation"} />}
-        <FontAwesomeIcon icon="refresh" />
-      </Button>
     </div>
   );
 
