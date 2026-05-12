@@ -4,7 +4,7 @@ import { Button } from "primereact/button";
 import { Calendar } from "primereact/calendar";
 import { Checkbox, CheckboxChangeEvent } from "primereact/checkbox";
 import { Column } from "primereact/column";
-import { DataTable } from "primereact/datatable";
+import { DataTable, SortOrder } from "primereact/datatable";
 import { Divider } from "primereact/divider";
 import { MultiSelect } from "primereact/multiselect";
 import { Tooltip } from "primereact/tooltip";
@@ -29,6 +29,14 @@ import {
 } from "../services/tour_service";
 import { GetBaseURL } from "../services/util_service";
 
+interface LazyParams {
+  first: number;
+  rows: number;
+  page: number;
+  sortField: string | undefined;
+  sortOrder: SortOrder | undefined;
+}
+
 function RequestIndex({
   listeners,
   tourStepsRef,
@@ -43,7 +51,13 @@ function RequestIndex({
   const [loading, setLoading] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
   const [filteredRecords, setFilteredRecords] = useState<number>(0);
-  const [lazyParams, setLazyParams] = useState({ first: 0, rows: 10, page: 0 });
+  const [lazyParams, setLazyParams] = useState<LazyParams>({
+    first: 0,
+    rows: 10,
+    page: 0,
+    sortField: undefined,
+    sortOrder: undefined,
+  });
   const [recordsUpdated, setRecordsUpdated] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState<boolean>(false);
   const [showHidden, setShowHidden] = useState<boolean>(false);
@@ -230,10 +244,25 @@ function RequestIndex({
       return filterQuery;
     };
 
+    const generateSortQuery = () => {
+      const sortQuery: Record<string, any> = {};
+
+      if (lazyParams.sortField) {
+        if (lazyParams.sortOrder && [-1, 1].includes(lazyParams.sortOrder)) {
+          sortQuery["order_by"] =
+            lazyParams.sortOrder == -1
+              ? "-" + lazyParams.sortField
+              : lazyParams.sortField;
+        }
+      }
+      return sortQuery;
+    };
+
     const queryHeaders: Record<string, any> = {
       length: lazyParams.rows,
       start: lazyParams.first,
       ...generateFilterQuery(),
+      ...generateSortQuery(),
     };
 
     if (showHidden) {
@@ -271,6 +300,10 @@ function RequestIndex({
   }, [lazyParams, filters, showHidden, showChildren]);
 
   const onPage = (event: any) => {
+    setLazyParams(event);
+  };
+
+  const onSort = (event: any) => {
     setLazyParams(event);
   };
 
@@ -560,8 +593,11 @@ function RequestIndex({
         header={header}
         rows={lazyParams.rows}
         first={lazyParams.first}
+        sortField={lazyParams.sortField}
+        sortOrder={lazyParams.sortOrder}
         totalRecords={totalRecords}
         onPage={onPage}
+        onSort={onSort}
         filters={filters}
         onFilter={(e) => setFilters(e.filters as typeof filters)}
         rowsPerPageOptions={[5, 10, 20, 50]}
@@ -571,16 +607,18 @@ function RequestIndex({
         <Column
           field="command_display_name"
           filter
+          sortable
           header="Command"
           body={commandNameTemplate}
         />
-        <Column field="namespace" filter header="Namespace" />
-        <Column field="system" filter header="System" />
-        <Column field="system_version" filter header="Version" />
-        <Column field="instance_name" filter header="Instance" />
+        <Column field="namespace" filter sortable header="Namespace" />
+        <Column field="system" filter sortable header="System" />
+        <Column field="system_version" filter sortable header="Version" />
+        <Column field="instance_name" filter sortable header="Instance" />
         <Column
           field="status"
           filter
+          sortable
           header="Status"
           filterElement={statusFilterTemplate}
           filterMatchModeOptions={[
@@ -591,12 +629,13 @@ function RequestIndex({
         <Column
           field="created_at"
           filter
+          sortable
           dataType="date"
           header="Created"
           body={(rowData) => formatDate(rowData.created_at)}
           filterElement={dateTimeFilterTemplate}
         />
-        <Column field="comment" filter header="Comment" />
+        <Column field="comment" filter sortable header="Comment" />
       </DataTable>
     </div>
   );
