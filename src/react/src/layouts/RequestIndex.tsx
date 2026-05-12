@@ -533,16 +533,17 @@ function RequestIndex({
     layout:
       "FirstPageLink PrevPageLink NextPageLink PageLinks LastPageLink RowsPerPageDropdown CurrentPageReport",
     CurrentPageReport: () => {
+      const lastCount = lazyParams.first + lazyParams.rows;
       if (filteredRecords > 0 && filteredRecords < totalRecords) {
         return (
           <div className="mx-4">
-            <span>{`Showing ${lazyParams.first} to ${lazyParams.first + lazyParams.rows} of ${filteredRecords} entries (filtered from ${totalRecords} entries)`}</span>
+            <span>{`Showing ${lazyParams.first} to ${lastCount > filteredRecords ? filteredRecords : lastCount} of ${filteredRecords} entries (filtered from ${totalRecords} entries)`}</span>
           </div>
         );
       } else {
         return (
           <div className="mx-4">
-            <span>{`Showing ${lazyParams.first} to ${lazyParams.first + lazyParams.rows} of ${totalRecords} entries`}</span>
+            <span>{`Showing ${lazyParams.first} to ${lastCount > totalRecords ? totalRecords : lastCount} of ${totalRecords} entries`}</span>
           </div>
         );
       }
