@@ -2,10 +2,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { FilterMatchMode } from "primereact/api";
 import { Button } from "primereact/button";
 import { Calendar } from "primereact/calendar";
-import { Checkbox } from "primereact/checkbox";
+import { Checkbox, CheckboxChangeEvent } from "primereact/checkbox";
 import { Column } from "primereact/column";
-import { DataTable } from "primereact/datatable";
+import { DataTable, SortOrder } from "primereact/datatable";
+import { Divider } from "primereact/divider";
 import { MultiSelect } from "primereact/multiselect";
+import { Tooltip } from "primereact/tooltip";
 import {
   RefObject,
   useCallback,
@@ -26,6 +28,14 @@ import {
   GenerateTourProps,
 } from "../services/tour_service";
 
+interface LazyParams {
+  first: number;
+  rows: number;
+  page: number;
+  sortField: string | undefined;
+  sortOrder: SortOrder | undefined;
+}
+
 function RequestIndex({
   listeners,
   tourStepsRef,
@@ -39,9 +49,18 @@ function RequestIndex({
   const altRequests = useRef<Array<Request>>([]);
   const [loading, setLoading] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [lazyParams, setLazyParams] = useState({ first: 0, rows: 10, page: 0 });
+  const [filteredRecords, setFilteredRecords] = useState<number>(0);
+  const [lazyParams, setLazyParams] = useState<LazyParams>({
+    first: 0,
+    rows: 10,
+    page: 0,
+    sortField: undefined,
+    sortOrder: undefined,
+  });
   const [recordsUpdated, setRecordsUpdated] = useState(false);
-  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState<boolean>(false);
+  const [showHidden, setShowHidden] = useState<boolean>(false);
+  const [showChildren, setShowChildren] = useState<boolean>(false);
 
   const [filters, setFilters] = useState({
     command_display_name: {
@@ -75,6 +94,24 @@ function RequestIndex({
     pos: 0,
   };
 
+  const ShowHiddenTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUUID,
+    label: "Show Hidden",
+    content: "Toggling this option will show hidden requests.",
+    layer: "LAYOUT",
+    pos: 1,
+  };
+
+  const ShowChildrenTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUUID,
+    label: "Show Children",
+    content: "Toggling this option will show child requests.",
+    layer: "LAYOUT",
+    pos: 2,
+  };
+
   const RefreshTableTourStep: TourStepProps = {
     prefix: tourPrefix,
     uuid: tourUUID,
@@ -82,7 +119,7 @@ function RequestIndex({
     content:
       "Clicking this button will refresh the table with the latest data.",
     layer: "LAYOUT",
-    pos: 1,
+    pos: 3,
   };
 
   const OpenRequestTourStep: TourStepProps = {
@@ -91,7 +128,7 @@ function RequestIndex({
     label: `Open Request`,
     content: `View details about this request on View Request Page`,
     layer: "LAYOUT",
-    pos: 2,
+    pos: 4,
   };
 
   const ViewRequestTourStep: TourStepProps = {
@@ -100,7 +137,7 @@ function RequestIndex({
     label: `View Request`,
     content: `View Request in popup modal.`,
     layer: "LAYOUT",
-    pos: 3,
+    pos: 5,
   };
 
   const lazyLoadData = useCallback(() => {
@@ -116,6 +153,12 @@ function RequestIndex({
 
         filterQuery["include"] = filterQuery["include"] || ["id"];
         filterQuery["include"].push(field);
+        if (showHidden) {
+          filterQuery["include"].push("hidden");
+        }
+        if (showChildren) {
+          filterQuery["include"].push("parent");
+        }
 
         if (
           filterMeta.value === null ||
@@ -200,11 +243,33 @@ function RequestIndex({
       return filterQuery;
     };
 
-    const queryHeaders = {
+    const generateSortQuery = () => {
+      const sortQuery: Record<string, any> = {};
+
+      if (lazyParams.sortField) {
+        if (lazyParams.sortOrder && [-1, 1].includes(lazyParams.sortOrder)) {
+          sortQuery["order_by"] =
+            lazyParams.sortOrder == -1
+              ? "-" + lazyParams.sortField
+              : lazyParams.sortField;
+        }
+      }
+      return sortQuery;
+    };
+
+    const queryHeaders: Record<string, any> = {
       length: lazyParams.rows,
       start: lazyParams.first,
       ...generateFilterQuery(),
+      ...generateSortQuery(),
     };
+
+    if (showHidden) {
+      queryHeaders["include_hidden"] = true;
+    }
+    if (showChildren) {
+      queryHeaders["include_children"] = true;
+    }
 
     GetRequestList(queryHeaders)
       .then((data: [Array<Request>, Headers]) => {
@@ -218,15 +283,26 @@ function RequestIndex({
         } else {
           setTotalRecords(requests.length);
         }
+        if (headers.has("Recordsfiltered")) {
+          setFilteredRecords(
+            parseInt(headers.get("Recordsfiltered") || "0", 10),
+          );
+        } else {
+          setFilteredRecords(requests.length);
+        }
         setLoading(false);
       })
       .catch((error) => {
         console.error("Error fetching request list:", error);
         setLoading(false);
       });
-  }, [lazyParams, filters]);
+  }, [lazyParams, filters, showHidden, showChildren]);
 
   const onPage = (event: any) => {
+    setLazyParams(event);
+  };
+
+  const onSort = (event: any) => {
     setLazyParams(event);
   };
 
@@ -271,11 +347,6 @@ function RequestIndex({
       />
     );
   };
-
-  const handleChange = (event: any) => {
-    setAutoRefresh(event.checked);
-  };
-
   useLayoutEffect(() => {
     if (autoRefresh && recordsUpdated) {
       lazyLoadData();
@@ -285,25 +356,56 @@ function RequestIndex({
   const header = (
     <div className="flex flex-wrap align-items-center justify-content-between gap-2">
       <span className="text-xl text-900 font-bold">Requests</span>
-      <div>
-        <Checkbox
-          onChange={handleChange}
-          checked={autoRefresh}
-          className="mr-2"
-          {...GenerateTourProps(AutoRefreshTourStep)}
-        />
-        Auto Refresh
+      <div className="flex align-items-center">
+        <label htmlFor="autoRefreshButton">
+          <Checkbox
+            id="autoRefreshButton"
+            onChange={(e: CheckboxChangeEvent) =>
+              setAutoRefresh(e.target?.checked ?? false)
+            }
+            checked={autoRefresh}
+            className="mr-2"
+            {...GenerateTourProps(AutoRefreshTourStep)}
+          />
+          Auto Refresh
+        </label>
       </div>
-      <Button
-        rounded
-        raised
-        onClick={lazyLoadData}
-        tooltip={recordsUpdated ? "New updates available" : "Refresh"}
-        {...GenerateTourProps(RefreshTableTourStep)}
-      >
-        {recordsUpdated && <FontAwesomeIcon icon={"circle-exclamation"} />}
-        <FontAwesomeIcon icon="refresh" />
-      </Button>
+      <div className="flex align-items-center">
+        <label className="mr-2" htmlFor="showHiddenButton">
+          <Checkbox
+            id="showHiddenButton"
+            onChange={(e: CheckboxChangeEvent) =>
+              setShowHidden(e.target?.checked ?? false)
+            }
+            checked={showHidden}
+            className="mr-2"
+            {...GenerateTourProps(ShowHiddenTourStep)}
+          />
+          Show Hidden
+        </label>
+        <label className="mr-2" htmlFor="showChildrenButton">
+          <Checkbox
+            id="showChildrenButton"
+            onChange={(e: CheckboxChangeEvent) =>
+              setShowChildren(e.target?.checked ?? false)
+            }
+            checked={showChildren}
+            className="mr-2"
+            {...GenerateTourProps(ShowChildrenTourStep)}
+          />
+          Show Children
+        </label>
+        <Button
+          rounded
+          raised
+          onClick={lazyLoadData}
+          tooltip={recordsUpdated ? "New updates available" : "Refresh"}
+          {...GenerateTourProps(RefreshTableTourStep)}
+        >
+          {recordsUpdated && <FontAwesomeIcon icon={"circle-exclamation"} />}
+          <FontAwesomeIcon icon="refresh" />
+        </Button>
+      </div>
     </div>
   );
 
@@ -314,10 +416,37 @@ function RequestIndex({
   };
 
   const commandNameTemplate = (request: Request) => {
-    if (request.command_display_name) {
-      return <span>{request.command_display_name}</span>;
-    }
-    return <span>{request.command}</span>;
+    return (
+      <div>
+        {request.parent && (
+          <>
+            <Tooltip target=".parent-icon">
+              <div className="flex flex-column">
+                <div
+                  className="justify-center font-bold"
+                  style={{ marginBottom: "4px" }}
+                >
+                  parent request
+                </div>
+                <Divider className="p-0 mx-0 my-1" />
+                <span>{request.parent.command}</span>
+              </div>
+            </Tooltip>
+            <Link to={`${GetBaseURL()}/request/${request.parent.id}`}>
+              <FontAwesomeIcon
+                icon="level-up"
+                className="parent-icon mr-2"
+                data-pr-position="top"
+              />
+            </Link>
+          </>
+        )}
+        <span>{request.command_display_name ?? request.command}</span>
+        {request.hidden && (
+          <FontAwesomeIcon icon="user-secret" style={{ float: "right" }} />
+        )}
+      </div>
+    );
   };
 
   const commandActionTemplate = (request: Request) => {
@@ -419,6 +548,8 @@ function RequestIndex({
   useEffect(() => {
     ClearTourSteps(tourStepsRef, tourPrefix, tourUUID);
     AddTourStep(tourStepsRef, AutoRefreshTourStep);
+    AddTourStep(tourStepsRef, ShowHiddenTourStep);
+    AddTourStep(tourStepsRef, ShowChildrenTourStep);
     AddTourStep(tourStepsRef, RefreshTableTourStep);
     if (requests && requests.length > 0) {
       AddTourStep(tourStepsRef, OpenRequestTourStep);
@@ -430,6 +561,27 @@ function RequestIndex({
     };
   }, [requests]);
 
+  const paginatorTemplate = {
+    layout:
+      "FirstPageLink PrevPageLink NextPageLink PageLinks LastPageLink RowsPerPageDropdown CurrentPageReport",
+    CurrentPageReport: () => {
+      const lastCount = lazyParams.first + lazyParams.rows;
+      if (filteredRecords > 0 && filteredRecords < totalRecords) {
+        return (
+          <div className="mx-4">
+            <span>{`Showing ${lazyParams.first} to ${lastCount > filteredRecords ? filteredRecords : lastCount} of ${filteredRecords} entries (filtered from ${totalRecords} entries)`}</span>
+          </div>
+        );
+      } else {
+        return (
+          <div className="mx-4">
+            <span>{`Showing ${lazyParams.first} to ${lastCount > totalRecords ? totalRecords : lastCount} of ${totalRecords} entries`}</span>
+          </div>
+        );
+      }
+    },
+  };
+
   return (
     <div>
       <DataTable
@@ -440,26 +592,32 @@ function RequestIndex({
         header={header}
         rows={lazyParams.rows}
         first={lazyParams.first}
+        sortField={lazyParams.sortField}
+        sortOrder={lazyParams.sortOrder}
         totalRecords={totalRecords}
         onPage={onPage}
+        onSort={onSort}
         filters={filters}
         onFilter={(e) => setFilters(e.filters as typeof filters)}
         rowsPerPageOptions={[5, 10, 20, 50]}
+        paginatorTemplate={paginatorTemplate}
       >
         <Column header="Actions" body={commandActionTemplate} />
         <Column
           field="command_display_name"
           filter
+          sortable
           header="Command"
           body={commandNameTemplate}
         />
-        <Column field="namespace" filter header="Namespace" />
-        <Column field="system" filter header="System" />
-        <Column field="system_version" filter header="Version" />
-        <Column field="instance_name" filter header="Instance" />
+        <Column field="namespace" filter sortable header="Namespace" />
+        <Column field="system" filter sortable header="System" />
+        <Column field="system_version" filter sortable header="Version" />
+        <Column field="instance_name" filter sortable header="Instance" />
         <Column
           field="status"
           filter
+          sortable
           header="Status"
           filterElement={statusFilterTemplate}
           filterMatchModeOptions={[
@@ -470,12 +628,13 @@ function RequestIndex({
         <Column
           field="created_at"
           filter
+          sortable
           dataType="date"
           header="Created"
           body={(rowData) => formatDate(rowData.created_at)}
           filterElement={dateTimeFilterTemplate}
         />
-        <Column field="comment" filter header="Comment" />
+        <Column field="comment" filter sortable header="Comment" />
       </DataTable>
     </div>
   );
