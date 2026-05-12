@@ -583,7 +583,7 @@ function App() {
                 />
                 <Route
                   path="/topics"
-                  element={<TopicIndex config={config} />}
+                  element={<TopicIndex config={config} listeners={listeners} />}
                 />
                 <Route
                   path="/users"

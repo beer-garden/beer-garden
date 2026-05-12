@@ -14,6 +14,7 @@ import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 
 import HasAccess from "../components/HasAccess";
 import SubscriberItem from "../components/SubscriberItem";
+import TopicCard from "../components/TopicCard";
 import { Subscriber, Topic } from "../models/brewtils-types";
 import { Config } from "../models/models";
 import {
@@ -31,7 +32,13 @@ interface TopicSubscriber {
   subscriber?: Subscriber;
 }
 
-function TopicIndex({ config }: { config: Config }) {
+function TopicIndex({
+  config,
+  listeners,
+}: {
+  config: Config;
+  listeners: Record<string, any>;
+}) {
   const toast = useRef<Toast>(null);
   const [topicSubscribers, setTopicSubscribers] = useState<
     Array<TopicSubscriber>
@@ -82,6 +89,7 @@ function TopicIndex({ config }: { config: Config }) {
       command: "",
     } as Subscriber,
   ]);
+  const [viewTopic, setViewTopic] = useState<Topic | undefined>(undefined);
   const msgs = useRef<Messages>(null);
   const loadTopics = useCallback(() => {
     setLoading(true);
@@ -459,6 +467,12 @@ function TopicIndex({ config }: { config: Config }) {
         <HasAccess config={config} permission="PLUGIN_ADMIN">
           <div className="flex">
             <Button
+              onClick={() => setViewTopic(topicSubscriber.topic)}
+              tooltip="View Topic"
+            >
+              <FontAwesomeIcon icon="eye" />
+            </Button>
+            <Button
               onClick={() => addSubscriber(topicSubscriber.topic!)}
               tooltip="Add Subscriber"
             >
@@ -699,6 +713,28 @@ function TopicIndex({ config }: { config: Config }) {
     <div>
       <Toast ref={toast} />
       <Dialog
+        data-testid="view_topic"
+        header={viewTopic?.name}
+        visible={viewTopic !== undefined}
+        footer={
+          <>
+            <Button onClick={() => setViewTopic(undefined)}>Close</Button>
+          </>
+        }
+        onHide={() => {
+          setViewTopic(undefined);
+        }}
+      >
+        {viewTopic && (
+          <TopicCard
+            targetTopic={viewTopic}
+            listeners={listeners}
+            isDialog={true}
+          />
+        )}
+      </Dialog>
+
+      <Dialog
         data-testid="topic-dialog"
         appendTo={"self"}
         header={isEdit.current ? "Add Subscriber" : "Create Topic"}
@@ -715,7 +751,6 @@ function TopicIndex({ config }: { config: Config }) {
           </>
         }
         visible={dialogVisible}
-        style={{ width: "50vw" }}
         onHide={() => {
           handleDialogClose();
         }}
