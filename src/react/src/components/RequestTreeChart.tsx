@@ -1,6 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "primereact/button";
 import { Column } from "primereact/column";
+import { Tooltip } from "primereact/tooltip";
 import { TreeTable } from "primereact/treetable";
 import { Link } from "react-router-dom";
 
@@ -8,7 +9,6 @@ import HasAccess from "../components/HasAccess";
 import { Request } from "../models/brewtils-types";
 import { Config } from "../models/models";
 import { DeleteRequest } from "../services/request_service";
-import { Tooltip } from "primereact/tooltip";
 
 function parseRequest(request: Request, config: Config) {
   const item = {
@@ -66,23 +66,52 @@ function RequestTreeChart(props: RequestTreeChartProps) {
   };
 
   const commandNameTemplate = (node: any) => {
-    
     return (
       <div>
         {node.data.topic && (
           <>
-            <Tooltip content={node.data.topic} target={`#TOPIC_${node.data.id}`} />
-            <FontAwesomeIcon icon="envelope" className="mr-2" id={`TOPIC_${node.data.id}`}/>
+            <Tooltip
+              content={node.data.topic}
+              target={`#TOPIC_${node.data.id}`}
+            />
+            <FontAwesomeIcon
+              icon="envelope"
+              className="mr-2"
+              id={`TOPIC_${node.data.id}`}
+            />
           </>
         )}
-        <Tooltip content={`${node.data.command_type} Command`} target={`#ICON_${node.data.id}`} />
-        {(node.data.command_type === undefined || node.data.command_type.length === 0 || node.data.command_type === "ACTION") && (<FontAwesomeIcon icon="a" className="mr-2" id={`ICON_${node.data.id}`}/>)}
-        {node.data.command_type === "INFO" && (<FontAwesomeIcon icon="i" className="mr-2" id={`ICON_${node.data.id}`}/>)}
-        {node.data.command_type === "TEMP" && (<FontAwesomeIcon icon="hourglass" className="mr-2" id={`ICON_${node.data.id}`}/>)}
+        <Tooltip
+          content={`${node.data.command_type} Command`}
+          target={`#ICON_${node.data.id}`}
+        />
+        {(node.data.command_type === undefined ||
+          node.data.command_type.length === 0 ||
+          node.data.command_type === "ACTION") && (
+          <FontAwesomeIcon
+            icon="a"
+            className="mr-2"
+            id={`ICON_${node.data.id}`}
+          />
+        )}
+        {node.data.command_type === "INFO" && (
+          <FontAwesomeIcon
+            icon="i"
+            className="mr-2"
+            id={`ICON_${node.data.id}`}
+          />
+        )}
+        {node.data.command_type === "TEMP" && (
+          <FontAwesomeIcon
+            icon="hourglass"
+            className="mr-2"
+            id={`ICON_${node.data.id}`}
+          />
+        )}
         <span>{node.data.command}</span>
       </div>
-    )
-  }
+    );
+  };
 
   const actionTemplate = (node: any, config: Config) => {
     if (node.data.id === props.currentRequestId) {
@@ -168,7 +197,12 @@ function RequestTreeChart(props: RequestTreeChartProps) {
         rowClassName={rowClassName}
         tableStyle={{ minWidth: "50rem" }}
       >
-        <Column field="command" header="Command" expander body={commandNameTemplate}></Column>
+        <Column
+          field="command"
+          header="Command"
+          expander
+          body={commandNameTemplate}
+        ></Column>
 
         <Column field="status" header="status"></Column>
         <Column field="namespace" header="Namespace"></Column>
