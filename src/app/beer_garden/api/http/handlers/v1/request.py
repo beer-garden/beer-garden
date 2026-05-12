@@ -980,7 +980,7 @@ class RequestListAPI(AuthorizationHandler):
         filter_params = {}
         q_filter = Q()
         include_fields = []
-        order_by = None
+        order_by = "-created_at"
         text_search = None
 
         # These are internal helpers

@@ -5,7 +5,9 @@ import { Calendar } from "primereact/calendar";
 import { Checkbox, CheckboxChangeEvent } from "primereact/checkbox";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
+import { Divider } from "primereact/divider";
 import { MultiSelect } from "primereact/multiselect";
+import { Tooltip } from "primereact/tooltip";
 import {
   RefObject,
   useCallback,
@@ -40,6 +42,7 @@ function RequestIndex({
   const altRequests = useRef<Array<Request>>([]);
   const [loading, setLoading] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
+  const [filteredRecords, setFilteredRecords] = useState<number>(0);
   const [lazyParams, setLazyParams] = useState({ first: 0, rows: 10, page: 0 });
   const [recordsUpdated, setRecordsUpdated] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState<boolean>(false);
@@ -137,6 +140,12 @@ function RequestIndex({
 
         filterQuery["include"] = filterQuery["include"] || ["id"];
         filterQuery["include"].push(field);
+        if (showHidden) {
+          filterQuery["include"].push("hidden");
+        }
+        if (showChildren) {
+          filterQuery["include"].push("parent");
+        }
 
         if (
           filterMeta.value === null ||
@@ -245,6 +254,13 @@ function RequestIndex({
           setTotalRecords(parseInt(headers.get("Recordstotal") || "0", 10));
         } else {
           setTotalRecords(requests.length);
+        }
+        if (headers.has("Recordsfiltered")) {
+          setFilteredRecords(
+            parseInt(headers.get("Recordsfiltered") || "0", 10),
+          );
+        } else {
+          setFilteredRecords(requests.length);
         }
         setLoading(false);
       })
@@ -368,10 +384,37 @@ function RequestIndex({
   };
 
   const commandNameTemplate = (request: Request) => {
-    if (request.command_display_name) {
-      return <span>{request.command_display_name}</span>;
-    }
-    return <span>{request.command}</span>;
+    return (
+      <div>
+        {request.parent && (
+          <>
+            <Tooltip target=".parent-icon">
+              <div className="flex flex-column">
+                <div
+                  className="justify-center font-bold"
+                  style={{ marginBottom: "4px" }}
+                >
+                  parent request
+                </div>
+                <Divider className="p-0 mx-0 my-1" />
+                <span>{request.parent.command}</span>
+              </div>
+            </Tooltip>
+            <Link to={`${GetBaseURL()}/request/${request.parent.id}`}>
+              <FontAwesomeIcon
+                icon="level-up"
+                className="parent-icon mr-2"
+                data-pr-position="top"
+              />
+            </Link>
+          </>
+        )}
+        <span>{request.command_display_name ?? request.command}</span>
+        {request.hidden && (
+          <FontAwesomeIcon icon="user-secret" style={{ float: "right" }} />
+        )}
+      </div>
+    );
   };
 
   const commandActionTemplate = (request: Request) => {
@@ -486,6 +529,26 @@ function RequestIndex({
     };
   }, [requests]);
 
+  const paginatorTemplate = {
+    layout:
+      "FirstPageLink PrevPageLink NextPageLink PageLinks LastPageLink RowsPerPageDropdown CurrentPageReport",
+    CurrentPageReport: () => {
+      if (filteredRecords > 0 && filteredRecords < totalRecords) {
+        return (
+          <div className="mx-4">
+            <span>{`Showing ${lazyParams.first} to ${lazyParams.first + lazyParams.rows} of ${filteredRecords} entries (filtered from ${totalRecords} entries)`}</span>
+          </div>
+        );
+      } else {
+        return (
+          <div className="mx-4">
+            <span>{`Showing ${lazyParams.first} to ${lazyParams.first + lazyParams.rows} of ${totalRecords} entries`}</span>
+          </div>
+        );
+      }
+    },
+  };
+
   return (
     <div>
       <DataTable
@@ -501,6 +564,7 @@ function RequestIndex({
         filters={filters}
         onFilter={(e) => setFilters(e.filters as typeof filters)}
         rowsPerPageOptions={[5, 10, 20, 50]}
+        paginatorTemplate={paginatorTemplate}
       >
         <Column header="Actions" body={commandActionTemplate} />
         <Column
