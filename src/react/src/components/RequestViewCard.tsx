@@ -303,6 +303,9 @@ function RequestViewCard({
             icon="pi pi-plus"
             onClick={() => {
               void navigate(`/request/${request.id}`);
+              if (isDialog) {
+                removeItem(requestItem.itemId);
+              }
             }}
             model={
               request &&

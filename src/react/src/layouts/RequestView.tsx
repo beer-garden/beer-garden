@@ -304,7 +304,7 @@ function RequestView({
   );
 
   useEffect(() => {
-    if (!request) {
+    if (!request || request.id !== requestId) {
       if (requestId !== undefined) {
         GetRequest(requestId, {})
           .then((data: Request) => {
