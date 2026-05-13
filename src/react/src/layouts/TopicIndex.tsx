@@ -296,7 +296,8 @@ function TopicIndex({ config }: { config: Config }) {
               0) > 0 && (
               <Button
                 size="small"
-                tooltip="Clear count"
+                aria-label={`Clear Publisher Count ${topicSubscriber.topic?.publisher_count} from Topic ${topicSubscriber.topic?.name}`}
+                tooltip="Clear Publisher Count"
                 onClick={() => clearCount(topicSubscriber.topic as Topic)}
               >
                 <FontAwesomeIcon icon="0" />
@@ -407,6 +408,7 @@ function TopicIndex({ config }: { config: Config }) {
                 <Button
                   size="small"
                   className="ml-2"
+                  aria-label={`Clear Count of ${topicSubscriber.subscriber.consumer_count} for Topic ${topicSubscriber?.topic?.name} Subscriber ${topicSubscriber.subscriber.garden ?? "*"} ${topicSubscriber.subscriber.namespace ?? "*"} ${topicSubscriber.subscriber.system ?? "*"} ${topicSubscriber.subscriber.version ?? "*"} ${topicSubscriber.subscriber.instance ?? "*"} ${topicSubscriber.subscriber.command ?? "*"}`}
                   tooltip="Clear count"
                   onClick={() =>
                     clearCount(
@@ -439,6 +441,7 @@ function TopicIndex({ config }: { config: Config }) {
                   }
                   size="small"
                   className="ml-2"
+                  aria-label={`Remove from Topic ${topicSubscriber?.topic?.name}, Subscriber ${topicSubscriber.subscriber.garden ?? "*"} ${topicSubscriber.subscriber.namespace ?? "*"} ${topicSubscriber.subscriber.system ?? "*"} ${topicSubscriber.subscriber.version ?? "*"} ${topicSubscriber.subscriber.instance ?? "*"} ${topicSubscriber.subscriber.command ?? "*"}`}
                   tooltip="Remove Subscriber"
                 >
                   <FontAwesomeIcon icon="xmark-square" />
@@ -460,6 +463,7 @@ function TopicIndex({ config }: { config: Config }) {
           <div className="flex">
             <Button
               onClick={() => addSubscriber(topicSubscriber.topic!)}
+              aria-label={`Add Subscriber to Topic ${topicSubscriber.topic?.name}`}
               tooltip="Add Subscriber"
             >
               <FontAwesomeIcon icon="square-plus" />
@@ -467,6 +471,7 @@ function TopicIndex({ config }: { config: Config }) {
             {has_only_dynamic_subscribers && (
               <Button
                 onClick={() => deleteTopic(topicSubscriber.topic!)}
+                aria-label={`Delete Topic ${topicSubscriber.topic?.name}`}
                 tooltip="Delete Topic"
               >
                 <FontAwesomeIcon icon="trash" />
@@ -491,6 +496,7 @@ function TopicIndex({ config }: { config: Config }) {
             onChange={handleChange}
             checked={hideGenerated}
             className="mr-2"
+            aria-label="Hide Generated Topics"
           />
           Hide Generated
         </div>
@@ -532,6 +538,15 @@ function TopicIndex({ config }: { config: Config }) {
             header="Topic"
             style={{ maxWidth: "400px", overflowWrap: "break-word" }}
             showFilterMenu={false}
+            pt={{
+              columnFilter: {
+                "aria-label": "Column Filter by Topic Name",
+              },
+              filterInput: {
+                "aria-label": "Filter by Topic Name",
+              },
+              
+            }}
           />
           <Column field="topic.name" header="" body={topicButtonTemplate} />
           <Column
@@ -541,6 +556,14 @@ function TopicIndex({ config }: { config: Config }) {
             header="Publisher Count"
             body={publisherCountTemplate}
             showFilterMenu={false}
+            pt={{
+              filterInput: {
+                "aria-label": "Filter by Topic Publisher Count",
+              },
+              filterMenuButton: {
+                "aria-label": "Open Topic Publisher Count filter menu",
+              },
+            }}
           />
           <Column
             field="subscriber.garden"
@@ -549,6 +572,14 @@ function TopicIndex({ config }: { config: Config }) {
             header="Garden"
             body={gardenTemplate}
             showFilterMenu={false}
+            pt={{
+              filterInput: {
+                "aria-label": "Filter by Subscriber Garden",
+              },
+              filterMenuButton: {
+                "aria-label": "Open Subscriber Garden filter menu",
+              },
+            }}
           />
           <Column
             field="subscriber.namespace"
@@ -557,6 +588,14 @@ function TopicIndex({ config }: { config: Config }) {
             header="Namespace"
             body={namespaceTemplate}
             showFilterMenu={false}
+            pt={{
+              filterInput: {
+                "aria-label": "Filter by Subscriber Namespace",
+              },
+              filterMenuButton: {
+                "aria-label": "Open Subscriber Namespace filter menu",
+              },
+            }}
           />
           <Column
             field="subscriber.system"
@@ -565,6 +604,14 @@ function TopicIndex({ config }: { config: Config }) {
             header="System"
             body={systemTemplate}
             showFilterMenu={false}
+            pt={{
+              filterInput: {
+                "aria-label": "Filter by Subscriber System",
+              },
+              filterMenuButton: {
+                "aria-label": "Open Subscriber System filter menu",
+              },
+            }}
           />
           <Column
             field="subscriber.version"
@@ -573,6 +620,14 @@ function TopicIndex({ config }: { config: Config }) {
             header="Version"
             body={versionTemplate}
             showFilterMenu={false}
+            pt={{
+              filterInput: {
+                "aria-label": "Filter by Subscriber Version",
+              },
+              filterMenuButton: {
+                "aria-label": "Open Subscriber Version filter menu",
+              },
+            }}
           />
           <Column
             field="subscriber.instance"
@@ -581,6 +636,14 @@ function TopicIndex({ config }: { config: Config }) {
             header="Instance"
             body={instanceTemplate}
             showFilterMenu={false}
+            pt={{
+              filterInput: {
+                "aria-label": "Filter by Subscriber Instance",
+              },
+              filterMenuButton: {
+                "aria-label": "Open Subscriber Instance filter menu",
+              },
+            }}
           />
           <Column
             field="subscriber.command"
@@ -590,6 +653,14 @@ function TopicIndex({ config }: { config: Config }) {
             body={commandTemplate}
             style={{ maxWidth: "300px", overflowWrap: "break-word" }}
             showFilterMenu={false}
+            pt={{
+              filterInput: {
+                "aria-label": "Filter by Subscriber command",
+              },
+              filterMenuButton: {
+                "aria-label": "Open Subscriber Command filter menu",
+              },
+            }}
           />
           <Column
             field="subscriber.consumer_count"
@@ -598,6 +669,14 @@ function TopicIndex({ config }: { config: Config }) {
             header="Consumer Count"
             body={consumerCountTemplate}
             showFilterMenu={false}
+            pt={{
+              filterInput: {
+                "aria-label": "Filter by Subscriber Consumer Count",
+              },
+              filterMenuButton: {
+                "aria-label": "Open Subscriber Consumer Count filter menu",
+              },
+            }}
           />
           <Column
             field="subscriber.subscriber_type"
@@ -606,6 +685,17 @@ function TopicIndex({ config }: { config: Config }) {
             header="Subscriber Type"
             body={subscriberTypeTemplate}
             showFilterMenu={false}
+            pt={{
+              columnFilter: {
+                "aria-label": "Filter by Subscriber Type",
+              },
+              filterInput: {
+                "aria-label": "Filter by Subscriber Type",
+              },
+              filterMenuButton: {
+                "aria-label": "Open Subscriber Type filter menu",
+              },
+            }}
           />
         </DataTable>
       </>

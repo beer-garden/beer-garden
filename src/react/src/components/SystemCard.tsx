@@ -454,6 +454,7 @@ function SystemCard({
               severity="success"
               size="small"
               onClick={() => handleStartInstance(instance, system)}
+              title={`Start Instance ${instance.name} in ${system.namespace}.${system.name}.${system.version}`}
               {...GenerateTourProps(startInstanceTourStep)}
             >
               <FontAwesomeIcon icon="play" />
@@ -462,6 +463,7 @@ function SystemCard({
               severity="warning"
               size="small"
               onClick={() => handleStopInstance(instance, system)}
+              title={`Stop Instance ${instance.name} in ${system.namespace}.${system.name}.${system.version}`}
               {...GenerateTourProps(stopInstanceTourStep)}
             >
               <FontAwesomeIcon icon="stop" />
@@ -551,7 +553,7 @@ function SystemCard({
                 <Button
                   severity="success"
                   size="small"
-                  title="Start"
+                  title={`Start System ${system.namespace}.${system.name}.${system.version}`}
                   onClick={() => startSystem(system)}
                   {...GenerateTourProps(startInstancesTourStep)}
                 >
@@ -560,7 +562,7 @@ function SystemCard({
                 <Button
                   severity="warning"
                   size="small"
-                  title="Stop"
+                  title={`Stop System ${system.namespace}.${system.name}.${system.version}`}
                   onClick={() => stopSystem(system)}
                   {...GenerateTourProps(stopInstancesTourStep)}
                 >
@@ -569,7 +571,7 @@ function SystemCard({
                 <Button
                   severity="info"
                   size="small"
-                  title="Refresh"
+                  title={`Refresh System ${system.namespace}.${system.name}.${system.version}`}
                   onClick={() => reloadSystem(system)}
                   className="mr-2"
                   {...GenerateTourProps(restartSystemTourStep)}
@@ -580,7 +582,7 @@ function SystemCard({
               <Button
                 severity="danger"
                 size="small"
-                title="Delete"
+                title={`Delete System ${system.namespace}.${system.name}.${system.version}`}
                 onClick={() => deleteSystem(system)}
                 {...GenerateTourProps(deleteSystemTourStep)}
               >

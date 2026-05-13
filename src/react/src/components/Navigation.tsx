@@ -330,7 +330,7 @@ function NavigationMenu({
       </Button>
 
       <CurrentRequestsTemplate listeners={listeners} config={config} />
-      <Button onClick={(e) => op.current?.toggle(e)} text>
+      <Button onClick={(e) => op.current?.toggle(e)} text title="Preferences">
         {username !== undefined ? (
           <Avatar
             size="large"

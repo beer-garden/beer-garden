@@ -216,7 +216,11 @@ function CurrentRequestsTemplate({
           </div>
         )}
       />
-      <Button className="fa-layers fa-fw fa-2x" onClick={confirm}>
+      <Button
+        className="fa-layers fa-fw fa-2x"
+        onClick={confirm}
+        title="Show Current Requests"
+      >
         <FontAwesomeIcon
           icon="envelope"
           className={currentRequests.length > 0 ? "fa-shake" : ""}

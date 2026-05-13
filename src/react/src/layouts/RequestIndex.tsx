@@ -399,7 +399,9 @@ function RequestIndex({
           rounded
           raised
           onClick={lazyLoadData}
+          aria-label={recordsUpdated ? "New updates available" : "Refresh"}
           tooltip={recordsUpdated ? "New updates available" : "Refresh"}
+          tooltipOptions={{ position: "bottom" }}
           {...GenerateTourProps(RefreshTableTourStep)}
         >
           {recordsUpdated && <FontAwesomeIcon icon={"circle-exclamation"} />}
@@ -457,6 +459,7 @@ function RequestIndex({
             rounded
             raised
             link
+            aria-label={"Open Request " + request.command_display_name}
             tooltip={"Open Request " + request.command_display_name}
             className="mr-2"
             {...GenerateTourProps(OpenRequestTourStep)}
@@ -469,6 +472,7 @@ function RequestIndex({
           raised
           link
           onClick={() => PeekRequestView(request)}
+          aria-label={"View " + request.command_display_name}
           tooltip={"View " + request.command_display_name}
           className="mr-2"
           {...GenerateTourProps(ViewRequestTourStep)}

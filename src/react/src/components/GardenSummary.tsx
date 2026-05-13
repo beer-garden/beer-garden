@@ -425,11 +425,11 @@ function GardenSummary({
         <div>
           <div className="grid">
             <div className="col-3">
-              <h4>Version</h4>
+              <h3>Version</h3>
               <p>{selectedGarden?.version}</p>
             </div>
             <div className="col-3">
-              <h4>Systems</h4>
+              <h3>Systems</h3>
               {Array.from(systemCounts, ([status, count]) => {
                 if (count && count > 0) {
                   const statusSeverity = GetSeverity(status);
@@ -449,7 +449,7 @@ function GardenSummary({
             {selectedGarden?.children &&
               selectedGarden?.children.length > 0 && (
                 <div className="col-3">
-                  <h4>Downstream</h4>
+                  <h3>Downstream</h3>
 
                   {selectedGarden?.children &&
                     selectedGarden?.children.length > 0 && (
@@ -467,7 +467,7 @@ function GardenSummary({
               )}
             {selectedGarden?.parent && (
               <div className="col-3">
-                <h4>Upstream</h4>
+                <h3>Upstream</h3>
                 <ul>
                   <li>{selectedGarden?.parent}</li>
                 </ul>
@@ -477,7 +477,7 @@ function GardenSummary({
           <div className="grid">
             {receivingConnections && receivingConnections.length > 0 && (
               <div className="col-4">
-                <h4>Receiving</h4>
+                <h3>Receiving</h3>
 
                 <DataTable value={receivingConnections}>
                   <Column field="api" header="API" />
@@ -496,7 +496,7 @@ function GardenSummary({
 
             {publishingConnections && publishingConnections.length > 0 && (
               <div className="col-4">
-                <h4>Publishing</h4>
+                <h3>Publishing</h3>
                 <DataTable value={publishingConnections}>
                   <Column field="api" header="API" />
                   <Column
