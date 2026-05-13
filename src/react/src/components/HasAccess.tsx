@@ -20,7 +20,7 @@ const HasAccess = ({
   if (config === undefined || permission === undefined) {
     return children;
   }
-  
+
   const [hasAccess, setHasAccess] = useState(
     config?.auth_enabled === undefined || config?.auth_enabled === false,
   );
