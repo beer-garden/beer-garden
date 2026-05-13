@@ -26,7 +26,7 @@ const HasAccess = ({
   const [hasAccess, setHasAccess] = useState(
     config?.auth_enabled === undefined || config?.auth_enabled === false,
   );
-  const [checking, setChecking] = useState(true);
+  const [checking, setChecking] = useState(config?.auth_enabled === true);
   const runValidation = useRef(config?.auth_enabled === true);
 
   const validatePermissions = useCallback(() => {
@@ -60,9 +60,7 @@ const HasAccess = ({
       }
       return;
     }
-    if (!hasAccess) {
-      setChecking(true);
-    }
+
     if (checking) {
       setHasAccess(validatePermissions());
       setChecking(false);
