@@ -438,6 +438,39 @@ function SystemCard({
       });
     }
 
+    const disabledStartStopButtons = (
+      <>
+        <Button
+          severity="success"
+          size="small"
+          disabled={true}
+          {...GenerateTourProps(startInstanceTourStep)}
+        >
+          <FontAwesomeIcon icon="play" />
+        </Button>
+        <Button
+          severity="warning"
+          size="small"
+          disabled={true}
+          {...GenerateTourProps(stopInstanceTourStep)}
+        >
+          <FontAwesomeIcon icon="stop" />
+        </Button>
+      </>
+    );
+    const disableAdminMenu = (
+      <>
+        <Button
+          severity="info"
+          size="small"
+          title={`Admin Tools for ${instance.name}`}
+          disabled={true}
+        >
+          <FontAwesomeIcon icon="bars" />
+        </Button>
+      </>
+    );
+
     return (
       <div>
         <ButtonGroup>
@@ -449,6 +482,8 @@ function SystemCard({
             hasSystemVersion={system.version}
             hasNamespace={system.namespace}
             hasInstanceName={instance.name}
+            isLoading={disabledStartStopButtons}
+            renderAuthFailed={disabledStartStopButtons}
           >
             <Button
               severity="success"
@@ -475,6 +510,8 @@ function SystemCard({
             hasSystemVersion={system.version}
             hasNamespace={system.namespace}
             hasInstanceName={instance.name}
+            isLoading={disableAdminMenu}
+            renderAuthFailed={disableAdminMenu}
           >
             <Menu
               model={instanceMenuItems}
@@ -534,6 +571,50 @@ function SystemCard({
     );
   };
 
+  const disabledButtonGroup = (
+    <>
+      <ButtonGroup>
+        <Button
+          severity="success"
+          size="small"
+          title="Start"
+          disabled={true}
+          {...GenerateTourProps(startInstancesTourStep)}
+        >
+          <FontAwesomeIcon icon="play" />
+        </Button>
+        <Button
+          severity="warning"
+          size="small"
+          title="Stop"
+          disabled={true}
+          {...GenerateTourProps(stopInstancesTourStep)}
+        >
+          <FontAwesomeIcon icon="stop" />
+        </Button>
+        <Button
+          severity="info"
+          size="small"
+          title="Refresh"
+          disabled={true}
+          className="mr-2"
+          {...GenerateTourProps(restartSystemTourStep)}
+        >
+          <FontAwesomeIcon icon="refresh" />
+        </Button>
+      </ButtonGroup>
+      <Button
+        severity="danger"
+        size="small"
+        title="Delete"
+        disabled={true}
+        {...GenerateTourProps(deleteSystemTourStep)}
+      >
+        <FontAwesomeIcon icon="trash" />
+      </Button>
+    </>
+  );
+
   return (
     <>
       <Panel key={system.id} headerTemplate={headerTemplate}>
@@ -545,6 +626,8 @@ function SystemCard({
             hasSystemName={system.name}
             hasSystemVersion={system.version}
             hasNamespace={system.namespace}
+            isLoading={disabledButtonGroup}
+            renderAuthFailed={disabledButtonGroup}
           >
             <div style={{ float: "right", marginLeft: "2px" }}>
               <ButtonGroup>
