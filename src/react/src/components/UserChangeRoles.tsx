@@ -1,5 +1,4 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
@@ -9,6 +8,7 @@ import { RefObject, useEffect, useState } from "react";
 import { Role, User } from "../models/brewtils-types";
 import { GetRoles } from "../services/role_service";
 import { UpdateUserRoles } from "../services/user_service";
+import AccessButton from "./AccessButton";
 
 function UserChangeRoles({
   user,
@@ -116,14 +116,13 @@ function UserChangeRoles({
       header={`Add/Remove Roles for ${user.username}`}
       footer={
         <>
-          <Button onClick={handleUserRolesDialogClose}>Close</Button>
-          <Button
+          <AccessButton onClick={handleUserRolesDialogClose} label="Close" />
+          <AccessButton
             data-testid={`submit-btn-dialog`}
             severity="danger"
             onClick={updateRoles}
-          >
-            Submit
-          </Button>
+            label="Submit"
+          />
         </>
       }
       visible={showRolesDialog}

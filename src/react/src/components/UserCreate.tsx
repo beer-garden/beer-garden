@@ -1,4 +1,3 @@
-import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
 import { Password } from "primereact/password";
@@ -6,6 +5,7 @@ import { Toast } from "primereact/toast";
 import { ChangeEvent, RefObject, useState } from "react";
 
 import { CreateUser } from "../services/user_service";
+import AccessButton from "./AccessButton";
 
 function UserCreate({
   showCreateUserDialog,
@@ -80,14 +80,13 @@ function UserCreate({
       header={`Create User`}
       footer={
         <>
-          <Button onClick={handleUserCreateDialogClose}>Close</Button>
-          <Button
+          <AccessButton onClick={handleUserCreateDialogClose} label="Close" />
+          <AccessButton
             data-testid={`submit-btn-dialog`}
             severity="danger"
             onClick={createUser}
-          >
-            Submit
-          </Button>
+            label="Submit"
+          />
         </>
       }
       visible={showCreateUserDialog}

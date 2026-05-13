@@ -20,6 +20,10 @@ const HasAccess = ({
   const [hasAccess, setHasAccess] = useState(false);
   const [checking, setChecking] = useState(false);
 
+  if (config === undefined || permission === undefined) {
+    return children;
+  }
+
   useEffect(() => {
     setChecking(true);
 

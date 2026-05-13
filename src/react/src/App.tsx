@@ -514,6 +514,7 @@ function App() {
                       listeners={listeners.current}
                       display={false}
                       tourStepsRef={tourStepsRef}
+                      config={config}
                     />
                   }
                 />
@@ -524,6 +525,7 @@ function App() {
                       listeners={listeners.current}
                       display={false}
                       tourStepsRef={tourStepsRef}
+                      config={config}
                     />
                   }
                 />
@@ -533,6 +535,7 @@ function App() {
                     <Workspace
                       listeners={listeners.current}
                       tourStepsRef={tourStepsRef}
+                      config={config}
                     />
                   }
                 />
@@ -543,6 +546,7 @@ function App() {
                       listeners={listeners.current}
                       display={true}
                       tourStepsRef={tourStepsRef}
+                      config={config}
                     />
                   }
                 />
@@ -553,6 +557,7 @@ function App() {
                       listeners={listeners.current}
                       display={true}
                       tourStepsRef={tourStepsRef}
+                      config={config}
                     />
                   }
                 />
@@ -574,6 +579,7 @@ function App() {
                       listeners={listeners.current}
                       display={false}
                       tourStepsRef={tourStepsRef}
+                      config={config}
                     />
                   }
                 />

@@ -1,5 +1,4 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
@@ -22,7 +21,8 @@ import {
   RunAdhocJob,
 } from "../services/job_service";
 import { GetRequestList } from "../services/request_service";
-import HasAccess from "./HasAccess";
+// import HasAccess from "./HasAccess";
+import AccessButton from "./AccessButton";
 
 function SchedulerViewCard({
   jobId,
@@ -201,7 +201,7 @@ function SchedulerViewCard({
   const commandNameTemplate = (request: Request) => {
     return (
       <div>
-        <Button
+        <AccessButton
           rounded
           raised
           link
@@ -213,7 +213,7 @@ function SchedulerViewCard({
           className="mr-2"
         >
           <FontAwesomeIcon icon="arrow-up-right-from-square" />
-        </Button>{" "}
+        </AccessButton>
         {request.command_display_name ?? request.command ?? request.id}
       </div>
     );
@@ -222,7 +222,7 @@ function SchedulerViewCard({
   const tableHeader = (
     <div className="flex flex-wrap align-items-center justify-content-between gap-2">
       <span className="text-xl text-900 font-bold">Associated Requests</span>
-      <Button
+      <AccessButton
         rounded
         raised
         onClick={queryJobRequests}
@@ -230,9 +230,18 @@ function SchedulerViewCard({
       >
         {recordsUpdated && <FontAwesomeIcon icon={"circle-exclamation"} />}
         <FontAwesomeIcon icon="refresh" />
-      </Button>
+      </AccessButton>
     </div>
   );
+
+  const permissions = {
+    config: config,
+    hasNamespace: job?.request_template?.namespace,
+    hasSystemName: job?.request_template?.system,
+    hasSystemVersion: job?.request_template?.system_version,
+    hasInstanceName: job?.request_template?.instance_name,
+    hasCommandName: job?.request_template?.command,
+  };
 
   return (
     <Card
@@ -241,7 +250,7 @@ function SchedulerViewCard({
       style={{ maxHeight: "80vh", overflowY: "auto" }}
       header={
         !isDialog && (
-          <Button
+          <AccessButton
             onClick={() => {
               removeItem(jobId);
             }}
@@ -250,7 +259,7 @@ function SchedulerViewCard({
             data-testid={"CLOSE_JOB_" + job?.name}
           >
             <FontAwesomeIcon icon="xmark" />
-          </Button>
+          </AccessButton>
         )
       }
       title={
@@ -259,95 +268,95 @@ function SchedulerViewCard({
             <div className="mr-2">{job ? job.name : "Loading..."}</div>
           </div>
 
-          <HasAccess
-            config={config}
+          <AccessButton
+            rounded
+            raised
+            link
+            onClick={() => {
+              if (job?.id) {
+                RunAdhocJob(job.id).catch((error) => {
+                  console.error("Error running job:", error);
+                });
+              }
+            }}
+            title={"Run Now " + job?.name}
+            className="mr-2"
+            {...permissions}
             permission="OPERATOR"
-            hasNamespace={job?.request_template?.namespace}
-            hasSystemName={job?.request_template?.system}
-            hasSystemVersion={job?.request_template?.system_version}
-            hasInstanceName={job?.request_template?.instance_name}
-            hasCommandName={job?.request_template?.command}
           >
-            <Button
-              rounded
-              raised
-              link
-              onClick={() => {
-                if (job?.id) {
-                  RunAdhocJob(job.id).catch((error) => {
-                    console.error("Error running job:", error);
-                  });
-                }
-              }}
-              title={"Run Now " + job?.name}
-              className="mr-2"
-            >
-              <FontAwesomeIcon icon="forward" />
-            </Button>
+            <FontAwesomeIcon icon="forward" />
+          </AccessButton>
 
-            <Button
+          <AccessButton
+            rounded
+            raised
+            link
+            onClick={() => {
+              editJob();
+            }}
+            title={"Update Job " + job?.name}
+            className="mr-2"
+            {...permissions}
+            permission="OPERATOR"
+          >
+            <FontAwesomeIcon icon="edit" />
+          </AccessButton>
+          {job?.status === "RUNNING" && (
+            <AccessButton
               rounded
               raised
               link
               onClick={() => {
-                editJob();
+                PauseJob(job)
+                  .then((updatedJob) => {
+                    setJob(updatedJob);
+                  })
+                  .catch((error) => {
+                    console.error("Error pausing job:", error);
+                  });
               }}
-              title={"Update Job " + job?.name}
+              title={"Pause Job " + job?.name}
               className="mr-2"
+              {...permissions}
+              permission="OPERATOR"
             >
-              <FontAwesomeIcon icon="edit" />
-            </Button>
-            {job?.status === "RUNNING" && (
-              <Button
-                rounded
-                raised
-                link
-                onClick={() => {
-                  PauseJob(job)
-                    .then((updatedJob) => {
-                      setJob(updatedJob);
-                    })
-                    .catch((error) => {
-                      console.error("Error pausing job:", error);
-                    });
-                }}
-                title={"Pause Job " + job?.name}
-                className="mr-2"
-              >
-                <FontAwesomeIcon icon="pause" />
-              </Button>
-            )}
-            {job?.status === "PAUSED" && (
-              <Button
-                rounded
-                raised
-                link
-                onClick={() => {
-                  ResumeJob(job)
-                    .then((updatedJob) => {
-                      setJob(updatedJob);
-                    })
-                    .catch((error) => {
-                      console.error("Error resuming job:", error);
-                    });
-                }}
-                title={"Resume Job " + job?.name}
-                className="mr-2"
-              >
-                <FontAwesomeIcon icon="play" />
-              </Button>
-            )}
-            <Button
+              <FontAwesomeIcon icon="pause" />
+            </AccessButton>
+          )}
+          {job?.status === "PAUSED" && (
+            <AccessButton
               rounded
               raised
               link
-              onClick={() => deleteJob()}
-              title={"Delete Job " + job?.name}
+              onClick={() => {
+                ResumeJob(job)
+                  .then((updatedJob) => {
+                    setJob(updatedJob);
+                  })
+                  .catch((error) => {
+                    console.error("Error resuming job:", error);
+                  });
+              }}
+              title={"Resume Job " + job?.name}
               className="mr-2"
+              {...permissions}
+              permission="OPERATOR"
             >
-              <FontAwesomeIcon icon="trash" />
-            </Button>
-          </HasAccess>
+              <FontAwesomeIcon icon="play" />
+            </AccessButton>
+          )}
+          <AccessButton
+            rounded
+            raised
+            link
+            onClick={() => deleteJob()}
+            title={"Delete Job " + job?.name}
+            className="mr-2"
+            {...permissions}
+            permission="OPERATOR"
+          >
+            <FontAwesomeIcon icon="trash" />
+          </AccessButton>
         </div>
       }
     >

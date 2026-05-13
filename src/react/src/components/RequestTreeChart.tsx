@@ -1,13 +1,12 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { TreeTable } from "primereact/treetable";
 import { Link } from "react-router-dom";
 
-import HasAccess from "../components/HasAccess";
 import { Request } from "../models/brewtils-types";
 import { Config } from "../models/models";
 import { DeleteRequest } from "../services/request_service";
+import AccessButton from "./AccessButton";
 
 function parseRequest(request: Request, config: Config) {
   const item = {
@@ -66,75 +65,70 @@ function RequestTreeChart(props: RequestTreeChartProps) {
     if (node.data.id === props.currentRequestId) {
       return;
     }
+    const permissions = {
+      config: config,
+      hasNamespace: props?.rootRequest?.namespace,
+      hasSystemName: props?.rootRequest?.system,
+      hasSystemVersion: props?.rootRequest?.system_version,
+      hasInstanceName: props?.rootRequest?.instance_name,
+      hasCommandName: props?.rootRequest?.command,
+    };
     return (
       <div>
         <Link to={`/request/${node.data.id}`}>
-          <Button rounded raised link title="Open">
+          <AccessButton rounded raised link title="Open">
             <FontAwesomeIcon icon="arrow-up-right-from-square" />{" "}
-          </Button>
+          </AccessButton>
         </Link>
         {!["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(
           node.data.status,
         ) && (
-          <HasAccess
-            config={config}
+          <AccessButton
+            rounded
+            raised
+            link
+            onClick={() => {}}
+            title="Cancel"
             permission="OPERATOR"
-            hasNamespace={props?.rootRequest?.namespace}
-            hasSystemName={props?.rootRequest?.system}
-            hasSystemVersion={props?.rootRequest?.system_version}
-            hasInstanceName={props?.rootRequest?.instance_name}
-            hasCommandName={props?.rootRequest?.command}
+            {...permissions}
           >
-            <Button rounded raised link onClick={() => {}} title="Cancel">
-              <FontAwesomeIcon icon="ban" />{" "}
-            </Button>
-          </HasAccess>
+            <FontAwesomeIcon icon="ban" />{" "}
+          </AccessButton>
         )}
         {["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(
           node.data.status,
         ) && (
-          <HasAccess
-            config={config}
-            permission="PLUGIN_ADMIN"
-            hasNamespace={props?.rootRequest?.namespace}
-            hasSystemName={props?.rootRequest?.system}
-            hasSystemVersion={props?.rootRequest?.system_version}
-            hasInstanceName={props?.rootRequest?.instance_name}
-            hasCommandName={props?.rootRequest?.command}
+          <AccessButton
+            rounded
+            raised
+            link
+            onClick={() =>
+              DeleteRequest(node.data).catch((error) => {
+                console.error("Error deleting request:", error);
+              })
+            }
+            title="Delete"
+            {...permissions}
+            permission="OPERATOR"
           >
-            <Button
+            <FontAwesomeIcon icon="trash" />{" "}
+          </AccessButton>
+        )}
+        {["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(
+          node.data.status,
+        ) && (
+          <Link to={`/recreate/${node.data.id}`}>
+            <AccessButton
               rounded
               raised
               link
-              onClick={() =>
-                DeleteRequest(node.data).catch((error) => {
-                  console.error("Error deleting request:", error);
-                })
-              }
-              title="Delete"
+              title="Pour Again"
+              {...permissions}
+              permission="OPERATOR"
             >
-              <FontAwesomeIcon icon="trash" />{" "}
-            </Button>
-          </HasAccess>
-        )}
-        {["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(
-          node.data.status,
-        ) && (
-          <HasAccess
-            config={config}
-            permission="OPERATOR"
-            hasNamespace={props?.rootRequest?.namespace}
-            hasSystemName={props?.rootRequest?.system}
-            hasSystemVersion={props?.rootRequest?.system_version}
-            hasInstanceName={props?.rootRequest?.instance_name}
-            hasCommandName={props?.rootRequest?.command}
-          >
-            <Link to={`/recreate/${node.data.id}`}>
-              <Button rounded raised link title="Pour Again">
-                <FontAwesomeIcon icon="rotate" />{" "}
-              </Button>
-            </Link>
-          </HasAccess>
+              <FontAwesomeIcon icon="rotate" />{" "}
+            </AccessButton>
+          </Link>
         )}
       </div>
     );

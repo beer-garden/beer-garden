@@ -1,6 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Badge } from "primereact/badge";
-import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { ConfirmPopup, confirmPopup } from "primereact/confirmpopup";
 import { DataTable } from "primereact/datatable";
@@ -10,7 +9,7 @@ import { Link } from "react-router-dom";
 import { Request } from "../models/brewtils-types";
 import { Config } from "../models/models";
 import { DeleteRequest, GetRequestList } from "../services/request_service";
-import HasAccess from "./HasAccess";
+import AccessButton from "./AccessButton";
 
 function CurrentRequestsTemplate({
   listeners,
@@ -137,11 +136,26 @@ function CurrentRequestsTemplate({
     return (
       <div>
         <Link to={`/request/${request.id}`}>
-          <Button rounded raised link>
+          <AccessButton
+            rounded
+            raised
+            link
+            tooltip={`Open Request ${request.id}`}
+          >
             <FontAwesomeIcon icon="arrow-up-right-from-square" />
-          </Button>
+          </AccessButton>
         </Link>
-        <HasAccess
+
+        <AccessButton
+          rounded
+          raised
+          link
+          onClick={() => {
+            DeleteRequest(request).catch((error) => {
+              console.error("Error deleting request:", error);
+            });
+          }}
+          tooltip={`Delete Request for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
           config={config}
           permission="PLUGIN_ADMIN"
           hasGardenName={request?.target_garden}
@@ -151,20 +165,8 @@ function CurrentRequestsTemplate({
           hasSystemVersion={request?.system_version}
           hasCommandName={request?.command}
         >
-          <Button
-            rounded
-            raised
-            link
-            onClick={() => {
-              DeleteRequest(request).catch((error) => {
-                console.error("Error deleting request:", error);
-              });
-            }}
-            tooltip={`Delete Request for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
-          >
-            <FontAwesomeIcon icon="xmark" />
-          </Button>
-        </HasAccess>
+          <FontAwesomeIcon icon="xmark" />
+        </AccessButton>
       </div>
     );
   };
@@ -204,22 +206,23 @@ function CurrentRequestsTemplate({
               </DataTable>
             </div>
             <div className="flex align-items-center gap-2 mt-3">
-              <Button
+              <AccessButton
                 ref={acceptBtnRef}
                 label="Close"
                 onClick={() => {
                   hide();
                 }}
                 className="p-button-sm p-button-outlined"
-              ></Button>
+                tooltip="Close Current Requests"
+              />
             </div>
           </div>
         )}
       />
-      <Button
+      <AccessButton
         className="fa-layers fa-fw fa-2x"
         onClick={confirm}
-        title="Show Current Requests"
+        tooltip="Show Current Requests"
       >
         <FontAwesomeIcon
           icon="envelope"
@@ -231,7 +234,7 @@ function CurrentRequestsTemplate({
             {currentRequests.length}
           </span>
         )}
-      </Button>
+      </AccessButton>
     </div>
   );
 }

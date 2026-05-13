@@ -1,5 +1,4 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "primereact/button";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Dialog } from "primereact/dialog";
 import { useEffect, useState } from "react";
@@ -7,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Queue } from "../models/brewtils-types";
 import { InstanceDialogProps } from "../models/models";
 import { ClearQueue, GetInstanceQueues } from "../services/queue_service";
+import AccessButton from "./AccessButton";
 
 function InstanceManageQueueDialog({
   instance,
@@ -71,7 +71,14 @@ function InstanceManageQueueDialog({
   return (
     <Dialog
       header={`Queue Manager: ${system.name}[${system.version}]-${instance.name}`}
-      footer={<Button onClick={onClose}>Close</Button>}
+      footer={
+        <AccessButton
+          onClick={onClose}
+          tooltip="Close Instance Manage Queue Dialog"
+        >
+          Close
+        </AccessButton>
+      }
       visible={isVisible}
       style={{ width: "50vw" }}
       onHide={onClose}
@@ -91,9 +98,10 @@ function InstanceManageQueueDialog({
               <td>{queue.size}</td>
               <td>
                 <ConfirmDialog message="Are you sure you want to clear the Queue?" />
-                <Button onClick={() => clearQueue(queue.name)}>
-                  Clear Queue
-                </Button>
+                <AccessButton
+                  onClick={() => clearQueue(queue.name)}
+                  label="Clear Queue"
+                />
               </td>
             </tr>
           ))}

@@ -1,5 +1,4 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { DataTable, SortOrder } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
@@ -18,7 +17,7 @@ import {
   useState,
 } from "react";
 
-import HasAccess from "../components/HasAccess";
+import AccessButton from "../components/AccessButton";
 import RoleScopeCard from "../components/RoleScopeCard";
 import { Role } from "../models/brewtils-types";
 import { Config, TourStepProps } from "../models/models";
@@ -284,22 +283,27 @@ function RoleIndex({
     return (
       <div className="flex items-end ml-2 page-header">
         <h1 className="flex-1">Role Management</h1>
-        <HasAccess config={config} permission="GARDEN_ADMIN" isGlobal={true}>
-          <div>
-            <Button
-              onClick={handleRescan}
-              label="Rescan Roles"
-              data-testid="rescan-btn"
-              {...GenerateTourProps(rescanRolesTourStep)}
-            />
-            <Button
-              onClick={openRoleDialog}
-              label="Create Role"
-              data-testid="create-btn"
-              {...GenerateTourProps(createRoleTourStep)}
-            />
-          </div>
-        </HasAccess>
+
+        <div>
+          <AccessButton
+            onClick={handleRescan}
+            label="Rescan Roles"
+            data-testid="rescan-btn"
+            {...GenerateTourProps(rescanRolesTourStep)}
+            config={config}
+            permission="GARDEN_ADMIN"
+            isGlobal={true}
+          />
+          <AccessButton
+            onClick={openRoleDialog}
+            label="Create Role"
+            data-testid="create-btn"
+            {...GenerateTourProps(createRoleTourStep)}
+            config={config}
+            permission="GARDEN_ADMIN"
+            isGlobal={true}
+          />
+        </div>
       </div>
     );
   }
@@ -408,33 +412,36 @@ function RoleIndex({
       }
       return (
         <div className="flex">
-          <Button
+          <AccessButton
             data-testid={`duplicate-btn-${role.name}`}
-            tooltip="Duplicate"
+            aria-label={`Duplicate ${role.name}`}
+            tooltip={`Duplicate ${role.name}`}
             onClick={() => handleLoadRole(role, true)}
             {...GenerateTourProps(duplicateRoleTourStep)}
           >
             <FontAwesomeIcon icon="clone" />
-          </Button>
+          </AccessButton>
           {!role.file_generated && !role.protected && (
-            <Button
+            <AccessButton
               data-testid={`edit-btn-${role.name}`}
-              tooltip="Edit"
+              aria-label={`Edit ${role.name}`}
+              tooltip={`Edit ${role.name}`}
               onClick={() => handleLoadRole(role, false)}
               {...GenerateTourProps(editRoleTourStep)}
             >
               <FontAwesomeIcon icon="pencil" />
-            </Button>
+            </AccessButton>
           )}
           {!role.file_generated && !role.protected && (
-            <Button
+            <AccessButton
               data-testid={`delete-btn-${role.name}`}
-              tooltip="Delete"
+              aria-label={`Delete ${role.name}`}
+              tooltip={`Delete ${role.name}`}
               onClick={() => handleDeleteRole(role)}
               {...GenerateTourProps(deleteRoleTourStep)}
             >
               <FontAwesomeIcon icon="trash-can" />
-            </Button>
+            </AccessButton>
           )}
         </div>
       );
@@ -496,14 +503,13 @@ function RoleIndex({
         header={isEdit.current ? "Edit Role" : "Create Role"}
         footer={
           <>
-            <Button onClick={handleDialogClose}>Close</Button>
-            <Button
+            <AccessButton onClick={handleDialogClose} label="Close" />
+            <AccessButton
               data-testid={`submit-btn-dialog`}
               severity="danger"
               onClick={handleDialogSubmit}
-            >
-              Submit
-            </Button>
+              label="Submit"
+            />
           </>
         }
         visible={dialogVisible}

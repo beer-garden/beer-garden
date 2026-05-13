@@ -591,6 +591,8 @@ function CommandForm({
             }
             disabled={disabled}
             style={{ maxWidth: "75%" }}
+            aria-label="Comment Field"
+            tooltip="Commend Field"
           />
         </div>
       </div>

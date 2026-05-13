@@ -1,11 +1,11 @@
 import { FilterMatchMode } from "primereact/api";
-import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Dropdown } from "primereact/dropdown";
 import { useEffect, useRef, useState } from "react";
 
 import { Command, Instance, System } from "../models/brewtils-types";
+import AccessButton from "./AccessButton";
 
 function CommandList({
   selectedSystem,
@@ -69,14 +69,15 @@ function CommandList({
 
   function actionTemplate(command: Command) {
     return (
-      <Button
+      <AccessButton
         disabled={buttonsDisabled.current}
         onClick={() => {
           commandListButtonClick(command);
         }}
+        tooltip={`Select Command ${command.name}`}
       >
         Select
-      </Button>
+      </AccessButton>
     );
   }
 
@@ -97,6 +98,7 @@ function CommandList({
         }}
         invalid={!selectedInstance || undefined}
         options={instances}
+        aria-label="Select Instance"
       />
       <DataTable
         key={buttonsDisabled.current}

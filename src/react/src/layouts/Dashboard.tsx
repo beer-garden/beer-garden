@@ -393,28 +393,6 @@ function GardenDashboard({
     );
   };
 
-  const togglerTemplate = (node: any, options: any) => {
-    if (!node.children || node.children.length === 0) {
-      return <></>;
-    }
-    const icon =
-      node.children && node.children.length > 0
-        ? options.expanded
-          ? "pi pi-angle-down"
-          : "pi pi-angle-right"
-        : "";
-    const label = options.expanded
-      ? `Collapse ${node.label}`
-      : `Expand ${node.label}`;
-    return (
-      <button
-        className={`${icon} mr-2`}
-        onClick={options.onClick}
-        title={label}
-      />
-    );
-  };
-
   return (
     <div className="grid h-screen">
       <Toast ref={toast} />
@@ -435,7 +413,7 @@ function GardenDashboard({
               findSelectedGarden(e.value);
             }
           }}
-          togglerTemplate={togglerTemplate}
+          togglerTemplate={<></>}
         />
       </div>
 
@@ -462,6 +440,7 @@ function GardenDashboard({
                 <UnassociatedRunnerCard
                   runnerGroup={runnerGroup}
                   toast={toast}
+                  config={config}
                 />
               </div>
             ))}

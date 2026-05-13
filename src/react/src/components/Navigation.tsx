@@ -1,6 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Avatar } from "primereact/avatar";
-import { Button } from "primereact/button";
 import { Menubar } from "primereact/menubar";
 import { OverlayPanel } from "primereact/overlaypanel";
 import { RefObject, useEffect, useRef, useState } from "react";
@@ -16,6 +15,7 @@ import {
   GenerateTourProps,
 } from "../services/tour_service";
 import { GetCurrentUser } from "../services/user_service";
+import AccessButton from "./AccessButton";
 import UserOverlay from "./UserOverlay";
 
 function NavigationMenu({
@@ -301,14 +301,15 @@ function NavigationMenu({
         <div>
           {username === undefined && (
             <div>
-              <Button
+              <AccessButton
                 rounded
                 className="mr-2"
                 onClick={() => setLoginVisible(true)}
                 data-testid="user-login"
+                tooltip="User Login"
               >
                 Login
-              </Button>
+              </AccessButton>
               <UserLogin
                 visible={loginVisible}
                 setVisible={setLoginVisible}
@@ -318,19 +319,23 @@ function NavigationMenu({
           )}
         </div>
       )}
-      <Button
+      <AccessButton
         text
         className="mr-2"
         onClick={toggleRunTour}
-        aria-label="Start Tour"
-        title="Start Tour"
+        tooltip="Start Tour"
         data-testid="start-tour"
       >
         <FontAwesomeIcon className="fa-2x" icon="compass" />
-      </Button>
+      </AccessButton>
 
       <CurrentRequestsTemplate listeners={listeners} config={config} />
-      <Button onClick={(e) => op.current?.toggle(e)} text title="Preferences">
+      <AccessButton
+        tooltip="User Preferences Menu"
+        onClick={(e) => op.current?.toggle(e)}
+        text
+        title="Preferences"
+      >
         {username !== undefined ? (
           <Avatar
             size="large"
@@ -340,7 +345,7 @@ function NavigationMenu({
         ) : (
           <FontAwesomeIcon icon="user" />
         )}
-      </Button>
+      </AccessButton>
       <OverlayPanel ref={op} style={{ width: "400px" }}>
         <UserOverlay username={username} onLogout={onLogout} />
       </OverlayPanel>
