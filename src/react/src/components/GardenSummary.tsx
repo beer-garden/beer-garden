@@ -5,6 +5,7 @@ import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Skeleton } from "primereact/skeleton";
 import { Tag } from "primereact/tag";
+import { Tooltip } from "primereact/tooltip";
 import { RefObject, useEffect, useState } from "react";
 
 import { Connection, Garden, Runner, System } from "../models/brewtils-types";
@@ -226,7 +227,58 @@ function GardenSummary({
     }
   }, [selectedGarden, selectedSystems]);
 
-  const statusTemplate = (row: any) => {
+  const apiTemplate = (connection: Connection, type: string) => {
+    let url = "";
+
+    if (connection.config?.host !== undefined) {
+      url = url + connection.config?.host;
+    }
+    if (connection.config?.port !== undefined) {
+      url = url + ":" + connection.config?.port;
+    }
+
+    if (
+      connection.config?.url_prefix !== undefined &&
+      connection.config?.url_prefix != null &&
+      connection.config?.url_prefix != "" &&
+      connection.config?.url_prefix != "/"
+    ) {
+      url = url + "/" + connection.config?.url_prefix;
+    }
+
+    if (type === "RECEIVING") {
+      if (connection.config?.subscribe_destination !== undefined) {
+        const sub_dest = connection.config?.subscribe_destination.replace(
+          /^\/+/,
+          "",
+        );
+        url = url.replace(/\/+$/, "");
+        url = url.concat("/", sub_dest);
+      }
+    } else {
+      if (connection.config?.send_destination !== undefined) {
+        const send_dest = connection.config?.send_destination.replace(
+          /^\/+/,
+          "",
+        );
+        url = url.replace(/\/+$/, "");
+        url = url.concat("/", send_dest);
+      }
+    }
+
+    const targetId = `Connection_${type}_${connection.api}`;
+
+    return (
+      <>
+        {url.length > 0 && (
+          <Tooltip position="bottom" content={url} target={`#${targetId}`} />
+        )}
+        <span id={targetId}>{connection.api}</span>
+      </>
+    );
+  };
+
+  const statusTemplate = (row: Connection) => {
     const severity = GetSeverity(row.status);
 
     return <Tag value={row.status} severity={severity} />;
@@ -497,7 +549,11 @@ function GardenSummary({
                 <h3>Receiving</h3>
 
                 <DataTable value={receivingConnections}>
-                  <Column field="api" header="API" />
+                  <Column
+                    field="api"
+                    header="API"
+                    body={(row) => apiTemplate(row, "RECEIVING")}
+                  />
                   <Column
                     field="status"
                     header="Status"
@@ -515,7 +571,11 @@ function GardenSummary({
               <div className="col-4">
                 <h3>Publishing</h3>
                 <DataTable value={publishingConnections}>
-                  <Column field="api" header="API" />
+                  <Column
+                    field="api"
+                    header="API"
+                    body={(row) => apiTemplate(row, "PUBLISHING")}
+                  />
                   <Column
                     field="status"
                     header="Status"

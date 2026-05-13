@@ -180,6 +180,7 @@ function RequestCreateCard({
             instance_name: responseRequest.instance_name,
             command: responseRequest.command,
             parameters: responseRequest.parameters,
+            command_type: responseRequest.command_type,
           });
           updateRequestCommand({
             namespace: responseRequest?.namespace ?? undefined,

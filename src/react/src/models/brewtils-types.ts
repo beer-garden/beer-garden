@@ -66,7 +66,7 @@ export interface Connection {
   api?: string;
   status?: string;
   status_info?: any;
-  config?: object;
+  config?: any;
 }
 
 export interface CronTrigger {
@@ -323,7 +323,7 @@ export interface Request {
   command_type?: string;
   parameters?: Record<string, any>;
   comment?: string;
-  metadata?: object;
+  metadata?: RequestMetadata;
   output_type?: output_types;
   id?: string;
   is_event?: boolean;
@@ -341,6 +341,10 @@ export interface Request {
   source_garden?: string;
   target_garden?: string;
   parent_id?: string;
+}
+
+export interface RequestMetadata {
+  _topic?: string;
 }
 
 export interface RequestTemplate {
