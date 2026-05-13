@@ -66,7 +66,7 @@ export interface Connection {
   api?: string;
   status?: string;
   status_info?: any;
-  config?: object;
+  config?: any;
 }
 
 export interface CronTrigger {
