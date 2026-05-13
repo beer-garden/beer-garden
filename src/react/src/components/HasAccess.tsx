@@ -1,10 +1,4 @@
-import {
-  PropsWithChildren,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { PropsWithChildren, useCallback, useEffect, useState } from "react";
 
 import { HasAccessProps, PermissionCheck } from "../models/models";
 import { checkPermission } from "../services/permission_service";
@@ -27,7 +21,6 @@ const HasAccess = ({
     config?.auth_enabled === undefined || config?.auth_enabled === false,
   );
   const [checking, setChecking] = useState(config?.auth_enabled === true);
-  const runValidation = useRef(config?.auth_enabled === true);
 
   const validatePermissions = useCallback(() => {
     const check = {
@@ -54,17 +47,11 @@ const HasAccess = ({
   ]);
 
   useEffect(() => {
-    if (!runValidation.current) {
-      if (checking) {
-        setChecking(false);
-      }
-      return;
-    }
-
-    if (checking) {
+    if (hasAccess && checking) {
+      setChecking(false);
+    } else if (checking) {
       setHasAccess(validatePermissions());
       setChecking(false);
-      runValidation.current = false;
     }
   }, [
     checking,
