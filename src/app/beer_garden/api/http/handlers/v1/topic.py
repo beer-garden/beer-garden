@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from brewtils.errors import ModelValidationError
-from brewtils.models import Operation
+from brewtils.models import Operation, Permissions
 from brewtils.models import Subscriber as BrewtilsSubscriber
 from brewtils.schema_parser import SchemaParser
 from mongoengine import Q
@@ -87,7 +87,7 @@ class TopicAPI(BaseHandler):
         tags:
           - Topics
         """
-
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         await self.client(
             Operation(operation_type="TOPIC_DELETE", kwargs={"topic_id": topic_id})
         )
@@ -156,6 +156,7 @@ class TopicAPI(BaseHandler):
         tags:
           - Topics
         """
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
         for op in patch:
@@ -273,6 +274,7 @@ class TopicNameAPI(BaseHandler):
           - Topics
         """
 
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         await self.client(
             Operation(operation_type="TOPIC_DELETE", kwargs={"topic_name": topic_name})
         )
@@ -340,6 +342,7 @@ class TopicNameAPI(BaseHandler):
         tags:
           - Topics
         """
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
         for op in patch:
@@ -467,6 +470,7 @@ class TopicListAPI(BaseHandler):
         tags:
           - Topics
         """
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         topic = SchemaParser.parse_topic(self.request.decoded_body, from_string=True)
 
         response = await self.client(
@@ -531,6 +535,7 @@ class TopicListAPI(BaseHandler):
         tags:
           - Topics
         """
+        self.minimum_permission = Permissions.PLUGIN_ADMIN.name
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
         for op in patch:
