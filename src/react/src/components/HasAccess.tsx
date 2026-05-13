@@ -1,4 +1,10 @@
-import { PropsWithChildren, useEffect, useState } from "react";
+import {
+  PropsWithChildren,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { HasAccessProps, PermissionCheck } from "../models/models";
 import { checkPermission } from "../services/permission_service";
@@ -21,24 +27,46 @@ const HasAccess = ({
     config?.auth_enabled === undefined || config?.auth_enabled === false,
   );
   const [checking, setChecking] = useState(true);
+  const runValidation = useRef(config?.auth_enabled === true);
+
+  const validatePermissions = useCallback(() => {
+    const check = {
+      global: isGlobal,
+      gardenName: hasGardenName,
+      namespace: hasNamespace,
+      systemName: hasSystemName,
+      systemVersion: hasSystemVersion,
+      commandName: hasCommandName,
+      instanceName: hasInstanceName,
+    } as PermissionCheck;
+
+    return checkPermission(config, permission, check);
+  }, [
+    config,
+    permission,
+    isGlobal,
+    hasGardenName,
+    hasNamespace,
+    hasSystemName,
+    hasSystemVersion,
+    hasCommandName,
+    hasInstanceName,
+  ]);
 
   useEffect(() => {
+    if (!runValidation.current) {
+      if (checking) {
+        setChecking(false);
+      }
+      return;
+    }
     if (!hasAccess) {
       setChecking(true);
     }
     if (checking) {
-      const check = {
-        global: isGlobal,
-        gardenName: hasGardenName,
-        namespace: hasNamespace,
-        systemName: hasSystemName,
-        systemVersion: hasSystemVersion,
-        commandName: hasCommandName,
-        instanceName: hasInstanceName,
-      } as PermissionCheck;
-
-      setHasAccess(checkPermission(config, permission, check));
+      setHasAccess(validatePermissions());
       setChecking(false);
+      runValidation.current = false;
     }
   }, [
     checking,
