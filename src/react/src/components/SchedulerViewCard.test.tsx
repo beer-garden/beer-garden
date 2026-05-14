@@ -611,7 +611,9 @@ describe("SchedulerViewCard", () => {
       />,
     );
 
-    const pauseButton = await screen.findByTitle("Pause Job " + mockJob?.name);
+    const pauseButton = await screen.findByRole("button", {
+      name: /Pause Job/i,
+    });
     await userEvent.click(pauseButton);
 
     await waitFor(() => {
@@ -669,9 +671,10 @@ describe("SchedulerViewCard", () => {
       />,
     );
 
-    const resumeButton = await screen.findByTitle(
-      "Resume Job " + mockJob?.name,
-    );
+    const resumeButton = await screen.findByRole("button", {
+      name: /Resume Job/i,
+    });
+
     await userEvent.click(resumeButton);
 
     await waitFor(() => {
@@ -726,9 +729,9 @@ describe("SchedulerViewCard", () => {
       />,
     );
 
-    const deleteButton = await screen.findByTitle(
-      "Delete Job " + mockJob?.name,
-    );
+    const deleteButton = await screen.findByRole("button", {
+      name: /Delete Job/i,
+    });
     await userEvent.click(deleteButton);
 
     await waitFor(() => {
@@ -780,7 +783,9 @@ describe("SchedulerViewCard", () => {
       />,
     );
 
-    const runNowButton = await screen.findByTitle("Run Now " + mockJob?.name);
+    const runNowButton = await screen.findByRole("button", {
+      name: /Run Now/i,
+    });
     await userEvent.click(runNowButton);
 
     await waitFor(() => {
@@ -897,7 +902,7 @@ describe("SchedulerViewCard", () => {
       expect(screen.getByText("example_command")).toBeInTheDocument();
       expect(screen.getByText("SUCCESS")).toBeInTheDocument();
       expect(
-        screen.getByTitle("Open Request " + mockRequest.command),
+        screen.getByRole("button", { name: /Open Request/i }),
       ).toBeInTheDocument();
     });
   });

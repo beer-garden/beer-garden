@@ -224,7 +224,6 @@ function CurrentRequestsTemplate({
         onClick={confirm}
         tooltip="Show Current Requests"
         text
-        
       >
         <FontAwesomeIcon
           icon="envelope"
