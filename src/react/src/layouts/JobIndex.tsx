@@ -211,7 +211,7 @@ function JobIndex({
           raised
           link
           onClick={() =>
-            addRequestItem({ jobId: job.id, type: "VIEW_SCHEDULED_JOB" })
+            addRequestItem({ jobId: job.id, type: "VIEW_JOB" })
           }
           title={"View Job " + job.name}
           className="mr-2"
