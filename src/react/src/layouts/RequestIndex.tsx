@@ -458,7 +458,7 @@ function RequestIndex({
             rounded
             raised
             link
-            tooltip={"Open Request " + request.command_display_name}
+            tooltip={`Open Request ${request.command_display_name ?? request.command} ${request.id}`}
             className="mr-2"
             {...GenerateTourProps(OpenRequestTourStep)}
           >
@@ -470,7 +470,7 @@ function RequestIndex({
           raised
           link
           onClick={() => PeekRequestView(request)}
-          tooltip={"View " + request.command_display_name}
+          tooltip={`View Request ${request.command_display_name ?? request.command} ${request.id}`}
           className="mr-2"
           {...GenerateTourProps(ViewRequestTourStep)}
         >
