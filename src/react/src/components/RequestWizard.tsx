@@ -4,7 +4,7 @@ import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { InputSwitch } from "primereact/inputswitch";
 import { Skeleton } from "primereact/skeleton";
-import { Stepper } from "primereact/stepper";
+import { Stepper, StepperChangeEvent } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
 import { useEffect, useRef, useState } from "react";
 
@@ -43,6 +43,13 @@ function RequestWizard({
 }) {
   const stepperRef = useRef<Stepper>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const stepperPanelOptions: any = {
+    className: "p-stepper-header p-stepper-header-right p-disabled",
+  };
+  const [stepperPanel1Options, setStepperPanel1Options] =
+    useState<any>(stepperPanelOptions);
+  const [stepperPanel2Options, setStepperPanel2Options] =
+    useState<any>(stepperPanelOptions);
 
   const [selectedSystem, setSelectedSystem] = useState<System | undefined>(
     undefined,
@@ -463,6 +470,31 @@ function RequestWizard({
     },
   ];
 
+  const handleChangeStep = (e: StepperChangeEvent) => {
+    setActiveIndex(e.index);
+    if (e.index == 1) {
+      // Enable panel 1 & disable 2
+      setStepperPanel1Options({});
+      setStepperPanel2Options(stepperPanelOptions);
+      if (request?.parameters) {
+        const newRequest = { ...request };
+        delete newRequest.parameters;
+        setRequest(newRequest);
+      }
+    } else if (e.index == 2) {
+      // Enable panel 1 & 2
+      setStepperPanel1Options({});
+      setStepperPanel2Options({});
+    } else {
+      // Disable panel 1 & 2
+      setStepperPanel1Options(stepperPanelOptions);
+      setStepperPanel2Options(stepperPanelOptions);
+      if (selectedInstance) {
+        setSelectedInstance(undefined);
+      }
+    }
+  };
+
   return (
     <Card
       className="justify-content-center"
@@ -489,12 +521,15 @@ function RequestWizard({
           ref={stepperRef}
           activeStep={activeIndex}
           style={{ flexBasis: "50rem" }}
-          linear
+          onChangeStep={handleChangeStep}
         >
           <StepperPanel header="Pick System">
             <SystemList systemListButtonClick={systemListButtonClick} />
           </StepperPanel>
-          <StepperPanel header="Pick Command">
+          <StepperPanel
+            header="Pick Command"
+            pt={{ header: stepperPanel1Options }}
+          >
             <BreadCrumb model={breadcrumbs} className="mb-2" />
             <CommandList
               selectedSystem={selectedSystem}
@@ -521,7 +556,7 @@ function RequestWizard({
               />
             </div>
           </StepperPanel>
-          <StepperPanel header="Form">
+          <StepperPanel header="Form" pt={{ header: stepperPanel2Options }}>
             <BreadCrumb model={commandBreadcrumbs} className="mb-2" />
             <div className="flex ml-4">
               <span className="mr-2 align-self-center">Scheduled</span>
