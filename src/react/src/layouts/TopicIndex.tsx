@@ -510,6 +510,17 @@ function TopicIndex({ config }: { config: Config }) {
       </div>
     );
 
+    // Custom filter template
+    const filterElement = (props: any) => {
+      return (
+        <InputText
+          value={props.value}
+          onChange={(e) => props.filterApplyCallback(e.target.value)}
+          aria-label={`Filter by ${props.field}`}
+        />
+      );
+    };
+
     return (
       <>
         <ConfirmDialog />
@@ -545,14 +556,7 @@ function TopicIndex({ config }: { config: Config }) {
             header="Topic"
             style={{ maxWidth: "400px", overflowWrap: "break-word" }}
             showFilterMenu={false}
-            pt={{
-              filterInput: {
-                "aria-label": "Filter by Topic Name",
-              },
-              filterMenuButton: {
-                "aria-label": "Open Topic Name filter menu",
-              },
-            }}
+            filterElement={filterElement}
           />
           <Column field="topic.name" header="" body={topicButtonTemplate} />
           <Column
@@ -562,14 +566,7 @@ function TopicIndex({ config }: { config: Config }) {
             header="Publisher Count"
             body={publisherCountTemplate}
             showFilterMenu={false}
-            pt={{
-              filterInput: {
-                "aria-label": "Filter by Topic Publisher Count",
-              },
-              filterMenuButton: {
-                "aria-label": "Open Topic Publisher Count filter menu",
-              },
-            }}
+            filterElement={filterElement}
           />
           <Column
             field="subscriber.garden"
@@ -578,14 +575,7 @@ function TopicIndex({ config }: { config: Config }) {
             header="Garden"
             body={gardenTemplate}
             showFilterMenu={false}
-            pt={{
-              filterInput: {
-                "aria-label": "Filter by Subscriber Garden",
-              },
-              filterMenuButton: {
-                "aria-label": "Open Subscriber Garden filter menu",
-              },
-            }}
+            filterElement={filterElement}
           />
           <Column
             field="subscriber.namespace"
@@ -594,14 +584,7 @@ function TopicIndex({ config }: { config: Config }) {
             header="Namespace"
             body={namespaceTemplate}
             showFilterMenu={false}
-            pt={{
-              filterInput: {
-                "aria-label": "Filter by Subscriber Namespace",
-              },
-              filterMenuButton: {
-                "aria-label": "Open Subscriber Namespace filter menu",
-              },
-            }}
+            filterElement={filterElement}
           />
           <Column
             field="subscriber.system"
@@ -610,14 +593,7 @@ function TopicIndex({ config }: { config: Config }) {
             header="System"
             body={systemTemplate}
             showFilterMenu={false}
-            pt={{
-              filterInput: {
-                "aria-label": "Filter by Subscriber System",
-              },
-              filterMenuButton: {
-                "aria-label": "Open Subscriber System filter menu",
-              },
-            }}
+            filterElement={filterElement}
           />
           <Column
             field="subscriber.version"
@@ -626,14 +602,7 @@ function TopicIndex({ config }: { config: Config }) {
             header="Version"
             body={versionTemplate}
             showFilterMenu={false}
-            pt={{
-              filterInput: {
-                "aria-label": "Filter by Subscriber Version",
-              },
-              filterMenuButton: {
-                "aria-label": "Open Subscriber Version filter menu",
-              },
-            }}
+            filterElement={filterElement}
           />
           <Column
             field="subscriber.instance"
@@ -642,14 +611,7 @@ function TopicIndex({ config }: { config: Config }) {
             header="Instance"
             body={instanceTemplate}
             showFilterMenu={false}
-            pt={{
-              filterInput: {
-                "aria-label": "Filter by Subscriber Instance",
-              },
-              filterMenuButton: {
-                "aria-label": "Open Subscriber Instance filter menu",
-              },
-            }}
+            filterElement={filterElement}
           />
           <Column
             field="subscriber.command"
@@ -659,14 +621,7 @@ function TopicIndex({ config }: { config: Config }) {
             body={commandTemplate}
             style={{ maxWidth: "300px", overflowWrap: "break-word" }}
             showFilterMenu={false}
-            pt={{
-              filterInput: {
-                "aria-label": "Filter by Subscriber command",
-              },
-              filterMenuButton: {
-                "aria-label": "Open Subscriber Command filter menu",
-              },
-            }}
+            filterElement={filterElement}
           />
           <Column
             field="subscriber.consumer_count"
@@ -675,14 +630,7 @@ function TopicIndex({ config }: { config: Config }) {
             header="Consumer Count"
             body={consumerCountTemplate}
             showFilterMenu={false}
-            pt={{
-              filterInput: {
-                "aria-label": "Filter by Subscriber Consumer Count",
-              },
-              filterMenuButton: {
-                "aria-label": "Open Subscriber Consumer Count filter menu",
-              },
-            }}
+            filterElement={filterElement}
           />
           <Column
             field="subscriber.subscriber_type"
@@ -691,14 +639,7 @@ function TopicIndex({ config }: { config: Config }) {
             header="Subscriber Type"
             body={subscriberTypeTemplate}
             showFilterMenu={false}
-            pt={{
-              filterInput: {
-                "aria-label": "Filter by Subscriber Type",
-              },
-              filterMenuButton: {
-                "aria-label": "Open Subscriber Type filter menu",
-              },
-            }}
+            filterElement={filterElement}
           />
         </DataTable>
       </>
