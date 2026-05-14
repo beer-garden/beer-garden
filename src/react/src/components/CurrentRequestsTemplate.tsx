@@ -68,7 +68,8 @@ function CurrentRequestsTemplate({
   const requestStickyCheck = (request: Request) => {
     const requestStickyLimit = 30; // Seconds
     return (
-      new Date(request.updated_at) > new Date(Date.now() - requestStickyLimit * 1000)
+      new Date(request.updated_at) >
+      new Date(Date.now() - requestStickyLimit * 1000)
     );
   };
 
@@ -246,12 +247,30 @@ function CurrentRequestsTemplate({
       <Button className="fa-layers fa-fw fa-2x" onClick={confirm}>
         <FontAwesomeIcon
           icon="envelope"
-          className={currentRequests.length > 0 ? "fa-shake" : ""}
+          className={
+            currentRequests.filter(
+              (request) =>
+                request.status &&
+                ["CREATED", "IN_PROGRESS"].includes(request.status),
+            ).length > 0
+              ? "fa-shake"
+              : ""
+          }
           style={{ "--fa-animation-duration": "3s" } as React.CSSProperties}
         />
-        {currentRequests.length > 0 && (
+        {currentRequests.filter(
+          (request) =>
+            request.status &&
+            ["CREATED", "IN_PROGRESS"].includes(request.status),
+        ).length > 0 && (
           <span className="fa-layers-counter" style={{ fontSize: "1.5em" }}>
-            {currentRequests.length}
+            {
+              currentRequests.filter(
+                (request) =>
+                  request.status &&
+                  ["CREATED", "IN_PROGRESS"].includes(request.status),
+              ).length
+            }
           </span>
         )}
       </Button>
