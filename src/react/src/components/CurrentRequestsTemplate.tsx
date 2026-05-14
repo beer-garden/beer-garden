@@ -26,6 +26,7 @@ function CurrentRequestsTemplate({
     altRequests.current = requests.map((req) => ({
       id: req.id,
       status: req.status,
+      updated_at: req.updated_at,
     }));
     setCurrentRequests(requests);
   };
@@ -35,7 +36,7 @@ function CurrentRequestsTemplate({
 
     if (sessionUUID) {
       const filterQuery: Record<string, any> = {};
-      filterQuery["include"] = ["id", "status", "command"];
+      filterQuery["include"] = ["id", "status", "command", "updated_at"];
       filterQuery["query"] = [
         JSON.stringify({
           field_name: "metadata__sessionUUID",
@@ -64,6 +65,13 @@ function CurrentRequestsTemplate({
     }
   }, []);
 
+  const requestStickyCheck = (request: Request) => {
+    const requestStickyLimit = 30; // Seconds
+    return (
+      new Date(request.updated_at) > new Date(Date.now() - requestStickyLimit * 1000)
+    );
+  };
+
   const ProcessEventRequests = (message: any) => {
     if (message.payload_type === "Request") {
       const sessionUUID = localStorage.getItem("sessionUUID");
@@ -81,12 +89,7 @@ function CurrentRequestsTemplate({
         for (const request of altRequests.current) {
           if (message.payload.id === request.id) {
             updateList = true;
-            if (
-              message.payload.status &&
-              ["CREATED", "IN_PROGRESS"].includes(message.payload.status)
-            ) {
-              updatedRequests.push(message.payload);
-            }
+            updatedRequests.push(message.payload);
           } else {
             updatedRequests.push(request);
           }
@@ -94,7 +97,8 @@ function CurrentRequestsTemplate({
 
         if (
           !updateList &&
-          ["CREATED", "IN_PROGRESS"].includes(message.payload.status)
+          (["CREATED", "IN_PROGRESS"].includes(message.payload.status) ||
+            requestStickyCheck(message.payload))
         ) {
           updatedRequests.push(message.payload);
           updateList = true;
@@ -110,6 +114,29 @@ function CurrentRequestsTemplate({
   useEffect(() => {
     getCurrentRequests();
   }, [getCurrentRequests]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      let updateList = false;
+      const updatedRequests = [] as Array<Request>;
+      for (const request of altRequests.current) {
+        if (
+          !request.status ||
+          ["CREATED", "IN_PROGRESS"].includes(request.status) ||
+          requestStickyCheck(request)
+        ) {
+          updatedRequests.push(request);
+        } else {
+          updateList = true;
+        }
+        if (updateList) {
+          setAllRequests(updatedRequests);
+        }
+      }
+    }, 5000); // check every 5 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   const SeverityCheck = (status?: string) => {
     if (!status) {
