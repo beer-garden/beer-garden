@@ -223,6 +223,8 @@ function CurrentRequestsTemplate({
         className="fa-layers fa-fw fa-2x"
         onClick={confirm}
         tooltip="Show Current Requests"
+        text
+        
       >
         <FontAwesomeIcon
           icon="envelope"
