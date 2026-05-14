@@ -471,7 +471,7 @@ function RequestWizard({
   ];
 
   const cleanForm = () => {
-    const newRequest = { ...request, command_type: "ACTION" };
+    const newRequest = { ...request, command_type: "" };
     delete newRequest.parameters;
     delete newRequest.comment;
     setRequest(newRequest);
