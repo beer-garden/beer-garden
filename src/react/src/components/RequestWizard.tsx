@@ -470,17 +470,20 @@ function RequestWizard({
     },
   ];
 
+  const cleanForm = () => {
+    const newRequest = { ...request, command_type: "ACTION" };
+    delete newRequest.parameters;
+    delete newRequest.comment;
+    setRequest(newRequest);
+  };
+
   const handleChangeStep = (e: StepperChangeEvent) => {
     setActiveIndex(e.index);
     if (e.index == 1) {
       // Enable panel 1 & disable 2
       setStepperPanel1Options({});
       setStepperPanel2Options(stepperPanelOptions);
-      if (request?.parameters) {
-        const newRequest = { ...request };
-        delete newRequest.parameters;
-        setRequest(newRequest);
-      }
+      cleanForm();
     } else if (e.index == 2) {
       // Enable panel 1 & 2
       setStepperPanel1Options({});
@@ -585,11 +588,7 @@ function RequestWizard({
                 label="Back"
                 severity="secondary"
                 onClick={() => {
-                  if (request?.parameters) {
-                    const newRequest = { ...request };
-                    delete newRequest.parameters;
-                    setRequest(newRequest);
-                  }
+                  cleanForm();
                   stepperRef.current?.prevCallback();
                 }}
               />
