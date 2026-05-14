@@ -1,5 +1,6 @@
 import "primereact/resources/primereact.min.css"; // Core CSS
 import "primeflex/primeflex.css";
+import "primeicons/primeicons.css";
 import "./App.css";
 
 import { PrimeReactProvider } from "primereact/api";
