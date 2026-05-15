@@ -109,10 +109,10 @@ function TopicCard({
   useEffect(() => {
     if (topic === undefined) {
       setTopic(requestItem.topic);
-    } else if (requests === undefined) {
+    } else {
       queryTopicRequests();
     }
-  }, [topic]);
+  }, [topic, lazyParams]);
 
   const setDisplayRequests = (requests: Array<Request>) => {
     setRequests(requests);
