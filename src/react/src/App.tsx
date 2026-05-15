@@ -410,7 +410,9 @@ function App() {
     if (action === ACTIONS.CLOSE) {
       runTourRef.current = false;
       setRunTour(false);
-    } else if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
+    } else if (
+      ([STATUS.FINISHED, STATUS.SKIPPED] as string[]).includes(status)
+    ) {
       runTourRef.current = false;
       setRunTour(false);
     }

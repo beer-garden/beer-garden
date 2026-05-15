@@ -3,7 +3,7 @@ import { BreadCrumb } from "primereact/breadcrumb";
 import { Card } from "primereact/card";
 import { InputSwitch } from "primereact/inputswitch";
 import { Skeleton } from "primereact/skeleton";
-import { Stepper } from "primereact/stepper";
+import { Stepper, StepperChangeEvent } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
 import { useEffect, useRef, useState } from "react";
 
@@ -42,6 +42,13 @@ function RequestWizard({
 }) {
   const stepperRef = useRef<Stepper>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const stepperPanelOptions: any = {
+    className: "p-stepper-header p-stepper-header-right p-disabled",
+  };
+  const [stepperPanel1Options, setStepperPanel1Options] =
+    useState<any>(stepperPanelOptions);
+  const [stepperPanel2Options, setStepperPanel2Options] =
+    useState<any>(stepperPanelOptions);
 
   const [selectedSystem, setSelectedSystem] = useState<System | undefined>(
     undefined,
@@ -462,6 +469,34 @@ function RequestWizard({
     },
   ];
 
+  const cleanForm = () => {
+    const newRequest = { ...request, command_type: "" };
+    delete newRequest.parameters;
+    delete newRequest.comment;
+    setRequest(newRequest);
+  };
+
+  const handleChangeStep = (e: StepperChangeEvent) => {
+    setActiveIndex(e.index);
+    if (e.index == 1) {
+      // Enable panel 1 & disable 2
+      setStepperPanel1Options({});
+      setStepperPanel2Options(stepperPanelOptions);
+      cleanForm();
+    } else if (e.index == 2) {
+      // Enable panel 1 & 2
+      setStepperPanel1Options({});
+      setStepperPanel2Options({});
+    } else {
+      // Disable panel 1 & 2
+      setStepperPanel1Options(stepperPanelOptions);
+      setStepperPanel2Options(stepperPanelOptions);
+      if (selectedInstance) {
+        setSelectedInstance(undefined);
+      }
+    }
+  };
+
   return (
     <Card
       className="justify-content-center"
@@ -488,13 +523,13 @@ function RequestWizard({
           ref={stepperRef}
           activeStep={activeIndex}
           style={{ flexBasis: "50rem" }}
-          linear
           pt={{
             nav: {
               "aria-label":
                 "Three step process of finding and executing create request",
             },
           }}
+          onChangeStep={handleChangeStep}
         >
           <StepperPanel
             header="Pick System"
@@ -513,6 +548,7 @@ function RequestWizard({
               action: {
                 "aria-label": "Pick Command Step",
               },
+              header: stepperPanel1Options 
             }}
           >
             <BreadCrumb model={breadcrumbs} className="mb-2" />
@@ -547,6 +583,7 @@ function RequestWizard({
               action: {
                 "aria-label": "Populate Create Request Form Step",
               },
+              header: stepperPanel2Options
             }}
           >
             <BreadCrumb model={commandBreadcrumbs} className="mb-2" />
@@ -578,11 +615,7 @@ function RequestWizard({
                 label="Back"
                 severity="secondary"
                 onClick={() => {
-                  if (request?.parameters) {
-                    const newRequest = { ...request };
-                    delete newRequest.parameters;
-                    setRequest(newRequest);
-                  }
+                  cleanForm();
                   stepperRef.current?.prevCallback();
                 }}
               />

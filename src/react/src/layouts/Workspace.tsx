@@ -164,7 +164,11 @@ function Workspace({
 
     items.forEach((value: RequestItem) => {
       list.push(
-        <div className="mr-2 mb-2 mt-2" style={{ minWidth: "49%" }}>
+        <div
+          key={value.itemId}
+          className="mr-2 mb-2 mt-2"
+          style={{ minWidth: "49%" }}
+        >
           <RequestItemCard
             removeItem={deleteItem}
             updateRequestItem={updateItem}
