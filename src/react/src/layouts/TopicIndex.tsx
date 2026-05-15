@@ -474,19 +474,19 @@ function TopicIndex({
       return (
         <div className="flex">
           <AccessButton
-              onClick={() =>
-                addRequestItem({
-                  topic: topicSubscriber.topic,
-                  type: "VIEW_TOPIC",
-                })
-              }
-              tooltip="View Topic"
-              aria-label={`ViewTopic ${topicSubscriber.topic?.name}`}
+            onClick={() =>
+              addRequestItem({
+                topic: topicSubscriber.topic,
+                type: "VIEW_TOPIC",
+              })
+            }
+            tooltip="View Topic"
+            aria-label={`ViewTopic ${topicSubscriber.topic?.name}`}
             config={config}
             permission="PLUGIN_ADMIN"
-            >
-              <FontAwesomeIcon icon="eye" />
-            </AccessButton>
+          >
+            <FontAwesomeIcon icon="eye" />
+          </AccessButton>
           <AccessButton
             onClick={() => addSubscriber(topicSubscriber.topic!)}
             aria-label={`Add Subscriber to Topic ${topicSubscriber.topic?.name}`}

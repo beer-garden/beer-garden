@@ -217,7 +217,7 @@ function TopicCard({
     <Card
       className="justify-content-center"
       unstyled={isDialog}
-      title={!isDialog && topic?.name}
+      title={!isDialog && requestItem?.topic?.name}
       header={
         !isDialog && (
           <Button
