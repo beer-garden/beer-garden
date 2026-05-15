@@ -23,11 +23,27 @@ function CurrentRequestsTemplate({
   const altRequests = useRef<Array<Request>>([]);
 
   const setAllRequests = (requests: Array<Request>) => {
-    altRequests.current = requests.map((req) => ({
-      id: req.id,
-      status: req.status,
-      updated_at: req.updated_at,
-    }));
+    altRequests.current = requests.map((req) => {
+      const request = {
+        id: req.id,
+        status: req.status,
+        updated_at: req.updated_at,
+        command: req.command,
+      };
+      if (config?.auth_enabled === true) {
+        return {
+          ...request,
+          ...{
+            target_garden: req.target_garden,
+            namespace: req.namespace,
+            system: req.system,
+            instance_name: req.instance_name,
+            system_version: req.system_version,
+          },
+        };
+      }
+      return request;
+    });
     setCurrentRequests(requests);
   };
 
@@ -36,7 +52,21 @@ function CurrentRequestsTemplate({
 
     if (sessionUUID) {
       const filterQuery: Record<string, any> = {};
-      filterQuery["include"] = ["id", "status", "command", "updated_at"];
+      if (config?.auth_enabled === true) {
+        filterQuery["include"] = [
+          "id",
+          "status",
+          "command",
+          "updated_at",
+          "target_garden",
+          "namespace",
+          "system",
+          "instance_name",
+          "system_version",
+        ];
+      } else {
+        filterQuery["include"] = ["id", "status", "command", "updated_at"];
+      }
       filterQuery["query"] = [
         JSON.stringify({
           field_name: "metadata__sessionUUID",
