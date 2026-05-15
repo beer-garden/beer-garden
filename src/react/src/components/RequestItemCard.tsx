@@ -6,6 +6,7 @@ import RequestCreateCard from "./RequestCreateCard";
 import RequestViewCard from "./RequestViewCard";
 import RequestWizard from "./RequestWizard";
 import SchedulerViewCard from "./SchedulerViewCard";
+import TopicCard from "./TopicCard";
 
 function RequestItemCard({
   requestItem,
@@ -84,6 +85,14 @@ function RequestItemCard({
                 });
             }
           }}
+        />
+      )}
+      {requestItem?.type === "VIEW_TOPIC" && requestItem?.topic && (
+        <TopicCard
+          requestItem={requestItem}
+          removeItem={removeItem}
+          listeners={listeners}
+          isDialog={isDialog}
         />
       )}
     </>

@@ -7,16 +7,19 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Request, Topic } from "../models/brewtils-types";
+import { RequestItem } from "../models/models";
 import { GetRequestList } from "../services/request_service";
 
 function TopicCard({
-  targetTopic,
+  requestItem,
   isDialog,
   listeners,
+  removeItem,
 }: {
-  targetTopic: Topic;
+  requestItem: RequestItem;
   isDialog: boolean;
   listeners: Record<string, any>;
+  removeItem: (id: string) => void;
 }) {
   const [topic, setTopic] = useState<Topic | undefined>(undefined);
   const navigate = useNavigate();
@@ -105,7 +108,7 @@ function TopicCard({
 
   useEffect(() => {
     if (topic === undefined) {
-      setTopic(targetTopic);
+      setTopic(requestItem.topic);
     } else if (requests === undefined) {
       queryTopicRequests();
     }
@@ -215,6 +218,18 @@ function TopicCard({
       className="justify-content-center"
       unstyled={isDialog}
       title={!isDialog && topic?.name}
+      header={
+        !isDialog && (
+          <Button
+            onClick={() => {
+              removeItem(requestItem.itemId);
+            }}
+            tooltip={`Close Topic View for ${topic?.name ?? "Unknown Topic"}`}
+          >
+            <FontAwesomeIcon icon="xmark" />
+          </Button>
+        )
+      }
     >
       <div>
         <div className="mr-4">

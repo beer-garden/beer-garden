@@ -14,9 +14,8 @@ import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 
 import HasAccess from "../components/HasAccess";
 import SubscriberItem from "../components/SubscriberItem";
-import TopicCard from "../components/TopicCard";
 import { Subscriber, Topic } from "../models/brewtils-types";
-import { Config } from "../models/models";
+import { Config, RequestItem } from "../models/models";
 import {
   AddSubscriber,
   CreateTopic,
@@ -34,10 +33,11 @@ interface TopicSubscriber {
 
 function TopicIndex({
   config,
-  listeners,
+  addRequestItem,
 }: {
   config: Config;
   listeners: Record<string, any>;
+  addRequestItem: (itemParams?: Partial<RequestItem>) => void;
 }) {
   const toast = useRef<Toast>(null);
   const [topicSubscribers, setTopicSubscribers] = useState<
@@ -89,7 +89,7 @@ function TopicIndex({
       command: "",
     } as Subscriber,
   ]);
-  const [viewTopic, setViewTopic] = useState<Topic | undefined>(undefined);
+  // const [viewTopic, setViewTopic] = useState<Topic | undefined>(undefined);
   const msgs = useRef<Messages>(null);
   const loadTopics = useCallback(() => {
     setLoading(true);
@@ -467,7 +467,12 @@ function TopicIndex({
         <HasAccess config={config} permission="PLUGIN_ADMIN">
           <div className="flex">
             <Button
-              onClick={() => setViewTopic(topicSubscriber.topic)}
+              onClick={() =>
+                addRequestItem({
+                  topic: topicSubscriber.topic,
+                  type: "VIEW_TOPIC",
+                })
+              }
               tooltip="View Topic"
             >
               <FontAwesomeIcon icon="eye" />
@@ -712,27 +717,6 @@ function TopicIndex({
   return (
     <div>
       <Toast ref={toast} />
-      <Dialog
-        data-testid="view_topic"
-        header={viewTopic?.name}
-        visible={viewTopic !== undefined}
-        footer={
-          <>
-            <Button onClick={() => setViewTopic(undefined)}>Close</Button>
-          </>
-        }
-        onHide={() => {
-          setViewTopic(undefined);
-        }}
-      >
-        {viewTopic && (
-          <TopicCard
-            targetTopic={viewTopic}
-            listeners={listeners}
-            isDialog={true}
-          />
-        )}
-      </Dialog>
 
       <Dialog
         data-testid="topic-dialog"
